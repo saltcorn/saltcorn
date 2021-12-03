@@ -9,7 +9,7 @@
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
-const { setTenant, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
@@ -66,7 +66,6 @@ function accessAllowedRead(req, user) {
  */
 router.get(
   "/sc_tables/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -95,7 +94,6 @@ router.get(
  */
 router.get(
   "/sc_views/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -124,7 +122,6 @@ router.get(
  */
 router.get(
   "/sc_pages/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -153,7 +150,6 @@ router.get(
  */
 router.get(
   "/sc_files/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -182,7 +178,6 @@ router.get(
  */
 router.get(
   "/sc_triggers/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -211,7 +206,6 @@ router.get(
  */
 router.get(
   "/sc_roles/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -240,7 +234,6 @@ router.get(
  */
 router.get(
   "/sc_tenants/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -269,7 +262,6 @@ router.get(
  */
 router.get(
   "/sc_plugins/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",
@@ -298,7 +290,6 @@ router.get(
  */
 router.get(
   "/sc_config/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
       "api-bearer",

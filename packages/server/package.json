@@ -40,7 +40,12 @@
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
     "socket.io": "4.2.0",
-    "tmp-promise": "^3.0.2"
+    "tmp-promise": "^3.0.2",
+    "multer-s3": "^2.10.0",
+    "multer": "^1.4.3",
+    "aws-sdk": "^2.1037.0",
+    "uuid": "^8.2.0",
+    "content-disposition": "^0.5.3"
   },
   "optionalDependencies": {
     "sd-notify": "^2.8.0"

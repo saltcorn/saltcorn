@@ -65,11 +65,11 @@ div.testrunoutput code {
 }
 
 div[data-inline-edit-dest-url] .editicon {
-  display: none;
+  visibility: hidden;
 }
 
 div[data-inline-edit-dest-url]:hover .editicon {
-  display: inline;
+  visibility: visible;
 }
 .searchbar-dropdown {
   left: unset;

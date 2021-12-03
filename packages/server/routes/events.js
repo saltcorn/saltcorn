@@ -25,7 +25,6 @@ module.exports = router;
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.redirect(`/actions`);

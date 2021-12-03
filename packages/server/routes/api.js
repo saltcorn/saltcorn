@@ -16,7 +16,7 @@
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
-const { setTenant, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -41,7 +41,7 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {*} fields 
+ * @param {*} fields
  * @returns {*}
  */
 const limitFields = (fields) => (r) => {
@@ -64,14 +64,14 @@ const limitFields = (fields) => (r) => {
  * @param {Table} table
  * @returns {boolean}
  */
-function accessAllowedRead(req, user, table){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowedRead(req, user, table) {
+  const role = req.isAuthenticated()
+    ? req.user.role_id
+    : user && user.role_id
+    ? user.role_id
+    : 10;
 
-    return role <= table.min_role_read;
+  return role <= table.min_role_read;
 }
 
 /**
@@ -81,15 +81,14 @@ function accessAllowedRead(req, user, table){
  * @param {Table} table
  * @returns {boolean}
  */
-function accessAllowedWrite(req, user, table){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowedWrite(req, user, table) {
+  const role = req.isAuthenticated()
+    ? req.user.role_id
+    : user && user.role_id
+    ? user.role_id
+    : 10;
 
-    return role <= table.min_role_write;
-
+  return role <= table.min_role_write;
 }
 /**
  * Check that user has right to trigger call
@@ -98,14 +97,14 @@ function accessAllowedWrite(req, user, table){
  * @param {Trigger} trigger
  * @returns {boolean}
  */
-function accessAllowed(req, user, trigger){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowed(req, user, trigger) {
+  const role = req.isAuthenticated()
+    ? req.user.role_id
+    : user && user.role_id
+    ? user.role_id
+    : 10;
 
-    return role <= trigger.min_role;
+  return role <= trigger.min_role;
 }
 
 /**
@@ -117,7 +116,6 @@ function accessAllowed(req, user, trigger){
 // todo add paging
 router.get(
   "/:tableName/",
-  setTenant,
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
@@ -176,7 +174,6 @@ router.get(
  */
 router.post(
   "/action/:actionname/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { actionname } = req.params;
     // todo protect action by authorization check
@@ -189,30 +186,30 @@ router.post(
       when_trigger: "API call",
     });
 
-    if (!trigger){
-        res.status(400).json({ error: req.__("Not found") });
-        return;
+    if (!trigger) {
+      res.status(400).json({ error: req.__("Not found") });
+      return;
     }
     await passport.authenticate(
-        "api-bearer",
-        { session: false },
-        async function (err, user, info) {
-            if (accessAllowed(req, user, trigger)) {
-                try {
-                    const action = getState().actions[trigger.action];
-                    const resp = await action.run({
-                        configuration: trigger.configuration,
-                        body: req.body,
-                        req,
-                    });
-                    res.json({success: true, data: resp});
-                } catch (e) {
-                    res.status(400).json({success: false, error: e.message});
-                }
-            } else {
-              res.status(401).json({ error: req.__("Not authorized") });
-            }
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowed(req, user, trigger)) {
+          try {
+            const action = getState().actions[trigger.action];
+            const resp = await action.run({
+              configuration: trigger.configuration,
+              body: req.body,
+              req,
+            });
+            res.json({ success: true, data: resp });
+          } catch (e) {
+            res.status(400).json({ success: false, error: e.message });
+          }
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
         }
+      }
     )(req, res, next);
   })
 );
@@ -225,7 +222,6 @@ router.post(
  */
 router.post(
   "/:tableName/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
     const table = await Table.findOne({ name: tableName });
@@ -294,7 +290,6 @@ router.post(
  */
 router.post(
   "/:tableName/:id",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
@@ -355,7 +350,6 @@ router.post(
 router.delete(
   "/:tableName/:id",
   // in case of primary key different from id - id will be string "undefined"
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
@@ -368,17 +362,14 @@ router.delete(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
-
           try {
-            if(id === "undefined"){
-                const pk_name = table.pk_name;
-                //const fields = await table.getFields();
-                const row = req.body;
-                //readState(row, fields);
-                await table.deleteRows({  [pk_name]:  row[pk_name]} );
-            }
-            else
-                await table.deleteRows({ id });
+            if (id === "undefined") {
+              const pk_name = table.pk_name;
+              //const fields = await table.getFields();
+              const row = req.body;
+              //readState(row, fields);
+              await table.deleteRows({ [pk_name]: row[pk_name] });
+            } else await table.deleteRows({ id });
             res.json({ success: true });
           } catch (e) {
             res.status(400).json({ error: e.message });

@@ -5,12 +5,7 @@
  */
 const Router = require("express-promise-router");
 
-const {
-  setTenant,
-  isAdmin,
-  error_catcher,
-  getGitRevision,
-} = require("./utils.js");
+const { isAdmin, error_catcher, getGitRevision } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
@@ -52,6 +47,7 @@ const load_plugins = require("../load_plugins");
 const {
   restore_backup,
   send_admin_page,
+  send_files_page,
   config_fields_form,
   save_config_from_form,
   flash_restart_if_required,
@@ -66,6 +62,7 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const moment = require("moment");
+const View = require("@saltcorn/data/models/view");
 
 /**
  * @type {object}
@@ -78,7 +75,7 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const site_id_form = (req) =>
@@ -131,7 +128,6 @@ const email_form = async (req) => {
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -156,7 +152,6 @@ router.get(
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await site_id_form(req);
@@ -189,7 +184,6 @@ router.post(
  */
 router.get(
   "/email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await email_form(req);
@@ -223,7 +217,6 @@ router.get(
  */
 router.get(
   "/send-test-email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const from = getState().getConfig("email_from");
@@ -254,7 +247,6 @@ router.get(
  */
 router.post(
   "/email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await email_form(req);
@@ -285,7 +277,6 @@ router.post(
  */
 router.get(
   "/backup",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     send_admin_page({
@@ -330,7 +321,6 @@ router.get(
  */
 router.get(
   "/system",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -450,7 +440,6 @@ router.get(
  */
 router.post(
   "/restart",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
@@ -473,7 +462,6 @@ router.post(
  */
 router.post(
   "/upgrade",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() !== db.connectObj.default_schema) {
@@ -510,7 +498,6 @@ router.post(
  */
 router.post(
   "/backup",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const fileName = await create_backup();
@@ -531,7 +518,6 @@ router.post(
  */
 router.post(
   "/restore",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
@@ -547,7 +533,7 @@ router.post(
 );
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Form}
  */
 const clearAllForm = (req) =>
@@ -628,7 +614,6 @@ const clearAllForm = (req) =>
  */
 router.post(
   "/enable-letsencrypt",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
@@ -706,7 +691,6 @@ router.post(
  */
 router.get(
   "/clear-all",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Admin`), {
@@ -736,7 +720,6 @@ router.get(
  */
 router.post(
   "/clear-all",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = clearAllForm(req);
@@ -746,7 +729,7 @@ router.post(
       await db.deleteWhere("_sc_pages");
     }
     if (form.values.views) {
-      await db.deleteWhere("_sc_views");
+      await View.delete({});
     }
     //user fields
     const users = await Table.findOne({ name: "users" });

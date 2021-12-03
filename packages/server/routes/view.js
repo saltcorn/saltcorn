@@ -13,7 +13,6 @@ const Page = require("@saltcorn/data/models/page");
 const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const {
-  setTenant,
   isAdmin,
   error_catcher,
   scan_for_page_title,
@@ -39,7 +38,6 @@ module.exports = router;
  */
 router.get(
   "/:viewname",
-  setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
@@ -83,7 +81,6 @@ router.get(
  */
 router.post(
   "/:viewname/preview",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
@@ -121,7 +118,6 @@ router.post(
  */
 router.post(
   "/:viewname/:route",
-  setTenant,
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
     const role = req.isAuthenticated() ? req.user.role_id : 10;
@@ -147,7 +143,6 @@ router.post(
  */
 router.post(
   "/:viewname",
-  setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
     const role = req.isAuthenticated() ? req.user.role_id : 10;

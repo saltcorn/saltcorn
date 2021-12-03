@@ -5,7 +5,7 @@
  */
 
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -54,7 +54,6 @@ module.exports = router;
  */
 router.get(
   "/create/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find({});
@@ -139,7 +138,6 @@ router.get(
  */
 router.post(
   "/create",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var pack = {
@@ -236,7 +234,6 @@ const install_pack_form = (req) =>
  */
 router.get(
   "/install",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Install Pack`), {
@@ -267,7 +264,6 @@ router.get(
  */
 router.post(
   "/install",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
@@ -326,7 +322,6 @@ router.post(
  */
 router.post(
   "/install-named/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -363,7 +358,6 @@ router.post(
  */
 router.post(
   "/uninstall/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;

@@ -5,12 +5,7 @@
  * @subcategory routes
  */
 const Router = require("express-promise-router");
-const {
-  isAdmin,
-  setTenant,
-  error_catcher,
-  get_base_url,
-} = require("./utils.js");
+const { isAdmin, error_catcher, get_base_url } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 
@@ -52,7 +47,7 @@ const { send_events_page } = require("../markup/admin.js");
 const EventLog = require("@saltcorn/data/models/eventlog");
 
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const logSettingsForm = async (req) => {
@@ -101,7 +96,6 @@ const logSettingsForm = async (req) => {
  */
 router.get(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await logSettingsForm(req);
@@ -128,7 +122,6 @@ router.get(
  */
 router.get(
   "/custom",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const cevs = getState().getConfig("custom_events", []);
@@ -202,7 +195,6 @@ const customEventForm = () =>
  */
 router.get(
   "/custom/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = customEventForm();
@@ -228,7 +220,6 @@ router.get(
  */
 router.post(
   "/custom/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = customEventForm();
@@ -264,7 +255,6 @@ router.post(
  */
 router.post(
   "/custom/delete/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -288,7 +278,6 @@ router.post(
  */
 router.post(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await logSettingsForm(req);
@@ -321,7 +310,6 @@ router.post(
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const state = req.query,
@@ -377,7 +365,6 @@ router.get(
  */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

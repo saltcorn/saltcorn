@@ -20,7 +20,7 @@ const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 const db = require("@saltcorn/data/db");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -46,9 +46,9 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} page 
- * @param {*} roles 
- * @param {object} req 
+ * @param {object} page
+ * @param {*} roles
+ * @param {object} req
  * @returns {Form}
  */
 const editPageRoleForm = (page, roles, req) =>
@@ -60,8 +60,8 @@ const editPageRoleForm = (page, roles, req) =>
   });
 
 /**
- * @param {object} page 
- * @param {object} req 
+ * @param {object} page
+ * @param {object} req
  * @returns {string}
  */
 const page_dropdown = (page, req) =>
@@ -101,8 +101,8 @@ const page_dropdown = (page, req) =>
   ]);
 
 /**
- * 
- * @param {object} req 
+ *
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const pagePropertiesForm = async (req) => {
@@ -146,9 +146,9 @@ const pagePropertiesForm = async (req) => {
 };
 
 /**
- * 
- * @param {object} req 
- * @param {object} context 
+ *
+ * @param {object} req
+ * @param {object} context
  * @returns {Promise<object>}
  */
 const pageBuilderData = async (req, context) => {
@@ -225,9 +225,9 @@ const pageBuilderData = async (req, context) => {
 };
 
 /**
- * @param {*} rows 
- * @param {*} roles 
- * @param {object} req 
+ * @param {*} rows
+ * @param {*} roles
+ * @param {object} req
  * @returns {div}
  */
 const getPageList = (rows, roles, req) => {
@@ -308,7 +308,6 @@ const getRootPageForm = (pages, roles, req) => {
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
@@ -339,10 +338,10 @@ router.get(
 );
 
 /**
- * @param {*} contents 
- * @param {*} noCard 
- * @param {object} req 
- * @param {*} page 
+ * @param {*} contents
+ * @param {*} noCard
+ * @param {object} req
+ * @param {*} page
  * @returns {*}
  */
 const wrap = (contents, noCard, req, page) => ({
@@ -372,7 +371,6 @@ const wrap = (contents, noCard, req, page) => ({
  */
 router.get(
   "/edit-properties/:pagename",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
@@ -401,7 +399,6 @@ router.get(
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await pagePropertiesForm(req);
@@ -420,7 +417,6 @@ router.get(
  */
 router.post(
   "/edit-properties",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await pagePropertiesForm(req);
@@ -456,7 +452,6 @@ router.post(
  */
 router.get(
   "/edit/:pagename",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
@@ -498,7 +493,6 @@ router.get(
  */
 router.post(
   "/edit/:pagename",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
@@ -529,7 +523,6 @@ router.post(
  */
 router.post(
   "/savebuilder/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -551,7 +544,6 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -570,7 +562,6 @@ router.post(
  */
 router.post(
   "/set_root_page",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
@@ -598,7 +589,6 @@ router.post(
  */
 router.post(
   "/add-to-menu/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -628,7 +618,6 @@ router.post(
  */
 router.post(
   "/clone/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -650,7 +639,6 @@ router.post(
  */
 router.post(
   "/setrole/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
