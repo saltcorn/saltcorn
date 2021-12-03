@@ -117,8 +117,12 @@ class File {
    */
   // TBD fs errors handling
   static async ensure_file_store() {
-    const file_store = db.connectObj.file_store;
-    await fs.mkdir(file_store, { recursive: true });
+    const { getState } = require("../db/state");
+
+    if (!getState().getConfig("storage_s3_enabled")) {
+      const file_store = db.connectObj.file_store;
+      await fs.mkdir(file_store, { recursive: true });
+    }
   }
 
   /**

@@ -146,8 +146,8 @@ router.get(
     const file = await File.findOne({ id });
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
-      s3storage.serveObject(file, res, true);
-      //res.download(file.location, file.filename);
+      if (file.s3_store) s3storage.serveObject(file, res, true);
+      else res.download(file.location, file.filename);
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
@@ -183,8 +183,8 @@ router.get(
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      //res.sendFile(file.location);
-      s3storage.serveObject(file, res, false);
+      if (file.s3_store) s3storage.serveObject(file, res, false);
+      else res.sendFile(file.location);
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
@@ -305,7 +305,14 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const f = await File.findOne({ id });
-    const result = await f.delete(s3storage.unlinkObject);
+    if (!f) {
+      req.flash("error", "File not found");
+      res.redirect("/files");
+      return;
+    }
+    const result = await f.delete(
+      f.s3_store ? s3storage.unlinkObject : undefined
+    );
     if (result && result.error) {
       req.flash("error", result.error);
     } else {
