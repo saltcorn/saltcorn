@@ -98,12 +98,15 @@ class File {
    * @returns {string} - path to file
    */
   static get_new_path(suggest) {
+    const { getState } = require("../db/state");
+
     // Check if it uses S3, then use a default "saltcorn" folder
-    const useS3 = db.connectObj.storage_s3_enabled;
+    const useS3 = getState().getConfig("storage_s3_enabled");
     const file_store = !useS3 ? db.connectObj.file_store : "saltcorn/";
 
     const newFnm = suggest || uuidv4();
-    return path.join(file_store, newFnm);
+    const newPath = path.join(file_store, newFnm);
+    return newPath;
   }
 
   /**
