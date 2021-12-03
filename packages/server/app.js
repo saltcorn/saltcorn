@@ -78,13 +78,6 @@ const getApp = async (opts = {}) => {
   // extenetede url encoding in use
   app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
-  app.use(setTenant);
-
-  // Change into s3storage compatible selector
-  // existing fileupload middleware is moved into s3storage.js
-  app.use(s3storage.middlewareSelect);
-  app.use(s3storage.middlewareTransform);
-
   // cookies
   app.use(require("cookie-parser")());
   // i18n support
@@ -214,6 +207,13 @@ const getApp = async (opts = {}) => {
       req.csrfToken = () => "";
       next();
     });
+
+  app.use(setTenant);
+
+  // Change into s3storage compatible selector
+  // existing fileupload middleware is moved into s3storage.js
+  app.use(s3storage.middlewareSelect);
+  app.use(s3storage.middlewareTransform);
 
   mountRoutes(app);
   // set tenant homepage as / root
