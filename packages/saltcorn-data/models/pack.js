@@ -327,13 +327,8 @@ const install_pack = contract(
       }
     }
     for (const viewSpec of pack.views) {
-      const {
-        table,
-        on_menu,
-        menu_label,
-        on_root_page,
-        ...viewNoTable
-      } = viewSpec;
+      const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
+        viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({
         ...viewNoTable,
@@ -432,7 +427,7 @@ const fetch_available_packs_from_store = contract(
  * @function
  * @param {string} name
  * @returns {Promise<object|null>}
- */ 
+ */
 const fetch_pack_by_name = contract(
   is.fun(
     is.str,

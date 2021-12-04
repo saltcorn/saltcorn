@@ -14,12 +14,12 @@ const { sleep } = require("../common");
  */
 class RunTestsCommand extends Command {
   /**
-   * 
-   * @param {string} cmd 
-   * @param {string[]} args 
-   * @param {*} env 
-   * @param {*} cwd 
-   * @param {boolean} keepalive 
+   *
+   * @param {string} cmd
+   * @param {string[]} args
+   * @param {*} env
+   * @param {*} cwd
+   * @param {boolean} keepalive
    * @returns {object}
    */
   async do_test(cmd, args, env, cwd, keepalive) {
@@ -33,8 +33,8 @@ class RunTestsCommand extends Command {
   }
 
   /**
-   * 
-   * @param {*} env 
+   *
+   * @param {*} env
    * @returns {Promise<void>}
    */
   async e2etest(env) {
@@ -64,8 +64,8 @@ class RunTestsCommand extends Command {
   }
 
   /**
-   * 
-   * @param {object} args 
+   *
+   * @param {object} args
    * @param {object} flags
    * @throws {Error}
    * @returns {void}
@@ -82,7 +82,7 @@ class RunTestsCommand extends Command {
       );
     }
   }
-  
+
   /**
    * @returns {Promise<void>}
    */
@@ -119,27 +119,18 @@ class RunTestsCommand extends Command {
       jestParams.push("--watchAll");
     }
     if (args.package === "core") {
-      await this.do_test(
-        "npm",
-        ["run", "test", ...jestParams],
-        env,
-      );
+      await this.do_test("npm", ["run", "test", ...jestParams], env);
     } else if (args.package === "e2e") {
       await this.e2etest(env);
     } else if (args.package) {
       const cwd = "packages/" + args.package;
-      await this.do_test(
-        "npm",
-        ["run", "test", ...jestParams],
-        env,
-        cwd,
-      );
+      await this.do_test("npm", ["run", "test", ...jestParams], env, cwd);
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(
         lerna,
-        ["run", "test", ...jestParams],
-        env,
+        ["run", "test", "--stream", ...jestParams],
+        env
       );
       await this.e2etest(env);
     }
@@ -170,12 +161,13 @@ RunTestsCommand.flags = {
   }),
   watch: flags.boolean({
     string: "watch",
-    description: "Watch files for changes and rerun tests related to changed files."
+    description:
+      "Watch files for changes and rerun tests related to changed files.",
   }),
   watchAll: flags.boolean({
     string: "watchAll",
-    description: "Watch files for changes and rerun all tests."
-  })
+    description: "Watch files for changes and rerun all tests.",
+  }),
 };
 
 module.exports = RunTestsCommand;

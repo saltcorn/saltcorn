@@ -2,7 +2,13 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/db-common/tsconfig.ref.json"
+    },
+    {
       "path": "./packages/sqlite/tsconfig.ref.json"
+    },
+    {
+      "path": "./packages/saltcorn-data/tsconfig.ref.json"
     }
-  ],
+  ]
 }

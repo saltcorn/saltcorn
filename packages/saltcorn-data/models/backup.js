@@ -94,7 +94,7 @@ const create_csv_from_rows = contract(
  * @function
  * @param {Table} table
  * @param {string} dirpath
- * @returns {Promise<void>} 
+ * @returns {Promise<void>}
  */
 const create_table_json = contract(
   is.fun([is.class("Table"), is.str], is.promise(is.undefined)),

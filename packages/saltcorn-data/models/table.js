@@ -9,7 +9,7 @@ const {
   sqlsanitize,
   mkWhere,
   mkSelectOptions,
-} = require("@saltcorn/db-common/internal.js");
+} = require("@saltcorn/db-common/internal");
 const Field = require("./field");
 const Trigger = require("./trigger");
 const {
