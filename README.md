@@ -203,6 +203,8 @@ run
 
 ```
 lerna bootstrap
+npm install
+npm run tsc
 ```
 
 to install everything. If successful, you should now be able to run `saltcorn` in your shell
