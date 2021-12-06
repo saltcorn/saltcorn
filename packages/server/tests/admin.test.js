@@ -268,8 +268,10 @@ describe("menu editor", () => {
     await request(app)
       .post("/menu")
       .set("Cookie", loginCookie)
-      .send("menu=" + encodeURIComponent(JSON.stringify(menu_json)))
-      .expect(toRedirect("/menu"));
+      .send(menu_json)
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(toSucceed);
   });
   it("show new menu", async () => {
     const app = await getApp({ disableCsrf: true });

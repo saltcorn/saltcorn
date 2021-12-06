@@ -338,15 +338,10 @@ router.post(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    if (req.xhr) {
-      const new_menu = req.body;
-      const menu_items = jQMEtoMenu(new_menu);
-      await save_menu_items(menu_items);
+    const new_menu = req.body;
+    const menu_items = jQMEtoMenu(new_menu);
+    await save_menu_items(menu_items);
 
-      res.json({ success: true });
-    } else {
-      req.flash("error", "unexpected response");
-      res.redirect(`/menu`);
-    }
+    res.json({ success: true });
   })
 );
