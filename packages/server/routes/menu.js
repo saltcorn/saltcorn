@@ -20,6 +20,7 @@ const db = require("@saltcorn/data/db");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
+const Table = require("@saltcorn/data/models/table");
 
 /**
  * @type {object}
@@ -40,7 +41,7 @@ const menuForm = async (req) => {
   const views = await View.find({}, { orderBy: "name", nocase: true });
   const pages = await Page.find({}, { orderBy: "name", nocase: true });
   const roles = await User.get_roles();
-
+  const dynTableOptions = (await Table.find({})).map((t) => t.name);
   return new Form({
     action: "/menu/",
     submitLabel: req.__("Save"),
@@ -58,7 +59,7 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "menutype item-menu",
         required: true,
-        options: ["View", "Page", "Link", "Header"],
+        options: ["View", "Page", "Link", "Header", "Dynamic"],
       },
       {
         name: "text",
@@ -66,6 +67,7 @@ const menuForm = async (req) => {
         class: "item-menu",
         input_type: "text",
         required: true,
+        showIf: { type: ["View", "Page", "Link", "Header"] },
       },
       {
         name: "icon_btn",
@@ -74,6 +76,7 @@ const menuForm = async (req) => {
         attributes: {
           html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
+        showIf: { type: ["View", "Page", "Link", "Header"] },
       },
       {
         name: "icon",
@@ -110,6 +113,44 @@ const menuForm = async (req) => {
         required: true,
         attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
+      },
+      {
+        name: "dyn_table",
+        label: req.__("Table"),
+        class: "item-menu",
+        type: "String",
+        attributes: {
+          options: dynTableOptions,
+        },
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_label_fml",
+        label: req.__("Label formula"),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_url_fml",
+        label: req.__("URL formula"),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_include_fml",
+        label: req.__("Include formula"),
+        sublabel: req.__(
+          "If specified, only include in menu rows that evaluate to true"
+        ),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        showIf: { type: "Dynamic" },
       },
       {
         name: "style",
