@@ -52,6 +52,11 @@ const menuForm = async (req) => {
     additionalButtons: [
       { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
       { label: "Add", id: "btnAdd", class: "btn btn-primary" },
+      {
+        label: "Recalculate dynamic",
+        id: "btnRecalc",
+        class: "btn btn-primary",
+      },
     ],
     fields: [
       {
@@ -68,7 +73,6 @@ const menuForm = async (req) => {
         class: "item-menu",
         input_type: "text",
         required: true,
-        showIf: { type: ["View", "Page", "Link", "Header"] },
       },
       {
         name: "icon_btn",
@@ -206,9 +210,9 @@ const menuEditorScript = (menu_items) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
   let lastState;
   let editor;  
-  function ajax_save_menu() {
+  function ajax_save_menu(skip_check) {
     const s = editor.getString()    
-    if(s===lastState) return;
+    if(s===lastState && !skip_check) return;
     lastState=s;
     ajax_post('/menu', {data: s, 
       success: ()=>{}, dataType : 'json', contentType: 'application/json;charset=UTF-8'})
@@ -234,6 +238,11 @@ const menuEditorScript = (menu_items) => `
       editor.update();
       ajax_save_menu();
   });
+  $("#btnRecalc").click(function(){
+    editor.update();
+    ajax_save_menu(true);
+    location.reload();
+});
   // Calling the add method
   $('#btnAdd').click(function(){
       editor.add();
