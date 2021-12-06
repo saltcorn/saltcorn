@@ -15,6 +15,7 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
+const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
@@ -255,18 +256,6 @@ const menuTojQME = (menu_items) =>
   }));
 
 /**
- * @param {object[]} menu_items
- * @returns {object[]}
- */
-const jQMEtoMenu = (menu_items) =>
-  menu_items.map((mi) => ({
-    ...mi,
-    label: mi.text,
-    children: undefined,
-    ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
-  }));
-
-/**
  * @name get
  * @function
  * @memberof module:routes/menu~menuRouter
@@ -318,6 +307,17 @@ router.get(
     });
   })
 );
+/**
+ * @param {object[]} menu_items
+ * @returns {object[]}
+ */
+const jQMEtoMenu = (menu_items) =>
+  menu_items.map((mi) => ({
+    ...mi,
+    label: mi.text,
+    children: undefined,
+    ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
+  }));
 
 /**
  * @name post
@@ -331,13 +331,12 @@ router.post(
   error_catcher(async (req, res) => {
     if (req.xhr) {
       const new_menu = req.body;
-      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
+      const menu_items = jQMEtoMenu(new_menu);
+      await save_menu_items(menu_items);
+
       res.json({ success: true });
     } else {
-      const new_menu = JSON.parse(req.body.menu);
-      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
-      req.flash("success", req.__(`Menu updated`));
-
+      req.flash("error", "unexpected response");
       res.redirect(`/menu`);
     }
   })

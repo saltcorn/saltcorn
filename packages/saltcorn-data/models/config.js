@@ -75,6 +75,9 @@ const configTypes = {
   /** @type {object} */
   menu_items: { type: "hidden", label: "Menu items" },
   /** @type {object} */
+  unrolled_menu_items: { type: "hidden", label: "Menu items" },
+
+  /** @type {object} */
   globalSearch: { type: "hidden", label: "Global search" },
   /** @type {object} */
   available_packs: { type: "hidden", label: "Available packs" },
@@ -640,9 +643,21 @@ const remove_from_menu = contract(
             : menuitem.pagename === item.name)
         )
     );
-    await getState().setConfig("menu_items", new_menu);
+    await save_menu_items(new_menu);
   }
 );
+
+const save_menu_items = async (menu_items) => {
+  const { getState } = require("../db/state");
+
+  const unrolled_menu_items = [];
+  for (const item of menu_items) {
+    if (item.type === "Dynamic") {
+    } else unrolled_menu_items.push(item);
+  }
+  await getState().setConfig("menu_items", menu_items);
+  await getState().setConfig("unrolled_menu_items", unrolled_menu_items);
+};
 
 /**
  * Get latest npm version
@@ -737,5 +752,6 @@ module.exports = {
   isFixedConfig,
   get_latest_npm_version,
   get_base_url,
+  save_menu_items,
   check_email_mask,
 };
