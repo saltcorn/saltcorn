@@ -661,7 +661,10 @@ const save_menu_items = async (menu_items) => {
         const where = item.dyn_include_fml
           ? jsexprToWhere(item.dyn_include_fml)
           : {};
-        const rows = await table.getRows(where);
+        const selopts = item.dyn_order
+          ? { orderBy: db.sqlsanitize(item.dyn_order) }
+          : {};
+        const rows = await table.getRows(where, selopts);
         const fLabel = get_expression_function(item.dyn_label_fml, fields);
         const fUrl = get_expression_function(item.dyn_url_fml, fields);
         for (const row of rows) {
