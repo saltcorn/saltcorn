@@ -75,6 +75,9 @@ const configTypes = {
   /** @type {object} */
   menu_items: { type: "hidden", label: "Menu items" },
   /** @type {object} */
+  unrolled_menu_items: { type: "hidden", label: "Menu items" },
+
+  /** @type {object} */
   globalSearch: { type: "hidden", label: "Global search" },
   /** @type {object} */
   available_packs: { type: "hidden", label: "Available packs" },
@@ -640,9 +643,48 @@ const remove_from_menu = contract(
             : menuitem.pagename === item.name)
         )
     );
-    await getState().setConfig("menu_items", new_menu);
+    await save_menu_items(new_menu);
   }
 );
+
+const save_menu_items = async (menu_items) => {
+  const { getState } = require("../db/state");
+  const Table = require("./table");
+  const { jsexprToWhere, get_expression_function } = require("./expression");
+
+  const unroll = async (items) => {
+    const unrolled_menu_items = [];
+    for (const item of items) {
+      if (item.type === "Dynamic") {
+        const table = Table.findOne({ name: item.dyn_table });
+        const fields = await table.getFields();
+        const where = item.dyn_include_fml
+          ? jsexprToWhere(item.dyn_include_fml)
+          : {};
+        const selopts = item.dyn_order
+          ? { orderBy: db.sqlsanitize(item.dyn_order) }
+          : {};
+        const rows = await table.getRows(where, selopts);
+        const fLabel = get_expression_function(item.dyn_label_fml, fields);
+        const fUrl = get_expression_function(item.dyn_url_fml, fields);
+        for (const row of rows) {
+          unrolled_menu_items.push({
+            ...item,
+            label: fLabel(row),
+            url: fUrl(row),
+            type: "Link",
+          });
+        }
+      } else if (item.subitems && item.subitems.length > 0) {
+        const subitems = await unroll(item.subitems);
+        unrolled_menu_items.push({ ...item, subitems });
+      } else unrolled_menu_items.push(item);
+    }
+    return unrolled_menu_items;
+  };
+  await getState().setConfig("menu_items", menu_items);
+  await getState().setConfig("unrolled_menu_items", await unroll(menu_items));
+};
 
 /**
  * Get latest npm version
@@ -737,5 +779,6 @@ module.exports = {
   isFixedConfig,
   get_latest_npm_version,
   get_base_url,
+  save_menu_items,
   check_email_mask,
 };

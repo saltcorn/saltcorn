@@ -833,5 +833,10 @@
 	"Connect to Amazon S3 (or compatible) securely.": "Connect to Amazon S3 (or compatible) securely.",
 	"Storage settings": "Storage settings",
 	"Storage": "Storage",
-	"Storage settings updated": "Storage settings updated"
+	"Storage settings updated": "Storage settings updated",
+	"Label formula": "Label formula",
+	"Include formula": "Include formula",
+	"If specified, only include in menu rows that evaluate to true": "If specified, only include in menu rows that evaluate to true",
+	"URL formula": "URL formula",
+	"Order field": "Order field"
 }
