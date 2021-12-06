@@ -651,30 +651,32 @@ const save_menu_items = async (menu_items) => {
   const { getState } = require("../db/state");
   const Table = require("./table");
   const { jsexprToWhere, get_expression_function } = require("./expression");
-
-  const unrolled_menu_items = [];
-  for (const item of menu_items) {
-    if (item.type === "Dynamic") {
-      const table = Table.findOne({ name: item.dyn_table });
-      const fields = await table.getFields();
-      const where = item.dyn_include_fml
-        ? jsexprToWhere(item.dyn_include_fml)
-        : {};
-      const rows = await table.getRows(where);
-      const fLabel = get_expression_function(item.dyn_label_fml, fields);
-      const fUrl = get_expression_function(item.dyn_url_fml, fields);
-      for (const row of rows) {
-        unrolled_menu_items.push({
-          ...item,
-          label: fLabel(row),
-          url: fUrl(row),
-          type: "Link",
-        });
-      }
-    } else unrolled_menu_items.push(item);
-  }
+  const unroll = async (items) => {
+    const unrolled_menu_items = [];
+    for (const item of items) {
+      if (item.type === "Dynamic") {
+        const table = Table.findOne({ name: item.dyn_table });
+        const fields = await table.getFields();
+        const where = item.dyn_include_fml
+          ? jsexprToWhere(item.dyn_include_fml)
+          : {};
+        const rows = await table.getRows(where);
+        const fLabel = get_expression_function(item.dyn_label_fml, fields);
+        const fUrl = get_expression_function(item.dyn_url_fml, fields);
+        for (const row of rows) {
+          unrolled_menu_items.push({
+            ...item,
+            label: fLabel(row),
+            url: fUrl(row),
+            type: "Link",
+          });
+        }
+      } else unrolled_menu_items.push(item);
+    }
+    return unrolled_menu_items;
+  };
   await getState().setConfig("menu_items", menu_items);
-  await getState().setConfig("unrolled_menu_items", unrolled_menu_items);
+  await getState().setConfig("unrolled_menu_items", await unroll(menu_items));
 };
 
 /**
