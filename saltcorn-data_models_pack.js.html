@@ -109,6 +109,7 @@ const TableConstraint = require("./table_constraints");
 const { tr } = require("@saltcorn/markup/tags");
 const Role = require("./role");
 const Library = require("./library");
+const { save_menu_items } = require("./config");
 
 const pack_fun = is.fun(is.str, is.promise(is.obj()));
 
@@ -348,7 +349,7 @@ const add_to_menu = contract(
   async (item) => {
     const current_menu = getState().getConfigCopy("menu_items", []);
     current_menu.push(item);
-    await getState().setConfig("menu_items", current_menu);
+    await save_menu_items(current_menu);
   }
 );
 
@@ -418,8 +419,13 @@ const install_pack = contract(
       }
     }
     for (const viewSpec of pack.views) {
-      const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
-        viewSpec;
+      const {
+        table,
+        on_menu,
+        menu_label,
+        on_root_page,
+        ...viewNoTable
+      } = viewSpec;
       const vtable = await Table.findOne({ name: table });
       await View.create({
         ...viewNoTable,
