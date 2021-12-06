@@ -42,7 +42,18 @@ const menuForm = async (req) => {
   const views = await View.find({}, { orderBy: "name", nocase: true });
   const pages = await Page.find({}, { orderBy: "name", nocase: true });
   const roles = await User.get_roles();
-  const dynTableOptions = (await Table.find({})).map((t) => t.name);
+  const tables = await Table.find({});
+  const dynTableOptions = tables.map((t) => t.name);
+  const dynParentFieldOptions = {};
+  for (const table of tables) {
+    dynParentFieldOptions[table.name] = [""];
+    const fields = await table.getFields();
+    for (const field of fields) {
+      if (field.reftable_name === table.name) {
+        dynParentFieldOptions[table.name].push(field.name);
+      }
+    }
+  }
   return new Form({
     action: "/menu/",
     submitLabel: req.__("Save"),
@@ -155,6 +166,16 @@ const menuForm = async (req) => {
         class: "item-menu",
         type: "String",
         required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_parent",
+        label: req.__("Parent field"),
+        class: "item-menu",
+        type: "String",
+        attributes: {
+          calcOptions: ["dyn_table", dynParentFieldOptions],
+        },
         showIf: { type: "Dynamic" },
       },
       {
