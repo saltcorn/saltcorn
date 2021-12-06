@@ -19,6 +19,7 @@ const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
+const { get_base_url } = require("./utils.js");
 
 /**
  * @param {*} tables
@@ -224,6 +225,8 @@ const usersTab = async (req, users, roleMap) => {
  * @returns {Promise<div>}
  */
 const actionsTab = async (req, triggers) => {
+  const base_url = get_base_url(req);
+
   return div(
     { class: "pb-3" },
     triggers.length <= 1 &&
