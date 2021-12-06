@@ -16,7 +16,10 @@ const getFlashes = (req) =>
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 
 const get_extra_menu = (role, state, req) => {
-  const cfg = getState().getConfig("menu_items", []);
+  let cfg = getState().getConfig("unrolled_menu_items", []);
+  if (!cfg || cfg.length === 0) {
+    cfg = getState().getConfig("menu_items", []);
+  }
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
   const transform = (items) =>
