@@ -651,6 +651,7 @@ const save_menu_items = async (menu_items) => {
   const { getState } = require("../db/state");
   const Table = require("./table");
   const { jsexprToWhere, get_expression_function } = require("./expression");
+
   const unroll = async (items) => {
     const unrolled_menu_items = [];
     for (const item of items) {
@@ -671,6 +672,9 @@ const save_menu_items = async (menu_items) => {
             type: "Link",
           });
         }
+      } else if (item.subitems && item.subitems.length > 0) {
+        const subitems = await unroll(item.subitems);
+        unrolled_menu_items.push({ ...item, subitems });
       } else unrolled_menu_items.push(item);
     }
     return unrolled_menu_items;
