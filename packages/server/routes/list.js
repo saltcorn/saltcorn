@@ -12,7 +12,17 @@ const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
-const { a, script, domReady, div, text } = require("@saltcorn/markup/tags");
+const {
+  a,
+  script,
+  domReady,
+  div,
+  text,
+  button,
+  input,
+  label,
+  form,
+} = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
@@ -244,6 +254,42 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
+            right: div(
+              { class: "dropdown" },
+              button(
+                {
+                  class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+                  "data-boundary": "viewport",
+                  type: "button",
+                  id: "btnHideCols",
+                  "data-toggle": "dropdown",
+                  "aria-haspopup": "true",
+                  "aria-expanded": "false",
+                },
+                "Show/hide fields"
+              ),
+              div(
+                {
+                  class: "dropdown-menu",
+                  "aria-labelledby": "btnHideCols",
+                },
+                form(
+                  { class: "px-2" },
+                  fields.map((f) =>
+                    div(
+                      { class: "form-check" },
+                      input({
+                        type: "checkbox",
+                        onChange: `showHideCol('${f.name}', this)`,
+                        class: "form-check-input",
+                        checked: true,
+                      }),
+                      label(f.name)
+                    )
+                  )
+                )
+              )
+            ),
           },
           {
             type: "blank",
@@ -269,6 +315,7 @@ router.get(
          `)
               ),
               div({ id: "jsGridNotify" }),
+
               div({ id: "jsGrid" })
             ),
           },
