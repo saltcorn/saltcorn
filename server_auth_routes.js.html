@@ -103,7 +103,12 @@ const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 
 const { send_verification_email } = require("@saltcorn/data/models/email");
-const { error_catcher, loggedIn, csrfField } = require("../routes/utils.js");
+const {
+  error_catcher,
+  loggedIn,
+  csrfField,
+  setTenant,
+} = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
 const { renderForm } = require("@saltcorn/markup");
@@ -516,6 +521,7 @@ router.get(
  */
 router.post(
   "/create_from_restore",
+  setTenant, // TODO why is this needed?????
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
