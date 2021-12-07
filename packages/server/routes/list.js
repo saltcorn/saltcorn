@@ -254,6 +254,42 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
+            right: div(
+              { class: "dropdown" },
+              button(
+                {
+                  class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+                  "data-boundary": "viewport",
+                  type: "button",
+                  id: "btnHideCols",
+                  "data-toggle": "dropdown",
+                  "aria-haspopup": "true",
+                  "aria-expanded": "false",
+                },
+                "Show/hide fields"
+              ),
+              div(
+                {
+                  class: "dropdown-menu",
+                  "aria-labelledby": "btnHideCols",
+                },
+                form(
+                  { class: "px-2" },
+                  fields.map((f) =>
+                    div(
+                      { class: "form-check" },
+                      input({
+                        type: "checkbox",
+                        onChange: `showHideCol('${f.name}', this)`,
+                        class: "form-check-input",
+                        checked: true,
+                      }),
+                      label(f.name)
+                    )
+                  )
+                )
+              )
+            ),
           },
           {
             type: "blank",
@@ -279,42 +315,7 @@ router.get(
          `)
               ),
               div({ id: "jsGridNotify" }),
-              div(
-                { class: "dropdown" },
-                button(
-                  {
-                    class: "btn btn-sm btn-outline-secondary dropdown-toggle",
-                    "data-boundary": "viewport",
-                    type: "button",
-                    id: "btnHideCols",
-                    "data-toggle": "dropdown",
-                    "aria-haspopup": "true",
-                    "aria-expanded": "false",
-                  },
-                  "Show/hide fields"
-                ),
-                div(
-                  {
-                    class: "dropdown-menu",
-                    "aria-labelledby": "btnHideCols",
-                  },
-                  form(
-                    { class: "px-2" },
-                    fields.map((f) =>
-                      div(
-                        { class: "form-check" },
-                        input({
-                          type: "checkbox",
-                          onChange: `showHideCol('${f.name}', this)`,
-                          class: "form-check-input",
-                          checked: true,
-                        }),
-                        label(f.name)
-                      )
-                    )
-                  )
-                )
-              ),
+
               div({ id: "jsGrid" })
             ),
           },

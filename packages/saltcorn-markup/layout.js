@@ -230,7 +230,12 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
     if (segment.type === "breadcrumbs") {
-      return wrap(segment, isTop, ix, breadcrumbs(segment.crumbs || []));
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        breadcrumbs(segment.crumbs || [], segment.right)
+      );
     }
     if (segment.type === "view") {
       return wrap(segment, isTop, ix, segment.contents || "");

@@ -24,14 +24,14 @@ const {
 } = require("./tags");
 
 /**
- * @param {string} item 
+ * @param {string} item
  * @returns {string}
  */
 const labelToId = (item) => text(item.replace(" ", ""));
 
 /**
- * @param {string} currentUrl 
- * @param {object} item 
+ * @param {string} currentUrl
+ * @param {object} item
  * @returns {boolean}
  */
 const active = (currentUrl, item) =>
@@ -40,7 +40,7 @@ const active = (currentUrl, item) =>
     item.subitems.some((si) => si.link && currentUrl.startsWith(si.link)));
 
 /**
- * @param {object[]} sections 
+ * @param {object[]} sections
  * @returns {object[]}
  */
 const innerSections = (sections) => {
@@ -93,8 +93,8 @@ const navSubitems = ({ label, subitems, icon, isUser }) =>
   );
 
 /**
- * @param {string} currentUrl 
- * @param {object[]} sections 
+ * @param {string} currentUrl
+ * @param {object[]} sections
  * @returns {div}
  */
 const rightNavBar = (currentUrl, sections) =>
@@ -127,16 +127,16 @@ const rightNavBar = (currentUrl, sections) =>
     )
   );
 
-  /**
-   * @param {object[]} sections 
-   * @returns {boolean}
-   */
+/**
+ * @param {object[]} sections
+ * @returns {boolean}
+ */
 const hasMobileItems = (sections) =>
   innerSections(sections).some((s) => s.location === "Mobile Bottom");
 
 /**
- * @param {string} currentUrl 
- * @param {object[]} sections 
+ * @param {string} currentUrl
+ * @param {object[]} sections
  * @param {string} [cls = ""]
  * @param {string} [clsLink = ""]
  * @returns {footer|string}
@@ -212,9 +212,9 @@ const leftNavBar = ({ name, logo }) => [
 ];
 
 /**
- * @param {object} brand 
- * @param {object[]} sections 
- * @param {string} currentUrl 
+ * @param {object} brand
+ * @param {object[]} sections
+ * @param {string} currentUrl
  * @param {object} opts
  * @param {boolean} [opts.fixedTop = true]
  * @returns {string}
@@ -235,8 +235,8 @@ const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
   );
 
 /**
- * @param {string} type 
- * @param {string} s 
+ * @param {string} type
+ * @param {string} s
  * @returns {string}
  */
 const alert = (type, s) => {
@@ -266,8 +266,8 @@ const navbarSolidOnScroll = script(
 );
 
 /**
- * @param {object} x 
- * @param {object} s 
+ * @param {object} x
+ * @param {object} s
  * @returns {object}
  */
 const logit = (x, s) => {
@@ -277,7 +277,7 @@ const logit = (x, s) => {
 };
 
 /**
- * @param {number} len 
+ * @param {number} len
  * @returns {function}
  */
 const standardBreadcrumbItem = (len) => ({ href, text }, ix) =>
@@ -311,10 +311,10 @@ const workflowBreadcrumbItem = ({ workflow, step }) =>
     .join("");
 
 /**
- * @param {object[]} crumbs 
+ * @param {object[]} crumbs
  * @returns {string}
  */
-const breadcrumbs = (crumbs) =>
+const breadcrumbs = (crumbs, right) =>
   nav(
     { "aria-label": "breadcrumb" },
     ol(
@@ -323,12 +323,13 @@ const breadcrumbs = (crumbs) =>
         c.workflow
           ? workflowBreadcrumbItem(c)
           : standardBreadcrumbItem(crumbs.length)(c)
-      )
+      ),
+      right ? li({ class: "ml-auto" }, right) : ""
     )
   );
 
 /**
- * @param {object[]} headers 
+ * @param {object[]} headers
  * @returns {string}
  */
 const headersInHead = (headers) =>
@@ -346,7 +347,7 @@ const headersInHead = (headers) =>
     .join("");
 
 /**
- * @param {object[]} headers 
+ * @param {object[]} headers
  * @returns {string}
  */
 const headersInBody = (headers) =>
@@ -367,7 +368,7 @@ const headersInBody = (headers) =>
     .join("");
 
 /**
- * @param {object[]} tabList 
+ * @param {object[]} tabList
  * @returns {ul}
  */
 const cardHeaderTabs = (tabList) =>
