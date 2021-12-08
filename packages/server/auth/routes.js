@@ -1081,12 +1081,13 @@ const setLanguageForm = (req, user) =>
  * @returns {Promise<object>}
  */
 const userSettings = async ({ req, res, pwform, user }) => {
-  let usersets;
+  let usersets, userSetsName;
   const user_settings_form = getState().getConfig("user_settings_form", "");
   if (user_settings_form) {
     const view = await View.findOne({ name: user_settings_form });
     if (view) {
       usersets = await view.run({ id: user.id }, { req, res });
+      userSetsName = view.name;
     }
   }
 
@@ -1096,6 +1097,15 @@ const userSettings = async ({ req, res, pwform, user }) => {
         type: "breadcrumbs",
         crumbs: [{ text: req.__("User") }, { text: req.__("Settings") }],
       },
+      ...(usersets
+        ? [
+            {
+              type: "card",
+              title: userSetsName,
+              contents: usersets,
+            },
+          ]
+        : []),
       {
         type: "card",
         title: req.__("User"),
@@ -1109,15 +1119,6 @@ const userSettings = async ({ req, res, pwform, user }) => {
           )
         ),
       },
-      ...(usersets
-        ? [
-            {
-              type: "card",
-              title: req.__("User Settings"),
-              contents: usersets,
-            },
-          ]
-        : []),
       {
         type: "card",
         title: req.__("Change password"),
