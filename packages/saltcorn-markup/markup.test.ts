@@ -1,14 +1,6 @@
-const {
-  a,
-  input,
-  div,
-  ul,
-  text,
-  text_attr,
-  i,
-  hr,
-  genericElement,
-} = require("./tags");
+import { describe, it, expect } from "@jest/globals";
+import tags = require("./tags");
+const { a, input, div, ul, text, text_attr, i, hr, genericElement } = tags;
 
 describe("tags", () => {
   it("renders", () => {

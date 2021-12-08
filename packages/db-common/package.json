@@ -5,8 +5,8 @@
   "homepage": "https://saltcorn.com",
   "scripts": {
     "test": "jest dist --runInBand",
-    "tsc": "echo \"Error: no TypeScript support yet\"",
-    "clean": "echo \"Error: no TypeScript support yet\""
+    "tsc": "tsc -p tsconfig.json",
+    "clean": "rm -rf ./dist/*"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
@@ -28,10 +28,19 @@
     "contractis": "^0.1.0"
   },
   "devDependencies": {
-    "jest": "^25.1.0"
+    "jest": "^25.1.0",
+    "@types/node": "^16.11.9",
+    "typescript": "^4.4.4"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+      "@saltcorn/markup$": "@saltcorn/markup/dist",
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
+    }
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {

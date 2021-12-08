@@ -1,15 +1,18 @@
-const { a, input, div, ul, text, text_attr } = require("./tags");
-const { renderForm } = require(".");
+import { describe, it, expect } from "@jest/globals";
+import tags = require("./tags");
+const { a, input, div, ul, text, text_attr } = tags;
+import index = require(".");
+const { renderForm } = index;
 
 class Form {
-  constructor(o) {
-    Object.entries(o).forEach(([k, v]) => {
-      this[k] = v;
+  constructor(o: any) {
+    Object.entries(o).forEach(([k, v]: [string, any]) => {
+      (this as any)[k] = v;
     });
   }
 }
 
-const nolines = (s) => s.split("\n").join("");
+const nolines = (s: string) => s.split("\n").join("");
 
 describe("form render", () => {
   it("renders a simple form", () => {
