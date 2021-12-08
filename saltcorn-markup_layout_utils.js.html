@@ -112,6 +112,8 @@ const {
   i,
   small,
   br,
+  form,
+  input,
 } = require("./tags");
 
 /**
@@ -211,6 +213,39 @@ const rightNavBar = (currentUrl, sections) =>
                 },
                 s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
                 text(s.label)
+              )
+            )
+          : s.type === "Search"
+          ? li(
+              form(
+                {
+                  action: "/search",
+                  class: "menusearch",
+                  method: "get",
+                },
+                div(
+                  { class: "input-group search-bar" },
+
+                  input({
+                    type: "search",
+                    class: "form-control search-bar pl-2 hasbl",
+                    placeholder: s.label,
+                    id: "inputq",
+                    name: "q",
+                    "aria-label": "Search",
+                    "aria-describedby": "button-search-submit",
+                  }),
+                  div(
+                    { class: "input-group-append" },
+                    button(
+                      {
+                        class: "btn btn-outline-secondary search-bar",
+                        type: "submit",
+                      },
+                      i({ class: "fas fa-search" })
+                    )
+                  )
+                )
               )
             )
           : ""
