@@ -33,8 +33,10 @@ const {
   form,
   select,
   option,
+  span,
   i,
   div,
+  code,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -1107,9 +1109,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
         ),
         // button for reset or generate api token
         div(
-          { class: "mt-4" },
+          { class: "mt-4 d-inline-block" },
           post_btn(
-            `/useradmin/gen-api-token/${user.id}`,
+            `/auth/gen-api-token`,
             user.api_token ? req.__("Reset") : req.__("Generate"),
             req.csrfToken()
           )
@@ -1117,9 +1119,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
         // button for remove api token
         user.api_token &&
           div(
-            { class: "mt-4" },
+            { class: "mt-4 ml-2 d-inline-block" },
             post_btn(
-              `/useradmin/remove-api-token/${user.id}`,
+              `/auth/remove-api-token`,
               // TBD localization
               user.api_token ? req.__("Remove") : req.__("Generate"),
               req.csrfToken(),
@@ -1165,7 +1167,43 @@ const userSettings = async ({ req, res, pwform, user }) => {
     ],
   };
 };
+/**
+ * Get new api token
+ * @name post/gen-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/gen-api-token",
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.getNewAPIToken();
+      req.flash("success", req.__(`New API token generated`));
+    }
+    res.redirect(`/auth/settings`);
+  })
+);
 
+/**
+ * Remove api token
+ * @name post/remove-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/remove-api-token",
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.removeAPIToken();
+      req.flash("success", req.__(`API token removed`));
+    }
+    res.redirect(`/auth/settings`);
+  })
+);
 /**
  * Set language
  * @name post/setlanguage

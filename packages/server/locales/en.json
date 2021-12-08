@@ -842,5 +842,6 @@
 	"Section field": "Section field",
 	"Optional. String type with options, each of which will become a menu section": "Optional. String type with options, each of which will become a menu section",
 	"Role to generate API keys": "Role to generate API keys",
-	"User should have this role or higher to generate API keys in their user settings": "User should have this role or higher to generate API keys in their user settings"
+	"User should have this role or higher to generate API keys in their user settings": "User should have this role or higher to generate API keys in their user settings",
+	"API token removed": "API token removed"
 }
