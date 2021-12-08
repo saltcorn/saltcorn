@@ -421,6 +421,8 @@ class State {
    * @param {object} t
    */
   addType(t) {
+    if (this.types[t.name]) return;
+
     this.types[t.name] = {
       ...t,
       fieldviews: {
