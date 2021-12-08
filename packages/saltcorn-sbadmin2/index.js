@@ -85,7 +85,6 @@ const active = (currentUrl, item) =>
  */
 const sideBarItem = (currentUrl) => (item) => {
   const is_active = active(currentUrl, item);
-  console.log(item);
   return li(
     { class: ["nav-item", is_active && "active"] },
     item.subitems
