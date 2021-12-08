@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "typeAcquisition": {
+    "include": ["jest"]
+  },
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true /* set to true by "composite" */
+  }
+}

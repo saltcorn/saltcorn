@@ -1,9 +1,4 @@
-/**
- * @category saltcorn-markup
- * @module layout
- */
-
-const { contract, is } = require("contractis");
+import tags = require("./tags");
 const {
   div,
   a,
@@ -23,29 +18,33 @@ const {
   li,
   i,
   genericElement,
-} = require("./tags");
+} = tags;
 const { alert, breadcrumbs } = require("./layout_utils");
-const { search_bar_form, search_bar } = require("./helpers");
+
+import helpers = require("./helpers");
+const { search_bar } = helpers;
+import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 
 /**
- * @param {object[]} [alerts]
+ * @param {any|any[]} [alerts]
  * @returns {boolean}
  */
-const couldHaveAlerts = (alerts) => alerts || Array.isArray(alerts);
+const couldHaveAlerts = (alerts?: any | any[]): boolean =>
+  alerts || Array.isArray(alerts);
 
 /**
- * @param {string|object} body
+ * @param {string|any} body
  * @param {object[]} [alerts]
  * @returns {object}
  */
-const makeSegments = (body, alerts) => {
+const makeSegments = (body: string | any, alerts: any[]): any => {
   const alertsSegments = couldHaveAlerts(alerts)
     ? [
         {
           type: "blank",
           contents: div(
             { id: "alerts-area" },
-            (alerts || []).map((a) => alert(a.type, a.msg))
+            (alerts || []).map((a: any) => alert(a.type, a.msg))
           ),
         },
       ]
@@ -63,11 +62,11 @@ const makeSegments = (body, alerts) => {
 
 /**
  *
- * @param {object} segment
+ * @param {any} segment
  * @param {string} inner
  * @returns {div|span|string}
  */
-const applyTextStyle = (segment, inner) => {
+const applyTextStyle = (segment: any, inner: string): string => {
   let style = segment.font ? { fontFamily: segment.font } : {};
   switch (segment.textStyle) {
     case "h1":
@@ -91,18 +90,36 @@ const applyTextStyle = (segment, inner) => {
   }
 };
 
+// declaration merging
+namespace LayoutExports {
+  export type RenderTabsOpts = {
+    contents: any[];
+    titles: string[];
+    tabsStyle: string;
+    ntabs?: any;
+    independent: boolean;
+  };
+}
+
 /**
  * @param {object} opts
  * @param {object[]} opts.contents
  * @param {string[]} opts.titles
  * @param {string} opts.tabsStyle
  * @param {*} opts.ntabs
+ * @param {independent} boolean
  * @param {function} go
  * @returns {ul_div}
  */
 const renderTabs = (
-  { contents, titles, tabsStyle, ntabs, independent },
-  go
+  {
+    contents,
+    titles,
+    tabsStyle,
+    ntabs,
+    independent,
+  }: LayoutExports.RenderTabsOpts,
+  go: (segment: any, isTop: boolean, ix: number) => any // TODO
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
@@ -183,6 +200,17 @@ const renderTabs = (
     );
 };
 
+// declaration merging
+namespace LayoutExports {
+  export type RenderParams = {
+    blockDispatch: any;
+    layout: any;
+    role?: any;
+    alerts?: any;
+    is_owner?: boolean;
+  };
+}
+
 /**
  * @param {object} opts
  * @param {object} opts.blockDispatch
@@ -192,9 +220,15 @@ const renderTabs = (
  * @param {boolean} opts.is_owner missing in contract
  * @returns {string}
  */
-const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
+const render = ({
+  blockDispatch,
+  layout,
+  role,
+  alerts,
+  is_owner,
+}: LayoutExports.RenderParams): string => {
   //console.log(JSON.stringify(layout, null, 2));
-  function wrap(segment, isTop, ix, inner) {
+  function wrap(segment: any, isTop: boolean, ix: any, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
@@ -206,7 +240,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
           )
         : applyTextStyle(segment, iconTag + inner);
   }
-  function go(segment, isTop, ix) {
+  function go(segment: any, isTop: boolean, ix: any): string {
     if (!segment) return "";
     if (
       typeof segment === "object" &&
@@ -366,8 +400,10 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                   segment.noPadding && "p-0",
                 ],
               },
+              // @ts-ignore
               go(segment.contents)
             ),
+          // @ts-ignore
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
@@ -418,13 +454,14 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
       )
         return "";
       const renderBg = true;
-      const sizeProp = (segKey, cssNm, unit) =>
+      const sizeProp = (segKey: string, cssNm: string, unit?: string) =>
         typeof segment[segKey] === "undefined"
           ? ""
           : `${cssNm}: ${segment[segKey]}${
               unit || segment[segKey + "Unit"] || "px"
             };`;
-      const ppCustomCSS = (s) => (s ? s.split("\n").join("") + ";" : "");
+      const ppCustomCSS = (s?: string) =>
+        s ? s.split("\n").join("") + ";" : "";
       const baseDisplayClass =
         block === false ? "inline-block" : display ? display : "block";
       let displayClass = minScreenWidth
@@ -434,11 +471,11 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
         : `d-${baseDisplayClass}`;
       if (maxScreenWidth)
         displayClass = `${displayClass} d-${maxScreenWidth}-none`;
-      const allZero = (xs) => xs.every((x) => +x === 0);
-      const ppBox = (what) =>
+      const allZero = (xs: any) => xs.every((x: number) => +x === 0);
+      const ppBox = (what: string) =>
         !segment[what] || allZero(segment[what])
           ? ""
-          : `${what}: ${segment[what].map((p) => p + "px").join(" ")};`;
+          : `${what}: ${segment[what].map((p: string) => p + "px").join(" ")};`;
       let flexStyles = "";
       Object.keys(style || {}).forEach((k) => {
         flexStyles += `${k}:${style[k]};`;
@@ -521,6 +558,7 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
                 src: `/files/serve/${bgFileId}`,
               })
             ),
+          // @ts-ignore
           go(segment.contents)
         )
       );
@@ -532,26 +570,29 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
     if (segment.type === "search_bar") {
       return `<form action="/search" method="get">${search_bar("q", "", {
         has_dropdown: segment.has_dropdown,
+        // @ts-ignore
         contents: go(segment.contents),
       })}</form>`;
     }
     if (segment.above) {
-      return segment.above.map((s, ix) => go(s, isTop, ix)).join("");
+      return segment.above
+        .map((s: any, ix: number) => go(s, isTop, ix))
+        .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
       const cardDeck =
-        segment.besides.every((s) => s && s.type === "card") &&
-        (!segment.widths || segment.widths.every((w) => w === defwidth));
+        segment.besides.every((s: any) => s && s.type === "card") &&
+        (!segment.widths || segment.widths.every((w: any) => w === defwidth));
       let markup;
       if (cardDeck)
         markup = div(
           { class: "card-deck" },
-          segment.besides.map((t, ixb) => go(t, false, ixb))
+          segment.besides.map((t: any, ixb: number) => go(t, false, ixb))
         );
       else
         markup = div(
           { class: "row w-100" },
-          segment.besides.map((t, ixb) =>
+          segment.besides.map((t: any, ixb: number) =>
             div(
               {
                 class:
@@ -577,19 +618,6 @@ const render = ({ blockDispatch, layout, role, alerts, is_owner }) => {
   return go(makeSegments(layout, alerts), true, 0);
 };
 
-const is_segment = is.obj({ type: is.maybe(is.str) });
-
-module.exports = contract(
-  is.fun(
-    is.obj({
-      blockDispatch: is.maybe(is.objVals(is.fun(is_segment, is.str))),
-      layout: is.or(is_segment, is.str),
-      role: is.maybe(is.posint),
-      alerts: is.maybe(
-        is.array(is.obj({ type: is.str, msg: is.or(is.str, is.array(is.str)) }))
-      ),
-    }),
-    is.str
-  ),
-  render
-);
+// declaration merging
+const LayoutExports = render;
+export = LayoutExports;

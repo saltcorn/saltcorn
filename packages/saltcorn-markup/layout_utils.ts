@@ -3,6 +3,7 @@
  * @module layout_utils
  */
 
+import tags = require("./tags");
 const {
   ul,
   li,
@@ -23,36 +24,43 @@ const {
   br,
   form,
   input,
-} = require("./tags");
+} = tags;
 
 /**
  * @param {string} item
  * @returns {string}
  */
-const labelToId = (item) => text(item.replace(" ", ""));
+const labelToId = (item: string): string => text(item.replace(" ", ""));
 
 /**
  * @param {string} currentUrl
  * @param {object} item
  * @returns {boolean}
  */
-const active = (currentUrl, item) =>
+const active = (currentUrl: string, item: any): boolean =>
   (item.link && currentUrl.startsWith(item.link)) ||
   (item.subitems &&
-    item.subitems.some((si) => si.link && currentUrl.startsWith(si.link)));
+    item.subitems.some((si: any) => si.link && currentUrl.startsWith(si.link)));
 
 /**
- * @param {object[]} sections
+ * @param {object[]} [sections]
  * @returns {object[]}
  */
-const innerSections = (sections) => {
-  var items = [];
+const innerSections = (sections?: any[]) => {
+  var items = new Array<any>();
   (sections || []).forEach((section) => {
-    (section.items || []).forEach((item) => {
+    (section.items || []).forEach((item: any) => {
       items.push(item);
     });
   });
   return items;
+};
+
+type NavSubItemsOpts = {
+  label: string;
+  subitems: any[];
+  icon?: string;
+  isUser: boolean;
 };
 
 /**
@@ -63,7 +71,12 @@ const innerSections = (sections) => {
  * @param {boolean} opts.isUser
  * @returns {li}
  */
-const navSubitems = ({ label, subitems, icon, isUser }) =>
+const navSubitems = ({
+  label,
+  subitems,
+  icon,
+  isUser,
+}: NavSubItemsOpts): string =>
   li(
     { class: "nav-item dropdown" },
     a(
@@ -99,7 +112,7 @@ const navSubitems = ({ label, subitems, icon, isUser }) =>
  * @param {object[]} sections
  * @returns {div}
  */
-const rightNavBar = (currentUrl, sections) =>
+const rightNavBar = (currentUrl: string, sections: any[]): string =>
   div(
     { class: "collapse navbar-collapse", id: "navbarResponsive" },
     ul(
@@ -166,7 +179,7 @@ const rightNavBar = (currentUrl, sections) =>
  * @param {object[]} sections
  * @returns {boolean}
  */
-const hasMobileItems = (sections) =>
+const hasMobileItems = (sections: any[]): boolean =>
   innerSections(sections).some((s) => s.location === "Mobile Bottom");
 
 /**
@@ -176,7 +189,12 @@ const hasMobileItems = (sections) =>
  * @param {string} [clsLink = ""]
  * @returns {footer|string}
  */
-const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
+const mobileBottomNavBar = (
+  currentUrl: string,
+  sections: any[],
+  cls: string = "",
+  clsLink: string = ""
+): string =>
   hasMobileItems(sections)
     ? footer(
         {
@@ -212,13 +230,18 @@ const mobileBottomNavBar = (currentUrl, sections, cls = "", clsLink = "") =>
       )
     : "";
 
+type LeftNavBarOpts = {
+  name: string;
+  logo: string;
+};
+
 /**
  * @param {object} opts
  * @param {string} opts.name
  * @param {string} opts.logo
  * @returns {string[]}
  */
-const leftNavBar = ({ name, logo }) => [
+const leftNavBar = ({ name, logo }: LeftNavBarOpts): string[] => [
   a(
     { class: "navbar-brand js-scroll-trigger", href: "/" },
     logo &&
@@ -254,7 +277,12 @@ const leftNavBar = ({ name, logo }) => [
  * @param {boolean} [opts.fixedTop = true]
  * @returns {string}
  */
-const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
+const navbar = (
+  brand: LeftNavBarOpts,
+  sections: any[],
+  currentUrl: string,
+  opts: any = { fixedTop: true }
+): string =>
   nav(
     {
       class: `navbar navbar-expand-md ${opts.class || ""} ${
@@ -274,7 +302,7 @@ const navbar = (brand, sections, currentUrl, opts = { fixedTop: true }) =>
  * @param {string} s
  * @returns {string}
  */
-const alert = (type, s) => {
+const alert = (type: string, s: string): string => {
   //console.log("alert", type, s,s.length)
   const realtype = type === "error" ? "danger" : type;
   return s && s.length > 0
@@ -288,9 +316,9 @@ const alert = (type, s) => {
 };
 
 /**
- * @returns {string}
+ * @type {string}
  */
-const navbarSolidOnScroll = script(
+const navbarSolidOnScroll: string = script(
   domReady(`$(window).scroll(function () {
     if ($(window).scrollTop() >= 10) {
     $('.navbar').css('background','white');
@@ -305,7 +333,7 @@ const navbarSolidOnScroll = script(
  * @param {object} s
  * @returns {object}
  */
-const logit = (x, s) => {
+const logit = (x: any, s: any): any => {
   if (s) console.log(s, x);
   else console.log(x);
   return x;
@@ -315,14 +343,16 @@ const logit = (x, s) => {
  * @param {number} len
  * @returns {function}
  */
-const standardBreadcrumbItem = (len) => ({ href, text }, ix) =>
-  li(
-    {
-      class: ["breadcrumb-item", ix == len - 1 && "active"],
-      "aria-current": ix == len - 1 && "page",
-    },
-    href ? a({ href }, text) : text
-  );
+const standardBreadcrumbItem =
+  (len: number) =>
+  ({ href, text }: { href?: string; text: string }, ix: number): string =>
+    li(
+      {
+        class: ["breadcrumb-item", ix == len - 1 && "active"],
+        "aria-current": ix == len - 1 && "page",
+      },
+      href ? a({ href }, text) : text
+    );
 
 /**
  * @param {object} opts
@@ -330,9 +360,15 @@ const standardBreadcrumbItem = (len) => ({ href, text }, ix) =>
  * @param {object} opts.step
  * @returns {string}
  */
-const workflowBreadcrumbItem = ({ workflow, step }) =>
+const workflowBreadcrumbItem = ({
+  workflow,
+  step,
+}: {
+  workflow: any;
+  step: any;
+}): string =>
   workflow.steps
-    .map((wfstep, ix) =>
+    .map((wfstep: any, ix: number) =>
       li(
         {
           class: [
@@ -349,15 +385,15 @@ const workflowBreadcrumbItem = ({ workflow, step }) =>
  * @param {object[]} crumbs
  * @returns {string}
  */
-const breadcrumbs = (crumbs, right) =>
+const breadcrumbs = (crumbs: any[], right: any): string =>
   nav(
     { "aria-label": "breadcrumb" },
     ol(
       { class: "breadcrumb" },
-      crumbs.map((c) =>
+      crumbs.map((c: any, ix: number) =>
         c.workflow
           ? workflowBreadcrumbItem(c)
-          : standardBreadcrumbItem(crumbs.length)(c)
+          : standardBreadcrumbItem(crumbs.length)(c, ix)
       ),
       right ? li({ class: "ml-auto" }, right) : ""
     )
@@ -367,7 +403,7 @@ const breadcrumbs = (crumbs, right) =>
  * @param {object[]} headers
  * @returns {string}
  */
-const headersInHead = (headers) =>
+const headersInHead = (headers: any[]): string =>
   headers
     .filter((h) => h.css)
     .map((h) => `<link href="${h.css}" rel="stylesheet">`)
@@ -385,7 +421,7 @@ const headersInHead = (headers) =>
  * @param {object[]} headers
  * @returns {string}
  */
-const headersInBody = (headers) =>
+const headersInBody = (headers: any[]): string =>
   headers
     .filter((h) => h.script)
     .map(
@@ -406,18 +442,27 @@ const headersInBody = (headers) =>
  * @param {object[]} tabList
  * @returns {ul}
  */
-const cardHeaderTabs = (tabList) =>
+const cardHeaderTabs = (tabList: any): string =>
   ul(
     { class: "nav nav-tabs card-header-tabs" },
-    tabList.map(({ href, label, active }) =>
-      li(
-        { class: "nav-item" },
-        a({ class: ["nav-link", active && "active"], href }, label)
-      )
+    tabList.map(
+      ({
+        href,
+        label,
+        active,
+      }: {
+        href: string;
+        label: string;
+        active: boolean;
+      }): string =>
+        li(
+          { class: "nav-item" },
+          a({ class: ["nav-link", active && "active"], href }, label)
+        )
     )
   );
 
-module.exports = {
+export = {
   navbar,
   alert,
   logit,

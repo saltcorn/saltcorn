@@ -18,23 +18,41 @@
  * @category saltcorn-markup
  */
 
-const renderForm = require("./form");
-const renderBuilder = require("./builder");
-const mkTable = require("./table");
-const tabs = require("./tabs");
-const { a, text, div, button, time } = require("./tags");
+import renderForm = require("./form");
+import renderBuilder = require("./builder");
+import mkTable = require("./table");
+import tabs = require("./tabs");
+import tags = require("./tags");
+const { a, text, div, button, time } = tags;
 
 /**
- * @param {string} href 
- * @param {string} s 
+ * @param {string} href
+ * @param {string} s
  * @returns {string}
  */
-const link = (href, s) => a({ href: text(href) }, text(s));
+const link = (href: string, s: string): string =>
+  a({ href: text(href) }, text(s));
+
+type PostBtnOpts = {
+  btnClass: string;
+  onClick?: string;
+  small?: boolean;
+  style?: string;
+  ajax?: boolean;
+  reload_on_done: string;
+  reload_delay: string;
+  klass: string;
+  formClass?: string;
+  spinner?: boolean;
+  req: any;
+  confirm?: boolean;
+  icon?: string;
+};
 
 /**
- * @param {string} href 
- * @param {string} s 
- * @param {string} csrfToken 
+ * @param {string} href
+ * @param {string} s
+ * @param {string} csrfToken
  * @param {object} opts
  * @param {string} [opts.btnClass = "btn-primary"]
  * @param {string} [opts.onClick]
@@ -52,9 +70,9 @@ const link = (href, s) => a({ href: text(href) }, text(s));
  * @returns {string}
  */
 const post_btn = (
-  href,
-  s,
-  csrfToken,
+  href: string,
+  s: string,
+  csrfToken: string,
   {
     btnClass = "btn-primary",
     onClick,
@@ -69,8 +87,8 @@ const post_btn = (
     req,
     confirm,
     icon,
-  } = {}
-) =>
+  }: PostBtnOpts | any = {}
+): string =>
   `<form action="${text(href)}" method="post"${
     formClass ? `class="${formClass}"` : ""
   }>
@@ -93,35 +111,41 @@ const post_btn = (
     style ? ` style="${style}"` : ""
   }>${icon ? `<i class="${icon}"></i>&nbsp;` : ""}${s}</button></form>`;
 
-  /**
+/**
  * UI Form for Delete Item confirmation
  * @param {string} href - href
  * @param {string} req - Request
- * @param {string} what - Item
+ * @param {string} [what] - Item
  * @returns {string} return html form
  */
-const post_delete_btn = (href, req, what) =>
+const post_delete_btn = (href: string, req: any, what?: string): string =>
   `<form action="${text(href)}" method="post" >
-    <input type="hidden" name="_csrf" value="${req.csrfToken()}">
-    <button type="submit" class="btn btn-danger btn-sm" 
-      onclick="return confirm('${
-        what
-          ? req.__("Are you sure you want to delete %s?", what)
-          : req.__("Are you sure?")
-      }')" />
-      <i class="fas fa-trash-alt"></i>
-    </button>
-  </form>`;
+   <input type="hidden" name="_csrf" value="${req.csrfToken()}">
+   <button type="submit" class="btn btn-danger btn-sm" 
+     onclick="return confirm('${
+       what
+         ? req.__("Are you sure you want to delete %s?", what)
+         : req.__("Are you sure?")
+     }')" />
+     <i class="fas fa-trash-alt"></i>
+   </button>
+ </form>`;
 
 /**
- * @param {string} href 
- * @param {string} s 
- * @param {object} req 
- * @param {boolean} confirm 
- * @param {string} what 
+ * @param {string} href
+ * @param {string} s
+ * @param {object} req
+ * @param {boolean} confirm
+ * @param {string} [what]
  * @returns {string}
  */
-const post_dropdown_item = (href, s, req, confirm, what) => {
+const post_dropdown_item = (
+  href: string,
+  s: string,
+  req: any,
+  confirm: boolean,
+  what?: string
+): string => {
   const id = href.split("/").join("");
   return `<a class="dropdown-item" onclick="${
     confirm
@@ -138,11 +162,11 @@ const post_dropdown_item = (href, s, req, confirm, what) => {
 };
 
 /**
- * @param {string} id 
- * @param {*} elems 
+ * @param {string} id
+ * @param {*} elems
  * @returns {div}
  */
-const settingsDropdown = (id, elems) =>
+const settingsDropdown = (id: string, elems: any): string =>
   div(
     { class: "dropdown" },
     button(
@@ -167,13 +191,16 @@ const settingsDropdown = (id, elems) =>
   );
 
 /**
- * @param {Date} date 
+ * @param {Date} date
  * @param {object} opts
  * @param {string} [opts.hour = "2-digit"]
  * @param {string} [opts.minute = "2-digit"]
  * @returns {string}
  */
-const localeTime = (date, options = { hour: "2-digit", minute: "2-digit" }) =>
+const localeTime = (
+  date: Date,
+  options: any = { hour: "2-digit", minute: "2-digit" }
+): string =>
   time(
     {
       datetime: date.toISOString(),
@@ -183,11 +210,11 @@ const localeTime = (date, options = { hour: "2-digit", minute: "2-digit" }) =>
   );
 
 /**
- * @param {Date} date 
- * @param {object} [options ={}]
+ * @param {Date} date
+ * @param {object} [options = {}]
  * @returns {string}
- */  
-const localeDateTime = (date, options = {}) =>
+ */
+const localeDateTime = (date: Date, options: any = {}): string =>
   time(
     {
       datetime: date.toISOString(),
@@ -197,11 +224,11 @@ const localeDateTime = (date, options = {}) =>
   );
 
 /**
- * @param {Date} date 
+ * @param {Date} date
  * @param {object} [options = {}]
  * @returns {string}
  */
-const localeDate = (date, options = {}) =>
+const localeDate = (date: Date, options: any = {}): string =>
   time(
     {
       datetime: date.toISOString(),
@@ -210,7 +237,7 @@ const localeDate = (date, options = {}) =>
     date.toLocaleDateString("en", options)
   );
 
-module.exports = {
+export = {
   mkTable,
   renderForm,
   settingsDropdown,
