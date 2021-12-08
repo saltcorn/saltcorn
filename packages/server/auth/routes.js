@@ -20,7 +20,7 @@ const {
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
-const { renderForm } = require("@saltcorn/markup");
+const { renderForm, post_btn } = require("@saltcorn/markup");
 const passport = require("passport");
 const {
   a,
@@ -33,7 +33,10 @@ const {
   form,
   select,
   option,
+  span,
   i,
+  div,
+  code,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -1081,21 +1084,67 @@ const setLanguageForm = (req, user) =>
  * @returns {Promise<object>}
  */
 const userSettings = async ({ req, res, pwform, user }) => {
-  let usersets;
+  let usersets, userSetsName;
   const user_settings_form = getState().getConfig("user_settings_form", "");
   if (user_settings_form) {
     const view = await View.findOne({ name: user_settings_form });
     if (view) {
       usersets = await view.run({ id: user.id }, { req, res });
+      userSetsName = view.name;
     }
   }
-
+  let apikeycard;
+  const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+  if (user.role_id <= min_role_apikeygen)
+    apikeycard = {
+      type: "card",
+      title: req.__("API token"),
+      contents: [
+        // api token for user
+        div(
+          user.api_token
+            ? span({ class: "mr-1" }, req.__("API token for this user: ")) +
+                code(user.api_token)
+            : req.__("No API token issued")
+        ),
+        // button for reset or generate api token
+        div(
+          { class: "mt-4 d-inline-block" },
+          post_btn(
+            `/auth/gen-api-token`,
+            user.api_token ? req.__("Reset") : req.__("Generate"),
+            req.csrfToken()
+          )
+        ),
+        // button for remove api token
+        user.api_token &&
+          div(
+            { class: "mt-4 ml-2 d-inline-block" },
+            post_btn(
+              `/auth/remove-api-token`,
+              // TBD localization
+              user.api_token ? req.__("Remove") : req.__("Generate"),
+              req.csrfToken(),
+              { req: req, confirm: true }
+            )
+          ),
+      ],
+    };
   return {
     above: [
       {
         type: "breadcrumbs",
         crumbs: [{ text: req.__("User") }, { text: req.__("Settings") }],
       },
+      ...(usersets
+        ? [
+            {
+              type: "card",
+              title: userSetsName,
+              contents: usersets,
+            },
+          ]
+        : []),
       {
         type: "card",
         title: req.__("User"),
@@ -1109,24 +1158,52 @@ const userSettings = async ({ req, res, pwform, user }) => {
           )
         ),
       },
-      ...(usersets
-        ? [
-            {
-              type: "card",
-              title: req.__("User Settings"),
-              contents: usersets,
-            },
-          ]
-        : []),
       {
         type: "card",
         title: req.__("Change password"),
         contents: renderForm(pwform, req.csrfToken()),
       },
+      ...(apikeycard ? [apikeycard] : []),
     ],
   };
 };
+/**
+ * Get new api token
+ * @name post/gen-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/gen-api-token",
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.getNewAPIToken();
+      req.flash("success", req.__(`New API token generated`));
+    }
+    res.redirect(`/auth/settings`);
+  })
+);
 
+/**
+ * Remove api token
+ * @name post/remove-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/remove-api-token",
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.removeAPIToken();
+      req.flash("success", req.__(`API token removed`));
+    }
+    res.redirect(`/auth/settings`);
+  })
+);
 /**
  * Set language
  * @name post/setlanguage

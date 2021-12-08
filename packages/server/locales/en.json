@@ -838,5 +838,10 @@
 	"Include formula": "Include formula",
 	"If specified, only include in menu rows that evaluate to true": "If specified, only include in menu rows that evaluate to true",
 	"URL formula": "URL formula",
-	"Order field": "Order field"
+	"Order field": "Order field",
+	"Section field": "Section field",
+	"Optional. String type with options, each of which will become a menu section": "Optional. String type with options, each of which will become a menu section",
+	"Role to generate API keys": "Role to generate API keys",
+	"User should have this role or higher to generate API keys in their user settings": "User should have this role or higher to generate API keys in their user settings",
+	"API token removed": "API token removed"
 }

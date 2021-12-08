@@ -81,8 +81,14 @@ div[data-inline-edit-dest-url]:hover .editicon {
 
   border-color: #95a5a6;
 }
-.search-bar input[type="search"] {
+.search-bar input[type="search"]:not(.hasbl) {
   border-left: none;
+  border-color: #95a5a6;
+  padding-left: 0.3rem;
+  background-color: #ffffff;
+}
+
+.search-bar input[type="search"] {
   border-color: #95a5a6;
   padding-left: 0.3rem;
   background-color: #ffffff;
@@ -95,10 +101,21 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .search-bar button.dropdown-toggle {
   border-left: none;
 }
+
 #button-search-submit {
   border-right: none;
   padding-right: 0.3rem;
 }
+
+form.menusearch button {
+  border-left: none;
+  padding-right: 0.3rem;
+}
+
+.pl-2p5 {
+  padding-left: 0.75rem !important;
+}
+
 .br-none {
   border-right: none;
 }

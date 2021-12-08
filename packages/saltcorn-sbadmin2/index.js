@@ -19,6 +19,8 @@ const {
   img,
   footer,
   button,
+  form,
+  input,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 const { renderForm, link } = require("@saltcorn/markup");
@@ -116,6 +118,33 @@ const sideBarItem = (currentUrl) => (item) => {
           { class: "nav-link", href: text(item.link) },
           item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
           span(text(item.label))
+        )
+      : item.type === "Search"
+      ? form(
+          { action: "/search", class: "menusearch ml-2 mr-3", method: "get" },
+          div(
+            { class: "input-group search-bar" },
+
+            input({
+              type: "search",
+              class: "form-control search-bar pl-2p5",
+              placeholder: item.label,
+              id: "inputq",
+              name: "q",
+              "aria-label": "Search",
+              "aria-describedby": "button-search-submit",
+            }),
+            div(
+              { class: "input-group-append" },
+              button(
+                {
+                  class: "btn btn-outline-secondary search-bar",
+                  type: "submit",
+                },
+                i({ class: "fas fa-search" })
+              )
+            )
+          )
         )
       : span({ class: "nav-link" }, text(item.label))
   );

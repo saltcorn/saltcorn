@@ -148,7 +148,7 @@ class Plugin {
           return stored
             .map((p) => new Plugin(p))
             .filter((p) => isRoot || !p.has_auth);
-        else throw e;
+        else return [];
       }
     } else
       return stored

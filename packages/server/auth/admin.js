@@ -320,6 +320,7 @@ const user_settings_form = (req) =>
       "verification_view",
       "elevate_verified",
       "min_role_upload",
+      "min_role_apikeygen",
       "timeout",
       "email_mask",
       "allow_forgot",
@@ -616,7 +617,7 @@ router.get(
               ),
               // button for reset or generate api token
               div(
-                { class: "mt-4" },
+                { class: "mt-4 d-inline-block" },
                 post_btn(
                   `/useradmin/gen-api-token/${user.id}`,
                   user.api_token ? req.__("Reset") : req.__("Generate"),
@@ -626,7 +627,7 @@ router.get(
               // button for remove api token
               user.api_token &&
                 div(
-                  { class: "mt-4" },
+                  { class: "mt-4 ml-2 d-inline-block" },
                   post_btn(
                     `/useradmin/remove-api-token/${user.id}`,
                     // TBD localization

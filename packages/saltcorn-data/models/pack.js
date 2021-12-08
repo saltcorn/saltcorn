@@ -404,10 +404,15 @@ const fetch_available_packs = contract(
     );
     //console.log("in fetch", stored_at, stored)
     if (!stored || !stored_at || is_stale(stored_at)) {
-      const from_api = await fetch_available_packs_from_store();
-      await getState().setConfig("available_packs", from_api);
-      await getState().setConfig("available_packs_fetched_at", new Date());
-      return from_api;
+      try {
+        const from_api = await fetch_available_packs_from_store();
+        await getState().setConfig("available_packs", from_api);
+        await getState().setConfig("available_packs_fetched_at", new Date());
+        return from_api;
+      } catch (e) {
+        console.error("fetch store error", e);
+        return [];
+      }
     } else return stored;
   }
 );
@@ -420,6 +425,7 @@ const fetch_available_packs_from_store = contract(
   is.fun([], is.promise(is.array(is.obj({ name: is.str })))),
   async () => {
     //console.log("fetch packs");
+
     const response = await fetch(
       "http://store.saltcorn.com/api/packs?fields=name,description"
     );
