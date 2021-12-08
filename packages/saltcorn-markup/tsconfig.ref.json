@@ -6,6 +6,5 @@
   "compilerOptions": {
     "composite": true,
     "declaration": true /* set to true by "composite" */
-  },
-  "exclude": ["node_modules", "dist", "*.test.*", "jest.config.js"]
+  }
 }

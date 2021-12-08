@@ -1,7 +1,4 @@
 {
-  "typeAcquisition": {
-    "include": ["jest"]
-  },
   "files": [],
   "references": [
     {

@@ -20,7 +20,6 @@ const {
   link,
   form,
 } = tags;
-const { contract, is } = require("contractis");
 
 /**
  * @param {object} rec
