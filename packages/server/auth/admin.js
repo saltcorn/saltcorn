@@ -320,6 +320,7 @@ const user_settings_form = (req) =>
       "verification_view",
       "elevate_verified",
       "min_role_upload",
+      "min_role_apikeygen",
       "timeout",
       "email_mask",
       "allow_forgot",

@@ -195,6 +195,15 @@ const configTypes = {
       "User should have this role or higher to upload files with API (uploads through forms are not affected)",
   },
   /** @type {object} */
+  min_role_apikeygen: {
+    type: "Role",
+    label: "Role to generate API keys",
+    default: "1",
+    required: true,
+    blurb:
+      "User should have this role or higher to generate API keys in their user settings",
+  },
+  /** @type {object} */
   email_mask: {
     type: "String",
     label: "Email mask",
