@@ -31,7 +31,9 @@
     "moduleNameMapper": {
       "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
       "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
-      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1"
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+      "@saltcorn/markup$": "@saltcorn/markup/dist",
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
     }
   },
   "publishConfig": {

@@ -1,4 +1,7 @@
 {
+  "typeAcquisition": {
+    "include": ["jest"]
+  },
   "files": [],
   "references": [
     {
@@ -6,6 +9,9 @@
     },
     {
       "path": "./packages/sqlite/tsconfig.ref.json"
+    },
+    {
+      "path": "./packages/saltcorn-markup/tsconfig.ref.json"
     },
     {
       "path": "./packages/saltcorn-data/tsconfig.ref.json"

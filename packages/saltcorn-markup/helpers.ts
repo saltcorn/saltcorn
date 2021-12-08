@@ -3,24 +3,15 @@
  * @module helpers
  */
 
-const {
-  a,
-  text,
-  div,
-  input,
-  text_attr,
-  ul,
-  li,
-  span,
-  label,
-} = require("./tags");
+import tags = require("./tags");
+const { a, text, div, input, text_attr, ul, li, span, label } = tags;
 
 /**
  * checks if x is defined
- * @param {*} x
+ * @param {any} x
  * @returns {boolean}
  */
-const isdef = (x) => typeof x !== "undefined";
+const isdef = (x: any): boolean => typeof x !== "undefined";
 
 /**
  * @param {object|string} v
@@ -29,23 +20,28 @@ const isdef = (x) => typeof x !== "undefined";
  * @param {string} neutral_label
  * @returns {string}
  */
-const select_options = (v, hdr, force_required, neutral_label = "") => {
+const select_options = (
+  v: string | any,
+  hdr: any,
+  force_required?: boolean,
+  neutral_label: string = ""
+): string => {
   const options0 = hdr.options || [];
   const options1 = force_required
-    ? options0.filter((o) => (typeof o === "string" ? o : o.value))
+    ? options0.filter((o: any) => (typeof o === "string" ? o : o.value))
     : options0;
-  const options = options1.map((o) =>
+  const options = options1.map((o: any) =>
     o.value === "" ? { ...o, label: neutral_label } : o
   );
   const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
-  const isSelected = (value) =>
+  const isSelected = (value: any) =>
     !selected
       ? false
       : selected.length
       ? selected.includes(value)
       : value === selected;
   return options
-    .map((o) => {
+    .map((o: any) => {
       const label = typeof o === "string" ? o : o.label;
       const value = typeof o === "string" ? o : o.value;
       return `<option value="${text_attr(value)}"${
@@ -54,6 +50,19 @@ const select_options = (v, hdr, force_required, neutral_label = "") => {
     })
     .join("");
 };
+
+// declaration merging
+namespace HelpersExports {
+  export type RadioGroupOpts = {
+    name: string;
+    options: any;
+    value: string;
+    inline: any;
+    form_name: string;
+    onChange: any;
+    [key: string]: any; // "...rest" properties
+  };
+}
 
 /**
  *
@@ -74,11 +83,11 @@ const radio_group = ({
   form_name,
   onChange,
   ...rest
-}) =>
+}: HelpersExports.RadioGroupOpts): string =>
   div(
     (options || [])
-      .filter((o) => (typeof o === "string" ? o : o.value))
-      .map((o, ix) => {
+      .filter((o: any) => (typeof o === "string" ? o : o.value))
+      .map((o: any, ix: number) => {
         const myvalue = typeof o === "string" ? o : o.value;
         const id = `input${text_attr(name)}${ix}`;
         return div(
@@ -102,6 +111,19 @@ const radio_group = ({
       .join("")
   );
 
+// declaration merging
+namespace HelpersExports {
+  export type CheckBoxGroupOpts = {
+    name: string;
+    options: any;
+    value: string;
+    inline: boolean;
+    form_name: string;
+    onChange: any;
+    [key: string]: any; // "...rest" properties
+  };
+}
+
 const checkbox_group = ({
   name,
   options,
@@ -110,11 +132,11 @@ const checkbox_group = ({
   form_name,
   onChange,
   ...rest
-}) =>
+}: HelpersExports.CheckBoxGroupOpts): string =>
   div(
     (options || [])
-      .filter((o) => (typeof o === "string" ? o : o.value))
-      .map((o, ix) => {
+      .filter((o: any) => (typeof o === "string" ? o : o.value))
+      .map((o: any, ix: number) => {
         const myvalue = typeof o === "string" ? o : o.value;
         const id = `input${text_attr(name)}${ix}`;
         return div(
@@ -140,6 +162,16 @@ const checkbox_group = ({
       .join("")
   );
 
+// declaration merging
+namespace HelpersExports {
+  export type PaginationOpts = {
+    current_page: number;
+    pages: number;
+    get_page_link: (index: number) => string;
+    trailing_ellipsis?: boolean;
+  };
+}
+
 /**
  * @param {object} opts
  * @param {number} opts.current_page
@@ -153,7 +185,7 @@ const pagination = ({
   pages,
   get_page_link,
   trailing_ellipsis,
-}) => {
+}: HelpersExports.PaginationOpts): string => {
   const from = Math.max(1, current_page - 3);
   const to = Math.min(pages, current_page + 3);
   var lis = [];
@@ -189,6 +221,18 @@ const pagination = ({
   return ul({ class: "pagination" }, lis);
 };
 
+// declaration merging
+namespace HelpersExports {
+  export type SearchBarOpts = {
+    placeHolder?: string;
+    has_dropdown: boolean;
+    contents: string;
+    badges?: string[];
+    stateField: string;
+    onClick: any;
+  };
+}
+
 /**
  * @param {string} name
  * @param {object} v
@@ -196,10 +240,17 @@ const pagination = ({
  * @returns {string}
  */
 const search_bar = (
-  name,
-  v,
-  { placeHolder, has_dropdown, contents, badges, stateField, onClick } = {}
-) => {
+  name: string,
+  v: any,
+  {
+    placeHolder,
+    has_dropdown,
+    contents,
+    badges,
+    stateField,
+    onClick,
+  }: HelpersExports.SearchBarOpts | any = {}
+): string => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const clickHandler = stateField
     ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('input.search-bar').val())`
@@ -231,7 +282,7 @@ const search_bar = (
     badges && badges.length > 0
       ? `<div class="input-group-text">${badges
           .map(
-            (b) =>
+            (b: any) =>
               `<span class="badge badge-primary">${b.text}${
                 b.onclick
                   ? `<a href="javascript:${b.onclick}"><i class="ml-1 fas fa-lg fa-times"></i></a> `
@@ -258,7 +309,7 @@ const search_bar = (
 </div>`;
 };
 
-module.exports = {
+let HelpersExports = {
   isdef,
   select_options,
   search_bar,
@@ -266,3 +317,4 @@ module.exports = {
   radio_group,
   checkbox_group,
 };
+export = HelpersExports;

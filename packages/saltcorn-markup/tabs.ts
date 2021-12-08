@@ -1,21 +1,17 @@
-/**
- * @category saltcorn-markup
- * @module tabs
- */
-
-const { a, text, div, ul, li } = require("./tags");
+import tags = require("./tags");
+const { a, text, div, ul, li } = tags;
 
 /**
- * @param {string} str 
+ * @param {string} str
  * @returns {string}
  */
-const mkId = (str) => text(str.split(" ").join("_"));
+const mkId = (str: string): string => text(str.split(" ").join("_"));
 
 /**
- * @param {object} obj 
+ * @param {object} obj
  * @returns {object}
  */
-const tabs = (obj) => {
+const tabs = (obj: any | any[]) => {
   const entries = Array.isArray(obj) ? obj : Object.entries(obj);
   const lis = entries.map((e, ix) =>
     li(
@@ -51,4 +47,4 @@ const tabs = (obj) => {
   );
 };
 
-module.exports = tabs;
+export = tabs;

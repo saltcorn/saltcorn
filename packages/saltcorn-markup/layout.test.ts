@@ -1,13 +1,15 @@
-const render = require("./layout");
-const { p } = require("./tags");
+import { describe, it, expect } from "@jest/globals";
+import render = require("./layout");
+import tags = require("./tags");
+const { p } = tags;
 
 describe("layout", () => {
   it("renders a simple layout", () => {
     const blockDispatch = {
-      wrapTop(segment, ix, s) {
+      wrapTop(segment: any, ix: number, s: string) {
         return p(s);
       },
-      reverseIt({ theString }) {
+      reverseIt({ theString }: { theString: string }) {
         return theString.split("").reverse().join("");
       },
     };
