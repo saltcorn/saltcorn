@@ -44,14 +44,24 @@ const menuForm = async (req) => {
   const roles = await User.get_roles();
   const tables = await Table.find({});
   const dynTableOptions = tables.map((t) => t.name);
-  const dynOrderFieldOptions = {};
+  const dynOrderFieldOptions = {},
+    dynSectionFieldOptions = {};
   for (const table of tables) {
     dynOrderFieldOptions[table.name] = [""];
+    dynSectionFieldOptions[table.name] = [""];
     const fields = await table.getFields();
     for (const field of fields) {
       dynOrderFieldOptions[table.name].push(field.name);
+      if (
+        field.type &&
+        field.type.name === "String" &&
+        field.attributes &&
+        field.attributes.options
+      )
+        dynSectionFieldOptions[table.name].push(field.name);
     }
   }
+
   return new Form({
     action: "/menu/",
     submitLabel: req.__("Save"),
@@ -147,6 +157,19 @@ const menuForm = async (req) => {
         attributes: {
           calcOptions: ["dyn_table", dynOrderFieldOptions],
         },
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_section_field",
+        label: req.__("Section field"),
+        class: "item-menu",
+        type: "String",
+        attributes: {
+          calcOptions: ["dyn_table", dynSectionFieldOptions],
+        },
+        sublabel: req.__(
+          "Optional. String type with options, each of which will become a menu section"
+        ),
         showIf: { type: "Dynamic" },
       },
       {

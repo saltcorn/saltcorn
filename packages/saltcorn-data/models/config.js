@@ -667,14 +667,41 @@ const save_menu_items = async (menu_items) => {
         const rows = await table.getRows(where, selopts);
         const fLabel = get_expression_function(item.dyn_label_fml, fields);
         const fUrl = get_expression_function(item.dyn_url_fml, fields);
-        for (const row of rows) {
-          unrolled_menu_items.push({
-            ...item,
-            label: fLabel(row),
-            url: fUrl(row),
-            type: "Link",
-          });
-        }
+        if (item.dyn_section_field) {
+          const section_field = fields.find(
+            (f) => f.name === item.dyn_section_field
+          );
+          if (!section_field)
+            throw new InvalidConfiguration(
+              `Dynamic menu section field ${item.dyn_section_field} not found`
+            );
+          const sections = section_field.attributes.options
+            .split(",")
+            .map((s) => s.trim());
+          for (const section of sections) {
+            unrolled_menu_items.push({
+              ...item,
+              label: section,
+              type: "Header",
+              subitems: rows
+                .filter((r) => r[item.dyn_section_field] === section)
+                .map((row) => ({
+                  ...item,
+                  label: fLabel(row),
+                  url: fUrl(row),
+                  type: "Link",
+                })),
+            });
+          }
+        } else
+          for (const row of rows) {
+            unrolled_menu_items.push({
+              ...item,
+              label: fLabel(row),
+              url: fUrl(row),
+              type: "Link",
+            });
+          }
       } else if (item.subitems && item.subitems.length > 0) {
         const subitems = await unroll(item.subitems);
         unrolled_menu_items.push({ ...item, subitems });

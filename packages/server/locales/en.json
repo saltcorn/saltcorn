@@ -838,5 +838,7 @@
 	"Include formula": "Include formula",
 	"If specified, only include in menu rows that evaluate to true": "If specified, only include in menu rows that evaluate to true",
 	"URL formula": "URL formula",
-	"Order field": "Order field"
+	"Order field": "Order field",
+	"Section field": "Section field",
+	"Optional. String type with options, each of which will become a menu section": "Optional. String type with options, each of which will become a menu section"
 }
