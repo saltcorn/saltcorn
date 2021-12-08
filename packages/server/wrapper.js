@@ -30,6 +30,7 @@ const get_extra_menu = (role, state, req) => {
         icon: item.icon,
         location: item.location,
         style: item.style || "",
+        type: item.type,
         link:
           item.type === "Link"
             ? item.url

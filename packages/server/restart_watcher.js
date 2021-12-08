@@ -18,6 +18,7 @@ const relevantPackages = [
   "postgres",
   "saltcorn-data",
   "saltcorn-markup",
+  "saltcorn-sbadmin2",
   "server",
   "sqlite",
 ];

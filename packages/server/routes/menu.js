@@ -84,7 +84,7 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "menutype item-menu",
         required: true,
-        options: ["View", "Page", "Link", "Header", "Dynamic"],
+        options: ["View", "Page", "Link", "Header", "Dynamic", "Search"],
       },
       {
         name: "text",
@@ -206,6 +206,7 @@ const menuForm = async (req) => {
         class: "item-menu",
         type: "String",
         required: true,
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
         attributes: {
           options: [
             { name: "", label: "Link" },
@@ -227,6 +228,7 @@ const menuForm = async (req) => {
       {
         name: "location",
         label: req.__("Location"),
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
         sublabel: req.__("Not all themes support all locations"),
         class: "item-menu",
         type: "String",
