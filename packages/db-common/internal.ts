@@ -343,3 +343,5 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
   return [orderby, limit, offset].filter((s) => s).join(" ");
 };
+
+export type Row = { [key: string]: any };
