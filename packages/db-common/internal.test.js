@@ -1,4 +1,9 @@
-const { sqlsanitize, mkWhere, sqlsanitizeAllowDots } = require("./internal");
+const {
+  sqlsanitize,
+  mkWhere,
+  mkSelectOptions,
+  sqlsanitizeAllowDots,
+} = require("./internal");
 
 describe("sqlsanitize", () => {
   it("should not alter valid name", () => {
@@ -123,6 +128,46 @@ describe("mkWhere", () => {
       where: 'where ("id">$1 or "id"<$2)',
     });
   });
+  it("should query ilike", () => {
+    expect(mkWhere({ name: { ilike: "imon" } })).toStrictEqual({
+      values: ["imon"],
+      where: `where "name" ILIKE '%' || $1 || '%'`,
+    });
+  });
+  it("should query ilike on sqlite", () => {
+    expect(mkWhere({ name: { ilike: "imon" } }, true)).toStrictEqual({
+      values: ["imon"],
+      where: `where "name" LIKE '%' || ? || '%'`,
+    });
+  });
+  it("should query FTS", () => {
+    const fld = (name) => ({
+      name,
+      type: { sql_name: "text" },
+    });
+    expect(
+      mkWhere({
+        _fts: { fields: [fld("name"), fld("description")], searchTerm: "foo" },
+      })
+    ).toStrictEqual({
+      values: ["foo"],
+      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ plainto_tsquery('english', $1)`,
+    });
+    expect(
+      mkWhere(
+        {
+          _fts: {
+            fields: [fld("name"), fld("description")],
+            searchTerm: "foo",
+          },
+        },
+        true
+      )
+    ).toStrictEqual({
+      values: ["foo"],
+      where: `where coalesce("name",'') || ' ' || coalesce("description",'') LIKE '%' || ? || '%'`,
+    });
+  });
   it("should query subselect", () => {
     expect(
       mkWhere({
@@ -194,5 +239,35 @@ describe("mkWhere", () => {
       values: [5, 7, 9],
       where: 'where ("id"=$1 or "x"=$2) and "z"=$3',
     });*/
+  });
+});
+
+describe("mkSelectOptions", () => {
+  it("should empty on no arg", () => {
+    expect(mkSelectOptions({})).toBe("");
+  });
+  it("should order by", () => {
+    expect(mkSelectOptions({ orderBy: "foo" })).toBe('order by "foo"');
+  });
+  it("should order by qualified ", () => {
+    expect(mkSelectOptions({ orderBy: "a.foo" })).toBe('order by "a"."foo"');
+  });
+  it("should order by desc", () => {
+    expect(mkSelectOptions({ orderBy: "foo", orderDesc: true })).toBe(
+      'order by "foo" DESC'
+    );
+  });
+  it("should limit", () => {
+    expect(mkSelectOptions({ limit: 10 })).toBe("limit 10");
+    expect(mkSelectOptions({ limit: "10" })).toBe("limit 10");
+  });
+  it("should order by distance", () => {
+    expect(
+      mkSelectOptions({
+        orderBy: {
+          distance: { latField: "x", longField: "y", lat: 5, long: 10 },
+        },
+      })
+    ).toContain("order by ((x - 5)*(x - 5)) + ((y - 10)*(y - 10)*0.99240");
   });
 });
