@@ -38,13 +38,13 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
 };
 
 type PlaceHolderStack = {
-  push: (x: any) => string; //push value, return placeholder
+  push: (x: Value) => string; //push value, return placeholder
   is_sqlite: boolean;
-  getValues: () => any[];
+  getValues: () => Value[];
 };
 
 const postgresPlaceHolderStack = (init: number = 0): PlaceHolderStack => {
-  let values: any[] = [];
+  let values: Value[] = [];
   let i = init;
   return {
     push(x) {
@@ -60,7 +60,7 @@ const postgresPlaceHolderStack = (init: number = 0): PlaceHolderStack => {
 };
 
 const sqlitePlaceHolderStack = (): PlaceHolderStack => {
-  let values: any[] = [];
+  let values: Value[] = [];
   return {
     push(x) {
       values.push(x);
@@ -105,7 +105,7 @@ const whereFTS = (
     )})`;
 };
 
-export type Value = string | number | boolean;
+export type Value = string | number | boolean | Value[];
 
 export type Where = {
   _fts?: { fields: any[]; table?: string; searchTerm: string };
@@ -121,7 +121,7 @@ export type Where = {
     | { inSelect: { where: Where; field: string; table: string } }
     | null
     | symbol
-    | any;
+    | any; // TODO Value
 };
 
 /**
