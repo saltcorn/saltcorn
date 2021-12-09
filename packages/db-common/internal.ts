@@ -104,9 +104,9 @@ const whereFTS = (
     )})`;
 };
 
-type Value = string | number | boolean;
+export type Value = string | number | boolean;
 
-type Where = {
+export type Where = {
   _fts?: { fields: any[]; table?: string; searchTerm: string };
   or?: Where[];
   not?: Where | symbol;
@@ -188,15 +188,7 @@ const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
   if (v2 === null) return isNull(v1);
   return `${pVal(v1)}=${pVal(v2)}`;
 };
-const equalsVals = (vs: any[]): any[] => {
-  let vals = new Array<any>();
 
-  vs.forEach((v) => {
-    if (v !== null && typeof v !== "symbol") vals.push(v);
-  });
-  //console.log({ vals });
-  return vals;
-};
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -317,7 +309,7 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   )} - ${+long})*(${sqlsanitizeAllowDots(longField)} - ${+long})*${cos_lat_2})`;
 };
 
-type SelectOptions = {
+export type SelectOptions = {
   orderBy?: any;
   limit?: string | number;
   offset?: string | number;
