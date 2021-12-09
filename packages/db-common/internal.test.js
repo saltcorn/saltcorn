@@ -153,6 +153,20 @@ describe("mkWhere", () => {
       values: ["foo"],
       where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ plainto_tsquery('english', $1)`,
     });
+    expect(
+      mkWhere(
+        {
+          _fts: {
+            fields: [fld("name"), fld("description")],
+            searchTerm: "foo",
+          },
+        },
+        true
+      )
+    ).toStrictEqual({
+      values: ["foo"],
+      where: `where coalesce("name",'') || ' ' || coalesce("description",'') LIKE '%' || ? || '%'`,
+    });
   });
   it("should query subselect", () => {
     expect(

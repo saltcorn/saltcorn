@@ -97,7 +97,8 @@ const whereFTS = (
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";
-  if (phs.is_sqlite) return `${flds} LIKE '%' || ? || '%'`;
+  if (phs.is_sqlite)
+    return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
     return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', ${phs.push(
       v.searchTerm
