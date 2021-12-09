@@ -226,7 +226,7 @@ const whereClause = (
     : typeof (v || {}).ilike !== "undefined"
     ? `${quote(sqlsanitizeAllowDots(k))} ${
         phs.is_sqlite ? "LIKE" : "ILIKE"
-      } '%' || ${phs.push(v)} || '%'`
+      } '%' || ${phs.push(v.ilike)} || '%'`
     : typeof (v || {}).gt !== "undefined"
     ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${phs.push(v.gt)}`
     : typeof (v || {}).lt !== "undefined"

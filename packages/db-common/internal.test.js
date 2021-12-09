@@ -123,6 +123,12 @@ describe("mkWhere", () => {
       where: 'where ("id">$1 or "id"<$2)',
     });
   });
+  it("should query ilike", () => {
+    expect(mkWhere({ name: { ilike: "imon" } })).toStrictEqual({
+      values: ["imon"],
+      where: `where "name" ILIKE '%' || $1 || '%'`,
+    });
+  });
   it("should query subselect", () => {
     expect(
       mkWhere({
