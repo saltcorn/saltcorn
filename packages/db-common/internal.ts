@@ -313,11 +313,19 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   )} - ${+long})*(${sqlsanitizeAllowDots(longField)} - ${+long})*${cos_lat_2})`;
 };
 
+type SelectOptions = {
+  orderBy?: any;
+  limit?: string | number;
+  offset?: string | number;
+  nocase?: boolean;
+  orderDesc?: boolean;
+};
+
 /**
  * @param {object} selopts
  * @returns {string[]}
  */
-export const mkSelectOptions = (selopts: any) => {
+export const mkSelectOptions = (selopts: SelectOptions): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
@@ -328,7 +336,7 @@ export const mkSelectOptions = (selopts: any) => {
           selopts.orderDesc ? " DESC" : ""
         }`
       : selopts.orderBy
-      ? `order by ${sqlsanitizeAllowDots(selopts.orderBy)}${
+      ? `order by "${sqlsanitizeAllowDots(selopts.orderBy)}"${
           selopts.orderDesc ? " DESC" : ""
         }`
       : "";

@@ -1,4 +1,9 @@
-const { sqlsanitize, mkWhere, sqlsanitizeAllowDots } = require("./internal");
+const {
+  sqlsanitize,
+  mkWhere,
+  mkSelectOptions,
+  sqlsanitizeAllowDots,
+} = require("./internal");
 
 describe("sqlsanitize", () => {
   it("should not alter valid name", () => {
@@ -214,5 +219,19 @@ describe("mkWhere", () => {
       values: [5, 7, 9],
       where: 'where ("id"=$1 or "x"=$2) and "z"=$3',
     });*/
+  });
+});
+
+describe("mkSelectOptions", () => {
+  it("should empty on no arg", () => {
+    expect(mkSelectOptions({})).toBe("");
+  });
+  it("should order by", () => {
+    expect(mkSelectOptions({ orderBy: "foo" })).toBe('order by "foo"');
+  });
+  it("should order by desc", () => {
+    expect(mkSelectOptions({ orderBy: "foo", orderDesc: true })).toBe(
+      'order by "foo" DESC'
+    );
   });
 });
