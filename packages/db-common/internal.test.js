@@ -229,6 +229,9 @@ describe("mkSelectOptions", () => {
   it("should order by", () => {
     expect(mkSelectOptions({ orderBy: "foo" })).toBe('order by "foo"');
   });
+  it("should order by qualified ", () => {
+    expect(mkSelectOptions({ orderBy: "a.foo" })).toBe('order by "a"."foo"');
+  });
   it("should order by desc", () => {
     expect(mkSelectOptions({ orderBy: "foo", orderDesc: true })).toBe(
       'order by "foo" DESC'

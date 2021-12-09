@@ -38,7 +38,7 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
 };
 
 type PlaceHolderStack = {
-  push: (x: any) => string;
+  push: (x: any) => string; //push value, return placeholder
   is_sqlite: boolean;
   getValues: () => any[];
 };
@@ -154,7 +154,11 @@ const wrapParens = (s: string): string => (s ? `(${s})` : s);
  * @returns {string}
  */
 const quote = (s: string): string =>
-  s.includes(".") || s.includes('"') ? s : `"${s}"`;
+  s.includes(".")
+    ? s.split(".").map(quote).join(".")
+    : s.includes('"')
+    ? s
+    : `"${s}"`;
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -332,11 +336,11 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
       : selopts.orderBy && selopts.orderBy.distance
       ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
       : selopts.orderBy && selopts.nocase
-      ? `order by lower(${sqlsanitizeAllowDots(selopts.orderBy)})${
+      ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
           selopts.orderDesc ? " DESC" : ""
         }`
       : selopts.orderBy
-      ? `order by "${sqlsanitizeAllowDots(selopts.orderBy)}"${
+      ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
           selopts.orderDesc ? " DESC" : ""
         }`
       : "";
