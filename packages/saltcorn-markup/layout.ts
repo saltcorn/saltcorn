@@ -113,13 +113,7 @@ type RenderTabsOpts = LayoutExports.RenderTabsOpts;
  * @returns {ul_div}
  */
 const renderTabs = (
-  { 
-    contents, 
-    titles, 
-    tabsStyle, 
-    ntabs, 
-    independent 
-  }: RenderTabsOpts,
+  { contents, titles, tabsStyle, ntabs, independent }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
