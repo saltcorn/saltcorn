@@ -2,7 +2,6 @@
  * @category db-common
  * @module internal
  */
-const { footer } = require("@saltcorn/markup/tags");
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 /**
@@ -36,6 +35,10 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
+};
+
+type Where = {
+  [key: string]: any;
 };
 
 /**
@@ -93,9 +96,9 @@ const mkCounter = (init: number = 0): (() => number) => {
  * @param {string} i
  * @returns {function}
  */
-const subSelectWhere = (is_sqlite: boolean, i: number) => (
+const subSelectWhere = (is_sqlite: boolean, i: () => number) => (
   k: string,
-  v: { inSelect: { where: any; field: string; table: string } }
+  v: { inSelect: { where: Where; field: string; table: string } }
 ): string => {
   const whereObj = v.inSelect.where;
   const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -111,7 +114,7 @@ const subSelectWhere = (is_sqlite: boolean, i: number) => (
  * @param {object} v
  * @returns {object[]}
  */
-const subSelectVals = (v: { inSelect: { where: any } }): any[] => {
+const subSelectVals = (v: { inSelect: { where: Where } }): any[] => {
   const whereObj = v.inSelect.where;
   const wheres = whereObj ? Object.entries(whereObj) : [];
   const xs = wheres
@@ -136,9 +139,10 @@ const quote = (s: string): string =>
  * @param {string} i
  * @returns {function}
  */
-const whereOr = (is_sqlite: boolean, i: string): ((ors: any[]) => string) => (
-  ors: any[]
-): string =>
+const whereOr = (
+  is_sqlite: boolean,
+  i: () => number
+): ((ors: any[]) => string) => (ors: any[]): string =>
   wrapParens(
     ors
       .map((vi: any) =>
@@ -176,7 +180,7 @@ const equalsVals = (vs: any[]): any[] => {
  */
 const whereClause = (
   is_sqlite: boolean,
-  i: any
+  i: () => number
 ): (([k, v]: [string, any | [any, any]]) => string) => ([k, v]: [
   string,
   any | [any, any]
@@ -290,7 +294,7 @@ type WhereAndVals = {
  * @returns {object}
  */
 export const mkWhere = (
-  whereObj: any,
+  whereObj: Where,
   is_sqlite: boolean,
   initCount: number = 0
 ): WhereAndVals => {
