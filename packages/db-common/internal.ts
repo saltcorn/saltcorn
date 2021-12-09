@@ -37,6 +37,42 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   else return s;
 };
 
+type PlaceHolderStack = {
+  push: (x: any) => string;
+  is_sqlite: boolean;
+  getValues: () => any[];
+};
+
+const postgresPlaceHolderStack = (init: number = 0): PlaceHolderStack => {
+  let values: any[] = [];
+  let i = init;
+  return {
+    push(x) {
+      values.push(x);
+      i += 1;
+      return `$${i}`;
+    },
+    is_sqlite: false,
+    getValues() {
+      return values;
+    },
+  };
+};
+
+const sqlitePlaceHolderStack = (): PlaceHolderStack => {
+  let values: any[] = [];
+  return {
+    push(x) {
+      values.push(x);
+      return `?`;
+    },
+    is_sqlite: true,
+    getValues() {
+      return values;
+    },
+  };
+};
+
 /**
  *
  * @param {object} v
@@ -45,9 +81,8 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
  * @returns {string}
  */
 const whereFTS = (
-  v: { fields: any[]; table?: string },
-  i: number,
-  is_sqlite: boolean
+  v: { fields: any[]; table?: string; searchTerm: string },
+  phs: PlaceHolderStack
 ): string => {
   const { fields, table } = v;
   let flds = fields
@@ -62,34 +97,17 @@ const whereFTS = (
     )
     .join(" || ' ' || ");
   if (flds === "") flds = "''";
-  if (is_sqlite) return `${flds} LIKE '%' || ? || '%'`;
+  if (phs.is_sqlite) return `${flds} LIKE '%' || ? || '%'`;
   else
-    return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', $${i})`;
-};
-
-/**
- * @param {boolean} is_sqlite
- * @param {string} i
- * @returns {string}
- */
-const placeHolder = (is_sqlite: boolean, i: number): string =>
-  is_sqlite ? `?` : `$${i}`;
-
-/**
- * @returns {number}
- */
-const mkCounter = (init: number = 0): (() => number) => {
-  let i = init;
-  return () => {
-    i += 1;
-    return i;
-  };
+    return `to_tsvector('english', ${flds}) @@ plainto_tsquery('english', ${phs.push(
+      v.searchTerm
+    )})`;
 };
 
 type Value = string | number | boolean;
 
 type Where = {
-  _fts?: { fields: any[]; table?: string };
+  _fts?: { fields: any[]; table?: string; searchTerm: string };
   or?: Where[];
   not?: Where | symbol;
   eq?: Value[];
@@ -111,7 +129,7 @@ type Where = {
  * @param {string} i
  * @returns {function}
  */
-const subSelectWhere = (is_sqlite: boolean, i: () => number) => (
+const subSelectWhere = (phs: PlaceHolderStack) => (
   k: string,
   v: { inSelect: { where: Where; field: string; table: string } }
 ): string => {
@@ -119,25 +137,13 @@ const subSelectWhere = (is_sqlite: boolean, i: () => number) => (
   const wheres = whereObj ? Object.entries(whereObj) : [];
   const where =
     whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause(is_sqlite, i)).join(" and ")
+      ? "where " + wheres.map(whereClause(phs)).join(" and ")
       : "";
   return `${quote(sqlsanitizeAllowDots(k))} in (select ${
     v.inSelect.field
   } from ${v.inSelect.table} ${where})`;
 };
-/**
- * @param {object} v
- * @returns {object[]}
- */
-const subSelectVals = (v: { inSelect: { where: Where } }): any[] => {
-  const whereObj = v.inSelect.where;
-  const wheres = whereObj ? Object.entries(whereObj) : [];
-  const xs = wheres
-    .map(getVal)
-    .flat(1)
-    .filter((v) => v !== null);
-  return xs;
-};
+
 /**
  * @param {string} s
  * @returns {string}
@@ -154,25 +160,24 @@ const quote = (s: string): string =>
  * @param {string} i
  * @returns {function}
  */
-const whereOr = (
-  is_sqlite: boolean,
-  i: () => number
-): ((ors: any[]) => string) => (ors: any[]): string =>
+const whereOr = (phs: PlaceHolderStack): ((ors: any[]) => string) => (
+  ors: any[]
+): string =>
   wrapParens(
     ors
       .map((vi: any) =>
         Object.entries(vi)
-          .map((kv) => whereClause(is_sqlite, i)(kv))
+          .map((kv) => whereClause(phs)(kv))
           .join(" and ")
       )
       .join(" or ")
   );
 
-const equals = ([v1, v2]: [any, any], is_sqlite: boolean, i: () => number) => {
+const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
   const pVal = (v: any) =>
     typeof v === "symbol"
       ? quote(sqlsanitizeAllowDots(v))
-      : placeHolder(is_sqlite, i()) + (typeof v === "string" ? "::text" : "");
+      : phs.push(v) + (typeof v === "string" ? "::text" : "");
   const isNull = (v: any) => `${pVal(v)} is null`;
   if (v1 === null && v2 === null) return "null is null";
   if (v1 === null) return isNull(v2);
@@ -194,109 +199,55 @@ const equalsVals = (vs: any[]): any[] => {
  * @returns {function}
  */
 const whereClause = (
-  is_sqlite: boolean,
-  i: () => number
+  phs: PlaceHolderStack
 ): (([k, v]: [string, any | [any, any]]) => string) => ([k, v]: [
   string,
   any | [any, any]
 ]): string =>
   k === "_fts"
-    ? whereFTS(v, i(), is_sqlite)
+    ? whereFTS(v, phs)
     : typeof (v || {}).in !== "undefined"
     ? `${quote(sqlsanitizeAllowDots(k))} = ${
-        is_sqlite ? "" : "ANY"
-      } (${placeHolder(is_sqlite, i())})`
+        phs.is_sqlite ? "" : "ANY"
+      } (${phs.push(v.in)})`
     : k === "or" && Array.isArray(v)
-    ? whereOr(is_sqlite, i)(v)
+    ? whereOr(phs)(v)
     : k === "not" && typeof v === "object"
     ? `not (${Object.entries(v)
-        .map((kv) => whereClause(is_sqlite, i)(kv))
+        .map((kv) => whereClause(phs)(kv))
         .join(" and ")})`
     : k === "eq" && Array.isArray(v)
     ? // @ts-ignore
-      equals(v, is_sqlite, i)
+      equals(v, phs)
     : v && v.or && Array.isArray(v.or)
-    ? wrapParens(
-        v.or.map((vi: any) => whereClause(is_sqlite, i)([k, vi])).join(" or ")
-      )
+    ? wrapParens(v.or.map((vi: any) => whereClause(phs)([k, vi])).join(" or "))
     : Array.isArray(v)
-    ? v.map((vi) => whereClause(is_sqlite, i)([k, vi])).join(" and ")
+    ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
     : typeof (v || {}).ilike !== "undefined"
     ? `${quote(sqlsanitizeAllowDots(k))} ${
-        is_sqlite ? "LIKE" : "ILIKE"
-      } '%' || ${placeHolder(is_sqlite, i())} || '%'`
+        phs.is_sqlite ? "LIKE" : "ILIKE"
+      } '%' || ${phs.push(v)} || '%'`
     : typeof (v || {}).gt !== "undefined"
-    ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${placeHolder(
-        is_sqlite,
-        i()
-      )}`
+    ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${phs.push(v.gt)}`
     : typeof (v || {}).lt !== "undefined"
-    ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${placeHolder(
-        is_sqlite,
-        i()
-      )}`
+    ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${phs.push(v.lt)}`
     : typeof (v || {}).inSelect !== "undefined"
-    ? subSelectWhere(is_sqlite, i)(k, v)
+    ? subSelectWhere(phs)(k, v)
     : typeof (v || {}).json !== "undefined"
-    ? is_sqlite
+    ? phs.is_sqlite
       ? `json_extract(${quote(
           sqlsanitizeAllowDots(k)
-        )}, '$.${sqlsanitizeAllowDots(v.json[0])}')=${placeHolder(
-          is_sqlite,
-          i()
-        )}`
+        )}, '$.${sqlsanitizeAllowDots(v.json[0])}')=${phs.push(v.json[1])}`
       : `${quote(sqlsanitizeAllowDots(k))}->>'${sqlsanitizeAllowDots(
           v.json[0]
-        )}'=${placeHolder(is_sqlite, i())}`
+        )}'=${phs.push(v.json[1])}`
     : v === null
     ? `${quote(sqlsanitizeAllowDots(k))} is null`
     : k === "not"
-    ? `not (${
-        typeof v === "symbol" ? v.description : placeHolder(is_sqlite, i())
-      })`
+    ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
     : `${quote(sqlsanitizeAllowDots(k))}=${
-        typeof v === "symbol" ? v.description : placeHolder(is_sqlite, i())
+        typeof v === "symbol" ? v.description : phs.push(v)
       }`;
-
-/**
- * @param {object[]} opts
- * @param {object} opts.k
- * @param {object} opts.v
- * @returns {boolean|object}
- */
-const getVal = ([k, v]: [string, any]): any =>
-  k === "_fts"
-    ? v.searchTerm
-    : typeof (v || {}).in !== "undefined"
-    ? [v.in]
-    : k === "not" && typeof v === "object"
-    ? Object.entries(v).map(getVal).flat(1)
-    : k === "eq" && Array.isArray(v)
-    ? equalsVals(v).flat(1)
-    : k === "or" && Array.isArray(v)
-    ? v
-        .map((vi) => Object.entries(vi).map(getVal))
-        .flat(1)
-        .flat(1)
-    : v && v.or && Array.isArray(v.or)
-    ? v.or.map((vi: any) => getVal([k, vi])).flat(1)
-    : Array.isArray(v)
-    ? v.map((vi) => getVal([k, vi])).flat(1)
-    : typeof (v || {}).ilike !== "undefined"
-    ? v.ilike
-    : typeof (v || {}).inSelect !== "undefined"
-    ? subSelectVals(v)
-    : typeof (v || {}).lt !== "undefined"
-    ? v.lt
-    : typeof (v || {}).gt !== "undefined"
-    ? v.gt
-    : typeof (v || {}).sql !== "undefined"
-    ? null
-    : typeof (v || {}).json !== "undefined"
-    ? v.json[1]
-    : typeof v === "symbol"
-    ? null
-    : v;
 
 type WhereAndVals = {
   where: string;
@@ -315,15 +266,14 @@ export const mkWhere = (
 ): WhereAndVals => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
   //console.log({ wheres });
+  const placeHolderStack = is_sqlite
+    ? sqlitePlaceHolderStack()
+    : postgresPlaceHolderStack(initCount);
   const where =
     whereObj && wheres.length > 0
-      ? "where " +
-        wheres.map(whereClause(is_sqlite, mkCounter(initCount))).join(" and ")
+      ? "where " + wheres.map(whereClause(placeHolderStack)).join(" and ")
       : "";
-  const values = wheres
-    .map(getVal)
-    .flat(1)
-    .filter((v) => v !== null);
+  const values = placeHolderStack.getValues();
   return { where, values };
 };
 
