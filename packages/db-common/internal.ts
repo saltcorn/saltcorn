@@ -101,6 +101,7 @@ type Where = {
     | Value[]
     | { inSelect: { where: Where; field: string; table: string } }
     | null
+    | symbol
     | any;
 };
 
