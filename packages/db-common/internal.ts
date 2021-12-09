@@ -105,7 +105,7 @@ const whereFTS = (
     )})`;
 };
 
-export type Value = string | number | boolean | Value[];
+export type Value = string | number | boolean | Date | Value[];
 
 export type Where = {
   _fts?: { fields: any[]; table?: string; searchTerm: string };
