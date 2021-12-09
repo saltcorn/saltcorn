@@ -284,7 +284,7 @@ const toInt = (x: number | string): number | null =>
     ? parseInt(x)
     : null;
 
-type CoordOpts = {
+export type CoordOpts = {
   latField: string;
   longField: string;
   lat: string;
@@ -310,7 +310,7 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
 };
 
 export type SelectOptions = {
-  orderBy?: any;
+  orderBy?: { distance: CoordOpts } | string;
   limit?: string | number;
   offset?: string | number;
   nocase?: boolean;
@@ -319,19 +319,21 @@ export type SelectOptions = {
 
 /**
  * @param {object} selopts
- * @returns {string[]}
+ * @returns {string}
  */
 export const mkSelectOptions = (selopts: SelectOptions): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
-      : selopts.orderBy && selopts.orderBy.distance
+      : selopts.orderBy &&
+        typeof selopts.orderBy === "object" &&
+        selopts.orderBy.distance
       ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
-      : selopts.orderBy && selopts.nocase
+      : selopts.orderBy && typeof selopts.orderBy === "string" && selopts.nocase
       ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
           selopts.orderDesc ? " DESC" : ""
         }`
-      : selopts.orderBy
+      : selopts.orderBy && typeof selopts.orderBy === "string"
       ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
           selopts.orderDesc ? " DESC" : ""
         }`

@@ -134,6 +134,12 @@ describe("mkWhere", () => {
       where: `where "name" ILIKE '%' || $1 || '%'`,
     });
   });
+  it("should query ilike on sqlite", () => {
+    expect(mkWhere({ name: { ilike: "imon" } }, true)).toStrictEqual({
+      values: ["imon"],
+      where: `where "name" LIKE '%' || ? || '%'`,
+    });
+  });
   it("should query FTS", () => {
     const fld = (name) => ({
       name,
@@ -236,5 +242,18 @@ describe("mkSelectOptions", () => {
     expect(mkSelectOptions({ orderBy: "foo", orderDesc: true })).toBe(
       'order by "foo" DESC'
     );
+  });
+  it("should limit", () => {
+    expect(mkSelectOptions({ limit: 10 })).toBe("limit 10");
+    expect(mkSelectOptions({ limit: "10" })).toBe("limit 10");
+  });
+  it("should order by distance", () => {
+    expect(
+      mkSelectOptions({
+        orderBy: {
+          distance: { latField: "x", longField: "y", lat: 5, long: 10 },
+        },
+      })
+    ).toContain("order by ((x - 5)*(x - 5)) + ((y - 10)*(y - 10)*0.99240");
   });
 });
