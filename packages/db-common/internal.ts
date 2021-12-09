@@ -54,7 +54,7 @@ const whereFTS = (
   is_sqlite: boolean
 ): string => {
   const { fields, table } = v;
-  var flds = fields
+  let flds = fields
     .filter((f: any) => f.type && f.type.sql_name === "text")
     .map(
       (f: any) =>
