@@ -34,7 +34,7 @@ export const enable_multi_tenant = (): void => {};
  * @param {function} f
  * @returns {object}
  */
-export const runWithTenant = (tenant: any, f: () => any): any => {
+export const runWithTenant = (tenant: string, f: () => any): any => {
   if (!is_multi_tenant) return f();
   else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
 };
