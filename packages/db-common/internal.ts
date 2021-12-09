@@ -37,10 +37,6 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   else return s;
 };
 
-type Where = {
-  [key: string]: any;
-};
-
 /**
  *
  * @param {object} v
@@ -88,6 +84,24 @@ const mkCounter = (init: number = 0): (() => number) => {
     i += 1;
     return i;
   };
+};
+
+type Value = string | number | boolean;
+
+type Where = {
+  _fts?: { fields: any[]; table?: string };
+  or?: Where[];
+  not?: Where | symbol;
+  eq?: Value[];
+  [key: string]:
+    | { in: Value[] }
+    | { or: Value[] }
+    | { gt: Value; equal?: boolean }
+    | { lt: Value; equal?: boolean }
+    | Value[]
+    | { inSelect: { where: Where; field: string; table: string } }
+    | null
+    | any;
 };
 
 /**
