@@ -18,29 +18,6 @@ const headerCell = (hdr: any): string =>
     hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label
   );
 
-/*
- contract(
-    is.fun(
-      [
-        is.array(is.obj({ label: is.str, key: is.or(is.str, is.fun()) })),
-        is.array(is.obj()),
-        is.maybe(
-          is.obj({
-            pagination: is.maybe(
-              is.obj({
-                current_page: is.posint,
-                pages: is.posint,
-                get_page_link: is.fun(),
-              })
-            ),
-            noHeader: is.maybe(is.bool),
-            hover: is.maybe(is.bool),
-          })
-        ),
-      ],
-      is.str
-    ),*/
-
 // declaration merging
 namespace TableExports {
   export type HeadersParams = {
@@ -50,17 +27,18 @@ namespace TableExports {
     align: string;
   };
 
-  // TOD ch
-  export type OptsObject = {
+  export type OptsParams = {
     pagination?: {
       current_page: number;
       pages: number;
-      get_page_link: any;
+      get_page_link: Function;
     };
     noHeader?: boolean;
     hover?: boolean;
   };
 }
+type HeadersParams = TableExports.HeadersParams;
+type OptsParams = TableExports.OptsParams;
 
 /**
  * @function
@@ -70,9 +48,9 @@ namespace TableExports {
  * @returns {string}
  */
 const mkTable = (
-  hdrs: TableExports.HeadersParams[],
+  hdrs: HeadersParams[],
   vs: any[],
-  opts: any = {}
+  opts: OptsParams | any = {}
 ): string =>
   div(
     { class: "table-responsive" },
@@ -81,18 +59,19 @@ const mkTable = (
         class: [
           "table table-sm",
           opts.class,
-          hdrs.some((h) => h.width) && "table-layout-fixed",
+          hdrs.some((h: HeadersParams) => h.width) && "table-layout-fixed",
           (opts.onRowSelect || (opts.hover && vs && vs.length > 1)) &&
             "table-hover",
         ],
         style: opts.style,
       },
-      !opts.noHeader && thead(tr(hdrs.map((hdr) => headerCell(hdr)))),
+      !opts.noHeader &&
+        thead(tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr)))),
       tbody(
         (vs || []).map((v: any) =>
           tr(
             mkClickHandler(opts, v),
-            hdrs.map((hdr) =>
+            hdrs.map((hdr: HeadersParams) =>
               td(
                 !!hdr.align && { style: "text-align:" + hdr.align },
                 typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
@@ -122,5 +101,6 @@ const mkClickHandler = (opts: any, v: any): any => {
   return attrs;
 };
 
+// declaration merging
 const TableExports = mkTable;
 export = TableExports;

@@ -7,7 +7,6 @@ import tags = require("./tags");
 const { ul, li, a, span, hr, div, text, i, h6, h1, p, header, img, footer } =
   tags;
 import renderLayout = require("./layout");
-import type { RenderParams } from "./layout";
 const { renderForm, link } = require(".");
 import layoutUtils = require("./layout_utils");
 const { navbar, alert } = layoutUtils;
@@ -26,15 +25,19 @@ const renderBody = (title: string, body: string | any, alerts: any[]): string =>
     alerts,
   });
 
-type WrapParams = {
-  title: string;
-  menu: any;
-  brand: any;
-  alerts: any[];
-  currentUrl: string;
-  body: string | any;
-  headers: any[];
-};
+// declaration merging
+namespace EmergencyLayoutExports {
+  export type WrapParams = {
+    title: string;
+    menu: any;
+    brand: any;
+    alerts: any[];
+    currentUrl: string;
+    body: string | any;
+    headers: any[];
+  };
+}
+type WrapParams = EmergencyLayoutExports.WrapParams;
 
 /**
  * @param {object} opts
@@ -58,4 +61,5 @@ const wrap = ({
 }: WrapParams): string =>
   navbar(brand, menu, currentUrl) + renderBody(title, body, alerts);
 
-exports = wrap;
+const EmergencyLayoutExports = wrap;
+exports = EmergencyLayoutExports;
