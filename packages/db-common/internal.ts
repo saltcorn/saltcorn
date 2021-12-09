@@ -300,7 +300,7 @@ const getVal = ([k, v]: [string, any]): any =>
 
 type WhereAndVals = {
   where: string;
-  values: string[];
+  values: Value[];
 };
 /**
  * @param {object} whereObj
