@@ -100,6 +100,7 @@ namespace LayoutExports {
     independent: boolean;
   };
 }
+type RenderTabsOpts = LayoutExports.RenderTabsOpts;
 
 /**
  * @param {object} opts
@@ -112,14 +113,8 @@ namespace LayoutExports {
  * @returns {ul_div}
  */
 const renderTabs = (
-  {
-    contents,
-    titles,
-    tabsStyle,
-    ntabs,
-    independent,
-  }: LayoutExports.RenderTabsOpts,
-  go: (segment: any, isTop: boolean, ix: number) => any // TODO
+  { contents, titles, tabsStyle, ntabs, independent }: RenderTabsOpts,
+  go: (segment: any, isTop: boolean, ix: number) => any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
@@ -202,7 +197,7 @@ const renderTabs = (
 
 // declaration merging
 namespace LayoutExports {
-  export type RenderParams = {
+  export type RenderOpts = {
     blockDispatch: any;
     layout: any;
     role?: any;
@@ -210,6 +205,7 @@ namespace LayoutExports {
     is_owner?: boolean;
   };
 }
+type RenderOpts = LayoutExports.RenderOpts;
 
 /**
  * @param {object} opts
@@ -217,7 +213,7 @@ namespace LayoutExports {
  * @param {object|string} opts.layout
  * @param {object} [opts.role]
  * @param {object[]} [opts.alerts]
- * @param {boolean} opts.is_owner missing in contract
+ * @param {boolean} opts.is_owner
  * @returns {string}
  */
 const render = ({
@@ -226,7 +222,7 @@ const render = ({
   role,
   alerts,
   is_owner,
-}: LayoutExports.RenderParams): string => {
+}: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment: any, isTop: boolean, ix: any, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";

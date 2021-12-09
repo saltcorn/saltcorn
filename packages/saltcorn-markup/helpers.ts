@@ -63,6 +63,7 @@ namespace HelpersExports {
     [key: string]: any; // "...rest" properties
   };
 }
+type RadioGroupOpts = HelpersExports.RadioGroupOpts;
 
 /**
  *
@@ -83,7 +84,7 @@ const radio_group = ({
   form_name,
   onChange,
   ...rest
-}: HelpersExports.RadioGroupOpts): string =>
+}: RadioGroupOpts): string =>
   div(
     (options || [])
       .filter((o: any) => (typeof o === "string" ? o : o.value))
@@ -123,6 +124,7 @@ namespace HelpersExports {
     [key: string]: any; // "...rest" properties
   };
 }
+type CheckBoxGroupOpts = HelpersExports.CheckBoxGroupOpts;
 
 const checkbox_group = ({
   name,
@@ -132,7 +134,7 @@ const checkbox_group = ({
   form_name,
   onChange,
   ...rest
-}: HelpersExports.CheckBoxGroupOpts): string =>
+}: CheckBoxGroupOpts): string =>
   div(
     (options || [])
       .filter((o: any) => (typeof o === "string" ? o : o.value))
@@ -171,6 +173,7 @@ namespace HelpersExports {
     trailing_ellipsis?: boolean;
   };
 }
+type PaginationOpts = HelpersExports.PaginationOpts;
 
 /**
  * @param {object} opts
@@ -185,7 +188,7 @@ const pagination = ({
   pages,
   get_page_link,
   trailing_ellipsis,
-}: HelpersExports.PaginationOpts): string => {
+}: PaginationOpts): string => {
   const from = Math.max(1, current_page - 3);
   const to = Math.min(pages, current_page + 3);
   var lis = [];
@@ -232,6 +235,7 @@ namespace HelpersExports {
     onClick: any;
   };
 }
+type SearchBarOpts = HelpersExports.SearchBarOpts;
 
 /**
  * @param {string} name
@@ -249,7 +253,7 @@ const search_bar = (
     badges,
     stateField,
     onClick,
-  }: HelpersExports.SearchBarOpts | any = {}
+  }: SearchBarOpts | any = {}
 ): string => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const clickHandler = stateField
@@ -309,7 +313,7 @@ const search_bar = (
 </div>`;
 };
 
-let HelpersExports = {
+const HelpersExports = {
   isdef,
   select_options,
   search_bar,
