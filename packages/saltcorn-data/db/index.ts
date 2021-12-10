@@ -1,7 +1,7 @@
 import * as multiTenant from "@saltcorn/db-common/multi-tenant";
 import * as singleTenant from "@saltcorn/db-common/single-tenant";
 
-import { sqlsanitize, mkWhere } from "@saltcorn/db-common/internal";
+import { sqlsanitize, mkWhere, Where } from "@saltcorn/db-common/internal";
 
 const { getConnectObject, is_sqlite } = require("./connect");
 
@@ -27,14 +27,15 @@ const dbModule = initDbModule();
 
 /** @type {db/tenant} */
 import tenantsModule = require("@saltcorn/db-common/tenants");
-const tenant: typeof multiTenant | typeof singleTenant | null =
-  tenantsModule(connectObj);
+const tenant: typeof multiTenant | typeof singleTenant | null = tenantsModule(
+  connectObj
+);
 if (!tenant) throw new Error("tenant is null");
 
 /**
  * @returns {string}
  */
-const getTenantSchemaPrefix = () =>
+const getTenantSchemaPrefix = (): string =>
   isSQLite ? "" : `"${tenant.getTenantSchema()}".`;
 
 const dbExports: any = {
@@ -43,7 +44,7 @@ const dbExports: any = {
   connectObj,
   isSQLite,
   ...dbModule,
-  mkWhere: (q: any) => mkWhere(q, isSQLite),
+  mkWhere: (q: Where) => mkWhere(q, isSQLite),
   getTenantSchemaPrefix,
 };
 export = dbExports;
