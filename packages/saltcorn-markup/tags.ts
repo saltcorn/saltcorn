@@ -41,12 +41,12 @@ const allTags: { [k: string]: (...args: any[]) => string } = Object.fromEntries(
 
 type ExportsType = {
   [key: string]: any; // "...allTags" properties
-  genericElement: any;
-  domReady: any;
-  text: any;
-  text_attr: any;
+  genericElement: (tagName: string, ...rest: any[]) => string;
+  domReady: (js: string) => string;
+  text: (t: string | number) => string;
+  text_attr: (t: string | number) => string;
   nbsp: string;
-  mkTag: any;
+  mkTag: typeof mkTag;
 };
 
 const tagsExports: ExportsType = {
