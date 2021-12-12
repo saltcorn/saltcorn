@@ -38,6 +38,7 @@ const {
   getRelevantPackages,
   getPluginDirectories,
 } = require("./restart_watcher");
+const { spawnSync } = require("child_process");
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**
@@ -162,6 +163,9 @@ module.exports =
     ...appargs
   } = {}) => {
     if (dev && cluster.isMaster) {
+      spawnSync("npm", ["run", "tsc"], {
+        stdio: "inherit",
+      });
       listenForChanges(getRelevantPackages(), await getPluginDirectories());
     }
     const useNCpus = process.env.SALTCORN_NWORKERS
