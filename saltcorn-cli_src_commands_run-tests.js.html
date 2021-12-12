@@ -181,6 +181,11 @@ class RunTestsCommand extends Command {
     const { args, flags } = this.parse(RunTestsCommand);
     this.validateCall(args, flags);
     var env;
+
+    spawnSync("npm", ["run", "tsc"], {
+      stdio: "inherit",
+    });
+
     const db = require("@saltcorn/data/db");
 
     if (db.isSQLite) {
