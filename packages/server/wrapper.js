@@ -239,6 +239,7 @@ module.exports = (version_tag) =>
             brand: get_brand(state),
             menu: get_menu(req),
             currentUrl,
+            originalUrl: req.originalUrl,
             alerts: getFlashes(req),
             body,
             headers: get_headers(req, version_tag),
@@ -283,6 +284,8 @@ module.exports = (version_tag) =>
           brand: get_brand(state),
           menu: get_menu(req),
           currentUrl,
+          originalUrl: req.originalUrl,
+
           alerts,
           body: html.length === 1 ? html[0] : html.join(""),
           headers: get_headers(req, version_tag, opts.description, pageHeaders),
