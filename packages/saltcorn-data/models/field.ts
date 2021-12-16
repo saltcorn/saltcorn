@@ -5,18 +5,21 @@
  * @subcategory models
  */
 
-const db = require("../db");
-const { contract, is } = require("contractis");
+import db from "../db";
 const { recalculate_for_stored, jsexprToWhere } = require("./expression");
-const { sqlsanitize } = require("@saltcorn/db-common/internal");
+import { sqlsanitize } from "@saltcorn/db-common/internal";
 const { InvalidAdminAction } = require("../utils");
-const { mkWhere } = require("../db");
+import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type { ErrorMessage, ResultMessage, TypeObj } from "../common_types";
+import { instanceOfTypeObj } from "../common_types";
+import type Table from "./table";
 
-const readKey = (v, field) => {
+const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
   if (typeof v === "string" && v.startsWith("Preset:")) return v;
   const { getState } = require("../db/state");
-
+  if (!field.reftype)
+    throw new Error("Unable to find the type, 'reftype' is undefined.");
   const type = getState().types[field.reftype];
   const parsed = type.read(v);
   return parsed || (v ? { error: "Unable to read key" } : null);
@@ -27,15 +30,54 @@ const readKey = (v, field) => {
  * @category saltcorn-data
  */
 class Field {
+  label: string;
+  name: string;
+  fieldview?: string;
+  validator: Function;
+  showIf?: boolean;
+  parent_field?: string;
+  postText?: string;
+  class: string;
+  id?: number;
+  default?: string;
+  sublabel?: string;
+  description?: string;
+  type?: string | TypeObj;
+  typename?: string;
+  options?: any;
+  required: boolean;
+  is_unique: boolean;
+  hidden: boolean;
+  disabled: boolean;
+  calculated: boolean;
+  primary_key: boolean;
+  stored: boolean;
+  expression?: string;
+  sourceURL?: string;
+  is_fkey: boolean;
+  input_type: string;
+  reftable_name?: string;
+  reftype?: string;
+  refname: string = "";
+  reftable?: Table;
+  attributes: any;
+  table_id?: number;
+  table?: Table;
+
+  // to use 'this[k] = v'
+  [key: string]: any;
+
   /**
    * Constructor
    * @param o
    */
-  constructor(o) {
+  constructor(o: FieldCfg | Field) {
+    if (!o.name && !o.label)
+      throw new Error(`Field initialised with no name and no label`);
+    this.label = <string>(o.label || o.name);
+    this.name = <string>(o.name || Field.labelToName(this.label));
     if (!o.type && !o.input_type)
       throw new Error(`Field ${o.name} initialised with no type`);
-    this.label = o.label || o.name;
-    this.name = o.name || Field.labelToName(o.label);
     this.fieldview = o.fieldview;
     this.validator = o.validator || (() => true);
     this.showIf = o.showIf;
@@ -49,7 +91,8 @@ class Field {
     const { getState } = require("../db/state");
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
-    if (!this.type) this.typename = o.type;
+    if (!this.type)
+      this.typename = typeof o.type === "string" ? o.type : o.type?.name;
     this.options = o.options;
     this.required = o.required ? true : false;
     this.is_unique = o.is_unique ? true : false;
@@ -75,10 +118,9 @@ class Field {
       this.reftype = "Integer";
       this.refname = "id";
     } else {
-      this.reftable_name =
-        o.reftable_name ||
-        (o.reftable && o.reftable.name) ||
-        o.type.replace("Key to ", "");
+      this.reftable_name = o.reftable_name || (o.reftable && o.reftable.name);
+      if (!this.reftable_name && o.type && typeof o.type === "string")
+        this.reftable_name = o.type.replace("Key to ", "");
       this.reftable = o.reftable;
       this.type = "Key";
       this.input_type =
@@ -97,14 +139,13 @@ class Field {
       this.table = o.table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
-    contract.class(this);
   }
 
   /**
    * To Json
    * @type {object}
    */
-  get toJson() {
+  get toJson(): any {
     return {
       id: this.id,
       table_id: this.table_id,
@@ -116,7 +157,7 @@ class Field {
       expression: this.expression,
       sublabel: this.sublabel,
       fieldview: this.fieldview,
-      type: typeof this.type === "string" ? this.type : this.type.name,
+      type: typeof this.type === "string" ? this.type : this.type?.name,
       reftable_name: this.reftable_name,
       attributes: this.attributes,
       required: this.required,
@@ -134,7 +175,7 @@ class Field {
    */
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
-  static labelToName(label) {
+  static labelToName(label: string): string | undefined {
     return sqlsanitize(label.toLowerCase().replace(" ", "_"));
   }
 
@@ -142,7 +183,7 @@ class Field {
    * ???
    * @returns {string}
    */
-  get form_name() {
+  get form_name(): string {
     if (this.parent_field) return `${this.parent_field}_${this.name}`;
     else return this.name;
   }
@@ -153,7 +194,11 @@ class Field {
    * @param {object} where
    * @returns {Promise<void>}
    */
-  async fill_fkey_options(force_allow_none = false, where0, extraCtx) {
+  async fill_fkey_options(
+    force_allow_none: boolean = false,
+    where0: Where,
+    extraCtx: any = {}
+  ): Promise<void> {
     const where =
       where0 ||
       (this.attributes.where
@@ -173,7 +218,7 @@ class Field {
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : "id");
-      const dbOpts = rows.map((r) => ({
+      const dbOpts = rows.map((r: Row) => ({
         label: r[summary_field],
         value: r[this.refname],
       }));
@@ -190,9 +235,13 @@ class Field {
    * @param {object} [req]
    * @returns {Promise<void>}
    */
-  async distinct_values(req, where) {
-    const __ = req && req.__ ? req.__ : (s) => s;
+  async distinct_values(
+    req: any,
+    where: Where
+  ): Promise<{ label: string; value: string; jsvalue?: boolean }[]> {
+    const __ = req && req.__ ? req.__ : (s: string) => s;
     if (
+      instanceOfTypeObj(this.type) &&
       this.type.name === "String" &&
       this.attributes &&
       this.attributes.options
@@ -201,14 +250,14 @@ class Field {
         { label: "", value: "" },
         ...this.attributes.options
           .split(",")
-          .map((o) => ({ label: o.trim(), value: o.trim() })),
+          .map((o: string) => ({ label: o.trim(), value: o.trim() })),
       ];
     }
     if (this.is_fkey) {
       await this.fill_fkey_options(false, where);
       return this.options || [];
     }
-    if (this.type.name === "Bool") {
+    if (instanceOfTypeObj(this.type) && this.type.name === "Bool") {
       return [
         { label: "", value: "" },
         { label: __("True"), value: "on", jsvalue: true },
@@ -219,17 +268,17 @@ class Field {
     let whereS = "";
     let values = [];
     if (where) {
-      const whereValues = mkWhere(where);
+      const whereValues = db.mkWhere(where);
       whereS = whereValues.where;
       values = whereValues.values;
     }
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
-        this.table.sql_name
+        this.table?.sql_name
       } ${whereS} order by "${db.sqlsanitize(this.name)}"`,
       values
     );
-    const dbOpts = rows.map((r) => ({
+    const dbOpts = rows.map((r: Row) => ({
       label: `${r[this.name]}`,
       value: r[this.name],
     }));
@@ -239,47 +288,66 @@ class Field {
   /**
    * @type {string}
    */
-  get sql_type() {
+  get sql_type(): string {
     if (this.is_fkey) {
+      if (!this.reftype || !this.reftable_name) {
+        throw new Error(
+          "'reftype' and 'reftable_name' must be set if 'is_fkey' is true."
+        );
+      }
       const schema = db.getTenantSchemaPrefix();
       const { getState } = require("../db/state");
-
       return `${
         getState().types[this.reftype].sql_name
       } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
       }")`;
-    } else {
+    } else if (
+      this.type &&
+      instanceOfTypeObj(this.type) &&
+      this.type.sql_name
+    ) {
       return this.type.sql_name;
     }
+    throw new Error("Unable to get the sql_type");
   }
 
   /**
    * @type {string}
    */
-  get pretty_type() {
+  get pretty_type(): string {
     if (this.reftable_name === "_sc_files") return "File";
     if (this.is_fkey) return `Key to ${this.reftable_name}`;
-    else return this.type ? this.type.name : "?";
+    else
+      return this.type && instanceOfTypeObj(this.type) ? this.type.name : "?";
   }
 
   /**
    * @type {string}
    */
-  get sql_bare_type() {
+  get sql_bare_type(): string {
     if (this.is_fkey) {
+      if (!this.reftype || !this.reftable_name) {
+        throw new Error(
+          "'reftype' and 'reftable_name' must be set if 'is_fkey' is true."
+        );
+      }
       const { getState } = require("../db/state");
-
       return getState().types[this.reftype].sql_name;
-    } else {
+    } else if (
+      this.type &&
+      instanceOfTypeObj(this.type) &&
+      this.type.sql_name
+    ) {
       return this.type.sql_name;
     }
+    throw new Error("Unable to get the sql_type");
   }
 
   /**
    * @returns {Promise<any>}
    */
-  async generate() {
+  async generate(): Promise<any> {
     if (this.is_fkey) {
       const rows = await db.select(
         this.reftable_name,
@@ -288,7 +356,7 @@ class Field {
       );
       if (rows.length === 1) return rows[0].id;
     } else {
-      if (this.type && this.type.contract)
+      if (instanceOfTypeObj(this.type) && this.type.contract)
         return this.type.contract(this.attributes).generate();
     }
   }
@@ -297,21 +365,26 @@ class Field {
    * @param {object} whole_rec
    * @returns {object}
    */
-  validate(whole_rec) {
+  validate(whole_rec: any): ResultMessage {
     const type = this.is_fkey ? { name: "Key" } : this.type;
-    const readval = this.is_fkey
-      ? readKey(whole_rec[this.form_name], this)
-      : !type || !type.read
-      ? whole_rec[this.form_name]
-      : type.readFromFormRecord
-      ? type.readFromFormRecord(whole_rec, this.form_name)
-      : type.read(whole_rec[this.form_name], this.attributes);
+    let readval = null;
+    if (this.is_fkey) {
+      readval = readKey(whole_rec[this.form_name], this);
+    } else {
+      let typeObj = <TypeObj>this.type;
+      readval =
+        !type || !typeObj.read
+          ? whole_rec[this.form_name]
+          : typeObj.readFromFormRecord
+          ? typeObj.readFromFormRecord(whole_rec, this.form_name)
+          : typeObj.read(whole_rec[this.form_name], this.attributes);
+    }
     if (typeof readval === "undefined" || readval === null)
       if (this.required && this.type !== "File")
-        return { error: "Unable to read " + type.name };
+        return { error: "Unable to read " + (<TypeObj>type)?.name };
       else return { success: null };
     const tyvalres =
-      type && type.validate
+      instanceOfTypeObj(type) && type.validate
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
@@ -327,16 +400,19 @@ class Field {
    * @param {object} [selectopts]
    * @returns {Field[]}
    */
-  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+  static async find(
+    where?: Where,
+    selectopts: SelectOptions = { orderBy: "name", nocase: true }
+  ): Promise<Field[]> {
     const db_flds = await db.select("_sc_fields", where, selectopts);
-    return db_flds.map((dbf) => new Field(dbf));
+    return db_flds.map((dbf: FieldCfg) => new Field(dbf));
   }
 
   /**
    * @param {object} where
    * @returns {Promise<Field>}
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<Field> {
     const db_fld = await db.selectOne("_sc_fields", where);
     return new Field(db_fld);
   }
@@ -344,17 +420,17 @@ class Field {
   /**
    * @returns {Promise<void>}
    */
-  async add_unique_constraint() {
+  async add_unique_constraint(): Promise<void> {
     await this.fill_table();
-    await db.add_unique_constraint(this.table.name, [this.name]);
+    await db.add_unique_constraint(this.table?.name, [this.name]);
   }
 
   /**
    * @returns {Promise<void>}
    */
-  async remove_unique_constraint() {
+  async remove_unique_constraint(): Promise<void> {
     await this.fill_table();
-    await db.drop_unique_constraint(this.table.name, [this.name]);
+    await db.drop_unique_constraint(this.table?.name, [this.name]);
   }
 
   /**
@@ -362,7 +438,10 @@ class Field {
    * @param {boolean} not_null
    * @returns {Promise<void>}
    */
-  async toggle_not_null(not_null) {
+  async toggle_not_null(not_null: boolean): Promise<void> {
+    if (!this.table) {
+      throw new Error("To toogle a not null constraint, 'table' must be set.");
+    }
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
     await db.query(
@@ -379,7 +458,12 @@ class Field {
    * @param {object} new_field
    * @returns {Promise<void>}
    */
-  async alter_sql_type(new_field) {
+  async alter_sql_type(new_field: Field) {
+    if (!this.table) {
+      throw new Error(
+        `To add the field '${new_field.name}', 'table' must be set.`
+      );
+    }
     let new_sql_type = new_field.sql_type;
     let def = "";
     let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
@@ -393,10 +477,12 @@ class Field {
         )}" drop column "${sqlsanitize(this.name)}";`
       );
 
-      if (new_field.type.primaryKey.sql_type)
-        new_sql_type = new_field.type.primaryKey.sql_type;
-      if (new_field.type.primaryKey.default_sql) {
-        def = `default ${new_field.type.primaryKey.default_sql}`;
+      if (instanceOfTypeObj(new_field.type)) {
+        if (new_field.type.primaryKey.sql_type)
+          new_sql_type = new_field.type.primaryKey.sql_type;
+        if (new_field.type.primaryKey.default_sql) {
+          def = `default ${new_field.type.primaryKey.default_sql}`;
+        }
       }
       await db.query(
         `ALTER TABLE ${schema}"${sqlsanitize(
@@ -419,7 +505,7 @@ class Field {
   /**
    * @returns {Promise<void>}
    */
-  async fill_table() {
+  async fill_table(): Promise<void> {
     if (!this.table) {
       const Table = require("./table");
       this.table = await Table.findOne({ id: this.table_id });
@@ -430,7 +516,13 @@ class Field {
    * @param {object} v
    * @returns {Promise<void>}
    */
-  async update(v) {
+  async update(v: Row): Promise<void> {
+    const f = new Field({ ...this, ...v });
+    const rename: boolean = f.name !== this.name;
+    if (rename && !this.table?.name) {
+      throw new Error("");
+    }
+
     if (
       typeof v.is_unique !== "undefined" &&
       !!v.is_unique !== !!this.is_unique
@@ -443,22 +535,21 @@ class Field {
     if (typeof v.required !== "undefined" && !!v.required !== !!this.required)
       await this.toggle_not_null(!!v.required);
 
-    const f = new Field({ ...this, ...v });
     if (f.sql_type !== this.sql_type) {
       await this.alter_sql_type(f);
     }
-    if (f.name !== this.name) {
+    if (rename) {
       const schema = db.getTenantSchemaPrefix();
 
       await db.query(
         `alter table ${schema}"${sqlsanitize(
-          this.table.name
+          this.table!.name // ensured above
         )}" rename column "${sqlsanitize(this.name)}" TO ${f.name};`
       );
     }
 
     await db.update("_sc_fields", v, this.id);
-    Object.entries(v).forEach(([k, v]) => {
+    Object.entries(v).forEach(([k, v]: [string, any]) => {
       this[k] = v;
     });
     await require("../db/state").getState().refresh_tables();
@@ -467,19 +558,21 @@ class Field {
   /**
    * @type {string}
    */
-  get listKey() {
-    return this.type.listAs
-      ? (r) => this.type.listAs(r[this.name])
-      : this.type.showAs
-      ? (r) => this.type.showAs(r[this.name])
-      : this.name;
+  get listKey(): any {
+    if (instanceOfTypeObj(this.type))
+      if (this.type.listAs)
+        return (r: any) => (<TypeObj>this.type).listAs!(r[this.name]);
+      else if (this.type.showAs)
+        return (r: any) => (<TypeObj>this.type).showAs!(r[this.name]);
+    return this.name;
   }
 
   /**
    * @type {object}
    */
-  get presets() {
-    if (this.type && this.type.presets) return this.type.presets;
+  get presets(): { LoggedIn: ({ user }: { user: any }) => boolean } | null {
+    if (instanceOfTypeObj(this.type) && this.type.presets)
+      return this.type.presets;
 
     if (this.type === "Key" && this.reftable_name === "users")
       return { LoggedIn: ({ user }) => user && user.id };
@@ -491,7 +584,7 @@ class Field {
    * @throws {InvalidAdminAction}
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     const Table = require("./table");
     const table = await Table.findOne({ id: this.table_id });
     const TableConstraint = require("./table_constraints");
@@ -532,8 +625,13 @@ class Field {
    * @param {object} table
    * @returns {Promise<void>}
    */
-  async enable_fkey_constraint(table) {
+  async enable_fkey_constraint(table: Table) {
     if (this.is_fkey && !db.isSQLite) {
+      if (!this.reftable_name) {
+        throw new Error(
+          "To enable a foreign key constraint, the 'reftable_name' must be set."
+        );
+      }
       const schema = db.getTenantSchemaPrefix();
 
       const q = `alter table ${schema}"${sqlsanitize(
@@ -552,7 +650,7 @@ class Field {
    * @param {boolean} [bare = false]
    * @returns {Promise<Field>}
    */
-  static async create(fld, bare = false) {
+  static async create(fld: Field, bare: boolean = false): Promise<Field> {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
 
@@ -565,7 +663,7 @@ class Field {
       const reftable = await Table.findOne({ name: f.reftable_name });
       if (reftable) {
         const reffields = await reftable.getFields();
-        const refpk = reffields.find((rf) => rf.primary_key);
+        const refpk = reffields.find((rf: Field) => rf.primary_key);
         f.reftype = refpk.type.name;
         f.refname = refpk.name;
       }
@@ -614,7 +712,7 @@ class Field {
       table_id: f.table_id,
       name: f.name,
       label: f.label,
-      type: f.is_fkey ? f.type : f.type.name,
+      type: f.is_fkey ? f.type : (<TypeObj>f.type)?.name,
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
       reftype: f.is_fkey ? f.reftype : undefined,
       refname: f.is_fkey ? f.refname : undefined,
@@ -653,7 +751,7 @@ class Field {
    * @param {number} [table_id]
    * @returns {*}
    */
-  static getTypeAttributes(typeattribs, table_id) {
+  static getTypeAttributes(typeattribs: Function | any, table_id?: number) {
     const Table = require("./table");
 
     if (!typeattribs) return [];
@@ -665,82 +763,53 @@ class Field {
   }
 }
 
-Field.contract = {
-  variables: {
-    name: is.str,
-    label: is.str,
-    class: is.str,
-    postText: is.maybe(is.str),
-    sublabel: is.maybe(is.str),
-    fieldview: is.maybe(is.str),
-    parent_field: is.maybe(is.str),
-    reftable_name: is.maybe(is.str),
-    validator: is.fun(is.any, is.bool),
-    type: is.maybe(
-      is.or(is.eq("Key"), is.eq("File"), is.obj({ name: is.str }))
-    ),
-    input_type: is.maybe(
-      is.one_of([
-        "hidden",
-        "file",
-        "select",
-        "fromtype",
-        "search",
-        "text",
-        "password",
-        "section_header",
-        "textarea",
-        "custom_html",
-        "code",
-      ])
-    ),
-    is_fkey: is.bool,
-    is_unique: is.bool,
-    required: is.bool,
-    disabled: is.bool,
-    id: is.maybe(is.posint),
-    attributes: is.obj(),
-    table_id: is.maybe(is.posint),
-  },
-  instance_check: is.and(
-    is.or(is.obj({ type: is.defined }), is.obj({ input_type: is.defined })),
-    is.or(
-      is.obj({ is_fkey: is.eq(false), reftable_name: is.eq(undefined) }),
-      is.obj({ is_fkey: is.eq(true), reftable_name: is.str })
-    )
-  ),
-  methods: {
-    validate: is.fun(
-      is.obj(),
-      is.or(is.obj({ errors: is.str }), is.obj({ success: is.any }))
-    ),
-    toJson: is.getter(is.obj({ type: is.str })),
-    sql_type: is.getter(is.str),
-    sql_bare_type: is.getter(is.str),
-    form_name: is.getter(is.str),
-    listKey: is.getter(is.any), // todo why not str?
-    presets: is.getter(is.maybe(is.objVals(is.fun(is.obj(), is.any)))),
-    delete: is.fun([], is.promise(is.undefined)),
-    generate: is.fun([], is.promise(is.any)),
-    add_unique_constraint: is.fun([], is.promise(is.undefined)),
-    remove_unique_constraint: is.fun([], is.promise(is.undefined)),
-    toggle_not_null: is.fun(is.bool, is.promise(is.undefined)), // TODO requires postgres
-    fill_table: is.fun([], is.promise(is.undefined)),
-    update: is.fun(is.obj(), is.promise(is.undefined)), //TODO requires not-null id
-    fill_fkey_options: is.fun(is.maybe(is.bool), is.promise()),
-    distinct_values: is.fun(
-      [],
-      is.promise(is.array(is.obj({ label: is.any, value: is.any })))
-    ),
-  },
-  static_methods: {
-    find: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("Field")))
-    ),
-    findOne: is.fun(is.obj(), is.promise(is.class("Field"))),
-    create: is.fun(is.obj(), is.promise(is.class("Field"))),
-    labelToName: is.fun(is.str, is.str),
-  },
-};
-module.exports = Field;
+// declaration merging
+namespace Field {
+  export type FieldCfg = {
+    label?: string;
+    name?: string;
+    fieldview?: string;
+    validator?: (arg0: any) => boolean;
+    showIf?: boolean;
+    parent_field?: string;
+    postText?: string;
+    class?: string;
+    id?: number;
+    default?: string;
+    sublabel?: string;
+    description?: string;
+    type?: string | TypeObj;
+    options?: any;
+    required?: boolean;
+    is_unique?: boolean;
+    hidden?: boolean;
+    disabled?: boolean;
+    calculated?: boolean;
+    primary_key?: boolean;
+    stored?: boolean;
+    expression?: string;
+    sourceURL?: string;
+    input_type?:
+      | "hidden"
+      | "file"
+      | "select"
+      | "fromtype"
+      | "search"
+      | "text"
+      | "password"
+      | "section_header"
+      | "textarea"
+      | "custom_html"
+      | "code";
+    reftable_name?: string;
+    reftable?: Table;
+    attributes?: string;
+    table_id?: number;
+    reftype?: string;
+    refname?: string;
+    table?: Table;
+  };
+}
+type FieldCfg = Field.FieldCfg;
+
+export = Field;
