@@ -1,9 +1,5 @@
-import db = require("../db");
-
-type ConstructorParams = {
-  id: number;
-  role: any;
-};
+import db from "../db";
+import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 
 /*
  * Role class
@@ -17,7 +13,7 @@ class Role {
    * Role constructor
    * @param {object} o
    */
-  constructor(o: ConstructorParams) {
+  constructor(o: RoleCfg) {
     this.id = o.id;
     this.role = o.role;
   }
@@ -26,7 +22,7 @@ class Role {
    * @param {*} uo
    * @returns {Role}
    */
-  public static async create(uo: any) {
+  public static async create(uo: RoleCfg) {
     const u = new Role(uo);
 
     const ex = await Role.findOne({ id: u.id });
@@ -43,24 +39,27 @@ class Role {
    * @param {*} selectopts
    * @returns {Promise<Role[]>}
    */
-  public static async find(where: any, selectopts: any) {
+  public static async find(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<Role[]> {
     const us = await db.select("_sc_roles", where, selectopts);
-    return us.map((u: any) => new Role(u));
+    return us.map((u: RoleCfg) => new Role(u));
   }
 
   /**
    * @param {*} where
    * @returns {Promise<Role>}
    */
-  public static async findOne(where: any) {
-    const u = await db.selectMaybeOne("_sc_roles", where);
+  public static async findOne(where: Where): Promise<Role> {
+    const u: RoleCfg = await db.selectMaybeOne("_sc_roles", where);
     return u ? new Role(u) : u;
   }
 
   /**
    * @returns {Promise<void>}
    */
-  public async delete() {
+  public async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`delete FROM ${schema}_sc_roles WHERE id = $1`, [this.id]);
   }
@@ -69,9 +68,17 @@ class Role {
    * @param {*} row
    * @returns {Promise<void>}
    */
-  public async update(row: any) {
+  public async update(row: Row): Promise<void> {
     await db.update("_sc_roles", row, this.id);
   }
 }
+
+namespace Role {
+  export type RoleCfg = {
+    id: number;
+    role: any;
+  };
+}
+type RoleCfg = Role.RoleCfg;
 
 export = Role;

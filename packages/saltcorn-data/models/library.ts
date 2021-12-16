@@ -4,8 +4,9 @@
  * @module models/library
  * @subcategory models
  */
-const db = require("../db");
-const { contract, is } = require("contractis");
+import db from "../db";
+import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+
 const { traverseSync } = require("./layout");
 
 /**
@@ -13,11 +14,16 @@ const { traverseSync } = require("./layout");
  * @category saltcorn-data
  */
 class Library {
+  id: number;
+  name: string;
+  icon: string;
+  layout: any;
+
   /**
    * Library constructor
-   * @param {object} o 
+   * @param {object} o
    */
-  constructor(o) {
+  constructor(o: LibraryCfg | Library) {
     this.id = o.id;
     this.name = o.name;
     this.icon = o.icon;
@@ -26,9 +32,9 @@ class Library {
   }
 
   /**
-   * @param {object} lib_in 
+   * @param {object} lib_in
    */
-  static async create(lib_in) {
+  static async create(lib_in: LibraryCfg): Promise<void> {
     const lib = new Library(lib_in);
     await db.insert("_sc_library", {
       name: lib.name,
@@ -40,35 +46,38 @@ class Library {
   /**
    * @type {...*}
    */
-  get toJson() {
+  get toJson(): any {
     const { id, ...rest } = this;
     return rest;
   }
 
   /**
-   * @param {*} where 
-   * @param {*} selectopts 
+   * @param {*} where
+   * @param {*} selectopts
    * @returns {Library[]}
    */
-  static async find(where, selectopts) {
+  static async find(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<Library[]> {
     const us = await db.select("_sc_library", where, selectopts);
-    return us.map((u) => new Library(u));
+    return us.map((u: any) => new Library(u));
   }
 
   /**
-   * @param {*} where 
+   * @param {*} where
    * @returns {Library}
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<Library> {
     const u = await db.selectMaybeOne("_sc_library", where);
     return u ? new Library(u) : u;
   }
 
   /**
-   * @param {*} what 
+   * @param {*} what
    * @returns {object}
    */
-  suitableFor(what) {
+  suitableFor(what: string): any {
     let notPage, notShow, notEdit, notFilter;
     if (!this.layout) return false;
     const layout = this.layout.layout ? this.layout.layout : this.layout;
@@ -118,7 +127,7 @@ class Library {
   /**
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`delete FROM ${schema}_sc_library WHERE id = $1`, [this.id]);
   }
@@ -127,9 +136,19 @@ class Library {
    * @param {*} row
    * @returns {Promise<void>}
    */
-  async update(row) {
+  async update(row: Row): Promise<void> {
     await db.update("_sc_library", row, this.id);
   }
 }
 
-module.exports = Library;
+namespace Library {
+  export type LibraryCfg = {
+    id: number;
+    name: string;
+    icon: string;
+    layout: string | any;
+  };
+}
+type LibraryCfg = Library.LibraryCfg;
+
+export = Library;

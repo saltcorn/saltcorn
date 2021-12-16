@@ -5,21 +5,35 @@
  * @subcategory models
  */
 
-const db = require("../db");
-const { contract, is } = require("contractis");
+import db = require("../db");
+import EventLog from "./eventlog";
+import Table from "./table";
+import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+
 const { satisfies } = require("../utils");
-const EventLog = require("./eventlog");
 
 /**
  * Trigger class
  * @category saltcorn-data
  */
 class Trigger {
+  name?: string;
+  action: string;
+  description?: string;
+  table_id?: number | null;
+  table_name?: string;
+  when_trigger: string;
+  channel?: string;
+  id?: number | null;
+  configuration: any;
+  min_role?: number | null;
+  run?: (row: Row) => boolean;
+
   /**
    * Trigger constructor
-   * @param {object} o 
+   * @param {object} o
    */
-  constructor(o) {
+  constructor(o: TriggerCfg) {
     this.name = o.name;
     this.action = o.action;
     this.description = o.description;
@@ -37,15 +51,13 @@ class Trigger {
         ? JSON.parse(o.configuration)
         : o.configuration || {};
     this.min_role = !o.min_role ? null : +o.min_role;
-
-    contract.class(this);
   }
 
   /**
    * Get JSON from Trigger
    * @type {{when_trigger, configuration: any, name, description, action}}
    */
-  get toJson() {
+  get toJson(): any {
     let table_name = this.table_name;
     if (!table_name && this.table_id) {
       const Table = require("./table");
@@ -69,7 +81,7 @@ class Trigger {
    * @param where - condition
    * @returns {Trigger[]}
    */
-  static find(where) {
+  static find(where: Where): Trigger[] {
     const { getState } = require("../db/state");
     return getState().triggers.filter(satisfies(where));
   }
@@ -80,22 +92,25 @@ class Trigger {
    * @param selectopts
    * @returns {Promise<Trigger[]>}
    */
-  static async findDB(where, selectopts) {
+  static async findDB(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<Trigger[]> {
     const db_flds = await db.select("_sc_triggers", where, selectopts);
-    return db_flds.map((dbf) => new Trigger(dbf));
+    return db_flds.map((dbf: TriggerCfg) => new Trigger(dbf));
   }
 
   /**
    * Find all triggers
    * @returns {Promise<Trigger[]>}
    */
-  static async findAllWithTableName() {
+  static async findAllWithTableName(): Promise<Trigger[]> {
     const schema = db.getTenantSchemaPrefix();
 
     const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger, a.channel, a.min_role 
     from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by a.id`;
     const { rows } = await db.query(sql);
-    return rows.map((dbf) => new Trigger(dbf));
+    return rows.map((dbf: any) => new Trigger(dbf));
   }
 
   /**
@@ -103,10 +118,10 @@ class Trigger {
    * @param where
    * @returns {Trigger}
    */
-  static findOne(where) {
+  static findOne(where: Where) {
     const { getState } = require("../db/state");
     return getState().triggers.find(
-      where.id ? (v) => v.id === +where.id : satisfies(where)
+      where.id ? (v: Trigger) => v.id === +where.id : satisfies(where)
     );
   }
 
@@ -116,7 +131,7 @@ class Trigger {
    * @param row
    * @returns {Promise<void>}
    */
-  static async update(id, row) {
+  static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_triggers", row, id);
     await require("../db/state").getState().refresh_triggers();
   }
@@ -126,7 +141,7 @@ class Trigger {
    * @param f
    * @returns {Promise<Trigger>}
    */
-  static async create(f) {
+  static async create(f: TriggerCfg): Promise<Trigger> {
     const trigger = new Trigger(f);
     const { id, table_name, ...rest } = trigger;
     if (table_name && !rest.table_id) {
@@ -144,23 +159,28 @@ class Trigger {
    * Delete current trigger
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     await db.deleteWhere("_sc_triggers", { id: this.id });
     await require("../db/state").getState().refresh_triggers();
   }
 
   /**
    * Emit an event: run associated triggers
-   * @param {*} eventType 
-   * @param {*} channel 
+   * @param {*} eventType
+   * @param {*} channel
    * @param {object} [userPW = {}]
-   * @param {*} payload 
+   * @param {*} payload
    */
-  static emitEvent(eventType, channel, userPW = {}, payload) {
+  static emitEvent(
+    eventType: string,
+    channel: string,
+    userPW = {},
+    payload: any
+  ): void {
     setTimeout(async () => {
-      const { password, ...user } = userPW || {};
+      const { password, ...user }: any = userPW || {};
       const { getState } = require("../db/state");
-      const findArgs = { when_trigger: eventType };
+      const findArgs: Where = { when_trigger: eventType };
 
       let table;
       if (["Insert", "Update", "Delete"].includes(channel)) {
@@ -187,7 +207,7 @@ class Trigger {
       EventLog.create({
         event_type: eventType,
         channel,
-        user_id: (userPW || {}).id || null,
+        user_id: (<any>(userPW || {})).id || null,
         payload,
         occur_at: new Date(),
       });
@@ -201,10 +221,14 @@ class Trigger {
    * @param row
    * @returns {Promise<void>}
    */
-  static async runTableTriggers(when_trigger, table, row) {
+  static async runTableTriggers(
+    when_trigger: string,
+    table: Table,
+    row: Row
+  ): Promise<void> {
     const triggers = await Trigger.getTableTriggers(when_trigger, table);
     for (const trigger of triggers) {
-      await trigger.run(row);
+      await trigger.run!(row); // getTableTriggers ensures run is set
     }
     EventLog.create({
       event_type: when_trigger,
@@ -220,7 +244,7 @@ class Trigger {
    * @param runargs
    * @returns {Promise<boolean>}
    */
-  async runWithoutRow(runargs = {}) {
+  async runWithoutRow(runargs = {}): Promise<boolean> {
     const { getState } = require("../db/state");
     const action = getState().actions[this.action];
     return (
@@ -239,13 +263,16 @@ class Trigger {
    * @param table
    * @returns {Promise<Trigger[]>}
    */
-  static async getTableTriggers(when_trigger, table) {
+  static async getTableTriggers(
+    when_trigger: string,
+    table: Table
+  ): Promise<Trigger[]> {
     const { getState } = require("../db/state");
 
     const triggers = await Trigger.find({ when_trigger, table_id: table.id });
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
-      trigger.run = (row) =>
+      trigger.run = (row: Row) =>
         action &&
         action.run &&
         action.run({
@@ -256,7 +283,8 @@ class Trigger {
         });
     }
     const virtual_triggers = getState().virtual_triggers.filter(
-      (tr) => when_trigger === tr.when_trigger && tr.table_id == table.id
+      (tr: Trigger) =>
+        when_trigger === tr.when_trigger && tr.table_id == table.id
     );
     return [...triggers, ...virtual_triggers];
   }
@@ -265,7 +293,7 @@ class Trigger {
    * Trigger when options
    * @type {string[]}
    */
-  static get when_options() {
+  static get when_options(): string[] {
     const { getState } = require("../db/state");
 
     return [
@@ -288,40 +316,22 @@ class Trigger {
   }
 }
 // todo clone trigger
-/**
- * Trigger contract
- * @type {{variables: {when_trigger: ((function(*=): *)|*), configuration: ((function(*=): *)|*), name: ((function(*=): *)|*), action: ((function(*=): *)|*), id: ((function(*=): *)|*), table_id: ((function(*=): *)|*)}, methods: {delete: ((function(*=): *)|*)}, static_methods: {find: ((function(*=): *)|*), findOne: ((function(*=): *)|*), create: ((function(*=): *)|*), update: ((function(*=): *)|*), getTableTriggers: ((function(*=): *)|*), runTableTriggers: ((function(*=): *)|*)}}}
- */
-Trigger.contract = {
-  variables: {
-    action: is.str,
-    table_id: is.maybe(is.posint),
-    name: is.maybe(is.str),
-    when_trigger: is.str,
-    id: is.maybe(is.posint),
-    configuration: is.obj(),
-    min_role: is.maybe(is.posint),
-  },
-  methods: {
-    delete: is.fun([], is.promise(is.undefined)),
-  },
-  static_methods: {
-    find: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.array(is.class("Trigger"))
-    ),
-    create: is.fun(is.obj(), is.promise(is.class("Trigger"))),
-    findOne: is.fun(is.obj(), is.maybe(is.class("Trigger"))),
-    update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
-    runTableTriggers: is.fun(
-      [is.str, is.class("Table"), is.obj({})],
-      is.promise(is.undefined)
-    ),
-    getTableTriggers: is.fun(
-      [is.str, is.class("Table")],
-      is.promise(is.array(is.obj({ run: is.fun(is.obj({}), is.any) })))
-    ),
-  },
-};
 
-module.exports = Trigger;
+namespace Trigger {
+  export type TriggerCfg = {
+    name?: string;
+    action: string;
+    description?: string;
+    table_id?: number | null;
+    table_name?: string;
+    table: Table;
+    when_trigger: string;
+    channel?: string;
+    id?: number | null;
+    configuration: any;
+    min_role: number;
+  };
+}
+type TriggerCfg = Trigger.TriggerCfg;
+
+export = Trigger;

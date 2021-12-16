@@ -4,21 +4,29 @@
  * @module models/eventlog
  * @subcategory models
  */
-const db = require("../db");
-const moment = require("moment");
 
-const { contract, is } = require("contractis");
+import db from "../db";
+import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
+import moment from "moment";
 
 /**
  * EventLog Class
  * @category saltcorn-data
  */
 class EventLog {
+  id?: number;
+  event_type: string;
+  channel?: string | null;
+  occur_at: Date;
+  user_id?: number | null;
+  payload?: any;
+  email?: string;
+
   /**
    * EventLog constructor
-   * @param {object} o 
+   * @param {object} o
    */
-  constructor(o) {
+  constructor(o: EventLogCfg) {
     this.id = o.id;
     this.event_type = o.event_type;
     this.channel = o.channel;
@@ -28,36 +36,33 @@ class EventLog {
     this.user_id = o.user_id;
     this.payload =
       typeof o.payload === "string" ? JSON.parse(o.payload) : o.payload;
-    contract.class(this);
   }
 
   /**
-   * @param {object} where 
-   * @param {object} selopts 
+   * @param {object} where
+   * @param {object} selopts
    * @returns {Promise<EventLog[]>}
    */
-  static async find(where, selopts) {
+  static async find(where: Where, selopts: SelectOptions): Promise<EventLog[]> {
     const us = await db.select("_sc_event_log", where, selopts);
-    return us.map((u) => new EventLog(u));
+    return us.map((u: EventLogCfg) => new EventLog(u));
   }
 
   /**
-   * @param {object} where 
+   * @param {object} where
    * @returns {Promise<EventLog>}
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<EventLog> {
     const u = await db.selectOne("_sc_event_log", where);
     return new EventLog(u);
   }
 
   /**
-   * @param {string} id 
+   * @param {number} id
    * @returns {Promise<EventLog>}
    */
-  static async findOneWithUser(id) {
-    const {
-      rows,
-    } = await db.query(
+  static async findOneWithUser(id: number): Promise<EventLog> {
+    const { rows } = await db.query(
       "select el.*, u.email from _sc_event_log el left join users u on el.user_id = u.id where el.id = $1",
       [id]
     );
@@ -68,25 +73,25 @@ class EventLog {
   }
 
   /**
-   * @param {object} where 
+   * @param {object} where
    * @returns {Promise<number>}
    */
-  static async count(where) {
+  static async count(where: Where): Promise<number> {
     return await db.count("_sc_event_log", where || {});
   }
 
   /**
-    * @type {string}
-    */
-  get reltime() {
+   * @type {string}
+   */
+  get reltime(): string {
     return moment(this.occur_at).fromNow();
   }
 
   /**
-   * @param {object} o 
+   * @param {object} o
    * @returns {Promise<EventLog>}
    */
-  static async create(o) {
+  static async create(o: EventLogCfg): Promise<EventLog | void> {
     const { getState } = require("../db/state");
 
     const settings = getState().getConfig("event_log_settings", {});
@@ -97,7 +102,7 @@ class EventLog {
     if (hasChannel && settings[`${o.event_type}_channel`]) {
       const wantChannels = settings[`${o.event_type}_channel`]
         .split(",")
-        .map((s) => s.trim());
+        .map((s: string) => s.trim());
       if (!wantChannels.includes(o.channel)) return;
     }
     const ev = new EventLog(o);
@@ -108,39 +113,34 @@ class EventLog {
   }
 
   /**
-   * @param {string} evType 
+   * @param {string} evType
    * @returns {boolean}
    */
-  static hasTable(evType) {
+  static hasTable(evType: string): boolean {
     return ["Insert", "Update", "Delete"].includes(evType);
   }
 
   /**
-   * @param {string} evType 
+   * @param {string} evType
    * @returns {boolean}
    */
-  static hasChannel(evType) {
+  static hasChannel(evType: string): boolean {
     const { getState } = require("../db/state");
     const t = getState().eventTypes[evType];
     return t && t.hasChannel;
   }
 }
 
-EventLog.contract = {
-  variables: {
-    id: is.maybe(is.posint),
-    event_type: is.str,
-    channel: is.maybe(is.str),
-    occur_at: is.class("Date"),
-    user_id: is.maybe(is.posint),
-    payload: is.maybe(is.obj()),
-  },
-  methods: {},
-  static_methods: {
-    find: is.fun(is.obj(), is.promise(is.array(is.class("EventLog")))),
-    findOne: is.fun(is.obj(), is.promise(is.class("EventLog"))),
-    create: is.fun(is.obj(), is.promise(is.any)),
-  },
-};
+namespace EventLog {
+  export type EventLogCfg = {
+    id?: number;
+    event_type: string;
+    channel?: string | null;
+    occur_at: Date;
+    user_id?: number | null;
+    payload?: any | null;
+  };
+}
+type EventLogCfg = EventLog.EventLogCfg;
 
-module.exports = EventLog;
+export = EventLog;

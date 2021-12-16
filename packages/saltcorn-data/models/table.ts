@@ -4,25 +4,44 @@
  * @module models/table
  * @subcategory models
  */
-const db = require("../db");
-const {
+import db from "../db";
+import {
   sqlsanitize,
   mkWhere,
   mkSelectOptions,
-} = require("@saltcorn/db-common/internal");
-const Field = require("./field");
-const Trigger = require("./trigger");
+  orderByIsObject,
+} from "@saltcorn/db-common/internal";
+import type {
+  Where,
+  SelectOptions,
+  Row,
+  JoinField,
+  CoordOpts,
+  JoinOptions,
+  AggregationOptions,
+} from "@saltcorn/db-common/internal";
+
+import Field from "./field";
+
+import type {
+  ResultMessage,
+  ErrorMessage,
+  SuccessMessage,
+  TypeObj,
+} from "../common_types";
+import { instanceOfErrorMsg, instanceOfTypeObj } from "../common_types";
+
+import Trigger from "./trigger";
 const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
   recalculate_for_stored,
   get_expression_function,
 } = require("./expression");
-const { contract, is } = require("contractis");
-const { is_table_query } = require("../contracts");
-const csvtojson = require("csvtojson");
-const moment = require("moment");
-const fs = require("fs");
+import csvtojson from "csvtojson";
+import moment from "moment";
+import { createReadStream } from "fs";
+import { stat, readFile } from "fs/promises";
 const {
   InvalidConfiguration,
   InvalidAdminAction,
@@ -37,17 +56,17 @@ const {
  * @param objs
  * @returns {object}
  */
-const transposeObjects = (objs) => {
-  const keys = new Set();
+const transposeObjects = (objs: any[]): any => {
+  const keys = new Set<string>();
   for (const o of objs) {
     Object.keys(o).forEach((k) => keys.add(k));
   }
-  const res = {};
-  keys.forEach((k) => {
+  const res: any = {};
+  keys.forEach((k: string) => {
     res[k] = [];
   });
   for (const o of objs) {
-    keys.forEach((k) => {
+    keys.forEach((k: string) => {
       res[k].push(o[k]);
     });
   }
@@ -63,7 +82,7 @@ const dateFormats = [moment.ISO_8601];
  * @param date
  * @returns {boolean}
  */
-const isDate = function (date) {
+const isDate = function (date: Date): boolean {
   return moment(date, dateFormats, true).isValid();
 };
 // todo resolve database specific
@@ -73,7 +92,7 @@ const isDate = function (date) {
  * @returns {string}
  */
 // todo refactor
-const normalise_error_message = (msg) =>
+const normalise_error_message = (msg: string): string =>
   db.isSQLite
     ? msg.replace(
         /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
@@ -89,11 +108,22 @@ const normalise_error_message = (msg) =>
  * @category saltcorn-data
  */
 class Table {
+  name: string;
+  id: number;
+  min_role_read: string;
+  min_role_write: string;
+  ownership_field_id?: string;
+  ownership_formula?: string;
+  versioned: boolean;
+  external: boolean;
+  description: string;
+  fields?: Field[];
+
   /**
    * Table constructor
    * @param {object} o
    */
-  constructor(o) {
+  constructor(o: TableCfg) {
     this.name = o.name;
     this.id = o.id;
     this.min_role_read = o.min_role_read;
@@ -104,7 +134,6 @@ class Table {
     this.external = false;
     this.description = o.description;
     if (o.fields) this.fields = o.fields.map((f) => new Field(f));
-    contract.class(this);
   }
 
   /**
@@ -113,13 +142,13 @@ class Table {
    * @param where - where condition
    * @returns {*|Table|null} table or null
    */
-  static findOne(where) {
+  static findOne(where: Where | Table): Table | null {
     if (
       where &&
       ((where.constructor && where.constructor.name === "Table") ||
         where.getRows)
     )
-      return where;
+      return <Table>where;
     if (typeof where === "string") return Table.findOne({ name: where });
     if (typeof where === "number") return Table.findOne({ id: where });
     if (where.name) {
@@ -130,9 +159,9 @@ class Table {
     const { getState } = require("../db/state");
     const tbl = getState().tables.find(
       where.id
-        ? (v) => v.id === +where.id
+        ? (v: TableCfg) => v.id === +where.id
         : where.name
-        ? (v) => v.name === where.name
+        ? (v: TableCfg) => v.name === where.name
         : satisfies(where)
     );
     return tbl ? new Table(structuredClone(tbl)) : null;
@@ -144,14 +173,17 @@ class Table {
    * @param selectopts - options
    * @returns {Promise<Table[]>} table list
    */
-  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+  static async find(
+    where?: Where,
+    selectopts: SelectOptions = { orderBy: "name", nocase: true }
+  ): Promise<Table[]> {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
-      return getState().tables.map((t) => new Table(t));
+      return getState().tables.map((t: TableCfg) => new Table(t));
     }
     const tbls = await db.select("_sc_tables", where, selectopts);
 
-    return tbls.map((t) => new Table(t));
+    return tbls.map((t: TableCfg) => new Table(t));
   }
 
   /**
@@ -161,11 +193,11 @@ class Table {
    * @returns {Promise<object[]>}
    */
   static async find_with_external(
-    where0 = {},
-    selectopts = { orderBy: "name", nocase: true }
-  ) {
+    where0: Where = {},
+    selectopts: SelectOptions = { orderBy: "name", nocase: true }
+  ): Promise<Table[]> {
     const { external, ...where } = where0;
-    let externals = [],
+    let externals: any[] = [],
       dbs = [];
     if (external !== false) {
       //do include externals
@@ -175,7 +207,7 @@ class Table {
     if (external !== true) {
       //do include db tables
       const tbls = await db.select("_sc_tables", where, selectopts);
-      dbs = tbls.map((t) => new Table(t));
+      dbs = tbls.map((t: TableCfg) => new Table(t));
     }
     return [...dbs, ...externals];
   }
@@ -185,17 +217,17 @@ class Table {
    * @param fields - fields list
    * @returns {null|*} null or owner column name
    */
-  owner_fieldname_from_fields(fields) {
-    if (!this.ownership_field_id) return null;
-    const field = fields.find((f) => f.id === this.ownership_field_id);
-    return field.name;
+  owner_fieldname_from_fields(fields?: Field[]): string | null | undefined {
+    if (!this.ownership_field_id || !fields) return null;
+    const field = fields.find((f: Field) => f.id === this.ownership_field_id);
+    return field?.name;
   }
 
   /**
    * Get owner column name
    * @returns {Promise<string|null|*>}
    */
-  owner_fieldname() {
+  owner_fieldname(): string | null | undefined {
     if (this.name === "users") return "id";
     if (!this.ownership_field_id) return null;
     return this.owner_fieldname_from_fields(this.fields);
@@ -207,14 +239,14 @@ class Table {
    * @param row - table row
    * @returns {Promise<string|null|*|boolean>}
    */
-  is_owner(user, row) {
+  is_owner(user: any, row: Row): boolean {
     if (!user) return false;
     if (this.ownership_formula) {
       const f = get_expression_function(this.ownership_formula, this.fields);
       return f(row, user);
     }
     const field_name = this.owner_fieldname();
-    return field_name && row[field_name] === user.id;
+    return typeof field_name === "string" && row[field_name] === user.id;
   }
 
   /**
@@ -223,7 +255,10 @@ class Table {
    * @param options - table fields
    * @returns {Promise<Table>} table
    */
-  static async create(name, options = {}) {
+  static async create(
+    name: string,
+    options: SelectOptions = {}
+  ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
     await db.query(
@@ -232,7 +267,7 @@ class Table {
       } primary key)`
     );
     // populate table definition row
-    const tblrow = {
+    const tblrow: any = {
       name,
       versioned: options.versioned || false,
       min_role_read: options.min_role_read || 1,
@@ -250,6 +285,7 @@ class Table {
       [id]
     );
     // create table
+
     const table = new Table({ ...tblrow, id });
     // create table history
     if (table.versioned) await table.create_history_table();
@@ -263,7 +299,7 @@ class Table {
    * Drop current table
    * @returns {Promise<void>}
    */
-  async delete(only_forget = false) {
+  async delete(only_forget: boolean = false): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
     await this.update({ ownership_field_id: null });
@@ -301,7 +337,7 @@ class Table {
    * get Table SQL Name
    * @type {string}
    */
-  get sql_name() {
+  get sql_name(): string {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
 
@@ -310,7 +346,7 @@ class Table {
    * @param where - condition
    * @returns {Promise<void>}
    */
-  async deleteRows(where) {
+  async deleteRows(where: Where) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     if (triggers.length > 0) {
@@ -318,7 +354,7 @@ class Table {
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
-          await trigger.run(row);
+          await trigger.run!(row);
         }
       }
     }
@@ -330,10 +366,12 @@ class Table {
    * @param row
    * @returns {*}
    */
-  readFromDB(row) {
-    for (const f of this.fields) {
-      if (f.type && f.type.readFromDB)
-        row[f.name] = f.type.readFromDB(row[f.name]);
+  readFromDB(row: Row): any {
+    if (this.fields) {
+      for (const f of this.fields) {
+        if (f.type && instanceOfTypeObj(f.type) && f.type.readFromDB)
+          row[f.name] = f.type.readFromDB(row[f.name]);
+      }
     }
     return row;
   }
@@ -343,7 +381,7 @@ class Table {
    * @param where
    * @returns {Promise<null|*>}
    */
-  async getRow(where = {}) {
+  async getRow(where: Where = {}): Promise<Row | null> {
     await this.getFields();
     const row = await db.selectMaybeOne(this.name, where);
     if (!row) return null;
@@ -356,11 +394,11 @@ class Table {
    * @param selopts
    * @returns {Promise<void>}
    */
-  async getRows(where = {}, selopts) {
+  async getRows(where: Where = {}, selopts?: SelectOptions): Promise<Row[]> {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
     return apply_calculated_fields(
-      rows.map((r) => this.readFromDB(r)),
+      rows.map((r: Row) => this.readFromDB(r)),
       this.fields
     );
   }
@@ -370,7 +408,7 @@ class Table {
    * @param where
    * @returns {Promise<number>}
    */
-  async countRows(where) {
+  async countRows(where: Where): Promise<number> {
     return await db.count(this.name, where);
   }
 
@@ -380,11 +418,11 @@ class Table {
    * @param fieldnm
    * @returns {Promise<Object[]>}
    */
-  async distinctValues(fieldnm) {
+  async distinctValues(fieldnm: string): Promise<any[]> {
     const res = await db.query(
       `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
     );
-    return res.rows.map((r) => r[fieldnm]);
+    return res.rows.map((r: Row) => r[fieldnm]);
   }
 
   /**
@@ -394,12 +432,12 @@ class Table {
    * @param _userid - user id
    * @returns {Promise<void>}
    */
-  async updateRow(v_in, id, _userid) {
+  async updateRow(v_in: any, id: number, _userid?: number): Promise<void> {
     let existing;
     let v;
     const fields = await this.getFields();
     const pk_name = this.pk_name;
-    if (fields.some((f) => f.calculated && f.stored)) {
+    if (fields.some((f: Field) => f.calculated && f.stored)) {
       existing = await db.selectOne(this.name, { [pk_name]: id });
       v = await apply_calculated_fields_stored(
         { ...existing, ...v_in },
@@ -437,11 +475,15 @@ class Table {
    * @param _userid
    * @returns {Promise<{error}|{success: boolean}>}
    */
-  async tryUpdateRow(v, id, _userid) {
+  async tryUpdateRow(
+    v: any,
+    id: any,
+    _userid?: number
+  ): Promise<ResultMessage> {
     try {
       await this.updateRow(v, id, _userid);
       return { success: true };
-    } catch (e) {
+    } catch (e: any) {
       return { error: normalise_error_message(e.message) };
     }
   }
@@ -452,7 +494,7 @@ class Table {
    * @param field_name
    * @returns {Promise<void>}
    */
-  async toggleBool(id, field_name) {
+  async toggleBool(id: any, field_name: string): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
       `update ${schema}"${sqlsanitize(this.name)}" set "${sqlsanitize(
@@ -463,8 +505,9 @@ class Table {
     const triggers = await Trigger.getTableTriggers("Update", this);
     if (triggers.length > 0) {
       const row = await this.getRow({ id });
+      if (!row) throw new Error(`Unable to find row with id: ${id}`);
       for (const trigger of triggers) {
-        await trigger.run(row);
+        await trigger.run!(row);
       }
     }
   }
@@ -473,8 +516,12 @@ class Table {
    * Get primary key field
    * @type {string}
    */
-  get pk_name() {
-    return this.fields.find((f) => f.primary_key).name;
+  get pk_name(): string {
+    const pkField = this.fields?.find((f: Field) => f.primary_key)?.name;
+    if (!pkField) {
+      throw new Error("A primary key field is mandatory");
+    }
+    return pkField;
   }
 
   /**
@@ -483,7 +530,7 @@ class Table {
    * @param _userid
    * @returns {Promise<*>}
    */
-  async insertRow(v_in, _userid) {
+  async insertRow(v_in: any, _userid: any): Promise<any> {
     await this.getFields();
     const v = await apply_calculated_fields_stored(v_in, this.fields);
     const pk_name = this.pk_name;
@@ -506,11 +553,14 @@ class Table {
    * @param _userid
    * @returns {Promise<{error}|{success: *}>}
    */
-  async tryInsertRow(v, _userid) {
+  async tryInsertRow(
+    v: any,
+    _userid?: number
+  ): Promise<{ error: string } | { success: any }> {
     try {
       const id = await this.insertRow(v, _userid);
       return { success: id };
-    } catch (e) {
+    } catch (e: any) {
       return { error: normalise_error_message(e.message) };
     }
   }
@@ -519,9 +569,12 @@ class Table {
    * Get Fields list for table
    * @returns {Promise<Field[]>}
    */
-  async getFields() {
+  async getFields(): Promise<Field[]> {
     if (!this.fields) {
       this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
+      for (let field of this.fields) {
+        field.table = this;
+      }
     }
     return this.fields;
   }
@@ -531,14 +584,17 @@ class Table {
    * @returns {Promise<void>}
    */
   // todo create function that returns history table name for table
-  async create_history_table() {
+  async create_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     const fields = await this.getFields();
     const flds = fields.map(
-      (f) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
+      (f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
     );
-    const pk = fields.find((f) => f.primary_key).name;
+    const pk = fields.find((f) => f.primary_key)?.name;
+    if (!pk) {
+      throw new Error("Unable to find a field with a primary key.");
+    }
 
     // create history table
     await db.query(
@@ -556,7 +612,7 @@ class Table {
    * Drop history table
    * @returns {Promise<void>}
    */
-  async drop_history_table() {
+  async drop_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     await db.query(`
@@ -568,7 +624,7 @@ class Table {
    * @param new_name
    * @returns {Promise<void>}
    */
-  async rename(new_name) {
+  async rename(new_name: string): Promise<void> {
     //in transaction
     if (db.isSQLite)
       throw new InvalidAdminAction("Cannot rename table on SQLite");
@@ -613,22 +669,28 @@ class Table {
    * @param new_table_rec
    * @returns {Promise<void>}
    */
-  async update(new_table_rec) {
+  async update(new_table_rec: any): Promise<void> {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = await Table.findOne({ id: this.id });
+    if (!existing) {
+      throw new Error(`Unable to find table with id: ${this.id}`);
+    }
     const { external, fields, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
     await require("../db/state").getState().refresh_tables();
 
     const new_table = await Table.findOne({ id: this.id });
-
-    if (new_table.versioned && !existing.versioned) {
-      await new_table.create_history_table();
-    } else if (!new_table.versioned && existing.versioned) {
-      await new_table.drop_history_table();
+    if (!new_table) {
+      throw new Error(`Unable to find table with id: ${this.id}`);
+    } else {
+      if (new_table.versioned && !existing.versioned) {
+        await new_table.create_history_table();
+      } else if (!new_table.versioned && existing.versioned) {
+        await new_table.drop_history_table();
+      }
+      Object.assign(this, new_table_rec);
     }
-    Object.assign(this, new_table_rec);
   }
 
   /**
@@ -636,7 +698,7 @@ class Table {
    * @param id
    * @returns {Promise<*>}
    */
-  async get_history(id) {
+  async get_history(id: number): Promise<Row[]> {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
       { id },
@@ -648,7 +710,7 @@ class Table {
    * Enable constraints
    * @returns {Promise<void>}
    */
-  async enable_fkey_constraints() {
+  async enable_fkey_constraints(): Promise<void> {
     const fields = await this.getFields();
     for (const f of fields) await f.enable_fkey_constraint(this);
   }
@@ -659,7 +721,10 @@ class Table {
    * @param filePath
    * @returns {Promise<{error: string}|{error: string}|{error: string}|{error: string}|{error: string}|{success: string}|{error: (string|string|*)}>}
    */
-  static async create_from_csv(name, filePath) {
+  static async create_from_csv(
+    name: string,
+    filePath: string
+  ): Promise<ResultMessage> {
     let rows;
     try {
       const s = await getLines(filePath, 500);
@@ -670,22 +735,23 @@ class Table {
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
     for (const [k, vs] of Object.entries(rowsTr)) {
-      const required = vs.every((v) => v !== "");
-      const nonEmpties = vs.filter((v) => v !== "");
+      const required = (<any[]>vs).every((v: any) => v !== "");
+      const nonEmpties = (<any[]>vs).filter((v: any) => v !== "");
       const isBools = "true false yes no on off y n t f".split(" ");
       let type;
       if (
-        nonEmpties.every((v) =>
+        nonEmpties.every((v: any) =>
           //https://www.postgresql.org/docs/11/datatype-boolean.html
 
           isBools.includes(v && v.toLowerCase && v.toLowerCase())
         )
       )
         type = "Bool";
-      else if (nonEmpties.every((v) => !isNaN(v)))
-        if (nonEmpties.every((v) => Number.isSafeInteger(+v))) type = "Integer";
+      else if (nonEmpties.every((v: any) => !isNaN(v)))
+        if (nonEmpties.every((v: any) => Number.isSafeInteger(+v)))
+          type = "Integer";
         else type = "Float";
-      else if (nonEmpties.every((v) => isDate(v))) type = "Date";
+      else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
@@ -716,13 +782,13 @@ class Table {
       }
       try {
         await Field.create(fld);
-      } catch (e) {
+      } catch (e: any) {
         await table.delete();
         return { error: `Error in header ${k}: ${e.message}` };
       }
     }
     const parse_res = await table.import_csv_file(filePath);
-    if (parse_res.error) {
+    if (instanceOfErrorMsg(parse_res)) {
       await table.delete();
       return { error: parse_res.error };
     }
@@ -740,7 +806,11 @@ class Table {
    * @param skip_first_data_row
    * @returns {Promise<{error: string}|{success: string}>}
    */
-  async import_csv_file(filePath, recalc_stored, skip_first_data_row) {
+  async import_csv_file(
+    filePath: string,
+    recalc_stored?: boolean,
+    skip_first_data_row?: boolean
+  ): Promise<ResultMessage> {
     let headers;
     const { readStateStrict } = require("../plugin-helper");
     try {
@@ -753,9 +823,9 @@ class Table {
       return { error: `Error processing CSV file` };
     }
     const fields = (await this.getFields()).filter((f) => !f.calculated);
-    const okHeaders = {};
+    const okHeaders: any = {};
     const pk_name = this.pk_name;
-    const renames = [];
+    const renames: any[] = [];
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
       else if (headers.includes(f.label)) {
@@ -764,7 +834,7 @@ class Table {
       } else if (f.required && !f.primary_key)
         return { error: `Required field missing: ${f.label}` };
     }
-    const fieldNames = headers.map((hnm) => {
+    const fieldNames = headers.map((hnm: any) => {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
     // also id
@@ -775,12 +845,12 @@ class Table {
     let rejects = 0;
     const client = db.isSQLite ? db : await db.getClient();
 
-    const stats = await fs.promises.stat(filePath);
+    const stats = await stat(filePath);
     const fileSizeInMegabytes = stats.size / (1024 * 1024);
 
     await client.query("BEGIN");
 
-    const readStream = fs.createReadStream(filePath);
+    const readStream = createReadStream(filePath);
 
     try {
       if (db.copyFrom && fileSizeInMegabytes > 1) {
@@ -788,7 +858,7 @@ class Table {
 
         const copyres = await db
           .copyFrom(readStream, this.name, fieldNames, client)
-          .catch((cate) => {
+          .catch((cate: Error) => {
             theError = cate;
           });
         if (theError || (copyres && copyres.error)) {
@@ -802,13 +872,13 @@ class Table {
           };
         }
       } else {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           csvtojson({
             includeColumns: colRe,
           })
             .fromStream(readStream)
             .subscribe(
-              async (rec) => {
+              async (rec: any) => {
                 i += 1;
                 if (skip_first_data_row && i === 2) return;
                 try {
@@ -824,14 +894,14 @@ class Table {
                       pk_name,
                     });
                   else rejects += 1;
-                } catch (e) {
+                } catch (e: any) {
                   await client.query("ROLLBACK");
 
                   if (!db.isSQLite) await client.release(true);
                   reject({ error: `${e.message} in row ${i}` });
                 }
               },
-              (err) => {
+              (err: any) => {
                 reject({ error: !err ? err : err.message || err });
               },
               () => {
@@ -841,7 +911,7 @@ class Table {
         });
         readStream.destroy();
       }
-    } catch (e) {
+    } catch (e: any) {
       return {
         error: `Error processing CSV file: ${
           !e ? e : e.error || e.message || e
@@ -853,10 +923,22 @@ class Table {
 
     if (!db.isSQLite) await client.release(true);
     const pk = fields.find((f) => f.primary_key);
-    if (db.reset_sequence && pk.type.name === "Integer")
+    if (!pk) {
+      throw new Error("Unable to find a field with a primary key.");
+    }
+
+    if (
+      db.reset_sequence &&
+      instanceOfTypeObj(pk.type) &&
+      pk.type.name === "Integer"
+    )
       await db.reset_sequence(this.name);
 
-    if (recalc_stored && this.fields.some((f) => f.calculated && f.stored)) {
+    if (
+      recalc_stored &&
+      this.fields &&
+      this.fields.some((f) => f.calculated && f.stored)
+    ) {
       await recalculate_for_stored(this);
     }
     return {
@@ -873,9 +955,12 @@ class Table {
    * @param skip_first_data_row
    * @returns {Promise<{error: string}|{success: string}>}
    */
-  async import_json_file(filePath, skip_first_data_row) {
+  async import_json_file(
+    filePath: string,
+    skip_first_data_row?: boolean
+  ): Promise<any> {
     // todo argument type buffer is not assignable for type String...
-    const file_rows = JSON.parse(await fs.promises.readFile(filePath));
+    const file_rows = JSON.parse(await (await readFile(filePath)).toString());
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -896,7 +981,7 @@ class Table {
       try {
         readState(rec, fields);
         await db.insert(this.name, rec, { noid: true, client, pk_name });
-      } catch (e) {
+      } catch (e: any) {
         await client.query("ROLLBACK");
 
         if (!db.isSQLite) await client.release(true);
@@ -906,7 +991,12 @@ class Table {
     await client.query("COMMIT");
     if (!db.isSQLite) await client.release(true);
     const pk = fields.find((f) => f.primary_key);
-    if (db.reset_sequence && pk.type.name === "Integer")
+    if (!pk) throw new Error("Unable to find a primary key field.");
+    if (
+      db.reset_sequence &&
+      instanceOfTypeObj(pk.type) &&
+      pk.type.name === "Integer"
+    )
       await db.reset_sequence(this.name);
 
     return {
@@ -919,26 +1009,36 @@ class Table {
    * @param allow_double
    * @returns {Promise<{parent_relations: object[], parent_field_list: object[]}>}
    */
-  async get_parent_relations(allow_double) {
+  async get_parent_relations(allow_double?: boolean): Promise<ParentRelations> {
     const fields = await this.getFields();
     let parent_relations = [];
     let parent_field_list = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
         const table = await Table.findOne({ name: f.reftable_name });
+        if (!table) throw new Error(`Unable to find table '${f.reftable_name}`);
         await table.getFields();
+        if (!table.fields)
+          throw new Error(`The table '${f.reftable_name} has no fields.`);
+
         for (const pf of table.fields.filter(
-          (f) => !f.calculated || f.stored
+          (f: Field) => !f.calculated || f.stored
         )) {
           parent_field_list.push(`${f.name}.${pf.name}`);
           if (pf.is_fkey && pf.type !== "File" && allow_double) {
             const table1 = await Table.findOne({ name: pf.reftable_name });
+            if (!table1)
+              throw new Error(`Unable to find table '${pf.reftable_name}`);
             await table1.getFields();
-            for (const gpf of table1.fields.filter(
-              (f) => !f.calculated || f.stored
-            )) {
-              parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
-            }
+            if (!table1.fields)
+              throw new Error(`The table '${pf.reftable_name} has no fields.`);
+            if (table1.fields)
+              for (const gpf of table1.fields.filter(
+                (f: Field) => !f.calculated || f.stored
+              )) {
+                parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+              }
+
             parent_relations.push({ key_field: pf, through: f, table: table1 });
           }
         }
@@ -952,13 +1052,16 @@ class Table {
    * Get child relations for table
    * @returns {Promise<{child_relations: object[], child_field_list: object[]}>}
    */
-  async get_child_relations() {
+  async get_child_relations(): Promise<ChildRelations> {
     const cfields = await Field.find({ reftable_name: this.name });
     let child_relations = [];
     let child_field_list = [];
     for (const f of cfields) {
       if (f.is_fkey) {
         const table = await Table.findOne({ id: f.table_id });
+        if (!table) {
+          throw new Error(`Unable to find table with id: ${f.table_id}`);
+        }
         child_field_list.push(`${table.name}.${f.name}`);
         await table.getFields();
         child_relations.push({ key_field: f, table });
@@ -972,12 +1075,12 @@ class Table {
    * @param opts
    * @returns {Promise<{values, sql: string}>}
    */
-  async getJoinedQuery(opts = {}) {
+  async getJoinedQuery(opts: JoinOptions | any = {}): Promise<any> {
     const fields = await this.getFields();
     let fldNms = [];
     let joinq = "";
-    let joinTables = [];
-    let joinFields = opts.joinFields || [];
+    let joinTables: string[] = [];
+    let joinFields: JoinField = opts.joinFields || [];
     const schema = db.getTenantSchemaPrefix();
 
     fields
@@ -1017,7 +1120,7 @@ class Table {
           );
         const throughTableFields = await throughTable.getFields();
         const throughRefField = throughTableFields.find(
-          (f) => f.name === through
+          (f: Field) => f.name === through
         );
         if (!throughRefField)
           throw new InvalidConfiguration(
@@ -1028,6 +1131,8 @@ class Table {
           through
         )}_jt_${sqlsanitize(ref)}`;
         if (!joinTables.includes(jtNm1)) {
+          if (!finalTable)
+            throw new Error("Unable to build a joind without a reftable_name.");
           joinTables.push(jtNm1);
           joinq += ` left join ${schema}"${sqlsanitize(
             finalTable
@@ -1041,7 +1146,7 @@ class Table {
     for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
-    Object.entries(opts.aggregations || {}).forEach(
+    Object.entries<AggregationOptions>(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
         if (aggregate.startsWith("Latest ")) {
           const dateField = aggregate.replace("Latest ", "");
@@ -1075,7 +1180,7 @@ class Table {
       }
     );
 
-    let whereObj = {};
+    let whereObj: any = {};
     if (opts.where) {
       Object.keys(opts.where).forEach((k) => {
         if (k === "_fts") whereObj[k] = { table: "a", ...opts.where[k] };
@@ -1083,11 +1188,11 @@ class Table {
       });
     }
     const { where, values } = mkWhere(whereObj, db.isSQLite);
-    const selectopts = {
+    const selectopts: SelectOptions = {
       limit: opts.limit,
       orderBy:
         opts.orderBy &&
-        (opts.orderBy.distance ? opts.orderBy : "a." + opts.orderBy),
+        (orderByIsObject(opts.orderBy) ? opts.orderBy : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
@@ -1102,7 +1207,7 @@ class Table {
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */
-  async getJoinedRows(opts = {}) {
+  async getJoinedRows(opts: JoinOptions | any = {}) {
     const fields = await this.getFields();
 
     const { sql, values } = await this.getJoinedQuery(opts);
@@ -1112,100 +1217,38 @@ class Table {
   }
 }
 
-/**
- * Table contract
- * @type {{variables: {name: ((function(*=): *)|*)}, methods: {updateRow: ((function(*=): *)|*), get_history: ((function(*=): *)|*), tryUpdateRow: ((function(*=): *)|*), deleteRows: ((function(*=): *)|*), update: ((function(*=): *)|*), getRows: ((function(*=): *)|*), getRow: ((function(*=): *)|*), delete: ((function(*=): *)|*), get_parent_relations: ((function(*=): *)|*), get_child_relations: ((function(*=): *)|*), tryInsertRow: ((function(*=): *)|*), getFields: ((function(*=): *)|*), insertRow: ((function(*=): *)|*), toggleBool: ((function(*=): *)|*), getJoinedRows: ((function(*=): *)|*), countRows: ((function(*=): *)|*), distinctValues: ((function(*=): *)|*), sql_name: ((function(*=): *)|*), import_csv_file: ((function(*=): *)|*)}, static_methods: {find: ((function(*=): *)|*), create_from_csv: ((function(*=): *)|*), findOne: ((function(*=): *)|*), find_with_external: ((function(*=): *)|*), create: ((function(*=): *)|*)}, constructs: {name: ((function(*=): *)|*)}}}
- */
-Table.contract = {
-  constructs: { name: is.str },
-  variables: { name: is.str },
-  methods: {
-    delete: is.fun([], is.promise(is.eq(undefined))),
-    update: is.fun(is.obj(), is.promise(is.eq(undefined))),
-    deleteRows: is.fun(is.obj(), is.promise(is.eq(undefined))),
-    getRow: is.fun(is.maybe(is.obj()), is.promise(is.maybe(is.obj()))),
-    getRows: is.fun(is.maybe(is.obj()), is.promise(is.array(is.obj()))),
-    countRows: is.fun(is.maybe(is.obj()), is.promise(is.posint)),
-    updateRow: is.fun([is.obj(), is.any], is.promise(is.eq(undefined))),
-    toggleBool: is.fun([is.any, is.str], is.promise(is.eq(undefined))),
-    insertRow: is.fun(is.obj(), is.promise(is.any)),
-    get_history: is.fun(is.posint, is.promise(is.array(is.obj()))),
-    distinctValues: is.fun(is.str, is.promise(is.array(is.any))),
-    tryInsertRow: is.fun(
-      [is.obj(), is.maybe(is.posint)],
-      is.promise(is.or(is.obj({ error: is.str }), is.obj({ success: is.any })))
-    ),
-    tryUpdateRow: is.fun(
-      [is.obj(), is.any, is.maybe(is.posint)],
-      is.promise(
-        is.or(is.obj({ error: is.str }), is.obj({ success: is.eq(true) }))
-      )
-    ),
-    sql_name: is.getter(is.str),
-    getFields: is.fun([], is.promise(is.array(is.class("Field")))),
-    get_parent_relations: is.fun(
-      [],
-      is.promise(
-        is.obj({
-          parent_relations: is.array(
-            is.obj({
-              key_field: is.class("Field"),
-              table: is.class("Table"),
-            })
-          ),
-          parent_field_list: is.array(is.str),
-        })
-      )
-    ),
-    get_child_relations: is.fun(
-      [],
-      is.promise(
-        is.obj({
-          child_relations: is.array(
-            is.obj({
-              key_field: is.class("Field"),
-              table: is.class("Table"),
-            })
-          ),
-          child_field_list: is.array(is.str),
-        })
-      )
-    ),
-    import_csv_file: is.fun(
-      is.str,
-      is.promise(is.or(is.obj({ success: is.str }), is.obj({ error: is.str })))
-    ),
-    getJoinedRows: is.fun(
-      is.maybe(is_table_query),
-      is.promise(is.array(is.obj({})))
-    ),
-  },
-  static_methods: {
-    find: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("Table")))
-    ),
-    find_with_external: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(
-        is.array(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
-      )
-    ),
-    findOne: is.fun(
-      is.or(is.obj(), is.str, is.posint),
-      is.maybe(is.or(is.class("Table"), is.obj({ external: is.eq(true) })))
-    ),
-    create: is.fun(is.str, is.promise(is.class("Table"))),
-    create_from_csv: is.fun(
-      [is.str, is.str],
-      is.promise(
-        is.or(
-          is.obj({ success: is.str, table: is.class("Table") }),
-          is.obj({ error: is.str })
-        )
-      )
-    ),
-    //update: is.fun([is.posint, is.obj({})], is.promise(is.eq(undefined)))
-  },
-};
-module.exports = Table;
+// declaration merging
+namespace Table {
+  export type TableCfg = {
+    name: string;
+    id: number;
+    min_role_read: string;
+    min_role_write: string;
+    ownership_field_id?: string;
+    ownership_formula?: string;
+    versioned?: boolean;
+    description: string;
+    fields: Field[];
+  };
+
+  export type ParentRelations = {
+    parent_relations: {
+      key_field: Field;
+      table: Table;
+    }[];
+    parent_field_list: string[];
+  };
+
+  export type ChildRelations = {
+    child_relations: {
+      key_field: Field;
+      table: Table;
+    }[];
+    child_field_list: string[];
+  };
+}
+type TableCfg = Table.TableCfg;
+type ParentRelations = Table.ParentRelations;
+type ChildRelations = Table.ChildRelations;
+
+export = Table;
