@@ -771,10 +771,12 @@ const save_menu_items = async (menu_items) => {
           const section_field = fields.find(
             (f) => f.name === item.dyn_section_field
           );
-          if (!section_field)
+          if (!section_field) {
+            const { InvalidConfiguration } = require("../utils");
             throw new InvalidConfiguration(
               `Dynamic menu section field ${item.dyn_section_field} not found`
             );
+          }
           const sections = section_field.attributes.options
             .split(",")
             .map((s) => s.trim());
