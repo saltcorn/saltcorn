@@ -17,6 +17,12 @@ class FixturesCommand extends Command {
     const fixtures = require("@saltcorn/data/db/fixtures");
     const reset = require("@saltcorn/data/db/reset_schema");
     const { flags } = this.parse(FixturesCommand);
+    if (flags.tenant) {
+      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+      const { init_multi_tenant } = require("@saltcorn/data/db/state");
+      await loadAllPlugins();
+      await init_multi_tenant(loadAllPlugins);
+    }
     await maybe_as_tenant(flags.tenant, async () => {
       if (flags.reset) {
         await reset();
