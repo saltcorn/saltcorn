@@ -31,6 +31,7 @@ const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
     id ? { id } : set_id ? { id: set_id } : {},
     mockReqRes
   );
+  if (res !== response) console.log(res);
   expect(res).toBe(response);
   await v.delete();
 };
@@ -201,6 +202,218 @@ describe("Show view", () => {
       },
       columns: [],
       response: `<div class="card mt-4 shadow"><div class="card-body">Herman Melville<br />Herman Melville</div></div>`,
+    });
+    const showbooks1 = {
+      layout: {
+        above: [
+          {
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    contents: "Author",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "as_text",
+                    textStyle: "",
+                    field_name: "author",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          { type: "line_break" },
+          {
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    contents: "Pages",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "show",
+                    textStyle: "",
+                    field_name: "pages",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          { type: "line_break" },
+          {
+            type: "container",
+            style: {},
+            bgType: "None",
+            hAlign: "left",
+            margin: [0, 0, 0, 0],
+            rotate: 0,
+            vAlign: "top",
+            bgColor: "#ffffff",
+            display: "block",
+            padding: [0, 0, 0, 0],
+            bgFileId: 0,
+            contents: {
+              type: "action",
+              block: false,
+              rndid: "746098",
+              confirm: false,
+              minRole: 10,
+              isFormula: {},
+              action_icon: "",
+              action_name: "Delete",
+              action_label: "",
+              configuration: {},
+            },
+            imageSize: "contain",
+            isFormula: {},
+            minHeight: 0,
+            textColor: "#ffffff",
+            widthUnit: "px",
+            heightUnit: "px",
+            htmlElement: "div",
+            showForRole: [
+              null,
+              true,
+              null,
+              null,
+              true,
+              null,
+              null,
+              null,
+              false,
+              null,
+              false,
+            ],
+            gradEndColor: "#88ff88",
+            setTextColor: false,
+            fullPageWidth: false,
+            gradDirection: "0",
+            minHeightUnit: "px",
+            showIfFormula: "",
+            gradStartColor: "#ff8888",
+            maxScreenWidth: "",
+            minScreenWidth: "",
+            show_for_owner: false,
+          },
+          {
+            type: "container",
+            style: {},
+            bgType: "None",
+            hAlign: "left",
+            margin: [0, 0, 0, 0],
+            rotate: 0,
+            vAlign: "top",
+            bgColor: "#ffffff",
+            display: "block",
+            padding: [0, 0, 0, 0],
+            bgFileId: 0,
+            contents: {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              contents: "VERY LONG",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            imageSize: "contain",
+            isFormula: {},
+            minHeight: 0,
+            textColor: "#ffffff",
+            widthUnit: "px",
+            heightUnit: "px",
+            htmlElement: "div",
+            showForRole: [],
+            gradEndColor: "#88ff88",
+            setTextColor: false,
+            fullPageWidth: false,
+            gradDirection: "0",
+            minHeightUnit: "px",
+            showIfFormula: "pages>800",
+            gradStartColor: "#ff8888",
+            maxScreenWidth: "",
+            minScreenWidth: "",
+            show_for_owner: false,
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          field_name: "author",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "show",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {},
+        },
+        {
+          type: "Action",
+          rndid: "746098",
+          confirm: false,
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Delete",
+          action_label: "",
+          configuration: {},
+        },
+      ],
+    };
+    await test_show({
+      ...showbooks1,
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-left" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/1?redirect=/view/testshow" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="text-left" style="min-height: 0px;border: 0px undefined black;    ">VERY LONG</div>`,
+    });
+    await test_show({
+      ...showbooks1,
+      id: 2,
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-left" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/2?redirect=/view/testshow" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div>`,
     });
   });
 });

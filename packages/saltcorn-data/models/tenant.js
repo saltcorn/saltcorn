@@ -23,6 +23,18 @@ const getAllTenants = contract(
     return tens.map(({ subdomain }) => subdomain);
   }
 );
+
+/**
+ * List all Tenants
+ * @function
+ * @returns {Promise<string[]>}
+ */
+const getAllTenantRows = contract(
+  is.fun([], is.promise(is.array(is.obj({})))),
+  async () => {
+    return await db.select("_sc_tenants");
+  }
+);
 /**
  * Create Tenant and switch to It:
  * - normalize domain name
@@ -136,6 +148,7 @@ const eachTenant = async (f) => {
 
 module.exports = {
   getAllTenants,
+  getAllTenantRows,
   createTenant,
   domain_sanitize,
   deleteTenant,
