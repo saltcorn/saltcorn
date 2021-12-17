@@ -511,7 +511,7 @@ const plugin_store_html = (items, req) => {
       },
       {
         besides: items.map(store_item_html(req)),
-        widths: items.map((item) => 4), // todo warning that item uis unused
+        widths: items.map(() => 4),
       },
     ],
   };
