@@ -582,14 +582,14 @@ function test_formula(tablename, stored) {
     },
   });
 }
-function align_dropdown(id) {
+function align_dropdown(id, input_id) {
   setTimeout(() => {
     if ($("#dm" + id).hasClass("show")) {
-      var inputWidth = $(".input-group.search-bar").outerWidth();
-      $(".dropdown-menu.search-bar").css("width", inputWidth);
-      var d0pos = $(".input-group.search-bar").offset();
+      var inputWidth = $("#" + input_id).outerWidth();
+      $("#dm" + id).css("width", inputWidth);
+      var d0pos = $("#" + input_id).offset();
       $("#dm" + id).offset({ left: d0pos.left });
-      $(document).on("click", ".dropdown-menu.search-bar", function (e) {
+      $(document).on("click", "#dm" + id, function (e) {
         e.stopPropagation();
       });
     }

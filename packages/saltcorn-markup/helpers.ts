@@ -256,8 +256,9 @@ const search_bar = (
   }: SearchBarOpts | any = {}
 ): string => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
+  const input_id = `input${text_attr(name)}_${rndid}`;
   const clickHandler = stateField
-    ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('input.search-bar').val())`
+    ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('#${input_id}').val())`
     : onClick || "";
   return `<div class="input-group search-bar">
   <div class="input-group-prepend">
@@ -272,7 +273,7 @@ const search_bar = (
   }" placeholder="${placeHolder || "Search for..."}" 
 }" 
   }" 
-       id="input${text_attr(name)}" name="${name}" 
+       id="${input_id}" name="${name}" 
        ${
          clickHandler
            ? `onsearch="${clickHandler}" onChange="${clickHandler}"`
@@ -299,7 +300,7 @@ const search_bar = (
   }
   ${
     has_dropdown
-      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
+      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}', '${input_id}')"></button>`
       : ""
   }
   ${
