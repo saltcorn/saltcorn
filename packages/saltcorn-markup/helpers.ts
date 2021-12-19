@@ -260,7 +260,7 @@ const search_bar = (
   const clickHandler = stateField
     ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('#${input_id}').val())`
     : onClick || "";
-  return `<div class="input-group search-bar">
+  return `<div class="input-group search-bar" id="search-input-group-${rndid}">
   <div class="input-group-prepend">
   <button class="btn btn-outline-secondary search-bar" ${
     clickHandler ? `onClick="${clickHandler}"` : ""
@@ -300,7 +300,7 @@ const search_bar = (
   }
   ${
     has_dropdown
-      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}', '${input_id}')"></button>`
+      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
       : ""
   }
   ${
