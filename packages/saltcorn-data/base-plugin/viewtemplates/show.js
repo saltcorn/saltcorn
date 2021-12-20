@@ -42,6 +42,7 @@ const {
   view_linker,
   parse_view_select,
   action_link,
+  splitUniques,
 } = require("./viewable_fields");
 const db = require("../../db");
 const {
@@ -685,5 +686,22 @@ module.exports = {
    */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
+  },
+  authorise_get: async ({ query, table_id, req }) => {
+    let body = query || {};
+    const user_id = req.user ? req.user.id : null;
+
+    if (user_id && Object.keys(body).length == 1) {
+      const table = await Table.findOne({ id: table_id });
+      if (table.ownership_field_id || table.ownership_formula) {
+        const fields = await table.getFields();
+        const { uniques } = splitUniques(fields, body);
+        if (Object.keys(uniques).length > 0) {
+          const row = await table.getRow(uniques);
+          return table.is_owner(req.user, row);
+        }
+      }
+    }
+    return false;
   },
 };

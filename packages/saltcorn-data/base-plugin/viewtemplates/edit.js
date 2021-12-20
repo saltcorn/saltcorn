@@ -663,10 +663,12 @@ module.exports = {
     let body = query || {};
     if (Object.keys(body).length == 1) {
       const table = await Table.findOne({ id: table_id });
-      const fields = await table.getFields();
-      const { uniques } = splitUniques(fields, body);
-      if (Object.keys(uniques).length > 0) {
-        body = await table.getRow(uniques);
+      if (table.ownership_field_id || table.ownership_formula) {
+        const fields = await table.getFields();
+        const { uniques } = splitUniques(fields, body);
+        if (Object.keys(uniques).length > 0) {
+          body = await table.getRow(uniques);
+        }
       }
     }
     return authorise_post({ body, table_id, req });
