@@ -659,8 +659,18 @@ module.exports = {
    * @param {...*} opts.rest
    * @returns {Promise<boolean>}
    */
-  authorise_get: async ({ query, ...rest }) =>
-    authorise_post({ body: query, ...rest }),
+  authorise_get: async ({ query, table_id, req }) => {
+    let body = query || {};
+    if (Object.keys(body).length == 1) {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const { uniques, nonUniques } = splitUniques(fields, body);
+      if (Object.keys(uniques).length > 0) {
+        body = await table.getRow(uniques);
+      }
+    }
+    return authorise_post({ body, table_id, req });
+  },
   /**
    * @param {object} opts
    * @param {Layout} opts.layout
