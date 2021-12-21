@@ -631,7 +631,15 @@ const authorise_post = async ({ body, table_id, req }) => {
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
     const field_name = await table.owner_fieldname();
-    return field_name && `${body[field_name]}` === `${user_id}`;
+    console.log(field_name, body[field_name], user_id, body);
+    if (typeof body[field_name] === "undefined") {
+      const fields = await table.getFields();
+      const { uniques } = splitUniques(fields, body);
+      if (Object.keys(uniques).length > 0) {
+        body = await table.getRow(uniques);
+        return table.is_owner(req.user, body);
+      }
+    } else return field_name && `${body[field_name]}` === `${user_id}`;
   }
   if (table.ownership_formula && user_id) {
     return await table.is_owner(req.user, body);
@@ -668,6 +676,7 @@ module.exports = {
         const { uniques } = splitUniques(fields, body);
         if (Object.keys(uniques).length > 0) {
           body = await table.getRow(uniques);
+          return table.is_owner(req.user, body);
         }
       }
     }

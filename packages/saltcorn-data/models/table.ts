@@ -241,11 +241,15 @@ class Table {
    */
   is_owner(user: any, row: Row): boolean {
     if (!user) return false;
+
     if (this.ownership_formula) {
       const f = get_expression_function(this.ownership_formula, this.fields);
       return f(row, user);
     }
     const field_name = this.owner_fieldname();
+    if (!field_name && this.name === "users")
+      return user && user.id && row && `${row.id}` === `${user.id}`;
+
     return typeof field_name === "string" && row[field_name] === user.id;
   }
 
