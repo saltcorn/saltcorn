@@ -16,6 +16,7 @@ const {
   removeEmptyStrings,
   removeDefaultColor,
   applyAsync,
+  mergeIntoWhere,
 } = require("../../utils");
 const {
   field_picker_fields,
@@ -31,7 +32,10 @@ const {
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
-const { get_async_expression_function } = require("../../models/expression");
+const {
+  get_async_expression_function,
+  jsexprToWhere,
+} = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
@@ -243,6 +247,12 @@ const configuration_workflow = (req) =>
             required: true,
           });
           formfields.push({
+            name: "include_fml",
+            label: req.__("Row inclusion formula"),
+            sublabel: req.__("Only include rows where this formula is true"),
+            type: "String",
+          });
+          formfields.push({
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
@@ -336,6 +346,7 @@ const run = async (
     create_view_label,
     default_state,
     create_view_location,
+    include_fml,
   },
   stateWithId,
   extraOpts
@@ -395,20 +406,26 @@ const run = async (
   //console.log(table);
   if (table.ownership_field_id && role > table.min_role_read && extraOpts.req) {
     const owner_field = fields.find((f) => f.id === table.ownership_field_id);
-    if (where[owner_field.name])
-      where[owner_field.name] = [
-        where[owner_field.name],
-        extraOpts.req.user ? extraOpts.req.user.id : -1,
-      ];
-    else
-      where[owner_field.name] = extraOpts.req.user ? extraOpts.req.user.id : -1;
+    mergeIntoWhere(where, {
+      [owner_field.name]: extraOpts.req.user ? extraOpts.req.user.id : -1,
+    });
   }
+  //console.log({ i: default_state.include_fml });
+  if (default_state.include_fml) {
+    let where1 = jsexprToWhere(default_state.include_fml, state);
+    //console.log({ where, where1 });
+    mergeIntoWhere(where, where1);
+    //console.log(where);
+  }
+
   let rows = await table.getJoinedRows({
     where,
     joinFields,
     aggregations,
     ...q,
   });
+
+  //TODO this will mean that limit is not respected. change filter to jsexprToWhere
   if (table.ownership_formula && role > table.min_role_read && extraOpts.req) {
     rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
   }

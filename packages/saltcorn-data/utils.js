@@ -118,6 +118,14 @@ const removeAllWhiteSpace = (s) =>
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const mergeIntoWhere = (where, newWhere) => {
+  Object.entries(newWhere).forEach(([k, v]) => {
+    if (typeof where[k] === "undefined") where[k] = v;
+    else where[k] = [where[k], v];
+  });
+  return where;
+};
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -134,4 +142,5 @@ module.exports = {
   getLines,
   removeAllWhiteSpace,
   sleep,
+  mergeIntoWhere,
 };
