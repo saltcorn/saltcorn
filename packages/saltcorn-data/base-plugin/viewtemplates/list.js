@@ -411,11 +411,9 @@ const run = async (
     });
   }
   //console.log({ i: default_state.include_fml });
-  if (default_state.include_fml) {
+  if (default_state?.include_fml) {
     let where1 = jsexprToWhere(default_state.include_fml, state);
-    //console.log({ where, where1 });
     mergeIntoWhere(where, where1);
-    //console.log(where);
   }
 
   let rows = await table.getJoinedRows({

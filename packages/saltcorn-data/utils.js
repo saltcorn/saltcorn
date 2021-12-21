@@ -126,9 +126,22 @@ const mergeIntoWhere = (where, newWhere) => {
   });
   return where;
 };
+
+const prefixFieldsInWhere = (inputWhere, tablePrefix) => {
+  if (!inputWhere) return {};
+  const whereObj = {};
+  Object.keys(inputWhere).forEach((k) => {
+    if (k === "_fts") whereObj[k] = { table: tablePrefix, ...inputWhere[k] };
+    else if (k === "not") {
+      whereObj.not = prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
+  });
+  return whereObj;
+};
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
+  prefixFieldsInWhere,
   isEmpty,
   asyncMap,
   numberToBool,
