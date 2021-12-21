@@ -42,6 +42,7 @@ const {
   view_linker,
   parse_view_select,
   action_link,
+  splitUniques,
 } = require("./viewable_fields");
 const db = require("../../db");
 const {
@@ -453,8 +454,18 @@ const runMany = async (
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
   if (extra && extra.where) Object.assign(qstate, extra.where);
-
-  const rows = await tbl.getJoinedRows({
+  const role =
+    extra && extra.req && extra.req.user ? extra.req.user.role_id : 10;
+  if (tbl.ownership_field_id && role > tbl.min_role_read && extra.req) {
+    const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
+    if (qstate[owner_field.name])
+      qstate[owner_field.name] = [
+        qstate[owner_field.name],
+        extra.req.user ? extra.req.user.id : -1,
+      ];
+    else qstate[owner_field.name] = extra.req.user ? extra.req.user.id : -1;
+  }
+  let rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations,
@@ -464,7 +475,9 @@ const runMany = async (
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
     ...q,
   });
-
+  if (tbl.ownership_formula && role > tbl.min_role_read && extra.req) {
+    rows = rows.filter((row) => tbl.is_owner(extra.req.user, row));
+  }
   const rendered = await renderRows(
     tbl,
     viewname,
@@ -685,5 +698,22 @@ module.exports = {
    */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
+  },
+  authorise_get: async ({ query, table_id, req }) => {
+    let body = query || {};
+    const user_id = req.user ? req.user.id : null;
+
+    if (user_id && Object.keys(body).length == 1) {
+      const table = await Table.findOne({ id: table_id });
+      if (table.ownership_field_id || table.ownership_formula) {
+        const fields = await table.getFields();
+        const { uniques } = splitUniques(fields, body);
+        if (Object.keys(uniques).length > 0) {
+          const row = await table.getRow(uniques);
+          return table.is_owner(req.user, row);
+        }
+      }
+    }
+    return false;
   },
 };

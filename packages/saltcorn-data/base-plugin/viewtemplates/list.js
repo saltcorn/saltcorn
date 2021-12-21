@@ -392,7 +392,7 @@ const run = async (
     q.orderBy = (default_state && default_state._order_field) || table.pk_name;
   if (!q.orderDesc) q.orderDesc = default_state && default_state._descending;
   const current_page = parseInt(state._page) || 1;
-
+  //console.log(table);
   if (table.ownership_field_id && role > table.min_role_read && extraOpts.req) {
     const owner_field = fields.find((f) => f.id === table.ownership_field_id);
     if (where[owner_field.name])
@@ -403,12 +403,15 @@ const run = async (
     else
       where[owner_field.name] = extraOpts.req.user ? extraOpts.req.user.id : -1;
   }
-  const rows = await table.getJoinedRows({
+  let rows = await table.getJoinedRows({
     where,
     joinFields,
     aggregations,
     ...q,
   });
+  if (table.ownership_formula && role > table.min_role_read && extraOpts.req) {
+    rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
+  }
 
   var page_opts =
     extraOpts && extraOpts.onRowSelect
