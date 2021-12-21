@@ -631,7 +631,6 @@ const authorise_post = async ({ body, table_id, req }) => {
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
     const field_name = await table.owner_fieldname();
-    console.log(field_name, body[field_name], user_id, body);
     if (typeof body[field_name] === "undefined") {
       const fields = await table.getFields();
       const { uniques } = splitUniques(fields, body);
