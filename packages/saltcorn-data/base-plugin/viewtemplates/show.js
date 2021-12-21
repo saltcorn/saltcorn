@@ -454,8 +454,18 @@ const runMany = async (
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
   if (extra && extra.where) Object.assign(qstate, extra.where);
-
-  const rows = await tbl.getJoinedRows({
+  const role =
+    extra && extra.req && extra.req.user ? extra.req.user.role_id : 10;
+  if (tbl.ownership_field_id && role > tbl.min_role_read && extra.req) {
+    const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
+    if (qstate[owner_field.name])
+      qstate[owner_field.name] = [
+        qstate[owner_field.name],
+        extra.req.user ? extra.req.user.id : -1,
+      ];
+    else qstate[owner_field.name] = extra.req.user ? extra.req.user.id : -1;
+  }
+  let rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations,
@@ -465,7 +475,9 @@ const runMany = async (
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
     ...q,
   });
-
+  if (tbl.ownership_formula && role > tbl.min_role_read && extra.req) {
+    rows = rows.filter((row) => tbl.is_owner(extra.req.user, row));
+  }
   const rendered = await renderRows(
     tbl,
     viewname,
