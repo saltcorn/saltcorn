@@ -140,6 +140,7 @@ const {
   asyncMap,
   structuredClone,
   InvalidConfiguration,
+  mergeIntoWhere,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
@@ -544,7 +545,7 @@ const runMany = async (
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
-  if (extra &amp;&amp; extra.where) Object.assign(qstate, extra.where);
+  if (extra &amp;&amp; extra.where) mergeIntoWhere(qstate, extra.where);
   const role =
     extra &amp;&amp; extra.req &amp;&amp; extra.req.user ? extra.req.user.role_id : 10;
   if (tbl.ownership_field_id &amp;&amp; role > tbl.min_role_read &amp;&amp; extra.req) {
