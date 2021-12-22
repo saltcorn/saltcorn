@@ -134,6 +134,13 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].favbook).toBe(2);
   });
+  it("should get joined rows where name is not null", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const nameds = await patients.getJoinedRows({
+      where: { not: { name: null } },
+    });
+    expect(nameds.length).toStrictEqual(2);
+  });
   it("should get rows in id range", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const rows = await patients.getRows({ id: [{ gt: 0 }, { lt: 10 }] });

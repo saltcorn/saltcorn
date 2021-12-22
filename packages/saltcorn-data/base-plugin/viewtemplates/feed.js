@@ -23,9 +23,9 @@ const {
 } = require("../../plugin-helper");
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
-
+const { jsexprToWhere } = require("../../models/expression");
 /**
- * @param {object} req 
+ * @param {object} req
  * @returns {Workflow}
  */
 const configuration_workflow = (req) =>
@@ -148,6 +148,14 @@ const configuration_workflow = (req) =>
                 required: true,
               },
               {
+                name: "include_fml",
+                label: req.__("Row inclusion formula"),
+                sublabel: req.__(
+                  "Only include rows where this formula is true"
+                ),
+                type: "String",
+              },
+              {
                 name: "cols_sm",
                 label: req.__("Columns small screen"),
                 type: "Integer",
@@ -228,10 +236,10 @@ const configuration_workflow = (req) =>
   });
 
 /**
- * @param {number} table_id 
- * @param {*} viewname 
+ * @param {number} table_id
+ * @param {*} viewname
  * @param {object} opts
- * @param {*} opts.show_view 
+ * @param {*} opts.show_view
  * @returns {Promise<Field>}
  */
 const get_state_fields = async (table_id, viewname, { show_view }) => {
@@ -246,8 +254,8 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
 };
 
 /**
- * @param {number} table_id 
- * @param {string} viewname 
+ * @param {number} table_id
+ * @param {string} viewname
  * @param {object} opts
  * @param {string} opts.show_view
  * @param {name} opts.order_field
@@ -262,8 +270,8 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
  * @param {string} [opts.create_view_location]
  * @param {boolean} opts.always_create_view
  * @param {*} opts.cols
- * @param {object} state 
- * @param {*} extraArgs 
+ * @param {object} state
+ * @param {*} extraArgs
  * @returns {Promise<div>}
  */
 const run = async (
@@ -282,6 +290,7 @@ const run = async (
     create_view_label,
     create_view_location,
     always_create_view,
+    include_fml,
     ...cols
   },
   state,
@@ -307,7 +316,9 @@ const run = async (
   }
   qextra.limit = q.limit || rows_per_page;
   const current_page = parseInt(state._page) || 1;
-
+  if (include_fml) {
+    qextra.where = jsexprToWhere(include_fml, state);
+  }
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     ...qextra,
@@ -423,7 +434,7 @@ module.exports = {
   /** @type {boolean} */
   display_state_form: false,
   /**
-   * @param {object} opts 
+   * @param {object} opts
    * @param {*} opts.create_view_label
    * @returns {string[]|Object[]}
    */

@@ -42,6 +42,7 @@ import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
+import { prefixFieldsInWhere } from "../utils";
 const {
   InvalidConfiguration,
   InvalidAdminAction,
@@ -1184,13 +1185,7 @@ class Table {
       }
     );
 
-    let whereObj: any = {};
-    if (opts.where) {
-      Object.keys(opts.where).forEach((k) => {
-        if (k === "_fts") whereObj[k] = { table: "a", ...opts.where[k] };
-        else whereObj[`a."${k}"`] = opts.where[k];
-      });
-    }
+    const whereObj = prefixFieldsInWhere(opts.where, "a");
     const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts: SelectOptions = {
       limit: opts.limit,

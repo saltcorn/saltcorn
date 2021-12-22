@@ -48,13 +48,13 @@ function jsexprToWhere(expression, extraCtx = {}) {
       ({
         BinaryExpression() {
           const cleft = compile(node.left);
+          const cleftName =
+            typeof cleft === "symbol" ? cleft.description : cleft;
           const cright = compile(node.right);
           const cmp =
             typeof cleft === "string" || cleft === null
               ? { eq: [cleft, cright] }
-              : typeof cleft === "symbol"
-              ? { [cleft.description]: cright }
-              : { [cleft]: cright };
+              : { [cleftName]: cright };
           return {
             "=="() {
               return cmp;
@@ -67,6 +67,18 @@ function jsexprToWhere(expression, extraCtx = {}) {
             },
             "!=="() {
               return { not: cmp };
+            },
+            ">"() {
+              return { [cleftName]: { gt: cright } };
+            },
+            "<"() {
+              return { [cleftName]: { lt: cright } };
+            },
+            ">="() {
+              return { [cleftName]: { gt: cright, equal: true } };
+            },
+            "<="() {
+              return { [cleftName]: { lt: cright, equal: true } };
             },
           }[node.operator](node);
         },

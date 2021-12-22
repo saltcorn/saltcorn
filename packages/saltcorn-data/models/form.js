@@ -80,6 +80,7 @@ class Form {
 
     for (const f of this.fields) {
       if (f.input_type === "hidden") r[f.name] = this.values[f.name];
+      else if (f.name.endsWith("_fml")) r[f.name] = "";
       else if (f.required || is.bool.generate()) {
         r[f.name] = await f.generate();
       }

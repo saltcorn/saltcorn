@@ -9,6 +9,7 @@ const {
   expressionValidator,
   jsexprToWhere,
 } = require("../models/expression");
+const { mkWhere } = require("@saltcorn/db-common/internal");
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -239,5 +240,18 @@ describe("jsexprToWhere", () => {
   it("translates context", () => {
     const w = jsexprToWhere("$father !== null && married_to === $father", {});
     expect(w).toEqual({ married_to: null, not: { eq: [null, null] } });
+  });
+  it("is null in sql", () => {
+    const w = jsexprToWhere("group !== null", {});
+    expect(w).toEqual({ not: { group: null } });
+
+    const { where } = mkWhere(w);
+    expect(where).toEqual('where not ("group" is null)');
+  });
+  it("translates greater than", () => {
+    expect(jsexprToWhere("foo>4")).toEqual({ foo: { gt: 4 } });
+  });
+  it("translates lte", () => {
+    expect(jsexprToWhere("foo<=4")).toEqual({ foo: { lt: 4, equal: true } });
   });
 });
