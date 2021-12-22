@@ -248,4 +248,10 @@ describe("jsexprToWhere", () => {
     const { where } = mkWhere(w);
     expect(where).toEqual('where not ("group" is null)');
   });
+  it("translates greater than", () => {
+    expect(jsexprToWhere("foo>4")).toEqual({ foo: { gt: 4 } });
+  });
+  it("translates lte", () => {
+    expect(jsexprToWhere("foo<=4")).toEqual({ foo: { lt: 4, equal: true } });
+  });
 });
