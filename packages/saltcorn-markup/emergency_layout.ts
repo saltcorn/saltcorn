@@ -4,8 +4,22 @@
  */
 
 import tags = require("./tags");
-const { ul, li, a, span, hr, div, text, i, h6, h1, p, header, img, footer } =
-  tags;
+const {
+  ul,
+  li,
+  a,
+  span,
+  hr,
+  div,
+  text,
+  i,
+  h6,
+  h1,
+  p,
+  header,
+  img,
+  footer,
+} = tags;
 import renderLayout = require("./layout");
 const { renderForm, link } = require(".");
 import layoutUtils = require("./layout_utils");
@@ -62,4 +76,4 @@ const wrap = ({
   navbar(brand, menu, currentUrl) + renderBody(title, body, alerts);
 
 const EmergencyLayoutExports = wrap;
-exports = EmergencyLayoutExports;
+export = EmergencyLayoutExports;
