@@ -8,16 +8,13 @@ type FieldLikeBasics = {
   name: string;
 };
 type FieldLikeWithInputType = {
-  input_type?: string;
+  input_type: string;
 } & FieldLikeBasics;
 type FieldLikeWithType = {
-  type?: string | { name: string };
+  type: string | { name: string };
 } & FieldLikeBasics;
 
-export type FieldLike =
-  | FieldLikeWithInputType
-  | FieldLikeWithType
-  | (FieldLikeWithInputType & FieldLikeWithType);
+export type FieldLike = FieldLikeWithInputType | FieldLikeWithType;
 
 export type Header = {
   script?: string;
@@ -32,7 +29,7 @@ type MenuItem = {
   }>;
 };
 
-type LayoutContainerObject = {
+type LayoutWithTypeProp = {
   type:
     | "blank"
     | "card"
@@ -42,18 +39,18 @@ type LayoutContainerObject = {
     | "image"
     | "link"
     | "line_break view";
+  besides?: never;
+  above?: never;
 };
-type LayoutContainer = null | LayoutContainerObject | any;
-type LayoutTypeHelper = Array<
+type LayoutContainer = null | LayoutWithTypeProp | any;
+type LayoutArray = Array<
   | LayoutContainer
   | { besides: Array<LayoutContainer> }
   | { above: Array<LayoutContainer> }
 >;
-type LayoutWithAbove = { above?: LayoutTypeHelper };
-type LayoutWithBesides = { besides: LayoutTypeHelper };
-export type Layout =
-  | (LayoutWithAbove | LayoutWithBesides)
-  | LayoutContainerObject;
+type LayoutWithAbove = { above: LayoutArray; besides?: never };
+type LayoutWithBesides = { besides: LayoutArray; above?: never };
+export type Layout = LayoutWithAbove | LayoutWithBesides | LayoutWithTypeProp;
 
 export type PluginWrapArg = {
   title: string;
