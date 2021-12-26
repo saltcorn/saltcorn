@@ -4,19 +4,13 @@ const { a, input, div, ul, text, text_attr } = tags;
 import index = require(".");
 const { renderForm } = index;
 
-class Form {
-  constructor(o: any) {
-    Object.entries(o).forEach(([k, v]: [string, any]) => {
-      (this as any)[k] = v;
-    });
-  }
-}
+import { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
 
 const nolines = (s: string) => s.split("\n").join("");
 
 describe("form render", () => {
   it("renders a simple form", () => {
-    const form = new Form({
+    const form: Form = {
       action: "/",
       fields: [
         {
@@ -26,7 +20,14 @@ describe("form render", () => {
           form_name: "name",
         },
       ],
-    });
+      errors: {},
+      values: {},
+      isStateForm: false,
+      formStyle: "",
+      methodGET: false,
+      xhrSubmit: false,
+      req: {},
+    };
     const want = `<form action="/" class="form-namespace  " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <div><label for="inputname">Name</label></div>
@@ -40,7 +41,7 @@ describe("form render", () => {
     expect(nolines(renderForm(form, ""))).toBe(nolines(want));
   });
   it("renders a form with layout", () => {
-    const form = new Form({
+    const form: Form = {
       action: "/",
       fields: [
         {
@@ -52,6 +53,11 @@ describe("form render", () => {
       ],
       values: {},
       errors: {},
+      isStateForm: false,
+      formStyle: "",
+      methodGET: false,
+      xhrSubmit: false,
+      req: {},
       layout: {
         above: [
           {
@@ -64,7 +70,7 @@ describe("form render", () => {
           { type: "line_break" },
         ],
       },
-    });
+    };
     const want = `<form action="/" class="form-namespace " method="post">
 <input type="hidden" name="_csrf" value="">
 <h2>
@@ -73,7 +79,7 @@ describe("form render", () => {
     expect(nolines(renderForm(form, ""))).toBe(nolines(want));
   });
   it("renders a simple form with errors", () => {
-    const form = new Form({
+    const form: Form = {
       action: "/",
       errors: { name: "Not a foo" },
       values: { name: "Bar" },
@@ -85,7 +91,12 @@ describe("form render", () => {
           form_name: "name",
         },
       ],
-    });
+      isStateForm: false,
+      formStyle: "",
+      methodGET: false,
+      xhrSubmit: false,
+      req: {},
+    };
     const want = `<form action="/" class="form-namespace  " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <div><label for="inputname">Name</label></div>

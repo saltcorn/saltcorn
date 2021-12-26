@@ -3,7 +3,7 @@ export type ErrorMessage = {
 };
 
 export type SuccessMessage = {
-  success: string | boolean | null;
+  success: any;
   table?: any;
 };
 
@@ -17,7 +17,7 @@ export const instanceOfSuccessMsg = (object: any): object is SuccessMessage => {
   return "success" in object;
 };
 
-export type TypeObj = {
+export type Type = {
   name: string;
   sql_name?: string;
   readFromDB?: (arg0: any) => any;
@@ -29,8 +29,9 @@ export type TypeObj = {
   primaryKey: { sql_type: string; default_sql?: string };
   presets?: any;
   contract?: any;
+  fieldviews?: any;
 };
 
-export function instanceOfTypeObj(object: any): object is TypeObj {
+export function instanceOfType(object: any): object is Type {
   return object && typeof object !== "string";
 }

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "skipLibCheck": true,
     "rootDir": ".",
     "outDir": "./dist",
@@ -12,7 +13,6 @@
     "allowSyntheticDefaultImports": true /* set to true by "esModuleInterop" and "module" */,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
     "lib": ["ES2020"],
     "module": "commonjs",

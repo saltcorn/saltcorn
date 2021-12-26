@@ -5,6 +5,9 @@
       "path": "./packages/db-common/tsconfig.ref.json"
     },
     {
+      "path": "./packages/saltcorn-types/tsconfig.ref.json"
+    },
+    {
       "path": "./packages/sqlite/tsconfig.ref.json"
     },
     {

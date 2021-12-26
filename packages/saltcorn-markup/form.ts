@@ -9,6 +9,8 @@ import renderLayout = require("./layout");
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { isdef, select_options, search_bar } = helpers;
+import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
+import { instanceOfField } from "@saltcorn/types/model-abstracts/abstract_field";
 
 /**
  * @param {string} s
@@ -99,105 +101,103 @@ const formRowWrap = (
  * @param {string} [nameAdd = ""]
  * @returns {function}
  */
-const innerField = (
-  v: any,
-  errors: any[],
-  nameAdd: string = ""
-): ((hdr: any) => string) => (hdr: any): string => {
-  const name: any = hdr.form_name + nameAdd;
-  const validClass = errors[name] ? "is-invalid" : "";
-  const maybe_disabled = hdr.disabled ? " disabled" : "";
-  switch (hdr.input_type) {
-    case "fromtype":
-      return displayEdit(
-        hdr,
-        name,
-        v && isdef(v[hdr.form_name]) ? v[hdr.form_name] : hdr.default,
-        validClass
-      );
-    case "hidden":
-      return `<input type="hidden" class="form-control ${validClass} ${
-        hdr.class || ""
-      }" name="${text_attr(name)}" ${
-        v ? `value="${text_attr(v[hdr.form_name])}"` : ""
-      }>`;
-    case "select":
-      const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
-        hdr.attributes && hdr.attributes.explainers
-          ? ` data-explainers="${encodeURIComponent(
-              JSON.stringify(hdr.attributes.explainers)
-            )}"`
-          : ""
-      }>${opts}</select>`;
-    case "textarea":
-      return `<textarea class="form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
-        v[hdr.form_name] || ""
-      )}</textarea>`;
-    case "code":
-      return `<textarea mode="${
-        (hdr.attributes || {}).mode || ""
-      }" class="to-code form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
-        v[hdr.form_name] || ""
-      }</textarea>`;
-    case "file":
-      if (hdr.attributes && hdr.attributes.select_file_where) {
-        hdr.input_type = "select";
-        return innerField(v, errors, nameAdd)(hdr);
-      } else
-        return `${
-          v[hdr.form_name] ? text(v[hdr.form_name]) : ""
-        }<input type="file" class="form-control-file ${validClass} ${
+const innerField =
+  (v: any, errors: any[], nameAdd: string = ""): ((hdr: any) => string) =>
+  (hdr: any): string => {
+    const name: any = hdr.form_name + nameAdd;
+    const validClass = errors[name] ? "is-invalid" : "";
+    const maybe_disabled = hdr.disabled ? " disabled" : "";
+    switch (hdr.input_type) {
+      case "fromtype":
+        return displayEdit(
+          hdr,
+          name,
+          v && isdef(v[hdr.form_name]) ? v[hdr.form_name] : hdr.default,
+          validClass
+        );
+      case "hidden":
+        return `<input type="hidden" class="form-control ${validClass} ${
           hdr.class || ""
-        }"${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-          name
-        )}">`;
-    case "search":
-      return search_bar(name, v && v[hdr.form_name]);
-    case "section_header":
-      return "";
-    case "custom_html":
-      return hdr.attributes.html;
-    default:
-      const the_input = `<input type="${
-        hdr.input_type
-      }" class="form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${name}" id="input${text_attr(name)}"${
-        v && isdef(v[hdr.form_name])
-          ? ` value="${text_attr(v[hdr.form_name])}"`
-          : ""
-      }>`;
-      const inner = hdr.postText
-        ? div(
-            { class: "input-group" },
-            the_input,
-            div(
-              { class: "input-group-append" },
-              span(
-                { class: "input-group-text", id: "basic-addon2" },
-                hdr.postText
+        }" name="${text_attr(name)}" ${
+          v ? `value="${text_attr(v[hdr.form_name])}"` : ""
+        }>`;
+      case "select":
+        const opts = select_options(v, hdr);
+        return `<select class="form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
+          hdr.attributes && hdr.attributes.explainers
+            ? ` data-explainers="${encodeURIComponent(
+                JSON.stringify(hdr.attributes.explainers)
+              )}"`
+            : ""
+        }>${opts}</select>`;
+      case "textarea":
+        return `<textarea class="form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+          v[hdr.form_name] || ""
+        )}</textarea>`;
+      case "code":
+        return `<textarea mode="${
+          (hdr.attributes || {}).mode || ""
+        }" class="to-code form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
+          v[hdr.form_name] || ""
+        }</textarea>`;
+      case "file":
+        if (hdr.attributes && hdr.attributes.select_file_where) {
+          hdr.input_type = "select";
+          return innerField(v, errors, nameAdd)(hdr);
+        } else
+          return `${
+            v[hdr.form_name] ? text(v[hdr.form_name]) : ""
+          }<input type="file" class="form-control-file ${validClass} ${
+            hdr.class || ""
+          }"${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+            name
+          )}">`;
+      case "search":
+        return search_bar(name, v && v[hdr.form_name]);
+      case "section_header":
+        return "";
+      case "custom_html":
+        return hdr.attributes.html;
+      default:
+        const the_input = `<input type="${
+          hdr.input_type
+        }" class="form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${name}" id="input${text_attr(name)}"${
+          v && isdef(v[hdr.form_name])
+            ? ` value="${text_attr(v[hdr.form_name])}"`
+            : ""
+        }>`;
+        const inner = hdr.postText
+          ? div(
+              { class: "input-group" },
+              the_input,
+              div(
+                { class: "input-group-append" },
+                span(
+                  { class: "input-group-text", id: "basic-addon2" },
+                  hdr.postText
+                )
               )
             )
-          )
-        : the_input;
-      return inner;
-  }
-};
+          : the_input;
+        return inner;
+    }
+  };
 
 /**
  * @param {object[]} v
@@ -206,15 +206,17 @@ const innerField = (
  * @param {object[]} labelCols
  * @returns {function}
  */
-const mkFormRow = (
-  v: any,
-  errors: any[],
-  formStyle: string,
-  labelCols: any
-): ((hdr: any) => string) => (hdr: any): string =>
-  hdr.isRepeat
-    ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
-    : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
+const mkFormRow =
+  (
+    v: any,
+    errors: any[],
+    formStyle: string,
+    labelCols: any
+  ): ((hdr: any) => string) =>
+  (hdr: any): string =>
+    hdr.isRepeat
+      ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
+      : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
 /**
  * @param {object[]} v
@@ -338,38 +340,40 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
  * @param {string} [nameAdd = ""]
  * @returns {function}
  */
-const mkFormRowForField = (
-  v: any,
-  errors: any[],
-  formStyle: string,
-  labelCols: number,
-  nameAdd: string = ""
-): ((hdr: any) => string) => (hdr: any): string => {
-  const name: any = hdr.form_name + nameAdd;
-  const errorFeedback = errors[name]
-    ? `<div class="invalid-feedback">${text(errors[name])}</div>`
-    : "";
-  if (hdr.input_type === "hidden") {
-    return innerField(v, errors, nameAdd)(hdr);
-  } else
-    return formRowWrap(
-      hdr,
-      innerField(v, errors, nameAdd)(hdr),
-      errorFeedback,
-      formStyle,
-      labelCols
-    );
-};
+const mkFormRowForField =
+  (
+    v: any,
+    errors: any[],
+    formStyle: string,
+    labelCols: number,
+    nameAdd: string = ""
+  ): ((hdr: any) => string) =>
+  (hdr: any): string => {
+    const name: any = hdr.form_name + nameAdd;
+    const errorFeedback = errors[name]
+      ? `<div class="invalid-feedback">${text(errors[name])}</div>`
+      : "";
+    if (hdr.input_type === "hidden") {
+      return innerField(v, errors, nameAdd)(hdr);
+    } else
+      return formRowWrap(
+        hdr,
+        innerField(v, errors, nameAdd)(hdr),
+        errorFeedback,
+        formStyle,
+        labelCols
+      );
+  };
 
 /**
  * @param {object} form
  * @returns {string}
  */
-const renderFormLayout = (form: any): string => {
+const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
     field(segment: any) {
-      const field = form.fields.find((f: any) => f.name === segment.field_name);
-      if (field && field.input_type !== "hidden") {
+      const field = form.fields.find((f) => f.name === segment.field_name);
+      if (instanceOfField(field) && field.input_type !== "hidden") {
         if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
 
         const errorFeedback = form.errors[field.name]
@@ -450,13 +454,17 @@ const renderFormLayout = (form: any): string => {
  * @param {string|false} csrfToken0
  * @returns {string}
  */
-const renderForm = (form: any, csrfToken0: string | boolean): string => {
+const renderForm = (
+  form: Form | string,
+  csrfToken0: string | boolean
+): string => {
+  if (typeof form === "string") return form;
+
   const csrfToken =
     csrfToken0 === false || csrfToken0 === ""
       ? csrfToken0
       : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
 
-  if (typeof form === "string") return form;
   if (form.isStateForm) {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
@@ -499,7 +507,7 @@ const renderForm = (form: any, csrfToken0: string | boolean): string => {
  * @param {string} csrfToken
  * @returns {string}
  */
-const mkFormWithLayout = (form: any, csrfToken: string | boolean): string => {
+const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}"${
@@ -556,7 +564,7 @@ const displayAdditionalButtons = (additionalButtons: any[]): string =>
  * @returns {string}
  */
 const mkForm = (
-  form: any,
+  form: Form,
   csrfToken: string | boolean,
   errors: any = {}
 ): string => {

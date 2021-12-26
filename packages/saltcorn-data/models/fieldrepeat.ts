@@ -5,25 +5,31 @@
  * @subcategory models
  */
 const { contract, is } = require("contractis");
-const Field = require("./field");
+import Field from "./field";
+import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
+import { SuccessMessage } from "@saltcorn/types/common_types";
 
 /**
  * FieldRepeat Class
  * @category saltcorn-data
  */
-class FieldRepeat {
+class FieldRepeat implements AbstractFieldRepeat {
+  label: string;
+  name: string;
+  fields: Array<Field>;
+  isRepeat = true;
+
   /**
    * FieldRepeat constructor
-   * @param {object} o 
+   * @param {object} o
    */
-  constructor(o) {
+  constructor(o: FieldRepeatCfg) {
     this.label = o.label || o.name;
     this.name = o.name;
     this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
     );
     this.isRepeat = true;
-    contract.class(this);
   }
 
   /**
@@ -31,7 +37,7 @@ class FieldRepeat {
    */
   async generate() {
     const nrepeats = Math.round(Math.random() * 5);
-    var r = {};
+    var r: any = {};
     for (let index = 0; index < nrepeats; index++) {
       for (const f of this.fields) {
         if (f.required || is.bool.generate()) {
@@ -42,21 +48,21 @@ class FieldRepeat {
   }
 
   /**
-   * @param {*} whole_rec 
+   * @param {*} whole_rec
    * @returns {object}
    */
-  validate(whole_rec) {
+  validate(whole_rec: any): { errors: any } | { success: any } {
     return this.validate_from_ix(whole_rec, 0);
   }
 
   /**
-   * @param {*} whole_rec 
-   * @param {*} ix 
+   * @param {*} whole_rec
+   * @param {*} ix
    * @returns {object}
    */
-  validate_from_ix(whole_rec, ix) {
+  validate_from_ix(whole_rec: any, ix: number): SuccessMessage {
     var has_any = false;
-    var res = {};
+    var res: any = {};
 
     this.fields.forEach((f) => {
       const fval = whole_rec[`${f.name}_${ix}`];
@@ -74,23 +80,17 @@ class FieldRepeat {
   /**
    * @type {string}
    */
-  get form_name() {
+  get form_name(): string {
     return this.name;
   }
 }
 
-FieldRepeat.contract = {
-  variables: {
-    name: is.str,
-    label: is.str,
-    fields: is.array(is.class("Field")),
-    isRepeat: is.eq(true),
-  },
-  methods: {
-    validate: is.fun(
-      is.obj(),
-      is.or(is.obj({ errors: is.obj() }), is.obj({ success: is.obj() }))
-    ),
-  },
-};
-module.exports = FieldRepeat;
+namespace FieldRepeat {
+  export type FieldRepeatCfg = {
+    name: string;
+    label?: string;
+    fields: Array<Field>;
+  };
+}
+type FieldRepeatCfg = FieldRepeat.FieldRepeatCfg;
+export = FieldRepeat;

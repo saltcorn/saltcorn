@@ -38,6 +38,7 @@
     "@saltcorn/sqlite": "0.6.3-beta.0"
   },
   "dependencies": {
+    "@saltcorn/types": "0.6.3-beta.0",
     "@saltcorn/markup": "0.6.3-beta.0",
     "@saltcorn/db-common": "0.6.3-beta.0",
     "acorn": "^8.0.3",
@@ -79,6 +80,7 @@
       "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
       "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
       "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
       "@saltcorn/markup$": "@saltcorn/markup/dist",
       "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
     }

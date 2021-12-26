@@ -10,9 +10,14 @@ const { recalculate_for_stored, jsexprToWhere } = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
 const { InvalidAdminAction } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
-import type { ErrorMessage, ResultMessage, TypeObj } from "../common_types";
-import { instanceOfTypeObj } from "../common_types";
+import type {
+  ErrorMessage,
+  ResultMessage,
+  Type,
+} from "@saltcorn/types/common_types";
+import { instanceOfType } from "@saltcorn/types/common_types";
 import type Table from "./table";
+import { AbstractField } from "@saltcorn/types/model-abstracts/abstract_field";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -29,7 +34,7 @@ const readKey = (v: any, field: Field): string | null | ErrorMessage => {
  * Field Class
  * @category saltcorn-data
  */
-class Field {
+class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
@@ -42,7 +47,7 @@ class Field {
   default?: string;
   sublabel?: string;
   description?: string;
-  type?: string | TypeObj;
+  type?: string | Type;
   typename?: string;
   options?: any;
   required: boolean;
@@ -196,7 +201,7 @@ class Field {
    */
   async fill_fkey_options(
     force_allow_none: boolean = false,
-    where0: Where,
+    where0?: Where,
     extraCtx: any = {}
   ): Promise<void> {
     const where =
@@ -241,7 +246,7 @@ class Field {
   ): Promise<{ label: string; value: string; jsvalue?: boolean }[]> {
     const __ = req && req.__ ? req.__ : (s: string) => s;
     if (
-      instanceOfTypeObj(this.type) &&
+      instanceOfType(this.type) &&
       this.type.name === "String" &&
       this.attributes &&
       this.attributes.options
@@ -257,7 +262,7 @@ class Field {
       await this.fill_fkey_options(false, where);
       return this.options || [];
     }
-    if (instanceOfTypeObj(this.type) && this.type.name === "Bool") {
+    if (instanceOfType(this.type) && this.type.name === "Bool") {
       return [
         { label: "", value: "" },
         { label: __("True"), value: "on", jsvalue: true },
@@ -302,11 +307,7 @@ class Field {
       } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
       }")`;
-    } else if (
-      this.type &&
-      instanceOfTypeObj(this.type) &&
-      this.type.sql_name
-    ) {
+    } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
     throw new Error("Unable to get the sql_type");
@@ -318,8 +319,7 @@ class Field {
   get pretty_type(): string {
     if (this.reftable_name === "_sc_files") return "File";
     if (this.is_fkey) return `Key to ${this.reftable_name}`;
-    else
-      return this.type && instanceOfTypeObj(this.type) ? this.type.name : "?";
+    else return this.type && instanceOfType(this.type) ? this.type.name : "?";
   }
 
   /**
@@ -334,11 +334,7 @@ class Field {
       }
       const { getState } = require("../db/state");
       return getState().types[this.reftype].sql_name;
-    } else if (
-      this.type &&
-      instanceOfTypeObj(this.type) &&
-      this.type.sql_name
-    ) {
+    } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
     throw new Error("Unable to get the sql_type");
@@ -356,7 +352,7 @@ class Field {
       );
       if (rows.length === 1) return rows[0].id;
     } else {
-      if (instanceOfTypeObj(this.type) && this.type.contract)
+      if (instanceOfType(this.type) && this.type.contract)
         return this.type.contract(this.attributes).generate();
     }
   }
@@ -371,7 +367,7 @@ class Field {
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
-      let typeObj = <TypeObj>this.type;
+      let typeObj = this.type as Type;
       readval =
         !type || !typeObj.read
           ? whole_rec[this.form_name]
@@ -381,10 +377,10 @@ class Field {
     }
     if (typeof readval === "undefined" || readval === null)
       if (this.required && this.type !== "File")
-        return { error: "Unable to read " + (<TypeObj>type)?.name };
+        return { error: "Unable to read " + (<Type>type)?.name };
       else return { success: null };
     const tyvalres =
-      instanceOfTypeObj(type) && type.validate
+      instanceOfType(type) && type.validate
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
@@ -477,7 +473,7 @@ class Field {
         )}" drop column "${sqlsanitize(this.name)}";`
       );
 
-      if (instanceOfTypeObj(new_field.type)) {
+      if (instanceOfType(new_field.type)) {
         if (new_field.type.primaryKey.sql_type)
           new_sql_type = new_field.type.primaryKey.sql_type;
         if (new_field.type.primaryKey.default_sql) {
@@ -559,11 +555,11 @@ class Field {
    * @type {string}
    */
   get listKey(): any {
-    if (instanceOfTypeObj(this.type))
+    if (instanceOfType(this.type))
       if (this.type.listAs)
-        return (r: any) => (<TypeObj>this.type).listAs!(r[this.name]);
+        return (r: any) => (<Type>this.type).listAs!(r[this.name]);
       else if (this.type.showAs)
-        return (r: any) => (<TypeObj>this.type).showAs!(r[this.name]);
+        return (r: any) => (<Type>this.type).showAs!(r[this.name]);
     return this.name;
   }
 
@@ -571,7 +567,7 @@ class Field {
    * @type {object}
    */
   get presets(): { LoggedIn: ({ user }: { user: any }) => boolean } | null {
-    if (instanceOfTypeObj(this.type) && this.type.presets)
+    if (instanceOfType(this.type) && this.type.presets)
       return this.type.presets;
 
     if (this.type === "Key" && this.reftable_name === "users")
@@ -712,7 +708,7 @@ class Field {
       table_id: f.table_id,
       name: f.name,
       label: f.label,
-      type: f.is_fkey ? f.type : (<TypeObj>f.type)?.name,
+      type: f.is_fkey ? f.type : (<Type>f.type)?.name,
       reftable_name: f.is_fkey ? f.reftable_name : undefined,
       reftype: f.is_fkey ? f.reftype : undefined,
       refname: f.is_fkey ? f.refname : undefined,
@@ -778,7 +774,7 @@ namespace Field {
     default?: string;
     sublabel?: string;
     description?: string;
-    type?: string | TypeObj;
+    type?: string | Type;
     options?: any;
     required?: boolean;
     is_unique?: boolean;

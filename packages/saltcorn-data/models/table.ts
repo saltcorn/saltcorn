@@ -16,20 +16,18 @@ import type {
   SelectOptions,
   Row,
   JoinField,
-  CoordOpts,
   JoinOptions,
   AggregationOptions,
 } from "@saltcorn/db-common/internal";
 
 import Field from "./field";
+import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
-import type {
-  ResultMessage,
-  ErrorMessage,
-  SuccessMessage,
-  TypeObj,
-} from "../common_types";
-import { instanceOfErrorMsg, instanceOfTypeObj } from "../common_types";
+import type { ResultMessage } from "@saltcorn/types/common_types";
+import {
+  instanceOfErrorMsg,
+  instanceOfType,
+} from "@saltcorn/types/common_types";
 
 import Trigger from "./trigger";
 const {
@@ -108,7 +106,7 @@ const normalise_error_message = (msg: string): string =>
  * Table class
  * @category saltcorn-data
  */
-class Table {
+class Table implements AbstractTable {
   name: string;
   id: number;
   min_role_read: string;
@@ -374,7 +372,7 @@ class Table {
   readFromDB(row: Row): any {
     if (this.fields) {
       for (const f of this.fields) {
-        if (f.type && instanceOfTypeObj(f.type) && f.type.readFromDB)
+        if (f.type && instanceOfType(f.type) && f.type.readFromDB)
           row[f.name] = f.type.readFromDB(row[f.name]);
       }
     }
@@ -934,7 +932,7 @@ class Table {
 
     if (
       db.reset_sequence &&
-      instanceOfTypeObj(pk.type) &&
+      instanceOfType(pk.type) &&
       pk.type.name === "Integer"
     )
       await db.reset_sequence(this.name);
@@ -999,7 +997,7 @@ class Table {
     if (!pk) throw new Error("Unable to find a primary key field.");
     if (
       db.reset_sequence &&
-      instanceOfTypeObj(pk.type) &&
+      instanceOfType(pk.type) &&
       pk.type.name === "Integer"
     )
       await db.reset_sequence(this.name);

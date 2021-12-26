@@ -3,11 +3,10 @@
  * @module models/backup
  * @subcategory models
  */
-const { contract, is } = require("contractis");
 const { getState } = require("../db/state");
 import db = require("../db");
 import Table from "./table";
-import { instanceOfErrorMsg } from "../common_types";
+import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
 const View = require("./view");
 const File = require("./file");
 const Plugin = require("./plugin");
@@ -34,6 +33,7 @@ const {
 const { asyncMap } = require("../utils");
 import Trigger from "./trigger";
 import Library from "./library";
+import { Plugin } from "@saltcorn/types/base_types";
 
 /**
  * @function
@@ -301,11 +301,10 @@ const restore_config = async (dirpath: string): Promise<void> => {
  * @param {function} loadAndSaveNewPlugin
  * @param {boolean} [restore_first_user]
  * @returns {Promise<void>}
- TODO ch: is_plugin type like in contract.js
  */
 const restore = async (
   fnm: string,
-  loadAndSaveNewPlugin: (is_plugin: any) => void,
+  loadAndSaveNewPlugin: (plugin: Plugin) => void,
   restore_first_user?: boolean
 ): Promise<string | void> => {
   const dir = await tmp.dir({ unsafeCleanup: true });
