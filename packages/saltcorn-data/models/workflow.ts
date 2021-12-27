@@ -4,36 +4,54 @@
  * @module models/workflow
  * @subcategory models
  */
-const db = require("../db");
+
+import { instanceOfType } from "@saltcorn/types/common_types";
+import { AbstractWorkflow } from "@saltcorn/types/model-abstracts/abstract_workflow";
+
+import db from "../db";
+
+import type Field from "./field";
+
 const { getState } = require("../db/state");
-const Field = require("./field");
-const { contract, is } = require("contractis");
 const { applyAsync, apply } = require("../utils");
+
+type ResultType = {
+  renderForm?: any;
+  context: any;
+  stepName: string;
+  currentStep: number;
+  maxSteps: number;
+  title: string;
+};
 
 /**
  * Workflow class
  * @category saltcorn-data
  */
-class Workflow {
+class Workflow implements AbstractWorkflow {
+  steps: any[];
+  onDone: (arg0: any) => any;
+  action?: string | undefined;
+  __: any;
+
   /**
    * Workflow constructor
-   * @param {*} o 
+   * @param {*} o
    */
-  constructor(o) {
+  constructor(o: WorkflowCfg) {
     this.steps = o.steps || [];
     this.onDone = o.onDone || ((c) => c);
     this.action = o.action;
-    this.__ = (s) => s;
-    contract.class(this);
+    this.__ = (s: any) => s;
   }
 
   /**
-   * @param {object} body 
-   * @param {object} req 
+   * @param {object} body
+   * @param {object} req
    * @returns {Promise<object>}
    */
-  async run(body, req) {
-    if (req) this.__ = (s) => req.__(s);
+  async run(body: any, req: any): Promise<ResultType | undefined> {
+    if (req) this.__ = (s: any) => req.__(s);
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);
     }
@@ -97,13 +115,13 @@ class Workflow {
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
   }
-  
+
   /**
-   * @param {object} context 
-   * @param {number} stepIx 
+   * @param {object} context
+   * @param {number} stepIx
    * @returns {Promise<object>}
    */
-  async runStep(context, stepIx) {
+  async runStep(context: any, stepIx: number): Promise<any> {
     if (stepIx >= this.steps.length) {
       return await this.onDone(context);
     }
@@ -120,7 +138,7 @@ class Workflow {
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
 
-      form.fields.forEach((fld) => {
+      form.fields.forEach((fld: Field) => {
         const ctxValue =
           step.contextField && fld.parent_field
             ? ((context[step.contextField] || {})[fld.parent_field] || {})[
@@ -134,7 +152,9 @@ class Workflow {
           typeof form.values[fld.name] === "undefined"
         ) {
           const value =
-            fld.type && fld.type.read ? fld.type.read(ctxValue) : ctxValue;
+            instanceOfType(fld.type) && fld.type.read
+              ? fld.type.read(ctxValue)
+              : ctxValue;
           if (fld.parent_field) {
             form.values[`${fld.parent_field}_${fld.name}`] = value;
           } else form.values[fld.name] = value;
@@ -176,30 +196,24 @@ class Workflow {
   }
 
   /**
-   * @param {object} step 
-   * @param {number} stepIx 
+   * @param {object} step
+   * @param {number} stepIx
    * @returns {string}
    */
-  title(step, stepIx) {
+  title(step: any, stepIx: number): string {
     return `${step.name} (${this.__("step")} ${stepIx + 1} / ${
       this.steps.length > stepIx + 1 ? this.__("max") + " " : ""
     }${this.steps.length})`;
   }
 }
 
-Workflow.contract = {
-  variables: {
-    steps: is.array(is.obj({ name: is.str })),
-    onDone: is.fun(is.obj(), is.obj()),
-    action: is.maybe(is.str),
-  },
-  methods: {
-    run: is.fun(
-      is.obj(),
-      is.promise(is.obj({ renderForm: is.maybe(is.class("Form")) }))
-    ),
-    runStep: is.fun([is.obj(), is.posint], is.promise(is.obj())),
-  },
-};
+namespace Workflow {
+  export type WorkflowCfg = {
+    steps?: any[];
+    onDone?: (arg0: any) => any;
+    action?: string;
+  };
+}
+type WorkflowCfg = Workflow.WorkflowCfg;
 
-module.exports = Workflow;
+export = Workflow;

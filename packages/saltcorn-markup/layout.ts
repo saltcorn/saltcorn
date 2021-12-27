@@ -224,7 +224,7 @@ const render = ({
   is_owner,
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
-  function wrap(segment: any, isTop: boolean, ix: any, inner: string) {
+  function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
@@ -236,7 +236,7 @@ const render = ({
           )
         : applyTextStyle(segment, iconTag + inner);
   }
-  function go(segment: any, isTop: boolean, ix: any): string {
+  function go(segment: any, isTop: boolean = false, ix: number = 0): string {
     if (!segment) return "";
     if (
       typeof segment === "object" &&
@@ -396,10 +396,8 @@ const render = ({
                   segment.noPadding && "p-0",
                 ],
               },
-              // @ts-ignore
               go(segment.contents)
             ),
-          // @ts-ignore
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
@@ -554,7 +552,6 @@ const render = ({
                 src: `/files/serve/${bgFileId}`,
               })
             ),
-          // @ts-ignore
           go(segment.contents)
         )
       );
@@ -566,7 +563,6 @@ const render = ({
     if (segment.type === "search_bar") {
       return `<form action="/search" method="get">${search_bar("q", "", {
         has_dropdown: segment.has_dropdown,
-        // @ts-ignore
         contents: go(segment.contents),
       })}</form>`;
     }
