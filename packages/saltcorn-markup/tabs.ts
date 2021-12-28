@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module tabs
+ */
+
 import tags = require("./tags");
 const { a, text, div, ul, li } = tags;
 
