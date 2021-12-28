@@ -51,6 +51,7 @@ class View {
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     this.default_render_page = o.default_render_page;
+    this.slug = stringToJSON(o.slug);
     contract.class(this);
   }
 
