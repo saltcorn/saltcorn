@@ -36,7 +36,7 @@
  * @property {module:routes/utils} utils
  * @property {module:routes/view} view
  * @property {module:routes/viewedit} viewedit
- * 
+ *
  * @category server
  * @subcategory routes
  */
@@ -71,38 +71,39 @@ const useradmin = require("../auth/admin");
 const roleadmin = require("../auth/roleadmin");
 const scapi = require("./scapi");
 
-/**
- * Function assigned to 'module.exports'
- * @returns {void}
- */
-module.exports = (app) => {
-  app.use("/table", table);
-  app.use("/field", field);
-  app.use("/files", files);
-  app.use("/list", list);
-  app.use("/edit", edit);
-  app.use("/config", config);
-  app.use("/plugins", plugins);
-  app.use("/packs", packs);
-  app.use("/menu", menu);
-  app.use("/view", view);
-  app.use("/crashlog", crashlog);
-  app.use("/events", events);
-  app.use("/page", page);
-  app.use("/settings", settings);
-  app.use("/pageedit", pageedit);
-  app.use("/actions", actions);
-  app.use("/eventlog", eventlog);
-  app.use("/library", library);
-  app.use("/site-structure", infoarch);
-  app.use("/search", search);
-  app.use("/admin", admin);
-  app.use("/tenant", tenant);
-  app.use("/api", api);
-  app.use("/viewedit", viewedit);
-  app.use("/delete", del);
-  app.use("/auth", auth);
-  app.use("/useradmin", useradmin);
-  app.use("/roleadmin", roleadmin);
-  app.use("/scapi", scapi);
-};
+module.exports =
+  /**
+   * Function assigned to 'module.exports'
+   * @returns {void}
+   */
+  (app) => {
+    app.use("/table", table);
+    app.use("/field", field);
+    app.use("/files", files);
+    app.use("/list", list);
+    app.use("/edit", edit);
+    app.use("/config", config);
+    app.use("/plugins", plugins);
+    app.use("/packs", packs);
+    app.use("/menu", menu);
+    app.use("/view", view);
+    app.use("/crashlog", crashlog);
+    app.use("/events", events);
+    app.use("/page", page);
+    app.use("/settings", settings);
+    app.use("/pageedit", pageedit);
+    app.use("/actions", actions);
+    app.use("/eventlog", eventlog);
+    app.use("/library", library);
+    app.use("/site-structure", infoarch);
+    app.use("/search", search);
+    app.use("/admin", admin);
+    app.use("/tenant", tenant);
+    app.use("/api", api);
+    app.use("/viewedit", viewedit);
+    app.use("/delete", del);
+    app.use("/auth", auth);
+    app.use("/useradmin", useradmin);
+    app.use("/roleadmin", roleadmin);
+    app.use("/scapi", scapi);
+  };

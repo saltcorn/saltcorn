@@ -455,25 +455,26 @@ const get_config_response = async (role_id, res, req) => {
   }
 };
 
-/**
- * Function assigned to 'module.exports'.
- * @param {object} req
- * @param {object} res
- * @returns {Promise<void>}
- */
-module.exports = async (req, res) => {
-  const isAuth = req.isAuthenticated();
-  const role_id = req.user ? req.user.role_id : 10;
-  const cfgResp = await get_config_response(role_id, res, req);
-  if (cfgResp) return;
+module.exports =
+  /**
+   * Function assigned to 'module.exports'.
+   * @param {object} req
+   * @param {object} res
+   * @returns {Promise<void>}
+   */
+  async (req, res) => {
+    const isAuth = req.isAuthenticated();
+    const role_id = req.user ? req.user.role_id : 10;
+    const cfgResp = await get_config_response(role_id, res, req);
+    if (cfgResp) return;
 
-  if (!isAuth) {
-    const hasUsers = await User.nonEmpty();
-    if (!hasUsers) {
-      res.redirect("/auth/create_first_user");
-      return;
-    } else res.redirect("/auth/login");
-  } else {
-    await no_views_logged_in(req, res);
-  }
-};
+    if (!isAuth) {
+      const hasUsers = await User.nonEmpty();
+      if (!hasUsers) {
+        res.redirect("/auth/create_first_user");
+        return;
+      } else res.redirect("/auth/login");
+    } else {
+      await no_views_logged_in(req, res);
+    }
+  };

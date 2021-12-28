@@ -1,7 +1,13 @@
+/**
+ * @category saltcorn-data
+ * @module models/role
+ * @subcategory models
+ */
+
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 
-/*
+/**
  * Role class
  * @category saltcorn-data
  */

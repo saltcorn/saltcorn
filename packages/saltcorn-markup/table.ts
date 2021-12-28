@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-markup
+ * @module table
+ */
+
 import tags = require("./tags");
 const { a, td, tr, th, text, div, table, thead, tbody, ul, li, span } = tags;
 import helpers = require("./helpers");
