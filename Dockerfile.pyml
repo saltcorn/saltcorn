@@ -21,7 +21,6 @@ RUN pip3 install --upgrade tensorflow && \
 
 RUN npm install -g lerna
 
-ENV NODE_ENV "production"
 ENV SALTCORN_DISABLE_UPGRADE "true"
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
 
@@ -29,7 +28,7 @@ WORKDIR /opt/saltcorn
 
 COPY . /opt/saltcorn
 RUN lerna bootstrap --ignore @saltcorn/e2e
-
+RUN npm install
 RUN npm run tsc
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"
