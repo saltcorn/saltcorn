@@ -314,6 +314,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
             mapObjectValues(slugOptions, (lvs) => lvs.map((lv) => lv.label)),
           ],
         },
+        showIf: { viewtemplate: hasTable },
       }),
       ...(isEdit
         ? [
