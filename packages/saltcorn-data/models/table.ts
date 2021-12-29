@@ -1213,10 +1213,10 @@ class Table implements AbstractTable {
     return apply_calculated_fields(res.rows, fields);
   }
 
-  async slug_options(): Promise<Array<{ label: string; value: any }>> {
+  async slug_options(): Promise<Array<{ label: string; steps: any }>> {
     const fields = await this.getFields();
     const unique_fields = fields.filter((f) => f.is_unique);
-    const opts: Array<{ label: string; value: any }> = unique_fields.map(
+    const opts: Array<{ label: string; steps: any }> = unique_fields.map(
       (f: Field) => {
         const label =
           instanceOfType(f.type) && f.type.name === "String"
@@ -1237,16 +1237,16 @@ class Table implements AbstractTable {
         };
       }
     );
-    opts.unshift({ label: "", value: null });
+    opts.unshift({ label: "", steps: [] });
     return opts;
   }
 
   static async allSlugOptions(): Promise<{
-    [nm: string]: Array<{ label: string; value: any }>;
+    [nm: string]: Array<{ label: string; steps: any }>;
   }> {
     const tables = await Table.find({});
     const options: {
-      [nm: string]: Array<{ label: string; value: any }>;
+      [nm: string]: Array<{ label: string; steps: any }>;
     } = {};
     for (const table of tables) {
       options[table.name] = await table.slug_options();
