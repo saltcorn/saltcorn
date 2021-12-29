@@ -1213,18 +1213,18 @@ class Table implements AbstractTable {
     return apply_calculated_fields(res.rows, fields);
   }
 
-  async slug_options(): Promise<Array<{ label: string; value: string }>> {
+  async slug_options(): Promise<Array<{ label: string; value: any }>> {
     const fields = await this.getFields();
     const unique_fields = fields.filter((f) => f.is_unique);
-    const opts = unique_fields.map((f: Field) => {
-      const label =
-        instanceOfType(f.type) && f.type.name === "String"
-          ? `/slugify-${f.name}`
-          : `/:${f.name}`;
-      return {
-        label,
-        value: JSON.stringify([
-          {
+    const opts: Array<{ label: string; value: any }> = unique_fields.map(
+      (f: Field) => {
+        const label =
+          instanceOfType(f.type) && f.type.name === "String"
+            ? `/slugify-${f.name}`
+            : `/:${f.name}`;
+        return {
+          label,
+          value: {
             field: f.name,
             unique: true,
             transform:
@@ -1232,18 +1232,19 @@ class Table implements AbstractTable {
                 ? "slugify"
                 : null,
           },
-        ]),
-      };
-    });
+        };
+      }
+    );
+    opts.unshift({ label: "", value: null });
     return opts;
   }
 
   static async allSlugOptions(): Promise<{
-    [nm: string]: Array<{ label: string; value: string }>;
+    [nm: string]: Array<{ label: string; value: any }>;
   }> {
     const tables = await Table.find({});
     const options: {
-      [nm: string]: Array<{ label: string; value: string }>;
+      [nm: string]: Array<{ label: string; value: any }>;
     } = {};
     for (const table of tables) {
       options[table.name] = await table.slug_options();

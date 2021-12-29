@@ -239,7 +239,6 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
     .filter(([k, v]) => !v.tableless)
     .map(([k, v]) => k);
   const slugOptions = await Table.allSlugOptions();
-  console.log(slugOptions);
   return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
@@ -470,13 +469,23 @@ router.post(
           }
 
         const v = result.success;
+        console.log({ v });
         if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
-          if (table && table.id) v.table_id = table.id;
-          else if (table && table.external) v.exttable_name = v.table_name;
+          if (table && table.id) {
+            v.table_id = table.id;
+          } else if (table && table.external) v.exttable_name = v.table_name;
         }
+        if (v.table_id) {
+          const table = await Table.findOne({ id: v.table_id });
+          const slugOptions = await table.slug_options();
+          const slug = slugOptions.find((so) => so.label === v.slug);
+          console.log({ slug });
+          if (slug) v.slug = slug.value;
+          else v.slug = null;
+        }
+        const table = await Table.findOne({ name: v.table_name });
         delete v.table_name;
-
         if (req.body.id) {
           await View.update(v, +req.body.id);
         } else {
