@@ -1,7 +1,7 @@
 const sql = "alter table _sc_fields add column primary_key boolean;";
 const js = async () => {
-  const Table = require("../models/table");
-  const db = require("../db");
+  const Table = require("@saltcorn/data/models/table");
+  const db = require("@saltcorn/data/db");
   const tables = await Table.find({});
   const schema = db.getTenantSchemaPrefix();
   for (const t of tables) {
