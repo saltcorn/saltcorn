@@ -1212,6 +1212,31 @@ class Table implements AbstractTable {
 
     return apply_calculated_fields(res.rows, fields);
   }
+
+  async slug_options() {
+    const fields = await this.getFields();
+    const unique_fields = fields.filter((f) => f.is_unique);
+    const opts = unique_fields.map((f: Field) => {
+      const label =
+        instanceOfType(f.type) && f.type.name === "String"
+          ? `/slugify-${f.name}`
+          : `/:${f.name}`;
+      return {
+        label,
+        value: [
+          {
+            field: f.name,
+            unique: true,
+            transform:
+              instanceOfType(f.type) && f.type.name === "String"
+                ? "slugify"
+                : null,
+          },
+        ],
+      };
+    });
+    return opts;
+  }
 }
 
 // declaration merging

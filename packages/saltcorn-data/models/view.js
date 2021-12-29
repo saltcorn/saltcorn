@@ -297,31 +297,6 @@ class View {
     return await this.viewtemplateObj.authorise_get(arg);
   }
 
-  async slug_options() {
-    const Table = require("./table");
-
-    if (!this.table_id) return [];
-    const tbl = Table.findOne({ id: this.table_id });
-    if (tbl) return [];
-
-    const fields = await tbl.getFields();
-    const unique_fields = fields.filter((f) => f.is_unique);
-    const opts = unique_fields.map((f) => {
-      const label = f.type.name === "String" ? `slugify(${f.name})` : f.name;
-      return {
-        label,
-        value: [
-          {
-            field: f.name,
-            unique: true,
-            transform: f.type.name === "String" ? "slugify" : null,
-          },
-        ],
-      };
-    });
-    return opts;
-  }
-
   /**
    * @returns {string}
    */
