@@ -232,12 +232,14 @@ const mapObjectValues = (o, f) =>
  * @param {object} values
  * @returns {Form}
  */
-const viewForm = (req, tableOptions, roles, pages, values) => {
+const viewForm = async (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
   const hasTable = Object.entries(getState().viewtemplates)
     .filter(([k, v]) => !v.tableless)
     .map(([k, v]) => k);
+  const slugOptions = await Table.allSlugOptions();
+  console.log(slugOptions);
   return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
@@ -302,6 +304,18 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
           ...pages.map((p) => ({ value: p.name, label: p.name })),
         ],
       }),
+      new Field({
+        name: "slug",
+        label: req.__("Slug"),
+        sublabel: req.__("Field that can be used for a prettier URL structure"),
+        type: "String",
+        attributes: {
+          calcOptions: [
+            "table_name",
+            mapObjectValues(slugOptions, (lvs) => lvs.map((lv) => lv.label)),
+          ],
+        },
+      }),
       ...(isEdit
         ? [
             new Field({
@@ -345,7 +359,7 @@ router.get(
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages, viewrow);
+    const form = await viewForm(req, tableOptions, roles, pages, viewrow);
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -380,7 +394,7 @@ router.get(
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages);
+    const form = await viewForm(req, tableOptions, roles, pages);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
@@ -417,7 +431,7 @@ router.post(
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages);
+    const form = await viewForm(req, tableOptions, roles, pages);
     const result = form.validate(req.body);
 
     const sendForm = (form) => {

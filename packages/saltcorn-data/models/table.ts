@@ -1213,7 +1213,7 @@ class Table implements AbstractTable {
     return apply_calculated_fields(res.rows, fields);
   }
 
-  async slug_options() {
+  async slug_options(): Promise<Array<{ label: string; value: string }>> {
     const fields = await this.getFields();
     const unique_fields = fields.filter((f) => f.is_unique);
     const opts = unique_fields.map((f: Field) => {
@@ -1223,7 +1223,7 @@ class Table implements AbstractTable {
           : `/:${f.name}`;
       return {
         label,
-        value: [
+        value: JSON.stringify([
           {
             field: f.name,
             unique: true,
@@ -1232,10 +1232,23 @@ class Table implements AbstractTable {
                 ? "slugify"
                 : null,
           },
-        ],
+        ]),
       };
     });
     return opts;
+  }
+
+  static async allSlugOptions(): Promise<{
+    [nm: string]: Array<{ label: string; value: string }>;
+  }> {
+    const tables = await Table.find({});
+    const options: {
+      [nm: string]: Array<{ label: string; value: string }>;
+    } = {};
+    for (const table of tables) {
+      options[table.name] = await table.slug_options();
+    }
+    return options;
   }
 }
 
