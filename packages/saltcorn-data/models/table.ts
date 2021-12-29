@@ -1216,27 +1216,26 @@ class Table implements AbstractTable {
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {
     const fields = await this.getFields();
     const unique_fields = fields.filter((f) => f.is_unique);
-    const opts: Array<{ label: string; steps: any }> = unique_fields.map(
-      (f: Field) => {
-        const label =
-          instanceOfType(f.type) && f.type.name === "String"
-            ? `/slugify-${f.name}`
-            : `/:${f.name}`;
-        return {
-          label,
-          steps: [
-            {
-              field: f.name,
-              unique: true,
-              transform:
-                instanceOfType(f.type) && f.type.name === "String"
-                  ? "slugify"
-                  : null,
-            },
-          ],
-        };
-      }
-    );
+    const opts: Array<{ label: string; steps: any }> = [];
+    unique_fields.forEach((f: Field) => {
+      const label =
+        instanceOfType(f.type) && f.type.name === "String"
+          ? `/slugify-${f.name}`
+          : `/:${f.name}`;
+      opts.push({
+        label,
+        steps: [
+          {
+            field: f.name,
+            unique: true,
+            transform:
+              instanceOfType(f.type) && f.type.name === "String"
+                ? "slugify"
+                : null,
+          },
+        ],
+      });
+    });
     opts.unshift({ label: "", steps: [] });
     return opts;
   }

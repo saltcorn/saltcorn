@@ -533,7 +533,10 @@ class View {
       for (const step of this.slug.steps) {
         console.log(step);
         if (step.unique) {
-          query[step.field] = params[pix];
+          query[step.field] = step.transform
+            ? { [step.transform]: params[pix] }
+            : params[pix];
+          return;
         }
         pix += 1;
       }
