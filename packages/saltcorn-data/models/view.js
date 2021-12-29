@@ -525,6 +525,21 @@ class View {
     };
     return configFlow;
   }
+
+  rewrite_query_from_slug(query, params) {
+    let pix = 0;
+    console.log("slug", this.slug);
+    if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
+      for (const step of this.slug.steps) {
+        console.log(step);
+        if (step.unique) {
+          query[step.field] = params[pix];
+        }
+        pix += 1;
+      }
+    }
+    console.log("updated query", query);
+  }
 }
 
 View.contract = {
