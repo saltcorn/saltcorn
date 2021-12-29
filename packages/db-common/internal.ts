@@ -210,7 +210,9 @@ const whereClause = (
     : k === "or" && Array.isArray(v)
     ? whereOr(phs)(v)
     : typeof (v || {}).slugify !== "undefined"
-    ? `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${phs.push(v)}`
+    ? `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${phs.push(
+        v.slugify
+      )}`
     : k === "not" && typeof v === "object"
     ? `not (${Object.entries(v)
         .map((kv) => whereClause(phs)(kv))
