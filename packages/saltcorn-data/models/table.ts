@@ -1224,14 +1224,16 @@ class Table implements AbstractTable {
             : `/:${f.name}`;
         return {
           label,
-          value: {
-            field: f.name,
-            unique: true,
-            transform:
-              instanceOfType(f.type) && f.type.name === "String"
-                ? "slugify"
-                : null,
-          },
+          steps: [
+            {
+              field: f.name,
+              unique: true,
+              transform:
+                instanceOfType(f.type) && f.type.name === "String"
+                  ? "slugify"
+                  : null,
+            },
+          ],
         };
       }
     );

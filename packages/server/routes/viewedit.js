@@ -355,6 +355,11 @@ router.get(
       (t) => t.id === viewrow.table_id || t.name === viewrow.exttable_name
     );
     viewrow.table_name = currentTable && currentTable.name;
+    if (viewrow.slug && currentTable) {
+      const slugOptions = await currentTable.slug_options();
+      const slug = slugOptions.find((so) => so.label === viewrow.slug.label);
+      if (slug) viewrow.slug = slug.label;
+    }
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
@@ -480,9 +485,7 @@ router.post(
           const table = await Table.findOne({ id: v.table_id });
           const slugOptions = await table.slug_options();
           const slug = slugOptions.find((so) => so.label === v.slug);
-          console.log({ slug });
-          if (slug) v.slug = slug.value;
-          else v.slug = null;
+          v.slug = slug || null;
         }
         const table = await Table.findOne({ name: v.table_name });
         delete v.table_name;
