@@ -474,7 +474,6 @@ router.post(
           }
 
         const v = result.success;
-        console.log({ v });
         if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
           if (table && table.id) {
