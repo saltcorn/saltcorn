@@ -189,7 +189,12 @@ const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
   if (v2 === null) return isNull(v1);
   return `${pVal(v1)}=${pVal(v2)}`;
 };
-
+const slugifyQuery = (k: string, s: string, phs: PlaceHolderStack) =>
+  phs.is_sqlite
+    ? `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${phs.push(s)}`
+    : `REGEXP_REPLACE(REPLACE(LOWER(${quote(
+        sqlsanitizeAllowDots(k)
+      )}),' ','-'),'[^\\w-]','','g')=${phs.push(s)}`;
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -210,9 +215,7 @@ const whereClause = (
     : k === "or" && Array.isArray(v)
     ? whereOr(phs)(v)
     : typeof (v || {}).slugify !== "undefined"
-    ? `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${phs.push(
-        v.slugify
-      )}`
+    ? slugifyQuery(k, v.slugify, phs)
     : k === "not" && typeof v === "object"
     ? `not (${Object.entries(v)
         .map((kv) => whereClause(phs)(kv))
