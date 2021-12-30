@@ -970,7 +970,7 @@ const stateFieldsToWhere = contract(
         const datefield = db.sqlsanitize(k.replace("_lte_", ""));
         const dfield = fields.find((fld) => fld.name == datefield);
         if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
-      } else if (field && field.type.name === "String" && v.slugify) {
+      } else if (field && field.type.name === "String" && v && v.slugify) {
         qstate[k] = v;
       } else if (
         field &&
@@ -1146,7 +1146,7 @@ const readState = (state, fields, req) => {
     if (typeof current !== "undefined") {
       if (Array.isArray(current) && f.type.read) {
         state[f.name] = current.map(f.type.read);
-      } else if (current.slugify)
+      } else if (current && current.slugify)
         state[f.name] = f.type.read
           ? { slugify: f.type.read(current.slugify) }
           : current;
