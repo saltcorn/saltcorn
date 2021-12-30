@@ -845,5 +845,7 @@
 	"User should have this role or higher to generate API keys in their user settings": "User should have this role or higher to generate API keys in their user settings",
 	"API token removed": "API token removed",
 	"Row inclusion formula": "Row inclusion formula",
-	"Only include rows where this formula is true": "Only include rows where this formula is true"
+	"Only include rows where this formula is true": "Only include rows where this formula is true",
+	"Slug": "Slug",
+	"Field that can be used for a prettier URL structure": "Field that can be used for a prettier URL structure"
 }

@@ -15,6 +15,7 @@ const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
+const View = require("../../models/view");
 
 /**
  * @function
@@ -105,14 +106,22 @@ const action_link = (
     });
 };
 
+const slug_transform = (row) => (step) =>
+  step.transform === "slugify"
+    ? `/${db.slugify(row[step.field])}`
+    : `/${row[step.field]}`;
 /**
  * @function
  * @param {Field[]} fields
  * @returns {function}
  */
-const get_view_link_query = contract(
-  is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
-  (fields) => {
+const get_view_link_query =
+  /*contract(
+  is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),*/
+  (fields, view) => {
+    if (view && view.slug && view.slug.steps && view.slug.steps.length > 0) {
+      return (r) => view.slug.steps.map(slug_transform(r)).join("");
+    }
     const fUniqueString = fields.find(
       (f) => f.is_unique && f.type.name === "String"
     );
@@ -126,8 +135,7 @@ const get_view_link_query = contract(
       const pk_name = fields.find((f) => f.primary_key).name;
       return (r) => `?${pk_name}=${r[pk_name]}`;
     }
-  }
-);
+  };
 
 /**
  * @function
@@ -257,7 +265,8 @@ const view_linker = contract(
     switch (vtype) {
       case "Own":
         const vnm = vrest;
-        const get_query = get_view_link_query(fields);
+        const viewrow = View.findOne({ name: vnm });
+        const get_query = get_view_link_query(fields, viewrow || {});
         return {
           label: vnm,
           key: (r) =>

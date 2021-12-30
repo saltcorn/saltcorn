@@ -130,22 +130,20 @@ export type Where = {
  * @param {string} i
  * @returns {function}
  */
-const subSelectWhere =
-  (phs: PlaceHolderStack) =>
-  (
-    k: string,
-    v: { inSelect: { where: Where; field: string; table: string } }
-  ): string => {
-    const whereObj = v.inSelect.where;
-    const wheres = whereObj ? Object.entries(whereObj) : [];
-    const where =
-      whereObj && wheres.length > 0
-        ? "where " + wheres.map(whereClause(phs)).join(" and ")
-        : "";
-    return `${quote(sqlsanitizeAllowDots(k))} in (select ${
-      v.inSelect.field
-    } from ${v.inSelect.table} ${where})`;
-  };
+const subSelectWhere = (phs: PlaceHolderStack) => (
+  k: string,
+  v: { inSelect: { where: Where; field: string; table: string } }
+): string => {
+  const whereObj = v.inSelect.where;
+  const wheres = whereObj ? Object.entries(whereObj) : [];
+  const where =
+    whereObj && wheres.length > 0
+      ? "where " + wheres.map(whereClause(phs)).join(" and ")
+      : "";
+  return `${quote(sqlsanitizeAllowDots(k))} in (select ${
+    v.inSelect.field
+  } from ${v.inSelect.table} ${where})`;
+};
 
 /**
  * @param {string} s
@@ -167,18 +165,18 @@ const quote = (s: string): string =>
  * @param {string} i
  * @returns {function}
  */
-const whereOr =
-  (phs: PlaceHolderStack): ((ors: any[]) => string) =>
-  (ors: any[]): string =>
-    wrapParens(
-      ors
-        .map((vi: any) =>
-          Object.entries(vi)
-            .map((kv) => whereClause(phs)(kv))
-            .join(" and ")
-        )
-        .join(" or ")
-    );
+const whereOr = (phs: PlaceHolderStack): ((ors: any[]) => string) => (
+  ors: any[]
+): string =>
+  wrapParens(
+    ors
+      .map((vi: any) =>
+        Object.entries(vi)
+          .map((kv) => whereClause(phs)(kv))
+          .join(" and ")
+      )
+      .join(" or ")
+  );
 
 const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
   const pVal = (v: any) =>
@@ -191,65 +189,69 @@ const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
   if (v2 === null) return isNull(v1);
   return `${pVal(v1)}=${pVal(v2)}`;
 };
-
+const slugifyQuery = (k: string, s: string, phs: PlaceHolderStack) =>
+  phs.is_sqlite
+    ? `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${phs.push(s)}`
+    : `REGEXP_REPLACE(REPLACE(LOWER(${quote(
+        sqlsanitizeAllowDots(k)
+      )}),' ','-'),'[^\\w-]','','g')=${phs.push(s)}`;
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
  * @returns {function}
  */
-const whereClause =
-  (phs: PlaceHolderStack): (([k, v]: [string, any | [any, any]]) => string) =>
-  ([k, v]: [string, any | [any, any]]): string =>
-    k === "_fts"
-      ? whereFTS(v, phs)
-      : typeof (v || {}).in !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} = ${
-          phs.is_sqlite ? "" : "ANY"
-        } (${phs.push(v.in)})`
-      : k === "or" && Array.isArray(v)
-      ? whereOr(phs)(v)
-      : k === "not" && typeof v === "object"
-      ? `not (${Object.entries(v)
-          .map((kv) => whereClause(phs)(kv))
-          .join(" and ")})`
-      : k === "eq" && Array.isArray(v)
-      ? // @ts-ignore
-        equals(v, phs)
-      : v && v.or && Array.isArray(v.or)
-      ? wrapParens(
-          v.or.map((vi: any) => whereClause(phs)([k, vi])).join(" or ")
-        )
-      : Array.isArray(v)
-      ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
-      : typeof (v || {}).ilike !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} ${
-          phs.is_sqlite ? "LIKE" : "ILIKE"
-        } '%' || ${phs.push(v.ilike)} || '%'`
-      : typeof (v || {}).gt !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${phs.push(
-          v.gt
-        )}`
-      : typeof (v || {}).lt !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${phs.push(
-          v.lt
-        )}`
-      : typeof (v || {}).inSelect !== "undefined"
-      ? subSelectWhere(phs)(k, v)
-      : typeof (v || {}).json !== "undefined"
-      ? phs.is_sqlite
-        ? `json_extract(${quote(
-            sqlsanitizeAllowDots(k)
-          )}, '$.${sqlsanitizeAllowDots(v.json[0])}')=${phs.push(v.json[1])}`
-        : `${quote(sqlsanitizeAllowDots(k))}->>'${sqlsanitizeAllowDots(
-            v.json[0]
-          )}'=${phs.push(v.json[1])}`
-      : v === null
-      ? `${quote(sqlsanitizeAllowDots(k))} is null`
-      : k === "not"
-      ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
-      : `${quote(sqlsanitizeAllowDots(k))}=${
-          typeof v === "symbol" ? v.description : phs.push(v)
-        }`;
+const whereClause = (
+  phs: PlaceHolderStack
+): (([k, v]: [string, any | [any, any]]) => string) => ([k, v]: [
+  string,
+  any | [any, any]
+]): string =>
+  k === "_fts"
+    ? whereFTS(v, phs)
+    : typeof (v || {}).in !== "undefined"
+    ? `${quote(sqlsanitizeAllowDots(k))} = ${
+        phs.is_sqlite ? "" : "ANY"
+      } (${phs.push(v.in)})`
+    : k === "or" && Array.isArray(v)
+    ? whereOr(phs)(v)
+    : typeof (v || {}).slugify !== "undefined"
+    ? slugifyQuery(k, v.slugify, phs)
+    : k === "not" && typeof v === "object"
+    ? `not (${Object.entries(v)
+        .map((kv) => whereClause(phs)(kv))
+        .join(" and ")})`
+    : k === "eq" && Array.isArray(v)
+    ? // @ts-ignore
+      equals(v, phs)
+    : v && v.or && Array.isArray(v.or)
+    ? wrapParens(v.or.map((vi: any) => whereClause(phs)([k, vi])).join(" or "))
+    : Array.isArray(v)
+    ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
+    : typeof (v || {}).ilike !== "undefined"
+    ? `${quote(sqlsanitizeAllowDots(k))} ${
+        phs.is_sqlite ? "LIKE" : "ILIKE"
+      } '%' || ${phs.push(v.ilike)} || '%'`
+    : typeof (v || {}).gt !== "undefined"
+    ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${phs.push(v.gt)}`
+    : typeof (v || {}).lt !== "undefined"
+    ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${phs.push(v.lt)}`
+    : typeof (v || {}).inSelect !== "undefined"
+    ? subSelectWhere(phs)(k, v)
+    : typeof (v || {}).json !== "undefined"
+    ? phs.is_sqlite
+      ? `json_extract(${quote(
+          sqlsanitizeAllowDots(k)
+        )}, '$.${sqlsanitizeAllowDots(v.json[0])}')=${phs.push(v.json[1])}`
+      : `${quote(sqlsanitizeAllowDots(k))}->>'${sqlsanitizeAllowDots(
+          v.json[0]
+        )}'=${phs.push(v.json[1])}`
+    : v === null
+    ? `${quote(sqlsanitizeAllowDots(k))} is null`
+    : k === "not"
+    ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
+    : `${quote(sqlsanitizeAllowDots(k))}=${
+        typeof v === "symbol" ? v.description : phs.push(v)
+      }`;
 
 type WhereAndVals = {
   where: string;

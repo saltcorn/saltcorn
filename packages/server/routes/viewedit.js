@@ -232,12 +232,13 @@ const mapObjectValues = (o, f) =>
  * @param {object} values
  * @returns {Form}
  */
-const viewForm = (req, tableOptions, roles, pages, values) => {
+const viewForm = async (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
   const hasTable = Object.entries(getState().viewtemplates)
     .filter(([k, v]) => !v.tableless)
     .map(([k, v]) => k);
+  const slugOptions = await Table.allSlugOptions();
   return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
@@ -302,6 +303,19 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
           ...pages.map((p) => ({ value: p.name, label: p.name })),
         ],
       }),
+      new Field({
+        name: "slug",
+        label: req.__("Slug"),
+        sublabel: req.__("Field that can be used for a prettier URL structure"),
+        type: "String",
+        attributes: {
+          calcOptions: [
+            "table_name",
+            mapObjectValues(slugOptions, (lvs) => lvs.map((lv) => lv.label)),
+          ],
+        },
+        showIf: { viewtemplate: hasTable },
+      }),
       ...(isEdit
         ? [
             new Field({
@@ -342,10 +356,15 @@ router.get(
       (t) => t.id === viewrow.table_id || t.name === viewrow.exttable_name
     );
     viewrow.table_name = currentTable && currentTable.name;
+    if (viewrow.slug && currentTable) {
+      const slugOptions = await currentTable.slug_options();
+      const slug = slugOptions.find((so) => so.label === viewrow.slug.label);
+      if (slug) viewrow.slug = slug.label;
+    }
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages, viewrow);
+    const form = await viewForm(req, tableOptions, roles, pages, viewrow);
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -380,7 +399,7 @@ router.get(
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages);
+    const form = await viewForm(req, tableOptions, roles, pages);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
@@ -417,7 +436,7 @@ router.post(
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages);
+    const form = await viewForm(req, tableOptions, roles, pages);
     const result = form.validate(req.body);
 
     const sendForm = (form) => {
@@ -458,11 +477,18 @@ router.post(
         const v = result.success;
         if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
-          if (table && table.id) v.table_id = table.id;
-          else if (table && table.external) v.exttable_name = v.table_name;
+          if (table && table.id) {
+            v.table_id = table.id;
+          } else if (table && table.external) v.exttable_name = v.table_name;
         }
+        if (v.table_id) {
+          const table = await Table.findOne({ id: v.table_id });
+          const slugOptions = await table.slug_options();
+          const slug = slugOptions.find((so) => so.label === v.slug);
+          v.slug = slug || null;
+        }
+        const table = await Table.findOne({ name: v.table_name });
         delete v.table_name;
-
         if (req.body.id) {
           await View.update(v, +req.body.id);
         } else {

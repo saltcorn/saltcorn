@@ -51,6 +51,7 @@ class View {
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     this.default_render_page = o.default_render_page;
+    this.slug = stringToJSON(o.slug);
     contract.class(this);
   }
 
@@ -523,6 +524,21 @@ class View {
       };
     };
     return configFlow;
+  }
+
+  rewrite_query_from_slug(query, params) {
+    let pix = 0;
+    if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
+      for (const step of this.slug.steps) {
+        if (step.unique) {
+          query[step.field] = step.transform
+            ? { [step.transform]: params[pix] }
+            : params[pix];
+          return;
+        }
+        pix += 1;
+      }
+    }
   }
 }
 

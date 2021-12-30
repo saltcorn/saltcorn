@@ -25,6 +25,7 @@ class ReleaseCommand extends Command {
       "@saltcorn/db-common": { dir: "db-common", publish: true },
       "@saltcorn/sqlite": { dir: "sqlite", publish: true },
       "@saltcorn/postgres": { dir: "postgres", publish: true },
+      "@saltcorn/types": { dir: "saltcorn-types", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
       "@saltcorn/data": { dir: "saltcorn-data", publish: true },
       "@saltcorn/random-tests": { dir: "saltcorn-random-tests" },
@@ -61,7 +62,7 @@ class ReleaseCommand extends Command {
         stdio: "inherit",
         cwd: ".",
       });
-    }
+    };
     const publish = (dir) =>
       spawnSync("npm", ["publish"], {
         stdio: "inherit",

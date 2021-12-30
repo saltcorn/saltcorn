@@ -126,6 +126,14 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
+  it("should get rows by slug", async () => {
+    const books = await Table.findOne({ name: "books" });
+    const all = await books.getRows({
+      author: { slugify: "herman-melville" },
+    });
+    expect(all.length).toStrictEqual(1);
+    expect(all[0].pages).toStrictEqual(967);
+  });
   it("should get joined rows where name is Michael", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const michaels = await patients.getJoinedRows({

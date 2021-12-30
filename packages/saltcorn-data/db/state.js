@@ -78,8 +78,8 @@ class State {
     this.eventTypes = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
-    this.function_context = { moment };
-    this.functions = { moment };
+    this.function_context = { moment, slugify: db.slugify };
+    this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
@@ -460,8 +460,8 @@ class State {
     this.auth_methods = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
-    this.function_context = { moment };
-    this.functions = { moment };
+    this.function_context = { moment, slugify: db.slugify };
+    this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};

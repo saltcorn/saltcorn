@@ -32,7 +32,9 @@ function apply_showif() {
     var e = $(element);
     var to_show = new Function("e", "return " + e.attr("data-show-if"));
     if (to_show(e))
-      e.show().find("input, textarea, button, select").prop("disabled", false);
+      e.show()
+        .find("input, textarea, button, select")
+        .prop("disabled", e.attr("data-disabled") || false);
     else
       e.hide().find("input, textarea, button, select").prop("disabled", true);
   });
