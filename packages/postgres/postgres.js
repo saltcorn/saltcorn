@@ -373,6 +373,12 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   return await promisify(pipeline)(fileStream, stream);
 };
 
+const slugify = (s) =>
+  s
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]/g, "");
+
 const postgresExports = {
   pool,
   /**
@@ -405,6 +411,7 @@ const postgresExports = {
   reset_sequence,
   getVersion,
   copyFrom,
+  slugify,
 };
 
 module.exports = (getConnectObjectPara) => {

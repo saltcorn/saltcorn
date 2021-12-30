@@ -359,3 +359,6 @@ export const drop_unique_constraint = async (
   sql_log(sql);
   await query(sql);
 };
+
+export const slugify = (s: string): string =>
+  s.toLowerCase().replace(/\s+/g, "-");

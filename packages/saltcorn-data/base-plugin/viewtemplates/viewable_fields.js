@@ -106,16 +106,9 @@ const action_link = (
     });
 };
 
-const slugify = (s) =>
-  db.is_sqlite
-    ? s.toLowerCase().replace(/\s+/g, "-")
-    : s
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w-]/g, "");
 const slug_transform = (row) => (step) =>
   step.transform === "slugify"
-    ? `/${slugify(row[step.field])}`
+    ? `/${db.slugify(row[step.field])}`
     : `/${row[step.field]}`;
 /**
  * @function
