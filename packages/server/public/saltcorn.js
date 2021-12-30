@@ -34,7 +34,7 @@ function apply_showif() {
     if (to_show(e))
       e.show()
         .find("input, textarea, button, select")
-        .prop("disabled", e.prop("data-disabled"));
+        .prop("disabled", e.attr("data-disabled") || false);
     else
       e.hide().find("input, textarea, button, select").prop("disabled", true);
   });

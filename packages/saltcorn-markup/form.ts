@@ -66,6 +66,7 @@ const formRowWrap = (
   div(
     {
       class: ["form-group", isHoriz(fStyle) && "row"],
+      "data-disabled": hdr.disabled ? "true" : false,
       ...(hdr.showIf && {
         "data-show-if": mkShowIf(hdr.showIf),
       }),
