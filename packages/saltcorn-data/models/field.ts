@@ -17,7 +17,10 @@ import type {
 } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type Table from "./table";
-import { AbstractField } from "@saltcorn/types/model-abstracts/abstract_field";
+import type {
+  AbstractField,
+  InputType,
+} from "@saltcorn/types/model-abstracts/abstract_field";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -60,7 +63,7 @@ class Field implements AbstractField {
   expression?: string;
   sourceURL?: string;
   is_fkey: boolean;
-  input_type: string;
+  input_type: InputType;
   reftable_name?: string;
   reftype?: string;
   refname: string = "";
@@ -474,9 +477,9 @@ class Field implements AbstractField {
       );
 
       if (instanceOfType(new_field.type)) {
-        if (new_field.type.primaryKey.sql_type)
+        if (new_field.type.primaryKey?.sql_type)
           new_sql_type = new_field.type.primaryKey.sql_type;
-        if (new_field.type.primaryKey.default_sql) {
+        if (new_field.type.primaryKey?.default_sql) {
           def = `default ${new_field.type.primaryKey.default_sql}`;
         }
       }
@@ -785,18 +788,7 @@ namespace Field {
     stored?: boolean;
     expression?: string;
     sourceURL?: string;
-    input_type?:
-      | "hidden"
-      | "file"
-      | "select"
-      | "fromtype"
-      | "search"
-      | "text"
-      | "password"
-      | "section_header"
-      | "textarea"
-      | "custom_html"
-      | "code";
+    input_type?: InputType;
     reftable_name?: string;
     reftable?: Table;
     attributes?: string;

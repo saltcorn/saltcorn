@@ -1,17 +1,24 @@
-import { AbstractForm } from "./model-abstracts/abstract_form";
-import { AbstractTable } from "./model-abstracts/abstract_table";
-import { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
-
-import type { Where } from "@saltcorn/db-common/internal";
+import type { AbstractForm } from "./model-abstracts/abstract_form";
+import type { AbstractTable } from "./model-abstracts/abstract_table";
+import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
+import type { InputType } from "./model-abstracts/abstract_field";
+import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type { Type, ReqRes } from "./common_types";
 
 type FieldLikeBasics = {
   name: string;
+  required?: boolean;
+  label?: string;
+  fieldview?: string;
+  input_type?: InputType;
+  type?: string | Type;
+  primary_key?: boolean;
 };
 type FieldLikeWithInputType = {
   input_type: string;
 } & FieldLikeBasics;
 type FieldLikeWithType = {
-  type: string | { name: string };
+  type: string | Type;
 } & FieldLikeBasics;
 
 export type FieldLike = FieldLikeWithInputType | FieldLikeWithType;
@@ -42,6 +49,7 @@ type LayoutWithTypeProp = {
   besides?: never;
   above?: never;
 };
+
 type LayoutContainer = null | LayoutWithTypeProp | any;
 type LayoutArray = Array<
   | LayoutContainer
@@ -50,6 +58,7 @@ type LayoutArray = Array<
 >;
 type LayoutWithAbove = { above: LayoutArray; besides?: never };
 type LayoutWithBesides = { besides: LayoutArray; above?: never };
+
 export type Layout = LayoutWithAbove | LayoutWithBesides | LayoutWithTypeProp;
 
 export type PluginWrapArg = {
@@ -141,27 +150,86 @@ export type TableQuery = {
   orderDesc?: boolean;
 };
 
+export type RunExtra = {
+  redirect?: string;
+} & ReqRes &
+  SelectOptions;
+
 export type ViewTemplate = {
   name: string;
   get_state_fields?: (
     arg0: number,
     arg1: string,
     arg2: any
-  ) => Promise<FieldLike>;
+  ) => Promise<Array<FieldLike>>;
   display_state_form?: boolean | ((arg0: any) => boolean);
   configuration_workflow: (arg0: {
     __: (arg0: string) => string;
   }) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;
-  run: ([arg0, arg1, arg2, arg3, arg4]: [
-    arg0: number,
-    arg1: string,
-    arg2: any,
-    arg3: any,
-    arg4: any
-  ]) => Promise<string>;
+  run: (
+    table_id: string | number,
+    viewname: string,
+    opts: any,
+    state: any,
+    arg4: RunExtra
+  ) => Promise<string>;
+  runMany?: (
+    table_id: number,
+    viewname: string,
+    { columns, layout }: { columns: Array<Column>; layout: Layout },
+    state: any,
+    extra: RunExtra
+  ) => Promise<string[]>;
+  renderRows?: (
+    table: AbstractTable,
+    viewname: string,
+    { columns, layout }: { columns: Array<Column>; layout: Layout },
+    extra: any,
+    rows: Row[]
+  ) => Promise<string[]>;
+  on_delete?: (
+    table_id: number,
+    viewname: string,
+    configuration: { default_state: any }
+  ) => Promise<void>;
+  authorise_post?: (opts: {
+    body: any;
+    table_id: number;
+    req: NonNullable<any>;
+  }) => Promise<boolean>;
+  authorise_get?: (opts: {
+    query: any;
+    table_id: number;
+    req: NonNullable<any>;
+  }) => Promise<boolean>;
+  runPost?: (
+    table_id: number,
+    viewname: string,
+    optsOne: {
+      columns: any[];
+      layout: Layout;
+      fixed: any;
+      view_when_done: any;
+      formula_destinations: any;
+    },
+    state: string,
+    body: string,
+    extraArgs: RunExtra
+  ) => Promise<void>;
+  getStringsForI18n?: (configuration?: any) => string[];
+  default_state_form?: (arg0: { default_state: any }) => any;
+  routes?: Record<string, Action>;
 };
+
+export type Action = (
+  table_id: number,
+  viewname: string,
+  optsOne: any,
+  body: any,
+  optsTwo: ReqRes
+) => Promise<any>;
 
 type PluginFunction = {
   run: (arg0: any) => any;

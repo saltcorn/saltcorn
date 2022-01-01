@@ -1,1 +1,4 @@
-export interface AbstractTable {}
+export interface AbstractTable {
+  name: string;
+  id?: number;
+}

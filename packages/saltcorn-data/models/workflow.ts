@@ -6,7 +6,10 @@
  */
 
 import { instanceOfType } from "@saltcorn/types/common_types";
-import { AbstractWorkflow } from "@saltcorn/types/model-abstracts/abstract_workflow";
+import type {
+  AbstractWorkflow,
+  RunResult,
+} from "@saltcorn/types/model-abstracts/abstract_workflow";
 
 import db from "../db";
 
@@ -14,15 +17,6 @@ import type Field from "./field";
 
 const { getState } = require("../db/state");
 const { applyAsync, apply } = require("../utils");
-
-type ResultType = {
-  renderForm?: any;
-  context: any;
-  stepName: string;
-  currentStep: number;
-  maxSteps: number;
-  title: string;
-};
 
 /**
  * Workflow class
@@ -50,7 +44,7 @@ class Workflow implements AbstractWorkflow {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async run(body: any, req: any): Promise<ResultType | undefined> {
+  async run(body: any, req: any): Promise<RunResult | undefined> {
     if (req) this.__ = (s: any) => req.__(s);
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);

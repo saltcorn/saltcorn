@@ -5,10 +5,8 @@
  * @subcategory models
  */
 
-const db = require("../db");
-const Form = require("../models/form");
-const { contract, is } = require("contractis");
-const { fieldlike, is_viewtemplate, is_tablely } = require("../contracts");
+import db from "../db";
+import Form from "./form";
 const {
   removeEmptyStrings,
   numberToBool,
@@ -18,19 +16,46 @@ const {
   structuredClone,
 } = require("../utils");
 const { remove_from_menu } = require("./config");
-const { div } = require("@saltcorn/markup/tags");
-const { renderForm } = require("@saltcorn/markup");
+import tags from "@saltcorn/markup/tags";
+const { div } = tags;
+import markup from "@saltcorn/markup";
+const { renderForm } = markup;
+
+import type {
+  ViewTemplate,
+  FieldLike,
+  Tablely,
+  RunExtra,
+} from "@saltcorn/types/base_types";
+import type Table from "./table";
+import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type Workflow from "./workflow";
+import { instanceOfType } from "@saltcorn/types/common_types";
 
 /**
  * View Class
  * @category saltcorn-data
  */
 class View {
+  name: string;
+  id?: number;
+  table_id?: number;
+  viewtemplate: string;
+  min_role: number;
+  viewtemplateObj?: ViewTemplate;
+  default_render_page?: string;
+  exttable_name?: string;
+  description?: string;
+  table_name?: string;
+  configuration?: any;
+  table?: Table;
+  slug?: any;
+
   /**
    * View constructor
    * @param {object} o
    */
-  constructor(o) {
+  constructor(o: ViewCfg | View) {
     this.name = o.name;
     this.id = o.id;
     this.viewtemplate = o.viewtemplate;
@@ -42,30 +67,35 @@ class View {
     }
     if (o.table_name) this.table_name = o.table_name;
     this.configuration = stringToJSON(o.configuration);
+    if (!o.min_role && !(o as any).is_public) {
+      throw new InvalidConfiguration(
+        `Unable to build view ${this.name}, neither 'min_role' or 'is_public' is given.`
+      );
+    }
     this.min_role =
-      !o.min_role && typeof o.is_public !== "undefined"
+      !o.min_role && typeWithDefinedMember<ViewCfg>(o, "is_public")
         ? o.is_public
           ? 10
           : 8
-        : +o.min_role;
+        : +o.min_role!;
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
     this.default_render_page = o.default_render_page;
+    this.table = o.table;
     this.slug = stringToJSON(o.slug);
-    contract.class(this);
   }
 
   /**
    * @param {object} where
    * @returns {View}
    */
-  static findOne(where) {
+  static findOne(where: Where): View | undefined {
     const { getState } = require("../db/state");
     const v = getState().views.find(
       where.id
-        ? (v) => v.id === +where.id
+        ? (v: View) => v.id === +where.id
         : where.name
-        ? (v) => v.name === where.name
+        ? (v: View) => v.name === where.name
         : satisfies(where)
     );
     return v
@@ -78,21 +108,28 @@ class View {
    * @param selectopts
    * @returns {Promise<View[]>}
    */
-  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+  static async find(
+    where: Where,
+    selectopts: SelectOptions = { orderBy: "name", nocase: true }
+  ): Promise<Array<View>> {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
-      return getState().views.map((t) => new View(t));
+      return getState().views.map((t: View) => new View(t));
     }
     const views = await db.select("_sc_views", where, selectopts);
 
-    return views.map((v) => new View(v));
+    return views.map((v: View) => new View(v));
   }
 
   /**
    * @returns {Promise<object[]>}
    */
-  async get_state_fields() {
-    if (this.viewtemplateObj && this.viewtemplateObj.get_state_fields) {
+  async get_state_fields(): Promise<Array<FieldLike>> {
+    if (
+      this.viewtemplateObj &&
+      this.viewtemplateObj.get_state_fields &&
+      this.table_id
+    ) {
       return await this.viewtemplateObj.get_state_fields(
         this.table_id,
         this.name,
@@ -105,10 +142,10 @@ class View {
    * Get menu label
    * @type {string|undefined}
    */
-  get menu_label() {
+  get menu_label(): string | undefined {
     const { getState } = require("../db/state");
     const menu_items = getState().getConfig("menu_items", []);
-    const item = menu_items.find((mi) => mi.viewname === this.name);
+    const item = menu_items.find((mi: any) => mi.viewname === this.name);
     return item ? item.label : undefined;
   }
 
@@ -117,14 +154,17 @@ class View {
    * @param pred
    * @returns {Promise<object[]>}
    */
-  static async find_table_views_where(table, pred) {
+  static async find_table_views_where(
+    table: number | Tablely | string,
+    pred: FindViewsPred
+  ): Promise<Array<View>> {
     var link_view_opts = [];
     const link_views = await View.find(
-      table.id
+      typeWithDefinedMember<Table>(table, "id")
         ? {
             table_id: table.id,
           }
-        : table.name
+        : typeWithDefinedMember<Table>(table, "name")
         ? { exttable_name: table.name }
         : typeof table === "string"
         ? { exttable_name: table }
@@ -150,7 +190,7 @@ class View {
   /**
    * @type {object}
    */
-  get select_option() {
+  get select_option(): any {
     return {
       name: this.name,
       label: `${this.name} [${this.viewtemplate}${
@@ -167,7 +207,7 @@ class View {
    * @param {function} pred
    * @returns {Promise<object>}
    */
-  static async find_all_views_where(pred) {
+  static async find_all_views_where(pred: FindViewsPred): Promise<Array<View>> {
     var link_view_opts = [];
     const link_views = await View.find({}, { orderBy: "name", nocase: true });
 
@@ -190,9 +230,13 @@ class View {
    * @param {Table|object} table
    * @returns {Promise<View[]>}
    */
-  static async find_possible_links_to_table(table) {
-    return View.find_table_views_where(table, ({ state_fields }) =>
-      state_fields.some((sf) => sf.name === "id" || sf.primary_key)
+  static async find_possible_links_to_table(
+    table: number | Tablely | string
+  ): Promise<Array<View>> {
+    return View.find_table_views_where(
+      table,
+      ({ state_fields }: { state_fields: Array<FieldLike> }) =>
+        state_fields.some((sf: FieldLike) => sf.name === "id" || sf.primary_key)
     );
   }
 
@@ -202,12 +246,13 @@ class View {
    * @returns {Promise<View>}
    */
   // todo there hard code about roles and flag is_public
-  static async create(v) {
+  static async create(v: ViewCfg): Promise<View> {
     // is_public flag processing
     if (!v.min_role && typeof v.is_public !== "undefined") {
       v.min_role = v.is_public ? 10 : 8;
       delete v.is_public;
     }
+    delete v.table;
     // insert view defintion into _sc_views
     const id = await db.insert("_sc_views", v);
     // refresh views list cache
@@ -219,7 +264,7 @@ class View {
    * Clone View
    * @returns {Promise<View>}
    */
-  async clone() {
+  async clone(): Promise<View> {
     const basename = this.name + " copy";
     let newname;
     // todo there is hard code linmitation about 100 copies of veiew
@@ -228,7 +273,7 @@ class View {
       const existing = await View.findOne({ name: newname });
       if (!existing) break;
     }
-    const createObj = {
+    const createObj: View = {
       ...this,
       name: newname,
     };
@@ -241,8 +286,13 @@ class View {
    * Delete current view from db
    * @returns {Promise<void>}
    */
-  async delete() {
-    if (this.viewtemplateObj && this.viewtemplateObj.on_delete)
+  async delete(): Promise<void> {
+    if (
+      this.viewtemplateObj &&
+      this.viewtemplateObj.on_delete &&
+      this.table_id &&
+      this.configuration
+    )
       await this.viewtemplateObj.on_delete(
         this.table_id,
         this.name,
@@ -261,7 +311,7 @@ class View {
    * @param where - condition
    * @returns {Promise<void>}
    */
-  static async delete(where) {
+  static async delete(where: Where): Promise<void> {
     const vs = await View.find(where);
     for (const v of vs) await v.delete();
   }
@@ -272,7 +322,7 @@ class View {
    * @param id - id
    * @returns {Promise<void>}
    */
-  static async update(v, id) {
+  static async update(v: any, id: number): Promise<void> {
     // update view description
     await db.update("_sc_views", v, id);
     // fresh view list cache
@@ -283,8 +333,12 @@ class View {
    * @param {*} arg
    * @returns {Promise<object>}
    */
-  async authorise_post(arg) {
-    if (!this.viewtemplateObj.authorise_post) return false;
+  async authorise_post(arg: {
+    body: any;
+    table_id: number;
+    req: NonNullable<any>;
+  }): Promise<boolean> {
+    if (!this.viewtemplateObj?.authorise_post) return false;
     return await this.viewtemplateObj.authorise_post(arg);
   }
 
@@ -292,15 +346,19 @@ class View {
    * @param {*} arg
    * @returns {Promise<object>}
    */
-  async authorise_get(arg) {
-    if (!this.viewtemplateObj.authorise_get) return false;
+  async authorise_get(arg: {
+    query: any;
+    table_id: number;
+    req: NonNullable<any>;
+  }): Promise<boolean> {
+    if (!this.viewtemplateObj?.authorise_get) return false;
     return await this.viewtemplateObj.authorise_get(arg);
   }
 
   /**
    * @returns {string}
    */
-  getStringsForI18n() {
+  getStringsForI18n(): string[] {
     if (!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n)
       return [];
     return this.viewtemplateObj.getStringsForI18n(this.configuration);
@@ -312,17 +370,22 @@ class View {
    * @param extraArgs
    * @returns {Promise<*>}
    */
-  async run(query, extraArgs) {
+  async run(query: string, extraArgs: RunExtra): Promise<any> {
     this.check_viewtemplate();
+    const table_id = this.exttable_name || this.table_id;
+    if (!table_id)
+      throw new InvalidConfiguration(
+        `Cannot run viewtemplate ${this.viewtemplate} in view ${this.name}. 'exttable_name' and 'table_id' are missing.`
+      );
     try {
-      return await this.viewtemplateObj.run(
-        this.exttable_name || this.table_id,
+      return await this.viewtemplateObj!.run(
+        table_id,
         this.name,
         this.configuration,
         removeEmptyStrings(query),
         extraArgs
       );
-    } catch (error) {
+    } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
@@ -331,7 +394,7 @@ class View {
   /**
    * @throws {InvalidConfiguration}
    */
-  check_viewtemplate() {
+  check_viewtemplate(): void {
     if (!this.viewtemplateObj)
       throw new InvalidConfiguration(
         `Cannot find viewtemplate ${this.viewtemplate} in view ${this.name}`
@@ -344,7 +407,11 @@ class View {
    * @param {*} res
    * @returns {Promise<object>}
    */
-  async run_possibly_on_page(query, req, res) {
+  async run_possibly_on_page(
+    query: NonNullable<any>,
+    req: NonNullable<any>,
+    res: NonNullable<any>
+  ): Promise<string> {
     const view = this;
     this.check_viewtemplate();
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
@@ -371,26 +438,36 @@ class View {
    * @throws {InvalidConfiguration}
    * @returns {Promise<object>}
    */
-  async runMany(query, extraArgs) {
+  async runMany(
+    query: string,
+    extraArgs: RunExtra
+  ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
     try {
-      if (this.viewtemplateObj.runMany)
-        return await this.viewtemplateObj.runMany(
+      if (this.viewtemplateObj?.runMany) {
+        if (!this.table_id) {
+          throw new InvalidConfiguration(
+            `Unable to call runMany, ${this.viewtemplate} is missing 'table_id'.`
+          );
+        }
+        return await this.viewtemplateObj!.runMany(
           this.table_id,
           this.name,
           this.configuration,
           query,
           extraArgs
         );
-      if (this.viewtemplateObj.renderRows) {
-        const Table = require("./table");
-        const { stateFieldsToWhere } = require("../plugin-helper");
-
+      }
+      if (this.viewtemplateObj?.renderRows) {
+        const Table = (await import("./table")).default;
+        const { stateFieldsToWhere } = await import("../plugin-helper");
         const tbl = await Table.findOne({ id: this.table_id });
+        if (!tbl)
+          throw new Error(`Unable to find table with id ${this.table_id}`);
         const fields = await tbl.getFields();
         const qstate = await stateFieldsToWhere({ fields, state: query });
         const rows = await tbl.getRows(qstate);
-        const rendered = await this.viewtemplateObj.renderRows(
+        const rendered = await this.viewtemplateObj!.renderRows(
           tbl,
           this.name,
           this.configuration,
@@ -398,9 +475,12 @@ class View {
           rows
         );
 
-        return rendered.map((html, ix) => ({ html, row: rows[ix] }));
+        return rendered.map((html: string, ix: number) => ({
+          html,
+          row: rows[ix],
+        }));
       }
-    } catch (error) {
+    } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
@@ -415,9 +495,21 @@ class View {
    * @param {*} extraArgs
    * @returns {Promise<object>}
    */
-  async runPost(query, body, extraArgs) {
+  async runPost(
+    query: string,
+    body: string,
+    extraArgs: RunExtra
+  ): Promise<any> {
     this.check_viewtemplate();
-    return await this.viewtemplateObj.runPost(
+    if (!this.viewtemplateObj!.runPost)
+      throw new InvalidConfiguration(
+        `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
+      );
+    if (!this.table_id)
+      throw new InvalidConfiguration(
+        `Unable to call runPost, ${this.viewtemplate} is missing 'table_id'.`
+      );
+    return await this.viewtemplateObj!.runPost(
       this.table_id,
       this.name,
       this.configuration,
@@ -434,9 +526,22 @@ class View {
    * @param {*} extraArgs
    * @returns {Promise<void>}
    */
-  async runRoute(route, body, res, extraArgs) {
+  async runRoute(
+    route: string,
+    body: any,
+    res: NonNullable<any>,
+    extraArgs: RunExtra
+  ): Promise<any> {
     this.check_viewtemplate();
-    const result = await this.viewtemplateObj.routes[route](
+    if (!this.viewtemplateObj!.routes)
+      throw new InvalidConfiguration(
+        `Unable to call runRoute of view '${this.name}', ${this.viewtemplate} is missing 'routes'.`
+      );
+    if (!this.table_id)
+      throw new InvalidConfiguration(
+        `Unable to call runRoute, of view '${this.name}', this.table_id is not set.`
+      );
+    const result = await this.viewtemplateObj!.routes[route](
       this.table_id,
       this.name,
       this.configuration,
@@ -452,11 +557,11 @@ class View {
    * @param {object} req_query
    * @returns {object}
    */
-  combine_state_and_default_state(req_query) {
+  combine_state_and_default_state(req_query: any): any {
     var state = { ...req_query };
     this.check_viewtemplate();
-    const defstate = this.viewtemplateObj.default_state_form
-      ? this.viewtemplateObj.default_state_form(this.configuration)
+    const defstate = this.viewtemplateObj!.default_state_form
+      ? this.viewtemplateObj!.default_state_form(this.configuration)
       : {};
 
     Object.entries(defstate || {}).forEach(([k, v]) => {
@@ -472,9 +577,9 @@ class View {
    * @param {object} req
    * @returns {Promise<Form|null>}
    */
-  async get_state_form(query, req) {
+  async get_state_form(query: any, req: ReqFunction): Promise<Form | null> {
     this.check_viewtemplate();
-    const vt_display_state_form = this.viewtemplateObj.display_state_form;
+    const vt_display_state_form = this.viewtemplateObj!.display_state_form;
     const display_state_form =
       typeof vt_display_state_form === "function"
         ? vt_display_state_form(this.configuration)
@@ -482,12 +587,17 @@ class View {
     if (display_state_form) {
       const fields = await this.get_state_fields();
 
-      fields.forEach((f) => {
+      fields.forEach((f: FieldLike) => {
         f.required = false;
         if (f.label === "Anywhere" && f.name === "_fts")
           f.label = req.__(f.label);
-        if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-        if (f.type && f.type.read && typeof query[f.name] !== "undefined") {
+        if (instanceOfType(f.type) && f.type.name === "Bool")
+          f.fieldview = "tristate";
+        if (
+          instanceOfType(f.type) &&
+          f.type.read &&
+          typeof query[f.name] !== "undefined"
+        ) {
           query[f.name] = f.type.read(query[f.name]);
         }
       });
@@ -509,15 +619,20 @@ class View {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async get_config_flow(req) {
+  async get_config_flow(req: ReqFunction): Promise<Workflow> {
     this.check_viewtemplate();
-    const configFlow = this.viewtemplateObj.configuration_workflow(req);
+    if (!this.id)
+      throw new InvalidConfiguration(
+        `Unable to execute 'get_config_flow' of view '${this.name}', 'this.name' must be set.`
+      );
+
+    const configFlow = this.viewtemplateObj!.configuration_workflow(req);
     configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
-    const oldOnDone = configFlow.onDone || ((c) => c);
-    configFlow.onDone = async (ctx) => {
+    const oldOnDone = configFlow.onDone || ((c: any) => c);
+    configFlow.onDone = async (ctx: any) => {
       const { table_id, ...configuration } = await oldOnDone(ctx);
 
-      await View.update({ configuration }, this.id);
+      await View.update({ configuration }, this.id!);
       return {
         redirect: `/viewedit`,
         flash: ["success", `View ${this.name || ""} saved`],
@@ -526,7 +641,7 @@ class View {
     return configFlow;
   }
 
-  rewrite_query_from_slug(query, params) {
+  rewrite_query_from_slug(query: any, params: any): void {
     let pix = 0;
     if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
       for (const step of this.slug.steps) {
@@ -542,97 +657,45 @@ class View {
   }
 }
 
-View.contract = {
-  variables: {
-    name: is.str,
-    id: is.maybe(is.posint),
-    table_id: is.maybe(is.posint),
-    viewtemplate: is.str,
-    min_role: is.posint,
-    viewtemplateObj: is.maybe(is_viewtemplate),
-    default_render_page: is.maybe(is.str),
-  },
-  methods: {
-    get_state_fields: is.fun([], is.promise(is.array(fieldlike))),
-    get_state_form: is.fun(
-      [is.obj(), is.obj({ __: is.fun(is.str, is.str) })],
-      is.promise(is.maybe(is.class("Form")))
-    ),
-    get_config_flow: is.fun(
-      is.obj({ __: is.fun(is.str, is.str) }),
-      is.promise(is.class("Workflow"))
-    ),
-    delete: is.fun([], is.promise(is.undefined)),
-    menu_label: is.getter(is.maybe(is.str)),
-    run: is.fun(
-      [is.obj(), is.obj({ req: is.defined, res: is.defined })],
-      is.promise(is.any)
-    ),
-    runPost: is.fun(
-      [is.obj(), is.obj(), is.obj({ req: is.defined, res: is.defined })],
-      is.promise(is.any)
-    ),
-    runRoute: is.fun(
-      [
-        is.str,
-        is.obj(),
-        is.obj(),
-        is.obj({ req: is.defined, res: is.defined }),
-      ],
-      is.promise(is.any)
-    ),
-    runMany: is.fun(
-      [is.obj(), is.obj({ req: is.defined, res: is.defined })],
-      is.promise(is.array(is.obj({ html: is.defined, row: is.obj() })))
-    ),
-    combine_state_and_default_state: is.fun(is.obj(), is.obj()),
-  },
-  static_methods: {
-    find: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("View")))
-    ),
-    findOne: is.fun(is.obj(), is.maybe(is.class("View"))),
-    create: is.fun(
-      is.obj({
-        name: is.str,
-        table_id: is.maybe(is.posint),
-        viewtemplate: is.str,
-      }),
-      is.promise(is.class("View"))
-    ),
-    update: is.fun([is.obj(), is.posint], is.promise(is.undefined)),
-    delete: is.fun(is.obj(), is.promise(is.undefined)),
+function typeWithDefinedMember<T>(object: any, member: string): object is T {
+  return (
+    typeof object === "object" &&
+    object &&
+    member in object &&
+    object[member] !== undefined &&
+    object[member] !== null
+  );
+}
 
-    find_possible_links_to_table: is.fun(
-      is.or(is.posint, is_tablely, is.str),
-      is.promise(is.array(is.class("View")))
-    ),
-    find_all_views_where: is.fun(
-      is.fun(
-        is.obj({
-          viewrow: is.class("View"),
-          viewtemplate: is.obj(),
-          state_fields: is.array(fieldlike),
-        }),
-        is.bool
-      ),
-      is.promise(is.array(is.class("View")))
-    ),
-    find_table_views_where: is.fun(
-      [
-        is.or(is.posint, is_tablely, is.str),
-        is.fun(
-          is.obj({
-            viewrow: is.class("View"),
-            viewtemplate: is.obj(),
-            state_fields: is.array(fieldlike),
-          }),
-          is.bool
-        ),
-      ],
-      is.promise(is.array(is.class("View")))
-    ),
-  },
+type ReqFunction = {
+  __: (arg0: string) => string;
 };
-module.exports = View;
+
+namespace View {
+  export type ViewCfg = {
+    name: string;
+    id?: number;
+    viewtemplate: string;
+    table_id?: number;
+    table?: Table;
+    exttable_name?: string;
+    description?: string;
+    table_name?: string;
+    configuration?: string | any;
+    min_role?: number;
+    is_public?: boolean;
+    default_render_page?: string;
+    slug?: any;
+  };
+
+  export type FindViewsPred = (arg0: {
+    viewrow: View;
+    viewtemplate?: ViewTemplate;
+    state_fields: Array<FieldLike>;
+  }) => boolean;
+}
+
+type ViewCfg = View.ViewCfg;
+type FindViewsPred = View.FindViewsPred;
+
+export = View;
