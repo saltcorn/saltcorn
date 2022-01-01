@@ -133,6 +133,7 @@ const search_or_create = {
    */
   configFields: async (field) => {
     const reftable = await Table.findOne({ name: field.reftable_name });
+    if (!reftable) return [];
     const views = await View.find({ table_id: reftable.id });
     return [
       {
