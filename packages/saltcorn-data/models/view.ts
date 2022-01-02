@@ -252,9 +252,9 @@ class View {
       v.min_role = v.is_public ? 10 : 8;
       delete v.is_public;
     }
-    delete v.table;
+    const { table, ...row } = v;
     // insert view defintion into _sc_views
-    const id = await db.insert("_sc_views", v);
+    const id = await db.insert("_sc_views", row);
     // refresh views list cache
     await require("../db/state").getState().refresh_views();
     return new View({ id, ...v });
