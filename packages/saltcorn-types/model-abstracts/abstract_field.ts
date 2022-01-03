@@ -1,7 +1,7 @@
 export interface AbstractField {
   label: string;
   name: string;
-  input_type: string;
+  input_type: InputType;
   sourceURL?: string;
   attributes: any;
   // 'form_name' is actually a getter
@@ -15,3 +15,16 @@ export interface AbstractFieldRepeat {
 export const instanceOfField = (object: any): object is AbstractField => {
   return object && "name" in object && "input_type" in object;
 };
+
+export type InputType =
+  | "hidden"
+  | "file"
+  | "select"
+  | "fromtype"
+  | "search"
+  | "text"
+  | "password"
+  | "section_header"
+  | "textarea"
+  | "custom_html"
+  | "code";

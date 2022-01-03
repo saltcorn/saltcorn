@@ -7,6 +7,11 @@ export type SuccessMessage = {
   table?: any;
 };
 
+export type ReqRes = {
+  req: NonNullable<any>;
+  res: NonNullable<any>;
+};
+
 export type ResultMessage = ErrorMessage | SuccessMessage;
 
 export const instanceOfErrorMsg = (object: any): object is ErrorMessage => {
@@ -26,7 +31,7 @@ export type Type = {
   validate?: Function;
   listAs?: Function;
   showAs?: Function;
-  primaryKey: { sql_type: string; default_sql?: string };
+  primaryKey?: { sql_type: string; default_sql?: string };
   presets?: any;
   contract?: any;
   fieldviews?: any;

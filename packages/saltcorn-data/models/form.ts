@@ -13,12 +13,16 @@ import {
   instanceOfType,
   instanceOfSuccessMsg,
 } from "@saltcorn/types/common_types";
-import db from "../db";
+import type { FieldLike } from "@saltcorn/types/base_types";
 import Field from "./field";
 import FieldRepeat from "./fieldrepeat";
 import type { Layout } from "@saltcorn/types/base_types";
 
 const { is } = require("contractis");
+
+const isFieldLike = (object: any): object is FieldLike => {
+  return object.constructor.name === Object.name;
+};
 
 /**
  * Form Class
@@ -54,9 +58,9 @@ class Form implements AbstractForm {
    * @param o
    */
   constructor(o: FormCfg) {
-    this.fields = o.fields.map((f: Field | FieldRepeat) =>
-      f.constructor.name === Object.name ? new Field(f) : f
-    );
+    this.fields = o.fields.map((f: Field | FieldRepeat | FieldLike) => {
+      return isFieldLike(f) ? new Field(f) : f;
+    });
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
@@ -203,7 +207,7 @@ const hasParentField = (object: any): object is Field => {
 
 namespace Form {
   export type FormCfg = {
-    fields: Array<Field | FieldRepeat>;
+    fields: Array<Field | FieldRepeat | FieldLike>;
     errors?: any;
     values?: any;
     action?: string;
