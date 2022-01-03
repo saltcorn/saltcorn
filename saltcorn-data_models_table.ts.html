@@ -199,7 +199,7 @@ const normalise_error_message = (msg: string): string =>
  */
 class Table implements AbstractTable {
   name: string;
-  id: number;
+  id?: number;
   min_role_read: string;
   min_role_write: string;
   ownership_field_id?: string;
@@ -1349,7 +1349,7 @@ class Table implements AbstractTable {
 namespace Table {
   export type TableCfg = {
     name: string;
-    id: number;
+    id?: number;
     min_role_read: string;
     min_role_write: string;
     ownership_field_id?: string;
