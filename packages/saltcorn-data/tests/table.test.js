@@ -407,7 +407,13 @@ describe("relations", () => {
     expect(rels.parent_field_list).toContain("favbook.author");
     expect(rels.parent_relations.length).toBe(2);
   });
-  it("get parent relations", async () => {
+
+  it("get parent relations with one-to-one", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const rels = await table.get_parent_relations();
+    expect(rels.parent_field_list).toEqual(["myreviews->book"]);
+  });
+  it("get child relations", async () => {
     const table = await Table.findOne({ name: "books" });
     const rels = await table.get_child_relations();
     expect(rels.child_field_list).toEqual([
