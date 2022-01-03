@@ -370,7 +370,7 @@ class View {
    * @param extraArgs
    * @returns {Promise<*>}
    */
-  async run(query: string, extraArgs: RunExtra): Promise<any> {
+  async run(query: any, extraArgs: RunExtra): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
     if (!table_id)
