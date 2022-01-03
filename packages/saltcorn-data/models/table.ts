@@ -1056,6 +1056,7 @@ class Table implements AbstractTable {
       const related_table = await Table.findOne({ id: relation.table_id });
       if (related_table) {
         parent_field_list.push(`${related_table.name}->${relation.name}`);
+        parent_relations.push({ key_field: relation, ontable: related_table });
       }
     }
 
@@ -1297,7 +1298,8 @@ namespace Table {
   export type ParentRelations = {
     parent_relations: {
       key_field: Field;
-      table: Table;
+      table?: Table;
+      ontable?: Table;
     }[];
     parent_field_list: string[];
   };
