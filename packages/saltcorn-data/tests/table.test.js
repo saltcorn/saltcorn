@@ -368,6 +368,36 @@ describe("Table get data", () => {
     expect(michaels[0].pages).toBe(728);
     expect(michaels[0].author).toBe("Leo Tolstoy");
   });
+  it("should get joined rows with one-to-one relations", async () => {
+    const ratings = await Table.create("myreviews");
+    await Field.create({
+      name: "book",
+      label: "Book",
+      type: "Key to books",
+      is_unique: true,
+      table: ratings,
+    });
+    await Field.create({
+      name: "rating",
+      label: "Rating",
+      type: "Integer",
+      table: ratings,
+    });
+    await ratings.insertRow({ book: 1, rating: 7 });
+    const books = await Table.findOne({ name: "books" });
+
+    const reads = await books.getJoinedRows({
+      orderBy: "id",
+      where: { author: "Herman Melville" },
+      joinFields: {
+        rating: { ref: "book", reftable: "myreviews", target: "rating" },
+      },
+    });
+    expect(reads.length).toStrictEqual(1);
+    expect(reads[0].rating).toBe(7);
+    expect(reads[0].author).toBe("Herman Melville");
+    expect(reads[0].pages).toBe(967);
+  });
 });
 
 describe("relations", () => {
