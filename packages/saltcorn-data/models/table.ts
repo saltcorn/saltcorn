@@ -1095,23 +1095,38 @@ class Table implements AbstractTable {
           target: `filename`,
         };
       });
-    for (const [fldnm, { ref, target, through }] of Object.entries(
+    for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
     )) {
-      const reffield = fields.find((f) => f.name === ref);
+      let reffield;
+      if (ontable) {
+        const ontableTbl = Table.findOne({ name: ontable });
+        if (!ontableTbl)
+          throw new InvalidConfiguration(
+            `Related table ${ontable} not found in table ${this.name}`
+          );
+        reffield = (await ontableTbl.getFields()).find((f) => f.name === ref);
+      } else {
+        reffield = fields.find((f) => f.name === ref);
+      }
       if (!reffield)
         throw new InvalidConfiguration(
           `Key field ${ref} not found in table ${this.name}`
         );
-      const reftable = reffield.reftable_name;
+      const reftable = ontable || reffield.reftable_name;
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
-        joinq += ` left join ${schema}"${sqlsanitize(
-          reftable
-        )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
+        if (ontable)
+          joinq += ` left join ${schema}"${sqlsanitize(
+            reftable
+          )}" ${jtNm} on ${jtNm}."${sqlsanitize(ref)}"=a."${reffield.refname}"`;
+        else
+          joinq += ` left join ${schema}"${sqlsanitize(
+            reftable
+          )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
       }
       if (through) {
         const throughTable = await Table.findOne({

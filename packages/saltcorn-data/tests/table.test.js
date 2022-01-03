@@ -385,12 +385,12 @@ describe("Table get data", () => {
     });
     await ratings.insertRow({ book: 1, rating: 7 });
     const books = await Table.findOne({ name: "books" });
-
+    //db.set_sql_logging();
     const reads = await books.getJoinedRows({
       orderBy: "id",
       where: { author: "Herman Melville" },
       joinFields: {
-        rating: { ref: "book", reftable: "myreviews", target: "rating" },
+        rating: { ref: "book", ontable: "myreviews", target: "rating" },
       },
     });
     expect(reads.length).toStrictEqual(1);
@@ -412,9 +412,10 @@ describe("relations", () => {
     const rels = await table.get_child_relations();
     expect(rels.child_field_list).toEqual([
       "discusses_books.book",
+      "myreviews.book",
       "patients.favbook",
     ]);
-    expect(rels.child_relations.length).toBe(2);
+    expect(rels.child_relations.length).toBe(3);
   });
   it("get grandparent relations", async () => {
     const table = await Table.findOne({ name: "readings" });
