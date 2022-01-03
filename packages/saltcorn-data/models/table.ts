@@ -1055,8 +1055,16 @@ class Table implements AbstractTable {
     for (const relation of o2o_rels) {
       const related_table = await Table.findOne({ id: relation.table_id });
       if (related_table) {
-        parent_field_list.push(`${related_table.name}->${relation.name}`);
-        parent_relations.push({ key_field: relation, ontable: related_table });
+        const relfields = await related_table.getFields();
+        for (const relfield of relfields) {
+          parent_field_list.push(
+            `${related_table.name}.${relation.name}->${relfield.name}`
+          );
+          parent_relations.push({
+            key_field: relation,
+            ontable: related_table,
+          });
+        }
       }
     }
 
