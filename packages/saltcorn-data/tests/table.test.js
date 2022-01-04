@@ -411,7 +411,11 @@ describe("relations", () => {
   it("get parent relations with one-to-one", async () => {
     const table = await Table.findOne({ name: "books" });
     const rels = await table.get_parent_relations();
-    expect(rels.parent_field_list).toEqual(["myreviews->book"]);
+    expect(rels.parent_field_list).toEqual([
+      "myreviews.book->book",
+      "myreviews.book->id",
+      "myreviews.book->rating",
+    ]);
   });
   it("get child relations", async () => {
     const table = await Table.findOne({ name: "books" });
