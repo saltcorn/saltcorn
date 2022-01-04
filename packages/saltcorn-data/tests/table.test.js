@@ -368,6 +368,36 @@ describe("Table get data", () => {
     expect(michaels[0].pages).toBe(728);
     expect(michaels[0].author).toBe("Leo Tolstoy");
   });
+  it("should get joined rows with one-to-one relations", async () => {
+    const ratings = await Table.create("myreviews");
+    await Field.create({
+      name: "book",
+      label: "Book",
+      type: "Key to books",
+      is_unique: true,
+      table: ratings,
+    });
+    await Field.create({
+      name: "rating",
+      label: "Rating",
+      type: "Integer",
+      table: ratings,
+    });
+    await ratings.insertRow({ book: 1, rating: 7 });
+    const books = await Table.findOne({ name: "books" });
+    //db.set_sql_logging();
+    const reads = await books.getJoinedRows({
+      orderBy: "id",
+      where: { author: "Herman Melville" },
+      joinFields: {
+        rating: { ref: "book", ontable: "myreviews", target: "rating" },
+      },
+    });
+    expect(reads.length).toStrictEqual(1);
+    expect(reads[0].rating).toBe(7);
+    expect(reads[0].author).toBe("Herman Melville");
+    expect(reads[0].pages).toBe(967);
+  });
 });
 
 describe("relations", () => {
@@ -377,14 +407,25 @@ describe("relations", () => {
     expect(rels.parent_field_list).toContain("favbook.author");
     expect(rels.parent_relations.length).toBe(2);
   });
-  it("get parent relations", async () => {
+
+  it("get parent relations with one-to-one", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const rels = await table.get_parent_relations();
+    expect(rels.parent_field_list).toEqual([
+      "myreviews.book->book",
+      "myreviews.book->id",
+      "myreviews.book->rating",
+    ]);
+  });
+  it("get child relations", async () => {
     const table = await Table.findOne({ name: "books" });
     const rels = await table.get_child_relations();
     expect(rels.child_field_list).toEqual([
       "discusses_books.book",
+      "myreviews.book",
       "patients.favbook",
     ]);
-    expect(rels.child_relations.length).toBe(2);
+    expect(rels.child_relations.length).toBe(3);
   });
   it("get grandparent relations", async () => {
     const table = await Table.findOne({ name: "readings" });
