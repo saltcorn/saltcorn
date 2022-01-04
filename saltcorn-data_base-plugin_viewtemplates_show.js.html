@@ -684,7 +684,11 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     join_field({ join_field, field_type, fieldview }) {
       const keypath = join_field.split(".");
       let value;
-      if (keypath.length === 2) {
+      if (join_field.includes("->")) {
+        const [relation, target] = join_field.split("->");
+        const [ontable, ref] = relation.split(".");
+        value = row[`${ref}_${ontable}_${target}`];
+      } else if (keypath.length === 2) {
         const [refNm, targetNm] = keypath;
         value = row[`${refNm}_${targetNm}`];
       } else {

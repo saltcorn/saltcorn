@@ -551,16 +551,24 @@ const get_viewable_fields = contract(
           Object.assign(r, setWidth);
           return r;
         } else if (column.type === "JoinField") {
-          const keypath = column.join_field.split(".");
           let refNm, targetNm, through, key;
-          if (keypath.length === 2) {
-            [refNm, targetNm] = keypath;
-            key = `${refNm}_${targetNm}`;
-          } else {
-            [refNm, through, targetNm] = keypath;
-            key = `${refNm}_${through}_${targetNm}`;
-          }
 
+          if (column.join_field.includes("->")) {
+            const [relation, target] = column.join_field.split("->");
+            const [ontable, ref] = relation.split(".");
+            targetNm = target;
+            refNm = ref;
+            key = `${ref}_${ontable}_${target}`;
+          } else {
+            const keypath = column.join_field.split(".");
+            if (keypath.length === 2) {
+              [refNm, targetNm] = keypath;
+              key = `${refNm}_${targetNm}`;
+            } else {
+              [refNm, through, targetNm] = keypath;
+              key = `${refNm}_${through}_${targetNm}`;
+            }
+          }
           return {
             ...setWidth,
             label: column.header_label

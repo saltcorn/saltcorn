@@ -910,20 +910,30 @@ const picked_fields_to_query = contract(
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
         if (column.join_field &amp;&amp; column.join_field.split) {
-          const kpath = column.join_field.split(".");
-          if (kpath.length === 2) {
-            const [refNm, targetNm] = kpath;
-            joinFields[`${refNm}_${targetNm}`] = {
-              ref: refNm,
-              target: targetNm,
+          if (column.join_field.includes("->")) {
+            const [relation, target] = column.join_field.split("->");
+            const [ontable, ref] = relation.split(".");
+            joinFields[`${ref}_${ontable}_${target}`] = {
+              ref,
+              target,
+              ontable,
             };
           } else {
-            const [refNm, through, targetNm] = kpath;
-            joinFields[`${refNm}_${through}_${targetNm}`] = {
-              ref: refNm,
-              target: targetNm,
-              through,
-            };
+            const kpath = column.join_field.split(".");
+            if (kpath.length === 2) {
+              const [refNm, targetNm] = kpath;
+              joinFields[`${refNm}_${targetNm}`] = {
+                ref: refNm,
+                target: targetNm,
+              };
+            } else {
+              const [refNm, through, targetNm] = kpath;
+              joinFields[`${refNm}_${through}_${targetNm}`] = {
+                ref: refNm,
+                target: targetNm,
+                through,
+              };
+            }
           }
         } else {
           throw new InvalidConfiguration(
