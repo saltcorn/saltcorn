@@ -8,6 +8,7 @@
 const path = require("path");
 const fs = require("fs");
 const envPaths = require("env-paths");
+const is = require("contractis/is");
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
@@ -55,8 +56,7 @@ const getGitRevision = () => {
 const getConnectObject = (connSpec = {}) => {
   const git_commit = getGitRevision();
   const sc_version = require("../../package.json").version;
-  const version_tag = git_commit || sc_version;
-  var connObj = { version_tag, git_commit, sc_version };
+  var connObj = { git_commit, sc_version };
   const fileCfg = getConfigFile() || {};
 
   function setKey(k, envnm, opts = {}) {
@@ -91,6 +91,12 @@ const getConnectObject = (connSpec = {}) => {
     default: [],
     transform: stringToJSON,
   });
+
+  if (!connObj.session_secret) connObj.session_secret = is.str.generate();
+  connObj.version_tag = require("crypto")
+    .createHash("sha256")
+    .update(`${connObj.session_secret}${git_commit || sc_version}`)
+    .digest("hex");
 
   if (process.env.DATABASE_URL) {
     delete connObj[user];
