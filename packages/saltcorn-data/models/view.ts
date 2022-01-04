@@ -373,10 +373,6 @@ class View {
   async run(query: any, extraArgs: RunExtra): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
-    if (!table_id)
-      throw new InvalidConfiguration(
-        `Cannot run viewtemplate ${this.viewtemplate} in view ${this.name}. 'exttable_name' and 'table_id' are missing.`
-      );
     try {
       return await this.viewtemplateObj!.run(
         table_id,
