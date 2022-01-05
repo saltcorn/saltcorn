@@ -24,6 +24,7 @@ const { renderForm, post_btn } = require("@saltcorn/markup");
 const passport = require("passport");
 const {
   a,
+  img,
   text,
   table,
   tbody,
@@ -52,7 +53,8 @@ const { restore_backup } = require("../markup/admin.js");
 const { restore } = require("@saltcorn/data/models/backup");
 const load_plugins = require("../load_plugins");
 const fs = require("fs");
-
+const base32 = require("thirty-two");
+const qrcode = require("qrcode");
 /**
  * @type {object}
  * @const
@@ -1436,3 +1438,44 @@ router.all(
     res.redirect(wfres.redirect || "/");
   })
 );
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get(
+  "/setup-totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    var key = randomKey(10);
+    var encodedKey = base32.encode(key);
+
+    // generate QR code for scanning into Google Authenticator
+    // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
+    var otpUrl =
+      "otpauth://totp/" + user.email + "?secret=" + encodedKey + "&period=30";
+    const image = await qrcode.toDataURL(otpUrl);
+    console.log({ image });
+    res.sendWrap(
+      req.__("Setup Two-factor authentication"),
+      div(img({ src: image }))
+    );
+  })
+);
+
+const randomKey = function (len) {
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  var buf = [],
+    chars = "abcdefghijklmnopqrstuvwxyz0123456789",
+    charlen = chars.length;
+
+  for (var i = 0; i < len; ++i) {
+    buf.push(chars[getRandomInt(0, charlen - 1)]);
+  }
+
+  return buf.join("");
+};
