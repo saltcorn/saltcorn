@@ -1445,19 +1445,27 @@ router.all(
  * @memberof module:auth/routes~routesRouter
  */
 router.get(
-  "/setup-totp",
+  "/twofa/totp",
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
-    var key = randomKey(10);
-    var encodedKey = base32.encode(key);
+    let key;
+    if (user._attributes.key) key = user._attributes.key;
+    else {
+      key = randomKey(10);
+      user._attributes.key = key;
+      await user.update({ _attributes: user._attributes });
+    }
+
+    const encodedKey = base32.encode(key);
 
     // generate QR code for scanning into Google Authenticator
     // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
-    var otpUrl =
-      "otpauth://totp/" + user.email + "?secret=" + encodedKey + "&period=30";
+    const site_name = getState().getConfig("site_name");
+    const otpUrl = `otpauth://totp/${
+      user.email
+    }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
     const image = await qrcode.toDataURL(otpUrl);
-    console.log({ image });
     res.sendWrap(
       req.__("Setup Two-factor authentication"),
       div(img({ src: image }))
