@@ -1445,15 +1445,15 @@ router.all(
  * @memberof module:auth/routes~routesRouter
  */
 router.get(
-  "/twofa/totp",
+  "/twofa/setup/totp",
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
     let key;
-    if (user._attributes.key) key = user._attributes.key;
+    if (user._attributes.totp_key) key = user._attributes.totp_key;
     else {
       key = randomKey(10);
-      user._attributes.key = key;
+      user._attributes.totp_key = key;
       await user.update({ _attributes: user._attributes });
     }
 
