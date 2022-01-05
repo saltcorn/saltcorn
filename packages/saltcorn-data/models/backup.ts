@@ -219,6 +219,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       const id = await db.insert("_sc_files", file_row);
       file_users[id] = user_id;
     }
+    if (db.reset_sequence) await db.reset_sequence("_sc_files");
   }
   return file_users;
 };
