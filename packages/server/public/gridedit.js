@@ -179,7 +179,7 @@ DateField.prototype = new jsGrid.Field({
     setTimeout(function () {
       flatpickr(insertPicker, {
         enableTime: true,
-        dateFormat: "Y-m-d H:i",
+        dateFormat: "Z",
       });
     });
     return insertPicker;
@@ -192,7 +192,7 @@ DateField.prototype = new jsGrid.Field({
     setTimeout(function () {
       flatpickr(editPicker, {
         enableTime: true,
-        dateFormat: "Y-m-d H:i",
+        dateFormat: "Z",
       });
     });
     return editPicker;
