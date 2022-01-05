@@ -660,7 +660,15 @@ router.post(
     if (fieldName.includes(".")) {
       const [refNm, targetNm] = fieldName.split(".");
       const ref = fields.find((f) => f.name === refNm);
+      if (!ref) {
+        res.send("");
+        return;
+      }
       const reftable = await Table.findOne({ name: ref.reftable_name });
+      if (!reftable) {
+        res.send("");
+        return;
+      }
       const reffields = await reftable.getFields();
       field = reffields.find((f) => f.name === targetNm);
       row = await reftable.getRow({});

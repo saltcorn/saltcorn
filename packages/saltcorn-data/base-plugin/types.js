@@ -26,6 +26,7 @@ const {
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
 const { getState } = require("../db/state");
+const { localeDate, localeDateTime } = require("@saltcorn/markup");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -845,13 +846,11 @@ const date = {
     show: {
       isEdit: false,
       run: (d, req) =>
-        text(
-          typeof d === "string"
-            ? text(d)
-            : d && d.toLocaleString
-            ? d.toLocaleString(locale(req))
-            : ""
-        ),
+        typeof d === "string"
+          ? text(d)
+          : d && d.toISOString
+          ? localeDateTime(d)
+          : "",
     },
     /**
      * @namespace
@@ -861,13 +860,11 @@ const date = {
     showDay: {
       isEdit: false,
       run: (d, req) =>
-        text(
-          typeof d === "string"
-            ? text(d)
-            : d && d.toLocaleDateString
-            ? d.toLocaleDateString(locale(req))
-            : ""
-        ),
+        typeof d === "string"
+          ? text(d)
+          : d && d.toISOString
+          ? localeDate(d)
+          : "",
     },
     /**
      * @namespace
