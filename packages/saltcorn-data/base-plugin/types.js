@@ -845,7 +845,12 @@ const date = {
      */
     show: {
       isEdit: false,
-      run: (d, req) => localeDateTime(d),
+      run: (d, req) =>
+        typeof d === "string"
+          ? text(d)
+          : d && d.toISOString
+          ? localeDateTime(d)
+          : "",
     },
     /**
      * @namespace
@@ -854,7 +859,12 @@ const date = {
      */
     showDay: {
       isEdit: false,
-      run: (d, req) => localeDate(d),
+      run: (d, req) =>
+        typeof d === "string"
+          ? text(d)
+          : d && d.toISOString
+          ? localeDate(d)
+          : "",
     },
     /**
      * @namespace
