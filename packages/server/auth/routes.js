@@ -31,6 +31,7 @@ const {
   th,
   td,
   tr,
+  h4,
   form,
   select,
   option,
@@ -55,6 +56,7 @@ const load_plugins = require("../load_plugins");
 const fs = require("fs");
 const base32 = require("thirty-two");
 const qrcode = require("qrcode");
+const totp = require("notp").totp;
 /**
  * @type {object}
  * @const
@@ -1466,12 +1468,75 @@ router.get(
       user.email
     }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
     const image = await qrcode.toDataURL(otpUrl);
-    res.sendWrap(
-      req.__("Setup Two-factor authentication"),
-      div(img({ src: image }))
-    );
+    res.sendWrap(req.__("Setup Two-factor Authentication"), {
+      type: "card",
+      title: req.__(
+        "Setup Two-factor Authentication with Time-based One-Time Password (TOTP)"
+      ),
+      contents: [
+        h4(req.__("1. Scan this QR code in your Authenticator app")),
+        img({ src: image }),
+        h4(req.__("2. Enter the code generated")),
+        renderForm(totpForm(req), req.csrfToken()),
+      ],
+    });
   })
 );
+
+router.post(
+  "/twofa/setup/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+
+    if (!user._attributes.totp_key) {
+      //key not set
+      req.flash("danger", req.__("2FA TOTP Key not set"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+
+    const form = totpForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      req.flash("danger", req.__("Error processing form"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+    const code = `${form.values.totpCode}`;
+    console.log(code, user._attributes.totp_key);
+    const rv = totp.verify(code, user._attributes.totp_key, {
+      time: 30,
+    });
+    if (!rv) {
+      req.flash("danger", req.__("Could not verify code"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+    user._attributes.totp_enabled = true;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor Authentication with Time-based One-Time Password enabled"
+      )
+    );
+
+    res.redirect("/auth/settings");
+  })
+);
+const totpForm = (req) =>
+  new Form({
+    action: "/auth/twofa/setup/totp",
+    fields: [
+      {
+        name: "totpCode",
+        label: req.__("Code"),
+        type: "Integer",
+        required: true,
+      },
+    ],
+  });
 
 const randomKey = function (len) {
   function getRandomInt(min, max) {
