@@ -261,6 +261,7 @@ class File {
       // delete name and possible file from file system
       if (unlinker) await unlinker(this);
       else await fs.unlink(this.location);
+      if (db.reset_sequence) await db.reset_sequence("_sc_files");
 
       // reload file list cache
       await require("../db/state").getState().refresh_files();

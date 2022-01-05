@@ -187,7 +187,8 @@ const getConnectObject = (connSpec = {}) => {
   connObj.version_tag = require("crypto")
     .createHash("sha256")
     .update(`${connObj.session_secret}${git_commit || sc_version}`)
-    .digest("hex");
+    .digest("hex")
+    .slice(0, 16);
 
   if (process.env.DATABASE_URL) {
     delete connObj[user];

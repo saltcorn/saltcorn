@@ -860,6 +860,7 @@ router.post(
       for (const file of files) {
         await file.delete();
       }
+      if (db.reset_sequence) await db.reset_sequence("_sc_files");
     }
     if (form.values.plugins) {
       const ps = await Plugin.find();
