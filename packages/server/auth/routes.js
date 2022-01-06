@@ -1633,3 +1633,15 @@ router.get(
     res.sendAuthWrap(req.__(`Two-Factor Authentication`), form, {});
   })
 );
+
+router.post(
+  "/twofa/login/totp",
+  passport.authenticate("totp", {
+    failureRedirect: "/auth/twofa/login/totp",
+    failureFlash: true,
+  }),
+  error_catcher(async (req, res) => {
+    req.session.totp_pending = false;
+    res.redirect("/");
+  })
+);
