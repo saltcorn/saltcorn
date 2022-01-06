@@ -926,6 +926,12 @@ router.post(
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
     userLimiter.resetKey(userIdKey(req.body));
+    const user = await User.findOne({ id: req.user.id });
+    if (user._attributes.totp_enabled) {
+      req.session.totp_pending = true;
+      res.redirect("/auth/twofa/login/totp");
+      return;
+    }
     if (req.session.cookie)
       if (req.body.remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 0);
@@ -1606,3 +1612,24 @@ const randomKey = function (len) {
 
   return buf.join("");
 };
+
+router.get(
+  "/twofa/login/totp",
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    let key = user._attributes.totp_key;
+    const form = new Form({
+      action: "/auth/twofa/login/totp",
+      submitLabel: "Verify",
+      fields: [
+        {
+          name: "code",
+          label: req.__("Code"),
+          type: "Integer",
+          required: true,
+        },
+      ],
+    });
+    res.sendAuthWrap(req.__(`Two-Factor Authentication`), form, {});
+  })
+);
