@@ -34,7 +34,7 @@
     "moment": "^2.27.0",
     "node-fetch": "2.6.2",
     "node-watch": "^0.7.2",
-    "passport": "^0.4.1",
+    "passport": "^0.5.1",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.2.1",
