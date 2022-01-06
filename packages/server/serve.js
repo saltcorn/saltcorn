@@ -163,9 +163,6 @@ module.exports =
     ...appargs
   } = {}) => {
     if (dev && cluster.isMaster) {
-      spawnSync("npm", ["run", "tsc"], {
-        stdio: "inherit",
-      });
       listenForChanges(getRelevantPackages(), await getPluginDirectories());
     }
     const useNCpus = process.env.SALTCORN_NWORKERS
