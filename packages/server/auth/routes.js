@@ -39,6 +39,8 @@ const {
   i,
   div,
   code,
+  pre,
+  p,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -1167,6 +1169,33 @@ const userSettings = async ({ req, res, pwform, user }) => {
         title: req.__("Change password"),
         contents: renderForm(pwform, req.csrfToken()),
       },
+      {
+        type: "card",
+        title: req.__("Two-factor Authentication"),
+        contents: [
+          div(
+            user._attributes.totp_enabled
+              ? req.__("Two-factor Authentication is enabled")
+              : req.__("Two-factor Authentication is disabled")
+          ),
+          div(
+            user._attributes.totp_enabled
+              ? post_btn(
+                  "/auth/twofa/disable/totp",
+                  "Disable",
+                  req.csrfToken(),
+                  {
+                    btnClass: "btn-danger",
+                    req,
+                  }
+                )
+              : a(
+                  { href: "/auth/twofa/setup/totp", class: "btn btn-primary" },
+                  "Enable"
+                )
+          ),
+        ],
+      },
       ...(apikeycard ? [apikeycard] : []),
     ],
   };
@@ -1460,6 +1489,7 @@ router.get(
     }
 
     const encodedKey = base32.encode(key);
+    console.log({ encodedKey });
 
     // generate QR code for scanning into Google Authenticator
     // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
@@ -1476,7 +1506,13 @@ router.get(
       contents: [
         h4(req.__("1. Scan this QR code in your Authenticator app")),
         img({ src: image }),
-        h4(req.__("2. Enter the code generated")),
+        p("Or enter this code:"),
+        code(pre(encodedKey.toString())),
+        h4(
+          req.__(
+            "2. Enter the 6-digit code generated in your authenticator app"
+          )
+        ),
         renderForm(totpForm(req), req.csrfToken()),
       ],
     });
@@ -1522,6 +1558,24 @@ router.post(
       )
     );
 
+    res.redirect("/auth/settings");
+  })
+);
+
+router.post(
+  "/twofa/disable/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    user._attributes.totp_enabled = false;
+    delete user._attributes.totp_key;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor Authentication with Time-based One-Time Password disabled"
+      )
+    );
     res.redirect("/auth/settings");
   })
 );
