@@ -661,6 +661,7 @@ const get_process_init_time = () => process_init_time;
 const features = {
   serve_static_dependencies: true,
   deep_public_plugin_serve: true,
+  fieldrepeats_in_field_attributes: true,
 };
 
 module.exports = {

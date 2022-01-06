@@ -16,6 +16,7 @@ import { SuccessMessage } from "@saltcorn/types/common_types";
 class FieldRepeat implements AbstractFieldRepeat {
   label: string;
   name: string;
+  type: string;
   fields: Array<Field>;
   isRepeat = true;
 
@@ -26,6 +27,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   constructor(o: FieldRepeatCfg) {
     this.label = o.label || o.name;
     this.name = o.name;
+    this.type = "FieldRepeat";
     this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
     );
