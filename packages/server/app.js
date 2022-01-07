@@ -148,7 +148,9 @@ const getApp = async (opts = {}) => {
             req.flash("danger", req.__("Incorrect user or password"))
           );
         const mu = await User.authenticate(userobj);
-        if (mu) return done(null, mu.session_object);
+        if (mu && mu._attributes.totp_enabled)
+          return done(null, { pending_user: mu.session_object });
+        else if (mu) return done(null, mu.session_object);
         else {
           const { password, ...nopw } = userobj;
           Trigger.emitEvent("LoginFailed", null, null, nopw);
@@ -191,7 +193,7 @@ const getApp = async (opts = {}) => {
   passport.use(
     new TotpStrategy(function (user, done) {
       // setup function, supply key and period to done callback
-      User.findOne({ id: user.id }).then((u) => {
+      User.findOne({ id: user.pending_user.id }).then((u) => {
         return done(null, u._attributes.totp_key, 30);
       });
     })

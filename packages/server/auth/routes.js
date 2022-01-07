@@ -926,9 +926,7 @@ router.post(
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
     userLimiter.resetKey(userIdKey(req.body));
-    const user = await User.findOne({ id: req.user.id });
-    if (user._attributes.totp_enabled) {
-      req.session.totp_pending = true;
+    if (req.user.pending_user) {
       res.redirect("/auth/twofa/login/totp");
       return;
     }
@@ -1616,8 +1614,6 @@ const randomKey = function (len) {
 router.get(
   "/twofa/login/totp",
   error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
-    let key = user._attributes.totp_key;
     const form = new Form({
       action: "/auth/twofa/login/totp",
       submitLabel: "Verify",
@@ -1641,7 +1637,9 @@ router.post(
     failureFlash: true,
   }),
   error_catcher(async (req, res) => {
-    req.session.totp_pending = false;
+    const user = await User.findOne({ id: req.user.pending_user.id });
+    user.relogin(req);
+
     res.redirect("/");
   })
 );
