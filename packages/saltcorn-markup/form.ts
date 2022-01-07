@@ -259,7 +259,12 @@ const mkFormRowForRepeat = (
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
     return (
       div(
-        { class: `repeats-${hdr.form_name}` },
+        {
+          class: `repeats-${hdr.form_name}`,
+          ...(hdr.showIf && {
+            "data-show-if": mkShowIf(hdr.showIf),
+          }),
+        },
         v[hdr.form_name].map((vi: any, ix: number) => {
           return div(
             { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
@@ -280,7 +285,12 @@ const mkFormRowForRepeat = (
   } else {
     return (
       div(
-        { class: `repeats-${hdr.form_name}` },
+        {
+          class: `repeats-${hdr.form_name}`,
+          ...(hdr.showIf && {
+            "data-show-if": mkShowIf(hdr.showIf),
+          }),
+        },
         div(
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           icons,

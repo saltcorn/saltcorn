@@ -42,7 +42,7 @@ class Field implements AbstractField {
   name: string;
   fieldview?: string;
   validator: Function;
-  showIf?: boolean;
+  showIf?: any;
   parent_field?: string;
   postText?: string;
   class: string;
@@ -769,7 +769,7 @@ namespace Field {
     name?: string;
     fieldview?: string;
     validator?: (arg0: any) => boolean;
-    showIf?: boolean;
+    showIf?: any;
     parent_field?: string;
     postText?: string;
     class?: string;

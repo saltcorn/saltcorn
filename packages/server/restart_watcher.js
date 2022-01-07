@@ -120,6 +120,9 @@ const listenForChanges = (projectDirs, pluginDirs) => {
         (event, file) => {
           console.log("'%s' changed \n re-starting now", file);
           closeWatchers();
+          spawnSync("npm", ["run", "tsc"], {
+            stdio: "inherit",
+          });
           process.exit();
         }
       )
