@@ -235,7 +235,7 @@ const is_plugin_layout = is.obj({
   authWrap: is.maybe(is.fun(is_plugin_authwrap_arg, is.str)),
 });
 
-const is_attribute = is.obj({ name: is.str, type: is.str, required: is.bool });
+const is_attribute = is.obj({ name: is.str, type: is.str });
 
 /**
  * @type {function}
@@ -315,8 +315,8 @@ const is_plugin_function = is.obj({
 });
 
 /**
- * 
- * @param {*} a 
+ *
+ * @param {*} a
  * @returns {function}
  */
 const is_maybe_cfg_fun = (a) => is.or(is.fun(is.obj, a), a, is.undefined);
