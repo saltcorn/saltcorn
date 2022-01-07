@@ -19,6 +19,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   type: string;
   fields: Array<Field>;
   isRepeat = true;
+  showIf?: any;
 
   /**
    * FieldRepeat constructor
@@ -32,6 +33,7 @@ class FieldRepeat implements AbstractFieldRepeat {
       f.constructor.name === Object.name ? new Field(f) : f
     );
     this.isRepeat = true;
+    this.showIf = o.showIf;
   }
 
   /**
@@ -92,6 +94,7 @@ namespace FieldRepeat {
     name: string;
     label?: string;
     fields: Array<Field>;
+    showIf?: any;
   };
 }
 type FieldRepeatCfg = FieldRepeat.FieldRepeatCfg;
