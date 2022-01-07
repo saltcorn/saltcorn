@@ -26,6 +26,7 @@ const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
+const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 
 /**
  * @type {object}
@@ -161,8 +162,9 @@ const translateAttributes = (attrs, req) =>
  * @returns {object}
  */
 const translateAttribute = (attr, req) => {
-  const res = { ...attr };
+  let res = { ...attr };
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
+  if (res.isRepeat) res = new FieldRepeat(res);
   return res;
 };
 
