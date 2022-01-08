@@ -100,5 +100,5 @@ class Test:
         assert self.sess.status == 302
         assert self.sess.redirect_url == '/auth/twofa/login/totp'
         self.sess.get('/view/patientlist')
-        assert self.sess.status == 200
-        assert "Michael Douglas" in self.sess.content
+        assert self.sess.status == 302
+        assert self.sess.redirect_url == '/'
