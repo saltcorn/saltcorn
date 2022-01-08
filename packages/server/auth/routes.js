@@ -1105,6 +1105,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
   }
   let apikeycard;
   const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+  const twoFaPolicy = getState().get2FApolicy(user);
+  const show2FAPolicy =
+    twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
   if (user.role_id <= min_role_apikeygen)
     apikeycard = {
       type: "card",
@@ -1173,33 +1176,40 @@ const userSettings = async ({ req, res, pwform, user }) => {
         title: req.__("Change password"),
         contents: renderForm(pwform, req.csrfToken()),
       },
-      {
-        type: "card",
-        title: req.__("Two-factor Authentication"),
-        contents: [
-          div(
-            user._attributes.totp_enabled
-              ? req.__("Two-factor Authentication is enabled")
-              : req.__("Two-factor Authentication is disabled")
-          ),
-          div(
-            user._attributes.totp_enabled
-              ? post_btn(
-                  "/auth/twofa/disable/totp",
-                  "Disable",
-                  req.csrfToken(),
-                  {
-                    btnClass: "btn-danger",
-                    req,
-                  }
-                )
-              : a(
-                  { href: "/auth/twofa/setup/totp", class: "btn btn-primary" },
-                  "Enable"
-                )
-          ),
-        ],
-      },
+      ...(show2FAPolicy
+        ? [
+            {
+              type: "card",
+              title: req.__("Two-factor Authentication"),
+              contents: [
+                div(
+                  user._attributes.totp_enabled
+                    ? req.__("Two-factor Authentication is enabled")
+                    : req.__("Two-factor Authentication is disabled")
+                ),
+                div(
+                  user._attributes.totp_enabled
+                    ? post_btn(
+                        "/auth/twofa/disable/totp",
+                        "Disable",
+                        req.csrfToken(),
+                        {
+                          btnClass: "btn-danger",
+                          req,
+                        }
+                      )
+                    : a(
+                        {
+                          href: "/auth/twofa/setup/totp",
+                          class: "btn btn-primary",
+                        },
+                        "Enable"
+                      )
+                ),
+              ],
+            },
+          ]
+        : []),
       ...(apikeycard ? [apikeycard] : []),
     ],
   };
