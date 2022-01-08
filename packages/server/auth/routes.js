@@ -1185,12 +1185,12 @@ const userSettings = async ({ req, res, pwform, user }) => {
         ? [
             {
               type: "card",
-              title: req.__("Two-factor Authentication"),
+              title: req.__("Two-factor authentication"),
               contents: [
                 div(
                   user._attributes.totp_enabled
-                    ? req.__("Two-factor Authentication is enabled")
-                    : req.__("Two-factor Authentication is disabled")
+                    ? req.__("Two-factor authentication is enabled")
+                    : req.__("Two-factor authentication is disabled")
                 ),
                 div(
                   user._attributes.totp_enabled
@@ -1516,10 +1516,10 @@ router.get(
       user.email
     }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
     const image = await qrcode.toDataURL(otpUrl);
-    res.sendWrap(req.__("Setup Two-factor Authentication"), {
+    res.sendWrap(req.__("Setup two-factor authentication"), {
       type: "card",
       title: req.__(
-        "Setup Two-factor Authentication with Time-based One-Time Password (TOTP)"
+        "Setup two-factor authentication with Time-based One-Time Password (TOTP)"
       ),
       contents: [
         h4(req.__("1. Scan this QR code in your Authenticator app")),
@@ -1528,7 +1528,7 @@ router.get(
         code(pre(encodedKey.toString())),
         h4(
           req.__(
-            "2. Enter the 6-digit code generated in your authenticator app"
+            "2. Enter the six-digit code generated in your Authenticator app"
           )
         ),
         renderForm(totpForm(req), req.csrfToken()),
@@ -1571,7 +1571,7 @@ router.post(
     req.flash(
       "success",
       req.__(
-        "Two-factor Authentication with Time-based One-Time Password enabled"
+        "Two-factor authentication with Time-based One-Time Password enabled"
       )
     );
 
@@ -1590,7 +1590,7 @@ router.post(
     req.flash(
       "success",
       req.__(
-        "Two-factor Authentication with Time-based One-Time Password disabled"
+        "Two-factor authentication with Time-based One-Time Password disabled"
       )
     );
     res.redirect("/auth/settings");
@@ -1639,7 +1639,7 @@ router.get(
         },
       ],
     });
-    res.sendAuthWrap(req.__(`Two-Factor Authentication`), form, {});
+    res.sendAuthWrap(req.__(`Two-factor authentication`), form, {});
   })
 );
 

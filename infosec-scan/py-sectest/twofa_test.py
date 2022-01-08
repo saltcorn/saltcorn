@@ -28,7 +28,7 @@ class Test:
         assert self.sess.redirect_url == '/'
         self.sess.get('/auth/settings')
         assert self.sess.status == 200
-        assert "Two-factor Authentication is disabled" in self.sess.content
+        assert "Two-factor authentication is disabled" in self.sess.content
         self.sess.get('/auth/twofa/setup/totp')
         totp_key = re.findall(r'<pre>(.+?)</pre>', self.sess.content)[0]
         totp_code = pyotp.TOTP(totp_key).now()
@@ -39,8 +39,8 @@ class Test:
         assert self.sess.redirect_url == '/auth/settings'
         self.sess.get('/auth/settings')
         assert self.sess.status == 200
-        assert "Two-factor Authentication with Time-based One-Time Password enabled" in self.sess.content
-        assert "Two-factor Authentication is enabled" in self.sess.content
+        assert "Two-factor authentication with Time-based One-Time Password enabled" in self.sess.content
+        assert "Two-factor authentication is enabled" in self.sess.content
 
         self.sess.get('/auth/logout')
         self.sess.get('/auth/login')
