@@ -605,6 +605,8 @@ const signup_login_with_user = (u, req, res) =>
       if (!err) {
         Trigger.emitEvent("Login", null, u);
         if (getState().verifier) res.redirect("/auth/verification-flow");
+        else if (getState().get2FApolicy(u) === "Mandatory")
+          res.redirect("/auth/twofa/setup/totp");
         else res.redirect("/");
       } else {
         req.flash("danger", err);
@@ -930,6 +932,7 @@ router.post(
       res.redirect("/auth/twofa/login/totp");
       return;
     }
+
     if (req.session.cookie)
       if (req.body.remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 0);
@@ -942,7 +945,9 @@ router.post(
       }
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
-    res.redirect("/");
+    if (getState().get2FApolicy(req.user) === "Mandatory") {
+      res.redirect("/auth/twofa/setup/totp");
+    } else res.redirect("/");
   })
 );
 
@@ -1647,7 +1652,7 @@ router.post(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.pending_user.id });
     user.relogin(req);
-
+    Trigger.emitEvent("Login", null, user);
     res.redirect("/");
   })
 );
