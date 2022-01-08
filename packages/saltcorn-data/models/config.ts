@@ -538,9 +538,9 @@ const isFixedConfig = (key: string): boolean =>
  * @function
  * @returns {Promise<object>}
  */
-const getAllConfig = async (): Promise<any> => {
+const getAllConfig = async (): Promise<ConfigTypes | void> => {
   const cfgs = await db.select("_sc_config");
-  var cfg: any = {};
+  var cfg: ConfigTypes = {};
   cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
     if (key === "testMigration")
       //legacy invalid cfg
@@ -566,15 +566,17 @@ const getAllConfig = async (): Promise<any> => {
  * @function
  * @returns {Promise<object>}
  */
-const getAllConfigOrDefaults = async (): Promise<any> => {
-  var cfgs: any = {};
+const getAllConfigOrDefaults = async (): Promise<ConfigTypes> => {
+  var cfgs: ConfigTypes = {};
   const cfgInDB = await getAllConfig();
-
-  Object.entries(configTypes).forEach(([key, v]: [key: string, v: any]) => {
-    const value =
-      typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-    if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
-  });
+  if (cfgInDB)
+    Object.entries(configTypes).forEach(
+      ([key, v]: [key: string, v: SingleConfig]) => {
+        const value =
+          typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
+        if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
+      }
+    );
   return cfgs;
 };
 
