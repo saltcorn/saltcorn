@@ -118,7 +118,7 @@ const runScheduler = async ({
 } = {}) => {
   let stopit;
   const run = async () => {
-    if (watchReaper && port) await checkAvailability(port); // TODO ch changed this
+    if (watchReaper && port) await checkAvailability(port);
     if (disableScheduler) return;
 
     stopit = await stop_when();

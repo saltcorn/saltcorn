@@ -39,7 +39,7 @@ class Plugin {
    * @param {object} o
    */
   constructor(o: PluginCfg | PackPlugin | Plugin) {
-    this.id = o.id ? +o.id : undefined; // TODO ch changed this
+    this.id = o.id ? +o.id : undefined;
     this.name = o.name;
     this.source = o.source;
     this.location = o.location;

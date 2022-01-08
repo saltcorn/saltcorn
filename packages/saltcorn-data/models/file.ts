@@ -168,7 +168,7 @@ class File {
       // set mime type
       const [mime_super, mime_sub] = file.mimetype.split("/");
       // move file in file system to newPath
-      await file.mv(newPath); //
+      await file.mv(newPath);
       // create file
       return await File.create({
         filename: file.name,

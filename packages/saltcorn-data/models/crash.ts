@@ -6,7 +6,7 @@
  */
 import db from "../db";
 import moment from "moment";
-import { SelectOptions, Where } from "@saltcorn/db-common/internal";
+import type { SelectOptions, Where } from "@saltcorn/db-common/internal";
 
 /**
  * Crash Class
