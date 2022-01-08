@@ -649,7 +649,10 @@ class Field implements AbstractField {
    * @param {boolean} [bare = false]
    * @returns {Promise<Field>}
    */
-  static async create(fld: Field, bare: boolean = false): Promise<Field> {
+  static async create(
+    fld: Field | FieldCfg,
+    bare: boolean = false
+  ): Promise<Field> {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
 

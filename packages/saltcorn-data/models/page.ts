@@ -4,18 +4,27 @@
  * @module models/page
  * @subcategory models
  */
-const db = require("../db");
-const { contract, is } = require("contractis");
-const View = require("./view");
-const Table = require("./table");
+import db from "../db";
+import View from "./view";
+import Table from "./table";
 const {
   eachView,
   traverseSync,
   getStringsForI18n,
   translateLayout,
 } = require("./layout");
-const { div } = require("@saltcorn/markup/tags");
-const { remove_from_menu } = require("./config");
+import tags from "@saltcorn/markup/tags";
+const { div } = tags;
+import config from "./config";
+import type { Layout, RunExtra } from "@saltcorn/types/base_types";
+import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
+import Role from "./role";
+import type {
+  PageCfg,
+  PackPage,
+} from "@saltcorn/types/model-abstracts/abstract_page";
+
+const { remove_from_menu } = config;
 const {
   action_link,
   fill_presets,
@@ -31,10 +40,18 @@ const {
  * @category saltcorn-data
  */
 class Page {
+  name: string;
+  title: string;
+  description: string;
+  id?: number;
+  min_role: number;
+  layout: Layout;
+  fixed_states: any;
+
   /**
    * @param {object} o
    */
-  constructor(o) {
+  constructor(o: PageCfg | PackPage | Page) {
     this.name = o.name;
     this.title = o.title;
     this.description = o.description;
@@ -46,7 +63,6 @@ class Page {
       typeof o.fixed_states === "string"
         ? JSON.parse(o.fixed_states)
         : o.fixed_states || {};
-    contract.class(this);
   }
 
   /**
@@ -55,13 +71,16 @@ class Page {
    * @param selectopts
    * @returns {Promise<*>}
    */
-  static async find(where, selectopts = { orderBy: "name", nocase: true }) {
+  static async find(
+    where?: Where,
+    selectopts: SelectOptions = { orderBy: "name", nocase: true }
+  ): Promise<Array<Page>> {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
-      return getState().pages.map((t) => new Page(t));
+      return getState().pages.map((t: Page) => new Page(t));
     }
     const db_flds = await db.select("_sc_pages", where, selectopts);
-    return db_flds.map((dbf) => new Page(dbf));
+    return db_flds.map((dbf: PageCfg) => new Page(dbf));
   }
 
   /**
@@ -69,13 +88,13 @@ class Page {
    * @param where
    * @returns {Promise<Page|*>}
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<Page> {
     const { getState } = require("../db/state");
     const p = getState().pages.find(
       where.id
-        ? (v) => v.id === +where.id
+        ? (v: Page) => v.id === +where.id
         : where.name
-        ? (v) => v.name === where.name
+        ? (v: Page) => v.name === where.name
         : satisfies(where)
     );
     return p
@@ -93,7 +112,7 @@ class Page {
    * @param row
    * @returns {Promise<void>}
    */
-  static async update(id, row) {
+  static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_pages", row, id);
     await require("../db/state").getState().refresh_pages();
   }
@@ -105,7 +124,7 @@ class Page {
    * @param f
    * @returns {Promise<Page>}
    */
-  static async create(f) {
+  static async create(f: PageCfg | PackPage): Promise<Page> {
     const page = new Page(f);
     const { id, ...rest } = page;
     const fid = await db.insert("_sc_pages", rest);
@@ -119,7 +138,7 @@ class Page {
    * Delete current page
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     await db.deleteWhere("_sc_pages", { id: this.id });
     const root_page_for_roles = await this.is_root_page_for_roles();
     for (const role of root_page_for_roles) {
@@ -134,24 +153,26 @@ class Page {
    * Is root page for role
    * @returns {Promise<*>}
    */
-  async is_root_page_for_roles() {
+  async is_root_page_for_roles(): Promise<Array<Role>> {
     const User = require("./user");
     const { getState } = require("../db/state");
 
     const roles = await User.get_roles();
     return roles
-      .filter((r) => getState().getConfig(r.role + "_home", "") === this.name)
-      .map((r) => r.role);
+      .filter(
+        (r: Role) => getState().getConfig(r.role + "_home", "") === this.name
+      )
+      .map((r: Role) => r.role);
   }
 
   /**
    * get menu label for page
    * @type {string|undefined}
    */
-  get menu_label() {
+  get menu_label(): string | undefined {
     const { getState } = require("../db/state");
     const menu_items = getState().getConfig("menu_items", []);
-    const item = menu_items.find((mi) => mi.pagename === this.name);
+    const item = menu_items.find((mi: any) => mi.pagename === this.name);
     return item ? item.label : undefined;
   }
 
@@ -159,7 +180,7 @@ class Page {
    * Clone page
    * @returns {Promise<Page>}
    */
-  async clone() {
+  async clone(): Promise<Page> {
     const basename = this.name + " copy";
     let newname;
     for (let i = 0; i < 100; i++) {
@@ -181,8 +202,8 @@ class Page {
    * @param extraArgs
    * @returns {Promise<any>}
    */
-  async run(querystate, extraArgs) {
-    await eachView(this.layout, async (segment) => {
+  async run(querystate: any, extraArgs: RunExtra): Promise<Layout> {
+    await eachView(this.layout, async (segment: any) => {
       const view = await View.findOne({ name: segment.view });
       if (!view) {
         throw new InvalidConfiguration(
@@ -204,7 +225,7 @@ class Page {
     });
     const pagename = this.name;
     traverseSync(this.layout, {
-      action(segment) {
+      action(segment: any) {
         const url = `javascript:ajax_post_json('/page/${pagename}/action/${segment.rndid}')`;
         const html = action_link(url, extraArgs.req, segment);
         segment.type = "blank";
@@ -217,39 +238,4 @@ class Page {
   }
 }
 
-/**
- * Page contract
- * @type {{variables: {min_role: ((function(*=): *)|*), layout: ((function(*=): *)|*), name: ((function(*=): *)|*), fixed_states: ((function(*=): *)|*), description: ((function(*=): *)|*), id: ((function(*=): *)|*), title: ((function(*=): *)|*)}, methods: {run: ((function(*=): *)|*), delete: ((function(*=): *)|*), is_root_page_for_roles: ((function(*=): *)|*), menu_label: ((function(*=): *)|*)}, static_methods: {find: ((function(*=): *)|*), findOne: ((function(*=): *)|*), create: ((function(*=): *)|*), update: ((function(*=): *)|*)}}}
- */
-Page.contract = {
-  variables: {
-    name: is.str,
-    title: is.str,
-    description: is.str,
-    id: is.maybe(is.posint),
-    min_role: is.posint,
-    layout: is.obj(),
-    fixed_states: is.obj(),
-  },
-  methods: {
-    delete: is.fun([], is.promise(is.undefined)),
-
-    menu_label: is.getter(is.maybe(is.str)),
-    run: is.fun(
-      [is.obj(), is.obj({ req: is.obj(), res: is.obj() })],
-      is.promise(is.any)
-    ),
-    is_root_page_for_roles: is.fun([], is.promise(is.array(is.str))),
-  },
-  static_methods: {
-    find: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("Page")))
-    ),
-    create: is.fun(is.obj(), is.promise(is.class("Page"))),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Page")))),
-    update: is.fun([is.posint, is.obj()], is.promise(is.undefined)),
-  },
-};
-
-module.exports = Page;
+export = Page;

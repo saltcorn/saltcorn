@@ -1,9 +1,18 @@
 import type { AbstractForm } from "./model-abstracts/abstract_form";
-import type { AbstractTable } from "./model-abstracts/abstract_table";
+import type {
+  AbstractTable,
+  PackTable,
+} from "./model-abstracts/abstract_table";
 import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
+import type { TriggerPack } from "./model-abstracts/abstract_trigger";
 import type { InputType } from "./model-abstracts/abstract_field";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { Type, ReqRes } from "./common_types";
+import type { RolePack } from "./model-abstracts/abstract_role";
+import type { LibraryPack } from "./model-abstracts/abstract_library";
+import type { PackView } from "./model-abstracts/abstract_view";
+import type { PackPage } from "./model-abstracts/abstract_page";
+import type { PackPlugin } from "./model-abstracts/abstract_plugin";
 
 type FieldLikeBasics = {
   name: string;
@@ -231,7 +240,7 @@ export type Action = (
   optsTwo: ReqRes
 ) => Promise<any>;
 
-type PluginFunction = {
+export type PluginFunction = {
   run: (arg0: any) => any;
   returns?: string;
   arguments?: string[];
@@ -265,21 +274,16 @@ export type Plugin = {
 };
 
 export type Pack = {
-  tables: Array<{
-    name: string;
-    fields: Array<FieldLike>;
-  }>;
-  views: Array<{
-    name: string;
-    viewtemplate: string;
-    configuration: any;
-  }>;
-  plugins: Array<{
-    name: string;
-    source: string;
-    location: string;
-  }>;
+  tables: Array<PackTable>;
+  views: Array<PackView>;
+  pages: Array<PackPage>;
+  plugins: Array<PackPlugin>;
+  roles: Array<RolePack>;
+  library: Array<LibraryPack>;
+  triggers: Array<TriggerPack>;
 };
+
+export type PluginSourceType = "npm" | "github" | "local" | "git";
 
 export type Column = {
   type: "Action" | "ViewLink" | "Link" | "JoinField" | "Aggregation" | "Field";

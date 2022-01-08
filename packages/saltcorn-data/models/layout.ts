@@ -3,15 +3,19 @@
  * @module models/layout
  * @subcategory models
  */
+
 const { getState } = require("../db/state");
+import { Layout } from "@saltcorn/types/base_types";
+
+type Visitors = { [key: string]: (segment: any) => void };
 
 /**
- * @param {object} layout 
- * @param {object[]} visitors 
+ * @param {object} layout
+ * @param {object[]} visitors
  * @returns {void}
  */
-const traverseSync = (layout, visitors) => {
-  const go = (segment) => {
+const traverseSync = (layout: Layout, visitors: Visitors): void => {
+  const go = (segment: any) => {
     if (!segment) return;
     if (visitors[segment.type]) {
       visitors[segment.type](segment);
@@ -21,7 +25,7 @@ const traverseSync = (layout, visitors) => {
       return;
     }
     if (segment.contents) {
-      if (typeof contents !== "string") go(segment.contents);
+      if (typeof segment.contents !== "string") go(segment.contents);
       return;
     }
     if (segment.above) {
@@ -37,12 +41,12 @@ const traverseSync = (layout, visitors) => {
 };
 
 /**
- * @param {object} layout 
- * @param {object[]} visitors 
+ * @param {object} layout
+ * @param {object[]} visitors
  * @returns {Promise<void>}
  */
-const traverse = async (layout, visitors) => {
-  const go = async (segment) => {
+const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
+  const go = async (segment: any) => {
     if (!segment) return;
     if (visitors[segment.type]) {
       await visitors[segment.type](segment);
@@ -53,7 +57,7 @@ const traverse = async (layout, visitors) => {
       return;
     }
     if (segment.contents) {
-      if (typeof contents !== "string") await go(segment.contents);
+      if (typeof segment.contents !== "string") await go(segment.contents);
       return;
     }
     if (segment.above) {
@@ -69,42 +73,43 @@ const traverse = async (layout, visitors) => {
 };
 
 /**
- * @param {object} layout 
- * @param {*} f 
+ * @param {object} layout
+ * @param {*} f
  * @returns {void}
  */
-const eachView = (layout, f) => traverse(layout, { view: f });
+const eachView = (layout: Layout, f: any): Promise<void> =>
+  traverse(layout, { view: f });
 
 /**
- * @param {object} layout 
+ * @param {object} layout
  * @returns {Promise<object[]>}
  */
-const getViews = async (layout) => {
-  const views = [];
-  await eachView(layout, (segment) => {
+const getViews = async (layout: Layout): Promise<any[]> => {
+  const views: any[] = [];
+  await eachView(layout, (segment: any) => {
     views.push(segment);
   });
   return views;
 };
 
 /**
- * @param {object} layout 
+ * @param {object} layout
  * @returns {string[]}
  */
-const getStringsForI18n = (layout) => {
-  const strings = [];
+const getStringsForI18n = (layout: Layout): string[] => {
+  const strings: string[] = [];
   traverseSync(layout, {
-    blank(s) {
+    blank(s: any) {
       if (typeof s === "string") strings.push(s);
       else if (s.contents) strings.push(s.contents);
     },
-    link({ text }) {
+    link({ text }: { text: string }) {
       strings.push(text);
     },
-    card({ title }) {
+    card({ title }: { title: string }) {
       strings.push(title);
     },
-    tabs({ titles }) {
+    tabs({ titles }: { titles: string[] }) {
       strings.push(...titles);
     },
   });
@@ -112,31 +117,31 @@ const getStringsForI18n = (layout) => {
 };
 
 /**
- * @param {object} layout 
- * @param {object} locale 
+ * @param {object} layout
+ * @param {object} locale
  */
-const translateLayout = (layout, locale) => {
-  const appState = getState()
-  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
+const translateLayout = (layout: Layout, locale: string): void => {
+  const appState = getState();
+  const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
 
   traverseSync(layout, {
-    blank(s) {
+    blank(s: any) {
       s.contents = __(s.contents);
     },
-    link(s) {
+    link(s: { text: string }) {
       s.text = __(s.text);
     },
-    card(s) {
+    card(s: { title: string }) {
       s.title = __(s.title);
     },
-    tabs(s) {
-      s.titles = s.titles.map((t) => __(t));
+    tabs(s: { titles: string[] }) {
+      s.titles = s.titles.map((t: string) => __(t));
     },
   });
 };
 //getViews: is.fun([], is.promise(is.array(is.obj()))),
 //eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
-module.exports = {
+export = {
   eachView,
   getViews,
   traverse,

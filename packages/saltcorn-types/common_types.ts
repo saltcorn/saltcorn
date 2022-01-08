@@ -40,3 +40,5 @@ export type Type = {
 export function instanceOfType(object: any): object is Type {
   return object && typeof object !== "string";
 }
+
+export type GenObj = { [key: string]: any };

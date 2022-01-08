@@ -3,20 +3,20 @@
  * @module models/scheduler
  * @subcategory models
  */
-const Crash = require("./crash");
+import Crash from "./crash";
 const { eachTenant } = require("./tenant");
-const Trigger = require("./trigger");
-const db = require("../db");
+import Trigger from "./trigger";
+import db from "../db";
 const { getState } = require("../db/state");
-const fetch = require("node-fetch");
-const EventLog = require("./eventlog");
+import fetch from "node-fetch";
+import EventLog from "./eventlog";
 
 /**
- * @param {Date} date 
- * @param {number} plusSeconds 
+ * @param {Date} date
+ * @param {number} plusSeconds
  * @returns {Promise<void>}
  */
-const sleepUntil = (date, plusSeconds) => {
+const sleepUntil = (date: Date, plusSeconds: number): Promise<void> => {
   const waitTill = new Date();
   waitTill.setTime(date.getTime() + 1000 * plusSeconds);
   const now = new Date();
@@ -25,11 +25,14 @@ const sleepUntil = (date, plusSeconds) => {
 };
 
 /**
- * @param {string} name 
- * @param {number} hours 
+ * @param {string} name
+ * @param {number} hours
  * @returns {Promise<Trigger[]>}
  */
-const getIntervalTriggersDueNow = async (name, hours) => {
+const getIntervalTriggersDueNow = async (
+  name: string,
+  hours: number
+): Promise<Array<Trigger>> => {
   const state = getState();
   const cfgField = `next_${name.toLowerCase()}_event`;
   const now = new Date();
@@ -58,7 +61,7 @@ const getIntervalTriggersDueNow = async (name, hours) => {
     event_type: name,
     channel: null,
     user_id: null,
-    payload:null,
+    payload: null,
     occur_at: new Date(),
   });
   return triggers;
@@ -67,10 +70,10 @@ const getIntervalTriggersDueNow = async (name, hours) => {
 let availabilityPassed = false;
 
 /**
- * @param {string} port 
+ * @param {string} port
  * @returns {Promise<void>}
  */
-const checkAvailability = async (port) => {
+const checkAvailability = async (port: number): Promise<void> => {
   try {
     const response = await fetch(`http://127.0.0.1:${port}/auth/login`);
     const pass = response.status < 400;
@@ -106,10 +109,16 @@ const runScheduler = async ({
   watchReaper,
   port,
   disableScheduler,
+}: {
+  stop_when?: () => false;
+  tickSeconds?: number;
+  watchReaper?: boolean;
+  port?: number;
+  disableScheduler?: boolean;
 } = {}) => {
   let stopit;
   const run = async () => {
-    if (watchReaper) await checkAvailability(port);
+    if (watchReaper && port) await checkAvailability(port); // TODO ch changed this
     if (disableScheduler) return;
 
     stopit = await stop_when();
@@ -121,7 +130,7 @@ const runScheduler = async ({
         event_type: "Often",
         channel: null,
         user_id: null,
-        payload:null,
+        payload: null,
         occur_at: new Date(),
       });
 
@@ -160,4 +169,4 @@ const runScheduler = async ({
   }
 };
 
-module.exports = runScheduler;
+export = runScheduler;

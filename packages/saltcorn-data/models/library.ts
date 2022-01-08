@@ -6,6 +6,7 @@
  */
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type { LibraryCfg } from "@saltcorn/types/model-abstracts/abstract_library";
 
 const { traverseSync } = require("./layout");
 
@@ -140,15 +141,5 @@ class Library {
     await db.update("_sc_library", row, this.id);
   }
 }
-
-namespace Library {
-  export type LibraryCfg = {
-    id: number;
-    name: string;
-    icon: string;
-    layout: string | any;
-  };
-}
-type LibraryCfg = Library.LibraryCfg;
 
 export = Library;

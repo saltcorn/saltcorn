@@ -3,24 +3,26 @@
  * @module models/email
  * @subcategory models
  */
-const nodemailer = require("nodemailer");
+import { createTransport, Transporter } from "nodemailer";
 const { getState } = require("../db/state");
-const BootstrapEmail = require("bootstrap-email");
-const tmp = require("tmp-promise");
-const fs = require("fs").promises;
-const { div } = require("@saltcorn/markup/tags");
-const View = require("./view");
-const { v4: uuidv4 } = require("uuid");
-const db = require("../db");
+const BootstrapEmail = require("bootstrap-email"); // no typings available
+import { tmpName } from "tmp-promise";
+import { writeFile, unlink } from "fs/promises";
+import tags from "@saltcorn/markup/tags";
+const { div } = tags;
+import View from "./view";
+import { v4 as uuidv4 } from "uuid";
+import db from "../db";
+import User from "./user";
 const { mockReqRes } = require("../tests/mocks");
 
 /**
  * @returns {Transporter}
  */
-const getMailTransport = () => {
+const getMailTransport = (): Transporter => {
   const port = getState().getConfig("smtp_port");
   const secure = getState().getConfig("smtp_secure", port === 465);
-  return nodemailer.createTransport({
+  return createTransport({
     host: getState().getConfig("smtp_host"),
     port,
     secure,
@@ -32,25 +34,28 @@ const getMailTransport = () => {
 };
 
 /**
- * @param {object} bsHtml 
+ * @param {object} bsHtml
  * @returns {object}
  */
-const transformBootstrapEmail = async (bsHtml) => {
-  const filename = await tmp.tmpName();
-  await fs.writeFile(filename, div({ class: "container" }, bsHtml));
+const transformBootstrapEmail = async (bsHtml: string): Promise<any> => {
+  const filename = await tmpName();
+  await writeFile(filename, div({ class: "container" }, bsHtml));
 
   const template = new BootstrapEmail(filename);
   const email = template.compile();
-  await fs.unlink(filename);
+  await unlink(filename);
   return email;
 };
 
 /**
- * @param {object} user 
+ * @param {object} user
  * @param {object} [req]
  * @returns {Promise<object>}
  */
-const send_verification_email = async (user, req) => {
+const send_verification_email = async (
+  user: User,
+  req: any
+): Promise<boolean | any> => {
   const verification_view_name = getState().getConfig("verification_view");
   if (verification_view_name) {
     const verification_view = await View.findOne({
@@ -73,10 +78,13 @@ const send_verification_email = async (user, req) => {
         if (req)
           req.flash(
             "success",
-            req.__("An email has been sent to %s to verify your address", user.email)
+            req.__(
+              "An email has been sent to %s to verify your address",
+              user.email
+            )
           );
         return true;
-      } catch (e) {
+      } catch (e: any) {
         return { error: e.message };
       }
     } else return { error: "Verification form specified but not found" };
@@ -85,7 +93,7 @@ const send_verification_email = async (user, req) => {
   }
 };
 
-module.exports = {
+export = {
   getMailTransport,
   transformBootstrapEmail,
   send_verification_email,
