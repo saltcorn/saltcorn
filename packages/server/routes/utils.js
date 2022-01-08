@@ -49,7 +49,13 @@ function isAdmin(req, res, next) {
     next();
   } else {
     req.flash("danger", req.__("Must be admin"));
-    res.redirect(req.user ? "/" : "/auth/login");
+    res.redirect(
+      req.user && req.user.pending_user
+        ? "/auth/twofa/login/totp"
+        : req.user
+        ? "/"
+        : "/auth/login"
+    );
   }
 }
 
