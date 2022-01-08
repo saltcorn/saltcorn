@@ -1194,14 +1194,14 @@ const userSettings = async ({ req, res, pwform, user }) => {
                         "Disable",
                         req.csrfToken(),
                         {
-                          btnClass: "btn-danger",
+                          btnClass: "btn-danger mt-2",
                           req,
                         }
                       )
                     : a(
                         {
                           href: "/auth/twofa/setup/totp",
-                          class: "btn btn-primary",
+                          class: "btn btn-primary mt-2",
                         },
                         "Enable"
                       )
