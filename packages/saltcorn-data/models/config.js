@@ -112,6 +112,12 @@ const configTypes = {
   /** @type {object} */
   layout_by_role: { type: "hidden", label: "Layout by role", default: {} },
   /** @type {object} */
+  twofa_policy_by_role: {
+    type: "hidden",
+    label: "2FA policy by role",
+    default: {},
+  },
+  /** @type {object} */
   allow_signup: {
     type: "Bool",
     label: "Allow signups",

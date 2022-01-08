@@ -86,6 +86,28 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
   );
 
 /**
+ * @param {Role} role
+ * @param {Layout[]} layouts
+ * @param {*} layout_by_role
+ * @param {object} req
+ * @returns {Form}
+ */
+const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
+  form(
+    {
+      action: `/roleadmin/setrole2fapolicy/${role.id}`,
+      method: "post",
+    },
+    csrfField(req),
+    select(
+      { name: "policy", onchange: "form.submit()" },
+      ["Optional", "Disabled", "Mandatory"].map((p) =>
+        option({ selected: twofa_policy_by_role[role.id] === p }, p)
+      )
+    )
+  );
+
+/**
  * @param {object} req
  * @returns {Form}
  */
@@ -125,6 +147,7 @@ router.get(
       (l) => l !== "emergency"
     );
     const layout_by_role = getState().getConfig("layout_by_role");
+    const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
     send_users_page({
       res,
       req,
@@ -141,6 +164,13 @@ router.get(
                 label: req.__("Theme"),
                 key: (role) =>
                   editRoleLayoutForm(role, layouts, layout_by_role, req),
+              },
+              {
+                label: req.__("2FA policy"),
+                key: (role) =>
+                  role.id === 10
+                    ? ""
+                    : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
               },
               {
                 label: req.__("Delete"),
@@ -240,6 +270,26 @@ router.post(
   })
 );
 
+/**
+ * @name post/setrolelayout/:id
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
+router.post(
+  "/setrole2fapolicy/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const twofa_policy_by_role = getState().getConfigCopy(
+      "twofa_policy_by_role"
+    );
+    twofa_policy_by_role[+id] = req.body.policy;
+    await getState().setConfig("twofa_policy_by_role", twofa_policy_by_role);
+    req.flash("success", req.__(`Saved 2FA policy for role`));
+
+    res.redirect(`/roleadmin`);
+  })
+);
 const unDeletableRoles = [1, 8, 10];
 /**
  * @name post/delete/:id
