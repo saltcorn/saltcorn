@@ -1493,7 +1493,6 @@ router.get(
     }
 
     const encodedKey = base32.encode(key);
-    console.log({ encodedKey });
 
     // generate QR code for scanning into Google Authenticator
     // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
@@ -1544,7 +1543,6 @@ router.post(
       return;
     }
     const code = `${form.values.totpCode}`;
-    console.log(code, user._attributes.totp_key);
     const rv = totp.verify(code, user._attributes.totp_key, {
       time: 30,
     });
