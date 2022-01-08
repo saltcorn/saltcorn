@@ -37,7 +37,7 @@ router.post(
     const { name, id, field_name } = req.params;
     const { redirect } = req.query;
     const table = await Table.findOne({ name });
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     if (role <= table.min_role_write) await table.toggleBool(+id, field_name);
     else
       req.flash(

@@ -42,8 +42,7 @@ router.get(
     const { viewname } = req.params;
     const query = { ...req.query };
     const view = await View.findOne({ name: viewname });
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
-
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       res.redirect("/");
@@ -122,7 +121,7 @@ router.post(
   "/:viewname/:route",
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
 
     const view = await View.findOne({ name: viewname });
     if (!view) {
@@ -147,7 +146,7 @@ router.post(
   ["/:viewname", "/:viewname/*"],
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     const query = { ...req.query };
 
     const view = await View.findOne({ name: viewname });

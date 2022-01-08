@@ -37,7 +37,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
 
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     const db_page = await Page.findOne({ name: pagename });
     if (db_page && role <= db_page.min_role) {
       const contents = await db_page.run(req.query, { res, req });
@@ -73,7 +73,7 @@ router.post(
   "/:pagename/action/:rndid",
   error_catcher(async (req, res) => {
     const { pagename, rndid } = req.params;
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     const db_page = await Page.findOne({ name: pagename });
     if (db_page && role <= db_page.min_role) {
       let col;

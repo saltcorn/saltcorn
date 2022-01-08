@@ -44,11 +44,12 @@ module.exports = router;
  * @returns {boolean}
  */
 function accessAllowedRead(req, user) {
-  const role = req.isAuthenticated()
-    ? req.user.role_id
-    : user && user.role_id
-    ? user.role_id
-    : 10;
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
   if (role === 1) return true;
   return false;
