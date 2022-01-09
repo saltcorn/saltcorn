@@ -3,18 +3,25 @@
  * @module models/user
  * @subcategory models
  */
-const db = require("../db");
-const bcrypt = require("bcryptjs");
-const { contract, is } = require("contractis");
-const { v4: uuidv4 } = require("uuid");
-const dumbPasswords = require("dumb-passwords");
-const validator = require("email-validator");
+import db from "../db";
+import { compareSync, hash } from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
+import { check } from "dumb-passwords";
+import { validate } from "email-validator";
+import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
+import type {
+  ErrorMessage,
+  GenObj,
+  SuccessMessage,
+} from "@saltcorn/types/common_types";
+import generators from "@saltcorn/types/generators";
+const { generateString } = generators;
 
 /**
- * @param {object} o 
+ * @param {object} o
  * @returns {*}
  */
-const safeUserFields = (o) => {
+const safeUserFields = (o: UserCfg | User): any => {
   const {
     email,
     password,
@@ -37,11 +44,24 @@ const safeUserFields = (o) => {
  * @category saltcorn-data
  */
 class User {
+  email: string;
+  password: string;
+  language?: string;
+  _attributes?: any;
+  api_token?: string | null;
+  verification_token?: string;
+  verified_on?: Date;
+  disabled: boolean;
+  id?: number;
+  reset_password_token?: string | null; // 10 chars length
+  reset_password_expiry?: Date | null;
+  role_id: number;
+
   /**
    * User constructor
-   * @param {object} o 
+   * @param {object} o
    */
-  constructor(o) {
+  constructor(o: UserCfg | User) {
     this.email = o.email;
     this.password = o.password;
     this.language = o.language;
@@ -51,23 +71,23 @@ class User {
         : o._attributes || {};
     this.api_token = o.api_token;
     this.verification_token = o.verification_token;
-    this.verified_on = ["string", "number"].includes(typeof o.verified_on)
-      ? new Date(o.verified_on)
-      : o.verified_on;
+    this.verified_on =
+      typeof o.verified_on === "string" || typeof o.verified_on === "number"
+        ? new Date(o.verified_on)
+        : o.verified_on;
     this.disabled = !!o.disabled;
-    this.id = o.id ? +o.id : o.id;
+    if (o.id) this.id = +o.id as number;
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry =
       (typeof o.reset_password_expiry === "string" &&
         o.reset_password_expiry.length > 0) ||
       typeof o.reset_password_expiry === "number"
         ? new Date(o.reset_password_expiry)
-        : o.reset_password_expiry || null;
+        : o.reset_password_expiry instanceof Date
+        ? o.reset_password_expiry
+        : null;
     this.role_id = o.role_id ? +o.role_id : 8;
-
     Object.assign(this, safeUserFields(o));
-
-    contract.class(this);
   }
 
   /**
@@ -75,8 +95,8 @@ class User {
    * @param pw - password string
    * @returns {Promise<string>}
    */
-  static async hashPassword(pw) {
-    return await bcrypt.hash(pw, 10);
+  static async hashPassword(pw: string): Promise<string> {
+    return await hash(pw, 10);
   }
 
   /**
@@ -84,8 +104,8 @@ class User {
    * @param pw - password string
    * @returns {boolean}
    */
-  checkPassword(pw) {
-    return bcrypt.compareSync(pw, this.password);
+  checkPassword(pw: string): boolean {
+    return compareSync(pw, this.password);
   }
 
   /**
@@ -94,10 +114,10 @@ class User {
    * @param expireToken - if true than force reset password token
    * @returns {Promise<void>} no result
    */
-  async changePasswordTo(newpw, expireToken) {
+  async changePasswordTo(newpw: string, expireToken?: boolean): Promise<void> {
     const password = await User.hashPassword(newpw);
     this.password = password;
-    const upd = { password };
+    const upd: Row = { password };
     if (expireToken) upd.reset_password_token = null;
     await db.update("users", upd, this.id);
   }
@@ -109,7 +129,11 @@ class User {
    * @param {object} [uo = {}]
    * @returns {Promise<{session_object: {_attributes: {}}, _attributes: {}}|User|*|boolean|{error: string}|User>}
    */
-  static async findOrCreateByAttribute(k, v, uo = {}) {
+  static async findOrCreateByAttribute(
+    k: string,
+    v: any,
+    uo: any = {}
+  ): Promise<User | false | ErrorMessage> {
     const u = await User.findOne({ _attributes: { json: [k, v] } });
     if (u) return u;
     else {
@@ -127,7 +151,7 @@ class User {
         const pseudoUser = { ...uo, _attributes: { [k]: v } };
         return { ...pseudoUser, session_object: pseudoUser };
       } else {
-        const extra = {};
+        const extra: GenObj = {};
         if (!uo.password) extra.password = User.generate_password();
         return await User.create({ ...uo, ...extra, _attributes: { [k]: v } });
       }
@@ -139,7 +163,7 @@ class User {
    * @param uo - user object
    * @returns {Promise<{error: string}|User>}
    */
-  static async create(uo) {
+  static async create(uo: GenObj): Promise<User | ErrorMessage> {
     const { email, password, passwordRepeat, role_id, ...rest } = uo;
     const u = new User({ email, password, role_id });
     if (User.unacceptable_password_reason(u.password))
@@ -165,7 +189,7 @@ class User {
    * Create session object for user
    * @type {{role_id: number, language, id, email, tenant: *}}
    */
-  get session_object() {
+  get session_object(): any {
     const so = {
       email: this.email,
       id: this.id,
@@ -182,7 +206,7 @@ class User {
    * @param uo - user object
    * @returns {Promise<boolean|User>}
    */
-  static async authenticate(uo) {
+  static async authenticate(uo: any): Promise<User | false> {
     const { password, ...uoSearch } = uo;
     const urows = await User.find(uoSearch, { limit: 2 });
     if (urows.length !== 1) return false;
@@ -199,9 +223,12 @@ class User {
    * @param selectopts - select options
    * @returns {Promise<User[]>}
    */
-  static async find(where, selectopts) {
+  static async find(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<Array<User>> {
     const us = await db.select("users", where, selectopts);
-    return us.map((u) => new User(u));
+    return us.map((u: UserCfg) => new User(u));
   }
 
   /**
@@ -209,7 +236,7 @@ class User {
    * @param where - where object
    * @returns {Promise<User|*>}
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<User | undefined> {
     const u = await db.selectMaybeOne("users", where);
     return u ? new User(u) : u;
   }
@@ -219,7 +246,7 @@ class User {
    * @deprecated use method count()
    * @returns {Promise<boolean>} true if there are users in db
    */
-  static async nonEmpty() {
+  static async nonEmpty(): Promise<boolean> {
     const res = await db.count("users");
     return res > 0;
   }
@@ -228,7 +255,7 @@ class User {
    * Delete user based on session object
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     this.destroy_sessions();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
@@ -239,7 +266,7 @@ class User {
    * @param language
    * @returns {Promise<void>}
    */
-  async set_language(language) {
+  async set_language(language: string): Promise<void> {
     await this.update({ language });
   }
 
@@ -248,7 +275,7 @@ class User {
    * @param row
    * @returns {Promise<void>}
    */
-  async update(row) {
+  async update(row: Row): Promise<void> {
     await db.update("users", row, this.id);
   }
 
@@ -256,14 +283,11 @@ class User {
    * Get new reset token
    * @returns {Promise<*|string>}
    */
-  async getNewResetToken() {
+  async getNewResetToken(): Promise<string> {
     const reset_password_token_uuid = uuidv4();
     const reset_password_expiry = new Date();
     reset_password_expiry.setDate(new Date().getDate() + 1);
-    const reset_password_token = await bcrypt.hash(
-      reset_password_token_uuid,
-      10
-    );
+    const reset_password_token = await hash(reset_password_token_uuid, 10);
     await db.update(
       "users",
       { reset_password_token, reset_password_expiry },
@@ -276,7 +300,7 @@ class User {
    * Add new API token to user
    * @returns {Promise<string>}
    */
-  async getNewAPIToken() {
+  async getNewAPIToken(): Promise<string> {
     const api_token = uuidv4();
     await db.update("users", { api_token }, this.id);
     this.api_token = api_token;
@@ -287,7 +311,7 @@ class User {
    * Remove API token for user
    * @returns {Promise<string>}
    */
-  async removeAPIToken() {
+  async removeAPIToken(): Promise<null> {
     const api_token = null;
     await db.update("users", { api_token }, this.id);
     this.api_token = api_token;
@@ -299,10 +323,10 @@ class User {
    * @param pw
    * @returns {string}
    */
-  static unacceptable_password_reason(pw) {
+  static unacceptable_password_reason(pw: string): string | undefined {
     if (typeof pw !== "string") return "Not a string";
     if (pw.length < 8) return "Too short";
-    if (dumbPasswords.check(pw)) return "Too common";
+    if (check(pw)) return "Too common";
   }
 
   /**
@@ -311,8 +335,8 @@ class User {
    * @returns {boolean}
    */
   // TBD that validation works
-  static valid_email(email) {
-    return validator.validate(email);
+  static valid_email(email: string): boolean {
+    return validate(email);
   }
 
   /**
@@ -321,7 +345,13 @@ class User {
    * @param verification_token - verification token string
    * @returns {Promise<{error: string}|boolean>} true if verification passed, error string if not
    */
-  static async verifyWithToken({ email, verification_token }) {
+  static async verifyWithToken({
+    email,
+    verification_token,
+  }: {
+    email: string;
+    verification_token: string;
+  }): Promise<true | ErrorMessage> {
     if (
       typeof verification_token !== "string" ||
       typeof email !== "string" ||
@@ -337,8 +367,8 @@ class User {
   /**
    * @returns {Promise<boolean>}
    */
-  async set_to_verified() {
-    const upd = { verified_on: new Date() };
+  async set_to_verified(): Promise<true> {
+    const upd: GenObj = { verified_on: new Date() };
     const { getState } = require("../db/state");
 
     const elevate_verified = +getState().getConfig("elevate_verified");
@@ -362,7 +392,11 @@ class User {
     email,
     reset_password_token,
     password,
-  }) {
+  }: {
+    email: string;
+    reset_password_token: string;
+    password: string;
+  }): Promise<SuccessMessage | ErrorMessage> {
     if (
       typeof reset_password_token !== "string" ||
       typeof email !== "string" ||
@@ -372,11 +406,13 @@ class User {
         error: "Invalid token or invalid token length or incorrect email",
       };
     const u = await User.findOne({ email });
-    if (u && new Date() < u.reset_password_expiry && u.reset_password_token) {
-      const match = bcrypt.compareSync(
-        reset_password_token,
-        u.reset_password_token
-      );
+    if (
+      u &&
+      u.reset_password_expiry &&
+      new Date() < u.reset_password_expiry &&
+      u.reset_password_token
+    ) {
+      const match = compareSync(reset_password_token, u.reset_password_token);
       if (match) {
         if (User.unacceptable_password_reason(password))
           return {
@@ -399,7 +435,7 @@ class User {
    */
   // TBD I think that method is simular to notEmppty() but more powerfull.
   // TBD use some rules for naming of methods - e.g. this method will have name count_users or countUsers because of methods relay on roles in this class
-  static async count(where) {
+  static async count(where: Where): Promise<number> {
     return await db.count("users", where || {});
   }
 
@@ -407,7 +443,7 @@ class User {
    * Get available roles
    * @returns {Promise<*>}
    */
-  static async get_roles() {
+  static async get_roles(): Promise<string[]> {
     const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
     return rs;
   }
@@ -416,8 +452,8 @@ class User {
    * Generate password
    * @returns {string}
    */
-  static generate_password() {
-    const candidate = is.str.generate().split(" ").join("");
+  static generate_password(): string {
+    const candidate = generateString().split(" ").join("");
     // TBD low performance impact - un
     if (candidate.length < 10) return User.generate_password();
     else return candidate;
@@ -426,7 +462,7 @@ class User {
   /**
    * @returns {Promise<void>}
    */
-  async destroy_sessions() {
+  async destroy_sessions(): Promise<void> {
     if (!db.isSQLite) {
       const schema = db.getTenantSchema();
 
@@ -440,64 +476,31 @@ class User {
   }
 
   /**
-   * @param {object} req 
+   * @param {object} req
    */
-  relogin(req) {
-    req.login(this.session_object, function (err) {
+  relogin(req: NonNullable<any>): void {
+    req.login(this.session_object, function (err: any) {
       if (err) req.flash("danger", err);
     });
   }
 }
 
-User.contract = {
-  variables: {
-    id: is.maybe(is.posint),
-    email: is.str,
-    //password: is.str,
-    disabled: is.bool,
-    language: is.maybe(is.str),
-    _attributes: is.maybe(is.obj({})),
-    role_id: is.posint,
-    reset_password_token: is.maybe(
-      is.and(
-        is.str,
-        is.sat((s) => s.length > 10)
-      )
-    ),
-    reset_password_expiry: is.maybe(is.class("Date")),
-  },
-  methods: {
-    delete: is.fun([], is.promise(is.undefined)),
-    destroy_sessions: is.fun([], is.promise(is.undefined)),
-    changePasswordTo: is.fun(is.str, is.promise(is.undefined)),
-    checkPassword: is.fun(is.str, is.bool),
-  },
-  static_methods: {
-    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("User")))),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("User")))),
-    nonEmpty: is.fun([], is.promise(is.bool)),
-    hashPassword: is.fun(is.str, is.promise(is.str)),
-    authenticate: is.fun(
-      is.objVals(is.str),
-      is.promise(is.or(is.class("User"), is.eq(false)))
-    ),
-    verifyWithToken: is.fun(
-      is.obj({ email: is.str, verification_token: is.str }),
-      is.promise(is.any)
-    ),
-    resetPasswordWithToken: is.fun(
-      is.obj({ email: is.str, reset_password_token: is.str, password: is.str }),
-      is.promise(is.any)
-    ),
-    create: is.fun(
-      is.obj({ email: is.str }),
-      is.promise(is.or(is.obj({ error: is.str }), is.class("User")))
-    ),
-    get_roles: is.fun(
-      [],
-      is.promise(is.array(is.obj({ id: is.posint, role: is.str })))
-    ),
-  },
-};
+namespace User {
+  export type UserCfg = {
+    id?: number | string;
+    email: string;
+    password: string;
+    disabled?: boolean;
+    language?: string;
+    _attributes?: string | any;
+    api_token?: string;
+    verification_token?: string;
+    verified_on?: Date | number | string;
+    role_id?: number | string;
+    reset_password_token?: string; // 10 chars length
+    reset_password_expiry?: Date | number | string;
+  };
+}
+type UserCfg = User.UserCfg;
 
-module.exports = User;
+export = User;

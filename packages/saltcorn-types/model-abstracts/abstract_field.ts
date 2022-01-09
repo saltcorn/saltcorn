@@ -4,6 +4,9 @@ export interface AbstractField {
   input_type: InputType;
   sourceURL?: string;
   attributes: any;
+  required: boolean;
+  primary_key: boolean;
+
   // 'form_name' is actually a getter
   form_name: string;
 }

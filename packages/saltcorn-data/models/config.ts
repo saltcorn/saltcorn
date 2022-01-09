@@ -4,22 +4,24 @@
  * @module models/config
  * @subcategory models
  */
-const db = require("../db");
-const { contract, is } = require("contractis");
-const latestVersion = require("latest-version");
+import db from "../db";
+import latestVersion from "latest-version";
 const { getConfigFile, configFilePath } = require("../db/connect");
-const fs = require("fs");
-const moment = require("moment-timezone");
 
-const allTimezones = moment.tz.names();
-const defaultTimezone = moment.tz.guess();
+import { writeFileSync } from "fs";
+import { tz } from "moment-timezone";
+const allTimezones = tz.names();
+const defaultTimezone = tz.guess();
+
+type SingleConfig = { [key: string]: any };
+type ConfigTypes = { [key: string]: SingleConfig };
 
 /**
  * Config variables types
  * @namespace
  * @category saltcorn-data
  */
-const configTypes = {
+const configTypes: ConfigTypes = {
   /** @type {object} */
   site_name: {
     type: "String",
@@ -61,7 +63,7 @@ const configTypes = {
     type: "String",
     label: "Base URL",
     default: "",
-    onChange(val) {
+    onChange(val: string) {
       const tenant = db.getTenantSchema();
       const isRoot = tenant === db.connectObj.default_schema;
       if (!isRoot && val) {
@@ -217,7 +219,7 @@ const configTypes = {
     type: "Bool",
     label: "Log SQL to stdout",
     default: false,
-    onChange(val) {
+    onChange(val: boolean) {
       db.set_sql_logging(val);
     },
     blurb: "Print all SQL statements to the standard output",
@@ -229,7 +231,7 @@ const configTypes = {
     restart_required: true,
     label: "Multitenancy enabled",
     default: db.is_it_multi_tenant(),
-    onChange(val) {
+    onChange(val: boolean) {
       set_multitenancy_cfg(val);
     },
   },
@@ -513,23 +515,20 @@ const available_languages = {
  * @param {object|undefined} def
  * @returns {Promise<object>}
  */
-const getConfig = contract(
-  is.fun([is.str, is.maybe(is.any)], is.promise(is.any)),
-  async (key, def) => {
-    const cfg = await db.selectMaybeOne("_sc_config", { key });
-    if (cfg && typeof cfg.value === "string") return JSON.parse(cfg.value).v;
-    else if (cfg) return cfg.value.v;
-    else if (def) return def;
-    else return configTypes[key] ? configTypes[key].default : undefined;
-  }
-);
+const getConfig = async (key: string, def?: any): Promise<any> => {
+  const cfg = await db.selectMaybeOne("_sc_config", { key });
+  if (cfg && typeof cfg.value === "string") return JSON.parse(cfg.value).v;
+  else if (cfg) return cfg.value.v;
+  else if (def) return def;
+  else return configTypes[key] ? configTypes[key].default : undefined;
+};
 
 /**
  * Returns true if key is defined in fixed_configration for tenant
  * @param {string} key
  * @returns {boolean}
  */
-const isFixedConfig = (key) =>
+const isFixedConfig = (key: string): boolean =>
   typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
   (db.connectObj.inherit_configuration.includes(key) &&
     db.getTenantSchema() !== db.connectObj.default_schema);
@@ -539,30 +538,27 @@ const isFixedConfig = (key) =>
  * @function
  * @returns {Promise<object>}
  */
-const getAllConfig = contract(
-  is.fun([], is.promise(is.objVals(is.any))),
-  async () => {
-    const cfgs = await db.select("_sc_config");
-    var cfg = {};
-    cfgs.forEach(({ key, value }) => {
-      if (key === "testMigration")
-        //legacy invalid cfg
-        return;
+const getAllConfig = async (): Promise<ConfigTypes | void> => {
+  const cfgs = await db.select("_sc_config");
+  var cfg: ConfigTypes = {};
+  cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
+    if (key === "testMigration")
+      //legacy invalid cfg
+      return;
 
-      try {
-        cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
-      } catch (e) {
-        console.error(
-          "config parsing error",
-          e,
-          { key, value },
-          db.getTenantSchema()
-        );
-      }
-    });
-    return cfg;
-  }
-);
+    try {
+      cfg[key] = typeof value === "string" ? JSON.parse(value).v : value.v;
+    } catch (e: any) {
+      console.error(
+        "config parsing error",
+        e,
+        { key, value },
+        db.getTenantSchema()
+      );
+    }
+  });
+  return cfg;
+};
 
 /**
  * Get all config variables list
@@ -570,20 +566,19 @@ const getAllConfig = contract(
  * @function
  * @returns {Promise<object>}
  */
-const getAllConfigOrDefaults = contract(
-  is.fun([], is.promise(is.objVals(is.any))),
-  async () => {
-    var cfgs = {};
-    const cfgInDB = await getAllConfig();
-
-    Object.entries(configTypes).forEach(([key, v]) => {
-      const value =
-        typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-      if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
-    });
-    return cfgs;
-  }
-);
+const getAllConfigOrDefaults = async (): Promise<ConfigTypes> => {
+  var cfgs: ConfigTypes = {};
+  const cfgInDB = await getAllConfig();
+  if (cfgInDB)
+    Object.entries(configTypes).forEach(
+      ([key, v]: [key: string, v: SingleConfig]) => {
+        const value =
+          typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
+        if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
+      }
+    );
+  return cfgs;
+};
 
 /**
  * Set config variable value by key
@@ -593,37 +588,37 @@ const getAllConfigOrDefaults = contract(
  * @returns {Promise<void>}
  */
 // TODO move db specific to pg/sqlite
-const setConfig = contract(
-  is.fun([is.str, is.any], is.promise(is.undefined)),
-  async (key, value) => {
-    if (db.isSQLite)
-      await db.query(
-        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
+const setConfig = async (key: string, value: any): Promise<void> => {
+  if (db.isSQLite)
+    await db.query(
+      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
                     on conflict (key) do update set value = json($value)`,
-        { $key: key, $value: JSON.stringify({ v: value }) }
-      );
-    else
-      await db.query(
-        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
+      { $key: key, $value: JSON.stringify({ v: value }) }
+    );
+  else
+    await db.query(
+      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
                     on conflict (key) do update set value = $2`,
-        [key, { v: value }]
-      );
-    if (configTypes[key] && configTypes[key].onChange)
-      configTypes[key].onChange(value);
-  }
-);
+      [key, { v: value }]
+    );
+  if (configTypes[key] && configTypes[key].onChange)
+    configTypes[key].onChange(value);
+};
+
 /**
  * Delete config variable
  * @function
  * @param {string} key
  * @returns {Promise<void>}
  */
-const deleteConfig = contract(
-  is.fun(is.str, is.promise(is.undefined)),
-  async (key) => {
-    await db.deleteWhere("_sc_config", { key });
-  }
-);
+const deleteConfig = async (key: string): Promise<void> => {
+  await db.deleteWhere("_sc_config", { key });
+};
+
+type RemoveFromMenuOpts = {
+  name: string;
+  type: "View" | "Page";
+};
 
 /**
  * Remove from menu
@@ -631,41 +626,34 @@ const deleteConfig = contract(
  * @param {object} item
  * @returns {Promise<void>}
  */
-const remove_from_menu = contract(
-  is.fun(
-    is.obj({
-      name: is.str,
-      type: is.one_of(["View", "Page"]),
-    }),
-    is.promise(is.undefined)
-  ),
-  async (item) => {
-    const { getState } = require("../db/state");
-
-    const current_menu = getState().getConfigCopy("menu_items", []);
-    const new_menu = current_menu.filter(
-      (menuitem) =>
-        !(
-          item.type === menuitem.type &&
-          (item.type === "View"
-            ? menuitem.viewname === item.name
-            : menuitem.pagename === item.name)
-        )
-    );
-    await save_menu_items(new_menu);
-  }
-);
-
-const save_menu_items = async (menu_items) => {
+const remove_from_menu = async (item: RemoveFromMenuOpts): Promise<void> => {
   const { getState } = require("../db/state");
-  const Table = require("./table");
+
+  const current_menu = getState().getConfigCopy("menu_items", []);
+  const new_menu = current_menu.filter(
+    (menuitem: any) =>
+      !(
+        item.type === menuitem.type &&
+        (item.type === "View"
+          ? menuitem.viewname === item.name
+          : menuitem.pagename === item.name)
+      )
+  );
+  await save_menu_items(new_menu);
+};
+
+const save_menu_items = async (menu_items: any[]): Promise<void> => {
+  const { getState } = require("../db/state");
+
+  const Table = (await import("./table")).default;
   const { jsexprToWhere, get_expression_function } = require("./expression");
 
-  const unroll = async (items) => {
+  const unroll: (items: any[]) => Promise<any[]> = async (items) => {
     const unrolled_menu_items = [];
     for (const item of items) {
       if (item.type === "Dynamic") {
         const table = Table.findOne({ name: item.dyn_table });
+        if (!table) throw new Error(`Unable to find table ${item.dyn_table}`);
         const fields = await table.getFields();
         const where = item.dyn_include_fml
           ? jsexprToWhere(item.dyn_include_fml)
@@ -688,7 +676,7 @@ const save_menu_items = async (menu_items) => {
           }
           const sections = section_field.attributes.options
             .split(",")
-            .map((s) => s.trim());
+            .map((s: string) => s.trim());
           for (const section of sections) {
             unrolled_menu_items.push({
               ...item,
@@ -729,7 +717,7 @@ const save_menu_items = async (menu_items) => {
  * @param {string} pkg
  * @returns {Promise<string>}
  */
-const get_latest_npm_version = async (pkg) => {
+const get_latest_npm_version = async (pkg: string): Promise<string> => {
   const { getState } = require("../db/state");
   const { is_stale } = require("./pack");
   const stored = getState().getConfig("latest_npm_version", {});
@@ -756,14 +744,15 @@ const get_latest_npm_version = async (pkg) => {
  * @param {string} s
  * @returns {string}
  */
-const ensure_final_slash = (s) => (s.endsWith("/") ? s : s + "/");
+const ensure_final_slash = (s: string): string =>
+  s.endsWith("/") ? s : s + "/";
 
 /**
  * Get base url
  * @param {object} req
  * @returns {string}
  */
-const get_base_url = (req) => {
+const get_base_url = (req?: any): string => {
   const { getState } = require("../db/state");
 
   const cfg = getState().getConfig("base_url", "");
@@ -784,14 +773,14 @@ const get_base_url = (req) => {
  * @param {string} email
  * @returns {boolean}
  */
-const check_email_mask = contract(is.fun(is.str, is.bool), (email) => {
+const check_email_mask = (email: string): boolean => {
   const { getState } = require("../db/state");
 
   const cfg = getState().getConfig("email_mask", "");
   if (cfg) {
     return email.endsWith(cfg);
   } else return true;
-});
+};
 
 /**
  * Set multitenancy cfg flag
@@ -799,13 +788,13 @@ const check_email_mask = contract(is.fun(is.str, is.bool), (email) => {
  * @param {boolean} val
  * @returns {void}
  */
-const set_multitenancy_cfg = contract(is.fun(is.bool, is.undefined), (val) => {
+const set_multitenancy_cfg = (val: boolean): void => {
   const cfg = getConfigFile();
   cfg.multi_tenant = val;
-  fs.writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
-});
+  writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
+};
 
-module.exports = {
+export = {
   getConfig,
   getAllConfig,
   setConfig,

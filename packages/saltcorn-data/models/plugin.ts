@@ -4,11 +4,17 @@
  * @module models/plugin
  * @subcategory models
  */
-const db = require("../db");
-const { contract, is } = require("contractis");
-const View = require("./view");
+import db from "../db";
+import View from "./view";
 const { is_stale } = require("./pack");
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
+import { Where } from "@saltcorn/db-common/internal";
+import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
+import type {
+  PluginCfg,
+  PackPlugin,
+} from "@saltcorn/types/model-abstracts/abstract_plugin";
+
 const { stringToJSON } = require("../utils");
 
 /**
@@ -16,12 +22,24 @@ const { stringToJSON } = require("../utils");
  * @category saltcorn-data
  */
 class Plugin {
+  id?: number;
+  location: string;
+  name: string;
+  version?: string;
+  documentation_link?: string;
+  configuration?: any;
+  source: PluginSourceType;
+  description?: string;
+  has_theme?: boolean;
+  has_auth?: boolean;
+  deploy_private_key?: string;
+
   /**
    * Plugin constructor
    * @param {object} o
    */
-  constructor(o) {
-    this.id = o.id ? +o.id : o.id;
+  constructor(o: PluginCfg | PackPlugin | Plugin) {
+    this.id = o.id ? +o.id : undefined;
     this.name = o.name;
     this.source = o.source;
     this.location = o.location;
@@ -32,7 +50,6 @@ class Plugin {
     this.has_auth = o.has_auth;
     this.deploy_private_key = o.deploy_private_key;
     this.configuration = stringToJSON(o.configuration);
-    contract.class(this);
   }
 
   /**
@@ -40,7 +57,7 @@ class Plugin {
    * @param where - where object
    * @returns {Promise<Plugin|null|*>} return existing plugin or new plugin
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<Plugin | null> {
     const p = await db.selectMaybeOne("_sc_plugins", where);
     return p ? new Plugin(p) : p;
   }
@@ -50,15 +67,17 @@ class Plugin {
    * @param where - where object
    * @returns {Promise<*>} returns plugins list
    */
-  static async find(where) {
-    return (await db.select("_sc_plugins", where)).map((p) => new Plugin(p));
+  static async find(where: Where): Promise<Array<Plugin>> {
+    return (await db.select("_sc_plugins", where)).map(
+      (p: PluginCfg) => new Plugin(p)
+    );
   }
 
   /**
    * Update or Insert plugin
    * @returns {Promise<void>}
    */
-  async upsert() {
+  async upsert(): Promise<void> {
     const row = {
       name: this.name,
       source: this.source,
@@ -79,7 +98,7 @@ class Plugin {
    * Delete plugin
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     await db.deleteWhere("_sc_plugins", { id: this.id });
     const { getState } = require("../db/state");
     await getState().remove_plugin(this.name);
@@ -90,7 +109,9 @@ class Plugin {
    * @param requirePlugin
    * @returns {Promise<void>}
    */
-  async upgrade_version(requirePlugin) {
+  async upgrade_version(
+    requirePlugin: (arg0: Plugin, arg1: boolean) => Plugin
+  ): Promise<void> {
     if (this.source === "npm") {
       const old_version = this.version;
       this.version = "latest";
@@ -106,9 +127,9 @@ class Plugin {
 
   /**
    * List of views relay on this plugin
-   * @returns {Promise<View[]>}
+   * @returns {Promise<string[]>}
    */
-  async dependant_views() {
+  async dependant_views(): Promise<string[]> {
     const views = await View.find({});
     const { getState } = require("../db/state");
     if (!getState().plugins[this.name]) return [];
@@ -116,7 +137,9 @@ class Plugin {
     const vt_names = Array.isArray(myViewTemplates)
       ? myViewTemplates.map((vt) => vt.name)
       : typeof myViewTemplates === "function"
-      ? myViewTemplates(getState().plugin_cfgs[this.name]).map((vt) => vt.name)
+      ? myViewTemplates(getState().plugin_cfgs[this.name]).map(
+          (vt: ViewTemplate) => vt.name
+        )
       : Object.keys(myViewTemplates);
     return views
       .filter((v) => vt_names.includes(v.viewtemplate))
@@ -127,7 +150,7 @@ class Plugin {
    * List plugins availabe in store
    * @returns {Promise<*>}
    */
-  static async store_plugins_available() {
+  static async store_plugins_available(): Promise<Array<Plugin>> {
     const { getState } = require("../db/state");
     const stored = getState().getConfig("available_plugins", false);
     const stored_at = getState().getConfig(
@@ -146,26 +169,26 @@ class Plugin {
         console.error(e);
         if (stored)
           return stored
-            .map((p) => new Plugin(p))
-            .filter((p) => isRoot || !p.has_auth);
+            .map((p: Plugin) => new Plugin(p))
+            .filter((p: Plugin) => isRoot || !p.has_auth);
         else return [];
       }
     } else
       return stored
-        .map((p) => new Plugin(p))
-        .filter((p) => isRoot || !p.has_auth);
+        .map((p: Plugin) => new Plugin(p))
+        .filter((p: Plugin) => isRoot || !p.has_auth);
   }
 
   /**
    *
    * @returns {Promise<*>}
    */
-  static async store_plugins_available_from_store() {
+  static async store_plugins_available_from_store(): Promise<Array<Plugin>> {
     //console.log("fetch plugins");
     // TODO support of other store URLs
     const response = await fetch("http://store.saltcorn.com/api/extensions");
     const json = await response.json();
-    return json.success.map((p) => new Plugin(p));
+    return json.success.map((p: PluginCfg) => new Plugin(p));
   }
 
   /**
@@ -173,7 +196,7 @@ class Plugin {
    * @param name
    * @returns {Promise<null|Plugin>}
    */
-  static async store_by_name(name) {
+  static async store_by_name(name: string): Promise<Plugin | null> {
     // TODO support of other store URLs
     const response = await fetch(
       "http://store.saltcorn.com/api/extensions?name=" +
@@ -186,34 +209,4 @@ class Plugin {
   }
 }
 
-Plugin.contract = {
-  variables: {
-    id: is.maybe(is.posint),
-    location: is.str,
-    name: is.str,
-    version: is.maybe(is.str),
-    documentation_link: is.maybe(is.str),
-    configuration: is.maybe(is.obj()),
-    source: is.one_of(["npm", "github", "local", "git"]),
-  },
-  methods: {
-    upsert: is.fun([], is.promise(is.eq(undefined))),
-    delete: is.fun([], is.promise(is.eq(undefined))),
-    dependant_views: is.fun([], is.promise(is.array(is.str))),
-  },
-  static_methods: {
-    find: is.fun(is.maybe(is.obj()), is.promise(is.array(is.class("Plugin")))),
-    findOne: is.fun(is.obj(), is.promise(is.maybe(is.class("Plugin")))),
-    store_by_name: is.fun(is.str, is.promise(is.maybe(is.class("Plugin")))),
-    store_plugins_available_from_store: is.fun(
-      [],
-      is.promise(is.array(is.class("Plugin")))
-    ),
-    store_plugins_available: is.fun(
-      [],
-      is.promise(is.array(is.class("Plugin")))
-    ),
-  },
-};
-
-module.exports = Plugin;
+export = Plugin;
