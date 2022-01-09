@@ -1305,6 +1305,12 @@ router.get(
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
+    if (!user) {
+      req.logout();
+      req.flash("danger", req.__("Must be logged in first"));
+      res.redirect("/auth/login");
+      return;
+    }
     res.sendWrap(
       req.__("User settings"),
       await userSettings({ req, res, pwform: changPwForm(req), user })
