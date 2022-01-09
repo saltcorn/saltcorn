@@ -65,11 +65,12 @@ const limitFields = (fields) => (r) => {
  * @returns {boolean}
  */
 function accessAllowedRead(req, user, table) {
-  const role = req.isAuthenticated()
-    ? req.user.role_id
-    : user && user.role_id
-    ? user.role_id
-    : 10;
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
   return role <= table.min_role_read;
 }
@@ -82,11 +83,12 @@ function accessAllowedRead(req, user, table) {
  * @returns {boolean}
  */
 function accessAllowedWrite(req, user, table) {
-  const role = req.isAuthenticated()
-    ? req.user.role_id
-    : user && user.role_id
-    ? user.role_id
-    : 10;
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
   return role <= table.min_role_write;
 }
@@ -98,11 +100,12 @@ function accessAllowedWrite(req, user, table) {
  * @returns {boolean}
  */
 function accessAllowed(req, user, trigger) {
-  const role = req.isAuthenticated()
-    ? req.user.role_id
-    : user && user.role_id
-    ? user.role_id
-    : 10;
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
   return role <= trigger.min_role;
 }

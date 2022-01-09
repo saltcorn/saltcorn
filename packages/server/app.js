@@ -38,7 +38,7 @@ const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
 const Trigger = require("@saltcorn/data/models/trigger");
 const s3storage = require("./s3storage");
-
+const TotpStrategy = require("passport-totp").Strategy;
 const locales = Object.keys(available_languages);
 // i18n configuration
 const i18n = new I18n({
@@ -148,7 +148,9 @@ const getApp = async (opts = {}) => {
             req.flash("danger", req.__("Incorrect user or password"))
           );
         const mu = await User.authenticate(userobj);
-        if (mu) return done(null, mu.session_object);
+        if (mu && mu._attributes.totp_enabled)
+          return done(null, { pending_user: mu.session_object });
+        else if (mu) return done(null, mu.session_object);
         else {
           const { password, ...nopw } = userobj;
           Trigger.emitEvent("LoginFailed", null, null, nopw);
@@ -186,6 +188,14 @@ const getApp = async (opts = {}) => {
           return done(null, { role_id: 10 });
         }
       }
+    })
+  );
+  passport.use(
+    new TotpStrategy(function (user, done) {
+      // setup function, supply key and period to done callback
+      User.findOne({ id: user.pending_user.id }).then((u) => {
+        return done(null, u._attributes.totp_key, 30);
+      });
     })
   );
   passport.serializeUser(function (user, done) {

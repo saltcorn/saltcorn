@@ -45,7 +45,7 @@ const get_extra_menu = (role, state, req) => {
 };
 
 const get_menu = (req) => {
-  const isAuth = req.isAuthenticated();
+  const isAuth = req.user && req.user.id;
   const state = getState();
   const role = (req.user || {}).role_id || 10;
 
