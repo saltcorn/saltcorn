@@ -17,7 +17,7 @@ import type {
  */
 class Role implements AbstractRole {
   id: number;
-  role: Role;
+  role: string;
 
   /**
    * Role constructor
