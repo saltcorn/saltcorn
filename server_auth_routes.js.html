@@ -115,12 +115,14 @@ const { renderForm, post_btn } = require("@saltcorn/markup");
 const passport = require("passport");
 const {
   a,
+  img,
   text,
   table,
   tbody,
   th,
   td,
   tr,
+  h4,
   form,
   select,
   option,
@@ -128,6 +130,8 @@ const {
   i,
   div,
   code,
+  pre,
+  p,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -143,7 +147,9 @@ const { restore_backup } = require("../markup/admin.js");
 const { restore } = require("@saltcorn/data/models/backup");
 const load_plugins = require("../load_plugins");
 const fs = require("fs");
-
+const base32 = require("thirty-two");
+const qrcode = require("qrcode");
+const totp = require("notp").totp;
 /**
  * @type {object}
  * @const
@@ -690,6 +696,8 @@ const signup_login_with_user = (u, req, res) =>
       if (!err) {
         Trigger.emitEvent("Login", null, u);
         if (getState().verifier) res.redirect("/auth/verification-flow");
+        else if (getState().get2FApolicy(u) === "Mandatory")
+          res.redirect("/auth/twofa/setup/totp");
         else res.redirect("/");
       } else {
         req.flash("danger", err);
@@ -1011,6 +1019,11 @@ router.post(
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
     userLimiter.resetKey(userIdKey(req.body));
+    if (req.user.pending_user) {
+      res.redirect("/auth/twofa/login/totp");
+      return;
+    }
+
     if (req.session.cookie)
       if (req.body.remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 0);
@@ -1023,7 +1036,9 @@ router.post(
       }
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
-    res.redirect("/");
+    if (getState().get2FApolicy(req.user) === "Mandatory") {
+      res.redirect("/auth/twofa/setup/totp");
+    } else res.redirect("/");
   })
 );
 
@@ -1186,6 +1201,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
   }
   let apikeycard;
   const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+  const twoFaPolicy = getState().get2FApolicy(user);
+  const show2FAPolicy =
+    twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
   if (user.role_id &lt;= min_role_apikeygen)
     apikeycard = {
       type: "card",
@@ -1254,6 +1272,40 @@ const userSettings = async ({ req, res, pwform, user }) => {
         title: req.__("Change password"),
         contents: renderForm(pwform, req.csrfToken()),
       },
+      ...(show2FAPolicy
+        ? [
+            {
+              type: "card",
+              title: req.__("Two-factor authentication"),
+              contents: [
+                div(
+                  user._attributes.totp_enabled
+                    ? req.__("Two-factor authentication is enabled")
+                    : req.__("Two-factor authentication is disabled")
+                ),
+                div(
+                  user._attributes.totp_enabled
+                    ? post_btn(
+                        "/auth/twofa/disable/totp",
+                        "Disable",
+                        req.csrfToken(),
+                        {
+                          btnClass: "btn-danger mt-2",
+                          req,
+                        }
+                      )
+                    : a(
+                        {
+                          href: "/auth/twofa/setup/totp",
+                          class: "btn btn-primary mt-2",
+                        },
+                        "Enable"
+                      )
+                ),
+              ],
+            },
+          ]
+        : []),
       ...(apikeycard ? [apikeycard] : []),
     ],
   };
@@ -1344,6 +1396,12 @@ router.get(
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
+    if (!user) {
+      req.logout();
+      req.flash("danger", req.__("Must be logged in first"));
+      res.redirect("/auth/login");
+      return;
+    }
     res.sendWrap(
       req.__("User settings"),
       await userSettings({ req, res, pwform: changPwForm(req), user })
@@ -1525,6 +1583,174 @@ router.all(
       return;
     }
     res.redirect(wfres.redirect || "/");
+  })
+);
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get(
+  "/twofa/setup/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    let key;
+    if (user._attributes.totp_key) key = user._attributes.totp_key;
+    else {
+      key = randomKey(10);
+      user._attributes.totp_key = key;
+      await user.update({ _attributes: user._attributes });
+    }
+
+    const encodedKey = base32.encode(key);
+
+    // generate QR code for scanning into Google Authenticator
+    // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
+    const site_name = getState().getConfig("site_name");
+    const otpUrl = `otpauth://totp/${
+      user.email
+    }?secret=${encodedKey}&amp;period=30&amp;issuer=${encodeURIComponent(site_name)}`;
+    const image = await qrcode.toDataURL(otpUrl);
+    res.sendWrap(req.__("Setup two-factor authentication"), {
+      type: "card",
+      title: req.__(
+        "Setup two-factor authentication with Time-based One-Time Password (TOTP)"
+      ),
+      contents: [
+        h4(req.__("1. Scan this QR code in your Authenticator app")),
+        img({ src: image }),
+        p("Or enter this code:"),
+        code(pre(encodedKey.toString())),
+        h4(
+          req.__(
+            "2. Enter the six-digit code generated in your Authenticator app"
+          )
+        ),
+        renderForm(totpForm(req), req.csrfToken()),
+      ],
+    });
+  })
+);
+
+router.post(
+  "/twofa/setup/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+
+    if (!user._attributes.totp_key) {
+      //key not set
+      req.flash("danger", req.__("2FA TOTP Key not set"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+
+    const form = totpForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      req.flash("danger", req.__("Error processing form"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+    const code = `${form.values.totpCode}`;
+    const rv = totp.verify(code, user._attributes.totp_key, {
+      time: 30,
+    });
+    if (!rv) {
+      req.flash("danger", req.__("Could not verify code"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+    user._attributes.totp_enabled = true;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor authentication with Time-based One-Time Password enabled"
+      )
+    );
+
+    res.redirect("/auth/settings");
+  })
+);
+
+router.post(
+  "/twofa/disable/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    user._attributes.totp_enabled = false;
+    delete user._attributes.totp_key;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor authentication with Time-based One-Time Password disabled"
+      )
+    );
+    res.redirect("/auth/settings");
+  })
+);
+const totpForm = (req) =>
+  new Form({
+    action: "/auth/twofa/setup/totp",
+    fields: [
+      {
+        name: "totpCode",
+        label: req.__("Code"),
+        type: "Integer",
+        required: true,
+      },
+    ],
+  });
+
+const randomKey = function (len) {
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  var buf = [],
+    chars = "abcdefghijklmnopqrstuvwxyz0123456789",
+    charlen = chars.length;
+
+  for (var i = 0; i &lt; len; ++i) {
+    buf.push(chars[getRandomInt(0, charlen - 1)]);
+  }
+
+  return buf.join("");
+};
+
+router.get(
+  "/twofa/login/totp",
+  error_catcher(async (req, res) => {
+    const form = new Form({
+      action: "/auth/twofa/login/totp",
+      submitLabel: "Verify",
+      fields: [
+        {
+          name: "code",
+          label: req.__("Code"),
+          type: "Integer",
+          required: true,
+        },
+      ],
+    });
+    res.sendAuthWrap(req.__(`Two-factor authentication`), form, {});
+  })
+);
+
+router.post(
+  "/twofa/login/totp",
+  passport.authenticate("totp", {
+    failureRedirect: "/auth/twofa/login/totp",
+    failureFlash: true,
+  }),
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.pending_user.id });
+    user.relogin(req);
+    Trigger.emitEvent("Login", null, user);
+    res.redirect("/");
   })
 );
 </code></pre>

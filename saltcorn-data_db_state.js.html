@@ -198,6 +198,14 @@ class State {
     return layoutvs[layoutvs.length - 1];
   }
 
+  get2FApolicy(user) {
+    const role_id = user ? +user.role_id : 10;
+    const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
+    if (twofa_policy_by_role &amp;&amp; twofa_policy_by_role[role_id])
+      return twofa_policy_by_role[role_id];
+    else return "Optional";
+  }
+
   /**
    * Refresh State cache for all Saltcorn main objects
    * @param {boolean} noSignal
