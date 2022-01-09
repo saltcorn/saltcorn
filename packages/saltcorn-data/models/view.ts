@@ -31,6 +31,8 @@ import type Table from "./table";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
 import { instanceOfType } from "@saltcorn/types/common_types";
+import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
+import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
 /**
  * View Class
@@ -48,7 +50,7 @@ class View {
   description?: string;
   table_name?: string;
   configuration?: any;
-  table?: Table;
+  table?: AbstractTable;
   slug?: any;
 
   /**
@@ -109,7 +111,7 @@ class View {
    * @returns {Promise<View[]>}
    */
   static async find(
-    where: Where,
+    where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Array<View>> {
     if (selectopts.cached) {
@@ -668,22 +670,6 @@ type ReqFunction = {
 };
 
 namespace View {
-  export type ViewCfg = {
-    name: string;
-    id?: number;
-    viewtemplate: string;
-    table_id?: number;
-    table?: Table;
-    exttable_name?: string;
-    description?: string;
-    table_name?: string;
-    configuration?: string | any;
-    min_role?: number;
-    is_public?: boolean;
-    default_render_page?: string;
-    slug?: any;
-  };
-
   export type FindViewsPred = (arg0: {
     viewrow: View;
     viewtemplate?: ViewTemplate;
@@ -691,7 +677,6 @@ namespace View {
   }) => boolean;
 }
 
-type ViewCfg = View.ViewCfg;
 type FindViewsPred = View.FindViewsPred;
 
 export = View;

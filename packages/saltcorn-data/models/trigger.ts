@@ -9,6 +9,7 @@ import db = require("../db");
 import EventLog from "./eventlog";
 import Table from "./table";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type { TriggerCfg } from "@saltcorn/types/model-abstracts/abstract_trigger";
 
 const { satisfies } = require("../utils");
 
@@ -173,7 +174,7 @@ class Trigger {
    */
   static emitEvent(
     eventType: string,
-    channel: string,
+    channel: string | null,
     userPW = {},
     payload: any
   ): void {
@@ -183,7 +184,7 @@ class Trigger {
       const findArgs: Where = { when_trigger: eventType };
 
       let table;
-      if (["Insert", "Update", "Delete"].includes(channel)) {
+      if (channel && ["Insert", "Update", "Delete"].includes(channel)) {
         const Table = require("./table");
         table = await Table.findOne({ name: channel });
         findArgs.table_id = table.id;
@@ -316,22 +317,5 @@ class Trigger {
   }
 }
 // todo clone trigger
-
-namespace Trigger {
-  export type TriggerCfg = {
-    name?: string;
-    action: string;
-    description?: string;
-    table_id?: number | null;
-    table_name?: string;
-    table: Table;
-    when_trigger: string;
-    channel?: string;
-    id?: number | null;
-    configuration: any;
-    min_role: number;
-  };
-}
-type TriggerCfg = Trigger.TriggerCfg;
 
 export = Trigger;

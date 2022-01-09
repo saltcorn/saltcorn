@@ -4,19 +4,26 @@
  * @module models/table_constraints
  * @subcategory models
  */
-const db = require("../db");
-const { contract, is } = require("contractis");
+import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
+import db from "../db";
+import type Field from "./field";
 const { stringToJSON } = require("../utils");
+import type Table from "./table";
 
 /**
  * TableConstraint class
  * @category saltcorn-data
  */
 class TableConstraint {
+  table_id?: number;
+  type: TypeOption;
+  id?: number | null;
+  configuration: any;
+
   /**
-   * @param {object} o 
+   * @param {object} o
    */
-  constructor(o) {
+  constructor(o: TableConstraintCfg) {
     this.table_id = +o.table_id;
     if (o.table) {
       this.table_id = o.table.id;
@@ -24,13 +31,12 @@ class TableConstraint {
     this.type = o.type;
     this.id = !o.id ? null : +o.id;
     this.configuration = stringToJSON(o.configuration) || {};
-    contract.class(this);
   }
 
   /**
    * @type {object}
    */
-  get toJson() {
+  get toJson(): { type: TypeOption; configuration: any } {
     return {
       type: this.type,
       configuration: this.configuration,
@@ -38,29 +44,32 @@ class TableConstraint {
   }
 
   /**
-   * @param {*} where 
-   * @param {*} selectopts 
+   * @param {*} where
+   * @param {*} selectopts
    * @returns {Promise<TableConstraint[]>}
    */
-  static async find(where, selectopts) {
+  static async find(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<Array<TableConstraint>> {
     const db_flds = await db.select("_sc_table_constraints", where, selectopts);
-    return db_flds.map((dbf) => new TableConstraint(dbf));
+    return db_flds.map((dbf: TableConstraintCfg) => new TableConstraint(dbf));
   }
 
   /**
-   * @param {*} where 
+   * @param {*} where
    * @returns {Promise<TableConstraint>}
    */
-  static async findOne(where) {
+  static async findOne(where: Where): Promise<TableConstraint | null> {
     const p = await db.selectMaybeOne("_sc_table_constraints", where);
     return p ? new TableConstraint(p) : null;
   }
 
   /**
-   * @param {*} f 
+   * @param {*} f
    * @returns {Promise<TableConstraint>}
    */
-  static async create(f) {
+  static async create(f: TableConstraintCfg): Promise<TableConstraint> {
     const con = new TableConstraint(f);
     const { id, ...rest } = con;
     const fid = await db.insert("_sc_table_constraints", rest);
@@ -77,7 +86,7 @@ class TableConstraint {
   /**
    * @returns {Promise<void>}
    */
-  async delete() {
+  async delete(): Promise<void> {
     await db.deleteWhere("_sc_table_constraints", { id: this.id });
     if (this.type === "Unique" && this.configuration.fields) {
       const Table = require("./table");
@@ -87,11 +96,14 @@ class TableConstraint {
   }
 
   /**
-   * @param {*} table 
-   * @param {*} field 
+   * @param {*} table
+   * @param {*} field
    * @returns {Promise<void>}
    */
-  static async delete_field_constraints(table, field) {
+  static async delete_field_constraints(
+    table: Table,
+    field: Field
+  ): Promise<void> {
     const tblcs = await TableConstraint.find({ table_id: table.id });
     for (const c of tblcs) {
       if (c.configuration.fields && c.configuration.fields.includes(field.name))
@@ -102,32 +114,24 @@ class TableConstraint {
   /**
    * @type {string[]}
    */
-  static get type_options() {
-    return ["Unique"];
+  static get type_options(): Array<TypeOption> {
+    return [...type_options];
   }
 }
 
-TableConstraint.contract = {
-  variables: {
-    table_id: is.maybe(is.posint),
-    type: is.one_of(TableConstraint.type_options),
-    id: is.maybe(is.posint),
-    configuration: is.obj(),
-  },
-  methods: {
-    delete: is.fun([], is.promise(is.undefined)),
-  },
-  static_methods: {
-    find: is.fun(
-      [is.maybe(is.obj()), is.maybe(is.obj())],
-      is.promise(is.array(is.class("TableConstraint")))
-    ),
-    create: is.fun(is.obj(), is.promise(is.class("TableConstraint"))),
-    findOne: is.fun(
-      is.obj(),
-      is.promise(is.maybe(is.class("TableConstraint")))
-    ),
-  },
-};
+// type union from array with const assertion
+const type_options = ["Unique"] as const;
+type TypeOption = typeof type_options[number];
 
-module.exports = TableConstraint;
+namespace TableConstraint {
+  export type TableConstraintCfg = {
+    table_id: number | string;
+    table?: Table;
+    id?: number;
+    configuration?: string | any;
+    type: TypeOption;
+  };
+}
+type TableConstraintCfg = TableConstraint.TableConstraintCfg;
+
+export = TableConstraint;

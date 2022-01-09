@@ -21,7 +21,11 @@ import type {
 } from "@saltcorn/db-common/internal";
 
 import Field from "./field";
-import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import type {
+  AbstractTable,
+  TableCfg,
+  PackTable,
+} from "@saltcorn/types/model-abstracts/abstract_table";
 
 import type { ResultMessage } from "@saltcorn/types/common_types";
 import {
@@ -109,13 +113,13 @@ const normalise_error_message = (msg: string): string =>
 class Table implements AbstractTable {
   name: string;
   id?: number;
-  min_role_read: string;
-  min_role_write: string;
+  min_role_read: number;
+  min_role_write: number;
   ownership_field_id?: string;
   ownership_formula?: string;
   versioned: boolean;
   external: boolean;
-  description: string;
+  description?: string;
   fields?: Field[];
 
   /**
@@ -260,7 +264,7 @@ class Table implements AbstractTable {
    */
   static async create(
     name: string,
-    options: SelectOptions = {}
+    options: SelectOptions | PackTable = {}
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -1291,18 +1295,6 @@ class Table implements AbstractTable {
 
 // declaration merging
 namespace Table {
-  export type TableCfg = {
-    name: string;
-    id?: number;
-    min_role_read: string;
-    min_role_write: string;
-    ownership_field_id?: string;
-    ownership_formula?: string;
-    versioned?: boolean;
-    description: string;
-    fields: Field[];
-  };
-
   export type ParentRelations = {
     parent_relations: {
       key_field: Field;
@@ -1320,7 +1312,7 @@ namespace Table {
     child_field_list: string[];
   };
 }
-type TableCfg = Table.TableCfg;
+
 type ParentRelations = Table.ParentRelations;
 type ChildRelations = Table.ChildRelations;
 

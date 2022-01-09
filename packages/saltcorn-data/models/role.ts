@@ -6,14 +6,18 @@
 
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type {
+  AbstractRole,
+  RoleCfg,
+} from "@saltcorn/types/model-abstracts/abstract_role";
 
 /**
  * Role class
  * @category saltcorn-data
  */
-class Role {
+class Role implements AbstractRole {
   id: number;
-  role: Role;
+  role: string;
 
   /**
    * Role constructor
@@ -78,13 +82,5 @@ class Role {
     await db.update("_sc_roles", row, this.id);
   }
 }
-
-namespace Role {
-  export type RoleCfg = {
-    id: number;
-    role: any;
-  };
-}
-type RoleCfg = Role.RoleCfg;
 
 export = Role;
