@@ -663,13 +663,13 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const localized_fld = field.attributes.localized_by[locale];
         val = row[localized_fld];
       }
-
+      const cfg = { ...field.attributes, ...configuration };
       if (fieldview &amp;&amp; field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
               val,
               row[`${field_name}__filename`],
-              configuration
+              cfg
             )
           : "";
       } else if (
@@ -678,7 +678,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         field.type.fieldviews &amp;&amp;
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val, req, configuration);
+        return field.type.fieldviews[fieldview].run(val, req, cfg);
       else return text(val);
     },
     join_field({ join_field, field_type, fieldview }) {
