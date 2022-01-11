@@ -381,9 +381,8 @@ const mkFormRowForField = (
 const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
     field(segment: any) {
-      const { ...field } = form.fields.find(
-        (f) => f.name === segment.field_name
-      );
+      const field = form.fields.find((f) => f.name === segment.field_name);
+
       if (instanceOfField(field) && field.input_type !== "hidden") {
         if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
 
