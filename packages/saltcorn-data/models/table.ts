@@ -348,6 +348,21 @@ class Table implements AbstractTable {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
 
+  async resetSequence() {
+    const fields = await this.getFields();
+    const pk = fields.find((f) => f.primary_key);
+    if (!pk) {
+      throw new Error("Unable to find a field with a primary key.");
+    }
+
+    if (
+      db.reset_sequence &&
+      instanceOfType(pk.type) &&
+      pk.type.name === "Integer"
+    )
+      await db.reset_sequence(this.name);
+  }
+
   /**
    * Delete rows from table
    * @param where - condition
@@ -366,6 +381,7 @@ class Table implements AbstractTable {
       }
     }
     await db.deleteWhere(this.name, where);
+    await this.resetSequence();
   }
 
   /**
@@ -929,18 +945,7 @@ class Table implements AbstractTable {
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
-    const pk = fields.find((f) => f.primary_key);
-    if (!pk) {
-      throw new Error("Unable to find a field with a primary key.");
-    }
-
-    if (
-      db.reset_sequence &&
-      instanceOfType(pk.type) &&
-      pk.type.name === "Integer"
-    )
-      await db.reset_sequence(this.name);
-
+    await this.resetSequence();
     if (
       recalc_stored &&
       this.fields &&
@@ -997,14 +1002,8 @@ class Table implements AbstractTable {
     }
     await client.query("COMMIT");
     if (!db.isSQLite) await client.release(true);
-    const pk = fields.find((f) => f.primary_key);
-    if (!pk) throw new Error("Unable to find a primary key field.");
-    if (
-      db.reset_sequence &&
-      instanceOfType(pk.type) &&
-      pk.type.name === "Integer"
-    )
-      await db.reset_sequence(this.name);
+
+    await this.resetSequence();
 
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
