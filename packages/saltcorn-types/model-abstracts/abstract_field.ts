@@ -3,6 +3,7 @@ export interface AbstractField {
   name: string;
   input_type: InputType;
   sourceURL?: string;
+  fieldview?: string;
   attributes: any;
   required: boolean;
   primary_key: boolean;
