@@ -381,15 +381,18 @@ const mkFormRowForField = (
 const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
     field(segment: any) {
-      const field = form.fields.find((f) => f.name === segment.field_name);
+      const field0 = form.fields.find((f) => f.name === segment.field_name);
+      const field = { ...field0 };
       if (instanceOfField(field) && field.input_type !== "hidden") {
         if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
+        if (instanceOfField(field0)) field.form_name = field0.form_name;
 
         const errorFeedback = form.errors[field.name]
           ? `<div class="invalid-feedback">${text(
               form.errors[field.name]
             )}</div>`
           : "";
+        if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
         return innerField(form.values, form.errors)(field) + errorFeedback;
       } else return "";
