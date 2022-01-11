@@ -536,7 +536,7 @@ const get_viewable_fields = contract(
                       f.type.fieldviews[column.fieldview].run(
                         row[f_with_val.name],
                         req,
-                        column.configuration
+                        { ...f.attributes, ...column.configuration }
                       )
                   : isShow
                   ? f.type.showAs
