@@ -155,6 +155,7 @@ const typeToJsGridType = (t, field) => {
     jsgField.editing = false;
     jsgField.inserting = false;
   }
+  if (field.primary_key) jsgField.inserting = false;
   return jsgField;
 };
 
