@@ -458,6 +458,9 @@ const renderFormLayout = (form: Form): string => {
       if (action_name === "GoBack") {
         return mkBtn(`onClick="history.back()" type="button"`);
       }
+      if (action_name === "SaveAndContinue") {
+        return mkBtn('onClick="saveAndContinue(this)" type="button"');
+      }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
         : 'type="submit"';

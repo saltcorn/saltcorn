@@ -69,7 +69,7 @@ const configuration_workflow = (req) =>
 
           const actions = [
             "Save",
-            //"SaveAndContinue",
+            "SaveAndContinue",
             "Reset",
             "GoBack",
             "Delete",
@@ -556,6 +556,7 @@ const runPost = async (
         delete row[field.name];
       }
     }
+    const originalID = id;
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
@@ -580,6 +581,10 @@ const runPost = async (
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
       }
+    }
+    if (req.xhr && !originalID) {
+      res.json({ id });
+      return;
     }
     if (redirect) {
       res.redirect(redirect);
