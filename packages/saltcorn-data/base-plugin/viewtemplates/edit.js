@@ -67,7 +67,13 @@ const configuration_workflow = (req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
 
-          const actions = ["Save", "Delete"];
+          const actions = [
+            "Save",
+            //"SaveAndContinue",
+            "Reset",
+            "GoBack",
+            "Delete",
+          ];
           const actionConfigForms = {
             Delete: [
               {

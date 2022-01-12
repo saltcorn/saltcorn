@@ -452,6 +452,12 @@ const renderFormLayout = (form: Form): string => {
           );
         } else return "";
       }
+      if (action_name === "Reset") {
+        return mkBtn(`onClick="location.reload()" type="button"`);
+      }
+      if (action_name === "GoBack") {
+        return mkBtn(`onClick="history.back()" type="button"`);
+      }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
         : 'type="submit"';
