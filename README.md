@@ -19,7 +19,7 @@ Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com
 
 ## Quickstart with Docker
 
-You can run a local instance for quick test by running the following command
+You can run a local instance for quick test by running the following command:
 
 `cd ./deploy/examples/test && docker-compose up -d`
 
