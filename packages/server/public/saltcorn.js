@@ -510,6 +510,33 @@ function ajax_modal(url, opts = {}) {
     },
   });
 }
+
+function saveAndContinue(e) {
+  var form = $(e).closest("form");
+  var url = form.attr("action");
+  var form_data = form.serialize();
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function (res) {
+      if (res.id && form.find("input[name=id")) {
+        form.append(
+          `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
+        );
+      }
+    },
+    error: function (request) {
+      $("#page-inner-content").html(request.responseText);
+      initialize_page();
+    },
+  });
+
+  return false;
+}
+
 function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
   var url = form.attr("action");

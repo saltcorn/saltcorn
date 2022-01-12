@@ -67,7 +67,13 @@ const configuration_workflow = (req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
 
-          const actions = ["Save", "Delete"];
+          const actions = [
+            "Save",
+            "SaveAndContinue",
+            "Reset",
+            "GoBack",
+            "Delete",
+          ];
           const actionConfigForms = {
             Delete: [
               {
@@ -209,6 +215,12 @@ const configuration_workflow = (req) =>
             ),
             fields: [
               {
+                name: "auto_save",
+                label: req.__("Auto save"),
+                sublabel: req.__("Save any changes immediately"),
+                type: "Bool",
+              },
+              {
                 name: "view_when_done",
                 label: req.__("Default view when done"),
                 sublabel: req.__(
@@ -296,7 +308,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, auto_save },
   state,
   { res, req }
 ) => {
@@ -317,6 +329,7 @@ const run = async (
     req,
     res,
     state,
+    auto_save,
   });
 };
 
@@ -333,7 +346,7 @@ const run = async (
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, auto_save },
   state,
   extra
 ) => {
@@ -364,6 +377,7 @@ const runMany = async (
       req: extra.req,
       res: extra.res,
       state,
+      auto_save,
     });
     return { html, row };
   });
@@ -450,9 +464,10 @@ const render = async ({
   req,
   state,
   res,
+  auto_save,
 }) => {
   const form = await getForm(table, viewname, columns, layout, state.id, req);
-
+  if (auto_save) form.onChange = `saveAndContinue(this)`;
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -505,7 +520,7 @@ const render = async ({
 const runPost = async (
   table_id,
   viewname,
-  { columns, layout, fixed, view_when_done, formula_destinations },
+  { columns, layout, fixed, view_when_done, formula_destinations, auto_save },
   state,
   body,
   { res, req, redirect }
@@ -513,6 +528,8 @@ const runPost = async (
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
+  if (auto_save) form.onChange = `saveAndContinue(this)`;
+
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);
@@ -550,6 +567,7 @@ const runPost = async (
         delete row[field.name];
       }
     }
+    const originalID = id;
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
@@ -574,6 +592,10 @@ const runPost = async (
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
       }
+    }
+    if (req.xhr && !originalID) {
+      res.json({ id });
+      return;
     }
     if (redirect) {
       res.redirect(redirect);
