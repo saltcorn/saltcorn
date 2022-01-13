@@ -4,7 +4,20 @@
  */
 
 import tags = require("./tags");
-const { p, div, i, label, text, text_attr, button, a, h5, span } = tags;
+const {
+  p,
+  div,
+  i,
+  label,
+  text,
+  text_attr,
+  button,
+  a,
+  h5,
+  span,
+  script,
+  domReady,
+} = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
@@ -459,7 +472,22 @@ const renderFormLayout = (form: Form): string => {
         return mkBtn(`onClick="history.back()" type="button"`);
       }
       if (action_name === "SaveAndContinue") {
-        return mkBtn('onClick="saveAndContinue(this)" type="button"');
+        return (
+          mkBtn('onClick="saveAndContinue(this)" type="button"') +
+          script(
+            // cant use currentScript in callback
+            `((myScript)=>{` +
+              domReady(`
+            $(myScript).closest('form').find('input').keydown(function (e) {
+            if (e.keyCode == 13) {
+                e.preventDefault();
+                saveAndContinue(myScript);
+                return false;
+            }
+        });`) +
+              `})(document.currentScript)`
+          )
+        );
       }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
