@@ -226,7 +226,12 @@ class Page {
     const pagename = this.name;
     traverseSync(this.layout, {
       action(segment: any) {
-        const url = `javascript:ajax_post_json('/page/${pagename}/action/${segment.rndid}')`;
+        console.log(segment);
+
+        const url =
+          segment.action_name === "GoBack"
+            ? `javascript:history.back()`
+            : `javascript:ajax_post_json('/page/${pagename}/action/${segment.rndid}')`;
         const html = action_link(url, extraArgs.req, segment);
         segment.type = "blank";
         segment.contents = html;
