@@ -248,9 +248,12 @@ const pageBuilderData = async (req, context) => {
   const images = await File.find({ mime_super: "image" });
   const roles = await User.get_roles();
   const stateActions = getState().actions;
-  const actions = Object.entries(stateActions)
-    .filter(([k, v]) => !v.requireRow &amp;&amp; !v.disableInBuilder)
-    .map(([k, v]) => k);
+  const actions = [
+    "GoBack",
+    ...Object.entries(stateActions)
+      .filter(([k, v]) => !v.requireRow &amp;&amp; !v.disableInBuilder)
+      .map(([k, v]) => k),
+  ];
   const triggers = await Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   });
