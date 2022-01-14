@@ -30,7 +30,10 @@ function add_repeater(nm) {
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
-    var to_show = new Function("e", "return " + e.attr("data-show-if"));
+    var to_show = new Function(
+      "e",
+      "return " + decodeURIComponent(e.attr("data-show-if"))
+    );
     if (to_show(e))
       e.show()
         .find("input, textarea, button, select")

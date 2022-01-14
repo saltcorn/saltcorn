@@ -37,23 +37,25 @@ const rmInitialDot = (s: string): string =>
  * @returns {string}
  */
 const mkShowIf = (sIf: any): string =>
-  Object.entries(sIf)
-    .map(([target, value]) =>
-      typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
-            target
-          )}]').prop('checked')===${JSON.stringify(value)}`
-        : Array.isArray(value)
-        ? `[${value
-            .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
-            target
-          )}]').val())`
-        : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
-            target
-          )}]').val()==='${value}'`
-    )
-    .join(" && ");
+  encodeURIComponent(
+    Object.entries(sIf)
+      .map(([target, value]) =>
+        typeof value === "boolean"
+          ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              target
+            )}]').prop('checked')===${JSON.stringify(value)}`
+          : Array.isArray(value)
+          ? `[${value
+              .map((v) => `'${v}'`)
+              .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              target
+            )}]').val())`
+          : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              target
+            )}]').val()==='${value}'`
+      )
+      .join(" && ")
+  );
 
 /**
  * @param {string} formStyle
