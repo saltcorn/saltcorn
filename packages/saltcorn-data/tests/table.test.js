@@ -619,6 +619,39 @@ Pencil, 0.5,, t`;
     const brows = await table.getRows({ item: "Book" });
     expect(brows[0].count).toBe(4);
   });
+  it("should import with space in name", async () => {
+    //db.set_sql_logging();
+    const csv = `Item Name,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2impok.csv";
+    await fs.writeFile(fnm, csv);
+    const { table } = await Table.create_from_csv("Invoice5", fnm);
+    const fields = await table.getFields();
+    const nameField = fields.find((f) => f.name === "item_name");
+    expect(nameField.type.name).toBe("String");
+    expect(nameField.label).toBe("Item Name");
+
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
+  });
+  it("should import with underscore in name", async () => {
+    //db.set_sql_logging();
+    const csv = `Item_Name,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2impok.csv";
+    await fs.writeFile(fnm, csv);
+    const { table } = await Table.create_from_csv("Invoice6", fnm);
+    const fields = await table.getFields();
+    expect(fields.map((f) => f.name)).toContain("item_name");
+    const nameField = fields.find((f) => f.name === "item_name");
+    expect(nameField.type.name).toBe("String");
+    expect(nameField.label).toBe("Item Name");
+
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
+  });
 });
 
 describe("Table field uppercase", () => {

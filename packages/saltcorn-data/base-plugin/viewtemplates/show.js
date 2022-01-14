@@ -79,6 +79,7 @@ const configuration_workflow = (req) =>
           );
           const actions = [
             "Delete",
+            "GoBack",
             ...boolfields.map((f) => `Toggle ${f.name}`),
             ...stateActions.map(([k, v]) => k),
           ];
