@@ -95,7 +95,20 @@
  */
 
 import tags = require("./tags");
-const { p, div, i, label, text, text_attr, button, a, h5, span } = tags;
+const {
+  p,
+  div,
+  i,
+  label,
+  text,
+  text_attr,
+  button,
+  a,
+  h5,
+  span,
+  script,
+  domReady,
+} = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
@@ -115,23 +128,25 @@ const rmInitialDot = (s: string): string =>
  * @returns {string}
  */
 const mkShowIf = (sIf: any): string =>
-  Object.entries(sIf)
-    .map(([target, value]) =>
-      typeof value === "boolean"
-        ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
-            target
-          )}]').prop('checked')===${JSON.stringify(value)}`
-        : Array.isArray(value)
-        ? `[${value
-            .map((v) => `'${v}'`)
-            .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
-            target
-          )}]').val())`
-        : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
-            target
-          )}]').val()==='${value}'`
-    )
-    .join(" &amp;&amp; ");
+  encodeURIComponent(
+    Object.entries(sIf)
+      .map(([target, value]) =>
+        typeof value === "boolean"
+          ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              target
+            )}]').prop('checked')===${JSON.stringify(value)}`
+          : Array.isArray(value)
+          ? `[${value
+              .map((v) => `'${v}'`)
+              .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              target
+            )}]').val())`
+          : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              target
+            )}]').val()==='${value}'`
+      )
+      .join(" &amp;&amp; ")
+  );
 
 /**
  * @param {string} formStyle
@@ -544,13 +559,30 @@ const renderFormLayout = (form: Form): string => {
         } else return "";
       }
       if (action_name === "Reset") {
-        return mkBtn(`onClick="location.reload()" type="button"`);
+        return mkBtn(
+          `onClick="$(this).closest('form').trigger('reset')" type="button"`
+        );
       }
       if (action_name === "GoBack") {
         return mkBtn(`onClick="history.back()" type="button"`);
       }
       if (action_name === "SaveAndContinue") {
-        return mkBtn('onClick="saveAndContinue(this)" type="button"');
+        return (
+          mkBtn('onClick="saveAndContinue(this)" type="button"') +
+          script(
+            // cant use currentScript in callback
+            `((myScript)=>{` +
+              domReady(`
+            $(myScript).closest('form').find('input').keydown(function (e) {
+            if (e.keyCode == 13) {
+                e.preventDefault();
+                saveAndContinue(myScript);
+                return false;
+            }
+        });`) +
+              `})(document.currentScript)`
+          )
+        );
       }
       const submitAttr = form.xhrSubmit
         ? 'onClick="ajaxSubmitForm(this)" type="button"'
