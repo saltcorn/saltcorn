@@ -779,6 +779,7 @@ class Table implements AbstractTable {
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
       //can fail here if: non integer i d, duplicate headers, invalid name
+
       const fld = new Field({
         name: Field.labelToName(k),
         required,
@@ -786,6 +787,7 @@ class Table implements AbstractTable {
         table,
         label,
       });
+      //console.log(fld);
       if (db.sqlsanitize(k.toLowerCase()) === "id") {
         if (type !== "Integer") {
           await table.delete();
@@ -849,20 +851,40 @@ class Table implements AbstractTable {
     const okHeaders: any = {};
     const pk_name = this.pk_name;
     const renames: any[] = [];
+
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
       else if (headers.includes(f.label)) {
         okHeaders[f.label] = f;
         renames.push({ from: f.label, to: f.name });
-      } else if (f.required && !f.primary_key)
+      } else if (
+        headers.map((h: string) => Field.labelToName(h)).includes(f.name)
+      ) {
+        okHeaders[f.name] = f;
+        renames.push({
+          from: headers.find((h: string) => Field.labelToName(h) === f.name),
+          to: f.name,
+        });
+      } else if (f.required && !f.primary_key) {
         return { error: `Required field missing: ${f.label}` };
+      }
     }
+
     const fieldNames = headers.map((hnm: any) => {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
     // also id
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
-    const colRe = new RegExp(`(${Object.keys(okHeaders).join("|")})`);
+
+    const renamesInv: any = {};
+    renames.forEach(({ from, to }) => {
+      renamesInv[to] = from;
+    });
+    const colRe = new RegExp(
+      `(${Object.keys(okHeaders)
+        .map((k) => renamesInv[k] || k)
+        .join("|")})`
+    );
 
     let i = 1;
     let rejects = 0;
@@ -909,6 +931,7 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
+
                   const rowOk = readStateStrict(rec, fields);
                   if (rowOk)
                     await db.insert(this.name, rec, {
