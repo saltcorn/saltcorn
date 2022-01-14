@@ -226,8 +226,6 @@ class Page {
     const pagename = this.name;
     traverseSync(this.layout, {
       action(segment: any) {
-        console.log(segment);
-
         const url =
           segment.action_name === "GoBack"
             ? `javascript:history.back()`
