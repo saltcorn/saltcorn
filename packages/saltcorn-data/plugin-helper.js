@@ -62,6 +62,7 @@ const link_view = (
           link_size,
           !link_style && "btn btn-link",
         ],
+        type: "button",
         onClick: `ajax_modal('${url}')`,
         style,
       },

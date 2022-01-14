@@ -540,7 +540,9 @@ const render = ({
             }`,
             ...(showIfFormulaInputs
               ? {
-                  "data-show-if": `showIfFormulaInputs(e, '${showIfFormulaInputs}')`,
+                  "data-show-if": encodeURIComponent(
+                    `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
+                  ),
                 }
               : {}),
           },
