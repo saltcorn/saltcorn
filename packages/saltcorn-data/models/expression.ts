@@ -9,7 +9,7 @@ import { replace } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import Table from "./table";
-import { Row } from "@saltcorn/db-common/internal";
+import { Row, Where } from "@saltcorn/db-common/internal";
 import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
 
@@ -48,7 +48,7 @@ type ExtendedNode = {
  * @throws {Error}
  * @returns {object}
  */
-function jsexprToWhere(expression: string, extraCtx: any = {}): any {
+function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
   if (!expression) return {};
   try {
     const ast = parseExpressionAt(expression, 0, {
@@ -195,6 +195,23 @@ function get_expression_function(
 /**
  * @param {string} expression
  * @param {object[]} fields
+ * @returns {any}
+ */
+function eval_expression(expression: string, row: any, user?: any): any {
+  const field_names = Object.keys(row);
+  const args = field_names.includes("user")
+    ? `{${field_names.join()}}`
+    : `{${field_names.join()}}, user`;
+  const { getState } = require("../db/state");
+  return runInNewContext(
+    `(${args})=>(${expression})`,
+    getState().function_context
+  )(row, user);
+}
+
+/**
+ * @param {string} expression
+ * @param {object[]} fields
  * @param {object} [extraContext = {}]
  * @returns {any}
  */
@@ -319,6 +336,7 @@ export = {
   apply_calculated_fields,
   get_async_expression_function,
   get_expression_function,
+  eval_expression,
   recalculate_for_stored,
   transform_for_async,
   apply_calculated_fields_stored,
