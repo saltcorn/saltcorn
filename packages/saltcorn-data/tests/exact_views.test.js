@@ -17,7 +17,7 @@ const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
   id,
   ...rest
 }) => {
-  const tbl = await Table.findOne({ name: table });
+  const tbl = await Table.findOne({ name: rest.table || table });
 
   const v = await View.create({
     table_id: tbl.id,
@@ -566,6 +566,40 @@ describe("List view", () => {
       ],
       response:
         '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'name\', false)">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th></th><th></th></tr></thead><tbody><tr><td>Kirk Douglas</td><td></td><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=1">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=2">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>',
+    });
+  });
+  it("should render list view with where aggregations", async () => {
+    await test_list({
+      table: "books",
+      columns: [
+        {
+          type: "Field",
+          col_width: "",
+          fieldview: "as_text",
+          field_name: "author",
+          state_field: "on",
+          header_label: "",
+        },
+        {
+          stat: "Count",
+          type: "Aggregation",
+          aggwhere: "",
+          agg_field: "name",
+          col_width: "",
+          agg_relation: "patients.favbook",
+          header_label: "",
+        },
+        {
+          stat: "Count",
+          type: "Aggregation",
+          aggwhere: "id==1",
+          agg_field: "id",
+          col_width: "",
+          agg_relation: "patients.favbook",
+          header_label: "count 1",
+        },
+      ],
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('author', false)">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`,
     });
   });
 });
