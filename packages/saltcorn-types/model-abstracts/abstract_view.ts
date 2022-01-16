@@ -17,7 +17,8 @@ export type ViewCfg = {
 };
 
 export type PackView = {
+  table?: string | null;
   on_menu?: boolean;
   menu_label?: string;
   on_root_page?: boolean;
-} & ViewCfg;
+} & Omit<ViewCfg, "table">;

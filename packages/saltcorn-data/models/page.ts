@@ -153,7 +153,7 @@ class Page {
    * Is root page for role
    * @returns {Promise<*>}
    */
-  async is_root_page_for_roles(): Promise<Array<Role>> {
+  async is_root_page_for_roles(): Promise<Array<string>> {
     const User = require("./user");
     const { getState } = require("../db/state");
 

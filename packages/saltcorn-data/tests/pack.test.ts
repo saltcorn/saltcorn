@@ -178,6 +178,7 @@ const todoPack: Pack = {
   views: [
     {
       name: "EditTodo",
+      table: "TodoItems",
       on_menu: false,
       min_role: 10,
       viewtemplate: "Edit",
@@ -228,6 +229,7 @@ const todoPack: Pack = {
     },
     {
       name: "List Todos",
+      table: "TodoItems",
       min_role: 10,
       menu_label: "List",
       viewtemplate: "List",
@@ -337,7 +339,6 @@ describe("pack install", () => {
   it("warns about duplicates", async () => {
     const { ...restOfPack } = todoPack;
     restOfPack.tables = [];
-    //restOfPack.pages = [{ name: "FooPage" }];
     const can = await can_install_pack(restOfPack);
     expect(can).toStrictEqual({
       warning:

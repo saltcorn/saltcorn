@@ -23,5 +23,5 @@ export type TableCfg = {
 export type PackTable = {
   triggers?: TriggerCfg[];
   constraints?: Array<any>;
-  ownership_field_name?: string;
+  ownership_field_name?: string | null;
 } & TableCfg;
