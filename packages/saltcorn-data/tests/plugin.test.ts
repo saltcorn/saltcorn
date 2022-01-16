@@ -1,7 +1,9 @@
-const Plugin = require("../models/plugin");
-const db = require("../db/index.js");
+import Plugin from "../models/plugin";
+import db from "../db/index";
 
 const { getState } = require("../db/state");
+import { assertIsSet } from "./assertions";
+import { afterAll, describe, it, expect } from "@jest/globals";
 
 getState().registerPlugin("base", require("../base-plugin"));
 jest.setTimeout(30000);
@@ -13,6 +15,7 @@ describe("plugin", () => {
     const ps = await Plugin.find();
     expect(ps.length).toBe(2);
     const p = await Plugin.findOne({ name: "base" });
+    assertIsSet(p);
     expect(p.name).toBe("base");
     const depviews = await p.dependant_views();
     expect(ps.length > 0).toBe(true);

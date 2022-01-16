@@ -146,8 +146,7 @@ function isIdentifierWithName(node: any): node is Identifier {
  */
 function transform_for_async(
   expression: string,
-  // TODO ch replace any as soon as the unit tests are migrated
-  statefuns: Record<string, /*PluginFunction*/ any>
+  statefuns: Record<string, PluginFunction>
 ) {
   var isAsync = false;
   const ast: any = parseExpressionAt(expression, 0, {

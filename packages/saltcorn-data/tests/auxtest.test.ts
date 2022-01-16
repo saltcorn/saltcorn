@@ -1,10 +1,12 @@
-const View = require("../models/view");
-const db = require("../db/index.js");
-const Table = require("../models/table");
+import View from "../models/view";
+import db from "../db/index";
+import Table from "../models/table";
 
 const { get_parent_views, get_child_views } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const { satisfies } = require("../utils");
+
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
@@ -18,7 +20,7 @@ describe("plugin helper", () => {
   it("get parent views", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const x = await get_parent_views(patients, "foobar");
-    expect(x[0].views.map((v) => v.name)).toStrictEqual([
+    expect(x[0].views.map((v: View) => v.name)).toStrictEqual([
       "authoredit",
       "authorshow",
     ]);
@@ -26,7 +28,7 @@ describe("plugin helper", () => {
   it("get child views", async () => {
     const books = await Table.findOne({ name: "books" });
     const x = await get_child_views(books, "foobar");
-    expect(x[1].views.map((v) => v.name)).toStrictEqual(["patientlist"]);
+    expect(x[1].views.map((v: View) => v.name)).toStrictEqual(["patientlist"]);
   });
 });
 

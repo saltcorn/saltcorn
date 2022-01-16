@@ -1,10 +1,14 @@
-const Table = require("../models/table");
-const Field = require("../models/field");
-const View = require("../models/view");
-const db = require("../db");
-const { plugin_with_routes, mockReqRes } = require("./mocks");
+import Table from "../models/table";
+import View from "../models/view";
+import db from "../db";
+import mocks from "./mocks";
+const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
-const Page = require("../models/page");
+import Page from "../models/page";
+import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { assertIsSet } from "./assertions";
+
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
@@ -12,32 +16,54 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
-const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
-  response,
-  id,
-  ...rest
-}) => {
-  const tbl = await Table.findOne({ name: table });
-
-  const v = await View.create({
-    table_id: tbl.id,
+const mkTester =
+  ({
     name,
     viewtemplate,
-    configuration: rest,
-    min_role: 10,
-  });
+    set_id,
+    table,
+  }: {
+    name: string;
+    viewtemplate: string;
+    set_id?: number;
+    table: string;
+  }) =>
+  async ({
+    response,
+    id,
+    ...rest
+  }: {
+    response: any;
+    id?: number;
+    [key: string]: any; // ...rest
+  }) => {
+    const tbl = await Table.findOne({ name: table });
+    assertIsSet(tbl);
+    const v = await View.create({
+      table_id: tbl.id,
+      name,
+      viewtemplate,
+      configuration: rest,
+      min_role: 10,
+    });
 
-  const res = await v.run(
-    id ? { id } : set_id ? { id: set_id } : {},
-    mockReqRes
-  );
-  if (res !== response) console.log(res);
-  expect(res).toBe(response);
-  await v.delete();
-};
+    const res = await v.run(
+      id ? { id } : set_id ? { id: set_id } : {},
+      mockReqRes
+    );
+    if (res !== response) console.log(res);
+    expect(res).toBe(response);
+    await v.delete();
+  };
 
-const test_page = async ({ response, ...rest }) => {
-  const p = await Page.create(rest);
+const test_page = async ({
+  response,
+  ...rest
+}: {
+  response: any;
+  [key: string]: any;
+}) => {
+  const p = await Page.create(rest as PageCfg);
   const contents = await p.run({}, mockReqRes);
   expect(contents).toStrictEqual(response);
   await p.delete();

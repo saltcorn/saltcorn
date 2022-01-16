@@ -12,15 +12,18 @@ const { InvalidAdminAction } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
+  GenObj,
   ResultMessage,
   Type,
 } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type Table from "./table";
 import type {
+  FieldCfg,
   AbstractField,
   InputType,
 } from "@saltcorn/types/model-abstracts/abstract_field";
+import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -28,7 +31,10 @@ const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   const { getState } = require("../db/state");
   if (!field.reftype)
     throw new Error("Unable to find the type, 'reftype' is undefined.");
-  const type = getState().types[field.reftype];
+  const type =
+    getState().types[
+      typeof field.reftype === "string" ? field.reftype : field.reftype.name
+    ];
   const parsed = type.read(v);
   return parsed || (v ? { error: "Unable to read key" } : null);
 };
@@ -41,7 +47,7 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: Function;
+  validator: (arg0: any) => boolean | string | undefined;
   showIf?: any;
   parent_field?: string;
   postText?: string;
@@ -65,12 +71,12 @@ class Field implements AbstractField {
   is_fkey: boolean;
   input_type: InputType;
   reftable_name?: string;
-  reftype?: string;
+  reftype?: string | Type;
   refname: string = "";
-  reftable?: Table;
-  attributes: any;
+  reftable?: AbstractTable;
+  attributes: GenObj;
   table_id?: number;
-  table?: Table;
+  table?: AbstractTable | null;
 
   // to use 'this[k] = v'
   [key: string]: any;
@@ -183,7 +189,7 @@ class Field implements AbstractField {
    */
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
-  static labelToName(label: string): string | undefined {
+  static labelToName(label: string): string {
     return sqlsanitize(label.toLowerCase().replace(" ", "_"));
   }
 
@@ -244,8 +250,8 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async distinct_values(
-    req: any,
-    where: Where
+    req?: any,
+    where?: Where
   ): Promise<{ label: string; value: string; jsvalue?: boolean }[]> {
     const __ = req && req.__ ? req.__ : (s: string) => s;
     if (
@@ -306,7 +312,9 @@ class Field implements AbstractField {
       const schema = db.getTenantSchemaPrefix();
       const { getState } = require("../db/state");
       return `${
-        getState().types[this.reftype].sql_name
+        getState().types[
+          typeof this.reftype === "string" ? this.reftype : this.reftype.name
+        ].sql_name
       } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
       }")`;
@@ -336,7 +344,9 @@ class Field implements AbstractField {
         );
       }
       const { getState } = require("../db/state");
-      return getState().types[this.reftype].sql_name;
+      return getState().types[
+        typeof this.reftype === "string" ? this.reftype : this.reftype.name
+      ].sql_name;
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
@@ -764,43 +774,5 @@ class Field implements AbstractField {
     } else return typeattribs;
   }
 }
-
-// declaration merging
-namespace Field {
-  export type FieldCfg = {
-    label?: string;
-    name?: string;
-    fieldview?: string;
-    validator?: (arg0: any) => boolean;
-    showIf?: any;
-    parent_field?: string;
-    postText?: string;
-    class?: string;
-    id?: number;
-    default?: string;
-    sublabel?: string;
-    description?: string;
-    type?: string | Type;
-    options?: any;
-    required?: boolean;
-    is_unique?: boolean;
-    hidden?: boolean;
-    disabled?: boolean;
-    calculated?: boolean;
-    primary_key?: boolean;
-    stored?: boolean;
-    expression?: string;
-    sourceURL?: string;
-    input_type?: InputType;
-    reftable_name?: string;
-    reftable?: Table;
-    attributes?: string;
-    table_id?: number;
-    reftype?: string;
-    refname?: string;
-    table?: Table;
-  };
-}
-type FieldCfg = Field.FieldCfg;
 
 export = Field;

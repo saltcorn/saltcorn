@@ -17,7 +17,7 @@ export type ViewCfg = {
 };
 
 export type PackView = {
-  on_menu: boolean;
+  on_menu?: boolean;
   menu_label?: string;
-  on_root_page: boolean;
+  on_root_page?: boolean;
 } & ViewCfg;

@@ -63,7 +63,7 @@ class File {
    * @returns {Promise<*>}
    */
   static async find(
-    where: Where,
+    where?: Where,
     selectopts: SelectOptions = {}
   ): Promise<Array<File>> {
     if (selectopts.cached) {

@@ -15,7 +15,7 @@ const { traverseSync } = require("./layout");
  * @category saltcorn-data
  */
 class Library {
-  id: number;
+  id?: number;
   name: string;
   icon: string;
   layout: any;

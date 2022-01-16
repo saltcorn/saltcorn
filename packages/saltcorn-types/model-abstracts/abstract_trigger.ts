@@ -10,8 +10,8 @@ export type TriggerCfg = {
   when_trigger: string;
   channel?: string;
   id?: number | null;
-  configuration: any;
-  min_role: number;
+  configuration?: any;
+  min_role?: number;
 };
 
 export type TriggerPack = {} & TriggerCfg;

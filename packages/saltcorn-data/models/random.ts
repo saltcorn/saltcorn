@@ -4,26 +4,29 @@
  * @module models/random
  * @subcategory models
  */
-const View = require("./view");
-const Field = require("./field");
-const Table = require("./table");
+import View from "./view";
+import Field from "./field";
+import Table from "./table";
 const { getState } = require("../db/state");
 const { generate_attributes } = require("../plugin-testing");
 const { initial_config_all_fields } = require("../plugin-helper");
-const { contract, is } = require("contractis");
-const db = require("../db");
+import db from "../db";
+import { GenObj } from "@saltcorn/types/common_types";
+import { Row } from "@saltcorn/db-common/internal";
+import { instanceOfType } from "@saltcorn/types/common_types";
+import {
+  generateString,
+  oneOf,
+  generateBool,
+  num_between,
+} from "@saltcorn/types/generators";
 
 /**
  * @param {object} [opts = {}]
  * @returns {Promise<Table>}
  */
-const random_table = async (opts = {}) => {
-  const name = is
-    .and(
-      is.sat((s) => db.sqlsanitize(s).length > 2),
-      is.str
-    )
-    .generate();
+const random_table = async (opts: GenObj = {}): Promise<Table> => {
+  const name = generateString(2);
   const table = await Table.create(name);
   if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
     const [pk] = await table.getFields();
@@ -31,7 +34,7 @@ const random_table = async (opts = {}) => {
     table.fields = null;
   }
   //fields
-  const nfields = is.integer({ gte: 2, lte: 10 }).generate();
+  const nfields = num_between(3, 10);
   const existing_field_names = ["id"];
   for (let index = 0; index < nfields; index++) {
     const field = await random_field(existing_field_names, table);
@@ -52,14 +55,14 @@ const random_table = async (opts = {}) => {
 };
 
 /**
- * @param {Table} table 
+ * @param {Table} table
  * @returns {Promise<*>}
  */
-const fill_table_row = async (table) => {
+const fill_table_row = async (table: Table): Promise<void> => {
   const fields = await table.getFields();
-  const row = {};
+  const row: Row = {};
   for (const f of fields) {
-    if (!f.calculated && (f.required || is.bool.generate()) && !f.primary_key)
+    if (!f.calculated && (f.required || generateBool()) && !f.primary_key)
       row[f.name] = await f.generate();
   }
   //console.log(fields, row);
@@ -67,19 +70,22 @@ const fill_table_row = async (table) => {
 };
 
 /**
- * @param {string} type 
- * @param {string[]} existing_fields 
- * @throws {Error} 
+ * @param {string} type
+ * @param {string[]} existing_fields
+ * @throws {Error}
  * @returns {string}
  */
-const random_expression = (type, existing_fields) => {
-  const numField = existing_fields.find((f) =>
-    ["Integer", "Float"].includes(f.type)
+const random_expression = (
+  type: string,
+  existing_fields: Array<Field>
+): string => {
+  const numField = existing_fields.find(
+    (f) => typeof f.type === "string" && ["Integer", "Float"].includes(f.type)
   );
   switch (type) {
     case "Bool":
       if (numField) return `${numField.name}>0`;
-      else return is.one_of(["true", "false"]).generate();
+      else return oneOf(["true", "false"]);
     case "Float":
       if (numField) return `${numField.name}+1.5`;
       else return "1.3";
@@ -92,11 +98,14 @@ const random_expression = (type, existing_fields) => {
 };
 
 /**
- * @param {string[]} existing_field_names 
- * @param {Table} table 
+ * @param {string[]} existing_field_names
+ * @param {Table} table
  * @returns {Promise<Field>}
  */
-const random_field = async (existing_field_names, table) => {
+const random_field = async (
+  existing_field_names: string[],
+  table: Table
+): Promise<Field> => {
   const tables = await Table.find({});
   const tables_with_data = [];
   for (const t of tables) {
@@ -109,18 +118,8 @@ const random_field = async (existing_field_names, table) => {
     "File",
   ];
   const type_options = getState().type_names.concat(fkey_opts || []);
-  const label = is
-    .and(
-      is.sat(
-        (s) =>
-          s.length > 2 && !existing_field_names.includes(Field.labelToName(s))
-      ),
-      is.str
-    )
-    .generate();
-
-  const type = is.one_of(type_options).generate();
-
+  const label = generateString(3, existing_field_names);
+  const type = oneOf(type_options);
   if (Math.random() < 0.2 && ["Integer", "Float", "Bool"].includes(type)) {
     const stored = Math.random() < 0.5;
     const existing_fields = await Field.find(
@@ -140,7 +139,7 @@ const random_field = async (existing_field_names, table) => {
 
   const f = new Field({ type, label });
   f.table_id = table.id;
-  if (f.type.attributes)
+  if (instanceOfType(f.type) && f.type.attributes)
     f.attributes = generate_attributes(
       f.type.attributes,
       f.type.validate_attributes,
@@ -153,11 +152,13 @@ const random_field = async (existing_field_names, table) => {
       f.attributes.summary_field = "email";
     } else {
       const reftable = await Table.findOne({ name: f.reftable_name });
+      if (!reftable)
+        throw new Error(`The table '${f.reftable_name} does not exist'`);
       const reffields = (await reftable.getFields()).filter(
         (f) => !f.calculated || f.stored
       );
       if (reffields.length > 0) {
-        const reff = is.one_of(reffields).generate();
+        const reff = oneOf(reffields);
         f.attributes.summary_field = reff.name;
       } else {
         f.attributes.summary_field = "id";
@@ -167,21 +168,24 @@ const random_field = async (existing_field_names, table) => {
   // unique?
   if (Math.random() < 0.25 && type !== "Bool") f.is_unique = true;
   // required?
-  if (is.bool.generate()) f.required = true;
+  if (generateBool()) f.required = true;
   return f;
 };
 
 /**
- * @param {Table} table 
- * @param {string} viewtemplate 
+ * @param {Table} table
+ * @param {string} viewtemplate
  * @returns {Promise<View>}
  */
-const initial_view = async (table, viewtemplate) => {
+const initial_view = async (
+  table: Table,
+  viewtemplate: string
+): Promise<View> => {
   const configuration = await initial_config_all_fields(
     viewtemplate === "Edit"
   )({ table_id: table.id });
   //console.log(configuration);
-  const name = is.str.generate();
+  const name = generateString();
   const view = await View.create({
     name,
     configuration,
@@ -193,14 +197,16 @@ const initial_view = async (table, viewtemplate) => {
 };
 
 /**
- * @param {Table} table 
+ * @param {Table} table
  * @returns {Promise<object[]>}
  */
-const all_views = async (table) => {
+const all_views = async (
+  table: Table
+): Promise<{ list: View; show: View; edit: View }> => {
   const list = await initial_view(table, "List");
   const edit = await initial_view(table, "Edit");
   const show = await initial_view(table, "Show");
   return { list, show, edit };
 };
 
-module.exports = { random_table, fill_table_row, initial_view, all_views };
+export = { random_table, fill_table_row, initial_view, all_views };

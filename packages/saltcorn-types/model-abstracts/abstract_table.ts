@@ -1,9 +1,11 @@
-import { AbstractField } from "./abstract_field";
+import { FieldCfg } from "./abstract_field";
 import { TriggerCfg } from "./abstract_trigger";
 
 export interface AbstractTable {
   name: string;
   id?: number;
+  // is actually a getter
+  sql_name: string;
 }
 
 export type TableCfg = {
@@ -15,11 +17,11 @@ export type TableCfg = {
   ownership_formula?: string;
   versioned?: boolean;
   description?: string;
-  fields: AbstractField[];
+  fields: FieldCfg[];
 };
 
 export type PackTable = {
-  triggers: TriggerCfg[];
-  constraints: Array<any>;
+  triggers?: TriggerCfg[];
+  constraints?: Array<any>;
   ownership_field_name?: string;
 } & TableCfg;

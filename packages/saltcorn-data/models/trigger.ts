@@ -174,9 +174,9 @@ class Trigger {
    */
   static emitEvent(
     eventType: string,
-    channel: string | null,
+    channel: string | null = null,
     userPW = {},
-    payload: any
+    payload?: any
   ): void {
     setTimeout(async () => {
       const { password, ...user }: any = userPW || {};

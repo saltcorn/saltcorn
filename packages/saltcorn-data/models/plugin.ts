@@ -25,7 +25,7 @@ class Plugin {
   id?: number;
   location: string;
   name: string;
-  version?: string;
+  version?: string | number;
   documentation_link?: string;
   configuration?: any;
   source: PluginSourceType;
@@ -67,7 +67,7 @@ class Plugin {
    * @param where - where object
    * @returns {Promise<*>} returns plugins list
    */
-  static async find(where: Where): Promise<Array<Plugin>> {
+  static async find(where?: Where): Promise<Array<Plugin>> {
     return (await db.select("_sc_plugins", where)).map(
       (p: PluginCfg) => new Plugin(p)
     );

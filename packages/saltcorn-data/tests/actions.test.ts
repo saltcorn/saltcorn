@@ -1,16 +1,15 @@
-const Table = require("../models/table");
+import Table from "../models/table";
 //const Field = require("../models/field");
-const Trigger = require("../models/trigger");
-const runScheduler = require("../models/scheduler");
-const db = require("../db");
+import Trigger from "../models/trigger";
+import runScheduler from "../models/scheduler";
+import db from "../db";
 const { getState } = require("../db/state");
-const {
-  plugin_with_routes,
-  getActionCounter,
-  resetActionCounter,
-  sleep,
-} = require("./mocks");
-const EventLog = require("../models/eventlog");
+import mocks from "./mocks";
+const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
+  mocks;
+import EventLog from "../models/eventlog";
+import { assertIsSet } from "./assertions";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 afterAll(db.close);
 
@@ -28,7 +27,7 @@ describe("Action", () => {
     expect(getActionCounter()).toBe(0);
 
     const table = await Table.findOne({ name: "patients" });
-
+    assertIsSet(table);
     const trigger = await Trigger.create({
       action: "incrementCounter",
       table_id: table.id,
@@ -46,6 +45,7 @@ describe("Action", () => {
     expect(getActionCounter()).toBe(1);
 
     const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
 
     await Trigger.create({
       action: "setCounter",
@@ -55,6 +55,7 @@ describe("Action", () => {
     });
     expect(getActionCounter()).toBe(1);
     const don = await table.getRow({ name: "Don Fabrizio" });
+    assertIsSet(don);
     await table.updateRow({ name: "Don Fabrizio II" }, don.id);
     expect(getActionCounter()).toBe(17);
   });
@@ -62,6 +63,7 @@ describe("Action", () => {
     expect(getActionCounter()).toBe(17);
 
     const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
 
     await Trigger.create({
       action: "setCounter",
@@ -78,6 +80,7 @@ describe("Action", () => {
   });
   it("should run js code", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
 
     await Trigger.create({
       action: "run_js_code",
@@ -92,6 +95,8 @@ describe("Action", () => {
     });
     await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
     const patients = await Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
     await sleep(10);
     const rows = await patients.getRows({ name: "TriggeredInsert" });
 
@@ -99,6 +104,7 @@ describe("Action", () => {
   });
   it("should run webhook", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
 
     await Trigger.create({
       action: "webhook",
@@ -111,6 +117,7 @@ describe("Action", () => {
       },
     });
     const row = await table.getRow({ author: "Giuseppe Tomasi" });
+    assertIsSet(row);
     await table.updateRow({ pages: 210 }, row.id);
   });
 
@@ -119,14 +126,15 @@ describe("Action", () => {
 
     const triggers = await Trigger.findAllWithTableName();
     expect(triggers.length).toBe(5);
-    expect(
-      triggers.find(
-        (tr) => tr.table_name === "books" && tr.when_trigger === "Update"
-      ).action
-    ).toBe("webhook");
+    const trigger = triggers.find(
+      (tr) => tr && tr.table_name === "books" && tr.when_trigger === "Update"
+    );
+    assertIsSet(trigger);
+    expect(trigger.action).toBe("webhook");
   });
   it("should get triggers", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
     const trigger = await Trigger.findOne({
       table_id: table.id,
       when_trigger: "Update",
@@ -147,6 +155,7 @@ describe("Action", () => {
   });
   it("should run webhook on insert", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
 
     await Trigger.create({
       action: "webhook",
@@ -192,7 +201,8 @@ describe("Events", () => {
   });
   it("should find with user", async () => {
     const ev = await EventLog.findOne({ event_type: "FooHappened" });
-    const evlog_w_user = await EventLog.findOneWithUser(ev.id);
+    assertIsSet(ev.id);
+    const evlog_w_user = await EventLog.findOneWithUser(ev.id!);
     expect(evlog_w_user.event_type).toBe("FooHappened");
   });
   it("should emit custom event with channel", async () => {

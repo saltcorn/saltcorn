@@ -43,7 +43,10 @@ class EventLog {
    * @param {object} selopts
    * @returns {Promise<EventLog[]>}
    */
-  static async find(where: Where, selopts: SelectOptions): Promise<EventLog[]> {
+  static async find(
+    where: Where,
+    selopts?: SelectOptions
+  ): Promise<EventLog[]> {
     const us = await db.select("_sc_event_log", where, selopts);
     return us.map((u: EventLogCfg) => new EventLog(u));
   }

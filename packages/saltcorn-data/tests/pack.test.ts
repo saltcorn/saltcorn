@@ -1,6 +1,5 @@
-//const Plugin = require("../models/plugin");
-const db = require("../db/index.js");
-
+import db from "../db/index";
+import pack from "../models/pack";
 const {
   table_pack,
   view_pack,
@@ -12,9 +11,11 @@ const {
   install_pack,
   can_install_pack,
   uninstall_pack,
-} = require("../models/pack");
+} = pack;
 const { getState } = require("../db/state");
-const Table = require("../models/table.js");
+import Table from "../models/table";
+import { Pack } from "@saltcorn/types/base_types";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -142,7 +143,7 @@ describe("pack create", () => {
 });
 
 describe("pack store", () => {
-  var packs;
+  let packs = new Array<{ name: string }>();
   it("reset the pack store cache", async () => {
     getState().deleteConfig("available_packs");
     getState().deleteConfig("available_packs_fetched_at");
@@ -173,11 +174,10 @@ describe("pack store", () => {
   });
 });
 
-const todoPack = {
+const todoPack: Pack = {
   views: [
     {
       name: "EditTodo",
-      table: "TodoItems",
       on_menu: false,
       min_role: 10,
       viewtemplate: "Edit",
@@ -228,7 +228,6 @@ const todoPack = {
     },
     {
       name: "List Todos",
-      table: "TodoItems",
       min_role: 10,
       menu_label: "List",
       viewtemplate: "List",
@@ -311,6 +310,9 @@ const todoPack = {
     },
   ],
   plugins: [],
+  roles: [],
+  library: [],
+  triggers: [],
 };
 
 describe("pack install", () => {
@@ -333,9 +335,9 @@ describe("pack install", () => {
     expect(can).toStrictEqual({ error: "Tables already exist: todoitems" });
   });
   it("warns about duplicates", async () => {
-    const { tables, ...restOfPack } = todoPack;
+    const { ...restOfPack } = todoPack;
     restOfPack.tables = [];
-    restOfPack.pages = [{ name: "FooPage" }];
+    //restOfPack.pages = [{ name: "FooPage" }];
     const can = await can_install_pack(restOfPack);
     expect(can).toStrictEqual({
       warning:
@@ -343,7 +345,7 @@ describe("pack install", () => {
     });
   });
   it("uninstalls pack", async () => {
-    await uninstall_pack(todoPack, "Todo list", () => {});
+    await uninstall_pack(todoPack, "Todo list");
     const tbl = await Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(false);
   });

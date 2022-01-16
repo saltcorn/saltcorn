@@ -4,7 +4,7 @@
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest dist --runInBand",
+    "test": "jest tests --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
@@ -71,6 +71,7 @@
     "@types/adm-zip": "^0.4.34",
     "@types/csvtojson": "^2.0.0",
     "@types/dateformat": "^5.0.0",
+    "@types/jest": "^27.0.3",
     "@types/node": "^16.11.12",
     "@types/nodemailer": "^6.4.4",
     "@types/node-fetch": "2.5.12",
@@ -79,10 +80,16 @@
     "@types/dumb-passwords": "^0.2.1",
     "@types/estraverse": "^5.1.1",
     "chaos-guinea-pig": "^0.1.0",
-    "jest": "^25.1.0"
+    "jest": "^27.1.0",
+    "ts-jest": "^27.1.0",
+    "typescript": "^4.4.4"
   },
   "jest": {
+    "preset": "ts-jest",
     "testEnvironment": "node",
+    "modulePathIgnorePatterns": [
+      ".*\\.js$"
+    ],
     "moduleNameMapper": {
       "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
       "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",

@@ -120,7 +120,7 @@ class Table implements AbstractTable {
   versioned: boolean;
   external: boolean;
   description?: string;
-  fields?: Field[];
+  fields?: Field[] | null;
 
   /**
    * Table constructor
@@ -220,7 +220,9 @@ class Table implements AbstractTable {
    * @param fields - fields list
    * @returns {null|*} null or owner column name
    */
-  owner_fieldname_from_fields(fields?: Field[]): string | null | undefined {
+  owner_fieldname_from_fields(
+    fields?: Field[] | null
+  ): string | null | undefined {
     if (!this.ownership_field_id || !fields) return null;
     const field = fields.find((f: Field) => f.id === this.ownership_field_id);
     return field?.name;
@@ -431,7 +433,7 @@ class Table implements AbstractTable {
    * @param where
    * @returns {Promise<number>}
    */
-  async countRows(where: Where): Promise<number> {
+  async countRows(where?: Where): Promise<number> {
     return await db.count(this.name, where);
   }
 
@@ -553,7 +555,7 @@ class Table implements AbstractTable {
    * @param _userid
    * @returns {Promise<*>}
    */
-  async insertRow(v_in: any, _userid: any): Promise<any> {
+  async insertRow(v_in: Row, _userid?: number): Promise<any> {
     await this.getFields();
     const v = await apply_calculated_fields_stored(v_in, this.fields);
     const pk_name = this.pk_name;
@@ -577,7 +579,7 @@ class Table implements AbstractTable {
    * @returns {Promise<{error}|{success: *}>}
    */
   async tryInsertRow(
-    v: any,
+    v: Row,
     _userid?: number
   ): Promise<{ error: string } | { success: any }> {
     try {
@@ -1129,7 +1131,7 @@ class Table implements AbstractTable {
     let fldNms = [];
     let joinq = "";
     let joinTables: string[] = [];
-    let joinFields: JoinField = opts.joinFields || [];
+    let joinFields: JoinField = opts.joinFields || {};
     const schema = db.getTenantSchemaPrefix();
 
     fields
@@ -1265,7 +1267,7 @@ class Table implements AbstractTable {
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */
-  async getJoinedRows(opts: JoinOptions | any = {}) {
+  async getJoinedRows(opts: JoinOptions | any = {}): Promise<Array<Row>> {
     const fields = await this.getFields();
 
     const { sql, values } = await this.getJoinedQuery(opts);
