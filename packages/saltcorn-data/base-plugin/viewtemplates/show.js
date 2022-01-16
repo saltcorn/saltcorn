@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/show
+ * @subcategory base-plugin
+ */
 const Form = require("../../models/form");
 const User = require("../../models/user");
 const Field = require("../../models/field");
@@ -37,17 +42,24 @@ const {
   view_linker,
   parse_view_select,
   action_link,
+  splitUniques,
 } = require("./viewable_fields");
 const db = require("../../db");
 const {
   asyncMap,
   structuredClone,
   InvalidConfiguration,
+  mergeIntoWhere,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const { get_expression_function } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
+const Library = require("../../models/library");
 
+/**
+ * @param {object} req
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -62,11 +74,14 @@ const configuration_workflow = (req) =>
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
           );
-          const stateActions = getState().actions;
+          const stateActions = Object.entries(getState().actions).filter(
+            ([k, v]) => !v.disableInBuilder
+          );
           const actions = [
             "Delete",
+            "GoBack",
             ...boolfields.map((f) => `Toggle ${f.name}`),
-            ...Object.keys(stateActions),
+            ...stateActions.map(([k, v]) => k),
           ];
           const triggers = await Trigger.find({
             when_trigger: { or: ["API call", "Never"] },
@@ -83,7 +98,7 @@ const configuration_workflow = (req) =>
             }
           }
           const actionConfigForms = {};
-          for (const [name, action] of Object.entries(stateActions)) {
+          for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
@@ -94,7 +109,7 @@ const configuration_workflow = (req) =>
           const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
-            false
+            "show"
           );
           if (table.name === "users") {
             fields.push(
@@ -127,6 +142,10 @@ const configuration_workflow = (req) =>
           const views = link_view_opts;
           const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("show")
+          );
+          const myviewrow = await View.findOne({ name: context.viewname });
           return {
             tableName: table.name,
             fields,
@@ -139,8 +158,10 @@ const configuration_workflow = (req) =>
             parent_field_list,
             child_field_list,
             agg_field_opts,
+            min_role: (myviewrow || {}).min_role,
             roles,
             views,
+            library,
             pages,
             handlesTextStyle,
             mode: "show",
@@ -172,6 +193,10 @@ const configuration_workflow = (req) =>
       },
     ],
   });
+
+/**
+ * @returns {object[]}
+ */
 const get_state_fields = () => [
   {
     name: "id",
@@ -181,8 +206,21 @@ const get_state_fields = () => [
   },
 ];
 
+/** @type {function} */
 const initial_config = initial_config_all_fields(false);
 
+/**
+ * @param {string} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {string} [opts.page_title]
+ * @param {boolean} opts.page_title_formula
+ * @param {object} state
+ * @param {object} extra
+ * @returns {Promise<string>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -207,13 +245,27 @@ const run = async (
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   readState(state, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
+  if (Object.keys(qstate).length === 0) return extra.req.__("No row selected");
   const rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations,
-    limit: 2,
+    limit: 5,
   });
-  if (rows.length !== 1) return extra.req.__("No row selected");
+  if (rows.length > 1)
+    rows.sort((a, b) => {
+      let diff = 0;
+      Object.keys(state).forEach((key) => {
+        if (a[key] && b[key]) {
+          if (typeof a[key] === "string" && typeof b[key] === "string") {
+            diff += a[key].length - b[key].length;
+          }
+        }
+      });
+      return diff;
+    });
+
+  if (rows.length == 0) return extra.req.__("No row selected");
   if (tbl.name === "users") {
     const base = get_base_url(extra.req);
     fields.push(
@@ -232,7 +284,7 @@ const run = async (
   await set_join_fieldviews({ layout, fields });
 
   const rendered = (
-    await renderRows(tbl, viewname, { columns, layout }, extra, rows)
+    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]])
   )[0];
   let page_title_preamble = "";
   if (page_title) {
@@ -246,6 +298,12 @@ const run = async (
   return page_title_preamble + rendered;
 };
 
+/**
+ * @param {object} opts
+ * @param {object} opts.layout
+ * @param {object[]} opts.fields
+ * @returns {Promise<void>}
+ */
 const set_join_fieldviews = async ({ layout, fields }) => {
   await traverse(layout, {
     join_field: async (segment) => {
@@ -276,6 +334,16 @@ const set_join_fieldviews = async ({ layout, fields }) => {
   });
 };
 
+/**
+ * @param {object} table
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {object} extra
+ * @param {object[]} rows
+ * @returns {Promise<string>}
+ */
 const renderRows = async (
   table,
   viewname,
@@ -312,10 +380,8 @@ const renderRows = async (
         throw new InvalidConfiguration(
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
-      else if (
-        view.viewtemplateObj.renderRows &&
-        view.view_select.type === "Own"
-      ) {
+      view.check_viewtemplate();
+      if (view.viewtemplateObj.renderRows && view.view_select.type === "Own") {
         segment.contents = (
           await view.viewtemplateObj.renderRows(
             view.table,
@@ -332,7 +398,11 @@ const renderRows = async (
           case "Own":
             state = { [pk_name]: row[pk_name] };
             break;
+          case "Independent":
+            state = {};
+            break;
           case "ChildList":
+          case "OneToOneShow":
             state = { [view.view_select.field_name]: row[pk_name] };
             break;
           case "ParentShow":
@@ -343,6 +413,13 @@ const renderRows = async (
         segment.contents = await view.run(state, extra);
       }
     });
+    const user_id = extra.req.user ? extra.req.user.id : null;
+
+    const is_owner =
+      table.ownership_formula && user_id
+        ? await table.is_owner(extra.req.user, row)
+        : owner_field && user_id && row[owner_field] === user_id;
+
     return render(
       row,
       fields,
@@ -351,11 +428,21 @@ const renderRows = async (
       table,
       role,
       extra.req,
-      owner_field
+      is_owner
     );
   });
 };
 
+/**
+ * @param {number} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {object} state
+ * @param {object} extra
+ * @returns {Promise<object[]>}
+ */
 const runMany = async (
   table_id,
   viewname,
@@ -368,8 +455,19 @@ const runMany = async (
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
-
-  const rows = await tbl.getJoinedRows({
+  if (extra && extra.where) mergeIntoWhere(qstate, extra.where);
+  const role =
+    extra && extra.req && extra.req.user ? extra.req.user.role_id : 10;
+  if (tbl.ownership_field_id && role > tbl.min_role_read && extra.req) {
+    const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
+    if (qstate[owner_field.name])
+      qstate[owner_field.name] = [
+        qstate[owner_field.name],
+        extra.req.user ? extra.req.user.id : -1,
+      ];
+    else qstate[owner_field.name] = extra.req.user ? extra.req.user.id : -1;
+  }
+  let rows = await tbl.getJoinedRows({
     where: qstate,
     joinFields,
     aggregations,
@@ -379,7 +477,9 @@ const runMany = async (
     ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
     ...q,
   });
-
+  if (tbl.ownership_formula && role > tbl.min_role_read && extra.req) {
+    rows = rows.filter((row) => tbl.is_owner(extra.req.user, row));
+  }
   const rendered = await renderRows(
     tbl,
     viewname,
@@ -391,22 +491,28 @@ const runMany = async (
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
 };
 
-const render = (
-  row,
-  fields,
-  layout0,
-  viewname,
-  table,
-  role,
-  req,
-  owner_field
-) => {
-  const user_id = req.user ? req.user.id : null;
-  const is_owner = owner_field && user_id && row[owner_field] === user_id;
+/**
+ * @param {object} row
+ * @param {Field[]} fields
+ * @param {Layout} layout0
+ * @param {string} viewname
+ * @param {Table} table
+ * @param {Role} role
+ * @param {object} req
+ * @param {object} is_owner
+ * @throws {Error}
+ * @returns {Layout}
+ */
+const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
-      const f = get_expression_function(segment[key], fields);
-      segment[key] = f(row);
+      try {
+        const f = get_expression_function(segment[key], fields);
+        segment[key] = f(row, req.user);
+      } catch (error) {
+        error.message = `Error in formula ${segment[key]} for property ${key} in segment of type ${segment.type}:\n${error.message}`;
+        throw error;
+      }
     }
   };
   const layout = structuredClone(layout0);
@@ -467,13 +573,13 @@ const render = (
         const localized_fld = field.attributes.localized_by[locale];
         val = row[localized_fld];
       }
-
+      const cfg = { ...field.attributes, ...configuration };
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
               val,
               row[`${field_name}__filename`],
-              configuration
+              cfg
             )
           : "";
       } else if (
@@ -482,13 +588,17 @@ const render = (
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val, req, configuration);
+        return field.type.fieldviews[fieldview].run(val, req, cfg);
       else return text(val);
     },
     join_field({ join_field, field_type, fieldview }) {
       const keypath = join_field.split(".");
       let value;
-      if (keypath.length === 2) {
+      if (join_field.includes("->")) {
+        const [relation, target] = join_field.split("->");
+        const [ontable, ref] = relation.split(".");
+        value = row[`${ref}_${ontable}_${target}`];
+      } else if (keypath.length === 2) {
         const [refNm, targetNm] = keypath;
         value = row[`${refNm}_${targetNm}`];
       } else {
@@ -534,6 +644,19 @@ const render = (
     is_owner,
   });
 };
+
+/**
+ * @param {number} table_id
+ * @param {*} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {*} opts.layout
+ * @param {*} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {*} optsTwo.res
+ * @returns {Promise<object>}
+ */
 const run_action = async (
   table_id,
   viewname,
@@ -547,7 +670,13 @@ const run_action = async (
   const table = await Table.findOne({ id: table_id });
   const row = await table.getRow({ id: body.id });
   try {
-    const result = await run_action_column({ col, req, table, row });
+    const result = await run_action_column({
+      col,
+      req,
+      table,
+      row,
+      referrer: req.get("Referrer"),
+    });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
     return { json: { error: e.message || e } };
@@ -555,7 +684,9 @@ const run_action = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "Show",
+  /** @type {string} */
   description: "Show a single row, with flexible layout",
   get_state_fields,
   configuration_workflow,
@@ -563,9 +694,32 @@ module.exports = {
   runMany,
   renderRows,
   initial_config,
+  /** @type {boolean} */
   display_state_form: false,
   routes: { run_action },
+  /**
+   * @param {object} opts
+   * @param {object} opts.layout
+   * @returns {string[]}
+   */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
+  },
+  authorise_get: async ({ query, table_id, req }) => {
+    let body = query || {};
+    const user_id = req.user ? req.user.id : null;
+
+    if (user_id && Object.keys(body).length == 1) {
+      const table = await Table.findOne({ id: table_id });
+      if (table.ownership_field_id || table.ownership_formula) {
+        const fields = await table.getFields();
+        const { uniques } = splitUniques(fields, body);
+        if (Object.keys(uniques).length > 0) {
+          const row = await table.getRow(uniques);
+          return table.is_owner(req.user, row);
+        }
+      }
+    }
+    return false;
   },
 };

@@ -137,3 +137,41 @@ describe("render view on page", () => {
       .expect(toNotInclude("Herman Melville"));
   });
 });
+
+describe("render view with slug", () => {
+  it("should show with id slug in list", async () => {
+    const view = await View.findOne({ name: "authorshow" });
+    const table = await Table.findOne({ name: "books" });
+    const slugOpts = await table.slug_options();
+    const slugOpt = slugOpts.find((so) => so.label === "/:id");
+    expect(!!slugOpt).toBe(true);
+    View.update({ default_render_page: null, slug: slugOpt }, view.id);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/view/authorlist")
+      .expect(toInclude(`/view/authorshow/1`));
+    await request(app)
+      .get("/view/authorshow/1")
+      .expect(toInclude(`Herman Melville`));
+  });
+  it("should show with name slug in list", async () => {
+    const view = await View.findOne({ name: "authorshow" });
+    const table0 = await Table.findOne({ name: "books" });
+    const fields = await table0.getFields();
+    const field = fields.find((f) => f.name === "author");
+    await field.update({ is_unique: true });
+    const table = await Table.findOne({ name: "books" });
+
+    const slugOpts = await table.slug_options();
+    const slugOpt = slugOpts.find((so) => so.label === "/slugify-author");
+    expect(!!slugOpt).toBe(true);
+    View.update({ default_render_page: null, slug: slugOpt }, view.id);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/view/authorlist")
+      .expect(toInclude(`/view/authorshow/herman-melville`));
+    await request(app)
+      .get("/view/authorshow/herman-melville")
+      .expect(toInclude(`Herman Melville`));
+  });
+});

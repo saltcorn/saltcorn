@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-sbadmin2
+ * @module saltcorn-sbadmin2/index
+ */
+
 const {
   ul,
   li,
@@ -14,6 +19,8 @@ const {
   img,
   footer,
   button,
+  form,
+  input,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 const { renderForm, link } = require("@saltcorn/markup");
@@ -24,6 +31,10 @@ const {
 } = require("@saltcorn/markup/layout_utils");
 const db = require("@saltcorn/data/db");
 
+/**
+ * @param {string} currentUrl
+ * @returns {function}
+ */
 const subItem = (currentUrl) => (item) =>
   item.link
     ? a(
@@ -36,13 +47,28 @@ const subItem = (currentUrl) => (item) =>
       )
     : h6({ class: "collapse-header" }, item.label);
 
+/**
+ * @param {object} item
+ * @returns {string}
+ */
 const labelToId = (item) => text(item.label.replace(" ", ""));
 
+/**
+ * @param {object} x
+ * @param {object} s
+ * @returns {object}
+ */
 const logit = (x, s) => {
   if (s) console.log(s, x);
   else console.log(x);
   return x;
 };
+
+/**
+ * @param {string} currentUrl
+ * @param {object} item
+ * @returns {boolean}
+ */
 const active = (currentUrl, item) =>
   (item.link && currentUrl.startsWith(item.link)) ||
   (item.altlinks && item.altlinks.some((l) => currentUrl.startsWith(l))) ||
@@ -53,6 +79,10 @@ const active = (currentUrl, item) =>
         (si.altlinks && si.altlinks.some((l) => currentUrl.startsWith(l)))
     ));
 
+/**
+ * @param {string} currentUrl
+ * @returns {function}
+ */
 const sideBarItem = (currentUrl) => (item) => {
   const is_active = active(currentUrl, item);
   return li(
@@ -89,10 +119,41 @@ const sideBarItem = (currentUrl) => (item) => {
           item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
           span(text(item.label))
         )
+      : item.type === "Search"
+      ? form(
+          { action: "/search", class: "menusearch ml-2 mr-3", method: "get" },
+          div(
+            { class: "input-group search-bar" },
+
+            input({
+              type: "search",
+              class: "form-control search-bar pl-2p5",
+              placeholder: item.label,
+              id: "inputq",
+              name: "q",
+              "aria-label": "Search",
+              "aria-describedby": "button-search-submit",
+            }),
+            div(
+              { class: "input-group-append" },
+              button(
+                {
+                  class: "btn btn-outline-secondary search-bar",
+                  type: "submit",
+                },
+                i({ class: "fas fa-search" })
+              )
+            )
+          )
+        )
       : span({ class: "nav-link" }, text(item.label))
   );
 };
 
+/**
+ * @param {string} currentUrl
+ * @returns {function}
+ */
 const sideBarSection = (currentUrl) => (section) => [
   section.section &&
     hr({ class: "sidebar-divider" }) +
@@ -100,6 +161,12 @@ const sideBarSection = (currentUrl) => (section) => [
   section.items.map(sideBarItem(currentUrl)).join(""),
 ];
 
+/**
+ * @param {object} brand
+ * @param {string[]} sections
+ * @param {string} currentUrl
+ * @returns {ul}
+ */
 const sidebar = (brand, sections, currentUrl) =>
   ul(
     {
@@ -127,12 +194,28 @@ const sidebar = (brand, sections, currentUrl) =>
     )
   );
 
+/**
+ * @namespace
+ * @category saltcorn-sbadmin2
+ */
 const blockDispatch = {
+  /**
+   *
+   * @param {object} opts
+   * @param {string} opts.title
+   * @param {string} opts.blurb
+   * @returns {div}
+   */
   pageHeader: ({ title, blurb }) =>
     div(
       h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
       blurb && p({ class: "mb-0 text-gray-800" }, blurb)
     ),
+  /**
+   * @param {object} opts
+   * @param {string} opts.contents
+   * @returns {div}
+   */
   footer: ({ contents }) =>
     div(
       { class: "container" },
@@ -141,6 +224,12 @@ const blockDispatch = {
         div({ class: "row" }, div({ class: "col-sm-12" }, contents))
       )
     ),
+  /**
+   * @param {object} opts
+   * @param {string} opts.caption
+   * @param {string} opts.blurb
+   * @returns {header}
+   */
   hero: ({ caption, blurb }) =>
     header(
       { class: "masthead" },
@@ -171,6 +260,13 @@ const blockDispatch = {
       )
     ),
 };
+
+/**
+ * @param {string} title
+ * @param {string|object} body
+ * @param {*} role
+ * @returns {string}
+ */
 const renderBody = (title, body, role) =>
   renderLayout({
     blockDispatch,
@@ -179,6 +275,10 @@ const renderBody = (title, body, role) =>
       typeof body === "string" ? { type: "card", title, contents: body } : body,
   });
 
+/**
+ * @param {object} authLinks
+ * @returns {hr|a}
+ */
 const renderAuthLinks = (authLinks) => {
   var links = [];
   if (authLinks.login)
@@ -204,12 +304,23 @@ const renderAuthLinks = (authLinks) => {
     );
 };
 
+/**
+ * @param {Form} form
+ * @returns {Form}
+ */
 const formModify = (form) => {
   form.formStyle = "vert";
   form.submitButtonClass = "btn-primary btn-user btn-block";
   return form;
 };
 
+/**
+ * @param {*} headers
+ * @param {string} title
+ * @param {string} bodyAttr
+ * @param {string} rest
+ * @returns {string}
+ */
 const wrapIt = (headers, title, bodyAttr, rest) =>
   `<!doctype html>
   <html lang="en">
@@ -228,7 +339,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   </head>
   <body ${bodyAttr}>
     ${rest}
-    <script src="/static_assets/${db.connectObj.version_tag}/jquery-3.4.1.min.js"></script>
+    <script src="/static_assets/${
+      db.connectObj.version_tag
+    }/jquery-3.6.0.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/jquery-easing/jquery.easing.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
@@ -236,6 +349,17 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     </body>
   </html>`;
 
+/**
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {object[]} opts.alerts
+ * @param {object} opts.form
+ * @param {string} opts.afterForm
+ * @param {*} opts.headers
+ * @param {string} opts.csrfToken
+ * @param {object} opts.authLinks
+ * @returns {string}
+ */
 const authWrap = ({
   title,
   alerts,
@@ -244,11 +368,12 @@ const authWrap = ({
   headers,
   csrfToken,
   authLinks,
+  bodyClass,
 }) =>
   wrapIt(
     headers,
     title,
-    'class="bg-gradient-primary"',
+    `class="bg-gradient-primary ${bodyClass || ""}"`,
     `<div class="container">
       <div class="row justify-content-center">
         <div class="col-xl-10 col-lg-12 col-md-9">
@@ -274,6 +399,18 @@ const authWrap = ({
     </div>`
   );
 
+/**
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {menu} opts.menu
+ * @param {object} opts.brand
+ * @param {object[]} opts.alerts
+ * @param {string} opts.currentUrl
+ * @param {string|object} opts.body
+ * @param {*} opts.headers
+ * @param {*} opts.role
+ * @returns {string}
+ */
 const wrap = ({
   title,
   menu,
@@ -283,17 +420,18 @@ const wrap = ({
   body,
   headers,
   role,
+  bodyClass,
 }) =>
   wrapIt(
     headers,
     title,
-    'id="page-top"',
+    `id="page-top" class="${bodyClass || ""}"`,
     `<div id="wrapper">
       ${sidebar(brand, menu, currentUrl)}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-          <div id="page-inner-content" class="container-fluid">
+          <div id="page-inner-content" class="container-fluid px-2">
             <div id="alerts-area">
               ${alerts.map((a) => alert(a.type, a.msg)).join("")}
             </div>
@@ -305,6 +443,15 @@ const wrap = ({
       </div>
     </div>`
   );
+
+/**
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {string} opts.body
+ * @param {object[]} opts.alerts
+ * @param {*} opts.role
+ * @returns {string}
+ */
 const exportRenderBody = ({ title, body, alerts, role }) =>
   `<div id="alerts-area">
     ${alerts.map((a) => alert(a.type, a.msg)).join("")}
@@ -314,10 +461,15 @@ const exportRenderBody = ({ title, body, alerts, role }) =>
   <div>`;
 
 module.exports = {
+  /** @type {number} */
   sc_plugin_api_version: 1,
+  /** @type {object} */
   serve_dependencies: {
-    "startbootstrap-sb-admin-2": require.resolve("startbootstrap-sb-admin-2/package.json"),
+    "startbootstrap-sb-admin-2": require.resolve(
+      "startbootstrap-sb-admin-2/package.json"
+    ),
   },
+  /** @type {object} */
   layout: {
     wrap,
     authWrap,

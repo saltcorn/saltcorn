@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/ViewLink
+ * @subcategory components / elements
+ */
+
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -7,11 +13,29 @@ import {
   MinRoleSettingRow,
   OrFormula,
   TextStyleSetting,
+  ButtonOrLinkSettingsRows,
 } from "./utils";
-import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 
-export const ViewLink = ({
+export /**
+ * @param {object} props
+ * @param {string} props.name
+ * @param {boolean} props.block
+ * @param {*} props.minRole
+ * @param {string} props.link_style
+ * @param {string} props.link_size
+ * @param {string} [props.link_icon]
+ * @param {boolean} props.inModal
+ * @param {string} [props.label]
+ * @param {string} props.textStyle
+ * @param {string} [props.link_bgcol]
+ * @param {string} [props.link_bordercol]
+ * @param {string} [props.link_textcol]
+ * @returns {tr}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace 
+ */
+const ViewLink = ({
   name,
   block,
   minRole,
@@ -21,6 +45,9 @@ export const ViewLink = ({
   inModal,
   label,
   textStyle,
+  link_bgcol,
+  link_bordercol,
+  link_textcol,
 }) => {
   const {
     selected,
@@ -35,6 +62,15 @@ export const ViewLink = ({
       } ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      style={
+        link_style === "btn btn-custom-color"
+          ? {
+              backgroundColor: link_bgcol || "#000000",
+              borderColor: link_bordercol || "#000000",
+              color: link_textcol || "#000000",
+            }
+          : {}
+      }
     >
       {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
       {displabel}
@@ -42,7 +78,13 @@ export const ViewLink = ({
   );
 };
 
-export const ViewLinkSettings = () => {
+export /**
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const ViewLinkSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -54,6 +96,9 @@ export const ViewLinkSettings = () => {
     link_size: node.data.props.link_size,
     link_icon: node.data.props.link_icon,
     textStyle: node.data.props.textStyle,
+    link_bgcol: node.data.props.link_bgcol,
+    link_bordercol: node.data.props.link_bordercol,
+    link_textcol: node.data.props.link_textcol,
   }));
   const {
     actions: { setProp },
@@ -63,82 +108,55 @@ export const ViewLinkSettings = () => {
     label,
     isFormula,
     inModal,
-    link_style,
-    link_icon,
-    link_size,
     textStyle,
   } = node;
   const options = useContext(optionsCtx);
   return (
     <div>
-      <div>
-        <label>View to link to</label>
-        <select
-          value={name}
-          className="form-control"
-          onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
-        >
-          {options.link_view_opts.map((f, ix) => (
-            <option key={ix} value={f.name}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Label (leave blank for default)</label>
-        <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
-          <input
-            type="text"
-            className="viewlink-label form-control"
-            value={label}
-            onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
+      <table className="w-100">
+        <tbody>
+          <tr>
+            <td colSpan="2">
+              <label>View to link to</label>
+              <select
+                value={name}
+                className="form-control"
+                onChange={(e) =>
+                  setProp((prop) => (prop.name = e.target.value))
+                }
+              >
+                {options.link_view_opts.map((f, ix) => (
+                  <option key={ix} value={f.name}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="2">
+              <label>Label (leave blank for default)</label>
+              <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
+                <input
+                  type="text"
+                  className="viewlink-label form-control"
+                  value={label}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.label = e.target.value))
+                  }
+                />
+              </OrFormula>
+            </td>
+          </tr>
+          <ButtonOrLinkSettingsRows
+            setProp={setProp}
+            keyPrefix="link_"
+            btnClass="btn"
+            values={node}
+            linkFirst={true}
           />
-        </OrFormula>
-      </div>
-      <div>
-        <label>Link style</label>
-        <select
-          className="form-control"
-          value={link_style}
-          onChange={(e) =>
-            setProp((prop) => (prop.link_style = e.target.value))
-          }
-        >
-          <option value="">Link</option>
-          <option value="btn btn-primary">Primary button</option>
-          <option value="btn btn-secondary">Secondary button</option>
-          <option value="btn btn-success">Success button</option>
-          <option value="btn btn-danger">Danger button</option>
-          <option value="btn btn-outline-primary">
-            Primary outline button
-          </option>
-          <option value="btn btn-outline-secondary">
-            Secondary outline button
-          </option>
-        </select>
-      </div>
-      <div>
-        <label>Link size</label>
-        <select
-          className="form-control"
-          value={link_size}
-          onChange={(e) => setProp((prop) => (prop.link_size = e.target.value))}
-        >
-          <option value="">Standard</option>
-          <option value="btn-lg">Large</option>
-          <option value="btn-sm">Small</option>
-          <option value="btn-block">Block</option>
-          <option value="btn-block btn-lg">Large block</option>
-        </select>
-      </div>
-      <label className="mr-2">Icon</label>
-      <FontIconPicker
-        value={link_icon}
-        icons={faIcons}
-        onChange={(value) => setProp((prop) => (prop.link_icon = value))}
-        isMulti={false}
-      />
+        </tbody>
+      </table>
       <div className="form-check">
         <input
           className="form-check-input"
@@ -160,6 +178,9 @@ export const ViewLinkSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 ViewLink.craft = {
   displayName: "ViewLink",
   defaultProps: {
@@ -179,6 +200,9 @@ ViewLink.craft = {
       "link_style",
       "link_icon",
       "link_size",
+      "link_bgcol",
+      "link_bordercol",
+      "link_textcol",
     ],
   },
 };

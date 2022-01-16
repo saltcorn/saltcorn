@@ -1,7 +1,13 @@
+/**
+ * @category server
+ * @module routes/pageedit
+ * @subcategory routes
+ */
 const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
+const Table = require("@saltcorn/data/models/table");
 const Page = require("@saltcorn/data/models/page");
 const { div, a } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
@@ -10,10 +16,11 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const Trigger = require("@saltcorn/data/models/trigger");
-const { getViews } = require("@saltcorn/data/models/layout");
+const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
+const db = require("@saltcorn/data/db");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -26,10 +33,24 @@ const {
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { editRoleForm, wizardCardTitle } = require("../markup/forms.js");
+const Library = require("@saltcorn/data/models/library");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace pageeditRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} page
+ * @param {*} roles
+ * @param {object} req
+ * @returns {Form}
+ */
 const editPageRoleForm = (page, roles, req) =>
   editRoleForm({
     url: `/pageedit/setrole/${page.id}`,
@@ -38,6 +59,11 @@ const editPageRoleForm = (page, roles, req) =>
     req,
   });
 
+/**
+ * @param {object} page
+ * @param {object} req
+ * @returns {string}
+ */
 const page_dropdown = (page, req) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
     a(
@@ -50,9 +76,9 @@ const page_dropdown = (page, req) =>
     a(
       {
         class: "dropdown-item",
-        href: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+        href: `/pageedit/edit-properties/${encodeURIComponent(page.name)}`,
       },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit properties")
     ),
     post_dropdown_item(
       `/pageedit/add-to-menu/${page.id}`,
@@ -73,141 +99,140 @@ const page_dropdown = (page, req) =>
       page.name
     ),
   ]);
-const pageFlow = (req) =>
-  new Workflow({
-    action: "/pageedit/edit/",
-    onDone: async (context) => {
-      const { id, columns, ...pageRow } = context;
-      pageRow.min_role = +pageRow.min_role;
-      if (!pageRow.fixed_states) pageRow.fixed_states = {};
-      if (id) {
-        await Page.update(id, pageRow);
-      } else await Page.create(pageRow);
-      return {
-        redirect: `/pageedit`,
-        flash: ["success", req.__(`Page %s saved`, pageRow.name)],
-      };
-    },
-    steps: [
-      {
-        name: req.__("Identity"),
-        form: async (context) => {
-          const roles = await User.get_roles();
 
-          return new Form({
-            fields: [
-              new Field({
-                label: req.__("Name"),
-                name: "name",
-                required: true,
-                validator(s) {
-                  if (s.length < 1) return req.__("Missing name");
-                },
-                sublabel: req.__("A short name that will be in your URL"),
-                type: "String",
-              }),
-              new Field({
-                label: req.__("Title"),
-                name: "title",
-                sublabel: req.__("Page title"),
-                input_type: "text",
-              }),
-              new Field({
-                label: req.__("Description"),
-                name: "description",
-                sublabel: req.__("A longer description"),
-                input_type: "text",
-              }),
-              {
-                name: "min_role",
-                label: req.__("Minimum role"),
-                sublabel: req.__("Role required to access page"),
-                input_type: "select",
-                options: roles.map((r) => ({ value: r.id, label: r.role })),
-              },
-            ],
-          });
-        },
-      },
-      {
-        name: req.__("Layout"),
-        builder: async (context) => {
-          const views = await View.find();
-          const pages = await Page.find();
-          const images = await File.find({ mime_super: "image" });
-          const roles = await User.get_roles();
-          const stateActions = getState().actions;
-          const actions = Object.entries(stateActions)
-            .filter(([k, v]) => !v.requireRow)
-            .map(([k, v]) => k);
-          const triggers = await Trigger.find({
-            when_trigger: { or: ["API call", "Never"] },
-          });
-          triggers.forEach((tr) => {
-            actions.push(tr.name);
-          });
-          const actionConfigForms = {};
-          for (const name of actions) {
-            const action = stateActions[name];
-            if (action && action.configFields) {
-              actionConfigForms[name] = await getActionConfigFields(action);
-            }
-          }
-          return {
-            views,
-            images,
-            pages,
-            actions,
-            actionConfigForms,
-            page_name: context.name,
-            page_id: context.id,
-            mode: "page",
-            roles,
-          };
-        },
-      },
-      {
-        name: req.__("Fixed states"),
-        contextField: "fixed_states",
-        onlyWhen: async (context) => {
-          const p = new Page(context);
-          const vs = await getViews(p.layout);
-          return vs.filter((v) => v.state === "fixed").length > 0;
-        },
-        form: async (context) => {
-          const p = new Page(context);
-          const vs = await getViews(p.layout);
-          const fixedvs = vs.filter((vseg) => vseg.state === "fixed");
-          const fields = [];
-          for (const vseg of fixedvs) {
-            const v = await View.findOne({ name: vseg.view });
-            if (v) {
-              const fs = await v.get_state_fields();
-              if (fs.length > 0)
-                fields.push({
-                  label: req.__(`Fixed state for %s view`, v.name),
-                  input_type: "section_header",
-                });
-              for (const frec of fs) {
-                const f = new Field(frec);
-                f.required = false;
-                if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
-                f.parent_field = vseg.name;
+/**
+ *
+ * @param {object} req
+ * @returns {Promise<Form>}
+ */
+const pagePropertiesForm = async (req) => {
+  const roles = await User.get_roles();
 
-                await f.fill_fkey_options(true);
-                fields.push(f);
-              }
-            }
-          }
-          return new Form({
-            blurb: req.__("Set fixed states for views"),
-            fields,
-          });
+  const form = new Form({
+    action: "/pageedit/edit-properties",
+    fields: [
+      new Field({
+        label: req.__("Name"),
+        name: "name",
+        required: true,
+        validator(s) {
+          if (s.length < 1) return req.__("Missing name");
         },
+        sublabel: req.__("A short name that will be in your URL"),
+        type: "String",
+      }),
+      new Field({
+        label: req.__("Title"),
+        name: "title",
+        sublabel: req.__("Page title"),
+        input_type: "text",
+      }),
+      new Field({
+        label: req.__("Description"),
+        name: "description",
+        sublabel: req.__("A longer description"),
+        input_type: "text",
+      }),
+      {
+        name: "min_role",
+        label: req.__("Minimum role"),
+        sublabel: req.__("Role required to access page"),
+        input_type: "select",
+        options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
     ],
   });
+  return form;
+};
 
+/**
+ *
+ * @param {object} req
+ * @param {object} context
+ * @returns {Promise<object>}
+ */
+const pageBuilderData = async (req, context) => {
+  const views = await View.find();
+  const pages = await Page.find();
+  const images = await File.find({ mime_super: "image" });
+  const roles = await User.get_roles();
+  const stateActions = getState().actions;
+  const actions = [
+    "GoBack",
+    ...Object.entries(stateActions)
+      .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
+      .map(([k, v]) => k),
+  ];
+  const triggers = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    actions.push(tr.name);
+  });
+  const actionConfigForms = {};
+  for (const name of actions) {
+    const action = stateActions[name];
+    if (action && action.configFields) {
+      actionConfigForms[name] = await getActionConfigFields(action);
+    }
+  }
+  const library = (await Library.find({})).filter((l) => l.suitableFor("page"));
+  const fixed_state_fields = {};
+  for (const view of views) {
+    fixed_state_fields[view.name] = [];
+    const table = Table.findOne({ id: view.table_id });
+    const fs = await view.get_state_fields();
+    for (const frec of fs) {
+      const f = new Field(frec);
+      f.required = false;
+      if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+
+      await f.fill_fkey_options(true);
+      fixed_state_fields[view.name].push(f);
+      if (table.name === "users" && f.primary_key)
+        fixed_state_fields[view.name].push(
+          new Field({
+            name: "preset_" + f.name,
+            label: req.__("Preset %s", f.label),
+            type: "String",
+            attributes: { options: ["LoggedIn"] },
+          })
+        );
+      if (f.presets) {
+        fixed_state_fields[view.name].push(
+          new Field({
+            name: "preset_" + f.name,
+            label: req.__("Preset %s", f.label),
+            type: "String",
+            attributes: { options: Object.keys(f.presets) },
+          })
+        );
+      }
+    }
+  }
+  return {
+    views,
+    images,
+    pages,
+    actions,
+    library,
+    min_role: context.min_role,
+    actionConfigForms,
+    page_name: context.name,
+    page_id: context.id,
+    mode: "page",
+    roles,
+    fixed_state_fields,
+    next_button_label: "Done",
+  };
+};
+
+/**
+ * @param {*} rows
+ * @param {*} roles
+ * @param {object} req
+ * @returns {div}
+ */
 const getPageList = (rows, roles, req) => {
   return div(
     mkTable(
@@ -241,12 +266,13 @@ const getPageList = (rows, roles, req) => {
     )
   );
 };
+
 /**
  * Root pages configuration Form
  * Allows to configure root page for each role
- * @param pages - list of pages
- * @param roles - list of roles
- * @param req - request
+ * @param {object[]} pages list of pages
+ * @param {object[]} roles - list of roles
+ * @param {object} req - request
  * @returns {Form} return Form
  */
 const getRootPageForm = (pages, roles, req) => {
@@ -276,9 +302,15 @@ const getRootPageForm = (pages, roles, req) => {
   }
   return form;
 };
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
@@ -308,43 +340,40 @@ router.get(
   })
 );
 
-const respondWorkflow = (page, wf, wfres, req, res) => {
-  const wrap = (contents, noCard) => ({
-    above: [
-      {
-        type: "breadcrumbs",
-        crumbs: [
-          { text: req.__("Pages"), href: "/pageedit" },
-          page
-            ? { href: `/pageedit/edit/${page.name}`, text: page.name }
-            : { text: req.__("New") },
-          { workflow: wf, step: wfres },
-        ],
-      },
-      {
-        type: noCard ? "container" : "card",
-        title: wizardCardTitle(page ? page.name : req.__("New"), wf, wfres),
-        contents,
-      },
-    ],
-  });
-  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
-  if (wfres.renderForm)
-    res.sendWrap(
-      req.__(`Page attributes`),
-      wrap(renderForm(wfres.renderForm, req.csrfToken()))
-    );
-  else if (wfres.renderBuilder)
-    res.sendWrap(
-      req.__(`Page configuration`),
-      wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
-    );
-  else res.redirect(wfres.redirect);
-};
+/**
+ * @param {*} contents
+ * @param {*} noCard
+ * @param {object} req
+ * @param {*} page
+ * @returns {*}
+ */
+const wrap = (contents, noCard, req, page) => ({
+  above: [
+    {
+      type: "breadcrumbs",
+      crumbs: [
+        { text: req.__("Pages"), href: "/pageedit" },
+        page
+          ? { href: `/pageedit/edit/${page.name}`, text: page.name }
+          : { text: req.__("New") },
+      ],
+    },
+    {
+      type: noCard ? "container" : "card",
+      title: page ? page.name : req.__("New"),
+      contents,
+    },
+  ],
+});
 
+/**
+ * @name get/edit-properties/:pagename
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
-  "/edit/:pagename",
-  setTenant,
+  "/edit-properties/:pagename",
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
@@ -353,41 +382,150 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
-      const wf = pageFlow(req);
-      const wfres = await wf.run(page, req);
-      respondWorkflow(page, wf, wfres, req, res);
+      // set fixed states in page directly for legacy builds
+      const form = await pagePropertiesForm(req);
+      form.hidden("id");
+      form.values = page;
+      res.sendWrap(
+        req.__(`Page attributes`),
+        wrap(renderForm(form, req.csrfToken()), false, req, page)
+      );
     }
   })
 );
 
+/**
+ * @name get/new
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    const wf = pageFlow(req);
-    const wfres = await wf.run({}, req);
-    respondWorkflow(null, wf, wfres, req, res);
+    const form = await pagePropertiesForm(req);
+    res.sendWrap(
+      req.__(`Page attributes`),
+      wrap(renderForm(form, req.csrfToken()), false, req)
+    );
   })
 );
 
+/**
+ * @name post/edit-properties
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
-  "/edit",
-  setTenant,
+  "/edit-properties",
   isAdmin,
   error_catcher(async (req, res) => {
-    const wf = pageFlow(req);
-    const wfres = await wf.run(req.body, req);
-    const page =
-      wfres.context && (await Page.findOne({ name: wfres.context.name }));
+    const form = await pagePropertiesForm(req);
+    form.hidden("id");
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendWrap(
+        req.__(`Page attributes`),
+        wrap(renderForm(form, req.csrfToken()), false, req)
+      );
+    } else {
+      const { id, columns, ...pageRow } = form.values;
+      pageRow.min_role = +pageRow.min_role;
 
-    respondWorkflow(page, wf, wfres, req, res);
+      if (+id) {
+        await Page.update(+id, pageRow);
+        res.redirect(`/pageedit/`);
+      } else {
+        if (!pageRow.fixed_states) pageRow.fixed_states = {};
+        if (!pageRow.layout) pageRow.layout = {};
+        await Page.create(pageRow);
+        res.redirect(`/pageedit/edit/${pageRow.name}`);
+      }
+    }
   })
 );
 
+/**
+ * @name get/edit/:pagename
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
+router.get(
+  "/edit/:pagename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { pagename } = req.params;
+    const page = await Page.findOne({ name: pagename });
+    if (!page) {
+      req.flash("error", req.__(`Page %s not found`, pagename));
+      res.redirect(`/pageedit`);
+    } else {
+      // set fixed states in page directly for legacy builds
+      traverseSync(page.layout, {
+        view(s) {
+          if (s.state === "fixed" && !s.configuration) {
+            const fs = page.fixed_states[s.name];
+            if (fs) s.configuration = fs;
+          }
+        },
+      });
+      const options = await pageBuilderData(req, page);
+      const builderData = {
+        options,
+        context: page,
+        layout: page.layout,
+        mode: "page",
+        version_tag: db.connectObj.version_tag,
+      };
+      res.sendWrap(
+        req.__(`Page configuration`),
+        wrap(renderBuilder(builderData, req.csrfToken()), true, req, page)
+      );
+    }
+  })
+);
+
+/**
+ * @name post/edit/:pagename
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
+router.post(
+  "/edit/:pagename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { pagename } = req.params;
+
+    const page = await Page.findOne({ name: pagename });
+    if (!page) {
+      req.flash("error", req.__(`Page %s not found`, pagename));
+      res.redirect(`/pageedit`);
+    } else if (req.body.layout) {
+      await Page.update(page.id, {
+        layout: decodeURIComponent(req.body.layout),
+      });
+
+      req.flash("success", req.__(`Page %s saved`, pagename));
+      res.redirect(`/pageedit`);
+    } else {
+      req.flash("error", req.__(`Error processing page`));
+      res.redirect(`/pageedit`);
+    }
+  })
+);
+
+/**
+ * @name post/savebuilder/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/savebuilder/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -401,9 +539,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -414,9 +557,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/set_root_page
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/set_root_page",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
@@ -436,9 +584,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/add-to-menu/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/add-to-menu/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -459,9 +612,15 @@ router.post(
     res.redirect(`/pageedit`);
   })
 );
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/clone/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -474,9 +633,15 @@ router.post(
     res.redirect(`/pageedit`);
   })
 );
+
+/**
+ * @name post/setrole/:id
+ * @function
+ * @memberof module:routes/pageedit~pageeditRouter
+ * @function
+ */
 router.post(
   "/setrole/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

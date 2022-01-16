@@ -1,9 +1,12 @@
 /**
  * Plugin Handler for Admin zone
+ * @category server
+ * @module routes/plugins
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -41,6 +44,7 @@ const {
   td,
   p,
   strong,
+  text,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
@@ -48,12 +52,20 @@ const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace pluginsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
+
 /**
  * Plugin Form Creation
- * @param req
- * @param plugin
+ * @param {object} req
+ * @param {object} plugin
  * @returns {Form}
  */
 const pluginForm = (req, plugin) => {
@@ -118,21 +130,24 @@ const pluginForm = (req, plugin) => {
   }
   return form;
 };
+
 /**
  * Returns true if plugin has own theme
- * @param name -plugin name
+ * @param {string} name plugin name
  * @returns {*|boolean}
  */
 const local_has_theme = (name) => {
   const mod = getState().plugins[name];
   return mod ? mod.layout : false;
 };
+
 /**
  * Get Pluging store itmes
- * @returns {Promise<*[]>}
+ * @returns {Promise<Object[]>}
  */
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
+
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
@@ -148,7 +163,6 @@ const get_store_items = async () => {
     has_theme: plugin.has_theme,
     has_auth: plugin.has_auth,
   }));
-
   const local_logins = installed_plugins
     .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
@@ -174,8 +188,22 @@ const get_store_items = async () => {
   );
 };
 
+/**
+ * @param {object} req
+ * @param {object} row
+ * @returns {a|string}
+ */
 const cfg_link = (req, row) => {
-  const plugin = getState().plugins[row.name];
+  let plugin = getState().plugins[row.name];
+  let linknm = row.name;
+  if (!plugin) {
+    const othernm = getState().plugin_module_names[row.name];
+
+    if (othernm) {
+      linknm = othernm;
+      plugin = getState().plugins[othernm];
+    }
+  }
   if (!plugin) return "";
   if (plugin.configuration_workflow)
     return a(
@@ -190,6 +218,11 @@ const cfg_link = (req, row) => {
   else return "";
 };
 
+/**
+ * @param {object} req
+ * @param {object} row
+ * @returns {a}
+ */
 const info_link = (req, row) =>
   a(
     {
@@ -201,9 +234,18 @@ const info_link = (req, row) =>
     '<i class="far fa-question-circle"></i>'
   );
 
+/**
+ * @param {string} title
+ * @returns {span}
+ */
 const badge = (title) =>
   span({ class: "badge badge-secondary plugin-store" }, title);
 
+/**
+ *
+ * @param {object} req
+ * @returns {function}
+ */
 const store_item_html = (req) => (item) => ({
   type: "card",
   title: item.name,
@@ -290,6 +332,11 @@ const store_item_html = (req) => (item) => ({
     )
   ),
 });
+
+/**
+ * @param {object} req
+ * @returns {ul}
+ */
 const storeNavPills = (req) => {
   const link = (txt) =>
     li(
@@ -317,20 +364,41 @@ const storeNavPills = (req) => {
   );
 };
 
+/**
+ * @param {object[]} items
+ * @param {object} query
+ * @returns {object[]}
+ */
 const filter_items = (items, query) => {
   const in_set = filter_items_set(items, query);
   if (!query.q) return in_set;
   return in_set.filter((p) => satisfy_q(p, query.q.toLowerCase()));
 };
 
+/**
+ * @param {string} s
+ * @param {string} q
+ * @returns {boolean}
+ */
 const match_string = (s, q) => {
   if (!s || !q) return false;
   return s.toLowerCase().includes(q);
 };
 
+/**
+ * @param {string} p
+ * @param {string} q
+ * @returns {boolean}
+ */
 const satisfy_q = (p, q) => {
   return match_string(p.name, q) || match_string(p.description, q);
 };
+
+/**
+ * @param {object[]} items
+ * @param {object} query
+ * @returns {object[]}
+ */
 const filter_items_set = (items, query) => {
   switch (query.set) {
     case "plugins":
@@ -345,6 +413,11 @@ const filter_items_set = (items, query) => {
       return items;
   }
 };
+
+/**
+ * @param {object} req
+ * @returns {div}
+ */
 const store_actions_dropdown = (req) =>
   div(
     { class: "dropdown" },
@@ -408,6 +481,12 @@ const store_actions_dropdown = (req) =>
       //create pack
     )
   );
+
+/**
+ * @param {object[]} items
+ * @param {object} req
+ * @returns {object}
+ */
 const plugin_store_html = (items, req) => {
   return {
     above: [
@@ -432,15 +511,20 @@ const plugin_store_html = (items, req) => {
       },
       {
         besides: items.map(store_item_html(req)),
-        widths: items.map((item) => 4), // todo warning that item uis unused
+        widths: items.map(() => 4),
       },
     ],
   };
 };
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const items = await get_store_items();
@@ -449,9 +533,14 @@ router.get(
   })
 );
 
+/**
+ * @name get/configure/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/configure/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -461,7 +550,10 @@ router.get(
       res.redirect("/plugins");
       return;
     }
-    const module = getState().plugins[plugin.name];
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(plugin.configuration || {});
@@ -472,14 +564,23 @@ router.get(
     );
   })
 );
+
+/**
+ * @name post/configure/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/configure/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
-    const module = getState().plugins[plugin.name];
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(req.body);
@@ -504,9 +605,15 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/new
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`New Plugin`), {
@@ -528,17 +635,25 @@ router.get(
     });
   })
 );
-router.get(
-  "/public/:plugin/:file",
-  setTenant,
-  error_catcher(async (req, res) => {
-    const { plugin, file } = req.params;
 
+/**
+ * @name get/public/:plugin/*
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
+router.get(
+  "/public/:plugin/*",
+  error_catcher(async (req, res) => {
+    const { plugin } = req.params;
+    const filepath = req.params[0];
     const location = getState().plugin_locations[plugin];
     if (location) {
-      const safeFile = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
+      const safeFile = path
+        .normalize(filepath)
+        .replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "public", safeFile);
-      if (fs.existsSync(fullpath)) res.sendFile(fullpath, { maxAge: "1h" });
+      if (fs.existsSync(fullpath)) res.sendFile(fullpath, { maxAge: "1d" });
       else res.status(404).send(req.__("Not found"));
     } else {
       res.status(404).send(req.__("Not found"));
@@ -546,9 +661,14 @@ router.get(
   })
 );
 
+/**
+ * @name get/pubdeps/:plugin/:dependency/:version/*
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/pubdeps/:plugin/:dependency/:version/*",
-  setTenant,
   error_catcher(async (req, res) => {
     const { plugin, dependency } = req.params;
     const filepath = req.params[0];
@@ -573,9 +693,14 @@ router.get(
   })
 );
 
+/**
+ * @name get/info/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/info/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -676,16 +801,22 @@ router.get(
   })
 );
 
+/**
+ * @name get/refresh
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/refresh",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     await getState().deleteConfig(
       "available_plugins",
       "available_plugins_fetched_at",
       "available_packs",
-      "available_packs_fetched_at"
+      "available_packs_fetched_at",
+      "latest_npm_version"
     );
     req.flash("success", req.__(`Store refreshed`));
 
@@ -693,9 +824,14 @@ router.get(
   })
 );
 
+/**
+ * @name get/upgrade
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/upgrade",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const installed_plugins = await Plugin.find({});
@@ -708,9 +844,14 @@ router.get(
   })
 );
 
+/**
+ * @name get/upgrade-plugin/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.get(
   "/upgrade-plugin/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -722,9 +863,15 @@ router.get(
     res.redirect(`/plugins/info/${plugin.name}`);
   })
 );
+
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const plugin = new Plugin(req.body);
@@ -752,9 +899,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/delete/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -782,14 +934,27 @@ router.post(
   })
 );
 
+/**
+ * @name post/install/:name
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
 router.post(
   "/install/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
     const plugin = await Plugin.store_by_name(decodeURIComponent(name));
+    if (!plugin) {
+      req.flash(
+        "error",
+        req.__(`Plugin %s not found`, text(decodeURIComponent(name)))
+      );
+      res.redirect(`/plugins`);
+      return;
+    }
     delete plugin.id;
     await load_plugins.loadAndSaveNewPlugin(plugin);
     const plugin_module = getState().plugins[name];

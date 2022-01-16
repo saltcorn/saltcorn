@@ -1,9 +1,20 @@
+/**
+ * @category server
+ * @module auth/testhelp
+ * @subcategory auth
+ */
 const request = require("supertest");
 const app = require("../app");
 const getApp = require("../app");
 const fixtures = require("@saltcorn/data/db/fixtures");
 const reset = require("@saltcorn/data/db/reset_schema");
 
+/**
+ * 
+ * @param {string} loc 
+ * @returns {void}
+ * @throws {Error}
+ */
 const toRedirect = (loc) => (res) => {
   if (res.statusCode !== 302) {
     console.log(res.text);
@@ -15,6 +26,13 @@ const toRedirect = (loc) => (res) => {
   }
 };
 
+/**
+ * 
+ * @param {number} txt 
+ * @param {number} expCode 
+ * @returns {void}
+ * @throws {Error}
+ */
 const toInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
@@ -29,6 +47,12 @@ const toInclude = (txt, expCode = 200) => (res) => {
   }
 };
 
+/**
+ * 
+ * @param {number} expCode 
+ * @returns {void}
+ * @throws {Error}
+ */
 const toSucceed = (expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
@@ -36,6 +60,13 @@ const toSucceed = (expCode = 200) => (res) => {
   }
 };
 
+/**
+ * 
+ * @param {number} txt 
+ * @param {number} expCode 
+ * @returns {void}
+ * @throws {Error}
+*/
 const toNotInclude = (txt, expCode = 200) => (res) => {
   if (res.statusCode !== expCode) {
     console.log(res.text);
@@ -49,6 +80,11 @@ const toNotInclude = (txt, expCode = 200) => (res) => {
     throw new Error(`Expected text ${txt} to be absent, but was present`);
   }
 };
+
+/**
+ * 
+ * @returns {Promise<void>}
+ */
 const getStaffLoginCookie = async () => {
   const app = await getApp({ disableCsrf: true });
   const res = await request(app)
@@ -59,6 +95,10 @@ const getStaffLoginCookie = async () => {
   return res.headers["set-cookie"][0];
 };
 
+/**
+ * 
+ * @returns {Promise<void>}
+ */
 const getAdminLoginCookie = async () => {
   const app = await getApp({ disableCsrf: true });
   const res = await request(app)
@@ -70,6 +110,12 @@ const getAdminLoginCookie = async () => {
   return res.headers["set-cookie"][0];
 };
 
+/**
+ * 
+ * @param {string} path 
+ * @param {string} dest 
+ * @returns {void}
+ */
 const itShouldRedirectUnauthToLogin = (path, dest) => {
   it(`should redirect unauth ${path} to ${dest || "login"}`, async () => {
     const app = await getApp({ disableCsrf: true });
@@ -82,11 +128,20 @@ const itShouldRedirectUnauthToLogin = (path, dest) => {
   });
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const resetToFixtures = async () => {
   await reset();
   await fixtures();
 };
 
+/**
+ * 
+ * @param {*} pred 
+ * @returns {void}
+ * @throws {Error}
+ */
 const succeedJsonWith = (pred) => (res) => {
   if (res.statusCode !== 200) {
     console.log(res.text);
@@ -99,6 +154,13 @@ const succeedJsonWith = (pred) => (res) => {
   }
 };
 
+/**
+ * 
+ * @param {number} code 
+ * @param {number} pred 
+ * @returns {void}
+ * @throws {Error}
+ */
 const respondJsonWith = (code, pred) => (res) => {
   if (res.statusCode !== code) {
     console.log(res.text);
@@ -110,6 +172,13 @@ const respondJsonWith = (code, pred) => (res) => {
     throw new Error(`Not satisfied`);
   }
 };
+
+/**
+ * 
+ * @param {object} res 
+ * @returns {void}
+ * @throws {Error}
+ */
 const notAuthorized = (res) => {
   if (res.statusCode !== 401) {
     console.log(res.text);

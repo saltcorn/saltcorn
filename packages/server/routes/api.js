@@ -9,11 +9,14 @@
  * To solve this in future needs to publish sc_role table into user tables of saltcorn.
  *
  * Documentation: https://wiki.saltcorn.com/view/ShowPage?title=API
- * @type {module:express-promise-router}
+ * @category server
+ * @module routes/api
+ * @subcategory routes
  */
+/** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
-const { setTenant, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -26,9 +29,21 @@ const {
   stateFieldsToWhere,
   readState,
 } = require("@saltcorn/data/plugin-helper");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace apiRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {*} fields
+ * @returns {*}
+ */
 const limitFields = (fields) => (r) => {
   if (fields) {
     let res = {};
@@ -44,61 +59,66 @@ const limitFields = (fields) => (r) => {
 
 /**
  * Check that user has right to read table data (only read in terms of CRUD)
- * @param req - httprequest
- * @param user - user based on access token
- * @param table
+ * @param {object} req httprequest
+ * @param {object} user - user based on access token
+ * @param {Table} table
  * @returns {boolean}
  */
-function accessAllowedRead(req, user, table){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowedRead(req, user, table) {
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
-    return role <= table.min_role_read;
+  return role <= table.min_role_read;
 }
 
 /**
  * Check that user has right to write table data (create, update, delete in terms of  CRUD)
- * @param req - httprequest
- * @param user - user based on access token
- * @param table
+ * @param {object} req httprequest
+ * @param {object} user user based on access token
+ * @param {Table} table
  * @returns {boolean}
  */
-function accessAllowedWrite(req, user, table){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowedWrite(req, user, table) {
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
-    return role <= table.min_role_write;
-
+  return role <= table.min_role_write;
 }
 /**
  * Check that user has right to trigger call
- * @param req - httprequest
- * @param user - user based on access token
- * @param trigger
+ * @param {object} req httprequest
+ * @param {object} user user based on access token
+ * @param {Trigger} trigger
  * @returns {boolean}
  */
-function accessAllowed(req, user, trigger){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowed(req, user, trigger) {
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
-    return role <= trigger.min_role;
+  return role <= trigger.min_role;
 }
+
 /**
  * Select Table rows using GET
+ * @name get/:tableName/
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 // todo add paging
 router.get(
   "/:tableName/",
-  setTenant,
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
@@ -147,13 +167,16 @@ router.get(
     )(req, res, next);
   })
 );
+
 /**
  * Call Action (Trigger) using POST
  * Attention! if you have table with name "action" it can be problem in future
+ * @name post/action/:actionname/
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.post(
   "/action/:actionname/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { actionname } = req.params;
     // todo protect action by authorization check
@@ -166,39 +189,42 @@ router.post(
       when_trigger: "API call",
     });
 
-    if (!trigger){
-        res.status(400).json({ error: req.__("Not found") });
-        return;
+    if (!trigger) {
+      res.status(400).json({ error: req.__("Not found") });
+      return;
     }
     await passport.authenticate(
-        "api-bearer",
-        { session: false },
-        async function (err, user, info) {
-            if (accessAllowed(req, user, trigger)) {
-                try {
-                    const action = getState().actions[trigger.action];
-                    const resp = await action.run({
-                        configuration: trigger.configuration,
-                        body: req.body,
-                        req,
-                    });
-                    res.json({success: true, data: resp});
-                } catch (e) {
-                    res.status(400).json({success: false, error: e.message});
-                }
-            } else {
-              res.status(401).json({ error: req.__("Not authorized") });
-            }
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowed(req, user, trigger)) {
+          try {
+            const action = getState().actions[trigger.action];
+            const resp = await action.run({
+              configuration: trigger.configuration,
+              body: req.body,
+              req,
+            });
+            res.json({ success: true, data: resp });
+          } catch (e) {
+            res.status(400).json({ success: false, error: e.message });
+          }
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
         }
+      }
     )(req, res, next);
   })
 );
+
 /**
  * Insert into Table using POST
+ * @name post/:tableName/
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.post(
   "/:tableName/",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
     const table = await Table.findOne({ name: tableName });
@@ -257,13 +283,16 @@ router.post(
     )(req, res, next);
   })
 );
+
 /**
  * Update Table row directed by ID using POST
  * POST api/<table>/id
+ * @name post/:tableName/:id
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.post(
   "/:tableName/:id",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
@@ -314,13 +343,16 @@ router.post(
     )(req, res, next);
   })
 );
+
 /**
  * Delete Table row by ID using DELETE
+ * @name delete/:tableName/:id
+ * @function
+ * @memberof module:routes/api~apiRouter
  */
 router.delete(
   "/:tableName/:id",
   // in case of primary key different from id - id will be string "undefined"
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
@@ -333,17 +365,14 @@ router.delete(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
-
           try {
-            if(id === "undefined"){
-                const pk_name = table.pk_name;
-                //const fields = await table.getFields();
-                const row = req.body;
-                //readState(row, fields);
-                await table.deleteRows({  [pk_name]:  row[pk_name]} );
-            }
-            else
-                await table.deleteRows({ id });
+            if (id === "undefined") {
+              const pk_name = table.pk_name;
+              //const fields = await table.getFields();
+              const row = req.body;
+              //readState(row, fields);
+              await table.deleteRows({ [pk_name]: row[pk_name] });
+            } else await table.deleteRows({ id });
             res.json({ success: true });
           } catch (e) {
             res.status(400).json({ error: e.message });

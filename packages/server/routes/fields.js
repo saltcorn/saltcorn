@@ -1,6 +1,9 @@
 /**
  *
  * Field Router
+ * @category server
+ * @module routes/fields
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
@@ -19,13 +22,30 @@ const {
 } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
+const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace fieldsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} req
+ * @param {*} fkey_opts
+ * @param {*} existing_names
+ * @param {*} id
+ * @param {*} hasData
+ * @returns {Promise<Form>}
+ */
 const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
   let isPrimary = false;
   let primaryTypes = Object.entries(getState().types)
@@ -116,22 +136,42 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
     ],
   });
 };
+
+/**
+ * @param {string} ctxType
+ * @returns {object}
+ */
 const calcFieldType = (ctxType) =>
   ctxType.startsWith("Key to")
     ? { type: "Key", reftable_name: ctxType.replace("Key to ", "") }
     : { type: ctxType };
 
+/**
+ * @param {*} attrs
+ * @param {object} req
+ * @returns {*}
+ */
 const translateAttributes = (attrs, req) =>
   Array.isArray(attrs)
     ? attrs.map((attr) => translateAttribute(attr, req))
     : attrs;
 
+/**
+ * @param {*} attr
+ * @param {*} req
+ * @returns {object}
+ */
 const translateAttribute = (attr, req) => {
-  const res = { ...attr };
+  let res = { ...attr };
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
+  if (res.isRepeat) res = new FieldRepeat(res);
   return res;
 };
 
+/**
+ * @param {*} req
+ * @returns {Workflow}
+ */
 const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
@@ -232,8 +272,11 @@ const fieldFlow = (req) =>
           if (context.type === "File") return true;
           if (new Field(context).is_fkey) return false;
           const type = getState().types[context.type];
-          if(!type) return false;
-          const attrs = Field.getTypeAttributes(type.attributes, context.table_id)
+          if (!type) return false;
+          const attrs = Field.getTypeAttributes(
+            type.attributes,
+            context.table_id
+          );
           return attrs.length > 0;
         },
         form: async (context) => {
@@ -254,7 +297,10 @@ const fieldFlow = (req) =>
             });
           } else {
             const type = getState().types[context.type];
-          const attrs = Field.getTypeAttributes(type.attributes, context.table_id)
+            const attrs = Field.getTypeAttributes(
+              type.attributes,
+              context.table_id
+            );
 
             return new Form({
               validator(vs) {
@@ -366,14 +412,30 @@ const fieldFlow = (req) =>
       },
     ],
   });
+
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const field = await Field.findOne({ id });
+    if (!field) {
+      req.flash("danger", req.__(`Field not found`));
+      res.redirect(`/table`);
+      return;
+    }
     const table = await Table.findOne({ id: field.table_id });
+    if (!field.type) {
+      req.flash("danger", req.__(`Type %s not found`, field.typename));
+      res.redirect(`/table/${field.table_id}`);
+      return;
+    }
     const wf = fieldFlow(req);
     const wfres = await wf.run(
       {
@@ -403,9 +465,14 @@ router.get(
   })
 );
 
+/**
+ * @name get/new/:table_id
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.get(
   "/new/:table_id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { table_id } = req.params;
@@ -434,9 +501,14 @@ router.get(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -454,9 +526,14 @@ router.post(
   })
 );
 
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const wf = fieldFlow(req);
@@ -497,9 +574,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/test-formula
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/test-formula",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { formula, tablename, stored } = req.body;
@@ -528,9 +610,15 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/show-calculated/:tableName/:fieldName/:fieldview
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/show-calculated/:tableName/:fieldName/:fieldview",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
@@ -557,9 +645,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/preview/:tableName/:fieldName/:fieldview
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/preview/:tableName/:fieldName/:fieldview",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
@@ -569,7 +662,15 @@ router.post(
     if (fieldName.includes(".")) {
       const [refNm, targetNm] = fieldName.split(".");
       const ref = fields.find((f) => f.name === refNm);
+      if (!ref) {
+        res.send("");
+        return;
+      }
       const reftable = await Table.findOne({ name: ref.reftable_name });
+      if (!reftable) {
+        res.send("");
+        return;
+      }
       const reffields = await reftable.getFields();
       field = reffields.find((f) => f.name === targetNm);
       row = await reftable.getRow({});
@@ -599,12 +700,12 @@ router.post(
     if (!fv && field.type === "Key" && fieldview === "select")
       res.send("<select disabled></select>");
     else if (!fv) res.send("");
-    else if (fv.isEdit)
+    else if (fv.isEdit || fv.isFilter)
       res.send(
         fv.run(
           field.name,
           undefined,
-          { disabled: true, ...configuration },
+          { disabled: true, ...configuration, ...(field.attributes || {}) },
           "",
           false,
           field
@@ -616,9 +717,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/preview/:tableName/:fieldName/
+ * @function
+ * @memberof module:routes/fields~fieldsRouter
+ * @function
+ */
 router.post(
   "/preview/:tableName/:fieldName/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.send("");

@@ -1,5 +1,16 @@
+/**
+ * @category server
+ * @module systemd
+ */
 const fetch = require("node-fetch");
 
+/**
+ * @param {number} interval 
+ * @param {object} notify 
+ * @param {object} opts 
+ * @param {string} opts.port
+ * @returns {void}
+ */
 const watchDog = (interval, notify, { port }) => {
   //we want to do a request / db check every 5 mins
   const pings_per_5_min = (5 * 60000) / interval;
@@ -37,7 +48,13 @@ const watchDog = (interval, notify, { port }) => {
   }
 };
 
-module.exports = (opts) => {
+module.exports = 
+/**
+ * @function
+ * @name "module.exports function"
+ * @param {object} opts 
+ */
+(opts) => {
   try {
     const notify = require("sd-notify");
     notify.ready();

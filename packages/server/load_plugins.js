@@ -2,6 +2,8 @@
  * Load plugins
  * File: load_plugins.js
  *
+ * @category server
+ * @module load_plugins
  */
 const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
@@ -42,22 +44,23 @@ const manager = new PluginManager({
     "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
   },
 });
+
 /**
  * Load one plugin
  * TODO correct names for functions loadPlugin, requirePlugin - currently uncler
  * @param plugin - plugin to load
  * @param force - force flag
- * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}|{readonly name: string, readonly location: string, plugin_module: *, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
  */
 const loadPlugin = async (plugin, force) => {
   // load pluging
   const res = await requirePlugin(plugin, force);
   // register plugin
   getState().registerPlugin(
-    plugin.name,
+    res.plugin_module.plugin_name || plugin.name,
     res.plugin_module,
     plugin.configuration,
-    res.location
+    res.location,
+    res.name
   );
   if (res.plugin_module.onLoad) {
     try {
@@ -68,13 +71,12 @@ const loadPlugin = async (plugin, force) => {
   }
   return res;
 };
+
 /**
  *
  * @param plugin
  * @param force
- * @returns {Promise<{plugin_module: *}|{readonly name: string, readonly location: string, plugin_module: any, readonly mainFile: string, readonly version: string, readonly dependencies: {[p: string]: string}}>}
  */
-
 const gitPullOrClone = async (plugin) => {
   await fs.promises.mkdir("git_plugins", { recursive: true });
   let keyfnm,
@@ -176,7 +178,13 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
       );
     }
   }
-  getState().registerPlugin(plugin.name, plugin_module, undefined, location);
+  getState().registerPlugin(
+    plugin_module.plugin_name || plugin.name,
+    plugin_module,
+    plugin.configuration,
+    location,
+    plugin.name
+  );
   if (plugin_module.onLoad) {
     try {
       await plugin_module.onLoad(plugin.configuration);
@@ -187,7 +195,11 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   if (version) plugin.version = version;
   if (!noSignalOrDB) await plugin.upsert();
   if (!noSignalOrDB && process.send)
-    process.send({ installPlugin: plugin, tenant: db.getTenantSchema(), force });
+    process.send({
+      installPlugin: plugin,
+      tenant: db.getTenantSchema(),
+      force,
+    });
 };
 
 module.exports = {

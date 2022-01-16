@@ -1,6 +1,8 @@
 /**
  * DB Tables discovery to Saltcorn tables.
- * @type {{changeConnection?: ((function(*): Promise<void>)|(function(*=): Promise<void>)), select?: ((function(*=, *=, *=): Promise<*>)|(function(*=, *=, *=): Promise<*>)), runWithTenant: ((function(*=, *=): (*))|(function(*, *): *)), set_sql_logging?: (function(*=): void), insert?: ((function(*=, *=, *=): Promise<undefined|*>)|(function(*=, *=, *=): Promise<undefined|*>)), update?: ((function(*=, *=, *=): Promise<void>)|(function(*=, *=, *=, *=): Promise<void>)), sql_log?: (function(*=, *=): void), deleteWhere?: ((function(*=, *=): Promise<void>)|(function(*=, *=): Promise<*>)), isSQLite: *, selectMaybeOne?: ((function(*=, *=): Promise<null|*>)|(function(*=, *=): Promise<null|*>)), close?: (function(): Promise<void>), drop_unique_constraint?: (function(*=, *): Promise<void>), enable_multi_tenant: (function()), getVersion?: ((function(): Promise<*>)|(function(*=): Promise<*>)), add_unique_constraint?: (function(*=, *): Promise<void>), getTenantSchema: ((function(): *)|(function(): *)), is_it_multi_tenant: ((function(): boolean)|(function(): boolean)), sqliteDatabase?: *, drop_reset_schema?: ((function(): Promise<void>)|(function(*): Promise<void>)), query?: ((function(*=, *=): Promise<unknown>)|(function(*=, *=): *)), count?: ((function(*=, *=): Promise<number>)|(function(*=, *=): Promise<number>)), pool?: *, connectObj: {sc_version: *, connectionString: string | undefined, git_commit: *, version_tag: *}|{sc_version: *, git_commit: *, version_tag: *}|boolean, sqlsanitize: *|(function(...[*]=): *), getClient?: (function(): Promise<*>), reset_sequence?: (function(*=): Promise<void>), copyFrom?: (function(*=, *=, *, *): Promise<void>), mkWhere: function(*=): {values: *, where: string|string}, selectOne?: ((function(*=, *=): Promise<*|undefined>)|(function(*=, *=): Promise<*|undefined>)), getTenantSchemaPrefix: function(): string|string}|{sqlsanitize?: *|(function(...[*]=): *), connectObj?: {sc_version: *, connectionString: string | undefined, git_commit: *, version_tag: *}|{sc_version: *, git_commit: *, version_tag: *}|boolean, isSQLite?: *, mkWhere?: function(*=): {values: *, where: string|string}, getTenantSchemaPrefix?: function(): string|string}}
+ * @category saltcorn-data
+ * @module models/discovery
+ * @subcategory models
  */
 const db = require("../db");
 const { getState } = require("../db/state");
@@ -12,8 +14,8 @@ const Table = require("./table");
  * List of discoverable tables.
  * Returns all tables that can be imported to Saltcorn from current tenant database schema.
  * The tables with name started with "_sc_" and tables imported to Saltcorn are ignored.
- * @param schema0 - current tenant db schema
- * @returns {Promise<*>} all tables that can be imported to Saltcorn from current tenant database schema
+ * @param {string} schema0 - current tenant db schema
+ * @returns {Promise<object[]>} all tables that can be imported to Saltcorn from current tenant database schema
  */
 const discoverable_tables = async (schema0) => {
   const schema = schema0 || db.getTenantSchema();
@@ -33,8 +35,8 @@ const discoverable_tables = async (schema0) => {
 };
 /**
  * List all views in current  tenant db schema
- * @param schema0 - current tenant db schema
- * @returns {Promise<*>} Return list of views
+ * @param {string} schema0 - current tenant db schema
+ * @returns {Promise<object[]>} Return list of views
  */
 const get_existing_views = async (schema0) => {
   const schema = schema0 || db.getTenantSchema();
@@ -48,8 +50,8 @@ const get_existing_views = async (schema0) => {
 };
 /**
  * Mapping SQL Type to Saltcorn type
- * @param sql_name - SQL type name
- * @returns {string|*} return Saltcorn type
+ * @param {string} sql_name - SQL type name
+ * @returns {string|void} return Saltcorn type
  */
 const findType = (sql_name) => {
   const fixed = {
@@ -78,9 +80,9 @@ const findType = (sql_name) => {
 };
 /**
  * Discover tables definitions
- * @param tableNames - list of table names
- * @param schema0 - db schema
- * @returns {Promise<{tables: *[]}>}
+ * @param {string[]} tableNames - list of table names
+ * @param {string} schema0 - db schema
+ * @returns {Promise<object>}
  */
 const discover_tables = async (tableNames, schema0) => {
   const schema = schema0 || db.getTenantSchema();
@@ -167,7 +169,7 @@ const discover_tables = async (tableNames, schema0) => {
 };
 /**
  * Add discovered tables to Saltcorn
- * @param pack - table definition
+ * @param {object} pack - table definition
  * @returns {Promise<void>}
  */
 const implement_discovery = async (pack) => {

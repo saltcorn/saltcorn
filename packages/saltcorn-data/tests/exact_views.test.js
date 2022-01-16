@@ -31,6 +31,7 @@ const mkTester = ({ name, viewtemplate, set_id, table }) => async ({
     id ? { id } : set_id ? { id: set_id } : {},
     mockReqRes
   );
+  if (res !== response) console.log(res);
   expect(res).toBe(response);
   await v.delete();
 };
@@ -128,7 +129,7 @@ describe("Show view", () => {
           configuration: { code: 'console.log("1")' },
         },
       ],
-      response: `<div class="row"><div class="col-6">1</div><div class="col-6"><a href="javascript:view_post('testshow', 'run_action', {rndid:'1a8ac3', id:1});" class="btn btn-success btn-sm">you're my number</a></div></div>`,
+      response: `<div class="row w-100"><div class="col-6">1</div><div class="col-6"><a href="javascript:view_post('testshow', 'run_action', {rndid:'1a8ac3', id:1});" class="btn btn-success btn-sm">you're my number</a></div></div>`,
     });
     await test_show({
       layout: {
@@ -179,7 +180,7 @@ describe("Show view", () => {
           in_modal: true,
         },
       ],
-      response: `<div class="row"><div class="col-6"><div class="card mt-4 shadow" ><div class="card-body"><button class="btn btn-secondary btn-sm" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-left"  style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967"   >Herman Melville</a></div></div></div>`,
+      response: `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" type="button" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-left" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
     });
     await test_show({
       layout: {
@@ -200,7 +201,219 @@ describe("Show view", () => {
         isFormula: {},
       },
       columns: [],
-      response: `<div class="card mt-4 shadow" ><div class="card-body">Herman Melville<br />Herman Melville</div></div>`,
+      response: `<div class="card mt-4 shadow"><div class="card-body">Herman Melville<br />Herman Melville</div></div>`,
+    });
+    const showbooks1 = {
+      layout: {
+        above: [
+          {
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    contents: "Author",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "as_text",
+                    textStyle: "",
+                    field_name: "author",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          { type: "line_break" },
+          {
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    contents: "Pages",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "show",
+                    textStyle: "",
+                    field_name: "pages",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          { type: "line_break" },
+          {
+            type: "container",
+            style: {},
+            bgType: "None",
+            hAlign: "left",
+            margin: [0, 0, 0, 0],
+            rotate: 0,
+            vAlign: "top",
+            bgColor: "#ffffff",
+            display: "block",
+            padding: [0, 0, 0, 0],
+            bgFileId: 0,
+            contents: {
+              type: "action",
+              block: false,
+              rndid: "746098",
+              confirm: false,
+              minRole: 10,
+              isFormula: {},
+              action_icon: "",
+              action_name: "Delete",
+              action_label: "",
+              configuration: {},
+            },
+            imageSize: "contain",
+            isFormula: {},
+            minHeight: 0,
+            textColor: "#ffffff",
+            widthUnit: "px",
+            heightUnit: "px",
+            htmlElement: "div",
+            showForRole: [
+              null,
+              true,
+              null,
+              null,
+              true,
+              null,
+              null,
+              null,
+              false,
+              null,
+              false,
+            ],
+            gradEndColor: "#88ff88",
+            setTextColor: false,
+            fullPageWidth: false,
+            gradDirection: "0",
+            minHeightUnit: "px",
+            showIfFormula: "",
+            gradStartColor: "#ff8888",
+            maxScreenWidth: "",
+            minScreenWidth: "",
+            show_for_owner: false,
+          },
+          {
+            type: "container",
+            style: {},
+            bgType: "None",
+            hAlign: "left",
+            margin: [0, 0, 0, 0],
+            rotate: 0,
+            vAlign: "top",
+            bgColor: "#ffffff",
+            display: "block",
+            padding: [0, 0, 0, 0],
+            bgFileId: 0,
+            contents: {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              contents: "VERY LONG",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            imageSize: "contain",
+            isFormula: {},
+            minHeight: 0,
+            textColor: "#ffffff",
+            widthUnit: "px",
+            heightUnit: "px",
+            htmlElement: "div",
+            showForRole: [],
+            gradEndColor: "#88ff88",
+            setTextColor: false,
+            fullPageWidth: false,
+            gradDirection: "0",
+            minHeightUnit: "px",
+            showIfFormula: "pages>800",
+            gradStartColor: "#ff8888",
+            maxScreenWidth: "",
+            minScreenWidth: "",
+            show_for_owner: false,
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          field_name: "author",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "show",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {},
+        },
+        {
+          type: "Action",
+          rndid: "746098",
+          confirm: false,
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Delete",
+          action_label: "",
+          configuration: {},
+        },
+      ],
+    };
+    await test_show({
+      ...showbooks1,
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-left" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/1?redirect=/view/testshow" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="text-left" style="min-height: 0px;border: 0px undefined black;    ">VERY LONG</div>`,
+    });
+    await test_show({
+      ...showbooks1,
+      id: 2,
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-left" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/2?redirect=/view/testshow" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div>`,
     });
   });
 });
@@ -287,13 +500,13 @@ describe("Edit view", () => {
     await test_edit({
       layout,
       columns,
-      response: `<form action="/view/testedit" class="form-namespace " method="post" ><input type="hidden" name="_csrf" value=""><div class="row"><div class="col-2">Name</div><div class="col-10"><input type="text"  class="form-control  "  data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value="" ></option><option value="1" >Herman Melville</option><option value="2" >Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value="" ></option><option value="1" >1</option><option value="2" >2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">1</option><option value="2">2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
     await test_edit({
       id: 1,
       layout,
       columns,
-      response: `<form action="/view/testedit" class="form-namespace " method="post" ><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row"><div class="col-2">Name</div><div class="col-10"><input type="text"  class="form-control  "  data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value="" ></option><option value="1" selected>Herman Melville</option><option value="2" >Leo Tolstoy</option></select></div></div><br /><div class="row"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value="" ></option><option value="1" >1</option><option value="2" >2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">1</option><option value="2">2</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
   });
 });
@@ -352,7 +565,7 @@ describe("List view", () => {
         },
       ],
       response:
-        '<div class="table-responsive"><table class="table table-sm" ><thead><tr><th><a href="javascript:sortby(\'name\', false)">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th /><th /></tr></thead><tbody><tr><td>Kirk Douglas</td><td /><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=1" >6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=2" >7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>',
+        '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'name\', false)">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th></th><th></th></tr></thead><tbody><tr><td>Kirk Douglas</td><td></td><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=1">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=2">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>',
     });
   });
 });
@@ -394,7 +607,7 @@ describe("Filter view", () => {
       ],
       viewname: "testfilter",
       response:
-        '<div class="row"><div class="col-6"><select name="ddfilterpatients.favbook.name" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'patients.favbook.name\'): set_state_field(\'patients.favbook.name\', this.value)"><option value=""  class="text-muted" /><option value="Kirk Douglas"  >Kirk Douglas</option><option value="Michael Douglas"  >Michael Douglas</option></select></div><div class="col-6"><button class="btn btn-outline-primary" onClick="set_state_field(\'pages\', \'13\')">thirteen</button></div></div><button class="btn btn-outline-primary" onClick="set_state_field(\'patients.favbook.name\', \'Jim\')">Jim</button><select name="ddfilterauthor" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'author\'): set_state_field(\'author\', this.value)"><option value=""  class="text-muted" /><option value="Herman Melville"  >Herman Melville</option><option value="Leo Tolstoy"  >Leo Tolstoy</option></select>',
+        '<div class="row w-100"><div class="col-6"><select name="ddfilterpatients.favbook.name" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'patients.favbook.name\'): set_state_field(\'patients.favbook.name\', this.value)"><option value="" class="text-muted"></option><option value="Kirk Douglas">Kirk Douglas</option><option value="Michael Douglas">Michael Douglas</option></select></div><div class="col-6"><button class="btn btn-outline-primary" onClick="set_state_field(\'pages\', \'13\')">thirteen</button></div></div><button class="btn btn-outline-primary" onClick="set_state_field(\'patients.favbook.name\', \'Jim\')">Jim</button><select name="ddfilterauthor" class="form-control d-inline" style="width: unset;" onchange="this.value==\'\' ? unset_state_field(\'author\'): set_state_field(\'author\', this.value)"><option value="" class="text-muted"></option><option value="Herman Melville">Herman Melville</option><option value="Leo Tolstoy">Leo Tolstoy</option></select>',
     });
   });
 });
@@ -447,7 +660,7 @@ describe("Page", () => {
             view: "authorlist",
             state: "shared",
             contents:
-              '<div class="table-responsive"><table class="table table-sm" ><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>authorshow</th><th /><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1" >authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2" >authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
+              '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>authorshow</th><th></th><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
           },
           {
             name: "18a8cc",
@@ -509,7 +722,7 @@ describe("Page", () => {
             view: "authorlist",
             state: "shared",
             contents:
-              '<div class="table-responsive"><table class="table table-sm" ><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>authorshow</th><th /><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
+              '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>authorshow</th><th></th><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
           },
           {
             name: "18a8cc",

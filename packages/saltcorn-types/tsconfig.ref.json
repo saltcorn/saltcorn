@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "skipLibCheck": true,
+
+    "composite": true,
+    "declaration": true /* set to true by "composite" */
+  }
+}

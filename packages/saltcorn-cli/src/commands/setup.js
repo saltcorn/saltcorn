@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/setup
+ */
 const { Command, flags } = require("@oclif/command");
 const {
   getConnectObject,
@@ -14,12 +18,20 @@ var tcpPortUsed = require("tcp-port-used");
 const { spawnSync } = require("child_process");
 var sudo = require("sudo");
 
+/**
+ * 
+ * @returns {string}
+ */
 const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
   if (s.length > 7) return s;
   else return gen_password();
 };
 
+/**
+ * 
+ * @returns {Promise<object>}
+ */
 const askDevServer = async () => {
   if (process.platform !== "linux") {
     console.log("Non-linux platform, continuing development-mode install");
@@ -45,11 +57,18 @@ const askDevServer = async () => {
   return responses.mode;
 };
 
+/**
+ * 
+ * @param {*} mod 
+ */
 const unloadModule = (mod) => {
   var name = require.resolve(mod);
   delete require.cache[name];
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const setupDevMode = async () => {
   const dbPath = path.join(defaultDataPath, "scdb.sqlite");
   fs.promises.mkdir(defaultDataPath, { recursive: true });
@@ -65,6 +84,9 @@ const setupDevMode = async () => {
   }
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const check_db = async () => {
   const inUse = await tcpPortUsed.check(5432, "127.0.0.1");
   if (!inUse) {
@@ -92,6 +114,11 @@ const check_db = async () => {
   }
 };
 
+/**
+ * 
+ * @param {*} args 
+ * @returns {Promise<void>}
+ */
 const asyncSudo = (args) => {
   return new Promise(function (resolve, reject) {
     var child = sudo(args, { cachePassword: true });
@@ -108,10 +135,20 @@ const asyncSudo = (args) => {
   });
 };
 
+/**
+ * 
+ * @param {*} args 
+ * @returns {Promise<void>}
+ */
 const asyncSudoPostgres = (args) => {
   return asyncSudo(["sudo", "-u", "postgres", ...args]);
 };
 
+/**
+ * 
+ * @param {string} for_who 
+ * @returns {Promise<string>}
+ */
 const get_password = async (for_who) => {
   var password = await cli.prompt(`Set ${for_who} to [auto-generate]`, {
     type: "hide",
@@ -125,6 +162,9 @@ const get_password = async (for_who) => {
   return password;
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const install_db = async () => {
   await asyncSudo(["apt", "install", "-y", "postgresql", "postgresql-client"]);
   await asyncSudo(["service", "postgresql", "start"]);
@@ -175,6 +215,10 @@ const install_db = async () => {
   });
 };
 
+/**
+ * 
+ * @returns {Promise<object>}
+ */
 const prompt_connection = async () => {
   console.log("Enter database connection parameters");
   const host = await cli.prompt("Database host [localhost]", {
@@ -203,16 +247,27 @@ const prompt_connection = async () => {
   };
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const setup_connection_config = async () => {
   const connobj = await prompt_connection();
   await write_connection_config(connobj);
 };
 
+/**
+ * 
+ * @param {object} connobj 
+ * @returns {Promise<void>}
+ */
 const write_connection_config = async (connobj) => {
   fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const setup_connection = async () => {
   const connobj = getConnectObject();
   if (connobj) {
@@ -234,6 +289,12 @@ const setup_connection = async () => {
   }
 };
 
+/**
+ * 
+ * @param {object} db 
+ * @param {string} tblname 
+ * @returns {Promise<boolean>}
+ */
 const table_exists = async (db, tblname) => {
   const { rows } = await db.query(`SELECT EXISTS 
     (
@@ -245,6 +306,9 @@ const table_exists = async (db, tblname) => {
   return rows[0].exists;
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const setup_schema = async () => {
   const db = require("@saltcorn/data/db");
   const ex_tables = await table_exists(db, "_sc_tables");
@@ -256,6 +320,9 @@ const setup_schema = async () => {
   } else console.log("Schema already present");
 };
 
+/**
+ * @returns {Promise<void>}
+ */
 const setup_users = async () => {
   const User = require("@saltcorn/data/models/user");
   const hasUsers = await User.nonEmpty();
@@ -269,8 +336,17 @@ const setup_users = async () => {
   }
 };
 
+/**
+ * SetupCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class SetupCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
+    console.log("Run setip");
     const mode = await askDevServer();
     if (mode == "server") {
       // check if i already know how to connect
@@ -286,12 +362,18 @@ class SetupCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 SetupCommand.description = `Set up a new system
 ...
 This will attempt to install or connect a database, and set up a 
 configuration file
 `;
 
+/**
+ * @type {object}
+ */
 SetupCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
 };

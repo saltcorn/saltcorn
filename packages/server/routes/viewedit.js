@@ -1,6 +1,8 @@
 /**
  * View Edit Router
- *
+ * @category server
+ * @module routes/viewedit
+ * @subcategory routes
  */
 
 const Router = require("express-promise-router");
@@ -28,7 +30,7 @@ const {
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
@@ -40,9 +42,22 @@ const Page = require("@saltcorn/data/models/page");
 const { add_to_menu } = require("@saltcorn/data/models/pack");
 const { editRoleForm } = require("../markup/forms.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace vieweditRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} view
+ * @param {object[]} roles
+ * @param {object} req
+ * @returns {Form}
+ */
 const editViewRoleForm = (view, roles, req) =>
   editRoleForm({
     url: `/viewedit/setrole/${view.id}`,
@@ -51,6 +66,11 @@ const editViewRoleForm = (view, roles, req) =>
     req,
   });
 
+/**
+ * @param {object} view
+ * @param {object} req
+ * @returns {div}
+ */
 const view_dropdown = (view, req) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
     a(
@@ -86,9 +106,15 @@ const view_dropdown = (view, req) =>
       view.name
     ),
   ]);
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var orderBy = "name";
@@ -144,6 +170,14 @@ router.get(
               },
               {
                 label: "",
+                key: (r) =>
+                  link(
+                    `/viewedit/config/${encodeURIComponent(r.name)}`,
+                    req.__("Configure")
+                  ),
+              },
+              {
+                label: "",
                 key: (r) => view_dropdown(r, req),
               },
             ],
@@ -182,15 +216,29 @@ router.get(
   })
 );
 
+/**
+ * @param {object} o
+ * @param {function} f
+ * @returns {object}
+ */
 const mapObjectValues = (o, f) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v)]));
 
-const viewForm = (req, tableOptions, roles, pages, values) => {
+/**
+ * @param {object} req
+ * @param {object} tableOptions
+ * @param {object[]} roles
+ * @param {object[]} pages
+ * @param {object} values
+ * @returns {Form}
+ */
+const viewForm = async (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
   const hasTable = Object.entries(getState().viewtemplates)
     .filter(([k, v]) => !v.tableless)
     .map(([k, v]) => k);
+  const slugOptions = await Table.allSlugOptions();
   return new Form({
     action: "/viewedit/save",
     submitLabel: req.__("Configure") + " &raquo;",
@@ -205,12 +253,12 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
         ),
       }),
       new Field({
-          label: req.__("Description"),
-          name: "description",
-          type: "String",
-          sublabel: req.__(
-              "Description allows you to give more information about the view."
-          ),
+        label: req.__("Description"),
+        name: "description",
+        type: "String",
+        sublabel: req.__(
+          "Description allows you to give more information about the view."
+        ),
       }),
       new Field({
         label: req.__("Template"),
@@ -255,6 +303,19 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
           ...pages.map((p) => ({ value: p.name, label: p.name })),
         ],
       }),
+      new Field({
+        name: "slug",
+        label: req.__("Slug"),
+        sublabel: req.__("Field that can be used for a prettier URL structure"),
+        type: "String",
+        attributes: {
+          calcOptions: [
+            "table_name",
+            mapObjectValues(slugOptions, (lvs) => lvs.map((lv) => lv.label)),
+          ],
+        },
+        showIf: { viewtemplate: hasTable },
+      }),
       ...(isEdit
         ? [
             new Field({
@@ -271,9 +332,15 @@ const viewForm = (req, tableOptions, roles, pages, values) => {
     values,
   });
 };
+
+/**
+ * @name get/edit/:viewname
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/edit/:viewname",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
@@ -289,10 +356,15 @@ router.get(
       (t) => t.id === viewrow.table_id || t.name === viewrow.exttable_name
     );
     viewrow.table_name = currentTable && currentTable.name;
+    if (viewrow.slug && currentTable) {
+      const slugOptions = await currentTable.slug_options();
+      const slug = slugOptions.find((so) => so.label === viewrow.slug.label);
+      if (slug) viewrow.slug = slug.label;
+    }
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages, viewrow);
+    const form = await viewForm(req, tableOptions, roles, pages, viewrow);
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -313,16 +385,21 @@ router.get(
   })
 );
 
+/**
+ * @name get/new
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages);
+    const form = await viewForm(req, tableOptions, roles, pages);
     if (req.query && req.query.table) {
       form.values.table_name = req.query.table;
     }
@@ -345,16 +422,21 @@ router.get(
   })
 );
 
+/**
+ * @name post/save
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/save",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external();
     const tableOptions = tables.map((t) => t.name);
     const roles = await User.get_roles();
     const pages = await Page.find();
-    const form = viewForm(req, tableOptions, roles, pages);
+    const form = await viewForm(req, tableOptions, roles, pages);
     const result = form.validate(req.body);
 
     const sendForm = (form) => {
@@ -382,23 +464,31 @@ router.post(
         form.hasErrors = true;
         sendForm(form);
       } else {
-          const existing_view = await View.findOne({ name: result.success.name });
-          if(typeof existing_view!=="undefined")
-              if(req.body.id!=existing_view.id){  // may be need !== but doesnt work
-              form.errors.name = req.__("A view with this name already exists");
-              form.hasErrors = true;
-              sendForm(form);
-              return;
+        const existing_view = await View.findOne({ name: result.success.name });
+        if (typeof existing_view !== "undefined")
+          if (req.body.id != existing_view.id) {
+            // may be need !== but doesnt work
+            form.errors.name = req.__("A view with this name already exists");
+            form.hasErrors = true;
+            sendForm(form);
+            return;
           }
 
-          const v = result.success;
-          if (v.table_name) {
+        const v = result.success;
+        if (v.table_name) {
           const table = await Table.findOne({ name: v.table_name });
-          if (table && table.id) v.table_id = table.id;
-          else if (table && table.external) v.exttable_name = v.table_name;
+          if (table && table.id) {
+            v.table_id = table.id;
+          } else if (table && table.external) v.exttable_name = v.table_name;
         }
+        if (v.table_id) {
+          const table = await Table.findOne({ id: v.table_id });
+          const slugOptions = await table.slug_options();
+          const slug = slugOptions.find((so) => so.label === v.slug);
+          v.slug = slug || null;
+        }
+        const table = await Table.findOne({ name: v.table_name });
         delete v.table_name;
-
         if (req.body.id) {
           await View.update(v, +req.body.id);
         } else {
@@ -414,6 +504,15 @@ router.post(
     }
   })
 );
+
+/**
+ * @param {object} view
+ * @param {Workflow} wf
+ * @param {object} wfres
+ * @param {object} req
+ * @param {object} res
+ * @returns {void}
+ */
 const respondWorkflow = (view, wf, wfres, req, res) => {
   const wrap = (contents, noCard) => ({
     above: [
@@ -446,9 +545,15 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
     );
   } else res.redirect(wfres.redirect);
 };
+
+/**
+ * @name get/config/:name
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.get(
   "/config/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -473,9 +578,14 @@ router.get(
   })
 );
 
+/**
+ * @name post/config/:name
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/config/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -486,9 +596,15 @@ router.post(
     respondWorkflow(view, configFlow, wfres, req, res);
   })
 );
+
+/**
+ * @name post/add-to-menu/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/add-to-menu/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -510,9 +626,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/clone/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -526,9 +647,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -538,9 +664,14 @@ router.post(
   })
 );
 
+/**
+ * @name post/savebuilder/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/savebuilder/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -555,9 +686,15 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/setrole/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
 router.post(
   "/setrole/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

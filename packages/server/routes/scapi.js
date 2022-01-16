@@ -1,11 +1,15 @@
 /**
  * SC service API handler
  * Allows to list tables, views, etc
- * @type {module:express-promise-router}
+ * @category server
+ * @module routes/scapi
+ * @subcategory routes
  */
+
+/** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
-const { setTenant, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
@@ -21,261 +25,285 @@ const {
   stateFieldsToWhere,
   readState,
 } = require("@saltcorn/data/plugin-helper");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace scapiRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
-
 
 /**
  * Check that user has right to read sc service api data.
  * Only admin currently can call this api.
- * @param req - httprequest
- * @param user - user based on access token
+ * @param {object} req httprequest
+ * @param {object} user user based on access token
  * @returns {boolean}
  */
-function accessAllowedRead(req, user){
-    const role = req.isAuthenticated()
-        ? req.user.role_id
-        : user && user.role_id
-            ? user.role_id
-            : 10;
+function accessAllowedRead(req, user) {
+  const role =
+    req.user && req.user.id
+      ? req.user.role_id
+      : user && user.role_id
+      ? user.role_id
+      : 10;
 
-    if (role === 1) return true;
-    return false;
+  if (role === 1) return true;
+  return false;
 }
 
-/**
- * List SC Tables using GET
- */
 // todo add paging
 // todo more granular access rights for api. Currently only admin can call this api.
 // todo add support of fields
-router.get(
-    "/sc_tables/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const tables = await Table.find({});
-
-                    res.json({ success: tables });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
- * List SC Views using GET
+ * List SC Tables using GET
+ * @name get/sc_tables
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_tables/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const tables = await Table.find({});
+
+          res.json({ success: tables });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights for api. Currently only admin can call this api.
+/**
+ * List SC Views using GET
+ * @name get/sc_views
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
+ */
 router.get(
-    "/sc_views/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
+  "/sc_views/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const views = await View.find({});
 
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const views = await View.find({});
-
-                    res.json({ success: views });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
+          res.json({ success: views });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
 );
 
+// todo add paging
+// todo more granular access rights to api. Currently only admin can call this api.
 /**
  * List SC Pages using GET
+ * @name get/sc_pages
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_pages/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const pages = await Page.find({});
+
+          res.json({ success: pages });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
-router.get(
-    "/sc_pages/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const pages = await Page.find({});
-
-                    res.json({ success: pages });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
  * List SC Files using GET
+ * @name get/sc_files
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_files/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const files = await File.find({});
+
+          res.json({ success: files });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
-router.get(
-    "/sc_files/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const files = await File.find({});
-
-                    res.json({ success: files });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
  * List SC Triggers using GET
+ * @name get/sc_triggers
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_triggers/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const triggers = await Trigger.find({});
+
+          res.json({ success: triggers });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
-router.get(
-    "/sc_triggers/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const triggers = await Trigger.find({});
-
-                    res.json({ success: triggers });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
  * List SC Roles using GET
+ * @name get/sc_roles
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_roles/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const roles = await Role.find({});
+
+          res.json({ success: roles });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
-router.get(
-    "/sc_roles/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const roles = await Role.find({});
-
-                    res.json({ success: roles });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
  * List SC Tenants using GET
+ * @name get/sc_tenants
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_tenants/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const tenants = await Tenant.getAllTenants();
+
+          res.json({ success: tenants });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
-router.get(
-    "/sc_tenants/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const tenants = await Tenant.getAllTenants();
-
-                    res.json({ success: tenants });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
  * List SC Plugins using GET
+ * @name get/sc_plugins
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
+router.get(
+  "/sc_plugins/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const plugins = await Plugin.find({});
+
+          res.json({ success: plugins });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 // todo add paging
 // todo more granular access rights to api. Currently only admin can call this api.
-router.get(
-    "/sc_plugins/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
-
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const plugins = await Plugin.find({});
-
-                    res.json({ success: plugins });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
-);
 /**
  * List SC Config Items using GET
+ * @name get/sc_config
+ * @function
+ * @memberof module:routes/scapi~scapiRouter
+ * @function
  */
-// todo add paging
-// todo more granular access rights to api. Currently only admin can call this api.
 router.get(
-    "/sc_config/",
-    setTenant,
-    error_catcher(async (req, res, next) => {
+  "/sc_config/",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const configVars = await Config.getAllConfig();
 
-        await passport.authenticate(
-            "api-bearer",
-            { session: false },
-            async function (err, user, info) {
-                if (accessAllowedRead(req, user)) {
-
-                    const configVars = await Config.getAllConfig();
-
-                    res.json({ success: configVars });
-                } else {
-                    res.status(401).json({ error: req.__("Not authorized") });
-                }
-            }
-        )(req, res, next);
-    })
+          res.json({ success: configVars });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
 );

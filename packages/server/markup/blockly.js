@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module markup/blockly
+ * @subcategory markup
+ */
+
 const {
   div,
   code,
@@ -9,6 +15,11 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 
+/**
+ * @param {object} opts
+ * @param {string} opts.locale
+ * @returns {string}
+ */
 const blocklyImportScripts = ({ locale }) =>
   script({
     src: "/plugins/pubdeps/base/blockly/6.20210701.0/blockly_compressed.js",
@@ -26,7 +37,11 @@ const blocklyImportScripts = ({ locale }) =>
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
   });
 
-const blocklyToolbox = () => `
+/**
+ * @param {boolean} hasActions 
+ * @returns {string}
+ */
+const blocklyToolbox = (hasActions) => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="Control Flow"  categorystyle="loop_category">
       <block type="controls_if"></block>
@@ -59,6 +74,7 @@ const blocklyToolbox = () => `
     
     <category name="Rows"  colour="20">
     <block type="empty"></block>
+    <block type="unit_row"></block>
     <block type="row"></block>
     <block type="row_get"></block>
     <block type="row_set"></block>
@@ -67,16 +83,19 @@ const blocklyToolbox = () => `
     <block type="insert_table"></block>
     <block type="update_table"></block>
     <block type="delete_table"></block>
+    <block type="delete_table_where"></block>
     </category>
 
     <category name="Lists" categorystyle="list_category">
     <block type="lists_create_empty"></block>
+    <block type="push_to_list"></block>
     <block type="lists_length"></block>
     <block type="lists_getIndex"></block>
     
     </category>
     <category name="Actions"  colour="80">
       <block type="console"></block>
+      ${hasActions ? `<block type="action"></block>` : ""}
       <block type="emit_event"></block>
       <block type="http_request"></block>
       <block type="sleep"></block>
@@ -87,6 +106,7 @@ const blocklyToolbox = () => `
     <category name="Variables" categorystyle="variable_category">
     <block type="variables_get"></block>
     <block type="variables_set"></block>
+    <block type="now"></block>
     </category>
 
   </xml>`;

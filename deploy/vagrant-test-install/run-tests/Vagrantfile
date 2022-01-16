@@ -1,0 +1,115 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "ubuntu/focal64"
+
+  config.ssh.forward_agent = true
+
+  config.ssh.insert_key = false
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+    vb.memory = "2048"
+  end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+  
+  #config.vm.synced_folder "../../../", "/home/vagrant/saltcorn"
+  
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  config.vm.provision "shell", inline: <<-SHELL
+
+    set -e
+    wget -qO - https://deb.nodesource.com/setup_14.x | bash -
+    apt-get install -qqy nodejs libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban git libcap2-bin unattended-upgrades libsystemd-dev chromium-browser python3-pip python3-pytest
+    sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
+
+    sudo -iu postgres createdb saltcorn 
+    sudo -iu postgres createdb saltcorn_test
+    sudo -iu postgres psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'foobar';"
+    sudo -iu vagrant mkdir -p /home/vagrant/.config/
+
+    cat <<EOF > /home/vagrant/.config/.saltcorn
+    {
+        "host":"localhost",
+        "port":5432,
+        "database":"saltcorn",
+        "user":"postgres",
+        "password":"foobar",
+        "session_secret":"jjtrjtyjd",
+        "multi_tenant": true
+    }
+EOF
+    chown vagrant:vagrant /home/vagrant/.config/.saltcorn
+    chmod 600 /home/vagrant/.config/.saltcorn
+    echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | sudo tee -a /etc/hosts
+    echo '127.0.0.1 otherexample.com' | sudo tee -a /etc/hosts
+    npm install -g lerna
+    sudo -iu vagrant pip3 install requests
+    sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
+    sudo -iu vagrant bash -c "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true cd saltcorn && lerna bootstrap --no-ci"
+    sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests"
+    sudo -iu vagrant bash -c "cd saltcorn && pytest-3 infosec-scan/"
+    sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
+    sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
+  SHELL
+end
+
+#then:
+
+# git clone https://github.com/saltcorn/saltcorn.git
+# git checkout <branch>
+# PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true lerna bootstrap --no-ci
+# packages/saltcorn-cli/bin/saltcorn run-tests

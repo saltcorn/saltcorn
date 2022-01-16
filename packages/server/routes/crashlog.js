@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/crashlog
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const Crash = require("@saltcorn/data/models/crash");
 const db = require("@saltcorn/data/db");
@@ -14,15 +20,27 @@ const {
   p,
 } = require("@saltcorn/markup/tags");
 
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { send_events_page } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace crashlogRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/crashlog~crashlogRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const state = req.query,
@@ -76,9 +94,14 @@ router.get(
   })
 );
 
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/crashlog~crashlogRouter
+ * @function
+ */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const err = {
@@ -90,9 +113,14 @@ router.post(
   })
 );
 
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:routes/crashlog~crashlogRouter
+ * @function
+ */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

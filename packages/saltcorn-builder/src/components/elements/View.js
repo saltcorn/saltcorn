@@ -1,4 +1,10 @@
-import React, { useContext, useEffect } from "react";
+/**
+ * @category saltcorn-builder
+ * @module components/elements/View
+ * @subcategory components / elements
+ */
+
+import React, { Fragment, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
@@ -8,9 +14,20 @@ import {
   BlockSetting,
   MinRoleSetting,
   fetchViewPreview,
+  ConfigForm,
 } from "./utils";
 
-export const View = ({ name, view, state }) => {
+export /**
+ * @param {object} props
+ * @param {*} props.name
+ * @param {string} props.view
+ * @param {*} props.state
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const View = ({ name, view, configuration, state }) => {
   const {
     selected,
     node_id,
@@ -28,9 +45,10 @@ export const View = ({ name, view, state }) => {
       options,
       view,
       setPreviews,
+      configuration,
       node_id,
     })();
-  }, []);
+  }, [view, configuration, state]);
   return (
     <div
       ref={(dom) => connect(drag(dom))}
@@ -50,29 +68,41 @@ export const View = ({ name, view, state }) => {
   );
 };
 
-export const ViewSettings = () => {
+export /**
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const ViewSettings = () => {
+  const node = useNode((node) => ({
+    name: node.data.props.name,
+    view: node.data.props.view,
+    state: node.data.props.state,
+    configuration: node.data.props.configuration, // fixed states
+    node_id: node.id,
+  }));
+
   const {
     actions: { setProp },
     name,
     view,
     state,
     node_id,
-  } = useNode((node) => ({
-    name: node.data.props.name,
-    view: node.data.props.view,
-    state: node.data.props.state,
-    node_id: node.id,
-  }));
+    configuration,
+  } = node;
   const options = useContext(optionsCtx);
   const views = options.views;
+  const fixed_state_fields =
+    options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = useContext(previewCtx);
-  const refetchPreview = fetchViewPreview({
-    options,
-    view,
-    setPreviews,
-    node_id,
-  });
-  //console.log(options)
+
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <div>
       <div>
@@ -82,7 +112,6 @@ export const ViewSettings = () => {
           className="form-control"
           onChange={(e) => {
             setProp((prop) => (prop.view = e.target.value));
-            refetchPreview({ view: e.target.value });
           }}
         >
           {views.map((f, ix) => (
@@ -93,22 +122,49 @@ export const ViewSettings = () => {
         </select>
       </div>
       {options.mode === "page" && (
-        <div>
-          <label>State</label>
-          <select
-            value={state}
-            className="form-control"
-            onChange={(e) => setProp((prop) => (prop.state = e.target.value))}
-          >
-            <option value="shared">Shared</option>
-            <option value="fixed">Fixed</option>
-          </select>
-        </div>
+        <Fragment>
+          <div>
+            <label>State</label>
+            <select
+              value={state}
+              className="form-control"
+              onChange={setAProp("state")}
+            >
+              <option value="shared">Shared</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+          {state === "fixed" &&
+            fixed_state_fields &&
+            fixed_state_fields.length > 0 && (
+              <Fragment>
+                <h6>View state fields</h6>
+                <ConfigForm
+                  fields={fixed_state_fields}
+                  configuration={configuration || {}}
+                  setProp={setProp}
+                  node={node}
+                />
+              </Fragment>
+            )}
+        </Fragment>
       )}
+      {view ? (
+        <a
+          className="d-block mt-2"
+          target="_blank"
+          href={`/viewedit/config/${view}`}
+        >
+          Configure this view
+        </a>
+      ) : null}
     </div>
   );
 };
 
+/**
+ * @type {object}
+ */
 View.craft = {
   displayName: "View",
   related: {

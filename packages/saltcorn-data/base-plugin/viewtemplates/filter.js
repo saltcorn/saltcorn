@@ -1,6 +1,12 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/filter
+ * @subcategory base-plugin
+ */
 const User = require("../../models/user");
 const View = require("../../models/view");
 const Table = require("../../models/table");
+const Field = require("../../models/field");
 const Workflow = require("../../models/workflow");
 
 const {
@@ -12,10 +18,15 @@ const {
   select,
   button,
   text_attr,
+  script,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
-const { readState } = require("../../plugin-helper");
+const {
+  readState,
+  calcfldViewOptions,
+  calcfldViewConfig,
+} = require("../../plugin-helper");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const {
   eachView,
@@ -23,7 +34,12 @@ const {
   getStringsForI18n,
 } = require("../../models/layout");
 const { InvalidConfiguration } = require("../../utils");
+const { jsexprToWhere } = require("../../models/expression");
+const Library = require("../../models/library");
 
+/**
+ * @returns {Workflow}
+ */
 const configuration_workflow = () =>
   new Workflow({
     steps: [
@@ -43,11 +59,13 @@ const configuration_workflow = () =>
             const cfields = await cr.table.getFields();
             cfields.forEach((cf) => {
               if (cf.name !== cr.key_field.name)
-                fields.push({
-                  ...cf,
-                  label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
-                  name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
-                });
+                fields.push(
+                  new Field({
+                    ...cf,
+                    label: `${cr.table.name}.${cr.key_field.name}→${cf.name}`,
+                    name: `${cr.table.name}.${cr.key_field.name}.${cf.name}`,
+                  })
+                );
             });
           }
           const actions = ["Clear"];
@@ -63,21 +81,50 @@ const configuration_workflow = () =>
             const presets = field.presets;
             field.preset_options = presets ? Object.keys(presets) : [];
           }
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("filter")
+          );
+          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+
+          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
+            fields,
+            "filter"
+          );
           return {
             fields,
+            tableName: table.name,
             roles,
             actions,
             views,
+            library,
+            field_view_options,
+            fieldViewConfigForms,
             mode: "filter",
           };
         },
       },
     ],
   });
+
+/** @returns {object[]} */
 const get_state_fields = () => [];
 
+/**
+ *
+ * @returns {Promise<object>}
+ */
 const initial_config = async () => ({ layout: {}, columns: [] });
 
+/**
+ * @param {number} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {object} opts.layout
+ * @param {object} state
+ * @param {object} extra
+ * @returns {Promise<Layout>}
+ */
 const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   //console.log(columns);
   //console.log(layout);
@@ -85,6 +132,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   const table = await Table.findOne(table_id);
   const fields = await table.getFields();
   readState(state, fields);
+
   const role = extra.req.user ? extra.req.user.role_id : 10;
   const distinct_values = {};
   for (const col of columns) {
@@ -96,17 +144,25 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
         ).map((x) => ({ label: x, value: x }));
       } else if (field)
         distinct_values[col.field_name] = await field.distinct_values(
-          extra.req
+          extra.req,
+          jsexprToWhere(col.where)
         );
       else if (col.field_name.includes(".")) {
         const kpath = col.field_name.split(".");
         if (kpath.length === 3) {
           const [jtNm, jFieldNm, lblField] = kpath;
           const jtable = await Table.findOne({ name: jtNm });
+          if (!jtable)
+            throw new InvalidConfiguration(
+              `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
+            );
           const jfields = await jtable.getFields();
           const jfield = jfields.find((f) => f.name === lblField);
           if (jfield)
-            distinct_values[col.field_name] = await jfield.distinct_values();
+            distinct_values[col.field_name] = await jfield.distinct_values(
+              extra.req,
+              jsexprToWhere(col.where)
+            );
         }
       }
       const dvs = distinct_values[col.field_name];
@@ -143,6 +199,35 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
+    field(segment) {
+      const { field_name, fieldview, configuration } = segment;
+      let field = fields.find((fld) => fld.name === field_name);
+      if (!field) return "";
+
+      if (
+        fieldview &&
+        field.type &&
+        field.type.fieldviews &&
+        field.type.fieldviews[fieldview]
+      ) {
+        const fv = field.type.fieldviews[fieldview];
+        if (fv.isEdit || fv.isFilter)
+          return fv.run(
+            field_name,
+            state[field_name],
+            {
+              onChange: `set_state_field('${field_name}', this.value)`,
+              ...field.attributes,
+              ...configuration,
+            },
+            "",
+            false,
+            segment,
+            state
+          );
+      }
+      return "";
+    },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
       return search_bar("_fts", state["_fts"], {
@@ -160,7 +245,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
           style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
-        distinct_values[field_name].map(({ label, value, jsvalue }) =>
+        (distinct_values[field_name] || []).map(({ label, value, jsvalue }) =>
           option(
             {
               value,
@@ -237,17 +322,36 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   return renderLayout({ blockDispatch, layout, role });
 };
 
+/**
+ * @param {object|undefined} x
+ * @param {object|undefined} y
+ * @returns {object}
+ */
 const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
+
+/**
+ * @param {string} x
+ * @param {string} y
+ * @returns {boolean}
+ */
 const eq_string = (x, y) => `${x}` === `${y}`;
 module.exports = {
+  /** @type {string} */
   name: "Filter",
+  /** @type {string} */
   description:
     "Elements that limit the rows shown in other views on the same page. Filter views do not show any rows on their own.",
   get_state_fields,
   configuration_workflow,
   run,
   initial_config,
+  /** @type {boolean} */
   display_state_form: false,
+  /**
+   * @param {object} opts
+   * @param {*} opts.layout
+   * @returns {string[]}
+   */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },

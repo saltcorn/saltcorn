@@ -1,5 +1,7 @@
 /**
  * Saltcorn App
+ * @category server
+ * @module app
  */
 
 const express = require("express");
@@ -21,10 +23,10 @@ const {
   available_languages,
 } = require("@saltcorn/data/models/config");
 const {
-  setTenant,
   get_base_url,
   error_catcher,
   getSessionStore,
+  setTenant,
 } = require("./routes/utils.js");
 const path = require("path");
 const fileUpload = require("express-fileupload");
@@ -35,7 +37,8 @@ const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
 const Trigger = require("@saltcorn/data/models/trigger");
-
+const s3storage = require("./s3storage");
+const TotpStrategy = require("passport-totp").Strategy;
 const locales = Object.keys(available_languages);
 // i18n configuration
 const i18n = new I18n({
@@ -43,6 +46,11 @@ const i18n = new I18n({
   directory: path.join(__dirname, "locales"),
 });
 // todo console.log app instance info when app starts - avoid to show secrets (password, etc)
+
+/**
+ * @param {object} [opts = {}]
+ * @returns {Promise<Express>}
+ */
 const getApp = async (opts = {}) => {
   const app = express();
   let sql_log = await getConfig("log_sql");
@@ -61,23 +69,15 @@ const getApp = async (opts = {}) => {
   app.use(helmet());
   app.use(
     express.json({
+      limit: "5mb",
       verify: (req, res, buf) => {
         req.rawBody = buf;
       },
     })
   );
   // extenetede url encoding in use
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
-  // add fileupload feature
-  // todo ability to configure filetmp dir - add new config / env parameter
-  app.use(
-    fileUpload({
-      useTempFiles: true,
-      createParentPath: true,
-      tempFileDir: "/tmp/",
-    })
-  );
   // cookies
   app.use(require("cookie-parser")());
   // i18n support
@@ -111,6 +111,12 @@ const getApp = async (opts = {}) => {
     )
   );
 
+  if (process.env.SALTCORN_SERVE_ADDITIONAL_DIR)
+    app.use(
+      express.static(process.env.SALTCORN_SERVE_ADDITIONAL_DIR, {
+        maxAge: development_mode ? 0 : 1000 * 60 * 15,
+      })
+    );
   let version_tag = db.connectObj.version_tag;
 
   app.use(
@@ -142,7 +148,9 @@ const getApp = async (opts = {}) => {
             req.flash("danger", req.__("Incorrect user or password"))
           );
         const mu = await User.authenticate(userobj);
-        if (mu) return done(null, mu.session_object);
+        if (mu && mu._attributes.totp_enabled)
+          return done(null, { pending_user: mu.session_object });
+        else if (mu) return done(null, mu.session_object);
         else {
           const { password, ...nopw } = userobj;
           Trigger.emitEvent("LoginFailed", null, null, nopw);
@@ -182,12 +190,26 @@ const getApp = async (opts = {}) => {
       }
     })
   );
+  passport.use(
+    new TotpStrategy(function (user, done) {
+      // setup function, supply key and period to done callback
+      User.findOne({ id: user.pending_user.id }).then((u) => {
+        return done(null, u._attributes.totp_key, 30);
+      });
+    })
+  );
   passport.serializeUser(function (user, done) {
     done(null, user);
   });
   passport.deserializeUser(function (user, done) {
     done(null, user);
   });
+  app.use(setTenant);
+
+  // Change into s3storage compatible selector
+  // existing fileupload middleware is moved into s3storage.js
+  app.use(s3storage.middlewareSelect);
+  app.use(s3storage.middlewareTransform);
 
   app.use(wrapper(version_tag));
   const csurf = csrf();
@@ -204,11 +226,10 @@ const getApp = async (opts = {}) => {
 
   mountRoutes(app);
   // set tenant homepage as / root
-  app.get("/", setTenant, error_catcher(homepage));
+  app.get("/", error_catcher(homepage));
   // /robots.txt
   app.get(
     "/robots.txt",
-    setTenant,
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/plain");
@@ -221,7 +242,6 @@ Sitemap: ${base}sitemap.xml
   // /sitemap.xml
   app.get(
     "/sitemap.xml",
-    setTenant,
     error_catcher(async (req, res) => {
       const base = get_base_url(req);
       res.set("Content-Type", "text/xml");

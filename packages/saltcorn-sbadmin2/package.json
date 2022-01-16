@@ -1,14 +1,16 @@
 {
   "name": "@saltcorn/sbadmin2",
-  "version": "0.5.3",
+  "version": "0.6.3-beta.3",
   "description": "SB Admin 2 layout plugin",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "dependencies": {
-    "@saltcorn/data": "0.5.3",
-    "@saltcorn/markup": "0.5.3",
+    "@saltcorn/data": "0.6.3-beta.3",
+    "@saltcorn/markup": "0.6.3-beta.3",
     "startbootstrap-sb-admin-2": "^4.1.4"
   },
   "author": "Tom Nielsen",
@@ -18,7 +20,15 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
+      "@saltcorn/markup$": "@saltcorn/markup/dist",
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
+    }
   },
   "publishConfig": {
     "access": "public"

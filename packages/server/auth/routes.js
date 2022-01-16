@@ -1,31 +1,46 @@
+/**
+ * @category server
+ * @module auth/routes
+ * @subcategory auth
+ */
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
+const File = require("@saltcorn/data/models/file");
+
 const { send_verification_email } = require("@saltcorn/data/models/email");
 const {
-  setTenant,
   error_catcher,
   loggedIn,
   csrfField,
+  setTenant,
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
-const { renderForm } = require("@saltcorn/markup");
+const { renderForm, post_btn } = require("@saltcorn/markup");
 const passport = require("passport");
 const {
   a,
+  img,
   text,
   table,
   tbody,
   th,
   td,
   tr,
+  h4,
   form,
   select,
   option,
+  span,
+  i,
+  div,
+  code,
+  pre,
+  p,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -37,9 +52,29 @@ const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
+const { restore_backup } = require("../markup/admin.js");
+const { restore } = require("@saltcorn/data/models/backup");
+const load_plugins = require("../load_plugins");
+const fs = require("fs");
+const base32 = require("thirty-two");
+const qrcode = require("qrcode");
+const totp = require("notp").totp;
+/**
+ * @type {object}
+ * @const
+ * @namespace routesRouter
+ * @category server
+ * @subcategory auth
+ */
+
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} req
+ * @param {boolean} isCreating
+ * @returns {Form}
+ */
 const loginForm = (req, isCreating) => {
   const postAuthMethods = Object.entries(getState().auth_methods)
     // TBD unresolved parameter K
@@ -56,7 +91,10 @@ const loginForm = (req, isCreating) => {
       new Field({
         label: req.__("E-mail"),
         name: "email",
-        input_type: "text",
+        type: "String",
+        attributes: {
+          input_type: "email",
+        },
         sublabel: user_sublabel || undefined,
         validator: (s) => s.length < 128,
       }),
@@ -73,6 +111,11 @@ const loginForm = (req, isCreating) => {
     submitLabel: req.__("Login"),
   });
 };
+
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const forgotForm = (req) =>
   new Form({
     blurb: req.__(
@@ -82,7 +125,10 @@ const forgotForm = (req) =>
       new Field({
         label: req.__("E-mail"),
         name: "email",
-        input_type: "text",
+        type: "String",
+        attributes: {
+          input_type: "email",
+        },
         validator: (s) => s.length < 128,
       }),
     ],
@@ -90,6 +136,11 @@ const forgotForm = (req) =>
     submitLabel: req.__("Reset password"),
   });
 
+/**
+ * @param {object} body
+ * @param {object} req
+ * @returns {Form}
+ */
 const resetForm = (body, req) => {
   const form = new Form({
     blurb: req.__("Enter your new password below"),
@@ -115,6 +166,12 @@ const resetForm = (body, req) => {
   form.values.token = body && body.token;
   return form;
 };
+
+/**
+ * @param {string} current
+ * @param {boolean} noMethods
+ * @returns {object}
+ */
 const getAuthLinks = (current, noMethods) => {
   const links = { methods: [] };
   const state = getState();
@@ -138,9 +195,13 @@ const getAuthLinks = (current, noMethods) => {
   return links;
 };
 
+/**
+ * @name get/login
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/login",
-  setTenant,
   error_catcher(async (req, res) => {
     const login_form_name = getState().getConfig("login_form", "");
     if (login_form_name) {
@@ -161,11 +222,15 @@ router.get(
   })
 );
 
-router.get("/logout", setTenant, (req, res) => {
+/**
+ * @name get/logout
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get("/logout", (req, res, next) => {
   req.logout();
   if (req.session.destroy)
     req.session.destroy((err) => {
-      // TBD unresolved function next
       if (err) return next(err);
       req.logout();
       res.redirect("/auth/login");
@@ -177,9 +242,13 @@ router.get("/logout", setTenant, (req, res) => {
   }
 });
 
+/**
+ * @name get/forgot
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/forgot",
-  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot", false)) {
       res.sendAuthWrap(
@@ -197,18 +266,26 @@ router.get(
   })
 );
 
+/**
+ * @name get/reset
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/reset",
-  setTenant,
   error_catcher(async (req, res) => {
     const form = resetForm(req.query, req);
     res.sendAuthWrap(req.__(`Reset password`), form, {});
   })
 );
 
+/**
+ * @name get/verify
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/verify",
-  setTenant,
   error_catcher(async (req, res) => {
     const { token, email } = req.query;
     const result = await User.verifyWithToken({
@@ -216,14 +293,22 @@ router.get(
       verification_token: token,
     });
     if (result.error) req.flash("danger", result.error);
-    else if (result) req.flash("success", req.__("Email verified"));
+    else if (result) {
+      req.flash("success", req.__("Email verified"));
+      const u = await User.findOne({ email });
+      if (u) u.relogin(req);
+    }
     res.redirect("/");
   })
 );
 
+/**
+ * @name post/reset
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/reset",
-  setTenant,
   error_catcher(async (req, res) => {
     const result = await User.resetPasswordWithToken({
       email: req.body.email,
@@ -241,9 +326,14 @@ router.post(
     res.redirect("/auth/login");
   })
 );
+
+/**
+ * @name post/forgot
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/forgot",
-  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot")) {
       const { email } = req.body;
@@ -269,9 +359,14 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/signup
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/signup",
-  setTenant,
   error_catcher(async (req, res) => {
     if (!getState().getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
@@ -308,9 +403,13 @@ router.get(
   })
 );
 
+/**
+ * @name get/create_first_user
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/create_first_user",
-  setTenant,
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
@@ -320,16 +419,55 @@ router.get(
       form.blurb = req.__(
         "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later."
       );
-      res.sendAuthWrap(req.__(`Create first user`), form, {});
+      const restore = restore_backup(
+        req.csrfToken(),
+        [i({ class: "fas fa-upload mr-2 mt-2" }), req.__("Restore a backup")],
+        `/auth/create_from_restore`
+      );
+      res.sendAuthWrap(req.__(`Create first user`), form, {}, restore);
     } else {
       req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
     }
   })
 );
+
+/**
+ * @name post/create_from_restore
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.post(
+  "/create_from_restore",
+  setTenant, // TODO why is this needed?????
+  error_catcher(async (req, res) => {
+    const hasUsers = await User.nonEmpty();
+    if (!hasUsers) {
+      const newPath = File.get_new_path();
+      await req.files.file.mv(newPath);
+      const err = await restore(
+        newPath,
+        (p) => load_plugins.loadAndSaveNewPlugin(p),
+        true
+      );
+      if (err) req.flash("error", err);
+      else req.flash("success", req.__("Successfully restored backup"));
+      fs.unlink(newPath, function () {});
+      res.redirect(`/auth/login`);
+    } else {
+      req.flash("danger", req.__("Users already present"));
+      res.redirect("/auth/login");
+    }
+  })
+);
+
+/**
+ * @name post/create_first_user
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/create_first_user",
-  setTenant,
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
@@ -371,6 +509,13 @@ router.post(
   })
 );
 
+/**
+ * @param {string} new_user_view_name
+ * @param {object} req
+ * @param {boolean} askEmail
+ * @returns {Promise<Form>}
+ * @throws {InvalidConfiguration}
+ */
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
   if (!view)
@@ -412,6 +557,9 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
         name: "email",
         label: req.__("Email"),
         type: "String",
+        attributes: {
+          input_type: "email",
+        },
         required: true,
       })
     );
@@ -439,6 +587,12 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   return form;
 };
 
+/**
+ * @param {object} u
+ * @param {object} req
+ * @param {object} res
+ * @returns {void}
+ */
 const signup_login_with_user = (u, req, res) =>
   req.login(
     {
@@ -451,6 +605,8 @@ const signup_login_with_user = (u, req, res) =>
       if (!err) {
         Trigger.emitEvent("Login", null, u);
         if (getState().verifier) res.redirect("/auth/verification-flow");
+        else if (getState().get2FApolicy(u) === "Mandatory")
+          res.redirect("/auth/twofa/setup/totp");
         else res.redirect("/");
       } else {
         req.flash("danger", err);
@@ -459,9 +615,13 @@ const signup_login_with_user = (u, req, res) =>
     }
   );
 
+/**
+ * @name get/signup_final_ext
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/signup_final_ext",
-  setTenant,
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
@@ -476,9 +636,13 @@ router.get(
   })
 );
 
+/**
+ * @name post/signup_final_ext
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/signup_final_ext",
-  setTenant,
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
@@ -523,9 +687,14 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/signup_final
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/signup_final",
-  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
       const new_user_form = getState().getConfig("new_user_form");
@@ -580,9 +749,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/signup
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/signup",
-  setTenant,
   error_catcher(async (req, res) => {
     if (!getState().getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
@@ -692,6 +865,11 @@ router.post(
   })
 );
 
+/**
+ * @param {object} req
+ * @param {object} res
+ * @returns {void}
+ */
 function handler(req, res) {
   console.log(
     `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
@@ -705,7 +883,12 @@ function handler(req, res) {
   );
   res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
 }
-// try to find a unique user id in login submit
+
+/**
+ * try to find a unique user id in login submit
+ * @param {object} body
+ * @returns {string}
+ */
 const userIdKey = (body) => {
   if (body.email) return body.email;
   const { remember, password, _csrf, passwordRepeat, ...rest } = body;
@@ -728,9 +911,13 @@ const userLimiter = rateLimit({
   handler,
 });
 
+/**
+ * @name post/login
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/login",
-  setTenant,
   ipLimiter,
   userLimiter,
   passport.authenticate("local", {
@@ -741,21 +928,36 @@ router.post(
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
     userLimiter.resetKey(userIdKey(req.body));
+    if (req.user.pending_user) {
+      res.redirect("/auth/twofa/login/totp");
+      return;
+    }
+
     if (req.session.cookie)
       if (req.body.remember) {
-        // TBD create config parameter
-        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // Cookie expires after 30 days
+        const setDur = +getState().getConfig("cookie_duration_remember", 0);
+        if (setDur) req.session.cookie.maxAge = setDur * 60 * 60 * 1000;
+        else req.session.cookie.expires = false;
       } else {
-        req.session.cookie.expires = false; // Cookie expires at end of session
+        const setDur = +getState().getConfig("cookie_duration", 0);
+        if (setDur) req.session.cookie.maxAge = setDur * 60 * 60 * 1000;
+        else req.session.cookie.expires = false;
       }
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
-    res.redirect("/");
+    if (getState().get2FApolicy(req.user) === "Mandatory") {
+      res.redirect("/auth/twofa/setup/totp");
+    } else res.redirect("/");
   })
 );
+
+/**
+ * @name get/login-with/:method
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/login-with/:method",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -770,9 +972,14 @@ router.get(
     }
   })
 );
+
+/**
+ * @name post/login-with/:method
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.post(
   "/login-with/:method",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -793,6 +1000,11 @@ router.post(
   })
 );
 
+/**
+ * @param {object}} req
+ * @param {object} res
+ * @returns {void}
+ */
 const loginCallback = (req, res) => () => {
   if (!req.user) return;
   if (!req.user.id) {
@@ -807,9 +1019,13 @@ const loginCallback = (req, res) => () => {
   }
 };
 
+/**
+ * @name get/callback/:method
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/callback/:method",
-  setTenant,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -823,6 +1039,10 @@ router.get(
   })
 );
 
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const changPwForm = (req) =>
   new Form({
     action: "/auth/settings",
@@ -843,6 +1063,12 @@ const changPwForm = (req) =>
       },
     ],
   });
+
+/**
+ * @param {object} req
+ * @param {object} user
+ * @returns {Form}
+ */
 const setLanguageForm = (req, user) =>
   form(
     {
@@ -864,22 +1090,79 @@ const setLanguageForm = (req, user) =>
     )
   );
 
+/**
+ * @param {object} opts
+ * @param {object} opts.req
+ * @param {object} opts.res
+ * @param {object} opts.pwform
+ * @param {object} opts.user
+ * @returns {Promise<object>}
+ */
 const userSettings = async ({ req, res, pwform, user }) => {
-  let usersets;
+  let usersets, userSetsName;
   const user_settings_form = getState().getConfig("user_settings_form", "");
   if (user_settings_form) {
     const view = await View.findOne({ name: user_settings_form });
     if (view) {
       usersets = await view.run({ id: user.id }, { req, res });
+      userSetsName = view.name;
     }
   }
-
+  let apikeycard;
+  const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+  const twoFaPolicy = getState().get2FApolicy(user);
+  const show2FAPolicy =
+    twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
+  if (user.role_id <= min_role_apikeygen)
+    apikeycard = {
+      type: "card",
+      title: req.__("API token"),
+      contents: [
+        // api token for user
+        div(
+          user.api_token
+            ? span({ class: "mr-1" }, req.__("API token for this user: ")) +
+                code(user.api_token)
+            : req.__("No API token issued")
+        ),
+        // button for reset or generate api token
+        div(
+          { class: "mt-4 d-inline-block" },
+          post_btn(
+            `/auth/gen-api-token`,
+            user.api_token ? req.__("Reset") : req.__("Generate"),
+            req.csrfToken()
+          )
+        ),
+        // button for remove api token
+        user.api_token &&
+          div(
+            { class: "mt-4 ml-2 d-inline-block" },
+            post_btn(
+              `/auth/remove-api-token`,
+              // TBD localization
+              user.api_token ? req.__("Remove") : req.__("Generate"),
+              req.csrfToken(),
+              { req: req, confirm: true }
+            )
+          ),
+      ],
+    };
   return {
     above: [
       {
         type: "breadcrumbs",
         crumbs: [{ text: req.__("User") }, { text: req.__("Settings") }],
       },
+      ...(usersets
+        ? [
+            {
+              type: "card",
+              title: userSetsName,
+              contents: usersets,
+            },
+          ]
+        : []),
       {
         type: "card",
         title: req.__("User"),
@@ -893,29 +1176,94 @@ const userSettings = async ({ req, res, pwform, user }) => {
           )
         ),
       },
-      ...(usersets
-        ? [
-            {
-              type: "card",
-              title: req.__("User Settings"),
-              contents: usersets,
-            },
-          ]
-        : []),
       {
         type: "card",
         title: req.__("Change password"),
         contents: renderForm(pwform, req.csrfToken()),
       },
+      ...(show2FAPolicy
+        ? [
+            {
+              type: "card",
+              title: req.__("Two-factor authentication"),
+              contents: [
+                div(
+                  user._attributes.totp_enabled
+                    ? req.__("Two-factor authentication is enabled")
+                    : req.__("Two-factor authentication is disabled")
+                ),
+                div(
+                  user._attributes.totp_enabled
+                    ? post_btn(
+                        "/auth/twofa/disable/totp",
+                        "Disable",
+                        req.csrfToken(),
+                        {
+                          btnClass: "btn-danger mt-2",
+                          req,
+                        }
+                      )
+                    : a(
+                        {
+                          href: "/auth/twofa/setup/totp",
+                          class: "btn btn-primary mt-2",
+                        },
+                        "Enable"
+                      )
+                ),
+              ],
+            },
+          ]
+        : []),
+      ...(apikeycard ? [apikeycard] : []),
     ],
   };
 };
 /**
+ * Get new api token
+ * @name post/gen-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/gen-api-token",
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.getNewAPIToken();
+      req.flash("success", req.__(`New API token generated`));
+    }
+    res.redirect(`/auth/settings`);
+  })
+);
+
+/**
+ * Remove api token
+ * @name post/remove-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/remove-api-token",
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.removeAPIToken();
+      req.flash("success", req.__(`API token removed`));
+    }
+    res.redirect(`/auth/settings`);
+  })
+);
+/**
  * Set language
+ * @name post/setlanguage
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.post(
   "/setlanguage",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const u = await User.findOne({ id: req.user.id });
@@ -946,21 +1294,33 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.get(
   "/settings",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
+    if (!user) {
+      req.logout();
+      req.flash("danger", req.__("Must be logged in first"));
+      res.redirect("/auth/login");
+      return;
+    }
     res.sendWrap(
       req.__("User settings"),
       await userSettings({ req, res, pwform: changPwForm(req), user })
     );
   })
 );
+
 /**
  * Define set email form for user
- * @param req
+ * @param {object} req
  * @returns {Form}
  */
 const setEmailForm = (req) =>
@@ -968,15 +1328,26 @@ const setEmailForm = (req) =>
     action: "/auth/set-email",
     blurb: req.__("Please enter your email address"),
     fields: [
-      { name: "email", label: req.__("Email"), type: "String", required: true },
+      {
+        name: "email",
+        label: req.__("Email"),
+        type: "String",
+        attributes: {
+          input_type: "email",
+        },
+        required: true,
+      },
     ],
   });
+
 /**
  * Render form for set email for user
+ * @name get/set-email
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.get(
   "/set-email",
-  setTenant,
   error_catcher(async (req, res) => {
     res.sendWrap(
       req.__("Set Email"),
@@ -984,12 +1355,15 @@ router.get(
     );
   })
 );
+
 /**
  * Execute set email for user
+ * @name post/set-email
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.post(
   "/set-email",
-  setTenant,
   error_catcher(async (req, res) => {
     const form = setEmailForm(req);
     form.validate(req.body);
@@ -1030,12 +1404,15 @@ router.post(
     );
   })
 );
+
 /**
  * Execute Change Password for User
+ * @name post/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
  */
 router.post(
   "/settings",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
@@ -1079,9 +1456,13 @@ router.post(
   })
 );
 
+/**
+ * @name all/verification-flow
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
 router.all(
   "/verification-flow",
-  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
     const verifier = await (getState().verifier || (() => null))(req.user);
@@ -1103,6 +1484,7 @@ router.all(
       const user = await User.findOne({ id: req.user.id });
       await user.set_to_verified();
       req.flash("success", req.__("User verified"));
+      user.relogin(req);
     }
     if (wfres.verified === false) {
       req.flash("danger", req.__("User verification failed"));
@@ -1110,5 +1492,173 @@ router.all(
       return;
     }
     res.redirect(wfres.redirect || "/");
+  })
+);
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get(
+  "/twofa/setup/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    let key;
+    if (user._attributes.totp_key) key = user._attributes.totp_key;
+    else {
+      key = randomKey(10);
+      user._attributes.totp_key = key;
+      await user.update({ _attributes: user._attributes });
+    }
+
+    const encodedKey = base32.encode(key);
+
+    // generate QR code for scanning into Google Authenticator
+    // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
+    const site_name = getState().getConfig("site_name");
+    const otpUrl = `otpauth://totp/${
+      user.email
+    }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
+    const image = await qrcode.toDataURL(otpUrl);
+    res.sendWrap(req.__("Setup two-factor authentication"), {
+      type: "card",
+      title: req.__(
+        "Setup two-factor authentication with Time-based One-Time Password (TOTP)"
+      ),
+      contents: [
+        h4(req.__("1. Scan this QR code in your Authenticator app")),
+        img({ src: image }),
+        p("Or enter this code:"),
+        code(pre(encodedKey.toString())),
+        h4(
+          req.__(
+            "2. Enter the six-digit code generated in your Authenticator app"
+          )
+        ),
+        renderForm(totpForm(req), req.csrfToken()),
+      ],
+    });
+  })
+);
+
+router.post(
+  "/twofa/setup/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+
+    if (!user._attributes.totp_key) {
+      //key not set
+      req.flash("danger", req.__("2FA TOTP Key not set"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+
+    const form = totpForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      req.flash("danger", req.__("Error processing form"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+    const code = `${form.values.totpCode}`;
+    const rv = totp.verify(code, user._attributes.totp_key, {
+      time: 30,
+    });
+    if (!rv) {
+      req.flash("danger", req.__("Could not verify code"));
+      res.redirect("/auth/twofa/setup/totp");
+      return;
+    }
+    user._attributes.totp_enabled = true;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor authentication with Time-based One-Time Password enabled"
+      )
+    );
+
+    res.redirect("/auth/settings");
+  })
+);
+
+router.post(
+  "/twofa/disable/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    user._attributes.totp_enabled = false;
+    delete user._attributes.totp_key;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor authentication with Time-based One-Time Password disabled"
+      )
+    );
+    res.redirect("/auth/settings");
+  })
+);
+const totpForm = (req) =>
+  new Form({
+    action: "/auth/twofa/setup/totp",
+    fields: [
+      {
+        name: "totpCode",
+        label: req.__("Code"),
+        type: "Integer",
+        required: true,
+      },
+    ],
+  });
+
+const randomKey = function (len) {
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  var buf = [],
+    chars = "abcdefghijklmnopqrstuvwxyz0123456789",
+    charlen = chars.length;
+
+  for (var i = 0; i < len; ++i) {
+    buf.push(chars[getRandomInt(0, charlen - 1)]);
+  }
+
+  return buf.join("");
+};
+
+router.get(
+  "/twofa/login/totp",
+  error_catcher(async (req, res) => {
+    const form = new Form({
+      action: "/auth/twofa/login/totp",
+      submitLabel: "Verify",
+      fields: [
+        {
+          name: "code",
+          label: req.__("Code"),
+          type: "Integer",
+          required: true,
+        },
+      ],
+    });
+    res.sendAuthWrap(req.__(`Two-factor authentication`), form, {});
+  })
+);
+
+router.post(
+  "/twofa/login/totp",
+  passport.authenticate("totp", {
+    failureRedirect: "/auth/twofa/login/totp",
+    failureFlash: true,
+  }),
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.pending_user.id });
+    user.relogin(req);
+    Trigger.emitEvent("Login", null, user);
+    res.redirect("/");
   })
 );

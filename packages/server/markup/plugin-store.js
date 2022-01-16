@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module markup/plugin-store
+ * @subcategory markup
+ */
+
 const {
   h5,
   h4,
@@ -17,9 +23,20 @@ const {
   strong,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
+
+/**
+ * @param {object} args 
+ * @returns {string}
+ */
 const show_function_arguments = (args) =>
   (args || []).map(({ name, type }) => `${name}: ${type}`).join(", ");
 
+/**
+ * @param {object} plugin 
+ * @param {string} key 
+ * @param {object} def 
+ * @returns {*}
+ */
 const withCfg = (plugin, key, def) =>
   plugin.plugin_module.configuration_workflow
     ? plugin.plugin_module[key]
@@ -27,6 +44,11 @@ const withCfg = (plugin, key, def) =>
       : def
     : plugin.plugin_module[key] || def;
 
+/**
+ * @param {object} plugin 
+ * @param {object} req 
+ * @returns {*}
+ */
 const plugin_types_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("Types"),
@@ -35,6 +57,11 @@ const plugin_types_info_card = (plugin, req) => ({
   ),
 });
 
+/**
+ * @param {object} plugin 
+ * @param {object} req 
+ * @returns {*}
+ */
 const plugin_functions_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("Functions"),
@@ -53,6 +80,11 @@ const plugin_functions_info_card = (plugin, req) => ({
     .join("<hr>"),
 });
 
+/**
+ * @param {object} plugin 
+ * @param {object} req 
+ * @returns {*}
+ */
 const plugin_viewtemplates_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("View templates"),
@@ -61,6 +93,10 @@ const plugin_viewtemplates_info_card = (plugin, req) => ({
     .join("<hr>"),
 });
 
+/**
+ * @param {object} repo 
+ * @returns {*}
+ */
 const showRepository = (repo) =>
   !repo
     ? repo

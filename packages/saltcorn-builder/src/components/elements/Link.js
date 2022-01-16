@@ -1,11 +1,39 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Link
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
-import { blockProps, BlockSetting, TextStyleSetting, OrFormula } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  TextStyleSetting,
+  OrFormula,
+  ButtonOrLinkSettingsRows,
+  DynamicFontAwesomeIcon,
+} from "./utils";
 import optionsCtx from "../context";
-import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 
-export const Link = ({
+export /**
+ * @param {object} props
+ * @param {string} props.text
+ * @param {boolean} props.block
+ * @param {object} props.isFormula
+ * @param {string} props.textStyle
+ * @param {string} props.link_style
+ * @param {string} props.link_size
+ * @param {string} [props.link_icon]
+ * @param {string} [props.link_bgcol]
+ * @param {string} [props.link_bordercol]
+ * @param {string} [props.link_textcol]
+ * @returns {Fragment}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const Link = ({
   text,
   block,
   isFormula,
@@ -13,6 +41,9 @@ export const Link = ({
   link_style,
   link_size,
   link_icon,
+  link_bgcol,
+  link_bordercol,
+  link_textcol,
 }) => {
   const {
     selected,
@@ -25,14 +56,29 @@ export const Link = ({
       } ${isFormula.text ? "text-monospace" : ""} ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      style={
+        link_style === "btn btn-custom-color"
+          ? {
+              backgroundColor: link_bgcol || "#000000",
+              borderColor: link_bordercol || "#000000",
+              color: link_textcol || "#000000",
+            }
+          : {}
+      }
     >
-      {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
+      <DynamicFontAwesomeIcon icon={link_icon} className="mr-1" />
       {isFormula.text ? `=${text}` : text}
     </span>
   );
 };
 
-export const LinkSettings = () => {
+export /**
+ * @returns {div}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const LinkSettings = () => {
   const node = useNode((node) => ({
     text: node.data.props.text,
     url: node.data.props.url,
@@ -45,6 +91,9 @@ export const LinkSettings = () => {
     link_style: node.data.props.link_style,
     link_size: node.data.props.link_size,
     link_icon: node.data.props.link_icon,
+    link_bgcol: node.data.props.link_bgcol,
+    link_bordercol: node.data.props.link_bordercol,
+    link_textcol: node.data.props.link_textcol,
   }));
   const {
     actions: { setProp },
@@ -56,140 +105,124 @@ export const LinkSettings = () => {
     nofollow,
     target_blank,
     link_src,
-    link_style,
-    link_size,
-    link_icon,
   } = node;
   const options = useContext(optionsCtx);
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <div>
-      <label>Text to display</label>
-      <OrFormula nodekey="text" {...{ setProp, isFormula, node }}>
-        <input
-          type="text"
-          className="form-control text-to-display"
-          value={text}
-          onChange={(e) => setProp((prop) => (prop.text = e.target.value))}
-        />
-      </OrFormula>
-      <label>Link source</label>
-      <select
-        value={link_src}
-        className="form-control"
-        onChange={(e) =>
-          setProp((prop) => {
-            prop.link_src = e.target.value;
-            if (e.target.value !== "URL") {
-              prop.isFormula.url = false;
-            }
-          })
-        }
-      >
-        <option>URL</option>
-        {(options.pages || []).length > 0 && <option>Page</option>}
-        {(options.views || []).length > 0 && options.mode === "page" && (
-          <option>View</option>
-        )}
-      </select>
-      {link_src === "URL" && (
-        <Fragment>
-          {" "}
-          <label>URL</label>
-          <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
-            <input
-              type="text"
-              className="form-control "
-              value={url}
-              onChange={(e) => setProp((prop) => (prop.url = e.target.value))}
-            />
-          </OrFormula>
-        </Fragment>
-      )}
-      {link_src === "Page" && (
-        <Fragment>
-          {" "}
-          <label>Page</label>
-          <select
-            value={url}
-            className="form-control"
-            onChange={(e) =>
-              setProp((prop) => {
-                prop.url = e.target.value;
-              })
-            }
-          >
-            <option></option>
-            {(options.pages || []).map((p) => (
-              <option value={`/page/${p.name}`}>{p.name}</option>
-            ))}
-          </select>
-        </Fragment>
-      )}
-      {link_src === "View" && (
-        <Fragment>
-          {" "}
-          <label>View</label>
-          <select
-            value={url}
-            className="form-control"
-            onChange={(e) =>
-              setProp((prop) => {
-                prop.url = e.target.value;
-              })
-            }
-          >
-            <option></option>
-            {(options.views || []).map((p) => (
-              <option value={`/view/${p.name}`}>
-                {p.name} [{p.viewtemplate}]
-              </option>
-            ))}
-          </select>
-        </Fragment>
-      )}
-      <div>
-        <label>Link style</label>
-        <select
-          className="form-control"
-          value={link_style}
-          onChange={(e) =>
-            setProp((prop) => (prop.link_style = e.target.value))
-          }
-        >
-          <option value="">Link</option>
-          <option value="btn btn-primary">Primary button</option>
-          <option value="btn btn-secondary">Secondary button</option>
-          <option value="btn btn-success">Success button</option>
-          <option value="btn btn-danger">Danger button</option>
-          <option value="btn btn-outline-primary">
-            Primary outline button
-          </option>
-          <option value="btn btn-outline-secondary">
-            Secondary outline button
-          </option>
-        </select>
-      </div>
-      <div>
-        <label>Link size</label>
-        <select
-          className="form-control"
-          value={link_size}
-          onChange={(e) => setProp((prop) => (prop.link_size = e.target.value))}
-        >
-          <option value="">Standard</option>
-          <option value="btn-lg">Large</option>
-          <option value="btn-sm">Small</option>
-          <option value="btn-block">Block</option>
-          <option value="btn-block btn-lg">Large block</option>
-        </select>
-      </div>
-      <label className="mr-2">Icon</label>
-      <FontIconPicker
-        value={link_icon}
-        icons={faIcons}
-        onChange={(value) => setProp((prop) => (prop.link_icon = value))}
-        isMulti={false}
-      />
+      <table className="w-100">
+        <tbody>
+          <tr>
+            <td>
+              <label>Text to display</label>
+            </td>
+            <td>
+              <OrFormula nodekey="text" {...{ setProp, isFormula, node }}>
+                <input
+                  type="text"
+                  className="form-control text-to-display"
+                  value={text}
+                  onChange={setAProp("text")}
+                />
+              </OrFormula>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Link source</label>
+            </td>
+            <td>
+              <select
+                value={link_src}
+                className="form-control"
+                onChange={(e) =>
+                  setProp((prop) => {
+                    prop.link_src = e.target.value;
+                    if (e.target.value !== "URL") {
+                      prop.isFormula.url = false;
+                    }
+                  })
+                }
+              >
+                <option>URL</option>
+                {(options.pages || []).length > 0 && <option>Page</option>}
+                {(options.views || []).length > 0 &&
+                  options.mode === "page" && <option>View</option>}
+              </select>
+            </td>
+          </tr>
+          {link_src === "URL" && (
+            <tr>
+              <td>
+                <label>URL</label>
+              </td>
+              <td>
+                <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
+                  <input
+                    type="text"
+                    className="form-control "
+                    value={url}
+                    onChange={setAProp("url")}
+                  />
+                </OrFormula>
+              </td>
+            </tr>
+          )}
+          {link_src === "Page" && (
+            <tr>
+              <td>
+                <label>Page</label>
+              </td>
+              <td>
+                <select
+                  value={url}
+                  className="form-control"
+                  onChange={setAProp("url")}
+                >
+                  <option></option>
+                  {(options.pages || []).map((p) => (
+                    <option value={`/page/${p.name}`}>{p.name}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          )}
+          {link_src === "View" && (
+            <tr>
+              <td>
+                <label>View</label>
+              </td>
+              <td>
+                <select
+                  value={url}
+                  className="form-control"
+                  onChange={setAProp("url")}
+                >
+                  <option></option>
+                  {(options.views || []).map((p) => (
+                    <option value={`/view/${p.name}`}>
+                      {p.name} [{p.viewtemplate}]
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          )}
+          <ButtonOrLinkSettingsRows
+            setProp={setProp}
+            keyPrefix="link_"
+            btnClass="btn"
+            values={node}
+            linkFirst={true}
+          />
+        </tbody>
+      </table>
+
       <div className="form-check">
         <input
           className="form-check-input"
@@ -220,6 +253,9 @@ export const LinkSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 Link.craft = {
   defaultProps: {
     text: "Click here",
@@ -246,6 +282,9 @@ Link.craft = {
       "link_size",
       "link_icon",
       "link_style",
+      "link_bgcol",
+      "link_bordercol",
+      "link_textcol",
     ],
   },
 };

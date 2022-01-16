@@ -17,6 +17,8 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const EventLog = require("@saltcorn/data/models/eventlog");
 
+jest.setTimeout(30000);
+
 beforeAll(async () => {
   await resetToFixtures();
   const mv = async (fnm) => {
@@ -73,6 +75,7 @@ describe("admin page", () => {
   adminPageContains([
     ["/menu", "jquery-menu-editor"],
     ["/search/config", "Search configuration"],
+    ["/library/list", "component assemblies"],
   ]);
   adminPageContains([["/actions", "Actions available"]]);
   adminPageContains([["/eventlog", "Event log"]]);
@@ -265,8 +268,10 @@ describe("menu editor", () => {
     await request(app)
       .post("/menu")
       .set("Cookie", loginCookie)
-      .send("menu=" + encodeURIComponent(JSON.stringify(menu_json)))
-      .expect(toRedirect("/menu"));
+      .send(menu_json)
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(toSucceed);
   });
   it("show new menu", async () => {
     const app = await getApp({ disableCsrf: true });

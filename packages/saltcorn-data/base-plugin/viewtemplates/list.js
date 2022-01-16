@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/list
+ * @subcategory base-plugin
+ */
 const Field = require("../../models/field");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
@@ -11,6 +16,7 @@ const {
   removeEmptyStrings,
   removeDefaultColor,
   applyAsync,
+  mergeIntoWhere,
 } = require("../../utils");
 const {
   field_picker_fields,
@@ -26,11 +32,18 @@ const {
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
-const { get_async_expression_function } = require("../../models/expression");
+const {
+  get_async_expression_function,
+  jsexprToWhere,
+} = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
 
+/**
+ * @param {object} context
+ * @returns {Promise<void>}
+ */
 const create_db_view = async (context) => {
   const table = await Table.findOne({ id: context.table_id });
   const fields = await table.getFields();
@@ -54,6 +67,13 @@ const create_db_view = async (context) => {
   await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
 
+/**
+ * @param {*} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {*} opts.default_state
+ * @returns {Promise<void>}
+ */
 const on_delete = async (table_id, viewname, { default_state }) => {
   if (!db.isSQLite) {
     const sqlviews = (await get_existing_views()).map((v) => v.table_name);
@@ -66,6 +86,10 @@ const on_delete = async (table_id, viewname, { default_state }) => {
   }
 };
 
+/**
+ * @param {object} req
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     onDone: async (ctx) => {
@@ -223,6 +247,12 @@ const configuration_workflow = (req) =>
             required: true,
           });
           formfields.push({
+            name: "include_fml",
+            label: req.__("Row inclusion formula"),
+            sublabel: req.__("Only include rows where this formula is true"),
+            type: "String",
+          });
+          formfields.push({
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
@@ -261,6 +291,14 @@ const configuration_workflow = (req) =>
       },
     ],
   });
+
+/**
+ * @param {string} table_id
+ * @param {*} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @returns {function}
+ */
 const get_state_fields = async (table_id, viewname, { columns }) => {
   const table_fields = await Field.find({ table_id });
   var state_fields = [];
@@ -281,8 +319,23 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
+/** @type {function} */
 const initial_config = initial_config_all_fields(false);
 
+/**
+ * @param {string|number} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {string} [opts.view_to_create]
+ * @param {string} opts.create_view_display
+ * @param {string} [opts.create_view_label]
+ * @param {object} [opts.default_state]
+ * @param {string} [opts.create_view_location]
+ * @param {object} [stateWithId]
+ * @param {object} extraOpts
+ * @returns {Promise<*>}
+ */
 const run = async (
   table_id,
   viewname,
@@ -293,6 +346,7 @@ const run = async (
     create_view_label,
     default_state,
     create_view_location,
+    include_fml,
   },
   stateWithId,
   extraOpts
@@ -349,23 +403,30 @@ const run = async (
     q.orderBy = (default_state && default_state._order_field) || table.pk_name;
   if (!q.orderDesc) q.orderDesc = default_state && default_state._descending;
   const current_page = parseInt(state._page) || 1;
-
+  //console.log(table);
   if (table.ownership_field_id && role > table.min_role_read && extraOpts.req) {
     const owner_field = fields.find((f) => f.id === table.ownership_field_id);
-    if (where[owner_field.name])
-      where[owner_field.name] = [
-        where[owner_field.name],
-        extraOpts.req.user ? extraOpts.req.user.id : -1,
-      ];
-    else
-      where[owner_field.name] = extraOpts.req.user ? extraOpts.req.user.id : -1;
+    mergeIntoWhere(where, {
+      [owner_field.name]: extraOpts.req.user ? extraOpts.req.user.id : -1,
+    });
   }
-  const rows = await table.getJoinedRows({
+  //console.log({ i: default_state.include_fml });
+  if (default_state?.include_fml) {
+    let where1 = jsexprToWhere(default_state.include_fml, state);
+    mergeIntoWhere(where, where1);
+  }
+
+  let rows = await table.getJoinedRows({
     where,
     joinFields,
     aggregations,
     ...q,
   });
+
+  //TODO this will mean that limit is not respected. change filter to jsexprToWhere
+  if (table.ownership_formula && role > table.min_role_read && extraOpts.req) {
+    rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
+  }
 
   var page_opts =
     extraOpts && extraOpts.onRowSelect
@@ -413,7 +474,9 @@ const run = async (
           state
         )}`,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
-        create_view_display === "Popup"
+        create_view_display === "Popup",
+        create_view_display === "Popup" && "btn btn-secondary",
+        create_view_display === "Popup" && "btn-sm"
       );
     }
   }
@@ -427,6 +490,18 @@ const run = async (
   return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
 
+/**
+ * @param {number} table_id
+ * @param {*} viewname
+ * @param {object} optsOne
+ * @param {object[]} optsOne.columns
+ * @param {*} optsOne.layout
+ * @param {object} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {*} optsTwo.res
+ * @returns {Promise<object>}
+ */
 const run_action = async (
   table_id,
   viewname,
@@ -457,6 +532,7 @@ const run_action = async (
       req,
       table,
       row,
+      referrer: req.get("Referrer"),
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
@@ -465,23 +541,40 @@ const run_action = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "List",
+  /** @type {string} */
   description:
     "Display multiple rows from a table in a grid with columns you specify",
   configuration_workflow,
   run,
+  /** @type {string} */
   view_quantity: "Many",
   get_state_fields,
   initial_config,
   on_delete,
   routes: { run_action },
+  /**
+   * @param {object} opts
+   * @returns {boolean}
+   */
   display_state_form: (opts) =>
     !(opts && opts.default_state && opts.default_state._omit_state_form),
+  /**
+   * @param {object} opts
+   * @returns {boolean}
+   */
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
     const { _omit_state_form, _create_db_view, ...ds } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
+  /**
+   * @param {object} opts
+   * @param {*} opts.columns
+   * @param {*} opts.create_view_label
+   * @returns {string[]}
+   */
   getStringsForI18n({ columns, create_view_label }) {
     const strings = [];
     const maybeAdd = (s) => {

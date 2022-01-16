@@ -6,9 +6,13 @@ WORKDIR /opt/saltcorn
 
 COPY . /opt/saltcorn
 
-RUN lerna bootstrap
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
+ENV SALTCORN_DISABLE_UPGRADE "true"
+
+RUN lerna bootstrap --ignore @saltcorn/e2e
+RUN npm install
+RUN npm run tsc
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"
-ENV SALTCORN_DISABLE_UPGRADE "true"
 
 ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]

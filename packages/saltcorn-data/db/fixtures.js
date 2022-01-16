@@ -1,3 +1,9 @@
+/**
+ * init fixtures
+ * @category saltcorn-data
+ * @module db/fixtures
+ * @subcategory db
+ */
 const db = require(".");
 const { getState } = require("./state");
 const Table = require("../models/table");
@@ -8,7 +14,13 @@ const User = require("../models/user");
 const Page = require("../models/page");
 const fs = require("fs").promises;
 
-module.exports = async () => {
+module.exports = 
+/**
+ * @function
+ * @name "module.exports function"
+ * @returns {Promise<void>}
+ */
+async () => {
   getState().registerPlugin("base", require("../base-plugin"));
   const table = await Table.create("books", {
     min_role_read: 10,

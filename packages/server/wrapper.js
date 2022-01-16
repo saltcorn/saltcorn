@@ -1,3 +1,7 @@
+/**
+ * @category server
+ * @module wrapper
+ */
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");
@@ -12,7 +16,10 @@ const getFlashes = (req) =>
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 
 const get_extra_menu = (role, state, req) => {
-  const cfg = getState().getConfig("menu_items", []);
+  let cfg = getState().getConfig("unrolled_menu_items", []);
+  if (!cfg || cfg.length === 0) {
+    cfg = getState().getConfig("menu_items", []);
+  }
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
   const transform = (items) =>
@@ -21,7 +28,9 @@ const get_extra_menu = (role, state, req) => {
       .map((item) => ({
         label: __(item.label),
         icon: item.icon,
+        location: item.location,
         style: item.style || "",
+        type: item.type,
         link:
           item.type === "Link"
             ? item.url
@@ -36,7 +45,7 @@ const get_extra_menu = (role, state, req) => {
 };
 
 const get_menu = (req) => {
-  const isAuth = req.isAuthenticated();
+  const isAuth = req.user && req.user.id;
   const state = getState();
   const role = (req.user || {}).role_id || 10;
 
@@ -79,7 +88,6 @@ const get_menu = (req) => {
     { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
     { link: "/viewedit", icon: "far fa-eye", label: req.__("Views") },
     { link: "/pageedit", icon: "far fa-file", label: req.__("Pages") },
-    { link: "/files", icon: "far fa-images", label: req.__("Files") },
     {
       label: req.__("Settings"),
       icon: "fas fa-wrench",
@@ -93,19 +101,24 @@ const get_menu = (req) => {
         {
           link: "/useradmin",
           icon: "fas fa-users-cog",
+          altlinks: ["/roleadmin"],
           label: req.__("Users and security"),
         },
         {
           link: "/site-structure",
-          altlinks: ["/menu", "/search/config", "/tenant/list"],
+          altlinks: [
+            "/menu",
+            "/search/config",
+            "/library/list",
+            "/tenant/list",
+          ],
           icon: "fas fa-compass",
           label: req.__("Site structure"),
         },
-
+        { link: "/files", icon: "far fa-images", label: req.__("Files") },
         {
           link: "/events",
-          altlinks: ["/actions", "/crashlog"],
-
+          altlinks: ["/actions", "/eventlog", "/crashlog"],
           icon: "fas fa-calendar-check",
           label: req.__("Events"),
         },
@@ -226,17 +239,20 @@ module.exports = (version_tag) =>
             brand: get_brand(state),
             menu: get_menu(req),
             currentUrl,
+            originalUrl: req.originalUrl,
             alerts: getFlashes(req),
             body,
             headers: get_headers(req, version_tag),
             role,
             req,
+            bodyClass: "auth",
           })
         );
       }
     };
     res.sendWrap = function (opts, ...html) {
       const title = typeof opts === "string" ? opts : opts.title;
+      const bodyClass = opts.bodyClass || "";
       const alerts = getFlashes(req);
       const state = getState();
       const layout = state.getLayout(req.user);
@@ -245,6 +261,11 @@ module.exports = (version_tag) =>
         const renderToHtml = layout.renderBody
           ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
           : defaultRenderToHtml;
+        res.header(
+          "Cache-Control",
+          "private, no-cache, no-store, must-revalidate"
+        );
+
         res.set("Page-Title", encodeURIComponent(title));
         res.send(
           html.length === 1
@@ -256,17 +277,21 @@ module.exports = (version_tag) =>
       const currentUrl = req.originalUrl.split("?")[0];
 
       const pageHeaders = typeof opts === "string" ? [] : opts.headers;
+
       res.send(
         layout.wrap({
           title,
           brand: get_brand(state),
           menu: get_menu(req),
           currentUrl,
+          originalUrl: req.originalUrl,
+
           alerts,
           body: html.length === 1 ? html[0] : html.join(""),
           headers: get_headers(req, version_tag, opts.description, pageHeaders),
           role,
           req,
+          bodyClass,
         })
       );
     };

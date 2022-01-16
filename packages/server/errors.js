@@ -1,9 +1,22 @@
+/**
+ * @category server
+ * @module errors
+ */
 const db = require("@saltcorn/data/db");
 const { pre, p, text, h3 } = require("@saltcorn/markup/tags");
 const Crash = require("@saltcorn/data/models/crash");
 const { getState } = require("@saltcorn/data/db/state");
 
-module.exports = async function (err, req, res, next) {
+module.exports = 
+/**
+ * 
+ * @param {object} err 
+ * @param {object} req 
+ * @param {object} res 
+ * @param {*} next 
+ * @returns {Promise<void>}
+ */
+async function (err, req, res, next) {
   if (!req.__) req.__ = (s) => s;
 
   const devmode = getState().getConfig("development_mode", false);

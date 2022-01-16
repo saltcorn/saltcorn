@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/run-benchmark
+ */
 const { Command, flags } = require("@oclif/command");
 const si = require("systeminformation");
 const fetch = require("node-fetch");
@@ -6,9 +10,19 @@ const wrkCB = require("wrk");
 const { sleep } = require("../common");
 const packagejson = require("../../package.json");
 
+/**
+ * 
+ * @param {string} s 
+ * @returns {number}
+ */
 const parseMillisecs = (s) =>
   s.endsWith("ms") ? parseFloat(s) : parseFloat(s) * 1000;
 
+/**
+ * 
+ * @param {*} args 
+ * @returns {Promise<object>}
+ */
 const wrk = (args) =>
   new Promise(function (resolve, reject) {
     wrkCB(args, function (err, out) {
@@ -22,9 +36,22 @@ const wrk = (args) =>
     });
   });
 
+/**
+ * 
+ * @param {string} s 
+ * @returns {string}
+ */
 const ensure_no_final_slash = (s) => (s.endsWith("/") ? s.slice(0, -1) : s);
 
+/**
+ * RunBenchmarkCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class RunBenchmarkCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const {
       args: { baseurl },
@@ -108,12 +135,21 @@ class RunBenchmarkCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 RunBenchmarkCommand.args = [
   { name: "baseurl", required: false, description: "Base URL" },
 ];
 
+/**
+ * @type {string}
+ */
 RunBenchmarkCommand.description = `Run benchmark`;
 
+/**
+ * @type {object}
+ */
 RunBenchmarkCommand.flags = {
   token: flags.string({
     char: "t",

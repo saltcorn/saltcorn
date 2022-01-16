@@ -1,10 +1,14 @@
 /**
  * Controls Saltcorn configuration
- * @type {path.PlatformPath | path}
+ * @category saltcorn-data
+ * @module db/connect
+ * @subcategory db
  */
+
 const path = require("path");
 const fs = require("fs");
 const envPaths = require("env-paths");
+const is = require("contractis/is");
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
@@ -13,13 +17,18 @@ const pathsWithApp = envPaths("saltcorn", { suffix: "" });
  * @type {string}
  */
 const defaultDataPath = pathsWithApp.data;
+
+/**
+ * @param {string|object} x
+ * @returns {object}
+ */
 const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
 /**
  * Get Git revision of Saltcorn source.
  * Required to work:
  *  - Git client installed,
  *  - Local git with repo Saltcorn sources.
- * @returns {null} - Return current Git commit
+ * @returns {string} - Return current Git commit
  */
 const getGitRevision = () => {
   let revision = null;
@@ -41,14 +50,13 @@ const getGitRevision = () => {
  * - File store path
  * - Saltcorn confuration inheritance and fixed configuration
  * For all parameters and priority see the code of function.
- * @param connSpec
- * @returns {{sc_version: string, connectionString: *, git_commit: *, version_tag: (*|string)}|{sqlite_path}|boolean}
+ * @param {object} [connSpec = {}]
+ * @returns {object|boolean}
  */
 const getConnectObject = (connSpec = {}) => {
   const git_commit = getGitRevision();
-  const sc_version = require("../package.json").version;
-  const version_tag = git_commit || sc_version;
-  var connObj = { version_tag, git_commit, sc_version };
+  const sc_version = require("../../package.json").version;
+  var connObj = { git_commit, sc_version };
   const fileCfg = getConfigFile() || {};
 
   function setKey(k, envnm, opts = {}) {
@@ -83,6 +91,13 @@ const getConnectObject = (connSpec = {}) => {
     default: [],
     transform: stringToJSON,
   });
+
+  if (!connObj.session_secret) connObj.session_secret = is.str.generate();
+  connObj.version_tag = require("crypto")
+    .createHash("sha256")
+    .update(`${connObj.session_secret}${git_commit || sc_version}`)
+    .digest("hex")
+    .slice(0, 16);
 
   if (process.env.DATABASE_URL) {
     delete connObj[user];
@@ -123,7 +138,7 @@ const getConfigFile = () => {
 };
 /**
  * Check that Saltcorn configured to use SQLite as database
- * @param connObj - connectin object
+ * @param {object} connObj - connectin object
  * @returns {boolean} - Returns true if Saltcorn configured to use SQLite as database
  */
 const is_sqlite = (connObj) => {

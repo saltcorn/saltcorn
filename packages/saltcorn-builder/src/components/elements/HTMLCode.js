@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/HTMLCode
+ * @subcategory components / elements
+ */
+
 import React from "react";
 import { useNode } from "@craftjs/core";
 import {
@@ -7,7 +13,15 @@ import {
   TextStyleSetting,
 } from "./utils";
 
-export const HTMLCode = ({ text }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.text
+ * @returns {span}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const HTMLCode = ({ text }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -23,7 +37,6 @@ export const HTMLCode = ({ text }) => {
   );
 };
 
-
 const fields = [
   {
     label: "HTML Code",
@@ -33,6 +46,9 @@ const fields = [
   },
 ];
 
+/**
+ * @type {object}
+ */
 HTMLCode.craft = {
   displayName: "HTMLCode",
   related: {

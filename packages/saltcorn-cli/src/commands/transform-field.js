@@ -1,6 +1,18 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/transform-field
+ */
 const { Command, flags } = require("@oclif/command");
 
+/**
+ * TransformFieldCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */    
 class TransformFieldCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const db = require("@saltcorn/data/db");
     const Table = require("@saltcorn/data/models/table");
@@ -36,6 +48,9 @@ class TransformFieldCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 TransformFieldCommand.args = [
   {
     name: "expression",
@@ -47,8 +62,14 @@ TransformFieldCommand.args = [
   { name: "tenant", required: false, description: "tenant name" },
 ];
 
+/**
+ * @type {string}
+ */
 TransformFieldCommand.description = `transform an existing field by applying a calculated expression`;
 
+/**
+ * @type {object}
+ */
 TransformFieldCommand.flags = {};
 
 module.exports = TransformFieldCommand;

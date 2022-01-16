@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/viewable_fields
+ * @subcategory base-plugin
+ */
 const { post_btn, link } = require("@saltcorn/markup");
 const { text, a, i } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
@@ -10,12 +15,24 @@ const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
+const View = require("../../models/view");
 
+/**
+ * @function
+ * @param {string} viewname
+ * @param {Table|object} table
+ * @param {string} action_name
+ * @param {object} r
+ * @param {string} colId missing in contract
+ * @param {colIdNm} colIdNm missing in contract
+ * @returns {any}
+ */
 const action_url = contract(
   is.fun([is.str, is_tablely, is.str, is.obj()], is.any),
   (viewname, table, action_name, r, colId, colIdNm) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+    else if (action_name === "GoBack") return { javascript: "history.back()" };
     else if (action_name.startsWith("Toggle")) {
       const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
@@ -26,6 +43,23 @@ const action_url = contract(
   }
 );
 
+/**
+ * @param {string} url
+ * @param {object} req
+ * @param {object} opts
+ * @param {string} opts.action_name
+ * @param {string} opts.action_label
+ * @param {*} opts.confirm
+ * @param {*} opts.rndid
+ * @param {string} opts.action_style
+ * @param {number} opts.action_size
+ * @param {*} opts.action_icon
+ * @param {string} opts.action_bgcol
+ * @param {string} opts.action_bordercol
+ * @param {string} opts.action_textcol
+ * @param {*} __
+ * @returns {object}
+ */
 const action_link = (
   url,
   req,
@@ -37,10 +71,19 @@ const action_link = (
     action_style,
     action_size,
     action_icon,
+    action_bgcol,
+    action_bordercol,
+    action_textcol,
   },
   __ = (s) => s
 ) => {
   const label = __(action_label) || action_name;
+  let style =
+    action_style === "btn-custom-color"
+      ? `background-color: ${action_bgcol || "#000000"};border-color: ${
+          action_bordercol || "#000000"
+        }; color: ${action_textcol || "#000000"}`
+      : null;
   if (url.javascript)
     return a(
       {
@@ -49,6 +92,7 @@ const action_link = (
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+        style,
       },
       action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
       label
@@ -58,12 +102,27 @@ const action_link = (
       confirm,
       req,
       icon: action_icon,
+      style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
     });
 };
-const get_view_link_query = contract(
-  is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),
-  (fields) => {
+
+const slug_transform = (row) => (step) =>
+  step.transform === "slugify"
+    ? `/${db.slugify(row[step.field])}`
+    : `/${row[step.field]}`;
+/**
+ * @function
+ * @param {Field[]} fields
+ * @returns {function}
+ */
+const get_view_link_query =
+  /*contract(
+  is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),*/
+  (fields, view) => {
+    if (view && view.slug && view.slug.steps && view.slug.steps.length > 0) {
+      return (r) => view.slug.steps.map(slug_transform(r)).join("");
+    }
     const fUniqueString = fields.find(
       (f) => f.is_unique && f.type.name === "String"
     );
@@ -77,9 +136,19 @@ const get_view_link_query = contract(
       const pk_name = fields.find((f) => f.primary_key).name;
       return (r) => `?${pk_name}=${r[pk_name]}`;
     }
-  }
-);
+  };
 
+/**
+ * @function
+ * @param {object} opts
+ * @param {string} opts.link_text
+ * @param {boolean} opts.link_text_formula missing in contract
+ * @param {string} [opts.link_url]
+ * @param {boolean} opts.link_url_formula
+ * @param {boolean} opts.link_target_blank
+ * @param {Field[]} fields
+ * @returns {object}
+ */
 const make_link = contract(
   is.fun(
     [is.obj({ link_text: is.str }), is.array(is.class("Field"))],
@@ -99,12 +168,23 @@ const make_link = contract(
     return {
       label: "",
       key: (r) => {
-        const txt = link_text_formula
-          ? get_expression_function(link_text, fields)(r)
-          : link_text;
-        const href = link_url_formula
-          ? get_expression_function(link_url, fields)(r)
-          : link_url;
+        let txt, href;
+        try {
+          txt = link_text_formula
+            ? get_expression_function(link_text, fields)(r)
+            : link_text;
+        } catch (error) {
+          error.message = `Error in formula ${link_text} for link text:\n${error.message}`;
+          throw error;
+        }
+        try {
+          href = link_url_formula
+            ? get_expression_function(link_url, fields)(r)
+            : link_url;
+        } catch (error) {
+          error.message = `Error in formula ${link_url} for link URL:\n${error.message}`;
+          throw error;
+        }
         const attrs = { href };
         if (link_target_blank) attrs.target = "_blank";
         return a(attrs, txt);
@@ -112,6 +192,11 @@ const make_link = contract(
     };
   }
 );
+
+/**
+ * @param {string} s
+ * @returns {object}
+ */
 const parse_view_select = (s) => {
   const colonSplit = s.split(":");
   if (colonSplit.length === 1) return { type: "Own", viewname: s };
@@ -120,15 +205,35 @@ const parse_view_select = (s) => {
     case "Own":
       return { type, viewname: vrest };
     case "ChildList":
+    case "OneToOneShow":
       const [viewnm, tbl, fld] = vrest.split(".");
       return { type, viewname: viewnm, table_name: tbl, field_name: fld };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+    case "Independent":
+      return { type, viewname: vrest };
   }
 };
 
 //todo: use above to simplify code
+/**
+ * @function
+ * @param {object} opts
+ * @param {string} opts.view,
+ * @param {object} opts.view_label missing in contract
+ * @param {object} opts.in_modal
+ * @param {object} opts.view_label_formula
+ * @param {string} [opts.link_style = ""]
+ * @param {string} [opts.link_size = ""]
+ * @param {string} [opts.link_icon = ""]
+ * @param {string} [opts.textStyle = ""]
+ * @param {string} [opts.link_bgcol]
+ * @param {string} [opts.link_bordercol]
+ * @param {string} [opts.link_textcol]
+ * @param {Field[]} fields
+ * @returns {object}
+ */
 const view_linker = contract(
   is.fun(
     [is.obj({ view: is.str }), is.array(is.class("Field"))],
@@ -144,6 +249,9 @@ const view_linker = contract(
       link_size = "",
       link_icon = "",
       textStyle = "",
+      link_bgcol,
+      link_bordercol,
+      link_textcol,
     },
     fields,
     __ = (s) => s
@@ -158,7 +266,8 @@ const view_linker = contract(
     switch (vtype) {
       case "Own":
         const vnm = vrest;
-        const get_query = get_view_link_query(fields);
+        const viewrow = View.findOne({ name: vnm });
+        const get_query = get_view_link_query(fields, viewrow || {});
         return {
           label: vnm,
           key: (r) =>
@@ -169,10 +278,32 @@ const view_linker = contract(
               link_style,
               link_size,
               link_icon,
-              textStyle
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol
+            ),
+        };
+      case "Independent":
+        const ivnm = vrest;
+        return {
+          label: ivnm,
+          key: (r) =>
+            link_view(
+              `/view/${encodeURIComponent(ivnm)}`,
+              get_label(ivnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol
             ),
         };
       case "ChildList":
+      case "OneToOneShow":
         const [viewnm, tbl, fld] = vrest.split(".");
         return {
           label: viewnm,
@@ -184,7 +315,10 @@ const view_linker = contract(
               link_style,
               link_size,
               link_icon,
-              textStyle
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol
             ),
         };
       case "ParentShow":
@@ -210,7 +344,10 @@ const view_linker = contract(
                   link_style,
                   link_size,
                   link_icon,
-                  textStyle
+                  textStyle,
+                  link_bgcol,
+                  link_bordercol,
+                  link_textcol
                 )
               : "";
           },
@@ -221,12 +358,27 @@ const view_linker = contract(
   }
 );
 
+/**
+ * @param {string} nm
+ * @returns {boolean}
+ */
 const action_requires_write = (nm) => {
   if (!nm) return false;
   if (nm === "Delete") return true;
   if (nm.startsWith("Toggle")) return true;
 };
 
+/**
+ * @function
+ * @param {string} viewname
+ * @param {Table|object} table
+ * @param {Fields[]} fields
+ * @param {object[]} columns
+ * @param {boolean} isShow
+ * @param {object} req
+ * @param {*} __
+ * @returns {object[]}
+ */
 const get_viewable_fields = contract(
   is.fun(
     [
@@ -250,16 +402,16 @@ const get_viewable_fields = contract(
       .map((column) => {
         const role = req.user ? req.user.role_id : 10;
         const user_id = req.user ? req.user.id : null;
+        const setWidth = column.col_width
+          ? { width: `${column.col_width}${column.col_width_units}` }
+          : {};
         if (column.type === "Action")
           return {
+            ...setWidth,
             label: column.header_label ? text(__(column.header_label)) : "",
             key: (r) => {
               if (action_requires_write(column.action_name)) {
-                const owner_field = table.owner_fieldname_from_fields(fields);
-                if (
-                  table.min_role_write < role &&
-                  (!owner_field || r[owner_field] !== user_id)
-                )
+                if (table.min_role_write < role && !table.is_owner(req.user, r))
                   return "";
               }
               const url = action_url(
@@ -301,23 +453,34 @@ const get_viewable_fields = contract(
           if (!column.view) return;
           const r = view_linker(column, fields, __);
           if (column.header_label) r.label = text(__(column.header_label));
+          Object.assign(r, setWidth);
           return r;
         } else if (column.type === "Link") {
           const r = make_link(column, fields, __);
           if (column.header_label) r.label = text(__(column.header_label));
+          Object.assign(r, setWidth);
           return r;
         } else if (column.type === "JoinField") {
-          const keypath = column.join_field.split(".");
           let refNm, targetNm, through, key;
-          if (keypath.length === 2) {
-            [refNm, targetNm] = keypath;
-            key = `${refNm}_${targetNm}`;
-          } else {
-            [refNm, through, targetNm] = keypath;
-            key = `${refNm}_${through}_${targetNm}`;
-          }
 
+          if (column.join_field.includes("->")) {
+            const [relation, target] = column.join_field.split("->");
+            const [ontable, ref] = relation.split(".");
+            targetNm = target;
+            refNm = ref;
+            key = `${ref}_${ontable}_${target}`;
+          } else {
+            const keypath = column.join_field.split(".");
+            if (keypath.length === 2) {
+              [refNm, targetNm] = keypath;
+              key = `${refNm}_${targetNm}`;
+            } else {
+              [refNm, through, targetNm] = keypath;
+              key = `${refNm}_${through}_${targetNm}`;
+            }
+          }
           return {
+            ...setWidth,
             label: column.header_label
               ? text(__(column.header_label))
               : text(targetNm),
@@ -337,6 +500,7 @@ const get_viewable_fields = contract(
           ).toLowerCase();
 
           return {
+            ...setWidth,
             label: column.header_label
               ? text(column.header_label)
               : text(column.stat + " " + table),
@@ -355,6 +519,7 @@ const get_viewable_fields = contract(
           const isNum = f && f.type && f.type.name === "Integer";
           return (
             f && {
+              ...setWidth,
               align: isNum ? "right" : undefined,
               label: headerLabelForName(column, f, req, __),
               key:
@@ -372,7 +537,7 @@ const get_viewable_fields = contract(
                       f.type.fieldviews[column.fieldview].run(
                         row[f_with_val.name],
                         req,
-                        column.configuration
+                        { ...f.attributes, ...column.configuration }
                       )
                   : isShow
                   ? f.type.showAs
@@ -389,6 +554,12 @@ const get_viewable_fields = contract(
       })
       .filter((v) => !!v)
 );
+
+/**
+ * @param {string} fname
+ * @param {object} req
+ * @returns {string}
+ */
 const sortlinkForName = (fname, req) => {
   const { _sortby, _sortdesc } = req.query || {};
   const desc =
@@ -399,6 +570,14 @@ const sortlinkForName = (fname, req) => {
       : "true";
   return `javascript:sortby('${text(fname)}', ${desc})`;
 };
+
+/**
+ * @param {object} column
+ * @param {object} f
+ * @param {object} req
+ * @param {*} __
+ * @returns {string}
+ */
 const headerLabelForName = (column, f, req, __) => {
   const label = column.header_label
     ? text(__(column.header_label))
@@ -412,6 +591,14 @@ const headerLabelForName = (column, f, req, __) => {
       : i({ class: "fas fa-caret-up" });
   return label + arrow;
 };
+
+/**
+ * @function
+ * @param {Field[]} fields
+ * @param {object} state
+ * @param {boolean} [fuzzyStrings]
+ * @returns {object}
+ */
 const splitUniques = contract(
   is.fun(
     [is.array(is.class("Field")), is.obj(), is.maybe(is.bool)],
@@ -437,6 +624,16 @@ const splitUniques = contract(
     return { uniques, nonUniques };
   }
 );
+
+/**
+ * @param {object} table
+ * @param {string} viewname
+ * @param {object[]} [columns]
+ * @param {object} layout0
+ * @param {boolean} id
+ * @param {object} req
+ * @returns {Promise<Form>}
+ */
 const getForm = async (table, viewname, columns, layout0, id, req) => {
   const fields = await table.getFields();
 
@@ -458,7 +655,7 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
           }
           if (f.calculated)
             f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
-
+          f.attributes = { ...column.configuration, ...f.attributes };
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({
@@ -501,11 +698,16 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
     fields: tfields,
     layout,
   });
-  await form.fill_fkey_options();
   if (id) form.hidden("id");
   return form;
 };
 
+/**
+ * @param {object} table
+ * @param {object} req
+ * @param {object} fixed
+ * @returns {Promise<object>}
+ */
 const fill_presets = async (table, req, fixed) => {
   const fields = await table.getFields();
   Object.keys(fixed || {}).forEach((k) => {
@@ -513,7 +715,11 @@ const fill_presets = async (table, req, fixed) => {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
         const fld = fields.find((f) => f.name === fldnm);
-        fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
+        if (fld) {
+          if (table.name === "users" && fld.primary_key)
+            fixed[fldnm] = req.user ? req.user.id : null;
+          else fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
+        }
       }
       delete fixed[k];
     } else {
@@ -533,4 +739,5 @@ module.exports = {
   splitUniques,
   getForm,
   fill_presets,
+  get_view_link_query,
 };

@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/tables
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
@@ -16,7 +22,7 @@ const {
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
   span,
@@ -48,12 +54,19 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace tablesRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 /**
  * Show Table Form
- * @param table
- * @param req
+ * @param {object} table
+ * @param {object} req
  * @returns {Promise<Form>}
  */
 const tableForm = async (table, req) => {
@@ -70,7 +83,7 @@ const tableForm = async (table, req) => {
     submitButtonClass: "btn-outline-primary",
     onChange: "remove_outline(this)",
     fields: [
-      ...(userFields.length > 0 && !table.external
+      ...(!table.external
         ? [
             {
               label: req.__("Ownership field"),
@@ -79,7 +92,22 @@ const tableForm = async (table, req) => {
                 "The user referred to in this field will be the owner of the row"
               ),
               input_type: "select",
-              options: [{ value: "", label: req.__("None") }, ...userFields],
+              options: [
+                { value: "", label: req.__("None") },
+                ...userFields,
+                { value: "_formula", label: req.__("Formula") },
+              ],
+            },
+            {
+              name: "ownership_formula",
+              label: req.__("Ownership formula"),
+              type: "String",
+              sublabel:
+                req.__("User is treated as owner if true. In scope: ") +
+                ["user", ...fields.map((f) => f.name)]
+                  .map((fn) => code(fn))
+                  .join(", "),
+              showIf: { ownership_field_id: "_formula" },
             },
           ]
         : []),
@@ -133,12 +161,16 @@ const tableForm = async (table, req) => {
   }
   return form;
 };
+
 /**
  * New table (GET handler)
+ * @name get/new
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/new/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`New table`), {
@@ -175,8 +207,8 @@ router.get(
 );
 /**
  * Discover Database Tables Form
- * @param tables - list of tables
- * @param req - HTTP Request
+ * @param {object[]} tables list of tables
+ * @param {object} req HTTP Request
  * @returns {Form}
  */
 const discoverForm = (tables, req) => {
@@ -198,12 +230,16 @@ const discoverForm = (tables, req) => {
     })),
   });
 };
+
 /**
  * Table Discover (GET handler)
+ * @name get/discover
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/discover",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     // get list of discoverable tables
@@ -228,12 +264,16 @@ router.get(
     });
   })
 );
+
 /**
  * Table Discover (post)
+ * @name post/discover
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/discover",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
@@ -251,12 +291,16 @@ router.post(
     res.redirect("/table");
   })
 );
+
 /**
  * Create Table from CSV file (get)
+ * @name get/create-from-csv
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/create-from-csv",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Create table from CSV file`), {
@@ -298,12 +342,16 @@ router.get(
     });
   })
 );
+
 /**
  * Create Table from CSV file (post)
+ * @name post/create-from-csv
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/create-from-csv",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
@@ -342,12 +390,16 @@ router.post(
     }
   })
 );
+
 /**
  * Show Relational Diagram (get)
+ * @name get/relationship-diagram
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/relationship-diagram",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
@@ -430,8 +482,19 @@ router.get(
   })
 );
 
+/**
+ * @param {string} col
+ * @param {string} lbl
+ * @returns {string}
+ */
 const badge = (col, lbl) =>
   `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
+
+/**
+ * @param {object} f
+ * @param {object} req
+ * @returns {string}
+ */
 const typeBadges = (f, req) => {
   let s = "";
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
@@ -441,6 +504,11 @@ const typeBadges = (f, req) => {
   if (f.stored) s += badge("warning", req.__("Stored"));
   return s;
 };
+
+/**
+ * @param {object} f
+ * @returns {string}
+ */
 const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
@@ -451,12 +519,16 @@ const attribBadges = (f) => {
   }
   return s;
 };
+
 /**
  * Table Constructor (GET Handler)
+ * @name get/:idorname
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/:idorname",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { idorname } = req.params;
@@ -502,7 +574,10 @@ router.get(
               r.type === "Key"
                 ? `Key to ` +
                   a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
-                : (r.type && r.type.name) || r.type,
+                : (r.type && r.type.name) ||
+                  r.type ||
+                  r.typename +
+                    span({ class: "badge badge-danger ml-1" }, "Unknown type"),
           },
           {
             label: "",
@@ -680,6 +755,7 @@ router.get(
             ),
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
+              table.name !== "users" &&
               a(
                 {
                   class: "dropdown-item",
@@ -700,10 +776,19 @@ router.get(
               req,
               true
             ),
+            table.name !== "users" &&
+              post_dropdown_item(
+                `/table/forget-table/${table.id}`,
+                '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
+                req,
+                true
+              ),
           ])
         )
     );
     // add table form
+    if (table.ownership_formula && !table.ownership_field_id)
+      table.ownership_field_id = "_formula";
     const tblForm = await tableForm(table, req);
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
@@ -742,12 +827,15 @@ router.get(
     });
   })
 );
+
 /**
- *
+ * @name post
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const v = req.body;
@@ -791,6 +879,9 @@ router.post(
       const table = await Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
       if (!rest.versioned) rest.versioned = false;
+      if (rest.ownership_field_id === "_formula")
+        rest.ownership_field_id = null;
+      else rest.ownership_formula = null;
       await table.update(rest);
       if (!old_versioned && rest.versioned)
         req.flash(
@@ -808,17 +899,26 @@ router.post(
     }
   })
 );
+
 /**
  * Delete Table Route Handler definition
  * /delete:/id, where id is table id in _sc_tables
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = await Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
     if (t.name === "users") {
       req.flash("error", req.__(`Cannot delete users table`));
       res.redirect(`/table`);
@@ -834,15 +934,44 @@ router.post(
     }
   })
 );
+router.post(
+  "/forget-table/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const t = await Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
+    try {
+      await t.delete(true);
+      req.flash(
+        "success",
+        req.__(`Table %s forgotten. You can now discover it.`, t.name)
+      );
+      res.redirect(`/table`);
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect(`/table`);
+    }
+  })
+);
 /**
  * Table badges to show in System Table list views
  * Currently supports:
  * - Owned - if ownership_field_id? What is it?
  * - History - if table has versioning
  * - External - if this is external table
- * @param t - table object
- * @param req - http request
- * @returns {string} - html string with list of badges
+ * @param {object} t table object
+ * @param {object} req http request
+ * @returns {string} html string with list of badges
  */
 const tableBadges = (t, req) => {
   let s = "";
@@ -851,13 +980,16 @@ const tableBadges = (t, req) => {
   if (t.external) s += badge("info", req.__("External"));
   return s;
 };
+
 /**
  * List Views of Tables (GET Handler)
- *
+ * @name get
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await Table.find_with_external({}, { orderBy: "name" });
@@ -942,12 +1074,16 @@ router.get(
     });
   })
 );
+
 /**
  * Download CSV file
+ * @name get/download/:name
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/download/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -967,12 +1103,16 @@ router.get(
     }).pipe(res);
   })
 );
+
 /**
  * Show list of Constraints for Table (GET Handler)
+ * @name get/constraints/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/constraints/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1023,8 +1163,8 @@ router.get(
 /**
  * Constraint Fields Edition Form
  * Choosing fields for adding to contrain
- * @param table_id
- * @param fields
+ * @param {string} table_id
+ * @param {object[]} fields
  * @returns {Form}
  */
 const constraintForm = (req, table_id, fields) =>
@@ -1039,13 +1179,17 @@ const constraintForm = (req, table_id, fields) =>
       type: "Bool",
     })),
   });
+
 /**
  * Add constraint GET handler
  * ${base_url}/table/add-constraint/:id
+ * @name get/add-constraint/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/add-constraint/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1080,12 +1224,16 @@ router.get(
     });
   })
 );
+
 /**
  * Add constraint POST handler
+ * @name post/add-constraint/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/add-constraint/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1114,8 +1262,8 @@ router.post(
 /**
  * Rename Table Form
  * Allows to set up new table name
- * @param table_id
- * @param req
+ * @param {string} table_id
+ * @param {object} req
  * @returns {Form}
  */
 const renameForm = (table_id, req) =>
@@ -1130,12 +1278,16 @@ const renameForm = (table_id, req) =>
       },
     ],
   });
+
 /**
  * Rename Table GET handler
+ * @name get/rename/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.get(
   "/rename/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1163,12 +1315,16 @@ router.get(
     });
   })
 );
+
 /**
  * Rename Table POST Handler
+ * @name post/rename/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/rename/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1183,12 +1339,16 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
 /**
  * Delete constraint POST handler
+ * @name post/delete-constraint/:id",
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/delete-constraint/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -1197,12 +1357,16 @@ router.post(
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
+
 /**
  * Import Table Data from CSV POST handler
+ * @name post/upload_to_table/:name,
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/upload_to_table/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -1228,12 +1392,16 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
 /**
  * Delete All rows from Table
+ * @name post/delete-all-rows/:name,
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/delete-all-rows/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -1249,12 +1417,16 @@ router.post(
     res.redirect(`/table/${table.id}`);
   })
 );
+
 /**
  * Call for Recalculate table columns that stored in db (POST Handler)
+ * @name post/recalc-stored/:name,
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
  */
 router.post(
   "/recalc-stored/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;

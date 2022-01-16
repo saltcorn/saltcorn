@@ -1,7 +1,10 @@
 /**
  * DB structure migration functionality
- * @type {module:fs}
+ * @category saltcorn-data
+ * @module migrate
  */
+
+/** @type {module:fs} */
 const fs = require("fs");
 const path = require("path");
 const db = require("./db");
@@ -81,7 +84,7 @@ const migrate = async (schema0, verbose) => {
 // todo add rollbacksql statement
 const create_blank_migration = async () => {
   var time = dateFormat(new Date(), "yyyymmddHHMM");
-  const fnm = path.join(__dirname, "migrations", `${time}.js`);
+  const fnm = path.join(__dirname, "..", "migrations", `${time}.js`);
   fs.writeFileSync(
     fnm,
     `

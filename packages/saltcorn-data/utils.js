@@ -1,3 +1,7 @@
+/**
+ * @category saltcorn-data
+ * @module utils
+ */
 const v8 = require("v8");
 const fs = require("fs");
 
@@ -114,9 +118,30 @@ const removeAllWhiteSpace = (s) =>
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const mergeIntoWhere = (where, newWhere) => {
+  Object.entries(newWhere).forEach(([k, v]) => {
+    if (typeof where[k] === "undefined") where[k] = v;
+    else where[k] = [where[k], v];
+  });
+  return where;
+};
+
+const prefixFieldsInWhere = (inputWhere, tablePrefix) => {
+  if (!inputWhere) return {};
+  const whereObj = {};
+  Object.keys(inputWhere).forEach((k) => {
+    if (k === "_fts") whereObj[k] = { table: tablePrefix, ...inputWhere[k] };
+    else if (k === "not") {
+      whereObj.not = prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
+  });
+  return whereObj;
+};
 module.exports = {
   removeEmptyStrings,
   removeDefaultColor,
+  prefixFieldsInWhere,
   isEmpty,
   asyncMap,
   numberToBool,
@@ -130,4 +155,5 @@ module.exports = {
   getLines,
   removeAllWhiteSpace,
   sleep,
+  mergeIntoWhere,
 };

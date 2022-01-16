@@ -126,6 +126,14 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
+  it("should get rows by slug", async () => {
+    const books = await Table.findOne({ name: "books" });
+    const all = await books.getRows({
+      author: { slugify: "herman-melville" },
+    });
+    expect(all.length).toStrictEqual(1);
+    expect(all[0].pages).toStrictEqual(967);
+  });
   it("should get joined rows where name is Michael", async () => {
     const patients = await Table.findOne({ name: "patients" });
     const michaels = await patients.getJoinedRows({
@@ -133,6 +141,13 @@ describe("Table get data", () => {
     });
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].favbook).toBe(2);
+  });
+  it("should get joined rows where name is not null", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    const nameds = await patients.getJoinedRows({
+      where: { not: { name: null } },
+    });
+    expect(nameds.length).toStrictEqual(2);
   });
   it("should get rows in id range", async () => {
     const patients = await Table.findOne({ name: "patients" });
@@ -353,6 +368,36 @@ describe("Table get data", () => {
     expect(michaels[0].pages).toBe(728);
     expect(michaels[0].author).toBe("Leo Tolstoy");
   });
+  it("should get joined rows with one-to-one relations", async () => {
+    const ratings = await Table.create("myreviews");
+    await Field.create({
+      name: "book",
+      label: "Book",
+      type: "Key to books",
+      is_unique: true,
+      table: ratings,
+    });
+    await Field.create({
+      name: "rating",
+      label: "Rating",
+      type: "Integer",
+      table: ratings,
+    });
+    await ratings.insertRow({ book: 1, rating: 7 });
+    const books = await Table.findOne({ name: "books" });
+    //db.set_sql_logging();
+    const reads = await books.getJoinedRows({
+      orderBy: "id",
+      where: { author: "Herman Melville" },
+      joinFields: {
+        rating: { ref: "book", ontable: "myreviews", target: "rating" },
+      },
+    });
+    expect(reads.length).toStrictEqual(1);
+    expect(reads[0].rating).toBe(7);
+    expect(reads[0].author).toBe("Herman Melville");
+    expect(reads[0].pages).toBe(967);
+  });
 });
 
 describe("relations", () => {
@@ -362,14 +407,25 @@ describe("relations", () => {
     expect(rels.parent_field_list).toContain("favbook.author");
     expect(rels.parent_relations.length).toBe(2);
   });
-  it("get parent relations", async () => {
+
+  it("get parent relations with one-to-one", async () => {
+    const table = await Table.findOne({ name: "books" });
+    const rels = await table.get_parent_relations();
+    expect(rels.parent_field_list).toEqual([
+      "myreviews.book->book",
+      "myreviews.book->id",
+      "myreviews.book->rating",
+    ]);
+  });
+  it("get child relations", async () => {
     const table = await Table.findOne({ name: "books" });
     const rels = await table.get_child_relations();
     expect(rels.child_field_list).toEqual([
       "discusses_books.book",
+      "myreviews.book",
       "patients.favbook",
     ]);
-    expect(rels.child_relations.length).toBe(2);
+    expect(rels.child_relations.length).toBe(3);
   });
   it("get grandparent relations", async () => {
     const table = await Table.findOne({ name: "readings" });
@@ -562,6 +618,39 @@ Pencil, 0.5,, t`;
     expect(rows[0].count).toBe(null);
     const brows = await table.getRows({ item: "Book" });
     expect(brows[0].count).toBe(4);
+  });
+  it("should import with space in name", async () => {
+    //db.set_sql_logging();
+    const csv = `Item Name,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2impok.csv";
+    await fs.writeFile(fnm, csv);
+    const { table } = await Table.create_from_csv("Invoice5", fnm);
+    const fields = await table.getFields();
+    const nameField = fields.find((f) => f.name === "item_name");
+    expect(nameField.type.name).toBe("String");
+    expect(nameField.label).toBe("Item Name");
+
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
+  });
+  it("should import with underscore in name", async () => {
+    //db.set_sql_logging();
+    const csv = `Item_Name,cost,count, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2impok.csv";
+    await fs.writeFile(fnm, csv);
+    const { table } = await Table.create_from_csv("Invoice6", fnm);
+    const fields = await table.getFields();
+    expect(fields.map((f) => f.name)).toContain("item_name");
+    const nameField = fields.find((f) => f.name === "item_name");
+    expect(nameField.type.name).toBe("String");
+    expect(nameField.label).toBe("Item Name");
+
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
   });
 });
 
@@ -873,6 +962,42 @@ describe("Table with row ownership", () => {
       expect(row.age).toBe(12);
       const owner_fnm = await persons.owner_fieldname();
       expect(owner_fnm).toBe("owner");
+      const is_owner = await persons.is_owner({ id: 6 }, row);
+      expect(is_owner).toBe(false);
+      const row1 = await persons.getRow({ age: 13 });
+      const is_owner1 = await persons.is_owner({ id: 1 }, row1);
+      expect(is_owner1).toBe(true);
+    }
+    await persons.delete();
+  });
+});
+describe("Table with row ownership", () => {
+  it("should create and delete table", async () => {
+    const persons = await Table.create("TableOwnedFml");
+    const name = await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    const age = await Field.create({
+      table: persons,
+      name: "age",
+      type: "String",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({ ownership_formula: "user.id===owner" });
+    if (!db.isSQLite) {
+      await age.update({ type: "Integer" });
+      await name.update({ name: "lastname" });
+      await persons.insertRow({ lastname: "Joe", age: 12 });
+      await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+      const row = await persons.getRow({ age: 12 });
+      expect(row.lastname).toBe("Joe");
+      expect(row.age).toBe(12);
       const is_owner = await persons.is_owner({ id: 6 }, row);
       expect(is_owner).toBe(false);
       const row1 = await persons.getRow({ age: 13 });

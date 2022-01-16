@@ -1,7 +1,17 @@
+/**
+ * @category server
+ * @module markup/expression_blurb
+ * @subcategory markup
+ */
+
 const { p, code, li, ul, pre } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { getState } = require("@saltcorn/data/db/state");
 
+/**
+ * @param {*} type 
+ * @returns {*}
+ */
 const toJsType = (type) =>
   ({
     Integer: "number",
@@ -12,6 +22,11 @@ const toJsType = (type) =>
     Color: "string",
   }[type] || type);
 
+/**
+ * @param {*} type 
+ * @param {object[]} fields 
+ * @returns {string[]}
+ */
 const intExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const intFields = fields.filter((f) => f.type && f.type.name === "Integer");
@@ -27,6 +42,11 @@ const intExamples = (type, fields) => {
   return exs;
 };
 
+/**
+ * @param {*} type 
+ * @param {object[]} fields 
+ * @returns {string[]}
+ */
 const colorExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const exs = [`"#06ab6d1"`];
@@ -36,6 +56,12 @@ const colorExamples = (type, fields) => {
   }
   return exs;
 };
+
+/**
+ * @param {*} type 
+ * @param {object[]} fields 
+ * @returns {string[]}
+ */
 const stringExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const strFields = fields.filter((f) => f.type && f.type.name === "String");
@@ -50,6 +76,12 @@ const stringExamples = (type, fields) => {
   }
   return exs;
 };
+
+/**
+ * @param {*} type 
+ * @param {object[]} fields 
+ * @returns {string[]}
+ */
 const floatExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const numFields = fields.filter(
@@ -73,6 +105,12 @@ const floatExamples = (type, fields) => {
   }
   return exs;
 };
+
+/**
+ * @param {*} type 
+ * @param {object[]} fields 
+ * @returns {string[]}
+ */
 const boolExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const numFields = fields.filter(
@@ -100,6 +138,13 @@ const boolExamples = (type, fields) => {
   return exs;
 };
 
+/**
+ * @param {string} type 
+ * @param {*} stored 
+ * @param {object[]} allFields 
+ * @param {object} req 
+ * @returns {p[]}
+ */
 const expressionBlurb = (type, stored, allFields, req) => {
   const fields = allFields.filter((f) => !f.is_fkey && !f.calculated);
   const funs = getState().functions;

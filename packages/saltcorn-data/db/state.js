@@ -1,8 +1,10 @@
 /**
  * State of Saltcorn
  * Keeps cache for main objects
+ * @category saltcorn-data
+ * @module db/state
+ * @subcategory db
  */
-
 const { contract, is } = require("contractis");
 const {
   is_plugin_wrap,
@@ -19,7 +21,11 @@ const { migrate } = require("../migrate");
 const File = require("../models/file");
 const Trigger = require("../models/trigger");
 const View = require("../models/view");
-const { getAllTenants, createTenant } = require("../models/tenant");
+const {
+  getAllTenants,
+  createTenant,
+  copy_tenant_template,
+} = require("../models/tenant");
 const {
   getAllConfigOrDefaults,
   setConfig,
@@ -32,19 +38,32 @@ const { I18n } = require("i18n");
 const path = require("path");
 const fs = require("fs");
 
-process.send = process.send || function () {};
+/**
+ * @param {object} v
+ * @returns {void}
+ */
+const process_send = (v) => {
+  if (process.send) process.send(v);
+};
 
 /**
- * State class
+ * State Class
+ * @category saltcorn-data
  */
 class State {
+  /**
+   * State constructor
+   * @param {string} tenant description
+   */
   constructor(tenant) {
     this.tenant = tenant;
     this.views = [];
     this.triggers = [];
+    this.virtual_triggers = [];
     this.viewtemplates = {};
     this.tables = [];
     this.types = {};
+    this.stashed_fieldviews = {};
     this.files = {};
     this.pages = [];
     this.fields = [];
@@ -55,11 +74,12 @@ class State {
     this.plugins = {};
     this.plugin_cfgs = {};
     this.plugin_locations = {};
+    this.plugin_module_names = {};
     this.eventTypes = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
-    this.function_context = { moment };
-    this.functions = { moment };
+    this.function_context = { moment, slugify: db.slugify };
+    this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
@@ -73,8 +93,8 @@ class State {
   /**
    * Get Layout by user
    * Based on role of user
-   * @param user
-   * @returns {unknown}
+   * @param {object} user
+   * @returns {object}
    */
   getLayout(user) {
     const role_id = user ? +user.role_id : 10;
@@ -87,8 +107,17 @@ class State {
     return layoutvs[layoutvs.length - 1];
   }
 
+  get2FApolicy(user) {
+    const role_id = user ? +user.role_id : 10;
+    const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
+    if (twofa_policy_by_role && twofa_policy_by_role[role_id])
+      return twofa_policy_by_role[role_id];
+    else return "Optional";
+  }
+
   /**
    * Refresh State cache for all Saltcorn main objects
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh(noSignal) {
@@ -99,8 +128,10 @@ class State {
     await this.refresh_pages(noSignal);
     await this.refresh_config(noSignal);
   }
+
   /**
    * Refresh config
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_config(noSignal) {
@@ -110,8 +141,12 @@ class State {
     });
     this.refresh_i18n();
     if (!noSignal)
-      process.send({ refresh: "config", tenant: db.getTenantSchema() });
+      process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async refresh_i18n() {
     const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
     try {
@@ -139,37 +174,53 @@ class State {
 
   /**
    * Refresh views
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_views(noSignal) {
     this.views = await View.find();
+    this.virtual_triggers = [];
+    for (const view of this.views) {
+      if (view.viewtemplateObj && view.viewtemplateObj.virtual_triggers) {
+        const trs = await view.viewtemplateObj.virtual_triggers(
+          view.table_id,
+          view.name,
+
+          view.configuration
+        );
+        this.virtual_triggers.push(...trs);
+      }
+    }
     if (!noSignal)
-      process.send({ refresh: "views", tenant: db.getTenantSchema() });
+      process_send({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh triggers
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_triggers(noSignal) {
     this.triggers = await Trigger.findDB();
     if (!noSignal)
-      process.send({ refresh: "triggers", tenant: db.getTenantSchema() });
+      process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh pages
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_pages(noSignal) {
     const Page = require("../models/page");
     this.pages = await Page.find();
     if (!noSignal)
-      process.send({ refresh: "pages", tenant: db.getTenantSchema() });
+      process_send({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh files
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
@@ -180,11 +231,12 @@ class State {
       this.files[f.id] = f;
     }
     if (!noSignal)
-      process.send({ refresh: "files", tenant: db.getTenantSchema() });
+      process_send({ refresh: "files", tenant: db.getTenantSchema() });
   }
 
   /**
    * Refresh tables & fields
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_tables(noSignal) {
@@ -222,14 +274,14 @@ class State {
     }
     this.tables = allTables;
     if (!noSignal)
-      process.send({ refresh: "tables", tenant: db.getTenantSchema() });
+      process_send({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
    * Get config parameter by key
-   * @param key - key of config paramter
-   * @param def - default value
-   * @returns {*}
+   * @param {string} key - key of config paramter
+   * @param {string} [def] - default value
+   * @returns {string}
    */
   getConfig(key, def) {
     const fixed = db.connectObj.fixed_configuration[key];
@@ -247,9 +299,9 @@ class State {
 
   /**
    * Get copy of config parameter
-   * @param key - key of parameter
-   * @param def - default value
-   * @returns {any}
+   * @param {sring} key - key of parameter
+   * @param {string} [def] - default value
+   * @returns {string}
    */
   getConfigCopy(key, def) {
     return structuredClone(this.getConfig(key, def));
@@ -258,8 +310,8 @@ class State {
   /**
    *
    * Set value of config parameter
-   * @param key - key of parameter
-   * @param value - value of parameter
+   * @param {string} key - key of parameter
+   * @param {string} value - value of parameter
    * @returns {Promise<void>}
    */
   async setConfig(key, value) {
@@ -271,13 +323,13 @@ class State {
       await setConfig(key, value);
       this.configs[key] = { value };
       if (key.startsWith("localizer_")) this.refresh_i18n();
-      process.send({ refresh: "config", tenant: db.getTenantSchema() });
+      process_send({ refresh: "config", tenant: db.getTenantSchema() });
     }
   }
 
   /**
    * Delete config parameter by key
-   * @param key - key of parameter
+   * @param {string} key - key of parameter
    * @returns {Promise<void>}
    */
   async deleteConfig(...keys) {
@@ -285,20 +337,23 @@ class State {
       await deleteConfig(key);
       delete this.configs[key];
     }
-    process.send({ refresh: "config", tenant: db.getTenantSchema() });
+    process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   /**
-   * Registre plugin
-   * @param name
-   * @param plugin
-   * @param cfg
-   * @param location
+   * Register plugin
+   * @param {string} name
+   * @param {object} plugin
+   * @param {*} cfg
+   * @param {*} location
+   * @param {string} modname
+   * @returns {void}
    */
-  registerPlugin(name, plugin, cfg, location) {
+  registerPlugin(name, plugin, cfg, location, modname) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
     this.plugin_locations[plugin.plugin_name || name] = location;
+    if (modname) this.plugin_module_names[modname] = name;
 
     const withCfg = (key, def) =>
       plugin.configuration_workflow
@@ -342,6 +397,10 @@ class State {
       if (type) {
         if (type.fieldviews) type.fieldviews[k] = v;
         else type.fieldviews = { [k]: v };
+      } else {
+        if (!this.stashed_fieldviews[v.type])
+          this.stashed_fieldviews[v.type] = {};
+        this.stashed_fieldviews[v.type][k] = v;
       }
     });
     const layout = withCfg("layout");
@@ -359,7 +418,7 @@ class State {
 
   /**
    * Get type names
-   * @returns {string[]}
+   * @type {string[]}
    */
   get type_names() {
     return Object.keys(this.types);
@@ -367,39 +426,50 @@ class State {
 
   /**
    * Add type
-   * @param t
+   * @param {object} t
    */
   addType(t) {
-    this.types[t.name] = { ...t, fieldviews: { ...t.fieldviews } };
+    if (this.types[t.name]) return;
+
+    this.types[t.name] = {
+      ...t,
+      fieldviews: {
+        ...t.fieldviews,
+        ...(this.stashed_fieldviews[t.name] || {}),
+      },
+    };
   }
 
   /**
    * Remove plugin
-   * @param name
+   * @param {string} name
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async remove_plugin(name, noSignal) {
     delete this.plugins[name];
     await this.refresh_plugins();
     if (!noSignal)
-      process.send({ removePlugin: name, tenant: db.getTenantSchema() });
+      process_send({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   /**
    * Reload plugins
+   * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal) {
     this.viewtemplates = {};
     this.types = {};
+    this.stashed_fieldviews = {};
     this.fields = [];
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
     this.headers = [];
-    this.function_context = { moment };
-    this.functions = { moment };
+    this.function_context = { moment, slugify: db.slugify };
+    this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};
@@ -409,22 +479,35 @@ class State {
     });
     await this.refresh(true);
     if (!noSignal)
-      process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
+      process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 
+  /**
+   * @returns {string[]}
+   */
   getStringsForI18n() {
     const strings = [];
     this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
     this.pages.forEach((p) => strings.push(...p.getStringsForI18n()));
     const menu = this.getConfig("menu_items", []);
     strings.push(...menu.map(({ label }) => label));
-    return Array.from(new Set(strings)).filter(removeAllWhiteSpace);
+    return Array.from(new Set(strings)).filter(
+      (s) => s && removeAllWhiteSpace(s)
+    );
   }
 
+  /**
+   *
+   * @param {function} f
+   */
   setRoomEmitter(f) {
     this.roomEmitter = f;
   }
 
+  /**
+   *
+   * @param {*} args
+   */
   emitRoom(...args) {
     if (this.roomEmitter) this.roomEmitter(...args);
   }
@@ -452,6 +535,11 @@ State.contract = {
 const singleton = new State("public");
 
 // return current State object
+
+/**
+ * @function
+ * @returns {State}
+ */
 const getState = contract(
   is.fun([], is.or(is.class("State"), is.eq(undefined))),
   () => {
@@ -463,17 +551,20 @@ const getState = contract(
   }
 );
 // list of all tenants
-var tenants = {};
+var tenants = { public: singleton };
 // list of tenants with other domains
 const otherdomaintenants = {};
+
 /**
  * Get other domain tenant
- * @param hostname
+ * @param {string} hostname
+ * @returns {object}
  */
 const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
 /**
  * Get tenant
- * @param ten
+ * @param {string} ten
+ * @returns {object}
  */
 const getTenant = (ten) => {
   //console.log({ ten, tenants });
@@ -481,8 +572,8 @@ const getTenant = (ten) => {
 };
 /**
  * Remove protocol (http:// or https://) from domain url
- * @param url
- * @returns {*}
+ * @param {string} url
+ * @returns {string}
  */
 const get_domain = (url) => {
   const noproto = url.replace("https://", "").replace("http://", "");
@@ -491,8 +582,8 @@ const get_domain = (url) => {
 /**
  * Set tenant base url???
  * From my point of view it just add tenant to list of otherdomaintenant
- * @param tenant_subdomain
- * @param value - new
+ * @param {object} tenant_subdomain
+ * @param {string} [value] - new
  */
 const set_tenant_base_url = (tenant_subdomain, value) => {
   const root_domain = get_domain(singleton.configs.base_url.value);
@@ -504,8 +595,8 @@ const set_tenant_base_url = (tenant_subdomain, value) => {
 };
 /**
  * Switch to multi_tenant
- * @param plugin_loader
- * @param disableMigrate - if true then dont migrate db
+ * @param {object} plugin_loader
+ * @param {boolean} disableMigrate - if true then dont migrate db
  * @returns {Promise<void>}
  */
 const init_multi_tenant = async (plugin_loader, disableMigrate) => {
@@ -527,20 +618,39 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
 };
 /**
  * Create tenant
- * @param t
- * @param plugin_loader
- * @param newurl
+ * @param {string} t
+ * @param {object} plugin_loader
+ * @param {string} newurl
+ * @param {boolean} noSignalOrDB
  * @returns {Promise<void>}
  */
-const create_tenant = async (t, plugin_loader, newurl, noSignalOrDB) => {
+const create_tenant = async (
+  t,
+  plugin_loader,
+  newurl,
+  noSignalOrDB,
+  loadAndSaveNewPlugin
+) => {
   if (!noSignalOrDB) await createTenant(t, newurl);
   tenants[t] = new State(t);
   await db.runWithTenant(t, plugin_loader);
-  if (!noSignalOrDB) process.send({ createTenant: t });
+  if (!noSignalOrDB) {
+    const tenant_template = singleton.getConfig("tenant_template");
+    if (tenant_template) {
+      //create backup
+      await copy_tenant_template({
+        tenant_template,
+        target: t,
+        state: tenants[t],
+        loadAndSaveNewPlugin,
+      });
+    }
+    process_send({ createTenant: t });
+  }
 };
 /**
  * Restart tenant
- * @param plugin_loader
+ * @param {object} plugin_loader
  * @returns {Promise<void>}
  */
 const restart_tenant = async (plugin_loader) => {
@@ -556,7 +666,11 @@ const process_init_time = new Date();
  */
 const get_process_init_time = () => process_init_time;
 
-const features = { serve_static_dependencies: true };
+const features = {
+  serve_static_dependencies: true,
+  deep_public_plugin_serve: true,
+  fieldrepeats_in_field_attributes: true,
+};
 
 module.exports = {
   getState,

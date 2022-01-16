@@ -1,9 +1,29 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/ToggleFilter
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const ToggleFilter = ({
+export /**
+ * @param {object} props
+ * @param {*} props.name
+ * @param {string} [props.value]
+ * @param {string} [props.preset_value]
+ * @param {boolean} props.block
+ * @param {string} [props.label]
+ * @param {string} props.size
+ * @param {string} props.style
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ToggleFilter = ({
   name,
   value,
   preset_value,
@@ -29,7 +49,13 @@ export const ToggleFilter = ({
   );
 };
 
-export const ToggleFilterSettings = () => {
+export /**
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const ToggleFilterSettings = () => {
   const {
     actions: { setProp },
     name,
@@ -52,6 +78,12 @@ export const ToggleFilterSettings = () => {
   const field = options.fields.find((f) => f.name === name);
   const preset_options = field.preset_options;
   const isBool = field && field.type.name === "Bool";
+  const setAProp = (key) => (e) => {
+    if (e.target) {
+      const target_value = e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };
   return (
     <table className="w-100">
       <tbody>
@@ -90,9 +122,7 @@ export const ToggleFilterSettings = () => {
               <select
                 value={value}
                 className="w-100"
-                onChange={(e) =>
-                  setProp((prop) => (prop.value = e.target.value))
-                }
+                onChange={setAProp("value")}
               >
                 <option value="on">True</option>
                 <option value="off">False</option>
@@ -102,9 +132,7 @@ export const ToggleFilterSettings = () => {
               <input
                 value={value}
                 className="w-100"
-                onChange={(e) =>
-                  setProp((prop) => (prop.value = e.target.value))
-                }
+                onChange={setAProp("value")}
               />
             )}
           </td>
@@ -118,9 +146,7 @@ export const ToggleFilterSettings = () => {
               <select
                 value={preset_value}
                 className="form-control"
-                onChange={(e) => {
-                  setProp((prop) => (prop.preset_value = e.target.value));
-                }}
+                onChange={setAProp("preset_value")}
               >
                 <option value=""></option>
                 {preset_options.map((po, ix) => (
@@ -140,7 +166,7 @@ export const ToggleFilterSettings = () => {
             <input
               value={label}
               className="w-100"
-              onChange={(e) => setProp((prop) => (prop.label = e.target.value))}
+              onChange={setAProp("label")}
             />
           </td>
         </tr>
@@ -149,11 +175,10 @@ export const ToggleFilterSettings = () => {
             <label>Button size</label>
           </td>
           <td>
-            {" "}
             <select
               className="form-control"
               value={size}
-              onChange={(e) => setProp((prop) => (prop.size = e.target.value))}
+              onChange={setAProp("size")}
             >
               <option value="">Standard</option>
               <option value="btn-lg">Large</option>
@@ -169,11 +194,10 @@ export const ToggleFilterSettings = () => {
             <label>Button style</label>
           </td>
           <td>
-            {" "}
             <select
               className="form-control"
               value={style}
-              onChange={(e) => setProp((prop) => (prop.style = e.target.value))}
+              onChange={setAProp("style")}
             >
               <option value="primary">Primary</option>
               <option value="secondary">Secondary</option>
@@ -197,6 +221,9 @@ export const ToggleFilterSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 ToggleFilter.craft = {
   displayName: "ToggleFilter",
   related: {

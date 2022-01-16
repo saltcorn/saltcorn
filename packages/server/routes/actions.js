@@ -1,17 +1,21 @@
 /**
  * Actions (Triggers) Handler
- *
+ * @category server
+ * @module routes/actions
+ * @subcategory routes
  */
 const Router = require("express-promise-router");
-const {
-  isAdmin,
-  setTenant,
-  error_catcher,
-  get_base_url,
-} = require("./utils.js");
+const { isAdmin, error_catcher, get_base_url } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace actionsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 const {
@@ -41,6 +45,7 @@ const {
   td,
   h6,
   pre,
+  text,
   hr,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
@@ -54,6 +59,9 @@ const {
   blocklyToolbox,
 } = require("../markup/blockly.js");
 
+/**
+ * @returns {Promise<object>}
+ */
 const getActions = async () => {
   return Object.entries(getState().actions).map(([k, v]) => {
     const hasConfig = !!v.configFields;
@@ -65,12 +73,15 @@ const getActions = async () => {
     };
   });
 };
+
 /**
  * Show list of Actions (Triggers) (HTTP GET)
+ * @name get
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
@@ -262,12 +273,15 @@ const triggerForm = async (req, trigger) => {
   //  }
   return form;
 };
+
 /**
  * Show form to create new Trigger (get)
+ * @name get/new
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
@@ -284,12 +298,15 @@ router.get(
     });
   })
 );
+
 /**
  * Show form to Edit existing Trigger (get)
+ * @name get/edit/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.get(
   "/edit/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -310,12 +327,15 @@ router.get(
     });
   })
 );
+
 /**
  * POST for new or existing trigger (Save trigger)
+ * @name post/new
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.post(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
@@ -346,12 +366,15 @@ router.post(
     }
   })
 );
+
 /**
  * POST for existing trigger (Save trigger)
+ * @name /edit/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.post(
   "/edit/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -380,6 +403,7 @@ router.post(
     }
   })
 );
+
 /**
  * Edit Trigger configuration (GET)
  *
@@ -387,10 +411,12 @@ router.post(
  *
  * - get configuration fields
  * - create form
+ * @name get/configure/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.get(
   "/configure/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -409,7 +435,9 @@ router.get(
       });
       form.values = trigger.configuration;
       const events = Trigger.when_options;
-      const actions = Object.keys(getState().actions);
+      const actions = await Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+      });
       const tables = (await Table.find({})).map((t) => ({
         name: t.name,
         external: t.external,
@@ -428,7 +456,7 @@ router.get(
               div(
                 blocklyImportScripts({ locale }),
                 div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
-                blocklyToolbox()
+                blocklyToolbox(actions.length > 0)
               ),
               {
                 above: [
@@ -495,12 +523,15 @@ router.get(
     }
   })
 );
+
 /**
  * Configure Trigger (POST)
+ * @name post/configure/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
  */
 router.post(
   "/configure/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -534,9 +565,14 @@ router.post(
     }
   })
 );
+
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -545,9 +581,14 @@ router.post(
     res.redirect(`/actions/`);
   })
 );
+
+/**
+ * @name get/testrun/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
 router.get(
   "/testrun/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -555,11 +596,17 @@ router.get(
     const output = [];
     const fakeConsole = {
       log(...s) {
-        output.push(div(code(s.join(" "))));
+        console.log(...s);
+        output.push(div(code(pre(text(s.join(" "))))));
       },
       error(...s) {
         output.push(
-          div(code({ style: "color:red;font-weight:bold;" }, s.join(" ")))
+          div(
+            code(
+              { style: "color:red;font-weight:bold;" },
+              pre(text(s.join(" ")))
+            )
+          )
         );
       },
     };

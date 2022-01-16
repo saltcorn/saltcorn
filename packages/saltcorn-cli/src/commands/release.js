@@ -1,8 +1,20 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/release
+ */
 const { Command, flags } = require("@oclif/command");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 
+/**
+ * ReleaseCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class ReleaseCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const {
       args: { version },
@@ -10,6 +22,10 @@ class ReleaseCommand extends Command {
 
     const pkgs = {
       "@saltcorn/e2e": { dir: "e2e" },
+      "@saltcorn/db-common": { dir: "db-common", publish: true },
+      "@saltcorn/sqlite": { dir: "sqlite", publish: true },
+      "@saltcorn/postgres": { dir: "postgres", publish: true },
+      "@saltcorn/types": { dir: "saltcorn-types", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
       "@saltcorn/data": { dir: "saltcorn-data", publish: true },
       "@saltcorn/random-tests": { dir: "saltcorn-random-tests" },
@@ -29,11 +45,23 @@ class ReleaseCommand extends Command {
             json.dependencies[dpkgnm] = version;
           if (json.devDependencies && json.devDependencies[dpkgnm])
             json.devDependencies[dpkgnm] = version;
+          if (json.optionalDependencies && json.optionalDependencies[dpkgnm])
+            json.optionalDependencies[dpkgnm] = version;
         });
       fs.writeFileSync(
         `packages/${dir}/package.json`,
         JSON.stringify(json, null, 2)
       );
+    };
+    const compileTsFiles = () => {
+      spawnSync("npm", ["install"], {
+        stdio: "inherit",
+        cwd: ".",
+      });
+      spawnSync("npm", ["run", "tsc"], {
+        stdio: "inherit",
+        cwd: ".",
+      });
     };
     const publish = (dir) =>
       spawnSync("npm", ["publish"], {
@@ -41,6 +69,7 @@ class ReleaseCommand extends Command {
         cwd: `packages/${dir}/`,
       });
 
+    compileTsFiles();
     //for each package:
     // 1. update version
     // 2. update dependencies for other packages
@@ -71,7 +100,7 @@ class ReleaseCommand extends Command {
     publish("saltcorn-cli");
 
     // update Dockerfile
-    const dockerfile = fs.readFileSync(`Dockerfile.release`, 'utf8');
+    const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
       `Dockerfile.release`,
       dockerfile.replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
@@ -91,12 +120,19 @@ class ReleaseCommand extends Command {
     });
     console.log("Now run:\n");
     console.log("  rm -rf packages/saltcorn-cli/node_modules\n");
+    console.log("  rm -rf node_modules\n");
     this.exit(0);
   }
 }
 
+/**
+ * @type {string}
+ */
 ReleaseCommand.description = `Release a new saltcorn version`;
 
+/**
+ * @type {object}
+ */
 ReleaseCommand.args = [
   { name: "version", required: true, description: "New version number" },
 ];

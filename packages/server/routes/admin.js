@@ -1,11 +1,11 @@
+/**
+ * @category server
+ * @module routes/admin
+ * @subcategory routes
+ */
 const Router = require("express-promise-router");
 
-const {
-  setTenant,
-  isAdmin,
-  error_catcher,
-  getGitRevision,
-} = require("./utils.js");
+const { isAdmin, error_catcher, getGitRevision } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
@@ -47,6 +47,7 @@ const load_plugins = require("../load_plugins");
 const {
   restore_backup,
   send_admin_page,
+  send_files_page,
   config_fields_form,
   save_config_from_form,
   flash_restart_if_required,
@@ -61,10 +62,22 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const moment = require("moment");
+const View = require("@saltcorn/data/models/view");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace routes/adminRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object} req
+ * @returns {Promise<Form>}
+ */
 const site_id_form = (req) =>
   config_fields_form({
     req,
@@ -85,7 +98,7 @@ const site_id_form = (req) =>
   });
 /**
  * Email settings form definition
- * @param req - request
+ * @param {object} req request
  * @returns {Promise<Form>} form
  */
 const email_form = async (req) => {
@@ -107,9 +120,14 @@ const email_form = async (req) => {
     "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
   return form;
 };
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -126,9 +144,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await site_id_form(req);
@@ -153,9 +176,14 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await email_form(req);
@@ -182,9 +210,13 @@ router.get(
   })
 );
 
+/**
+ * @name get/send-test-email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/send-test-email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const from = getState().getConfig("email_from");
@@ -207,9 +239,14 @@ router.get(
     res.redirect("/admin/email");
   })
 );
+
+/**
+ * @name post/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/email",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await email_form(req);
@@ -232,9 +269,14 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/backup",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     send_admin_page({
@@ -272,9 +314,13 @@ router.get(
   })
 );
 
+/**
+ * @name get/system
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/system",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -387,26 +433,35 @@ router.get(
   })
 );
 
+/**
+ * @name post/restart
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/restart",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      process.send("RestartServer");
-      //process.exit(0);
+      if (process.send) process.send("RestartServer");
+      else process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
-      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
+      process.send &&
+        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }
   })
 );
 
+/**
+ * @name post/upgrade
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/upgrade",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() !== db.connectObj.default_schema) {
@@ -436,9 +491,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/backup",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const fileName = await create_backup();
@@ -452,9 +511,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/restore
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/restore",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
@@ -469,6 +532,10 @@ router.post(
   })
 );
 
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const clearAllForm = (req) =>
   new Form({
     action: "/admin/clear-all",
@@ -503,6 +570,24 @@ const clearAllForm = (req) =>
       },
       {
         type: "Bool",
+        name: "triggers",
+        label: req.__("Triggers"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "eventlog",
+        label: req.__("Event log"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "library",
+        label: req.__("Library"),
+        default: true,
+      },
+      {
+        type: "Bool",
         name: "users",
         label: req.__("Users"),
         default: true,
@@ -513,7 +598,6 @@ const clearAllForm = (req) =>
         label: req.__("Configuration"),
         default: true,
       },
-      ,
       {
         type: "Bool",
         name: "plugins",
@@ -523,9 +607,13 @@ const clearAllForm = (req) =>
     ],
   });
 
+/**
+ * @name post/enable-letsencrypt
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/enable-letsencrypt",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
@@ -596,9 +684,13 @@ router.post(
   })
 );
 
+/**
+ * @name get/clear-all
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.get(
   "/clear-all",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Admin`), {
@@ -620,9 +712,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/clear-all
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
 router.post(
   "/clear-all",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = clearAllForm(req);
@@ -632,7 +729,7 @@ router.post(
       await db.deleteWhere("_sc_pages");
     }
     if (form.values.views) {
-      await db.deleteWhere("_sc_views");
+      await View.delete({});
     }
     //user fields
     const users = await Table.findOne({ name: "users" });
@@ -672,6 +769,7 @@ router.post(
       for (const file of files) {
         await file.delete();
       }
+      if (db.reset_sequence) await db.reset_sequence("_sc_files");
     }
     if (form.values.plugins) {
       const ps = await Plugin.find();
@@ -680,15 +778,23 @@ router.post(
       }
       await getState().refresh_plugins();
     }
-    if (form.values.config) {
-      //config+crashes+nontable triggers
+    if (form.values.triggers) {
       await db.deleteWhere("_sc_triggers");
+      await getState().refresh_triggers();
+    }
+    if (form.values.library) {
+      await db.deleteWhere("_sc_library");
+    }
+    if (form.values.eventlog) {
+      await db.deleteWhere("_sc_event_log");
+    }
+    if (form.values.config) {
+      //config+crashes
       await db.deleteWhere("_sc_errors");
-      await db.deleteWhere("_sc_config");
+      await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState().refresh();
     }
     if (form.values.users) {
-      await db.deleteWhere("_sc_config");
       const users1 = await Table.findOne({ name: "users" });
       const userfields1 = await users1.getFields();
 
@@ -696,7 +802,17 @@ router.post(
         if (f.name !== "email" && f.name !== "id") await f.delete();
       }
       await db.deleteWhere("users");
+      await db.deleteWhere("_sc_roles", { not: { id: { in: [1, 4, 8, 10] } } });
       if (db.reset_sequence) await db.reset_sequence("users");
+      req.logout();
+      if (req.session.destroy)
+        req.session.destroy((err) => {
+          req.logout();
+        });
+      else {
+        req.logout();
+        req.session = null;
+      }
       res.redirect(`/auth/create_first_user`);
     } else {
       req.flash(

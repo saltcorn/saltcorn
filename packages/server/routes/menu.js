@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/menu
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 
 const Field = require("@saltcorn/data/models/field");
@@ -9,19 +15,52 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
+const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
+const Table = require("@saltcorn/data/models/table");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace menuRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ *
+ * @param {object} req
+ * @returns {Promise<Form>}
+ */
 const menuForm = async (req) => {
   const views = await View.find({}, { orderBy: "name", nocase: true });
   const pages = await Page.find({}, { orderBy: "name", nocase: true });
   const roles = await User.get_roles();
+  const tables = await Table.find({});
+  const dynTableOptions = tables.map((t) => t.name);
+  const dynOrderFieldOptions = {},
+    dynSectionFieldOptions = {};
+  for (const table of tables) {
+    dynOrderFieldOptions[table.name] = [""];
+    dynSectionFieldOptions[table.name] = [""];
+    const fields = await table.getFields();
+    for (const field of fields) {
+      dynOrderFieldOptions[table.name].push(field.name);
+      if (
+        field.type &&
+        field.type.name === "String" &&
+        field.attributes &&
+        field.attributes.options
+      )
+        dynSectionFieldOptions[table.name].push(field.name);
+    }
+  }
 
   return new Form({
     action: "/menu/",
@@ -32,6 +71,11 @@ const menuForm = async (req) => {
     additionalButtons: [
       { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
       { label: "Add", id: "btnAdd", class: "btn btn-primary" },
+      {
+        label: "Recalculate dynamic",
+        id: "btnRecalc",
+        class: "btn btn-primary",
+      },
     ],
     fields: [
       {
@@ -40,7 +84,7 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "menutype item-menu",
         required: true,
-        options: ["View", "Page", "Link", "Header"],
+        options: ["View", "Page", "Link", "Header", "Dynamic", "Search"],
       },
       {
         name: "text",
@@ -56,6 +100,7 @@ const menuForm = async (req) => {
         attributes: {
           html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
+        showIf: { type: ["View", "Page", "Link", "Header"] },
       },
       {
         name: "icon",
@@ -94,12 +139,74 @@ const menuForm = async (req) => {
         showIf: { type: "View" },
       },
       {
+        name: "dyn_table",
+        label: req.__("Table"),
+        class: "item-menu",
+        type: "String",
+        attributes: {
+          options: dynTableOptions,
+        },
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_order",
+        label: req.__("Order field"),
+        class: "item-menu",
+        type: "String",
+        attributes: {
+          calcOptions: ["dyn_table", dynOrderFieldOptions],
+        },
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_section_field",
+        label: req.__("Section field"),
+        class: "item-menu",
+        type: "String",
+        attributes: {
+          calcOptions: ["dyn_table", dynSectionFieldOptions],
+        },
+        sublabel: req.__(
+          "Optional. String type with options, each of which will become a menu section"
+        ),
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_label_fml",
+        label: req.__("Label formula"),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_url_fml",
+        label: req.__("URL formula"),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
+        name: "dyn_include_fml",
+        label: req.__("Include formula"),
+        sublabel: req.__(
+          "If specified, only include in menu rows that evaluate to true"
+        ),
+        class: "item-menu",
+        type: "String",
+        required: true,
+        showIf: { type: "Dynamic" },
+      },
+      {
         name: "style",
         label: req.__("Style"),
         sublabel: req.__("Not all themes support menu buttons"),
         class: "item-menu",
         type: "String",
         required: true,
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
         attributes: {
           options: [
             { name: "", label: "Link" },
@@ -118,19 +225,38 @@ const menuForm = async (req) => {
           ],
         },
       },
+      {
+        name: "location",
+        label: req.__("Location"),
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
+        sublabel: req.__("Not all themes support all locations"),
+        class: "item-menu",
+        type: "String",
+        //fieldview: "radio_group",
+        required: true,
+        //default: "Standard",
+        attributes: {
+          inline: true,
+          options: "Standard, Mobile Bottom",
+        },
+      },
     ],
   });
 };
 
 //create -- new
 
+/**
+ * @param {object[]} menu_items
+ * @returns {string}
+ */
 const menuEditorScript = (menu_items) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
   let lastState;
   let editor;  
-  function ajax_save_menu() {
+  function ajax_save_menu(skip_check) {
     const s = editor.getString()    
-    if(s===lastState) return;
+    if(s===lastState && !skip_check) return;
     lastState=s;
     ajax_post('/menu', {data: s, 
       success: ()=>{}, dataType : 'json', contentType: 'application/json;charset=UTF-8'})
@@ -156,6 +282,11 @@ const menuEditorScript = (menu_items) => `
       editor.update();
       ajax_save_menu();
   });
+  $("#btnRecalc").click(function(){
+    editor.update();
+    ajax_save_menu(true);
+    location.reload();
+});
   // Calling the add method
   $('#btnAdd').click(function(){
       editor.add();
@@ -164,6 +295,11 @@ const menuEditorScript = (menu_items) => `
   lastState=editor.getString()
   setInterval(ajax_save_menu, 500)
   `;
+
+/**
+ * @param {object[]} menu_items
+ * @returns {object[]}
+ */
 const menuTojQME = (menu_items) =>
   (menu_items || []).map((mi) => ({
     ...mi,
@@ -171,16 +307,15 @@ const menuTojQME = (menu_items) =>
     subitems: undefined,
     ...(mi.subitems ? { children: menuTojQME(mi.subitems) } : {}),
   }));
-const jQMEtoMenu = (menu_items) =>
-  menu_items.map((mi) => ({
-    ...mi,
-    label: mi.text,
-    children: undefined,
-    ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
-  }));
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/menu~menuRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await menuForm(req);
@@ -225,22 +360,32 @@ router.get(
     });
   })
 );
+/**
+ * @param {object[]} menu_items
+ * @returns {object[]}
+ */
+const jQMEtoMenu = (menu_items) =>
+  menu_items.map((mi) => ({
+    ...mi,
+    label: mi.text,
+    children: undefined,
+    ...(mi.children ? { subitems: jQMEtoMenu(mi.children) } : {}),
+  }));
 
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/menu~menuRouter
+ * @function
+ */
 router.post(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    if (req.xhr) {
-      const new_menu = req.body;
-      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
-      res.json({ success: true });
-    } else {
-      const new_menu = JSON.parse(req.body.menu);
-      await getState().setConfig("menu_items", jQMEtoMenu(new_menu));
-      req.flash("success", req.__(`Menu updated`));
+    const new_menu = req.body;
+    const menu_items = jQMEtoMenu(new_menu);
+    await save_menu_items(menu_items);
 
-      res.redirect(`/menu`);
-    }
+    res.json({ success: true });
   })
 );

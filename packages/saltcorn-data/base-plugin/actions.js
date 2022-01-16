@@ -1,6 +1,8 @@
 /**
  * Action description
- *
+ * @category saltcorn-data
+ * @module base-plugin/actions
+ * @subcategory base-plugin
  */
 
 const fetch = require("node-fetch");
@@ -25,20 +27,47 @@ const db = require("../db");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
+/**
+ * @param {object} opts 
+ * @param {object} opts.row
+ * @param {object} opts.table
+ * @param {object} opts.channel
+ * @param {object} opts.configuration
+ * @param {object} opts.user
+ * @param {...*} opts.rest
+ * @returns {Promise<object>}
+ */
 const run_code = async ({
   row,
   table,
   channel,
-  configuration: { code },
+  configuration: { code, run_where },
   user,
   ...rest
 }) => {
+  if (run_where === "Client page") return { eval_js: code };
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {
       v.run({ row, table, user, configuration: args, ...rest, ...args });
     };
   });
+  const trigger_actions = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  for (const trigger of trigger_actions) {
+    const state_action = getState().actions[trigger.action];
+    Actions[trigger.name] = (args = {}) => {
+      state_action.run({
+        row,
+        table,
+        configuration: trigger.configuration,
+        user,
+        ...rest,
+        ...args,
+      });
+    };
+  }
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
@@ -52,6 +81,7 @@ const run_code = async ({
     emitEvent,
     sleep,
     fetchJSON,
+    fetch,
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
@@ -61,7 +91,14 @@ const run_code = async ({
 };
 
 module.exports = {
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   blocks: {
+    disableInBuilder: true,
+    disableInList: true,
     configFields: [
       {
         name: "workspace",
@@ -72,9 +109,22 @@ module.exports = {
         input_type: "hidden",
       },
     ],
+    /** 
+     * @type {base-plugin/actions~run_code} 
+     * @see base-plugin/actions~run_code
+     */
     run: run_code,
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   emit_event: {
+    /**
+     * @returns {object[]}
+     */
     configFields: () => [
       {
         name: "eventType",
@@ -97,6 +147,13 @@ module.exports = {
         fieldview: "textarea",
       },
     ],
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<void>}
+     */
     run: async ({
       row,
       configuration: { eventType, channel, payload },
@@ -110,6 +167,12 @@ module.exports = {
       );
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   webhook: {
     configFields: [
       {
@@ -126,6 +189,12 @@ module.exports = {
         fieldview: "textarea", // I think that textarea is better
       },
     ],
+    /**
+     * @param {object} opts 
+     * @param {string} opts.url
+     * @param {object} opts.body
+     * @returns {Promise<object>}
+     */
     run: async ({ row, configuration: { url, body } }) => {
       return await fetch(url, {
         method: "post",
@@ -134,7 +203,16 @@ module.exports = {
       });
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   find_or_create_dm_room: {
+    /**
+     * @returns {Promise<object[]>}
+     */
     configFields: async () => {
       const views = await View.find_all_views_where(
         ({ viewrow }) => viewrow.viewtemplate === "Room"
@@ -151,6 +229,15 @@ module.exports = {
         },
       ];
     },
+
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {*} opts.table
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<object>}
+     */
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
       const { participant_field } = view.configuration;
@@ -168,10 +255,11 @@ module.exports = {
       const { rows } = await db.query(
         `with my_rooms as (select "${part_key_to_room}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
           part_table_name
-        )}" where ${part_user_field} = $1)          
+        )}" where "${part_user_field}" = $1)          
         select * from "${db.getTenantSchema()}"."${db.sqlsanitize(
           roomtable.name
-        )}" r where r.id in (select "${part_key_to_room}" from my_rooms) and $2 in (select ${part_user_field} from "${db.getTenantSchema()}"."${db.sqlsanitize(
+        )}" r where r.id in (select "${part_key_to_room}" from my_rooms) 
+        and $2 in (select "${part_user_field}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
           part_table_name
         )}" where "${part_key_to_room}" = r.id)`,
         [user.id, row.id]
@@ -193,7 +281,18 @@ module.exports = {
       }
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   send_email: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.table
+     * @returns {Promise<object[]>}
+     */
     configFields: async ({ table }) => {
       if (!table) return [];
       const views = await View.find_table_views_where(
@@ -204,7 +303,10 @@ module.exports = {
       const view_opts = views.map((v) => v.name);
       const fields = await table.getFields();
       const field_opts = fields
-        .filter((f) => f.type.name === "String" || f.reftable_name === "users")
+        .filter(
+          (f) =>
+            (f.type && f.type.name === "String") || f.reftable_name === "users"
+        )
         .map((f) => f.name);
       return [
         {
@@ -253,6 +355,14 @@ module.exports = {
       ];
     },
     requireRow: true,
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.table
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<object>}
+     */
     run: async ({
       row,
       table,
@@ -305,7 +415,18 @@ module.exports = {
       return { notify: `E-mail sent to ${to_addr}` };
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   insert_joined_row: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.table
+     * @returns {Promise<object[]>}
+     */
     configFields: async ({ table }) => {
       if (!table) return [];
       const { child_field_list } = await table.get_child_relations();
@@ -320,6 +441,14 @@ module.exports = {
       ];
     },
     requireRow: true,
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.table
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<object>}
+     */
     run: async ({ row, table, configuration: { joined_table }, user }) => {
       const [join_table_name, join_field] = joined_table.split(".");
       const joinTable = await Table.findOne({ name: join_table_name });
@@ -337,9 +466,25 @@ module.exports = {
       return await joinTable.insertRow(newRow);
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   duplicate_row: {
+    /**
+     * @returns {Promise<object[]>}
+     */
     configFields: () => [],
     requireRow: true,
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.table
+     * @param {*} opts.user
+     * @returns {Promise<object>}
+     */
     run: async ({ row, table, user }) => {
       const newRow = { ...row };
       await table.getFields();
@@ -348,7 +493,18 @@ module.exports = {
       return { reload_page: true };
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   recalculate_stored_fields: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.table
+     * @returns {Promise<object[]>}
+     */
     configFields: async ({ table }) => {
       const tables = await Table.find();
       return [
@@ -361,12 +517,28 @@ module.exports = {
         },
       ];
     },
+    /**
+     * @param {object} opts
+     * @param {object} opts.configuration
+     * @returns {Promise<void>}
+     */
     run: async ({ configuration: { table } }) => {
       const table_for_recalc = await Table.findOne({ name: table });
       recalculate_for_stored(table_for_recalc);
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   insert_any_row: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
     configFields: async ({ table }) => {
       const tables = await Table.find();
       return [
@@ -386,6 +558,14 @@ module.exports = {
         },
       ];
     },
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @param {...*} opts.rest
+     * @returns {Promise<object|boolean>}
+     */
     run: async ({ row, configuration: { row_expr, table }, user, ...rest }) => {
       const f = get_async_expression_function(row_expr, [], {
         row: row || {},
@@ -399,7 +579,18 @@ module.exports = {
       else return true;
     },
   },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   run_js_code: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.table
+     * @returns {Promise<object[]>}
+     */
     configFields: async ({ table }) => {
       const fields = table ? (await table.getFields()).map((f) => f.name) : [];
       const vars = [
@@ -421,8 +612,18 @@ module.exports = {
           attributes: { mode: "application/javascript" },
           sublabel: div("Variables in scope: ", vars),
         },
+        {
+          name: "run_where",
+          label: "Run where",
+          input_type: "select",
+          options: ["Server", "Client page"],
+        },
       ];
     },
+    /** 
+     * @type {base-plugin/actions~run_code} 
+     * @see base-plugin/actions~run_code
+     **/
     run: run_code,
   },
 };

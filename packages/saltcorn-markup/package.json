@@ -1,24 +1,47 @@
 {
   "name": "@saltcorn/markup",
-  "version": "0.5.3",
+  "version": "0.6.3-beta.3",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "tsc": "tsc -p tsconfig.json",
+    "clean": "rm -rf ./dist/*"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
   "dependencies": {
-    "contractis": "^0.1.0",
     "escape-html": "^1.0.3",
-    "xss": "^1.0.8"
+    "html-tags": "3.1.0",
+    "xss": "^1.0.10"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "^25.1.0"
+    "@saltcorn/types": "0.6.3-beta.3",
+    "@types/escape-html": "^1.0.1",
+    "@types/jest": "^27.0.3",
+    "@types/node": "^16.11.9",
+    "jest": "^27.1.0",
+    "ts-jest": "^27.1.0",
+    "typescript": "^4.4.4"
   },
   "jest": {
+    "preset": "ts-jest",
     "testEnvironment": "node"
   },
   "publishConfig": {

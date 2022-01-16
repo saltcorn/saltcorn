@@ -1,15 +1,20 @@
 /**
  * Tenant Management Data Layer Access
- *
+ * @category saltcorn-data
+ * @module models/tenant
+ * @subcategory models
  */
 const db = require("../db");
 const reset = require("../db/reset_schema");
 const { contract, is } = require("contractis");
-const { sqlsanitize } = require("../db/internal");
+const { sqlsanitize } = require("@saltcorn/db-common/internal");
 const { setConfig } = require("./config");
+const fs = require("fs").promises;
+
 /**
  * List all Tenants
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @returns {Promise<string[]>}
  */
 const getAllTenants = contract(
   is.fun([], is.promise(is.array(is.str))),
@@ -18,25 +23,45 @@ const getAllTenants = contract(
     return tens.map(({ subdomain }) => subdomain);
   }
 );
+
+/**
+ * List all Tenants
+ * @function
+ * @returns {Promise<string[]>}
+ */
+const getAllTenantRows = contract(
+  is.fun([], is.promise(is.array(is.obj({})))),
+  async () => {
+    return await db.select("_sc_tenants");
+  }
+);
 /**
  * Create Tenant and switch to It:
  * - normalize domain name
  * - create db schema
  * - reset db schema (create required )
  * - change current base_url
- * @type {*|(function(...[*]=): *)}
  *
  * Arguments:
  * subdomain - tenant name (subdomain)
  * newurl - base url of tenant
  * email - email of creator
  * description - description of tenant
+ * @function
+ * @param {string} subdomain
+ * @param {string} [newurl]
+ * @param {string} [email]
+ * @param {string} [description]
+ * @returns {Promise<void>}
  */
 const createTenant = contract(
-  is.fun([is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)], is.promise(is.undefined)),
+  is.fun(
+    [is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)],
+    is.promise(is.undefined)
+  ),
   // TODO how to set names for arguments
-  async ( subdomain, newurl, email, description) => {
-      // normalize domain name
+  async (subdomain, newurl, email, description) => {
+    // normalize domain name
     const saneDomain = domain_sanitize(subdomain);
 
     // add email
@@ -61,10 +86,31 @@ const createTenant = contract(
     });
   }
 );
+const copy_tenant_template = async ({
+  tenant_template,
+  target,
+  loadAndSaveNewPlugin,
+}) => {
+  const { create_backup, restore } = require("./backup");
+  // TODO use a hygenic name for backup file
+  const backupFile = await db.runWithTenant(tenant_template, create_backup);
+  await db.runWithTenant(target, async () => {
+    await restore(backupFile, loadAndSaveNewPlugin, true);
+
+    await db.updateWhere("_sc_files", { user_id: null }, {});
+    await db.deleteWhere("users", {});
+    await db.reset_sequence("users");
+    //
+  });
+  await fs.unlink(backupFile);
+};
+
 /**
  * Delete Tenant
  * Note! This is deleting all tenant data in database!
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {string} sub
+ * @returns {Promise<void>}
  */
 const deleteTenant = contract(
   is.fun(is.str, is.promise(is.undefined)),
@@ -80,7 +126,9 @@ const deleteTenant = contract(
  * Sanitize Domain (Normalize domain name).
  * - force to lower case
  * - remove . in name
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {string} s
+ * @returns {string}
  */
 const domain_sanitize = contract(is.fun(is.str, is.str), (s) =>
   sqlsanitize(s.replace(".", "").toLowerCase())
@@ -100,8 +148,10 @@ const eachTenant = async (f) => {
 
 module.exports = {
   getAllTenants,
+  getAllTenantRows,
   createTenant,
   domain_sanitize,
   deleteTenant,
   eachTenant,
+  copy_tenant_template,
 };

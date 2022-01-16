@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/listshowlist
+ * @subcategory base-plugin
+ */
 const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
@@ -12,6 +17,10 @@ const {
 const { splitUniques } = require("./viewable_fields");
 const { InvalidConfiguration } = require("../../utils");
 
+/**
+ * @param {object} req
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -56,6 +65,19 @@ const configuration_workflow = (req) =>
                 required: false,
                 attributes: {
                   options: show_view_opts,
+                },
+              },
+              {
+                name: "list_width",
+                label: req.__("List width"),
+                sublabel: req.__(
+                  "Number of columns (1-12) allocated to the list view"
+                ),
+                type: "Integer",
+                default: 6,
+                attributes: {
+                  min: 1,
+                  max: 12,
                 },
               },
               {
@@ -106,6 +128,14 @@ const configuration_workflow = (req) =>
     ],
   });
 
+/**
+ * @param {*} table_id
+ * @param {*} viewname
+ * @param {object} opts
+ * @param {string} opts.list_view
+ * @param {*} opts.show_view
+ * @returns {Promise<object[]>}
+ */
 const get_state_fields = async (
   table_id,
   viewname,
@@ -125,10 +155,21 @@ const get_state_fields = async (
   } else return [id];
 };
 
+/**
+ * @param {string} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {string} opts.list_view
+ * @param {string} opts.show_view
+ * @param {object} opts.subtables
+ * @param {*} state
+ * @param {*} extraArgs
+ * @returns {Promise<div>}
+ */
 const run = async (
   table_id,
   viewname,
-  { list_view, show_view, subtables },
+  { list_view, show_view, list_width, subtables },
   state,
   extraArgs
 ) => {
@@ -146,7 +187,7 @@ const run = async (
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
-      onRowSelect: (v) => `select_id(${v.id})`,
+      onRowSelect: (v) => `select_id('${v.id}')`,
     });
   }
 
@@ -176,6 +217,7 @@ const run = async (
         const [reltype, rel] = relspec.split(":");
         switch (reltype) {
           case "ChildList":
+          case "OneToOneShow":
             const [vname, reltblnm, relfld] = rel.split(".");
             const tab_name = reltblnm;
             const subview = await View.findOne({ name: vname });
@@ -218,10 +260,11 @@ const run = async (
       ? [h6(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
       : tabs(reltbls);
   if (lresp) {
+    if (list_width === 12) return lresp;
     return div(
       { class: "row" },
-      div({ class: "col-sm-6" }, lresp),
-      div({ class: "col-sm-6" }, sresp, relTblResp)
+      div({ class: `col-sm-${list_width || 6}` }, lresp),
+      div({ class: `col-sm-${12 - (list_width || 6)}` }, sresp, relTblResp)
     );
   } else {
     return div(sresp, relTblResp);
@@ -229,12 +272,21 @@ const run = async (
 };
 
 module.exports = {
+  /** @type {string} */
   name: "ListShowList",
+  /** @type {string} */
   description:
     "Combine an optional list view on the left with displays on the right of a single selected row, with views of related rows from different tables underneath",
   configuration_workflow,
   run,
   get_state_fields,
+  /**
+
+   * @param {object} opts
+   * @param {string} opts.list_view
+   * @param {boolean} opts._omit_state_form
+   * @returns {boolean}
+   */
   display_state_form: ({ list_view, _omit_state_form }) =>
     !!list_view && !_omit_state_form,
 };

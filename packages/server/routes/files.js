@@ -1,7 +1,14 @@
+/**
+ * @category server
+ * @module routes/files
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
+const s3storage = require("../s3storage");
 
 const {
   mkTable,
@@ -10,7 +17,7 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const {
   span,
   h5,
@@ -29,12 +36,30 @@ const {
   label,
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("./utils");
-const { editRoleForm } = require("../markup/forms.js");
+const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
+const {
+  send_files_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace filesRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {*} file
+ * @param {*} roles
+ * @param {*} req
+ * @returns {Form}
+ */
 const editFileRoleForm = (file, roles, req) =>
   editRoleForm({
     url: `/files/setrole/${file.id}`,
@@ -43,90 +68,82 @@ const editFileRoleForm = (file, roles, req) =>
     req,
   });
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await File.find({}, { orderBy: "filename" });
     const roles = await User.get_roles();
-    res.sendWrap("Files", {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: req.__("Files") }],
-        },
-        {
-          type: "card",
-          contents: [
-            mkTable(
-              [
-                {
-                  label: req.__("Filename"),
-                  key: (r) =>
-                    div(
-                      { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
-                      r.filename
-                    ),
-                },
-                { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-                { label: req.__("Media type"), key: (r) => r.mimetype },
-                {
-                  label: req.__("Role to access"),
-                  key: (r) => editFileRoleForm(r, roles, req),
-                },
-                {
-                  label: req.__("Link"),
-                  key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
-                },
-                {
-                  label: req.__("Download"),
-                  key: (r) =>
-                    link(`/files/download/${r.id}`, req.__("Download")),
-                },
-                {
-                  label: req.__("Delete"),
-                  key: (r) =>
-                    post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
-                },
-              ],
-              rows,
-              { hover: true }
-            ),
-            form(
+    send_files_page({
+      res,
+      req,
+      active_sub: "Files",
+      contents: {
+        type: "card",
+        contents: [
+          mkTable(
+            [
               {
-                action: "/files/upload",
-                method: "post",
-                encType: "multipart/form-data",
+                label: req.__("Filename"),
+                key: (r) =>
+                  div(
+                    { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                    r.filename
+                  ),
               },
-              csrfField(req),
-              label(req.__("Upload file ")),
-              input({
-                name: "file",
-                class: "form-control-file",
-                type: "file",
-                onchange: "form.submit()",
-                multiple: true,
-              })
-            ),
-          ],
-        },
-      ],
+              { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+              { label: req.__("Media type"), key: (r) => r.mimetype },
+              {
+                label: req.__("Role to access"),
+                key: (r) => editFileRoleForm(r, roles, req),
+              },
+              {
+                label: req.__("Link"),
+                key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
+              },
+              {
+                label: req.__("Download"),
+                key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+              },
+              {
+                label: req.__("Delete"),
+                key: (r) =>
+                  post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
+              },
+            ],
+            rows,
+            { hover: true }
+          ),
+          fileUploadForm(req),
+        ],
+      },
     });
   })
 );
 
+/**
+ * @name get/download/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.get(
   "/download/:id",
-  setTenant,
   error_catcher(async (req, res) => {
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
     const { id } = req.params;
     const file = await File.findOne({ id });
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
-      res.download(file.location, file.filename);
+      if (file.s3_store) s3storage.serveObject(file, res, true);
+      else res.download(file.location, file.filename);
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
@@ -134,11 +151,16 @@ router.get(
   })
 );
 
+/**
+ * @name get/serve/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.get(
   "/serve/:id",
-  setTenant,
   error_catcher(async (req, res) => {
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
     const { id } = req.params;
     let file;
@@ -156,7 +178,8 @@ router.get(
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      res.sendFile(file.location);
+      if (file.s3_store) s3storage.serveObject(file, res, false);
+      else res.sendFile(file.location);
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
@@ -164,9 +187,14 @@ router.get(
   })
 );
 
+/**
+ * @name post/setrole/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/setrole/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -185,9 +213,15 @@ router.post(
     res.redirect("/files");
   })
 );
+
+/**
+ * @name post/setname/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/setname/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -198,13 +232,18 @@ router.post(
   })
 );
 
+/**
+ * @name post/upload
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/upload",
-  setTenant,
   error_catcher(async (req, res) => {
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
-    const role = req.isAuthenticated() ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 10;
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
       else jsonResp = { error: "Not authorized" };
@@ -233,6 +272,7 @@ router.post(
         jsonResp = {
           success: {
             filename: many ? f.map((fl) => fl.filename) : f.filename,
+            id: many ? f.map((fl) => fl.id) : f.id,
             url: many
               ? f.map((fl) => `/files/serve/${fl.id}`)
               : `/files/serve/${f.id}`,
@@ -244,19 +284,110 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const f = await File.findOne({ id });
-    const result = await f.delete();
+    if (!f) {
+      req.flash("error", "File not found");
+      res.redirect("/files");
+      return;
+    }
+    const result = await f.delete(
+      f.s3_store ? s3storage.unlinkObject : undefined
+    );
     if (result && result.error) {
       req.flash("error", result.error);
     } else {
       req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files`);
+  })
+);
+
+/**
+ * Storage settings form definition
+ * @param {object} req request
+ * @returns {Promise<Form>} form
+ */
+const storage_form = async (req) => {
+  const form = await config_fields_form({
+    req,
+    field_names: [
+      "storage_s3_enabled",
+      "storage_s3_bucket",
+      "storage_s3_path_prefix",
+      "storage_s3_endpoint",
+      "storage_s3_region",
+      "storage_s3_access_key",
+      "storage_s3_access_secret",
+      "storage_s3_secure",
+    ],
+    action: "/files/storage",
+  });
+  form.submitButtonClass = "btn-outline-primary";
+  form.submitLabel = req.__("Save");
+  form.onChange = "remove_outline(this)";
+  return form;
+};
+
+/**
+ * @name get/storage
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/storage",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await storage_form(req);
+    send_files_page({
+      res,
+      req,
+      active_sub: "Storage",
+      contents: {
+        type: "card",
+        title: req.__("Storage settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+
+/**
+ * @name post/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/storage",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await storage_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Storage",
+        contents: {
+          type: "card",
+          title: req.__("Storage settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Storage settings updated"));
+      res.redirect("/files/storage");
+    }
   })
 );

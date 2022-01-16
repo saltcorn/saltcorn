@@ -1,9 +1,25 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/DropDownFilter
+ * @subcategory components / elements
+ */
+
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
-export const DropDownFilter = ({ name, block, full_width }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.name
+ * @param {boolean} props.block
+ * @param {boolean} props.full_width
+ * @returns {span}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const DropDownFilter = ({ name, block, full_width }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -21,18 +37,26 @@ export const DropDownFilter = ({ name, block, full_width }) => {
   );
 };
 
-export const DropDownFilterSettings = () => {
+export /**
+ * @returns {table}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const DropDownFilterSettings = () => {
   const {
     actions: { setProp },
     name,
     block,
     neutral_label,
     full_width,
+    where,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
     neutral_label: node.data.props.neutral_label,
     full_width: node.data.props.full_width,
+    where: node.data.props.where,
   }));
   const options = useContext(optionsCtx);
   return (
@@ -71,11 +95,23 @@ export const DropDownFilterSettings = () => {
           </td>
         </tr>
         <tr>
+          <td>
+            <label>Where</label>
+          </td>
+          <td>
+            <input
+              value={where}
+              className="form-control"
+              onChange={(e) => setProp((prop) => (prop.where = e.target.value))}
+            />
+          </td>
+        </tr>
+        <tr>
           <td></td>
           <td>
             <BlockSetting block={block} setProp={setProp} />
           </td>
-        </tr>{" "}
+        </tr>
         <tr>
           <td></td>
           <td>
@@ -98,6 +134,9 @@ export const DropDownFilterSettings = () => {
   );
 };
 
+/** 
+ * @type {object} 
+ */
 DropDownFilter.craft = {
   displayName: "DropDownFilter",
   related: {
@@ -108,6 +147,7 @@ DropDownFilter.craft = {
       { name: "name", segment_name: "field_name", column_name: "field_name" },
       "full_width",
       "neutral_label",
+      "where",
       "block",
     ],
   },

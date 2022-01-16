@@ -1,9 +1,23 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/restore
+ */
 const { Command, flags } = require("@oclif/command");
 const { spawnSync } = require("child_process");
 const path = require("path");
 const { maybe_as_tenant } = require("../common");
 
+/**
+ * RestoreCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class RestoreCommand extends Command {
+  /**
+   * 
+   * @param {string} fnm 
+   * @returns {Promise<void>}
+   */
   async pg_restore(fnm) {
     const { getConnectObject } = require("@saltcorn/data/db/connect");
     const connobj = getConnectObject();
@@ -19,6 +33,13 @@ class RestoreCommand extends Command {
     );
     this.exit(res.status);
   }
+
+  /**
+   * 
+   * @param {string} fnm 
+   * @param {object} tenant 
+   * @returns {Promise<void>}
+   */
   async zip_restore(fnm, tenant) {
     const { restore } = require("@saltcorn/data/models/backup");
     const User = require("@saltcorn/data/models/user");
@@ -34,6 +55,10 @@ class RestoreCommand extends Command {
       }
     });
   }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { args, flags } = this.parse(RestoreCommand);
     switch (path.extname(args.file)) {
@@ -54,12 +79,21 @@ class RestoreCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 RestoreCommand.args = [
   { name: "file", required: true, description: "backup file to restore" },
 ];
 
+/**
+ * @type {string}
+ */
 RestoreCommand.description = `Restore a previously backed up database (zip or sqlc format)`;
 
+/**
+ * @type {object}
+ */
 RestoreCommand.flags = {
   tenant: flags.string({
     char: "t",

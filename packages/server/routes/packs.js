@@ -1,5 +1,11 @@
+/**
+ * @category server
+ * @module routes/packs
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -17,19 +23,37 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  role_pack,
+  library_pack,
+  trigger_pack,
   install_pack,
   fetch_pack_by_name,
   can_install_pack,
   uninstall_pack,
 } = require("@saltcorn/data/models/pack");
 const { h5, pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
+const Library = require("@saltcorn/data/models/library");
+const Trigger = require("@saltcorn/data/models/trigger");
+const Role = require("@saltcorn/data/models/role");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace packsRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.get(
   "/create/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const tables = await Table.find({});
@@ -56,9 +80,35 @@ router.get(
       name: `page.${t.name}`,
       type: "Bool",
     }));
+    const libs = await Library.find({});
+    const libFields = libs.map((l) => ({
+      label: `${l.name} library item`,
+      name: `library.${l.name}`,
+      type: "Bool",
+    }));
+    const trigs = await Trigger.find({});
+    const trigFields = trigs.map((l) => ({
+      label: `${l.name} trigger`,
+      name: `trigger.${l.name}`,
+      type: "Bool",
+    }));
+    const roles = await Role.find({ not: { id: { in: [1, 8, 10] } } });
+    const roleFields = roles.map((l) => ({
+      label: `${l.role} role`,
+      name: `role.${l.role}`,
+      type: "Bool",
+    }));
     const form = new Form({
       action: "/packs/create",
-      fields: [...tableFields, ...viewFields, ...pluginFields, ...pageFields],
+      fields: [
+        ...tableFields,
+        ...viewFields,
+        ...pluginFields,
+        ...pageFields,
+        ...trigFields,
+        ...roleFields,
+        ...libFields,
+      ],
     });
     res.sendWrap(req.__(`Create Pack`), {
       above: [
@@ -80,12 +130,25 @@ router.get(
   })
 );
 
+/**
+ * @name post/create
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/create",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
-    var pack = { tables: [], views: [], plugins: [], pages: [] };
+    var pack = {
+      tables: [],
+      views: [],
+      plugins: [],
+      pages: [],
+      roles: [],
+      library: [],
+      triggers: [],
+    };
     for (const k of Object.keys(req.body)) {
       const [type, name] = k.split(".");
       switch (type) {
@@ -100,6 +163,15 @@ router.post(
           break;
         case "page":
           pack.pages.push(await page_pack(name));
+          break;
+        case "library":
+          pack.library.push(await library_pack(name));
+          break;
+        case "role":
+          pack.roles.push(await role_pack(name));
+          break;
+        case "trigger":
+          pack.triggers.push(await trigger_pack(name));
           break;
 
         default:
@@ -136,6 +208,10 @@ router.post(
   })
 );
 
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const install_pack_form = (req) =>
   new Form({
     action: "/packs/install",
@@ -150,9 +226,14 @@ const install_pack_form = (req) =>
     ],
   });
 
+/**
+ * @name get/install
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.get(
   "/install",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Install Pack`), {
@@ -175,9 +256,14 @@ router.get(
   })
 );
 
+/**
+ * @name post/install
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/install",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
@@ -228,14 +314,24 @@ router.post(
   })
 );
 
+/**
+ * @name post/install-named/:name
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/install-named/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
+    if (!pack) {
+      req.flash("error", req.__(`Pack %s not found`, text(name)));
+      res.redirect(`/plugins`);
+      return;
+    }
     const can_install = await can_install_pack(pack.pack);
 
     if (can_install.error) {
@@ -254,14 +350,24 @@ router.post(
   })
 );
 
+/**
+ * @name post/uninstall/:name
+ * @function
+ * @memberof module:routes/packs~packsRouter
+ * @function
+ */
 router.post(
   "/uninstall/:name",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
+    if (!pack) {
+      req.flash("error", req.__(`Pack %s not found`, text(name)));
+      res.redirect(`/plugins`);
+      return;
+    }
     await uninstall_pack(pack.pack, name);
 
     req.flash("success", req.__(`Pack %s uninstalled`, text(name)));

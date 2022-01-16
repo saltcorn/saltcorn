@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/JoinField
+ * @subcategory components / elements
+ */
+
 import React, { useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -9,7 +15,18 @@ import {
 } from "./utils";
 import previewCtx from "../preview_context";
 
-export const JoinField = ({ name, block, fieldview, textStyle }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.name
+ * @param {boolean} props.block
+ * @param {object} props.fieldview
+ * @param {string} props.textStyle
+ * @returns {span}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const JoinField = ({ name, block, fieldview, textStyle }) => {
   const {
     selected,
     node_id,
@@ -47,7 +64,13 @@ export const JoinField = ({ name, block, fieldview, textStyle }) => {
   );
 };
 
-export const JoinFieldSettings = () => {
+export /**
+ * @returns {Fragment}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const JoinFieldSettings = () => {
   const {
     actions: { setProp },
     name,
@@ -148,6 +171,9 @@ export const JoinFieldSettings = () => {
   );
 };
 
+/**
+ * @type {object}
+ */
 JoinField.craft = {
   displayName: "JoinField",
   related: {

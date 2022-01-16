@@ -12,6 +12,7 @@ const { getViews } = require("../models/layout");
 
 const { getState } = require("../db/state");
 const { rick_file, mockReqRes } = require("./mocks");
+const Library = require("../models/library.js");
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -156,6 +157,20 @@ describe("File", () => {
     expect(f.mimetype).toBe("image/png");
     await File.update(f.id, { size_kb: 56 });
     await f.delete();
+  });
+});
+
+describe("Library", () => {
+  it("should create", async () => {
+    await Library.create({ name: "Foos", icon: "fa-cog", layout: {} });
+    const libs = await Library.find({});
+    expect(libs.length).toBe(1);
+    const suitable = libs[0].suitableFor("page");
+    expect(suitable).toBe(true);
+    const lib = await Library.findOne({ name: "Foos" });
+    expect(lib.icon).toBe("fa-cog");
+    await lib.update({ icon: "fa-bar" });
+    await lib.delete();
   });
 });
 

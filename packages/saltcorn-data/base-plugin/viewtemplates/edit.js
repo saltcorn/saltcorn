@@ -1,3 +1,8 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/edit
+ * @subcategory base-plugin
+ */
 const Field = require("../../models/field");
 const File = require("../../models/file");
 const Table = require("../../models/table");
@@ -11,6 +16,7 @@ const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const { get_expression_function } = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
+const Library = require("../../models/library");
 
 const {
   initial_config_all_fields,
@@ -28,6 +34,7 @@ const {
   getForm,
   fill_presets,
   parse_view_select,
+  get_view_link_query,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -36,6 +43,10 @@ const {
 } = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
+/**
+ * @param {object} req
+ * @returns {Workflow}
+ */
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -49,14 +60,20 @@ const configuration_workflow = (req) =>
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
-            true
+            "edit"
           );
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
 
-          const actions = ["Save", "Delete"];
+          const actions = [
+            "Save",
+            "SaveAndContinue",
+            "Reset",
+            "GoBack",
+            "Delete",
+          ];
           const actionConfigForms = {
             Delete: [
               {
@@ -93,6 +110,11 @@ const configuration_workflow = (req) =>
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
           }
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("edit")
+          );
+          const myviewrow = await View.findOne({ name: context.viewname });
+
           return {
             tableName: table.name,
             fields,
@@ -103,6 +125,8 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            min_role: (myviewrow || {}).min_role,
+            library,
             views,
             mode: "edit",
           };
@@ -191,6 +215,12 @@ const configuration_workflow = (req) =>
             ),
             fields: [
               {
+                name: "auto_save",
+                label: req.__("Auto save"),
+                sublabel: req.__("Save any changes immediately"),
+                type: "Bool",
+              },
+              {
                 name: "view_when_done",
                 label: req.__("Default view when done"),
                 sublabel: req.__(
@@ -232,6 +262,14 @@ const configuration_workflow = (req) =>
       },
     ],
   });
+
+/**
+ * @param {*} table_id
+ * @param {*} viewname
+ * @param {object} opts
+ * @param {*} opts.columns
+ * @returns {Promise<object[]>}
+ */
 const get_state_fields = async (table_id, viewname, { columns }) => [
   {
     name: "id",
@@ -240,6 +278,10 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
   },
 ];
 
+/**
+ * @param {Form} form
+ * @param {string} locale
+ */
 const setDateLocales = (form, locale) => {
   form.fields.forEach((f) => {
     if (f.type && f.type.name === "Date") {
@@ -248,12 +290,25 @@ const setDateLocales = (form, locale) => {
   });
 };
 
+/** @type {function} */
 const initial_config = initial_config_all_fields(true);
 
+/**
+ * @param {number} table_id
+ * @param {string} viewname
+ * @param {object} optsOne
+ * @param {*} optsOne.columns
+ * @param {*} optsOne.layout
+ * @param {string} state
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<Form>}
+ */
 const run = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, auto_save },
   state,
   { res, req }
 ) => {
@@ -274,12 +329,24 @@ const run = async (
     req,
     res,
     state,
+    auto_save,
   });
 };
+
+/**
+ * @param {number} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {*} opts.columns
+ * @param {*} opts.layout
+ * @param {State} state
+ * @param {object} extra
+ * @returns {Promise<Form[]>}
+ */
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, auto_save },
   state,
   extra
 ) => {
@@ -310,11 +377,22 @@ const runMany = async (
       req: extra.req,
       res: extra.res,
       state,
+      auto_save,
     });
     return { html, row };
   });
 };
 
+/**
+ * @param {object} opts
+ * @param {Form} opts.form
+ * @param {Table} opts.table
+ * @param {object} opts.req
+ * @param {object} opts.row
+ * @param {object} opts.res
+ * @throws {InvalidConfiguration}
+ * @returns {Promise<void>}
+ */
 const transformForm = async ({ form, table, req, row, res }) => {
   await traverse(form.layout, {
     action(segment) {
@@ -344,7 +422,11 @@ const transformForm = async ({ form, table, req, row, res }) => {
         case "Own":
           state = { id: row.id };
           break;
+        case "Independent":
+          state = {};
+          break;
         case "ChildList":
+        case "OneToOneShow":
           state = { [view_select.field_name]: row.id };
           break;
         case "ParentShow":
@@ -359,6 +441,19 @@ const transformForm = async ({ form, table, req, row, res }) => {
   setDateLocales(form, req.getLocale());
 };
 
+/**
+ * @param {object} opts
+ * @param {Table} opts.table
+ * @param {Fields[]} opts.fields
+ * @param {string} opts.viewname
+ * @param {object[]} opts.columns
+ * @param {Layout} opts.layout
+ * @param {object} opts.row
+ * @param {object} opts.req
+ * @param {object} opts.state
+ * @param {object} opts.res
+ * @returns {Promise<Form>}
+ */
 const render = async ({
   table,
   fields,
@@ -369,9 +464,10 @@ const render = async ({
   req,
   state,
   res,
+  auto_save,
 }) => {
   const form = await getForm(table, viewname, columns, layout, state.id, req);
-
+  if (auto_save) form.onChange = `saveAndContinue(this)`;
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -397,14 +493,34 @@ const render = async ({
       }
     }
   });
+  await form.fill_fkey_options();
+
   await transformForm({ form, table, req, row, res });
+
   return renderForm(form, req.csrfToken());
 };
 
+/**
+ * @param {number} table_id
+ * @param {string} viewname
+ * @param {object} optsOne
+ * @param {object[]} optsOne.columns
+ * @param {Layout} optsOne.layout
+ * @param {object} optsOne.fixed
+ * @param {boolean} optsOne.view_when_done
+ * @param {object[]} optsOne.formula_destinations
+ * @param {object} state
+ * @param {*} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.res
+ * @param {object} optsTwo.req
+ * @param {string} optsTwo.redirect
+ * @returns {Promise<void>}
+ */
 const runPost = async (
   table_id,
   viewname,
-  { columns, layout, fixed, view_when_done, formula_destinations },
+  { columns, layout, fixed, view_when_done, formula_destinations, auto_save },
   state,
   body,
   { res, req, redirect }
@@ -412,6 +528,8 @@ const runPost = async (
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
+  if (auto_save) form.onChange = `saveAndContinue(this)`;
+
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);
@@ -423,6 +541,7 @@ const runPost = async (
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
+    await form.fill_fkey_options();
     await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
@@ -448,13 +567,16 @@ const runPost = async (
         delete row[field.name];
       }
     }
+    const originalID = id;
     if (typeof id === "undefined") {
       const ins_res = await table.tryInsertRow(
         row,
         req.user ? +req.user.id : undefined
       );
-      if (ins_res.success) id = ins_res.success;
-      else {
+      if (ins_res.success) {
+        id = ins_res.success;
+        row[pk.name] = id;
+      } else {
         req.flash("error", text_attr(ins_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
@@ -470,6 +592,10 @@ const runPost = async (
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
       }
+    }
+    if (req.xhr && !originalID) {
+      res.json({ id });
+      return;
     }
     if (redirect) {
       res.redirect(redirect);
@@ -504,28 +630,48 @@ const runPost = async (
       if (
         (nxview.table_id === table_id || relation) &&
         state_fields.some((sf) => sf.name === pk.name)
-      )
-        res.redirect(
-          `/view/${text(viewname_when_done)}?${pk.name}=${text(
-            relation ? row[relation] : id
-          )}`
-        );
-      else res.redirect(`/view/${text(viewname_when_done)}`);
+      ) {
+        const get_query = get_view_link_query(fields);
+        const query = relation
+          ? `?${pk.name}=${text(row[relation])}`
+          : get_query(row);
+        res.redirect(`/view/${text(viewname_when_done)}${query}`);
+      } else res.redirect(`/view/${text(viewname_when_done)}`);
     }
   }
 };
+
+/**
+ * @param {object} opts
+ * @param {object} opts.body
+ * @param {string} opts.table_id
+ * @param {object} opts.req
+ * @returns {Promise<boolean>}
+ */
 const authorise_post = async ({ body, table_id, req }) => {
   const table = await Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
     const field_name = await table.owner_fieldname();
-    return field_name && `${body[field_name]}` === `${user_id}`;
+    if (typeof body[field_name] === "undefined") {
+      const fields = await table.getFields();
+      const { uniques } = splitUniques(fields, body);
+      if (Object.keys(uniques).length > 0) {
+        body = await table.getRow(uniques);
+        return table.is_owner(req.user, body);
+      }
+    } else return field_name && `${body[field_name]}` === `${user_id}`;
+  }
+  if (table.ownership_formula && user_id) {
+    return await table.is_owner(req.user, body);
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
 };
 module.exports = {
+  /** @type {string} */
   name: "Edit",
+  /** @type {string} */
   description: "Form for creating a new row or editing existing rows",
   configuration_workflow,
   run,
@@ -533,10 +679,35 @@ module.exports = {
   runPost,
   get_state_fields,
   initial_config,
+  /** @type {boolean} */
   display_state_form: false,
   authorise_post,
-  authorise_get: async ({ query, ...rest }) =>
-    authorise_post({ body: query, ...rest }),
+  /**
+   * @param {object} opts
+   * @param {object} opts.query
+   * @param {...*} opts.rest
+   * @returns {Promise<boolean>}
+   */
+  authorise_get: async ({ query, table_id, req }) => {
+    let body = query || {};
+    if (Object.keys(body).length == 1) {
+      const table = await Table.findOne({ id: table_id });
+      if (table.ownership_field_id || table.ownership_formula) {
+        const fields = await table.getFields();
+        const { uniques } = splitUniques(fields, body);
+        if (Object.keys(uniques).length > 0) {
+          body = await table.getRow(uniques);
+          return table.is_owner(req.user, body);
+        }
+      }
+    }
+    return authorise_post({ body, table_id, req });
+  },
+  /**
+   * @param {object} opts
+   * @param {Layout} opts.layout
+   * @returns {string[]}
+   */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },

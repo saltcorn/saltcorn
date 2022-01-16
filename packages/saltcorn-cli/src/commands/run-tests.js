@@ -1,21 +1,48 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/run-tests
+ */
 const { Command, flags } = require("@oclif/command");
 
 const { spawnSync, spawn } = require("child_process");
 const { sleep } = require("../common");
 
+/**
+ * RunTestsCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class RunTestsCommand extends Command {
-  async do_test(cmd, args, env, forever, cwd, keepalive) {
+  /**
+   *
+   * @param {string} cmd
+   * @param {string[]} args
+   * @param {*} env
+   * @param {*} cwd
+   * @param {boolean} keepalive
+   * @returns {object}
+   */
+  async do_test(cmd, args, env, cwd, keepalive) {
     const res = spawnSync(cmd, args, {
       stdio: "inherit",
       env,
       cwd,
     });
-    if (forever && res.status === 0)
-      await this.do_test(cmd, args, env, forever, cwd);
-    else if (res.status !== 0 && !keepalive) this.exit(res.status);
+    if (res.status !== 0 && !keepalive) this.exit(res.status);
     return res;
   }
+
+  /**
+   *
+   * @param {*} env
+   * @returns {Promise<void>}
+   */
   async e2etest(env) {
+    spawnSync("packages/saltcorn-cli/bin/saltcorn", ["fixtures", "-r"], {
+      stdio: "inherit",
+      env,
+    });
+
     const server = spawn(
       "packages/saltcorn-cli/bin/saltcorn",
       ["serve", "-p", "2987"],
@@ -29,16 +56,45 @@ class RunTestsCommand extends Command {
       "npm",
       ["run", "gotest"],
       env,
-      false,
       "packages/e2e",
       true
     );
     server.kill();
     if (res.status !== 0) this.exit(res.status);
   }
+
+  /**
+   *
+   * @param {object} args
+   * @param {object} flags
+   * @throws {Error}
+   * @returns {void}
+   */
+  validateCall(args, flags) {
+    if (!args.package && flags.testFilter) {
+      throw new Error(
+        "No package name given. To use -t please specify a package or use core."
+      );
+    }
+    if (flags.watch && flags.watchAll) {
+      throw new Error(
+        "Ether use 'watch' or 'watchAll' but not both at the same time."
+      );
+    }
+  }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
+    this.validateCall(args, flags);
     var env;
+
+    spawnSync("npm", ["run", "tsc"], {
+      stdio: "inherit",
+    });
+
     const db = require("@saltcorn/data/db");
 
     if (db.isSQLite) {
@@ -54,32 +110,32 @@ class RunTestsCommand extends Command {
     await reset();
     await fixtures();
     await db.close();
-    const covargs = flags.coverage ? ["--", "--coverage"] : [];
+    let jestParams = ["--"];
+    if (flags.coverage) {
+      jestParams.push("--coverage");
+    }
+    if (flags.testFilter) {
+      jestParams.push("-t", flags.testFilter);
+    }
+    if (flags.watch) {
+      jestParams.push("--watch");
+    }
+    if (flags.watchAll) {
+      jestParams.push("--watchAll");
+    }
     if (args.package === "core") {
-      await this.do_test(
-        "npm",
-        ["run", "test", ...covargs],
-        env,
-        flags.forever
-      );
+      await this.do_test("npm", ["run", "test", ...jestParams], env);
     } else if (args.package === "e2e") {
       await this.e2etest(env);
     } else if (args.package) {
       const cwd = "packages/" + args.package;
-      await this.do_test(
-        "npm",
-        ["run", "test", ...covargs],
-        env,
-        flags.forever,
-        cwd
-      );
+      await this.do_test("npm", ["run", "test", ...jestParams], env, cwd);
     } else {
       const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
       await this.do_test(
         lerna,
-        ["run", "test", ...covargs],
-        env,
-        flags.forever
+        ["run", "test", "--stream", ...jestParams],
+        env
       );
       await this.e2etest(env);
     }
@@ -87,17 +143,35 @@ class RunTestsCommand extends Command {
   }
 }
 
+/**
+ * @type {object}
+ */
 RunTestsCommand.args = [
   { name: "package", description: "which package to run tests for" },
 ];
 
+/**
+ * @type {string}
+ */
 RunTestsCommand.description = `Run test suites`;
 
+/**
+ * @type {object}
+ */
 RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
-  forever: flags.boolean({
-    char: "f",
-    description: "Run forever till failure",
+  testFilter: flags.string({
+    char: "t",
+    description: "Filter tests by suite or test name",
+  }),
+  watch: flags.boolean({
+    string: "watch",
+    description:
+      "Watch files for changes and rerun tests related to changed files.",
+  }),
+  watchAll: flags.boolean({
+    string: "watchAll",
+    description: "Watch files for changes and rerun all tests.",
   }),
 };
 

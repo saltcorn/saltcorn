@@ -1,7 +1,12 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Action
+ * @subcategory components / elements
+ */
+
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import faIcons from "./faicons";
 import {
   blockProps,
   BlockSetting,
@@ -9,35 +14,76 @@ import {
   OrFormula,
   ConfigForm,
   setInitialConfig,
+  ButtonOrLinkSettingsRows,
+  DynamicFontAwesomeIcon,
 } from "./utils";
-import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 
-export const Action = ({
+export /**
+ * 
+ * @param {object} props 
+ * @param {string} props.name
+ * @param {string} props.block
+ * @param {string} props.action_label
+ * @param {string} props.action_style
+ * @param {string} props.action_icon
+ * @param {string} props.action_size
+ * @param {string} props.action_bgcol
+ * @param {string} props.action_bordercol
+ * @param {string} props.action_textcol
+ * @returns {span|btn}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const Action = 
+({
   name,
   block,
   action_label,
   action_style,
   action_icon,
   action_size,
+  action_bgcol,
+  action_bordercol,
+  action_textcol,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+
+  /**
+   * @type {object}
+   */
   const btn = (
     <button
       className={`btn ${action_style || "btn-primary"} ${action_size || ""}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
+      style={
+        action_style === "btn-custom-color"
+          ? {
+              backgroundColor: action_bgcol || "#000000",
+              borderColor: action_bordercol || "#000000",
+              color: action_textcol || "#000000",
+            }
+          : {}
+      }
     >
-      {action_icon ? <i className={`${action_icon} mr-1`}></i> : ""}
+      <DynamicFontAwesomeIcon icon={action_icon} className="mr-1" />
       {action_label || name}
     </button>
   );
   return selected ? <span className={"selected-node"}>{btn}</span> : btn;
 };
 
-export const ActionSettings = () => {
+export /** 
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ * @returns {div}
+ */
+ const ActionSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -49,6 +95,9 @@ export const ActionSettings = () => {
     action_style: node.data.props.action_style,
     action_size: node.data.props.action_size,
     action_icon: node.data.props.action_icon,
+    action_bgcol: node.data.props.action_bgcol,
+    action_bordercol: node.data.props.action_bordercol,
+    action_textcol: node.data.props.action_textcol,
   }));
   const {
     actions: { setProp },
@@ -59,119 +108,64 @@ export const ActionSettings = () => {
     confirm,
     configuration,
     action_label,
-    action_style,
-    action_size,
-    action_icon,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
-  console.log({ action_icon });
   return (
     <div>
       <table className="w-100">
-        <tr>
-          <td>
-            <label>Action</label>
-          </td>
-          <td>
-            <select
-              value={name}
-              className="form-control"
-              onChange={(e) => {
-                setProp((prop) => (prop.name = e.target.value));
-                setInitialConfig(
-                  setProp,
-                  e.target.value,
-                  getCfgFields(e.target.value)
-                );
-              }}
-            >
-              {options.actions.map((f, ix) => (
-                <option key={ix} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td colSpan="2">
-            <label>Label (leave blank for default)</label>
-            <OrFormula nodekey="action_label" {...{ setProp, isFormula, node }}>
-              <input
-                type="text"
+        <tbody>
+          <tr>
+            <td>
+              <label>Action</label>
+            </td>
+            <td>
+              <select
+                value={name}
                 className="form-control"
-                value={action_label}
-                onChange={(e) =>
-                  setProp((prop) => (prop.action_label = e.target.value))
-                }
-              />
-            </OrFormula>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Action style</label>
-          </td>
-          <td>
-            <select
-              className="form-control"
-              value={action_style}
-              onChange={(e) =>
-                setProp((prop) => (prop.action_style = e.target.value))
-              }
-            >
-              <option value="btn-primary">Primary button</option>
-              <option value="btn-secondary">Secondary button</option>
-              <option value="btn-success">Success button</option>
-              <option value="btn-danger">Danger button</option>
-              <option value="btn-outline-primary">
-                Primary outline button
-              </option>
-              <option value="btn-outline-secondary">
-                Secondary outline button
-              </option>
-              <option value="btn-link">Link</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Action size</label>
-          </td>
-          <td>
-            {" "}
-            <select
-              className="form-control"
-              value={action_size}
-              onChange={(e) =>
-                setProp((prop) => (prop.action_size = e.target.value))
-              }
-            >
-              <option value="">Standard</option>
-              <option value="btn-lg">Large</option>
-              <option value="btn-sm">Small</option>
-              <option value="btn-block">Block</option>
-              <option value="btn-block btn-lg">Large block</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Icon</label>
-          </td>
-          <td>
-            <FontIconPicker
-              value={action_icon}
-              icons={faIcons}
-              onChange={(value) =>
-                setProp((prop) => (prop.action_icon = value))
-              }
-              isMulti={false}
-            />
-          </td>
-        </tr><MinRoleSettingRow minRole={minRole} setProp={setProp} />
+                onChange={(e) => {
+                  setProp((prop) => (prop.name = e.target.value));
+                  setInitialConfig(
+                    setProp,
+                    e.target.value,
+                    getCfgFields(e.target.value)
+                  );
+                }}
+              >
+                {options.actions.map((f, ix) => (
+                  <option key={ix} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="2">
+              <label>Label (leave blank for default)</label>
+              <OrFormula
+                nodekey="action_label"
+                {...{ setProp, isFormula, node }}
+              >
+                <input
+                  type="text"
+                  className="form-control"
+                  value={action_label}
+                  onChange={(e) =>
+                    setProp((prop) => (prop.action_label = e.target.value))
+                  }
+                />
+              </OrFormula>
+            </td>
+          </tr>
+          <ButtonOrLinkSettingsRows
+            setProp={setProp}
+            keyPrefix="action_"
+            values={node}
+          />
+          <MinRoleSettingRow minRole={minRole} setProp={setProp} />
+        </tbody>
       </table>
       {options.mode === "show" ? (
         <div className="form-check">
@@ -188,7 +182,7 @@ export const ActionSettings = () => {
         </div>
       ) : null}
       <BlockSetting block={block} setProp={setProp} />
-      
+
       {cfgFields ? (
         <ConfigForm
           fields={cfgFields}
@@ -201,6 +195,9 @@ export const ActionSettings = () => {
   );
 };
 
+/** 
+ * @type {object} 
+ */
 Action.craft = {
   displayName: "Action",
   related: {

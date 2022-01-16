@@ -1,7 +1,19 @@
+/**
+ * @category saltcorn-cli
+ * @module commands/serve
+ */
 const { Command, flags } = require("@oclif/command");
 const si = require("systeminformation");
 
+/**
+ * ServeCommand Class
+ * @extends oclif.Command
+ * @category saltcorn-cli
+ */
 class ServeCommand extends Command {
+  /**
+   * @returns {Promise<void>}
+   */
   async run() {
     const { flags } = this.parse(ServeCommand);
     const cpu = await si.cpu();
@@ -28,6 +40,7 @@ class ServeCommand extends Command {
     if (flags.nomigrate) serveArgs.disableMigrate = true;
     if (flags.noscheduler) serveArgs.disableScheduler = true;
     if (flags.watchReaper) serveArgs.watchReaper = true;
+    if (flags.dev) serveArgs.dev = true;
     if (flags.verbose) {
       const db = require("@saltcorn/data/db");
       db.set_sql_logging();
@@ -37,13 +50,23 @@ class ServeCommand extends Command {
   }
 }
 
+/**
+ * @type {string}
+ */
 ServeCommand.description = `Start the Saltcorn server`;
 
+/**
+ * @type {object}
+ */
 ServeCommand.flags = {
-  port: flags.integer({ char: "p", description: "port", default: 3000 }),
   port: flags.integer({ char: "p", description: "port", default: 3000 }),
   verbose: flags.boolean({ char: "v", description: "Verbose" }),
   watchReaper: flags.boolean({ char: "r", description: "Watch reaper" }),
+  dev: flags.boolean({
+    string: "dev",
+    char: "d",
+    description: "Run in dev mode and re-start on file changes",
+  }),
   addschema: flags.boolean({ char: "a", description: "Add schema if missing" }),
   nomigrate: flags.boolean({ char: "n", description: "No migrations" }),
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),

@@ -30,9 +30,14 @@ function add_repeater(nm) {
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
-    var to_show = new Function("e", "return " + e.attr("data-show-if"));
+    var to_show = new Function(
+      "e",
+      "return " + decodeURIComponent(e.attr("data-show-if"))
+    );
     if (to_show(e))
-      e.show().find("input, textarea, button, select").prop("disabled", false);
+      e.show()
+        .find("input, textarea, button, select")
+        .prop("disabled", e.attr("data-disabled") || false);
     else
       e.hide().find("input, textarea, button, select").prop("disabled", true);
   });
@@ -106,28 +111,70 @@ function reindex(element, oldix, newix) {
   );
 }
 
+function get_form_subset_record(e) {
+  const rec = {};
+  e.find("input[name],select[name]").each(function () {
+    rec[$(this).attr("name")] = $(this).val();
+  });
+  return rec;
+}
+
+function apply_form_subset_record(e, vals) {
+  e.find("input[name],select[name]").each(function () {
+    var name = $(this).attr("name");
+    if (vals[name]) $(this).val(vals[name]);
+  });
+}
+
+function reindex_form_record(vals, oldix, newix) {
+  const rec = {};
+  Object.keys(vals).forEach((k) => {
+    const newkey = k.split("_" + oldix).join("_" + newix);
+    rec[newkey] = vals[k];
+  });
+  return rec;
+}
+
 function rep_up(e) {
   var myrep = $(e).closest(".form-repeat");
+  var theform = $(e).closest("form");
   var ix = myrep.index();
   var parent = myrep.parent();
   if (ix > 0) {
     var swap_with = parent.children(".form-repeat").eq(ix - 1);
+    var vals1 = reindex_form_record(get_form_subset_record(myrep), ix, ix - 1);
+    var vals2 = reindex_form_record(
+      get_form_subset_record(swap_with),
+      ix - 1,
+      ix
+    );
     reindex(myrep, ix, ix - 1);
     reindex(swap_with, ix - 1, ix);
     $(myrep).swapWith(swap_with);
+    apply_form_subset_record(theform, vals2);
+    apply_form_subset_record(theform, vals1);
   }
 }
 
 function rep_down(e) {
   var myrep = $(e).closest(".form-repeat");
+  var theform = $(e).closest("form");
   var ix = myrep.index();
   var parent = myrep.parent();
   var nchildren = parent.children(".form-repeat").length;
   if (ix < nchildren - 1) {
     var swap_with = parent.children(".form-repeat").eq(ix + 1);
+    var vals1 = reindex_form_record(get_form_subset_record(myrep), ix, ix + 1);
+    var vals2 = reindex_form_record(
+      get_form_subset_record(swap_with),
+      ix + 1,
+      ix
+    );
     reindex(myrep, ix, ix + 1);
     reindex(swap_with, ix + 1, ix);
     $(myrep).swapWith(swap_with);
+    apply_form_subset_record(theform, vals2);
+    apply_form_subset_record(theform, vals1);
   }
 }
 function initialize_page() {
@@ -264,6 +311,18 @@ function select_id(id) {
 function set_state_field(key, value) {
   pjax_to(updateQueryStringParameter(window.location.href, key, value));
 }
+
+function check_state_field(that) {
+  const checked = that.checked;
+  const name = that.name;
+  const value = that.value;
+  var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
+  let dest;
+  if (checked) dest = window.location.href + `${separator}${name}=${value}`;
+  else dest = window.location.href.replace(`${name}=${value}`, "");
+  pjax_to(dest.replace("&&", "&").replace("?&", "?"));
+}
+
 function set_state_fields(kvs) {
   var newhref = window.location.href;
   Object.entries(kvs).forEach((kv) => {
@@ -271,7 +330,7 @@ function set_state_fields(kvs) {
       newhref = removeQueryStringParameter(newhref, kv[0]);
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
-  pjax_to(newhref);
+  pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
 }
 function unset_state_field(key) {
   pjax_to(removeQueryStringParameter(window.location.href, key));
@@ -299,7 +358,11 @@ function pjax_to(href) {
         setTimeout(() => {
           loadPage = true;
         }, 0);
-
+        if (res.includes("<!--SCPT:")) {
+          const start = res.indexOf("<!--SCPT:");
+          const end = res.indexOf("-->", start);
+          document.title = res.substring(start + 9, end);
+        }
         $("#page-inner-content").html(res);
         initialize_page();
       },
@@ -354,6 +417,31 @@ function notifyAlert(note) {
 </div>`);
 }
 
+function ajax_done(res) {
+  if (res.notify) notifyAlert(res.notify);
+  if (res.error) notifyAlert({ type: "danger", text: res.error });
+  if (res.eval_js) eval(res.eval_js);
+  if (res.reload_page) location.reload(); //TODO notify to cookie if reload or goto
+  if (res.download) {
+    const dataurl = `data:${
+      res.download.mimetype || "application/octet-stream"
+    };base64,${res.download.blob}`;
+    fetch(dataurl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        if (res.download.filename) link.download = res.download.filename;
+        else link.target = "_blank";
+        link.click();
+      });
+  }
+  if (res.goto) {
+    if (res.target === "_blank") window.open(res.goto, "_blank").focus();
+    else window.location.href = res.goto;
+  }
+}
+
 function view_post(viewname, route, data, onDone) {
   $.ajax("/view/" + viewname + "/" + route, {
     dataType: "json",
@@ -368,10 +456,7 @@ function view_post(viewname, route, data, onDone) {
     data: typeof data === "string" ? data : JSON.stringify(data),
   }).done(function (res) {
     if (onDone) onDone(res);
-    if (res.notify) notifyAlert(res.notify);
-    if (res.error) notifyAlert({ type: "danger", text: res.error });
-    if (res.reload_page) location.reload(); //TODO notify to cookie if reload or goto
-    if (res.goto) window.location.href = res.goto;
+    ajax_done(res);
   });
 }
 var logged_errors = [];
@@ -428,6 +513,33 @@ function ajax_modal(url, opts = {}) {
     },
   });
 }
+
+function saveAndContinue(e) {
+  var form = $(e).closest("form");
+  var url = form.attr("action");
+  var form_data = form.serialize();
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function (res) {
+      if (res.id && form.find("input[name=id")) {
+        form.append(
+          `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
+        );
+      }
+    },
+    error: function (request) {
+      $("#page-inner-content").html(request.responseText);
+      initialize_page();
+    },
+  });
+
+  return false;
+}
+
 function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
   var url = form.attr("action");
@@ -467,7 +579,7 @@ function ajax_post(url, args) {
       "CSRF-Token": _sc_globalCsrf,
     },
     ...(args || {}),
-  });
+  }).done(ajax_done);
 }
 function ajax_post_btn(e, reload_on_done, reload_delay) {
   var form = $(e).closest("form");
@@ -505,11 +617,11 @@ function test_formula(tablename, stored) {
 function align_dropdown(id) {
   setTimeout(() => {
     if ($("#dm" + id).hasClass("show")) {
-      var inputWidth = $(".input-group.search-bar").outerWidth();
-      $(".dropdown-menu.search-bar").css("width", inputWidth);
-      var d0pos = $(".input-group.search-bar").offset();
+      var inputWidth = $("#search-input-group-" + id).outerWidth();
+      $("#dm" + id).css("width", inputWidth);
+      var d0pos = $("#search-input-group-" + id).offset();
       $("#dm" + id).offset({ left: d0pos.left });
-      $(document).on("click", ".dropdown-menu.search-bar", function (e) {
+      $(document).on("click", "#dm" + id, function (e) {
         e.stopPropagation();
       });
     }
@@ -527,7 +639,13 @@ function init_room(viewname, room_id) {
   const socket = io({ transports: ["websocket"] });
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
-    $(`.msglist-${room_id}`).append(msg);
+    if (msg.not_for_user_id) {
+      const my_user_id = $(`.msglist-${room_id}`).attr("data-user-id");
+      if (+my_user_id === +msg.not_for_user_id) return;
+    }
+    if (msg.append) $(`.msglist-${room_id}`).append(msg.append);
+    if (msg.pls_ack_msg_id)
+      view_post(viewname, "ack_read", { room_id, id: msg.pls_ack_msg_id });
   });
 
   $(`form.room-${room_id}`).submit((e) => {
@@ -538,4 +656,20 @@ function init_room(viewname, room_id) {
       $(`form.room-${room_id}`).trigger("reset");
     });
   });
+}
+function room_older(viewname, room_id, btn) {
+  view_post(
+    viewname,
+    "fetch_older_msg",
+    { room_id, lt_msg_id: +$(btn).attr("data-lt-msg-id") },
+    (res) => {
+      if (res.prepend) $(`.msglist-${room_id}`).prepend(res.prepend);
+      if (res.new_fetch_older_lt)
+        $(btn).attr("data-lt-msg-id", res.new_fetch_older_lt);
+      if (res.remove_fetch_older) $(btn).remove();
+    }
+  );
+}
+function showHideCol(nm, e) {
+  $("#jsGrid").jsGrid("fieldOption", nm, "visible", e.checked);
 }

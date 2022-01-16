@@ -1,3 +1,9 @@
+/**
+ * @category saltcorn-builder
+ * @module components/elements/Field
+ * @subcategory components / elements
+ */
+
 import React, { useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -11,7 +17,19 @@ import {
   fetchFieldPreview,
 } from "./utils";
 
-export const Field = ({ name, fieldview, block, textStyle, configuration }) => {
+export /**
+ * @param {object} props
+ * @param {string} props.name
+ * @param {string} props.fieldview
+ * @param {boolean} props.block
+ * @param {string} props.textStyle
+ * @param {object} props.configuration
+ * @returns {div}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace 
+ */
+const Field = ({ name, fieldview, block, textStyle, configuration }) => {
   const {
     selected,
     node_id,
@@ -50,7 +68,13 @@ export const Field = ({ name, fieldview, block, textStyle, configuration }) => {
   );
 };
 
-export const FieldSettings = () => {
+export /**
+ * @returns {Fragment}
+ * @namespace
+ * @category saltcorn-builder
+ * @subcategory components
+ */
+const FieldSettings = () => {
   const {
     actions: { setProp },
     name,
@@ -160,7 +184,7 @@ export const FieldSettings = () => {
             <TextStyleRow textStyle={textStyle} setProp={setProp} />
           )}
         </tbody>
-      </table>{" "}
+      </table>
       {cfgFields ? (
         <ConfigForm
           fields={cfgFields}
@@ -173,6 +197,9 @@ export const FieldSettings = () => {
   );
 };
 
+/** 
+ * @type {object} 
+ */
 Field.craft = {
   displayName: "Field",
   related: {

@@ -1,3 +1,8 @@
+/**
+ * @category server
+ * @module auth/roleadmin
+ * @subcategory auth
+ */
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -15,12 +20,7 @@ const {
   post_dropdown_item,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const {
-  isAdmin,
-  setTenant,
-  error_catcher,
-  csrfField,
-} = require("../routes/utils");
+const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -44,8 +44,24 @@ const {
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace roleadminRouter
+ * @category server
+ * @subcategory auth
+ */
 const router = new Router();
 module.exports = router;
+
+/**
+ * @param {Role} role
+ * @param {Layout[]} layouts
+ * @param {*} layout_by_role
+ * @param {object} req
+ * @returns {Form}
+ */
 const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
   form(
     {
@@ -69,6 +85,32 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
     )
   );
 
+/**
+ * @param {Role} role
+ * @param {Layout[]} layouts
+ * @param {*} layout_by_role
+ * @param {object} req
+ * @returns {Form}
+ */
+const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
+  form(
+    {
+      action: `/roleadmin/setrole2fapolicy/${role.id}`,
+      method: "post",
+    },
+    csrfField(req),
+    select(
+      { name: "policy", onchange: "form.submit()" },
+      ["Optional", "Disabled", "Mandatory"].map((p) =>
+        option({ selected: twofa_policy_by_role[role.id] === p }, p)
+      )
+    )
+  );
+
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const roleForm = (req) =>
   new Form({
     action: "/roleadmin/edit",
@@ -87,9 +129,13 @@ const roleForm = (req) =>
     ],
   });
 
+/**
+ * @name get
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const roles = await User.get_roles();
@@ -101,6 +147,7 @@ router.get(
       (l) => l !== "emergency"
     );
     const layout_by_role = getState().getConfig("layout_by_role");
+    const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
     send_users_page({
       res,
       req,
@@ -119,6 +166,13 @@ router.get(
                   editRoleLayoutForm(role, layouts, layout_by_role, req),
               },
               {
+                label: req.__("2FA policy"),
+                key: (role) =>
+                  role.id === 10
+                    ? ""
+                    : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
+              },
+              {
                 label: req.__("Delete"),
                 key: (r) =>
                   unDeletableRoles.includes(r.id)
@@ -135,9 +189,13 @@ router.get(
   })
 );
 
+/**
+ * @name get/new
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await roleForm(req);
@@ -155,9 +213,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/edit
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.post(
   "/edit",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await roleForm(req);
@@ -188,9 +251,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/setrolelayout/:id
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.post(
   "/setrolelayout/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -202,10 +269,35 @@ router.post(
     res.redirect(`/roleadmin`);
   })
 );
+
+/**
+ * @name post/setrolelayout/:id
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
+router.post(
+  "/setrole2fapolicy/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const twofa_policy_by_role = getState().getConfigCopy(
+      "twofa_policy_by_role"
+    );
+    twofa_policy_by_role[+id] = req.body.policy;
+    await getState().setConfig("twofa_policy_by_role", twofa_policy_by_role);
+    req.flash("success", req.__(`Saved 2FA policy for role`));
+
+    res.redirect(`/roleadmin`);
+  })
+);
 const unDeletableRoles = [1, 8, 10];
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:auth/roleadmin~roleadminRouter
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

@@ -1,5 +1,12 @@
+/**
+ * @category saltcorn-data
+ * @module contract
+ */
 const { contract, is } = require("contractis");
 
+/**
+ * @type {function}
+ */
 const fieldlike = is.obj(
   {
     name: is.str,
@@ -9,8 +16,14 @@ const fieldlike = is.obj(
   (o) => o.type || o.input_type
 );
 
+/**
+ * @type {function}
+ */
 const is_header = is.obj({ script: is.maybe(is.str) });
 
+/**
+ * @type {function}
+ */
 const is_menu_item = is.obj({
   label: is.str,
   link: is.maybe(is.str),
@@ -24,6 +37,9 @@ const is_menu_item = is.obj({
   ),
 });
 
+/**
+ * @type {function}
+ */
 const is_layout_container = is.or(
   is.eq(null),
   is.obj({
@@ -34,6 +50,9 @@ const is_layout_container = is.or(
   is.obj({})
 );
 
+/**
+ * @type {function}
+ */
 const is_layout = is.or(
   is.obj(
     {
@@ -61,6 +80,9 @@ const is_layout = is.or(
   is.and(is_layout_container, is.obj({}))
 );
 
+/**
+ * @type {function}
+ */
 const is_plugin_wrap_arg = is.obj({
   title: is.str,
   body: is.or(is.str, is_layout),
@@ -81,6 +103,9 @@ const is_plugin_wrap_arg = is.obj({
   headers: is.array(is_header),
 });
 
+/**
+ * @type {function}
+ */
 const is_plugin_authwrap_arg = is.obj({
   title: is.str,
   form: is.class("Form"),
@@ -106,15 +131,24 @@ const is_plugin_authwrap_arg = is.obj({
   }),
 });
 
+/**
+ * @type {function}
+ */
 const is_plugin_wrap = is.fun(is_plugin_wrap_arg, is.str);
 
+/**
+ * @type {function}
+ */
 const is_plugin_layout = is.obj({
   wrap: is_plugin_wrap,
   authWrap: is.maybe(is.fun(is_plugin_authwrap_arg, is.str)),
 });
 
-const is_attribute = is.obj({ name: is.str, type: is.str, required: is.bool });
+const is_attribute = is.obj({ name: is.str, type: is.str });
 
+/**
+ * @type {function}
+ */
 const is_plugin_type = is.obj({
   name: is.str,
   sql_name: is.str,
@@ -138,6 +172,9 @@ const is_plugin_type = is.obj({
   presets: is.maybe(is.objVals(is.fun([], is.any))),
 });
 
+/**
+ * @type {function}
+ */
 const is_table_query = is.obj({
   joinFields: is.maybe(is.objVals(is.obj({ ref: is.str, target: is.str }))),
   aggregations: is.maybe(
@@ -157,6 +194,9 @@ const is_table_query = is.obj({
   orderDesc: is.maybe(is.bool),
 });
 
+/**
+ * @type {function}
+ */
 const is_viewtemplate = is.obj({
   name: is.str,
   get_state_fields: is.maybe(
@@ -183,8 +223,16 @@ const is_plugin_function = is.obj({
   isAsync: is.maybe(is.bool),
 });
 
+/**
+ *
+ * @param {*} a
+ * @returns {function}
+ */
 const is_maybe_cfg_fun = (a) => is.or(is.fun(is.obj, a), a, is.undefined);
 
+/**
+ * @type {function}
+ */
 const is_plugin = is.obj({
   sc_plugin_api_version: is.posint,
   headers: is_maybe_cfg_fun(is.array(is_header)),
@@ -217,6 +265,9 @@ const is_plugin = is.obj({
   dependencies: is.maybe(is.array(is.str)),
 });
 
+/**
+ * @type {function}
+ */
 const is_pack = is.obj({
   tables: is.array(is.obj({ name: is.str, fields: is.array(fieldlike) })),
   views: is.array(
@@ -224,6 +275,10 @@ const is_pack = is.obj({
   ),
   plugins: is.array(is.obj({ name: is.str, source: is.str, location: is.str })),
 });
+
+/**
+ * @type {function}
+ */
 const is_column = is.obj({
   type: is.one_of([
     "Action",
@@ -235,6 +290,9 @@ const is_column = is.obj({
   ]),
 });
 
+/**
+ * @type {function}
+ */
 const is_tablely = is.or(is.class("Table"), is.obj({ external: is.eq(true) }));
 
 module.exports = {

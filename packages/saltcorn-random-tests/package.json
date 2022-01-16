@@ -1,11 +1,11 @@
 {
   "name": "@saltcorn/random-tests",
-  "version": "0.5.3",
+  "version": "0.6.3-beta.3",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/data": "0.5.3",
-    "@saltcorn/server": "0.5.3"
+    "@saltcorn/data": "0.6.3-beta.3",
+    "@saltcorn/server": "0.6.3-beta.3"
   },
   "devDependencies": {
     "chaos-guinea-pig": "^0.1.0",
@@ -13,7 +13,9 @@
     "supertest": "^4.0.2"
   },
   "scripts": {
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
@@ -25,7 +27,15 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/plugin_packages/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
+      "@saltcorn/markup$": "@saltcorn/markup/dist",
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
+    }
   },
   "publishConfig": {
     "access": "public"

@@ -1,8 +1,13 @@
 /**
  * Auth / Admin
- * @type {module:express-promise-router}
+ * @category server
+ * @module auth/admin
+ * @subcategory auth
  */
 // todo refactor to few modules + rename to be in sync with router url
+/**
+ * @type {module:express-promise-router}
+ */
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -33,9 +38,22 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
+
+/**
+ * @type {object}
+ * @const
+ * @namespace auth/adminRouter
+ * @category server
+ * @subcategory auth
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ *
+ * @param {object} req
+ * @returns {Promise<object>}
+ */
 const getUserFields = async (req) => {
   const userTable = await Table.findOne({ name: "users" });
   const userFields = (await userTable.getFields()).filter(
@@ -60,6 +78,7 @@ const getUserFields = async (req) => {
   await iterForm("signup_form");
   await iterForm("new_user_form");
   for (const f of userFields) {
+    await f.fill_fkey_options();
     if (f.name === "email") {
       f.validator = (s) => {
         if (!User.valid_email(s)) return req.__("Not a valid e-mail address");
@@ -68,9 +87,13 @@ const getUserFields = async (req) => {
   }
   return userFields;
 };
+
 /**
  * User Form
- * @type {*|(function(...[*]=): *)}
+ * @function
+ * @param {object} req
+ * @param {User} user
+ * @returns {Promise<Form>}
  */
 const userForm = contract(
   is.fun(
@@ -131,11 +154,12 @@ const userForm = contract(
     return form;
   }
 );
+
 /**
  * Dropdown for User Info in left menu
- * @param user
- * @param req
- * @param can_reset
+ * @param {object} user
+ * @param {object} req
+ * @param {boolean} can_reset
  * @returns {string}
  */
 const user_dropdown = (user, req, can_reset) =>
@@ -190,9 +214,13 @@ const user_dropdown = (user, req, can_reset) =>
     ),
   ]);
 
+/**
+ * @name get
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const users = await User.find({}, { orderBy: "id" });
@@ -248,12 +276,15 @@ router.get(
     });
   })
 );
+
 /**
  * Send User Form for create new User
+ * @name get/new
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.get(
   "/new",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await userForm(req);
@@ -271,6 +302,11 @@ router.get(
   })
 );
 
+/**
+ *
+ * @param {object} req
+ * @returns {Form}
+ */
 const user_settings_form = (req) =>
   config_fields_form({
     req,
@@ -284,18 +320,26 @@ const user_settings_form = (req) =>
       "verification_view",
       "elevate_verified",
       "min_role_upload",
+      "min_role_apikeygen",
       "timeout",
       "email_mask",
       "allow_forgot",
+      "cookie_duration",
+      "cookie_duration_remember",
       "cookie_sessions",
       "custom_http_headers",
     ],
     action: "/useradmin/settings",
     submitLabel: req.__("Save"),
   });
+
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await user_settings_form(req);
@@ -311,9 +355,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await user_settings_form(req);
@@ -337,9 +386,13 @@ router.post(
   })
 );
 
+/**
+ * @name get/ssl
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/ssl",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -453,15 +506,24 @@ router.get(
   })
 );
 
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const ssl_form = (req) =>
   config_fields_form({
     req,
     field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
     action: "/useradmin/ssl/custom",
   });
+
+/**
+ * @name get/ssl/custom
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/ssl/custom",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await ssl_form(req);
@@ -478,9 +540,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/ssl/custom
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/ssl/custom",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await ssl_form(req);
@@ -509,9 +576,14 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.get(
   "/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -545,7 +617,7 @@ router.get(
               ),
               // button for reset or generate api token
               div(
-                { class: "mt-4" },
+                { class: "mt-4 d-inline-block" },
                 post_btn(
                   `/useradmin/gen-api-token/${user.id}`,
                   user.api_token ? req.__("Reset") : req.__("Generate"),
@@ -555,7 +627,7 @@ router.get(
               // button for remove api token
               user.api_token &&
                 div(
-                  { class: "mt-4" },
+                  { class: "mt-4 ml-2 d-inline-block" },
                   post_btn(
                     `/useradmin/remove-api-token/${user.id}`,
                     // TBD localization
@@ -571,12 +643,15 @@ router.get(
     });
   })
 );
+
 /**
  * Save user data
+ * @name post/save
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/save",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     let form, sub2;
@@ -646,12 +721,15 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
+
 /**
  * Reset password for yser
+ * @name post/reset-password/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/reset-password/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -662,12 +740,15 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
+
 /**
  * Send verification email for user
+ * @name post/send-verification/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/send-verification/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -683,12 +764,15 @@ router.post(
     res.redirect(`/useradmin`);
   })
 );
+
 /**
  * Get new api token
+ * @name post/gen-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/gen-api-token/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -699,12 +783,15 @@ router.post(
     res.redirect(`/useradmin/${u.id}`);
   })
 );
+
 /**
  * Remove api token
+ * @name post/remove-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/remove-api-token/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -715,12 +802,15 @@ router.post(
     res.redirect(`/useradmin/${u.id}`);
   })
 );
+
 /**
  * Set random password
+ * @name post/set-random-password/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
   "/set-random-password/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -737,9 +827,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/disable/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/disable/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -751,9 +845,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/enable/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/enable/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
@@ -764,9 +862,13 @@ router.post(
   })
 );
 
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
 router.post(
   "/delete/:id",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

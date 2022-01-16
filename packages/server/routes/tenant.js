@@ -1,3 +1,9 @@
+/**
+ * @category server
+ * @module routes/tenant
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const { getState, create_tenant } = require("@saltcorn/data/db/state");
@@ -28,8 +34,8 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const url = require("url");
-const { loadAllPlugins } = require("../load_plugins");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
+const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
@@ -40,12 +46,21 @@ const {
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace tenantRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
+
 /**
  * Declare Form to create Tenant
- * @param req - Request
+ * @param {object} req - Request
  * @returns {Form} - Saltcorn Form Declaration
+ * @category server
  */
 // TBD add form field email for tenant admin
 const tenant_form = (req) =>
@@ -65,12 +80,13 @@ const tenant_form = (req) =>
       },
     ],
   });
+
 /**
  * Check that user has role that allowed to create tenants
  * By default Admin role (id is 10) has rights to create tenants.
  * You can specify config variable "role_to_create_tenant" to overwrite this.
  * Note that only one role currently can have such rights simultaneously.
- * @param req - Request
+ * @param {object} req - Request
  * @returns {boolean} true if role has righs to create tenant
  */
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
@@ -79,10 +95,11 @@ const create_tenant_allowed = (req) => {
   const user_role = req.user ? req.user.role_id : 10;
   return user_role <= required_role;
 };
+
 /**
  * Check that String is IPv4 address
- * @param hostname
- * @returns {boolean|this is string[]}
+ * @param {string} hostname
+ * @returns {boolean|string[]}
  */
 // TBD not sure that false is correct return if type of is not string
 // TBD Add IPv6 support
@@ -90,9 +107,14 @@ const is_ip_address = (hostname) => {
   if (typeof hostname !== "string") return false;
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
+
+/**
+ * @name get/create
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
+ */
 router.get(
   "/create",
-  setTenant,
   error_catcher(async (req, res) => {
     if (
       !db.is_it_multi_tenant() ||
@@ -116,31 +138,37 @@ router.get(
           "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
         )
       );
+    let create_tenant_warning = "";
     if (getState().getConfig("create_tenant_warning"))
-      req.flash(
-        "warning",
-        h4(req.__("Warning")) +
-          p(
+      create_tenant_warning = div(
+        {
+          class: "alert alert-warning alert-dismissible fade show mt-5",
+          role: "alert",
+        },
+        h4(req.__("Warning")),
+        p(
+          req.__(
+            "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+          ) +
+            " " +
             req.__(
-              "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+              "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
             ) +
-              " " +
-              req.__(
-                "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-              ) +
-              " " +
-              req.__(
-                "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-              ) +
-              " " +
-              req.__(
-                'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
-              )
-          )
+            " " +
+            req.__(
+              "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+            ) +
+            " " +
+            req.__(
+              'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+            )
+        )
       );
+
     res.sendWrap(
       req.__("Create application"),
-      renderForm(tenant_form(req), req.csrfToken()) +
+      create_tenant_warning +
+        renderForm(tenant_form(req), req.csrfToken()) +
         p(
           { class: "mt-2" },
           req.__("To login to a previously created application, go to: "),
@@ -153,8 +181,8 @@ router.get(
 );
 /**
  * Return URL of new Tenant
- * @param req - Request
- * @param subdomain - Tenant Subdomain name string
+ * @param {object} req - Request
+ * @param {string} subdomain - Tenant Subdomain name string
  * @returns {string}
  */
 const getNewURL = (req, subdomain) => {
@@ -169,12 +197,15 @@ const getNewURL = (req, subdomain) => {
 
   return newurl;
 };
+
 /**
  * Create Tenant UI Main logic
+ * @name post/create
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
  */
 router.post(
   "/create",
-  setTenant,
   error_catcher(async (req, res) => {
     // check that multi-tenancy is enabled
     if (
@@ -218,7 +249,19 @@ router.post(
         );
       } else {
         const newurl = getNewURL(req, subdomain);
-        await create_tenant(subdomain, loadAllPlugins, newurl);
+        await create_tenant(
+          subdomain,
+          loadAllPlugins,
+          newurl,
+          false,
+          loadAndSaveNewPlugin
+        );
+        let new_url_create = newurl;
+        const hasTemplate = getState().getConfig("tenant_template");
+        if (hasTemplate) {
+          new_url_create += "auth/create_first_user";
+        }
+
         res.sendWrap(
           req.__("Create application"),
           div(
@@ -226,14 +269,25 @@ router.post(
 
             div(
               { class: "my-3", style: "font-size: 22px" },
-              a({ href: newurl, class: "new-tenant-link" }, newurl)
+              a(
+                { href: new_url_create, class: "new-tenant-link" },
+                new_url_create
+              )
             ),
             p(
               req.__(
                 "Please click the above link now to create the first user."
               ) +
                 " " +
-                req.__("Use this link to revisit your application at any time.")
+                hasTemplate
+                ? req.__(
+                    'Use this link: <a href="%s">%s</a> to revisit your application at any time.',
+                    newurl,
+                    newurl
+                  )
+                : req.__(
+                    "Use this link to revisit your application at any time."
+                  )
             )
           )
         );
@@ -241,12 +295,15 @@ router.post(
     }
   })
 );
+
 /**
  * List tenants HTTP GET Web UI
+ * @name get/list
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
  */
 router.get(
   "/list",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -306,17 +363,30 @@ router.get(
     });
   })
 );
+
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
 const tenant_settings_form = (req) =>
   config_fields_form({
     req,
-    field_names: ["role_to_create_tenant", "create_tenant_warning"],
+    field_names: [
+      "role_to_create_tenant",
+      "create_tenant_warning",
+      "tenant_template",
+    ],
     action: "/tenant/settings",
     submitLabel: req.__("Save"),
   });
 
+/**
+ * @name get/settings
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
+ */
 router.get(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -343,9 +413,14 @@ router.get(
     });
   })
 );
+
+/**
+ * @name post/settings
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
+ */
 router.post(
   "/settings",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await tenant_settings_form(req);
@@ -371,7 +446,7 @@ router.post(
 );
 /**
  * Get Tenant info
- * @param subdomain
+ * @param {string} subdomain
  * @returns {Promise<*>}
  */
 // TBD move this function data layer or just separate file(reengineering)
@@ -413,12 +488,15 @@ const get_tenant_info = async (subdomain) => {
     return info;
   });
 };
+
 /**
  * Tenant info
+ * @name get/info/:subdomain
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
  */
 router.get(
   "/info/:subdomain",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -554,13 +632,16 @@ router.get(
     });
   })
 );
+
 /**
  * Show Information about Tenant
  * /tenant/info
+ * @name post/info/:subdomain
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
  */
 router.post(
   "/info/:subdomain",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (
@@ -583,12 +664,15 @@ router.post(
     res.redirect(`/tenant/info/${text(subdomain)}`);
   })
 );
+
 /**
  * Execute Delete of tenant
+ * @name post/delete/:sub
+ * @function
+ * @memberof module:routes/tenant~tenantRouter
  */
 router.post(
   "/delete/:sub",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (

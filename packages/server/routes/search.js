@@ -1,8 +1,14 @@
+/**
+ * @category server
+ * @module routes/search
+ * @subcategory routes
+ */
+
 const Router = require("express-promise-router");
 const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
-const { setTenant, isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -10,15 +16,29 @@ const { renderForm } = require("@saltcorn/markup");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { send_infoarch_page } = require("../markup/admin.js");
 
+/**
+ * @type {object}
+ * @const
+ * @namespace searchRouter
+ * @category server
+ * @subcategory routes
+ */
 const router = new Router();
 module.exports = router;
 
+/**
+ * @param {object[]} tables
+ * @param {object[]} views
+ * @param {object} req
+ * @returns {Forms}
+ */
 const searchConfigForm = (tables, views, req) => {
   var fields = [];
   var tbls_noviews = [];
   for (const t of tables) {
     var ok_views = views.filter(
-      (v) => v.table_id === t.id && v.viewtemplateObj.runMany
+      (v) =>
+        v.table_id === t.id && v.viewtemplateObj && v.viewtemplateObj.runMany
     );
     if (ok_views.length === 0) tbls_noviews.push(t.name);
     else
@@ -47,9 +67,14 @@ const searchConfigForm = (tables, views, req) => {
   });
 };
 
+/**
+ * @name get/config
+ * @function
+ * @memberof module:routes/search~searchRouter
+ * @function
+ */
 router.get(
   "/config",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var views = await View.find({}, { orderBy: "name" });
@@ -69,9 +94,14 @@ router.get(
   })
 );
 
+/**
+ * @name post/config
+ * @function
+ * @memberof module:routes/search~searchRouter
+ * @function
+ */
 router.post(
   "/config",
-  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     var views = await View.find({}, { orderBy: "name" });
@@ -97,6 +127,9 @@ router.post(
   })
 );
 
+/**
+ * @returns {Form}
+ */
 const searchForm = () =>
   new Form({
     action: "/search",
@@ -112,6 +145,16 @@ const searchForm = () =>
     ],
   });
 
+/**
+ * @param {object} opts
+ * @param {*} opts.q
+ * @param {*} opts._page
+ * @param {*} opts.table
+ * @param {object} opts
+ * @param {object} req
+ * @param {object} res
+ * @returns {Promise<void>}
+ */
 const runSearch = async ({ q, _page, table }, req, res) => {
   const role = (req.user || {}).role_id || 10;
   const cfg = getState().getConfig("globalSearch");
@@ -199,9 +242,14 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   });
 };
 
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/search~searchRouter
+ * @function
+ */
 router.get(
   "/",
-  setTenant,
   error_catcher(async (req, res) => {
     if (req.query && req.query.q) {
       await runSearch(req.query, req, res);
