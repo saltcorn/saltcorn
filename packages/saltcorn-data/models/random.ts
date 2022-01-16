@@ -26,7 +26,7 @@ import {
  * @returns {Promise<Table>}
  */
 const random_table = async (opts: GenObj = {}): Promise<Table> => {
-  const name = generateString(2);
+  const name = generateString(3);
   const table = await Table.create(name);
   if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
     const [pk] = await table.getFields();
