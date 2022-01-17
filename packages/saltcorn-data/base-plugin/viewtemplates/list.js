@@ -253,6 +253,12 @@ const configuration_workflow = (req) =>
             type: "String",
           });
           formfields.push({
+            name: "transpose",
+            label: req.__("Transpose"),
+            sublabel: req.__("Display one column per line"),
+            type: "Bool",
+          });
+          formfields.push({
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
@@ -346,7 +352,6 @@ const run = async (
     create_view_label,
     default_state,
     create_view_location,
-    include_fml,
   },
   stateWithId,
   extraOpts
@@ -446,6 +451,7 @@ const run = async (
   if (default_state && default_state._omit_header) {
     page_opts.noHeader = true;
   }
+  page_opts.transpose = (default_state || {}).transpose;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
