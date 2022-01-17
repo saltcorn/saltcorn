@@ -1212,8 +1212,20 @@ class Table implements AbstractTable {
     for (const f of fields.filter((f) => !f.calculated || f.stored)) {
       fldNms.push(`a."${sqlsanitize(f.name)}"`);
     }
+    const whereObj = prefixFieldsInWhere(opts.where, "a");
+    const { where, values } = mkWhere(whereObj, db.isSQLite);
+
+    let placeCounter = values.length;
     Object.entries<AggregationOptions>(opts.aggregations || {}).forEach(
       ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
+        let whereStr = "";
+        if (where && !subselect) {
+          const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
+          whereStr = whereAndValues.where.substr(6); // remove "where "
+
+          values.push(...whereAndValues.values);
+          placeCounter += whereAndValues.values.length;
+        }
         if (aggregate.startsWith("Latest ")) {
           const dateField = aggregate.replace("Latest ", "");
           fldNms.push(
@@ -1222,7 +1234,7 @@ class Table implements AbstractTable {
             )}" where ${dateField}=(select max(${dateField}) from ${schema}"${sqlsanitize(
               table
             )}" where "${sqlsanitize(ref)}"=a.id${
-              where ? ` and ${where}` : ""
+              whereStr ? ` and ${whereStr}` : ""
             }) and "${sqlsanitize(ref)}"=a.id) ${sqlsanitize(fldnm)}`
           );
         } else if (subselect)
@@ -1241,13 +1253,13 @@ class Table implements AbstractTable {
               field ? `"${sqlsanitize(field)}"` : "*"
             }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )}"=a.id${where ? ` and ${where}` : ""}) ${sqlsanitize(fldnm)}`
+            )}"=a.id${whereStr ? ` and ${whereStr}` : ""}) ${sqlsanitize(
+              fldnm
+            )}`
           );
       }
     );
 
-    const whereObj = prefixFieldsInWhere(opts.where, "a");
-    const { where, values } = mkWhere(whereObj, db.isSQLite);
     const selectopts: SelectOptions = {
       limit: opts.limit,
       orderBy:
@@ -1260,6 +1272,7 @@ class Table implements AbstractTable {
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+
     return { sql, values };
   }
 

@@ -52,7 +52,10 @@ const {
   mergeIntoWhere,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
-const { get_expression_function } = require("../../models/expression");
+const {
+  get_expression_function,
+  eval_expression,
+} = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
 
@@ -507,8 +510,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
-        const f = get_expression_function(segment[key], fields);
-        segment[key] = f(row, req.user);
+        segment[key] = eval_expression(segment[key], row, req.user);
       } catch (error) {
         error.message = `Error in formula ${segment[key]} for property ${key} in segment of type ${segment.type}:\n${error.message}`;
         throw error;

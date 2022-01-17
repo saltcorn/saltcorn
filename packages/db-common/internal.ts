@@ -356,7 +356,7 @@ export type AggregationOptions = {
   table: string;
   ref: string;
   field: string;
-  where?: string;
+  where?: Where;
   aggregate: string;
   subselect?: SubselectOptions;
 };
