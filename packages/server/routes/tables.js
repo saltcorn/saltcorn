@@ -22,7 +22,7 @@ const {
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher, setTenant } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
   span,
@@ -352,6 +352,7 @@ router.get(
  */
 router.post(
   "/create-from-csv",
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
@@ -1367,6 +1368,7 @@ router.post(
  */
 router.post(
   "/upload_to_table/:name",
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
