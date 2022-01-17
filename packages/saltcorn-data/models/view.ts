@@ -643,7 +643,7 @@ class View {
     let pix = 0;
     if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
       for (const step of this.slug.steps) {
-        if (step.unique) {
+        if (step.unique && params[pix]) {
           query[step.field] = step.transform
             ? { [step.transform]: params[pix] }
             : params[pix];
