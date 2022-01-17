@@ -100,7 +100,10 @@ const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column, is_tablely } = require("../../contracts");
 const { link_view, strictParseInt } = require("../../plugin-helper");
-const { get_expression_function } = require("../../models/expression");
+const {
+  get_expression_function,
+  eval_expression,
+} = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
@@ -261,17 +264,13 @@ const make_link = contract(
       key: (r) => {
         let txt, href;
         try {
-          txt = link_text_formula
-            ? get_expression_function(link_text, fields)(r)
-            : link_text;
+          txt = link_text_formula ? eval_expression(link_text, r) : link_text;
         } catch (error) {
           error.message = `Error in formula ${link_text} for link text:\n${error.message}`;
           throw error;
         }
         try {
-          href = link_url_formula
-            ? get_expression_function(link_url, fields)(r)
-            : link_url;
+          href = link_url_formula ? eval_expression(link_url, r) : link_url;
         } catch (error) {
           error.message = `Error in formula ${link_url} for link URL:\n${error.message}`;
           throw error;
