@@ -40,10 +40,32 @@ namespace TableExports {
     };
     noHeader?: boolean;
     hover?: boolean;
+    transpose?: boolean;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
 type OptsParams = TableExports.OptsParams;
+
+/**
+ * @function
+ * @param {object[]} hdrs
+ * @param {object[]} vs
+ * @param {object} [opts]
+ * @returns {string}
+ */
+const transposedBody = (
+  hdrs: HeadersParams[],
+  vs: any[],
+  opts: OptsParams | any = {}
+): string[] =>
+  hdrs.map((hdr: HeadersParams) =>
+    tr(
+      headerCell(hdr),
+      (vs || []).map((v: any) =>
+        td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
+      )
+    )
+  );
 
 /**
  * @function
@@ -71,19 +93,22 @@ const mkTable = (
         style: opts.style,
       },
       !opts.noHeader &&
+        !opts.transpose &&
         thead(tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr)))),
       tbody(
-        (vs || []).map((v: any) =>
-          tr(
-            mkClickHandler(opts, v),
-            hdrs.map((hdr: HeadersParams) =>
-              td(
-                !!hdr.align && { style: "text-align:" + hdr.align },
-                typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+        opts.transpose
+          ? transposedBody(hdrs, vs, opts)
+          : (vs || []).map((v: any) =>
+              tr(
+                mkClickHandler(opts, v),
+                hdrs.map((hdr: HeadersParams) =>
+                  td(
+                    !!hdr.align && { style: "text-align:" + hdr.align },
+                    typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+                  )
+                )
               )
             )
-          )
-        )
       )
     ),
     opts.pagination && pagination(opts.pagination)

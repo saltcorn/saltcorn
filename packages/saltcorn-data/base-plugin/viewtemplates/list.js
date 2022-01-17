@@ -255,7 +255,7 @@ const configuration_workflow = (req) =>
           formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
-            sublabel: req.__("Dispplay one column per line"),
+            sublabel: req.__("Display one column per line"),
             type: "Bool",
           });
           formfields.push({
