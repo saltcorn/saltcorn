@@ -16,6 +16,7 @@ const {
   isAdmin,
   error_catcher,
   scan_for_page_title,
+  setTenant,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
@@ -144,6 +145,7 @@ router.post(
  */
 router.post(
   ["/:viewname", "/:viewname/*"],
+  setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 10;
