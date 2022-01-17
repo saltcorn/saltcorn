@@ -18,7 +18,7 @@
   "source": {
     "include": ["."],
     "includePattern": "\\.(js|ts)$",
-    "excludePattern": "node_modules|plugin_packages|public|dist"
+    "excludePattern": "node_modules|plugin_packages|public|dist|tests"
   },
   "tags": {
     "allowUnknownTags": ["category", "subcategory", "optional"]

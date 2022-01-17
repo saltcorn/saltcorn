@@ -157,7 +157,7 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
  * @param {string} [fnm]
  * @returns {Promise<string>}
  */
-const create_backup = async (fnm: string): Promise<string> => {
+const create_backup = async (fnm?: string): Promise<string> => {
   const tmpDir = await dir({ unsafeCleanup: true });
 
   await create_pack(tmpDir.path);

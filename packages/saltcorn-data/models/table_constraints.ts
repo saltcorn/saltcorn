@@ -24,7 +24,9 @@ class TableConstraint {
    * @param {object} o
    */
   constructor(o: TableConstraintCfg) {
-    this.table_id = +o.table_id;
+    if (!o.table_id && !o.table)
+      throw new Error(`Please specify ether 'table._id' or 'table'.`);
+    if (o.table_id) this.table_id = +o.table_id;
     if (o.table) {
       this.table_id = o.table.id;
     }
@@ -125,7 +127,7 @@ type TypeOption = typeof type_options[number];
 
 namespace TableConstraint {
   export type TableConstraintCfg = {
-    table_id: number | string;
+    table_id?: number | string;
     table?: Table;
     id?: number;
     configuration?: string | any;

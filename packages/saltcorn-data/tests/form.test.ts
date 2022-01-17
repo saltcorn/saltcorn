@@ -1,8 +1,11 @@
-const Table = require("../models/table");
-const Field = require("../models/field");
-const FieldRepeat = require("../models/fieldrepeat");
-const Form = require("../models/form");
-const { renderForm } = require("@saltcorn/markup");
+import Table from "../models/table";
+import Field from "../models/field";
+import FieldRepeat from "../models/fieldrepeat";
+import Form from "../models/form";
+import markup from "@saltcorn/markup";
+const { renderForm } = markup;
+import { assertIsErrorsMsg } from "./assertions";
+import { describe, it, expect } from "@jest/globals";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -105,9 +108,11 @@ describe("Form", () => {
       ],
     });
     const vres = form.validate({ age: 15 });
+    assertIsErrorsMsg(vres);
     expect(vres.errors).toEqual({ age: "Must be 16 or higher" });
 
     const vres1 = form.validate({ age: 17 });
+    assertIsErrorsMsg(vres1);
     expect(vres1.errors).toEqual({ _form: "Should be older than 18" });
   });
 });

@@ -1,5 +1,5 @@
 export type LibraryCfg = {
-  id: number;
+  id?: number;
   name: string;
   icon: string;
   layout: string | any;

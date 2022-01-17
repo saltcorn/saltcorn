@@ -21,7 +21,7 @@ import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import Role from "./role";
 import type {
   PageCfg,
-  PackPage,
+  PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
 
 const { remove_from_menu } = config;
@@ -51,7 +51,7 @@ class Page {
   /**
    * @param {object} o
    */
-  constructor(o: PageCfg | PackPage | Page) {
+  constructor(o: PageCfg | PagePack | Page) {
     this.name = o.name;
     this.title = o.title;
     this.description = o.description;
@@ -124,7 +124,7 @@ class Page {
    * @param f
    * @returns {Promise<Page>}
    */
-  static async create(f: PageCfg | PackPage): Promise<Page> {
+  static async create(f: PageCfg | PagePack): Promise<Page> {
     const page = new Page(f);
     const { id, ...rest } = page;
     const fid = await db.insert("_sc_pages", rest);
@@ -153,7 +153,7 @@ class Page {
    * Is root page for role
    * @returns {Promise<*>}
    */
-  async is_root_page_for_roles(): Promise<Array<Role>> {
+  async is_root_page_for_roles(): Promise<Array<string>> {
     const User = require("./user");
     const { getState } = require("../db/state");
 

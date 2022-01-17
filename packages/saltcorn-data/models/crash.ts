@@ -49,7 +49,7 @@ class Crash {
    * @returns {Promise<Crash[]>}
    */
   static async find(
-    where: Where,
+    where?: Where,
     selopts: SelectOptions = {}
   ): Promise<Array<Crash>> {
     const us = await db.select("_sc_errors", where, selopts);
