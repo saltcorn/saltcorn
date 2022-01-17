@@ -1,7 +1,10 @@
-const Table = require("../models/table");
-const Field = require("../models/field");
-const db = require("../db");
+import Table from "../models/table";
+import Field from "../models/field";
+import db from "../db";
 const { getState } = require("../db/state");
+
+import { assertIsSet } from "./assertions";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -22,6 +25,7 @@ describe("Field", () => {
       required: true,
       attributes: { default: 6 },
     });
+    assertIsSet(fc.id);
     expect(fc.id > 0).toBe(true);
     const f = await Field.findOne({ id: fc.id });
     expect(f.name).toBe("height1");
@@ -41,6 +45,7 @@ describe("Field", () => {
       type: "Integer",
       required: false,
     });
+    assertIsSet(fc.id);
     expect(fc.id > 0).toBe(true);
     const f = await Field.findOne({ id: fc.id });
 
@@ -179,6 +184,7 @@ describe("user presets", () => {
     type: "Key to users",
   });
   const presets = field.presets;
+  assertIsSet(presets);
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
 });
 
@@ -203,7 +209,7 @@ describe("Field.distinct_values", () => {
 
   it("gives int values", async () => {
     const table = await Table.findOne({ name: "fdvtable" });
-
+    assertIsSet(table);
     const fc = await Field.create({
       table,
       name: "height",
@@ -241,6 +247,7 @@ describe("Field.distinct_values", () => {
   });
   it("gives string values", async () => {
     const books = await Table.findOne({ name: "books" });
+    assertIsSet(books);
     await books.insertRow({ author: "Herman Melville", pages: 56 });
     const fc = await Field.findOne({ name: "author" });
     const dvs = await fc.distinct_values();

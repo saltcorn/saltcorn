@@ -56,6 +56,7 @@ class User {
   reset_password_token?: string | null; // 10 chars length
   reset_password_expiry?: Date | null;
   role_id: number;
+  [key: string]: any;
 
   /**
    * User constructor
@@ -435,7 +436,7 @@ class User {
    */
   // TBD I think that method is simular to notEmppty() but more powerfull.
   // TBD use some rules for naming of methods - e.g. this method will have name count_users or countUsers because of methods relay on roles in this class
-  static async count(where: Where): Promise<number> {
+  static async count(where?: Where): Promise<number> {
     return await db.count("users", where || {});
   }
 
@@ -499,6 +500,7 @@ namespace User {
     role_id?: number | string;
     reset_password_token?: string; // 10 chars length
     reset_password_expiry?: Date | number | string;
+    [key: string]: any;
   };
 }
 type UserCfg = User.UserCfg;

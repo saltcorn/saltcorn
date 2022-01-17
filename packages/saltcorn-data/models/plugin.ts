@@ -12,7 +12,7 @@ import { Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
 import type {
   PluginCfg,
-  PackPlugin,
+  PluginPack,
 } from "@saltcorn/types/model-abstracts/abstract_plugin";
 
 const { stringToJSON } = require("../utils");
@@ -25,7 +25,7 @@ class Plugin {
   id?: number;
   location: string;
   name: string;
-  version?: string;
+  version?: string | number;
   documentation_link?: string;
   configuration?: any;
   source: PluginSourceType;
@@ -38,7 +38,7 @@ class Plugin {
    * Plugin constructor
    * @param {object} o
    */
-  constructor(o: PluginCfg | PackPlugin | Plugin) {
+  constructor(o: PluginCfg | PluginPack | Plugin) {
     this.id = o.id ? +o.id : undefined;
     this.name = o.name;
     this.source = o.source;
@@ -67,7 +67,7 @@ class Plugin {
    * @param where - where object
    * @returns {Promise<*>} returns plugins list
    */
-  static async find(where: Where): Promise<Array<Plugin>> {
+  static async find(where?: Where): Promise<Array<Plugin>> {
     return (await db.select("_sc_plugins", where)).map(
       (p: PluginCfg) => new Plugin(p)
     );

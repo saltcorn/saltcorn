@@ -1,18 +1,24 @@
-const db = require("../db/index.js");
-const renderLayout = require("@saltcorn/markup/layout");
-const Table = require("../models/table");
-const TableConstraint = require("../models/table_constraints");
-const Form = require("../models/form");
-const Field = require("../models/field");
-const Crash = require("../models/crash");
-const File = require("../models/file");
-const View = require("../models/view");
-const Page = require("../models/page");
-const { getViews } = require("../models/layout");
+import db from "../db/index";
+import layoutMarkup from "@saltcorn/markup/layout";
+const renderLayout = layoutMarkup;
+import Table from "../models/table";
+import TableConstraint from "../models/table_constraints";
+import Form from "../models/form";
+import Field from "../models/field";
+import Crash from "../models/crash";
+import File from "../models/file";
+import View from "../models/view";
+import Page from "../models/page";
+import layoutModel from "../models/layout";
+const { getViews } = layoutModel;
 
 const { getState } = require("../db/state");
-const { rick_file, mockReqRes } = require("./mocks");
-const Library = require("../models/library.js");
+import mocks from "./mocks";
+const { rick_file, mockReqRes } = mocks;
+import Library from "../models/library";
+import { assertIsSet } from "./assertions";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -23,10 +29,10 @@ afterAll(db.close);
 
 describe("Table create", () => {
   it("should create", async () => {
-    expect.assertions(1);
+    expect.assertions(3);
     const tc = await Table.create("mytable");
     const tf = await Table.findOne({ id: tc.id });
-
+    assertIsSet(tf);
     expect(tf.name).toStrictEqual("mytable");
   });
 });
@@ -121,6 +127,8 @@ describe("Page", () => {
     });
 
     const cs = await Page.findOne({ name: "foo" });
+    assertIsSet(cs);
+    assertIsSet(cs.id);
     expect(cs.name).toBe("foo");
     const layout = await cs.run({}, mockReqRes);
     const html = renderLayout({ layout });
@@ -153,6 +161,8 @@ describe("File", () => {
 
     expect(cs[0].mime_super).toBe("image");
     const f = await File.findOne({ filename: "rick.png" });
+    assertIsSet(f);
+    assertIsSet(f.id);
     expect(f.mime_sub).toBe("png");
     expect(f.mimetype).toBe("image/png");
     await File.update(f.id, { size_kb: 56 });
@@ -177,12 +187,14 @@ describe("Library", () => {
 describe("TableConstraint", () => {
   it("should create", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
     const con = await TableConstraint.create({
       table,
       type: "Unique",
       configuration: { fields: ["author", "pages"] },
     });
     const con1 = await TableConstraint.findOne({ id: con.id });
+    assertIsSet(con1);
     expect(con1.type).toBe("Unique");
     expect(con1.toJson.type).toBe("Unique");
     expect(con1.id).toBe(con.id);

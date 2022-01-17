@@ -1,9 +1,13 @@
-const Table = require("../models/table");
-const Field = require("../models/field");
-const View = require("../models/view");
-const db = require("../db");
-const { plugin_with_routes, mockReqRes } = require("./mocks");
+import Table from "../models/table";
+import View from "../models/view";
+import db from "../db";
+import mocks from "./mocks";
+const { plugin_with_routes, mockReqRes } = mocks;
 const { getState } = require("../db/state");
+import { assertIsSet } from "./assertions";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { GenObj } from "../../saltcorn-types/dist/common_types";
+
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
@@ -15,57 +19,72 @@ beforeAll(async () => {
 describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     expect(v.min_role).toBe(10);
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
   it("should run on page", async () => {
     const v = await View.findOne({ name: "authorlist" });
-    const res = await v.run_possibly_on_page({}, mockReqRes.req,  mockReqRes.res);
+    assertIsSet(v);
+    const res = await v.run_possibly_on_page(
+      {},
+      mockReqRes.req,
+      mockReqRes.res
+    );
     expect(res.length > 0).toBe(true);
   });
   it("should run with string query", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     const res = await v.run({ author: "Mel" }, mockReqRes);
 
     expect(res.length > 0).toBe(true);
   });
   it("should run with integer query as int", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     const res = await v.run({ pages: 967 }, mockReqRes);
 
     expect(res.length > 0).toBe(true);
   });
   it("should run with integer query as string", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     const res = await v.run({ pages: "967" }, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
   it("should render list state form", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     const res = await v.get_state_form({}, mockReqRes.req);
+    assertIsSet(res);
     expect(res.constructor.name).toBe("Form");
     expect(res.fields.length > 0).toBe(true);
   });
   it("should get config flow", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     const res = await v.get_config_flow({ __: (s) => s });
     expect(res.constructor.name).toBe("Workflow");
     expect(res.steps.length > 0).toBe(true);
   });
   it("should runMany with no query", async () => {
     const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
     const res = await v.runMany({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
   it("should runPost", async () => {
     const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
     const rows = await db.select("books", {});
     expect(rows).toContainEqual({ author: "James Joyce", id: 3, pages: 678 });
   });
   it("should find", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
     const link_views = await View.find({
       table_id: table.id,
     });
@@ -79,7 +98,7 @@ describe("View", () => {
   });
   it("should create and delete", async () => {
     const table = await Table.findOne({ name: "books" });
-
+    assertIsSet(table);
     const v = await View.create({
       table_id: table.id,
       name: "anewview",
@@ -100,13 +119,16 @@ describe("View", () => {
       configuration: { columns: [], default_state: { foo: "bar" } },
       min_role: 10,
     });
-    await View.update({name: "anewestview"}, v1.id)
-    await View.delete({name: "anewestview"})
+    assertIsSet(v1.id);
+    await View.update({ name: "anewestview" }, v1.id);
+    await View.delete({ name: "anewestview" });
   });
   it("should clone", async () => {
     const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
     await v.clone();
     const v1 = await View.findOne({ name: "authorlist copy" });
+    assertIsSet(v1);
     expect(!!v1).toBe(true);
     const res = await v1.run({ author: "Mel" }, mockReqRes);
 
@@ -119,14 +141,15 @@ describe("View with routes", () => {
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     var html, json;
     const spy = {
-      send(h) {
+      send(h: any) {
         html = h;
       },
-      json(h) {
+      json(h: GenObj) {
         json = h;
       },
     };
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
 
     const v = await View.create({
       table_id: table.id,
@@ -148,6 +171,7 @@ describe("View with routes", () => {
 describe("nested views", () => {
   it("should create and run", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
 
     const small = await View.create({
       table_id: table.id,
@@ -221,6 +245,7 @@ describe("nested views", () => {
   });
   it("should create and run feed of nested", async () => {
     const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
 
     const large = await View.create({
       table_id: table.id,

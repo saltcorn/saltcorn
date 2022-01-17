@@ -4,10 +4,17 @@
  * @module models/discovery
  * @subcategory models
  */
-const db = require("../db");
-const { getState } = require("../db/state");
-const { available_languages } = require("./config");
-const Table = require("./table");
+
+import { Row } from "@saltcorn/db-common/internal";
+import { PluginType } from "@saltcorn/types/base_types";
+import { Type } from "@saltcorn/types/common_types";
+import { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
+import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
+import db from "../db";
+import state from "../db/state";
+const { getState } = state;
+import Field from "./field";
+import Table from "./table";
 
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
 /**
@@ -17,18 +24,16 @@ const Table = require("./table");
  * @param {string} schema0 - current tenant db schema
  * @returns {Promise<object[]>} all tables that can be imported to Saltcorn from current tenant database schema
  */
-const discoverable_tables = async (schema0) => {
+const discoverable_tables = async (schema0?: string): Promise<Row[]> => {
   const schema = schema0 || db.getTenantSchema();
-  const {
-    rows,
-  } = await db.query(
+  const { rows } = await db.query(
     "select * from information_schema.tables where table_schema=$1 order by table_name",
     [schema]
   );
   const myTables = await Table.find({});
   const myTableNames = myTables.map((t) => t.name);
   const discoverable = rows.filter(
-    (t) =>
+    (t: Row) =>
       !(myTableNames.includes(t.table_name) || t.table_name.startsWith("_sc_"))
   );
   return discoverable;
@@ -38,11 +43,9 @@ const discoverable_tables = async (schema0) => {
  * @param {string} schema0 - current tenant db schema
  * @returns {Promise<object[]>} Return list of views
  */
-const get_existing_views = async (schema0) => {
+const get_existing_views = async (schema0?: string): Promise<Row[]> => {
   const schema = schema0 || db.getTenantSchema();
-  const {
-    rows,
-  } = await db.query(
+  const { rows } = await db.query(
     "select * from information_schema.views where table_schema=$1",
     [schema]
   );
@@ -53,8 +56,8 @@ const get_existing_views = async (schema0) => {
  * @param {string} sql_name - SQL type name
  * @returns {string|void} return Saltcorn type
  */
-const findType = (sql_name) => {
-  const fixed = {
+const findType = (sql_name: string): any => {
+  const fixed: string | undefined = {
     integer: "Integer",
     smallint: "Integer",
     bigint: "Integer",
@@ -62,7 +65,7 @@ const findType = (sql_name) => {
     character: "String", // char - if length is not defined is 1 else length needs to be defined
     "character varying": "String", // varchar  - this type can have length
     //varchar: "String",
-    date: "Date"
+    date: "Date",
     // TBD Implement time type in Saltcorn
     // "time without time zone": "Date",
     // TBD Implement timestamp type in Saltcorn
@@ -72,38 +75,40 @@ const findType = (sql_name) => {
   }[sql_name];
   if (fixed) return fixed;
   const t = Object.entries(getState().types).find(
-    ([k, v]) => v.sql_name === sql_name
+    ([k, v]: [k: string, v: any]) => v.sql_name === sql_name
   );
   if (t) {
     return t[0];
   }
 };
+
 /**
  * Discover tables definitions
  * @param {string[]} tableNames - list of table names
  * @param {string} schema0 - db schema
  * @returns {Promise<object>}
  */
-const discover_tables = async (tableNames, schema0) => {
+const discover_tables = async (
+  tableNames: string[],
+  schema0?: string
+): Promise<{ tables: Array<TablePack> }> => {
   const schema = schema0 || db.getTenantSchema();
-  const packTables = [];
+  const packTables = new Array<TablePack>();
 
   for (const tnm of tableNames) {
-    const {
-      rows,
-    } = await db.query(
+    const { rows } = await db.query(
       "select * from information_schema.columns where table_schema=$1 and table_name=$2",
       [schema, tnm]
     );
     // TBD add logic about column length, scale, etc
     const fields = rows
-      .map((c) => ({
+      .map((c: Row) => ({
         name: c.column_name,
         label: c.column_name,
         type: findType(c.data_type),
         required: c.is_nullable === "NO",
       }))
-      .filter((f) => f.type);
+      .filter((f: FieldCfg) => f.type);
 
     // try to find column name for primary key of table
     const pkq = await db.query(
@@ -116,8 +121,8 @@ const discover_tables = async (tableNames, schema0) => {
       [schema, tnm]
     );
     // set primary_key and unique attributes for column
-    pkq.rows.forEach(({ column_name }) => {
-      const field = fields.find((f) => f.name === column_name);
+    pkq.rows.forEach(({ column_name }: { column_name: string }) => {
+      const field = fields.find((f: FieldCfg) => f.name === column_name);
       field.primary_key = true;
       field.is_unique = true;
     });
@@ -144,8 +149,16 @@ const discover_tables = async (tableNames, schema0) => {
     );
     // construct foreign key relations
     fkq.rows.forEach(
-      ({ column_name, foreign_table_name, foreign_column_name }) => {
-        const field = fields.find((f) => f.name === column_name);
+      ({
+        column_name,
+        foreign_table_name,
+        foreign_column_name,
+      }: {
+        column_name: string;
+        foreign_table_name: string;
+        foreign_column_name: string;
+      }) => {
+        const field = fields.find((f: Field) => f.name === column_name);
         field.type = "Key";
         field.reftable_name = foreign_table_name;
         field.refname = foreign_column_name;
@@ -155,15 +168,26 @@ const discover_tables = async (tableNames, schema0) => {
     packTables.push({ name: tnm, fields, min_role_read: 1, min_role_write: 1 });
   }
   packTables.forEach((t) => {
-    t.fields.forEach((f) => {
-      if (f.type === "Key") {
-        const reftable = packTables.find(
-          (reft) => reft.name === f.reftable_name
-        );
-        const refpk = reftable.fields.find((rtf) => rtf.primary_key);
-        f.reftype = refpk.type;
-      }
-    });
+    t.fields &&
+      t.fields.forEach((f: FieldCfg) => {
+        if (f.type === "Key") {
+          const reftable = packTables.find(
+            (reft) => reft.name === f.reftable_name
+          );
+          if (!reftable)
+            throw new Error(`Unable to find table '${f.reftable_name}'`);
+          if (!reftable.fields)
+            throw new Error(`The table '${f.reftable_name}' has no fields`);
+          const refpk = reftable.fields.find(
+            (rtf: FieldCfg) => rtf.primary_key
+          );
+          if (!refpk)
+            throw new Error(
+              `The table '${f.reftable_name}' has no primary key`
+            );
+          f.reftype = refpk.type;
+        }
+      });
   });
   return { tables: packTables };
 };
@@ -172,22 +196,25 @@ const discover_tables = async (tableNames, schema0) => {
  * @param {object} pack - table definition
  * @returns {Promise<void>}
  */
-const implement_discovery = async (pack) => {
+const implement_discovery = async (pack: {
+  tables: Array<TablePack>;
+}): Promise<void> => {
   for (const table of pack.tables) {
     const { fields, ...tblRow } = table;
     const id = await db.insert("_sc_tables", tblRow);
     table.id = id;
   }
   for (const table of pack.tables) {
-    for (const field of table.fields) {
-      await db.insert("_sc_fields", { ...field, table_id: table.id });
+    if (table.fields) {
+      for (const field of table.fields) {
+        await db.insert("_sc_fields", { ...field, table_id: table.id });
+      }
     }
   }
   // refresh Saltcorn table list (in memory)
   await require("../db/state").getState().refresh_tables();
-
 };
-module.exports = {
+export = {
   discoverable_tables,
   discover_tables,
   implement_discovery,

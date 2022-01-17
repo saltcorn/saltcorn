@@ -110,7 +110,7 @@ const runScheduler = async ({
   port,
   disableScheduler,
 }: {
-  stop_when?: () => false;
+  stop_when?: () => boolean;
   tickSeconds?: number;
   watchReaper?: boolean;
   port?: number;

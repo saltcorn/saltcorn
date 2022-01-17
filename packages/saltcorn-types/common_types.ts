@@ -1,5 +1,6 @@
 export type ErrorMessage = {
   error: string;
+  errors?: string[];
 };
 
 export type SuccessMessage = {
@@ -35,6 +36,8 @@ export type Type = {
   presets?: any;
   contract?: any;
   fieldviews?: any;
+  attributes?: GenObj;
+  validate_attributes?: Function;
 };
 
 export function instanceOfType(object: any): object is Type {

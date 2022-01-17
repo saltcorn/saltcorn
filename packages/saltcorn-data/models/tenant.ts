@@ -4,37 +4,33 @@
  * @module models/tenant
  * @subcategory models
  */
-const db = require("../db");
+import db from "../db";
 const reset = require("../db/reset_schema");
-const { contract, is } = require("contractis");
-const { sqlsanitize } = require("@saltcorn/db-common/internal");
-const { setConfig } = require("./config");
-const fs = require("fs").promises;
+import { sqlsanitize } from "@saltcorn/db-common/internal";
+import config from "./config";
+const { setConfig } = config;
+import { unlink } from "fs/promises";
+import type { Plugin } from "@saltcorn/types/base_types";
+import type { Row } from "@saltcorn/db-common/internal";
 
 /**
  * List all Tenants
  * @function
  * @returns {Promise<string[]>}
  */
-const getAllTenants = contract(
-  is.fun([], is.promise(is.array(is.str))),
-  async () => {
-    const tens = await db.select("_sc_tenants");
-    return tens.map(({ subdomain }) => subdomain);
-  }
-);
+const getAllTenants = async (): Promise<string[]> => {
+  const tens = await db.select("_sc_tenants");
+  return tens.map(({ subdomain }: { subdomain: string }) => subdomain);
+};
 
 /**
  * List all Tenants
  * @function
  * @returns {Promise<string[]>}
  */
-const getAllTenantRows = contract(
-  is.fun([], is.promise(is.array(is.obj({})))),
-  async () => {
-    return await db.select("_sc_tenants");
-  }
-);
+const getAllTenantRows = async (): Promise<Row[]> => {
+  return await db.select("_sc_tenants");
+};
 /**
  * Create Tenant and switch to It:
  * - normalize domain name
@@ -54,13 +50,14 @@ const getAllTenantRows = contract(
  * @param {string} [description]
  * @returns {Promise<void>}
  */
-const createTenant = contract(
-  is.fun(
-    [is.str, is.maybe(is.str), is.maybe(is.str), is.maybe(is.str)],
-    is.promise(is.undefined)
-  ),
+const createTenant =
   // TODO how to set names for arguments
-  async (subdomain, newurl, email, description) => {
+  async (
+    subdomain: string,
+    newurl?: string,
+    email?: string,
+    description?: string
+  ): Promise<void> => {
     // normalize domain name
     const saneDomain = domain_sanitize(subdomain);
 
@@ -84,14 +81,17 @@ const createTenant = contract(
       await reset(true, saneDomain);
       if (newurl) await setConfig("base_url", newurl);
     });
-  }
-);
+  };
 const copy_tenant_template = async ({
   tenant_template,
   target,
   loadAndSaveNewPlugin,
+}: {
+  tenant_template: string;
+  target: string;
+  loadAndSaveNewPlugin: (plugin: Plugin) => void;
 }) => {
-  const { create_backup, restore } = require("./backup");
+  const { create_backup, restore } = await import("./backup");
   // TODO use a hygenic name for backup file
   const backupFile = await db.runWithTenant(tenant_template, create_backup);
   await db.runWithTenant(target, async () => {
@@ -102,7 +102,7 @@ const copy_tenant_template = async ({
     await db.reset_sequence("users");
     //
   });
-  await fs.unlink(backupFile);
+  await unlink(backupFile);
 };
 
 /**
@@ -112,16 +112,13 @@ const copy_tenant_template = async ({
  * @param {string} sub
  * @returns {Promise<void>}
  */
-const deleteTenant = contract(
-  is.fun(is.str, is.promise(is.undefined)),
-  async (sub) => {
-    const subdomain = domain_sanitize(sub);
-    // drop tenant db schema
-    await db.query(`drop schema if exists "${subdomain}" CASCADE `);
-    // delete information about tenant from main site
-    await db.deleteWhere("_sc_tenants", { subdomain });
-  }
-);
+const deleteTenant = async (sub: string): Promise<void> => {
+  const subdomain = domain_sanitize(sub);
+  // drop tenant db schema
+  await db.query(`drop schema if exists "${subdomain}" CASCADE `);
+  // delete information about tenant from main site
+  await db.deleteWhere("_sc_tenants", { subdomain });
+};
 /**
  * Sanitize Domain (Normalize domain name).
  * - force to lower case
@@ -130,15 +127,15 @@ const deleteTenant = contract(
  * @param {string} s
  * @returns {string}
  */
-const domain_sanitize = contract(is.fun(is.str, is.str), (s) =>
-  sqlsanitize(s.replace(".", "").toLowerCase())
-);
+const domain_sanitize = (s: string): string =>
+  sqlsanitize(s.replace(".", "").toLowerCase());
+
 /**
  * Call fuction f for each Tenant
  * @param f - called function
  * @returns {Promise<void>} no result
  */
-const eachTenant = async (f) => {
+const eachTenant = async (f: () => Promise<void>): Promise<void> => {
   await f();
   if (db.is_it_multi_tenant()) {
     const tenantList = await getAllTenants();
@@ -146,7 +143,7 @@ const eachTenant = async (f) => {
   }
 };
 
-module.exports = {
+export = {
   getAllTenants,
   getAllTenantRows,
   createTenant,

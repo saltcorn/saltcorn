@@ -1,10 +1,10 @@
-const {
-  discoverable_tables,
-  discover_tables,
-  implement_discovery,
-} = require("../models/discovery");
+import discovery from "../models/discovery";
+const { discoverable_tables, discover_tables, implement_discovery } = discovery;
 const { getState } = require("../db/state");
-const db = require("../db");
+import db from "../db";
+
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { Row } from "@saltcorn/db-common/internal";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -27,7 +27,7 @@ describe("Table Discovery", () => {
     });
     it("should list tables", async () => {
       const tbls = await discoverable_tables();
-      expect(tbls.map((t) => t.table_name).sort()).toStrictEqual([
+      expect(tbls.map((t: Row) => t.table_name).sort()).toStrictEqual([
         "discdog",
         "discperson",
       ]);

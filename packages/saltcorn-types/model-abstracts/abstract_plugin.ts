@@ -4,7 +4,7 @@ export type PluginCfg = {
   id?: number | string;
   location: string;
   name: string;
-  version?: string;
+  version?: string | number;
   documentation_link?: string;
   configuration?: string | any;
   source: PluginSourceType;
@@ -14,4 +14,4 @@ export type PluginCfg = {
   deploy_private_key?: string;
 };
 
-export type PackPlugin = {} & PluginCfg;
+export type PluginPack = {} & PluginCfg;

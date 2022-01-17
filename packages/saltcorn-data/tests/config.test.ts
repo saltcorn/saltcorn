@@ -1,8 +1,9 @@
-const Table = require("../models/table");
-const Field = require("../models/field");
-const db = require("../db");
+import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
+
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+
 const {
   getConfig,
   getAllConfig,
@@ -12,6 +13,7 @@ const {
   check_email_mask,
   get_latest_npm_version,
 } = require("../models/config");
+
 afterAll(db.close);
 
 beforeAll(async () => {

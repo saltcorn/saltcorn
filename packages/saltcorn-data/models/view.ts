@@ -30,7 +30,7 @@ import type {
 import type Table from "./table";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
-import { instanceOfType } from "@saltcorn/types/common_types";
+import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
@@ -437,7 +437,7 @@ class View {
    * @returns {Promise<object>}
    */
   async runMany(
-    query: string,
+    query: GenObj,
     extraArgs: RunExtra
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
@@ -494,8 +494,8 @@ class View {
    * @returns {Promise<object>}
    */
   async runPost(
-    query: string,
-    body: string,
+    query: GenObj,
+    body: GenObj,
     extraArgs: RunExtra
   ): Promise<any> {
     this.check_viewtemplate();

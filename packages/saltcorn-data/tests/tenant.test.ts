@@ -1,4 +1,4 @@
-const db = require("../db");
+import db from "../db";
 const {
   getState,
   init_multi_tenant,
@@ -6,14 +6,11 @@ const {
   restart_tenant,
 } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-const {
-  createTenant,
-  deleteTenant,
-  getAllTenants,
-} = require("../models/tenant");
-const {
-  getConfig,
-} = require("../models/config");
+import tenant from "../models/tenant";
+const { createTenant, deleteTenant, getAllTenants } = tenant;
+import config from "../models/config";
+const { getConfig } = config;
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 afterAll(db.close);
 
@@ -25,14 +22,13 @@ describe("Tenant", () => {
   if (!db.isSQLite) {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
-      getState().setConfig("base_url", "http://example.com/")
+      getState().setConfig("base_url", "http://example.com/");
       await create_tenant("test10", () => {}, "http://test10.example.com/");
       db.runWithTenant("test10", async () => {
         const ten = db.getTenantSchema();
         expect(ten).toBe("test10");
-        const base =  await getConfig("base_url")
+        const base = await getConfig("base_url");
         expect(base).toBe("http://test10.example.com/");
-
       });
       const tens = await getAllTenants();
       expect(tens).toContain("test10");

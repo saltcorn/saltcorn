@@ -1,15 +1,20 @@
-const Table = require("../models/table");
-const Field = require("../models/field");
-const db = require("../db");
+import Table from "../models/table";
+import Field from "../models/field";
+import db from "../db";
 const { getState } = require("../db/state");
-const { plugin_with_routes, sleep } = require("./mocks");
+import mocks from "./mocks";
+const { plugin_with_routes, sleep } = mocks;
+import expression from "../models/expression";
 const {
   get_expression_function,
   transform_for_async,
   expressionValidator,
   jsexprToWhere,
-} = require("../models/expression");
-const { mkWhere } = require("@saltcorn/db-common/internal");
+} = expression;
+import { mkWhere } from "@saltcorn/db-common/internal";
+
+import { assertIsSet } from "./assertions";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -60,7 +65,7 @@ describe("calculated", () => {
       stored: true,
     });
     const fields = await table.getFields();
-    const fzf = get_expression_function(fz.expression, fields);
+    const fzf = get_expression_function(fz.expression!, fields);
     expect(fzf({ x: 4, y: 2 })).toBe(6);
     await table.insertRow({ x: 5, y: 8 });
     const [row] = await table.getRows();
@@ -71,15 +76,18 @@ describe("calculated", () => {
     expect(row1.z).toBe(13);
     expect(row1.w).toBe(3);
     const row0 = await table.getRow({});
+    assertIsSet(row0);
     expect(row0.z).toBe(13);
     expect(row0.w).toBe(3);
     await table.updateRow({ y: 9 }, row.id);
     const row2 = await table.getRow({});
+    assertIsSet(row2);
     expect(row2.z).toBe(14);
     expect(row2.w).toBe(4);
     await table.update({ versioned: true });
     const newid = await table.insertRow({ x: 2, y: 4 });
     const row3 = await table.getRow({ id: newid });
+    assertIsSet(row3);
     expect(row3.z).toBe(6);
     expect(row3.w).toBe(2);
     await fz.delete();
@@ -101,11 +109,12 @@ describe("calculated", () => {
       expression: "process.exit(0)",
     });
     const fields = await table.getFields();
+    assertIsSet(fz.expression);
     const fzf = get_expression_function(fz.expression, fields);
     let error;
     try {
       fzf({ x: 4 });
-    } catch (e) {
+    } catch (e: any) {
       error = e;
     }
     expect(error.constructor.name).toBe("ReferenceError");
@@ -137,16 +146,21 @@ describe("calculated", () => {
       stored: true,
     });
     const row0 = await table.getRow({ id: id1 });
+    assertIsSet(row0);
     expect(row0.x).toBe(6);
     expect([null, 15]).toContain(row0.z);
     const row201 = await table.getRow({ id: id201 });
+    assertIsSet(row201);
+
     expect(row201.x).toBe(7);
     expect([null, 9]).toContain(row201.z);
     await sleep(3000);
     const row1 = await table.getRow({ id: id1 });
+    assertIsSet(row1);
     expect(row1.x).toBe(6);
     expect(row1.z).toBe(15);
     const rowlast = await table.getRow({ id: id201 });
+    assertIsSet(rowlast);
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
   });
@@ -174,6 +188,7 @@ describe("calculated", () => {
     });
     await table.insertRow({ x: 13 });
     const row0 = await table.getRow({});
+    assertIsSet(row0);
     expect(row0.z).toBe(16);
     expect(row0.w).toBe(18);
   });
@@ -204,6 +219,7 @@ describe("calculated", () => {
 
     const id = await table.insertRow({ x: 14 });
     const row0 = await table.getRow({});
+    assertIsSet(row0);
     expect(row0.z).toBe(17);
     await table.updateRow({ x: 15 }, id);
     const rows = await table.getRows({});

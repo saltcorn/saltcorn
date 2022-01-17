@@ -1,16 +1,22 @@
-const db = require("../db");
+import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-const { create_backup, restore } = require("../models/backup");
+import backup from "../models/backup";
+const { create_backup, restore } = backup;
 const reset = require("../db/reset_schema");
-const fs = require("fs").promises;
-const Table = require("../models/table");
-const View = require("../models/view");
-const User = require("../models/user");
-const { setConfig, getConfig } = require("../models/config");
-const Trigger = require("../models/trigger");
-const Library = require("../models/library");
-const Role = require("../models/role");
+import { unlink } from "fs/promises";
+import Table from "../models/table";
+import View from "../models/view";
+import User from "../models/user";
+import config from "../models/config";
+const { setConfig, getConfig } = config;
+import Trigger from "../models/trigger";
+import Library from "../models/library";
+import Role from "../models/role";
+
+import { assertIsSet, assertsObjectIsUser } from "./assertions";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+
 afterAll(db.close);
 
 beforeAll(async () => {
@@ -46,6 +52,7 @@ describe("Backup and restore", () => {
 
     const fnm = await create_backup();
     const t1 = await Table.findOne({ name: "books" });
+    assertIsSet(t1);
     const t1c = await t1.countRows();
     const v1 = await View.find();
     expect(!!t1).toBe(true);
@@ -56,6 +63,7 @@ describe("Backup and restore", () => {
       password: "AhGGr6rhu45",
       role_id: 1,
     });
+    assertsObjectIsUser(admu);
     expect(typeof admu.password).toBe("string");
 
     const t2 = await Table.findOne({ name: "books" });
@@ -63,11 +71,13 @@ describe("Backup and restore", () => {
     const sn0 = await getConfig("site_name");
     expect(sn0).toBe("Saltcorn");
     const restore_res = await restore(fnm, (p) => {});
-    await fs.unlink(fnm);
+    await unlink(fnm);
     expect(restore_res).toBe(undefined);
     const t3 = await Table.findOne({ name: "books" });
+    assertIsSet(t3);
     expect(!!t3).toBe(true);
     const t5 = await Table.findOne({ name: "myblanktable" });
+    assertIsSet(t5);
     expect(!!t5).toBe(true);
     expect(t5.min_role_read).toBe(6);
     const t3c = await t3.countRows();
@@ -79,6 +89,7 @@ describe("Backup and restore", () => {
     await t3.insertRow({ author: "Marcus Rediker", pages: 224 });
     const staff = await User.findOne({ email: "staff@foo.com" });
     expect(!!staff).toBe(true);
+    assertsObjectIsUser(staff);
     expect(typeof staff.password).toBe("string");
     const trig = await Trigger.findOne({ name: "footrig" });
     expect(!!trig).toBe(true);

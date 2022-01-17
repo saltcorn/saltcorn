@@ -203,7 +203,7 @@ const renderTabs = (
 // declaration merging
 namespace LayoutExports {
   export type RenderOpts = {
-    blockDispatch: any;
+    blockDispatch?: any;
     layout: any;
     role?: any;
     alerts?: any;
