@@ -1,7 +1,7 @@
 import type { AbstractForm } from "./model-abstracts/abstract_form";
 import type {
   AbstractTable,
-  PackTable,
+  TablePack,
 } from "./model-abstracts/abstract_table";
 import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
 import type { TriggerPack } from "./model-abstracts/abstract_trigger";
@@ -10,9 +10,9 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { Type, ReqRes } from "./common_types";
 import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
-import type { PackView } from "./model-abstracts/abstract_view";
-import type { PackPage } from "./model-abstracts/abstract_page";
-import type { PackPlugin } from "./model-abstracts/abstract_plugin";
+import type { ViewPack } from "./model-abstracts/abstract_view";
+import type { PagePack } from "./model-abstracts/abstract_page";
+import type { PluginPack } from "./model-abstracts/abstract_plugin";
 
 type FieldLikeBasics = {
   name: string;
@@ -274,10 +274,10 @@ export type Plugin = {
 };
 
 export type Pack = {
-  tables: Array<PackTable>;
-  views: Array<PackView>;
-  pages: Array<PackPage>;
-  plugins: Array<PackPlugin>;
+  tables: Array<TablePack>;
+  views: Array<ViewPack>;
+  pages: Array<PagePack>;
+  plugins: Array<PluginPack>;
   roles: Array<RolePack>;
   library: Array<LibraryPack>;
   triggers: Array<TriggerPack>;

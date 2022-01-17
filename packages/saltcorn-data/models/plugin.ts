@@ -12,7 +12,7 @@ import { Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
 import type {
   PluginCfg,
-  PackPlugin,
+  PluginPack,
 } from "@saltcorn/types/model-abstracts/abstract_plugin";
 
 const { stringToJSON } = require("../utils");
@@ -38,7 +38,7 @@ class Plugin {
    * Plugin constructor
    * @param {object} o
    */
-  constructor(o: PluginCfg | PackPlugin | Plugin) {
+  constructor(o: PluginCfg | PluginPack | Plugin) {
     this.id = o.id ? +o.id : undefined;
     this.name = o.name;
     this.source = o.source;

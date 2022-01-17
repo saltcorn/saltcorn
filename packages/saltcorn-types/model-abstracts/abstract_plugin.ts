@@ -14,4 +14,4 @@ export type PluginCfg = {
   deploy_private_key?: string;
 };
 
-export type PackPlugin = {} & PluginCfg;
+export type PluginPack = {} & PluginCfg;

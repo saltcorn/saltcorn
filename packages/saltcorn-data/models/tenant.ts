@@ -91,7 +91,7 @@ const copy_tenant_template = async ({
   target: string;
   loadAndSaveNewPlugin: (plugin: Plugin) => void;
 }) => {
-  const { create_backup, restore } = require("./backup");
+  const { create_backup, restore } = await import("./backup");
   // TODO use a hygenic name for backup file
   const backupFile = await db.runWithTenant(tenant_template, create_backup);
   await db.runWithTenant(target, async () => {

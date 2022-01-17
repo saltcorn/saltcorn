@@ -24,7 +24,7 @@ import Field from "./field";
 import type {
   AbstractTable,
   TableCfg,
-  PackTable,
+  TablePack,
 } from "@saltcorn/types/model-abstracts/abstract_table";
 
 import type { ResultMessage } from "@saltcorn/types/common_types";
@@ -266,7 +266,7 @@ class Table implements AbstractTable {
    */
   static async create(
     name: string,
-    options: SelectOptions | PackTable = {}
+    options: SelectOptions | TablePack = {}
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database

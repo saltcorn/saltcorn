@@ -16,7 +16,7 @@ export type ViewCfg = {
   slug?: any;
 };
 
-export type PackView = {
+export type ViewPack = {
   table?: string | null;
   on_menu?: boolean;
   menu_label?: string;

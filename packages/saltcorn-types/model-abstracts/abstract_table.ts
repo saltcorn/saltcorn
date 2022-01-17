@@ -20,7 +20,7 @@ export type TableCfg = {
   fields: FieldCfg[];
 };
 
-export type PackTable = {
+export type TablePack = {
   triggers?: TriggerCfg[];
   constraints?: Array<any>;
   ownership_field_name?: string | null;

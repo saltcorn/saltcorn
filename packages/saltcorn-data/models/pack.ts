@@ -17,12 +17,12 @@ import Role from "./role";
 import Library from "./library";
 import config from "./config";
 import type { Pack } from "@saltcorn/types/base_types";
-import type { PackPage } from "@saltcorn/types/model-abstracts/abstract_page";
+import type { PagePack } from "@saltcorn/types/model-abstracts/abstract_page";
 const { save_menu_items } = config;
 import type Plugin from "./plugin";
-import type { PackView } from "@saltcorn/types/model-abstracts/abstract_view";
-import type { PackTable } from "@saltcorn/types/model-abstracts/abstract_table";
-import type { PackPlugin } from "@saltcorn/types/model-abstracts/abstract_plugin";
+import type { ViewPack } from "@saltcorn/types/model-abstracts/abstract_view";
+import type { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
+import type { PluginPack } from "@saltcorn/types/model-abstracts/abstract_plugin";
 import type { LibraryPack } from "@saltcorn/types/model-abstracts/abstract_library";
 import type { TriggerPack } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import type { RolePack } from "@saltcorn/types/model-abstracts/abstract_role";
@@ -32,7 +32,7 @@ import type { RolePack } from "@saltcorn/types/model-abstracts/abstract_role";
  * @param {string} name
  * @returns {Promise<object>}
  */
-const table_pack = async (name: string): Promise<PackTable> => {
+const table_pack = async (name: string): Promise<TablePack> => {
   const table = await Table.findOne({ name });
   if (!table) throw new Error(`Unable to find table '${name}'`);
 
@@ -63,7 +63,7 @@ const table_pack = async (name: string): Promise<PackTable> => {
  * @param {string} name
  * @returns {Promise<object>}
  */
-const view_pack = async (name: string): Promise<PackView> => {
+const view_pack = async (name: string): Promise<ViewPack> => {
   const view = await View.findOne({ name });
   if (!view) throw new Error(`Unable to find view '${name}'`);
   const table = await Table.findOne({ id: view.table_id });
@@ -85,7 +85,7 @@ const view_pack = async (name: string): Promise<PackView> => {
  * @param {string} name
  * @returns {Promise<object>}
  */
-const plugin_pack = async (name: string): Promise<PackPlugin> => {
+const plugin_pack = async (name: string): Promise<PluginPack> => {
   const Plugin = (await import("./plugin")).default;
   const plugin = await Plugin.findOne({ name });
   if (!plugin) throw new Error(`Unable to find plugin '${name}'`);
@@ -103,7 +103,7 @@ const plugin_pack = async (name: string): Promise<PackPlugin> => {
  * @param {string} name
  * @returns {Promise<object>}
  */
-const page_pack = async (name: string): Promise<PackPage> => {
+const page_pack = async (name: string): Promise<PagePack> => {
   const page = await Page.findOne({ name });
   const root_page_for_roles = await page.is_root_page_for_roles();
   return {
@@ -349,7 +349,7 @@ const install_pack = async (
 
   for (const pageFullSpec of pack.pages || []) {
     const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
-    await Page.create(pageSpec as PackPage);
+    await Page.create(pageSpec as PagePack);
     for (const role of root_page_for_roles || []) {
       const current_root = getState().getConfigCopy(role + "_home", "");
       if (!current_root || current_root === "")

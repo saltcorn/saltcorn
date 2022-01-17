@@ -11,7 +11,7 @@ export type PageCfg = {
   fixed_states?: string | any;
 };
 
-export type PackPage = {
+export type PagePack = {
   menu_label?: string;
   root_page_for_roles?: string[];
 } & PageCfg;

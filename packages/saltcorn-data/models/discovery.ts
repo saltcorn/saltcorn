@@ -8,7 +8,7 @@
 import { Row } from "@saltcorn/db-common/internal";
 import { PluginType } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
-import { PackTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
 import db from "../db";
 import state from "../db/state";
@@ -91,9 +91,9 @@ const findType = (sql_name: string): any => {
 const discover_tables = async (
   tableNames: string[],
   schema0?: string
-): Promise<{ tables: Array<PackTable> }> => {
+): Promise<{ tables: Array<TablePack> }> => {
   const schema = schema0 || db.getTenantSchema();
-  const packTables = new Array<PackTable>();
+  const packTables = new Array<TablePack>();
 
   for (const tnm of tableNames) {
     const { rows } = await db.query(
@@ -197,7 +197,7 @@ const discover_tables = async (
  * @returns {Promise<void>}
  */
 const implement_discovery = async (pack: {
-  tables: Array<PackTable>;
+  tables: Array<TablePack>;
 }): Promise<void> => {
   for (const table of pack.tables) {
     const { fields, ...tblRow } = table;
