@@ -352,7 +352,7 @@ router.get(
  */
 router.post(
   "/create-from-csv",
-  setTenant,
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
@@ -1368,6 +1368,7 @@ router.post(
  */
 router.post(
   "/upload_to_table/:name",
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
