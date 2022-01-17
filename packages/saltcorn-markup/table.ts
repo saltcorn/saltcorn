@@ -60,7 +60,7 @@ const transposedBody = (
 ): string[] =>
   hdrs.map((hdr: HeadersParams) =>
     tr(
-      headerCell(hdr),
+      th(hdr.label),
       (vs || []).map((v: any) =>
         td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
       )

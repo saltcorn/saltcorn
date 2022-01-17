@@ -859,5 +859,7 @@
 	"Two-factor authentication with Time-based One-Time Password disabled": "Two-factor authentication with Time-based One-Time Password disabled",
 	"Two-factor authentication is disabled": "Two-factor authentication is disabled",
 	"Auto save": "Auto save",
-	"Save any changes immediately": "Save any changes immediately"
+	"Save any changes immediately": "Save any changes immediately",
+	"Transpose": "Transpose",
+	"Display one column per line": "Display one column per line"
 }
