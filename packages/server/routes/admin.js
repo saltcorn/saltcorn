@@ -5,7 +5,12 @@
  */
 const Router = require("express-promise-router");
 
-const { isAdmin, error_catcher, getGitRevision } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  getGitRevision,
+  setTenant,
+} = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
@@ -518,6 +523,7 @@ router.post(
  */
 router.post(
   "/restore",
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
