@@ -20,7 +20,7 @@ const {
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
-const { jsexprToSQL } = require("./models/expression");
+const { jsexprToWhere } = require("./models/expression");
 /**
  *
  * @param {string} url
@@ -876,10 +876,11 @@ const picked_fields_to_query = contract(
             fld +
             db.sqlsanitize(column.aggwhere || "")
           ).toLowerCase();
+
           aggregations[targetNm] = {
             table,
             ref: fld,
-            where: jsexprToSQL(column.aggwhere),
+            where: column.aggwhere ? jsexprToWhere(column.aggwhere) : undefined,
             field,
             aggregate: column.stat,
           };

@@ -27,15 +27,6 @@ function expressionValidator(s: string): true | string {
   }
 }
 
-/**
- * @param {string} expression
- * @returns {string}
- */
-function jsexprToSQL(expression: string): string {
-  if (!expression) return expression;
-  return expression.replace(/===/g, "=").replace(/==/g, "=").replace(/"/g, "'");
-}
-
 type StringToFunction = Record<string, Function>;
 type ExtendedNode = {
   left?: ExtendedNode;
@@ -340,6 +331,5 @@ export = {
   recalculate_for_stored,
   transform_for_async,
   apply_calculated_fields_stored,
-  jsexprToSQL,
   jsexprToWhere,
 };
