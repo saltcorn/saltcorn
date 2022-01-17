@@ -451,7 +451,7 @@ const run = async (
   if (default_state && default_state._omit_header) {
     page_opts.noHeader = true;
   }
-  page_opts.transpose = default_state.transpose;
+  page_opts.transpose = (default_state || {}).transpose;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
