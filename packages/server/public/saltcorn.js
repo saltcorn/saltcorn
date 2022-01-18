@@ -604,7 +604,33 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
-
+function make_unique_field(id, table_id, field_name, value) {
+  if (!value) return;
+  $.ajax(
+    `/api/${table_id}?approximate=true&${encodeURIComponent(
+      field_name
+    )}=${encodeURIComponent(value)}&fields=${encodeURIComponent(field_name)}`,
+    {
+      type: "GET",
+      success: function (res) {
+        if (res.success) {
+          const vals = res.success
+            .map((o) => o[field_name])
+            .filter((s) => s.startsWith(value));
+          if (vals.includes(value)) {
+            for (let i = 1; i < vals.length + 1; i++) {
+              const newname = `${value} ${i}`;
+              if (!vals.includes(newname)) {
+                $("#" + id).val(newname);
+                return;
+              }
+            }
+          }
+        }
+      },
+    }
+  );
+}
 function test_formula(tablename, stored) {
   var formula = $("input[name=expression]").val();
   ajax_post(`/field/test-formula`, {
