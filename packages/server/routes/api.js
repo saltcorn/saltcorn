@@ -122,7 +122,7 @@ router.get(
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
-    const { fields, versioncount, ...req_query } = req.query;
+    const { fields, versioncount, _approximate, ...req_query } = req.query;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
       res.status(404).json({ error: req.__("Not found") });
@@ -152,7 +152,7 @@ router.get(
             const tbl_fields = await table.getFields();
             const qstate = await stateFieldsToWhere({
               fields: tbl_fields,
-              approximate: false,
+              approximate: _approximate || false,
               state: req.query,
             });
             rows = await table.getRows(qstate);
