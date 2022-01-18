@@ -372,25 +372,7 @@ const string = {
     },
     make_unique: {
       isEdit: true,
-      configFields: (field) => [
-        ...(field.attributes.options &&
-        field.attributes.options.length > 0 &&
-        !field.required
-          ? [
-              {
-                name: "neutral_label",
-                label: "Neutral label",
-                type: "String",
-              },
-              {
-                name: "force_required",
-                label: "Required",
-                sublabel:
-                  "User must select a value, even if the table field is not required",
-                type: "Bool",
-              },
-            ]
-          : []),
+      configFields: [
         {
           name: "placeholder",
           label: "Placeholder",

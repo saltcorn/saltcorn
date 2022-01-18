@@ -605,6 +605,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
   return false;
 }
 function make_unique_field(id, table_id, field_name, value) {
+  if (!value) return;
   $.ajax(
     `/api/${table_id}?approximate=true&${encodeURIComponent(
       field_name
