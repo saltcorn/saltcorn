@@ -22,6 +22,8 @@ const {
   span,
   img,
   text_attr,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
@@ -367,6 +369,59 @@ const string = {
               id: `input${text_attr(nm)}`,
               ...(isdef(v) && { value: text_attr(v) }),
             }),
+    },
+    make_unique: {
+      isEdit: true,
+      configFields: (field) => [
+        ...(field.attributes.options &&
+        field.attributes.options.length > 0 &&
+        !field.required
+          ? [
+              {
+                name: "neutral_label",
+                label: "Neutral label",
+                type: "String",
+              },
+              {
+                name: "force_required",
+                label: "Required",
+                sublabel:
+                  "User must select a value, even if the table field is not required",
+                type: "Bool",
+              },
+            ]
+          : []),
+        {
+          name: "placeholder",
+          label: "Placeholder",
+          type: "String",
+        },
+        {
+          name: "input_type",
+          label: "Input type",
+          input_type: "select",
+          options: ["text", "email", "url", "tel", "password"],
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        input({
+          type: attrs.input_type || "text",
+          disabled: attrs.disabled,
+          class: ["form-control", cls],
+          placeholder: attrs.placeholder,
+          onChange: attrs.onChange,
+          "data-fieldname": text_attr(field.name),
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && { value: text_attr(v) }),
+        }) +
+        script(
+          domReady(
+            `make_unique_field('input${text_attr(nm)}', ${field.table_id}, '${
+              field.name
+            }', ${JSON.stringify(v)})`
+          )
+        ),
     },
     /**
      * @namespace
