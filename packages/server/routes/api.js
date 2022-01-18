@@ -28,6 +28,7 @@ const passport = require("passport");
 const {
   stateFieldsToWhere,
   readState,
+  strictParseInt,
 } = require("@saltcorn/data/plugin-helper");
 
 /**
@@ -121,9 +122,13 @@ router.get(
   "/:tableName/",
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
-    const { tableName } = req.params;
-    const { fields, versioncount, _approximate, ...req_query } = req.query;
-    const table = await Table.findOne({ name: tableName });
+    let { tableName } = req.params;
+    const { fields, versioncount, approximate, ...req_query } = req.query;
+    const table = await Table.findOne(
+      strictParseInt(tableName)
+        ? { id: strictParseInt(tableName) }
+        : { name: tableName }
+    );
     if (!table) {
       res.status(404).json({ error: req.__("Not found") });
       return;
@@ -152,8 +157,8 @@ router.get(
             const tbl_fields = await table.getFields();
             const qstate = await stateFieldsToWhere({
               fields: tbl_fields,
-              approximate: _approximate || false,
-              state: req.query,
+              approximate: !!approximate,
+              state: req_query,
             });
             rows = await table.getRows(qstate);
           } else {
