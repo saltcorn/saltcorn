@@ -60,7 +60,7 @@
     "latest-version": "^5.1.0",
     "moment": "^2.27.0",
     "moment-timezone": "^0.5.33",
-    "node-fetch": "2.6.2",
+    "node-fetch": "2.6.7",
     "nodemailer": "^6.4.17",
     "pluralize": "^8.0.0",
     "tmp-promise": "^3.0.2",
