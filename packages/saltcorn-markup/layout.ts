@@ -72,20 +72,22 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment: any, inner: string): string => {
-  let style = segment.font ? { fontFamily: segment.font } : {};
+  let style: any = segment.font ? { fontFamily: segment.font } : {};
+  if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
+    style.display = "inline-block";
   switch (segment.textStyle) {
     case "h1":
-      return h1(style, inner);
+      return h1({ style }, inner);
     case "h2":
-      return h2(style, inner);
+      return h2({ style }, inner);
     case "h3":
-      return h3(style, inner);
+      return h3({ style }, inner);
     case "h4":
-      return h4(style, inner);
+      return h4({ style }, inner);
     case "h5":
-      return h5(style, inner);
+      return h5({ style }, inner);
     case "h6":
-      return h6(style, inner);
+      return h6({ style }, inner);
     default:
       return segment.block
         ? div({ class: segment.textStyle || "", style }, inner)
