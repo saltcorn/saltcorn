@@ -1189,3 +1189,6 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
     children
   );
 };
+
+export const isBlock = (block, inline, textStyle) =>
+  !textStyle || !textStyle.startsWith("h") ? block : !inline;

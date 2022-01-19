@@ -14,6 +14,7 @@ import {
   ErrorBoundary,
   TextStyleRow,
   DynamicFontAwesomeIcon,
+  isBlock,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -60,8 +61,6 @@ function escape_tags(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-const isBlock = (block, inline, textStyle) =>
-  !textStyle || !textStyle.startsWith("h") ? block : !inline;
 export /**
  * @param {object} props
  * @param {string} props.text

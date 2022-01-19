@@ -10,10 +10,11 @@ import optionsCtx from "../context";
 import previewCtx from "../preview_context";
 import {
   blockProps,
-  BlockSetting,
+  BlockOrInlineSetting,
   TextStyleRow,
   ConfigForm,
   setInitialConfig,
+  isBlock,
   fetchFieldPreview,
 } from "./utils";
 
@@ -27,9 +28,16 @@ export /**
  * @returns {div}
  * @category saltcorn-builder
  * @subcategory components
- * @namespace 
+ * @namespace
  */
-const Field = ({ name, fieldview, block, textStyle, configuration }) => {
+const Field = ({
+  name,
+  fieldview,
+  block,
+  inline,
+  textStyle,
+  configuration,
+}) => {
   const {
     selected,
     node_id,
@@ -52,7 +60,7 @@ const Field = ({ name, fieldview, block, textStyle, configuration }) => {
   return (
     <div
       className={`${textStyle} ${selected ? "selected-node" : ""} ${
-        block ? "" : "d-inline-block"
+        isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
       }`}
       ref={(dom) => connect(drag(dom))}
     >
@@ -80,6 +88,7 @@ const FieldSettings = () => {
     name,
     fieldview,
     block,
+    inline,
     configuration,
     node_id,
     textStyle,
@@ -87,6 +96,7 @@ const FieldSettings = () => {
     name: node.data.props.name,
     fieldview: node.data.props.fieldview,
     block: node.data.props.block,
+    inline: node.data.props.inline,
     textStyle: node.data.props.textStyle,
     configuration: node.data.props.configuration,
     node_id: node.id,
@@ -177,7 +187,12 @@ const FieldSettings = () => {
           <tr>
             <td></td>
             <td>
-              <BlockSetting block={block} setProp={setProp} />
+              <BlockOrInlineSetting
+                block={block}
+                inline={inline}
+                textStyle={textStyle}
+                setProp={setProp}
+              />
             </td>
           </tr>
           {!(handlesTextStyle && handlesTextStyle.includes(fieldview)) && (
@@ -197,8 +212,8 @@ const FieldSettings = () => {
   );
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Field.craft = {
   displayName: "Field",
@@ -211,6 +226,7 @@ Field.craft = {
       "fieldview",
       "textStyle",
       "block",
+      "inline",
       { name: "configuration", default: {} },
     ],
   },
