@@ -125,6 +125,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           text={segment.contents}
           isFormula={segment.isFormula || {}}
           block={segment.block || false}
+          inline={segment.inline || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
           icon={segment.icon}
@@ -387,6 +388,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         type: "blank",
         contents: node.props.text,
         block: node.props.block,
+        inline: node.props.inline,
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,

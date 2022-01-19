@@ -60,6 +60,8 @@ function escape_tags(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+const isBlock = (block, inline, textStyle) =>
+  !textStyle || !textStyle.startsWith("h") ? block : !inline;
 export /**
  * @param {object} props
  * @param {string} props.text
@@ -73,7 +75,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
+const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -89,10 +91,11 @@ const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
   }, [selected]);
   return (
     <div
-      className={`${!block ? "d-inline-block" : ""} ${textStyle} is-text ${
-        isFormula.text ? "text-monospace" : ""
-      } ${selected ? "selected-node" : ""}`}
-      {...blockProps(block)}
+      className={`${
+        isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
+      } ${textStyle} is-text ${isFormula.text ? "text-monospace" : ""} ${
+        selected ? "selected-node" : ""
+      }`}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
       style={font ? { fontFamily: font } : {}}
