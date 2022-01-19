@@ -55,6 +55,27 @@ const BlockSetting = ({ block, setProp }) => (
   </div>
 );
 
+export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
+  !textStyle || !textStyle.startsWith("h") ? (
+    <BlockSetting block={block} setProp={setProp} />
+  ) : (
+    <div className="form-check">
+      <input
+        className="form-check-input"
+        name="inline"
+        type="checkbox"
+        checked={inline}
+        onChange={(e) => {
+          if (e.target) {
+            const target_value = e.target.checked;
+            setProp((prop) => (prop.inline = target_value));
+          }
+        }}
+      />
+      <label className="form-check-label">Inline display</label>
+    </div>
+  );
+
 export /**
  * @param {object} props
  * @param {function} props.setProp

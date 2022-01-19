@@ -8,7 +8,7 @@ import React, { useState, useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import {
   blockProps,
-  BlockSetting,
+  BlockOrInlineSetting,
   TextStyleSetting,
   OrFormula,
   ErrorBoundary,
@@ -53,7 +53,7 @@ const ckConfig = {
 };
 
 /**
- * @param {string} str 
+ * @param {string} str
  * @returns {string}
  */
 function escape_tags(str) {
@@ -133,11 +133,12 @@ export /**
  * @namespace
  * @category saltcorn-builder
  * @subcategory components
-*/
+ */
 const TextSettings = () => {
   const node = useNode((node) => ({
     text: node.data.props.text,
     block: node.data.props.block,
+    inline: node.data.props.inline,
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
     labelFor: node.data.props.labelFor,
@@ -148,6 +149,7 @@ const TextSettings = () => {
     actions: { setProp },
     text,
     block,
+    inline,
     textStyle,
     isFormula,
     labelFor,
@@ -246,7 +248,12 @@ const TextSettings = () => {
           </tr>
         </tbody>
       </table>
-      <BlockSetting block={block} setProp={setProp} />
+      <BlockOrInlineSetting
+        block={block}
+        inline={inline}
+        textStyle={textStyle}
+        setProp={setProp}
+      />
     </div>
   );
 };
@@ -258,6 +265,7 @@ Text.craft = {
   defaultProps: {
     text: "Click here",
     block: false,
+    inline: false,
     isFormula: {},
     textStyle: "",
     labelFor: "",
