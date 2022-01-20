@@ -506,6 +506,7 @@ function ajax_modal(url, opts = {}) {
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
       $("#scmodal").modal();
+      initialize_page();
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
         (opts.onClose || function () {})(res);
