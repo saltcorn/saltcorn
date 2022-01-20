@@ -8,12 +8,13 @@ import React, { useState, useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import {
   blockProps,
-  BlockSetting,
+  BlockOrInlineSetting,
   TextStyleSetting,
   OrFormula,
   ErrorBoundary,
   TextStyleRow,
   DynamicFontAwesomeIcon,
+  isBlock,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -53,7 +54,7 @@ const ckConfig = {
 };
 
 /**
- * @param {string} str 
+ * @param {string} str
  * @returns {string}
  */
 function escape_tags(str) {
@@ -73,7 +74,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
+const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -89,10 +90,11 @@ const Text = ({ text, block, isFormula, textStyle, icon, font }) => {
   }, [selected]);
   return (
     <div
-      className={`${!block ? "d-inline-block" : ""} ${textStyle} is-text ${
-        isFormula.text ? "text-monospace" : ""
-      } ${selected ? "selected-node" : ""}`}
-      {...blockProps(block)}
+      className={`${
+        isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
+      } ${textStyle} is-text ${isFormula.text ? "text-monospace" : ""} ${
+        selected ? "selected-node" : ""
+      }`}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
       style={font ? { fontFamily: font } : {}}
@@ -133,11 +135,12 @@ export /**
  * @namespace
  * @category saltcorn-builder
  * @subcategory components
-*/
+ */
 const TextSettings = () => {
   const node = useNode((node) => ({
     text: node.data.props.text,
     block: node.data.props.block,
+    inline: node.data.props.inline,
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
     labelFor: node.data.props.labelFor,
@@ -148,6 +151,7 @@ const TextSettings = () => {
     actions: { setProp },
     text,
     block,
+    inline,
     textStyle,
     isFormula,
     labelFor,
@@ -246,7 +250,12 @@ const TextSettings = () => {
           </tr>
         </tbody>
       </table>
-      <BlockSetting block={block} setProp={setProp} />
+      <BlockOrInlineSetting
+        block={block}
+        inline={inline}
+        textStyle={textStyle}
+        setProp={setProp}
+      />
     </div>
   );
 };
@@ -258,6 +267,7 @@ Text.craft = {
   defaultProps: {
     text: "Click here",
     block: false,
+    inline: false,
     isFormula: {},
     textStyle: "",
     labelFor: "",

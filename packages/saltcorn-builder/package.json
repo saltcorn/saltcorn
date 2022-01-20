@@ -15,32 +15,33 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.9.6",
-    "@babel/preset-env": "^7.9.6",
-    "@babel/preset-react": "^7.9.4",
+    "@babel/core": "7.9.6",
+    "@babel/preset-env": "7.9.6",
+    "@babel/preset-react": "7.9.4",
     "@craftjs/core": "0.1.0-beta.20",
+    "@craftjs/utils": "0.1.0-beta.20",
     "saltcorn-craft-layers-noeye": "0.1.0-beta.22",
-    "@fonticonpicker/react-fonticonpicker": "^1.2.0",
-    "@fortawesome/fontawesome-svg-core": "^1.2.34",
-    "@fortawesome/free-regular-svg-icons": "^5.15.2",
-    "@fortawesome/free-solid-svg-icons": "^5.15.2",
-    "@fortawesome/react-fontawesome": "^0.1.14",
-    "babel-loader": "^8.1.0",
-    "ckeditor4-react": "^1.4.0",
-    "classnames": "^2.2.6",
-    "prop-types": "^15.7.2",
-    "react": "^16.13.1",
-    "react-bootstrap-icons": "^1.5.0",
-    "react-contenteditable": "^3.3.5",
-    "react-dom": "^16.13.1",
-    "react-transition-group": "^4.4.1",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "@fonticonpicker/react-fonticonpicker": "1.2.0",
+    "@fortawesome/fontawesome-svg-core": "1.2.34",
+    "@fortawesome/free-regular-svg-icons": "5.15.2",
+    "@fortawesome/free-solid-svg-icons": "5.15.2",
+    "@fortawesome/react-fontawesome": "0.1.14",
+    "babel-loader": "8.1.0",
+    "ckeditor4-react": "1.4.2",
+    "classnames": "2.2.6",
+    "prop-types": "15.7.2",
+    "react": "16.13.1",
+    "react-bootstrap-icons": "1.5.0",
+    "react-contenteditable": "3.3.5",
+    "react-dom": "16.13.1",
+    "react-transition-group": "4.4.1",
+    "webpack": "4.43.0",
+    "webpack-cli": "3.3.11"
   },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "styled-components": "^4.4.1"
+    "styled-components": "4.4.1"
   }
 }
