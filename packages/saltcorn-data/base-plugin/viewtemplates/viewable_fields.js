@@ -604,8 +604,8 @@ const splitUniques = contract(
     is.obj({ uniques: is.obj(), nonUniques: is.obj() })
   ),
   (fields, state, fuzzyStrings) => {
-    var uniques = [];
-    var nonUniques = [];
+    let uniques = {};
+    let nonUniques = {};
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find((f) => f.name === k);
       if (
