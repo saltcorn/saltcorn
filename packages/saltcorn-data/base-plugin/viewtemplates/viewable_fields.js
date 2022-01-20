@@ -129,14 +129,18 @@ const get_view_link_query =
     const fUniqueString = fields.find(
       (f) => f.is_unique && f.type.name === "String"
     );
+    const pk_name = fields.find((f) => f.primary_key).name;
     if (fUniqueString)
       return (r) =>
-        `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`;
+        r && r[fUniqueString.name]
+          ? `?${fUniqueString.name}=${encodeURIComponent(
+              r[fUniqueString.name]
+            )}`
+          : `?${pk_name}=${r[pk_name]}`;
     const fUnique = fields.find((f) => f.is_unique);
     if (fUnique)
       return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
     else {
-      const pk_name = fields.find((f) => f.primary_key).name;
       return (r) => `?${pk_name}=${r[pk_name]}`;
     }
   };
