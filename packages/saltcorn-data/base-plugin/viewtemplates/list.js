@@ -259,6 +259,24 @@ const configuration_workflow = (req) =>
             type: "Bool",
           });
           formfields.push({
+            name: "transpose_width",
+            label: req.__("Vertical column width"),
+            type: "Integer",
+            showIf: { transpose: true },
+          });
+          formfields.push({
+            name: "transpose_width_units",
+            label: req.__("Vertical width units"),
+            type: "String",
+            required: true,
+            fieldview: "radio_group",
+            attributes: {
+              inline: true,
+              options: ["px", "%", "vw", "em", "rem"],
+            },
+            showIf: { transpose: true },
+          });
+          formfields.push({
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
@@ -452,6 +470,8 @@ const run = async (
     page_opts.noHeader = true;
   }
   page_opts.transpose = (default_state || {}).transpose;
+  page_opts.transpose_width = (default_state || {}).transpose_width;
+  page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
