@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.6.3",
+  "version": "0.6.4-beta.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -34,13 +34,13 @@
     "dist/**/*"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "0.6.3",
-    "@saltcorn/sqlite": "0.6.3"
+    "@saltcorn/postgres": "0.6.4-beta.1",
+    "@saltcorn/sqlite": "0.6.4-beta.1"
   },
   "dependencies": {
-    "@saltcorn/types": "0.6.3",
-    "@saltcorn/markup": "0.6.3",
-    "@saltcorn/db-common": "0.6.3",
+    "@saltcorn/types": "0.6.4-beta.1",
+    "@saltcorn/markup": "0.6.4-beta.1",
+    "@saltcorn/db-common": "0.6.4-beta.1",
     "acorn": "^8.0.3",
     "adm-zip": "0.5.5",
     "astring": "^1.4.3",
