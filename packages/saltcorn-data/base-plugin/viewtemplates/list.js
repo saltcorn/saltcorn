@@ -342,6 +342,39 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
+/**
+ * @param {object} opts
+ * @param {object} opts.layout
+ * @param {object[]} opts.fields
+ * @returns {Promise<void>}
+ */
+const set_join_fieldviews = async ({ columns, fields }) => {
+  for (const segment of columns) {
+    const { join_field, join_fieldview } = segment;
+    if (!join_fieldview) continue;
+    const keypath = join_field.split(".");
+    if (keypath.length === 2) {
+      const [refNm, targetNm] = keypath;
+      const ref = fields.find((f) => f.name === refNm);
+      if (!ref) continue;
+      const table = await Table.findOne({ name: ref.reftable_name });
+      if (!table) continue;
+      const reffields = await table.getFields();
+      const field = reffields.find((f) => f.name === targetNm);
+      if (field && field.type === "File") segment.field_type = "File";
+      else if (
+        field &&
+        field.type &&
+        field.type.name &&
+        field.type.fieldviews &&
+        field.type.fieldviews[join_fieldview]
+      )
+        segment.field_type = field.type.name;
+    } else {
+      //const [refNm, through, targetNm] = keypath;
+    }
+  }
+};
 /** @type {function} */
 const initial_config = initial_config_all_fields(false);
 
@@ -405,6 +438,8 @@ const run = async (
       ? extraOpts.req.user.role_id
       : 10;
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  await set_join_fieldviews({ columns, fields });
+
   const tfields = get_viewable_fields(
     viewname,
     table,
