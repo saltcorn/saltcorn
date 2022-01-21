@@ -626,6 +626,16 @@ const field_picker_fields = contract(
         showIf: { type: "JoinField" },
       },
       {
+        name: "join_fieldview",
+        label: __("Field view"),
+        type: "String",
+        required: false,
+        attributes: {
+          calcOptions: ["join_field", field_view_options],
+        },
+        showIf: { type: "JoinField" },
+      },
+      {
         name: "agg_relation",
         label: __("Relation"),
         type: "String",
