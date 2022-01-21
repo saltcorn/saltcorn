@@ -268,7 +268,6 @@ const configuration_workflow = (req) =>
             name: "transpose_width_units",
             label: req.__("Vertical width units"),
             type: "String",
-            required: true,
             fieldview: "radio_group",
             attributes: {
               inline: true,
