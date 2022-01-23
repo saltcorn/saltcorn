@@ -41,7 +41,7 @@ class RestoreCommand extends Command {
    * @returns {Promise<void>}
    */
   async zip_restore(fnm, tenant) {
-    const { restore } = require("@saltcorn/models-common/models/backup");
+    const { restore } = require("@saltcorn/admin-models/models/backup");
     const User = require("@saltcorn/data/models/user");
     const load_plugins = require("@saltcorn/server/load_plugins");
     await maybe_as_tenant(tenant, async () => {

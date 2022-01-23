@@ -1,6 +1,6 @@
 /**
  * Tenant Management Data Layer Access
- * @category saltcorn-models-common
+ * @category saltcorn-admin-models
  * @module tenant
  */
 import db from "@saltcorn/data/db/index";

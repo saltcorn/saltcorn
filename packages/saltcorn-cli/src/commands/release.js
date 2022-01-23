@@ -28,8 +28,8 @@ class ReleaseCommand extends Command {
       "@saltcorn/types": { dir: "saltcorn-types", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
       "@saltcorn/data": { dir: "saltcorn-data", publish: true },
-      "@saltcorn/models-common": {
-        dir: "saltcorn-models-common",
+      "@saltcorn/admin-models": {
+        dir: "saltcorn-admin-models",
         publish: true,
       },
       "@saltcorn/random-tests": { dir: "saltcorn-random-tests" },

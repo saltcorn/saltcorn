@@ -19,7 +19,7 @@ class SetupBenchmarkCommand extends Command {
     const load_plugins = require("@saltcorn/server/load_plugins");
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
-    const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     await loadAllPlugins();
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, undefined, tenants);
@@ -67,7 +67,7 @@ class SetupBenchmarkCommand extends Command {
         thread: thread_id,
       });
       // install page
-      const { install_pack } = require("@saltcorn/models-common/models/pack");
+      const { install_pack } = require("@saltcorn/admin-models/models/pack");
       await install_pack(simple_page_pack, flags.name, () => {});
       // install file
       const { rick_file } = require("@saltcorn/data/tests/mocks");

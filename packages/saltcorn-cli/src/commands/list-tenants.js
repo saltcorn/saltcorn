@@ -14,7 +14,7 @@ class ListTenantsCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     const db = require("@saltcorn/data/db");
     const tenantList = await getAllTenants();
     console.log(

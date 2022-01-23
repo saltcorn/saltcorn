@@ -7,12 +7,12 @@
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const { getState, add_tenant } = require("@saltcorn/data/db/state");
-const { create_tenant } = require("@saltcorn/models-common/models/tenant");
+const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 const {
   getAllTenants,
   domain_sanitize,
   deleteTenant,
-} = require("@saltcorn/models-common/models/tenant");
+} = require("@saltcorn/admin-models/models/tenant");
 const {
   renderForm,
   link,
@@ -46,7 +46,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
-const { create_backup, restore } = require("@saltcorn/models-common/models/backup");
+const { create_backup, restore } = require("@saltcorn/admin-models/models/backup");
 
 /**
  * @type {object}

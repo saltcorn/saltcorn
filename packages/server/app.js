@@ -28,7 +28,7 @@ const {
   getSessionStore,
   setTenant,
 } = require("./routes/utils.js");
-const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
+const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");

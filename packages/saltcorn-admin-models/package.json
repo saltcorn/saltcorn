@@ -1,7 +1,7 @@
 {
-  "name": "@saltcorn/models-common",
+  "name": "@saltcorn/admin-models",
   "version": "0.6.4-beta.1",
-  "description": "common model structures for Saltcorn, open-source no-code platform",
+  "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
     "test": "jest tests --runInBand",

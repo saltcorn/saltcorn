@@ -1,5 +1,5 @@
 /**
- * @category saltcorn-models-common
+ * @category saltcorn-admin-models
  * @module pack
  */
 

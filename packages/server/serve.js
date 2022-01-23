@@ -14,7 +14,7 @@ const {
   restart_tenant,
   add_tenant,
 } = require("@saltcorn/data/db/state");
-const { create_tenant } = require("@saltcorn/models-common/models/tenant");
+const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 
 const path = require("path");
 
@@ -39,7 +39,7 @@ const {
   getRelevantPackages,
   getPluginDirectories,
 } = require("./restart_watcher");
-const { eachTenant, getAllTenants } = require("@saltcorn/models-common/models/tenant");
+const { eachTenant, getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**

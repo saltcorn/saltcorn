@@ -12,7 +12,7 @@
     "@oclif/command": "^1.8.16",
     "@oclif/config": "^1.18.2",
     "@oclif/plugin-help": "^3.3.1",
-    "@saltcorn/models-common": "0.6.4-beta.1",
+    "@saltcorn/admin-models": "0.6.4-beta.1",
     "@saltcorn/data": "0.6.4-beta.1",
     "@saltcorn/server": "0.6.4-beta.1",
     "cli-ux": "^5.6.7",

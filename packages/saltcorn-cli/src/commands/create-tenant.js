@@ -26,7 +26,7 @@ class CreateTenantCommand extends Command {
       this.exit(0);
       return;
     }
-    const { insertTenant, switchToTenant } = require("@saltcorn/models-common/models/tenant");
+    const { insertTenant, switchToTenant } = require("@saltcorn/admin-models/models/tenant");
     //const url = typeof flags.url !== `undefined`? flags.url : "";
     //const email = typeof flags.email !== `undefined`? flags.email : "";
     //const description = flags.description !==  `undefined` ? flags.description : "";

@@ -18,7 +18,7 @@ class TransformFieldCommand extends Command {
     const Table = require("@saltcorn/data/models/table");
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
-    const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 
     const {
       get_async_expression_function,

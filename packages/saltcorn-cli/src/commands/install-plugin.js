@@ -21,7 +21,7 @@ class InstallPluginCommand extends Command {
     const {
       fetch_pack_by_name,
       install_pack,
-    } = require("@saltcorn/models-common/models/pack");
+    } = require("@saltcorn/admin-models/models/pack");
     const load_plugins = require("@saltcorn/server/load_plugins");
 
     if (!flags.name && !flags.directory) {
@@ -32,7 +32,7 @@ class InstallPluginCommand extends Command {
     }
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
-    const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     await loadAllPlugins();
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, undefined, tenants);
