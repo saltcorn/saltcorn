@@ -1,18 +1,17 @@
 /**
- * @category saltcorn-data
- * @module models/backup
- * @subcategory models
+ * @category saltcorn-models-common
+ * @module backup
  */
-const { getState } = require("../db/state");
-import db from "../db";
-import Table from "./table";
+
+const { getState } = require("@saltcorn/data/db/state");
+import db from "@saltcorn/data/db/index";
+import Table from "@saltcorn/data/models/table";
 import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
-import View from "./view";
-const File = require("./file");
-const Plugin = require("./plugin");
-const User = require("./user");
-import Role from "./role";
-const Page = require("./page");
+import View from "@saltcorn/data/models/view";
+import File from "@saltcorn/data/models/file";
+import Role from "@saltcorn/data/models/role";
+import Page from "@saltcorn/data/models/page";
+import Plugin from "@saltcorn/data/models/plugin";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
 import { writeFile, mkdir, copyFile, readFile } from "fs/promises";
@@ -21,6 +20,7 @@ import { join, basename } from "path";
 import dateFormat from "dateformat";
 import stringify from "csv-stringify/lib/sync";
 import csvtojson from "csvtojson";
+import pack from "./pack";
 const {
   table_pack,
   view_pack,
@@ -28,12 +28,11 @@ const {
   page_pack,
   install_pack,
   can_install_pack,
-} = require("./pack");
+} = pack;
 
-const { asyncMap } = require("../utils");
-import Trigger from "./trigger";
-import Library from "./library";
-import { Plugin } from "@saltcorn/types/base_types";
+const { asyncMap } = require("@saltcorn/data/utils");
+import Trigger from "@saltcorn/data/models/trigger";
+import Library from "@saltcorn/data/models/library";
 
 /**
  * @function
@@ -315,7 +314,7 @@ const restore = async (
   );
 
   const can_restore = await can_install_pack(pack);
-  if (can_restore.error) {
+  if (typeof can_restore !== "boolean" && can_restore.error) {
     return `Cannot restore backup, clashing entities: 
     ${can_restore.error || ""}
     Delete these entities or restore to a pristine instance.

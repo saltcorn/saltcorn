@@ -1,14 +1,14 @@
-import db from "../db";
+import db from "@saltcorn/data/db/index";
 const {
   getState,
+  add_tenant,
   init_multi_tenant,
-  create_tenant,
   restart_tenant,
-} = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
+} = require("@saltcorn/data/db/state");
+getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
 import tenant from "../models/tenant";
-const { createTenant, deleteTenant, getAllTenants } = tenant;
-import config from "../models/config";
+const { create_tenant, deleteTenant, getAllTenants } = tenant;
+import config from "@saltcorn/data/models/config";
 const { getConfig } = config;
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
@@ -23,7 +23,14 @@ describe("Tenant", () => {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
       getState().setConfig("base_url", "http://example.com/");
-      await create_tenant("test10", () => {}, "http://test10.example.com/");
+      add_tenant("test10");
+      const tenant_template = getState().getConfig("tenant_template");
+      await create_tenant({
+        t: "test10",
+        plugin_loader: () => {},
+        newurl: "http://test10.example.com/",
+        tenant_template,
+      });
       db.runWithTenant("test10", async () => {
         const ten = db.getTenantSchema();
         expect(ten).toBe("test10");
@@ -33,7 +40,7 @@ describe("Tenant", () => {
       const tens = await getAllTenants();
       expect(tens).toContain("test10");
       expect(tens).not.toContain("public");
-      await init_multi_tenant(() => {});
+      await init_multi_tenant(() => {}, undefined, tens);
     });
     it("can restart a tenant", async () => {
       await db.runWithTenant("test10", async () => {

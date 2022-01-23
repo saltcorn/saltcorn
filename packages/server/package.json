@@ -9,6 +9,7 @@
     "@saltcorn/base-plugin": "0.6.4-beta.1",
     "@saltcorn/builder": "0.6.4-beta.1",
     "@saltcorn/data": "0.6.4-beta.1",
+    "@saltcorn/models-common": "0.6.4-beta.1",
     "greenlock-express": "^4.0.3",
     "@saltcorn/markup": "0.6.4-beta.1",
     "@saltcorn/sbadmin2": "0.6.4-beta.1",
@@ -81,7 +82,9 @@
       "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
       "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
       "@saltcorn/markup$": "@saltcorn/markup/dist",
-      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
+      "@saltcorn/server/(.*)": "@saltcorn/server/dist/$1",
+      "@saltcorn/models-common/(.*)": "@saltcorn/models-common/dist/$1"
     }
   },
   "publishConfig": {

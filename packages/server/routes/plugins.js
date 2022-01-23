@@ -18,7 +18,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
-const { fetch_available_packs } = require("@saltcorn/data/models/pack");
+const { fetch_available_packs } = require("@saltcorn/models-common/models/pack");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 const {

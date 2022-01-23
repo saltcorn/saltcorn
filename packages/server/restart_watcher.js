@@ -8,7 +8,7 @@ const { spawnSync } = require("child_process");
 const watch = require("node-watch");
 const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
-const { eachTenant } = require("@saltcorn/data/models/tenant");
+const { eachTenant } = require("@saltcorn/models-common/models/tenant");
 
 /**
  * packages that should trigger a server re-start

@@ -6,12 +6,13 @@
 
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
-const { getState, create_tenant } = require("@saltcorn/data/db/state");
+const { getState, add_tenant } = require("@saltcorn/data/db/state");
+const { create_tenant } = require("@saltcorn/models-common/models/tenant");
 const {
   getAllTenants,
   domain_sanitize,
   deleteTenant,
-} = require("@saltcorn/data/models/tenant");
+} = require("@saltcorn/models-common/models/tenant");
 const {
   renderForm,
   link,
@@ -45,6 +46,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
+const { create_backup, restore } = require("@saltcorn/models-common/models/backup");
 
 /**
  * @type {object}
@@ -249,13 +251,16 @@ router.post(
         );
       } else {
         const newurl = getNewURL(req, subdomain);
-        await create_tenant(
-          subdomain,
-          loadAllPlugins,
+        const tenant_template = getState().getConfig("tenant_template");
+        add_tenant(subdomain);
+        await create_tenant({
+          t: subdomain,
+          plugin_loader: loadAllPlugins,
           newurl,
-          false,
-          loadAndSaveNewPlugin
-        );
+          noSignalOrDB: false,
+          loadAndSaveNewPlugin: loadAndSaveNewPlugin,
+          tenant_template,
+        });
         let new_url_create = newurl;
         const hasTemplate = getState().getConfig("tenant_template");
         if (hasTemplate) {

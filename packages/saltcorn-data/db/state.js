@@ -22,11 +22,6 @@ const File = require("../models/file");
 const Trigger = require("../models/trigger");
 const View = require("../models/view");
 const {
-  getAllTenants,
-  createTenant,
-  copy_tenant_template,
-} = require("../models/tenant");
-const {
   getAllConfigOrDefaults,
   setConfig,
   deleteConfig,
@@ -599,8 +594,7 @@ const set_tenant_base_url = (tenant_subdomain, value) => {
  * @param {boolean} disableMigrate - if true then dont migrate db
  * @returns {Promise<void>}
  */
-const init_multi_tenant = async (plugin_loader, disableMigrate) => {
-  const tenantList = await getAllTenants();
+const init_multi_tenant = async (plugin_loader, disableMigrate, tenantList) => {
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State(domain);
@@ -616,38 +610,11 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
     }
   }
 };
-/**
- * Create tenant
- * @param {string} t
- * @param {object} plugin_loader
- * @param {string} newurl
- * @param {boolean} noSignalOrDB
- * @returns {Promise<void>}
- */
-const create_tenant = async (
-  t,
-  plugin_loader,
-  newurl,
-  noSignalOrDB,
-  loadAndSaveNewPlugin
-) => {
-  if (!noSignalOrDB) await createTenant(t, newurl);
+
+const add_tenant = (t, noSignalOrDB) => {
   tenants[t] = new State(t);
-  await db.runWithTenant(t, plugin_loader);
-  if (!noSignalOrDB) {
-    const tenant_template = singleton.getConfig("tenant_template");
-    if (tenant_template) {
-      //create backup
-      await copy_tenant_template({
-        tenant_template,
-        target: t,
-        state: tenants[t],
-        loadAndSaveNewPlugin,
-      });
-    }
-    process_send({ createTenant: t });
-  }
 };
+
 /**
  * Restart tenant
  * @param {object} plugin_loader
@@ -676,10 +643,11 @@ module.exports = {
   getState,
   getTenant,
   init_multi_tenant,
-  create_tenant,
   restart_tenant,
   get_other_domain_tenant,
   set_tenant_base_url,
   get_process_init_time,
   features,
+  add_tenant,
+  process_send,
 };

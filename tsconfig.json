@@ -15,6 +15,9 @@
     },
     {
       "path": "./packages/saltcorn-data/tsconfig.ref.json"
+    },
+    {
+      "path": "./packages/saltcorn-models-common/tsconfig.ref.json"
     }
   ]
 }

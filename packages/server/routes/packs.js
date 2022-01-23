@@ -30,7 +30,7 @@ const {
   fetch_pack_by_name,
   can_install_pack,
   uninstall_pack,
-} = require("@saltcorn/data/models/pack");
+} = require("@saltcorn/models-common/models/pack");
 const { h5, pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
 const Library = require("@saltcorn/data/models/library");
 const Trigger = require("@saltcorn/data/models/trigger");

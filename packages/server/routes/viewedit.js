@@ -39,7 +39,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 
-const { add_to_menu } = require("@saltcorn/data/models/pack");
+const { add_to_menu } = require("@saltcorn/models-common/models/pack");
 const { editRoleForm } = require("../markup/forms.js");
 
 /**

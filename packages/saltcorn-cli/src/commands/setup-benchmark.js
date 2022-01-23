@@ -15,21 +15,20 @@ class SetupBenchmarkCommand extends Command {
    * @returns {Promise<void>}
    */
   async install_forum_pack() {
-    const {
-      fetch_pack_by_name,
-      install_pack,
-    } = require("@saltcorn/data/models/pack");
+    const { fetch_pack_by_name, install_pack } = require("@saltcorn/data/pack");
     const load_plugins = require("@saltcorn/server/load_plugins");
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
+    const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
     await loadAllPlugins();
-    await init_multi_tenant(loadAllPlugins);
+    const tenants = await getAllTenants();
+    await init_multi_tenant(loadAllPlugins, undefined, tenants);
     const pack = await fetch_pack_by_name("Forum");
     await install_pack(pack.pack, flags.name, (p) =>
       load_plugins.loadAndSaveNewPlugin(p)
     );
   }
-  
+
   /**
    * @returns {Promise<void>}
    */
@@ -68,12 +67,11 @@ class SetupBenchmarkCommand extends Command {
         thread: thread_id,
       });
       // install page
-      const { install_pack } = require("@saltcorn/data/models/pack");
+      const { install_pack } = require("@saltcorn/models-common/models/pack");
       await install_pack(simple_page_pack, flags.name, () => {});
       // install file
       const { rick_file } = require("@saltcorn/data/tests/mocks");
       await rick_file();
-
     });
   }
 }

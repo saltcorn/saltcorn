@@ -1,4 +1,4 @@
-import db from "../db/index";
+import db from "@saltcorn/data/db/index";
 import pack from "../models/pack";
 const {
   table_pack,
@@ -7,26 +7,26 @@ const {
   page_pack,
   fetch_available_packs,
   fetch_pack_by_name,
-  is_stale,
   install_pack,
   can_install_pack,
   uninstall_pack,
 } = pack;
-const { getState } = require("../db/state");
-import Table from "../models/table";
+const { isStale } = require("@saltcorn/data/utils");
+const { getState } = require("@saltcorn/data/db/state");
+import Table from "@saltcorn/data/models/table";
 import { Pack } from "@saltcorn/types/base_types";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
 });
 
 afterAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
 
   await db.close();
 });
@@ -163,7 +163,7 @@ describe("pack store", () => {
   });
   it("caches the pack store", async () => {
     const stored_at = getState().getConfig("available_packs_fetched_at", false);
-    expect(is_stale(stored_at)).toBe(false);
+    expect(isStale(stored_at)).toBe(false);
     await getState().setConfig("available_packs", []);
     const packs1 = await fetch_available_packs();
     expect(packs1).toEqual([]);

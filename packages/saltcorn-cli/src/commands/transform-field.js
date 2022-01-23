@@ -8,7 +8,7 @@ const { Command, flags } = require("@oclif/command");
  * TransformFieldCommand Class
  * @extends oclif.Command
  * @category saltcorn-cli
- */    
+ */
 class TransformFieldCommand extends Command {
   /**
    * @returns {Promise<void>}
@@ -18,14 +18,17 @@ class TransformFieldCommand extends Command {
     const Table = require("@saltcorn/data/models/table");
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
+    const { getAllTenants } = require("@saltcorn/models-common/models/tenant");
 
     const {
       get_async_expression_function,
     } = require("@saltcorn/data/models/expression");
     const { args } = this.parse(TransformFieldCommand);
     await loadAllPlugins();
-    if (args.tenant && db.is_it_multi_tenant())
-      await init_multi_tenant(loadAllPlugins);
+    if (args.tenant && db.is_it_multi_tenant()) {
+      const tenants = await getAllTenants();
+      await init_multi_tenant(loadAllPlugins, undefined, tenants);
+    }
     const tenant = args.tenant || db.connectObj.default_schema;
     await db.runWithTenant(tenant, async () => {
       const table = await Table.findOne({ name: args.table });

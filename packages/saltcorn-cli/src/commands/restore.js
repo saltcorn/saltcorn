@@ -14,8 +14,8 @@ const { maybe_as_tenant } = require("../common");
  */
 class RestoreCommand extends Command {
   /**
-   * 
-   * @param {string} fnm 
+   *
+   * @param {string} fnm
    * @returns {Promise<void>}
    */
   async pg_restore(fnm) {
@@ -35,13 +35,13 @@ class RestoreCommand extends Command {
   }
 
   /**
-   * 
-   * @param {string} fnm 
-   * @param {object} tenant 
+   *
+   * @param {string} fnm
+   * @param {object} tenant
    * @returns {Promise<void>}
    */
   async zip_restore(fnm, tenant) {
-    const { restore } = require("@saltcorn/data/models/backup");
+    const { restore } = require("@saltcorn/models-common/models/backup");
     const User = require("@saltcorn/data/models/user");
     const load_plugins = require("@saltcorn/server/load_plugins");
     await maybe_as_tenant(tenant, async () => {

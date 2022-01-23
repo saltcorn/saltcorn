@@ -1,21 +1,22 @@
-import Table from "../models/table";
-//const Field = require("../models/field");
-import Trigger from "../models/trigger";
-import runScheduler from "../models/scheduler";
-import db from "../db";
-const { getState } = require("../db/state");
-import mocks from "./mocks";
+import Trigger from "@saltcorn/data/models/trigger";
+import Table from "@saltcorn/data/models/table";
+import EventLog from "@saltcorn/data/models/eventlog";
+import tenant from "../models/tenant";
+const { eachTenant } = tenant;
+import runScheduler from "@saltcorn/data/models/scheduler";
+import db from "@saltcorn/data/db/index";
+const { getState } = require("@saltcorn/data/db/state");
+import mocks from "@saltcorn/data/tests/mocks";
 const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
-import EventLog from "../models/eventlog";
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "@saltcorn/data/tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
 });
 
 jest.setTimeout(10000);
@@ -231,6 +232,10 @@ describe("Scheduler", () => {
     runScheduler({
       stop_when: () => stopSched,
       tickSeconds: 1,
+      watchReaper: undefined,
+      port: undefined,
+      disableScheduler: undefined,
+      eachTenant,
     });
     await sleep(500);
     expect(getActionCounter()).toBe(1);

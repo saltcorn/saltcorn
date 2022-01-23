@@ -4,7 +4,7 @@
  */
 const { Command, flags } = require("@oclif/command");
 const db = require("@saltcorn/data/db");
-const { eachTenant } = require("@saltcorn/data/models/tenant");
+const { eachTenant } = require("@saltcorn/models-common/models/tenant");
 // todo add dryrun mode
 
 /**

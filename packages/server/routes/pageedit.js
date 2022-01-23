@@ -17,7 +17,7 @@ const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
-const { add_to_menu } = require("@saltcorn/data/models/pack");
+const { add_to_menu } = require("@saltcorn/models-common/models/pack");
 const db = require("@saltcorn/data/db");
 
 const { isAdmin, error_catcher } = require("./utils.js");

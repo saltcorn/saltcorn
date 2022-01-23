@@ -44,7 +44,8 @@ import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
-import { prefixFieldsInWhere } from "../utils";
+import utils from "../utils";
+const { prefixFieldsInWhere } = utils;
 const {
   InvalidConfiguration,
   InvalidAdminAction,
