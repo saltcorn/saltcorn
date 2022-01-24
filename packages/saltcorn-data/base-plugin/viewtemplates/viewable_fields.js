@@ -464,8 +464,7 @@ const get_viewable_fields = contract(
           Object.assign(r, setWidth);
           return r;
         } else if (column.type === "JoinField") {
-          let refNm, targetNm, through, key;
-
+          let refNm, targetNm, through, key, type;
           if (column.join_field.includes("->")) {
             const [relation, target] = column.join_field.split("->");
             const [ontable, ref] = relation.split(".");
@@ -482,12 +481,20 @@ const get_viewable_fields = contract(
               key = `${refNm}_${through}_${targetNm}`;
             }
           }
+          if (column.field_type) type = getState().types[column.field_type];
           return {
             ...setWidth,
             label: column.header_label
               ? text(__(column.header_label))
               : text(targetNm),
-            key,
+            key:
+              column.join_fieldview &&
+              type &&
+              type.fieldviews &&
+              type.fieldviews[column.join_fieldview]
+                ? (row) =>
+                    type.fieldviews[column.join_fieldview].run(row[key], req)
+                : (row) => text(row[key]),
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {
