@@ -382,6 +382,7 @@ const JoinFieldElem = ({ connectors, options }) => (
   >
     <JoinField
       name={options.parent_field_list[0]}
+      configuration={{}}
       textStyle={""}
       block={false}
     />
