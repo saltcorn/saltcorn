@@ -19,20 +19,13 @@ export /**
  * @param {string} [props.title]
  * @param {string} props.shadow
  * @param {boolean} props.noPadding
- * @param {object} props.style 
+ * @param {object} props.style
  * @returns {div}
  * @category saltcorn-builder
  * @subcategory components
  * @namespace
  */
-const Card = ({
-  children,
-  isFormula,
-  title,
-  shadow,
-  noPadding,
-  style,
-}) => {
+const Card = ({ children, isFormula, title, shadow, noPadding, style }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -119,7 +112,7 @@ const CardSettings = () => {
         </tbody>
       </table>
       <div accordiontitle="Box" className="w-100">
-        <BoxModelEditor setProp={setProp} node={node} />
+        <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
     </Accordion>
   );
@@ -138,8 +131,8 @@ const fields = [
   { name: "style", default: {} },
 ];
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Card.craft = {
   props: {

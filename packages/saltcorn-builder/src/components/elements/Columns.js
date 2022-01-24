@@ -178,7 +178,7 @@ const ColumnsSettings = () => {
         </tbody>
       </table>
       <div accordiontitle="Box" className="w-100">
-        <BoxModelEditor setProp={setProp} node={node} />
+        <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
     </Accordion>
   );

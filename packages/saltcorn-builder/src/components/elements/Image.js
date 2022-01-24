@@ -42,7 +42,9 @@ const Image = ({ fileid, block, srctype, url, alt, style }) => {
         "No images Available"
       ) : (
         <img
-          className={`w-100 image-widget ${selected ? "selected-node" : ""}`}
+          className={`${style && style.width ? "" : "w-100"} image-widget ${
+            selected ? "selected-node" : ""
+          }`}
           style={reactifyStyles(style || {})}
           src={theurl}
           alt={alt}
@@ -260,7 +262,7 @@ const ImageSettings = () => {
         </tbody>
       </table>
       <div accordiontitle="Box" className="w-100">
-        <BoxModelEditor setProp={setProp} node={node} />
+        <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
     </Accordion>
   );

@@ -292,7 +292,7 @@ const render = ({
         isTop,
         ix,
         img({
-          class: "w-100",
+          class: segment.style && segment.style.width ? null : "w-100",
           alt: segment.alt,
           style: segment.style,
           src:
@@ -594,7 +594,10 @@ const render = ({
       else
         markup = div(
           {
-            class: "row w-100",
+            class: [
+              "row",
+              segment.style && segment.style.width ? null : "w-100",
+            ],
             style: segment.style,
           },
           segment.besides.map((t: any, ixb: number) =>
