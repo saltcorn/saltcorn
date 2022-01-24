@@ -193,6 +193,14 @@ const calcfldViewConfig = contract(
             f
           );
       }
+      if (f.type === "Key") {
+        if (f.reftable && f.reftable.fields) {
+          const joinedCfg = await calcfldViewConfig(f.reftable.fields, isEdit);
+          Object.entries(joinedCfg).forEach(([nm, o]) => {
+            fieldViewConfigForms[`${f.name}.${nm}`] = o;
+          });
+        }
+      }
     }
     return fieldViewConfigForms;
   }
@@ -340,14 +348,24 @@ const field_picker_fields = contract(
     )) {
       for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
         for (const formField of formFields) {
-          fvConfigFields.push({
-            ...formField,
-            showIf: {
-              type: "Field",
-              field_name,
-              fieldview,
-            },
-          });
+          if (field_name.includes("."))
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "JoinField",
+                join_field: field_name,
+                join_fieldview: fieldview,
+              },
+            });
+          else
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "Field",
+                field_name,
+                fieldview,
+              },
+            });
         }
       }
     }
@@ -437,6 +455,26 @@ const field_picker_fields = contract(
           calcOptions: ["field_name", field_view_options],
         },
         showIf: { type: "Field" },
+      },
+      {
+        name: "join_field",
+        label: __("Join Field"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: parent_field_list,
+        },
+        showIf: { type: "JoinField" },
+      },
+      {
+        name: "join_fieldview",
+        label: __("Field view"),
+        type: "String",
+        required: false,
+        attributes: {
+          calcOptions: ["join_field", field_view_options],
+        },
+        showIf: { type: "JoinField" },
       },
       ...fvConfigFields,
       {
@@ -615,26 +653,7 @@ const field_picker_fields = contract(
         required: false,
         showIf: { type: "Link" },
       },
-      {
-        name: "join_field",
-        label: __("Join Field"),
-        type: "String",
-        required: true,
-        attributes: {
-          options: parent_field_list,
-        },
-        showIf: { type: "JoinField" },
-      },
-      {
-        name: "join_fieldview",
-        label: __("Field view"),
-        type: "String",
-        required: false,
-        attributes: {
-          calcOptions: ["join_field", field_view_options],
-        },
-        showIf: { type: "JoinField" },
-      },
+
       {
         name: "agg_relation",
         label: __("Relation"),
