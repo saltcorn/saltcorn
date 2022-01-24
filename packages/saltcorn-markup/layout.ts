@@ -294,6 +294,7 @@ const render = ({
         img({
           class: "w-100",
           alt: segment.alt,
+          style: segment.style,
           src:
             srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
         })
