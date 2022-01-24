@@ -84,14 +84,14 @@ const progress_bar = (type) => ({
         style: {
           width: "100%",
           height: `${attrs.px_height || 8}px`,
-          backgroundColor: attrs.bg_color,
+          backgroundColor: attrs.bg_color || "#777777",
         },
       },
       div({
         style: {
           width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
           height: `${attrs.px_height || 8}px`,
-          backgroundColor: attrs.bar_color,
+          backgroundColor: attrs.bar_color || "#0000ff",
         },
       })
     ),

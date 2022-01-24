@@ -482,7 +482,7 @@ function press_store_button(clicked) {
 
 function ajax_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
-    $("body").append(`<div id="scmodal", class="modal" tabindex="-1">
+    $("body").append(`<div id="scmodal", class="modal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">

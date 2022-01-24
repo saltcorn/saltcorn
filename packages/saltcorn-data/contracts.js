@@ -245,21 +245,14 @@ const is_plugin = is.obj({
   configuration_workflow: is.maybe(is.fun([], is.class("Workflow"))),
   fieldviews: is.maybe(
     is.objVals(
-      is.obj(
-        {
-          type: is.str,
-          isEdit: is.bool,
-          run: is.or(
-            is.fun(is.any, is.str),
-            is.fun(
-              [is.str, is.any, is.maybe(is.obj()), is.str, is.bool],
-              is.str
-            )
-          ),
-        },
-        (o) =>
-          (o.isEdit && o.run.length >= 2) || (!o.isEdit && o.run.length == 1)
-      )
+      is.obj({
+        type: is.str,
+        isEdit: is.bool,
+        run: is.or(
+          is.fun(is.any, is.str),
+          is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
+        ),
+      })
     )
   ),
   dependencies: is.maybe(is.array(is.str)),

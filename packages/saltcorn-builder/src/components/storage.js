@@ -236,6 +236,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           breakpoints={segment.breakpoints || default_breakpoints(segment)}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
+          style={segment.style || {}}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -262,6 +263,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
             widths={getColWidths(segment)}
             breakpoints={segment.breakpoints || default_breakpoints(segment)}
             ncols={segment.besides.length}
+            style={segment.style || {}}
             contents={segment.besides.map(toTag)}
           />
         )
@@ -402,6 +404,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
+        style: node.props.style,
         widths,
       };
     }

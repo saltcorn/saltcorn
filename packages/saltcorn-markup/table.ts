@@ -58,11 +58,20 @@ const transposedBody = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string[] =>
-  hdrs.map((hdr: HeadersParams) =>
+  hdrs.map((hdr: HeadersParams, ix) =>
     tr(
       th(hdr.label),
       (vs || []).map((v: any) =>
-        td(typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v))
+        td(
+          ix === 0 && opts.transpose_width
+            ? {
+                style: {
+                  width: `${opts.transpose_width}${opts.transpose_width_units}`,
+                },
+              }
+            : null,
+          typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+        )
       )
     )
   );

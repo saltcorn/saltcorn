@@ -593,7 +593,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         return field.type.fieldviews[fieldview].run(val, req, cfg);
       else return text(val);
     },
-    join_field({ join_field, field_type, fieldview }) {
+    join_field(jf) {
+      const { join_field, field_type, fieldview, configuration } = jf;
       const keypath = join_field.split(".");
       let value;
       if (join_field.includes("->")) {
@@ -610,11 +611,12 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (field_type === "File") {
         return value ? getState().fileviews[fieldview].run(value, "") : "";
       }
+
       if (field_type && fieldview) {
         const type = getState().types[field_type];
-        if (type && getState().types[field_type])
-          return type.fieldviews[fieldview].run(value, req);
-        else return text(value);
+        if (type && getState().types[field_type]) {
+          return type.fieldviews[fieldview].run(value, req, configuration);
+        } else return text(value);
       } else return text(value);
     },
     aggregation({ agg_relation, stat }) {

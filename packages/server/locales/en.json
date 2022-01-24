@@ -861,5 +861,7 @@
 	"Auto save": "Auto save",
 	"Save any changes immediately": "Save any changes immediately",
 	"Transpose": "Transpose",
-	"Display one column per line": "Display one column per line"
+	"Display one column per line": "Display one column per line",
+	"Vertical column width": "Vertical column width",
+	"Vertical width units": "Vertical width units"
 }

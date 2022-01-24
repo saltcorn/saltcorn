@@ -259,6 +259,23 @@ const configuration_workflow = (req) =>
             type: "Bool",
           });
           formfields.push({
+            name: "transpose_width",
+            label: req.__("Vertical column width"),
+            type: "Integer",
+            showIf: { transpose: true },
+          });
+          formfields.push({
+            name: "transpose_width_units",
+            label: req.__("Vertical width units"),
+            type: "String",
+            fieldview: "radio_group",
+            attributes: {
+              inline: true,
+              options: ["px", "%", "vw", "em", "rem"],
+            },
+            showIf: { transpose: true },
+          });
+          formfields.push({
             name: "_omit_state_form",
             label: req.__("Omit search form"),
             sublabel: req.__("Do not display the search filter form"),
@@ -325,6 +342,39 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
+/**
+ * @param {object} opts
+ * @param {object} opts.layout
+ * @param {object[]} opts.fields
+ * @returns {Promise<void>}
+ */
+const set_join_fieldviews = async ({ columns, fields }) => {
+  for (const segment of columns) {
+    const { join_field, join_fieldview } = segment;
+    if (!join_fieldview) continue;
+    const keypath = join_field.split(".");
+    if (keypath.length === 2) {
+      const [refNm, targetNm] = keypath;
+      const ref = fields.find((f) => f.name === refNm);
+      if (!ref) continue;
+      const table = await Table.findOne({ name: ref.reftable_name });
+      if (!table) continue;
+      const reffields = await table.getFields();
+      const field = reffields.find((f) => f.name === targetNm);
+      if (field && field.type === "File") segment.field_type = "File";
+      else if (
+        field &&
+        field.type &&
+        field.type.name &&
+        field.type.fieldviews &&
+        field.type.fieldviews[join_fieldview]
+      )
+        segment.field_type = field.type.name;
+    } else {
+      //const [refNm, through, targetNm] = keypath;
+    }
+  }
+};
 /** @type {function} */
 const initial_config = initial_config_all_fields(false);
 
@@ -388,6 +438,8 @@ const run = async (
       ? extraOpts.req.user.role_id
       : 10;
   const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  await set_join_fieldviews({ columns, fields });
+
   const tfields = get_viewable_fields(
     viewname,
     table,
@@ -452,6 +504,8 @@ const run = async (
     page_opts.noHeader = true;
   }
   page_opts.transpose = (default_state || {}).transpose;
+  page_opts.transpose_width = (default_state || {}).transpose_width;
+  page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";

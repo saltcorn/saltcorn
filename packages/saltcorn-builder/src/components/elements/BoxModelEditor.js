@@ -12,7 +12,7 @@ Copyright (c) 2017 Taha Paksu
 */
 
 export /**
- * 
+ *
  * @param {object} props
  * @param {function} props.setProp
  * @param {object} props.node
@@ -21,7 +21,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const BoxModelEditor = ({ setProp, node }) => {
+const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
   const [selectedCategory, setSelectedCategory] = useState(false);
   const [selectedDirection, setSelectedDirection] = useState(false);
   const selectedProperty = !selectedCategory
@@ -146,7 +146,9 @@ const BoxModelEditor = ({ setProp, node }) => {
                             name="boxmodel-ex-1_width"
                             size="3"
                             value={
-                              node.width
+                              sizeWithStyle
+                                ? style["width"]
+                                : node.width
                                 ? `${node.width}${node.widthUnits || "px"}`
                                 : ""
                             }
@@ -159,7 +161,9 @@ const BoxModelEditor = ({ setProp, node }) => {
                             name="boxmodel-ex-1_height"
                             size="3"
                             value={
-                              node.height
+                              sizeWithStyle
+                                ? style["height"]
+                                : node.height
                                 ? `${node.height}${node.heightUnits || "px"}`
                                 : ""
                             }
@@ -271,20 +275,23 @@ const BoxModelEditor = ({ setProp, node }) => {
                 field={{ name: "width", label: "width", type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
+                isStyle={!!sizeWithStyle}
               />
               <SettingsRow
                 field={{ name: "height", label: "height", type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
+                isStyle={!!sizeWithStyle}
               />
               <SettingsRow
                 field={{
-                  name: "minHeight",
+                  name: sizeWithStyle ? "min-height" : "minHeight",
                   label: "min height",
                   type: "DimUnits",
                 }}
                 node={node}
                 setProp={setProp}
+                isStyle={!!sizeWithStyle}
               />
             </Fragment>
           )}

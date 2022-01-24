@@ -670,6 +670,7 @@ const features = {
   serve_static_dependencies: true,
   deep_public_plugin_serve: true,
   fieldrepeats_in_field_attributes: true,
+  no_plugin_fieldview_length_check: true,
 };
 
 module.exports = {
