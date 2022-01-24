@@ -587,12 +587,15 @@ const render = ({
       let markup;
       if (cardDeck)
         markup = div(
-          { class: "card-deck" },
+          { class: "card-deck", style: segment.style },
           segment.besides.map((t: any, ixb: number) => go(t, false, ixb))
         );
       else
         markup = div(
-          { class: "row w-100" },
+          {
+            class: "row w-100",
+            style: segment.style,
+          },
           segment.besides.map((t: any, ixb: number) =>
             div(
               {
