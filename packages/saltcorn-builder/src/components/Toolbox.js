@@ -622,6 +622,9 @@ const ToolboxEdit = () => {
         <HTMLElem connectors={connectors} />
         <ViewElem connectors={connectors} views={views} />
       </div>
+      <div className="toolbar-row">
+        <JoinFieldElem connectors={connectors} options={options} />
+      </div>
     </Fragment>
   );
 };

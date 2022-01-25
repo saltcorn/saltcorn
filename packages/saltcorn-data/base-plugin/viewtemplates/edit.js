@@ -114,11 +114,13 @@ const configuration_workflow = (req) =>
             l.suitableFor("edit")
           );
           const myviewrow = await View.findOne({ name: context.viewname });
+          const { parent_field_list } = await table.get_parent_relations(true);
 
           return {
             tableName: table.name,
             fields,
             field_view_options,
+            parent_field_list,
             handlesTextStyle,
             roles,
             actions,
