@@ -127,6 +127,7 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
+const { getState } = require("../../db/state");
 
 /**
  * @returns {Workflow}
@@ -294,7 +295,26 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
-
+      //console.log({ fieldview, field });
+      if (fieldview &amp;&amp; field.type &amp;&amp; field.type === "Key") {
+        const fv = getState().keyFieldviews[fieldview];
+        if (fv &amp;&amp; (fv.isEdit || fv.isFilter)) {
+          segment.options = distinct_values[field_name];
+          return fv.run(
+            field_name,
+            state[field_name],
+            {
+              onChange: `set_state_field('${field_name}', this.value)`,
+              ...field.attributes,
+              ...configuration,
+            },
+            "",
+            false,
+            segment,
+            state
+          );
+        }
+      }
       if (
         fieldview &amp;&amp;
         field.type &amp;&amp;
