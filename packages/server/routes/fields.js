@@ -49,7 +49,6 @@ module.exports = router;
  */
 const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
   let isPrimary = false;
-
   let primaryTypes = Object.entries(getState().types)
     .filter(([k, v]) => v.primaryKey)
     .map(([k, v]) => k);
