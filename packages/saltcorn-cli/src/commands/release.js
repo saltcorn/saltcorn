@@ -68,7 +68,7 @@ class ReleaseCommand extends Command {
       });
     };
     const publish = (dir) =>
-      spawnSync("npm", ["publish"], {
+      spawnSync("npm", ["publish", "--access=public"], {
         stdio: "inherit",
         cwd: `packages/${dir}/`,
       });
