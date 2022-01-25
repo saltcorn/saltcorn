@@ -1,27 +1,30 @@
-import db from "../db";
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
+import db from "@saltcorn/data/db/index";
+const { getState } = require("@saltcorn/data/db/state");
+getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
 import backup from "../models/backup";
 const { create_backup, restore } = backup;
-const reset = require("../db/reset_schema");
+const reset = require("@saltcorn/data/db/reset_schema");
 import { unlink } from "fs/promises";
-import Table from "../models/table";
-import View from "../models/view";
-import User from "../models/user";
-import config from "../models/config";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
+import config from "@saltcorn/data/models/config";
 const { setConfig, getConfig } = config;
-import Trigger from "../models/trigger";
-import Library from "../models/library";
-import Role from "../models/role";
+import Trigger from "@saltcorn/data/models/trigger";
+import Library from "@saltcorn/data/models/library";
+import Role from "@saltcorn/data/models/role";
 
-import { assertIsSet, assertsObjectIsUser } from "./assertions";
+import {
+  assertIsSet,
+  assertsObjectIsUser,
+} from "@saltcorn/data/tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
 });
 
 describe("Backup and restore", () => {

@@ -17,7 +17,7 @@ class DeleteTenantsCommand extends Command {
     const {
       getAllTenantRows,
       deleteTenant,
-    } = require("@saltcorn/data/models/tenant");
+    } = require("@saltcorn/admin-models/models/tenant");
     const db = require("@saltcorn/data/db");
     const tenantList = await getAllTenantRows();
     const tensExamine = tenantList.slice(

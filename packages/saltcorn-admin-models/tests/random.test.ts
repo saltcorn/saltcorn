@@ -1,28 +1,34 @@
-const { random_table, fill_table_row, all_views } = require("../models/random");
-import db from "../db";
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
+const {
+  random_table,
+  fill_table_row,
+  all_views,
+} = require("@saltcorn/data/models/random");
+import db from "@saltcorn/data/db/index";
+const { getState } = require("@saltcorn/data/db/state");
+getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
 const { set_seed } = require("chaos-guinea-pig");
-const is = require("contractis/is");
 import generators from "@saltcorn/types/generators";
-const { oneOf } = generators;
-import Form from "../models/form";
-import User from "../models/user";
+const { oneOf, generateBool } = generators;
+import Form from "@saltcorn/data/models/form";
+import User from "@saltcorn/data/models/user";
 
 import markup from "@saltcorn/markup";
 const { renderForm } = markup;
 import { unlink } from "fs/promises";
 import backup from "../models/backup";
 const { create_backup, restore, create_csv_from_rows } = backup;
-const reset = require("../db/reset_schema");
-import mocks from "./mocks";
+const reset = require("@saltcorn/data/db/reset_schema");
+import mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;
-import Table from "../models/table";
-import Field from "../models/field";
+import Table from "@saltcorn/data/models/table";
+import Field from "@saltcorn/data/models/field";
 import { dir } from "tmp-promise";
 import { join } from "path";
 import { Row } from "@saltcorn/db-common/internal";
-import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
+import {
+  assertIsSet,
+  assertsIsSuccessMessage,
+} from "@saltcorn/data/tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
 jest.setTimeout(80000);
@@ -30,8 +36,8 @@ jest.setTimeout(80000);
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
   getState().registerPlugin("mock_plugin", plugin_with_routes);
 });
 const seed = set_seed();
@@ -51,7 +57,7 @@ describe("Random tables", () => {
       const nonFkey = fields.filter((f: Field) => !f.is_fkey && !f.primary_key);
       expect(rows.length > -1).toBe(true);
       //enable versioning
-      if (is.bool.generate()) await table.update({ versioned: true });
+      if (generateBool()) await table.update({ versioned: true });
       //update a row
       let id;
       if (rows.length > 0) {

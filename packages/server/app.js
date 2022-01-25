@@ -28,6 +28,7 @@ const {
   getSessionStore,
   setTenant,
 } = require("./routes/utils.js");
+const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
@@ -84,7 +85,8 @@ const getApp = async (opts = {}) => {
   app.use(i18n.init);
   // init multitenant mode
   if (db.is_it_multi_tenant()) {
-    await init_multi_tenant(loadAllPlugins, opts.disableMigrate);
+    const tenants = await getAllTenants();
+    await init_multi_tenant(loadAllPlugins, opts.disableMigrate, tenants);
   }
   //
   // todo ability to configure session_secret Age

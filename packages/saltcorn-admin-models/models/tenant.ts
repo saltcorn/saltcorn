@@ -1,17 +1,19 @@
 /**
  * Tenant Management Data Layer Access
- * @category saltcorn-data
- * @module models/tenant
- * @subcategory models
+ * @category saltcorn-admin-models
+ * @module tenant
  */
-import db from "../db";
-const reset = require("../db/reset_schema");
+import db from "@saltcorn/data/db/index";
+const reset = require("@saltcorn/data/db/reset_schema");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
-import config from "./config";
+import config from "@saltcorn/data/models/config";
 const { setConfig } = config;
 import { unlink } from "fs/promises";
-import type { Plugin } from "@saltcorn/types/base_types";
+import Plugin from "@saltcorn/data/models/plugin";
 import type { Row } from "@saltcorn/db-common/internal";
+import backup from "./backup";
+const { create_backup, restore } = backup;
+const { tenants, process_send } = require("@saltcorn/data/db/state");
 
 /**
  * List all Tenants
@@ -32,35 +34,25 @@ const getAllTenantRows = async (): Promise<Row[]> => {
   return await db.select("_sc_tenants");
 };
 /**
- * Create Tenant and switch to It:
+ * Insert Tenant
  * - normalize domain name
  * - create db schema
  * - reset db schema (create required )
- * - change current base_url
- *
- * Arguments:
- * subdomain - tenant name (subdomain)
- * newurl - base url of tenant
- * email - email of creator
- * description - description of tenant
  * @function
- * @param {string} subdomain
- * @param {string} [newurl]
- * @param {string} [email]
- * @param {string} [description]
+ * @param {string} subdomain tenant name (subdomain)
+ * @param {string} [email] email of creator
+ * @param {string} [description] description of tenant
  * @returns {Promise<void>}
  */
-const createTenant =
+const insertTenant =
   // TODO how to set names for arguments
   async (
     subdomain: string,
-    newurl?: string,
     email?: string,
     description?: string
-  ): Promise<void> => {
+  ): Promise<string> => {
     // normalize domain name
     const saneDomain = domain_sanitize(subdomain);
-
     // add email
     const saneEmail = typeof email !== "undefined" ? email : "";
     // add description
@@ -72,26 +64,38 @@ const createTenant =
       { noid: true }
     );
     //create schema
-    await db.query(`CREATE SCHEMA "${saneDomain}";`);
-
-    // set continuation storage
-    //db.tenantNamespace.set("tenant", saneDomain);
-    await db.runWithTenant(saneDomain, async () => {
-      //reset schema
-      await reset(true, saneDomain);
-      if (newurl) await setConfig("base_url", newurl);
-    });
+    if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
+    return saneDomain;
   };
+/**
+ * Switch to Tenant:
+ * - change current base_url
+ * @param subdomain tenant name (subdomain)
+ * @param newurl base url of tenant
+ */
+const switchToTenant = async (
+  domain: string,
+  newurl: string
+): Promise<void> => {
+  // set continuation storage
+  //db.tenantNamespace.set("tenant", saneDomain);
+  await db.runWithTenant(domain, async () => {
+    //reset schema
+    await reset(true, domain);
+    if (newurl) await setConfig("base_url", newurl);
+  });
+};
 const copy_tenant_template = async ({
   tenant_template,
   target,
+  state,
   loadAndSaveNewPlugin,
 }: {
   tenant_template: string;
   target: string;
+  state: any;
   loadAndSaveNewPlugin: (plugin: Plugin) => void;
 }) => {
-  const { create_backup, restore } = await import("./backup");
   // TODO use a hygenic name for backup file
   const backupFile = await db.runWithTenant(tenant_template, create_backup);
   await db.runWithTenant(target, async () => {
@@ -135,7 +139,7 @@ const domain_sanitize = (s: string): string =>
  * @param f - called function
  * @returns {Promise<void>} no result
  */
-const eachTenant = async (f: () => Promise<void>): Promise<void> => {
+const eachTenant = async (f: () => Promise<any>): Promise<void> => {
   await f();
   if (db.is_it_multi_tenant()) {
     const tenantList = await getAllTenants();
@@ -143,10 +147,48 @@ const eachTenant = async (f: () => Promise<void>): Promise<void> => {
   }
 };
 
+/**
+ * Create tenant
+ * @param {string} t
+ * @param {object} plugin_loader
+ * @param {string} newurl
+ * @param {boolean} noSignalOrDB
+ * @returns {Promise<void>}
+ */
+const create_tenant = async ({
+  t,
+  plugin_loader,
+  noSignalOrDB,
+  loadAndSaveNewPlugin,
+  tenant_template,
+}: {
+  t: string;
+  plugin_loader: Function;
+  noSignalOrDB?: boolean;
+  loadAndSaveNewPlugin?: (plugin: Plugin) => void;
+  tenant_template?: string;
+}) => {
+  await db.runWithTenant(t, plugin_loader);
+  if (!noSignalOrDB) {
+    if (tenant_template && loadAndSaveNewPlugin) {
+      //create backup
+      await copy_tenant_template({
+        tenant_template,
+        target: t,
+        state: tenants[t],
+        loadAndSaveNewPlugin,
+      });
+    }
+    process_send({ createTenant: t });
+  }
+};
+
 export = {
+  create_tenant,
+  insertTenant,
+  switchToTenant,
   getAllTenants,
   getAllTenantRows,
-  createTenant,
   domain_sanitize,
   deleteTenant,
   eachTenant,
