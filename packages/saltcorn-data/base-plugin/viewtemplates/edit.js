@@ -407,6 +407,9 @@ const transformForm = async ({ form, table, req, row, res }) => {
         }
       }
     },
+    join_field(segment) {
+      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}`;
+    },
     async view(segment) {
       if (!row) {
         segment.type = "blank";
