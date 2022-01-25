@@ -515,7 +515,7 @@ function ajax_modal(url, opts = {}) {
   });
 }
 
-function saveAndContinue(e) {
+function saveAndContinue(e, k) {
   var form = $(e).closest("form");
   var url = form.attr("action");
   var form_data = form.serialize();
@@ -535,6 +535,9 @@ function saveAndContinue(e) {
     error: function (request) {
       $("#page-inner-content").html(request.responseText);
       initialize_page();
+    },
+    complete: function () {
+      if (k) k();
     },
   });
 

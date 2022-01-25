@@ -478,7 +478,23 @@ const renderFormLayout = (form: Form): string => {
         );
       }
       if (action_name === "GoBack") {
-        return mkBtn(`onClick="history.back()" type="button"`);
+        if (
+          !configuration ||
+          (!configuration.save_first && !configuration.reload_after)
+        )
+          return mkBtn(`onClick="history.back()" type="button"`);
+        if (configuration.save_first && configuration.reload_after)
+          return mkBtn(
+            `onClick="saveAndContinue(this,()=>window.location=document.referrer)" type="button"`
+          );
+        if (configuration.save_first)
+          return mkBtn(
+            `onClick="saveAndContinue(this,()=>history.back())" type="button"`
+          );
+        if (configuration.reload_after)
+          return mkBtn(
+            `onClick="window.location=document.referrer" type="button"`
+          );
       }
       if (action_name === "SaveAndContinue") {
         return (

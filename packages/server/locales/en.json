@@ -863,5 +863,7 @@
 	"Transpose": "Transpose",
 	"Display one column per line": "Display one column per line",
 	"Vertical column width": "Vertical column width",
-	"Vertical width units": "Vertical width units"
+	"Vertical width units": "Vertical width units",
+	"Save before going back": "Save before going back",
+	"Reload after going back": "Reload after going back"
 }

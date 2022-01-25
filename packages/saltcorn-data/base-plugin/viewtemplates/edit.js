@@ -91,6 +91,18 @@ const configuration_workflow = (req) =>
                 type: "String",
               },
             ],
+            GoBack: [
+              {
+                name: "save_first",
+                label: req.__("Save before going back"),
+                type: "Bool",
+              },
+              {
+                name: "reload_after",
+                label: req.__("Reload after going back"),
+                type: "Bool",
+              },
+            ],
           };
           const views = await get_link_view_opts(table, context.viewname);
           if (table.name === "users") {
