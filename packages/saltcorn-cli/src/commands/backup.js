@@ -28,20 +28,21 @@ class BackupCommand extends Command {
     const { flags } = this.parse(BackupCommand);
 
     if (flags.tenant) {
-      const { create_backup } = require("@saltcorn/data/models/backup");
+      const { create_backup } = require("@saltcorn/admin-models/models/backup");
 
       const db = require("@saltcorn/data/db");
       const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
       const { init_multi_tenant } = require("@saltcorn/data/db/state");
-
+      const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
       await loadAllPlugins();
-      await init_multi_tenant(loadAllPlugins);
+      const tenants = await getAllTenants();
+      await init_multi_tenant(loadAllPlugins, undefined, tenants);
       await db.runWithTenant(flags.tenant, async () => {
         const fnm = await create_backup(flags.output);
         console.log(fnm);
       });
     } else if (flags.zip) {
-      const { create_backup } = require("@saltcorn/data/models/backup");
+      const { create_backup } = require("@saltcorn/admin-models/models/backup");
       const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
       await loadAllPlugins();
       const fnm = await create_backup(flags.output);

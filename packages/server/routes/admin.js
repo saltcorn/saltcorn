@@ -17,7 +17,7 @@ const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
-const { getAllTenants } = require("@saltcorn/data/models/tenant");
+const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const { post_btn, renderForm } = require("@saltcorn/markup");
 const {
   div,
@@ -46,7 +46,7 @@ const {
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
-const { create_backup, restore } = require("@saltcorn/data/models/backup");
+const { create_backup, restore } = require("@saltcorn/admin-models/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const {

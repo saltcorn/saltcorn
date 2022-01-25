@@ -4,6 +4,7 @@
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
+    "@saltcorn/admin-models": "0.6.4-beta.1",
     "@saltcorn/data": "0.6.4-beta.1",
     "@saltcorn/server": "0.6.4-beta.1"
   },
@@ -34,7 +35,8 @@
       "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
       "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
       "@saltcorn/markup$": "@saltcorn/markup/dist",
-      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
+      "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1"
     }
   },
   "publishConfig": {

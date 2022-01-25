@@ -11,9 +11,10 @@ const db = require("@saltcorn/data/db");
 const {
   getState,
   init_multi_tenant,
-  create_tenant,
   restart_tenant,
+  add_tenant,
 } = require("@saltcorn/data/db/state");
+const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 
 const path = require("path");
 
@@ -38,7 +39,10 @@ const {
   getRelevantPackages,
   getPluginDirectories,
 } = require("./restart_watcher");
-const { spawnSync } = require("child_process");
+const {
+  eachTenant,
+  getAllTenants,
+} = require("@saltcorn/admin-models/models/tenant");
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**
@@ -72,7 +76,8 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   // switch on sql logging - but it was initiated before???
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
   if (db.is_it_multi_tenant()) {
-    await init_multi_tenant(loadAllPlugins, disableMigrate);
+    const tenants = await getAllTenants();
+    await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
   }
   if (useClusterAdaptor) setupPrimary();
 };
@@ -95,7 +100,14 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
   if (msg.createTenant) {
-    create_tenant(msg.createTenant, loadAllPlugins, "", true);
+    const tenant_template = getState().getConfig("tenant_template");
+    add_tenant(msg.createTenant);
+    create_tenant({
+      t: msg.createTenant,
+      plugin_loader: loadAllPlugins,
+      noSignalOrDB: true,
+      tenant_template,
+    });
     db.runWithTenant(msg.createTenant, async () => {
       getState().refresh(true);
     });
@@ -117,29 +129,28 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @param {number} opts.pid
  * @returns {function}
  */
-const onMessageFromWorker = (
-  masterState,
-  { port, watchReaper, disableScheduler, pid }
-) => (msg) => {
-  //console.log("worker msg", typeof msg, msg);
-  if (msg === "Start" && !masterState.started) {
-    masterState.started = true;
-    runScheduler({ port, watchReaper, disableScheduler });
-    require("./systemd")({ port });
-    return true;
-  } else if (msg === "RestartServer") {
-    process.exit(0);
-    return true;
-  } else if (msg.tenant || msg.createTenant) {
-    ///ie from saltcorn
-    //broadcast
-    Object.entries(cluster.workers).forEach(([wpid, w]) => {
-      if (wpid !== pid) w.send(msg);
-    });
-    workerDispatchMsg(msg); //also master
-    return true;
-  }
-};
+const onMessageFromWorker =
+  (masterState, { port, watchReaper, disableScheduler, pid }) =>
+  (msg) => {
+    //console.log("worker msg", typeof msg, msg);
+    if (msg === "Start" && !masterState.started) {
+      masterState.started = true;
+      runScheduler({ port, watchReaper, disableScheduler, eachTenant });
+      require("./systemd")({ port });
+      return true;
+    } else if (msg === "RestartServer") {
+      process.exit(0);
+      return true;
+    } else if (msg.tenant || msg.createTenant) {
+      ///ie from saltcorn
+      //broadcast
+      Object.entries(cluster.workers).forEach(([wpid, w]) => {
+        if (wpid !== pid) w.send(msg);
+      });
+      workerDispatchMsg(msg); //also master
+      return true;
+    }
+  };
 
 module.exports =
   /**

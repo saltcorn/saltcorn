@@ -725,10 +725,10 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
  */
 const get_latest_npm_version = async (pkg: string): Promise<string> => {
   const { getState } = require("../db/state");
-  const { is_stale } = require("./pack");
+  const { isStale } = require("../utils");
   const stored = getState().getConfig("latest_npm_version", {});
 
-  if (stored[pkg] && !is_stale(stored[pkg].time, 6)) {
+  if (stored[pkg] && !isStale(stored[pkg].time, 6)) {
     return stored[pkg].version;
   }
   try {

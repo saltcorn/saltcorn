@@ -20,8 +20,10 @@ class FixturesCommand extends Command {
     if (flags.tenant) {
       const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
       const { init_multi_tenant } = require("@saltcorn/data/db/state");
+      const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
       await loadAllPlugins();
-      await init_multi_tenant(loadAllPlugins);
+      const tenants = await getAllTenants();
+      await init_multi_tenant(loadAllPlugins, undefined, tenants);
     }
     await maybe_as_tenant(flags.tenant, async () => {
       if (flags.reset) {

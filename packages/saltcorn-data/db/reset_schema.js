@@ -6,8 +6,8 @@
 
 //https://stackoverflow.com/a/21247009
 /**
- * @param {boolean} dontDrop 
- * @param {string} schema0 
+ * @param {boolean} dontDrop
+ * @param {string} schema0
  * @returns {Promise<void>}
  */
 const reset = async (dontDrop = false, schema0) => {
@@ -16,6 +16,8 @@ const reset = async (dontDrop = false, schema0) => {
   const schema = schema0 || db.connectObj.default_schema;
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
+  const ignoreExisting = is_sqlite && dontDrop;
+  const ifNotExists = ignoreExisting ? "IF NOT EXISTS" : "";
   const serial = is_sqlite ? "integer" : "serial";
   const json = is_sqlite ? "json" : "jsonb";
   if (!dontDrop) {
@@ -23,32 +25,48 @@ const reset = async (dontDrop = false, schema0) => {
   }
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}_sc_roles (
+    CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_roles (
       id ${serial} primary key,      
       role VARCHAR(50)
     )
   `);
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}_sc_config (
+    CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_config (
       key text primary key,      
       value JSONB not null
     )
   `);
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}_sc_migrations (
+    CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_migrations (
       migration text primary key
     )
   `);
 
-  await db.insert(`_sc_roles`, { role: "admin", id: 1 }, { noid: true });
-  await db.insert(`_sc_roles`, { role: "staff", id: 4 }, { noid: true });
-  await db.insert(`_sc_roles`, { role: "user", id: 8 }, { noid: true });
-  await db.insert(`_sc_roles`, { role: "public", id: 10 }, { noid: true });
+  await db.insert(
+    `_sc_roles`,
+    { role: "admin", id: 1 },
+    { noid: true, ignoreExisting }
+  );
+  await db.insert(
+    `_sc_roles`,
+    { role: "staff", id: 4 },
+    { noid: true, ignoreExisting }
+  );
+  await db.insert(
+    `_sc_roles`,
+    { role: "user", id: 8 },
+    { noid: true, ignoreExisting }
+  );
+  await db.insert(
+    `_sc_roles`,
+    { role: "public", id: 10 },
+    { noid: true, ignoreExisting }
+  );
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}_sc_tables
+    CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_tables
     (
       id ${serial} primary key,
       name text NOT NULL unique,
@@ -60,11 +78,11 @@ const reset = async (dontDrop = false, schema0) => {
   `);
 
   await db.query(`
-    CREATE INDEX _sc_idx_table_name on ${schemaQdot}_sc_tables(name); 
+    CREATE INDEX ${ifNotExists} _sc_idx_table_name on ${schemaQdot}_sc_tables(name); 
   `);
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}_sc_fields
+    CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_fields
     (
       id ${serial} primary key,
       table_id integer references ${schemaQdot}_sc_tables(id) NOT NULL,
@@ -77,11 +95,11 @@ const reset = async (dontDrop = false, schema0) => {
     )
   `);
   await db.query(`
-    CREATE INDEX _sc_idx_field_table on ${schemaQdot}_sc_fields(table_id); 
+    CREATE INDEX ${ifNotExists} _sc_idx_field_table on ${schemaQdot}_sc_fields(table_id); 
   `);
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}_sc_views
+    CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_views
     (
       id ${serial} primary key,
       viewtemplate text NOT NULL,
@@ -94,11 +112,11 @@ const reset = async (dontDrop = false, schema0) => {
     )
   `);
   await db.query(`
-    CREATE INDEX _sc_idx_view_name on ${schemaQdot}_sc_views(name); 
+    CREATE INDEX ${ifNotExists} _sc_idx_view_name on ${schemaQdot}_sc_views(name); 
   `);
 
   await db.query(`
-    CREATE TABLE ${schemaQdot}users (
+    CREATE TABLE ${ifNotExists} ${schemaQdot}users (
       id ${serial} primary key,      
       email VARCHAR(128) not null unique,
       password VARCHAR(60),
@@ -107,26 +125,34 @@ const reset = async (dontDrop = false, schema0) => {
   `);
 
   await db.query(`
-  CREATE TABLE ${schemaQdot}_sc_plugins (
+  CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_plugins (
     id ${serial} primary key,      
     name VARCHAR(128),
     source VARCHAR(128),
     location VARCHAR(128)
   )
   `);
-  await db.insert("_sc_plugins", {
-    name: "base",
-    source: "npm",
-    location: "@saltcorn/base-plugin",
-  });
-  await db.insert("_sc_plugins", {
-    name: "sbadmin2",
-    source: "npm",
-    location: "@saltcorn/sbadmin2",
-  });
+  await db.insert(
+    "_sc_plugins",
+    {
+      name: "base",
+      source: "npm",
+      location: "@saltcorn/base-plugin",
+    },
+    { ignoreExisting }
+  );
+  await db.insert(
+    "_sc_plugins",
+    {
+      name: "sbadmin2",
+      source: "npm",
+      location: "@saltcorn/sbadmin2",
+    },
+    { ignoreExisting }
+  );
   if (schema === db.connectObj.default_schema && !is_sqlite)
     await db.query(`
-    CREATE UNLOGGED TABLE "${db.connectObj.default_schema}"."_sc_session" (
+    CREATE UNLOGGED TABLE ${ifNotExists} "${db.connectObj.default_schema}"."_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,
       "expire" timestamp(6) NOT NULL
@@ -135,7 +161,7 @@ const reset = async (dontDrop = false, schema0) => {
     
     ALTER TABLE "${db.connectObj.default_schema}"."_sc_session" ADD CONSTRAINT "_sc_session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
     
-    CREATE INDEX "_sc_IDX_session_expire" ON "${db.connectObj.default_schema}"."_sc_session" ("expire");
+    CREATE INDEX ${ifNotExists} "_sc_IDX_session_expire" ON "${db.connectObj.default_schema}"."_sc_session" ("expire");
   `);
 
   await migrate(schema);

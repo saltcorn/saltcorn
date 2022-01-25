@@ -13,7 +13,7 @@ const { Command, flags } = require("@oclif/command");
  * @extends oclif.Command
  * @category saltcorn-cli
  */
-class CreateTenantCommand extends Command {
+class CreateTenantCommand extends Command { 
   /**
    * @returns {Promise<void>}
    */
@@ -26,14 +26,14 @@ class CreateTenantCommand extends Command {
       this.exit(0);
       return;
     }
-    const { createTenant } = require("@saltcorn/data/models/tenant");
+    const { insertTenant, switchToTenant } = require("@saltcorn/admin-models/models/tenant");
     //const url = typeof flags.url !== `undefined`? flags.url : "";
     //const email = typeof flags.email !== `undefined`? flags.email : "";
     //const description = flags.description !==  `undefined` ? flags.description : "";
     // TODO Do we need to set default value for base url or not? And what is correct way to get domain of base_url here?
     // const base =  await db.getgetConfig("base_url");
-    await createTenant(args.tenant, flags.url, flags.email, flags.description);
-    console.log()
+    await switchToTenant(await insertTenant(args.tenant, flags.email, flags.description), flags.url);
+    console.log();
     this.exit(0);
   }
 }

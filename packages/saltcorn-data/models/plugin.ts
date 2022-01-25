@@ -6,7 +6,7 @@
  */
 import db from "../db";
 import View from "./view";
-const { is_stale } = require("./pack");
+const { isStale } = require("../utils");
 import fetch from "node-fetch";
 import { Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
@@ -159,7 +159,7 @@ class Plugin {
     );
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-    if (!stored || !stored_at || is_stale(stored_at)) {
+    if (!stored || !stored_at || isStale(stored_at)) {
       try {
         const from_api = await Plugin.store_plugins_available_from_store();
         await getState().setConfig("available_plugins", from_api);

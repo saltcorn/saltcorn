@@ -1,31 +1,31 @@
 /**
- * @category saltcorn-data
- * @module models/pack
- * @subcategory models
+ * @category saltcorn-admin-models
+ * @module pack
  */
 
-import Table from "./table";
-import db from "../db";
-import View from "./view";
-import Field from "./field";
-import Trigger from "./trigger";
-const { getState } = require("../db/state");
+import Table from "@saltcorn/data/models/table";
+import db from "@saltcorn/data/db/index";
+import View from "@saltcorn/data/models/view";
+import Field from "@saltcorn/data/models/field";
+import Trigger from "@saltcorn/data/models/trigger";
+const { getState } = require("@saltcorn/data/db/state");
 import fetch from "node-fetch";
-import Page from "./page";
-import TableConstraint from "./table_constraints";
-import Role from "./role";
-import Library from "./library";
-import config from "./config";
+import Page from "@saltcorn/data/models/page";
+import TableConstraint from "@saltcorn/data/models/table_constraints";
+import Role from "@saltcorn/data/models/role";
+import Library from "@saltcorn/data/models/library";
+import config from "@saltcorn/data/models/config";
 import type { Pack } from "@saltcorn/types/base_types";
 import type { PagePack } from "@saltcorn/types/model-abstracts/abstract_page";
 const { save_menu_items } = config;
-import type Plugin from "./plugin";
+import type Plugin from "@saltcorn/data/models/plugin";
 import type { ViewPack } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import type { PluginPack } from "@saltcorn/types/model-abstracts/abstract_plugin";
 import type { LibraryPack } from "@saltcorn/types/model-abstracts/abstract_library";
 import type { TriggerPack } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import type { RolePack } from "@saltcorn/types/model-abstracts/abstract_role";
+const { isStale } = require("@saltcorn/data/utils");
 
 /**
  * @function
@@ -86,7 +86,7 @@ const view_pack = async (name: string): Promise<ViewPack> => {
  * @returns {Promise<object>}
  */
 const plugin_pack = async (name: string): Promise<PluginPack> => {
-  const Plugin = (await import("./plugin")).default;
+  const Plugin = (await import("@saltcorn/data/models/plugin")).default;
   const plugin = await Plugin.findOne({ name });
   if (!plugin) throw new Error(`Unable to find plugin '${name}'`);
   return {
@@ -273,7 +273,7 @@ const install_pack = async (
   loadAndSaveNewPlugin: (arg0: Plugin) => void,
   bare_tables = false
 ): Promise<void> => {
-  const Plugin = (await import("./plugin")).default;
+  const Plugin = (await import("@saltcorn/data/models/plugin")).default;
   const existingPlugins = await Plugin.find({});
   for (const plugin of pack.plugins) {
     if (!existingPlugins.some((ep) => ep.name === plugin.name)) {
@@ -371,18 +371,6 @@ const install_pack = async (
 
 /**
  * @function
- * @param {Date} date
- * @param {string} [hours = 24]
- * @returns {boolean}
- */
-const is_stale = (date: Date | string, hours: number = 24): boolean => {
-  const oneday = 60 * 60 * hours * 1000;
-  let now = new Date();
-  return new Date(date).valueOf() < now.valueOf() - oneday;
-};
-
-/**
- * @function
  * @returns {object[]}
  */
 const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
@@ -392,7 +380,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
     false
   );
   //console.log("in fetch", stored_at, stored)
-  if (!stored || !stored_at || is_stale(stored_at)) {
+  if (!stored || !stored_at || isStale(stored_at)) {
     try {
       const from_api = await fetch_available_packs_from_store();
       await getState().setConfig("available_packs", from_api);
@@ -448,7 +436,6 @@ export = {
   install_pack,
   fetch_available_packs,
   fetch_pack_by_name,
-  is_stale,
   can_install_pack,
   uninstall_pack,
   add_to_menu,
