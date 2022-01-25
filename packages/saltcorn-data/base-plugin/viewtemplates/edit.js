@@ -57,6 +57,14 @@ const configuration_workflow = (req) =>
           const fields = (await table.getFields()).filter(
             (f) => !f.primary_key
           );
+          for (const field of fields) {
+            if (field.type === "Key") {
+              field.reftable = await Table.findOne({
+                name: field.reftable_name,
+              });
+              if (field.reftable) await field.reftable.getFields();
+            }
+          }
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,

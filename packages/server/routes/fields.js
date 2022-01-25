@@ -634,9 +634,13 @@ router.post(
       if (kpath.length === 2 && row[kpath[0]]) {
         const field = fields.find((f) => f.name === kpath[0]);
         const reftable = await Table.findOne({ name: field.reftable_name });
+        const targetField = (await reftable.getFields()).find(
+          (f) => f.name === kpath[1]
+        );
+        const fv = targetField.type.fieldviews[fieldview];
         const q = { [reftable.pk_name]: row[kpath[0]] };
         const refRow = await reftable.getRow(q);
-        res.send(`${refRow[kpath[1]]}`);
+        res.send(fv.run(refRow[kpath[1]], req));
         return;
       }
       res.send("");
