@@ -12,6 +12,8 @@ const {
   getAllTenants,
   domain_sanitize,
   deleteTenant,
+  switchToTenant,
+  insertTenant,
 } = require("@saltcorn/admin-models/models/tenant");
 const {
   renderForm,
@@ -46,7 +48,10 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
-const { create_backup, restore } = require("@saltcorn/admin-models/models/backup");
+const {
+  create_backup,
+  restore,
+} = require("@saltcorn/admin-models/models/backup");
 
 /**
  * @type {object}
@@ -252,11 +257,11 @@ router.post(
       } else {
         const newurl = getNewURL(req, subdomain);
         const tenant_template = getState().getConfig("tenant_template");
+        await switchToTenant(await insertTenant(subdomain), newurl);
         add_tenant(subdomain);
         await create_tenant({
           t: subdomain,
           plugin_loader: loadAllPlugins,
-          newurl,
           noSignalOrDB: false,
           loadAndSaveNewPlugin: loadAndSaveNewPlugin,
           tenant_template,

@@ -39,7 +39,10 @@ const {
   getRelevantPackages,
   getPluginDirectories,
 } = require("./restart_watcher");
-const { eachTenant, getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const {
+  eachTenant,
+  getAllTenants,
+} = require("@saltcorn/admin-models/models/tenant");
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**
@@ -102,7 +105,6 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     create_tenant({
       t: msg.createTenant,
       plugin_loader: loadAllPlugins,
-      newUrl: "",
       noSignalOrDB: true,
       tenant_template,
     });

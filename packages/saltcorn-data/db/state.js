@@ -611,7 +611,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate, tenantList) => {
   }
 };
 
-const add_tenant = (t, noSignalOrDB) => {
+const add_tenant = (t) => {
   tenants[t] = new State(t);
 };
 

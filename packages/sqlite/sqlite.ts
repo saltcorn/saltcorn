@@ -218,7 +218,7 @@ export const deleteWhere = async (
 export const insert = async (
   tbl: string,
   obj: Row,
-  opts: { noid?: boolean } = {}
+  opts: { noid?: boolean; ignoreExisting?: boolean } = {}
 ): Promise<string | void> => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
@@ -236,7 +236,8 @@ export const insert = async (
   const valList = kvs
     .filter(([k, v]: [any, any]) => !(v && v.next_version_by_id))
     .map(mkVal);
-  const sql = `insert into "${sqlsanitize(
+  const ignoreExisting = opts.ignoreExisting ? "or ignore" : "";
+  const sql = `insert ${ignoreExisting} into "${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList})`;
 
@@ -331,9 +332,7 @@ export const add_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  const sql = `create unique index ${sqlsanitize(
-    table_name
-  )}_${field_names
+  const sql = `create unique index ${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique on "${sqlsanitize(table_name)}"(${field_names
     .map((f) => `"${sqlsanitize(f)}"`)

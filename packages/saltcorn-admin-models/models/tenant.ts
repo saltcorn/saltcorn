@@ -64,7 +64,7 @@ const insertTenant =
       { noid: true }
     );
     //create schema
-    await db.query(`CREATE SCHEMA "${saneDomain}";`);
+    if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
     return saneDomain;
   };
 /**
@@ -158,20 +158,16 @@ const eachTenant = async (f: () => Promise<any>): Promise<void> => {
 const create_tenant = async ({
   t,
   plugin_loader,
-  newurl,
   noSignalOrDB,
   loadAndSaveNewPlugin,
   tenant_template,
 }: {
   t: string;
   plugin_loader: Function;
-  newurl: string;
   noSignalOrDB?: boolean;
   loadAndSaveNewPlugin?: (plugin: Plugin) => void;
   tenant_template?: string;
 }) => {
-  if (!noSignalOrDB)
-    await switchToTenant(await insertTenant(t, newurl), newurl);
   await db.runWithTenant(t, plugin_loader);
   if (!noSignalOrDB) {
     if (tenant_template && loadAndSaveNewPlugin) {

@@ -7,7 +7,13 @@ const {
 } = require("@saltcorn/data/db/state");
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
 import tenant from "../models/tenant";
-const { create_tenant, deleteTenant, getAllTenants } = tenant;
+const {
+  create_tenant,
+  deleteTenant,
+  getAllTenants,
+  switchToTenant,
+  insertTenant,
+} = tenant;
 import config from "@saltcorn/data/models/config";
 const { getConfig } = config;
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
@@ -23,12 +29,15 @@ describe("Tenant", () => {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
       getState().setConfig("base_url", "http://example.com/");
-      add_tenant("test10");
       const tenant_template = getState().getConfig("tenant_template");
+      await switchToTenant(
+        await insertTenant("test10"),
+        "http://test10.example.com/"
+      );
+      add_tenant("test10");
       await create_tenant({
         t: "test10",
         plugin_loader: () => {},
-        newurl: "http://test10.example.com/",
         tenant_template,
       });
       db.runWithTenant("test10", async () => {
