@@ -132,17 +132,18 @@ const calcfldViewOptions = contract(
         else if (isFilter) {
           fvs[f.name] = Object.keys(getState().keyFieldviews);
         } else {
-          if (f.reftable && f.reftable.fields) {
-            const { field_view_options } = calcfldViewOptions(
-              f.reftable.fields,
-              mode
-            );
-            for (const jf of f.reftable.fields) {
-              fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
-            }
-          }
           fvs[f.name] = ["show"];
         }
+        if (f.reftable && f.reftable.fields) {
+          const { field_view_options } = calcfldViewOptions(
+            f.reftable.fields,
+            isEdit ? "show" : mode
+          );
+          for (const jf of f.reftable.fields) {
+            fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+          }
+        }
+
         Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
