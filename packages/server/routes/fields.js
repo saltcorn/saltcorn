@@ -624,10 +624,29 @@ router.post(
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
     const fields = await table.getFields();
-    const field = fields.find((f) => f.name === fieldName);
-    const formula = field.expression;
     const row = { ...req.body };
     readState(row, fields);
+
+    if (fieldName.includes(".")) {
+      //join field
+      const kpath = fieldName.split(".");
+
+      if (kpath.length === 2 && row[kpath[0]]) {
+        const field = fields.find((f) => f.name === kpath[0]);
+        const reftable = await Table.findOne({ name: field.reftable_name });
+        const q = { [reftable.pk_name]: row[kpath[0]] };
+        const refRow = await reftable.getRow(q);
+        res.send(`${refRow[kpath[1]]}`);
+        return;
+      }
+      res.send("");
+      return;
+    }
+
+    const field = fields.find((f) => f.name === fieldName);
+
+    const formula = field.expression;
+
     let result;
     try {
       if (field.stored) {
