@@ -158,7 +158,18 @@ const is_plugin_type = is.obj({
       isEdit: is.bool,
       run: is.or(
         is.fun(is.any, is.str),
-        is.fun([is.str, is.any, is.maybe(is.obj()), is.str, is.bool], is.str)
+        is.fun(
+          [
+            is.str,
+            is.any,
+            is.maybe(is.obj()),
+            is.str,
+            is.bool,
+            is.maybe(is.obj({})),
+            is.maybe(is.obj({})),
+          ],
+          is.str
+        )
       ),
     })
   ),
