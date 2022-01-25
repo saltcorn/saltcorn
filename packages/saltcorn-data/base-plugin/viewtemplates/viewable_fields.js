@@ -745,10 +745,15 @@ const fill_presets = async (table, req, fixed) => {
   });
   return fixed;
 };
+const objToQueryString = (o) =>
+  Object.entries(o || {})
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join("&");
 
 module.exports = {
   get_viewable_fields,
   action_url,
+  objToQueryString,
   action_link,
   view_linker,
   parse_view_select,

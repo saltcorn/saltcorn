@@ -35,6 +35,7 @@ const {
   fill_presets,
   parse_view_select,
   get_view_link_query,
+  objToQueryString,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -416,7 +417,8 @@ const transformForm = async ({ form, table, req, row, res }) => {
       }
     },
     join_field(segment) {
-      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}`;
+      const qs = objToQueryString(segment.configuration);
+      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
     async view(segment) {
       if (!row) {

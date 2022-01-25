@@ -27,6 +27,7 @@ const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
+const { applyAsync } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -48,6 +49,7 @@ module.exports = router;
  */
 const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
   let isPrimary = false;
+
   let primaryTypes = Object.entries(getState().types)
     .filter(([k, v]) => v.primaryKey)
     .map(([k, v]) => k);
@@ -640,7 +642,12 @@ router.post(
         const fv = targetField.type.fieldviews[fieldview];
         const q = { [reftable.pk_name]: row[kpath[0]] };
         const refRow = await reftable.getRow(q);
-        res.send(fv.run(refRow[kpath[1]], req));
+        const configuration = req.query;
+        let configFields = [];
+        if (fv.configFields)
+          configFields = await applyAsync(fv.configFields, targetField);
+        readState(configuration, configFields);
+        res.send(fv.run(refRow[kpath[1]], req, configuration));
         return;
       }
       res.send("");
