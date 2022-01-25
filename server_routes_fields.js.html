@@ -118,6 +118,7 @@ const expressionBlurb = require("../markup/expression_blurb");
 const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
+const { applyAsync } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -715,10 +716,38 @@ router.post(
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
     const fields = await table.getFields();
-    const field = fields.find((f) => f.name === fieldName);
-    const formula = field.expression;
     const row = { ...req.body };
     readState(row, fields);
+
+    if (fieldName.includes(".")) {
+      //join field
+      const kpath = fieldName.split(".");
+
+      if (kpath.length === 2 &amp;&amp; row[kpath[0]]) {
+        const field = fields.find((f) => f.name === kpath[0]);
+        const reftable = await Table.findOne({ name: field.reftable_name });
+        const targetField = (await reftable.getFields()).find(
+          (f) => f.name === kpath[1]
+        );
+        const fv = targetField.type.fieldviews[fieldview];
+        const q = { [reftable.pk_name]: row[kpath[0]] };
+        const refRow = await reftable.getRow(q);
+        const configuration = req.query;
+        let configFields = [];
+        if (fv.configFields)
+          configFields = await applyAsync(fv.configFields, targetField);
+        readState(configuration, configFields);
+        res.send(fv.run(refRow[kpath[1]], req, configuration));
+        return;
+      }
+      res.send("");
+      return;
+    }
+
+    const field = fields.find((f) => f.name === fieldName);
+
+    const formula = field.expression;
+
     let result;
     try {
       if (field.stored) {

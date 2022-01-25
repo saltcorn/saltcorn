@@ -486,6 +486,11 @@ const mkFormRowForField = (
  */
 const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
+    join_field(segment: any) {
+      if (segment.sourceURL)
+        return div({ "data-source-url": segment.sourceURL }, "join data");
+      return "";
+    },
     field(segment: any) {
       const field0 = form.fields.find((f) => f.name === segment.field_name);
       const field = { ...field0 };
