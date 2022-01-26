@@ -228,13 +228,15 @@ function initialize_page() {
   });
   if (codes.length > 0)
     enable_codemirror(() => {
-      codes.forEach((el) => {
-        console.log($(el).attr("mode"), el);
-        CodeMirror.fromTextArea(el, {
-          lineNumbers: true,
-          mode: $(el).attr("mode"),
+      setTimeout(() => {
+        codes.forEach((el) => {
+          //console.log($(el).attr("mode"), el);
+          CodeMirror.fromTextArea(el, {
+            lineNumbers: true,
+            mode: $(el).attr("mode"),
+          });
         });
-      });
+      }, 100);
     });
   const locale =
     navigator.userLanguage ||
