@@ -151,6 +151,12 @@ const typeToGridType = (t, field) => {
           ? field.attributes.max
           : undefined,
     };
+  } else if (t.name === "Bool") {
+    jsgField.editor = "tickCross";
+    jsgField.formatter = "tickCross";
+    jsgField.hozAlign = "center";
+    jsgField.editorParams = field.required ? {} : { tristate: true };
+    jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
   }
   /*else
     jsgField.type =
@@ -354,8 +360,10 @@ router.get(
   })
 );
 
-//number edits
-//bools
-//pagination
 //date
+//colour
+//right-align numbers
+//pagination
+//initial order
+
 //versioned
