@@ -138,7 +138,21 @@ const typeToGridType = (t, field) => {
     jsgField.editorParams = { values };
     jsgField.formatterParams = { values };
     jsgField.formatter = "__lookupIntToString";
-  } /*else
+  } else if (t.name === "Float" || t.name === "Integer") {
+    jsgField.editor = "number";
+    jsgField.editorParams = {
+      step: t.name === "Integer" ? 1 : undefined,
+      min:
+        typeof field.attributes.min !== "undefined"
+          ? field.attributes.min
+          : undefined,
+      max:
+        typeof field.attributes.max !== "undefined"
+          ? field.attributes.max
+          : undefined,
+    };
+  }
+  /*else
     jsgField.type =
       t.name === "String"
         ? "text"
@@ -339,3 +353,9 @@ router.get(
     );
   })
 );
+
+//number edits
+//bools
+//pagination
+//date
+//versioned
