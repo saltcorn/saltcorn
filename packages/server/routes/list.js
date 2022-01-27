@@ -137,7 +137,7 @@ const typeToGridType = (t, field) => {
     field.options.forEach(({ label, value }) => (values[value] = label));
     jsgField.editorParams = { values };
     jsgField.formatterParams = { values };
-    jsgField.formatter = "lookup";
+    jsgField.formatter = "__lookupIntToString";
   } /*else
     jsgField.type =
       t.name === "String"
@@ -299,7 +299,11 @@ router.get(
               //script(domReady(versionsField(table.name))),
               script(
                 domReady(`
-              const columns=${JSON.stringify(jsfields)};             
+              const columns=${JSON.stringify(jsfields)};          
+              columns.forEach(col=>{
+                if(col.formatter && typeof col.formatter ==="string" && col.formatter.startsWith("__"))
+                  col.formatter = window[col.formatter.substring(2)];
+              })   
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${table.name}",                   
                   layout:"fitColumns", 

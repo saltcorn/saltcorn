@@ -231,3 +231,9 @@ function showHideCol(nm, e) {
   if (e && e.checked) window.tabulator_table.showColumn(nm);
   else window.tabulator_table.hideColumn(nm);
 }
+
+function lookupIntToString(cell, formatterParams, onRendered) {
+  const val = `${cell.getValue()}`;
+  const res = formatterParams.values[val];
+  return res;
+}
