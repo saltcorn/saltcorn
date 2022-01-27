@@ -298,3 +298,29 @@ function isoDateTimeFormatter(cell, formatterParams, onRendered) {
 
   return new Date(val).toLocaleString(window.detected_locale || "en");
 }
+function colorFormatter(cell, formatterParams, onRendered) {
+  const val = cell.getValue();
+  if (!val) return "";
+
+  return $(
+    `<div style="height: 15px; width: 30px; background-color: ${val}"></div>`
+  )[0];
+}
+
+function colorEditor(cell, onRendered, success, cancel) {
+  const editor = document.createElement("input");
+
+  editor.setAttribute("type", "color");
+  editor.value = cell.getValue();
+  //when the value has been set, trigger the cell to update
+  function successFunc() {
+    const val = editor.value;
+    success(val);
+  }
+
+  editor.addEventListener("change", successFunc);
+  editor.addEventListener("blur", successFunc);
+
+  //return the editor element
+  return editor;
+}

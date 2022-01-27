@@ -165,6 +165,12 @@ const typeToGridType = (t, field) => {
     jsgField.formatter = "__isoDateTimeFormatter";
 
     //jsgField.headerFilter = "input";
+  } else if (t.name === "Color") {
+    jsgField.editor = "__colorEditor";
+    jsgField.formatter = "__colorFormatter";
+    jsgField.hozAlign = "center";
+    jsgField.vertAlign = "center";
+    //jsgField.headerFilter = "input";
   }
   /*else
     jsgField.type =
@@ -370,8 +376,7 @@ router.get(
   })
 );
 
-//date
-//colour
+//insert new row
 //pagination
 //initial order
 
