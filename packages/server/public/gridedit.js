@@ -5,6 +5,7 @@
  * @param keyfields -
  * @returns {{deleteItem: (function(*): *), loadData: (function(*=): *), updateItem: (function(*=): *), insertItem: (function(*=): *)}}
  */
+
 /*
 function jsgrid_controller(table_name, vc, keyfields) {
   var url = "/api/" + table_name + "/";
@@ -323,4 +324,7 @@ function colorEditor(cell, onRendered, success, cancel) {
 
   //return the editor element
   return editor;
+}
+function add_tabulator_row() {
+  window.tabulator_table.addRow({});
 }

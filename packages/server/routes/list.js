@@ -17,6 +17,7 @@ const {
   script,
   domReady,
   div,
+  i,
   text,
   button,
   input,
@@ -289,42 +290,51 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
-            right: div(
-              { class: "dropdown" },
+            right:
               button(
                 {
-                  class: "btn btn-sm btn-outline-secondary dropdown-toggle",
-                  "data-boundary": "viewport",
-                  type: "button",
-                  id: "btnHideCols",
-                  "data-toggle": "dropdown",
-                  "aria-haspopup": "true",
-                  "aria-expanded": "false",
+                  class: "btn btn-sm btn-primary mr-2",
+                  onClick: "add_tabulator_row()",
                 },
-                "Show/hide fields"
-              ),
+                i({ class: "fas fa-plus mr-1" }),
+                "Add row"
+              ) +
               div(
-                {
-                  class: "dropdown-menu",
-                  "aria-labelledby": "btnHideCols",
-                },
-                form(
-                  { class: "px-2" },
-                  fields.map((f) =>
-                    div(
-                      { class: "form-check" },
-                      input({
-                        type: "checkbox",
-                        onChange: `showHideCol('${f.name}', this)`,
-                        class: "form-check-input",
-                        checked: true,
-                      }),
-                      label(f.name)
+                { class: "dropdown d-inline" },
+                button(
+                  {
+                    class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+                    "data-boundary": "viewport",
+                    type: "button",
+                    id: "btnHideCols",
+                    "data-toggle": "dropdown",
+                    "aria-haspopup": "true",
+                    "aria-expanded": "false",
+                  },
+                  "Show/hide fields"
+                ),
+                div(
+                  {
+                    class: "dropdown-menu",
+                    "aria-labelledby": "btnHideCols",
+                  },
+                  form(
+                    { class: "px-2" },
+                    fields.map((f) =>
+                      div(
+                        { class: "form-check" },
+                        input({
+                          type: "checkbox",
+                          onChange: `showHideCol('${f.name}', this)`,
+                          class: "form-check-input",
+                          checked: true,
+                        }),
+                        label(f.name)
+                      )
                     )
                   )
                 )
-              )
-            ),
+              ),
           },
           {
             type: "blank",
@@ -353,7 +363,7 @@ router.get(
                 const row = cell.getRow().getData()
                 $.ajax({
                   type: "POST",
-                  url: "/api/${table.name}/" + row.id,
+                  url: "/api/${table.name}/" + (row.id||""),
                   data: row,
                   headers: {
                     "CSRF-Token": _sc_globalCsrf,
@@ -362,6 +372,7 @@ router.get(
                 }).done(function (resp) {
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
+                  console.log(resp)
                 });
               });`)
               ),
