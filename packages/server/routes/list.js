@@ -372,7 +372,10 @@ router.get(
                 }).done(function (resp) {
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
-                  console.log(resp)
+                  if(resp.success &&typeof resp.success ==="number" && !row.id) {
+                    window.tabulator_table.updateRow(cell.getRow(), {id: resp.success});
+                  }
+
                 });
               });`)
               ),
@@ -388,6 +391,7 @@ router.get(
 );
 
 //insert new row
+//delete row
 //pagination
 //initial order
 
