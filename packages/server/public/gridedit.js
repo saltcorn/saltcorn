@@ -226,3 +226,7 @@ HtmlField.prototype = new jsGrid.Field({
   },
 });
 jsGrid.fields.html = HtmlField;
+
+function showHideCol(nm, e) {
+  $("#jsGrid").jsGrid("fieldOption", nm, "visible", e.checked);
+}

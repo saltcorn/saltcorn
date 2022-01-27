@@ -702,6 +702,3 @@ function room_older(viewname, room_id, btn) {
     }
   );
 }
-function showHideCol(nm, e) {
-  $("#jsGrid").jsGrid("fieldOption", nm, "visible", e.checked);
-}
