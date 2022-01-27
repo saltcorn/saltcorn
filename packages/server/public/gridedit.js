@@ -5,7 +5,7 @@
  * @param keyfields -
  * @returns {{deleteItem: (function(*): *), loadData: (function(*=): *), updateItem: (function(*=): *), insertItem: (function(*=): *)}}
  */
-
+/*
 function jsgrid_controller(table_name, vc, keyfields) {
   var url = "/api/" + table_name + "/";
   //
@@ -226,7 +226,8 @@ HtmlField.prototype = new jsGrid.Field({
   },
 });
 jsGrid.fields.html = HtmlField;
-
+*/
 function showHideCol(nm, e) {
-  $("#jsGrid").jsGrid("fieldOption", nm, "visible", e.checked);
+  if (e && e.checked) window.tabulator_table.showColumn(nm);
+  else window.tabulator_table.hideColumn(nm);
 }

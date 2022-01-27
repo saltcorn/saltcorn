@@ -232,9 +232,9 @@ router.get(
             script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
           },
           // main logic for grid editor is here
-          /*     {
+          {
             script: `/static_assets/${db.connectObj.version_tag}/gridedit.js`,
-          }, */
+          },
           //css for jsgrid - grid editor external component
           {
             css: `/static_assets/${db.connectObj.version_tag}/tabulator_bootstrap4.min.css`,
@@ -255,7 +255,7 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
-            /* right: div(
+            right: div(
               { class: "dropdown" },
               button(
                 {
@@ -290,7 +290,7 @@ router.get(
                   )
                 )
               )
-            ),*/
+            ),
           },
           {
             type: "blank",
@@ -298,7 +298,7 @@ router.get(
               //script(`var edit_fields=${JSON.stringify(jsfields)};`),
               //script(domReady(versionsField(table.name))),
               script(
-                domReady(`var table = new Tabulator("#jsGrid", {
+                domReady(`window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${table.name}",                   
                   layout:"fitColumns", 
                   autoColumns:true,
