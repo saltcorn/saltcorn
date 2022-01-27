@@ -215,34 +215,31 @@ router.get(
       .filter((f) => f.type === "Key" || f.type === "File")
       .map((f) => ({ name: f.name, type: f.reftype }));
     const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
-    if (table.versioned) {
+    /*if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }
-    jsfields.push({ type: "control" });
+    jsfields.push({ type: "control" });*/
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
         headers: [
           //jsgrid - grid editor external component
           {
-            script: `/static_assets/${db.connectObj.version_tag}/jsgrid.min.js`,
+            script: `/static_assets/${db.connectObj.version_tag}/tabulator.min.js`,
           },
           // date flat picker external component
           {
             script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
           },
           // main logic for grid editor is here
-          {
+          /*     {
             script: `/static_assets/${db.connectObj.version_tag}/gridedit.js`,
-          },
+          }, */
           //css for jsgrid - grid editor external component
           {
-            css: `/static_assets/${db.connectObj.version_tag}/jsgrid.min.css`,
+            css: `/static_assets/${db.connectObj.version_tag}/tabulator_bootstrap4.min.css`,
           },
-          // css theme for jsgrid - grid editor external component
-          {
-            css: `/static_assets/${db.connectObj.version_tag}/jsgrid-theme.min.css`,
-          },
+
           // css for date flat picker external component
           {
             css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
@@ -258,7 +255,7 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
-            right: div(
+            /* right: div(
               { class: "dropdown" },
               button(
                 {
@@ -293,29 +290,26 @@ router.get(
                   )
                 )
               )
-            ),
+            ),*/
           },
           {
             type: "blank",
             contents: div(
-              script(`var edit_fields=${JSON.stringify(jsfields)};`),
-              script(domReady(versionsField(table.name))),
+              //script(`var edit_fields=${JSON.stringify(jsfields)};`),
+              //script(domReady(versionsField(table.name))),
               script(
-                domReady(`$("#jsGrid").jsGrid({
-                width: "100%",
-                sorting: true,
-                paging: true,
-                autoload: true,
-                inserting: true,
-                editing: true,
-                         
-                controller: 
-                  jsgrid_controller("${table.name}", ${JSON.stringify(
-                  table.versioned
-                )}, ${JSON.stringify(keyfields)}),
-         
-                fields: edit_fields
-            });
+                domReady(`var table = new Tabulator("#jsGrid", {
+                  ajaxURL:"/api/${table.name}",                   
+                  layout:"fitColumns", 
+                  autoColumns:true,
+                  ajaxResponse:function(url, params, response){
+                    //url - the URL of the request
+                    //params - the parameters passed with the request
+                    //response - the JSON object returned in the body of the response.
+            
+                    return response.success; //return the tableData property of a response json object
+                },
+              });
          `)
               ),
               div({ id: "jsGridNotify" }),
