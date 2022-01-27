@@ -122,21 +122,23 @@ router.post(
  */
 const typeToGridType = (t, field) => {
   const jsgField = { field: field.name, title: field.label, editor: true };
-  /*if (t.name === "String" && field.attributes && field.attributes.options) {
-    jsgField.type = "select";
-    jsgField.items = field.attributes.options
-      .split(",")
-      .map((o) => ({ value: o.trim(), label: o.trim() }));
-    jsgField.valueField = "value";
-    jsgField.textField = "label";
-    if (!field.required) jsgField.items.unshift("");
+  if (t.name === "String" && field.attributes && field.attributes.options) {
+    jsgField.editor = "select";
+
+    const values = field.attributes.options.split(",").map((o) => o.trim());
+    if (!field.required) values.unshift("");
+
+    jsgField.editorParams = { values };
   } else if (t === "Key" || t === "File") {
-    jsgField.type = "select";
+    jsgField.editor = "select";
     //console.log(field.options);
-    jsgField.items = field.options;
-    jsgField.valueField = "value";
-    jsgField.textField = "label";
-  } else
+    const values = {};
+
+    field.options.forEach(({ label, value }) => (values[value] = label));
+    jsgField.editorParams = { values };
+    jsgField.formatterParams = { values };
+    jsgField.formatter = "lookup";
+  } /*else
     jsgField.type =
       t.name === "String"
         ? "text"
@@ -296,10 +298,12 @@ router.get(
               //script(`var edit_fields=${JSON.stringify(jsfields)};`),
               //script(domReady(versionsField(table.name))),
               script(
-                domReady(`window.tabulator_table = new Tabulator("#jsGrid", {
+                domReady(`
+              const columns=${JSON.stringify(jsfields)};             
+              window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${table.name}",                   
                   layout:"fitColumns", 
-                  columns:${JSON.stringify(jsfields)},
+                  columns,
                   ajaxResponse:function(url, params, response){                    
             
                     return response.success; //return the tableData property of a response json object
