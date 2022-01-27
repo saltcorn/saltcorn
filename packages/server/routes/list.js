@@ -160,6 +160,11 @@ const typeToGridType = (t, field) => {
     jsgField.vertAlign = "center";
     jsgField.editorParams = field.required ? {} : { tristate: true };
     jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
+  } else if (t.name === "Date") {
+    jsgField.editor = "__flatpickerEditor";
+    //jsgField.formatter = "datetime";
+
+    //jsgField.headerFilter = "input";
   }
   /*else
     jsgField.type =
@@ -250,6 +255,9 @@ router.get(
           {
             script: `/static_assets/${db.connectObj.version_tag}/tabulator.min.js`,
           },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/luxon.min.js`,
+          },
           // date flat picker external component
           {
             script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
@@ -324,8 +332,10 @@ router.get(
                 domReady(`
               const columns=${JSON.stringify(jsfields)};          
               columns.forEach(col=>{
-                if(col.formatter && typeof col.formatter ==="string" && col.formatter.startsWith("__"))
-                  col.formatter = window[col.formatter.substring(2)];
+                Object.entries(col).forEach(([k,v])=>{
+                  if(typeof v === "string" && v.startsWith("__"))
+                    col[k] = window[v.substring(2)];
+                })
               })   
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${table.name}",                   

@@ -237,3 +237,57 @@ function lookupIntToString(cell, formatterParams, onRendered) {
   const res = formatterParams.values[val];
   return res;
 }
+
+function flatpickerEditor(cell, onRendered, success, cancel) {
+  var input = $("<input type='text'/>");
+
+  input.flatpickr({
+    enableTime: true,
+    dateFormat: "Y-m-d H:i",
+    time_24hr: true,
+    locale: "en", // global variable with locale 'en', 'fr', ...
+    defaultDate: cell.getValue(),
+    onClose: function (selectedDates, dateStr, instance) {
+      evt = window.event;
+      var isEscape = false;
+      if ("key" in evt) {
+        isEscape = evt.key === "Escape" || evt.key === "Esc";
+      } else {
+        isEscape = evt.keyCode === 27;
+      }
+      if (isEscape) {
+        // user hit escape
+        cancel();
+      } else {
+        console.log("success", dateStr);
+        success(dateStr);
+      }
+    },
+  });
+
+  input.css({
+    border: "1px",
+    background: "transparent",
+    padding: "4px",
+    width: "100%",
+    "box-sizing": "border-box",
+  });
+
+  input.val(cell.getValue());
+
+  var inputBlur = function (e) {
+    if (e.target !== input[0]) {
+      if ($(e.target).closest(".flatpicker-input").length === 0) {
+        $(document).off("mousedown", inputBlur);
+      }
+    }
+  };
+
+  $(document).on("mousedown", inputBlur);
+
+  onRendered(function () {
+    input.focus();
+  });
+
+  return input[0];
+}
