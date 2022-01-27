@@ -120,9 +120,9 @@ router.post(
  * @param field
  * @returns {{name, title}}
  */
-const typeToJsGridType = (t, field) => {
-  var jsgField = { name: field.name, title: field.label };
-  if (t.name === "String" && field.attributes && field.attributes.options) {
+const typeToGridType = (t, field) => {
+  const jsgField = { field: field.name, title: field.label, editor: true };
+  /*if (t.name === "String" && field.attributes && field.attributes.options) {
     jsgField.type = "select";
     jsgField.items = field.attributes.options
       .split(",")
@@ -150,14 +150,12 @@ const typeToJsGridType = (t, field) => {
         ? "color"
         : t.name === "Date"
         ? "date"
-        : "text";
+        : "text";*/
   if (field.calculated) {
-    jsgField.editing = false;
-    jsgField.inserting = false;
+    jsgField.editor = false;
   }
   if (field.primary_key) {
-    jsgField.inserting = false;
-    jsgField.editing = false;
+    jsgField.editor = false;
   }
   return jsgField;
 };
@@ -214,7 +212,7 @@ router.get(
     const keyfields = fields
       .filter((f) => f.type === "Key" || f.type === "File")
       .map((f) => ({ name: f.name, type: f.reftype }));
-    const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
+    const jsfields = fields.map((f) => typeToGridType(f.type, f));
     /*if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }
@@ -301,16 +299,27 @@ router.get(
                 domReady(`window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${table.name}",                   
                   layout:"fitColumns", 
-                  autoColumns:true,
-                  ajaxResponse:function(url, params, response){
-                    //url - the URL of the request
-                    //params - the parameters passed with the request
-                    //response - the JSON object returned in the body of the response.
+                  columns:${JSON.stringify(jsfields)},
+                  ajaxResponse:function(url, params, response){                    
             
                     return response.success; //return the tableData property of a response json object
-                },
+                  },
               });
-         `)
+              window.tabulator_table.on("cellEdited", function(cell){
+                const row = cell.getRow().getData()
+                $.ajax({
+                  type: "POST",
+                  url: "/api/${table.name}/" + row.id,
+                  data: row,
+                  headers: {
+                    "CSRF-Token": _sc_globalCsrf,
+                  },
+                  //error: errorHandler(data),
+                }).done(function (resp) {
+                  //if (item._versions) item._versions = +item._versions + 1;
+                  //data.resolve(fixKeys(item));
+                });
+              });`)
               ),
               div({ id: "jsGridNotify" }),
 
