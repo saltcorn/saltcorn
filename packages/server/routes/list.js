@@ -162,7 +162,7 @@ const typeToGridType = (t, field) => {
     jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
   } else if (t.name === "Date") {
     jsgField.editor = "__flatpickerEditor";
-    //jsgField.formatter = "datetime";
+    jsgField.formatter = "__isoDateTimeFormatter";
 
     //jsgField.headerFilter = "input";
   }
@@ -254,9 +254,6 @@ router.get(
           //jsgrid - grid editor external component
           {
             script: `/static_assets/${db.connectObj.version_tag}/tabulator.min.js`,
-          },
-          {
-            script: `/static_assets/${db.connectObj.version_tag}/luxon.min.js`,
           },
           // date flat picker external component
           {

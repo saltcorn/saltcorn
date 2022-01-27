@@ -291,3 +291,10 @@ function flatpickerEditor(cell, onRendered, success, cancel) {
 
   return input[0];
 }
+
+function isoDateTimeFormatter(cell, formatterParams, onRendered) {
+  const val = cell.getValue();
+  if (!val) return "";
+
+  return new Date(val).toLocaleString(window.detected_locale || "en");
+}

@@ -247,6 +247,7 @@ function initialize_page() {
     navigator.browserLanguage ||
     navigator.systemLanguage ||
     "en";
+  window.detected_locale = locale;
   const parse = (s) => JSON.parse(decodeURIComponent(s));
   $("time[locale-time-options]").each(function () {
     var el = $(this);
