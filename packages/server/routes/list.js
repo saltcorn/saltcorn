@@ -140,6 +140,8 @@ const typeToGridType = (t, field) => {
     jsgField.formatter = "__lookupIntToString";
   } else if (t.name === "Float" || t.name === "Integer") {
     jsgField.editor = "number";
+    jsgField.hozAlign = "right";
+    jsgField.headerHozAlign = "right";
     jsgField.editorParams = {
       step: t.name === "Integer" ? 1 : undefined,
       min:
@@ -155,6 +157,7 @@ const typeToGridType = (t, field) => {
     jsgField.editor = "tickCross";
     jsgField.formatter = "tickCross";
     jsgField.hozAlign = "center";
+    jsgField.vertAlign = "center";
     jsgField.editorParams = field.required ? {} : { tristate: true };
     jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
   }
@@ -362,7 +365,6 @@ router.get(
 
 //date
 //colour
-//right-align numbers
 //pagination
 //initial order
 
