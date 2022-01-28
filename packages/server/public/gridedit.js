@@ -30,7 +30,6 @@ function flatpickerEditor(cell, onRendered, success, cancel) {
         // user hit escape
         cancel();
       } else {
-        console.log("success", dateStr);
         success(dateStr);
       }
     },
