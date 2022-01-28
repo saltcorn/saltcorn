@@ -379,7 +379,7 @@ router.get(
                   headers: {
                     "CSRF-Token": _sc_globalCsrf,
                   },
-                  //error: errorHandler(data),
+                  error: tabulator_error_handler,
                 }).done(function (resp) {
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
@@ -401,3 +401,5 @@ router.get(
     );
   })
 );
+
+// TODO: increment version count

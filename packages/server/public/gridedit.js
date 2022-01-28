@@ -125,6 +125,21 @@ function delete_tabulator_row(e, cell) {
       "CSRF-Token": _sc_globalCsrf,
     },
     success: () => cell.getRow().delete(),
-    //error: errorHandler(),
+    error: tabulator_error_handler,
   });
+}
+
+function tabulator_error_handler(request) {
+  let errtxt =
+    request.responseJSON && request.responseJSON.error
+      ? request.responseJSON.error
+      : request.responseText;
+  if (errtxt) {
+    $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
+    ${errtxt}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  </div>`);
+  }
 }
