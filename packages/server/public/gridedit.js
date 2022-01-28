@@ -328,3 +328,18 @@ function colorEditor(cell, onRendered, success, cancel) {
 function add_tabulator_row() {
   window.tabulator_table.addRow({});
 }
+
+function delete_tabulator_row(e, cell) {
+  const row = cell.getRow().getData();
+
+  $.ajax({
+    type: "DELETE",
+    url: window.tabulator_api_url + row.id,
+    data: row, // to process primary keys different from id
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    success: () => cell.getRow().delete(),
+    //error: errorHandler(),
+  });
+}

@@ -132,7 +132,6 @@ const typeToGridType = (t, field) => {
     jsgField.editorParams = { values };
   } else if (t === "Key" || t === "File") {
     jsgField.editor = "select";
-    //console.log(field.options);
     const values = {};
 
     field.options.forEach(({ label, value }) => (values[value] = label));
@@ -164,30 +163,13 @@ const typeToGridType = (t, field) => {
   } else if (t.name === "Date") {
     jsgField.editor = "__flatpickerEditor";
     jsgField.formatter = "__isoDateTimeFormatter";
-
-    //jsgField.headerFilter = "input";
   } else if (t.name === "Color") {
     jsgField.editor = "__colorEditor";
     jsgField.formatter = "__colorFormatter";
     jsgField.hozAlign = "center";
     jsgField.vertAlign = "center";
-    //jsgField.headerFilter = "input";
   }
-  /*else
-    jsgField.type =
-      t.name === "String"
-        ? "text"
-        : t.name === "Integer"
-        ? "number"
-        : t.name === "Float"
-        ? "decimal"
-        : t.name === "Bool"
-        ? "checkbox"
-        : t.name === "Color"
-        ? "color"
-        : t.name === "Date"
-        ? "date"
-        : "text";*/
+
   if (field.calculated) {
     jsgField.editor = false;
   }
@@ -252,8 +234,15 @@ router.get(
     const jsfields = fields.map((f) => typeToGridType(f.type, f));
     /*if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
-    }
-    jsfields.push({ type: "control" });*/
+    }*/
+    jsfields.push({
+      formatter: "buttonCross",
+      title: i({ class: "far fa-trash-alt" }),
+      width: 40,
+      align: "center",
+      headerSort: false,
+      cellClick: "__delete_tabulator_row",
+    });
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -377,7 +366,8 @@ router.get(
                   }
 
                 });
-              });`)
+              });
+              window.tabulator_api_url="/api/${table.name}/"`)
               ),
               div({ id: "jsGridNotify" }),
 
@@ -390,8 +380,7 @@ router.get(
   })
 );
 
-//insert new row
-//delete row
+//insert row at top
 //pagination
 //initial order
 
