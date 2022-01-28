@@ -343,6 +343,7 @@ router.get(
                   ajaxURL:"/api/${table.name}",                   
                   layout:"fitColumns", 
                   columns,
+                  height:"100%",
                   ajaxResponse:function(url, params, response){                    
             
                     return response.success; //return the tableData property of a response json object
@@ -380,7 +381,6 @@ router.get(
   })
 );
 
-//insert row at top
 //pagination
 //initial order
 

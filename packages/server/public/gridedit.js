@@ -326,7 +326,7 @@ function colorEditor(cell, onRendered, success, cancel) {
   return editor;
 }
 function add_tabulator_row() {
-  window.tabulator_table.addRow({});
+  window.tabulator_table.addRow({}, true);
 }
 
 function delete_tabulator_row(e, cell) {
