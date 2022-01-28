@@ -203,6 +203,12 @@ jsGrid.fields.versions = VersionsField;
 `;
 // end of versionsField
 
+const arrangeIdFirst = (flds) => {
+  const noId = flds.filter((f) => f.name !== "id");
+  const id = flds.find((f) => f.name === "id");
+  return [id, ...noId];
+};
+
 /**
  * Table Data List Viewer (GET handler))
  * @name get/:tname
@@ -231,7 +237,9 @@ router.get(
     const keyfields = fields
       .filter((f) => f.type === "Key" || f.type === "File")
       .map((f) => ({ name: f.name, type: f.reftype }));
-    const jsfields = fields.map((f) => typeToGridType(f.type, f));
+    const jsfields = arrangeIdFirst(fields).map((f) =>
+      typeToGridType(f.type, f)
+    );
     /*if (table.versioned) {
       jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
     }*/
@@ -344,6 +352,9 @@ router.get(
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
+                  initialSort:[
+                    {column:"id", dir:"asc"},
+                  ],
                   ajaxResponse:function(url, params, response){                    
             
                     return response.success; //return the tableData property of a response json object
@@ -382,6 +393,5 @@ router.get(
 );
 
 //pagination
-//initial order
 
 //versioned
