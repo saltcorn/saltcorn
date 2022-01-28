@@ -308,6 +308,12 @@ function colorFormatter(cell, formatterParams, onRendered) {
   )[0];
 }
 
+function versionsFormatter(cell, formatterParams, onRendered) {
+  const value = cell.getValue();
+  const row = cell.getRow().getData();
+  return $(`<a href="/list/_versions/${window.tabulator_table_name}/${row.id}">
+    ${value || 0}&nbsp;<i class="fa-sm fas fa-list"></i></a>`)[0];
+}
 function colorEditor(cell, onRendered, success, cancel) {
   const editor = document.createElement("input");
 
@@ -331,10 +337,13 @@ function add_tabulator_row() {
 
 function delete_tabulator_row(e, cell) {
   const row = cell.getRow().getData();
-
+  if (!row.id) {
+    cell.getRow().delete();
+    return;
+  }
   $.ajax({
     type: "DELETE",
-    url: window.tabulator_api_url + row.id,
+    url: `/api/${window.tabulator_table_name}/${row.id}`,
     data: row, // to process primary keys different from id
     headers: {
       "CSRF-Token": _sc_globalCsrf,

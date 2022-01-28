@@ -240,9 +240,13 @@ router.get(
     const jsfields = arrangeIdFirst(fields).map((f) =>
       typeToGridType(f.type, f)
     );
-    /*if (table.versioned) {
-      jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
-    }*/
+    if (table.versioned) {
+      jsfields.push({
+        field: "_versions",
+        title: "Versions",
+        formatter: "__versionsFormatter",
+      });
+    }
     jsfields.push({
       formatter: "buttonCross",
       title: i({ class: "far fa-trash-alt" }),
@@ -348,10 +352,14 @@ router.get(
                 })
               })   
               window.tabulator_table = new Tabulator("#jsGrid", {
-                  ajaxURL:"/api/${table.name}",                   
+                  ajaxURL:"/api/${table.name}${
+                  table.versioned ? "?versioncount=on" : ""
+                }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
+                  pagination:true,
+                  paginationSize:20,
                   initialSort:[
                     {column:"id", dir:"asc"},
                   ],
@@ -379,7 +387,7 @@ router.get(
 
                 });
               });
-              window.tabulator_api_url="/api/${table.name}/"`)
+              window.tabulator_table_name="${table.name}";`)
               ),
               div({ id: "jsGridNotify" }),
 
@@ -391,7 +399,3 @@ router.get(
     );
   })
 );
-
-//pagination
-
-//versioned
