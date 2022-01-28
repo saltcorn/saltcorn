@@ -247,6 +247,7 @@ function initialize_page() {
     navigator.browserLanguage ||
     navigator.systemLanguage ||
     "en";
+  window.detected_locale = locale;
   const parse = (s) => JSON.parse(decodeURIComponent(s));
   $("time[locale-time-options]").each(function () {
     var el = $(this);
@@ -701,7 +702,4 @@ function room_older(viewname, room_id, btn) {
       if (res.remove_fetch_older) $(btn).remove();
     }
   );
-}
-function showHideCol(nm, e) {
-  $("#jsGrid").jsGrid("fieldOption", nm, "visible", e.checked);
 }
