@@ -507,8 +507,7 @@ const render = async ({
     form.hidden(table.pk_name);
   }
 
-  const { nonUniques } = splitUniques(fields, state);
-  Object.entries(nonUniques).forEach(([k, v]) => {
+  Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
       form.values[k] = field.type.read ? field.type.read(v) : v;
