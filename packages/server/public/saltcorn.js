@@ -267,6 +267,7 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
+  $('a[data-toggle="tab"]').historyTabs();
 }
 
 $(initialize_page);
@@ -703,3 +704,51 @@ function room_older(viewname, room_id, btn) {
     }
   );
 }
+
+/*
+https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
+Copyright (c) 2015 Jeff Green
+*/
+
++(function ($) {
+  "use strict";
+  $.fn.historyTabs = function () {
+    var that = this;
+    window.addEventListener("popstate", function (event) {
+      if (event.state) {
+        $(that)
+          .filter('[href="' + event.state.url + '"]')
+          .tab("show");
+      }
+    });
+    return this.each(function (index, element) {
+      $(element).on("show.bs.tab", function () {
+        var stateObject = { url: $(this).attr("href") };
+
+        if (window.location.hash && stateObject.url !== window.location.hash) {
+          window.history.pushState(
+            stateObject,
+            document.title,
+            window.location.pathname +
+              window.location.search +
+              $(this).attr("href")
+          );
+        } else {
+          window.history.replaceState(
+            stateObject,
+            document.title,
+            window.location.pathname +
+              window.location.search +
+              $(this).attr("href")
+          );
+        }
+      });
+      if (!window.location.hash && $(element).is(".active")) {
+        // Shows the first element if there are no query parameters.
+        $(element).tab("show");
+      } else if ($(this).attr("href") === window.location.hash) {
+        $(element).tab("show");
+      }
+    });
+  };
+})(jQuery);

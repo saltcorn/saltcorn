@@ -109,6 +109,15 @@ namespace LayoutExports {
 }
 type RenderTabsOpts = LayoutExports.RenderTabsOpts;
 
+function validID(s: string) {
+  return s
+    ? s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/^[^a-z]+|[^\w:.-]+/gi, "")
+    : s;
+}
+
 /**
  * @param {object} opts
  * @param {object[]} opts.contents
@@ -175,7 +184,7 @@ const renderTabs = (
                 class: ["nav-link", ix === 0 && "active"],
                 id: `${rndid}link${ix}`,
                 "data-toggle": "tab",
-                href: `#${rndid}tab${ix}`,
+                href: `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
                 "aria-selected": ix === 0 ? "true" : "false",
@@ -192,7 +201,7 @@ const renderTabs = (
             {
               class: ["tab-pane fade", ix === 0 && "show active"],
               role: "tabpanel",
-              id: `${rndid}tab${ix}`,
+              id: `${validID(titles[ix])}`,
               "aria-labelledby": `${rndid}link${ix}`,
             },
             go(t, false, ix)
