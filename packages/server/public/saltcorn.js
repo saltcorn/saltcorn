@@ -625,7 +625,7 @@ function make_unique_field(id, table_id, field_name, value, space, start) {
             .map((o) => o[field_name])
             .filter((s) => s.startsWith(value));
           if (vals.includes(value)) {
-            for (let i = start || 0; i < vals.length + 1; i++) {
+            for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
               const newname = `${value}${space ? " " : ""}${i}`;
               if (!vals.includes(newname)) {
                 $("#" + id).val(newname);

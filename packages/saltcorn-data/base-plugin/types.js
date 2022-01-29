@@ -393,7 +393,7 @@ const string = {
           name: "start_from",
           label: "Start from",
           type: "Integer",
-          default: 1,
+          default: 0,
         },
       ],
       run: (nm, v, attrs, cls, required, field) =>
