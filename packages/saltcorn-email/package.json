@@ -1,12 +1,12 @@
 {
-  "name": "@saltcorn/admin-models",
+  "name": "@saltcorn/email",
   "version": "0.6.4-beta.2",
-  "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
+  "description": "Email model for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
     "test": "jest tests --runInBand",
-    "tsc": "tsc -p tsconfig.json",
-    "clean": "rm -rf ./dist/*"
+    "tsc": "echo \"Error: no TypeScript support yet\"",
+    "clean": "echo \"Error: no TypeScript support yet\""
   },
   "author": "Tom Nielsen",
   "license": "MIT",
@@ -24,31 +24,23 @@
   "files": [
     "dist/**/*"
   ],
+  "optionalDependencies": {
+    "@saltcorn/postgres": "0.6.4-beta.2",
+    "@saltcorn/sqlite": "0.6.4-beta.2"
+  },
   "dependencies": {
-    "@saltcorn/types": "0.6.4-beta.2",
-    "@saltcorn/markup": "0.6.4-beta.2",
-    "@saltcorn/db-common": "0.6.4-beta.2",
     "@saltcorn/data": "0.6.4-beta.2",
-    "adm-zip": "0.5.5",
-    "csv-stringify": "^5.5.0",
-    "csvtojson": "^2.0.10",
-    "dateformat": "^3.0.3",
-    "node-fetch": "2.6.2",
-    "tmp-promise": "^3.0.2"
+    "@saltcorn/markup": "0.6.4-beta.2",
+    "bootstrap-email": "git+https://github.com/christianhugoch/bootstrap-email.git",
+    "nodemailer": "^6.4.17",
+    "tmp-promise": "^3.0.2",
+    "uuid": "^8.2.0"
   },
   "repository": "github:saltcorn/saltcorn",
-  "publishConfig": {
-    "access": "public"
-  },
   "devDependencies": {
-    "@types/adm-zip": "^0.4.34",
-    "@types/csvtojson": "^2.0.0",
-    "@types/dateformat": "^5.0.0",
-    "@types/jest": "^27.0.3",
-    "@types/node": "^14.14.31",
-    "@types/node-fetch": "2.5.12",
-    "@types/tmp": "^0.2.3",
-    "chaos-guinea-pig": "^0.1.0",
+    "@types/node": "^16.11.12",
+    "@types/nodemailer": "^6.4.4",
+    "@types/uuid": "^8.3.3",
     "jest": "^27.1.0",
     "ts-jest": "^27.1.0",
     "typescript": "^4.4.4"
@@ -63,7 +55,12 @@
       "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
       "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
       "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
-      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1"
+      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
+      "@saltcorn/markup$": "@saltcorn/markup/dist",
+      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

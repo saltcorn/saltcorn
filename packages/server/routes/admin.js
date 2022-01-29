@@ -60,7 +60,7 @@ const {
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
-const { getMailTransport } = require("@saltcorn/data/models/email");
+const { getMailTransport } = require("@saltcorn/email/email");
 const {
   getBaseDomain,
   hostname_matches_baseurl,

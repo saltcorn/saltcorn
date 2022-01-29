@@ -12,10 +12,6 @@ const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
-const {
-  getMailTransport,
-  transformBootstrapEmail,
-} = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
 const {
   get_async_expression_function,
@@ -28,7 +24,7 @@ const db = require("../db");
 // todo add translation
 
 /**
- * @param {object} opts 
+ * @param {object} opts
  * @param {object} opts.row
  * @param {object} opts.table
  * @param {object} opts.channel
@@ -109,8 +105,8 @@ module.exports = {
         input_type: "hidden",
       },
     ],
-    /** 
-     * @type {base-plugin/actions~run_code} 
+    /**
+     * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      */
     run: run_code,
@@ -190,7 +186,7 @@ module.exports = {
       },
     ],
     /**
-     * @param {object} opts 
+     * @param {object} opts
      * @param {string} opts.url
      * @param {object} opts.body
      * @returns {Promise<object>}
@@ -241,11 +237,8 @@ module.exports = {
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
       const { participant_field } = view.configuration;
-      const [
-        part_table_name,
-        part_key_to_room,
-        part_user_field,
-      ] = participant_field.split(".");
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
       const roomtable = Table.findOne({ id: view.table_id });
       const parttable = Table.findOne({ name: part_table_name });
 
@@ -374,6 +367,8 @@ module.exports = {
         to_email_fixed,
       },
       user,
+      getMailTransport,
+      transformBootstrapEmail,
     }) => {
       let to_addr;
       switch (to_email) {
@@ -620,8 +615,8 @@ module.exports = {
         },
       ];
     },
-    /** 
-     * @type {base-plugin/actions~run_code} 
+    /**
+     * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      **/
     run: run_code,

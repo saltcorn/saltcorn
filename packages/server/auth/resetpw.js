@@ -4,13 +4,13 @@
  * @subcategory auth
  */
 const { getState } = require("@saltcorn/data/db/state");
-const { getMailTransport } = require("@saltcorn/data/models/email");
+const { getMailTransport } = require("@saltcorn/email/email");
 const { get_base_url } = require("../routes/utils");
 
 /**
- * @param {string} link 
- * @param {object} user 
- * @param {object} req 
+ * @param {string} link
+ * @param {object} user
+ * @param {object} req
  * @returns {void}
  */
 const generate_email = (link, user, req) => ({
@@ -48,8 +48,8 @@ ${req.__(
 });
 
 /**
- * @param {object} user 
- * @param {object} req 
+ * @param {object} user
+ * @param {object} req
  * @returns {Promise<void>}
  */
 const send_reset_email = async (user, req) => {
@@ -59,8 +59,8 @@ const send_reset_email = async (user, req) => {
 };
 
 /**
- * @param {object} user 
- * @param {object} req 
+ * @param {object} user
+ * @param {object} req
  * @returns {Promise<string>}
  */
 const get_reset_link = async (user, req) => {

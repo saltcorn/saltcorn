@@ -1635,7 +1635,7 @@
         "cheerio": "^1.0.0-rc.10",
         "ejs": "^2.6.1",
         "juice": "^5.2.0",
-        "node-sass": "^4.14.1",
+        "node-sass": "^6.0.1",
         "postcss": "^7.0.25",
         "sass-extract": "^2.1.0"
       }
@@ -4970,8 +4970,8 @@
       }
     },
     "node-sass": {
-      "version": "4.14.1",
-      "resolved": "https://registry.npmjs.org/node-sass/-/node-sass-4.14.1.tgz",
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/node-sass/-/node-sass-6.0.1.tgz",
       "integrity": "sha512-sjCuOlvGyCJS40R8BscF5vhVlQjNN069NtQ1gSxyK1u9iqvn6tf7O1R4GNowVZfiZUCRt5MmMs1xd+4V/7Yr0g==",
       "requires": {
         "async-foreach": "^0.1.3",

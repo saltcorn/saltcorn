@@ -36,7 +36,8 @@
       "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
       "@saltcorn/markup$": "@saltcorn/markup/dist",
       "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
-      "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1"
+      "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1",
+      "@saltcorn/email/(.*)": "@saltcorn/email/dist/$1"
     }
   },
   "publishConfig": {
