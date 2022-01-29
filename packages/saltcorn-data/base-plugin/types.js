@@ -384,6 +384,17 @@ const string = {
           input_type: "select",
           options: ["text", "email", "url", "tel", "password"],
         },
+        {
+          name: "include_space",
+          label: "Include space",
+          type: "Bool",
+        },
+        {
+          name: "start_from",
+          label: "Start from",
+          type: "Integer",
+          default: 1,
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
@@ -401,7 +412,9 @@ const string = {
           domReady(
             `make_unique_field('input${text_attr(nm)}', ${field.table_id}, '${
               field.name
-            }', ${JSON.stringify(v)})`
+            }', ${JSON.stringify(v)}, ${attrs.include_space}, ${
+              attrs.start_from
+            })`
           )
         ),
     },

@@ -611,7 +611,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
-function make_unique_field(id, table_id, field_name, value) {
+function make_unique_field(id, table_id, field_name, value, space, start) {
   if (!value) return;
   $.ajax(
     `/api/${table_id}?approximate=true&${encodeURIComponent(
@@ -625,8 +625,8 @@ function make_unique_field(id, table_id, field_name, value) {
             .map((o) => o[field_name])
             .filter((s) => s.startsWith(value));
           if (vals.includes(value)) {
-            for (let i = 1; i < vals.length + 1; i++) {
-              const newname = `${value} ${i}`;
+            for (let i = start || 0; i < vals.length + 1; i++) {
+              const newname = `${value}${space ? " " : ""}${i}`;
               if (!vals.includes(newname)) {
                 $("#" + id).val(newname);
                 return;
