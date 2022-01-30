@@ -104,6 +104,7 @@ namespace LayoutExports {
     titles: string[];
     tabsStyle: string;
     ntabs?: any;
+    deeplink?: boolean;
     independent: boolean;
   };
 }
@@ -129,7 +130,7 @@ function validID(s: string) {
  * @returns {ul_div}
  */
 const renderTabs = (
-  { contents, titles, tabsStyle, ntabs, independent }: RenderTabsOpts,
+  { contents, titles, tabsStyle, ntabs, independent, deeplink }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -181,7 +182,11 @@ const renderTabs = (
             { class: "nav-item", role: "presentation" },
             a(
               {
-                class: ["nav-link", ix === 0 && "active"],
+                class: [
+                  "nav-link",
+                  ix === 0 && "active",
+                  deeplink && "deeplink",
+                ],
                 id: `${rndid}link${ix}`,
                 "data-toggle": "tab",
                 href: `#${validID(titles[ix])}`,
