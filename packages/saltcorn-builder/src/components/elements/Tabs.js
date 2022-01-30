@@ -4,9 +4,10 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useContext } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
+import optionsCtx from "../context";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -139,6 +140,7 @@ const TabsSettings = () => {
     independent,
     ntabs,
   } = node;
+  const options = useContext(optionsCtx);
   return (
     <table className="w-100" accordiontitle="Placement">
       <tbody>
@@ -159,6 +161,7 @@ const TabsSettings = () => {
               <option>Tabs</option>
               <option>Pills</option>
               <option>Accordion</option>
+              {options.mode === "show" && <option>Switch</option>}
             </select>
           </td>
         </tr>
