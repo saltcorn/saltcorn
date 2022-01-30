@@ -35,6 +35,7 @@ class ReleaseCommand extends Command {
       "@saltcorn/random-tests": { dir: "saltcorn-random-tests" },
       "@saltcorn/server": { dir: "server", publish: true },
       "@saltcorn/base-plugin": { dir: "saltcorn-base-plugin", publish: true },
+      "@saltcorn/email": { dir: "saltcorn-email", publish: true },
       //"saltcorn-cli", publish: true},
       "@saltcorn/markup": { dir: "saltcorn-markup", publish: true },
       "@saltcorn/sbadmin2": { dir: "saltcorn-sbadmin2", publish: true },
