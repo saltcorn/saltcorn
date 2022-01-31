@@ -37,9 +37,10 @@ const select_options = (
   const isSelected = (value: any) =>
     !selected
       ? false
-      : selected.length
+      : Array.isArray(selected)
       ? selected.includes(value)
-      : value === selected;
+      : `${value}` === `${selected}`;
+
   return options
     .map((o: any) => {
       const label = typeof o === "string" ? o : o.label;
