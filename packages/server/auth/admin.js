@@ -37,7 +37,7 @@ const {
   hostname_matches_baseurl,
   is_hsts_tld,
 } = require("../markup/admin");
-const { send_verification_email } = require("@saltcorn/email/email");
+const { send_verification_email } = require("@saltcorn/data/models/email");
 
 /**
  * @type {object}

@@ -12,6 +12,10 @@ const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
+const {
+  getMailTransport,
+  transformBootstrapEmail,
+} = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
 const {
   get_async_expression_function,
@@ -20,6 +24,7 @@ const {
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
+
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
@@ -367,8 +372,6 @@ module.exports = {
         to_email_fixed,
       },
       user,
-      getMailTransport,
-      transformBootstrapEmail,
     }) => {
       let to_addr;
       switch (to_email) {

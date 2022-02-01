@@ -11,7 +11,7 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 
-const { send_verification_email } = require("@saltcorn/email/email");
+const { send_verification_email } = require("@saltcorn/data/models/email");
 const {
   error_catcher,
   loggedIn,

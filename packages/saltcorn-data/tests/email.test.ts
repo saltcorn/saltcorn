@@ -5,9 +5,9 @@
 
 import { dirname, join, normalize } from "path";
 import { readdirSync, readFileSync } from "fs";
-import email from "../email";
+import email from "../models/email";
 const { transformBootstrapEmail } = email;
-const BootstrapEmail = require.resolve("bootstrap-email");
+const BootstrapEmail = require.resolve("bootstrap-email_with-node-sass-6");
 import { describe, it, expect, jest } from "@jest/globals";
 
 function removeBreaks(str: string): string {

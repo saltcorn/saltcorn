@@ -4,17 +4,17 @@
  * @subcategory models
  */
 import { createTransport, Transporter } from "nodemailer";
-const { getState } = require("@saltcorn/data/db/state");
-const BootstrapEmail = require("bootstrap-email"); // no typings available
+const { getState } = require("../db/state");
+const BootstrapEmail = require("bootstrap-email_with-node-sass-6"); // no typings available
 import { tmpName } from "tmp-promise";
 import { writeFile, unlink } from "fs/promises";
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
-import View from "@saltcorn/data/models/view";
+import View from "./view";
 import { v4 as uuidv4 } from "uuid";
-import db from "@saltcorn/data/db/index";
-import User from "@saltcorn/data/models/user";
-import mocks from "@saltcorn/data/tests/mocks";
+import db from "../db/index";
+import User from "./user";
+import mocks from "../tests/mocks";
 const { mockReqRes } = mocks;
 
 /**

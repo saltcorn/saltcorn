@@ -18,9 +18,6 @@
     },
     {
       "path": "./packages/saltcorn-admin-models/tsconfig.ref.json"
-    },
-    {
-      "path": "./packages/saltcorn-email/tsconfig.ref.json"
     }
   ]
 }

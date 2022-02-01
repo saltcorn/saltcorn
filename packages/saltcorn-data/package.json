@@ -59,7 +59,9 @@
     "node-fetch": "2.6.2",
     "pluralize": "^8.0.0",
     "tmp-promise": "^3.0.2",
-    "uuid": "^8.2.0"
+    "uuid": "^8.2.0",
+    "bootstrap-email_with-node-sass-6": "^1.1.2",
+    "nodemailer": "^6.4.17"    
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
@@ -68,6 +70,7 @@
     "@types/jest": "^27.0.3",
     "@types/node": "^16.11.12",
     "@types/node-fetch": "2.5.12",
+    "@types/nodemailer": "^6.4.4",
     "@types/uuid": "^8.3.3",
     "@types/bcryptjs": "^2.4.2",
     "@types/dumb-passwords": "^0.2.1",

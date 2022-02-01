@@ -4,7 +4,7 @@
  * @subcategory auth
  */
 const { getState } = require("@saltcorn/data/db/state");
-const { getMailTransport } = require("@saltcorn/email/email");
+const { getMailTransport } = require("@saltcorn/data/models/email");
 const { get_base_url } = require("../routes/utils");
 
 /**

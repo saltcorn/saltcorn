@@ -9,7 +9,6 @@
     "@saltcorn/base-plugin": "0.6.4-beta.2",
     "@saltcorn/builder": "0.6.4-beta.2",
     "@saltcorn/data": "0.6.4-beta.2",
-    "@saltcorn/email": "0.6.4-beta.2",
     "@saltcorn/admin-models": "0.6.4-beta.2",
     "@saltcorn/markup": "0.6.4-beta.2",
     "@saltcorn/sbadmin2": "0.6.4-beta.2",
@@ -85,8 +84,7 @@
       "@saltcorn/markup$": "@saltcorn/markup/dist",
       "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
       "@saltcorn/server/(.*)": "@saltcorn/server/dist/$1",
-      "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1",
-      "@saltcorn/email/(.*)": "@saltcorn/email/dist/$1"
+      "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1"
     }
   },
   "publishConfig": {
