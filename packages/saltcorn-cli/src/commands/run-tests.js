@@ -94,9 +94,7 @@ class RunTestsCommand extends Command {
     spawnSync("npm", ["run", "tsc"], {
       stdio: "inherit",
     });
-
     const db = require("@saltcorn/data/db");
-
     if (db.isSQLite) {
       const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });

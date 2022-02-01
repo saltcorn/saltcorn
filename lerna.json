@@ -1,6 +1,5 @@
 {
-  "packages": [
-    "packages/*"
-  ],
-  "version": "0.5.2-beta.1"
+  "packages": ["packages/*"],
+  "version": "0.5.2-beta.1",
+  "npmClientArgs": ["--legacy-peer-deps"]
 }

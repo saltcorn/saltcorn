@@ -24,11 +24,12 @@ const {
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
+
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
 /**
- * @param {object} opts 
+ * @param {object} opts
  * @param {object} opts.row
  * @param {object} opts.table
  * @param {object} opts.channel
@@ -109,8 +110,8 @@ module.exports = {
         input_type: "hidden",
       },
     ],
-    /** 
-     * @type {base-plugin/actions~run_code} 
+    /**
+     * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      */
     run: run_code,
@@ -190,7 +191,7 @@ module.exports = {
       },
     ],
     /**
-     * @param {object} opts 
+     * @param {object} opts
      * @param {string} opts.url
      * @param {object} opts.body
      * @returns {Promise<object>}
@@ -241,11 +242,8 @@ module.exports = {
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
       const { participant_field } = view.configuration;
-      const [
-        part_table_name,
-        part_key_to_room,
-        part_user_field,
-      ] = participant_field.split(".");
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
       const roomtable = Table.findOne({ id: view.table_id });
       const parttable = Table.findOne({ name: part_table_name });
 
@@ -620,8 +618,8 @@ module.exports = {
         },
       ];
     },
-    /** 
-     * @type {base-plugin/actions~run_code} 
+    /**
+     * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      **/
     run: run_code,

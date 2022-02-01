@@ -31,12 +31,12 @@ This has been tested on Debian 9, 10 and 11 and Ubuntu 18.04, 20.04 and 21.04. A
 three lines on the command line shell, as root or as a user with sudo access:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_14.x | sudo bash -
+wget -qO - https://deb.nodesource.com/setup_16.x | sudo bash -
 sudo apt-get install -qqy nodejs
 npx saltcorn-install -y
 ```
 
-The first two lines will install Node.js 14. The last line will call the Saltcorn install script
+The first two lines will install Node.js 16. The last line will call the Saltcorn install script
 accepting all the defaults, Which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
@@ -44,7 +44,7 @@ If you want a different port or a different database backend, or not install as 
 can omit the final `-y` to get an interactive installation:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_14.x | sudo bash -
+wget -qO - https://deb.nodesource.com/setup_16.x | sudo bash -
 sudo apt-get install -qqy nodejs
 npx saltcorn-install
 ```
@@ -57,10 +57,10 @@ TL;DR: `npm install -g @saltcorn/cli && saltcorn setup`
 
 ### Installing node and npm
 
-For a recent version (v14) of Node.js:
+For a recent version (v16) of Node.js:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_14.x | sudo -E bash -
+wget -qO - https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
@@ -174,10 +174,10 @@ Use cloudflare or lets encrypt to get a free SSL certificate (for https).
 
 `sudo apt install nodejs npm libpq-dev`
 
-will give you a usable version. For a more recent version (v14) of Node.js:
+will give you a usable version. For a more recent version (v16) of Node.js:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_14.x | sudo -E bash -
+wget -qO - https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev
 ```
 

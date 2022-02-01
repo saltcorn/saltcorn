@@ -13,9 +13,9 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: "14.x"
+          node-version: "16.x"
       - run: npm install -g jsdoc 
-      - run: npm install
+      - run: npm install --legacy-peer-deps
       - run: jsdoc -c deploy/jsdoc/jsdoc.conf.json -R deploy/jsdoc/documentation_main.md
       - run: cp deploy/jsdoc/jsdoc.styles.css docs/jsdoc.styles.css
       - run: mkdir docs/build && cp deploy/jsdoc/entry.js docs/build/entry.js

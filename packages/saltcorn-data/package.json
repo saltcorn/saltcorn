@@ -45,8 +45,6 @@
     "astring": "^1.4.3",
     "bcryptjs": "^2.4.3",
     "blockly": "^6.20210701.0",
-    "bootstrap-email": "^1.1.1",
-    "connect-pg-simple": "^6.1.0",
     "contractis": "^0.1.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
@@ -59,10 +57,11 @@
     "moment": "^2.27.0",
     "moment-timezone": "^0.5.33",
     "node-fetch": "2.6.2",
-    "nodemailer": "^6.4.17",
     "pluralize": "^8.0.0",
     "tmp-promise": "^3.0.2",
-    "uuid": "^8.2.0"
+    "uuid": "^8.2.0",
+    "bootstrap-email_with-node-sass-6": "^1.1.2",
+    "nodemailer": "^6.4.17"    
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
@@ -70,8 +69,8 @@
     "@types/dateformat": "^5.0.0",
     "@types/jest": "^27.0.3",
     "@types/node": "^16.11.12",
-    "@types/nodemailer": "^6.4.4",
     "@types/node-fetch": "2.5.12",
+    "@types/nodemailer": "^6.4.4",
     "@types/uuid": "^8.3.3",
     "@types/bcryptjs": "^2.4.2",
     "@types/dumb-passwords": "^0.2.1",

@@ -908,7 +908,7 @@
         "astring": "^1.4.3",
         "bcryptjs": "^2.4.3",
         "blockly": "^6.20210701.0",
-        "bootstrap-email": "^1.1.1",
+        "bootstrap-email_with-node-sass-6": "^1.1.2",
         "connect-pg-simple": "^6.1.0",
         "contractis": "^0.1.0",
         "csvtojson": "^2.0.10",
@@ -1626,16 +1626,16 @@
       "resolved": "https://registry.npmjs.org/bootstrap/-/bootstrap-4.6.0.tgz",
       "integrity": "sha512-Io55IuQY3kydzHtbGvQya3H+KorS/M9rSNyfCGCg9WZ4pyT/lCxIlpJgG1GXW/PswzC84Tr2fBYi+7+jFVQQBw=="
     },
-    "bootstrap-email": {
+    "bootstrap-email_with-node-sass-6": {
       "version": "1.1.2",
-      "resolved": "https://registry.npmjs.org/bootstrap-email/-/bootstrap-email-1.1.2.tgz",
-      "integrity": "sha512-nTd+MrOXZNDusHUwWUps8zMtZ8M4JUUV4sXiKa6mqR5CyrVZjK2tG8XYRU/VxhIWVkLRs+hfr8p3qn0XC/2Vyg==",
+      "resolved": "https://registry.npmjs.org/bootstrap-email_with-node-sass-6/-/bootstrap-email_with-node-sass-6-1.1.2.tgz",
+      "integrity": "sha512-hjmD7CA2ft4+gAz6ZnkQ/udvFD+RZ9VijG5JxZT42SWYHVP6vCBYyZ1Rku0ccdi5EO1k3Mvrxt3P9Vf6Nb+QLQ==",
       "requires": {
         "bunyan": "^1.8.12",
         "cheerio": "^1.0.0-rc.10",
         "ejs": "^2.6.1",
         "juice": "^5.2.0",
-        "node-sass": "^4.14.1",
+        "node-sass": "^6.0.1",
         "postcss": "^7.0.25",
         "sass-extract": "^2.1.0"
       }
@@ -4970,8 +4970,8 @@
       }
     },
     "node-sass": {
-      "version": "4.14.1",
-      "resolved": "https://registry.npmjs.org/node-sass/-/node-sass-4.14.1.tgz",
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/node-sass/-/node-sass-6.0.1.tgz",
       "integrity": "sha512-sjCuOlvGyCJS40R8BscF5vhVlQjNN069NtQ1gSxyK1u9iqvn6tf7O1R4GNowVZfiZUCRt5MmMs1xd+4V/7Yr0g==",
       "requires": {
         "async-foreach": "^0.1.3",

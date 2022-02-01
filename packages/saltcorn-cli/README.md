@@ -20,7 +20,7 @@ $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.6.4-beta.2 darwin-x64 node-v14.16.1
+@saltcorn/cli/0.6.4-beta.2 linux-x64 node-v16.13.2
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
