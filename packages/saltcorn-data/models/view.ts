@@ -503,10 +503,6 @@ class View {
       throw new InvalidConfiguration(
         `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
       );
-    if (!this.table_id)
-      throw new InvalidConfiguration(
-        `Unable to call runPost, ${this.viewtemplate} is missing 'table_id'.`
-      );
     return await this.viewtemplateObj!.runPost(
       this.table_id,
       this.name,

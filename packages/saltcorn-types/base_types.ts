@@ -214,7 +214,7 @@ export type ViewTemplate = {
     req: NonNullable<any>;
   }) => Promise<boolean>;
   runPost?: (
-    table_id: number,
+    table_id: number | number | undefined,
     viewname: string,
     optsOne: {
       columns: any[];
