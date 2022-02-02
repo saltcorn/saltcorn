@@ -172,6 +172,7 @@ const typeToGridType = (t, field) => {
     jsgField.vertAlign = "center";
   } else if (t.name === "JSON") {
     jsgField.formatter = "__jsonFormatter";
+    jsgField.editor = "__jsonEditor";
   }
 
   if (field.calculated) {
