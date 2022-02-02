@@ -193,6 +193,12 @@ const configuration_workflow = (req) =>
                 label: req.__("Reload after going back"),
                 type: "Bool",
               },
+              {
+                name: "steps",
+                label: req.__("Steps to go back"),
+                type: "Integer",
+                default: 1,
+              },
             ],
           };
           const views = await get_link_view_opts(table, context.viewname);
