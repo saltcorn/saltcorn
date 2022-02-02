@@ -449,7 +449,7 @@ class Field implements AbstractField {
    */
   async toggle_not_null(not_null: boolean): Promise<void> {
     if (!this.table) {
-      throw new Error("To toogle a not null constraint, 'table' must be set.");
+      throw new Error("To toggle a not null constraint, 'table' must be set.");
     }
     const schema = db.getTenantSchemaPrefix();
     await this.fill_table();
