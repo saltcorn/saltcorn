@@ -255,7 +255,7 @@ router.get(
       formatter: "buttonCross",
       title: i({ class: "far fa-trash-alt" }),
       width: 40,
-      align: "center",
+      hozAlign: "center",
       headerSort: false,
       cellClick: "__delete_tabulator_row",
     });
