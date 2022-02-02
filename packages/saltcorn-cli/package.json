@@ -21,6 +21,7 @@
     "inquirer": "^7.3.3",
     "js-yaml": "^4.1.0",
     "node-fetch": "2.6.2",
+    "node-gyp": "^7.1.0",
     "node-watch": "^0.7.3",
     "source-map-support": "^0.5.21",
     "sudo": "^1.0.3",
