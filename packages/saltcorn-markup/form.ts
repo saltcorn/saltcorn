@@ -478,23 +478,16 @@ const renderFormLayout = (form: Form): string => {
         );
       }
       if (action_name === "GoBack") {
-        if (
-          !configuration ||
-          (!configuration.save_first && !configuration.reload_after)
-        )
-          return mkBtn(`onClick="history.back()" type="button"`);
-        if (configuration.save_first && configuration.reload_after)
-          return mkBtn(
-            `onClick="saveAndContinue(this,()=>window.location=document.referrer)" type="button"`
-          );
+        const reload = configuration.reload_after ? "reload_on_init();" : "";
+        const doNav =
+          !configuration.steps || configuration.steps !== 1
+            ? "history.back()"
+            : `history.go(${-1 * configuration.steps})`;
         if (configuration.save_first)
           return mkBtn(
-            `onClick="saveAndContinue(this,()=>history.back())" type="button"`
+            `onClick="${reload}saveAndContinue(this,()=>${doNav})" type="button"`
           );
-        if (configuration.reload_after)
-          return mkBtn(
-            `onClick="window.location=document.referrer" type="button"`
-          );
+        else return mkBtn(`onClick="${reload}${doNav}" type="button"`);
       }
       if (action_name === "SaveAndContinue") {
         return (

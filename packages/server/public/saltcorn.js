@@ -177,6 +177,14 @@ function rep_down(e) {
     apply_form_subset_record(theform, vals1);
   }
 }
+
+function reload_on_init() {
+  localStorage.setItem("reload_on_init", true);
+}
+if (localStorage.getItem("reload_on_init")) {
+  localStorage.removeItem("reload_on_init");
+  location.reload();
+}
 function initialize_page() {
   $("form").change(apply_showif);
   apply_showif();
