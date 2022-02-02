@@ -106,6 +106,28 @@ function colorEditor(cell, onRendered, success, cancel) {
   //return the editor element
   return editor;
 }
+
+function jsonEditor(cell, onRendered, success, cancel) {
+  const editor = document.createElement("textarea");
+
+  editor.value = JSON.stringify(cell.getValue());
+  //when the value has been set, trigger the cell to update
+  function successFunc() {
+    const val = editor.value;
+    try {
+      success(JSON.parse(val));
+    } catch (e) {
+      if (e) tabulator_show_error(e.message);
+      cancel();
+    }
+  }
+
+  editor.addEventListener("change", successFunc);
+  editor.addEventListener("blur", successFunc);
+
+  //return the editor element
+  return editor;
+}
 function add_tabulator_row() {
   window.tabulator_table.addRow({}, true);
 }
@@ -134,11 +156,14 @@ function tabulator_error_handler(request) {
       ? request.responseJSON.error
       : request.responseText;
   if (errtxt) {
-    $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
+    tabulator_show_error(errtxt);
+  }
+}
+function tabulator_show_error(errtxt) {
+  $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
     ${errtxt}
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
   </div>`);
-  }
 }

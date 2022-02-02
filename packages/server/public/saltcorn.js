@@ -177,6 +177,14 @@ function rep_down(e) {
     apply_form_subset_record(theform, vals1);
   }
 }
+
+function reload_on_init() {
+  localStorage.setItem("reload_on_init", true);
+}
+if (localStorage.getItem("reload_on_init")) {
+  localStorage.removeItem("reload_on_init");
+  location.reload();
+}
 function initialize_page() {
   $("form").change(apply_showif);
   apply_showif();
@@ -612,7 +620,15 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
-function make_unique_field(id, table_id, field_name, value, space, start) {
+function make_unique_field(
+  id,
+  table_id,
+  field_name,
+  value,
+  space,
+  start,
+  always_append
+) {
   if (!value) return;
   $.ajax(
     `/api/${table_id}?approximate=true&${encodeURIComponent(
@@ -625,7 +641,7 @@ function make_unique_field(id, table_id, field_name, value, space, start) {
           const vals = res.success
             .map((o) => o[field_name])
             .filter((s) => s.startsWith(value));
-          if (vals.includes(value)) {
+          if (vals.includes(value) || always_append) {
             for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
               const newname = `${value}${space ? " " : ""}${i}`;
               if (!vals.includes(newname)) {

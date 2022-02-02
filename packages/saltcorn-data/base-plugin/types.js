@@ -395,6 +395,11 @@ const string = {
           type: "Integer",
           default: 0,
         },
+        {
+          name: "always_append",
+          label: "Always append",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
@@ -414,7 +419,7 @@ const string = {
               field.name
             }', ${JSON.stringify(v)}, ${attrs.include_space}, ${
               attrs.start_from
-            })`
+            }, ${attrs.always_append})`
           )
         ),
     },

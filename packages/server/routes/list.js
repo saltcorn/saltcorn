@@ -140,6 +140,7 @@ const typeToGridType = (t, field) => {
     jsgField.formatter = "__lookupIntToString";
   } else if (t.name === "Float" || t.name === "Integer") {
     jsgField.editor = "number";
+    jsgField.sorter = "number";
     jsgField.hozAlign = "right";
     jsgField.headerHozAlign = "right";
     jsgField.editorParams = {
@@ -161,6 +162,7 @@ const typeToGridType = (t, field) => {
     jsgField.editorParams = field.required ? {} : { tristate: true };
     jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
   } else if (t.name === "Date") {
+    jsgField.sorter = "date";
     jsgField.editor = "__flatpickerEditor";
     jsgField.formatter = "__isoDateTimeFormatter";
   } else if (t.name === "Color") {
@@ -170,6 +172,7 @@ const typeToGridType = (t, field) => {
     jsgField.vertAlign = "center";
   } else if (t.name === "JSON") {
     jsgField.formatter = "__jsonFormatter";
+    jsgField.editor = "__jsonEditor";
   }
 
   if (field.calculated) {
@@ -253,7 +256,7 @@ router.get(
       formatter: "buttonCross",
       title: i({ class: "far fa-trash-alt" }),
       width: 40,
-      align: "center",
+      hozAlign: "center",
       headerSort: false,
       cellClick: "__delete_tabulator_row",
     });
