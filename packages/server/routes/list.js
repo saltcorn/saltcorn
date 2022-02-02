@@ -140,6 +140,7 @@ const typeToGridType = (t, field) => {
     jsgField.formatter = "__lookupIntToString";
   } else if (t.name === "Float" || t.name === "Integer") {
     jsgField.editor = "number";
+    jsgField.sorter = "number";
     jsgField.hozAlign = "right";
     jsgField.headerHozAlign = "right";
     jsgField.editorParams = {
@@ -161,6 +162,7 @@ const typeToGridType = (t, field) => {
     jsgField.editorParams = field.required ? {} : { tristate: true };
     jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
   } else if (t.name === "Date") {
+    jsgField.sorter = "date";
     jsgField.editor = "__flatpickerEditor";
     jsgField.formatter = "__isoDateTimeFormatter";
   } else if (t.name === "Color") {
