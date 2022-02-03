@@ -72,7 +72,7 @@ class State {
     this.plugin_module_names = {};
     this.eventTypes = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
-    this.headers = [];
+    this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
@@ -348,6 +348,7 @@ class State {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
     this.plugin_locations[plugin.plugin_name || name] = location;
+    this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
     const withCfg = (key, def) =>
@@ -407,7 +408,7 @@ class State {
       this.verifier = verifier;
     }
     withCfg("headers", []).forEach((h) => {
-      if (!this.headers.includes(h)) this.headers.push(h);
+      if (!this.headers[name].includes(h)) this.headers[name].push(h);
     });
   }
 
@@ -462,7 +463,7 @@ class State {
     this.actions = {};
     this.auth_methods = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
-    this.headers = [];
+    this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
@@ -514,7 +515,7 @@ class State {
  */
 State.contract = {
   variables: {
-    headers: is.array(is_header),
+    headers: is.any,
     viewtemplates: is.objVals(is_viewtemplate),
     types: is.objVals(is_plugin_type),
   },
