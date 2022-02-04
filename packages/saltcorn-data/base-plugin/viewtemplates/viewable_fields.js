@@ -761,4 +761,5 @@ module.exports = {
   getForm,
   fill_presets,
   get_view_link_query,
+  make_link,
 };
