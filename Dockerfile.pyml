@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y wget
 
-RUN wget -qO - https://deb.nodesource.com/setup_14.x | bash -
+RUN wget -qO - https://deb.nodesource.com/setup_16.x | bash -
 
 RUN apt-get install -y \
 	python3-pip nodejs python-is-python3 \

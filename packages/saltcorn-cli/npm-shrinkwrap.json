@@ -4972,7 +4972,7 @@
     "node-sass": {
       "version": "6.0.1",
       "resolved": "https://registry.npmjs.org/node-sass/-/node-sass-6.0.1.tgz",
-      "integrity": "sha512-sjCuOlvGyCJS40R8BscF5vhVlQjNN069NtQ1gSxyK1u9iqvn6tf7O1R4GNowVZfiZUCRt5MmMs1xd+4V/7Yr0g==",
+      "integrity": "sha512-f+Rbqt92Ful9gX0cGtdYwjTrWAaGURgaK5rZCWOgCNyGWusFYHhbqCCBoFBeat+HKETOU02AyTxNhJV0YZf2jQ==",
       "requires": {
         "async-foreach": "^0.1.3",
         "chalk": "^1.1.1",
