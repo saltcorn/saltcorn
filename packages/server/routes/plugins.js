@@ -51,6 +51,7 @@ const fs = require("fs");
 const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
+const { sleep } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -967,6 +968,7 @@ router.post(
           plugin_db.name
         )
       );
+      await sleep(1000); // Allow other tenants to load this plugin
       res.redirect(`/plugins/configure/${plugin_db.name}`);
     } else {
       req.flash("success", req.__(`Plugin %s installed`, plugin.name));
