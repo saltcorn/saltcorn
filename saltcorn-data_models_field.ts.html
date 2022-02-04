@@ -122,10 +122,9 @@ const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   const { getState } = require("../db/state");
   if (!field.reftype)
     throw new Error("Unable to find the type, 'reftype' is undefined.");
-  const type =
-    getState().types[
-      typeof field.reftype === "string" ? field.reftype : field.reftype.name
-    ];
+  const type = getState().types[
+    typeof field.reftype === "string" ? field.reftype : field.reftype.name
+  ];
   const parsed = type.read(v);
   return parsed || (v ? { error: "Unable to read key" } : null);
 };
@@ -539,6 +538,8 @@ class Field implements AbstractField {
    * @returns {Promise&lt;void>}
    */
   async toggle_not_null(not_null: boolean): Promise&lt;void> {
+    await this.fill_table();
+
     if (!this.table) {
       throw new Error("To toggle a not null constraint, 'table' must be set.");
     }
