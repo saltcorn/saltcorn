@@ -2,7 +2,7 @@ import Table from "../models/table";
 import Field from "../models/field";
 import FieldRepeat from "../models/fieldrepeat";
 import Form from "../models/form";
-import markup from "@saltcorn/markup";
+import markup from "@saltcorn/markup/index";
 const { renderForm } = markup;
 import { assertIsErrorsMsg } from "./assertions";
 import { describe, it, expect } from "@jest/globals";

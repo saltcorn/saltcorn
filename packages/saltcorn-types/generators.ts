@@ -16,6 +16,7 @@ const ntimes = (n: number, f: Function) => {
   }
   return res;
 };
+
 const generateString = (minLength: number = 0, excludes?: string[]): string => {
   const n = Math.round(num_between(minLength, 15));
   let result = ntimes(n, char).join("");

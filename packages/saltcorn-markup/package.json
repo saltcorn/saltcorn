@@ -3,7 +3,7 @@
   "version": "0.6.4-beta.4",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "test": "jest",
     "tsc": "tsc -p tsconfig.json",

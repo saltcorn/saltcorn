@@ -60,8 +60,7 @@ const table_pack = async (name: string): Promise<TablePack> => {
 
 /**
  * @function
- * @param {string} name
- * @returns {Promise<object>}
+ * @param name
  */
 const view_pack = async (name: string): Promise<ViewPack> => {
   const view = await View.findOne({ name });

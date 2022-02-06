@@ -1,13 +1,7 @@
-// for the jsdoc documentation
-/**
- * @category sqlite
- * @module sqlite/index
- */
+// For the typedoc documentation
 
 /**
- * All files in the sqlite package.
- * @namespace sqlite_overview
- * @property {module:sqlite} sqlite
- *
- * @category sqlite
+ * This is the sqlite package
+ * @module
  */
+export * from "./sqlite";
