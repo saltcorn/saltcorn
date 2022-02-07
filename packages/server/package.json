@@ -17,7 +17,6 @@
     "aws-sdk": "^2.1037.0",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
-    "connect-sqlite3": "^0.9.11",
     "content-disposition": "^0.5.3",
     "contractis": "^0.1.0",
     "cookie-parser": "^1.4.4",
@@ -53,6 +52,7 @@
     "uuid": "^8.2.0"
   },
   "optionalDependencies": {
+    "connect-sqlite3": "^0.9.11",
     "sd-notify": "^2.8.0"
   },
   "repository": "github:saltcorn/saltcorn",
