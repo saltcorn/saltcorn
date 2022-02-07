@@ -9,10 +9,7 @@ const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column, is_tablely } = require("../../contracts");
 const { link_view, strictParseInt } = require("../../plugin-helper");
-const {
-  get_expression_function,
-  eval_expression,
-} = require("../../models/expression");
+const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
@@ -262,8 +259,7 @@ const view_linker = contract(
     const get_label = (def, row) => {
       if (!view_label || view_label.length === 0) return def;
       if (!view_label_formula) return view_label;
-      const f = get_expression_function(view_label, fields);
-      return f(row);
+      return eval_expression(view_label, row);
     };
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
@@ -426,7 +422,7 @@ const get_viewable_fields = contract(
                 "action_name"
               );
               const label = column.action_label_formula
-                ? get_expression_function(column.action_label, fields)(r)
+                ? eval_expression(column.action_label, r)
                 : __(column.action_label) || column.action_name;
               if (url.javascript)
                 return a(
