@@ -28,7 +28,6 @@ const {
 const { asyncMap } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
-import { monitorEventLoopDelay } from "perf_hooks";
 
 /**
  * @function
