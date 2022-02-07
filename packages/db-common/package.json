@@ -8,6 +8,7 @@
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
+  "main": "./dist/index.js",  
   "author": "Tom Nielsen",
   "license": "MIT",
   "exports": {

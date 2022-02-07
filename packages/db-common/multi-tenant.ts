@@ -1,8 +1,7 @@
 /**
- * @category db-common
- * @module multi-tenant
+ * This is the multi tenant module
+ * @module
  */
-
 import { sqlsanitize } from "./internal";
 import { AsyncLocalStorage } from "async_hooks";
 

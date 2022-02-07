@@ -1,8 +1,3 @@
-/**
- * @category saltcorn-admin-models
- * @module backup
- */
-
 const { getState } = require("@saltcorn/data/db/state");
 import db from "@saltcorn/data/db/index";
 import Table from "@saltcorn/data/models/table";
@@ -65,10 +60,9 @@ const create_pack = async (dirpath: string): Promise<void> => {
 };
 
 /**
- * @function
- * @param {object[]} rows
- * @param {string} fnm
- * @returns {Promise<void>}
+ *
+ * @param rows
+ * @param fnm
  */
 const create_csv_from_rows = async (
   rows: any[],
@@ -152,9 +146,8 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
 };
 
 /**
- * @function
- * @param {string} [fnm]
- * @returns {Promise<string>}
+ *
+ * @param fnm
  */
 const create_backup = async (fnm?: string): Promise<string> => {
   const tmpDir = await dir({ unsafeCleanup: true });
@@ -293,11 +286,9 @@ const restore_config = async (dirpath: string): Promise<void> => {
 };
 
 /**
- * @function
- * @param {string} fnm
- * @param {function} loadAndSaveNewPlugin
- * @param {boolean} [restore_first_user]
- * @returns {Promise<void>}
+ * @param fnm
+ * @param loadAndSaveNewPlugin
+ * @param restore_first_user
  */
 const restore = async (
   fnm: string,

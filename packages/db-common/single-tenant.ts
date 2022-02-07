@@ -1,8 +1,7 @@
 /**
- * @category db-common
- * @module single-tenant
+ * This is the single tenant module
+ * @module
  */
-
 let connObj: any = null;
 
 /**

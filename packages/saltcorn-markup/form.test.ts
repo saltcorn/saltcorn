@@ -1,7 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import tags = require("./tags");
 const { a, input, div, ul, text, text_attr } = tags;
-import index = require(".");
+import index = require("./index");
 const { renderForm } = index;
 
 import { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";

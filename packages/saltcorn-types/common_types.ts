@@ -1,3 +1,7 @@
+/**
+ * Those are the common types
+ * @module
+ */
 export type ErrorMessage = {
   error: string;
   errors?: string[];

@@ -18,7 +18,7 @@ const {
 const { remove_from_menu } = require("./config");
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
-import markup from "@saltcorn/markup";
+import markup from "@saltcorn/markup/index";
 const { renderForm } = markup;
 
 import type {

@@ -12,7 +12,7 @@ const { oneOf, generateBool } = generators;
 import Form from "@saltcorn/data/models/form";
 import User from "@saltcorn/data/models/user";
 
-import markup from "@saltcorn/markup";
+import markup from "@saltcorn/markup/index";
 const { renderForm } = markup;
 import { unlink } from "fs/promises";
 import backup from "../models/backup";

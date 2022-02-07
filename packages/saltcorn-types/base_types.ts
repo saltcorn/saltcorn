@@ -1,3 +1,7 @@
+/**
+ * Those are the base types
+ * @module
+ */
 import type { AbstractForm } from "./model-abstracts/abstract_form";
 import type {
   AbstractTable,
@@ -29,7 +33,6 @@ type FieldLikeWithInputType = {
 type FieldLikeWithType = {
   type: string | Type;
 } & FieldLikeBasics;
-
 export type FieldLike = FieldLikeWithInputType | FieldLikeWithType;
 
 export type Header = {
