@@ -2458,6 +2458,7 @@
       "version": "0.9.13",
       "resolved": "https://registry.npmjs.org/connect-sqlite3/-/connect-sqlite3-0.9.13.tgz",
       "integrity": "sha512-4Dif7wjNutcAsvvl85nqApIa3gViEnN6lKOcEBEtuL9JB1DIq1bREcq0pQCc1oCpSvDGpjsFs0doftzGFc4cmQ==",
+      "optional": true,
       "requires": {
         "sqlite3": "^5.0.2"
       }
@@ -6837,6 +6838,7 @@
       "version": "5.0.2",
       "resolved": "https://registry.npmjs.org/sqlite3/-/sqlite3-5.0.2.tgz",
       "integrity": "sha512-1SdTNo+BVU211Xj1csWa8lV6KM0CtucDwRyA0VHl91wEH1Mgh7RxUpI4rVvG7OhHrzCSGaVyW5g8vKvlrk9DJA==",
+      "optional": true,
       "requires": {
         "node-addon-api": "^3.0.0",
         "node-gyp": "3.x",

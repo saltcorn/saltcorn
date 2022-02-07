@@ -25,7 +25,9 @@
     "dist/**/*"
   ],
   "dependencies": {
-    "@saltcorn/db-common": "0.6.4-beta.4",
+    "@saltcorn/db-common": "0.6.4-beta.4"
+  },
+  "optionalDependencies": {
     "sqlite3": "^5.0.2"
   },
   "repository": "github:saltcorn/saltcorn",
