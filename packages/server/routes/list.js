@@ -272,6 +272,9 @@ router.get(
           {
             script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
           },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/luxon.min.js`,
+          },
           // main logic for grid editor is here
           {
             script: `/static_assets/${db.connectObj.version_tag}/gridedit.js`,
