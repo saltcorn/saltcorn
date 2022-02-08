@@ -23,6 +23,7 @@ const asyncSudo = (args, allowFail) => {
 
 const asyncSudoUser = (user, args) => {
   if (os.userInfo().username === user) {
+    console.log(">", args.join(" "));
     execSync(args.join(" "), {
       stdio: "inherit",
     });
