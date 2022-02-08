@@ -163,8 +163,14 @@ const typeToGridType = (t, field) => {
     jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
   } else if (t.name === "Date") {
     jsgField.sorter = "date";
+    jsgField.sorterParams = {
+      format: "iso",
+    };
     jsgField.editor = "__flatpickerEditor";
-    jsgField.formatter = "__isoDateTimeFormatter";
+    jsgField.formatter = "datetime";
+    jsgField.formatterParams = {
+      inputFormat: "iso",
+    };
   } else if (t.name === "Color") {
     jsgField.editor = "__colorEditor";
     jsgField.formatter = "__colorFormatter";

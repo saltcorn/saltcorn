@@ -14,7 +14,7 @@ function flatpickerEditor(cell, onRendered, success, cancel) {
 
   input.flatpickr({
     enableTime: true,
-    dateFormat: "Y-m-d H:i",
+    dateFormat: "Z",
     time_24hr: true,
     locale: "en", // global variable with locale 'en', 'fr', ...
     defaultDate: cell.getValue(),
@@ -67,6 +67,13 @@ function isoDateTimeFormatter(cell, formatterParams, onRendered) {
   if (!val) return "";
 
   return new Date(val).toLocaleString(window.detected_locale || "en");
+}
+
+function isoDateFormatter(cell, formatterParams, onRendered) {
+  const val = cell.getValue();
+  if (!val) return "";
+
+  return new Date(val).toLocaleDateString(window.detected_locale || "en");
 }
 function colorFormatter(cell, formatterParams, onRendered) {
   const val = cell.getValue();
