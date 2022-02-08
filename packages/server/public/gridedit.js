@@ -9,12 +9,12 @@ function lookupIntToString(cell, formatterParams, onRendered) {
   return res;
 }
 
-function flatpickerEditor(cell, onRendered, success, cancel) {
+function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
   var input = $("<input type='text'/>");
-
+  const dayOnly = editorParams && editorParams.dayOnly;
   input.flatpickr({
-    enableTime: true,
-    dateFormat: "Z",
+    enableTime: !dayOnly,
+    dateFormat: dayOnly ? "Y-m-d" : "Z",
     time_24hr: true,
     locale: "en", // global variable with locale 'en', 'fr', ...
     defaultDate: cell.getValue(),
