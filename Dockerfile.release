@@ -3,6 +3,6 @@ FROM node:14
 ENV NODE_ENV "production"
 ENV SALTCORN_DISABLE_UPGRADE "true"
 
-RUN npm install -g @saltcorn/cli@0.6.4-beta.5 --unsafe
+RUN npm install -g @saltcorn/cli@0.6.4-beta.6 --unsafe
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
