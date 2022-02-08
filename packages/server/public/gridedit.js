@@ -9,12 +9,12 @@ function lookupIntToString(cell, formatterParams, onRendered) {
   return res;
 }
 
-function flatpickerEditor(cell, onRendered, success, cancel) {
+function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
   var input = $("<input type='text'/>");
-
+  const dayOnly = editorParams && editorParams.dayOnly;
   input.flatpickr({
-    enableTime: true,
-    dateFormat: "Y-m-d H:i",
+    enableTime: !dayOnly,
+    dateFormat: dayOnly ? "Y-m-d" : "Z",
     time_24hr: true,
     locale: "en", // global variable with locale 'en', 'fr', ...
     defaultDate: cell.getValue(),
@@ -67,6 +67,13 @@ function isoDateTimeFormatter(cell, formatterParams, onRendered) {
   if (!val) return "";
 
   return new Date(val).toLocaleString(window.detected_locale || "en");
+}
+
+function isoDateFormatter(cell, formatterParams, onRendered) {
+  const val = cell.getValue();
+  if (!val) return "";
+
+  return new Date(val).toLocaleDateString(window.detected_locale || "en");
 }
 function colorFormatter(cell, formatterParams, onRendered) {
   const val = cell.getValue();
