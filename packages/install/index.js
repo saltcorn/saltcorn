@@ -197,6 +197,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     "npm",
     "install",
     "-g",
+    "--legacy-peer-deps",
     "@saltcorn/cli@latest",
     "--unsafe",
   ]);
