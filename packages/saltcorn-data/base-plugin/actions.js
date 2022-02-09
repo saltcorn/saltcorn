@@ -16,6 +16,7 @@ const {
   getMailTransport,
   transformBootstrapEmail,
   emailMockReqRes,
+  viewToEmailHtml,
 } = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
 const {
@@ -397,8 +398,7 @@ module.exports = {
           break;
       }
       const view = await View.findOne({ name: viewname });
-      const htmlBs = await view.run({ id: row.id }, emailMockReqRes);
-      const html = await transformBootstrapEmail(htmlBs);
+      const html = await viewToEmailHtml(view, { id: row.id });
       console.log(
         "Sending email from %s to %s with subject %s to_email",
         getState().getConfig("email_from"),

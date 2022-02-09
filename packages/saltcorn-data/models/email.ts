@@ -41,7 +41,11 @@ const getMailTransport = (): Transporter => {
     },
   });
 };
-
+const viewToEmailHtml = async (view: any, state: any) => {
+  const htmlBs = await view.run(state, emailMockReqRes);
+  const html = await transformBootstrapEmail(htmlBs);
+  return html;
+};
 /**
  * @param {string} bsHtml
  * @param {boolean} [container=true] wrap in a container div (used by unit test)
@@ -80,11 +84,8 @@ const send_verification_email = async (
       try {
         await db.update("users", { verification_token }, user.id);
         user.verification_token = verification_token;
-        const htmlBs = await verification_view.run(
-          { id: user.id },
-          emailMockReqRes
-        );
-        const html = await transformBootstrapEmail(htmlBs);
+
+        const html = await viewToEmailHtml(verification_view, { id: user.id });
         const email = {
           from: getState().getConfig("email_from"),
           to: user.email,
@@ -115,4 +116,5 @@ export = {
   transformBootstrapEmail,
   send_verification_email,
   emailMockReqRes,
+  viewToEmailHtml,
 };
