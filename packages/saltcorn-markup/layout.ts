@@ -219,6 +219,7 @@ namespace LayoutExports {
     role?: any;
     alerts?: any;
     is_owner?: boolean;
+    req?: any;
   };
 }
 type RenderOpts = LayoutExports.RenderOpts;
@@ -238,6 +239,7 @@ const render = ({
   role,
   alerts,
   is_owner,
+  req,
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
