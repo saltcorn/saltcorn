@@ -17,6 +17,14 @@ import User from "./user";
 import mocks from "../tests/mocks";
 const { mockReqRes } = mocks;
 
+const emailMockReqRes = {
+  req: {
+    ...mockReqRes.req,
+    generate_email: true,
+  },
+  res: mockReqRes.res,
+};
+
 /**
  * @returns {Transporter}
  */
@@ -72,7 +80,10 @@ const send_verification_email = async (
       try {
         await db.update("users", { verification_token }, user.id);
         user.verification_token = verification_token;
-        const htmlBs = await verification_view.run({ id: user.id }, mockReqRes);
+        const htmlBs = await verification_view.run(
+          { id: user.id },
+          emailMockReqRes
+        );
         const html = await transformBootstrapEmail(htmlBs);
         const email = {
           from: getState().getConfig("email_from"),
@@ -103,4 +114,5 @@ export = {
   getMailTransport,
   transformBootstrapEmail,
   send_verification_email,
+  emailMockReqRes,
 };

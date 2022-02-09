@@ -15,6 +15,7 @@ const Trigger = require("../models/trigger");
 const {
   getMailTransport,
   transformBootstrapEmail,
+  emailMockReqRes,
 } = require("../models/email");
 const { mockReqRes } = require("../tests/mocks");
 const {
@@ -242,8 +243,11 @@ module.exports = {
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
       const { participant_field } = view.configuration;
-      const [part_table_name, part_key_to_room, part_user_field] =
-        participant_field.split(".");
+      const [
+        part_table_name,
+        part_key_to_room,
+        part_user_field,
+      ] = participant_field.split(".");
       const roomtable = Table.findOne({ id: view.table_id });
       const parttable = Table.findOne({ name: part_table_name });
 
@@ -393,7 +397,7 @@ module.exports = {
           break;
       }
       const view = await View.findOne({ name: viewname });
-      const htmlBs = await view.run({ id: row.id }, mockReqRes);
+      const htmlBs = await view.run({ id: row.id }, emailMockReqRes);
       const html = await transformBootstrapEmail(htmlBs);
       console.log(
         "Sending email from %s to %s with subject %s to_email",
