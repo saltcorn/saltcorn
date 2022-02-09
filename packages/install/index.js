@@ -201,6 +201,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     "@saltcorn/cli@latest",
     "--unsafe",
   ]);
+  await asyncSudoUser(user, ["npm", "rebuild", "-g", "node-sass"]);
   await asyncSudo([
     "bash",
     "-c",
