@@ -100,7 +100,7 @@ const two_level_select = {
   configFields: async ({ table, name }) => {
     if (!table) return [];
     const fields = await table.getFields();
-    const relOpts = [];
+    const relOpts = [""];
     const field = fields.find((f) => f.name === name);
 
     if (field.is_fkey && field.reftable_name) {
@@ -138,17 +138,6 @@ const two_level_select = {
   },
 
   run: (nm, v, attrs, cls, reqd, field) => {
-    if (attrs.disabled)
-      return (
-        input({
-          class: `${cls} ${field.class || ""}`,
-          "data-fieldname": field.form_name,
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-          readonly: true,
-          placeholder: v || field.label,
-        }) + span({ class: "ml-m1" }, "v")
-      );
     return tags.select(
       {
         class: `form-control ${cls} ${field.class || ""}`,

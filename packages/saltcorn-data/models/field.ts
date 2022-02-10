@@ -220,6 +220,40 @@ class Field implements AbstractField {
     //console.log(where);
     if (
       this.is_fkey &&
+      this.fieldview === "two_level_select" &&
+      this.attributes.relation
+    ) {
+      const Table = require("./table");
+      const refTable = Table.findOne(this.reftable_name);
+      const relFields = await refTable.getFields();
+      const relField = relFields.find(
+        (f: any) => f.name === this.attributes.relation
+      );
+
+      const rows = await refTable.getJoinedRows({
+        joinFields: {
+          first_level: {
+            ref: this.attributes.relation,
+            target: relField.attributes.summary_field,
+          },
+        },
+      });
+      this.options = {};
+      rows.forEach((row: any) => {
+        const opt = {
+          label: row[this.attributes.summary_field],
+          value: row[this.refname],
+        };
+        if (!this.options[row.first_level])
+          this.options[row.first_level] = {
+            id: row[this.attributes.relation],
+            options: [opt],
+          };
+        else this.options[row.first_level].options.push(opt);
+      });
+      //console.log(this.options);
+    } else if (
+      this.is_fkey &&
       (this.type !== "File" ||
         typeof this.attributes.select_file_where !== "undefined")
     ) {
