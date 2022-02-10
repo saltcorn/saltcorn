@@ -76,12 +76,14 @@ function apply_showif() {
     });
   });
 }
-function get_form_record(e) {
+function get_form_record(e, select_labels) {
   const rec = {};
   e.closest("form")
     .find("input[name],select[name]")
     .each(function () {
-      rec[$(this).attr("name")] = $(this).val();
+      if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
+        rec[$(this).attr("name")] = $(this).find("option:selected").text();
+      else rec[$(this).attr("name")] = $(this).val();
     });
   return rec;
 }
@@ -723,7 +725,7 @@ function room_older(viewname, room_id, btn) {
 
 function fill_formula_btn_click(btn) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
-  const rec = get_form_record($(btn));
+  const rec = get_form_record($(btn), true);
   const val = new Function(
     `{${Object.keys(rec).join(",")}}`,
     "return " + formula
