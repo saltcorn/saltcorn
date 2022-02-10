@@ -6,7 +6,6 @@
 import { dirname, join, normalize } from "path";
 import { readdirSync, readFileSync } from "fs";
 import email from "../models/email";
-const BootstrapEmail = require.resolve("bootstrap-email_with-node-sass-6");
 import { describe, it, expect, jest } from "@jest/globals";
 
 function removeBreaks(str: string): string {
@@ -16,7 +15,7 @@ function removeBreaks(str: string): string {
 jest.setTimeout(60 * 1000);
 
 describe("Bootstrap Mail Transformations", () => {
-  const examplesDir = normalize(join(dirname(BootstrapEmail), "../examples"));
+  /* const examplesDir = normalize(join(dirname(BootstrapEmail), "../examples"));
   const inputsDir = join(examplesDir, "input");
   const outputsDir = join(examplesDir, "output");
   const inputFiles = readdirSync(inputsDir).map((file: string) => {
@@ -31,5 +30,5 @@ describe("Bootstrap Mail Transformations", () => {
       //const mail = await transformBootstrapEmail(inputFiles[i], false);
       //expect(removeBreaks(mail)).toBe(removeBreaks(expectedFiles[i]));
     }
-  });
+  });*/
 });
