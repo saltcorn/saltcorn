@@ -89,6 +89,80 @@ const select = {
   },
 };
 
+const two_level_select = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  isEdit: true,
+  /**
+   * @type {object[]}
+   */
+  configFields: async ({ table }) => {
+    if (!table) return [];
+    const fields = await table.getFields();
+    const relOpts = [];
+    for (const field of fields) {
+      if (field.is_fkey && field.reftable_name) {
+        const relTable = Table.findOne(field.reftable_name);
+        const relFields = await relTable.getFields();
+        relFields.forEach((relField) => {
+          if (relField.is_fkey) {
+            relOpts.push(`${field.name}.${relfield.name}`);
+          }
+        });
+      }
+    }
+    return [
+      {
+        name: "relation",
+        label: "Relation",
+        input_type: "select",
+        options: relOpts,
+      },
+      {
+        name: "neutral_label",
+        label: "Neutral label",
+        type: "String",
+      },
+      {
+        name: "force_required",
+        label: "Force required",
+        sublabel:
+          "User must select a value, even if the table field is not required",
+        type: "Bool",
+      },
+    ];
+  },
+
+  run: (nm, v, attrs, cls, reqd, field) => {
+    if (attrs.disabled)
+      return (
+        input({
+          class: `${cls} ${field.class || ""}`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          readonly: true,
+          placeholder: v || field.label,
+        }) + span({ class: "ml-m1" }, "v")
+      );
+    return tags.select(
+      {
+        class: `form-control ${cls} ${field.class || ""}`,
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+      },
+      select_options(
+        v,
+        field,
+        (attrs || {}).force_required,
+        (attrs || {}).neutral_label
+      )
+    );
+  },
+};
+
 /**
  * radio_select namespace
  * @namespace
@@ -195,4 +269,4 @@ const search_or_create = {
     );
   },
 };
-module.exports = { select, search_or_create, radio_select };
+module.exports = { select, search_or_create, radio_select, two_level_select };
