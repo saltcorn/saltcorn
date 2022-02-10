@@ -4,6 +4,7 @@
  */
 
 import tags = require("./tags");
+import mjml = require("./mjml-tags");
 const {
   div,
   a,
@@ -24,47 +25,8 @@ const {
   i,
   genericElement,
 } = tags;
-const { alert, breadcrumbs } = require("./layout_utils");
 
 import helpers = require("./helpers");
-import renderMJML from "./mjml-layout";
-const { search_bar } = helpers;
-import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
-
-/**
- * @param {any|any[]} [alerts]
- * @returns {boolean}
- */
-const couldHaveAlerts = (alerts?: any | any[]): boolean =>
-  alerts || Array.isArray(alerts);
-
-/**
- * @param {string|any} body
- * @param {object[]} [alerts]
- * @returns {object}
- */
-const makeSegments = (body: string | any, alerts: any[]): any => {
-  const alertsSegments = couldHaveAlerts(alerts)
-    ? [
-        {
-          type: "blank",
-          contents: div(
-            { id: "alerts-area" },
-            (alerts || []).map((a: any) => alert(a.type, a.msg))
-          ),
-        },
-      ]
-    : [];
-
-  if (typeof body === "string")
-    return {
-      above: [...alertsSegments, { type: "blank", contents: body }],
-    };
-  else if (body.above) {
-    if (couldHaveAlerts(alerts)) body.above.unshift(alertsSegments[0]);
-    return body;
-  } else return { above: [...alertsSegments, body] };
-};
 
 /**
  *
@@ -118,99 +80,6 @@ function validID(s: string) {
         .replace(/^[^a-z]+|[^\w:.-]+/gi, "")
     : s;
 }
-
-/**
- * @param {object} opts
- * @param {object[]} opts.contents
- * @param {string[]} opts.titles
- * @param {string} opts.tabsStyle
- * @param {*} opts.ntabs
- * @param {independent} boolean
- * @param {function} go
- * @returns {ul_div}
- */
-const renderTabs = (
-  { contents, titles, tabsStyle, ntabs, independent }: RenderTabsOpts,
-  go: (segment: any, isTop: boolean, ix: number) => any
-) => {
-  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
-  if (tabsStyle === "Accordion")
-    return div(
-      { class: "accordion", id: `${rndid}top` },
-      contents.map((t, ix) =>
-        div(
-          { class: "card" },
-          div(
-            { class: "card-header", id: `${rndid}head${ix}` },
-            h2(
-              { class: "mb-0" },
-              button(
-                {
-                  class: "btn btn-link btn-block text-left",
-                  type: "button",
-                  "data-toggle": "collapse",
-                  "data-target": `#${rndid}tab${ix}`,
-                  "aria-expanded": ix === 0 ? "true" : "false",
-                  "aria-controls": `${rndid}tab${ix}`,
-                },
-                titles[ix]
-              )
-            )
-          ),
-          div(
-            {
-              class: ["collapse", ix === 0 && "show"],
-              id: `${rndid}tab${ix}`,
-              "aria-labelledby": `${rndid}head${ix}`,
-              "data-parent": independent ? undefined : `#${rndid}top`,
-            },
-            div({ class: "card-body" }, go(t, false, ix))
-          )
-        )
-      )
-    );
-  else
-    return (
-      ul(
-        {
-          role: "tablist",
-          id: `${rndid}`,
-          class: `nav ${tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"}`,
-        },
-        contents.map((t, ix) =>
-          li(
-            { class: "nav-item", role: "presentation" },
-            a(
-              {
-                class: ["nav-link", ix === 0 && "active"],
-                id: `${rndid}link${ix}`,
-                "data-toggle": "tab",
-                href: `#${validID(titles[ix])}`,
-                role: "tab",
-                "aria-controls": `${rndid}tab${ix}`,
-                "aria-selected": ix === 0 ? "true" : "false",
-              },
-              titles[ix]
-            )
-          )
-        )
-      ) +
-      div(
-        { class: "tab-content", id: `${rndid}content` },
-        contents.map((t, ix) =>
-          div(
-            {
-              class: ["tab-pane fade", ix === 0 && "show active"],
-              role: "tabpanel",
-              id: `${validID(titles[ix])}`,
-              "aria-labelledby": `${rndid}link${ix}`,
-            },
-            go(t, false, ix)
-          )
-        )
-      )
-    );
-};
 
 // declaration merging
 namespace LayoutExports {
@@ -278,14 +147,7 @@ const render = ({
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
-    if (segment.type === "breadcrumbs") {
-      return wrap(
-        segment,
-        isTop,
-        ix,
-        breadcrumbs(segment.crumbs || [], segment.right)
-      );
-    }
+
     if (segment.type === "view") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
@@ -421,8 +283,7 @@ const render = ({
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
-    if (segment.type === "tabs")
-      return wrap(segment, isTop, ix, renderTabs(segment, go));
+
     if (segment.type === "container") {
       const {
         bgFileId,
@@ -582,12 +443,7 @@ const render = ({
     if (segment.type === "line_break") {
       return "<br />";
     }
-    if (segment.type === "search_bar") {
-      return `<form action="/search" method="get">${search_bar("q", "", {
-        has_dropdown: segment.has_dropdown,
-        contents: go(segment.contents),
-      })}</form>`;
-    }
+
     if (segment.above) {
       return segment.above
         .map((s: any, ix: number) => go(s, isTop, ix))
@@ -635,16 +491,7 @@ const render = ({
       return isTop ? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  if (req && req.generate_email)
-    return renderMJML({
-      blockDispatch,
-      layout,
-      role,
-      alerts,
-      is_owner,
-      req,
-    });
-  else return go(makeSegments(layout, alerts), true, 0);
+  return go(layout, true, 0);
 };
 
 // declaration merging
