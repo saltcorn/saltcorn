@@ -277,7 +277,7 @@ class Field implements AbstractField {
         { label: __("False"), value: "off", jsvalue: false },
       ];
     }
-    await this.fill_table();
+    this.fill_table();
     let whereS = "";
     let values = [];
     if (where) {
@@ -429,7 +429,7 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async add_unique_constraint(): Promise<void> {
-    await this.fill_table();
+    this.fill_table();
     await db.add_unique_constraint(this.table?.name, [this.name]);
   }
 
@@ -437,7 +437,7 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async remove_unique_constraint(): Promise<void> {
-    await this.fill_table();
+    this.fill_table();
     await db.drop_unique_constraint(this.table?.name, [this.name]);
   }
 
@@ -447,13 +447,12 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async toggle_not_null(not_null: boolean): Promise<void> {
-    await this.fill_table();
+    this.fill_table();
 
     if (!this.table) {
       throw new Error("To toggle a not null constraint, 'table' must be set.");
     }
     const schema = db.getTenantSchemaPrefix();
-    await this.fill_table();
     await db.query(
       `alter table ${schema}"${sqlsanitize(
         this.table.name
@@ -479,7 +478,7 @@ class Field implements AbstractField {
     let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
 
     const schema = db.getTenantSchemaPrefix();
-    await this.fill_table();
+    this.fill_table();
     if (new_field.primary_key) {
       await db.query(
         `ALTER TABLE ${schema}"${sqlsanitize(
@@ -515,10 +514,10 @@ class Field implements AbstractField {
   /**
    * @returns {Promise<void>}
    */
-  async fill_table(): Promise<void> {
+  fill_table(): void {
     if (!this.table) {
       const Table = require("./table");
-      this.table = await Table.findOne({ id: this.table_id });
+      this.table = Table.findOne({ id: this.table_id });
     }
   }
 

@@ -184,6 +184,7 @@ const calcfldViewConfig = contract(
   async (fields, isEdit) => {
     const fieldViewConfigForms = {};
     for (const f of fields) {
+      f.fill_table();
       fieldViewConfigForms[f.name] = {};
       const fieldviews =
         f.type === "Key"

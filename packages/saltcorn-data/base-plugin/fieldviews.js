@@ -104,10 +104,12 @@ const two_level_select = {
     for (const field of fields) {
       if (field.is_fkey && field.reftable_name) {
         const relTable = Table.findOne(field.reftable_name);
+        if (!relTable) continue;
+
         const relFields = await relTable.getFields();
         relFields.forEach((relField) => {
           if (relField.is_fkey) {
-            relOpts.push(`${field.name}.${relfield.name}`);
+            relOpts.push(`${field.name}.${relField.name}`);
           }
         });
       }
