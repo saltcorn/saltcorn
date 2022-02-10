@@ -43,7 +43,7 @@ const getMailTransport = (): Transporter => {
 const viewToEmailHtml = async (view: any, state: any) => {
   const htmlBs = await view.run(state, emailMockReqRes);
   const html = await mjml2html(mjml.mjml(mjml.body(htmlBs)), {});
-  return html;
+  return html.html;
 };
 
 /**
