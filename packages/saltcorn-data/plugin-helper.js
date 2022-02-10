@@ -311,8 +311,9 @@ const field_picker_fields = contract(
 
     const stateActions = getState().actions;
     const stateActionKeys = Object.entries(stateActions)
-      .filter(([k, v]) => !v.requireRow && !v.disableInList)
+      .filter(([k, v]) => !v.disableInList)
       .map(([k, v]) => k);
+
     const actions = [
       "Delete",
       ...boolfields.map((f) => `Toggle ${f.name}`),
