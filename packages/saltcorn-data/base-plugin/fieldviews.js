@@ -97,27 +97,28 @@ const two_level_select = {
   /**
    * @type {object[]}
    */
-  configFields: async ({ table }) => {
+  configFields: async ({ table, name }) => {
     if (!table) return [];
     const fields = await table.getFields();
     const relOpts = [];
-    for (const field of fields) {
-      if (field.is_fkey && field.reftable_name) {
-        const relTable = Table.findOne(field.reftable_name);
-        if (!relTable) continue;
+    const field = fields.find((f) => f.name === name);
 
-        const relFields = await relTable.getFields();
-        relFields.forEach((relField) => {
-          if (relField.is_fkey) {
-            relOpts.push(`${field.name}.${relField.name}`);
-          }
-        });
-      }
+    if (field.is_fkey && field.reftable_name) {
+      const relTable = Table.findOne(field.reftable_name);
+      if (!relTable) return [];
+
+      const relFields = await relTable.getFields();
+      relFields.forEach((relField) => {
+        if (relField.is_fkey) {
+          relOpts.push(relField.name);
+        }
+      });
     }
+
     return [
       {
         name: "relation",
-        label: "Relation",
+        label: "Top level field",
         input_type: "select",
         options: relOpts,
       },
