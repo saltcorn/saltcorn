@@ -138,21 +138,40 @@ const two_level_select = {
   },
 
   run: (nm, v, attrs, cls, reqd, field) => {
-    return tags.select(
-      {
-        class: `form-control ${cls} ${field.class || ""}`,
-        "data-fieldname": field.form_name,
-        name: text_attr(nm),
-        id: `input${text_attr(nm)}`,
-      },
-      select_options(
-        v,
-        field,
-        (attrs || {}).force_required,
-        (attrs || {}).neutral_label
+    return (
+      tags.select(
+        {
+          class: `form-control w-50 ${cls} ${field.class || ""} d-inline`,
+        },
+        select_options_first_level(
+          v,
+          field,
+          (attrs || {}).force_required,
+          (attrs || {}).neutral_label
+        )
+      ) +
+      tags.select(
+        {
+          class: `form-control w-50 ${cls} ${field.class || ""}  d-inline`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          "data-calc-options": encodeURIComponent(
+            JSON.stringify(attrs.calcOptions)
+          ),
+        },
+        option({ value: "" }, "")
       )
     );
   },
+};
+const select_options_first_level = (v, hdr, force_required, neutral_label) => {
+  return Object.entries(hdr.options).map(([label, { id, options }]) =>
+    option(
+      { value: id, selected: options.map((o) => o.value).includes(v) },
+      label
+    )
+  );
 };
 
 /**
