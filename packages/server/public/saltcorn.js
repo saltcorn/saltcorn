@@ -721,6 +721,16 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
+function fill_formula_btn_click(btn) {
+  const formula = decodeURIComponent($(btn).attr("data-formula"));
+  const rec = get_form_record($(btn));
+  const val = new Function(
+    `{${Object.keys(rec).join(",")}}`,
+    "return " + formula
+  )(rec);
+  $(btn).closest(".input-group").find("input").val(val);
+}
+
 /*
 https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
 Copyright (c) 2015 Jeff Green
