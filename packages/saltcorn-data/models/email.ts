@@ -5,16 +5,15 @@
  */
 import { createTransport, Transporter } from "nodemailer";
 const { getState } = require("../db/state");
-const BootstrapEmail = require("bootstrap-email_with-node-sass-6"); // no typings available
-import { tmpName } from "tmp-promise";
-import { writeFile, unlink } from "fs/promises";
 import tags from "@saltcorn/markup/tags";
+import mjml from "@saltcorn/markup/mjml-tags";
 const { div } = tags;
 import View from "./view";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db/index";
 import User from "./user";
 import mocks from "../tests/mocks";
+import mjml2html from "mjml";
 const { mockReqRes } = mocks;
 
 const emailMockReqRes = {
@@ -43,26 +42,8 @@ const getMailTransport = (): Transporter => {
 };
 const viewToEmailHtml = async (view: any, state: any) => {
   const htmlBs = await view.run(state, emailMockReqRes);
-  const html = await transformBootstrapEmail(htmlBs);
+  const html = await mjml2html(mjml.mjml(mjml.body(htmlBs)), {});
   return html;
-};
-/**
- * @param {string} bsHtml
- * @param {boolean} [container=true] wrap in a container div (used by unit test)
- * @returns {Promise<string>}
- */
-const transformBootstrapEmail = async (
-  bsHtml: string,
-  container: boolean = true
-): Promise<string> => {
-  const filename = await tmpName();
-  const html = container ? div({ class: "container" }, bsHtml) : bsHtml;
-  await writeFile(filename, html);
-
-  const template = new BootstrapEmail(filename);
-  const email = template.compile();
-  await unlink(filename);
-  return email;
 };
 
 /**
@@ -113,7 +94,6 @@ const send_verification_email = async (
 
 export = {
   getMailTransport,
-  transformBootstrapEmail,
   send_verification_email,
   emailMockReqRes,
   viewToEmailHtml,
