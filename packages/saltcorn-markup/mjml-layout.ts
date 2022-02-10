@@ -165,7 +165,7 @@ const render = ({
         segment,
         isTop,
         ix,
-        img({
+        mjml.image({
           class: segment.style && segment.style.width ? null : "w-100",
           alt: segment.alt,
           style: segment.style,
@@ -359,8 +359,7 @@ const render = ({
         segment,
         isTop,
         ix,
-        genericElement(
-          htmlElement || "div",
+        mjml.section(
           {
             class: [
               customClass || false,
@@ -450,44 +449,25 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const cardDeck =
-        segment.besides.every((s: any) => s && s.type === "card") &&
-        (!segment.widths || segment.widths.every((w: any) => w === defwidth));
+
       let markup;
-      if (cardDeck)
-        markup = div(
-          { class: "card-deck", style: segment.style },
-          segment.besides.map((t: any, ixb: number) => go(t, false, ixb))
-        );
-      else
-        markup = div(
-          {
-            class: [
-              "row",
-              segment.style && segment.style.width ? null : "w-100",
-            ],
-            style: segment.style,
-          },
-          segment.besides.map((t: any, ixb: number) =>
-            div(
-              {
-                class:
-                  segment.widths === false
-                    ? ""
-                    : `col-${
-                        segment.breakpoint
-                          ? segment.breakpoint + "-"
-                          : segment.breakpoints && segment.breakpoints[ixb]
-                          ? segment.breakpoints[ixb] + "-"
-                          : ""
-                      }${segment.widths ? segment.widths[ixb] : defwidth}${
-                        segment.aligns ? " text-" + segment.aligns[ixb] : ""
-                      }`,
-              },
-              go(t, false, ixb)
-            )
+
+      markup = mjml.section(
+        {
+          class: ["row", segment.style && segment.style.width ? null : "w-100"],
+          style: segment.style,
+        },
+        segment.besides.map((t: any, ixb: number) =>
+          mjml.column(
+            {
+              width: `${Math.round(
+                (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
+              )}`,
+            },
+            go(t, false, ixb)
           )
-        );
+        )
+      );
       return isTop ? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
