@@ -138,10 +138,16 @@ const two_level_select = {
   },
 
   run: (nm, v, attrs, cls, reqd, field) => {
+    const options2 = {};
+    Object.entries(field.options).forEach(([label, { id, options }]) => {
+      options2[id] = options;
+    });
+    const calcOptions = [`_${field.name}_toplevel`, options2];
     return (
       tags.select(
         {
           class: `form-control w-50 ${cls} ${field.class || ""} d-inline`,
+          "data-fieldname": `_${field.name}_toplevel`,
         },
         select_options_first_level(
           v,
@@ -156,9 +162,7 @@ const two_level_select = {
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
-          "data-calc-options": encodeURIComponent(
-            JSON.stringify(attrs.calcOptions)
-          ),
+          "data-calc-options": encodeURIComponent(JSON.stringify(calcOptions)),
         },
         option({ value: "" }, "")
       )

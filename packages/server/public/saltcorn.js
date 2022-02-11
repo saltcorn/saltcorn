@@ -55,8 +55,18 @@ function apply_showif() {
     //console.log(val, options, current,data)
     e.empty();
     (options || []).forEach((o) => {
-      if (current === o) e.append($("<option selected>" + o + "</option>"));
-      else e.append($("<option>" + o + "</option>"));
+      if (!(o && o.label && o.value)) {
+        if (current === o) e.append($("<option selected>" + o + "</option>"));
+        else e.append($("<option>" + o + "</option>"));
+      } else {
+        e.append(
+          $(
+            `<option ${current === o.value ? "selected" : ""} value="${
+              o.value
+            }">${o.label}</option>`
+          )
+        );
+      }
     });
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
