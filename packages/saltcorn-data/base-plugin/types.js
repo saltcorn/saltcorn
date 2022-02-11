@@ -370,6 +370,48 @@ const string = {
               ...(isdef(v) && { value: text_attr(v) }),
             }),
     },
+    fill_formula_btn: {
+      isEdit: true,
+      configFields: [
+        {
+          name: "formula",
+          label: "Formula",
+          type: "String",
+        },
+        {
+          name: "label",
+          label: "Button label",
+          type: "String",
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        div(
+          { class: "input-group" },
+          input({
+            type: attrs.input_type || "text",
+            disabled: attrs.disabled,
+            class: ["form-control", cls],
+            placeholder: attrs.placeholder,
+            onChange: attrs.onChange,
+            "data-fieldname": text_attr(field.name),
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            ...(isdef(v) && { value: text_attr(v) }),
+          }),
+          div(
+            { class: "input-group-append" },
+            button(
+              {
+                class: "btn btn-secondary",
+                type: "button",
+                "data-formula": encodeURIComponent(attrs?.formula),
+                onClick: "fill_formula_btn_click(this)",
+              },
+              attrs?.label || "Fill"
+            )
+          )
+        ),
+    },
     make_unique: {
       isEdit: true,
       configFields: [

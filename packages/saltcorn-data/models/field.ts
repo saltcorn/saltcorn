@@ -220,6 +220,40 @@ class Field implements AbstractField {
     //console.log(where);
     if (
       this.is_fkey &&
+      this.fieldview === "two_level_select" &&
+      this.attributes.relation
+    ) {
+      const Table = require("./table");
+      const refTable = Table.findOne(this.reftable_name);
+      const relFields = await refTable.getFields();
+      const relField = relFields.find(
+        (f: any) => f.name === this.attributes.relation
+      );
+
+      const rows = await refTable.getJoinedRows({
+        joinFields: {
+          first_level: {
+            ref: this.attributes.relation,
+            target: relField.attributes.summary_field,
+          },
+        },
+      });
+      this.options = {};
+      rows.forEach((row: any) => {
+        const opt = {
+          label: row[this.attributes.summary_field],
+          value: row[this.refname],
+        };
+        if (!this.options[row.first_level])
+          this.options[row.first_level] = {
+            id: row[this.attributes.relation],
+            options: [opt],
+          };
+        else this.options[row.first_level].options.push(opt);
+      });
+      //console.log(this.options);
+    } else if (
+      this.is_fkey &&
       (this.type !== "File" ||
         typeof this.attributes.select_file_where !== "undefined")
     ) {
@@ -277,7 +311,7 @@ class Field implements AbstractField {
         { label: __("False"), value: "off", jsvalue: false },
       ];
     }
-    await this.fill_table();
+    this.fill_table();
     let whereS = "";
     let values = [];
     if (where) {
@@ -429,7 +463,7 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async add_unique_constraint(): Promise<void> {
-    await this.fill_table();
+    this.fill_table();
     await db.add_unique_constraint(this.table?.name, [this.name]);
   }
 
@@ -437,7 +471,7 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async remove_unique_constraint(): Promise<void> {
-    await this.fill_table();
+    this.fill_table();
     await db.drop_unique_constraint(this.table?.name, [this.name]);
   }
 
@@ -447,13 +481,12 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async toggle_not_null(not_null: boolean): Promise<void> {
-    await this.fill_table();
+    this.fill_table();
 
     if (!this.table) {
       throw new Error("To toggle a not null constraint, 'table' must be set.");
     }
     const schema = db.getTenantSchemaPrefix();
-    await this.fill_table();
     await db.query(
       `alter table ${schema}"${sqlsanitize(
         this.table.name
@@ -479,7 +512,7 @@ class Field implements AbstractField {
     let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
 
     const schema = db.getTenantSchemaPrefix();
-    await this.fill_table();
+    this.fill_table();
     if (new_field.primary_key) {
       await db.query(
         `ALTER TABLE ${schema}"${sqlsanitize(
@@ -515,10 +548,10 @@ class Field implements AbstractField {
   /**
    * @returns {Promise<void>}
    */
-  async fill_table(): Promise<void> {
+  fill_table(): void {
     if (!this.table) {
       const Table = require("./table");
-      this.table = await Table.findOne({ id: this.table_id });
+      this.table = Table.findOne({ id: this.table_id });
     }
   }
 
