@@ -1,0 +1,26 @@
+{
+  "name": "@saltcorn/mobile-builder",
+  "description": "plugin to to build a mobile app from a tenant application",
+  "homepage": "https://saltcorn.com",
+  "repository": "github:saltcorn/saltcorn",
+  "version": "0.6.4",
+  "author": "Christian Hugo",
+  "dependencies": {
+    "@oclif/core": "^1.2.0",
+    "cordova-android": "^10.1.1",
+    "@saltcorn/markup": "^0.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.12"
+  },
+  "files": [
+    "/dist"
+  ],
+  "license": "MIT",
+  "oclif": {
+    "commands": "./dist/commands"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

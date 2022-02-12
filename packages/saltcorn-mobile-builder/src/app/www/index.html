@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="js/bundles/index.bundle.js"></script>
+    <script>
+      window.onload = function () {
+        document.getElementById("time-div").innerHTML = window.localeDateTime(
+          new Date()
+        );
+      };
+    </script>
+  </head>
+
+  <body>
+    <div id="time-div"></div>
+  </body>
+</html>

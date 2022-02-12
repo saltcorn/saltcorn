@@ -1,0 +1,17 @@
+{
+  "name": "saltcorn-mobile-app",
+  "displayName": "Saltcorn mobile app",
+  "version": "1.0.0",
+  "description": "Apache Cordova application with @saltcorn/markup",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Christian Hugo",
+  "license": "MIT",
+  "cordova": {
+    "platforms": [
+      "android"
+    ]
+  }
+}
