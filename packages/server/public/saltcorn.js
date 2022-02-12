@@ -55,8 +55,18 @@ function apply_showif() {
     //console.log(val, options, current,data)
     e.empty();
     (options || []).forEach((o) => {
-      if (current === o) e.append($("<option selected>" + o + "</option>"));
-      else e.append($("<option>" + o + "</option>"));
+      if (!(o && o.label && o.value)) {
+        if (current === o) e.append($("<option selected>" + o + "</option>"));
+        else e.append($("<option>" + o + "</option>"));
+      } else {
+        e.append(
+          $(
+            `<option ${current === o.value ? "selected" : ""} value="${
+              o.value
+            }">${o.label}</option>`
+          )
+        );
+      }
     });
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
@@ -76,12 +86,14 @@ function apply_showif() {
     });
   });
 }
-function get_form_record(e) {
+function get_form_record(e, select_labels) {
   const rec = {};
   e.closest("form")
     .find("input[name],select[name]")
     .each(function () {
-      rec[$(this).attr("name")] = $(this).val();
+      if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
+        rec[$(this).attr("name")] = $(this).find("option:selected").text();
+      else rec[$(this).attr("name")] = $(this).val();
     });
   return rec;
 }
@@ -719,6 +731,16 @@ function room_older(viewname, room_id, btn) {
       if (res.remove_fetch_older) $(btn).remove();
     }
   );
+}
+
+function fill_formula_btn_click(btn) {
+  const formula = decodeURIComponent($(btn).attr("data-formula"));
+  const rec = get_form_record($(btn), true);
+  const val = new Function(
+    `{${Object.keys(rec).join(",")}}`,
+    "return " + formula
+  )(rec);
+  $(btn).closest(".input-group").find("input").val(val);
 }
 
 /*

@@ -89,6 +89,95 @@ const select = {
   },
 };
 
+const two_level_select = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  isEdit: true,
+  /**
+   * @type {object[]}
+   */
+  configFields: async ({ table, name }) => {
+    if (!table) return [];
+    const fields = await table.getFields();
+    const relOpts = [""];
+    const field = fields.find((f) => f.name === name);
+
+    if (field.is_fkey && field.reftable_name) {
+      const relTable = Table.findOne(field.reftable_name);
+      if (!relTable) return [];
+
+      const relFields = await relTable.getFields();
+      relFields.forEach((relField) => {
+        if (relField.is_fkey) {
+          relOpts.push(relField.name);
+        }
+      });
+    }
+
+    return [
+      {
+        name: "relation",
+        label: "Top level field",
+        input_type: "select",
+        options: relOpts,
+      },
+      {
+        name: "neutral_label",
+        label: "Neutral label",
+        type: "String",
+      },
+      {
+        name: "force_required",
+        label: "Force required",
+        sublabel:
+          "User must select a value, even if the table field is not required",
+        type: "Bool",
+      },
+    ];
+  },
+
+  run: (nm, v, attrs, cls, reqd, field) => {
+    const options2 = {};
+    Object.entries(field.options).forEach(([label, { id, options }]) => {
+      options2[id] = options;
+    });
+    const calcOptions = [`_${field.name}_toplevel`, options2];
+    return (
+      tags.select(
+        {
+          class: `form-control w-50 ${cls} ${field.class || ""} d-inline`,
+          "data-fieldname": `_${field.name}_toplevel`,
+        },
+        select_options_first_level(
+          v,
+          field,
+          (attrs || {}).force_required,
+          (attrs || {}).neutral_label
+        )
+      ) +
+      tags.select(
+        {
+          class: `form-control w-50 ${cls} ${field.class || ""}  d-inline`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          "data-calc-options": encodeURIComponent(JSON.stringify(calcOptions)),
+        },
+        option({ value: "" }, "")
+      )
+    );
+  },
+};
+const select_options_first_level = (v, hdr, force_required, neutral_label) => {
+  return Object.entries(hdr.options).map(([label, { id, options }]) =>
+    option(
+      { value: id, selected: options.map((o) => o.value).includes(v) },
+      label
+    )
+  );
+};
+
 /**
  * radio_select namespace
  * @namespace
@@ -195,4 +284,4 @@ const search_or_create = {
     );
   },
 };
-module.exports = { select, search_or_create, radio_select };
+module.exports = { select, search_or_create, radio_select, two_level_select };

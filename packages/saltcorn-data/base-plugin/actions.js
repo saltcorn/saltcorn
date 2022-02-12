@@ -622,4 +622,41 @@ module.exports = {
      **/
     run: run_code,
   },
+  duplicate_row_prefill_edit: {
+    configFields: async ({ table }) => {
+      const fields = table ? await table.getFields() : [];
+      const views = await View.find_table_views_where(
+        table,
+        ({ viewrow }) => viewrow.viewtemplate === "Edit"
+      );
+
+      const fldOpts = fields.map((f) => ({
+        label: f.name,
+        name: f.name,
+        default: f.name !== "id",
+        type: "Bool",
+      }));
+      return [
+        {
+          name: "viewname",
+          label: "View to create",
+          input_type: "select",
+          options: views.map((v) => v.name),
+        },
+        ...fldOpts,
+      ];
+    },
+    requireRow: true,
+    run: async ({ row, table, configuration: { viewname, ...flds }, user }) => {
+      const qs = Object.entries(flds)
+        .map(([k, v]) =>
+          v && typeof row[k] !== "undefined"
+            ? `${encodeURIComponent(k)}=${encodeURIComponent(row[k])}`
+            : false
+        )
+        .filter((s) => s)
+        .join("&");
+      return { goto: `/view/${viewname}?${qs}` };
+    },
+  },
 };
