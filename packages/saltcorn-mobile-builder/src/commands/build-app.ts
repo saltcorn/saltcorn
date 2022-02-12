@@ -1,7 +1,7 @@
 import { Command } from "@oclif/core";
-import { spawnSync } from "child_process";
+import { spawnSync, execSync } from "child_process";
 
-import { copyFileSync, mkdirSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
 export default class BuildAppCommand extends Command {
@@ -9,7 +9,11 @@ export default class BuildAppCommand extends Command {
 
   packageRoot = join(__dirname, "../../");
   saltcornMarkupRoot = join(require.resolve("@saltcorn/markup"), "../../");
-  appBundlesDir = join(this.packageRoot, "src/app/www/js/bundles");
+  appDir = join(require.resolve("@saltcorn/mobile-app"), "..");
+  appBundlesDir = join(
+    require.resolve("@saltcorn/mobile-app"),
+    "../www/js/bundles"
+  );
 
   bundleSaltcornMarkup = () => {
     spawnSync("npm", ["run", "build"], {
@@ -18,22 +22,22 @@ export default class BuildAppCommand extends Command {
     });
   };
   copyBundleToApp = () => {
-    mkdirSync(this.appBundlesDir);
+    if (!existsSync(this.appBundlesDir)) mkdirSync(this.appBundlesDir);
     copyFileSync(
       join(this.saltcornMarkupRoot, "bundle", "index.bundle.js"),
       join(this.appBundlesDir, "index.bundle.js")
     );
   };
   addAndroidPlatform = () => {
-    spawnSync("cordova", ["platform", "add", "android"], {
+    spawnSync("npm", ["run", "add-platform"], {
       stdio: "inherit",
-      cwd: join(this.packageRoot, "src/app"),
+      cwd: this.appDir,
     });
   };
   buildApk = () => {
-    spawnSync("cordova", ["build"], {
+    spawnSync("npm", ["run", "build-app"], {
       stdio: "inherit",
-      cwd: join(this.packageRoot, "src/app"),
+      cwd: this.appDir,
     });
   };
 

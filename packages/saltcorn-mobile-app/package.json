@@ -1,11 +1,12 @@
 {
-  "name": "saltcorn-mobile-app",
+  "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "1.0.0",
+  "version": "0.6.4",
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "add-platform": "cordova platform add android",
+    "build-app": "cordova build"
   },
   "author": "Christian Hugo",
   "license": "MIT",
@@ -13,5 +14,9 @@
     "platforms": [
       "android"
     ]
+  },
+  "dependencies": {
+    "cordova": "^11.0.0",
+    "cordova-android": "^10.1.1"
   }
 }

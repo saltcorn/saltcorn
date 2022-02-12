@@ -7,8 +7,8 @@
   "author": "Christian Hugo",
   "dependencies": {
     "@oclif/core": "^1.2.0",
-    "cordova-android": "^10.1.1",
-    "@saltcorn/markup": "^0.6.4"
+    "@saltcorn/markup": "^0.6.4",
+    "@saltcorn/mobile-app": "^0.6.4"
   },
   "devDependencies": {
     "@types/node": "^16.11.12"
