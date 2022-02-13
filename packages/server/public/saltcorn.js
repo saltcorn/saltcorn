@@ -636,12 +636,13 @@ function make_unique_field(
   id,
   table_id,
   field_name,
-  value,
+  elem,
   space,
   start,
   always_append,
   char_type
 ) {
+  const value = $(elem).val();
   if (!value) return;
   $.ajax(
     `/api/${table_id}?approximate=true&${encodeURIComponent(

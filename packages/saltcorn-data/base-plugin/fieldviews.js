@@ -171,7 +171,7 @@ const two_level_select = {
   },
 };
 const select_options_first_level = (v, hdr, force_required, neutral_label) => {
-  return Object.entries(hdr.options).map(([label, { id, options }]) =>
+  return Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
     option(
       { value: id, selected: options.map((o) => o.value).includes(v) },
       label
