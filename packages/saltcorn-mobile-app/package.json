@@ -5,7 +5,7 @@
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
-    "add-platform": "cordova platform add android",
+    "add-platform": "cordova platform add",
     "build-app": "cordova build"
   },
   "author": "Christian Hugo",

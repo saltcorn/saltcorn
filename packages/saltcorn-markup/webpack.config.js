@@ -5,12 +5,13 @@ module.exports = {
     minimize: false, // debug
   },
   entry: {
-    index: "./dist/index.js",
+    markup: "./dist/index.js",
   },
   output: {
     path: path.resolve(__dirname),
     filename: "bundle/[name].bundle.js",
-    libraryTarget: "window",
+    libraryTarget: "umd",
+    library: ["saltcorn", "[name]"],
   },
   resolve: {
     alias: {

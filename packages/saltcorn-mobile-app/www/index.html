@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="js/bundles/index.bundle.js"></script>
+    <script src="js/bundles/markup.bundle.js"></script>
     <script>
       window.onload = function () {
-        document.getElementById("time-div").innerHTML = window.localeDateTime(
-          new Date()
-        );
+        document.getElementById("time-div").innerHTML =
+          saltcorn.markup.localeDateTime(new Date());
       };
     </script>
   </head>
