@@ -140,7 +140,7 @@ const two_level_select = {
 
   run: (nm, v, attrs, cls, reqd, field) => {
     const options2 = {};
-    Object.entries(field.options).forEach(([label, { id, options }]) => {
+    Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
       options2[id] = options;
     });
     const calcOptions = [`_${field.name}_toplevel`, options2];
