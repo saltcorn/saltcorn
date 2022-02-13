@@ -376,6 +376,9 @@ router.get(
                   pagination:true,
                   paginationSize:20,
                   clipboard:true,
+                  persistence:true, 
+                  persistenceID:"table_tab_${table.name}",
+                  movableColumns: true,
                   initialSort:[
                     {column:"id", dir:"asc"},
                   ],
