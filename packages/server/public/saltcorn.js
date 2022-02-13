@@ -636,11 +636,13 @@ function make_unique_field(
   id,
   table_id,
   field_name,
-  value,
+  elem,
   space,
   start,
-  always_append
+  always_append,
+  char_type
 ) {
+  const value = $(elem).val();
   if (!value) return;
   $.ajax(
     `/api/${table_id}?approximate=true&${encodeURIComponent(
@@ -650,12 +652,25 @@ function make_unique_field(
       type: "GET",
       success: function (res) {
         if (res.success) {
+          const gen_char = (i) => {
+            switch (char_type) {
+              case "Lowercase Letters":
+                return String.fromCharCode("a".charCodeAt(0) + i);
+                break;
+              case "Uppercase Letters":
+                return String.fromCharCode("A".charCodeAt(0) + i);
+                break;
+              default:
+                return i;
+                break;
+            }
+          };
           const vals = res.success
             .map((o) => o[field_name])
             .filter((s) => s.startsWith(value));
           if (vals.includes(value) || always_append) {
             for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
-              const newname = `${value}${space ? " " : ""}${i}`;
+              const newname = `${value}${space ? " " : ""}${gen_char(i)}`;
               if (!vals.includes(newname)) {
                 $("#" + id).val(newname);
                 return;

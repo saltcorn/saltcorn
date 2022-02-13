@@ -264,6 +264,7 @@ router.get(
       width: 40,
       hozAlign: "center",
       headerSort: false,
+      clipboard: false,
       cellClick: "__delete_tabulator_row",
     });
     res.sendWrap(
@@ -374,6 +375,10 @@ router.get(
                   height:"100%",
                   pagination:true,
                   paginationSize:20,
+                  clipboard:true,
+                  persistence:true, 
+                  persistenceID:"table_tab_${table.name}",
+                  movableColumns: true,
                   initialSort:[
                     {column:"id", dir:"asc"},
                   ],

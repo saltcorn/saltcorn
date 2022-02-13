@@ -383,6 +383,37 @@ const string = {
           label: "Button label",
           type: "String",
         },
+        {
+          name: "make_unique",
+          label: "Make unique after fill",
+          type: "Bool",
+        },
+        {
+          name: "include_space",
+          label: "Include space",
+          type: "Bool",
+          showIf: { make_unique: true },
+        },
+        {
+          name: "start_from",
+          label: "Start from",
+          type: "Integer",
+          default: 0,
+          showIf: { make_unique: true },
+        },
+        {
+          name: "always_append",
+          label: "Always append",
+          type: "Bool",
+          showIf: { make_unique: true },
+        },
+        {
+          name: "char_type",
+          label: "Append character type",
+          input_type: "select",
+          options: ["Digits", "Lowercase Letters", "Uppercase Letters"],
+          showIf: { make_unique: true },
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         div(
@@ -405,7 +436,17 @@ const string = {
                 class: "btn btn-secondary",
                 type: "button",
                 "data-formula": encodeURIComponent(attrs?.formula),
-                onClick: "fill_formula_btn_click(this)",
+                onClick:
+                  "fill_formula_btn_click(this);" +
+                  (attrs.make_unique
+                    ? `make_unique_field('input${text_attr(nm)}', ${
+                        field.table_id
+                      }, '${field.name}',  $('#input${text_attr(nm)}'), ${
+                        attrs.include_space
+                      }, ${attrs.start_from}, ${attrs.always_append}, '${
+                        attrs.char_type
+                      }')`
+                    : ""),
               },
               attrs?.label || "Fill"
             )
@@ -442,6 +483,12 @@ const string = {
           label: "Always append",
           type: "Bool",
         },
+        {
+          name: "char_type",
+          label: "Append character type",
+          input_type: "select",
+          options: ["Digits", "Lowercase Letters", "Uppercase Letters"],
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
@@ -459,9 +506,9 @@ const string = {
           domReady(
             `make_unique_field('input${text_attr(nm)}', ${field.table_id}, '${
               field.name
-            }', ${JSON.stringify(v)}, ${attrs.include_space}, ${
+            }', $('#input${text_attr(nm)}'), ${attrs.include_space}, ${
               attrs.start_from
-            }, ${attrs.always_append})`
+            }, ${attrs.always_append}, ${JSON.stringify(attrs.char_type)})`
           )
         ),
     },
