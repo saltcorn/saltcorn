@@ -467,7 +467,7 @@ const string = {
               field.name
             }', ${JSON.stringify(v)}, ${attrs.include_space}, ${
               attrs.start_from
-            }, ${attrs.always_append}, ${attrs.char_type})`
+            }, ${attrs.always_append}, ${JSON.stringify(attrs.char_type)})`
           )
         ),
     },
