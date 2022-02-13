@@ -442,6 +442,12 @@ const string = {
           label: "Always append",
           type: "Bool",
         },
+        {
+          name: "char_type",
+          label: "Append character type",
+          input_type: "select",
+          options: ["Digits", "Lowercase Letters", "Uppercase Letters"],
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
@@ -461,7 +467,7 @@ const string = {
               field.name
             }', ${JSON.stringify(v)}, ${attrs.include_space}, ${
               attrs.start_from
-            }, ${attrs.always_append})`
+            }, ${attrs.always_append}, ${attrs.char_type})`
           )
         ),
     },
