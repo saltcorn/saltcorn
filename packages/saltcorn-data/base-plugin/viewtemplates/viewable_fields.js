@@ -499,7 +499,6 @@ const get_viewable_fields = contract(
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {
-          //console.log(column)
           const [table, fld] = column.agg_relation.split(".");
           const targetNm = (
             column.stat.replace(" ", "") +
@@ -515,7 +514,7 @@ const get_viewable_fields = contract(
             label: column.header_label
               ? text(column.header_label)
               : text(column.stat + " " + table),
-            key: text(targetNm),
+            key: targetNm,
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Field") {
