@@ -102,6 +102,7 @@ const two_level_select = {
     const fields = await table.getFields();
     const relOpts = [""];
     const field = fields.find((f) => f.name === name);
+    if (!field) return [];
 
     if (field.is_fkey && field.reftable_name) {
       const relTable = Table.findOne(field.reftable_name);
