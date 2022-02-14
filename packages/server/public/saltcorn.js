@@ -60,14 +60,15 @@ function apply_showif() {
     e.empty();
     (options || []).forEach((o) => {
       if (!(o && o.label && o.value)) {
-        if (current === o) e.append($("<option selected>" + o + "</option>"));
+        if (`${current}` === `${o}`)
+          e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
       } else {
         e.append(
           $(
-            `<option ${current === o.value ? "selected" : ""} value="${
-              o.value
-            }">${o.label}</option>`
+            `<option ${
+              `${current}` === `${o.value}` ? "selected" : ""
+            } value="${o.value}">${o.label}</option>`
           )
         );
       }
