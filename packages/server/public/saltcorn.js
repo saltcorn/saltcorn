@@ -30,16 +30,20 @@ function add_repeater(nm) {
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
-    var to_show = new Function(
-      "e",
-      "return " + decodeURIComponent(e.attr("data-show-if"))
-    );
-    if (to_show(e))
-      e.show()
-        .find("input, textarea, button, select")
-        .prop("disabled", e.attr("data-disabled") || false);
-    else
-      e.hide().find("input, textarea, button, select").prop("disabled", true);
+    try {
+      var to_show = new Function(
+        "e",
+        "return " + decodeURIComponent(e.attr("data-show-if"))
+      );
+      if (to_show(e))
+        e.show()
+          .find("input, textarea, button, select")
+          .prop("disabled", e.attr("data-disabled") || false);
+      else
+        e.hide().find("input, textarea, button, select").prop("disabled", true);
+    } catch (e) {
+      console.error(e);
+    }
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
@@ -56,14 +60,15 @@ function apply_showif() {
     e.empty();
     (options || []).forEach((o) => {
       if (!(o && o.label && o.value)) {
-        if (current === o) e.append($("<option selected>" + o + "</option>"));
+        if (`${current}` === `${o}`)
+          e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
       } else {
         e.append(
           $(
-            `<option ${current === o.value ? "selected" : ""} value="${
-              o.value
-            }">${o.label}</option>`
+            `<option ${
+              `${current}` === `${o.value}` ? "selected" : ""
+            } value="${o.value}">${o.label}</option>`
           )
         );
       }
