@@ -1,4 +1,6 @@
-const path = require("path");
+const { join } = require("path");
+
+const typesDir = join(require.resolve("@saltcorn/types/index"), "../..");
 
 module.exports = {
   optimization: {
@@ -8,14 +10,14 @@ module.exports = {
     markup: "./dist/index.js",
   },
   output: {
-    path: path.resolve(__dirname),
+    path: __dirname,
     filename: "bundle/[name].bundle.js",
     libraryTarget: "umd",
     library: ["saltcorn", "[name]"],
   },
   resolve: {
     alias: {
-      "@saltcorn/types": path.resolve(__dirname, "../saltcorn-types/dist"),
+      "@saltcorn/types": join(typesDir, "dist"),
     },
   },
 };
