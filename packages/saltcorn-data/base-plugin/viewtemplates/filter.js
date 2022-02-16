@@ -339,7 +339,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       );
     },
   };
-  return renderLayout({ blockDispatch, layout, role });
+  return renderLayout({ blockDispatch, layout, role, req: extra.req });
 };
 
 /**

@@ -69,7 +69,7 @@ import emailImport from "./email";
 export namespace email {
   export const {
     getMailTransport,
-    transformBootstrapEmail,
+    viewToEmailHtml,
     send_verification_email,
   } = emailImport;
 }
@@ -103,8 +103,12 @@ export namespace layout {
 
 import randomImport from "./random";
 export namespace random {
-  export const { random_table, fill_table_row, initial_view, all_views } =
-    randomImport;
+  export const {
+    random_table,
+    fill_table_row,
+    initial_view,
+    all_views,
+  } = randomImport;
 }
 
 import schedulerImport from "./scheduler";

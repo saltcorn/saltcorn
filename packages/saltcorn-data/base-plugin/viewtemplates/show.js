@@ -646,6 +646,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     layout,
     role,
     is_owner,
+    req,
   });
 };
 
