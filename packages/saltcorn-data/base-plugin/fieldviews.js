@@ -102,6 +102,7 @@ const two_level_select = {
     const fields = await table.getFields();
     const relOpts = [""];
     const field = fields.find((f) => f.name === name);
+    if (!field) return [];
 
     if (field.is_fkey && field.reftable_name) {
       const relTable = Table.findOne(field.reftable_name);
@@ -139,7 +140,7 @@ const two_level_select = {
 
   run: (nm, v, attrs, cls, reqd, field) => {
     const options2 = {};
-    Object.entries(field.options).forEach(([label, { id, options }]) => {
+    Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
       options2[id] = options;
     });
     const calcOptions = [`_${field.name}_toplevel`, options2];
@@ -170,7 +171,7 @@ const two_level_select = {
   },
 };
 const select_options_first_level = (v, hdr, force_required, neutral_label) => {
-  return Object.entries(hdr.options).map(([label, { id, options }]) =>
+  return Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
     option(
       { value: id, selected: options.map((o) => o.value).includes(v) },
       label
