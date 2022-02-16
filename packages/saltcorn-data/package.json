@@ -61,7 +61,7 @@
     "tmp-promise": "^3.0.2",
     "uuid": "^8.2.0",
     "nodemailer": "^6.4.17",
-    "mjml": "4.7.0",
+    "mjml": "4.12.0",
     "@types/mjml": "4.7.0"
   },
   "repository": "github:saltcorn/saltcorn",
