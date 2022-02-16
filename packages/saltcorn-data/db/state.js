@@ -639,6 +639,7 @@ const features = {
   deep_public_plugin_serve: true,
   fieldrepeats_in_field_attributes: true,
   no_plugin_fieldview_length_check: true,
+  bootstrap5: true,
 };
 
 module.exports = {
