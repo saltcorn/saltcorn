@@ -40,9 +40,15 @@ const getMailTransport = (): Transporter => {
     },
   });
 };
-const viewToEmailHtml = async (view: any, state: any) => {
+
+const viewToMjml = async (view: any, state: any) => {
   const htmlBs = await view.run(state, emailMockReqRes);
-  const html = await mjml2html(mjml.mjml(mjml.body(htmlBs)), {});
+  return mjml.mjml(mjml.body(htmlBs));
+};
+
+const viewToEmailHtml = async (view: any, state: any) => {
+  const mjmlMarkup = await viewToMjml(view, state);
+  const html = mjml2html(mjmlMarkup, { minify: true });
   return html.html;
 };
 
@@ -97,4 +103,5 @@ export = {
   send_verification_email,
   emailMockReqRes,
   viewToEmailHtml,
+  viewToMjml,
 };
