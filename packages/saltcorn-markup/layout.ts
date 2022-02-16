@@ -600,8 +600,19 @@ const render = ({
       let markup;
       if (cardDeck)
         markup = div(
-          { class: "card-deck", style: segment.style },
-          segment.besides.map((t: any, ixb: number) => go(t, false, ixb))
+          {
+            class: `row row-cols-1 row-cols-md-${segment.besides.length} g-4 mb-3`,
+            style: segment.style,
+          },
+          segment.besides.map((t: any, ixb: number) => {
+            const newt = { ...t };
+            newt.class = t.class
+              ? Array.isArray(t.class)
+                ? ["h-100", ...t.class]
+                : t.class + " h-100"
+              : "h-100";
+            return div({ class: "col" }, go(newt, false, ixb));
+          })
         );
       else
         markup = div(
