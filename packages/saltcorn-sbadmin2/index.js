@@ -333,7 +333,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
+    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin/7.0.4/dist/css/styles.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -342,9 +342,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <script src="/static_assets/${
       db.connectObj.version_tag
     }/jquery-3.6.0.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+            <script src="/plugins/pubdeps/sbadmin2/bootstrap/5.1.3/dist/js/bootstrap.bundle.min.js"></script>
             <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/jquery-easing/jquery.easing.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
+            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin/7.0.4/dist/js/scripts.js"></script>
     ${headersInBody(headers)}
     </body>
   </html>`;
@@ -468,6 +468,10 @@ module.exports = {
     "startbootstrap-sb-admin-2": require.resolve(
       "startbootstrap-sb-admin-2/package.json"
     ),
+    "startbootstrap-sb-admin": require.resolve(
+      "startbootstrap-sb-admin/package.json"
+    ),
+    bootstrap: require.resolve("bootstrap/package.json"),
   },
   /** @type {object} */
   layout: {

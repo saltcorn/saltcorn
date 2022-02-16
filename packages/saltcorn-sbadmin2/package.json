@@ -11,7 +11,9 @@
   "dependencies": {
     "@saltcorn/data": "0.6.4",
     "@saltcorn/markup": "0.6.4",
-    "startbootstrap-sb-admin-2": "^4.1.4"
+    "startbootstrap-sb-admin-2": "^4.1.4",
+    "startbootstrap-sb-admin": "^7.0.4",
+    "bootstrap": "5.1.3"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
