@@ -20,7 +20,6 @@ const {
   footer,
   button,
   form,
-  nav,
   input,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
@@ -169,30 +168,29 @@ const sideBarSection = (currentUrl) => (section) => [
  * @returns {ul}
  */
 const sidebar = (brand, sections, currentUrl) =>
-  nav(
+  ul(
     {
-      class: "sb-sidenav accordion sb-sidenav-dark",
-      id: "sidenavAccordion",
+      class:
+        "navbar-nav bg-gradient-primary sidebar sidebar-dark accordion d-print-none",
+      id: "accordionSidebar",
     },
-    div(
-      { class: "sb-sidenav-menu" },
-      div(
-        { class: "nav" },
-        a(
-          {
-            class:
-              "sidebar-brand d-flex align-items-center justify-content-center",
-            href: "/",
-          },
-          brand.logo &&
-            div(
-              { class: "sidebar-brand-icon" },
-              img({ src: brand.logo, width: "35", height: "35", alt: "Logo" })
-            ),
-          div({ class: "sidebar-brand-text mx-3" }, brand.name)
+    a(
+      {
+        class: "sidebar-brand d-flex align-items-center justify-content-center",
+        href: "/",
+      },
+      brand.logo &&
+        div(
+          { class: "sidebar-brand-icon" },
+          img({ src: brand.logo, width: "35", height: "35", alt: "Logo" })
         ),
-        sections.map(sideBarSection(currentUrl))
-      )
+      div({ class: "sidebar-brand-text mx-3" }, brand.name)
+    ),
+    sections.map(sideBarSection(currentUrl)),
+    hr({ class: "sidebar-divider d-none d-md-block" }),
+    div(
+      { class: "text-center d-none d-md-inline" },
+      button({ class: "rounded-circle border-0", id: "sidebarToggle" })
     )
   );
 
@@ -376,7 +374,7 @@ const authWrap = ({
     headers,
     title,
     `class="bg-gradient-primary ${bodyClass || ""}"`,
-    `<div id="layoutSidenav">
+    `<div class="container">
       <div class="row justify-content-center">
         <div class="col-xl-10 col-lg-12 col-md-9">
           <div class="card o-hidden border-0 shadow-lg my-5">
@@ -428,12 +426,11 @@ const wrap = ({
     headers,
     title,
     `id="page-top" class="${bodyClass || ""}"`,
-    `<div id="layoutSidenav">
-      <div id="layoutSidenav_nav">
-        ${sidebar(brand, menu, currentUrl)}
-      </div>
-      <div id="layoutSidenav_content">
-        <main>
+    `<div id="wrapper">
+      ${sidebar(brand, menu, currentUrl)}
+
+      <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
           <div id="page-inner-content" class="container-fluid px-2">
             <div id="alerts-area">
               ${alerts.map((a) => alert(a.type, a.msg)).join("")}
@@ -442,7 +439,7 @@ const wrap = ({
               ${renderBody(title, body, role)}
             <div>
           </div>
-        </main>
+        </div>
       </div>
     </div>`
   );
