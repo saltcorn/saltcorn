@@ -127,19 +127,19 @@ const RenderNode = ({ render }) => {
                 zIndex: 9999,
               }}
             >
-              <div className="dispname mr-3">{name}</div>{" "}
+              <div className="dispname me-3">{name}</div>{" "}
               {moveable && isActive && (
                 <button
                   className="btn btn-link btn-builder-move p-0"
                   ref={drag}
                 >
-                  <FontAwesomeIcon icon={faArrowsAlt} className="mr-2" />
+                  <FontAwesomeIcon icon={faArrowsAlt} className="me-2" />
                 </button>
               )}
               {isActive && parent && parent !== "ROOT" ? (
                 <FontAwesomeIcon
                   icon={faArrowUp}
-                  className="mr-2"
+                  className="me-2"
                   onClick={() => {
                     actions.selectNode(parent);
                   }}
@@ -151,12 +151,12 @@ const RenderNode = ({ render }) => {
                       key={1}
                       icon={faCopy}
                       onClick={duplicate}
-                      className="mr-2"
+                      className="me-2"
                     />,
                     <FontAwesomeIcon
                       key={2}
                       icon={faTrashAlt}
-                      className="mr-2"
+                      className="me-2"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         actions.delete(id);
@@ -175,13 +175,13 @@ const RenderNode = ({ render }) => {
 };
 /*
    {moveable ? (
-                <Btn className="mr-2 cursor-move" ref={drag}>
+                <Btn className="me-2 cursor-move" ref={drag}>
                   <Move />
                 </Btn>
               ) : null}
               {id !== ROOT_NODE && (
                 <Btn
-                  className="mr-2 cursor-pointer"
+                  className="me-2 cursor-pointer"
                   onClick={() => {
                     actions.selectNode(parent);
                   }}

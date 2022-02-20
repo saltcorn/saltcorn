@@ -211,7 +211,7 @@ const SettingsPanel = () => {
           <Fragment>
             {selected.isDeletable && (
               <button className="btn btn-sm btn-danger" onClick={deleteThis}>
-                <FontAwesomeIcon icon={faTrashAlt} className="mr-1" />
+                <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
                 Delete
               </button>
             )}
@@ -220,16 +220,16 @@ const SettingsPanel = () => {
                 className="btn btn-sm btn-danger"
                 onClick={deleteChildren}
               >
-                <FontAwesomeIcon icon={faTrashAlt} className="mr-1" />
+                <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
                 Delete contents
               </button>
             ) : (
               <button
                 title="Duplicate element with its children"
-                className="btn btn-sm btn-secondary ml-2"
+                className="btn btn-sm btn-secondary ms-2"
                 onClick={duplicate}
               >
-                <FontAwesomeIcon icon={faCopy} className="mr-1" />
+                <FontAwesomeIcon icon={faCopy} className="me-1" />
                 Clone
               </button>
             )}
@@ -271,7 +271,7 @@ const SaveButton = () => {
   };
   return options.page_id || options.view_id ? (
     <button
-      className="btn btn-sm btn-outline-secondary mr-2 builder-save-ajax"
+      className="btn btn-sm btn-outline-secondary me-2 builder-save-ajax"
       onClick={onClick}
     >
       Save
@@ -315,7 +315,7 @@ const HistoryPanel = () => {
     <Fragment>
       {canUndo && (
         <button
-          className="btn btn-sm btn-secondary ml-2 mr-2"
+          className="btn btn-sm btn-secondary ms-2 me-2"
           title="Undo"
           onClick={() => actions.history.undo()}
         >
@@ -412,7 +412,7 @@ const Builder = ({ options, layout, mode }) => {
                     </div>
                   </Accordion>
                 </div>
-                <div className="card toolbox-card pr-0">
+                <div className="card toolbox-card pe-0">
                   <div className="card-header">Layers</div>
                   {showLayers && (
                     <div className="card-body p-0 builder-layers">

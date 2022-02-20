@@ -321,7 +321,7 @@ const Accordion = ({ titles, children }) => {
             <div
               className={`bg-${
                 isCurrent ? "primary" : "secondary"
-              } pl-1 text-white w-100 mt-1`}
+              } ps-1 text-white w-100 mt-1`}
               onClick={() => setCurrentTab(ix)}
             >
               <span className="w-1em">

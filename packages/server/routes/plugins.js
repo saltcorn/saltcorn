@@ -209,7 +209,7 @@ const cfg_link = (req, row) => {
   if (plugin.configuration_workflow)
     return a(
       {
-        class: "btn btn-secondary btn-sm d-inline mr-1",
+        class: "btn btn-secondary btn-sm d-inline me-1",
         role: "button",
         href: `/plugins/configure/${encodeURIComponent(row.name)}`,
         title: req.__("Configure plugin"),
@@ -736,7 +736,7 @@ router.get(
               ? a(
                   {
                     href: `/plugins/upgrade-plugin/${plugin_db.name}`,
-                    class: "btn btn-primary btn-sm ml-2",
+                    class: "btn btn-primary btn-sm ms-2",
                   },
                   req.__("Upgrade")
                 )
@@ -748,7 +748,7 @@ router.get(
               th(req.__("Plugin dependencies")),
               td(
                 mod.plugin_module.dependencies.map((d) =>
-                  span({ class: "badge badge-primary mr-1" }, d)
+                  span({ class: "badge badge-primary me-1" }, d)
                 )
               )
             )

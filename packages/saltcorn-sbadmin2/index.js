@@ -121,7 +121,7 @@ const sideBarItem = (currentUrl) => (item) => {
         )
       : item.type === "Search"
       ? form(
-          { action: "/search", class: "menusearch ml-2 mr-3", method: "get" },
+          { action: "/search", class: "menusearch ms-2 me-3", method: "get" },
           div(
             { class: "input-group search-bar" },
 

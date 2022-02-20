@@ -610,7 +610,7 @@ router.get(
               div(
                 user.api_token
                   ? span(
-                      { class: "mr-1" },
+                      { class: "me-1" },
                       req.__("API token for this user: ")
                     ) + code(user.api_token)
                   : req.__("No API token issued")
@@ -627,7 +627,7 @@ router.get(
               // button for remove api token
               user.api_token &&
                 div(
-                  { class: "mt-4 ml-2 d-inline-block" },
+                  { class: "mt-4 ms-2 d-inline-block" },
                   post_btn(
                     `/useradmin/remove-api-token/${user.id}`,
                     // TBD localization

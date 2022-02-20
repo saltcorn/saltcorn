@@ -210,7 +210,7 @@ function initialize_page() {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();
       $(this).html(
-        `<span class="current">${current}</span><i class="editicon fas fa-edit ml-1"></i>`
+        `<span class="current">${current}</span><i class="editicon fas fa-edit ms-1"></i>`
       );
     }
   });

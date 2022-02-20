@@ -291,7 +291,7 @@ const search_bar = (
             (b: any) =>
               `<span class="badge badge-primary">${b.text}${
                 b.onclick
-                  ? `<a href="javascript:${b.onclick}"><i class="ml-1 fas fa-lg fa-times"></i></a> `
+                  ? `<a href="javascript:${b.onclick}"><i class="ms-1 fas fa-lg fa-times"></i></a> `
                   : ""
               }</span>`
           )

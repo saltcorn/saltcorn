@@ -150,7 +150,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
 
                   input({
                     type: "search",
-                    class: "form-control search-bar pl-2 hasbl",
+                    class: "form-control search-bar ps-2 hasbl",
                     placeholder: s.label,
                     id: "inputq",
                     name: "q",
