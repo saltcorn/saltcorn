@@ -504,10 +504,10 @@ const plugin_store_html = (items, req) => {
           { class: "d-flex" },
           storeNavPills(req),
           div(
-            { class: "ml-auto" },
+            { class: "ms-auto" },
             search_bar("q", req.query.q || "", { stateField: "q" })
           ),
-          div({ class: "ml-auto" }, store_actions_dropdown(req))
+          div({ class: "ms-auto" }, store_actions_dropdown(req))
         ),
       },
       {

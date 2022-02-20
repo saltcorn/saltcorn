@@ -116,7 +116,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
   div(
     { class: "collapse navbar-collapse", id: "navbarResponsive" },
     ul(
-      { class: "navbar-nav ml-auto my-2 my-lg-0" },
+      { class: "navbar-nav ms-auto my-2 my-lg-0" },
 
       innerSections(sections).map((s) =>
         s.location === "Mobile Bottom"
@@ -395,7 +395,7 @@ const breadcrumbs = (crumbs: any[], right: any): string =>
           ? workflowBreadcrumbItem(c)
           : standardBreadcrumbItem(crumbs.length)(c, ix)
       ),
-      right ? li({ class: "ml-auto" }, right) : ""
+      right ? li({ class: "ms-auto" }, right) : ""
     )
   );
 
