@@ -93,8 +93,8 @@ const sideBarItem = (currentUrl) => (item) => {
             {
               class: ["nav-link", !is_active && "collapsed"],
               href: "#",
-              "data-toggle": "collapse",
-              "data-target": `#collapse${labelToId(item)}`,
+              "data-bs-toggle": "collapse",
+              "data-bs-target": `#collapse${labelToId(item)}`,
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
             },

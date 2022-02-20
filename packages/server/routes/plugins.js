@@ -427,7 +427,7 @@ const store_actions_dropdown = (req) =>
         class: "btn btn-outline-secondary",
         type: "button",
         id: "dropdownMenuButton",
-        "data-toggle": "dropdown",
+        "data-bs-toggle": "dropdown",
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },

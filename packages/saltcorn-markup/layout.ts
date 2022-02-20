@@ -148,8 +148,8 @@ const renderTabs = (
                 {
                   class: "btn btn-link btn-block text-left",
                   type: "button",
-                  "data-toggle": "collapse",
-                  "data-target": `#${rndid}tab${ix}`,
+                  "data-bs-toggle": "collapse",
+                  "data-bs-target": `#${rndid}tab${ix}`,
                   "aria-expanded": ix === 0 ? "true" : "false",
                   "aria-controls": `${rndid}tab${ix}`,
                 },
@@ -184,7 +184,7 @@ const renderTabs = (
               {
                 class: ["nav-link", ix === 0 && "active"],
                 id: `${rndid}link${ix}`,
-                "data-toggle": "tab",
+                "data-bs-toggle": "tab",
                 href: `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
@@ -376,7 +376,7 @@ const render = ({
                       {
                         class: ["nav-link", ix === 0 && "active"],
                         href: `#tab-${title}`,
-                        "data-toggle": "tab",
+                        "data-bs-toggle": "tab",
                         role: "tab",
                       },
                       title

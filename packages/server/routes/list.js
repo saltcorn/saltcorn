@@ -323,7 +323,7 @@ router.get(
                     "data-boundary": "viewport",
                     type: "button",
                     id: "btnHideCols",
-                    "data-toggle": "dropdown",
+                    "data-bs-toggle": "dropdown",
                     "aria-haspopup": "true",
                     "aria-expanded": "false",
                   },

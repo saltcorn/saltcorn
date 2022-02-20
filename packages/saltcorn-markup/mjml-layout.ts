@@ -238,7 +238,7 @@ const render = ({
                       {
                         class: ["nav-link", ix === 0 && "active"],
                         href: `#tab-${title}`,
-                        "data-toggle": "tab",
+                        "data-bs-toggle": "tab",
                         role: "tab",
                       },
                       title
