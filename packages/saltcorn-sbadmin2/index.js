@@ -134,15 +134,13 @@ const sideBarItem = (currentUrl) => (item) => {
               "aria-label": "Search",
               "aria-describedby": "button-search-submit",
             }),
-            div(
-              { class: "input-group-append" },
-              button(
-                {
-                  class: "btn btn-outline-secondary search-bar",
-                  type: "submit",
-                },
-                i({ class: "fas fa-search" })
-              )
+
+            button(
+              {
+                class: "btn btn-outline-secondary search-bar",
+                type: "submit",
+              },
+              i({ class: "fas fa-search" })
             )
           )
         )

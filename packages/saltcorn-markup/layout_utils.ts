@@ -157,15 +157,12 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                     "aria-label": "Search",
                     "aria-describedby": "button-search-submit",
                   }),
-                  div(
-                    { class: "input-group-append" },
-                    button(
-                      {
-                        class: "btn btn-outline-secondary search-bar",
-                        type: "submit",
-                      },
-                      i({ class: "fas fa-search" })
-                    )
+                  button(
+                    {
+                      class: "btn btn-outline-secondary search-bar",
+                      type: "submit",
+                    },
+                    i({ class: "fas fa-search" })
                   )
                 )
               )
@@ -342,16 +339,17 @@ const logit = (x: any, s: any): any => {
  * @param {number} len
  * @returns {function}
  */
-const standardBreadcrumbItem =
-  (len: number) =>
-  ({ href, text }: { href?: string; text: string }, ix: number): string =>
-    li(
-      {
-        class: ["breadcrumb-item", ix == len - 1 && "active"],
-        "aria-current": ix == len - 1 && "page",
-      },
-      href ? a({ href }, text) : text
-    );
+const standardBreadcrumbItem = (len: number) => (
+  { href, text }: { href?: string; text: string },
+  ix: number
+): string =>
+  li(
+    {
+      class: ["breadcrumb-item", ix == len - 1 && "active"],
+      "aria-current": ix == len - 1 && "page",
+    },
+    href ? a({ href }, text) : text
+  );
 
 /**
  * @param {object} opts

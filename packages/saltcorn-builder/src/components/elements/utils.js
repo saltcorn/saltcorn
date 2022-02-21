@@ -130,18 +130,17 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
         ) : (
           children
         )}
-        <div className="input-group-append">
-          <button
-            className={`btn activate-formula ${
-              isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
-            }`}
-            title="Calculated formula"
-            type="button"
-            onClick={switchIsFml}
-          >
-            <i className="fas fa-calculator"></i>
-          </button>
-        </div>
+
+        <button
+          className={`btn activate-formula ${
+            isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
+          }`}
+          title="Calculated formula"
+          type="button"
+          onClick={switchIsFml}
+        >
+          <i className="fas fa-calculator"></i>
+        </button>
       </div>
       {isFormula[nodekey] && (
         <div style={{ marginTop: "-5px" }}>

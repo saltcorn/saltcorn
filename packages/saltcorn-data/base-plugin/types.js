@@ -429,27 +429,24 @@ const string = {
             id: `input${text_attr(nm)}`,
             ...(isdef(v) && { value: text_attr(v) }),
           }),
-          div(
-            { class: "input-group-append" },
-            button(
-              {
-                class: "btn btn-secondary",
-                type: "button",
-                "data-formula": encodeURIComponent(attrs?.formula),
-                onClick:
-                  "fill_formula_btn_click(this);" +
-                  (attrs.make_unique
-                    ? `make_unique_field('input${text_attr(nm)}', ${
-                        field.table_id
-                      }, '${field.name}',  $('#input${text_attr(
-                        nm
-                      )}'), ${!!attrs.include_space}, ${
-                        attrs.start_from || 0
-                      }, ${!!attrs.always_append}, '${attrs.char_type}')`
-                    : ""),
-              },
-              attrs?.label || "Fill"
-            )
+          button(
+            {
+              class: "btn btn-secondary",
+              type: "button",
+              "data-formula": encodeURIComponent(attrs?.formula),
+              onClick:
+                "fill_formula_btn_click(this);" +
+                (attrs.make_unique
+                  ? `make_unique_field('input${text_attr(nm)}', ${
+                      field.table_id
+                    }, '${field.name}',  $('#input${text_attr(
+                      nm
+                    )}'), ${!!attrs.include_space}, ${
+                      attrs.start_from || 0
+                    }, ${!!attrs.always_append}, '${attrs.char_type}')`
+                  : ""),
+            },
+            attrs?.label || "Fill"
           )
         ),
     },

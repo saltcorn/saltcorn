@@ -204,12 +204,10 @@ const innerField = (
         ? div(
             { class: "input-group" },
             the_input,
-            div(
-              { class: "input-group-append" },
-              span(
-                { class: "input-group-text", id: "basic-addon2" },
-                hdr.postText
-              )
+
+            span(
+              { class: "input-group-text", id: "basic-addon2" },
+              hdr.postText
             )
           )
         : the_input;
