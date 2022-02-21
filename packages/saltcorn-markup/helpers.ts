@@ -262,13 +262,13 @@ const search_bar = (
     ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('#${input_id}').val())`
     : onClick || "";
   return `<div class="input-group search-bar" id="search-input-group-${rndid}">
- 
+  
   <button class="btn btn-outline-secondary search-bar" ${
     clickHandler ? `onClick="${clickHandler}"` : ""
   } type="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
   </button>
- 
+  
 <input type="search" class="form-control search-bar ${
     (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
   }" placeholder="${placeHolder || "Search for..."}" 
@@ -283,7 +283,6 @@ const search_bar = (
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
-
   ${
     badges && badges.length > 0
       ? `<div class="input-group-text">${badges
@@ -295,7 +294,8 @@ const search_bar = (
                   : ""
               }</span>`
           )
-          .join("&nbsp;")}`
+          .join("&nbsp;")}
+  </div>`
       : ""
   }
   ${
@@ -310,7 +310,6 @@ const search_bar = (
       </div>`
       : ""
   }
-</div>
 </div>`;
 };
 
