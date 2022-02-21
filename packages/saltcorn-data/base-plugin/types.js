@@ -326,7 +326,7 @@ const string = {
         attrs.options && (attrs.options.length > 0 || !required)
           ? select(
               {
-                class: ["form-control", cls],
+                class: ["form-control", "form-select", cls],
                 name: text_attr(nm),
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
@@ -345,7 +345,7 @@ const string = {
           : attrs.calcOptions
           ? select(
               {
-                class: ["form-control", cls],
+                class: ["form-control", "form-select", cls],
                 name: text_attr(nm),
                 disabled: attrs.disabled,
                 "data-fieldname": text_attr(field.name),

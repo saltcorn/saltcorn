@@ -141,7 +141,7 @@ const innerField = (
       }>`;
     case "select":
       const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
+      return `<select class="form-control form-select ${validClass} ${
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
