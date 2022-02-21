@@ -501,13 +501,10 @@ const plugin_store_html = (items, req) => {
       {
         type: "card",
         contents: div(
-          { class: "d-flex" },
+          { class: "d-flex justify-content-between" },
           storeNavPills(req),
-          div(
-            { class: "ms-auto" },
-            search_bar("q", req.query.q || "", { stateField: "q" })
-          ),
-          div({ class: "ms-auto" }, store_actions_dropdown(req))
+          div(search_bar("q", req.query.q || "", { stateField: "q" })),
+          div(store_actions_dropdown(req))
         ),
       },
       {
