@@ -347,7 +347,7 @@ class State {
   registerPlugin(name, plugin, cfg, location, modname) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
-    this.plugin_locations[plugin.plugin_name || name] = location;
+    if (location) this.plugin_locations[plugin.plugin_name || name] = location;
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
