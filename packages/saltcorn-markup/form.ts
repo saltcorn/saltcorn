@@ -681,7 +681,7 @@ const mkForm = (
     ${
       form.noSubmitButton
         ? ""
-        : `<button type="submit" class="btn form-submit-btn ${
+        : `<button type="submit" class="btn ${
             form.submitButtonClass || "btn-primary"
           }">${text(form.submitLabel || "Save")}</button>`
     }

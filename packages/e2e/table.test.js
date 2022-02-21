@@ -82,7 +82,7 @@ describe("Table create", () => {
     await browser.page.select("#inputviewtemplate", "List");
     await browser.page.select("#inputtable_name", "Persons");
     console.log("at error", await browser.content());
-    await browser.clickNav("button.form-submit-btn");
+    await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain(
       "Specify the fields in the table to show"
     );
