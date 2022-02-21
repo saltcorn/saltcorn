@@ -373,7 +373,7 @@ const workflowBreadcrumbItem = ({
         {
           class: [
             "breadcrumb-item breadcrumb-workflow",
-            step.currentStep - 1 === ix && "active-step font-weight-bold",
+            step.currentStep - 1 === ix && "active-step fw-bold",
           ],
         },
         span(wfstep.name)

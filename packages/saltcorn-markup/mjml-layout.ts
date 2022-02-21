@@ -221,7 +221,7 @@ const render = ({
               { class: "card-header" },
               typeof segment.title === "string"
                 ? h6(
-                    { class: "m-0 font-weight-bold text-primary" },
+                    { class: "m-0 fw-bold text-primary" },
                     segment.title
                   )
                 : segment.title

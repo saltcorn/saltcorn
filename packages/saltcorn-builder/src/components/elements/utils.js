@@ -251,7 +251,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="h4">Heading 4</option>
       <option value="h5">Heading 5</option>
       <option value="h6">Heading 6</option>
-      <option value="font-weight-bold">Bold</option>
+      <option value="fw-bold">Bold</option>
       <option value="font-italic">Italics</option>
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
