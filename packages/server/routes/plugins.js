@@ -599,6 +599,7 @@ router.post(
           refresh_plugin_cfg: plugin.name,
           tenant: db.getTenantSchema(),
         });
+      await sleep(500); // Allow other workers to reload this plugin
       res.redirect("/plugins");
     }
   })
