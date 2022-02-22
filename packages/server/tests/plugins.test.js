@@ -90,7 +90,7 @@ describe("Plugin Endpoints", () => {
       .expect(toInclude("testfilecontents"));
     await request(app)
       .get(
-        "/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css"
+        "/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/css/sb-admin-2.min.css"
       )
       .expect(toInclude("Start Bootstrap"));
 
@@ -98,6 +98,11 @@ describe("Plugin Endpoints", () => {
       .post("/plugins/delete/" + p.name)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
+    await request(app)
+      .get(
+        "/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/css/sb-admin-2.min.css"
+      )
+      .expect(toInclude("Start Bootstrap"));
   });
   it("should install named without config", async () => {
     const loginCookie = await getAdminLoginCookie();

@@ -309,10 +309,10 @@ router.get(
             right:
               button(
                 {
-                  class: "btn btn-sm btn-primary mr-2",
+                  class: "btn btn-sm btn-primary me-2",
                   onClick: "add_tabulator_row()",
                 },
-                i({ class: "fas fa-plus mr-1" }),
+                i({ class: "fas fa-plus me-1" }),
                 "Add row"
               ) +
               div(
@@ -323,7 +323,7 @@ router.get(
                     "data-boundary": "viewport",
                     type: "button",
                     id: "btnHideCols",
-                    "data-toggle": "dropdown",
+                    "data-bs-toggle": "dropdown",
                     "aria-haspopup": "true",
                     "aria-expanded": "false",
                   },

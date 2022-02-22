@@ -210,7 +210,7 @@ function initialize_page() {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();
       $(this).html(
-        `<span class="current">${current}</span><i class="editicon fas fa-edit ml-1"></i>`
+        `<span class="current">${current}</span><i class="editicon fas fa-edit ms-1"></i>`
       );
     }
   });
@@ -292,7 +292,7 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  $('a[data-toggle="tab"]').historyTabs();
+  $('a[data-bs-toggle="tab"]').historyTabs();
 }
 
 $(initialize_page);

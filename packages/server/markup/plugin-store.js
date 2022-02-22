@@ -53,7 +53,7 @@ const plugin_types_info_card = (plugin, req) => ({
   type: "card",
   title: req.__("Types"),
   contents: plugin.plugin_module.types.map((type) =>
-    span({ class: "badge badge-primary ml-2" }, type.name)
+    span({ class: "badge badge-primary ms-2" }, type.name)
   ),
 });
 
@@ -69,7 +69,7 @@ const plugin_functions_info_card = (plugin, req) => ({
     .map(([nm, v]) =>
       div(
         h4(
-          { class: "d-inline mr-2" },
+          { class: "d-inline me-2" },
           `${nm}(${show_function_arguments(v["arglist"])})`
         ),
         v.isAsync && span({ class: "badge badge-primary" }, "async"),

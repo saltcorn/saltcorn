@@ -31,7 +31,7 @@ const settingsCard = ({ title, icon, blurb, href }) => ({
   url: href,
   contents: {
     besides: [
-      i({ class: [icon, "fa-3x fa-fw mr-3"] }),
+      i({ class: [icon, "fa-3x fa-fw me-3"] }),
       a({ href }, h3(title)) + p(blurb),
     ],
     widths: false,

@@ -209,7 +209,7 @@ const cfg_link = (req, row) => {
   if (plugin.configuration_workflow)
     return a(
       {
-        class: "btn btn-secondary btn-sm d-inline mr-1",
+        class: "btn btn-secondary btn-sm d-inline me-1",
         role: "button",
         href: `/plugins/configure/${encodeURIComponent(row.name)}`,
         title: req.__("Configure plugin"),
@@ -427,7 +427,7 @@ const store_actions_dropdown = (req) =>
         class: "btn btn-outline-secondary",
         type: "button",
         id: "dropdownMenuButton",
-        "data-toggle": "dropdown",
+        "data-bs-toggle": "dropdown",
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
@@ -501,13 +501,10 @@ const plugin_store_html = (items, req) => {
       {
         type: "card",
         contents: div(
-          { class: "d-flex" },
+          { class: "d-flex justify-content-between" },
           storeNavPills(req),
-          div(
-            { class: "ml-auto" },
-            search_bar("q", req.query.q || "", { stateField: "q" })
-          ),
-          div({ class: "ml-auto" }, store_actions_dropdown(req))
+          div(search_bar("q", req.query.q || "", { stateField: "q" })),
+          div(store_actions_dropdown(req))
         ),
       },
       {
@@ -736,7 +733,7 @@ router.get(
               ? a(
                   {
                     href: `/plugins/upgrade-plugin/${plugin_db.name}`,
-                    class: "btn btn-primary btn-sm ml-2",
+                    class: "btn btn-primary btn-sm ms-2",
                   },
                   req.__("Upgrade")
                 )
@@ -748,7 +745,7 @@ router.get(
               th(req.__("Plugin dependencies")),
               td(
                 mod.plugin_module.dependencies.map((d) =>
-                  span({ class: "badge badge-primary mr-1" }, d)
+                  span({ class: "badge badge-primary me-1" }, d)
                 )
               )
             )

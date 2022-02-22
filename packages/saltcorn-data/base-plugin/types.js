@@ -326,7 +326,7 @@ const string = {
         attrs.options && (attrs.options.length > 0 || !required)
           ? select(
               {
-                class: ["form-control", cls],
+                class: ["form-control", "form-select", cls],
                 name: text_attr(nm),
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
@@ -345,7 +345,7 @@ const string = {
           : attrs.calcOptions
           ? select(
               {
-                class: ["form-control", cls],
+                class: ["form-control", "form-select", cls],
                 name: text_attr(nm),
                 disabled: attrs.disabled,
                 "data-fieldname": text_attr(field.name),
@@ -429,27 +429,24 @@ const string = {
             id: `input${text_attr(nm)}`,
             ...(isdef(v) && { value: text_attr(v) }),
           }),
-          div(
-            { class: "input-group-append" },
-            button(
-              {
-                class: "btn btn-secondary",
-                type: "button",
-                "data-formula": encodeURIComponent(attrs?.formula),
-                onClick:
-                  "fill_formula_btn_click(this);" +
-                  (attrs.make_unique
-                    ? `make_unique_field('input${text_attr(nm)}', ${
-                        field.table_id
-                      }, '${field.name}',  $('#input${text_attr(
-                        nm
-                      )}'), ${!!attrs.include_space}, ${
-                        attrs.start_from || 0
-                      }, ${!!attrs.always_append}, '${attrs.char_type}')`
-                    : ""),
-              },
-              attrs?.label || "Fill"
-            )
+          button(
+            {
+              class: "btn btn-secondary",
+              type: "button",
+              "data-formula": encodeURIComponent(attrs?.formula),
+              onClick:
+                "fill_formula_btn_click(this);" +
+                (attrs.make_unique
+                  ? `make_unique_field('input${text_attr(nm)}', ${
+                      field.table_id
+                    }, '${field.name}',  $('#input${text_attr(
+                      nm
+                    )}'), ${!!attrs.include_space}, ${
+                      attrs.start_from || 0
+                    }, ${!!attrs.always_append}, '${attrs.char_type}')`
+                  : ""),
+            },
+            attrs?.label || "Fill"
           )
         ),
     },
@@ -1207,7 +1204,7 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          class: ["mr-2 mt-1", cls],
+          class: ["me-2 mt-1", cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
           onChange: attrs.onChange,

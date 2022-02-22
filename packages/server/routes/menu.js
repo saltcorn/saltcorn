@@ -334,7 +334,7 @@ router.get(
           script: static_pre + "/iconset-fontawesome5-3-1.min.js",
         },
         {
-          script: static_pre + "/bootstrap-iconpicker.min.js",
+          script: static_pre + "/bootstrap-iconpicker.js",
         },
         {
           css: static_pre + "/bootstrap-iconpicker.min.css",

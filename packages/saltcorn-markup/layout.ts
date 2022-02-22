@@ -148,8 +148,8 @@ const renderTabs = (
                 {
                   class: "btn btn-link btn-block text-left",
                   type: "button",
-                  "data-toggle": "collapse",
-                  "data-target": `#${rndid}tab${ix}`,
+                  "data-bs-toggle": "collapse",
+                  "data-bs-target": `#${rndid}tab${ix}`,
                   "aria-expanded": ix === 0 ? "true" : "false",
                   "aria-controls": `${rndid}tab${ix}`,
                 },
@@ -184,7 +184,7 @@ const renderTabs = (
               {
                 class: ["nav-link", ix === 0 && "active"],
                 id: `${rndid}link${ix}`,
-                "data-toggle": "tab",
+                "data-bs-toggle": "tab",
                 href: `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
@@ -359,7 +359,7 @@ const render = ({
               { class: "card-header" },
               typeof segment.title === "string"
                 ? h6(
-                    { class: "m-0 font-weight-bold text-primary" },
+                    { class: "m-0 fw-bold text-primary" },
                     segment.title
                   )
                 : segment.title
@@ -376,7 +376,7 @@ const render = ({
                       {
                         class: ["nav-link", ix === 0 && "active"],
                         href: `#tab-${title}`,
-                        "data-toggle": "tab",
+                        "data-bs-toggle": "tab",
                         role: "tab",
                       },
                       title
@@ -600,8 +600,19 @@ const render = ({
       let markup;
       if (cardDeck)
         markup = div(
-          { class: "card-deck", style: segment.style },
-          segment.besides.map((t: any, ixb: number) => go(t, false, ixb))
+          {
+            class: `row row-cols-1 row-cols-md-${segment.besides.length} g-4 mb-3`,
+            style: segment.style,
+          },
+          segment.besides.map((t: any, ixb: number) => {
+            const newt = { ...t };
+            newt.class = t.class
+              ? Array.isArray(t.class)
+                ? ["h-100", ...t.class]
+                : t.class + " h-100"
+              : "h-100";
+            return div({ class: "col" }, go(newt, false, ixb));
+          })
         );
       else
         markup = div(
