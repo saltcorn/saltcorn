@@ -74,7 +74,7 @@ const select = {
       );
     return tags.select(
       {
-        class: `form-control ${cls} ${field.class || ""}`,
+        class: `form-control form-select ${cls} ${field.class || ""}`,
         "data-fieldname": field.form_name,
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
@@ -147,7 +147,9 @@ const two_level_select = {
     return (
       tags.select(
         {
-          class: `form-control form-select w-50 ${cls} ${field.class || ""} d-inline`,
+          class: `form-control form-select w-50 ${cls} ${
+            field.class || ""
+          } d-inline`,
           "data-fieldname": `_${field.name}_toplevel`,
         },
         select_options_first_level(
@@ -159,7 +161,9 @@ const two_level_select = {
       ) +
       tags.select(
         {
-          class: `form-control form-select w-50 ${cls} ${field.class || ""}  d-inline`,
+          class: `form-control form-select w-50 ${cls} ${
+            field.class || ""
+          }  d-inline`,
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
