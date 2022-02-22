@@ -1,7 +1,7 @@
 import { Command, Flags } from "@oclif/core";
 import { spawnSync } from "child_process";
 
-import { copyFileSync, existsSync, mkdirSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from "fs";
 import { join } from "path";
 
 export default class BuildAppCommand extends Command {
@@ -19,6 +19,7 @@ export default class BuildAppCommand extends Command {
   supportedPlatforms = ["android", "browser"]; // TODO ios
 
   packageRoot = join(__dirname, "../../");
+  bundleDir = join(this.packageRoot, "bundle");
   saltcornMarkupRoot = join(require.resolve("@saltcorn/markup"), "../../");
   appDir = join(require.resolve("@saltcorn/mobile-app"), "..");
   appBundlesDir = join(
@@ -28,8 +29,8 @@ export default class BuildAppCommand extends Command {
 
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
-    this.bundleSaltcornMarkup();
-    this.copyBundleToApp();
+    this.bundlePackages();
+    this.copyBundlesToApp();
     if (flags.platforms) {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
@@ -37,19 +38,21 @@ export default class BuildAppCommand extends Command {
     this.buildApk();
   }
 
-  bundleSaltcornMarkup = () => {
+  bundlePackages = () => {
     spawnSync("npm", ["run", "build"], {
       stdio: "inherit",
-      cwd: this.saltcornMarkupRoot,
+      cwd: this.packageRoot,
     });
   };
-  copyBundleToApp = () => {
+  copyBundlesToApp = () => {
     if (!existsSync(this.appBundlesDir))
       mkdirSync(this.appBundlesDir, { recursive: true });
-    copyFileSync(
-      join(this.saltcornMarkupRoot, "bundle", "markup.bundle.js"),
-      join(this.appBundlesDir, "markup.bundle.js")
-    );
+    for (let bundleName of readdirSync(this.bundleDir)) {
+      copyFileSync(
+        join(this.bundleDir, bundleName),
+        join(this.appBundlesDir, bundleName)
+      );
+    }
   };
   validatePlatforms = (platforms: string[]) => {
     for (const platform of platforms)

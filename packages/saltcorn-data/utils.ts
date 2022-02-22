@@ -2,12 +2,10 @@
  * @category saltcorn-data
  * @module utils
  */
-const v8 = require("v8");
 import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Where } from "@saltcorn/db-common/internal";
-const fs = require("fs");
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};

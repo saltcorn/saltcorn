@@ -7,7 +7,7 @@ module.exports = {
     minimize: false, // debug
   },
   entry: {
-    markup: "./dist/index.js",
+    markup: join(__dirname, "./dist/index.js"),
   },
   output: {
     path: __dirname,

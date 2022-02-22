@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script src="js/bundles/common_chunks.bundle.js"></script>
     <script src="js/bundles/markup.bundle.js"></script>
+    <script src="js/bundles/data.bundle.js"></script>
+
     <script>
       window.onload = function () {
         document.getElementById("time-div").innerHTML =
           saltcorn.markup.localeDateTime(new Date());
       };
+      document.addEventListener("deviceready", function () {
+        console.log("mobile app: Initializing 'saltcorn-data/db'");
+        saltcorn.data.db.init();
+        console.log("mobile app: Doing a schema reset");
+        saltcorn.data.db.reset(true);
+        console.log("mobile app: App is up");
+      });
     </script>
   </head>
 

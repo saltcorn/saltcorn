@@ -12,6 +12,9 @@ const is = require("contractis/is");
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
+
+const { isNode } = require("../webpack-helper");
+
 /**
  * Default data path?
  * @type {string}
@@ -58,8 +61,7 @@ const getConnectObject = (connSpec = {}) => {
   let sc_version;
   try {
     sc_version = require("../../package.json").version;
-  }
-  catch(error) { 
+  } catch (error) {
     sc_version = require("../package.json").version;
   }
   var connObj = { git_commit, sc_version };
@@ -148,6 +150,7 @@ const getConfigFile = () => {
  * @returns {boolean} - Returns true if Saltcorn configured to use SQLite as database
  */
 const is_sqlite = (connObj) => {
+  if (!isNode()) return true;
   if (connObj.connectionString)
     return connObj.connectionString.startsWith("sqlite");
 

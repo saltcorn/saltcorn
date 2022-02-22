@@ -16,7 +16,9 @@
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
     "lib": ["ES2020"],
     "module": "commonjs",
-    "target": "ES2020"
+    "target": "ES2020",
+    "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "dist/**"]
+  "exclude": ["node_modules", "dist/**"],
+  "include": ["**/*", "**/*.json"]
 }

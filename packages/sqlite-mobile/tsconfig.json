@@ -1,10 +1,6 @@
 {
-  "typeAcquisition": {
-    "include": ["jest"]
-  },
   "compilerOptions": {
-    "rootDir": "./src",
-
+    "rootDir": ".",
     "outDir": "./dist",
     "allowJs": true,
     "sourceMap": true,
@@ -19,6 +15,7 @@
     "lib": ["ES2020"],
     "module": "commonjs",
     "target": "ES2020"
+    /*"skipLibCheck": true, /* Skip type checking of declaration files. */
   },
-  "exclude": ["node_modules", "dist", "*.test.*", "webpack.config.js", "bundle"]
+  "exclude": ["node_modules", "dist/**"]
 }

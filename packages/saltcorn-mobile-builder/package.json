@@ -5,13 +5,19 @@
   "repository": "github:saltcorn/saltcorn",
   "version": "0.6.4",
   "author": "Christian Hugo",
+  "scripts": {
+    "build": "webpack --mode development"
+  },
   "dependencies": {
     "@oclif/core": "^1.2.0",
     "@saltcorn/markup": "^0.6.4",
     "@saltcorn/mobile-app": "^0.6.4"
   },
   "devDependencies": {
-    "@types/node": "^16.11.12"
+    "@types/node": "^16.11.12",
+    "webpack-merge": "^5.8.0",
+    "webpack": "5.68.0",
+    "webpack-cli": "4.9.2"
   },
   "files": [
     "/dist"
