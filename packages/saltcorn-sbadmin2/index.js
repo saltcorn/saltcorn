@@ -93,8 +93,8 @@ const sideBarItem = (currentUrl) => (item) => {
             {
               class: ["nav-link", !is_active && "collapsed"],
               href: "#",
-              "data-bs-toggle": "collapse",
-              "data-bs-target": `#collapse${labelToId(item)}`,
+              "data-toggle": "collapse",
+              "data-target": `#collapse${labelToId(item)}`,
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
             },
@@ -121,7 +121,7 @@ const sideBarItem = (currentUrl) => (item) => {
         )
       : item.type === "Search"
       ? form(
-          { action: "/search", class: "menusearch ms-2 me-3", method: "get" },
+          { action: "/search", class: "menusearch ml-2 mr-3", method: "get" },
           div(
             { class: "input-group search-bar" },
 
@@ -134,13 +134,15 @@ const sideBarItem = (currentUrl) => (item) => {
               "aria-label": "Search",
               "aria-describedby": "button-search-submit",
             }),
-
-            button(
-              {
-                class: "btn btn-outline-secondary search-bar",
-                type: "submit",
-              },
-              i({ class: "fas fa-search" })
+            div(
+              { class: "input-group-append" },
+              button(
+                {
+                  class: "btn btn-outline-secondary search-bar",
+                  type: "submit",
+                },
+                i({ class: "fas fa-search" })
+              )
             )
           )
         )
@@ -240,12 +242,12 @@ const blockDispatch = {
           },
           div(
             { class: "col-lg-10 align-self-end" },
-            h1({ class: "text-uppercase fw-bold" }, caption),
+            h1({ class: "text-uppercase font-weight-bold" }, caption),
             hr({ class: "divider my-4" })
           ),
           div(
             { class: "col-lg-8 align-self-baseline" },
-            p({ class: "fw-light mb-5" }, blurb)
+            p({ class: "font-weight-light mb-5" }, blurb)
             /*a(
               {
                 class: "btn btn-primary btn-xl",
@@ -327,11 +329,11 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/fontawesome-free/css/all.min.css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/css/sb-admin-2.css">
+    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -340,9 +342,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <script src="/static_assets/${
       db.connectObj.version_tag
     }/jquery-3.6.0.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/jquery-easing/jquery.easing.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/js/sb-admin-2.min.js"></script>
+            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/vendor/jquery-easing/jquery.easing.min.js"></script>
+            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
     ${headersInBody(headers)}
     </body>
   </html>`;
@@ -463,8 +465,8 @@ module.exports = {
   sc_plugin_api_version: 1,
   /** @type {object} */
   serve_dependencies: {
-    "startbootstrap-sb-admin-2-bs5": require.resolve(
-      "startbootstrap-sb-admin-2-bs5/package.json"
+    "startbootstrap-sb-admin-2": require.resolve(
+      "startbootstrap-sb-admin-2/package.json"
     ),
   },
   /** @type {object} */
