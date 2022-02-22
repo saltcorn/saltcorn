@@ -288,7 +288,7 @@ const search_bar = (
       ? `<div class="input-group-text">${badges
           .map(
             (b: any) =>
-              `<span class="badge badge-primary">${b.text}${
+              `<span class="badge bg-primary">${b.text}${
                 b.onclick
                   ? `<a href="javascript:${b.onclick}"><i class="ms-1 fas fa-lg fa-times"></i></a> `
                   : ""

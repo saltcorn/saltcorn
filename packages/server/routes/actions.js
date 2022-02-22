@@ -147,9 +147,7 @@ router.get(
                   td({ class: "pe-2" }, req.__("Actions available")),
                   td(
                     actions
-                      .map((a) =>
-                        span({ class: "badge badge-primary" }, a.name)
-                      )
+                      .map((a) => span({ class: "badge bg-primary" }, a.name))
                       .join("&nbsp;")
                   )
                 ),
@@ -157,7 +155,7 @@ router.get(
                   td({ class: "pe-2" }, req.__("Event types")),
                   td(
                     Trigger.when_options
-                      .map((a) => span({ class: "badge badge-secondary" }, a))
+                      .map((a) => span({ class: "badge bg-secondary" }, a))
                       .join("&nbsp;")
                   )
                 )

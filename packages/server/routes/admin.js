@@ -46,7 +46,10 @@ const {
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
-const { create_backup, restore } = require("@saltcorn/admin-models/models/backup");
+const {
+  create_backup,
+  restore,
+} = require("@saltcorn/admin-models/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const {
@@ -393,7 +396,7 @@ router.get(
                             )
                           : isRoot && is_latest
                           ? span(
-                              { class: "badge badge-primary ms-2" },
+                              { class: "badge bg-primary ms-2" },
                               req.__("Latest")
                             )
                           : "")

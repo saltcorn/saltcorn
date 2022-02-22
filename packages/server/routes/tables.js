@@ -488,8 +488,7 @@ router.get(
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl) =>
-  `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
+const badge = (col, lbl) => `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 /**
  * @param {object} f
@@ -578,7 +577,7 @@ router.get(
                 : (r.type && r.type.name) ||
                   r.type ||
                   r.typename +
-                    span({ class: "badge badge-danger ms-1" }, "Unknown type"),
+                    span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
           {
             label: "",
