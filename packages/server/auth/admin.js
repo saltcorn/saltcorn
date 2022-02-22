@@ -249,7 +249,7 @@ router.get(
                 label: "",
                 key: (r) =>
                   r.disabled
-                    ? span({ class: "badge badge-danger" }, "Disabled")
+                    ? span({ class: "badge bg-danger" }, "Disabled")
                     : "",
               },
               {
@@ -444,8 +444,8 @@ router.get(
               h5(
                 req.__("Currently: "),
                 letsencrypt
-                  ? span({ class: "badge badge-primary" }, req.__("Enabled"))
-                  : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+                  ? span({ class: "badge bg-primary" }, req.__("Enabled"))
+                  : span({ class: "badge bg-secondary" }, req.__("Disabled"))
               ),
               letsencrypt
                 ? post_btn(
@@ -490,8 +490,8 @@ router.get(
               h5(
                 req.__("Currently: "),
                 has_custom
-                  ? span({ class: "badge badge-primary" }, req.__("Enabled"))
-                  : span({ class: "badge badge-secondary" }, req.__("Disabled"))
+                  ? span({ class: "badge bg-primary" }, req.__("Enabled"))
+                  : span({ class: "badge bg-secondary" }, req.__("Disabled"))
               ),
               // TBD change to button
               link(

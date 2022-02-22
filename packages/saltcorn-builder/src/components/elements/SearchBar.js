@@ -52,7 +52,7 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
 
       {show_badges && (
         <div className="input-group-text">
-          <span className="badge badge-primary">X:Y</span>
+          <span className="badge bg-primary">X:Y</span>
         </div>
       )}
       {has_dropdown && (

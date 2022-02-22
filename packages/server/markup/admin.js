@@ -73,7 +73,7 @@ const add_edit_bar = ({ role, title, contents, what, url, req }) => {
   const bar = div(
     { class: "alert alert-light d-print-none admin-edit-bar" },
     title,
-    what && span({ class: "ms-1 badge badge-primary" }, what),
+    what && span({ class: "ms-1 badge bg-primary" }, what),
     a({ class: "ms-4", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" }))
   );
 

@@ -240,7 +240,7 @@ const info_link = (req, row) =>
  * @returns {span}
  */
 const badge = (title) =>
-  span({ class: "badge badge-secondary plugin-store" }, title);
+  span({ class: "badge bg-secondary plugin-store" }, title);
 
 /**
  *
@@ -746,7 +746,7 @@ router.get(
               th(req.__("Plugin dependencies")),
               td(
                 mod.plugin_module.dependencies.map((d) =>
-                  span({ class: "badge badge-primary me-1" }, d)
+                  span({ class: "badge bg-primary me-1" }, d)
                 )
               )
             )
