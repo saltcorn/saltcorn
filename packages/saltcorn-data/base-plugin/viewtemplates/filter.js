@@ -261,7 +261,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       return select(
         {
           name: `ddfilter${field_name}`,
-          class: "form-control d-inline",
+          class: "form-control form-select d-inline",
           style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
