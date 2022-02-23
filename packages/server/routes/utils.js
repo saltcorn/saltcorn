@@ -100,7 +100,8 @@ const set_custom_http_headers = (res, state) => {
  * @returns {string}
  */
 const get_tenant_from_req = (req) => {
-  if (req.subdomains && req.subdomains.length > 0) return req.subdomains[0];
+  if (req.subdomains && req.subdomains.length > 0)
+    return req.subdomains[req.subdomains.length - 1];
 
   if (req.subdomains && req.subdomains.length == 0)
     return db.connectObj.default_schema;
