@@ -135,7 +135,7 @@ class RunTestsCommand extends Command {
         ["run", "test", "--stream", ...jestParams],
         env
       );
-      //await this.e2etest(env);
+      await this.e2etest(env);
     }
     this.exit(0);
   }
