@@ -5,7 +5,7 @@
  */
 import { runInNewContext, Script } from "vm";
 import { parseExpressionAt, Node } from "acorn";
-import { replace } from "estraverse";
+import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import Table from "./table";
@@ -124,6 +124,36 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
       `Expression "${expression}" is too complicated, I do not understand`
     );
   }
+}
+
+function freeVariables(expression: string): string[][] {
+  const freeVars: string[][] = [];
+  const ast: any = parseExpressionAt(expression, 0, {
+    ecmaVersion: 2020,
+    allowAwaitOutsideFunction: true,
+    locations: false,
+  });
+  traverse(ast, {
+    leave: function (node) {
+      //console.log(node);
+
+      if (node.type === "Identifier") {
+        freeVars.push([node.name]);
+      }
+      if (node.type === "MemberExpression") {
+        if (
+          node.object.type === "Identifier" &&
+          node.property.type === "Identifier"
+        ) {
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.push([node.object.name, node.property.name]);
+        }
+      }
+    },
+  });
+
+  return freeVars;
 }
 
 function isIdentifierWithName(node: any): node is Identifier {
@@ -331,4 +361,5 @@ export = {
   transform_for_async,
   apply_calculated_fields_stored,
   jsexprToWhere,
+  freeVariables,
 };
