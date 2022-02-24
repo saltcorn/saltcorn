@@ -264,6 +264,7 @@ router.get(
       width: 40,
       hozAlign: "center",
       headerSort: false,
+      clipboard: false,
       cellClick: "__delete_tabulator_row",
     });
     res.sendWrap(
@@ -308,10 +309,10 @@ router.get(
             right:
               button(
                 {
-                  class: "btn btn-sm btn-primary mr-2",
+                  class: "btn btn-sm btn-primary me-2",
                   onClick: "add_tabulator_row()",
                 },
-                i({ class: "fas fa-plus mr-1" }),
+                i({ class: "fas fa-plus me-1" }),
                 "Add row"
               ) +
               div(
@@ -322,7 +323,7 @@ router.get(
                     "data-boundary": "viewport",
                     type: "button",
                     id: "btnHideCols",
-                    "data-toggle": "dropdown",
+                    "data-bs-toggle": "dropdown",
                     "aria-haspopup": "true",
                     "aria-expanded": "false",
                   },
@@ -374,6 +375,10 @@ router.get(
                   height:"100%",
                   pagination:true,
                   paginationSize:20,
+                  clipboard:true,
+                  persistence:true, 
+                  persistenceID:"table_tab_${table.name}",
+                  movableColumns: true,
                   initialSort:[
                     {column:"id", dir:"asc"},
                   ],

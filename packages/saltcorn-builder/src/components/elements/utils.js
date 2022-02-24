@@ -130,18 +130,17 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
         ) : (
           children
         )}
-        <div className="input-group-append">
-          <button
-            className={`btn activate-formula ${
-              isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
-            }`}
-            title="Calculated formula"
-            type="button"
-            onClick={switchIsFml}
-          >
-            <i className="fas fa-calculator"></i>
-          </button>
-        </div>
+
+        <button
+          className={`btn activate-formula ${
+            isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
+          }`}
+          title="Calculated formula"
+          type="button"
+          onClick={switchIsFml}
+        >
+          <i className="fas fa-calculator"></i>
+        </button>
       </div>
       {isFormula[nodekey] && (
         <div style={{ marginTop: "-5px" }}>
@@ -251,7 +250,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="h4">Heading 4</option>
       <option value="h5">Heading 5</option>
       <option value="h6">Heading 6</option>
-      <option value="font-weight-bold">Bold</option>
+      <option value="fw-bold">Bold</option>
       <option value="font-italic">Italics</option>
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
@@ -321,7 +320,7 @@ const Accordion = ({ titles, children }) => {
             <div
               className={`bg-${
                 isCurrent ? "primary" : "secondary"
-              } pl-1 text-white w-100 mt-1`}
+              } ps-1 text-white w-100 mt-1`}
               onClick={() => setCurrentTab(ix)}
             >
               <span className="w-1em">

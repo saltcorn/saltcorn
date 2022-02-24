@@ -124,7 +124,7 @@ router.get(
               href: "/site-structure/localizer/add-lang",
               class: "btn btn-primary mt-1",
             },
-            i({ class: "fas fa-plus-square mr-1" }),
+            i({ class: "fas fa-plus-square me-1" }),
             req.__("Add language")
           )
         ),

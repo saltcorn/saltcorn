@@ -389,6 +389,7 @@ const field_picker_fields = contract(
         "Sum",
         "Max",
         "Min",
+        "Array_Agg",
       ];
       table.fields.forEach((f) => {
         if (f.type && f.type.name === "Date") {

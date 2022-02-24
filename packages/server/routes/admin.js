@@ -46,7 +46,10 @@ const {
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
-const { create_backup, restore } = require("@saltcorn/admin-models/models/backup");
+const {
+  create_backup,
+  restore,
+} = require("@saltcorn/admin-models/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const {
@@ -299,7 +302,7 @@ router.get(
                   post_btn("/admin/backup", req.__("Backup"), req.csrfToken())
                 )
               ),
-              td(p({ class: "ml-4 pt-2" }, req.__("Download a backup")))
+              td(p({ class: "ms-4 pt-2" }, req.__("Download a backup")))
             ),
             tr(td(div({ class: "my-4" }))),
             tr(
@@ -310,7 +313,7 @@ router.get(
                   req.__("Restore"),
                 ])
               ),
-              td(p({ class: "ml-4" }, req.__("Restore a backup")))
+              td(p({ class: "ms-4" }, req.__("Restore a backup")))
             )
           )
         ),
@@ -393,7 +396,7 @@ router.get(
                             )
                           : isRoot && is_latest
                           ? span(
-                              { class: "badge badge-primary ml-2" },
+                              { class: "badge bg-primary ms-2" },
                               req.__("Latest")
                             )
                           : "")

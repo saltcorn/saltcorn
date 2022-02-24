@@ -159,7 +159,7 @@ const settingsDropdown = (id: string, elems: any): string =>
         "data-boundary": "viewport",
         type: "button",
         id,
-        "data-toggle": "dropdown",
+        "data-bs-toggle": "dropdown",
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },

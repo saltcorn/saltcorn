@@ -401,7 +401,7 @@ class State {
   ) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
-    this.plugin_locations[plugin.plugin_name || name] = location;
+    if (location) this.plugin_locations[plugin.plugin_name || name] = location;
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
@@ -689,6 +689,7 @@ const features = {
   deep_public_plugin_serve: true,
   fieldrepeats_in_field_attributes: true,
   no_plugin_fieldview_length_check: true,
+  bootstrap5: true,
 };
 
 export = {

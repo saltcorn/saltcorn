@@ -12,11 +12,7 @@ const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
-const {
-  getMailTransport,
-  transformBootstrapEmail,
-} = require("../models/email");
-const { mockReqRes } = require("../tests/mocks");
+const { getMailTransport, viewToEmailHtml } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
@@ -396,8 +392,7 @@ module.exports = {
           break;
       }
       const view = await View.findOne({ name: viewname });
-      const htmlBs = await view.run({ id: row.id }, mockReqRes);
-      const html = await transformBootstrapEmail(htmlBs);
+      const html = await viewToEmailHtml(view, { id: row.id });
       console.log(
         "Sending email from %s to %s with subject %s to_email",
         getState().getConfig("email_from"),

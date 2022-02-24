@@ -24,7 +24,7 @@ const tabs = (obj: any | any[]) => {
       a(
         {
           class: ["nav-link", ix == 0 && "active"],
-          "data-toggle": "tab",
+          "data-bs-toggle": "tab",
           href: `#${mkId(e[0])}`,
           id: `${mkId(e[0])}-tab`,
           role: "tab",
