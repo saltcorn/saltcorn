@@ -75,6 +75,9 @@ describe("Table create", () => {
     await browser.goto("/viewedit");
     expect(await browser.content()).toContain("Create view");
     await browser.goto("/viewedit/new");
+    expect(await browser.content()).toContain(
+      "please give some basic information about the view"
+    );
     await browser.page.type("#inputname", "PersonList");
     await browser.page.select("#inputviewtemplate", "List");
     await browser.page.select("#inputtable_name", "Persons");

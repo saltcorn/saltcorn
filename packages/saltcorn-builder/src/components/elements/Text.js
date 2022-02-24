@@ -99,7 +99,7 @@ const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
       onClick={(e) => selected && setEditable(true)}
       style={font ? { fontFamily: font } : {}}
     >
-      <DynamicFontAwesomeIcon icon={icon} className="mr-1" />
+      <DynamicFontAwesomeIcon icon={icon} className="me-1" />
       {isFormula.text ? (
         <Fragment>
           =

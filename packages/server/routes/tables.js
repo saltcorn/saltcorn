@@ -488,8 +488,7 @@ router.get(
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl) =>
-  `<span class="badge badge-${col}">${lbl}</span>&nbsp;`;
+const badge = (col, lbl) => `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 /**
  * @param {object} f
@@ -578,7 +577,7 @@ router.get(
                 : (r.type && r.type.name) ||
                   r.type ||
                   r.typename +
-                    span({ class: "badge badge-danger ml-1" }, "Unknown type"),
+                    span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
           {
             label: "",
@@ -1035,22 +1034,22 @@ router.get(
     const createCard = div(
       h5(req.__("Create table")),
       a(
-        { href: `/table/new`, class: "btn btn-primary mt-1 mr-3" },
-        i({ class: "fas fa-plus-square mr-1" }),
+        { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
+        i({ class: "fas fa-plus-square me-1" }),
         req.__("Create table")
       ),
       a(
         {
           href: `/table/create-from-csv`,
-          class: "btn btn-secondary mr-3 mt-1",
+          class: "btn btn-secondary me-3 mt-1",
         },
-        i({ class: "fas fa-upload mr-1" }),
+        i({ class: "fas fa-upload me-1" }),
         req.__("Create from CSV upload")
       ),
       !db.isSQLite &&
         a(
           { href: `/table/discover`, class: "btn btn-secondary mt-1" },
-          i({ class: "fas fa-map-signs mr-1" }),
+          i({ class: "fas fa-map-signs me-1" }),
           req.__("Discover tables")
         )
     );

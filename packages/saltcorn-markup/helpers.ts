@@ -262,13 +262,13 @@ const search_bar = (
     ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('#${input_id}').val())`
     : onClick || "";
   return `<div class="input-group search-bar" id="search-input-group-${rndid}">
-  <div class="input-group-prepend">
+  
   <button class="btn btn-outline-secondary search-bar" ${
     clickHandler ? `onClick="${clickHandler}"` : ""
   } type="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
   </button>
-  </div>
+  
 <input type="search" class="form-control search-bar ${
     (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
   }" placeholder="${placeHolder || "Search for..."}" 
@@ -283,15 +283,14 @@ const search_bar = (
        aria-label="Search" aria-describedby="button-search-submit" ${
          v ? `value="${text_attr(v)}"` : ""
        }>
-<div class="input-group-append">
   ${
     badges && badges.length > 0
       ? `<div class="input-group-text">${badges
           .map(
             (b: any) =>
-              `<span class="badge badge-primary">${b.text}${
+              `<span class="badge bg-primary">${b.text}${
                 b.onclick
-                  ? `<a href="javascript:${b.onclick}"><i class="ml-1 fas fa-lg fa-times"></i></a> `
+                  ? `<a href="javascript:${b.onclick}"><i class="ms-1 fas fa-lg fa-times"></i></a> `
                   : ""
               }</span>`
           )
@@ -301,7 +300,7 @@ const search_bar = (
   }
   ${
     has_dropdown
-      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
+      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
       : ""
   }
   ${
@@ -311,7 +310,6 @@ const search_bar = (
       </div>`
       : ""
   }
-</div>
 </div>`;
 };
 

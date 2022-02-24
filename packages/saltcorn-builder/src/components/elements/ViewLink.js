@@ -72,7 +72,7 @@ const ViewLink = ({
           : {}
       }
     >
-      {link_icon ? <i className={`${link_icon} mr-1`}></i> : ""}
+      {link_icon ? <i className={`${link_icon} me-1`}></i> : ""}
       {displabel}
     </span>
   );

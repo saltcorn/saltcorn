@@ -74,7 +74,7 @@ const select = {
       );
     return tags.select(
       {
-        class: `form-control ${cls} ${field.class || ""}`,
+        class: `form-control form-select ${cls} ${field.class || ""}`,
         "data-fieldname": field.form_name,
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
@@ -102,6 +102,7 @@ const two_level_select = {
     const fields = await table.getFields();
     const relOpts = [""];
     const field = fields.find((f) => f.name === name);
+    if (!field) return [];
 
     if (field.is_fkey && field.reftable_name) {
       const relTable = Table.findOne(field.reftable_name);
@@ -139,14 +140,16 @@ const two_level_select = {
 
   run: (nm, v, attrs, cls, reqd, field) => {
     const options2 = {};
-    Object.entries(field.options).forEach(([label, { id, options }]) => {
+    Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
       options2[id] = options;
     });
     const calcOptions = [`_${field.name}_toplevel`, options2];
     return (
       tags.select(
         {
-          class: `form-control w-50 ${cls} ${field.class || ""} d-inline`,
+          class: `form-control form-select w-50 ${cls} ${
+            field.class || ""
+          } d-inline`,
           "data-fieldname": `_${field.name}_toplevel`,
         },
         select_options_first_level(
@@ -158,7 +161,9 @@ const two_level_select = {
       ) +
       tags.select(
         {
-          class: `form-control w-50 ${cls} ${field.class || ""}  d-inline`,
+          class: `form-control form-select w-50 ${cls} ${
+            field.class || ""
+          }  d-inline`,
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
@@ -170,7 +175,7 @@ const two_level_select = {
   },
 };
 const select_options_first_level = (v, hdr, force_required, neutral_label) => {
-  return Object.entries(hdr.options).map(([label, { id, options }]) =>
+  return Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
     option(
       { value: id, selected: options.map((o) => o.value).includes(v) },
       label
@@ -253,7 +258,7 @@ const search_or_create = {
     return (
       tags.select(
         {
-          class: `form-control ${cls} ${field.class || ""}`,
+          class: `form-control form-select ${cls} ${field.class || ""}`,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
         },

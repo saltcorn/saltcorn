@@ -70,7 +70,7 @@ const Action =
           : {}
       }
     >
-      <DynamicFontAwesomeIcon icon={action_icon} className="mr-1" />
+      <DynamicFontAwesomeIcon icon={action_icon} className="me-1" />
       {action_label || name}
     </button>
   );

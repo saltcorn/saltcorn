@@ -39,11 +39,10 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
         connect(drag(dom));
       }}
     >
-      <div className="input-group-prepend">
-        <button className="btn btn-outline-secondary" disabled>
-          <i className="fas fa-search"></i>
-        </button>
-      </div>
+      <button className="btn btn-outline-secondary" disabled>
+        <i className="fas fa-search"></i>
+      </button>
+
       <input
         type="text"
         className="form-control bg-light"
@@ -51,31 +50,29 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
         disabled
       />
 
-      <div className="input-group-append">
-        {show_badges && (
-          <div className="input-group-text">
-            <span className="badge badge-primary">X:Y</span>
+      {show_badges && (
+        <div className="input-group-text">
+          <span className="badge bg-primary">X:Y</span>
+        </div>
+      )}
+      {has_dropdown && (
+        <Fragment>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => setDropdown(!showDropdown)}
+          >
+            <FontAwesomeIcon icon={faCaretDown} />
+          </button>
+          <div
+            className={`dropdown-menu searchbar-dropdown ${
+              showDropdown ? "show" : ""
+            }`}
+            style={{ width: dropWidth, left: 0 }}
+          >
+            <div className="canvas">{children}</div>
           </div>
-        )}
-        {has_dropdown && (
-          <Fragment>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={() => setDropdown(!showDropdown)}
-            >
-              <FontAwesomeIcon icon={faCaretDown} />
-            </button>
-            <div
-              className={`dropdown-menu searchbar-dropdown ${
-                showDropdown ? "show" : ""
-              }`}
-              style={{ width: dropWidth, left: 0 }}
-            >
-              <div className="canvas">{children}</div>
-            </div>
-          </Fragment>
-        )}
-      </div>
+        </Fragment>
+      )}
     </div>
   );
 };

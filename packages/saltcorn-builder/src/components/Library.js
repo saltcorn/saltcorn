@@ -168,7 +168,7 @@ const Library = () => {
           disabled={!selected}
           onClick={() => setAdding(!adding)}
         >
-          <FontAwesomeIcon icon={faPlus} className="mr-1" />
+          <FontAwesomeIcon icon={faPlus} className="me-1" />
           Add
         </button>
         <div
@@ -192,11 +192,11 @@ const Library = () => {
             isMulti={false}
           />
           <button className={`btn btn-primary mt-3`} onClick={addSelected}>
-            <FontAwesomeIcon icon={faPlus} className="mr-1" />
+            <FontAwesomeIcon icon={faPlus} className="me-1" />
             Add
           </button>
           <button
-            className={`btn btn-outline-secondary ml-2 mt-3`}
+            className={`btn btn-outline-secondary ms-2 mt-3`}
             onClick={() => setAdding(false)}
           >
             <FontAwesomeIcon icon={faTimes} />

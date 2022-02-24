@@ -141,7 +141,7 @@ const innerField = (
       }>`;
     case "select":
       const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
+      return `<select class="form-control form-select ${validClass} ${
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
@@ -204,12 +204,10 @@ const innerField = (
         ? div(
             { class: "input-group" },
             the_input,
-            div(
-              { class: "input-group-append" },
-              span(
-                { class: "input-group-text", id: "basic-addon2" },
-                hdr.postText
-              )
+
+            span(
+              { class: "input-group-text", id: "basic-addon2" },
+              hdr.postText
             )
           )
         : the_input;
@@ -549,7 +547,7 @@ const renderForm = (
           class: "btn btn-secondary dropdown-toggle",
           type: "button",
           id: "dropdownMenuButton",
-          "data-toggle": "dropdown",
+          "data-bs-toggle": "dropdown",
           "aria-haspopup": "true",
           "aria-expanded": "false",
         },

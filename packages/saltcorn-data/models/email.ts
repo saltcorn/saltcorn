@@ -5,17 +5,24 @@
  */
 import { createTransport, Transporter } from "nodemailer";
 const { getState } = require("../db/state");
-const BootstrapEmail = require("bootstrap-email_with-node-sass-6"); // no typings available
-import { tmpName } from "tmp-promise";
-import { writeFile, unlink } from "fs/promises";
 import tags from "@saltcorn/markup/tags";
+import mjml from "@saltcorn/markup/mjml-tags";
 const { div } = tags;
 import View from "./view";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db/index";
 import User from "./user";
 import mocks from "../tests/mocks";
+import mjml2html from "mjml";
 const { mockReqRes } = mocks;
+
+const emailMockReqRes = {
+  req: {
+    ...mockReqRes.req,
+    generate_email: true,
+  },
+  res: mockReqRes.res,
+};
 
 /**
  * @returns {Transporter}
@@ -34,23 +41,15 @@ const getMailTransport = (): Transporter => {
   });
 };
 
-/**
- * @param {string} bsHtml
- * @param {boolean} [container=true] wrap in a container div (used by unit test)
- * @returns {Promise<string>}
- */
-const transformBootstrapEmail = async (
-  bsHtml: string,
-  container: boolean = true
-): Promise<string> => {
-  const filename = await tmpName();
-  const html = container ? div({ class: "container" }, bsHtml) : bsHtml;
-  await writeFile(filename, html);
+const viewToMjml = async (view: any, state: any) => {
+  const htmlBs = await view.run(state, emailMockReqRes);
+  return mjml.mjml(mjml.body(htmlBs));
+};
 
-  const template = new BootstrapEmail(filename);
-  const email = template.compile();
-  await unlink(filename);
-  return email;
+const viewToEmailHtml = async (view: any, state: any) => {
+  const mjmlMarkup = await viewToMjml(view, state);
+  const html = mjml2html(mjmlMarkup, { minify: true });
+  return html.html;
 };
 
 /**
@@ -72,8 +71,8 @@ const send_verification_email = async (
       try {
         await db.update("users", { verification_token }, user.id);
         user.verification_token = verification_token;
-        const htmlBs = await verification_view.run({ id: user.id }, mockReqRes);
-        const html = await transformBootstrapEmail(htmlBs);
+
+        const html = await viewToEmailHtml(verification_view, { id: user.id });
         const email = {
           from: getState().getConfig("email_from"),
           to: user.email,
@@ -101,6 +100,8 @@ const send_verification_email = async (
 
 export = {
   getMailTransport,
-  transformBootstrapEmail,
   send_verification_email,
+  emailMockReqRes,
+  viewToEmailHtml,
+  viewToMjml,
 };

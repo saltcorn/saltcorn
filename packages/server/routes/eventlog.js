@@ -155,9 +155,9 @@ router.get(
           a(
             {
               href: "/eventlog/custom/new",
-              class: "btn btn-primary mt-1 mr-3",
+              class: "btn btn-primary mt-1 me-3",
             },
-            i({ class: "fas fa-plus-square mr-1" }),
+            i({ class: "fas fa-plus-square me-1" }),
             req.__("Create custom event")
           ),
       },

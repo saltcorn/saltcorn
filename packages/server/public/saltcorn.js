@@ -30,16 +30,20 @@ function add_repeater(nm) {
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
-    var to_show = new Function(
-      "e",
-      "return " + decodeURIComponent(e.attr("data-show-if"))
-    );
-    if (to_show(e))
-      e.show()
-        .find("input, textarea, button, select")
-        .prop("disabled", e.attr("data-disabled") || false);
-    else
-      e.hide().find("input, textarea, button, select").prop("disabled", true);
+    try {
+      var to_show = new Function(
+        "e",
+        "return " + decodeURIComponent(e.attr("data-show-if"))
+      );
+      if (to_show(e))
+        e.show()
+          .find("input, textarea, button, select")
+          .prop("disabled", e.attr("data-disabled") || false);
+      else
+        e.hide().find("input, textarea, button, select").prop("disabled", true);
+    } catch (e) {
+      console.error(e);
+    }
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
@@ -56,14 +60,15 @@ function apply_showif() {
     e.empty();
     (options || []).forEach((o) => {
       if (!(o && o.label && o.value)) {
-        if (current === o) e.append($("<option selected>" + o + "</option>"));
+        if (`${current}` === `${o}`)
+          e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
       } else {
         e.append(
           $(
-            `<option ${current === o.value ? "selected" : ""} value="${
-              o.value
-            }">${o.label}</option>`
+            `<option ${
+              `${current}` === `${o.value}` ? "selected" : ""
+            } value="${o.value}">${o.label}</option>`
           )
         );
       }
@@ -205,7 +210,7 @@ function initialize_page() {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();
       $(this).html(
-        `<span class="current">${current}</span><i class="editicon fas fa-edit ml-1"></i>`
+        `<span class="current">${current}</span><i class="editicon fas fa-edit ms-1"></i>`
       );
     }
   });
@@ -287,7 +292,7 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  $('a[data-toggle="tab"]').historyTabs();
+  $('a[data-bs-toggle="tab"]').historyTabs();
 }
 
 $(initialize_page);
@@ -636,11 +641,13 @@ function make_unique_field(
   id,
   table_id,
   field_name,
-  value,
+  elem,
   space,
   start,
-  always_append
+  always_append,
+  char_type
 ) {
+  const value = $(elem).val();
   if (!value) return;
   $.ajax(
     `/api/${table_id}?approximate=true&${encodeURIComponent(
@@ -650,12 +657,25 @@ function make_unique_field(
       type: "GET",
       success: function (res) {
         if (res.success) {
+          const gen_char = (i) => {
+            switch (char_type) {
+              case "Lowercase Letters":
+                return String.fromCharCode("a".charCodeAt(0) + i);
+                break;
+              case "Uppercase Letters":
+                return String.fromCharCode("A".charCodeAt(0) + i);
+                break;
+              default:
+                return i;
+                break;
+            }
+          };
           const vals = res.success
             .map((o) => o[field_name])
             .filter((s) => s.startsWith(value));
           if (vals.includes(value) || always_append) {
             for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
-              const newname = `${value}${space ? " " : ""}${i}`;
+              const newname = `${value}${space ? " " : ""}${gen_char(i)}`;
               if (!vals.includes(newname)) {
                 $("#" + id).val(newname);
                 return;

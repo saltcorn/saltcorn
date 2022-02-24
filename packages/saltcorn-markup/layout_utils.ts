@@ -85,7 +85,7 @@ const navSubitems = ({
         href: "#",
         id: `dropdown${labelToId(label)}`,
         role: "button",
-        "data-toggle": "dropdown",
+        "data-bs-toggle": "dropdown",
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
@@ -116,7 +116,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
   div(
     { class: "collapse navbar-collapse", id: "navbarResponsive" },
     ul(
-      { class: "navbar-nav ml-auto my-2 my-lg-0" },
+      { class: "navbar-nav ms-auto my-2 my-lg-0" },
 
       innerSections(sections).map((s) =>
         s.location === "Mobile Bottom"
@@ -150,22 +150,19 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
 
                   input({
                     type: "search",
-                    class: "form-control search-bar pl-2 hasbl",
+                    class: "form-control search-bar ps-2 hasbl",
                     placeholder: s.label,
                     id: "inputq",
                     name: "q",
                     "aria-label": "Search",
                     "aria-describedby": "button-search-submit",
                   }),
-                  div(
-                    { class: "input-group-append" },
-                    button(
-                      {
-                        class: "btn btn-outline-secondary search-bar",
-                        type: "submit",
-                      },
-                      i({ class: "fas fa-search" })
-                    )
+                  button(
+                    {
+                      class: "btn btn-outline-secondary search-bar",
+                      type: "submit",
+                    },
+                    i({ class: "fas fa-search" })
                   )
                 )
               )
@@ -259,8 +256,8 @@ const leftNavBar = ({ name, logo }: LeftNavBarOpts): string[] => [
     {
       class: "navbar-toggler navbar-toggler-right",
       type: "button",
-      "data-toggle": "collapse",
-      "data-target": "#navbarResponsive",
+      "data-bs-toggle": "collapse",
+      "data-bs-target": "#navbarResponsive",
       "aria-controls": "navbarResponsive",
       "aria-expanded": "false",
       "aria-label": "Toggle navigation",
@@ -308,8 +305,7 @@ const alert = (type: string, s: string): string => {
   return s && s.length > 0
     ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
         ${text(s)}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
         </button>
       </div>`
     : "";
@@ -343,16 +339,17 @@ const logit = (x: any, s: any): any => {
  * @param {number} len
  * @returns {function}
  */
-const standardBreadcrumbItem =
-  (len: number) =>
-  ({ href, text }: { href?: string; text: string }, ix: number): string =>
-    li(
-      {
-        class: ["breadcrumb-item", ix == len - 1 && "active"],
-        "aria-current": ix == len - 1 && "page",
-      },
-      href ? a({ href }, text) : text
-    );
+const standardBreadcrumbItem = (len: number) => (
+  { href, text }: { href?: string; text: string },
+  ix: number
+): string =>
+  li(
+    {
+      class: ["breadcrumb-item", ix == len - 1 && "active"],
+      "aria-current": ix == len - 1 && "page",
+    },
+    href ? a({ href }, text) : text
+  );
 
 /**
  * @param {object} opts
@@ -373,7 +370,7 @@ const workflowBreadcrumbItem = ({
         {
           class: [
             "breadcrumb-item breadcrumb-workflow",
-            step.currentStep - 1 === ix && "active-step font-weight-bold",
+            step.currentStep - 1 === ix && "active-step fw-bold",
           ],
         },
         span(wfstep.name)
@@ -395,7 +392,7 @@ const breadcrumbs = (crumbs: any[], right: any): string =>
           ? workflowBreadcrumbItem(c)
           : standardBreadcrumbItem(crumbs.length)(c, ix)
       ),
-      right ? li({ class: "ml-auto" }, right) : ""
+      right ? li({ class: "ms-auto" }, right) : ""
     )
   );
 
