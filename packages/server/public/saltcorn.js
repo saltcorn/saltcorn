@@ -440,8 +440,7 @@ function notifyAlert(note) {
   $("#alerts-area")
     .append(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
   ${txt}
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
+  <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close">
   </button>
 </div>`);
 }
