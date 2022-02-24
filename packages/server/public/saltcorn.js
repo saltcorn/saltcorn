@@ -440,7 +440,7 @@ function notifyAlert(note) {
   $("#alerts-area")
     .append(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
   ${txt}
-  <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close">
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
   </button>
 </div>`);
 }
@@ -515,8 +515,7 @@ function ajax_modal(url, opts = {}) {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
         </div>
         <div class="modal-body">
@@ -533,7 +532,7 @@ function ajax_modal(url, opts = {}) {
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
-      $("#scmodal").modal();
+      new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
