@@ -10,6 +10,7 @@ const View = require("../../models/view");
 const File = require("../../models/file");
 const Table = require("../../models/table");
 const Page = require("../../models/page");
+const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
@@ -684,6 +685,7 @@ const run_action = async (
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
+    Crash.create(e, req);
     return { json: { error: e.message || e } };
   }
 };

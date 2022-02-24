@@ -9,6 +9,8 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
+const Crash = require("../../models/crash");
+
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script, button, div } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
@@ -596,6 +598,7 @@ const run_action = async (
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
+    Crash.create(e, req);
     return { json: { error: e.message || e } };
   }
 };
