@@ -13,9 +13,6 @@ import { tz } from "moment-timezone";
 const allTimezones = tz.names();
 const defaultTimezone = tz.guess();
 
-type SingleConfig = { [key: string]: any };
-type ConfigTypes = { [key: string]: SingleConfig };
-
 /**
  * Config variables types
  * @namespace
@@ -800,7 +797,7 @@ const set_multitenancy_cfg = (val: boolean): void => {
   writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
 };
 
-export = {
+const configExports = {
   getConfig,
   getAllConfig,
   setConfig,
@@ -815,3 +812,12 @@ export = {
   save_menu_items,
   check_email_mask,
 };
+
+namespace configExports {
+  export type SingleConfig = Record<string, any>;
+  export type ConfigTypes = Record<string, SingleConfig>;
+}
+type SingleConfig = configExports.SingleConfig;
+type ConfigTypes = configExports.ConfigTypes;
+
+export = configExports;

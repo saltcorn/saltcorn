@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "cordova": "^11.0.0",
-    "cordova-android": "^10.1.1",
     "cordova-sqlite-storage": "^6.0.0"
   }
 }

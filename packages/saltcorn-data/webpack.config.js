@@ -19,11 +19,6 @@ const saltcornMocks = {
   "./email": join(mocksDir, "models", "email"),
 
   // this will be removed
-  "./state": join(mocksDir, "saltcorn", "state"),
-  "../state": join(mocksDir, "saltcorn", "state"),
-  "./db/state": join(mocksDir, "saltcorn", "state"),
-  "../db/state": join(mocksDir, "saltcorn", "state"),
-  "../../db/state": join(mocksDir, "saltcorn", "state"),
   "../plugin-helper": join(mocksDir, "saltcorn", "plugin-helper"),
   "../../plugin-helper": join(mocksDir, "saltcorn", "plugin-helper"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),

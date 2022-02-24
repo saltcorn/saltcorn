@@ -5,39 +5,36 @@
  * @module db/state
  * @subcategory db
  */
-const { contract, is } = require("contractis");
-const {
-  is_plugin_wrap,
-  is_plugin,
-  is_header,
-  is_viewtemplate,
-  is_plugin_type,
-  is_plugin_layout,
-} = require("../contracts");
-const moment = require("moment");
 
-const db = require(".");
+import View from "../models/view";
+import Trigger from "../models/trigger";
+import File from "../models/file";
+import Table from "../models/table";
+import Page from "../models/page";
+import Field from "../models/field";
+import { Plugin, PluginLayout, ViewTemplate } from "@saltcorn/types/base_types";
+import { Type } from "@saltcorn/types/common_types";
+import { ConfigTypes, SingleConfig } from "models/config";
+import User from "../models/user";
+
+import moment from "moment";
+
+import db from ".";
 const { migrate } = require("../migrate");
-const File = require("../models/file");
-const Trigger = require("../models/trigger");
-const View = require("../models/view");
-const {
-  getAllConfigOrDefaults,
-  setConfig,
-  deleteConfig,
-  configTypes,
-} = require("../models/config");
+import config from "../models/config";
+const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
-const { structuredClone, removeAllWhiteSpace } = require("../utils");
-const { I18n } = require("i18n");
-const path = require("path");
-const fs = require("fs");
-
+import utils from "../utils";
+const { structuredClone, removeAllWhiteSpace } = utils;
+import I18n from "i18n";
+import { join } from "path";
+import { existsSync } from "fs";
+import { writeFile, mkdir } from "fs/promises";
+import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
 /**
- * @param {object} v
- * @returns {void}
+ * @param v
  */
-const process_send = (v) => {
+const process_send = (v: any) => {
   if (process.send) process.send(v);
 };
 
@@ -46,11 +43,41 @@ const process_send = (v) => {
  * @category saltcorn-data
  */
 class State {
+  tenant: string;
+  views: Array<View>;
+  triggers: Array<Trigger>;
+  virtual_triggers: Array<Trigger>;
+  viewtemplates: Record<string, ViewTemplate>;
+  tables: Array<Table>;
+  types: Record<string, Type>;
+  stashed_fieldviews: Record<string, any>;
+  files: Record<string, File>;
+  pages: Array<Page>;
+  fields: Array<Field>;
+  configs: ConfigTypes;
+  fileviews: Record<string, any>;
+  actions: Record<string, any>;
+  auth_methods: Record<string, any>;
+  plugins: Record<string, Plugin>;
+  plugin_cfgs: any;
+  plugin_locations: any;
+  plugin_module_names: any;
+  eventTypes: any;
+  layouts: Record<string, PluginLayout>;
+  headers: any;
+  function_context: any;
+  functions: any;
+  keyFieldviews: any;
+  external_tables: any;
+  verifier: any;
+  i18n: I18n.I18n;
+  roomEmitter?: Function;
+
   /**
    * State constructor
    * @param {string} tenant description
    */
-  constructor(tenant) {
+  constructor(tenant: string) {
     this.tenant = tenant;
     this.views = [];
     this.triggers = [];
@@ -78,11 +105,11 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
-    this.i18n = new I18n({
+    this.i18n = new I18n.I18n();
+    this.i18n.configure({
       locales: [],
-      directory: path.join(__dirname, "..", "app-locales"),
+      directory: join(__dirname, "..", "app-locales"),
     });
-    contract.class(this);
   }
 
   /**
@@ -91,7 +118,7 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user) {
+  getLayout(user: User) {
     const role_id = user ? +user.role_id : 10;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {
@@ -102,7 +129,7 @@ class State {
     return layoutvs[layoutvs.length - 1];
   }
 
-  get2FApolicy(user) {
+  get2FApolicy(user: User) {
     const role_id = user ? +user.role_id : 10;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
     if (twofa_policy_by_role && twofa_policy_by_role[role_id])
@@ -115,7 +142,7 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh(noSignal) {
+  async refresh(noSignal: boolean) {
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
     await this.refresh_tables(noSignal);
@@ -129,36 +156,39 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh_config(noSignal) {
+  async refresh_config(noSignal: boolean) {
     this.configs = await getAllConfigOrDefaults();
-    this.getConfig("custom_events", []).forEach((cev) => {
+    this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
     });
     this.refresh_i18n();
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
    * @returns {Promise<void>}
    */
   async refresh_i18n() {
-    const localeDir = path.join(__dirname, "..", "app-locales", this.tenant);
+    const localeDir = join(__dirname, "..", "app-locales", this.tenant);
     try {
       //avoid race condition
-      if (!fs.existsSync(localeDir)) await fs.promises.mkdir(localeDir);
+      if (!existsSync(localeDir)) await mkdir(localeDir);
     } catch {}
     const allStrings = this.getConfig("localizer_strings", {});
     for (const lang of Object.keys(this.getConfig("localizer_languages", {}))) {
       //write json file
       const strings = allStrings[lang];
       if (strings)
-        await fs.promises.writeFile(
-          path.join(localeDir, `${lang}.json`),
+        await writeFile(
+          join(localeDir, `${lang}.json`),
           JSON.stringify(strings, null, 2)
         );
     }
-    this.i18n = new I18n({
+    this.i18n = new I18n.I18n();
+    this.i18n.configure({
       locales: Object.keys(this.getConfig("localizer_languages", {})),
       directory: localeDir,
       autoReload: false,
@@ -172,7 +202,7 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh_views(noSignal) {
+  async refresh_views(noSignal: boolean) {
     this.views = await View.find();
     this.virtual_triggers = [];
     for (const view of this.views) {
@@ -186,8 +216,10 @@ class State {
         this.virtual_triggers.push(...trs);
       }
     }
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "views", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -195,10 +227,12 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh_triggers(noSignal) {
+  async refresh_triggers(noSignal: boolean) {
     this.triggers = await Trigger.findDB();
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -206,11 +240,13 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh_pages(noSignal) {
+  async refresh_pages(noSignal: boolean) {
     const Page = require("../models/page");
     this.pages = await Page.find();
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "pages", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -219,14 +255,16 @@ class State {
    * @returns {Promise<void>}
    */
   // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
-  async refresh_files(noSignal) {
+  async refresh_files(noSignal: boolean) {
     const allfiles = await File.find();
     this.files = {};
     for (const f of allfiles) {
-      this.files[f.id] = f;
+      if (f.id) this.files[f.id] = f;
     }
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "files", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -234,7 +272,7 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh_tables(noSignal) {
+  async refresh_tables(noSignal: boolean) {
     const allTables = await db.select(
       "_sc_tables",
       {},
@@ -246,15 +284,15 @@ class State {
       { orderBy: "name", nocase: true }
     );
     for (const table of allTables) {
-      table.fields = allFields.filter((f) => f.table_id === table.id);
-      table.fields.forEach((f) => {
+      table.fields = allFields.filter((f: Field) => f.table_id === table.id);
+      table.fields.forEach((f: Field) => {
         if (
           f.attributes &&
           f.attributes.localizes_field &&
           f.attributes.locale
         ) {
           const localized = table.fields.find(
-            (lf) => lf.name === f.attributes.localizes_field
+            (lf: Field) => lf.name === f.attributes.localizes_field
           );
           if (localized) {
             if (!localized.attributes) localized.attributes = {};
@@ -268,8 +306,10 @@ class State {
       });
     }
     this.tables = allTables;
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "tables", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -278,7 +318,7 @@ class State {
    * @param {string} [def] - default value
    * @returns {string}
    */
-  getConfig(key, def) {
+  getConfig(key: string, def?: any) {
     const fixed = db.connectObj.fixed_configuration[key];
     if (typeof fixed !== "undefined") return fixed;
     if (db.connectObj.inherit_configuration.includes(key)) {
@@ -298,7 +338,7 @@ class State {
    * @param {string} [def] - default value
    * @returns {string}
    */
-  getConfigCopy(key, def) {
+  getConfigCopy(key: string, def: any) {
     return structuredClone(this.getConfig(key, def));
   }
 
@@ -309,7 +349,7 @@ class State {
    * @param {string} value - value of parameter
    * @returns {Promise<void>}
    */
-  async setConfig(key, value) {
+  async setConfig(key: string, value: any) {
     if (
       !this.configs[key] ||
       typeof this.configs[key].value === "undefined" ||
@@ -318,24 +358,32 @@ class State {
       await setConfig(key, value);
       this.configs[key] = { value };
       if (key.startsWith("localizer_")) this.refresh_i18n();
-      process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      if (db.is_node)
+        process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      else {
+      }
     }
   }
 
   /**
    * Delete config parameter by key
-   * @param {string} key - key of parameter
+   * @param {string} keys - key of parameter
    * @returns {Promise<void>}
    */
-  async deleteConfig(...keys) {
+  async deleteConfig(...keys: string[]) {
     for (const key of keys) {
       await deleteConfig(key);
       delete this.configs[key];
     }
-    process_send({ refresh: "config", tenant: db.getTenantSchema() });
+    if (db.is_node)
+      process_send({ refresh: "config", tenant: db.getTenantSchema() });
+    else {
+    }
   }
 
   /**
+   *     registerPlugin: is.fun([is.str, is_plugin], is.eq(undefined)),
+
    * Register plugin
    * @param {string} name
    * @param {object} plugin
@@ -344,30 +392,38 @@ class State {
    * @param {string} modname
    * @returns {void}
    */
-  registerPlugin(name, plugin, cfg, location, modname) {
+  registerPlugin(
+    name: string,
+    plugin: Plugin,
+    cfg: SingleConfig,
+    location?: string,
+    modname?: string
+  ) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
     this.plugin_locations[plugin.plugin_name || name] = location;
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
-    const withCfg = (key, def) =>
+    const withCfg = (key: string, def?: any) =>
       plugin.configuration_workflow
         ? plugin[key]
           ? plugin[key](cfg || {})
           : def
         : plugin[key] || def;
 
-    withCfg("types", []).forEach((t) => {
+    withCfg("types", []).forEach((t: Type) => {
       this.addType(t);
     });
-    withCfg("viewtemplates", []).forEach((vt) => {
+    withCfg("viewtemplates", []).forEach((vt: ViewTemplate) => {
       this.viewtemplates[vt.name] = vt;
     });
-    Object.entries(withCfg("functions", {})).forEach(([k, v]) => {
-      this.functions[k] = v;
-      this.function_context[k] = typeof v === "function" ? v : v.run;
-    });
+    Object.entries(withCfg("functions", {})).forEach(
+      ([k, v]: [k: string, v: any]) => {
+        this.functions[k] = v;
+        this.function_context[k] = typeof v === "function" ? v : v.run;
+      }
+    );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
     });
@@ -380,34 +436,40 @@ class State {
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
     });
-    Object.entries(withCfg("external_tables", {})).forEach(([k, v]) => {
-      if (!v.name) v.name = k;
-      this.external_tables[k] = v;
-    });
-    Object.entries(withCfg("fieldviews", {})).forEach(([k, v]) => {
-      if (v.type === "Key") {
-        this.keyFieldviews[k] = v;
-        return;
+    Object.entries(withCfg("external_tables", {})).forEach(
+      ([k, v]: [k: string, v: any]) => {
+        // TODO ch
+        if (!v.name) v.name = k;
+        this.external_tables[k] = v;
       }
-      const type = this.types[v.type];
-      if (type) {
-        if (type.fieldviews) type.fieldviews[k] = v;
-        else type.fieldviews = { [k]: v };
-      } else {
-        if (!this.stashed_fieldviews[v.type])
-          this.stashed_fieldviews[v.type] = {};
-        this.stashed_fieldviews[v.type][k] = v;
+    );
+    Object.entries(withCfg("fieldviews", {})).forEach(
+      ([k, v]: [k: string, v: any]) => {
+        if (v.type === "Key") {
+          this.keyFieldviews[k] = v;
+          return;
+        }
+        const type = this.types[v.type];
+        if (type) {
+          if (type.fieldviews) type.fieldviews[k] = v;
+          else type.fieldviews = { [k]: v };
+        } else {
+          if (!this.stashed_fieldviews[v.type])
+            this.stashed_fieldviews[v.type] = {};
+          this.stashed_fieldviews[v.type][k] = v;
+        }
       }
-    });
+    );
     const layout = withCfg("layout");
     if (layout) {
-      this.layouts[name] = contract(is_plugin_layout, layout);
+      // TOOO ch
+      this.layouts[name] = layout;
     }
     const verifier = withCfg("verifier_workflow");
     if (verifier) {
       this.verifier = verifier;
     }
-    withCfg("headers", []).forEach((h) => {
+    withCfg("headers", []).forEach((h: any) => {
       if (!this.headers[name].includes(h)) this.headers[name].push(h);
     });
   }
@@ -424,7 +486,7 @@ class State {
    * Add type
    * @param {object} t
    */
-  addType(t) {
+  addType(t: Type) {
     if (this.types[t.name]) return;
 
     this.types[t.name] = {
@@ -442,11 +504,13 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async remove_plugin(name, noSignal) {
+  async remove_plugin(name: string, noSignal: boolean) {
     delete this.plugins[name];
     await this.refresh_plugins();
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ removePlugin: name, tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -454,7 +518,7 @@ class State {
    * @param {boolean} noSignal
    * @returns {Promise<void>}
    */
-  async refresh_plugins(noSignal) {
+  async refresh_plugins(noSignal?: boolean) {
     this.viewtemplates = {};
     this.types = {};
     this.stashed_fieldviews = {};
@@ -470,12 +534,14 @@ class State {
     this.external_tables = {};
     this.eventTypes = {};
     this.verifier = null;
-    Object.entries(this.plugins).forEach(([k, v]) => {
+    Object.entries(this.plugins).forEach(([k, v]: [k: string, v: Plugin]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
     await this.refresh(true);
-    if (!noSignal)
+    if (!noSignal && db.is_node)
       process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
+    else if (!db.is_node) {
+    }
   }
 
   /**
@@ -486,7 +552,7 @@ class State {
     this.views.forEach((v) => strings.push(...v.getStringsForI18n()));
     this.pages.forEach((p) => strings.push(...p.getStringsForI18n()));
     const menu = this.getConfig("menu_items", []);
-    strings.push(...menu.map(({ label }) => label));
+    strings.push(...menu.map(({ label }: { label: string }) => label));
     return Array.from(new Set(strings)).filter(
       (s) => s && removeAllWhiteSpace(s)
     );
@@ -496,7 +562,7 @@ class State {
    *
    * @param {function} f
    */
-  setRoomEmitter(f) {
+  setRoomEmitter(f: Function) {
     this.roomEmitter = f;
   }
 
@@ -504,28 +570,10 @@ class State {
    *
    * @param {*} args
    */
-  emitRoom(...args) {
+  emitRoom(...args: any[]) {
     if (this.roomEmitter) this.roomEmitter(...args);
   }
 }
-
-/**
- * State constract
- * @type {{variables: {headers: ((function(*=): *)|*), types: ((function(*=): *)|*), viewtemplates: ((function(*=): *)|*)}, methods: {addType: ((function(*=): *)|*), registerPlugin: ((function(*=): *)|*), type_names: ((function(*=): *)|*), refresh: ((function(*=): *)|*)}}}
- */
-State.contract = {
-  variables: {
-    headers: is.any,
-    viewtemplates: is.objVals(is_viewtemplate),
-    types: is.objVals(is_plugin_type),
-  },
-  methods: {
-    addType: is.fun(is_plugin_type, is.eq(undefined)),
-    registerPlugin: is.fun([is.str, is_plugin], is.eq(undefined)),
-    refresh: is.fun([], is.promise(is.eq(undefined))),
-    type_names: is.getter(is.array(is.str)),
-  },
-};
 
 // the state is singleton
 const singleton = new State("public");
@@ -536,33 +584,31 @@ const singleton = new State("public");
  * @function
  * @returns {State}
  */
-const getState = contract(
-  is.fun([], is.or(is.class("State"), is.eq(undefined))),
-  () => {
-    if (!db.is_it_multi_tenant()) return singleton;
+const getState = (): State | undefined => {
+  if (!db.is_it_multi_tenant()) return singleton;
 
-    const ten = db.getTenantSchema();
-    if (ten === db.connectObj.default_schema) return singleton;
-    else return tenants[ten];
-  }
-);
+  const ten = db.getTenantSchema();
+  if (ten === db.connectObj.default_schema) return singleton;
+  else return tenants[ten];
+};
 // list of all tenants
-var tenants = { public: singleton };
+var tenants: Record<string, State> = { public: singleton };
 // list of tenants with other domains
-const otherdomaintenants = {};
+const otherdomaintenants: Record<string, string> = {};
 
 /**
  * Get other domain tenant
  * @param {string} hostname
  * @returns {object}
  */
-const get_other_domain_tenant = (hostname) => otherdomaintenants[hostname];
+const get_other_domain_tenant = (hostname: string) =>
+  otherdomaintenants[hostname];
 /**
  * Get tenant
  * @param {string} ten
  * @returns {object}
  */
-const getTenant = (ten) => {
+const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
   return tenants[ten];
 };
@@ -571,7 +617,7 @@ const getTenant = (ten) => {
  * @param {string} url
  * @returns {string}
  */
-const get_domain = (url) => {
+const get_domain = (url: string): string => {
   const noproto = url.replace("https://", "").replace("http://", "");
   return noproto.split("/")[0].split(":")[0];
 };
@@ -581,7 +627,7 @@ const get_domain = (url) => {
  * @param {object} tenant_subdomain
  * @param {string} [value] - new
  */
-const set_tenant_base_url = (tenant_subdomain, value) => {
+const set_tenant_base_url = (tenant_subdomain: string, value?: string) => {
   const root_domain = get_domain(singleton.configs.base_url.value);
   if (value) {
     const cfg_domain = get_domain(value);
@@ -595,7 +641,11 @@ const set_tenant_base_url = (tenant_subdomain, value) => {
  * @param {boolean} disableMigrate - if true then dont migrate db
  * @returns {Promise<void>}
  */
-const init_multi_tenant = async (plugin_loader, disableMigrate, tenantList) => {
+const init_multi_tenant = async (
+  plugin_loader: Function,
+  disableMigrate: boolean,
+  tenantList: string[]
+) => {
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State(domain);
@@ -603,7 +653,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate, tenantList) => {
         await db.runWithTenant(domain, () => migrate(domain, true));
       await db.runWithTenant(domain, plugin_loader);
       set_tenant_base_url(domain, tenants[domain].configs.base_url.value);
-    } catch (err) {
+    } catch (err: any) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
         err.message
@@ -612,7 +662,7 @@ const init_multi_tenant = async (plugin_loader, disableMigrate, tenantList) => {
   }
 };
 
-const add_tenant = (t) => {
+const add_tenant = (t: string) => {
   tenants[t] = new State(t);
 };
 
@@ -621,7 +671,7 @@ const add_tenant = (t) => {
  * @param {object} plugin_loader
  * @returns {Promise<void>}
  */
-const restart_tenant = async (plugin_loader) => {
+const restart_tenant = async (plugin_loader: Function) => {
   const ten = db.getTenantSchema();
   tenants[ten] = new State(ten);
   await plugin_loader();
@@ -641,7 +691,7 @@ const features = {
   no_plugin_fieldview_length_check: true,
 };
 
-module.exports = {
+export = {
   getState,
   getTenant,
   init_multi_tenant,

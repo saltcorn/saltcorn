@@ -8,7 +8,10 @@ import type {
   TablePack,
 } from "./model-abstracts/abstract_table";
 import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
-import type { TriggerPack } from "./model-abstracts/abstract_trigger";
+import type {
+  AbstractTrigger,
+  TriggerPack,
+} from "./model-abstracts/abstract_trigger";
 import type { InputType } from "./model-abstracts/abstract_field";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { Type, ReqRes } from "./common_types";
@@ -233,6 +236,11 @@ export type ViewTemplate = {
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
   routes?: Record<string, Action>;
+  virtual_triggers?: (
+    table_id: number | undefined, // TODO ch
+    name: string,
+    configuration: any
+  ) => Promise<Array<AbstractTrigger>>;
 };
 
 export type Action = (
@@ -254,6 +262,7 @@ type MaybeCfgFun<Type> = (a: Type) => (arg0: any) => Type | Type | undefined;
 
 export type Plugin = {
   sc_plugin_api_version: number;
+  plugin_name?: string;
   headers: MaybeCfgFun<Array<Header>>;
   functions: MaybeCfgFun<PluginFunction | ((arg1: any) => any)>;
   layout: MaybeCfgFun<PluginLayout>;
@@ -274,6 +283,7 @@ export type Plugin = {
         ]) => string);
   };
   dependencies: string[];
+  [key: string]: any;
 };
 
 export type Pack = {

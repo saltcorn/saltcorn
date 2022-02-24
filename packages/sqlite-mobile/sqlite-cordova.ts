@@ -1,3 +1,8 @@
+/**
+ * This is the sqlite-cordova module
+ * @module
+ */
+
 import {
   Row,
   sqlsanitize,
@@ -94,4 +99,21 @@ export const select = async (
 /**
  *
  */
-export const drop_reset_schema = () => {};
+export const drop_reset_schema = () => {
+  window.sqlitePlugin.deleteDatabase(
+    {
+      name: connobj?.sqlite_db_name || "scdb.sqlite",
+      location: connobj?.sqlite_path || "default",
+    },
+    () => {
+      db = window.sqlitePlugin.openDatabase({
+        name: connobj?.sqlite_db_name || "scdb.sqlite",
+        location: connobj?.sqlite_path || "default",
+      });
+    },
+    (error: Error) => {
+      console.log("drop_reset_schema: error");
+      console.log(error);
+    }
+  );
+};

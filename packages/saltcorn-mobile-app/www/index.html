@@ -11,11 +11,11 @@
         document.getElementById("time-div").innerHTML =
           saltcorn.markup.localeDateTime(new Date());
       };
-      document.addEventListener("deviceready", function () {
+      document.addEventListener("deviceready", async () => {
         console.log("mobile app: Initializing 'saltcorn-data/db'");
         saltcorn.data.db.init();
         console.log("mobile app: Doing a schema reset");
-        saltcorn.data.db.reset(true);
+        await saltcorn.data.db.reset();
         console.log("mobile app: App is up");
       });
     </script>
