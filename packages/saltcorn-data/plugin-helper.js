@@ -852,6 +852,8 @@ const picked_fields_to_query = contract(
   (columns, fields) => {
     var joinFields = {};
     var aggregations = {};
+    let freeVars = new Set(); // for join fields
+    const fieldNames = new Set(fields.map((f) => f.name));
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
         if (column.join_field && column.join_field.split) {
@@ -886,6 +888,11 @@ const picked_fields_to_query = contract(
           );
         }
       } else if (column.type === "ViewLink") {
+        if (column.view_label_formula)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(column.view_label),
+          ]);
         if (column.view && column.view.split) {
           const [vtype, vrest] = column.view.split(":");
           if (vtype === "ParentShow") {
@@ -919,10 +926,45 @@ const picked_fields_to_query = contract(
             field,
             aggregate: column.stat,
           };
+        } else if (column.type === "Link") {
+          if (column.link_text_formula)
+            freeVars = new Set([
+              ...freeVars,
+              ...freeVariables(column.link_text),
+            ]);
+          if (column.link_url_formula)
+            freeVars = new Set([
+              ...freeVars,
+              ...freeVariables(column.link_url),
+            ]);
+        } else if (column.type === "Action" && column.action_label_formula) {
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(column.action_label),
+          ]);
         }
       }
     });
-
+    [...freeVars]
+      .filter((v) => v.includes("."))
+      .map((v) => {
+        const kpath = v.split(".");
+        if (fieldNames.has(kpath[0]))
+          if (kpath.length === 2) {
+            const [refNm, targetNm] = kpath;
+            joinFields[`${refNm}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+            };
+          } else {
+            const [refNm, through, targetNm] = kpath;
+            joinFields[`${refNm}_${through}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through,
+            };
+          }
+      });
     return { joinFields, aggregations };
   }
 );
