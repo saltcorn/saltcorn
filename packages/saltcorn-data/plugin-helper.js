@@ -20,7 +20,7 @@ const {
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
-const { jsexprToWhere } = require("./models/expression");
+const { jsexprToWhere, freeVariables } = require("./models/expression");
 /**
  *
  * @param {string} url
