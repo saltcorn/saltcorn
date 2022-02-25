@@ -1287,7 +1287,39 @@ class Table implements AbstractTable {
     const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
 
-    return apply_calculated_fields(res.rows, fields);
+    const calcRow = apply_calculated_fields(res.rows, fields);
+
+    //rename joinfields
+    if (Object.values(opts.joinFields).some((jf: any) => jf.rename_object)) {
+      let f = (x: any) => x;
+      Object.entries(opts.joinFields).forEach(([k, v]: any) => {
+        if (v.rename_object) {
+          if (v.rename_object.length === 2) {
+            const oldf = f;
+            f = (x: any) => {
+              x[v.rename_object[0]] = {
+                [v.rename_object[1]]: x[k],
+                ...x[v.rename_object[0]],
+              };
+              return oldf(x);
+            };
+          } else if (v.rename_object.length === 3) {
+            const oldf = f;
+            f = (x: any) => {
+              x[v.rename_object[0]] = {
+                [v.rename_object[1]]: {
+                  [v.rename_object[2]]: x[k],
+                  ...x[v.rename_object[1]],
+                },
+                ...x[v.rename_object[0]],
+              };
+              return oldf(x);
+            };
+          }
+        }
+      });
+      return calcRow.map(f);
+    } else return calcRow;
   }
 
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {

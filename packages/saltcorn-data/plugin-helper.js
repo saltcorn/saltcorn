@@ -955,6 +955,7 @@ const picked_fields_to_query = contract(
             joinFields[`${refNm}_${targetNm}`] = {
               ref: refNm,
               target: targetNm,
+              rename_object: [refNm, targetNm],
             };
           } else {
             const [refNm, through, targetNm] = kpath;
@@ -962,6 +963,7 @@ const picked_fields_to_query = contract(
               ref: refNm,
               target: targetNm,
               through,
+              rename_object: [refNm, through, targetNm],
             };
           }
       });
