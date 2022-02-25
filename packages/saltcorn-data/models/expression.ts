@@ -148,6 +148,18 @@ function freeVariables(expression: string): Set<string> {
           freeVars.pop();
           freeVars.pop();
           freeVars.push(`${node.object.name}.${node.property.name}`);
+        } else if (
+          node.object.type === "MemberExpression" &&
+          node.object.object.type === "Identifier" &&
+          node.object.property.type === "Identifier" &&
+          node.property.type === "Identifier"
+        ) {
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.push(
+            `${node.object.object.name}.${node.object.property.name}.${node.property.name}`
+          );
         }
       }
     },

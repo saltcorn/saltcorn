@@ -249,6 +249,15 @@ describe("free variables", () => {
   it("record access", () => {
     expect([...freeVariables("2+x.k")]).toEqual(["x.k"]);
   });
+  it("record double access", () => {
+    expect([...freeVariables("x.k.y")]).toEqual(["x.k.y"]);
+  });
+  it("record single and double access", () => {
+    expect([...freeVariables("x.k.y+x.z")]).toEqual(["x.k.y", "x.z"]);
+  });
+  it("record double access with function", () => {
+    expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
+  });
 });
 describe("jsexprToWhere", () => {
   it("translates equality", () => {
