@@ -7,6 +7,9 @@ export { db };
 
 export * as models from "./models/index";
 
+import basePlugin from "./base-plugin";
+export { basePlugin };
+
 export let migrations: any = {};
 function requireAll(context: any) {
   for (let key of context.keys()) {

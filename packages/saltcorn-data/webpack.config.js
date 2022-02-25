@@ -17,6 +17,7 @@ const npmMocks = {
 
 const saltcornMocks = {
   "./email": join(mocksDir, "models", "email"),
+  "../models/email": join(mocksDir, "models", "email"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
 };
@@ -58,6 +59,7 @@ module.exports = {
       util: require.resolve("util"),
       os: require.resolve("os-browserify/browser"),
       vm: require.resolve("vm-browserify"),
+      zlib: require.resolve("browserify-zlib"),
     },
     alias: {
       ...nodeMocks,
