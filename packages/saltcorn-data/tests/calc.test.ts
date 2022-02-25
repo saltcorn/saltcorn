@@ -10,6 +10,7 @@ const {
   transform_for_async,
   expressionValidator,
   jsexprToWhere,
+  freeVariables,
 } = expression;
 import { mkWhere } from "@saltcorn/db-common/internal";
 
@@ -235,6 +236,27 @@ describe("expressions", () => {
   });
   it("invalidates incorrect", () => {
     expect(expressionValidator("2+")).toBe("Unexpected end of input");
+  });
+});
+
+describe("free variables", () => {
+  it("empty", () => {
+    expect([...freeVariables("2+2")]).toEqual([]);
+  });
+  it("simple", () => {
+    expect([...freeVariables("2+x")]).toEqual(["x"]);
+  });
+  it("record access", () => {
+    expect([...freeVariables("2+x.k")]).toEqual(["x.k"]);
+  });
+  it("record double access", () => {
+    expect([...freeVariables("x.k.y")]).toEqual(["x.k.y"]);
+  });
+  it("record single and double access", () => {
+    expect([...freeVariables("x.k.y+x.z")]).toEqual(["x.k.y", "x.z"]);
+  });
+  it("record double access with function", () => {
+    expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
   });
 });
 describe("jsexprToWhere", () => {
