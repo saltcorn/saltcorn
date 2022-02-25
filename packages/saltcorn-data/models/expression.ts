@@ -126,8 +126,8 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
   }
 }
 
-function freeVariables(expression: string): string[][] {
-  const freeVars: string[][] = [];
+function freeVariables(expression: string): Set<string> {
+  const freeVars: string[] = [];
   const ast: any = parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
     allowAwaitOutsideFunction: true,
@@ -138,7 +138,7 @@ function freeVariables(expression: string): string[][] {
       //console.log(node);
 
       if (node.type === "Identifier") {
-        freeVars.push([node.name]);
+        freeVars.push(node.name);
       }
       if (node.type === "MemberExpression") {
         if (
@@ -147,13 +147,14 @@ function freeVariables(expression: string): string[][] {
         ) {
           freeVars.pop();
           freeVars.pop();
-          freeVars.push([node.object.name, node.property.name]);
+          freeVars.push(`${node.object.name}.${node.property.name}`);
         }
       }
     },
   });
+  //console.log(expression, freeVars);
 
-  return freeVars;
+  return new Set(freeVars);
 }
 
 function isIdentifierWithName(node: any): node is Identifier {

@@ -241,13 +241,13 @@ describe("expressions", () => {
 
 describe("free variables", () => {
   it("empty", () => {
-    expect(freeVariables("2+2")).toEqual([]);
+    expect([...freeVariables("2+2")]).toEqual([]);
   });
   it("simple", () => {
-    expect(freeVariables("2+x")).toEqual([["x"]]);
+    expect([...freeVariables("2+x")]).toEqual(["x"]);
   });
   it("record access", () => {
-    expect(freeVariables("2+x.k")).toEqual([["x", "k"]]);
+    expect([...freeVariables("2+x.k")]).toEqual(["x.k"]);
   });
 });
 describe("jsexprToWhere", () => {
