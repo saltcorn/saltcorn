@@ -1290,9 +1290,11 @@ class Table implements AbstractTable {
     const calcRow = apply_calculated_fields(res.rows, fields);
 
     //rename joinfields
-    if (Object.values(opts.joinFields).some((jf: any) => jf.rename_object)) {
+    if (
+      Object.values(opts.joinFields || {}).some((jf: any) => jf.rename_object)
+    ) {
       let f = (x: any) => x;
-      Object.entries(opts.joinFields).forEach(([k, v]: any) => {
+      Object.entries(opts.joinFields || {}).forEach(([k, v]: any) => {
         if (v.rename_object) {
           if (v.rename_object.length === 2) {
             const oldf = f;
