@@ -926,23 +926,17 @@ const picked_fields_to_query = contract(
             field,
             aggregate: column.stat,
           };
-        } else if (column.type === "Link") {
-          if (column.link_text_formula)
-            freeVars = new Set([
-              ...freeVars,
-              ...freeVariables(column.link_text),
-            ]);
-          if (column.link_url_formula)
-            freeVars = new Set([
-              ...freeVars,
-              ...freeVariables(column.link_url),
-            ]);
-        } else if (column.type === "Action" && column.action_label_formula) {
-          freeVars = new Set([
-            ...freeVars,
-            ...freeVariables(column.action_label),
-          ]);
         }
+      } else if (column.type === "Link") {
+        if (column.link_text_formula)
+          freeVars = new Set([...freeVars, ...freeVariables(column.link_text)]);
+        if (column.link_url_formula)
+          freeVars = new Set([...freeVars, ...freeVariables(column.link_url)]);
+      } else if (column.type === "Action" && column.action_label_formula) {
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.action_label),
+        ]);
       }
     });
     [...freeVars]
