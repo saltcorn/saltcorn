@@ -853,7 +853,9 @@ const picked_fields_to_query = contract(
     var joinFields = {};
     var aggregations = {};
     let freeVars = new Set(); // for join fields
-    const fieldNames = new Set(fields.map((f) => f.name));
+    const joinFieldNames = new Set(
+      fields.filter((f) => f.is_fkey).map((f) => f.name)
+    );
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
         if (column.join_field && column.join_field.split) {
@@ -943,7 +945,7 @@ const picked_fields_to_query = contract(
       .filter((v) => v.includes("."))
       .map((v) => {
         const kpath = v.split(".");
-        if (fieldNames.has(kpath[0]))
+        if (joinFieldNames.has(kpath[0]))
           if (kpath.length === 2) {
             const [refNm, targetNm] = kpath;
             joinFields[`${refNm}_${targetNm}`] = {
