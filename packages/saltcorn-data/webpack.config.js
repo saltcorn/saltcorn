@@ -17,18 +17,8 @@ const npmMocks = {
 
 const saltcornMocks = {
   "./email": join(mocksDir, "models", "email"),
-
-  // this will be removed
-  "../plugin-helper": join(mocksDir, "saltcorn", "plugin-helper"),
-  "../../plugin-helper": join(mocksDir, "saltcorn", "plugin-helper"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
-  "./viewable_fields": join(mocksDir, "saltcorn", "viewable_fields"),
-  "../base-plugin/viewtemplates/viewable_fields": join(
-    mocksDir,
-    "saltcorn",
-    "viewable_fields"
-  ),
 };
 
 const dbMocks = {
