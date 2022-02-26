@@ -11,6 +11,16 @@ const markupCfg = require(join(
   "../..",
   "webpack.config"
 ));
+const basePluginCfg = require(join(
+  require.resolve("@saltcorn/base-plugin"),
+  "../",
+  "webpack.config"
+));
+const sbAdmin2Cfg = require(join(
+  require.resolve("@saltcorn/sbadmin2"),
+  "../",
+  "webpack.config"
+));
 
 const addDependOn = (dataEntryPoint, b) => {
   const copy = { ...dataEntryPoint };
@@ -37,6 +47,6 @@ const out = mergeWithCustomize({
     }
     return undefined;
   },
-})(dataCfg, markupCfg);
+})(dataCfg, markupCfg, basePluginCfg, sbAdmin2Cfg);
 
 module.exports = out;

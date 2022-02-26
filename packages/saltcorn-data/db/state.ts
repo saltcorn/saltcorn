@@ -30,7 +30,7 @@ import I18n from "i18n";
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
-import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
+
 /**
  * @param v
  */
@@ -164,8 +164,6 @@ class State {
     this.refresh_i18n();
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -218,8 +216,6 @@ class State {
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "views", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -231,8 +227,6 @@ class State {
     this.triggers = await Trigger.findDB();
     if (!noSignal && db.is_node)
       process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -245,8 +239,6 @@ class State {
     this.pages = await Page.find();
     if (!noSignal && db.is_node)
       process_send({ refresh: "pages", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -263,8 +255,6 @@ class State {
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "files", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -308,8 +298,6 @@ class State {
     this.tables = allTables;
     if (!noSignal && db.is_node)
       process_send({ refresh: "tables", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -361,6 +349,7 @@ class State {
       if (db.is_node)
         process_send({ refresh: "config", tenant: db.getTenantSchema() });
       else {
+        this.refresh_config(true);
       }
     }
   }
@@ -378,12 +367,11 @@ class State {
     if (db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
     else {
+      this.refresh_config(true);
     }
   }
 
   /**
-   *     registerPlugin: is.fun([is.str, is_plugin], is.eq(undefined)),
-
    * Register plugin
    * @param {string} name
    * @param {object} plugin
@@ -509,8 +497,6 @@ class State {
     await this.refresh_plugins();
     if (!noSignal && db.is_node)
       process_send({ removePlugin: name, tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
@@ -540,8 +526,6 @@ class State {
     await this.refresh(true);
     if (!noSignal && db.is_node)
       process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
-    else if (!db.is_node) {
-    }
   }
 
   /**
