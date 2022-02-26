@@ -10,6 +10,7 @@ const View = require("../../models/view");
 const File = require("../../models/file");
 const Table = require("../../models/table");
 const Page = require("../../models/page");
+const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
@@ -52,7 +53,10 @@ const {
   mergeIntoWhere,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
-const { get_expression_function } = require("../../models/expression");
+const {
+  get_expression_function,
+  eval_expression,
+} = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
 
@@ -507,8 +511,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
-        const f = get_expression_function(segment[key], fields);
-        segment[key] = f(row, req.user);
+        segment[key] = eval_expression(segment[key], row, req.user);
       } catch (error) {
         error.message = `Error in formula ${segment[key]} for property ${key} in segment of type ${segment.type}:\n${error.message}`;
         throw error;
@@ -591,7 +594,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         return field.type.fieldviews[fieldview].run(val, req, cfg);
       else return text(val);
     },
-    join_field({ join_field, field_type, fieldview }) {
+    join_field(jf) {
+      const { join_field, field_type, fieldview, configuration } = jf;
       const keypath = join_field.split(".");
       let value;
       if (join_field.includes("->")) {
@@ -608,11 +612,12 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (field_type === "File") {
         return value ? getState().fileviews[fieldview].run(value, "") : "";
       }
+
       if (field_type && fieldview) {
         const type = getState().types[field_type];
-        if (type && getState().types[field_type])
-          return type.fieldviews[fieldview].run(value, req);
-        else return text(value);
+        if (type && getState().types[field_type]) {
+          return type.fieldviews[fieldview].run(value, req, configuration);
+        } else return text(value);
       } else return text(value);
     },
     aggregation({ agg_relation, stat }) {
@@ -642,6 +647,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     layout,
     role,
     is_owner,
+    req,
   });
 };
 
@@ -679,6 +685,7 @@ const run_action = async (
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
+    Crash.create(e, req);
     return { json: { error: e.message || e } };
   }
 };

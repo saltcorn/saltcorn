@@ -144,20 +144,18 @@ router.get(
             contents: table(
               tbody(
                 tr(
-                  td({ class: "pr-2" }, req.__("Actions available")),
+                  td({ class: "pe-2" }, req.__("Actions available")),
                   td(
                     actions
-                      .map((a) =>
-                        span({ class: "badge badge-primary" }, a.name)
-                      )
+                      .map((a) => span({ class: "badge bg-primary" }, a.name))
                       .join("&nbsp;")
                   )
                 ),
                 tr(
-                  td({ class: "pr-2" }, req.__("Event types")),
+                  td({ class: "pe-2" }, req.__("Event types")),
                   td(
                     Trigger.when_options
-                      .map((a) => span({ class: "badge badge-secondary" }, a))
+                      .map((a) => span({ class: "badge bg-secondary" }, a))
                       .join("&nbsp;")
                   )
                 )

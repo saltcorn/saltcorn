@@ -1,41 +1,117 @@
-// for the jsdoc documentation
-/**
- * @category saltcorn-data
- * @subcategory models
- * @module models/index
- */
+// For the typedoc documentation
 
-/**
- * All files in the models module.
- * @namespace models_overview
- * @property {module:models/backup} backup
- * @property {module:models/config} config
- * @property {module:models/crash} crash
- * @property {module:models/discovery} discovery
- * @property {module:models/email} email
- * @property {module:models/eventlog} eventlog
- * @property {module:models/expression} expression
- * @property {module:models/field} field
- * @property {module:models/fieldrepeat} fieldrepeat
- * @property {module:models/file} file
- * @property {module:models/form} form
- * @property {module:models/layout} layout
- * @property {module:models/library} library
- * @property {module:models/pack} pack
- * @property {module:models/page} page
- * @property {module:models/plugin} plugin
- * @property {module:models/random} random
- * @property {module:models/role} role
- * @property {module:models/scheduler} scheduler
- * @property {module:models/table_constraints} table_constraints
- * @property {module:models/table} table
- * @property {module:models/tenant} tenant
- * @property {module:models/trigger} trigger
- * @property {module:models/user} user
- * @property {module:models/view} view
- * @property {module:models/workflow} workflow
- *
- *
- * @category saltcorn-data
- * @subcategory models
- */
+import Crash from "./crash";
+import EventLog from "./eventlog";
+import Field from "./field";
+import FieldRepeat from "./fieldrepeat";
+import File from "./file";
+import Form from "./form";
+import Library from "./library";
+import Page from "./page";
+import Plugin from "./plugin";
+import Role from "./role";
+import TableConstraint from "./table_constraints";
+import Table from "./table";
+import Trigger from "./trigger";
+import User from "./user";
+import View from "./view";
+import Workflow from "./workflow";
+
+export {
+  Crash,
+  EventLog,
+  Field,
+  FieldRepeat,
+  File,
+  Form,
+  Library,
+  Page,
+  Plugin,
+  Role,
+  TableConstraint,
+  Table,
+  Trigger,
+  User,
+  View,
+  Workflow,
+};
+
+import configImport from "./config";
+export namespace config {
+  export const {
+    getConfig,
+    getAllConfig,
+    setConfig,
+    getAllConfigOrDefaults,
+    deleteConfig,
+    configTypes,
+    remove_from_menu,
+    available_languages,
+    isFixedConfig,
+    get_latest_npm_version,
+    get_base_url,
+    save_menu_items,
+    check_email_mask,
+  } = configImport;
+}
+
+import discoveryImport from "./discovery";
+export namespace discovery {
+  export const {
+    discoverable_tables,
+    discover_tables,
+    implement_discovery,
+    get_existing_views,
+  } = discoveryImport;
+}
+
+import emailImport from "./email";
+export namespace email {
+  export const {
+    getMailTransport,
+    viewToEmailHtml,
+    send_verification_email,
+  } = emailImport;
+}
+
+import expressionImport from "./expression";
+export namespace expression {
+  export const {
+    expressionValidator,
+    apply_calculated_fields,
+    get_async_expression_function,
+    get_expression_function,
+    eval_expression,
+    recalculate_for_stored,
+    transform_for_async,
+    apply_calculated_fields_stored,
+    jsexprToWhere,
+  } = expressionImport;
+}
+
+import layoutImport from "./layout";
+export namespace layout {
+  export const {
+    eachView,
+    getViews,
+    traverse,
+    traverseSync,
+    getStringsForI18n,
+    translateLayout,
+  } = layoutImport;
+}
+
+import randomImport from "./random";
+export namespace random {
+  export const {
+    random_table,
+    fill_table_row,
+    initial_view,
+    all_views,
+  } = randomImport;
+}
+
+import schedulerImport from "./scheduler";
+export namespace scheduler {
+  export const runScheduler = schedulerImport;
+}

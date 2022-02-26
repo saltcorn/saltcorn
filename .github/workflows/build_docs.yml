@@ -13,12 +13,14 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: "14.x"
-      - run: npm install -g jsdoc 
-      - run: npm install
-      - run: jsdoc -c deploy/jsdoc/jsdoc.conf.json -R deploy/jsdoc/documentation_main.md
-      - run: cp deploy/jsdoc/jsdoc.styles.css docs/jsdoc.styles.css
-      - run: mkdir docs/build && cp deploy/jsdoc/entry.js docs/build/entry.js
+          node-version: "16.x"
+      - run: npm install -g lerna
+      - run: lerna bootstrap --no-ci
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+      - run: npm run tsc
+      - run: npm install --legacy-peer-deps
+      - run: npm run docs
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:

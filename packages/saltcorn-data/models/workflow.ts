@@ -24,7 +24,7 @@ const { applyAsync, apply } = require("../utils");
  */
 class Workflow implements AbstractWorkflow {
   steps: any[];
-  onDone: (arg0: any) => any;
+  onDone: (context: any) => any;
   action?: string | undefined;
   __: any;
 
@@ -44,7 +44,7 @@ class Workflow implements AbstractWorkflow {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async run(body: any, req: any): Promise<RunResult | undefined> {
+  async run(body?: any, req?: any): Promise<RunResult | undefined> {
     if (req) this.__ = (s: any) => req.__(s);
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);
@@ -115,7 +115,7 @@ class Workflow implements AbstractWorkflow {
    * @param {number} stepIx
    * @returns {Promise<object>}
    */
-  async runStep(context: any, stepIx: number): Promise<any> {
+  async runStep(context: any, stepIx: number): Promise<RunResult | undefined> {
     if (stepIx >= this.steps.length) {
       return await this.onDone(context);
     }
@@ -204,7 +204,7 @@ class Workflow implements AbstractWorkflow {
 namespace Workflow {
   export type WorkflowCfg = {
     steps?: any[];
-    onDone?: (arg0: any) => any;
+    onDone?: (context: any) => any;
     action?: string;
   };
 }

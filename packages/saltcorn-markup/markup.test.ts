@@ -1,5 +1,6 @@
 import { describe, it, expect } from "@jest/globals";
 import tags = require("./tags");
+import mjml = require("./mjml-tags");
 const { a, input, div, ul, text, text_attr, i, hr, genericElement } = tags;
 
 describe("tags", () => {
@@ -92,5 +93,22 @@ describe("tags", () => {
     );
     expect(text("<p>alert<p>")).toBe("<p>alert<p>");
     expect(text("<kbd>ctrl<kbd>")).toBe("<kbd>ctrl<kbd>");
+  });
+});
+
+describe("mjml tags", () => {
+  it("renders", () => {
+    expect(
+      mjml.mjml(
+        mjml.body(
+          mjml.section(
+            { "background-color": "#f0f0f0" },
+            mjml.text("hello world")
+          )
+        )
+      )
+    ).toBe(
+      '<mjml><mj-body><mj-section background-color="#f0f0f0"><mj-text>hello world</mj-text></mj-section></mj-body></mjml>'
+    );
   });
 });

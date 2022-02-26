@@ -68,9 +68,9 @@ Vagrant.configure("2") do |config|
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
-    wget -qO - https://deb.nodesource.com/setup_14.x | bash -
+    wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
-    npx saltcorn-install -y
+    sudo -iu vagrant npx -y saltcorn-install -y
     wget -qO- http://localhost/ | grep Please   
   SHELL
 end

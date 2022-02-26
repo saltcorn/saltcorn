@@ -382,6 +382,7 @@ const JoinFieldElem = ({ connectors, options }) => (
   >
     <JoinField
       name={options.parent_field_list[0]}
+      configuration={{}}
       textStyle={""}
       block={false}
     />
@@ -620,6 +621,9 @@ const ToolboxEdit = () => {
       <div className="toolbar-row">
         <HTMLElem connectors={connectors} />
         <ViewElem connectors={connectors} views={views} />
+      </div>
+      <div className="toolbar-row">
+        <JoinFieldElem connectors={connectors} options={options} />
       </div>
     </Fragment>
   );

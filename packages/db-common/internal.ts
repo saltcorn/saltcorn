@@ -265,7 +265,7 @@ type WhereAndVals = {
  */
 export const mkWhere = (
   whereObj: Where,
-  is_sqlite: boolean,
+  is_sqlite: boolean = false,
   initCount: number = 0
 ): WhereAndVals => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -293,10 +293,10 @@ const toInt = (x: number | string): number | null =>
     : null;
 
 export type CoordOpts = {
-  latField: string;
-  longField: string;
-  lat: string;
-  long: string;
+  latField: number | string;
+  longField: number | string;
+  lat: number | string;
+  long: number | string;
 };
 /**
  * @param {object} opts
@@ -309,12 +309,14 @@ export type CoordOpts = {
 const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   const cos_lat_2 = Math.pow(Math.cos((+lat * Math.PI) / 180), 2);
   return `((${sqlsanitizeAllowDots(
-    latField
+    `${latField}`
   )} - ${+lat})*(${sqlsanitizeAllowDots(
-    latField
+    `${latField}`
   )} - ${+lat})) + ((${sqlsanitizeAllowDots(
-    longField
-  )} - ${+long})*(${sqlsanitizeAllowDots(longField)} - ${+long})*${cos_lat_2})`;
+    `${longField}`
+  )} - ${+long})*(${sqlsanitizeAllowDots(
+    `${longField}`
+  )} - ${+long})*${cos_lat_2})`;
 };
 
 export type SelectOptions = {
@@ -354,7 +356,7 @@ export type AggregationOptions = {
   table: string;
   ref: string;
   field: string;
-  where?: string;
+  where?: Where;
   aggregate: string;
   subselect?: SubselectOptions;
 };

@@ -12,11 +12,7 @@ const View = require("../models/view");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
-const {
-  getMailTransport,
-  transformBootstrapEmail,
-} = require("../models/email");
-const { mockReqRes } = require("../tests/mocks");
+const { getMailTransport, viewToEmailHtml } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
@@ -24,11 +20,12 @@ const {
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
+
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
 /**
- * @param {object} opts 
+ * @param {object} opts
  * @param {object} opts.row
  * @param {object} opts.table
  * @param {object} opts.channel
@@ -109,8 +106,8 @@ module.exports = {
         input_type: "hidden",
       },
     ],
-    /** 
-     * @type {base-plugin/actions~run_code} 
+    /**
+     * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      */
     run: run_code,
@@ -190,7 +187,7 @@ module.exports = {
       },
     ],
     /**
-     * @param {object} opts 
+     * @param {object} opts
      * @param {string} opts.url
      * @param {object} opts.body
      * @returns {Promise<object>}
@@ -395,8 +392,7 @@ module.exports = {
           break;
       }
       const view = await View.findOne({ name: viewname });
-      const htmlBs = await view.run({ id: row.id }, mockReqRes);
-      const html = await transformBootstrapEmail(htmlBs);
+      const html = await viewToEmailHtml(view, { id: row.id });
       console.log(
         "Sending email from %s to %s with subject %s to_email",
         getState().getConfig("email_from"),
@@ -620,10 +616,47 @@ module.exports = {
         },
       ];
     },
-    /** 
-     * @type {base-plugin/actions~run_code} 
+    /**
+     * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      **/
     run: run_code,
+  },
+  duplicate_row_prefill_edit: {
+    configFields: async ({ table }) => {
+      const fields = table ? await table.getFields() : [];
+      const views = await View.find_table_views_where(
+        table,
+        ({ viewrow }) => viewrow.viewtemplate === "Edit"
+      );
+
+      const fldOpts = fields.map((f) => ({
+        label: f.name,
+        name: f.name,
+        default: f.name !== "id",
+        type: "Bool",
+      }));
+      return [
+        {
+          name: "viewname",
+          label: "View to create",
+          input_type: "select",
+          options: views.map((v) => v.name),
+        },
+        ...fldOpts,
+      ];
+    },
+    requireRow: true,
+    run: async ({ row, table, configuration: { viewname, ...flds }, user }) => {
+      const qs = Object.entries(flds)
+        .map(([k, v]) =>
+          v && typeof row[k] !== "undefined"
+            ? `${encodeURIComponent(k)}=${encodeURIComponent(row[k])}`
+            : false
+        )
+        .filter((s) => s)
+        .join("&");
+      return { goto: `/view/${viewname}?${qs}` };
+    },
   },
 };

@@ -17,7 +17,7 @@ const voidHtmlTagsSet = new Set(voidHtmlTags);
  * @returns {string}
  */
 const domReady = (js: string): string =>
-  `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',f,false)})(function(){${js}});`;
+  `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){${js}});`;
 
 whiteList.kbd = [];
 

@@ -100,7 +100,8 @@ const set_custom_http_headers = (res, state) => {
  * @returns {string}
  */
 const get_tenant_from_req = (req) => {
-  if (req.subdomains && req.subdomains.length > 0) return req.subdomains[0];
+  if (req.subdomains && req.subdomains.length > 0)
+    return req.subdomains[req.subdomains.length - 1];
 
   if (req.subdomains && req.subdomains.length == 0)
     return db.connectObj.default_schema;
@@ -121,8 +122,10 @@ const setTenant = (req, res, next) => {
     const other_domain = get_other_domain_tenant(req.hostname);
     if (other_domain) {
       const state = getTenant(other_domain);
-      if (!state) res.status(404).send(req.__("Subdomain not found"));
-      else {
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
         db.runWithTenant(other_domain, () => {
           setLanguage(req, res, state);
           next();
@@ -130,10 +133,11 @@ const setTenant = (req, res, next) => {
       }
     } else {
       const ten = get_tenant_from_req(req);
-      //console.log("tenant", ten);
       const state = getTenant(ten);
-      if (!state) res.status(404).send(req.__("Subdomain not found"));
-      else {
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
         db.runWithTenant(ten, () => {
           setLanguage(req, res, state);
           next();

@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/sqlite",
-  "version": "0.6.3-beta.3",
+  "version": "0.6.4",
   "description": "Sqlite structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -25,7 +25,9 @@
     "dist/**/*"
   ],
   "dependencies": {
-    "@saltcorn/db-common": "0.6.3-beta.3",
+    "@saltcorn/db-common": "0.6.4"
+  },
+  "optionalDependencies": {
     "sqlite3": "^5.0.2"
   },
   "repository": "github:saltcorn/saltcorn",

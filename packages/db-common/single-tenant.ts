@@ -1,8 +1,7 @@
 /**
- * @category db-common
- * @module single-tenant
+ * This is the single tenant module
+ * @module
  */
-
 let connObj: any = null;
 
 /**
@@ -36,6 +35,9 @@ export const enable_multi_tenant = (): void => {};
  * @param {function} f
  * @returns {*}
  */
-export const runWithTenant = (t: string, f: () => any): any => {
+export const runWithTenant = <Type>(
+  t: string,
+  f: () => Promise<Type>
+): Promise<Type> => {
   return f();
 };

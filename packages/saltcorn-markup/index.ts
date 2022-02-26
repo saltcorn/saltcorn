@@ -1,23 +1,7 @@
 /**
- * @category saltcorn-markup
- * @module saltcorn-markup/index
+ * This is the saltcorn-markup package
+ * @module
  */
-
-/**
- * All files in the saltcorn-markup package.
- * @namespace saltcorn-markup_overview
- * @property {module:builder} builder
- * @property {module:emergency_layout} emergency_layout
- * @property {module:form} from
- * @property {module:helpers} helpers
- * @property {module:layout_utils} layout_utils
- * @property {module:layout} layout
- * @property {module:mktag} mktag
- * @property {module:table} table
- * @property {module:tabs} tabs
- * @category saltcorn-markup
- */
-
 import renderForm = require("./form");
 import renderBuilder = require("./builder");
 import mkTable = require("./table");
@@ -50,24 +34,24 @@ type PostBtnOpts = {
 };
 
 /**
- * @param {string} href
- * @param {string} s
- * @param {string} csrfToken
- * @param {object} opts
- * @param {string} [opts.btnClass = "btn-primary"]
- * @param {string} [opts.onClick]
- * @param {string} [opts.small]
- * @param {string} [opts.style]
- * @param {*} opts.ajax
- * @param {string} opts.reload_on_done
- * @param {string} opts.reload_delay
- * @param {string} [opts.klass = "btn-primary"]
- * @param {string} [opts.formClass]
- * @param {string} opts.spinner
- * @param {object} opts.req
- * @param {boolean} opts.confirm
- * @param {string} opts.icon
- * @returns {string}
+ * @param href
+ * @param s
+ * @param csrfToken
+ * @param opts
+ * @param opts.btnClass
+ * @param opts.onClick
+ * @param opts.small
+ * @param opts.style
+ * @param opts.ajax
+ * @param opts.reload_on_done
+ * @param opts.reload_delay
+ * @param opts.klass
+ * @param opts.formClass
+ * @param opts.spinner
+ * @param opts.req
+ * @param opts.confirm
+ * @param opts.icon
+ * @returns
  */
 const post_btn = (
   href: string,
@@ -113,10 +97,10 @@ const post_btn = (
 
 /**
  * UI Form for Delete Item confirmation
- * @param {string} href - href
- * @param {string} req - Request
- * @param {string} [what] - Item
- * @returns {string} return html form
+ * @param href - href
+ * @param req - Request
+ * @param what- Item
+ * @returns return html form
  */
 const post_delete_btn = (href: string, req: any, what?: string): string =>
   `<form action="${text(href)}" method="post" >
@@ -132,12 +116,12 @@ const post_delete_btn = (href: string, req: any, what?: string): string =>
  </form>`;
 
 /**
- * @param {string} href
- * @param {string} s
- * @param {object} req
- * @param {boolean} confirm
- * @param {string} [what]
- * @returns {string}
+ * @param href
+ * @param s
+ * @param req
+ * @param confirm
+ * @param what
+ * @returns
  */
 const post_dropdown_item = (
   href: string,
@@ -162,9 +146,9 @@ const post_dropdown_item = (
 };
 
 /**
- * @param {string} id
- * @param {*} elems
- * @returns {div}
+ * @param id
+ * @param elems
+ * @returns
  */
 const settingsDropdown = (id: string, elems: any): string =>
   div(
@@ -175,7 +159,7 @@ const settingsDropdown = (id: string, elems: any): string =>
         "data-boundary": "viewport",
         type: "button",
         id,
-        "data-toggle": "dropdown",
+        "data-bs-toggle": "dropdown",
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
@@ -191,11 +175,11 @@ const settingsDropdown = (id: string, elems: any): string =>
   );
 
 /**
- * @param {Date} date
- * @param {object} opts
- * @param {string} [opts.hour = "2-digit"]
- * @param {string} [opts.minute = "2-digit"]
- * @returns {string}
+ * @param date
+ * @param opts
+ * @param opts.hour
+ * @param opts.minute
+ * @returns
  */
 const localeTime = (
   date: Date,
@@ -210,9 +194,9 @@ const localeTime = (
   );
 
 /**
- * @param {Date} date
- * @param {object} [options = {}]
- * @returns {string}
+ * @param date
+ * @param options
+ * @returns
  */
 const localeDateTime = (date: Date, options: any = {}): string =>
   time(
@@ -224,9 +208,9 @@ const localeDateTime = (date: Date, options: any = {}): string =>
   );
 
 /**
- * @param {Date} date
- * @param {object} [options = {}]
- * @returns {string}
+ * @param date
+ * @param options
+ * @returns
  */
 const localeDate = (date: Date, options: any = {}): string =>
   time(

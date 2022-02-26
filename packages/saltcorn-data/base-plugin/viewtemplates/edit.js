@@ -35,6 +35,7 @@ const {
   fill_presets,
   parse_view_select,
   get_view_link_query,
+  objToQueryString,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -57,6 +58,14 @@ const configuration_workflow = (req) =>
           const fields = (await table.getFields()).filter(
             (f) => !f.primary_key
           );
+          for (const field of fields) {
+            if (field.type === "Key") {
+              field.reftable = await Table.findOne({
+                name: field.reftable_name,
+              });
+              if (field.reftable) await field.reftable.getFields();
+            }
+          }
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -80,6 +89,24 @@ const configuration_workflow = (req) =>
                 name: "after_delete_url",
                 label: req.__("URL after delete"),
                 type: "String",
+              },
+            ],
+            GoBack: [
+              {
+                name: "save_first",
+                label: req.__("Save before going back"),
+                type: "Bool",
+              },
+              {
+                name: "reload_after",
+                label: req.__("Reload after going back"),
+                type: "Bool",
+              },
+              {
+                name: "steps",
+                label: req.__("Steps to go back"),
+                type: "Integer",
+                default: 1,
               },
             ],
           };
@@ -114,11 +141,13 @@ const configuration_workflow = (req) =>
             l.suitableFor("edit")
           );
           const myviewrow = await View.findOne({ name: context.viewname });
+          const { parent_field_list } = await table.get_parent_relations(true);
 
           return {
             tableName: table.name,
             fields,
             field_view_options,
+            parent_field_list,
             handlesTextStyle,
             roles,
             actions,
@@ -405,6 +434,10 @@ const transformForm = async ({ form, table, req, row, res }) => {
         }
       }
     },
+    join_field(segment) {
+      const qs = objToQueryString(segment.configuration);
+      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
+    },
     async view(segment) {
       if (!row) {
         segment.type = "blank";
@@ -480,8 +513,7 @@ const render = async ({
     form.hidden(table.pk_name);
   }
 
-  const { nonUniques } = splitUniques(fields, state);
-  Object.entries(nonUniques).forEach(([k, v]) => {
+  Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
       form.values[k] = field.type.read ? field.type.read(v) : v;

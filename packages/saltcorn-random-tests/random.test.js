@@ -9,7 +9,7 @@ const {
   toRedirect,
 } = require("@saltcorn/server/auth/testhelp");
 const db = require("@saltcorn/data/db");
-const { fetch_available_packs } = require("@saltcorn/data/models/pack");
+const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
 
 beforeAll(async () => {
   await resetToFixtures();

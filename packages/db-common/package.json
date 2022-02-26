@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/db-common",
-  "version": "0.6.3-beta.3",
+  "version": "0.6.4",
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -8,6 +8,7 @@
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
+  "main": "./dist/index.js",
   "author": "Tom Nielsen",
   "license": "MIT",
   "exports": {

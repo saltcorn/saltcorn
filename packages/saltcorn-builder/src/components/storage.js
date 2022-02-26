@@ -125,6 +125,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           text={segment.contents}
           isFormula={segment.isFormula || {}}
           block={segment.block || false}
+          inline={segment.inline || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
           icon={segment.icon}
@@ -235,6 +236,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           breakpoints={segment.breakpoints || default_breakpoints(segment)}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
+          style={segment.style || {}}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -261,6 +263,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
             widths={getColWidths(segment)}
             breakpoints={segment.breakpoints || default_breakpoints(segment)}
             ncols={segment.besides.length}
+            style={segment.style || {}}
             contents={segment.besides.map(toTag)}
           />
         )
@@ -387,6 +390,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         type: "blank",
         contents: node.props.text,
         block: node.props.block,
+        inline: node.props.inline,
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
@@ -400,6 +404,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
+        style: node.props.style,
         widths,
       };
     }

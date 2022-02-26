@@ -197,6 +197,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     "npm",
     "install",
     "-g",
+    "--legacy-peer-deps",
     "@saltcorn/cli@latest",
     "--unsafe",
   ]);
@@ -238,16 +239,19 @@ const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
 (async () => {
   const osInfo = await si.osInfo();
   // for me (only if not root) or create saltcorn user
+  if (process.argv.includes("-v")) console.log({ osInfo });
   const user = await askUser();
+  if (process.argv.includes("-v")) console.log({ user });
 
   // postgres or sqlite
   const db = await askDatabase();
+  if (process.argv.includes("-v")) console.log({ db });
 
   const mode = await askDevServer(db);
+  if (process.argv.includes("-v")) console.log({ mode });
 
   const port = await askPort(mode);
-  if (process.argv.includes("-v"))
-    console.log({ yes, user, db, mode, port, osInfo });
+  if (process.argv.includes("-v")) console.log({ port });
 
   // install system pkg
   await installSystemPackages(osInfo, user, db, mode, port);

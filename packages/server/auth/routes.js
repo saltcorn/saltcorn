@@ -53,7 +53,7 @@ const Table = require("@saltcorn/data/models/table");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");
-const { restore } = require("@saltcorn/data/models/backup");
+const { restore } = require("@saltcorn/admin-models/models/backup");
 const load_plugins = require("../load_plugins");
 const fs = require("fs");
 const base32 = require("thirty-two");
@@ -421,7 +421,7 @@ router.get(
       );
       const restore = restore_backup(
         req.csrfToken(),
-        [i({ class: "fas fa-upload mr-2 mt-2" }), req.__("Restore a backup")],
+        [i({ class: "fas fa-upload me-2 mt-2" }), req.__("Restore a backup")],
         `/auth/create_from_restore`
       );
       res.sendAuthWrap(req.__(`Create first user`), form, {}, restore);
@@ -1121,7 +1121,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         // api token for user
         div(
           user.api_token
-            ? span({ class: "mr-1" }, req.__("API token for this user: ")) +
+            ? span({ class: "me-1" }, req.__("API token for this user: ")) +
                 code(user.api_token)
             : req.__("No API token issued")
         ),
@@ -1137,7 +1137,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         // button for remove api token
         user.api_token &&
           div(
-            { class: "mt-4 ml-2 d-inline-block" },
+            { class: "mt-4 ms-2 d-inline-block" },
             post_btn(
               `/auth/remove-api-token`,
               // TBD localization

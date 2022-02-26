@@ -8,11 +8,13 @@ import React, { Fragment } from "react";
 import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
+import { Accordion, reactifyStyles } from "./utils";
+import { BoxModelEditor } from "./BoxModelEditor";
 
 export /**
- * 
- * @param {number} n 
- * @param {function} f 
+ *
+ * @param {number} n
+ * @param {function} f
  * @returns {object[]}
  */
 const ntimes = (n, f) => {
@@ -24,8 +26,8 @@ const ntimes = (n, f) => {
 };
 
 export /**
- * 
- * @param {number[]} xs 
+ *
+ * @param {number[]} xs
  * @returns {number}
  */
 const sum = (xs) => {
@@ -35,14 +37,14 @@ const sum = (xs) => {
 };
 
 /**
- * @param {number} ncols 
+ * @param {number} ncols
  * @returns {number}
  */
 const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
 
 /**
- * @param {number[]} widths 
- * @param {number} colix 
+ * @param {number[]} widths
+ * @param {number} colix
  * @returns {number}
  */
 const getWidth = (widths, colix) =>
@@ -58,7 +60,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Columns = ({ widths, contents, ncols }) => {
+const Columns = ({ widths, contents, ncols, style }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -67,6 +69,7 @@ const Columns = ({ widths, contents, ncols }) => {
     <div
       className={`row ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
+      style={reactifyStyles(style || {})}
     >
       {ntimes(ncols, (ix) => (
         <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
@@ -86,19 +89,22 @@ export /**
  * @subcategory components
  */
 const ColumnsSettings = () => {
+  const node = useNode((node) => ({
+    widths: node.data.props.widths,
+    ncols: node.data.props.ncols,
+    breakpoints: node.data.props.breakpoints,
+    style: node.data.props.style,
+  }));
   const {
     actions: { setProp },
     widths,
     ncols,
     breakpoints,
-  } = useNode((node) => ({
-    widths: node.data.props.widths,
-    ncols: node.data.props.ncols,
-    breakpoints: node.data.props.breakpoints,
-  }));
+    style,
+  } = node;
   return (
-    <div>
-      <table>
+    <Accordion>
+      <table accordiontitle="Column properties">
         <tbody>
           <tr>
             <td colSpan="3">
@@ -171,18 +177,22 @@ const ColumnsSettings = () => {
           ))}
         </tbody>
       </table>
-    </div>
+      <div accordiontitle="Box" className="w-100">
+        <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
+      </div>
+    </Accordion>
   );
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Columns.craft = {
   displayName: "Columns",
   defaultProps: {
     widths: [6],
     ncols: 2,
+    style: {},
     breakpoints: ["sm", "sm"],
   },
   related: {

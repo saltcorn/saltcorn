@@ -30,16 +30,20 @@ function add_repeater(nm) {
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
-    var to_show = new Function(
-      "e",
-      "return " + decodeURIComponent(e.attr("data-show-if"))
-    );
-    if (to_show(e))
-      e.show()
-        .find("input, textarea, button, select")
-        .prop("disabled", e.attr("data-disabled") || false);
-    else
-      e.hide().find("input, textarea, button, select").prop("disabled", true);
+    try {
+      var to_show = new Function(
+        "e",
+        "return " + decodeURIComponent(e.attr("data-show-if"))
+      );
+      if (to_show(e))
+        e.show()
+          .find("input, textarea, button, select")
+          .prop("disabled", e.attr("data-disabled") || false);
+      else
+        e.hide().find("input, textarea, button, select").prop("disabled", true);
+    } catch (e) {
+      console.error(e);
+    }
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
@@ -55,8 +59,19 @@ function apply_showif() {
     //console.log(val, options, current,data)
     e.empty();
     (options || []).forEach((o) => {
-      if (current === o) e.append($("<option selected>" + o + "</option>"));
-      else e.append($("<option>" + o + "</option>"));
+      if (!(o && o.label && o.value)) {
+        if (`${current}` === `${o}`)
+          e.append($("<option selected>" + o + "</option>"));
+        else e.append($("<option>" + o + "</option>"));
+      } else {
+        e.append(
+          $(
+            `<option ${
+              `${current}` === `${o.value}` ? "selected" : ""
+            } value="${o.value}">${o.label}</option>`
+          )
+        );
+      }
     });
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
@@ -76,12 +91,14 @@ function apply_showif() {
     });
   });
 }
-function get_form_record(e) {
+function get_form_record(e, select_labels) {
   const rec = {};
   e.closest("form")
     .find("input[name],select[name]")
     .each(function () {
-      rec[$(this).attr("name")] = $(this).val();
+      if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
+        rec[$(this).attr("name")] = $(this).find("option:selected").text();
+      else rec[$(this).attr("name")] = $(this).val();
     });
   return rec;
 }
@@ -177,6 +194,14 @@ function rep_down(e) {
     apply_form_subset_record(theform, vals1);
   }
 }
+
+function reload_on_init() {
+  localStorage.setItem("reload_on_init", true);
+}
+if (localStorage.getItem("reload_on_init")) {
+  localStorage.removeItem("reload_on_init");
+  location.reload();
+}
 function initialize_page() {
   $("form").change(apply_showif);
   apply_showif();
@@ -185,7 +210,7 @@ function initialize_page() {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();
       $(this).html(
-        `<span class="current">${current}</span><i class="editicon fas fa-edit ml-1"></i>`
+        `<span class="current">${current}</span><i class="editicon fas fa-edit ms-1"></i>`
       );
     }
   });
@@ -228,13 +253,15 @@ function initialize_page() {
   });
   if (codes.length > 0)
     enable_codemirror(() => {
-      codes.forEach((el) => {
-        console.log($(el).attr("mode"), el);
-        CodeMirror.fromTextArea(el, {
-          lineNumbers: true,
-          mode: $(el).attr("mode"),
+      setTimeout(() => {
+        codes.forEach((el) => {
+          //console.log($(el).attr("mode"), el);
+          CodeMirror.fromTextArea(el, {
+            lineNumbers: true,
+            mode: $(el).attr("mode"),
+          });
         });
-      });
+      }, 100);
     });
   const locale =
     navigator.userLanguage ||
@@ -245,6 +272,7 @@ function initialize_page() {
     navigator.browserLanguage ||
     navigator.systemLanguage ||
     "en";
+  window.detected_locale = locale;
   const parse = (s) => JSON.parse(decodeURIComponent(s));
   $("time[locale-time-options]").each(function () {
     var el = $(this);
@@ -264,6 +292,7 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
+  $('a[data-bs-toggle="tab"]').historyTabs();
 }
 
 $(initialize_page);
@@ -411,8 +440,7 @@ function notifyAlert(note) {
   $("#alerts-area")
     .append(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
   ${txt}
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
   </button>
 </div>`);
 }
@@ -482,13 +510,12 @@ function press_store_button(clicked) {
 
 function ajax_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
-    $("body").append(`<div id="scmodal", class="modal" tabindex="-1">
+    $("body").append(`<div id="scmodal", class="modal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
         </div>
         <div class="modal-body">
@@ -505,7 +532,8 @@ function ajax_modal(url, opts = {}) {
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
-      $("#scmodal").modal();
+      new bootstrap.Modal($("#scmodal")).show();
+      initialize_page();
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
         (opts.onClose || function () {})(res);
@@ -514,7 +542,7 @@ function ajax_modal(url, opts = {}) {
   });
 }
 
-function saveAndContinue(e) {
+function saveAndContinue(e, k) {
   var form = $(e).closest("form");
   var url = form.attr("action");
   var form_data = form.serialize();
@@ -534,6 +562,9 @@ function saveAndContinue(e) {
     error: function (request) {
       $("#page-inner-content").html(request.responseText);
       initialize_page();
+    },
+    complete: function () {
+      if (k) k();
     },
   });
 
@@ -604,7 +635,56 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
-
+function make_unique_field(
+  id,
+  table_id,
+  field_name,
+  elem,
+  space,
+  start,
+  always_append,
+  char_type
+) {
+  const value = $(elem).val();
+  if (!value) return;
+  $.ajax(
+    `/api/${table_id}?approximate=true&${encodeURIComponent(
+      field_name
+    )}=${encodeURIComponent(value)}&fields=${encodeURIComponent(field_name)}`,
+    {
+      type: "GET",
+      success: function (res) {
+        if (res.success) {
+          const gen_char = (i) => {
+            switch (char_type) {
+              case "Lowercase Letters":
+                return String.fromCharCode("a".charCodeAt(0) + i);
+                break;
+              case "Uppercase Letters":
+                return String.fromCharCode("A".charCodeAt(0) + i);
+                break;
+              default:
+                return i;
+                break;
+            }
+          };
+          const vals = res.success
+            .map((o) => o[field_name])
+            .filter((s) => s.startsWith(value));
+          if (vals.includes(value) || always_append) {
+            for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
+              const newname = `${value}${space ? " " : ""}${gen_char(i)}`;
+              if (!vals.includes(newname)) {
+                $("#" + id).val(newname);
+                return;
+              }
+            }
+          }
+        }
+      },
+    }
+  );
+}
 function test_formula(tablename, stored) {
   var formula = $("input[name=expression]").val();
   ajax_post(`/field/test-formula`, {
@@ -670,6 +750,61 @@ function room_older(viewname, room_id, btn) {
     }
   );
 }
-function showHideCol(nm, e) {
-  $("#jsGrid").jsGrid("fieldOption", nm, "visible", e.checked);
+
+function fill_formula_btn_click(btn) {
+  const formula = decodeURIComponent($(btn).attr("data-formula"));
+  const rec = get_form_record($(btn), true);
+  const val = new Function(
+    `{${Object.keys(rec).join(",")}}`,
+    "return " + formula
+  )(rec);
+  $(btn).closest(".input-group").find("input").val(val);
 }
+
+/*
+https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
+Copyright (c) 2015 Jeff Green
+*/
+
++(function ($) {
+  "use strict";
+  $.fn.historyTabs = function () {
+    var that = this;
+    window.addEventListener("popstate", function (event) {
+      if (event.state) {
+        $(that)
+          .filter('[href="' + event.state.url + '"]')
+          .tab("show");
+      }
+    });
+    return this.each(function (index, element) {
+      $(element).on("show.bs.tab", function () {
+        var stateObject = { url: $(this).attr("href") };
+
+        if (window.location.hash && stateObject.url !== window.location.hash) {
+          window.history.pushState(
+            stateObject,
+            document.title,
+            window.location.pathname +
+              window.location.search +
+              $(this).attr("href")
+          );
+        } else {
+          window.history.replaceState(
+            stateObject,
+            document.title,
+            window.location.pathname +
+              window.location.search +
+              $(this).attr("href")
+          );
+        }
+      });
+      if (!window.location.hash && $(element).is(".active")) {
+        // Shows the first element if there are no query parameters.
+        $(element).tab("show");
+      } else if ($(this).attr("href") === window.location.hash) {
+        $(element).tab("show");
+      }
+    });
+  };
+})(jQuery);

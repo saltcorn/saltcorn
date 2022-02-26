@@ -11,6 +11,7 @@ import {
   blockProps,
   BlockSetting,
   TextStyleRow,
+  ConfigForm,
   fetchFieldPreview,
 } from "./utils";
 import previewCtx from "../preview_context";
@@ -76,6 +77,7 @@ const JoinFieldSettings = () => {
     name,
     block,
     textStyle,
+    configuration,
     fieldview,
     node_id,
   } = useNode((node) => ({
@@ -83,17 +85,22 @@ const JoinFieldSettings = () => {
     block: node.data.props.block,
     textStyle: node.data.props.textStyle,
     fieldview: node.data.props.fieldview,
+    configuration: node.data.props.configuration,
+
     node_id: node.id,
   }));
   const options = useContext(optionsCtx);
   const { setPreviews } = useContext(previewCtx);
 
   const fvs = options.field_view_options[name];
+  const getCfgFields = (fv) =>
+    ((options.fieldViewConfigForms || {})[name] || {})[fv];
+  const cfgFields = getCfgFields(fieldview);
   const refetchPreview = fetchFieldPreview({
     options,
     name,
     fieldview,
-    configuration: {},
+    configuration,
     setPreviews,
     node_id,
   });
@@ -167,6 +174,14 @@ const JoinFieldSettings = () => {
           <TextStyleRow textStyle={textStyle} setProp={setProp} />
         </tbody>
       </table>
+      {cfgFields ? (
+        <ConfigForm
+          fields={cfgFields}
+          configuration={configuration || {}}
+          setProp={setProp}
+          onChange={(k, v) => refetchPreview({ configuration: { [k]: v } })}
+        />
+      ) : null}
     </Fragment>
   );
 };
@@ -185,6 +200,7 @@ JoinField.craft = {
       "fieldview",
       "textStyle",
       "block",
+      { name: "configuration", default: {} },
     ],
   },
 };

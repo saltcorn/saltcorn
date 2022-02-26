@@ -1,0 +1,13 @@
+{
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/saltcorn-admin-models",
+    "packages/saltcorn-types",
+    "packages/sqlite",
+    "packages/saltcorn-markup",
+    "packages/saltcorn-data",
+    "packages/db-common"
+  ],
+  "out": "docs",
+  "readme": "deploy/typedoc/documentation_main.md"
+}

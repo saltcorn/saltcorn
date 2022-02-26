@@ -16,8 +16,9 @@ export type ViewCfg = {
   slug?: any;
 };
 
-export type PackView = {
-  on_menu: boolean;
+export type ViewPack = {
+  table?: string | null;
+  on_menu?: boolean;
   menu_label?: string;
-  on_root_page: boolean;
-} & ViewCfg;
+  on_root_page?: boolean;
+} & Omit<ViewCfg, "table">;

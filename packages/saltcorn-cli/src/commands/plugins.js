@@ -16,7 +16,7 @@ class PluginsCommand extends Command {
   async run() {
     const db = require("@saltcorn/data/db");
     const { requirePlugin } = require("@saltcorn/server/load_plugins");
-    const { getAllTenants } = require("@saltcorn/data/models/tenant");
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     const Plugin = require("@saltcorn/data/models/plugin");
     var plugins = [];
     const { flags } = this.parse(PluginsCommand);

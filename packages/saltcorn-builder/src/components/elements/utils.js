@@ -55,6 +55,27 @@ const BlockSetting = ({ block, setProp }) => (
   </div>
 );
 
+export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
+  !textStyle || !textStyle.startsWith("h") ? (
+    <BlockSetting block={block} setProp={setProp} />
+  ) : (
+    <div className="form-check">
+      <input
+        className="form-check-input"
+        name="inline"
+        type="checkbox"
+        checked={inline}
+        onChange={(e) => {
+          if (e.target) {
+            const target_value = e.target.checked;
+            setProp((prop) => (prop.inline = target_value));
+          }
+        }}
+      />
+      <label className="form-check-label">Inline display</label>
+    </div>
+  );
+
 export /**
  * @param {object} props
  * @param {function} props.setProp
@@ -109,18 +130,17 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
         ) : (
           children
         )}
-        <div className="input-group-append">
-          <button
-            className={`btn activate-formula ${
-              isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
-            }`}
-            title="Calculated formula"
-            type="button"
-            onClick={switchIsFml}
-          >
-            <i className="fas fa-calculator"></i>
-          </button>
-        </div>
+
+        <button
+          className={`btn activate-formula ${
+            isFormula[nodekey] ? "btn-secondary" : "btn-outline-secondary"
+          }`}
+          title="Calculated formula"
+          type="button"
+          onClick={switchIsFml}
+        >
+          <i className="fas fa-calculator"></i>
+        </button>
       </div>
       {isFormula[nodekey] && (
         <div style={{ marginTop: "-5px" }}>
@@ -230,7 +250,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="h4">Heading 4</option>
       <option value="h5">Heading 5</option>
       <option value="h6">Heading 6</option>
-      <option value="font-weight-bold">Bold</option>
+      <option value="fw-bold">Bold</option>
       <option value="font-italic">Italics</option>
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
@@ -300,7 +320,7 @@ const Accordion = ({ titles, children }) => {
             <div
               className={`bg-${
                 isCurrent ? "primary" : "secondary"
-              } pl-1 text-white w-100 mt-1`}
+              } ps-1 text-white w-100 mt-1`}
               onClick={() => setCurrentTab(ix)}
             >
               <span className="w-1em">
@@ -1168,3 +1188,6 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
     children
   );
 };
+
+export const isBlock = (block, inline, textStyle) =>
+  !textStyle || !textStyle.startsWith("h") ? block : !inline;

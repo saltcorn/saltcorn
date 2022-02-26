@@ -5,14 +5,19 @@
  */
 const Router = require("express-promise-router");
 
-const { isAdmin, error_catcher, getGitRevision } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  getGitRevision,
+  setTenant,
+} = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
-const { getAllTenants } = require("@saltcorn/data/models/tenant");
+const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const { post_btn, renderForm } = require("@saltcorn/markup");
 const {
   div,
@@ -41,7 +46,10 @@ const {
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
-const { create_backup, restore } = require("@saltcorn/data/models/backup");
+const {
+  create_backup,
+  restore,
+} = require("@saltcorn/admin-models/models/backup");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const {
@@ -294,7 +302,7 @@ router.get(
                   post_btn("/admin/backup", req.__("Backup"), req.csrfToken())
                 )
               ),
-              td(p({ class: "ml-4 pt-2" }, req.__("Download a backup")))
+              td(p({ class: "ms-4 pt-2" }, req.__("Download a backup")))
             ),
             tr(td(div({ class: "my-4" }))),
             tr(
@@ -305,7 +313,7 @@ router.get(
                   req.__("Restore"),
                 ])
               ),
-              td(p({ class: "ml-4" }, req.__("Restore a backup")))
+              td(p({ class: "ms-4" }, req.__("Restore a backup")))
             )
           )
         ),
@@ -388,7 +396,7 @@ router.get(
                             )
                           : isRoot && is_latest
                           ? span(
-                              { class: "badge badge-primary ml-2" },
+                              { class: "badge bg-primary ms-2" },
                               req.__("Latest")
                             )
                           : "")
@@ -518,6 +526,7 @@ router.post(
  */
 router.post(
   "/restore",
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();

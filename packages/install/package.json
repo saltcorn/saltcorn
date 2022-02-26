@@ -2,7 +2,7 @@
   "name": "saltcorn-install",
   "description": "Install Saltcorn",
   "homepage": "https://saltcorn.com",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "author": "Tom Nielsen @glutamate",
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {

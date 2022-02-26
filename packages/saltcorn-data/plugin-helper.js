@@ -20,7 +20,7 @@ const {
 const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
-const { jsexprToSQL } = require("./models/expression");
+const { jsexprToWhere, freeVariables } = require("./models/expression");
 /**
  *
  * @param {string} url
@@ -129,18 +129,21 @@ const calcfldViewOptions = contract(
         else fvs[f.name] = ["upload"];
       } else if (f.type === "Key") {
         if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
-        else {
-          if (f.reftable && f.reftable.fields) {
-            const { field_view_options } = calcfldViewOptions(
-              f.reftable.fields,
-              mode
-            );
-            for (const jf of f.reftable.fields) {
-              fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
-            }
-          }
+        else if (isFilter) {
+          fvs[f.name] = Object.keys(getState().keyFieldviews);
+        } else {
           fvs[f.name] = ["show"];
         }
+        if (f.reftable && f.reftable.fields) {
+          const { field_view_options } = calcfldViewOptions(
+            f.reftable.fields,
+            isEdit ? "show" : mode
+          );
+          for (const jf of f.reftable.fields) {
+            fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+          }
+        }
+
         Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
@@ -181,6 +184,7 @@ const calcfldViewConfig = contract(
   async (fields, isEdit) => {
     const fieldViewConfigForms = {};
     for (const f of fields) {
+      f.fill_table();
       fieldViewConfigForms[f.name] = {};
       const fieldviews =
         f.type === "Key"
@@ -192,6 +196,14 @@ const calcfldViewConfig = contract(
             fv.configFields,
             f
           );
+      }
+      if (f.type === "Key") {
+        if (f.reftable && f.reftable.fields) {
+          const joinedCfg = await calcfldViewConfig(f.reftable.fields, isEdit);
+          Object.entries(joinedCfg).forEach(([nm, o]) => {
+            fieldViewConfigForms[`${f.name}.${nm}`] = o;
+          });
+        }
       }
     }
     return fieldViewConfigForms;
@@ -300,8 +312,9 @@ const field_picker_fields = contract(
 
     const stateActions = getState().actions;
     const stateActionKeys = Object.entries(stateActions)
-      .filter(([k, v]) => !v.requireRow && !v.disableInList)
+      .filter(([k, v]) => !v.disableInList)
       .map(([k, v]) => k);
+
     const actions = [
       "Delete",
       ...boolfields.map((f) => `Toggle ${f.name}`),
@@ -340,14 +353,24 @@ const field_picker_fields = contract(
     )) {
       for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
         for (const formField of formFields) {
-          fvConfigFields.push({
-            ...formField,
-            showIf: {
-              type: "Field",
-              field_name,
-              fieldview,
-            },
-          });
+          if (field_name.includes("."))
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "JoinField",
+                join_field: field_name,
+                join_fieldview: fieldview,
+              },
+            });
+          else
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "Field",
+                field_name,
+                fieldview,
+              },
+            });
         }
       }
     }
@@ -366,6 +389,7 @@ const field_picker_fields = contract(
         "Sum",
         "Max",
         "Min",
+        "Array_Agg",
       ];
       table.fields.forEach((f) => {
         if (f.type && f.type.name === "Date") {
@@ -437,6 +461,26 @@ const field_picker_fields = contract(
           calcOptions: ["field_name", field_view_options],
         },
         showIf: { type: "Field" },
+      },
+      {
+        name: "join_field",
+        label: __("Join Field"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: parent_field_list,
+        },
+        showIf: { type: "JoinField" },
+      },
+      {
+        name: "join_fieldview",
+        label: __("Field view"),
+        type: "String",
+        required: false,
+        attributes: {
+          calcOptions: ["join_field", field_view_options],
+        },
+        showIf: { type: "JoinField" },
       },
       ...fvConfigFields,
       {
@@ -615,16 +659,7 @@ const field_picker_fields = contract(
         required: false,
         showIf: { type: "Link" },
       },
-      {
-        name: "join_field",
-        label: __("Join Field"),
-        type: "String",
-        required: true,
-        attributes: {
-          options: parent_field_list,
-        },
-        showIf: { type: "JoinField" },
-      },
+
       {
         name: "agg_relation",
         label: __("Relation"),
@@ -817,6 +852,10 @@ const picked_fields_to_query = contract(
   (columns, fields) => {
     var joinFields = {};
     var aggregations = {};
+    let freeVars = new Set(); // for join fields
+    const joinFieldNames = new Set(
+      fields.filter((f) => f.is_fkey).map((f) => f.name)
+    );
     (columns || []).forEach((column) => {
       if (column.type === "JoinField") {
         if (column.join_field && column.join_field.split) {
@@ -851,6 +890,11 @@ const picked_fields_to_query = contract(
           );
         }
       } else if (column.type === "ViewLink") {
+        if (column.view_label_formula)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(column.view_label),
+          ]);
         if (column.view && column.view.split) {
           const [vtype, vrest] = column.view.split(":");
           if (vtype === "ParentShow") {
@@ -876,17 +920,49 @@ const picked_fields_to_query = contract(
             fld +
             db.sqlsanitize(column.aggwhere || "")
           ).toLowerCase();
+
           aggregations[targetNm] = {
             table,
             ref: fld,
-            where: jsexprToSQL(column.aggwhere),
+            where: column.aggwhere ? jsexprToWhere(column.aggwhere) : undefined,
             field,
             aggregate: column.stat,
           };
         }
+      } else if (column.type === "Link") {
+        if (column.link_text_formula)
+          freeVars = new Set([...freeVars, ...freeVariables(column.link_text)]);
+        if (column.link_url_formula)
+          freeVars = new Set([...freeVars, ...freeVariables(column.link_url)]);
+      } else if (column.type === "Action" && column.action_label_formula) {
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.action_label),
+        ]);
       }
     });
-
+    [...freeVars]
+      .filter((v) => v.includes("."))
+      .map((v) => {
+        const kpath = v.split(".");
+        if (joinFieldNames.has(kpath[0]))
+          if (kpath.length === 2) {
+            const [refNm, targetNm] = kpath;
+            joinFields[`${refNm}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              rename_object: [refNm, targetNm],
+            };
+          } else {
+            const [refNm, through, targetNm] = kpath;
+            joinFields[`${refNm}_${through}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through,
+              rename_object: [refNm, through, targetNm],
+            };
+          }
+      });
     return { joinFields, aggregations };
   }
 );

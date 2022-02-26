@@ -22,11 +22,6 @@ const File = require("../models/file");
 const Trigger = require("../models/trigger");
 const View = require("../models/view");
 const {
-  getAllTenants,
-  createTenant,
-  copy_tenant_template,
-} = require("../models/tenant");
-const {
   getAllConfigOrDefaults,
   setConfig,
   deleteConfig,
@@ -77,7 +72,7 @@ class State {
     this.plugin_module_names = {};
     this.eventTypes = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
-    this.headers = [];
+    this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
@@ -352,7 +347,8 @@ class State {
   registerPlugin(name, plugin, cfg, location, modname) {
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
-    this.plugin_locations[plugin.plugin_name || name] = location;
+    if (location) this.plugin_locations[plugin.plugin_name || name] = location;
+    this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
     const withCfg = (key, def) =>
@@ -412,7 +408,7 @@ class State {
       this.verifier = verifier;
     }
     withCfg("headers", []).forEach((h) => {
-      if (!this.headers.includes(h)) this.headers.push(h);
+      if (!this.headers[name].includes(h)) this.headers[name].push(h);
     });
   }
 
@@ -467,7 +463,7 @@ class State {
     this.actions = {};
     this.auth_methods = {};
     this.layouts = { emergency: { wrap: emergency_layout } };
-    this.headers = [];
+    this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
     this.keyFieldviews = {};
@@ -519,7 +515,7 @@ class State {
  */
 State.contract = {
   variables: {
-    headers: is.array(is_header),
+    headers: is.any,
     viewtemplates: is.objVals(is_viewtemplate),
     types: is.objVals(is_plugin_type),
   },
@@ -599,8 +595,7 @@ const set_tenant_base_url = (tenant_subdomain, value) => {
  * @param {boolean} disableMigrate - if true then dont migrate db
  * @returns {Promise<void>}
  */
-const init_multi_tenant = async (plugin_loader, disableMigrate) => {
-  const tenantList = await getAllTenants();
+const init_multi_tenant = async (plugin_loader, disableMigrate, tenantList) => {
   for (const domain of tenantList) {
     try {
       tenants[domain] = new State(domain);
@@ -616,38 +611,11 @@ const init_multi_tenant = async (plugin_loader, disableMigrate) => {
     }
   }
 };
-/**
- * Create tenant
- * @param {string} t
- * @param {object} plugin_loader
- * @param {string} newurl
- * @param {boolean} noSignalOrDB
- * @returns {Promise<void>}
- */
-const create_tenant = async (
-  t,
-  plugin_loader,
-  newurl,
-  noSignalOrDB,
-  loadAndSaveNewPlugin
-) => {
-  if (!noSignalOrDB) await createTenant(t, newurl);
+
+const add_tenant = (t) => {
   tenants[t] = new State(t);
-  await db.runWithTenant(t, plugin_loader);
-  if (!noSignalOrDB) {
-    const tenant_template = singleton.getConfig("tenant_template");
-    if (tenant_template) {
-      //create backup
-      await copy_tenant_template({
-        tenant_template,
-        target: t,
-        state: tenants[t],
-        loadAndSaveNewPlugin,
-      });
-    }
-    process_send({ createTenant: t });
-  }
 };
+
 /**
  * Restart tenant
  * @param {object} plugin_loader
@@ -670,16 +638,19 @@ const features = {
   serve_static_dependencies: true,
   deep_public_plugin_serve: true,
   fieldrepeats_in_field_attributes: true,
+  no_plugin_fieldview_length_check: true,
+  bootstrap5: true,
 };
 
 module.exports = {
   getState,
   getTenant,
   init_multi_tenant,
-  create_tenant,
   restart_tenant,
   get_other_domain_tenant,
   set_tenant_base_url,
   get_process_init_time,
   features,
+  add_tenant,
+  process_send,
 };

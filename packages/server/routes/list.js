@@ -17,6 +17,7 @@ const {
   script,
   domReady,
   div,
+  i,
   text,
   button,
   input,
@@ -120,44 +121,71 @@ router.post(
  * @param field
  * @returns {{name, title}}
  */
-const typeToJsGridType = (t, field) => {
-  var jsgField = { name: field.name, title: field.label };
+const typeToGridType = (t, field) => {
+  const jsgField = { field: field.name, title: field.label, editor: true };
   if (t.name === "String" && field.attributes && field.attributes.options) {
-    jsgField.type = "select";
-    jsgField.items = field.attributes.options
-      .split(",")
-      .map((o) => ({ value: o.trim(), label: o.trim() }));
-    jsgField.valueField = "value";
-    jsgField.textField = "label";
-    if (!field.required) jsgField.items.unshift("");
+    jsgField.editor = "select";
+
+    const values = field.attributes.options.split(",").map((o) => o.trim());
+    if (!field.required) values.unshift("");
+
+    jsgField.editorParams = { values };
   } else if (t === "Key" || t === "File") {
-    jsgField.type = "select";
-    //console.log(field.options);
-    jsgField.items = field.options;
-    jsgField.valueField = "value";
-    jsgField.textField = "label";
-  } else
-    jsgField.type =
-      t.name === "String"
-        ? "text"
-        : t.name === "Integer"
-        ? "number"
-        : t.name === "Float"
-        ? "decimal"
-        : t.name === "Bool"
-        ? "checkbox"
-        : t.name === "Color"
-        ? "color"
-        : t.name === "Date"
-        ? "date"
-        : "text";
+    jsgField.editor = "select";
+    const values = {};
+
+    field.options.forEach(({ label, value }) => (values[value] = label));
+    jsgField.editorParams = { values };
+    jsgField.formatterParams = { values };
+    jsgField.formatter = "__lookupIntToString";
+  } else if (t.name === "Float" || t.name === "Integer") {
+    jsgField.editor = "number";
+    jsgField.sorter = "number";
+    jsgField.hozAlign = "right";
+    jsgField.headerHozAlign = "right";
+    jsgField.editorParams = {
+      step: t.name === "Integer" ? 1 : undefined,
+      min:
+        typeof field.attributes.min !== "undefined"
+          ? field.attributes.min
+          : undefined,
+      max:
+        typeof field.attributes.max !== "undefined"
+          ? field.attributes.max
+          : undefined,
+    };
+  } else if (t.name === "Bool") {
+    jsgField.editor = "tickCross";
+    jsgField.formatter = "tickCross";
+    jsgField.hozAlign = "center";
+    jsgField.vertAlign = "center";
+    jsgField.editorParams = field.required ? {} : { tristate: true };
+    jsgField.formatterParams = field.required ? {} : { allowEmpty: true };
+  } else if (t.name === "Date") {
+    jsgField.sorter = "date";
+    jsgField.sorterParams = {
+      format: "iso",
+    };
+    jsgField.editor = "__flatpickerEditor";
+    jsgField.formatter = "datetime";
+    jsgField.formatterParams = {
+      inputFormat: "iso",
+    };
+  } else if (t.name === "Color") {
+    jsgField.editor = "__colorEditor";
+    jsgField.formatter = "__colorFormatter";
+    jsgField.hozAlign = "center";
+    jsgField.vertAlign = "center";
+  } else if (t.name === "JSON") {
+    jsgField.formatter = "__jsonFormatter";
+    jsgField.editor = "__jsonEditor";
+  }
+
   if (field.calculated) {
-    jsgField.editing = false;
-    jsgField.inserting = false;
+    jsgField.editor = false;
   }
   if (field.primary_key) {
-    jsgField.inserting = false;
-    jsgField.editing = false;
+    jsgField.editor = false;
   }
   return jsgField;
 };
@@ -185,6 +213,12 @@ VersionsField.prototype = new jsGrid.Field({
 jsGrid.fields.versions = VersionsField;
 `;
 // end of versionsField
+
+const arrangeIdFirst = (flds) => {
+  const noId = flds.filter((f) => f.name !== "id");
+  const id = flds.find((f) => f.name === "id");
+  return [id, ...noId];
+};
 
 /**
  * Table Data List Viewer (GET handler))
@@ -214,22 +248,39 @@ router.get(
     const keyfields = fields
       .filter((f) => f.type === "Key" || f.type === "File")
       .map((f) => ({ name: f.name, type: f.reftype }));
-    const jsfields = fields.map((f) => typeToJsGridType(f.type, f));
+    const jsfields = arrangeIdFirst(fields).map((f) =>
+      typeToGridType(f.type, f)
+    );
     if (table.versioned) {
-      jsfields.push({ name: "_versions", title: "Versions", type: "versions" });
+      jsfields.push({
+        field: "_versions",
+        title: "Versions",
+        formatter: "__versionsFormatter",
+      });
     }
-    jsfields.push({ type: "control" });
+    jsfields.push({
+      formatter: "buttonCross",
+      title: i({ class: "far fa-trash-alt" }),
+      width: 40,
+      hozAlign: "center",
+      headerSort: false,
+      clipboard: false,
+      cellClick: "__delete_tabulator_row",
+    });
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
         headers: [
           //jsgrid - grid editor external component
           {
-            script: `/static_assets/${db.connectObj.version_tag}/jsgrid.min.js`,
+            script: `/static_assets/${db.connectObj.version_tag}/tabulator.min.js`,
           },
           // date flat picker external component
           {
             script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/luxon.min.js`,
           },
           // main logic for grid editor is here
           {
@@ -237,12 +288,9 @@ router.get(
           },
           //css for jsgrid - grid editor external component
           {
-            css: `/static_assets/${db.connectObj.version_tag}/jsgrid.min.css`,
+            css: `/static_assets/${db.connectObj.version_tag}/tabulator_bootstrap4.min.css`,
           },
-          // css theme for jsgrid - grid editor external component
-          {
-            css: `/static_assets/${db.connectObj.version_tag}/jsgrid-theme.min.css`,
-          },
+
           // css for date flat picker external component
           {
             css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
@@ -258,65 +306,107 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
-            right: div(
-              { class: "dropdown" },
+            right:
               button(
                 {
-                  class: "btn btn-sm btn-outline-secondary dropdown-toggle",
-                  "data-boundary": "viewport",
-                  type: "button",
-                  id: "btnHideCols",
-                  "data-toggle": "dropdown",
-                  "aria-haspopup": "true",
-                  "aria-expanded": "false",
+                  class: "btn btn-sm btn-primary me-2",
+                  onClick: "add_tabulator_row()",
                 },
-                "Show/hide fields"
-              ),
+                i({ class: "fas fa-plus me-1" }),
+                "Add row"
+              ) +
               div(
-                {
-                  class: "dropdown-menu",
-                  "aria-labelledby": "btnHideCols",
-                },
-                form(
-                  { class: "px-2" },
-                  fields.map((f) =>
-                    div(
-                      { class: "form-check" },
-                      input({
-                        type: "checkbox",
-                        onChange: `showHideCol('${f.name}', this)`,
-                        class: "form-check-input",
-                        checked: true,
-                      }),
-                      label(f.name)
+                { class: "dropdown d-inline" },
+                button(
+                  {
+                    class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+                    "data-boundary": "viewport",
+                    type: "button",
+                    id: "btnHideCols",
+                    "data-bs-toggle": "dropdown",
+                    "aria-haspopup": "true",
+                    "aria-expanded": "false",
+                  },
+                  "Show/hide fields"
+                ),
+                div(
+                  {
+                    class: "dropdown-menu",
+                    "aria-labelledby": "btnHideCols",
+                  },
+                  form(
+                    { class: "px-2" },
+                    fields.map((f) =>
+                      div(
+                        { class: "form-check" },
+                        input({
+                          type: "checkbox",
+                          onChange: `showHideCol('${f.name}', this)`,
+                          class: "form-check-input",
+                          checked: true,
+                        }),
+                        label(f.name)
+                      )
                     )
                   )
                 )
-              )
-            ),
+              ),
           },
           {
             type: "blank",
             contents: div(
-              script(`var edit_fields=${JSON.stringify(jsfields)};`),
-              script(domReady(versionsField(table.name))),
+              //script(`var edit_fields=${JSON.stringify(jsfields)};`),
+              //script(domReady(versionsField(table.name))),
               script(
-                domReady(`$("#jsGrid").jsGrid({
-                width: "100%",
-                sorting: true,
-                paging: true,
-                autoload: true,
-                inserting: true,
-                editing: true,
-                         
-                controller: 
-                  jsgrid_controller("${table.name}", ${JSON.stringify(
-                  table.versioned
-                )}, ${JSON.stringify(keyfields)}),
-         
-                fields: edit_fields
-            });
-         `)
+                domReady(`
+              const columns=${JSON.stringify(jsfields)};          
+              columns.forEach(col=>{
+                Object.entries(col).forEach(([k,v])=>{
+                  if(typeof v === "string" && v.startsWith("__"))
+                    col[k] = window[v.substring(2)];
+                })
+              })   
+              window.tabulator_table = new Tabulator("#jsGrid", {
+                  ajaxURL:"/api/${table.name}${
+                  table.versioned ? "?versioncount=on" : ""
+                }",                   
+                  layout:"fitColumns", 
+                  columns,
+                  height:"100%",
+                  pagination:true,
+                  paginationSize:20,
+                  clipboard:true,
+                  persistence:true, 
+                  persistenceID:"table_tab_${table.name}",
+                  movableColumns: true,
+                  initialSort:[
+                    {column:"id", dir:"asc"},
+                  ],
+                  ajaxResponse:function(url, params, response){                    
+            
+                    return response.success; //return the tableData property of a response json object
+                  },
+              });
+              window.tabulator_table.on("cellEdited", function(cell){
+                const row = cell.getRow().getData()
+                $.ajax({
+                  type: "POST",
+                  url: "/api/${table.name}/" + (row.id||""),
+                  data: row,
+                  headers: {
+                    "CSRF-Token": _sc_globalCsrf,
+                  },
+                  error: tabulator_error_handler,
+                }).done(function (resp) {
+                  //if (item._versions) item._versions = +item._versions + 1;
+                  //data.resolve(fixKeys(item));
+                  if(resp.success &&typeof resp.success ==="number" && !row.id) {
+                    window.tabulator_table.updateRow(cell.getRow(), {id: resp.success});
+                  }
+
+                });
+              });
+              window.tabulator_table_name="${table.name}";`)
               ),
               div({ id: "jsGridNotify" }),
 
@@ -328,3 +418,5 @@ router.get(
     );
   })
 );
+
+// TODO: increment version count

@@ -22,6 +22,8 @@ const {
   span,
   img,
   text_attr,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
@@ -82,14 +84,14 @@ const progress_bar = (type) => ({
         style: {
           width: "100%",
           height: `${attrs.px_height || 8}px`,
-          backgroundColor: attrs.bg_color,
+          backgroundColor: attrs.bg_color || "#777777",
         },
       },
       div({
         style: {
           width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
           height: `${attrs.px_height || 8}px`,
-          backgroundColor: attrs.bar_color,
+          backgroundColor: attrs.bar_color || "#0000ff",
         },
       })
     ),
@@ -324,7 +326,7 @@ const string = {
         attrs.options && (attrs.options.length > 0 || !required)
           ? select(
               {
-                class: ["form-control", cls],
+                class: ["form-control", "form-select", cls],
                 name: text_attr(nm),
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
@@ -343,7 +345,7 @@ const string = {
           : attrs.calcOptions
           ? select(
               {
-                class: ["form-control", cls],
+                class: ["form-control", "form-select", cls],
                 name: text_attr(nm),
                 disabled: attrs.disabled,
                 "data-fieldname": text_attr(field.name),
@@ -367,6 +369,145 @@ const string = {
               id: `input${text_attr(nm)}`,
               ...(isdef(v) && { value: text_attr(v) }),
             }),
+    },
+    fill_formula_btn: {
+      isEdit: true,
+      configFields: [
+        {
+          name: "formula",
+          label: "Formula",
+          type: "String",
+        },
+        {
+          name: "label",
+          label: "Button label",
+          type: "String",
+        },
+        {
+          name: "make_unique",
+          label: "Make unique after fill",
+          type: "Bool",
+        },
+        {
+          name: "include_space",
+          label: "Include space",
+          type: "Bool",
+          showIf: { make_unique: true },
+        },
+        {
+          name: "start_from",
+          label: "Start from",
+          type: "Integer",
+          default: 0,
+          showIf: { make_unique: true },
+        },
+        {
+          name: "always_append",
+          label: "Always append",
+          type: "Bool",
+          showIf: { make_unique: true },
+        },
+        {
+          name: "char_type",
+          label: "Append character type",
+          input_type: "select",
+          options: ["Digits", "Lowercase Letters", "Uppercase Letters"],
+          showIf: { make_unique: true },
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        div(
+          { class: "input-group" },
+          input({
+            type: attrs.input_type || "text",
+            disabled: attrs.disabled,
+            class: ["form-control", cls],
+            placeholder: attrs.placeholder,
+            onChange: attrs.onChange,
+            "data-fieldname": text_attr(field.name),
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            ...(isdef(v) && { value: text_attr(v) }),
+          }),
+          button(
+            {
+              class: "btn btn-secondary",
+              type: "button",
+              "data-formula": encodeURIComponent(attrs?.formula),
+              onClick:
+                "fill_formula_btn_click(this);" +
+                (attrs.make_unique
+                  ? `make_unique_field('input${text_attr(nm)}', ${
+                      field.table_id
+                    }, '${field.name}',  $('#input${text_attr(
+                      nm
+                    )}'), ${!!attrs.include_space}, ${
+                      attrs.start_from || 0
+                    }, ${!!attrs.always_append}, '${attrs.char_type}')`
+                  : ""),
+            },
+            attrs?.label || "Fill"
+          )
+        ),
+    },
+    make_unique: {
+      isEdit: true,
+      configFields: [
+        {
+          name: "placeholder",
+          label: "Placeholder",
+          type: "String",
+        },
+        {
+          name: "input_type",
+          label: "Input type",
+          input_type: "select",
+          options: ["text", "email", "url", "tel", "password"],
+        },
+        {
+          name: "include_space",
+          label: "Include space",
+          type: "Bool",
+        },
+        {
+          name: "start_from",
+          label: "Start from",
+          type: "Integer",
+          default: 0,
+        },
+        {
+          name: "always_append",
+          label: "Always append",
+          type: "Bool",
+        },
+        {
+          name: "char_type",
+          label: "Append character type",
+          input_type: "select",
+          options: ["Digits", "Lowercase Letters", "Uppercase Letters"],
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        input({
+          type: attrs.input_type || "text",
+          disabled: attrs.disabled,
+          class: ["form-control", cls],
+          placeholder: attrs.placeholder,
+          onChange: attrs.onChange,
+          "data-fieldname": text_attr(field.name),
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          ...(isdef(v) && { value: text_attr(v) }),
+        }) +
+        script(
+          domReady(
+            `make_unique_field('input${text_attr(nm)}', ${field.table_id}, '${
+              field.name
+            }', $('#input${text_attr(nm)}'), ${attrs.include_space}, ${
+              attrs.start_from
+            }, ${attrs.always_append}, ${JSON.stringify(attrs.char_type)})`
+          )
+        ),
     },
     /**
      * @namespace
@@ -1063,7 +1204,7 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          class: ["mr-2 mt-1", cls],
+          class: ["me-2 mt-1", cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
           onChange: attrs.onChange,

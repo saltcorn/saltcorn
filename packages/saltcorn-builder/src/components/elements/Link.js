@@ -66,7 +66,7 @@ const Link = ({
           : {}
       }
     >
-      <DynamicFontAwesomeIcon icon={link_icon} className="mr-1" />
+      <DynamicFontAwesomeIcon icon={link_icon} className="me-1" />
       {isFormula.text ? `=${text}` : text}
     </span>
   );

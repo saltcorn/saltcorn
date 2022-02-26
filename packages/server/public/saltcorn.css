@@ -220,3 +220,7 @@ footer.bs-mobile-nav-footer {
 .welcome-page-entity-list {
   min-height: 35vh;
 }
+
+.form-group {
+  margin-bottom: 1rem;
+}

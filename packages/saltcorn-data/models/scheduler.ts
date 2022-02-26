@@ -4,7 +4,6 @@
  * @subcategory models
  */
 import Crash from "./crash";
-const { eachTenant } = require("./tenant");
 import Trigger from "./trigger";
 import db from "../db";
 const { getState } = require("../db/state");
@@ -109,13 +108,17 @@ const runScheduler = async ({
   watchReaper,
   port,
   disableScheduler,
-}: {
-  stop_when?: () => false;
-  tickSeconds?: number;
-  watchReaper?: boolean;
-  port?: number;
-  disableScheduler?: boolean;
-} = {}) => {
+  eachTenant,
+}:
+  | {
+      stop_when?: () => boolean;
+      tickSeconds?: number;
+      watchReaper?: boolean;
+      port?: number;
+      disableScheduler?: boolean;
+      eachTenant: (f: () => Promise<any>) => Promise<void>;
+    }
+  | any = {}) => {
   let stopit;
   const run = async () => {
     if (watchReaper && port) await checkAvailability(port);

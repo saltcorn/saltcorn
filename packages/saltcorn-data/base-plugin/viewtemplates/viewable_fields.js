@@ -9,7 +9,7 @@ const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column, is_tablely } = require("../../contracts");
 const { link_view, strictParseInt } = require("../../plugin-helper");
-const { get_expression_function } = require("../../models/expression");
+const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
@@ -126,14 +126,18 @@ const get_view_link_query =
     const fUniqueString = fields.find(
       (f) => f.is_unique && f.type.name === "String"
     );
+    const pk_name = fields.find((f) => f.primary_key).name;
     if (fUniqueString)
       return (r) =>
-        `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`;
+        r && r[fUniqueString.name]
+          ? `?${fUniqueString.name}=${encodeURIComponent(
+              r[fUniqueString.name]
+            )}`
+          : `?${pk_name}=${r[pk_name]}`;
     const fUnique = fields.find((f) => f.is_unique);
     if (fUnique)
       return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
     else {
-      const pk_name = fields.find((f) => f.primary_key).name;
       return (r) => `?${pk_name}=${r[pk_name]}`;
     }
   };
@@ -170,17 +174,13 @@ const make_link = contract(
       key: (r) => {
         let txt, href;
         try {
-          txt = link_text_formula
-            ? get_expression_function(link_text, fields)(r)
-            : link_text;
+          txt = link_text_formula ? eval_expression(link_text, r) : link_text;
         } catch (error) {
           error.message = `Error in formula ${link_text} for link text:\n${error.message}`;
           throw error;
         }
         try {
-          href = link_url_formula
-            ? get_expression_function(link_url, fields)(r)
-            : link_url;
+          href = link_url_formula ? eval_expression(link_url, r) : link_url;
         } catch (error) {
           error.message = `Error in formula ${link_url} for link URL:\n${error.message}`;
           throw error;
@@ -259,8 +259,7 @@ const view_linker = contract(
     const get_label = (def, row) => {
       if (!view_label || view_label.length === 0) return def;
       if (!view_label_formula) return view_label;
-      const f = get_expression_function(view_label, fields);
-      return f(row);
+      return eval_expression(view_label, row);
     };
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
@@ -423,7 +422,7 @@ const get_viewable_fields = contract(
                 "action_name"
               );
               const label = column.action_label_formula
-                ? get_expression_function(column.action_label, fields)(r)
+                ? eval_expression(column.action_label, r)
                 : __(column.action_label) || column.action_name;
               if (url.javascript)
                 return a(
@@ -461,8 +460,8 @@ const get_viewable_fields = contract(
           Object.assign(r, setWidth);
           return r;
         } else if (column.type === "JoinField") {
-          let refNm, targetNm, through, key;
-
+          //console.log(column);
+          let refNm, targetNm, through, key, type;
           if (column.join_field.includes("->")) {
             const [relation, target] = column.join_field.split("->");
             const [ontable, ref] = relation.split(".");
@@ -479,16 +478,27 @@ const get_viewable_fields = contract(
               key = `${refNm}_${through}_${targetNm}`;
             }
           }
+          if (column.field_type) type = getState().types[column.field_type];
           return {
             ...setWidth,
             label: column.header_label
               ? text(__(column.header_label))
               : text(targetNm),
-            key,
+            key:
+              column.join_fieldview &&
+              type &&
+              type.fieldviews &&
+              type.fieldviews[column.join_fieldview]
+                ? (row) =>
+                    type.fieldviews[column.join_fieldview].run(
+                      row[key],
+                      req,
+                      column
+                    )
+                : (row) => text(row[key]),
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Aggregation") {
-          //console.log(column)
           const [table, fld] = column.agg_relation.split(".");
           const targetNm = (
             column.stat.replace(" ", "") +
@@ -504,10 +514,11 @@ const get_viewable_fields = contract(
             label: column.header_label
               ? text(column.header_label)
               : text(column.stat + " " + table),
-            key: text(targetNm),
+            key: targetNm,
             // sortlink: `javascript:sortby('${text(targetNm)}')`
           };
         } else if (column.type === "Field") {
+          //console.log(column);
           let f = fields.find((fld) => fld.name === column.field_name);
           let f_with_val = f;
           if (f && f.attributes && f.attributes.localized_by) {
@@ -605,8 +616,8 @@ const splitUniques = contract(
     is.obj({ uniques: is.obj(), nonUniques: is.obj() })
   ),
   (fields, state, fuzzyStrings) => {
-    var uniques = [];
-    var nonUniques = [];
+    let uniques = {};
+    let nonUniques = {};
     Object.entries(state).forEach(([k, v]) => {
       const field = fields.find((f) => f.name === k);
       if (
@@ -729,10 +740,15 @@ const fill_presets = async (table, req, fixed) => {
   });
   return fixed;
 };
+const objToQueryString = (o) =>
+  Object.entries(o || {})
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join("&");
 
 module.exports = {
   get_viewable_fields,
   action_url,
+  objToQueryString,
   action_link,
   view_linker,
   parse_view_select,
@@ -740,4 +756,5 @@ module.exports = {
   getForm,
   fill_presets,
   get_view_link_query,
+  make_link,
 };

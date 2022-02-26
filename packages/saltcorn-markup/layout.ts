@@ -27,6 +27,7 @@ const {
 const { alert, breadcrumbs } = require("./layout_utils");
 
 import helpers = require("./helpers");
+import renderMJML from "./mjml-layout";
 const { search_bar } = helpers;
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 
@@ -72,20 +73,22 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment: any, inner: string): string => {
-  let style = segment.font ? { fontFamily: segment.font } : {};
+  let style: any = segment.font ? { fontFamily: segment.font } : {};
+  if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
+    style.display = "inline-block";
   switch (segment.textStyle) {
     case "h1":
-      return h1(style, inner);
+      return h1({ style }, inner);
     case "h2":
-      return h2(style, inner);
+      return h2({ style }, inner);
     case "h3":
-      return h3(style, inner);
+      return h3({ style }, inner);
     case "h4":
-      return h4(style, inner);
+      return h4({ style }, inner);
     case "h5":
-      return h5(style, inner);
+      return h5({ style }, inner);
     case "h6":
-      return h6(style, inner);
+      return h6({ style }, inner);
     default:
       return segment.block
         ? div({ class: segment.textStyle || "", style }, inner)
@@ -106,6 +109,15 @@ namespace LayoutExports {
   };
 }
 type RenderTabsOpts = LayoutExports.RenderTabsOpts;
+
+function validID(s: string) {
+  return s
+    ? s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/^[^a-z]+|[^\w:.-]+/gi, "")
+    : s;
+}
 
 /**
  * @param {object} opts
@@ -136,8 +148,8 @@ const renderTabs = (
                 {
                   class: "btn btn-link btn-block text-left",
                   type: "button",
-                  "data-toggle": "collapse",
-                  "data-target": `#${rndid}tab${ix}`,
+                  "data-bs-toggle": "collapse",
+                  "data-bs-target": `#${rndid}tab${ix}`,
                   "aria-expanded": ix === 0 ? "true" : "false",
                   "aria-controls": `${rndid}tab${ix}`,
                 },
@@ -172,8 +184,8 @@ const renderTabs = (
               {
                 class: ["nav-link", ix === 0 && "active"],
                 id: `${rndid}link${ix}`,
-                "data-toggle": "tab",
-                href: `#${rndid}tab${ix}`,
+                "data-bs-toggle": "tab",
+                href: `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
                 "aria-selected": ix === 0 ? "true" : "false",
@@ -190,7 +202,7 @@ const renderTabs = (
             {
               class: ["tab-pane fade", ix === 0 && "show active"],
               role: "tabpanel",
-              id: `${rndid}tab${ix}`,
+              id: `${validID(titles[ix])}`,
               "aria-labelledby": `${rndid}link${ix}`,
             },
             go(t, false, ix)
@@ -203,11 +215,12 @@ const renderTabs = (
 // declaration merging
 namespace LayoutExports {
   export type RenderOpts = {
-    blockDispatch: any;
+    blockDispatch?: any;
     layout: any;
     role?: any;
     alerts?: any;
     is_owner?: boolean;
+    req?: any;
   };
 }
 type RenderOpts = LayoutExports.RenderOpts;
@@ -227,6 +240,7 @@ const render = ({
   role,
   alerts,
   is_owner,
+  req,
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
@@ -290,8 +304,9 @@ const render = ({
         isTop,
         ix,
         img({
-          class: "w-100",
+          class: segment.style && segment.style.width ? null : "w-100",
           alt: segment.alt,
+          style: segment.style,
           src:
             srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
         })
@@ -344,7 +359,7 @@ const render = ({
               { class: "card-header" },
               typeof segment.title === "string"
                 ? h6(
-                    { class: "m-0 font-weight-bold text-primary" },
+                    { class: "m-0 fw-bold text-primary" },
                     segment.title
                   )
                 : segment.title
@@ -361,7 +376,7 @@ const render = ({
                       {
                         class: ["nav-link", ix === 0 && "active"],
                         href: `#tab-${title}`,
-                        "data-toggle": "tab",
+                        "data-bs-toggle": "tab",
                         role: "tab",
                       },
                       title
@@ -585,12 +600,29 @@ const render = ({
       let markup;
       if (cardDeck)
         markup = div(
-          { class: "card-deck" },
-          segment.besides.map((t: any, ixb: number) => go(t, false, ixb))
+          {
+            class: `row row-cols-1 row-cols-md-${segment.besides.length} g-4 mb-3`,
+            style: segment.style,
+          },
+          segment.besides.map((t: any, ixb: number) => {
+            const newt = { ...t };
+            newt.class = t.class
+              ? Array.isArray(t.class)
+                ? ["h-100", ...t.class]
+                : t.class + " h-100"
+              : "h-100";
+            return div({ class: "col" }, go(newt, false, ixb));
+          })
         );
       else
         markup = div(
-          { class: "row w-100" },
+          {
+            class: [
+              "row",
+              segment.style && segment.style.width ? null : "w-100",
+            ],
+            style: segment.style,
+          },
           segment.besides.map((t: any, ixb: number) =>
             div(
               {
@@ -614,7 +646,16 @@ const render = ({
       return isTop ? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  return go(makeSegments(layout, alerts), true, 0);
+  if (req && req.generate_email)
+    return renderMJML({
+      blockDispatch,
+      layout,
+      role,
+      alerts,
+      is_owner,
+      req,
+    });
+  else return go(makeSegments(layout, alerts), true, 0);
 };
 
 // declaration merging

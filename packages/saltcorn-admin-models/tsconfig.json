@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": false,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "allowJs": true,
+    "sourceMap": true,
+    "composite": true,
+    "declaration": true /* set to true by "composite" */,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true /* set to true by "esModuleInterop" and "module" */,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
+    "lib": ["ES2020"],
+    "module": "commonjs",
+    "target": "ES2020"
+  },
+  "exclude": ["node_modules", "dist/**"]
+}

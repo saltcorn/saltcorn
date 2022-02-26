@@ -1,3 +1,4 @@
+import { GenObj } from "../common_types";
 import type { Layout } from "../base_types";
 
 export type PageCfg = {
@@ -6,11 +7,11 @@ export type PageCfg = {
   description: string;
   min_role: number;
   id?: number;
-  layout: string | Layout;
-  fixed_states: string | any;
+  layout: string | Layout | GenObj;
+  fixed_states?: string | any;
 };
 
-export type PackPage = {
+export type PagePack = {
   menu_label?: string;
   root_page_for_roles?: string[];
 } & PageCfg;

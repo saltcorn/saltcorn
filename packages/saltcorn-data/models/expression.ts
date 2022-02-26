@@ -5,11 +5,11 @@
  */
 import { runInNewContext, Script } from "vm";
 import { parseExpressionAt, Node } from "acorn";
-import { replace } from "estraverse";
+import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import Table from "./table";
-import { Row } from "@saltcorn/db-common/internal";
+import { Row, Where } from "@saltcorn/db-common/internal";
 import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
 
@@ -27,15 +27,6 @@ function expressionValidator(s: string): true | string {
   }
 }
 
-/**
- * @param {string} expression
- * @returns {string}
- */
-function jsexprToSQL(expression: string): string {
-  if (!expression) return expression;
-  return expression.replace(/===/g, "=").replace(/==/g, "=").replace(/"/g, "'");
-}
-
 type StringToFunction = Record<string, Function>;
 type ExtendedNode = {
   left?: ExtendedNode;
@@ -48,7 +39,7 @@ type ExtendedNode = {
  * @throws {Error}
  * @returns {object}
  */
-function jsexprToWhere(expression: string, extraCtx: any = {}): any {
+function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
   if (!expression) return {};
   try {
     const ast = parseExpressionAt(expression, 0, {
@@ -135,6 +126,49 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): any {
   }
 }
 
+function freeVariables(expression: string): Set<string> {
+  const freeVars: string[] = [];
+  const ast: any = parseExpressionAt(expression, 0, {
+    ecmaVersion: 2020,
+    allowAwaitOutsideFunction: true,
+    locations: false,
+  });
+  traverse(ast, {
+    leave: function (node) {
+      //console.log(node);
+
+      if (node.type === "Identifier") {
+        freeVars.push(node.name);
+      }
+      if (node.type === "MemberExpression") {
+        if (
+          node.object.type === "Identifier" &&
+          node.property.type === "Identifier"
+        ) {
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.push(`${node.object.name}.${node.property.name}`);
+        } else if (
+          node.object.type === "MemberExpression" &&
+          node.object.object.type === "Identifier" &&
+          node.object.property.type === "Identifier" &&
+          node.property.type === "Identifier"
+        ) {
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.push(
+            `${node.object.object.name}.${node.object.property.name}.${node.property.name}`
+          );
+        }
+      }
+    },
+  });
+  //console.log(expression, freeVars);
+
+  return new Set(freeVars);
+}
+
 function isIdentifierWithName(node: any): node is Identifier {
   return node && "name" in node && node.name !== undefined;
 }
@@ -146,8 +180,7 @@ function isIdentifierWithName(node: any): node is Identifier {
  */
 function transform_for_async(
   expression: string,
-  // TODO ch replace any as soon as the unit tests are migrated
-  statefuns: Record<string, /*PluginFunction*/ any>
+  statefuns: Record<string, PluginFunction>
 ) {
   var isAsync = false;
   const ast: any = parseExpressionAt(expression, 0, {
@@ -190,6 +223,23 @@ function get_expression_function(
     `(${args})=>(${expression})`,
     getState().function_context
   );
+}
+
+/**
+ * @param {string} expression
+ * @param {object[]} fields
+ * @returns {any}
+ */
+function eval_expression(expression: string, row: any, user?: any): any {
+  const field_names = Object.keys(row);
+  const args = field_names.includes("user")
+    ? `{${field_names.join()}}`
+    : `{${field_names.join()}}, user`;
+  const { getState } = require("../db/state");
+  return runInNewContext(
+    `(${args})=>(${expression})`,
+    getState().function_context
+  )(row, user);
 }
 
 /**
@@ -319,9 +369,10 @@ export = {
   apply_calculated_fields,
   get_async_expression_function,
   get_expression_function,
+  eval_expression,
   recalculate_for_stored,
   transform_for_async,
   apply_calculated_fields_stored,
-  jsexprToSQL,
   jsexprToWhere,
+  freeVariables,
 };

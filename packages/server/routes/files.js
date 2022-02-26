@@ -17,7 +17,7 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher, setTenant } = require("./utils.js");
 const {
   span,
   h5,
@@ -240,6 +240,7 @@ router.post(
  */
 router.post(
   "/upload",
+  setTenant, // TODO why is this needed?????
   error_catcher(async (req, res) => {
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);

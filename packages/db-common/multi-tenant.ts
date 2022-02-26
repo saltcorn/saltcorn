@@ -1,8 +1,7 @@
 /**
- * @category db-common
- * @module multi-tenant
+ * This is the multi tenant module
+ * @module
  */
-
 import { sqlsanitize } from "./internal";
 import { AsyncLocalStorage } from "async_hooks";
 
@@ -34,7 +33,10 @@ export const enable_multi_tenant = (): void => {};
  * @param {function} f
  * @returns {object}
  */
-export const runWithTenant = (tenant: string, f: () => any): any => {
+export const runWithTenant = <Type>(
+  tenant: string,
+  f: () => Promise<Type>
+): Promise<Type> => {
   if (!is_multi_tenant) return f();
   else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
 };

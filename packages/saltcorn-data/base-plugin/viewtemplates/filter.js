@@ -36,6 +36,7 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
+const { getState } = require("../../db/state");
 
 /**
  * @returns {Workflow}
@@ -203,7 +204,26 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
-
+      //console.log({ fieldview, field });
+      if (fieldview && field.type && field.type === "Key") {
+        const fv = getState().keyFieldviews[fieldview];
+        if (fv && (fv.isEdit || fv.isFilter)) {
+          segment.options = distinct_values[field_name];
+          return fv.run(
+            field_name,
+            state[field_name],
+            {
+              onChange: `set_state_field('${field_name}', this.value)`,
+              ...field.attributes,
+              ...configuration,
+            },
+            "",
+            false,
+            segment,
+            state
+          );
+        }
+      }
       if (
         fieldview &&
         field.type &&
@@ -241,7 +261,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       return select(
         {
           name: `ddfilter${field_name}`,
-          class: "form-control d-inline",
+          class: "form-control form-select d-inline",
           style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
         },
@@ -319,7 +339,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
       );
     },
   };
-  return renderLayout({ blockDispatch, layout, role });
+  return renderLayout({ blockDispatch, layout, role, req: extra.req });
 };
 
 /**

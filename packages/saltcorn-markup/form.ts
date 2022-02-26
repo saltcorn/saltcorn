@@ -141,7 +141,7 @@ const innerField = (
       }>`;
     case "select":
       const opts = select_options(v, hdr);
-      return `<select class="form-control ${validClass} ${
+      return `<select class="form-control form-select ${validClass} ${
         hdr.class || ""
       }"${maybe_disabled} data-fieldname="${text_attr(
         hdr.form_name
@@ -204,12 +204,10 @@ const innerField = (
         ? div(
             { class: "input-group" },
             the_input,
-            div(
-              { class: "input-group-append" },
-              span(
-                { class: "input-group-text", id: "basic-addon2" },
-                hdr.postText
-              )
+
+            span(
+              { class: "input-group-text", id: "basic-addon2" },
+              hdr.postText
             )
           )
         : the_input;
@@ -395,6 +393,11 @@ const mkFormRowForField = (
  */
 const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
+    join_field(segment: any) {
+      if (segment.sourceURL)
+        return div({ "data-source-url": segment.sourceURL }, "join data");
+      return "";
+    },
     field(segment: any) {
       const field0 = form.fields.find((f) => f.name === segment.field_name);
       const field = { ...field0 };
@@ -473,7 +476,16 @@ const renderFormLayout = (form: Form): string => {
         );
       }
       if (action_name === "GoBack") {
-        return mkBtn(`onClick="history.back()" type="button"`);
+        const reload = configuration.reload_after ? "reload_on_init();" : "";
+        const doNav =
+          !configuration.steps || configuration.steps !== 1
+            ? "history.back()"
+            : `history.go(${-1 * configuration.steps})`;
+        if (configuration.save_first)
+          return mkBtn(
+            `onClick="${reload}saveAndContinue(this,()=>${doNav})" type="button"`
+          );
+        else return mkBtn(`onClick="${reload}${doNav}" type="button"`);
       }
       if (action_name === "SaveAndContinue") {
         return (
@@ -535,7 +547,7 @@ const renderForm = (
           class: "btn btn-secondary dropdown-toggle",
           type: "button",
           id: "dropdownMenuButton",
-          "data-toggle": "dropdown",
+          "data-bs-toggle": "dropdown",
           "aria-haspopup": "true",
           "aria-expanded": "false",
         },

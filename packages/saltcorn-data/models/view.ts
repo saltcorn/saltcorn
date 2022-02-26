@@ -18,7 +18,7 @@ const {
 const { remove_from_menu } = require("./config");
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
-import markup from "@saltcorn/markup";
+import markup from "@saltcorn/markup/index";
 const { renderForm } = markup;
 
 import type {
@@ -30,7 +30,7 @@ import type {
 import type Table from "./table";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
-import { instanceOfType } from "@saltcorn/types/common_types";
+import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
@@ -437,7 +437,7 @@ class View {
    * @returns {Promise<object>}
    */
   async runMany(
-    query: string,
+    query: GenObj,
     extraArgs: RunExtra
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
@@ -494,18 +494,14 @@ class View {
    * @returns {Promise<object>}
    */
   async runPost(
-    query: string,
-    body: string,
+    query: GenObj,
+    body: GenObj,
     extraArgs: RunExtra
   ): Promise<any> {
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.runPost)
       throw new InvalidConfiguration(
         `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
-      );
-    if (!this.table_id)
-      throw new InvalidConfiguration(
-        `Unable to call runPost, ${this.viewtemplate} is missing 'table_id'.`
       );
     return await this.viewtemplateObj!.runPost(
       this.table_id,
@@ -643,7 +639,7 @@ class View {
     let pix = 0;
     if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
       for (const step of this.slug.steps) {
-        if (step.unique) {
+        if (step.unique && params[pix]) {
           query[step.field] = step.transform
             ? { [step.transform]: params[pix] }
             : params[pix];

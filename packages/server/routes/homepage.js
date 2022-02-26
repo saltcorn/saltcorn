@@ -13,7 +13,7 @@ const Page = require("@saltcorn/data/models/page");
 const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
 const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
-const { fetch_available_packs } = require("@saltcorn/data/models/pack");
+const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
 const { restore_backup } = require("../markup/admin");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
@@ -50,17 +50,17 @@ const tableCard = (tables, req) => ({
   contents:
     (tables.length <= 1
       ? p(
-          { class: "mt-2 pr-2" },
+          { class: "mt-2 pe-2" },
           i(req.__("Tables organise data by fields and rows."))
         )
       : "") + tableTable(tables, req),
-  bodyClass: "py-0 pr-0",
+  bodyClass: "py-0 pe-0",
   footer: div(
     a({ href: `/table/new`, class: "btn btn-primary" }, req.__("Create table")),
     a(
       {
         href: `/table/create-from-csv`,
-        class: "btn btn-secondary ml-2",
+        class: "btn btn-secondary ms-2",
       },
       req.__("CSV upload")
     )
@@ -97,11 +97,11 @@ const viewCard = (views, req) => ({
   type: "card",
   title: link("/viewedit", req.__("Views")),
   class: "welcome-page-entity-list",
-  bodyClass: "py-0  pr-0",
+  bodyClass: "py-0  pe-0",
   contents:
     (views.length <= 1
       ? p(
-          { class: "mt-2 pr-2" },
+          { class: "mt-2 pe-2" },
           i(
             req.__(
               "Views display data from tables. A view is a view template applied to a table, with configuration."
@@ -152,7 +152,7 @@ const pageCard = (pages, req) => ({
   contents:
     (pages.length <= 1
       ? p(
-          { class: "mt-2 pr-2" },
+          { class: "mt-2 pe-2" },
           i(
             req.__(
               "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content."
@@ -162,8 +162,8 @@ const pageCard = (pages, req) => ({
       : "") +
     (pages.length > 0
       ? pageTable(pages, req)
-      : div({ class: "mt-2 pr-2" }, p(req.__("No pages")))),
-  bodyClass: "py-0 pr-0",
+      : div({ class: "mt-2 pe-2" }, p(req.__("No pages")))),
+  bodyClass: "py-0 pe-0",
   footer: div(
     a(
       { href: `/pageedit/new`, class: "btn btn-primary" },
@@ -231,7 +231,7 @@ const actionsTab = async (req, triggers) => {
     { class: "pb-3" },
     triggers.length <= 1 &&
       p(
-        { class: "mt-2 pr-2" },
+        { class: "mt-2 pe-2" },
         i(req.__("Triggers run actions in response to events."))
       ),
     triggers.length == 0
@@ -262,7 +262,7 @@ const actionsTab = async (req, triggers) => {
 };
 const packTab = (req, packlist) =>
   div(
-    { class: "pb-3 pt-2 pr-4" },
+    { class: "pb-3 pt-2 pe-4" },
     p(req.__("Instead of building, get up and running in no time with packs")),
     p(
       { class: "font-italic" },
@@ -289,7 +289,7 @@ const packTab = (req, packlist) =>
 
 const helpCard = (req) =>
   div(
-    { class: "pb-3 pt-2 pr-4" },
+    { class: "pb-3 pt-2 pe-4" },
     p(req.__("Confused?")),
     p(
       req.__(
@@ -354,7 +354,7 @@ const welcome_page = async (req) => {
           {
             type: "card",
             //title: req.__("Install pack"),
-            bodyClass: "py-0 pr-0",
+            bodyClass: "py-0 pe-0",
             class: "welcome-page-entity-list",
 
             tabContents:
@@ -373,7 +373,7 @@ const welcome_page = async (req) => {
           {
             type: "card",
             //title: req.__("Learn"),
-            bodyClass: "py-0 pr-0",
+            bodyClass: "py-0 pe-0",
             class: "welcome-page-entity-list",
             tabContents:
               users.length > 4
