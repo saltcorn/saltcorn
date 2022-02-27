@@ -236,7 +236,7 @@ export type ViewTemplate = {
 };
 
 export type Action = (
-  table_id?: number,
+  table_id: number | undefined | null,
   viewname: string,
   optsOne: any,
   body: any,
