@@ -435,7 +435,7 @@ const store_actions_dropdown = (req) =>
     ),
     div(
       {
-        class: "dropdown-menu dropdown-menu-right",
+        class: "dropdown-menu dropdown-menu-end",
         "aria-labelledby": "dropdownMenuButton",
       },
       a(

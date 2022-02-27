@@ -544,7 +544,7 @@ const run = async (
   }
 
   const create_link_div = isright
-    ? div({ class: "float-right" }, create_link)
+    ? div({ class: "float-end" }, create_link)
     : create_link;
 
   const tableHtml = mkTable(tfields, rows, page_opts);

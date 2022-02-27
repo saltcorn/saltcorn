@@ -256,7 +256,7 @@ const mkFormRowForRepeat = (
     i({ class: "fas fa-plus" })
   );
   const icons = div(
-    { class: "float-right" },
+    { class: "float-end" },
     span(
       { onclick: "rep_up(this)" },
       i({ class: "fa fa-arrow-up pull-right" })
