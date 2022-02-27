@@ -167,7 +167,7 @@ const settingsDropdown = (id: string, elems: any): string =>
     ),
     div(
       {
-        class: "dropdown-menu dropdown-menu-right",
+        class: "dropdown-menu dropdown-menu-end",
         "aria-labelledby": id,
       },
       elems
