@@ -92,7 +92,7 @@ const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
     <div
       className={`${
         isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
-      } ${textStyle} is-text ${isFormula.text ? "text-monospace" : ""} ${
+      } ${textStyle} is-text ${isFormula.text ? "font-monospace" : ""} ${
         selected ? "selected-node" : ""
       }`}
       ref={(dom) => connect(drag(dom))}

@@ -144,7 +144,7 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
       </div>
       {isFormula[nodekey] && (
         <div style={{ marginTop: "-5px" }}>
-          <small className="text-muted text-monospace">FORMULA</small>
+          <small className="text-muted font-monospace">FORMULA</small>
         </div>
       )}
     </Fragment>
@@ -255,7 +255,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
       <option value="text-underline">Underline</option>
-      <option value="text-monospace">Monospace</option>
+      <option value="font-monospace">Monospace</option>
     </select>
   );
 };

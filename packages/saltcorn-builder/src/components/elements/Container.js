@@ -742,7 +742,7 @@ const ContainerSettings = () => {
                   onChange={setAProp("showIfFormula")}
                 />
                 <div style={{ marginTop: "-5px" }}>
-                  <small className="text-muted text-monospace">FORMULA</small>
+                  <small className="text-muted font-monospace">FORMULA</small>
                 </div>
               </td>
             </tr>

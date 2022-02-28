@@ -53,7 +53,7 @@ const Link = ({
     <span
       className={`${textStyle} is-builder-link ${
         selected ? "selected-node" : ""
-      } ${isFormula.text ? "text-monospace" : ""} ${link_style} ${link_size}`}
+      } ${isFormula.text ? "font-monospace" : ""} ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       style={
