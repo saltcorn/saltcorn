@@ -105,7 +105,7 @@ const action_link = (
       icon: action_icon,
       style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
-      formClass: block === false && "d-inline"
+      formClass: !block && "d-inline"
     });
 };
 
