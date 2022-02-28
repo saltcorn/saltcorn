@@ -74,6 +74,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
+    block
   },
   __ = (s) => s
 ) => {
@@ -104,6 +105,7 @@ const action_link = (
       icon: action_icon,
       style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
+      formClass: block === false && "d-inline"
     });
 };
 
