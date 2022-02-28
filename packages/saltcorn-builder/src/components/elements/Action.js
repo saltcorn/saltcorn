@@ -19,8 +19,8 @@ import {
 } from "./utils";
 
 export /**
- * 
- * @param {object} props 
+ *
+ * @param {object} props
  * @param {string} props.name
  * @param {string} props.block
  * @param {string} props.action_label
@@ -35,8 +35,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const Action = 
-({
+const Action = ({
   name,
   block,
   action_label,
@@ -51,14 +50,15 @@ const Action =
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-
+  console.log({ block });
   /**
    * @type {object}
    */
-  const btn = (
+  return (
     <button
-      className={`btn ${action_style || "btn-primary"} ${action_size || ""}`}
-      {...blockProps(block)}
+      className={`btn ${action_style || "btn-primary"} ${action_size || ""} ${
+        selected ? "selected-node" : ""
+      } ${block ? "d-block" : ""}`}
       ref={(dom) => connect(drag(dom))}
       style={
         action_style === "btn-custom-color"
@@ -74,16 +74,15 @@ const Action =
       {action_label || name}
     </button>
   );
-  return selected ? <span className={"selected-node"}>{btn}</span> : btn;
 };
 
-export /** 
+export /**
  * @category saltcorn-builder
  * @subcategory components
  * @namespace
  * @returns {div}
  */
- const ActionSettings = () => {
+const ActionSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -195,8 +194,8 @@ export /**
   );
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Action.craft = {
   displayName: "Action",
