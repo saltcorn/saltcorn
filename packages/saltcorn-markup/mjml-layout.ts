@@ -37,7 +37,7 @@ import helpers = require("./helpers");
 const applyTextStyle = (segment: any, inner: string): string => {
   let style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
-    : segment.style;
+    : segment.style || {};
   let hasStyle = Object.keys(style).length > 0;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
@@ -223,10 +223,7 @@ const render = ({
             div(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h6(
-                    { class: "m-0 fw-bold text-primary" },
-                    segment.title
-                  )
+                ? h6({ class: "m-0 fw-bold text-primary" }, segment.title)
                 : segment.title
             ),
           segment.tabContents &&

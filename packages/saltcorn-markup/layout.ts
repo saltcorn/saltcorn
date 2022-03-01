@@ -75,7 +75,7 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
 const applyTextStyle = (segment: any, inner: string): string => {
   let style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
-    : segment.style;
+    : segment.style || {};
   let hasStyle = Object.keys(style).length > 0;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
