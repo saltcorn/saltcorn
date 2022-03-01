@@ -128,6 +128,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           inline={segment.inline || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
+          style={segment.style || {}}
           icon={segment.icon}
           font={segment.font || ""}
         />
@@ -225,6 +226,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           titles={segment.titles}
           ntabs={segment.ntabs}
           independent={segment.independent}
+          deeplink={segment.deeplink}
           tabsStyle={segment.tabsStyle}
           contents={segment.contents.map(toTag)}
         />
@@ -394,6 +396,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
+        style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,
       };
@@ -417,6 +420,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         titles: node.props.titles,
         tabsStyle: node.props.tabsStyle,
         independent: node.props.independent,
+        deeplink: node.props.deeplink,
         ntabs: node.props.ntabs,
       };
     }

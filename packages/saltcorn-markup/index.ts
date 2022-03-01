@@ -74,7 +74,7 @@ const post_btn = (
   }: PostBtnOpts | any = {}
 ): string =>
   `<form action="${text(href)}" method="post"${
-    formClass ? `class="${formClass}"` : ""
+    formClass ? ` class="${formClass}"` : ""
   }>
   <input type="hidden" name="_csrf" value="${csrfToken}">
 <button ${ajax ? 'type="button"' : 'type="submit"'} ${

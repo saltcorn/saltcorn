@@ -94,7 +94,7 @@ const ToggleFilterSettings = () => {
           <td>
             <select
               value={name}
-              className="form-control"
+              className="form-control form-select"
               onChange={(e) => {
                 setProp((prop) => (prop.name = e.target.value));
                 const field = options.fields.find(
@@ -121,7 +121,7 @@ const ToggleFilterSettings = () => {
             {isBool ? (
               <select
                 value={value}
-                className="w-100"
+                className="w-100 form-select"
                 onChange={setAProp("value")}
               >
                 <option value="on">True</option>
@@ -145,7 +145,7 @@ const ToggleFilterSettings = () => {
             <td>
               <select
                 value={preset_value}
-                className="form-control"
+                className="form-control form-select"
                 onChange={setAProp("preset_value")}
               >
                 <option value=""></option>
@@ -176,7 +176,7 @@ const ToggleFilterSettings = () => {
           </td>
           <td>
             <select
-              className="form-control"
+              className="form-control form-select"
               value={size}
               onChange={setAProp("size")}
             >
@@ -195,7 +195,7 @@ const ToggleFilterSettings = () => {
           </td>
           <td>
             <select
-              className="form-control"
+              className="form-control form-select"
               value={style}
               onChange={setAProp("style")}
             >

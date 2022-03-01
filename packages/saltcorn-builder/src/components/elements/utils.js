@@ -144,7 +144,7 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
       </div>
       {isFormula[nodekey] && (
         <div style={{ marginTop: "-5px" }}>
-          <small className="text-muted text-monospace">FORMULA</small>
+          <small className="text-muted font-monospace">FORMULA</small>
         </div>
       )}
     </Fragment>
@@ -166,6 +166,7 @@ const MinRoleSetting = ({ minRole, setProp }) => {
     <div>
       <label>Minimum Role</label>
       <select
+        className="form-control form-select"
         value={minRole}
         onChange={(e) => (e) => {
           if (e.target) {
@@ -203,7 +204,7 @@ const MinRoleSettingRow = ({ minRole, setProp }) => {
       <td>
         <select
           value={minRole}
-          className="form-control"
+          className="form-control form-select"
           onChange={(e) => {
             if (e.target) {
               const target_value = e.target.value;
@@ -235,7 +236,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
   return (
     <select
       value={textStyle}
-      className="form-control"
+      className="form-control form-select"
       onChange={(e) => {
         if (e.target) {
           const target_value = e.target.value;
@@ -255,7 +256,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
       <option value="small">Small</option>
       <option value="text-muted">Muted</option>
       <option value="text-underline">Underline</option>
-      <option value="text-monospace">Monospace</option>
+      <option value="font-monospace">Monospace</option>
     </select>
   );
 };
@@ -564,12 +565,12 @@ export /**
 const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
   <div>
     {fields.map((f, ix) => {
-      if (f.showIf && node && node.configuration) {
+      if (f.showIf && configuration) {
         let noshow = false;
         Object.entries(f.showIf).forEach(([nm, value]) => {
           if (Array.isArray(value))
-            noshow = noshow || value.includes(node.configuration[nm]);
-          else noshow = noshow || value !== node.configuration[nm];
+            noshow = noshow || value.includes(configuration[nm]);
+          else noshow = noshow || value !== configuration[nm];
         });
         if (noshow) return null;
       }
@@ -624,6 +625,8 @@ const ConfigField = ({
    * @param {object} v
    * @returns {void}
    */
+  const options = useContext(optionsCtx);
+
   const myOnChange = (v) => {
     setProp((prop) => {
       if (configuration) {
@@ -659,7 +662,7 @@ const ConfigField = ({
             : field.attributes.options;
         return (
           <select
-            className="form-control"
+            className="form-control form-select"
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
           >
@@ -683,6 +686,20 @@ const ConfigField = ({
           />
         );
     },
+    Font: () => (
+      <select
+        className="form-control form-select"
+        value={value || ""}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
+      >
+        <option value={""}></option>
+        {Object.entries(options.fonts || {}).map(([nm, ff], ix) => (
+          <option key={ix} value={ff}>
+            {nm}
+          </option>
+        ))}
+      </select>
+    ),
     Integer: () => (
       <input
         type="number"
@@ -735,7 +752,7 @@ const ConfigField = ({
     ),
     select: () => (
       <select
-        className="form-control"
+        className="form-control form-select"
         value={value || ""}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       >
@@ -1030,7 +1047,7 @@ const ButtonOrLinkSettingsRows = ({
       </td>
       <td>
         <select
-          className="form-control"
+          className="form-control form-select"
           value={values[keyPrefix + "style"]}
           onChange={setAProp(keyPrefix + "style")}
         >
@@ -1062,7 +1079,7 @@ const ButtonOrLinkSettingsRows = ({
       </td>
       <td>
         <select
-          className="form-control"
+          className="form-control form-select"
           value={values[keyPrefix + "size"]}
           onChange={setAProp(keyPrefix + "size")}
         >

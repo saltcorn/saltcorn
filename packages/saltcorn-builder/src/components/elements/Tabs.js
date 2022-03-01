@@ -128,12 +128,14 @@ const TabsSettings = () => {
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
     independent: node.data.props.independent,
+    deeplink: node.data.props.deeplink,
     titles: node.data.props.titles,
   }));
   const {
     actions: { setProp },
     titles,
     tabsStyle,
+    deeplink,
     independent,
     ntabs,
   } = node;
@@ -147,7 +149,7 @@ const TabsSettings = () => {
           <td>
             <select
               value={tabsStyle}
-              className="form-control"
+              className="form-control form-select"
               onChange={(e) =>
                 setProp((prop) => {
                   prop.tabsStyle = e.target.value;
@@ -194,7 +196,7 @@ const TabsSettings = () => {
             </td>
           </tr>
         ))}
-        {tabsStyle === "Accordion" && (
+        {tabsStyle === "Accordion" ? (
           <tr>
             <td colSpan="2">
               <div className="form-check">
@@ -213,6 +215,25 @@ const TabsSettings = () => {
               </div>
             </td>
           </tr>
+        ) : (
+          <tr>
+            <td colSpan="2">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={deeplink}
+                  onChange={(e) => {
+                    if (e.target) {
+                      setProp((prop) => (prop.deeplink = e.target.checked));
+                    }
+                  }}
+                />
+                <label className="form-check-label">Deep link</label>
+              </div>
+            </td>
+          </tr>
         )}
       </tbody>
     </table>
@@ -228,6 +249,7 @@ Tabs.craft = {
     ntabs: 2,
     tabsStyle: "Tabs",
     independent: false,
+    deeplink: true,
   },
   displayName: "Tabs",
   related: {

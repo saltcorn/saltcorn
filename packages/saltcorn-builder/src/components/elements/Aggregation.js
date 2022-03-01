@@ -76,7 +76,7 @@ const AggregationSettings = () => {
           </td>
           <td>
             <select
-              className="form-control"
+              className="form-control form-select"
               value={agg_relation}
               onChange={(e) =>
                 setProp((prop) => {
@@ -100,7 +100,7 @@ const AggregationSettings = () => {
           </td>
           <td>
             <select
-              className="form-control"
+              className="form-control form-select"
               value={agg_field}
               onChange={(e) =>
                 setProp((prop) => (prop.agg_field = e.target.value))
@@ -121,7 +121,7 @@ const AggregationSettings = () => {
           <td>
             <select
               value={stat}
-              className="form-control"
+              className="form-control form-select"
               onChange={(e) => setProp((prop) => (prop.stat = e.target.value))}
             >
               <option value={"Count"}>Count</option>

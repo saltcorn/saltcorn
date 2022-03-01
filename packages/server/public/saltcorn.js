@@ -292,7 +292,7 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  $('a[data-bs-toggle="tab"]').historyTabs();
+  $('a[data-bs-toggle="tab"].deeplink').historyTabs();
 }
 
 $(initialize_page);
