@@ -564,12 +564,12 @@ export /**
 const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
   <div>
     {fields.map((f, ix) => {
-      if (f.showIf && node && node.configuration) {
+      if (f.showIf && configuration) {
         let noshow = false;
         Object.entries(f.showIf).forEach(([nm, value]) => {
           if (Array.isArray(value))
-            noshow = noshow || value.includes(node.configuration[nm]);
-          else noshow = noshow || value !== node.configuration[nm];
+            noshow = noshow || value.includes(configuration[nm]);
+          else noshow = noshow || value !== configuration[nm];
         });
         if (noshow) return null;
       }
