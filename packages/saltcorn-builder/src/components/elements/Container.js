@@ -395,7 +395,6 @@ const ContainerSettings = () => {
                 { value: "left", title: "Left", label: <AlignStart /> },
                 { value: "center", title: "Center", label: <AlignCenter /> },
                 { value: "right", title: "Right", label: <AlignEnd /> },
-                { value: "justify", title: "Justify", label: <Justify /> },
               ],
             }}
             node={node}
