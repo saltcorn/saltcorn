@@ -363,10 +363,7 @@ const render = ({
             div(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h6(
-                    { class: "m-0 fw-bold text-primary" },
-                    segment.title
-                  )
+                ? h6({ class: "m-0 fw-bold text-primary" }, segment.title)
                 : segment.title
             ),
           segment.tabContents &&
