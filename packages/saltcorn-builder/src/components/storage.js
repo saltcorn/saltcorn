@@ -225,6 +225,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           titles={segment.titles}
           ntabs={segment.ntabs}
           independent={segment.independent}
+          deeplink={segment.deeplink}
           tabsStyle={segment.tabsStyle}
           contents={segment.contents.map(toTag)}
         />
@@ -417,6 +418,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         titles: node.props.titles,
         tabsStyle: node.props.tabsStyle,
         independent: node.props.independent,
+        deeplink: node.props.deeplink,
         ntabs: node.props.ntabs,
       };
     }
