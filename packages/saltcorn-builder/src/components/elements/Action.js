@@ -50,7 +50,6 @@ const Action = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  console.log({ block });
   /**
    * @type {object}
    */
