@@ -264,6 +264,39 @@ const TextSettings = () => {
             node={node}
             setProp={setProp}
           />
+          <SettingsRow
+            field={{
+              name: "font-size",
+              label: "Font size",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "font-weight",
+              label: "Weight",
+              type: "Integer",
+              min: 100,
+              max: 900,
+              step: 100,
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "line-height",
+              label: "Line height",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
         </tbody>
       </table>
       <BlockOrInlineSetting
