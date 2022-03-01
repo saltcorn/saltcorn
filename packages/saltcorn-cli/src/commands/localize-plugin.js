@@ -37,7 +37,7 @@ class LocalizePluginCommand extends Command {
 
 LocalizePluginCommand.args = [
   { name: "plugin", required: true, description: "Current plugin name" },
-  { name: "path", required: true, description: "path to local plugin" },
+  { name: "path", required: true, description: "Absolute path to local plugin" },
 ];
 
 /**
