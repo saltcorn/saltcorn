@@ -820,7 +820,7 @@ const ConfigField = ({
             autoable={field.autoable}
             className={`w-${
               styleDim === "auto" ? 100 : 50
-            } form-control-sm d-inline dimunit form-select`}
+            } form-control-sm d-inline dimunit`}
             vert={true}
             onChange={(e) => {
               if (!e.target) return;
