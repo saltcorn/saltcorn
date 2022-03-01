@@ -120,7 +120,7 @@ const JoinFieldSettings = () => {
             <td>
               <select
                 value={name}
-                className="form-control"
+                className="form-control form-select"
                 onChange={(e) => {
                   setProp((prop) => (prop.name = e.target.value));
                   const newfvs = options.field_view_options[e.target.value];
@@ -150,7 +150,7 @@ const JoinFieldSettings = () => {
               <td>
                 <select
                   value={fieldview}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={(e) => {
                     setProp((prop) => (prop.fieldview = e.target.value));
                     refetchPreview({ fieldview: e.target.value });

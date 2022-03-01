@@ -139,7 +139,7 @@ const LinkSettings = () => {
             <td>
               <select
                 value={link_src}
-                className="form-control"
+                className="form-control form-select"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.link_src = e.target.value;
@@ -181,7 +181,7 @@ const LinkSettings = () => {
               <td>
                 <select
                   value={url}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={setAProp("url")}
                 >
                   <option></option>
@@ -200,7 +200,7 @@ const LinkSettings = () => {
               <td>
                 <select
                   value={url}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={setAProp("url")}
                 >
                   <option></option>

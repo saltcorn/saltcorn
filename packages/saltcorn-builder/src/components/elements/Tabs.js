@@ -149,7 +149,7 @@ const TabsSettings = () => {
           <td>
             <select
               value={tabsStyle}
-              className="form-control"
+              className="form-control form-select"
               onChange={(e) =>
                 setProp((prop) => {
                   prop.tabsStyle = e.target.value;

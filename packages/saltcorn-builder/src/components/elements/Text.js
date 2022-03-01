@@ -16,7 +16,7 @@ import {
   DynamicFontAwesomeIcon,
   isBlock,
   reactifyStyles,
-  SettingsRow
+  SettingsRow,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -224,7 +224,11 @@ const TextSettings = () => {
       {mode === "edit" && (
         <Fragment>
           <label>Label for Field</label>
-          <select value={labelFor} onChange={setAProp("labelFor")}>
+          <select
+            value={labelFor}
+            onChange={setAProp("labelFor")}
+            className="form-control form-select"
+          >
             <option value={""}></option>
             {fields.map((f, ix) => (
               <option key={ix} value={f.name}>

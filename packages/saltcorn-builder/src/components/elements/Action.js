@@ -121,7 +121,7 @@ const ActionSettings = () => {
             <td>
               <select
                 value={name}
-                className="form-control"
+                className="form-control form-select"
                 onChange={(e) => {
                   setProp((prop) => (prop.name = e.target.value));
                   setInitialConfig(

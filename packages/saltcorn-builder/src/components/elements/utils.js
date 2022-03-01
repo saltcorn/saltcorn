@@ -166,6 +166,7 @@ const MinRoleSetting = ({ minRole, setProp }) => {
     <div>
       <label>Minimum Role</label>
       <select
+        className="form-control form-select"
         value={minRole}
         onChange={(e) => (e) => {
           if (e.target) {
@@ -203,7 +204,7 @@ const MinRoleSettingRow = ({ minRole, setProp }) => {
       <td>
         <select
           value={minRole}
-          className="form-control"
+          className="form-control form-select"
           onChange={(e) => {
             if (e.target) {
               const target_value = e.target.value;
@@ -235,7 +236,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
   return (
     <select
       value={textStyle}
-      className="form-control"
+      className="form-control form-select"
       onChange={(e) => {
         if (e.target) {
           const target_value = e.target.value;
@@ -661,7 +662,7 @@ const ConfigField = ({
             : field.attributes.options;
         return (
           <select
-            className="form-control"
+            className="form-control form-select"
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
           >
@@ -687,16 +688,13 @@ const ConfigField = ({
     },
     Font: () => (
       <select
-        className="form-control"
+        className="form-control form-select"
         value={value || ""}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       >
         <option value={""}></option>
-        {Object.entries(options.fonts||{}).map(([nm, ff], ix) => (
-          <option
-            key={ix}
-            value={ff}
-          >
+        {Object.entries(options.fonts || {}).map(([nm, ff], ix) => (
+          <option key={ix} value={ff}>
             {nm}
           </option>
         ))}
@@ -754,7 +752,7 @@ const ConfigField = ({
     ),
     select: () => (
       <select
-        className="form-control"
+        className="form-control form-select"
         value={value || ""}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       >
@@ -822,7 +820,7 @@ const ConfigField = ({
             autoable={field.autoable}
             className={`w-${
               styleDim === "auto" ? 100 : 50
-            } form-control-sm d-inline dimunit`}
+            } form-control-sm d-inline dimunit form-select`}
             vert={true}
             onChange={(e) => {
               if (!e.target) return;
@@ -1049,7 +1047,7 @@ const ButtonOrLinkSettingsRows = ({
       </td>
       <td>
         <select
-          className="form-control"
+          className="form-control form-select"
           value={values[keyPrefix + "style"]}
           onChange={setAProp(keyPrefix + "style")}
         >
@@ -1081,7 +1079,7 @@ const ButtonOrLinkSettingsRows = ({
       </td>
       <td>
         <select
-          className="form-control"
+          className="form-control form-select"
           value={values[keyPrefix + "size"]}
           onChange={setAProp(keyPrefix + "size")}
         >
