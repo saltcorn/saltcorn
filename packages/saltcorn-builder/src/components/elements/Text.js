@@ -15,6 +15,7 @@ import {
   TextStyleRow,
   DynamicFontAwesomeIcon,
   isBlock,
+  reactifyStyles,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -74,7 +75,16 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
+const Text = ({
+  text,
+  block,
+  inline,
+  isFormula,
+  textStyle,
+  icon,
+  font,
+  style,
+}) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -97,7 +107,10 @@ const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
       }`}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
-      style={font ? { fontFamily: font } : {}}
+      style={{
+        ...(font ? { fontFamily: font } : {}),
+        ...reactifyStyles(style || {}),
+      }}
     >
       <DynamicFontAwesomeIcon icon={icon} className="me-1" />
       {isFormula.text ? (
@@ -146,6 +159,7 @@ const TextSettings = () => {
     labelFor: node.data.props.labelFor,
     icon: node.data.props.icon,
     font: node.data.props.font,
+    style: node.data.props.style,
   }));
   const {
     actions: { setProp },
@@ -157,6 +171,7 @@ const TextSettings = () => {
     labelFor,
     icon,
     font,
+    style
   } = node;
   const { mode, fields } = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -272,6 +287,7 @@ Text.craft = {
     textStyle: "",
     labelFor: "",
     font: "",
+    style: {},
   },
   displayName: "Text",
   related: {
