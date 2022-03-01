@@ -499,6 +499,11 @@ const render = ({
       Object.keys(style || {}).forEach((k) => {
         flexStyles += `${k}:${style[k]};`;
       });
+      const to_bs5 = (s: string) => {
+        if (s === "left") return "start";
+        if (s === "right") return "end";
+        return s;
+      };
       return wrap(
         segment,
         isTop,
@@ -508,7 +513,7 @@ const render = ({
           {
             class: [
               customClass || false,
-              hAlign && `text-${hAlign}`,
+              hAlign && `text-${to_bs5(hAlign)}`,
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "bottom" && "d-flex align-items-end",
               vAlign === "middle" &&
