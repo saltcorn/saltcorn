@@ -73,7 +73,10 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment: any, inner: string): string => {
-  let style: any = segment.font ? { fontFamily: segment.font } : {};
+  let style: any = segment.font
+    ? { fontFamily: segment.font, ...segment.style }
+    : segment.style;
+  let hasStyle = Object.keys(style).length > 0;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
   switch (segment.textStyle) {
@@ -92,7 +95,7 @@ const applyTextStyle = (segment: any, inner: string): string => {
     default:
       return segment.block
         ? div({ class: segment.textStyle || "", style }, inner)
-        : segment.textStyle || segment.font
+        : segment.textStyle || hasStyle
         ? span({ class: segment.textStyle || "", style }, inner)
         : inner;
   }
