@@ -169,7 +169,10 @@ class Workflow implements AbstractWorkflow {
         title: this.title(step, stepIx),
       };
     } else if (step.builder) {
-      const options = await applyAsync(step.builder, context);
+      const options = {
+        ...(await applyAsync(step.builder, context)),
+        fonts: getState().fonts,
+      };
       return {
         renderBuilder: {
           options,

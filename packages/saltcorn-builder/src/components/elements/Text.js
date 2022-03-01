@@ -16,6 +16,7 @@ import {
   DynamicFontAwesomeIcon,
   isBlock,
   reactifyStyles,
+  SettingsRow
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -171,7 +172,7 @@ const TextSettings = () => {
     labelFor,
     icon,
     font,
-    style
+    style,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -250,19 +251,15 @@ const TextSettings = () => {
               />
             </td>
           </tr>
-          <tr>
-            <td>
-              <label>Font</label>
-            </td>
-            <td>
-              <input
-                type="text"
-                className="form-control"
-                value={font}
-                onChange={setAProp("font")}
-              />
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "font",
+              label: "Font family",
+              type: "Font",
+            }}
+            node={node}
+            setProp={setProp}
+          />
         </tbody>
       </table>
       <BlockOrInlineSetting

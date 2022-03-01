@@ -542,7 +542,7 @@ const ContainerSettings = () => {
             field={{
               name: "font-family",
               label: "Font family",
-              type: "String",
+              type: "Font",
             }}
             node={node}
             setProp={setProp}

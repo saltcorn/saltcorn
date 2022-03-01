@@ -624,6 +624,8 @@ const ConfigField = ({
    * @param {object} v
    * @returns {void}
    */
+  const options = useContext(optionsCtx);
+
   const myOnChange = (v) => {
     setProp((prop) => {
       if (configuration) {
@@ -683,6 +685,23 @@ const ConfigField = ({
           />
         );
     },
+    Font: () => (
+      <select
+        className="form-control"
+        value={value || ""}
+        onChange={(e) => e.target && myOnChange(e.target.value)}
+      >
+        <option value={""}></option>
+        {Object.entries(options.fonts||{}).map(([nm, ff], ix) => (
+          <option
+            key={ix}
+            value={ff}
+          >
+            {nm}
+          </option>
+        ))}
+      </select>
+    ),
     Integer: () => (
       <input
         type="number"
