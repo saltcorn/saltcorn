@@ -9,21 +9,58 @@
     <script src="js/bundles/sbadmin2.bundle.js"></script>
 
     <script>
-      window.onload = function () {
-        document.getElementById("time-div").innerHTML =
-          saltcorn.markup.localeDateTime(new Date());
+      const get_headers = () => {
+        const stdHeaders = [
+          { css: "public/saltcorn.css" },
+          { script: "public/saltcorn.js" },
+        ];
+        return [...stdHeaders];
       };
+
+      const wrap = (title, contents, state) => {
+        const bodyClass = "";
+        const alerts = [];
+        const role_id = 1;
+        const role = role_id;
+        const layout = state.getLayout({ role_id: role_id });
+
+        const wrappedIn = layout.wrap({
+          title,
+          brand: {},
+          menu: [],
+          alerts,
+          body: contents.above.join(""),
+          headers: get_headers(),
+          role,
+          bodyClass,
+        });
+        return wrappedIn;
+      };
+
       document.addEventListener("deviceready", async () => {
-        console.log("mobile app: Initializing 'saltcorn-data/db'");
-        saltcorn.data.db.init();
-        console.log("mobile app: Doing a schema reset");
-        await saltcorn.data.db.reset();
-        console.log("mobile app: App is up");
+        await saltcorn.data.db.init();
+        const state = saltcorn.data.state.getState();
+        await state.refresh_tables();
+        await state.refresh_views();
+        state.registerPlugin("base", saltcorn.base_plugin);
+        state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
+        const views = await saltcorn.data.models.View.find({
+          name: "ListTodosB",
+        });
+        for (const view of views) {
+          const contents = await view.run_possibly_on_page({}, {}, {});
+          let help = { above: [contents] };
+          document.getElementById("content-div").innerHTML = wrap(
+            "Todos",
+            help,
+            state
+          );
+        }
       });
     </script>
   </head>
 
   <body>
-    <div id="time-div"></div>
+    <div id="content-div"></div>
   </body>
 </html>

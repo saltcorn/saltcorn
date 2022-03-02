@@ -6,6 +6,7 @@ import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Where } from "@saltcorn/db-common/internal";
+import { isNode } from "./webpack-helper";
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -52,7 +53,8 @@ const applyAsync = async (f: Function | any, x: any) => {
 };
 
 const structuredClone = (obj: any) => {
-  return deserialize(serialize(obj));
+  if (isNode()) return deserialize(serialize(obj));
+  else return JSON.parse(JSON.stringify(obj));
 };
 
 class InvalidAdminAction extends Error {

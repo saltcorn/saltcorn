@@ -14,6 +14,7 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
+const { isNode } = require("../../webpack-helper");
 
 /**
  * @function
@@ -111,31 +112,26 @@ const slug_transform = (row) => (step) =>
  * @param {Field[]} fields
  * @returns {function}
  */
-const get_view_link_query =
-  /*contract(
-  is.fun(is.array(is.class("Field")), is.fun(is.obj(), is.str)),*/
-  (fields, view) => {
-    if (view && view.slug && view.slug.steps && view.slug.steps.length > 0) {
-      return (r) => view.slug.steps.map(slug_transform(r)).join("");
-    }
-    const fUniqueString = fields.find(
-      (f) => f.is_unique && f.type.name === "String"
-    );
-    const pk_name = fields.find((f) => f.primary_key).name;
-    if (fUniqueString)
-      return (r) =>
-        r && r[fUniqueString.name]
-          ? `?${fUniqueString.name}=${encodeURIComponent(
-              r[fUniqueString.name]
-            )}`
-          : `?${pk_name}=${r[pk_name]}`;
-    const fUnique = fields.find((f) => f.is_unique);
-    if (fUnique)
-      return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
-    else {
-      return (r) => `?${pk_name}=${r[pk_name]}`;
-    }
-  };
+const get_view_link_query = (fields, view) => {
+  if (view && view.slug && view.slug.steps && view.slug.steps.length > 0) {
+    return (r) => view.slug.steps.map(slug_transform(r)).join("");
+  }
+  const fUniqueString = fields.find(
+    (f) => f.is_unique && f.type.name === "String"
+  );
+  const pk_name = fields.find((f) => f.primary_key).name;
+  if (fUniqueString)
+    return (r) =>
+      r && r[fUniqueString.name]
+        ? `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`
+        : `?${pk_name}=${r[pk_name]}`;
+  const fUnique = fields.find((f) => f.is_unique);
+  if (fUnique)
+    return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
+  else {
+    return (r) => `?${pk_name}=${r[pk_name]}`;
+  }
+};
 
 /**
  * @function
@@ -383,7 +379,11 @@ const get_viewable_fields = (
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => {
             if (action_requires_write(column.action_name)) {
-              if (table.min_role_write < role && !table.is_owner(req.user, r))
+              if (
+                isNode() &&
+                table.min_role_write < role &&
+                !table.is_owner(req.user, r)
+              )
                 return "";
             }
             const url = action_url(
@@ -411,7 +411,7 @@ const get_viewable_fields = (
                 label
               );
             else
-              return post_btn(url, label, req.csrfToken(), {
+              return post_btn(url, label, isNode() ? req.csrfToken() : "", {
                 small: true,
                 ajax: true,
                 reload_on_done: true,
@@ -658,7 +658,7 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
       }
     })
     .filter((tf) => !!tf);
-  const path = req.baseUrl + req.path;
+  const path = isNode() ? req.baseUrl + req.path : "";
   let action = `/view/${viewname}`;
   if (path && path.startsWith("/auth/")) action = path;
   const layout = structuredClone(layout0);

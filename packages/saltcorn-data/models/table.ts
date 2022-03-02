@@ -34,12 +34,14 @@ import {
 } from "@saltcorn/types/common_types";
 
 import Trigger from "./trigger";
+import expression from "./expression";
 const {
   apply_calculated_fields,
   apply_calculated_fields_stored,
   recalculate_for_stored,
   get_expression_function,
-} = require("./expression");
+} = expression;
+
 import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
@@ -53,6 +55,7 @@ const {
   structuredClone,
   getLines,
 } = require("../utils");
+import { isNode } from "../webpack-helper";
 /**
  * Transponce Objects
  * TODO more detailed explanation
@@ -248,7 +251,7 @@ class Table implements AbstractTable {
   is_owner(user: any, row: Row): boolean {
     if (!user) return false;
 
-    if (this.ownership_formula) {
+    if (this.ownership_formula && this.fields) {
       const f = get_expression_function(this.ownership_formula, this.fields);
       return f(row, user);
     }
@@ -410,7 +413,7 @@ class Table implements AbstractTable {
   async getRow(where: Where = {}): Promise<Row | null> {
     await this.getFields();
     const row = await db.selectMaybeOne(this.name, where);
-    if (!row) return null;
+    if (!row || !this.fields) return null;
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
@@ -423,6 +426,7 @@ class Table implements AbstractTable {
   async getRows(where: Where = {}, selopts?: SelectOptions): Promise<Row[]> {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
+    if (!this.fields) return [];
     return apply_calculated_fields(
       rows.map((r: Row) => this.readFromDB(r)),
       this.fields
@@ -467,6 +471,7 @@ class Table implements AbstractTable {
       existing = await db.selectOne(this.name, { [pk_name]: id });
       v = await apply_calculated_fields_stored(
         { ...existing, ...v_in },
+        // @ts-ignore TODO ch throw ?
         this.fields
       );
     } else v = v_in;
@@ -558,6 +563,7 @@ class Table implements AbstractTable {
    */
   async insertRow(v_in: Row, _userid?: number): Promise<any> {
     await this.getFields();
+    // @ts-ignore TODO ch throw?
     const v = await apply_calculated_fields_stored(v_in, this.fields);
     const pk_name = this.pk_name;
     const id = await db.insert(this.name, v, { pk_name });

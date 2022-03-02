@@ -152,12 +152,13 @@ const sideBarItem = (currentUrl) => (item) => {
  * @param {string} currentUrl
  * @returns {function}
  */
-const sideBarSection = (currentUrl) => (section) => [
-  section.section &&
-    hr({ class: "sidebar-divider" }) +
-      div({ class: "sidebar-heading" }, section.section),
-  section.items.map(sideBarItem(currentUrl)).join(""),
-];
+const sideBarSection = (currentUrl) => (section) =>
+  [
+    section.section &&
+      hr({ class: "sidebar-divider" }) +
+        div({ class: "sidebar-heading" }, section.section),
+    section.items.map(sideBarItem(currentUrl)).join(""),
+  ];
 
 /**
  * @param {object} brand
@@ -312,6 +313,25 @@ const formModify = (form) => {
   return form;
 };
 
+const allCssLink = db.is_node
+  ? `<link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/fontawesome-free/css/all.min.css">`
+  : `<link rel="stylesheet" href="plugin_sources/all.min.css">`;
+const sbadmin2CssLink = db.is_node
+  ? `<link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/css/sb-admin-2.css">`
+  : `<link rel="stylesheet" href="plugin_sources/sb-admin-2.css">`;
+const jqueryScript = db.is_node
+  ? `<script src="/static_assets/${db.connectObj.version_tag}/jquery-3.6.0.min.js"></script>`
+  : `<script src="public/jquery-3.6.0.min.js"></script>`;
+const bootstrapScript = db.is_node
+  ? `<script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>`
+  : `<script src="plugin_sources/bootstrap.bundle.min.js"></script>`;
+const jqueryEasingScript = db.is_node
+  ? `<script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/jquery-easing/jquery.easing.min.js"></script>`
+  : `<script src="plugin_sources/jquery.easing.min.js"></script>`;
+const sbadmin2JsLink = db.is_node
+  ? `<script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/js/sb-admin-2.min.js"></script>`
+  : `<script src="plugin_sources/sb-admin-2.min.js"></script>`;
+
 /**
  * @param {*} headers
  * @param {string} title
@@ -327,22 +347,20 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/fontawesome-free/css/all.min.css">
+    ${allCssLink}
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/css/sb-admin-2.css">
+    ${sbadmin2CssLink}
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
   <body ${bodyAttr}>
     ${rest}
-    <script src="/static_assets/${
-      db.connectObj.version_tag
-    }/jquery-3.6.0.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/vendor/jquery-easing/jquery.easing.min.js"></script>
-            <script src="/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0/js/sb-admin-2.min.js"></script>
+    ${jqueryScript}
+            ${bootstrapScript}
+            ${jqueryEasingScript}
+            ${sbadmin2JsLink}
     ${headersInBody(headers)}
     </body>
   </html>`;
@@ -425,7 +443,7 @@ const wrap = ({
     title,
     `id="page-top" class="${bodyClass || ""}"`,
     `<div id="wrapper">
-      ${sidebar(brand, menu, currentUrl)}
+      ${db.is_node ? sidebar(brand, menu, currentUrl) : ""}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">

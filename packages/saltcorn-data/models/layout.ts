@@ -4,8 +4,11 @@
  * @subcategory models
  */
 
-const { getState } = require("../db/state");
+import state from "../db/state";
+const { getState } = state;
 import { Layout } from "@saltcorn/types/base_types";
+import db from "../db/index";
+const { is_node } = db;
 
 type Visitors = { [key: string]: (segment: any) => void };
 
@@ -122,7 +125,12 @@ const getStringsForI18n = (layout: Layout): string[] => {
  */
 const translateLayout = (layout: Layout, locale: string): void => {
   const appState = getState();
-  const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
+  const __ =
+    is_node && appState
+      ? (s: string) => appState.i18n.__({ phrase: s, locale }) || s
+      : (s: string) => {
+          return s;
+        };
 
   traverseSync(layout, {
     blank(s: any) {

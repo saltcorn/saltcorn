@@ -39,6 +39,7 @@ const {
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
+const { isNode } = require("../../webpack-helper");
 
 /**
  * @param {object} context
@@ -411,8 +412,9 @@ const run = async (
   );
   const fields = await table.getFields();
   const appState = getState();
-  const locale = extraOpts.req.getLocale();
-  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
+  const locale = isNode() ? extraOpts.req.getLocale() : "en";
+  const __ = (s) =>
+    isNode() ? appState.i18n.__({ phrase: s, locale }) || s : undefined;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
@@ -518,8 +520,10 @@ const run = async (
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
   if (
-    view_to_create &&
-    (role <= table.min_role_write || (table.ownership_field_id && about_user))
+    !isNode() ||
+    (view_to_create &&
+      (role <= table.min_role_write ||
+        (table.ownership_field_id && about_user)))
   ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });

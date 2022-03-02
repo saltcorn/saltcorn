@@ -383,7 +383,7 @@ class State {
   registerPlugin(
     name: string,
     plugin: Plugin,
-    cfg: SingleConfig,
+    cfg?: SingleConfig,
     location?: string,
     modname?: string
   ) {

@@ -12,6 +12,7 @@
     "@oclif/core": "^1.2.0",
     "@saltcorn/markup": "^0.6.4",
     "@saltcorn/data": "^0.6.4",
+    "@saltcorn/server": "^0.6.4",
     "@saltcorn/base-plugin": "^0.6.4",
     "@saltcorn/sbadmin2": "^0.6.4",
     "@saltcorn/mobile-app": "^0.6.4"

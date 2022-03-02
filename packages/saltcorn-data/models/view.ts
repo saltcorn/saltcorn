@@ -405,14 +405,14 @@ class View {
    * @param {*} res
    * @returns {Promise<object>}
    */
-  async run_possibly_on_page(
-    query: NonNullable<any>,
-    req: NonNullable<any>,
-    res: NonNullable<any>
-  ): Promise<string> {
+  async run_possibly_on_page(query: any, req: any, res: any): Promise<string> {
     const view = this;
     this.check_viewtemplate();
-    if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
+    if (
+      db.is_node &&
+      view.default_render_page &&
+      (!req.xhr || req.headers.pjaxpageload)
+    ) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
@@ -424,7 +424,9 @@ class View {
     const resp = await view.run(state, { res, req });
     const state_form = await view.get_state_form(state, req);
     const contents = div(
-      state_form ? renderForm(state_form, req.csrfToken()) : "",
+      state_form
+        ? renderForm(state_form, db.is_node ? req.csrfToken() : "")
+        : "",
       resp
     );
     return contents;

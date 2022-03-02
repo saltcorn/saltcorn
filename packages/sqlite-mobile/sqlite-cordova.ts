@@ -29,10 +29,17 @@ export const setConnectionObject = (connobjPara: any): void => {
 /**
  *
  */
-export const init = () => {
-  db = window.sqlitePlugin.openDatabase({
-    name: connobj?.sqlite_db_name || "scdb.sqlite",
-    location: connobj?.sqlite_path || "default",
+export const init = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db = window.sqlitePlugin.openDatabase(
+      {
+        name: connobj?.sqlite_db_name || "scdb.sqlite",
+        location: connobj?.sqlite_path || "default",
+        createFromLocation: 1,
+      },
+      resolve,
+      reject
+    );
   });
 };
 
@@ -52,7 +59,7 @@ export const query = (statement: string, params?: any): Promise<any> => {
         let rows = Array<any>();
         for (let i = 0; i < results.rows.length; i++)
           rows.push(results.rows.item(i));
-        return resolve(rows);
+        return resolve({ rows });
       },
       (err: Error) => {
         return reject(err);
@@ -93,7 +100,7 @@ export const select = async (
     selectopts
   )}`;
   const tq = await query(sql, values);
-  return tq;
+  return tq.rows;
 };
 
 /**

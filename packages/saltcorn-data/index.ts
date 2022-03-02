@@ -5,6 +5,9 @@
 import db from "./db/index";
 export { db };
 
+import state from "./db/state";
+export { state };
+
 export * as models from "./models/index";
 
 export let migrations: any = {};

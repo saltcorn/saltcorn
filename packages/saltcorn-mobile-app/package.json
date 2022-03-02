@@ -15,11 +15,11 @@
       "android"
     ],
     "plugins": {
-      "cordova-sqlite-storage": {}
+      "cordova-sqlite-ext": {}
     }
   },
   "dependencies": {
     "cordova": "^11.0.0",
-    "cordova-sqlite-storage": "^6.0.0"
+    "cordova-sqlite-ext": "^6.0.0"
   }
 }

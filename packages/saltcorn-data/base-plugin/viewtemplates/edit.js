@@ -43,6 +43,7 @@ const {
   translateLayout,
 } = require("../../models/layout");
 const { asyncMap } = require("../../utils");
+const { isNode } = require("../../webpack-helper");
 
 /**
  * @param {object} req
@@ -469,9 +470,9 @@ const transformForm = async ({ form, table, req, row, res }) => {
       segment.contents = await view.run(state, { req, res });
     },
   });
-  translateLayout(form.layout, req.getLocale());
+  translateLayout(form.layout, isNode() ? req.getLocale() : "en");
   if (req.xhr) form.xhrSubmit = true;
-  setDateLocales(form, req.getLocale());
+  setDateLocales(form, isNode() ? req.getLocale() : "en");
 };
 
 /**
@@ -529,7 +530,7 @@ const render = async ({
 
   await transformForm({ form, table, req, row, res });
 
-  return renderForm(form, req.csrfToken());
+  return renderForm(form, isNode() ? req.csrfToken() : "");
 };
 
 /**
@@ -569,7 +570,7 @@ const runPost = async (
       form.fields.push(new Field({ name: k, input_type: "hidden" }));
     }
   });
-  setDateLocales(form, req.getLocale());
+  setDateLocales(form, isNode() ? req.getLocale() : "en");
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);

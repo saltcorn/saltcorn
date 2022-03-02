@@ -7,7 +7,7 @@ import renderBuilder = require("./builder");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
-const { a, text, div, button, time } = tags;
+const { a, text, div, button, time, i } = tags;
 
 /**
  * @param {string} href
@@ -234,4 +234,7 @@ export = {
   localeTime,
   localeDate,
   localeDateTime,
+  div,
+  a,
+  i,
 };
