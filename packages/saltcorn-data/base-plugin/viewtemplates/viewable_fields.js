@@ -4,7 +4,7 @@
  * @subcategory base-plugin
  */
 const { post_btn, link } = require("@saltcorn/markup");
-const { text, a, i } = require("@saltcorn/markup/tags");
+const { text, a, i, div, button } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column, is_tablely } = require("../../contracts");
@@ -74,7 +74,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
-    block
+    block,
   },
   __ = (s) => s
 ) => {
@@ -105,7 +105,7 @@ const action_link = (
       icon: action_icon,
       style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
-      formClass: !block && "d-inline"
+      formClass: !block && "d-inline",
     });
 };
 
@@ -398,16 +398,17 @@ const get_viewable_fields = contract(
       })
     )
   ),
-  (viewname, table, fields, columns, isShow, req, __) =>
-    columns
+  (viewname, table, fields, columns, isShow, req, __) => {
+    const dropdown_actions = [];
+    const tfields = columns
       .map((column) => {
         const role = req.user ? req.user.role_id : 10;
         const user_id = req.user ? req.user.id : null;
         const setWidth = column.col_width
           ? { width: `${column.col_width}${column.col_width_units}` }
           : {};
-        if (column.type === "Action")
-          return {
+        if (column.type === "Action") {
+          const action_col = {
             ...setWidth,
             label: column.header_label ? text(__(column.header_label)) : "",
             key: (r) => {
@@ -450,7 +451,11 @@ const get_viewable_fields = contract(
                 });
             },
           };
-        else if (column.type === "ViewLink") {
+          if (column.in_dropdown) {
+            dropdown_actions.push(action_col);
+            return false;
+          } else return action_col;
+        } else if (column.type === "ViewLink") {
           if (!column.view) return;
           const r = view_linker(column, fields, __);
           if (column.header_label) r.label = text(__(column.header_label));
@@ -565,9 +570,38 @@ const get_viewable_fields = contract(
           );
         }
       })
-      .filter((v) => !!v)
+      .filter((v) => !!v);
+    if (dropdown_actions.length > 0) {
+      tfields.push({
+        label: "Action",
+        key: (r) =>
+          div(
+            { class: "dropdown" },
+            button(
+              {
+                class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+                "data-boundary": "viewport",
+                type: "button",
+                id: `actiondd${r.id}`,
+                "data-bs-toggle": "dropdown",
+                "aria-haspopup": "true",
+                "aria-expanded": "false",
+              },
+              "Action"
+            ),
+            div(
+              {
+                class: "dropdown-menu dropdown-menu-end",
+                "aria-labelledby": `actiondd${r.id}`,
+              },
+              dropdown_actions.map((acol) => acol.key(r))
+            )
+          ),
+      });
+    }
+    return tfields;
+  }
 );
-
 /**
  * @param {string} fname
  * @param {object} req
