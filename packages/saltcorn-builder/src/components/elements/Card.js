@@ -42,7 +42,7 @@ const Card = ({ children, isFormula, title, shadow, noPadding, style }) => {
       {title && title.length > 0 && (
         <div className="card-header">
           {isFormula.title ? (
-            <span className="text-monospace">={title}</span>
+            <span className="font-monospace">={title}</span>
           ) : (
             title
           )}

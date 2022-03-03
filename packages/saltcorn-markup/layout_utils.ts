@@ -94,7 +94,7 @@ const navSubitems = ({
     ),
     div(
       {
-        class: ["dropdown-menu", isUser && "dropdown-menu-right"],
+        class: ["dropdown-menu", isUser && "dropdown-menu-end"],
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
       subitems.map((si) =>

@@ -15,6 +15,8 @@ import {
   TextStyleRow,
   DynamicFontAwesomeIcon,
   isBlock,
+  reactifyStyles,
+  SettingsRow,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -74,7 +76,16 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
+const Text = ({
+  text,
+  block,
+  inline,
+  isFormula,
+  textStyle,
+  icon,
+  font,
+  style,
+}) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -92,12 +103,15 @@ const Text = ({ text, block, inline, isFormula, textStyle, icon, font }) => {
     <div
       className={`${
         isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
-      } ${textStyle} is-text ${isFormula.text ? "text-monospace" : ""} ${
+      } ${textStyle} is-text ${isFormula.text ? "font-monospace" : ""} ${
         selected ? "selected-node" : ""
       }`}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
-      style={font ? { fontFamily: font } : {}}
+      style={{
+        ...(font ? { fontFamily: font } : {}),
+        ...reactifyStyles(style || {}),
+      }}
     >
       <DynamicFontAwesomeIcon icon={icon} className="me-1" />
       {isFormula.text ? (
@@ -146,6 +160,7 @@ const TextSettings = () => {
     labelFor: node.data.props.labelFor,
     icon: node.data.props.icon,
     font: node.data.props.font,
+    style: node.data.props.style,
   }));
   const {
     actions: { setProp },
@@ -157,6 +172,7 @@ const TextSettings = () => {
     labelFor,
     icon,
     font,
+    style,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -208,7 +224,11 @@ const TextSettings = () => {
       {mode === "edit" && (
         <Fragment>
           <label>Label for Field</label>
-          <select value={labelFor} onChange={setAProp("labelFor")}>
+          <select
+            value={labelFor}
+            onChange={setAProp("labelFor")}
+            className="form-control form-select"
+          >
             <option value={""}></option>
             {fields.map((f, ix) => (
               <option key={ix} value={f.name}>
@@ -235,19 +255,48 @@ const TextSettings = () => {
               />
             </td>
           </tr>
-          <tr>
-            <td>
-              <label>Font</label>
-            </td>
-            <td>
-              <input
-                type="text"
-                className="form-control"
-                value={font}
-                onChange={setAProp("font")}
-              />
-            </td>
-          </tr>
+          <SettingsRow
+            field={{
+              name: "font",
+              label: "Font family",
+              type: "Font",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "font-size",
+              label: "Font size",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "font-weight",
+              label: "Weight",
+              type: "Integer",
+              min: 100,
+              max: 900,
+              step: 100,
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
+              name: "line-height",
+              label: "Line height",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
         </tbody>
       </table>
       <BlockOrInlineSetting
@@ -272,6 +321,7 @@ Text.craft = {
     textStyle: "",
     labelFor: "",
     font: "",
+    style: {},
   },
   displayName: "Text",
   related: {

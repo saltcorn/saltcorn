@@ -73,7 +73,10 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment: any, inner: string): string => {
-  let style: any = segment.font ? { fontFamily: segment.font } : {};
+  let style: any = segment.font
+    ? { fontFamily: segment.font, ...segment.style }
+    : segment.style || {};
+  let hasStyle = Object.keys(style).length > 0;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
   switch (segment.textStyle) {
@@ -92,7 +95,7 @@ const applyTextStyle = (segment: any, inner: string): string => {
     default:
       return segment.block
         ? div({ class: segment.textStyle || "", style }, inner)
-        : segment.textStyle || segment.font
+        : segment.textStyle || hasStyle
         ? span({ class: segment.textStyle || "", style }, inner)
         : inner;
   }
@@ -105,6 +108,7 @@ namespace LayoutExports {
     titles: string[];
     tabsStyle: string;
     ntabs?: any;
+    deeplink?: boolean;
     independent: boolean;
   };
 }
@@ -130,7 +134,7 @@ function validID(s: string) {
  * @returns {ul_div}
  */
 const renderTabs = (
-  { contents, titles, tabsStyle, ntabs, independent }: RenderTabsOpts,
+  { contents, titles, tabsStyle, ntabs, independent, deeplink }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -182,7 +186,11 @@ const renderTabs = (
             { class: "nav-item", role: "presentation" },
             a(
               {
-                class: ["nav-link", ix === 0 && "active"],
+                class: [
+                  "nav-link",
+                  ix === 0 && "active",
+                  deeplink && "deeplink",
+                ],
                 id: `${rndid}link${ix}`,
                 "data-bs-toggle": "tab",
                 href: `#${validID(titles[ix])}`,
@@ -358,10 +366,7 @@ const render = ({
             div(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h6(
-                    { class: "m-0 fw-bold text-primary" },
-                    segment.title
-                  )
+                ? h6({ class: "m-0 fw-bold text-primary" }, segment.title)
                 : segment.title
             ),
           segment.tabContents &&
@@ -494,6 +499,11 @@ const render = ({
       Object.keys(style || {}).forEach((k) => {
         flexStyles += `${k}:${style[k]};`;
       });
+      const to_bs5 = (s: string) => {
+        if (s === "left") return "start";
+        if (s === "right") return "end";
+        return s;
+      };
       return wrap(
         segment,
         isTop,
@@ -503,7 +513,7 @@ const render = ({
           {
             class: [
               customClass || false,
-              hAlign && `text-${hAlign}`,
+              hAlign && `text-${to_bs5(hAlign)}`,
               vAlign === "middle" && "d-flex align-items-center",
               vAlign === "bottom" && "d-flex align-items-end",
               vAlign === "middle" &&

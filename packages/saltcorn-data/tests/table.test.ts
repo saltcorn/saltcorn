@@ -257,6 +257,39 @@ describe("Table get data", () => {
     expect(reads.length).toStrictEqual(3);
     expect(reads[0].author).toBe("Herman Melville");
   });
+  it("should rename joined rows signly", async () => {
+    const patients = await Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const pats = await patients.getJoinedRows({
+      orderBy: "id",
+      joinFields: {
+        favbook_author: {
+          ref: "favbook",
+          target: "author",
+          rename_object: ["favbook", "author"],
+        },
+      },
+    });
+    expect(pats.length).toStrictEqual(2);
+    expect(pats[0].favbook.author).toBe("Herman Melville");
+  });
+  it("should rename joined rows doubly", async () => {
+    const readings = await Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const reads = await readings.getJoinedRows({
+      orderBy: "id",
+      joinFields: {
+        favbook_author: {
+          ref: "patient_id",
+          through: "favbook",
+          target: "author",
+          rename_object: ["patient_id", "favbook", "author"],
+        },
+      },
+    });
+    expect(reads.length).toStrictEqual(3);
+    expect(reads[0].patient_id.favbook.author).toBe("Herman Melville");
+  });
   it("should get joined rows with aggregations and joins", async () => {
     const patients = await Table.findOne({ name: "patients" });
     assertIsSet(patients);

@@ -169,8 +169,7 @@ function tabulator_error_handler(request) {
 function tabulator_show_error(errtxt) {
   $("#jsGridNotify").html(`<div class="alert alert-danger" role="alert">
     ${errtxt}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">   
   </button>
   </div>`);
 }

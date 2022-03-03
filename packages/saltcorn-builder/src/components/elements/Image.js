@@ -142,7 +142,7 @@ const ImageSettings = () => {
             <td>
               <select
                 value={srctype}
-                className="form-control"
+                className="form-control form-select"
                 onChange={setAProp("srctype")}
               >
                 <option>File</option>
@@ -160,7 +160,7 @@ const ImageSettings = () => {
               <td>
                 <select
                   value={fileid}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={setAProp("fileid")}
                 >
                   {options.images.map((f, ix) => (
@@ -217,7 +217,7 @@ const ImageSettings = () => {
               <td>
                 <select
                   value={field}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={setAProp("field")}
                 >
                   {options.fields

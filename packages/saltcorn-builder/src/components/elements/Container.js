@@ -395,7 +395,6 @@ const ContainerSettings = () => {
                 { value: "left", title: "Left", label: <AlignStart /> },
                 { value: "center", title: "Center", label: <AlignCenter /> },
                 { value: "right", title: "Right", label: <AlignEnd /> },
-                { value: "justify", title: "Justify", label: <Justify /> },
               ],
             }}
             node={node}
@@ -488,7 +487,7 @@ const ContainerSettings = () => {
                 <td>
                   <select
                     value={bgFileId}
-                    className="form-control-sm w-100"
+                    className="form-control-sm w-100 form-select"
                     onChange={setAProp("bgFileId")}
                   >
                     {options.images.map((f, ix) => (
@@ -512,7 +511,7 @@ const ContainerSettings = () => {
                 <td>
                   <select
                     value={imageSize}
-                    className="form-control-sm"
+                    className="form-control-sm  form-select"
                     onChange={setAProp("imageSize")}
                   >
                     <option>contain</option>
@@ -543,7 +542,7 @@ const ContainerSettings = () => {
             field={{
               name: "font-family",
               label: "Font family",
-              type: "String",
+              type: "Font",
             }}
             node={node}
             setProp={setProp}
@@ -742,7 +741,7 @@ const ContainerSettings = () => {
                   onChange={setAProp("showIfFormula")}
                 />
                 <div style={{ marginTop: "-5px" }}>
-                  <small className="text-muted text-monospace">FORMULA</small>
+                  <small className="text-muted font-monospace">FORMULA</small>
                 </div>
               </td>
             </tr>
@@ -803,7 +802,7 @@ const ContainerSettings = () => {
             <td>
               <select
                 value={minScreenWidth}
-                className="form-control"
+                className="form-control form-select"
                 onChange={setAProp("minScreenWidth")}
               >
                 <option value="">all</option>
@@ -821,7 +820,7 @@ const ContainerSettings = () => {
             <td>
               <select
                 value={maxScreenWidth}
-                className="form-control"
+                className="form-control form-select"
                 onChange={setAProp("maxScreenWidth")}
               >
                 <option value="">all</option>
@@ -847,7 +846,7 @@ const ContainerSettings = () => {
         <label>Hover color</label>
         <select
           value={hoverColor}
-          className="form-control"
+          className="form-control form-select"
           onChange={setAProp("hoverColor")}
         >
           <option value="">None</option>

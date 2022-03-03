@@ -204,7 +204,7 @@ describe("Show view", () => {
           in_modal: true,
         },
       ],
-      response: `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" type="button" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-left" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
+      response: `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" type="button" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
     });
     await test_show({
       layout: {
@@ -428,14 +428,14 @@ describe("Show view", () => {
     };
     await test_show({
       ...showbooks1,
-      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-left" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/1?redirect=/view/testshow" method="post">
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/1?redirect=/view/testshow" method="post" class="d-inline">
   <input type="hidden" name="_csrf" value="">
-<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="text-left" style="min-height: 0px;border: 0px undefined black;    ">VERY LONG</div>`,
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="text-start" style="min-height: 0px;border: 0px undefined black;    ">VERY LONG</div>`,
     });
     await test_show({
       ...showbooks1,
       id: 2,
-      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-left" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/2?redirect=/view/testshow" method="post">
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;border: 0px undefined black;    "><form action="/delete/books/2?redirect=/view/testshow" method="post" class="d-inline">
   <input type="hidden" name="_csrf" value="">
 <button type="submit"  class=" btn  btn-primary ">Delete</button></form></div>`,
     });

@@ -53,7 +53,7 @@ const Link = ({
     <span
       className={`${textStyle} is-builder-link ${
         selected ? "selected-node" : ""
-      } ${isFormula.text ? "text-monospace" : ""} ${link_style} ${link_size}`}
+      } ${isFormula.text ? "font-monospace" : ""} ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       style={
@@ -139,7 +139,7 @@ const LinkSettings = () => {
             <td>
               <select
                 value={link_src}
-                className="form-control"
+                className="form-control form-select"
                 onChange={(e) =>
                   setProp((prop) => {
                     prop.link_src = e.target.value;
@@ -181,7 +181,7 @@ const LinkSettings = () => {
               <td>
                 <select
                   value={url}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={setAProp("url")}
                 >
                   <option></option>
@@ -200,7 +200,7 @@ const LinkSettings = () => {
               <td>
                 <select
                   value={url}
-                  className="form-control"
+                  className="form-control form-select"
                   onChange={setAProp("url")}
                 >
                   <option></option>

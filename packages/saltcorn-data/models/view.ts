@@ -533,10 +533,7 @@ class View {
       throw new InvalidConfiguration(
         `Unable to call runRoute of view '${this.name}', ${this.viewtemplate} is missing 'routes'.`
       );
-    if (!this.table_id)
-      throw new InvalidConfiguration(
-        `Unable to call runRoute, of view '${this.name}', this.table_id is not set.`
-      );
+
     const result = await this.viewtemplateObj!.routes[route](
       this.table_id,
       this.name,
