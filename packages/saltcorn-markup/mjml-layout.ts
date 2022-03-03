@@ -35,10 +35,11 @@ import helpers = require("./helpers");
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment: any, inner: string): string => {
-  let style: any = segment.font
+  const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
-  let hasStyle = Object.keys(style).length > 0;
+  const hasStyle = Object.keys(style).length > 0;
+  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
   switch (segment.textStyle) {
@@ -56,9 +57,9 @@ const applyTextStyle = (segment: any, inner: string): string => {
       return h6({ style }, inner);
     default:
       return segment.block
-        ? div({ class: segment.textStyle || "", style }, inner)
+        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
         : segment.textStyle || hasStyle
-        ? span({ class: segment.textStyle || "", style }, inner)
+        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
         : inner;
   }
 };
