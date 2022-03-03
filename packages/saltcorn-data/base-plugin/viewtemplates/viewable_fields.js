@@ -431,12 +431,13 @@ const get_viewable_fields = contract(
                 return a(
                   {
                     href: "javascript:" + url.javascript,
-                    class:
-                      column.action_style === "btn-link"
-                        ? ""
-                        : `btn ${column.action_style || "btn-primary"} ${
-                            column.action_size || ""
-                          }`,
+                    class: column.in_dropdown
+                      ? "dropdown-item"
+                      : column.action_style === "btn-link"
+                      ? ""
+                      : `btn ${column.action_style || "btn-primary"} ${
+                          column.action_size || ""
+                        }`,
                   },
                   label
                 );
@@ -446,7 +447,9 @@ const get_viewable_fields = contract(
                   ajax: true,
                   reload_on_done: true,
                   confirm: column.confirm,
-                  btnClass: column.action_style || "btn-primary",
+                  btnClass: column.in_dropdown
+                    ? "dropdown-item"
+                    : column.action_style || "btn-primary",
                   req,
                 });
             },
