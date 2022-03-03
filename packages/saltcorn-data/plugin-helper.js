@@ -550,6 +550,12 @@ const field_picker_fields = contract(
         type: "Bool",
         showIf: { type: "Action" },
       },
+      {
+        name: "in_dropdown",
+        label: __("Place in dropdown"),
+        type: "Bool",
+        showIf: { type: "Action" },
+      },
       ...actionConfigFields,
       {
         name: "view",
