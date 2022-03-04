@@ -336,7 +336,7 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     connectors={connectors}
     icon="far fa-caret-square-down"
     title="Dropdown filter"
-    label="Dropdown"
+    label="Select"
   >
     <DropDownFilter
       name={fields[0].name}
@@ -456,7 +456,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
     connectors={connectors}
     text="∑"
     title="Aggregation"
-    label="Calc"
+    label="Aggreg8"
     bold
     fontSize="16px"
     disable={child_field_list.length === 0}
