@@ -751,14 +751,33 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
-function fill_formula_btn_click(btn) {
+async function fill_formula_btn_click(btn, k) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
+  const free_vars = JSON.parse(
+    decodeURIComponent($(btn).attr("data-formula-free-vars"))
+  );
+  const table = JSON.parse(
+    decodeURIComponent($(btn).attr("data-formula-table"))
+  );
   const rec = get_form_record($(btn), true);
+  const rec_ids = get_form_record($(btn));
+  for (const fv of free_vars) {
+    if (fv.includes(".")) {
+      const kpath = fv.split(".");
+      const [refNm, targetNm] = kpath;
+      const reffield = table.fields.find((f) => f.name === refNm);
+      const resp = await $.ajax(
+        `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
+      );
+      rec[refNm] = resp.success[0];
+    }
+  }
   const val = new Function(
     `{${Object.keys(rec).join(",")}}`,
     "return " + formula
   )(rec);
   $(btn).closest(".input-group").find("input").val(val);
+  if (k) k();
 }
 
 /*
