@@ -868,5 +868,7 @@
 	"Reload after going back": "Reload after going back",
 	"2FA policy": "2FA policy",
 	"Steps to go back": "Steps to go back",
-	"Place in dropdown": "Place in dropdown"
+	"Place in dropdown": "Place in dropdown",
+	"Hide null columns": "Hide null columns",
+	"Do not display a column if it contains entirely missing values": "Do not display a column if it contains entirely missing values"
 }
