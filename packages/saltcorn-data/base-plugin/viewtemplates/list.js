@@ -290,6 +290,14 @@ const configuration_workflow = (req) =>
             sublabel: req.__("Do not display the header"),
             type: "Bool",
           });
+          formfields.push({
+            name: "hide_null_columns",
+            label: req.__("Hide null columns"),
+            sublabel: req.__(
+              "Do not display a column if it contains entirely missing values"
+            ),
+            type: "Bool",
+          });
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -439,8 +447,8 @@ const run = async (
     extraOpts && extraOpts.req && extraOpts.req.user
       ? extraOpts.req.user.role_id
       : 10;
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   await set_join_fieldviews({ columns, fields });
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
 
   const tfields = get_viewable_fields(
     viewname,
