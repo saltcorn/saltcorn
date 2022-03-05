@@ -9,6 +9,7 @@ import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import { SettingsRow } from "./utils";
 
 export /**
  * @param {object} props
@@ -20,7 +21,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const DropMenu = ({ children, action_style, action_size, block }) => {
+const DropMenu = ({ children, action_style, action_size, block, label }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -35,13 +36,15 @@ const DropMenu = ({ children, action_style, action_size, block }) => {
         } ${block ? "d-block" : ""}`}
         ref={(dom) => connect(drag(dom))}
       >
+        {label}
         <FontAwesomeIcon
           icon={faCaretDown}
+          className="ms-1"
           onClick={() => setDropdown(!showDropdown)}
         />
       </button>
       <div
-        className={`dropdown-menu DropMenu-dropdown ${
+        className={`dropdown-menu dropmenu-dropdown ${
           showDropdown ? "show" : ""
         }`}
       >
@@ -58,42 +61,29 @@ export /**
  * @subcategory components
  */
 const DropMenuSettings = () => {
-  const {
-    actions: { setProp },
-    has_dropdown,
-    show_badges,
-  } = useNode((node) => ({
-    has_dropdown: node.data.props.has_dropdown,
+  const node = useNode((node) => ({
+    label: node.data.props.label,
     show_badges: node.data.props.show_badges,
   }));
-
+  const {
+    actions: { setProp },
+    label,
+    show_badges,
+  } = node;
   return (
-    <div>
-      <div className="form-check">
-        <input
-          className="form-check-input"
-          name="block"
-          type="checkbox"
-          checked={has_dropdown}
-          onChange={(e) =>
-            setProp((prop) => (prop.has_dropdown = e.target.checked))
-          }
+    <table className="w-100">
+      <tbody>
+        <SettingsRow
+          field={{
+            label: "Label",
+            name: "label",
+            type: "String",
+          }}
+          node={node}
+          setProp={setProp}
         />
-        <label className="form-check-label">Has Dropdown</label>
-      </div>
-      <div className="form-check">
-        <input
-          className="form-check-input"
-          name="block"
-          type="checkbox"
-          checked={show_badges}
-          onChange={(e) =>
-            setProp((prop) => (prop.show_badges = e.target.checked))
-          }
-        />
-        <label className="form-check-label">Show current state badges</label>
-      </div>
-    </div>
+      </tbody>
+    </table>
   );
 };
 
@@ -103,13 +93,13 @@ const DropMenuSettings = () => {
 DropMenu.craft = {
   displayName: "DropMenu",
   props: {
-    has_dropdown: false,
+    label: "",
     show_badges: false,
   },
   related: {
     settings: DropMenuSettings,
     segment_type: "dropdown_menu",
     hasContents: true,
-    fields: ["has_dropdown", "show_badges"],
+    fields: ["label", "show_badges"],
   },
 };
