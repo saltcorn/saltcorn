@@ -650,7 +650,6 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       return key(row);
     },
     dropdown_menu(segment, go) {
-      console.log(segment);
       const rndid = `actiondd${Math.floor(Math.random() * 16777215).toString(
         16
       )}`;
