@@ -355,7 +355,7 @@ const DropMenuElem = ({ connectors }) => (
     title="Dropdown menu"
     label="DropMenu"
   >
-    <DropMenu block={false} neutral_label={""} full_width={false} />
+    <DropMenu />
   </WrapElem>
 );
 

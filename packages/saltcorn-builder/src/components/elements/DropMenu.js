@@ -44,12 +44,12 @@ const DropMenu = ({
   const [showDropdown, setDropdown] = useState(false);
   //const [dropWidth, setDropWidth] = useState(200);
   return (
-    <Fragment>
+    <div
+      className={`${selected ? "selected-node" : ""} ${block ? "d-block" : ""}`}
+      ref={(dom) => connect(drag(dom))}
+    >
       <button
-        className={`btn ${action_style || "btn-primary"} ${action_size || ""} ${
-          selected ? "selected-node" : ""
-        } ${block ? "d-block" : ""}`}
-        ref={(dom) => connect(drag(dom))}
+        className={`btn ${action_style || "btn-primary"} ${action_size || ""} `}
         style={
           action_style === "btn-custom-color"
             ? {
@@ -76,7 +76,7 @@ const DropMenu = ({
       >
         <div className="canvas">{children}</div>
       </div>
-    </Fragment>
+    </div>
   );
 };
 
