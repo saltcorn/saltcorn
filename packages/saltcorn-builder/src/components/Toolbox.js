@@ -16,6 +16,7 @@ import { ViewLink } from "./elements/ViewLink";
 import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
 import { DropDownFilter } from "./elements/DropDownFilter";
+import { DropMenu } from "./elements/DropMenu";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
@@ -346,6 +347,18 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     />
   </WrapElem>
 );
+
+const DropMenuElem = ({ connectors }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="far fa-caret-square-down"
+    title="Dropdown menu"
+    label="DropMenu"
+  >
+    <DropMenu block={false} neutral_label={""} full_width={false} />
+  </WrapElem>
+);
+
 /**
  * @param {object} props
  * @param {object} props.connectors
@@ -529,6 +542,7 @@ const ToolboxShow = () => {
       </div>
       <div className="toolbar-row">
         <HTMLElem connectors={connectors} />
+        <DropMenuElem connectors={connectors} />
       </div>
     </Fragment>
   );
