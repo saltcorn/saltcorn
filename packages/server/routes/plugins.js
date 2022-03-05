@@ -646,7 +646,9 @@ router.get(
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
     const filepath = req.params[0];
-    const location = getState().plugin_locations[plugin];
+    const location = getState().plugin_locations[
+      plugin.includes("@") ? plugin.split("@")[0] : plugin
+    ];
     if (location) {
       const safeFile = path
         .normalize(filepath)
