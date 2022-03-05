@@ -290,6 +290,14 @@ const configuration_workflow = (req) =>
             sublabel: req.__("Do not display the header"),
             type: "Bool",
           });
+          formfields.push({
+            name: "hide_null_columns",
+            label: req.__("Hide null columns"),
+            sublabel: req.__(
+              "Do not display a column if it contains entirely missing values"
+            ),
+            type: "Bool",
+          });
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -439,8 +447,8 @@ const run = async (
     extraOpts && extraOpts.req && extraOpts.req.user
       ? extraOpts.req.user.role_id
       : 10;
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   await set_join_fieldviews({ columns, fields });
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
 
   const tfields = get_viewable_fields(
     viewname,
@@ -547,10 +555,24 @@ const run = async (
     ? div({ class: "float-end" }, create_link)
     : create_link;
 
-  const tableHtml = mkTable(tfields, rows, page_opts);
+  const tableHtml = mkTable(
+    default_state?.hide_null_columns
+      ? remove_null_cols(tfields, rows)
+      : tfields,
+    rows,
+    page_opts
+  );
 
   return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
+const remove_null_cols = (tfields, rows) =>
+  tfields.filter((tfield) => {
+    const key = tfield.row_key || tfield.key;
+    if (typeof key !== "string") return true; //unable to tell if should be removed
+    const is_not_null = (row) =>
+      row[key] !== null && typeof row[key] !== "undefined";
+    return rows.every(is_not_null);
+  });
 
 /**
  * @param {number} table_id

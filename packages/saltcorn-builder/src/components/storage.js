@@ -25,6 +25,7 @@ import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
+import { DropMenu } from "./elements/DropMenu";
 
 /**
  * @param {object} segment
@@ -69,6 +70,7 @@ const allElements = [
   DropDownFilter,
   Tabs,
   ToggleFilter,
+  DropMenu,
 ];
 
 export /**

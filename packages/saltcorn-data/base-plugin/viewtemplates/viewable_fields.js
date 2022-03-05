@@ -494,6 +494,7 @@ const get_viewable_fields = contract(
             label: column.header_label
               ? text(__(column.header_label))
               : text(targetNm),
+            row_key: key,
             key:
               column.join_fieldview &&
               type &&
@@ -543,6 +544,7 @@ const get_viewable_fields = contract(
               ...setWidth,
               align: isNum ? "right" : undefined,
               label: headerLabelForName(column, f, req, __),
+              row_key: f_with_val.name,
               key:
                 column.fieldview && f.type === "File"
                   ? (row) =>

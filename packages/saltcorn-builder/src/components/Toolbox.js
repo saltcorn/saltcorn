@@ -16,6 +16,7 @@ import { ViewLink } from "./elements/ViewLink";
 import { Columns } from "./elements/Columns";
 import { Action } from "./elements/Action";
 import { DropDownFilter } from "./elements/DropDownFilter";
+import { DropMenu } from "./elements/DropMenu";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
@@ -336,7 +337,7 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     connectors={connectors}
     icon="far fa-caret-square-down"
     title="Dropdown filter"
-    label="Dropdown"
+    label="Select"
   >
     <DropDownFilter
       name={fields[0].name}
@@ -346,6 +347,18 @@ const DropDownFilterElem = ({ connectors, fields }) => (
     />
   </WrapElem>
 );
+
+const DropMenuElem = ({ connectors }) => (
+  <WrapElem
+    connectors={connectors}
+    icon="far fa-caret-square-down"
+    title="Dropdown menu"
+    label="DropMenu"
+  >
+    <DropMenu />
+  </WrapElem>
+);
+
 /**
  * @param {object} props
  * @param {object} props.connectors
@@ -456,7 +469,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
     connectors={connectors}
     text="∑"
     title="Aggregation"
-    label="Calc"
+    label="Aggreg8"
     bold
     fontSize="16px"
     disable={child_field_list.length === 0}
@@ -529,6 +542,7 @@ const ToolboxShow = () => {
       </div>
       <div className="toolbar-row">
         <HTMLElem connectors={connectors} />
+        <DropMenuElem connectors={connectors} />
       </div>
     </Fragment>
   );

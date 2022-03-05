@@ -29,6 +29,8 @@ const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
 const { getState } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
+const { freeVariables } = require("../models/expression");
+const Table = require("../models/table");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -151,6 +153,11 @@ const getStrOptions = (v, optsStr) =>
             )
           : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
+
+const join_fields_in_formula = (fml) => {
+  if (!fml) return [];
+  return [...freeVariables(fml)];
+};
 
 /**
  * string type
@@ -434,17 +441,24 @@ const string = {
               class: "btn btn-secondary",
               type: "button",
               "data-formula": encodeURIComponent(attrs?.formula),
+              "data-formula-free-vars": encodeURIComponent(
+                JSON.stringify(join_fields_in_formula(attrs?.formula))
+              ),
+              "data-formula-table": encodeURIComponent(
+                JSON.stringify(Table.findOne(field.table_id))
+              ),
               onClick:
-                "fill_formula_btn_click(this);" +
+                "fill_formula_btn_click(this" +
                 (attrs.make_unique
-                  ? `make_unique_field('input${text_attr(nm)}', ${
+                  ? `,()=>make_unique_field('input${text_attr(nm)}', ${
                       field.table_id
                     }, '${field.name}',  $('#input${text_attr(
                       nm
                     )}'), ${!!attrs.include_space}, ${
                       attrs.start_from || 0
                     }, ${!!attrs.always_append}, '${attrs.char_type}')`
-                  : ""),
+                  : "") +
+                ")",
             },
             attrs?.label || "Fill"
           )
