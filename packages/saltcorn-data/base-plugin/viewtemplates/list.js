@@ -556,7 +556,9 @@ const run = async (
     : create_link;
 
   const tableHtml = mkTable(
-    default_state.hide_null_columns ? remove_null_cols(tfields, rows) : tfields,
+    default_state?.hide_null_columns
+      ? remove_null_cols(tfields, rows)
+      : tfields,
     rows,
     page_opts
   );
