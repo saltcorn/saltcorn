@@ -649,7 +649,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       const { key } = view_linker(view, fields);
       return key(row);
     },
-    dropdown_menu(segment) {
+    dropdown_menu(segment, go) {
       console.log(segment);
       const rndid = `actiondd${Math.floor(Math.random() * 16777215).toString(
         16
@@ -689,7 +689,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
             class: "dropdown-menu dropdown-menu-end",
             "aria-labelledby": rndid,
           },
-          ""
+          div({ class: "d-flex flex-column px-2" }, go(segment.contents))
         )
       );
     },
