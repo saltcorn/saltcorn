@@ -74,7 +74,7 @@ const DropMenu = ({
           showDropdown ? "show" : ""
         }`}
       >
-        <div className="canvas">{children}</div>
+        <div className="canvas d-flex flex-column">{children}</div>
       </div>
     </div>
   );
