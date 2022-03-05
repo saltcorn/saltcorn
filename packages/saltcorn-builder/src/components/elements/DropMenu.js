@@ -119,7 +119,11 @@ const DropMenuSettings = () => {
           keyPrefix="action_"
           values={node}
         />
-        <BlockSetting block={block} setProp={setProp} />
+        <tr>
+          <td colSpan="2">
+            <BlockSetting block={block} setProp={setProp} />
+          </td>
+        </tr>
       </tbody>
     </table>
   );
