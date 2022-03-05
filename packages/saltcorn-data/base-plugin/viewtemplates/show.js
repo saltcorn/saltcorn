@@ -23,7 +23,15 @@ const {
   translateLayout,
 } = require("../../models/layout");
 
-const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
+const {
+  div,
+  text,
+  span,
+  a,
+  text_attr,
+  i,
+  button,
+} = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -640,6 +648,50 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     view_link(view) {
       const { key } = view_linker(view, fields);
       return key(row);
+    },
+    dropdown_menu(segment) {
+      console.log(segment);
+      const rndid = `actiondd${Math.floor(Math.random() * 16777215).toString(
+        16
+      )}`;
+
+      let style =
+        segment.action_style === "btn-custom-color"
+          ? `background-color: ${
+              segment.action_bgcol || "#000000"
+            };border-color: ${segment.action_bordercol || "#000000"}; color: ${
+              segment.action_textcol || "#000000"
+            }`
+          : null;
+      return div(
+        { class: "dropdown" },
+        button(
+          {
+            class:
+              segment.action_style === "btn-link"
+                ? ""
+                : `btn ${segment.action_style || "btn-primary"} ${
+                    segment.action_size || ""
+                  } dropdown-toggle`,
+
+            "data-boundary": "viewport",
+            type: "button",
+            id: rndid,
+            "data-bs-toggle": "dropdown",
+            "aria-haspopup": "true",
+            "aria-expanded": "false",
+            style,
+          },
+          segment.label || "Actions"
+        ),
+        div(
+          {
+            class: "dropdown-menu dropdown-menu-end",
+            "aria-labelledby": rndid,
+          },
+          ""
+        )
+      );
     },
   };
   return renderLayout({
