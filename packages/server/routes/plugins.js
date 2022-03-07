@@ -838,7 +838,6 @@ router.get(
   error_catcher(async (req, res) => {
     const installed_plugins = await Plugin.find({});
     for (const plugin of installed_plugins) {
-      console.log("upgrading", plugin.name);
       await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     }
     req.flash("success", req.__(`Plugins up-to-date`));
