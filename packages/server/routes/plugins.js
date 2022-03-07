@@ -450,6 +450,7 @@ const store_actions_dropdown = (req) =>
           {
             class: "dropdown-item",
             href: `/plugins/upgrade`,
+            onClick: `notifyAlert('Upgrading plugins...', true)`,
           },
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed plugins")

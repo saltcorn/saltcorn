@@ -571,7 +571,7 @@ const remove_null_cols = (tfields, rows) =>
     if (typeof key !== "string") return true; //unable to tell if should be removed
     const is_not_null = (row) =>
       row[key] !== null && typeof row[key] !== "undefined";
-    return rows.every(is_not_null);
+    return rows.some(is_not_null);
   });
 
 /**

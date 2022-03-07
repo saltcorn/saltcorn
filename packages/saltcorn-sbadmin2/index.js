@@ -380,7 +380,9 @@ const authWrap = ({
               <div class="row">
                 <div class="col">
                   <div class="p-5">
+                  <div id="alerts-area">
                     ${alerts.map((a) => alert(a.type, a.msg)).join("")}
+                  </div>                  
                     <div class="text-center">
                       <h1 class="h4 text-gray-900 mb-4">${title}</h1>
                     </div>
