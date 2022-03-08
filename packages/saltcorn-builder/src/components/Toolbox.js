@@ -355,7 +355,7 @@ const DropMenuElem = ({ connectors }) => (
     title="Dropdown menu"
     label="DropMenu"
   >
-    <DropMenu />
+    <Element canvas is={DropMenu}></Element>
   </WrapElem>
 );
 

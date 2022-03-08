@@ -135,8 +135,8 @@ const DropMenuSettings = () => {
 DropMenu.craft = {
   displayName: "DropMenu",
   props: {
-    label: "",
-    show_badges: false,
+    label: "Menu",
+    block: false,
   },
   related: {
     settings: DropMenuSettings,
