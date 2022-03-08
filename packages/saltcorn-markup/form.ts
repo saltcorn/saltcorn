@@ -398,6 +398,21 @@ const renderFormLayout = (form: Form): string => {
         return div({ "data-source-url": segment.sourceURL }, "join data");
       return "";
     },
+    tabs(segment: any, go: any) {
+      if (segment.tabsStyle !== "Value switch") return false;
+      return segment.titles
+        .map((t: any, ix: number) =>
+          div(
+            {
+              "data-show-if": mkShowIf({
+                [segment.field]: typeof t.value === "undefined" ? t : t.value,
+              }),
+            },
+            go(segment.contents[ix])
+          )
+        )
+        .join("");
+    },
     field(segment: any) {
       const field0 = form.fields.find((f) => f.name === segment.field_name);
       const field = { ...field0 };
