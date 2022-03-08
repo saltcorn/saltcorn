@@ -29,7 +29,6 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
   const [showTabs, setShowTabs] = useState([true]);
-  console.log(titles);
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
