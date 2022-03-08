@@ -131,8 +131,19 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table)) {
-          const dvs = await table.distinctValues(fieldName);
-
+          const field = (await table.getFields()).find(
+            (f) => f.name === fieldName
+          );
+          if (!field) {
+            res.status(404).json({ error: req.__("Not found") });
+            return;
+          }
+          let dvs;
+          if (field.is_fkey) {
+            dvs = await field.distinct_values();
+          } else {
+            dvs = await table.distinctValues(fieldName);
+          }
           res.json({ success: dvs });
         } else {
           res.status(401).json({ error: req.__("Not authorized") });

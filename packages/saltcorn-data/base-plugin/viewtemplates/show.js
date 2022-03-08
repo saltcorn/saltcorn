@@ -652,7 +652,11 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     tabs(segment, go) {
       if (segment.tabsStyle !== "Value switch") return false;
       const value = row[segment.field];
-      const ix = segment.titles.findIndex((t) => `${t}` === `${value}`);
+      const ix = segment.titles.findIndex((t) =>
+        typeof t.value === "undefined"
+          ? `${t}` === `${value}`
+          : value === t.value
+      );
       if (ix === -1) return "";
       return go(segment.contents[ix]);
     },

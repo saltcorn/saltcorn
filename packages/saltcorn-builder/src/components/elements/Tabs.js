@@ -29,7 +29,7 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
   const [showTabs, setShowTabs] = useState([true]);
-
+  console.log(titles);
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
@@ -95,7 +95,12 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
                 className={`nav-link ${ix === showTab ? `active` : ""}`}
                 onClick={() => setShowTab(ix)}
               >
-                {titles[ix]}
+                {titles[ix] &&
+                  (typeof titles[ix].label === "undefined"
+                    ? titles[ix]
+                    : titles[ix].label === ""
+                    ? "(empty)"
+                    : titles[ix].label)}
               </a>
             </li>
           ))}
@@ -158,7 +163,8 @@ const TabsSettings = () => {
         })
         .then(function (data) {
           if (data.success) {
-            setProp((prop) => (prop.ntabs = data.success.length));
+            const len = data.success.length;
+            setProp((prop) => (prop.ntabs = len));
             setProp((prop) => (prop.titles = data.success));
           }
         });
@@ -183,7 +189,9 @@ const TabsSettings = () => {
               <option>Tabs</option>
               <option>Pills</option>
               <option>Accordion</option>
-              {options.mode === "show" && <option>Value switch</option>}
+              {["show", "edit"].includes(options.mode) && (
+                <option>Value switch</option>
+              )}
             </select>
           </td>
         </tr>
