@@ -355,7 +355,7 @@ const DropMenuElem = ({ connectors }) => (
     title="Dropdown menu"
     label="DropMenu"
   >
-    <DropMenu />
+    <Element canvas is={DropMenu}></Element>
   </WrapElem>
 );
 
@@ -638,6 +638,7 @@ const ToolboxEdit = () => {
       </div>
       <div className="toolbar-row">
         <JoinFieldElem connectors={connectors} options={options} />
+        <DropMenuElem connectors={connectors} />
       </div>
     </Fragment>
   );
@@ -678,6 +679,9 @@ const ToolboxPage = () => {
       <div className="toolbar-row">
         <ContainerElem connectors={connectors} />
         <TabsElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <DropMenuElem connectors={connectors} />
       </div>
     </Fragment>
   );
