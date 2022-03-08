@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState, useContext } from "react";
+import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
@@ -30,8 +30,24 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
   const [showTab, setShowTab] = useState(0);
   const [showTabs, setShowTabs] = useState([true]);
   const [distinctValues, setDistinctValues] = useState([]);
-
-  useEffect(() => {}, [field]);
+  const options = useContext(optionsCtx);
+  useEffect(() => {
+    if (field)
+      fetch(`/api/${options.tableName}/distinct/${field}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+        },
+      })
+        .then(function (response) {
+          if (response.status < 399) return response.json();
+          else return "";
+        })
+        .then(function (data) {
+          if (data.success) setDistinctValues(data.success);
+        });
+  }, [field]);
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
@@ -79,6 +95,42 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
           </div>
         ))}
       </div>
+    );
+  else if (tabsStyle === "Value switch")
+    return (
+      <Fragment>
+        <ul
+          id="myTab"
+          role="tablist"
+          className={`nav nav-pills builder ${selected ? "selected-node" : ""}`}
+          ref={(dom) => connect(drag(dom))}
+        >
+          {distinctValues.map((dv, ix) => (
+            <li key={ix} className="nav-item" role="presentation">
+              <a
+                className={`nav-link ${ix === showTab ? `active` : ""}`}
+                onClick={() => setShowTab(ix)}
+              >
+                {dv}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div className="tab-content" id="myTabContent">
+          {distinctValues.map((dv, ix) => (
+            <div
+              key={ix}
+              className={`tab-pane fade ${ix === showTab ? `show active` : ""}`}
+              role="tabpanel"
+              aria-labelledby="home-tab"
+            >
+              <Element canvas id={`Tab${ix}`} is={Column}>
+                {contents[ix]}
+              </Element>
+            </div>
+          ))}
+        </div>
+      </Fragment>
     );
   else
     return (
