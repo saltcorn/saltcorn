@@ -131,6 +131,7 @@ const TabsSettings = () => {
     independent: node.data.props.independent,
     deeplink: node.data.props.deeplink,
     titles: node.data.props.titles,
+    field: node.data.props.field,
   }));
   const {
     actions: { setProp },
@@ -139,6 +140,7 @@ const TabsSettings = () => {
     deeplink,
     independent,
     ntabs,
+    field,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -161,82 +163,113 @@ const TabsSettings = () => {
               <option>Tabs</option>
               <option>Pills</option>
               <option>Accordion</option>
-              {options.mode === "show" && <option>Switch</option>}
+              {options.mode === "show" && <option>Value switch</option>}
             </select>
           </td>
         </tr>
-        <tr>
-          <th>
-            <label>Number of sections</label>
-          </th>
-          <td>
-            <input
-              type="number"
-              className="form-control"
-              value={ntabs}
-              step="1"
-              min="0"
-              max="20"
-              onChange={(e) => setProp((prop) => (prop.ntabs = e.target.value))}
-            />
-          </td>
-        </tr>
-        <tr>
-          <th colSpan="2">Titles</th>
-        </tr>
-        {ntimes(ntabs, (ix) => (
-          <tr key={ix}>
-            <th>{ix + 1}</th>
-            <td>
-              <input
-                type="text"
-                className="form-control text-to-display"
-                value={titles[ix]}
-                onChange={(e) =>
-                  setProp((prop) => (prop.titles[ix] = e.target.value))
-                }
-              />
-            </td>
-          </tr>
-        ))}
-        {tabsStyle === "Accordion" ? (
+        {tabsStyle === "Value switch" ? (
           <tr>
-            <td colSpan="2">
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  name="block"
-                  type="checkbox"
-                  checked={independent}
-                  onChange={(e) => {
-                    if (e.target) {
-                      setProp((prop) => (prop.independent = e.target.checked));
-                    }
-                  }}
-                />
-                <label className="form-check-label">Open independently</label>
-              </div>
+            <td>
+              <label>Field</label>
+            </td>
+            <td>
+              <select
+                value={field}
+                className="form-control form-select"
+                onChange={(e) => {
+                  setProp((prop) => (prop.field = e.target.value));
+                }}
+              >
+                {options.fields.map((f, ix) => (
+                  <option key={ix} value={f.name}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
             </td>
           </tr>
         ) : (
-          <tr>
-            <td colSpan="2">
-              <div className="form-check">
+          <Fragment>
+            <tr>
+              <th>
+                <label>Number of sections</label>
+              </th>
+              <td>
                 <input
-                  className="form-check-input"
-                  name="block"
-                  type="checkbox"
-                  checked={deeplink}
-                  onChange={(e) => {
-                    if (e.target) {
-                      setProp((prop) => (prop.deeplink = e.target.checked));
-                    }
-                  }}
+                  type="number"
+                  className="form-control"
+                  value={ntabs}
+                  step="1"
+                  min="0"
+                  max="20"
+                  onChange={(e) =>
+                    setProp((prop) => (prop.ntabs = e.target.value))
+                  }
                 />
-                <label className="form-check-label">Deep link</label>
-              </div>
-            </td>
-          </tr>
+              </td>
+            </tr>
+            <tr>
+              <th colSpan="2">Titles</th>
+            </tr>
+            {ntimes(ntabs, (ix) => (
+              <tr key={ix}>
+                <th>{ix + 1}</th>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control text-to-display"
+                    value={titles[ix]}
+                    onChange={(e) =>
+                      setProp((prop) => (prop.titles[ix] = e.target.value))
+                    }
+                  />
+                </td>
+              </tr>
+            ))}
+            {tabsStyle === "Accordion" ? (
+              <tr>
+                <td colSpan="2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      name="block"
+                      type="checkbox"
+                      checked={independent}
+                      onChange={(e) => {
+                        if (e.target) {
+                          setProp(
+                            (prop) => (prop.independent = e.target.checked)
+                          );
+                        }
+                      }}
+                    />
+                    <label className="form-check-label">
+                      Open independently
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              <tr>
+                <td colSpan="2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      name="block"
+                      type="checkbox"
+                      checked={deeplink}
+                      onChange={(e) => {
+                        if (e.target) {
+                          setProp((prop) => (prop.deeplink = e.target.checked));
+                        }
+                      }}
+                    />
+                    <label className="form-check-label">Deep link</label>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </Fragment>
         )}
       </tbody>
     </table>
