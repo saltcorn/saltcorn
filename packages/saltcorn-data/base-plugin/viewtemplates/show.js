@@ -649,6 +649,13 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       const { key } = view_linker(view, fields);
       return key(row);
     },
+    tabs(segment, go) {
+      if (segment.tabsStyle !== "Value switch") return false;
+      const value = row[segment.field];
+      const ix = segment.titles.findIndex((t) => `${t}` === `${value}`);
+      if (ix === -1) return "";
+      return go(segment.contents[ix]);
+    },
     dropdown_menu(segment, go) {
       const rndid = `actiondd${Math.floor(Math.random() * 16777215).toString(
         16

@@ -282,7 +282,9 @@ const render = ({
       );
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
-      return wrap(segment, isTop, ix, blockDispatch[segment.type](segment, go));
+      const resp = blockDispatch[segment.type](segment, go);
+      if (resp !== false) return wrap(segment, isTop, ix, resp);
+      //else continue below
     }
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
