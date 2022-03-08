@@ -22,14 +22,16 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Tabs = ({ contents, titles, tabsStyle, ntabs, independent }) => {
+const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(0);
   const [showTabs, setShowTabs] = useState([true]);
+  const [distinctValues, setDistinctValues] = useState([]);
 
+  useEffect(() => {}, [field]);
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
