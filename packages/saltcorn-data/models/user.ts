@@ -8,6 +8,9 @@ import { compareSync, hash } from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { check } from "dumb-passwords";
 import { validate } from "email-validator";
+import Trigger from "./trigger";
+import Table from "./table";
+
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -183,6 +186,11 @@ class User {
       ...rest,
     });
     u.id = id;
+    Trigger.runTableTriggers(
+      "Insert",
+      Table.findOne({ name: "users" }) as Table,
+      u
+    );
     return u;
   }
 
