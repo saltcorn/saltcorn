@@ -41,6 +41,8 @@ const {
   code,
   pre,
   p,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -416,6 +418,7 @@ router.get(
       const form = loginForm(req, true);
       form.action = "/auth/create_first_user";
       form.submitLabel = req.__("Create user");
+      form.class = "create-first-user";
       form.blurb = req.__(
         "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later."
       );
@@ -424,7 +427,17 @@ router.get(
         [i({ class: "fas fa-upload me-2 mt-2" }), req.__("Restore a backup")],
         `/auth/create_from_restore`
       );
-      res.sendAuthWrap(req.__(`Create first user`), form, {}, restore);
+      res.sendAuthWrap(
+        req.__(`Create first user`),
+        form,
+        {},
+        restore +
+          script(
+            domReady(
+              `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
+            )
+          )
+      );
     } else {
       req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
