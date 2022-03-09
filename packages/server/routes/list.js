@@ -259,8 +259,8 @@ router.get(
       });
     }
     jsfields.push({
-      formatter: "buttonCross",
-      title: i({ class: "far fa-trash-alt" }),
+      formatter: "__deleteIcon",
+      title: "",
       width: 40,
       hozAlign: "center",
       headerSort: false,
