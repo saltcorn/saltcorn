@@ -1563,6 +1563,7 @@ router.post(
     if (!user._attributes.totp_key) {
       //key not set
       req.flash("danger", req.__("2FA TOTP Key not set"));
+      console.log("2FA TOTP Key not set");
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
@@ -1571,6 +1572,8 @@ router.post(
     form.validate(req.body);
     if (form.hasErrors) {
       req.flash("danger", req.__("Error processing form"));
+      console.log("Error processing form");
+
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
@@ -1580,6 +1583,7 @@ router.post(
     });
     if (!rv) {
       req.flash("danger", req.__("Could not verify code"));
+      console.log("Could not verify code");
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
