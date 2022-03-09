@@ -71,6 +71,7 @@ const {
 } = require("../markup/admin");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
+const { getConfigFile } = require("@saltcorn/data/db/connect");
 
 /**
  * @type {object}
@@ -99,7 +100,7 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
-      "multitenancy_enabled",
+      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     ],
     action: "/admin",
     submitLabel: req.__("Save"),
