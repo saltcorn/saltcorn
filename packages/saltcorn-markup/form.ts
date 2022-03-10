@@ -124,7 +124,6 @@ const innerField =
     const name: any = hdr.form_name + nameAdd;
     const validClass = errors[name] ? "is-invalid" : "";
     const maybe_disabled = hdr.disabled ? " disabled data-disabled" : "";
-    console.log(hdr);
 
     switch (hdr.input_type) {
       case "fromtype":
