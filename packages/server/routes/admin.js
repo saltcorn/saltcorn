@@ -399,6 +399,15 @@ router.get(
                           ? span(
                               { class: "badge bg-primary ms-2" },
                               req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check for updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
                             )
                           : "")
                     )
@@ -499,7 +508,15 @@ router.post(
     }
   })
 );
-
+router.post(
+  "/check-for-upgrade",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    await getState().deleteConfig("latest_npm_version");
+    req.flash("success", req.__(`Versions refreshed`));
+    res.redirect(`/admin/system`);
+  })
+);
 /**
  * @name post/backup
  * @function

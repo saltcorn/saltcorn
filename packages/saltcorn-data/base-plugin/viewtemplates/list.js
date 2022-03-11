@@ -568,10 +568,15 @@ const run = async (
 const remove_null_cols = (tfields, rows) =>
   tfields.filter((tfield) => {
     const key = tfield.row_key || tfield.key;
-    if (typeof key !== "string") return true; //unable to tell if should be removed
-    const is_not_null = (row) =>
+    if (!(typeof key === "string" || Array.isArray(key))) return true; //unable to tell if should be removed
+    const is_not_null_simple = (row) =>
       row[key] !== null && typeof row[key] !== "undefined";
-    return rows.some(is_not_null);
+    const is_not_null_array = (row) =>
+      row[key[0]] !== null &&
+      typeof row[key[0]] !== "undefined" &&
+      typeof row[key[0]][key[1]] !== "undefined";
+    if (Array.isArray(key)) return rows.some(is_not_null_array);
+    else return rows.some(is_not_null_simple);
   });
 
 /**

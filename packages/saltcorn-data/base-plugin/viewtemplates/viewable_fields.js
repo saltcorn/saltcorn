@@ -16,6 +16,7 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
+const Table = require("../../models/table");
 
 /**
  * @function
@@ -167,6 +168,7 @@ const make_link = contract(
       link_url,
       link_url_formula,
       link_target_blank,
+      in_dropdown,
     },
     fields,
     __ = (s) => s
@@ -189,6 +191,7 @@ const make_link = contract(
         }
         const attrs = { href };
         if (link_target_blank) attrs.target = "_blank";
+        if (in_dropdown) attrs.class = "dropdown-item";
         return a(attrs, txt);
       },
     };
@@ -254,6 +257,7 @@ const view_linker = contract(
       link_bgcol,
       link_bordercol,
       link_textcol,
+      in_dropdown,
     },
     fields,
     __ = (s) => s
@@ -282,7 +286,8 @@ const view_linker = contract(
               textStyle,
               link_bgcol,
               link_bordercol,
-              link_textcol
+              link_textcol,
+              in_dropdown && "dropdown-item"
             ),
         };
       case "Independent":
@@ -300,7 +305,8 @@ const view_linker = contract(
               textStyle,
               link_bgcol,
               link_bordercol,
-              link_textcol
+              link_textcol,
+              in_dropdown && "dropdown-item"
             ),
         };
       case "ChildList":
@@ -319,7 +325,8 @@ const view_linker = contract(
               textStyle,
               link_bgcol,
               link_bordercol,
-              link_textcol
+              link_textcol,
+              in_dropdown && "dropdown-item"
             ),
         };
       case "ParentShow":
@@ -348,7 +355,8 @@ const view_linker = contract(
                   textStyle,
                   link_bgcol,
                   link_bordercol,
-                  link_textcol
+                  link_textcol,
+                  in_dropdown && "dropdown-item"
                 )
               : "";
           },
@@ -473,12 +481,18 @@ const get_viewable_fields = contract(
         const r = view_linker(column, fields, __);
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
-        return r;
+        if (column.in_dropdown) {
+          dropdown_actions.push(r);
+          return false;
+        } else return r;
       } else if (column.type === "Link") {
         const r = make_link(column, fields, __);
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
-        return r;
+        if (column.in_dropdown) {
+          dropdown_actions.push(r);
+          return false;
+        } else return r;
       } else if (column.type === "JoinField") {
         //console.log(column);
         let refNm, targetNm, through, key, type;
@@ -499,6 +513,25 @@ const get_viewable_fields = contract(
           }
         }
         if (column.field_type) type = getState().types[column.field_type];
+        if (
+          column.join_fieldview &&
+          type?.fieldviews?.[column.join_fieldview]?.expandColumns
+        ) {
+          const reffield = fields.find((f) => f.name === refNm);
+          const reftable = Table.findOne({
+            name: reffield.reftable_name,
+          });
+          const field = reftable.fields.find((f) => f.name === targetNm);
+          return type.fieldviews[column.join_fieldview].expandColumns(
+            field,
+            {
+              ...field.attributes,
+              ...column,
+            },
+            column
+          );
+        }
+
         return {
           ...setWidth,
           label: column.header_label
