@@ -638,7 +638,12 @@ router.post(
         const targetField = (await reftable.getFields()).find(
           (f) => f.name === kpath[1]
         );
-        const fv = targetField.type.fieldviews[fieldview];
+        let fv = targetField.type.fieldviews[fieldview];
+        if (!fv) {
+          fv =
+            targetField.type.fieldviews.show ||
+            targetField.type.fieldviews.as_text;
+        }
         const q = { [reftable.pk_name]: row[kpath[0]] };
         const refRow = await reftable.getRow(q);
         const configuration = req.query;
