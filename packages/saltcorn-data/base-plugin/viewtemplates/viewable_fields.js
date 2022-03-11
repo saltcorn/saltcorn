@@ -509,7 +509,7 @@ const get_viewable_fields = contract(
             name: reffield.reftable_name,
           });
           const field = reftable.fields.find((f) => f.name === targetNm);
-          const newcols = type.fieldviews[column.join_fieldview].expandColumns(
+          return type.fieldviews[column.join_fieldview].expandColumns(
             field,
             {
               ...field.attributes,
@@ -517,8 +517,6 @@ const get_viewable_fields = contract(
             },
             column
           );
-          console.log({ newcols });
-          return newcols;
         }
 
         return {
