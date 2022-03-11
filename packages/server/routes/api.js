@@ -139,7 +139,10 @@ router.get(
             return;
           }
           let dvs;
-          if (field.is_fkey) {
+          if (
+            field.is_fkey ||
+            (field.type.name === "String" && field.attributes?.options)
+          ) {
             dvs = await field.distinct_values();
           } else {
             dvs = await table.distinctValues(fieldName);
