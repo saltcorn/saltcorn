@@ -45,7 +45,8 @@ const link_view = (
   textStyle = "",
   link_bgcol,
   link_bordercol,
-  link_textcol
+  link_textcol,
+  extraClass
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -61,6 +62,7 @@ const link_view = (
           link_style,
           link_size,
           !link_style && "btn btn-link",
+          extraClass,
         ],
         type: "button",
         onClick: `ajax_modal('${url}')`,
@@ -73,7 +75,7 @@ const link_view = (
     return a(
       {
         href: url,
-        class: [textStyle, link_style, link_size],
+        class: [textStyle, link_style, link_size, extraClass],
         style,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
@@ -550,12 +552,6 @@ const field_picker_fields = contract(
         type: "Bool",
         showIf: { type: "Action" },
       },
-      {
-        name: "in_dropdown",
-        label: __("Place in dropdown"),
-        type: "Bool",
-        showIf: { type: "Action" },
-      },
       ...actionConfigFields,
       {
         name: "view",
@@ -665,7 +661,12 @@ const field_picker_fields = contract(
         required: false,
         showIf: { type: "Link" },
       },
-
+      {
+        name: "in_dropdown",
+        label: __("Place in dropdown"),
+        type: "Bool",
+        showIf: { type: ["Action", "ViewLink", "Link"] },
+      },
       {
         name: "agg_relation",
         label: __("Relation"),
