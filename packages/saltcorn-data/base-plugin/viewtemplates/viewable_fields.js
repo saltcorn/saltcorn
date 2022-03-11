@@ -492,7 +492,7 @@ const get_viewable_fields = contract(
         if (column.in_dropdown) {
           dropdown_actions.push(r);
           return false;
-        } else r;
+        } else return r;
       } else if (column.type === "JoinField") {
         //console.log(column);
         let refNm, targetNm, through, key, type;
