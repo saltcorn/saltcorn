@@ -148,8 +148,10 @@ const calcfldViewOptions = contract(
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
       } else if (f.type && f.type.fieldviews) {
-        const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
-          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter
+        const tfvs = Object.entries(f.type.fieldviews).filter(
+          ([k, fv]) =>
+            (f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter) &&
+            !(mode !== "list" && fv.expandColumns)
         );
         let tfvs_ordered = [];
         if (isEdit) {
@@ -345,7 +347,7 @@ const field_picker_fields = contract(
       }
     }
     const fldOptions = fields.map((f) => f.name);
-    const { field_view_options } = calcfldViewOptions(fields, "show");
+    const { field_view_options } = calcfldViewOptions(fields, "list");
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
     const fvConfigFields = [];
     for (const [field_name, fvOptFields] of Object.entries(
@@ -377,10 +379,8 @@ const field_picker_fields = contract(
     const link_view_opts = await get_link_view_opts(table, viewname);
 
     const { parent_field_list } = await table.get_parent_relations(true);
-    const {
-      child_field_list,
-      child_relations,
-    } = await table.get_child_relations();
+    const { child_field_list, child_relations } =
+      await table.get_child_relations();
     const aggStatOptions = {};
     const agg_field_opts = child_relations.map(({ table, key_field }) => {
       aggStatOptions[`${table.name}.${key_field.name}`] = [
@@ -1115,106 +1115,107 @@ const initial_config_all_fields = contract(
       is.promise(is.obj({ columns: is.array(is.obj()), layout: is.obj() }))
     )
   ),
-  (isEdit) => async ({ table_id, exttable_name }) => {
-    const table = await Table.findOne(
-      table_id ? { id: table_id } : { name: exttable_name }
-    );
+  (isEdit) =>
+    async ({ table_id, exttable_name }) => {
+      const table = await Table.findOne(
+        table_id ? { id: table_id } : { name: exttable_name }
+      );
 
-    const fields = (await table.getFields()).filter(
-      (f) => !f.primary_key && (!isEdit || !f.calculated)
-    );
-    var cfg = { columns: [] };
-    var aboves = [null];
-    fields.forEach((f) => {
-      if (!f.type) return;
-      const flabel = {
-        above: [
-          null,
-          {
-            type: "blank",
-            block: false,
-            contents: f.label,
-            textStyle: "",
-            ...(isEdit ? { labelFor: f.name } : {}),
-          },
-        ],
-      };
-      if (
-        f.is_fkey &&
-        f.type !== "File" &&
-        f.reftable_name !== "users" &&
-        !isEdit
-      ) {
-        cfg.columns.push({
-          type: "JoinField",
-          join_field: `${f.name}.${f.attributes.summary_field}`,
-        });
-        aboves.push({
-          widths: [2, 10],
-          besides: [
-            flabel,
+      const fields = (await table.getFields()).filter(
+        (f) => !f.primary_key && (!isEdit || !f.calculated)
+      );
+      var cfg = { columns: [] };
+      var aboves = [null];
+      fields.forEach((f) => {
+        if (!f.type) return;
+        const flabel = {
+          above: [
+            null,
             {
-              above: [
-                null,
-                {
-                  type: "join_field",
-                  block: false,
-                  textStyle: "",
-                  join_field: `${f.name}.${f.attributes.summary_field}`,
-                },
-              ],
+              type: "blank",
+              block: false,
+              contents: f.label,
+              textStyle: "",
+              ...(isEdit ? { labelFor: f.name } : {}),
             },
           ],
-        });
-      } else if (f.reftable_name !== "users") {
-        const fvNm = f.type.fieldviews
-          ? Object.entries(f.type.fieldviews).find(
-              ([nm, fv]) => fv.isEdit === isEdit
-            )[0]
-          : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
-        cfg.columns.push({
-          field_name: f.name,
-          type: "Field",
-          fieldview: fvNm,
-          state_field: true,
-        });
-        aboves.push({
-          widths: [2, 10],
-          besides: [
-            flabel,
-            {
-              above: [
-                null,
-                {
-                  type: "field",
-                  block: false,
-                  fieldview: fvNm,
-                  textStyle: "",
-                  field_name: f.name,
-                },
-              ],
-            },
-          ],
-        });
-      }
-      aboves.push({ type: "line_break" });
-    });
-    if (isEdit)
-      aboves.push({
-        type: "action",
-        block: false,
-        minRole: 10,
-        action_name: "Save",
+        };
+        if (
+          f.is_fkey &&
+          f.type !== "File" &&
+          f.reftable_name !== "users" &&
+          !isEdit
+        ) {
+          cfg.columns.push({
+            type: "JoinField",
+            join_field: `${f.name}.${f.attributes.summary_field}`,
+          });
+          aboves.push({
+            widths: [2, 10],
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "join_field",
+                    block: false,
+                    textStyle: "",
+                    join_field: `${f.name}.${f.attributes.summary_field}`,
+                  },
+                ],
+              },
+            ],
+          });
+        } else if (f.reftable_name !== "users") {
+          const fvNm = f.type.fieldviews
+            ? Object.entries(f.type.fieldviews).find(
+                ([nm, fv]) => fv.isEdit === isEdit
+              )[0]
+            : f.type === "File" && !isEdit
+            ? Object.keys(getState().fileviews)[0]
+            : f.type === "File" && isEdit
+            ? "upload"
+            : f.type === "Key"
+            ? "select"
+            : undefined;
+          cfg.columns.push({
+            field_name: f.name,
+            type: "Field",
+            fieldview: fvNm,
+            state_field: true,
+          });
+          aboves.push({
+            widths: [2, 10],
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: fvNm,
+                    textStyle: "",
+                    field_name: f.name,
+                  },
+                ],
+              },
+            ],
+          });
+        }
+        aboves.push({ type: "line_break" });
       });
-    cfg.layout = { above: aboves };
-    return cfg;
-  }
+      if (isEdit)
+        aboves.push({
+          type: "action",
+          block: false,
+          minRole: 10,
+          action_name: "Save",
+        });
+      cfg.layout = { above: aboves };
+      return cfg;
+    }
 );
 
 /**
