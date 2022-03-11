@@ -875,5 +875,6 @@
 	"Set to 0 for expration at the end of browser session": "Set to 0 for expration at the end of browser session",
 	"Could not verify code": "Could not verify code",
 	"Disable two-factor authentication": "Disable two-factor authentication",
-	"Enter your two-factor code in order to disable it": "Enter your two-factor code in order to disable it"
+	"Enter your two-factor code in order to disable it": "Enter your two-factor code in order to disable it",
+	"Allow the user to enter a new key that is not in the schema": "Allow the user to enter a new key that is not in the schema"
 }
