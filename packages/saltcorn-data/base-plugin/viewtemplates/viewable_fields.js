@@ -730,7 +730,10 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
           if (f.calculated)
             f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
           f.attributes = { ...column.configuration, ...f.attributes };
-          if (typeof column.block !== "undefined")
+          if (
+            typeof column.block !== "undefined" &&
+            typeof f.attributes.block === "undefined"
+          )
             f.attributes.block = column.block;
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
