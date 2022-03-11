@@ -16,6 +16,7 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
+const Table = require("../../models/table");
 
 /**
  * @function
@@ -499,6 +500,27 @@ const get_viewable_fields = contract(
           }
         }
         if (column.field_type) type = getState().types[column.field_type];
+        if (
+          column.join_fieldview &&
+          type?.fieldviews?.[column.join_fieldview]?.expandColumns
+        ) {
+          const reffield = fields.find((f) => f.name === refNm);
+          const reftable = Table.findOne({
+            name: reffield.reftable_name,
+          });
+          const field = reftable.fields.find((f) => f.name === targetNm);
+          const newcols = type.fieldviews[column.join_fieldview].expandColumns(
+            field,
+            {
+              ...field.attributes,
+              ...column,
+            },
+            column
+          );
+          console.log({ newcols });
+          return newcols;
+        }
+
         return {
           ...setWidth,
           label: column.header_label
