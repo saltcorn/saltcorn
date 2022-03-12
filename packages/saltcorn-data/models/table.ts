@@ -1169,15 +1169,57 @@ class Table implements AbstractTable {
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
         if (ontable)
-          joinq += ` left join ${schema}"${sqlsanitize(
+          joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
           )}" ${jtNm} on ${jtNm}."${sqlsanitize(ref)}"=a."${reffield.refname}"`;
         else
-          joinq += ` left join ${schema}"${sqlsanitize(
+          joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
           )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
       }
-      if (through) {
+      if (through && Array.isArray(through)) {
+        //const throughs = Array.isArray(through) ? through : [through];
+        let last_reffield = reffield;
+        let jtNm1;
+        let lastJtNm = jtNm;
+        for (const through1 of through) {
+          const throughTable = await Table.findOne({
+            name: last_reffield.reftable_name,
+          });
+          if (!throughTable)
+            throw new InvalidConfiguration(
+              `Join-through table ${last_reffield.reftable_name} not found`
+            );
+          const throughTableFields = await throughTable.getFields();
+          const throughRefField = throughTableFields.find(
+            (f: Field) => f.name === through1
+          );
+          if (!throughRefField)
+            throw new InvalidConfiguration(
+              `Reference field field ${through} not found in table ${throughTable.name}`
+            );
+          const finalTable = throughRefField.reftable_name;
+          jtNm1 = `${sqlsanitize(
+            last_reffield.reftable_name as string
+          )}_jt_${sqlsanitize(through1)}_jt_${sqlsanitize(ref)}`;
+          console.log({ through1, ref, jtNm1 });
+
+          if (!joinTables.includes(jtNm1)) {
+            if (!finalTable)
+              throw new Error(
+                "Unable to build a joind without a reftable_name."
+              );
+            joinTables.push(jtNm1);
+            joinq += `\n left join ${schema}"${sqlsanitize(
+              finalTable
+            )}" ${jtNm1} on ${jtNm1}.id=${lastJtNm}."${sqlsanitize(through1)}"`;
+          }
+
+          last_reffield = throughRefField;
+          lastJtNm = jtNm1;
+        }
+        fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+      } else if (through) {
         const throughTable = await Table.findOne({
           name: reffield.reftable_name,
         });

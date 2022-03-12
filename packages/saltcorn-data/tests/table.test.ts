@@ -257,6 +257,24 @@ describe("Table get data", () => {
     expect(reads.length).toStrictEqual(3);
     expect(reads[0].author).toBe("Herman Melville");
   });
+  it("should get triple joined rows", async () => {
+    const readings = await Table.findOne({ name: "readings" });
+    db.set_sql_logging(true);
+    assertIsSet(readings);
+    const reads = await readings.getJoinedRows({
+      orderBy: "id",
+      joinFields: {
+        publisher: {
+          ref: "patient_id",
+          through: ["favbook", "publisher"],
+          target: "name",
+        },
+      },
+    });
+    expect(reads.length).toStrictEqual(3);
+    //expect(reads[0].name).toBe("AK Press");
+    expect(reads[2].publisher).toBe("AK Press");
+  });
   it("should rename joined rows signly", async () => {
     const patients = await Table.findOne({ name: "patients" });
     assertIsSet(patients);
