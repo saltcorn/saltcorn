@@ -542,6 +542,36 @@ describe("relations", () => {
     ]);
     expect(rels.parent_relations.length).toBe(3);
   });
+  it("get triple relations", async () => {
+    const table = await Table.findOne({ name: "readings" });
+    assertIsSet(table);
+    const rels = await table.get_parent_relations(true, true);
+    expect(rels.parent_field_list).toEqual([
+      "patient_id.favbook",
+      "patient_id.favbook.author",
+      "patient_id.favbook.id",
+      "patient_id.favbook.pages",
+      "patient_id.favbook.publisher",
+      "patient_id.favbook.publisher.id",
+      "patient_id.favbook.publisher.name",
+      "patient_id.id",
+      "patient_id.name",
+      "patient_id.parent",
+      "patient_id.parent.favbook",
+      "patient_id.parent.favbook.author",
+      "patient_id.parent.favbook.id",
+      "patient_id.parent.favbook.pages",
+      "patient_id.parent.favbook.publisher",
+      "patient_id.parent.id",
+      "patient_id.parent.name",
+      "patient_id.parent.parent",
+      "patient_id.parent.parent.favbook",
+      "patient_id.parent.parent.id",
+      "patient_id.parent.parent.name",
+      "patient_id.parent.parent.parent",
+    ]);
+    expect(rels.parent_relations.length).toBe(3);
+  });
 });
 
 describe("CSV import", () => {

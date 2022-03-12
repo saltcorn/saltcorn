@@ -1041,7 +1041,10 @@ class Table implements AbstractTable {
    * @param allow_double
    * @returns {Promise<{parent_relations: object[], parent_field_list: object[]}>}
    */
-  async get_parent_relations(allow_double?: boolean): Promise<ParentRelations> {
+  async get_parent_relations(
+    allow_double?: boolean,
+    allow_triple?: boolean
+  ): Promise<ParentRelations> {
     const fields = await this.getFields();
     let parent_relations = [];
     let parent_field_list = [];
@@ -1069,6 +1072,21 @@ class Table implements AbstractTable {
                 (f: Field) => !f.calculated || f.stored
               )) {
                 parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+                if (gpf.is_fkey && gpf.type !== "File" && allow_triple) {
+                  const gpfTbl = Table.findOne({
+                    name: gpf.reftable_name,
+                  });
+                  if (gpfTbl) {
+                    const gpfFields = await gpfTbl.getFields();
+                    for (const ggpf of gpfFields.filter(
+                      (f: Field) => !f.calculated || f.stored
+                    )) {
+                      parent_field_list.push(
+                        `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`
+                      );
+                    }
+                  }
+                }
               }
 
             parent_relations.push({ key_field: pf, through: f, table: table1 });
