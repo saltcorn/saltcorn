@@ -504,13 +504,7 @@ const get_viewable_fields = contract(
           key = `${ref}_${ontable}_${target}`;
         } else {
           const keypath = column.join_field.split(".");
-          if (keypath.length === 2) {
-            [refNm, targetNm] = keypath;
-            key = `${refNm}_${targetNm}`;
-          } else {
-            [refNm, through, targetNm] = keypath;
-            key = `${refNm}_${through}_${targetNm}`;
-          }
+          key = keypath.join("_");
         }
         if (column.field_type) type = getState().types[column.field_type];
         if (

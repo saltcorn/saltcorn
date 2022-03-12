@@ -380,7 +380,7 @@ const field_picker_fields = contract(
     }
     const link_view_opts = await get_link_view_opts(table, viewname);
 
-    const { parent_field_list } = await table.get_parent_relations(true);
+    const { parent_field_list } = await table.get_parent_relations(true, true);
     const { child_field_list, child_relations } =
       await table.get_child_relations();
     const aggStatOptions = {};
@@ -882,12 +882,19 @@ const picked_fields_to_query = contract(
                 ref: refNm,
                 target: targetNm,
               };
-            } else {
+            } else if (kpath.length === 3) {
               const [refNm, through, targetNm] = kpath;
               joinFields[`${refNm}_${through}_${targetNm}`] = {
                 ref: refNm,
                 target: targetNm,
                 through,
+              };
+            } else if (kpath.length === 4) {
+              const [refNm, through1, through2, targetNm] = kpath;
+              joinFields[`${refNm}_${through1}_${through2}_ ${targetNm}`] = {
+                ref: refNm,
+                target: targetNm,
+                through: [through1, through2],
               };
             }
           }
