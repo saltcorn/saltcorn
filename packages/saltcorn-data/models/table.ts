@@ -1072,7 +1072,7 @@ class Table implements AbstractTable {
                 (f: Field) => !f.calculated || f.stored
               )) {
                 parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
-                if (gpf.is_fkey && gpf.type !== "File" && allow_triple) {
+                if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
                   const gpfTbl = Table.findOne({
                     name: gpf.reftable_name,
                   });
