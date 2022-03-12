@@ -259,7 +259,6 @@ describe("Table get data", () => {
   });
   it("should get triple joined rows", async () => {
     const readings = await Table.findOne({ name: "readings" });
-    db.set_sql_logging(true);
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",

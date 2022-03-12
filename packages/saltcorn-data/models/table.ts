@@ -1202,7 +1202,6 @@ class Table implements AbstractTable {
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
           )}_jt_${sqlsanitize(through1)}_jt_${sqlsanitize(ref)}`;
-          console.log({ through1, ref, jtNm1 });
 
           if (!joinTables.includes(jtNm1)) {
             if (!finalTable)
