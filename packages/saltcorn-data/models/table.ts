@@ -1177,12 +1177,12 @@ class Table implements AbstractTable {
             reftable
           )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
       }
-      if (through && Array.isArray(through)) {
-        //const throughs = Array.isArray(through) ? through : [through];
+      if (through) {
+        const throughs = Array.isArray(through) ? through : [through];
         let last_reffield = reffield;
         let jtNm1;
         let lastJtNm = jtNm;
-        for (const through1 of through) {
+        for (const through1 of throughs) {
           const throughTable = await Table.findOne({
             name: last_reffield.reftable_name,
           });
@@ -1217,35 +1217,6 @@ class Table implements AbstractTable {
 
           last_reffield = throughRefField;
           lastJtNm = jtNm1;
-        }
-        fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
-      } else if (through) {
-        const throughTable = await Table.findOne({
-          name: reffield.reftable_name,
-        });
-        if (!throughTable)
-          throw new InvalidConfiguration(
-            `Join-through table ${reffield.reftable_name} not found`
-          );
-        const throughTableFields = await throughTable.getFields();
-        const throughRefField = throughTableFields.find(
-          (f: Field) => f.name === through
-        );
-        if (!throughRefField)
-          throw new InvalidConfiguration(
-            `Reference field field ${through} not found in table ${throughTable.name}`
-          );
-        const finalTable = throughRefField.reftable_name;
-        const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
-          through
-        )}_jt_${sqlsanitize(ref)}`;
-        if (!joinTables.includes(jtNm1)) {
-          if (!finalTable)
-            throw new Error("Unable to build a joind without a reftable_name.");
-          joinTables.push(jtNm1);
-          joinq += ` left join ${schema}"${sqlsanitize(
-            finalTable
-          )}" ${jtNm1} on ${jtNm1}.id=${jtNm}."${sqlsanitize(through)}"`;
         }
         fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
       } else {
