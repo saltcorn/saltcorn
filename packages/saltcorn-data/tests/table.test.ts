@@ -487,6 +487,8 @@ describe("relations", () => {
     assertIsSet(table);
     const rels = await table.get_parent_relations();
     expect(rels.parent_field_list).toEqual([
+      "publisher.id",
+      "publisher.name",
       "myreviews.book->book",
       "myreviews.book->id",
       "myreviews.book->rating",
@@ -512,6 +514,7 @@ describe("relations", () => {
       "patient_id.favbook.author",
       "patient_id.favbook.id",
       "patient_id.favbook.pages",
+      "patient_id.favbook.publisher",
       "patient_id.id",
       "patient_id.name",
       "patient_id.parent",
