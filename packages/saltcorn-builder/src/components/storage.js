@@ -25,6 +25,7 @@ import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
+import { DropMenu } from "./elements/DropMenu";
 
 /**
  * @param {object} segment
@@ -69,6 +70,7 @@ const allElements = [
   DropDownFilter,
   Tabs,
   ToggleFilter,
+  DropMenu,
 ];
 
 export /**
@@ -227,6 +229,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           ntabs={segment.ntabs}
           independent={segment.independent}
           deeplink={segment.deeplink}
+          field={segment.field}
           tabsStyle={segment.tabsStyle}
           contents={segment.contents.map(toTag)}
         />
@@ -419,6 +422,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         ),
         titles: node.props.titles,
         tabsStyle: node.props.tabsStyle,
+        field: node.props.field,
         independent: node.props.independent,
         deeplink: node.props.deeplink,
         ntabs: node.props.ntabs,

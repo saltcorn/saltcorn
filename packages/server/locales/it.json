@@ -475,5 +475,7 @@
 	"Events": "Events",
 	"Verified": "Verified",
 	"SSL": "SSL",
-	"Generate": "Generate"
+	"Generate": "Generate",
+	"Two-factor authentication": "Two-factor authentication",
+	"Two-factor authentication is disabled": "Two-factor authentication is disabled"
 }

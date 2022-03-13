@@ -1,6 +1,6 @@
 # Saltcorn
 
-![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)
+![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg) [![OpenCollective](https://img.shields.io/badge/OpenCollective-1F87FF?style=flat&logo=OpenCollective&logoColor=black)](https://opencollective.com/saltcorn)
 
 Saltcorn is an extensible open source no-code database application builder. Use it to build web applications based on relational data with flexible views, datatypes and layouts.
 

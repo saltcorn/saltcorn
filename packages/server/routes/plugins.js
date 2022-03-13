@@ -450,6 +450,7 @@ const store_actions_dropdown = (req) =>
           {
             class: "dropdown-item",
             href: `/plugins/upgrade`,
+            onClick: `notifyAlert('Upgrading plugins...', true)`,
           },
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed plugins")
@@ -646,7 +647,9 @@ router.get(
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
     const filepath = req.params[0];
-    const location = getState().plugin_locations[plugin];
+    const location = getState().plugin_locations[
+      plugin.includes("@") ? plugin.split("@")[0] : plugin
+    ];
     if (location) {
       const safeFile = path
         .normalize(filepath)

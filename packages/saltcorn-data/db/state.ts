@@ -723,6 +723,7 @@ const features = {
   fieldrepeats_in_field_attributes: true,
   no_plugin_fieldview_length_check: true,
   bootstrap5: true,
+  version_plugin_serve_path: true,
 };
 
 export = {

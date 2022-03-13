@@ -38,7 +38,8 @@ const link_view = (
   textStyle = "",
   link_bgcol,
   link_bordercol,
-  link_textcol
+  link_textcol,
+  extraClass
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -54,6 +55,7 @@ const link_view = (
           link_style,
           link_size,
           !link_style && "btn btn-link",
+          extraClass,
         ],
         type: "button",
         onClick: `ajax_modal('${url}')`,
@@ -66,7 +68,7 @@ const link_view = (
     return a(
       {
         href: url,
-        class: [textStyle, link_style, link_size],
+        class: [textStyle, link_style, link_size, extraClass],
         style,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
@@ -86,12 +88,14 @@ const stateToQueryString = (state) => {
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        k === "id" ? null : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+        k === "id"
+          ? null
+          : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
       )
       .filter((s) => !!s)
       .join("&")
   );
-};
+}
 
 /**
  * @function
@@ -107,7 +111,8 @@ const calcfldViewOptions = (fields, mode) => {
   fields.forEach((f) => {
     handlesTextStyle[f.name] = [];
     if (f.type === "File") {
-      if (!isEdit && !isFilter) fvs[f.name] = Object.keys(getState().fileviews);
+      if (!isEdit && !isFilter)
+        fvs[f.name] = Object.keys(getState().fileviews);
       else fvs[f.name] = ["upload"];
     } else if (f.type === "Key") {
       if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
@@ -130,8 +135,10 @@ const calcfldViewOptions = (fields, mode) => {
         if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
       });
     } else if (f.type && f.type.fieldviews) {
-      const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
-        f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter
+      const tfvs = Object.entries(f.type.fieldviews).filter(
+        ([k, fv]) =>
+          (f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter) &&
+          !(mode !== "list" && fv.expandColumns)
       );
       let tfvs_ordered = [];
       if (isEdit) {
@@ -152,7 +159,7 @@ const calcfldViewOptions = (fields, mode) => {
     }
   });
   return { field_view_options: fvs, handlesTextStyle };
-};
+}
 
 /**
  * @function
@@ -171,7 +178,10 @@ const calcfldViewConfig = async (fields, isEdit) => {
         : (f.type && f.type.fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews)) {
       if (fv.configFields)
-        fieldViewConfigForms[f.name][nm] = await applyAsync(fv.configFields, f);
+        fieldViewConfigForms[f.name][nm] = await applyAsync(
+          fv.configFields,
+          f
+        );
     }
     if (f.type === "Key") {
       if (f.reftable && f.reftable.fields) {
@@ -183,7 +193,7 @@ const calcfldViewConfig = async (fields, isEdit) => {
     }
   }
   return fieldViewConfigForms;
-};
+}
 
 /**
  * @function
@@ -243,7 +253,7 @@ const get_link_view_opts = async (table, viewname) => {
     });
   });
   return link_view_opts;
-};
+}
 
 /**
  * Get Action configuration fields
@@ -309,7 +319,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     }
   }
   const fldOptions = fields.map((f) => f.name);
-  const { field_view_options } = calcfldViewOptions(fields, "show");
+  const { field_view_options } = calcfldViewOptions(fields, "list");
   const fieldViewConfigForms = await calcfldViewConfig(fields, false);
   const fvConfigFields = [];
   for (const [field_name, fvOptFields] of Object.entries(
@@ -621,7 +631,12 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       required: false,
       showIf: { type: "Link" },
     },
-
+    {
+      name: "in_dropdown",
+      label: __("Place in dropdown"),
+      type: "Bool",
+      showIf: { type: ["Action", "ViewLink", "Link"] },
+    },
     {
       name: "agg_relation",
       label: __("Relation"),
@@ -680,7 +695,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       },
     },
   ];
-};
+}
 
 /**
  * get_child_views Contract
@@ -702,7 +717,8 @@ const get_child_views = async (table, viewname) => {
     child_views.push({ relation, related_table, views });
   }
   return child_views;
-};
+}
+
 
 /**
  * get_parent_views Contract
@@ -723,13 +739,14 @@ const get_parent_views = async (table, viewname) => {
     const views = await View.find_table_views_where(
       related_table,
       ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname && state_fields.some((sf) => sf.name === "id")
+        viewrow.name !== viewname &&
+        state_fields.some((sf) => sf.name === "id")
     );
 
     parent_views.push({ relation, related_table, views });
   }
   return parent_views;
-};
+}
 
 /**
  * get_onetoone_views Contract
@@ -749,12 +766,14 @@ const get_onetoone_views = async (table, viewname) => {
     const views = await View.find_table_views_where(
       related_table.id,
       ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname && state_fields.some((sf) => sf.name === "id")
+        viewrow.name !== viewname &&
+        state_fields.some((sf) => sf.name === "id")
     );
     child_views.push({ relation, related_table, views });
   }
   return child_views;
-};
+}
+
 
 /**
  * picked_fields_to_query Contract
@@ -903,7 +922,8 @@ const stateFieldsToQuery = ({ state, fields, prefix = "" }) => {
   const latNear = stateKeys.find((k) => k.startsWith("_near_lat_"));
   const longNear = stateKeys.find((k) => k.startsWith("_near_long_"));
   if (latNear && longNear) {
-    const latField = prefix + db.sqlsanitize(latNear.replace("_near_lat_", ""));
+    const latField =
+      prefix + db.sqlsanitize(latNear.replace("_near_lat_", ""));
     const longField =
       prefix + db.sqlsanitize(longNear.replace("_near_long_", ""));
     const lat = parseFloat(state[latNear]);
@@ -911,7 +931,7 @@ const stateFieldsToQuery = ({ state, fields, prefix = "" }) => {
     q.orderBy = { distance: { lat, long, latField, longField } };
   }
   return q;
-};
+}
 
 /**
  *
@@ -994,7 +1014,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
     }
   });
   return qstate;
-};
+}
 
 /**
  * initial_config_all_fields Contract
@@ -1004,106 +1024,106 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
  */
 const initial_config_all_fields =
   (isEdit) =>
-  async ({ table_id, exttable_name }) => {
-    const table = await Table.findOne(
-      table_id ? { id: table_id } : { name: exttable_name }
-    );
+    async ({ table_id, exttable_name }) => {
+      const table = await Table.findOne(
+        table_id ? { id: table_id } : { name: exttable_name }
+      );
 
-    const fields = (await table.getFields()).filter(
-      (f) => !f.primary_key && (!isEdit || !f.calculated)
-    );
-    var cfg = { columns: [] };
-    var aboves = [null];
-    fields.forEach((f) => {
-      if (!f.type) return;
-      const flabel = {
-        above: [
-          null,
-          {
-            type: "blank",
-            block: false,
-            contents: f.label,
-            textStyle: "",
-            ...(isEdit ? { labelFor: f.name } : {}),
-          },
-        ],
-      };
-      if (
-        f.is_fkey &&
-        f.type !== "File" &&
-        f.reftable_name !== "users" &&
-        !isEdit
-      ) {
-        cfg.columns.push({
-          type: "JoinField",
-          join_field: `${f.name}.${f.attributes.summary_field}`,
-        });
-        aboves.push({
-          widths: [2, 10],
-          besides: [
-            flabel,
+      const fields = (await table.getFields()).filter(
+        (f) => !f.primary_key && (!isEdit || !f.calculated)
+      );
+      var cfg = { columns: [] };
+      var aboves = [null];
+      fields.forEach((f) => {
+        if (!f.type) return;
+        const flabel = {
+          above: [
+            null,
             {
-              above: [
-                null,
-                {
-                  type: "join_field",
-                  block: false,
-                  textStyle: "",
-                  join_field: `${f.name}.${f.attributes.summary_field}`,
-                },
-              ],
+              type: "blank",
+              block: false,
+              contents: f.label,
+              textStyle: "",
+              ...(isEdit ? { labelFor: f.name } : {}),
             },
           ],
-        });
-      } else if (f.reftable_name !== "users") {
-        const fvNm = f.type.fieldviews
-          ? Object.entries(f.type.fieldviews).find(
-              ([nm, fv]) => fv.isEdit === isEdit
-            )[0]
-          : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
-        cfg.columns.push({
-          field_name: f.name,
-          type: "Field",
-          fieldview: fvNm,
-          state_field: true,
-        });
-        aboves.push({
-          widths: [2, 10],
-          besides: [
-            flabel,
-            {
-              above: [
-                null,
-                {
-                  type: "field",
-                  block: false,
-                  fieldview: fvNm,
-                  textStyle: "",
-                  field_name: f.name,
-                },
-              ],
-            },
-          ],
-        });
-      }
-      aboves.push({ type: "line_break" });
-    });
-    if (isEdit)
-      aboves.push({
-        type: "action",
-        block: false,
-        minRole: 10,
-        action_name: "Save",
+        };
+        if (
+          f.is_fkey &&
+          f.type !== "File" &&
+          f.reftable_name !== "users" &&
+          !isEdit
+        ) {
+          cfg.columns.push({
+            type: "JoinField",
+            join_field: `${f.name}.${f.attributes.summary_field}`,
+          });
+          aboves.push({
+            widths: [2, 10],
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "join_field",
+                    block: false,
+                    textStyle: "",
+                    join_field: `${f.name}.${f.attributes.summary_field}`,
+                  },
+                ],
+              },
+            ],
+          });
+        } else if (f.reftable_name !== "users") {
+          const fvNm = f.type.fieldviews
+            ? Object.entries(f.type.fieldviews).find(
+                ([nm, fv]) => fv.isEdit === isEdit
+              )[0]
+            : f.type === "File" && !isEdit
+            ? Object.keys(getState().fileviews)[0]
+            : f.type === "File" && isEdit
+            ? "upload"
+            : f.type === "Key"
+            ? "select"
+            : undefined;
+          cfg.columns.push({
+            field_name: f.name,
+            type: "Field",
+            fieldview: fvNm,
+            state_field: true,
+          });
+          aboves.push({
+            widths: [2, 10],
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: fvNm,
+                    textStyle: "",
+                    field_name: f.name,
+                  },
+                ],
+              },
+            ],
+          });
+        }
+        aboves.push({ type: "line_break" });
       });
-    cfg.layout = { above: aboves };
-    return cfg;
-  };
+      if (isEdit)
+        aboves.push({
+          type: "action",
+          block: false,
+          minRole: 10,
+          action_name: "Save",
+        });
+      cfg.layout = { above: aboves };
+      return cfg;
+    }
 
 /**
  *
@@ -1285,7 +1305,6 @@ module.exports = {
   initial_config_all_fields,
   calcfldViewOptions,
   get_link_view_opts,
-  //is_column,
   readState,
   readStateStrict,
   stateToQueryString,

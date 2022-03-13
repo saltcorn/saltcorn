@@ -224,3 +224,7 @@ footer.bs-mobile-nav-footer {
 .form-group {
   margin-bottom: 1rem;
 }
+
+.table-responsive {
+  overflow: visible;
+}

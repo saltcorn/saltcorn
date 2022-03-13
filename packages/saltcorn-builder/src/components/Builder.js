@@ -26,6 +26,7 @@ import { Image } from "./elements/Image";
 import { Tabs } from "./elements/Tabs";
 import { Empty } from "./elements/Empty";
 import { DropDownFilter } from "./elements/DropDownFilter";
+import { DropMenu } from "./elements/DropMenu";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import optionsCtx from "./context";
 import PreviewCtx from "./preview_context";
@@ -446,6 +447,7 @@ const Builder = ({ options, layout, mode }) => {
                       Container,
                       Column,
                       DropDownFilter,
+                      DropMenu,
                       Tabs,
                       ToggleFilter,
                     }}

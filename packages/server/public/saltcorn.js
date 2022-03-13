@@ -423,7 +423,7 @@ function tristateClick(nm) {
   }
 }
 
-function notifyAlert(note) {
+function notifyAlert(note, spin) {
   if (Array.isArray(note)) {
     note.forEach(notifyAlert);
     return;
@@ -438,10 +438,16 @@ function notifyAlert(note) {
   }
 
   $("#alerts-area")
-    .append(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+    .append(`<div class="alert alert-${type} alert-dismissible fade show ${
+    spin ? "d-flex align-items-center" : ""
+  }" role="alert">
   ${txt}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-  </button>
+  ${
+    spin
+      ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
+      : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+  </button>`
+  }
 </div>`);
 }
 
@@ -751,14 +757,33 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
-function fill_formula_btn_click(btn) {
+async function fill_formula_btn_click(btn, k) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
+  const free_vars = JSON.parse(
+    decodeURIComponent($(btn).attr("data-formula-free-vars"))
+  );
+  const table = JSON.parse(
+    decodeURIComponent($(btn).attr("data-formula-table"))
+  );
   const rec = get_form_record($(btn), true);
+  const rec_ids = get_form_record($(btn));
+  for (const fv of free_vars) {
+    if (fv.includes(".")) {
+      const kpath = fv.split(".");
+      const [refNm, targetNm] = kpath;
+      const reffield = table.fields.find((f) => f.name === refNm);
+      const resp = await $.ajax(
+        `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
+      );
+      rec[refNm] = resp.success[0];
+    }
+  }
   const val = new Function(
     `{${Object.keys(rec).join(",")}}`,
     "return " + formula
   )(rec);
   $(btn).closest(".input-group").find("input").val(val);
+  if (k) k();
 }
 
 /*

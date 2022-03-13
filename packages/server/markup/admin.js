@@ -46,14 +46,21 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
       encType: "multipart/form-data",
     },
     input({ type: "hidden", name: "_csrf", value: csrf }),
-    label({ class: "btn-link", for: "upload_to_restore" }, inner),
+    label(
+      {
+        class: "btn-link",
+        for: "upload_to_restore",
+        style: { cursor: "pointer" },
+      },
+      inner
+    ),
     input({
       id: "upload_to_restore",
       class: "d-none",
       name: "file",
       type: "file",
       accept: "application/zip,.zip",
-      onchange: "this.form.submit();",
+      onchange: "notifyAlert('Restoring backup...', true);this.form.submit();",
     })
   );
 

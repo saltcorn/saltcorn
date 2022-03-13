@@ -71,6 +71,7 @@ const {
 } = require("../markup/admin");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
+const { getConfigFile } = require("@saltcorn/data/db/connect");
 
 /**
  * @type {object}
@@ -99,7 +100,7 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
-      "multitenancy_enabled",
+      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     ],
     action: "/admin",
     submitLabel: req.__("Save"),
@@ -398,6 +399,15 @@ router.get(
                           ? span(
                               { class: "badge bg-primary ms-2" },
                               req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check for updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
                             )
                           : "")
                     )
@@ -498,7 +508,15 @@ router.post(
     }
   })
 );
-
+router.post(
+  "/check-for-upgrade",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    await getState().deleteConfig("latest_npm_version");
+    req.flash("success", req.__(`Versions refreshed`));
+    res.redirect(`/admin/system`);
+  })
+);
 /**
  * @name post/backup
  * @function

@@ -23,7 +23,15 @@ const {
   translateLayout,
 } = require("../../models/layout");
 
-const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
+const {
+  div,
+  text,
+  span,
+  a,
+  text_attr,
+  i,
+  button,
+} = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -640,6 +648,17 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     view_link(view) {
       const { key } = view_linker(view, fields);
       return key(row);
+    },
+    tabs(segment, go) {
+      if (segment.tabsStyle !== "Value switch") return false;
+      const value = row[segment.field];
+      const ix = segment.titles.findIndex((t) =>
+        typeof t.value === "undefined"
+          ? `${t}` === `${value}`
+          : value === t.value
+      );
+      if (ix === -1) return "";
+      return go(segment.contents[ix]);
     },
   };
   return renderLayout({

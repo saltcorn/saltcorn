@@ -41,6 +41,8 @@ const {
   code,
   pre,
   p,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -416,6 +418,7 @@ router.get(
       const form = loginForm(req, true);
       form.action = "/auth/create_first_user";
       form.submitLabel = req.__("Create user");
+      form.class = "create-first-user";
       form.blurb = req.__(
         "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later."
       );
@@ -424,7 +427,17 @@ router.get(
         [i({ class: "fas fa-upload me-2 mt-2" }), req.__("Restore a backup")],
         `/auth/create_from_restore`
       );
-      res.sendAuthWrap(req.__(`Create first user`), form, {}, restore);
+      res.sendAuthWrap(
+        req.__(`Create first user`),
+        form,
+        {},
+        restore +
+          script(
+            domReady(
+              `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
+            )
+          )
+      );
     } else {
       req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
@@ -1194,14 +1207,12 @@ const userSettings = async ({ req, res, pwform, user }) => {
                 ),
                 div(
                   user._attributes.totp_enabled
-                    ? post_btn(
-                        "/auth/twofa/disable/totp",
-                        "Disable",
-                        req.csrfToken(),
+                    ? a(
                         {
-                          btnClass: "btn-danger mt-2",
-                          req,
-                        }
+                          href: "/auth/twofa/disable/totp",
+                          class: "btn btn-danger mt-2",
+                        },
+                        "Disable"
                       )
                     : a(
                         {
@@ -1552,6 +1563,7 @@ router.post(
     if (!user._attributes.totp_key) {
       //key not set
       req.flash("danger", req.__("2FA TOTP Key not set"));
+      console.log("2FA TOTP Key not set");
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
@@ -1560,6 +1572,8 @@ router.post(
     form.validate(req.body);
     if (form.hasErrors) {
       req.flash("danger", req.__("Error processing form"));
+      console.log("Error processing form");
+
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
@@ -1569,6 +1583,7 @@ router.post(
     });
     if (!rv) {
       req.flash("danger", req.__("Could not verify code"));
+      console.log("Could not verify code");
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
@@ -1585,11 +1600,42 @@ router.post(
   })
 );
 
+router.get(
+  "/twofa/disable/totp",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    res.sendWrap(req.__("Disable two-factor authentication"), {
+      type: "card",
+      title: req.__("Disable two-factor authentication"),
+      contents: [
+        h4(req.__("Enter your two-factor code in order to disable it")),
+        renderForm(totpForm(req, "/auth/twofa/disable/totp"), req.csrfToken()),
+      ],
+    });
+  })
+);
+
 router.post(
   "/twofa/disable/totp",
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
+    const form = totpForm(req, "/auth/twofa/disable/totp");
+    form.validate(req.body);
+    if (form.hasErrors) {
+      req.flash("danger", req.__("Error processing form"));
+      res.redirect("/auth/twofa/disable/totp");
+      return;
+    }
+    const code = `${form.values.totpCode}`;
+    const rv = totp.verify(code, user._attributes.totp_key, {
+      time: 30,
+    });
+    if (!rv) {
+      req.flash("danger", req.__("Could not verify code"));
+      res.redirect("/auth/twofa/disable/totp");
+      return;
+    }
     user._attributes.totp_enabled = false;
     delete user._attributes.totp_key;
     await user.update({ _attributes: user._attributes });
@@ -1602,9 +1648,9 @@ router.post(
     res.redirect("/auth/settings");
   })
 );
-const totpForm = (req) =>
+const totpForm = (req, action) =>
   new Form({
-    action: "/auth/twofa/setup/totp",
+    action: action || "/auth/twofa/setup/totp",
     fields: [
       {
         name: "totpCode",

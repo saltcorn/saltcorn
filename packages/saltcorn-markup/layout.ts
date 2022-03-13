@@ -73,10 +73,11 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @returns {div|span|string}
  */
 const applyTextStyle = (segment: any, inner: string): string => {
-  let style: any = segment.font
+  const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
-  let hasStyle = Object.keys(style).length > 0;
+  const hasStyle = Object.keys(style).length > 0;
+  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
   switch (segment.textStyle) {
@@ -94,9 +95,9 @@ const applyTextStyle = (segment: any, inner: string): string => {
       return h6({ style }, inner);
     default:
       return segment.block
-        ? div({ class: segment.textStyle || "", style }, inner)
+        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
         : segment.textStyle || hasStyle
-        ? span({ class: segment.textStyle || "", style }, inner)
+        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
         : inner;
   }
 };
@@ -281,7 +282,9 @@ const render = ({
       );
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
-      return wrap(segment, isTop, ix, blockDispatch[segment.type](segment, go));
+      const resp = blockDispatch[segment.type](segment, go);
+      if (resp !== false) return wrap(segment, isTop, ix, resp);
+      //else continue below
     }
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
@@ -318,6 +321,49 @@ const render = ({
           src:
             srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
         })
+      );
+    }
+    if (segment.type === "dropdown_menu") {
+      const rndid = `actiondd${Math.floor(Math.random() * 16777215).toString(
+        16
+      )}`;
+
+      let style =
+        segment.action_style === "btn-custom-color"
+          ? `background-color: ${
+              segment.action_bgcol || "#000000"
+            };border-color: ${segment.action_bordercol || "#000000"}; color: ${
+              segment.action_textcol || "#000000"
+            }`
+          : null;
+      return div(
+        { class: "dropdown" },
+        button(
+          {
+            class:
+              segment.action_style === "btn-link"
+                ? ""
+                : `btn ${segment.action_style || "btn-primary"} ${
+                    segment.action_size || ""
+                  } dropdown-toggle`,
+
+            "data-boundary": "viewport",
+            type: "button",
+            id: rndid,
+            "data-bs-toggle": "dropdown",
+            "aria-haspopup": "true",
+            "aria-expanded": "false",
+            style,
+          },
+          segment.label || "Actions"
+        ),
+        div(
+          {
+            class: "dropdown-menu dropdown-menu-end",
+            "aria-labelledby": rndid,
+          },
+          div({ class: "d-flex flex-column px-2" }, go(segment.contents))
+        )
       );
     }
     if (segment.type === "link") {

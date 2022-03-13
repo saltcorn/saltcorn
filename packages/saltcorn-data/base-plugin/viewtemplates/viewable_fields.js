@@ -3,10 +3,10 @@
  * @module base-plugin/viewtemplates/viewable_fields
  * @subcategory base-plugin
  */
-const { post_btn } = require("@saltcorn/markup");
-const { text, a, i } = require("@saltcorn/markup/tags");
+const { post_btn, link } = require("@saltcorn/markup");
+const { text, a, i, div, button } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
-const { link_view } = require("../../plugin-helper");
+const { link_view, strictParseInt } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
@@ -14,6 +14,7 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
+const Table = require("../../models/table");
 const { isNode } = require("../../webpack-helper");
 
 /**
@@ -30,8 +31,7 @@ const action_url = (viewname, table, action_name, r, colId, colIdNm) => {
   if (action_name === "Delete")
     return `/delete/${table.name}/${r.id}${
       isNode() ? `?redirect=/view/${viewname}` : ""
-    }`;
-  // TODO CH delete redirect
+    }`; // TODO CH delete redirect
   else if (action_name === "GoBack") return { javascript: "history.back()" };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
@@ -42,7 +42,7 @@ const action_url = (viewname, table, action_name, r, colId, colIdNm) => {
   return {
     javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
   };
-};
+}
 
 /**
  * @param {string} url
@@ -130,7 +130,9 @@ const get_view_link_query = (fields, view) => {
   if (fUniqueString)
     return (r) =>
       r && r[fUniqueString.name]
-        ? `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`
+        ? `?${fUniqueString.name}=${encodeURIComponent(
+            r[fUniqueString.name]
+          )}`
         : `?${pk_name}=${r[pk_name]}`;
   const fUnique = fields.find((f) => f.is_unique);
   if (fUnique)
@@ -138,7 +140,7 @@ const get_view_link_query = (fields, view) => {
   else {
     return (r) => `?${pk_name}=${r[pk_name]}`;
   }
-};
+}
 
 /**
  * @function
@@ -158,6 +160,7 @@ const make_link = (
     link_url,
     link_url_formula,
     link_target_blank,
+    in_dropdown,
   },
   fields,
   __ = (s) => s
@@ -180,10 +183,11 @@ const make_link = (
       }
       const attrs = { href };
       if (link_target_blank) attrs.target = "_blank";
+      if (in_dropdown) attrs.class = "dropdown-item";
       return a(attrs, txt);
     },
   };
-};
+}
 
 /**
  * @param {string} s
@@ -239,6 +243,7 @@ const view_linker = (
     link_bgcol,
     link_bordercol,
     link_textcol,
+    in_dropdown,
   },
   fields,
   __ = (s) => s
@@ -271,7 +276,8 @@ const view_linker = (
             textStyle,
             link_bgcol,
             link_bordercol,
-            link_textcol
+            link_textcol,
+            in_dropdown && "dropdown-item"
           ),
       };
     case "Independent":
@@ -289,7 +295,8 @@ const view_linker = (
             textStyle,
             link_bgcol,
             link_bordercol,
-            link_textcol
+            link_textcol,
+            in_dropdown && "dropdown-item"
           ),
       };
     case "ChildList":
@@ -308,7 +315,8 @@ const view_linker = (
             textStyle,
             link_bgcol,
             link_bordercol,
-            link_textcol
+            link_textcol,
+            in_dropdown && "dropdown-item"
           ),
       };
     case "ParentShow":
@@ -337,7 +345,8 @@ const view_linker = (
                 textStyle,
                 link_bgcol,
                 link_bordercol,
-                link_textcol
+                link_textcol,
+                in_dropdown && "dropdown-item"
               )
             : "";
         },
@@ -345,7 +354,7 @@ const view_linker = (
     default:
       throw new Error(view);
   }
-};
+}
 
 /**
  * @param {string} nm
@@ -355,6 +364,17 @@ const action_requires_write = (nm) => {
   if (!nm) return false;
   if (nm === "Delete") return true;
   if (nm.startsWith("Toggle")) return true;
+};
+
+// flapMap if f returns array
+const flapMaipish = (xs, f) => {
+  const res = [];
+  for (const x of xs) {
+    const y = f(x);
+    if (Array.isArray(y)) res.push(...y);
+    else res.push(y);
+  }
+  return res;
 };
 
 /**
@@ -368,182 +388,250 @@ const action_requires_write = (nm) => {
  * @param {*} __
  * @returns {object[]}
  */
-const get_viewable_fields = (
-  viewname,
-  table,
-  fields,
-  columns,
-  isShow,
-  req,
-  __
-) =>
-  columns
-    .map((column) => {
-      const role = req.user ? req.user.role_id : 10;
-      const user_id = req.user ? req.user.id : null;
-      const setWidth = column.col_width
-        ? { width: `${column.col_width}${column.col_width_units}` }
-        : {};
-      if (column.type === "Action")
-        return {
-          ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
-          key: (r) => {
-            if (action_requires_write(column.action_name)) {
-              if (table.min_role_write < role && !table.is_owner(req.user, r))
-                return "";
-            }
-            const url = action_url(
-              viewname,
-              table,
-              column.action_name,
-              r,
-              column.action_name,
-              "action_name"
+const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) => {
+  const dropdown_actions = [];
+  const tfields = flapMaipish(columns, (column) => {
+    const role = req.user ? req.user.role_id : 10;
+    const user_id = req.user ? req.user.id : null;
+    const setWidth = column.col_width
+      ? { width: `${column.col_width}${column.col_width_units}` }
+      : {};
+    if (column.type === "Action") {
+      const action_col = {
+        ...setWidth,
+        label: column.header_label ? text(__(column.header_label)) : "",
+        key: (r) => {
+          if (action_requires_write(column.action_name)) {
+            if (table.min_role_write < role && !table.is_owner(req.user, r))
+              return "";
+          }
+          const url = action_url(
+            viewname,
+            table,
+            column.action_name,
+            r,
+            column.action_name,
+            "action_name"
+          );
+          const label = column.action_label_formula
+            ? eval_expression(column.action_label, r)
+            : __(column.action_label) || column.action_name;
+          if (url.javascript)
+            return a(
+              {
+                href: "javascript:" + url.javascript,
+                class: column.in_dropdown
+                  ? "dropdown-item"
+                  : column.action_style === "btn-link"
+                  ? ""
+                  : `btn ${column.action_style || "btn-primary"} ${
+                      column.action_size || ""
+                    }`,
+              },
+              label
             );
-            const label = column.action_label_formula
-              ? eval_expression(column.action_label, r)
-              : __(column.action_label) || column.action_name;
-            if (url.javascript)
-              return a(
-                {
-                  href: "javascript:" + url.javascript,
-                  class:
-                    column.action_style === "btn-link"
-                      ? ""
-                      : `btn ${column.action_style || "btn-primary"} ${
-                          column.action_size || ""
-                        }`,
-                },
-                label
-              );
-            else
-              return post_btn(url, label, isNode() ? req.csrfToken() : "", {
-                small: true,
-                ajax: true,
-                reload_on_done: true,
-                confirm: column.confirm,
-                btnClass: column.action_style || "btn-primary",
-                req,
-              });
-          },
-        };
-      else if (column.type === "ViewLink") {
-        if (!column.view) return;
-        const r = view_linker(column, fields, __);
-        if (column.header_label) r.label = text(__(column.header_label));
-        Object.assign(r, setWidth);
-        return r;
-      } else if (column.type === "Link") {
-        const r = make_link(column, fields, __);
-        if (column.header_label) r.label = text(__(column.header_label));
-        Object.assign(r, setWidth);
-        return r;
-      } else if (column.type === "JoinField") {
-        //console.log(column);
-        let refNm, targetNm, through, key, type;
-        if (column.join_field.includes("->")) {
-          const [relation, target] = column.join_field.split("->");
-          const [ontable, ref] = relation.split(".");
-          targetNm = target;
-          refNm = ref;
-          key = `${ref}_${ontable}_${target}`;
+          else
+            return post_btn(url, label, req.csrfToken(), {
+              small: true,
+              ajax: true,
+              reload_on_done: true,
+              confirm: column.confirm,
+              btnClass: column.in_dropdown
+                ? "dropdown-item"
+                : column.action_style || "btn-primary",
+              req,
+            });
+        },
+      };
+      if (column.in_dropdown) {
+        dropdown_actions.push(action_col);
+        return false;
+      } else return action_col;
+    } else if (column.type === "ViewLink") {
+      if (!column.view) return;
+      const r = view_linker(column, fields, __);
+      if (column.header_label) r.label = text(__(column.header_label));
+      Object.assign(r, setWidth);
+      if (column.in_dropdown) {
+        dropdown_actions.push(r);
+        return false;
+      } else return r;
+    } else if (column.type === "Link") {
+      const r = make_link(column, fields, __);
+      if (column.header_label) r.label = text(__(column.header_label));
+      Object.assign(r, setWidth);
+      if (column.in_dropdown) {
+        dropdown_actions.push(r);
+        return false;
+      } else return r;
+    } else if (column.type === "JoinField") {
+      //console.log(column);
+      let refNm, targetNm, through, key, type;
+      if (column.join_field.includes("->")) {
+        const [relation, target] = column.join_field.split("->");
+        const [ontable, ref] = relation.split(".");
+        targetNm = target;
+        refNm = ref;
+        key = `${ref}_${ontable}_${target}`;
+      } else {
+        const keypath = column.join_field.split(".");
+        if (keypath.length === 2) {
+          [refNm, targetNm] = keypath;
+          key = `${refNm}_${targetNm}`;
         } else {
-          const keypath = column.join_field.split(".");
-          if (keypath.length === 2) {
-            [refNm, targetNm] = keypath;
-            key = `${refNm}_${targetNm}`;
-          } else {
-            [refNm, through, targetNm] = keypath;
-            key = `${refNm}_${through}_${targetNm}`;
-          }
+          [refNm, through, targetNm] = keypath;
+          key = `${refNm}_${through}_${targetNm}`;
         }
-        if (column.field_type) type = getState().types[column.field_type];
-        return {
-          ...setWidth,
-          label: column.header_label
-            ? text(__(column.header_label))
-            : text(targetNm),
-          key:
-            column.join_fieldview &&
-            type &&
-            type.fieldviews &&
-            type.fieldviews[column.join_fieldview]
-              ? (row) =>
-                  type.fieldviews[column.join_fieldview].run(
-                    row[key],
-                    req,
-                    column
-                  )
-              : (row) => text(row[key]),
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
-        };
-      } else if (column.type === "Aggregation") {
-        const [table, fld] = column.agg_relation.split(".");
-        const targetNm = (
-          column.stat.replace(" ", "") +
-          "_" +
-          table +
-          "_" +
-          fld +
-          db.sqlsanitize(column.aggwhere || "")
-        ).toLowerCase();
-
-        return {
-          ...setWidth,
-          label: column.header_label
-            ? text(column.header_label)
-            : text(column.stat + " " + table),
-          key: targetNm,
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
-        };
-      } else if (column.type === "Field") {
-        //console.log(column);
-        let f = fields.find((fld) => fld.name === column.field_name);
-        let f_with_val = f;
-        if (f && f.attributes && f.attributes.localized_by) {
-          const locale = req.getLocale();
-          const localized_fld_nm = f.attributes.localized_by[locale];
-          f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
-        }
-        const isNum = f && f.type && f.type.name === "Integer";
-        return (
-          f && {
-            ...setWidth,
-            align: isNum ? "right" : undefined,
-            label: headerLabelForName(column, f, req, __),
-            key:
-              column.fieldview && f.type === "File"
-                ? (row) =>
-                    row[f.name] &&
-                    getState().fileviews[column.fieldview].run(
-                      row[f.name],
-                      row[`${f.name}__filename`]
-                    )
-                : column.fieldview &&
-                  f.type.fieldviews &&
-                  f.type.fieldviews[column.fieldview]
-                ? (row) =>
-                    f.type.fieldviews[column.fieldview].run(
-                      row[f_with_val.name],
-                      req,
-                      { ...f.attributes, ...column.configuration }
-                    )
-                : isShow
-                ? f.type.showAs
-                  ? (row) => f.type.showAs(row[f_with_val.name])
-                  : (row) => text(row[f_with_val.name])
-                : f.listKey,
-            sortlink:
-              !f.calculated || f.stored
-                ? sortlinkForName(f.name, req)
-                : undefined,
-          }
+      }
+      if (column.field_type) type = getState().types[column.field_type];
+      if (
+        column.join_fieldview &&
+        type?.fieldviews?.[column.join_fieldview]?.expandColumns
+      ) {
+        const reffield = fields.find((f) => f.name === refNm);
+        const reftable = Table.findOne({
+          name: reffield.reftable_name,
+        });
+        const field = reftable.fields.find((f) => f.name === targetNm);
+        return type.fieldviews[column.join_fieldview].expandColumns(
+          field,
+          {
+            ...field.attributes,
+            ...column,
+          },
+          column
         );
       }
-    })
-    .filter((v) => !!v);
 
+      return {
+        ...setWidth,
+        label: column.header_label
+          ? text(__(column.header_label))
+          : text(targetNm),
+        row_key: key,
+        key:
+          column.join_fieldview &&
+          type &&
+          type.fieldviews &&
+          type.fieldviews[column.join_fieldview]
+            ? (row) =>
+                type.fieldviews[column.join_fieldview].run(
+                  row[key],
+                  req,
+                  column
+                )
+            : (row) => text(row[key]),
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
+      };
+    } else if (column.type === "Aggregation") {
+      const [table, fld] = column.agg_relation.split(".");
+      const targetNm = (
+        column.stat.replace(" ", "") +
+        "_" +
+        table +
+        "_" +
+        fld +
+        db.sqlsanitize(column.aggwhere || "")
+      ).toLowerCase();
+
+      return {
+        ...setWidth,
+        label: column.header_label
+          ? text(column.header_label)
+          : text(column.stat + " " + table),
+        key: targetNm,
+        // sortlink: `javascript:sortby('${text(targetNm)}')`
+      };
+    } else if (column.type === "Field") {
+      //console.log(column);
+      let f = fields.find((fld) => fld.name === column.field_name);
+      let f_with_val = f;
+      if (f && f.attributes && f.attributes.localized_by) {
+        const locale = req.getLocale();
+        const localized_fld_nm = f.attributes.localized_by[locale];
+        f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
+      }
+      const isNum = f && f.type && f.type.name === "Integer";
+      if (
+        column.fieldview &&
+        f.type?.fieldviews?.[column.fieldview]?.expandColumns
+      ) {
+        return f.type.fieldviews[column.fieldview].expandColumns(
+          f,
+          {
+            ...f.attributes,
+            ...column.configuration,
+          },
+          column
+        );
+      }
+
+      return (
+        f && {
+          ...setWidth,
+          align: isNum ? "right" : undefined,
+          label: headerLabelForName(column, f, req, __),
+          row_key: f_with_val.name,
+          key:
+            column.fieldview && f.type === "File"
+              ? (row) =>
+                  row[f.name] &&
+                  getState().fileviews[column.fieldview].run(
+                    row[f.name],
+                    row[`${f.name}__filename`]
+                  )
+              : column.fieldview &&
+                f.type.fieldviews &&
+                f.type.fieldviews[column.fieldview]
+              ? (row) =>
+                  f.type.fieldviews[column.fieldview].run(
+                    row[f_with_val.name],
+                    req,
+                    { ...f.attributes, ...column.configuration }
+                  )
+              : isShow
+              ? f.type.showAs
+                ? (row) => f.type.showAs(row[f_with_val.name])
+                : (row) => text(row[f_with_val.name])
+              : f.listKey,
+          sortlink:
+            !f.calculated || f.stored
+              ? sortlinkForName(f.name, req)
+              : undefined,
+        }
+      );
+    }
+  }).filter((v) => !!v);
+  if (dropdown_actions.length > 0) {
+    tfields.push({
+      label: "Action",
+      key: (r) =>
+        div(
+          { class: "dropdown" },
+          button(
+            {
+              class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+              "data-boundary": "viewport",
+              type: "button",
+              id: `actiondd${r.id}`,
+              "data-bs-toggle": "dropdown",
+              "aria-haspopup": "true",
+              "aria-expanded": "false",
+            },
+            "Action"
+          ),
+          div(
+            {
+              class: "dropdown-menu dropdown-menu-end",
+              "aria-labelledby": `actiondd${r.id}`,
+            },
+            dropdown_actions.map((acol) => acol.key(r))
+          )
+        ),
+    });
+  }
+  return tfields;
+}
 /**
  * @param {string} fname
  * @param {object} req
@@ -606,7 +694,7 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };
-};
+}
 
 /**
  * @param {object} table
@@ -639,6 +727,11 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
           if (f.calculated)
             f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
           f.attributes = { ...column.configuration, ...f.attributes };
+          if (
+            typeof column.block !== "undefined" &&
+            typeof f.attributes.block === "undefined"
+          )
+            f.attributes.block = column.block;
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({
