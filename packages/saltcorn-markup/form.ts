@@ -2,6 +2,7 @@
  * @category saltcorn-markup
  * @module form
  */
+declare const window: any;
 
 import tags = require("./tags");
 const {
@@ -505,10 +506,14 @@ const renderFormLayout = (form: Form): string => {
           )
         );
       }
-      const submitAttr = form.xhrSubmit
-        ? 'onClick="ajaxSubmitForm(this)" type="button"'
-        : 'type="submit"';
-      return mkBtn(submitAttr);
+      const isNode = typeof window === "undefined";
+      if (isNode) {
+        const submitAttr = form.xhrSubmit
+          ? 'onClick="ajaxSubmitForm(this)" type="button"'
+          : 'type="submit"';
+        return mkBtn(submitAttr);
+      }
+      return mkBtn('onClick="local_post_btn(this)" type="button"');
     },
   };
   return renderLayout({ blockDispatch, layout: form.layout });
@@ -640,7 +645,7 @@ const mkForm = (
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form ${form.id ? `id="${form.id}" ` : ""}action="${
     form.action
-  }" ${
+  }"${form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""} ${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
     form.class || ""

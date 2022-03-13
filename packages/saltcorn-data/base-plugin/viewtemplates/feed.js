@@ -24,6 +24,8 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const { jsexprToWhere } = require("../../models/expression");
+const { isNode } = require("../../webpack-helper");
+
 /**
  * @param {object} req
  * @returns {Workflow}
@@ -366,10 +368,14 @@ const run = async (
         );
       create_link = await create_view.run(state, extraArgs);
     } else {
+      const target = `/view/${encodeURIComponent(
+        view_to_create
+      )}${stateToQueryString(state)}`;
+      const hrefVal = isNode()
+        ? target
+        : `javascript:linkCallback('get${target}');`;
       create_link = link_view(
-        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
-          state
-        )}`,
+        hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup",
         create_view_display === "Popup" && "btn btn-secondary",

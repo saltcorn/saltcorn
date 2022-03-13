@@ -3,7 +3,7 @@
  * It contains utils for "@saltcorn/sqlite" and "@saltcorn/sqlite-mobile"
  * @module
  */
-import { Row, sqlsanitize, Value } from "./internal";
+import { Row, sqlsanitize, Value, mkWhere, Where } from "./internal";
 
 /**
  * @param v
@@ -68,4 +68,34 @@ export const buildInsertSql = (
     sql: sql,
     valList: valList,
   };
+};
+
+/**
+ *
+ * @param tbl
+ * @param whereObj
+ * @param queryFunc
+ * @returns
+ */
+export const doCount = async (tbl: string, whereObj: Where, queryFunc: any) => {
+  const { where, values } = mkWhere(whereObj, true);
+  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
+  const tq = await queryFunc(sql, values);
+  return parseInt(tq.rows[0]["COUNT(*)"]);
+};
+
+/**
+ *
+ * @param tbl
+ * @param whereObj
+ * @param queryFunc
+ */
+export const doDeleteWhere = async (
+  tbl: string,
+  whereObj: Where,
+  queryFunc: any
+) => {
+  const { where, values } = mkWhere(whereObj, true);
+  const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
+  const tq = await queryFunc(sql, values);
 };

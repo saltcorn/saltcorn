@@ -14,7 +14,7 @@ import type {
 } from "./model-abstracts/abstract_trigger";
 import type { InputType } from "./model-abstracts/abstract_field";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
-import type { Type, ReqRes } from "./common_types";
+import type { Type, ReqRes, GenObj } from "./common_types";
 import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
 import type { ViewPack } from "./model-abstracts/abstract_view";
@@ -229,8 +229,8 @@ export type ViewTemplate = {
       view_when_done: any;
       formula_destinations: any;
     },
-    state: string,
-    body: string,
+    state: GenObj,
+    body: GenObj,
     extraArgs: RunExtra
   ) => Promise<void>;
   getStringsForI18n?: (configuration?: any) => string[];

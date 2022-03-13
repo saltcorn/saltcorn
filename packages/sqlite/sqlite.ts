@@ -24,7 +24,8 @@ import type {
 import {
   buildInsertSql,
   mkVal,
-  reprAsJson,
+  doCount,
+  doDeleteWhere,
 } from "@saltcorn/db-common/sqlite-commons";
 
 let sqliteDatabase: Database | null = null;
@@ -190,10 +191,7 @@ export const deleteWhere = async (
   tbl: string,
   whereObj: Where
 ): Promise<void> => {
-  const { where, values } = mkWhere(whereObj, true);
-  const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
-
-  const tq = await query(sql, values);
+  await doDeleteWhere(tbl, whereObj, query);
 };
 
 /**
@@ -257,10 +255,7 @@ export const selectMaybeOne = async (
  * @function
  */
 export const count = async (tbl: string, whereObj: Where) => {
-  const { where, values } = mkWhere(whereObj, true);
-  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
-  const tq = await query(sql, values);
-  return parseInt(tq.rows[0]["COUNT(*)"]);
+  return await doCount(tbl, whereObj, query);
 };
 
 /**

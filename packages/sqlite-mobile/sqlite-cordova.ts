@@ -11,7 +11,12 @@ import {
   mkWhere,
   mkSelectOptions,
 } from "@saltcorn/db-common/internal";
-import { buildInsertSql } from "@saltcorn/db-common/sqlite-commons";
+import {
+  buildInsertSql,
+  doCount,
+  doDeleteWhere,
+  mkVal,
+} from "@saltcorn/db-common/sqlite-commons";
 
 declare let window: any;
 
@@ -81,6 +86,8 @@ export const insert = async (
 ): Promise<string | void> => {
   const { sql, valList } = buildInsertSql(tbl, obj, opts);
   await query(sql, valList);
+  const ids = await query("SELECT last_insert_rowid() as id");
+  return ids.rows[0].id;
 };
 
 /**
@@ -123,4 +130,45 @@ export const drop_reset_schema = () => {
       console.log(error);
     }
   );
+};
+
+export const count = async (tbl: string, whereObj: Where) => {
+  return await doCount(tbl, whereObj, query);
+};
+
+export const deleteWhere = async (
+  tbl: string,
+  whereObj: Where
+): Promise<void> => {
+  await doDeleteWhere(tbl, whereObj, query);
+};
+
+export const selectMaybeOne = async (
+  tbl: string,
+  where: Where
+): Promise<Row | null> => {
+  const rows = await select(tbl, where);
+  if (rows.length === 0) return null;
+  else return rows[0];
+};
+
+export const selectOne = async (tbl: string, where: Where): Promise<Row> => {
+  const rows = await select(tbl, where);
+  if (rows.length === 0) {
+    const w = mkWhere(where, true);
+    throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
+  } else return rows[0];
+};
+
+export const update = async (
+  tbl: string,
+  obj: Row,
+  id: string | number
+): Promise<void> => {
+  const kvs = Object.entries(obj);
+  const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
+  let valList = kvs.map(mkVal);
+  valList.push(id);
+  const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
+  await query(q, valList);
 };

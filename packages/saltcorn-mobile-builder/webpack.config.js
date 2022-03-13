@@ -28,25 +28,42 @@ const addDependOn = (dataEntryPoint, b) => {
   return merge({}, copy, b);
 };
 
-const out = mergeWithCustomize({
-  customizeArray(a, b, key) {
-    if (key === "library") {
-      return _.uniq([...a, ...b]);
-    }
-    return undefined;
-  },
-  customizeObject(a, b, key) {
-    if (key === "output") {
-      const copy = { ...a };
-      copy.path = __dirname;
-      return copy;
-    }
-    if (key === "entry") {
-      if (a.data) return addDependOn(a, b);
-      else if (b.data) return addDependOn(b, a);
-    }
-    return undefined;
-  },
-})(dataCfg, markupCfg, basePluginCfg, sbAdmin2Cfg);
+const buildPluginCfgs = (env) => {
+  return Object.keys(env)
+    .filter((key) => key.endsWith("_plugin_cfg"))
+    .map((varName) => {
+      const { dir, name } = JSON.parse(env[varName]);
+      const packageJSON = require(join(dir, "package.json"));
+      let genericEntry = {};
+      genericEntry[name] = {
+        import: join(dir, packageJSON.main),
+        dependOn: ["markup", "data"],
+      };
+      return {
+        entry: genericEntry,
+      };
+    });
+};
 
-module.exports = out;
+module.exports = (env) => {
+  return mergeWithCustomize({
+    customizeArray(a, b, key) {
+      if (key === "library") {
+        return _.uniq([...a, ...b]);
+      }
+      return undefined;
+    },
+    customizeObject(a, b, key) {
+      if (key === "output") {
+        const copy = { ...a };
+        copy.path = __dirname;
+        return copy;
+      }
+      if (key === "entry") {
+        if (a.data) return addDependOn(a, b);
+        else if (b.data) return addDependOn(b, a);
+      }
+      return undefined;
+    },
+  })(dataCfg, markupCfg, basePluginCfg, sbAdmin2Cfg, ...buildPluginCfgs(env));
+};

@@ -470,9 +470,10 @@ const transformForm = async ({ form, table, req, row, res }) => {
       segment.contents = await view.run(state, { req, res });
     },
   });
-  translateLayout(form.layout, isNode() ? req.getLocale() : "en");
+  translateLayout(form.layout, req.getLocale());
+
   if (req.xhr) form.xhrSubmit = true;
-  setDateLocales(form, isNode() ? req.getLocale() : "en");
+  setDateLocales(form, req.getLocale());
 };
 
 /**
@@ -530,7 +531,7 @@ const render = async ({
 
   await transformForm({ form, table, req, row, res });
 
-  return renderForm(form, isNode() ? req.csrfToken() : "");
+  return renderForm(form, req.csrfToken());
 };
 
 /**
@@ -570,7 +571,7 @@ const runPost = async (
       form.fields.push(new Field({ name: k, input_type: "hidden" }));
     }
   });
-  setDateLocales(form, isNode() ? req.getLocale() : "en");
+  setDateLocales(form, req.getLocale());
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
@@ -651,7 +652,6 @@ const runPost = async (
     }
     const [viewname_when_done, relation] = use_view_when_done.split(".");
     const nxview = await View.findOne({ name: viewname_when_done });
-    //console.log()
     if (!nxview) {
       req.flash(
         "warning",
@@ -660,16 +660,19 @@ const runPost = async (
       res.redirect(`/`);
     } else {
       const state_fields = await nxview.get_state_fields();
+      let target = `/view/${text(viewname_when_done)}`;
+      let query = "";
       if (
         (nxview.table_id === table_id || relation) &&
         state_fields.some((sf) => sf.name === pk.name)
       ) {
         const get_query = get_view_link_query(fields);
-        const query = relation
+        query = relation
           ? `?${pk.name}=${text(row[relation])}`
           : get_query(row);
-        res.redirect(`/view/${text(viewname_when_done)}${query}`);
-      } else res.redirect(`/view/${text(viewname_when_done)}`);
+      }
+      if (isNode()) res.redirect(`${target}${query}`);
+      else linkCallback(`get${target}${query}`);
     }
   }
 };

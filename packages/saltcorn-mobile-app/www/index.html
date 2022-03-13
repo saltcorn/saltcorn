@@ -2,40 +2,46 @@
 <html>
   <head>
     <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script src="public/jquery-3.6.0.min.js"></script>
+    <script src="plugin_sources/bootstrap.bundle.min.js"></script>
+    <script src="plugin_sources/jquery.easing.min.js"></script>
+    <script src="plugin_sources/sb-admin-2.min.js"></script>
+    <script src="https://unpkg.com/universal-router/universal-router.min.js"></script>
+
+    <script src="js/utils.js"></script>
+
     <script src="js/bundles/common_chunks.bundle.js"></script>
     <script src="js/bundles/markup.bundle.js"></script>
     <script src="js/bundles/data.bundle.js"></script>
     <script src="js/bundles/base_plugin.bundle.js"></script>
     <script src="js/bundles/sbadmin2.bundle.js"></script>
 
-    <script>
-      const get_headers = () => {
-        const stdHeaders = [
-          { css: "public/saltcorn.css" },
-          { script: "public/saltcorn.js" },
-        ];
-        return [...stdHeaders];
-      };
+    <script type="module">
+      import { initRoutes } from "./js/routes/init.js";
 
-      const wrap = (title, contents, state) => {
-        const bodyClass = "";
-        const alerts = [];
-        const role_id = 1;
-        const role = role_id;
-        const layout = state.getLayout({ role_id: role_id });
+      const staticPlugins = ["base", "sbadmin2"];
 
-        const wrappedIn = layout.wrap({
-          title,
-          brand: {},
-          menu: [],
-          alerts,
-          body: contents.above.join(""),
-          headers: get_headers(),
-          role,
-          bodyClass,
+      async function loadPlugin(plugin) {
+        return new Promise((resolve, reject) => {
+          let script = document.createElement("script");
+          document.head.appendChild(script);
+          script.onload = () => {
+            resolve();
+          };
+          // TODO reject after some seconds
+          script.src = `js/bundles/${plugin.name}.bundle.js`;
         });
-        return wrappedIn;
-      };
+      }
+
+      async function loadPlugins(state) {
+        let plugins = (await saltcorn.data.models.Plugin.find()).filter(
+          (plugin) => !staticPlugins.includes(plugin.name)
+        );
+        for (const plugin of plugins) {
+          await loadPlugin(plugin);
+          state.registerPlugin(plugin.name, saltcorn[plugin.name]);
+        }
+      }
 
       document.addEventListener("deviceready", async () => {
         await saltcorn.data.db.init();
@@ -44,18 +50,14 @@
         await state.refresh_views();
         state.registerPlugin("base", saltcorn.base_plugin);
         state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
-        const views = await saltcorn.data.models.View.find({
-          name: "ListTodosB",
-        });
-        for (const view of views) {
-          const contents = await view.run_possibly_on_page({}, {}, {});
-          let help = { above: [contents] };
-          document.getElementById("content-div").innerHTML = wrap(
-            "Todos",
-            help,
-            state
-          );
-        }
+        await loadPlugins(state);
+        await initRoutes();
+        // TODO ch generic entry point
+        window.router
+          .resolve({ pathname: "get/view/Contacts" })
+          .then((html) => {
+            document.getElementById("content-div").innerHTML = html;
+          });
       });
     </script>
   </head>

@@ -414,7 +414,7 @@ const run = async (
   );
   const fields = await table.getFields();
   const appState = getState();
-  const locale = isNode() ? extraOpts.req.getLocale() : "en";
+  const locale = extraOpts.req.getLocale();
   const __ = (s) =>
     isNode() ? appState.i18n.__({ phrase: s, locale }) || s : undefined;
   //move fieldview cfg into configuration subfield in each column
@@ -494,7 +494,7 @@ const run = async (
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
 
-  if (rows.length === rows_per_page || current_page > 1) {
+  if ((rows && rows.length === rows_per_page) || current_page > 1) {
     const nrows = await table.countRows(where);
     if (nrows > rows_per_page || current_page > 1) {
       page_opts.pagination = {
@@ -522,10 +522,8 @@ const run = async (
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
   if (
-    !isNode() ||
-    (view_to_create &&
-      (role <= table.min_role_write ||
-        (table.ownership_field_id && about_user)))
+    view_to_create &&
+    (role <= table.min_role_write || (table.ownership_field_id && about_user))
   ) {
     if (create_view_display === "Embedded") {
       const create_view = await View.findOne({ name: view_to_create });
@@ -535,10 +533,14 @@ const run = async (
         );
       create_link = await create_view.run(state, extraOpts);
     } else {
+      const target = `/view/${encodeURIComponent(
+        view_to_create
+      )}${stateToQueryString(state)}`;
+      const hrefVal = isNode()
+        ? target
+        : `javascript:linkCallback('get${target}');`;
       create_link = link_view(
-        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
-          state
-        )}`,
+        hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup",
         create_view_display === "Popup" && "btn btn-secondary",

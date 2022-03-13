@@ -55,7 +55,7 @@ const {
   structuredClone,
   getLines,
 } = require("../utils");
-import { isNode } from "../webpack-helper";
+
 /**
  * Transponce Objects
  * TODO more detailed explanation
@@ -1292,6 +1292,7 @@ class Table implements AbstractTable {
 
     const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
+    if (res.length === 0) return res; // check
 
     const calcRow = apply_calculated_fields(res.rows, fields);
 

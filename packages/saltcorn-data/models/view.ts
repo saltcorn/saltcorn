@@ -7,6 +7,7 @@
 
 import db from "../db";
 import Form from "./form";
+import utils from "../utils";
 const {
   removeEmptyStrings,
   numberToBool,
@@ -14,7 +15,7 @@ const {
   InvalidConfiguration,
   satisfies,
   structuredClone,
-} = require("../utils");
+} = utils;
 const { remove_from_menu } = require("./config");
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
@@ -408,11 +409,7 @@ class View {
   async run_possibly_on_page(query: any, req: any, res: any): Promise<string> {
     const view = this;
     this.check_viewtemplate();
-    if (
-      db.is_node &&
-      view.default_render_page &&
-      (!req.xhr || req.headers.pjaxpageload)
-    ) {
+    if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
@@ -424,9 +421,7 @@ class View {
     const resp = await view.run(state, { res, req });
     const state_form = await view.get_state_form(state, req);
     const contents = div(
-      state_form
-        ? renderForm(state_form, db.is_node ? req.csrfToken() : "")
-        : "",
+      state_form ? renderForm(state_form, req.csrfToken()) : "",
       resp
     );
     return contents;
@@ -596,13 +591,19 @@ class View {
       });
       const form = new Form({
         methodGET: true,
-        action: `/view/${encodeURIComponent(this.name)}`,
+        action: db.is_node
+          ? `/view/${encodeURIComponent(this.name)}`
+          : "javascript:void(0);", // onsubmit without reload
         fields,
         submitLabel: req.__("Apply"),
         isStateForm: true,
         __: req.__,
         values: removeEmptyStrings(query),
       });
+      if (!db.is_node)
+        form.onSubmit = `javascript:submitCallback(this, 'get/view/${encodeURIComponent(
+          this.name
+        )}')`;
       await form.fill_fkey_options(true);
       return form;
     } else return null;

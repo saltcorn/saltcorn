@@ -114,3 +114,7 @@ sessions.sqlite
 platforms/
 
 bundles/
+
+plugin_sources/
+public/
+*.sqlite

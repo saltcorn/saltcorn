@@ -147,8 +147,7 @@ const translateLayout = (layout: Layout, locale: string): void => {
     },
   });
 };
-//getViews: is.fun([], is.promise(is.array(is.obj()))),
-//eachView: is.fun(is.fun(is.obj(), is.any), is.promise(is.undefined)),
+
 export = {
   eachView,
   getViews,

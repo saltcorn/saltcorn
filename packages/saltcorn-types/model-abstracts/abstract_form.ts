@@ -27,6 +27,7 @@ export interface AbstractForm {
   additionalButtons?: Array<AdditionalButton>;
   onChange?: string;
   xhrSubmit: boolean;
+  onSubmit?: string;
   req: any;
   __?: any;
 }

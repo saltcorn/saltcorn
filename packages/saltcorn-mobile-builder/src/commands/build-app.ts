@@ -1,8 +1,9 @@
 import { Command, Flags } from "@oclif/core";
 import { spawnSync } from "child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, readdirSync } from "fs";
 import { join } from "path";
 import db from "@saltcorn/data/db/index";
+import Plugin from "@saltcorn/data/models/plugin";
 
 export default class BuildAppCommand extends Command {
   static description = "build mobile app from tenant";
@@ -30,8 +31,15 @@ export default class BuildAppCommand extends Command {
   sbadmin2Root = join(require.resolve("@saltcorn/sbadmin2"), "..");
   serverRoot = join(require.resolve("@saltcorn/server"), "..");
 
+  tempPluginDir = join(this.packageRoot, "plugins");
+
+  staticPlugins = ["base", "sbadmin2"];
+
+  plugins = Array<Plugin>();
+
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
+    await this.loadPlugins();
     this.copyPublics();
     this.copyPluginSources();
     this.bundlePackages();
@@ -42,7 +50,28 @@ export default class BuildAppCommand extends Command {
       this.addPlatforms(flags.platforms);
     }
     this.buildApk();
+    rmSync(this.tempPluginDir, { recursive: true, force: true });
   }
+
+  loadPlugins = async () => {
+    this.plugins = (await Plugin.find()).filter(
+      (plugin: Plugin) => !this.staticPlugins.includes(plugin.name)
+    );
+    if (this.plugins.length > 0) {
+      if (!existsSync(this.tempPluginDir))
+        mkdirSync(this.tempPluginDir, { recursive: true });
+      spawnSync("npm", ["init", "-y"], {
+        stdio: "inherit",
+        cwd: join(this.packageRoot, "plugins"),
+      });
+      for (const plugin of this.plugins) {
+        spawnSync("npm", ["install", plugin.location], {
+          stdio: "inherit",
+          cwd: this.tempPluginDir,
+        });
+      }
+    }
+  };
 
   copyPublics = () => {
     if (!existsSync(join(this.wwwDir, "plugin_sources")))
@@ -60,6 +89,7 @@ export default class BuildAppCommand extends Command {
       join(this.wwwDir, "public", "saltcorn.css")
     );
   };
+
   copyPluginSources = () => {
     if (!existsSync(join(this.wwwDir, "plugin_sources")))
       mkdirSync(join(this.wwwDir, "plugin_sources"), { recursive: true });
@@ -99,12 +129,23 @@ export default class BuildAppCommand extends Command {
       join(this.wwwDir, "plugin_sources", "sb-admin-2.min.js")
     );
   };
+
   bundlePackages = () => {
-    spawnSync("npm", ["run", "build"], {
+    const pluginCfgs = this.plugins.map((plugin: Plugin) => {
+      const varName = `${plugin.name}_plugin_cfg`;
+      const cfg = {
+        dir: join(this.packageRoot, "plugins", "node_modules", plugin.location),
+        name: plugin.name,
+      };
+      return `${varName}=${JSON.stringify(cfg)}`;
+    });
+
+    spawnSync("npm", ["run", "build", "--", "--env", ...pluginCfgs], {
       stdio: "inherit",
       cwd: this.packageRoot,
     });
   };
+
   copyBundlesToApp = () => {
     if (!existsSync(this.appBundlesDir))
       mkdirSync(this.appBundlesDir, { recursive: true });
@@ -115,20 +156,24 @@ export default class BuildAppCommand extends Command {
       );
     }
   };
+
   copySqliteDbToApp = () => {
     copyFileSync(db.connectObj.sqlite_path, join(this.wwwDir, "scdb.sqlite"));
   };
+
   validatePlatforms = (platforms: string[]) => {
     for (const platform of platforms)
       if (!this.supportedPlatforms.includes(platform))
         throw new Error(`The platform '${platform}' is not supported`);
   };
+
   addPlatforms = (platforms: string[]) => {
     spawnSync("npm", ["run", "add-platform", "--", ...platforms], {
       stdio: "inherit",
       cwd: this.appDir,
     });
   };
+
   buildApk = () => {
     spawnSync("npm", ["run", "build-app"], {
       stdio: "inherit",

@@ -7,7 +7,9 @@ module.exports = {
     minimize: false, // debug
   },
   entry: {
-    markup: join(__dirname, "./dist/index.js"),
+    markup: {
+      import: join(__dirname, "./dist/index.js"),
+    },
   },
   output: {
     path: __dirname,
@@ -18,6 +20,7 @@ module.exports = {
   resolve: {
     alias: {
       "@saltcorn/types": join(typesDir, "dist"),
+      "@saltcorn/markup/tags": join(__dirname, "dist", "tags"),
     },
   },
 };

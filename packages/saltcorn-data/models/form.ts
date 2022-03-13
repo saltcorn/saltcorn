@@ -50,6 +50,7 @@ class Form implements AbstractForm {
   validator?: (arg0: any) => any;
   hasErrors: boolean;
   xhrSubmit: boolean;
+  onSubmit?: string;
   req: any;
   __?: any;
 

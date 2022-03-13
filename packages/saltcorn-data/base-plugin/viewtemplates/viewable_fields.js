@@ -28,11 +28,16 @@ const { isNode } = require("../../webpack-helper");
  */
 const action_url = (viewname, table, action_name, r, colId, colIdNm) => {
   if (action_name === "Delete")
-    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+    return `/delete/${table.name}/${r.id}${
+      isNode() ? `?redirect=/view/${viewname}` : ""
+    }`;
+  // TODO CH delete redirect
   else if (action_name === "GoBack") return { javascript: "history.back()" };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    return `/edit/toggle/${table.name}/${r.id}/${field_name}${
+      isNode() ? `?redirect=/view/${viewname}` : ""
+    }`; // TODO CH toggle redirect
   }
   return {
     javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
@@ -70,7 +75,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
-    block
+    block,
   },
   __ = (s) => s
 ) => {
@@ -101,7 +106,7 @@ const action_link = (
       icon: action_icon,
       style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
-      formClass: !block && "d-inline"
+      formClass: !block && "d-inline",
     });
 };
 
@@ -253,7 +258,11 @@ const view_linker = (
         label: vnm,
         key: (r) =>
           link_view(
-            `/view/${encodeURIComponent(vnm)}${get_query(r)}`,
+            isNode()
+              ? `/view/${encodeURIComponent(vnm)}${get_query(r)}`
+              : `javascript:linkCallback('get/view/${encodeURIComponent(
+                  vnm
+                )}${get_query(r)}')`,
             get_label(vnm, r),
             in_modal,
             link_style,
@@ -381,11 +390,7 @@ const get_viewable_fields = (
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => {
             if (action_requires_write(column.action_name)) {
-              if (
-                isNode() &&
-                table.min_role_write < role &&
-                !table.is_owner(req.user, r)
-              )
+              if (table.min_role_write < role && !table.is_owner(req.user, r))
                 return "";
             }
             const url = action_url(

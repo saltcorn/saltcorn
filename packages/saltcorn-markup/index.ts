@@ -24,13 +24,24 @@ type PostBtnOpts = {
   style?: string;
   ajax?: boolean;
   reload_on_done: string;
-  reload_delay: string;
+  reload_delay?: string;
   klass: string;
   formClass?: string;
   spinner?: boolean;
   req: any;
   confirm?: boolean;
   icon?: string;
+};
+
+declare let window: any;
+
+const buildButtonCallback = (
+  reload_on_done: boolean,
+  reload_delay?: number
+): string => {
+  const isNode = typeof window === "undefined";
+  if (isNode) return `ajax_post_btn(this, ${reload_on_done}, ${reload_delay})`;
+  else return "local_post_btn(this)";
 };
 
 /**
@@ -83,11 +94,11 @@ const post_btn = (
       : ajax && confirm
       ? `onclick="if(confirm('${req.__("Are you sure?")}')) {${
           spinner ? "press_store_button(this);" : ""
-        }ajax_post_btn(this, ${reload_on_done}, ${reload_delay})}"`
+        }${buildButtonCallback(reload_on_done, reload_delay)}}"`
       : ajax
       ? `onclick="${
           spinner ? "press_store_button(this);" : ""
-        }ajax_post_btn(this, ${reload_on_done}, ${reload_delay})"`
+        }${buildButtonCallback(reload_on_done, reload_delay)}"`
       : confirm
       ? `onclick="return confirm('${req.__("Are you sure?")}')"`
       : ""
