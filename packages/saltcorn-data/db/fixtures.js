@@ -153,6 +153,7 @@ module.exports =
       label: "Patient",
       type: "Key",
       reftable: patients,
+      attributes: { summary_field: "name" },
       required: true,
     });
     await Field.create({
@@ -199,6 +200,7 @@ module.exports =
       name: "publisher",
       label: "Publisher",
       type: "Key",
+      attributes: { summary_field: "name" },
       reftable: publisher,
       required: false,
     });
