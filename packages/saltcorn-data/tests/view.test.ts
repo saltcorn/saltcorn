@@ -80,7 +80,12 @@ describe("View", () => {
     assertIsSet(v);
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
     const rows = await db.select("books", {});
-    expect(rows).toContainEqual({ author: "James Joyce", id: 3, pages: 678 });
+    expect(rows).toContainEqual({
+      author: "James Joyce",
+      id: 3,
+      pages: 678,
+      publisher: null,
+    });
   });
   it("should find", async () => {
     const table = await Table.findOne({ name: "books" });

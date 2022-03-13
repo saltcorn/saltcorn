@@ -138,16 +138,15 @@ const configuration_workflow = (req) =>
             context.viewname
           );
           const roles = await User.get_roles();
-          const { parent_field_list } = await table.get_parent_relations(true);
-          const {
-            child_field_list,
-            child_relations,
-          } = await table.get_child_relations();
+          const { parent_field_list } = await table.get_parent_relations(
+            true,
+            true
+          );
+          const { child_field_list, child_relations } =
+            await table.get_child_relations();
           var agg_field_opts = {};
           child_relations.forEach(({ table, key_field }) => {
-            agg_field_opts[
-              `${table.name}.${key_field.name}`
-            ] = table.fields
+            agg_field_opts[`${table.name}.${key_field.name}`] = table.fields
               .filter((f) => !f.calculated || f.stored)
               .map((f) => f.name);
           });
@@ -610,12 +609,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const [relation, target] = join_field.split("->");
         const [ontable, ref] = relation.split(".");
         value = row[`${ref}_${ontable}_${target}`];
-      } else if (keypath.length === 2) {
-        const [refNm, targetNm] = keypath;
-        value = row[`${refNm}_${targetNm}`];
       } else {
-        const [refNm, through, targetNm] = keypath;
-        value = row[`${refNm}_${through}_${targetNm}`];
+        value = row[join_field.split(".").join("_")];
       }
       if (field_type === "File") {
         return value ? getState().fileviews[fieldview].run(value, "") : "";
