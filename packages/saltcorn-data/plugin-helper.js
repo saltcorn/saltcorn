@@ -891,7 +891,7 @@ const picked_fields_to_query = contract(
               };
             } else if (kpath.length === 4) {
               const [refNm, through1, through2, targetNm] = kpath;
-              joinFields[`${refNm}_${through1}_${through2}_ ${targetNm}`] = {
+              joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
                 ref: refNm,
                 target: targetNm,
                 through: [through1, through2],
