@@ -1347,6 +1347,21 @@ class Table implements AbstractTable {
               };
               return oldf(x);
             };
+          } else if (v.rename_object.length === 4) {
+            const oldf = f;
+            f = (x: any) => {
+              x[v.rename_object[0]] = {
+                [v.rename_object[1]]: {
+                  [v.rename_object[2]]: {
+                    [v.rename_object[3]]: x[k],
+                    ...x[v.rename_object[2]],
+                  },
+                  ...x[v.rename_object[1]],
+                },
+                ...x[v.rename_object[0]],
+              };
+              return oldf(x);
+            };
           }
         }
       });

@@ -967,13 +967,21 @@ const picked_fields_to_query = contract(
               target: targetNm,
               rename_object: [refNm, targetNm],
             };
-          } else {
+          } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
             joinFields[`${refNm}_${through}_${targetNm}`] = {
               ref: refNm,
               target: targetNm,
               through,
               rename_object: [refNm, through, targetNm],
+            };
+          } else if (kpath.length === 4) {
+            const [refNm, through1, through2, targetNm] = kpath;
+            joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through: [through1, through2],
+              rename_object: [refNm, through1, through2, targetNm],
             };
           }
       });
