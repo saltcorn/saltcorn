@@ -16,43 +16,45 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
-const mkTester = ({
-  name,
-  viewtemplate,
-  set_id,
-  table,
-}: {
-  name: string;
-  viewtemplate: string;
-  set_id?: number;
-  table: string;
-}) => async ({
-  response,
-  id,
-  ...rest
-}: {
-  response: any;
-  id?: number;
-  [key: string]: any; // ...rest
-}) => {
-  const tbl = await Table.findOne({ name: rest.table || table });
-  assertIsSet(tbl);
-  const v = await View.create({
-    table_id: tbl.id,
+const mkTester =
+  ({
     name,
     viewtemplate,
-    configuration: rest,
-    min_role: 10,
-  });
+    set_id,
+    table,
+  }: {
+    name: string;
+    viewtemplate: string;
+    set_id?: number;
+    table: string;
+  }) =>
+  async ({
+    response,
+    id,
+    ...rest
+  }: {
+    response: any;
+    id?: number;
+    [key: string]: any; // ...rest
+  }) => {
+    const tbl = await Table.findOne({ name: rest.table || table });
+    assertIsSet(tbl);
+    const v = await View.create({
+      table_id: tbl.id,
+      name,
+      viewtemplate,
+      configuration: rest,
+      min_role: 10,
+    });
 
-  const res = await v.run(
-    id ? { id } : set_id ? { id: set_id } : {},
-    mockReqRes
-  );
-  if (res !== response) console.log(res);
-  expect(res).toBe(response);
-  await v.delete();
-};
+    const res = await v.run(
+      id ? { id } : set_id ? { id: set_id } : {},
+      mockReqRes
+    );
+    if (res !== response) console.log(res);
+    expect(res).toBe(response);
+    await v.delete();
+  };
 
 const test_page = async ({
   response,
@@ -624,6 +626,126 @@ describe("List view", () => {
         },
       ],
       response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('author', false)">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`,
+    });
+  });
+  it("should render triply joined formulae list view", async () => {
+    await test_list({
+      table: "readings",
+      columns: [
+        {
+          type: "Field",
+          col_width: "",
+          fieldview: "show",
+          field_name: "temperature",
+          state_field: "on",
+          header_label: "",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: "patient_id.name",
+          header_label: "name",
+          link_text_formula: "on",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: "patient_id.favbook.author",
+          header_label: "author",
+          link_text_formula: "on",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: "patient_id.favbook.publisher?.name",
+          header_label: "publisher",
+          link_text_formula: "on",
+        },
+      ],
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>author</th><th>publisher</th></tr></thead><tbody><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">39</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Michael Douglas</a></td><td><a href="http://bbc.co.uk">Leo Tolstoy</a></td><td><a href="http://bbc.co.uk">AK Press</a></td></tr></tbody></table></div>`,
+    });
+  });
+  it("should render triply joined with dropdown list view", async () => {
+    await test_list({
+      table: "readings",
+      columns: [
+        {
+          type: "Field",
+          col_width: "",
+          fieldview: "show",
+          field_name: "normalised",
+          state_field: "on",
+          header_label: "",
+        },
+        {
+          type: "JoinField",
+          col_width: "",
+          join_field: "patient_id.favbook.author",
+          header_label: "",
+        },
+        {
+          type: "Field",
+          col_width: "",
+          fieldview: "show",
+          field_name: "temperature",
+          state_field: "on",
+          header_label: "",
+        },
+        {
+          type: "JoinField",
+          col_width: "",
+          join_field: "patient_id.favbook.publisher.name",
+          header_label: "",
+        },
+        {
+          type: "ViewLink",
+          view: "Own:showreads",
+          col_width: "",
+          link_size: "",
+          link_style: "",
+          view_label: "",
+          header_label: "",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: '"Foo "+temperature.toString().substring(1,3)',
+          header_label: "",
+          link_text_formula: "on",
+        },
+        {
+          type: "Action",
+          col_width: "",
+          action_name: "Delete",
+          action_size: "",
+          in_dropdown: "on",
+          action_label: "",
+          action_style: "btn-primary",
+          header_label: "",
+        },
+        {
+          type: "ViewLink",
+          view: "Own:showreads",
+          in_modal: "on",
+          col_width: "",
+          link_size: "",
+          link_style: "",
+          view_label: "",
+          in_dropdown: "on",
+          header_label: "",
+        },
+      ],
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>author</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>showreads</th><th></th><th>Action</th></tr></thead><tbody><tr><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Herman Melville</td><td style="text-align:right">37</td><td></td><td><a href="/view/showreads?id=1">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd1"><form action="/delete/readings/1?redirect=/view/testlist" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=1')">showreads</button></div></div></td></tr><tr><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Herman Melville</td><td style="text-align:right">39</td><td></td><td><a href="/view/showreads?id=2">showreads</a></td><td><a href="http://bbc.co.uk">Foo 9</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd2"><form action="/delete/readings/2?redirect=/view/testlist" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=2')">showreads</button></div></div></td></tr><tr><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Leo Tolstoy</td><td style="text-align:right">37</td><td>AK Press</td><td><a href="/view/showreads?id=3">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd3"><form action="/delete/readings/3?redirect=/view/testlist" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=3')">showreads</button></div></div></td></tr></tbody></table></div>`,
     });
   });
 });

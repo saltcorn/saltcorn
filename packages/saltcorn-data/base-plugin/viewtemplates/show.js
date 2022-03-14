@@ -321,14 +321,18 @@ const set_join_fieldviews = async ({ layout, fields }) => {
       const { join_field, fieldview } = segment;
       if (!fieldview) return;
       const keypath = join_field.split(".");
-      if (keypath.length === 2) {
-        const [refNm, targetNm] = keypath;
-        const ref = fields.find((f) => f.name === refNm);
-        if (!ref) return;
-        const table = await Table.findOne({ name: ref.reftable_name });
-        if (!table) return;
-        const reffields = await table.getFields();
-        const field = reffields.find((f) => f.name === targetNm);
+      if (keypath.length > 1) {
+        //const [refNm, through, targetNm] = keypath;
+        let oldFields = fields;
+        let field;
+        for (const refNm of keypath) {
+          field = oldFields.find((f) => f.name === refNm);
+          if (!field) break;
+          if (field.is_fkey) {
+            const reftable = Table.findOne({ name: field.reftable_name });
+            oldFields = reftable.fields;
+          } else break;
+        }
         if (field && field.type === "File") segment.field_type = "File";
         else if (
           field &&
@@ -338,8 +342,6 @@ const set_join_fieldviews = async ({ layout, fields }) => {
           field.type.fieldviews[fieldview]
         )
           segment.field_type = field.type.name;
-      } else {
-        //const [refNm, through, targetNm] = keypath;
       }
     },
   });

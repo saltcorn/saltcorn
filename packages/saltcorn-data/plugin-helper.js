@@ -143,6 +143,28 @@ const calcfldViewOptions = contract(
           );
           for (const jf of f.reftable.fields) {
             fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+            if (jf.is_fkey) {
+              const jtable = Table.findOne(jf.reftable_name);
+              const jfieldOpts = calcfldViewOptions(
+                jtable.fields,
+                isEdit ? "show" : mode
+              );
+              for (const jf2 of jtable.fields) {
+                fvs[`${f.name}.${jf.name}.${jf2.name}`] =
+                  jfieldOpts.field_view_options[jf2.name];
+                if (jf2.is_fkey) {
+                  const jtable2 = Table.findOne(jf2.reftable_name);
+                  const jfield2Opts = calcfldViewOptions(
+                    jtable2.fields,
+                    isEdit ? "show" : mode
+                  );
+                  for (const jf3 of jtable2.fields) {
+                    fvs[`${f.name}.${jf.name}.${jf2.name}.${jf3.name}`] =
+                      jfield2Opts.field_view_options[jf3.name];
+                  }
+                }
+              }
+            }
           }
         }
 
@@ -967,13 +989,21 @@ const picked_fields_to_query = contract(
               target: targetNm,
               rename_object: [refNm, targetNm],
             };
-          } else {
+          } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
             joinFields[`${refNm}_${through}_${targetNm}`] = {
               ref: refNm,
               target: targetNm,
               through,
               rename_object: [refNm, through, targetNm],
+            };
+          } else if (kpath.length === 4) {
+            const [refNm, through1, through2, targetNm] = kpath;
+            joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through: [through1, through2],
+              rename_object: [refNm, through1, through2, targetNm],
             };
           }
       });
