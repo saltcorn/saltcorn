@@ -767,15 +767,18 @@ async function fill_formula_btn_click(btn, k) {
   );
   const rec = get_form_record($(btn), true);
   const rec_ids = get_form_record($(btn));
+
   for (const fv of free_vars) {
     if (fv.includes(".")) {
       const kpath = fv.split(".");
       const [refNm, targetNm] = kpath;
       const reffield = table.fields.find((f) => f.name === refNm);
-      const resp = await $.ajax(
-        `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
-      );
-      rec[refNm] = resp.success[0];
+      if (reffield && reffield.reftable_name) {
+        const resp = await $.ajax(
+          `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
+        );
+        rec[refNm] = resp.success[0];
+      }
     }
   }
   const val = new Function(
