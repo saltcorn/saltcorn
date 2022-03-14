@@ -541,6 +541,15 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
           {
             script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
           },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/iconset-fontawesome5-3-1.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.js`,
+          },
+          {
+            css: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.min.css`,
+          },
         ],
       },
       wrap(renderForm(wfres.renderForm, req.csrfToken()))
