@@ -16,43 +16,45 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
-const mkTester = ({
-  name,
-  viewtemplate,
-  set_id,
-  table,
-}: {
-  name: string;
-  viewtemplate: string;
-  set_id?: number;
-  table: string;
-}) => async ({
-  response,
-  id,
-  ...rest
-}: {
-  response: any;
-  id?: number;
-  [key: string]: any; // ...rest
-}) => {
-  const tbl = await Table.findOne({ name: rest.table || table });
-  assertIsSet(tbl);
-  const v = await View.create({
-    table_id: tbl.id,
+const mkTester =
+  ({
     name,
     viewtemplate,
-    configuration: rest,
-    min_role: 10,
-  });
+    set_id,
+    table,
+  }: {
+    name: string;
+    viewtemplate: string;
+    set_id?: number;
+    table: string;
+  }) =>
+  async ({
+    response,
+    id,
+    ...rest
+  }: {
+    response: any;
+    id?: number;
+    [key: string]: any; // ...rest
+  }) => {
+    const tbl = await Table.findOne({ name: rest.table || table });
+    assertIsSet(tbl);
+    const v = await View.create({
+      table_id: tbl.id,
+      name,
+      viewtemplate,
+      configuration: rest,
+      min_role: 10,
+    });
 
-  const res = await v.run(
-    id ? { id } : set_id ? { id: set_id } : {},
-    mockReqRes
-  );
-  if (res !== response) console.log(res);
-  expect(res).toBe(response);
-  await v.delete();
-};
+    const res = await v.run(
+      id ? { id } : set_id ? { id: set_id } : {},
+      mockReqRes
+    );
+    if (res !== response) console.log(res);
+    expect(res).toBe(response);
+    await v.delete();
+  };
 
 const test_page = async ({
   response,
@@ -624,6 +626,46 @@ describe("List view", () => {
         },
       ],
       response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('author', false)">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`,
+    });
+  });
+  it("should render triply joined list view", async () => {
+    await test_list({
+      table: "readings",
+      columns: [
+        {
+          type: "Field",
+          col_width: "",
+          fieldview: "show",
+          field_name: "temperature",
+          state_field: "on",
+          header_label: "",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: "patient_id.name",
+          header_label: "name",
+          link_text_formula: "on",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: "patient_id.favbook.author",
+          header_label: "author",
+          link_text_formula: "on",
+        },
+        {
+          type: "Link",
+          link_url: "http://bbc.co.uk",
+          col_width: "",
+          link_text: "patient_id.favbook.publisher?.name",
+          header_label: "publisher",
+          link_text_formula: "on",
+        },
+      ],
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>author</th><th>publisher</th></tr></thead><tbody><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">39</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Michael Douglas</a></td><td><a href="http://bbc.co.uk">Leo Tolstoy</a></td><td><a href="http://bbc.co.uk">AK Press</a></td></tr></tbody></table></div>`,
     });
   });
 });
