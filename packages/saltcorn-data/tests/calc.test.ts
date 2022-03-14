@@ -258,6 +258,9 @@ describe("free variables", () => {
   it("record double access with function", () => {
     expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
   });
+  it("chain record access", () => {
+    expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
+  });
 });
 describe("jsexprToWhere", () => {
   it("translates equality", () => {
