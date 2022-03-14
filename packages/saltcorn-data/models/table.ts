@@ -1330,8 +1330,8 @@ class Table implements AbstractTable {
             const oldf = f;
             f = (x: any) => {
               x[v.rename_object[0]] = {
-                [v.rename_object[1]]: x[k],
                 ...x[v.rename_object[0]],
+                [v.rename_object[1]]: x[k],
               };
               return oldf(x);
             };
@@ -1339,11 +1339,11 @@ class Table implements AbstractTable {
             const oldf = f;
             f = (x: any) => {
               x[v.rename_object[0]] = {
-                [v.rename_object[1]]: {
-                  [v.rename_object[2]]: x[k],
-                  ...x[v.rename_object[1]],
-                },
                 ...x[v.rename_object[0]],
+                [v.rename_object[1]]: {
+                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
+                  [v.rename_object[2]]: x[k],
+                },
               };
               return oldf(x);
             };
@@ -1351,20 +1351,24 @@ class Table implements AbstractTable {
             const oldf = f;
             f = (x: any) => {
               x[v.rename_object[0]] = {
-                [v.rename_object[1]]: {
-                  [v.rename_object[2]]: {
-                    [v.rename_object[3]]: x[k],
-                    ...x[v.rename_object[2]],
-                  },
-                  ...x[v.rename_object[1]],
-                },
                 ...x[v.rename_object[0]],
+                [v.rename_object[1]]: {
+                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
+                  [v.rename_object[2]]: {
+                    ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
+                      v.rename_object[2]
+                    ],
+                    [v.rename_object[3]]: x[k],
+                  },
+                },
               };
+
               return oldf(x);
             };
           }
         }
       });
+
       return calcRow.map(f);
     } else return calcRow;
   }
