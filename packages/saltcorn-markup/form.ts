@@ -17,6 +17,7 @@ const {
   span,
   script,
   domReady,
+  ul,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -243,6 +244,35 @@ const mkFormRow =
  * @returns {div}
  */
 const mkFormRowForRepeat = (
+  v: any,
+  errors: any[],
+  formStyle: string,
+  labelCols: number,
+  hdr: any
+): string => {
+  return div(
+    { class: "row w-100" },
+    div(
+      { class: "col-6" },
+      div(ul({ id: "myEditor", class: "sortableLists list-group" }))
+    ),
+    div(
+      { class: "col-6", id: "menuForm" },
+      hdr.fields.map(mkFormRow({}, errors, formStyle, labelCols))
+    ),
+    script()
+  );
+};
+
+/**
+ * @param {object[]} v
+ * @param {object[]} errors
+ * @param {string} formStyle
+ * @param {object[]} labelCols
+ * @param {object} hdr
+ * @returns {div}
+ */
+const mkFormRowForRepeat1 = (
   v: any,
   errors: any[],
   formStyle: string,
