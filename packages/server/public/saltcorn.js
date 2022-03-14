@@ -789,6 +789,24 @@ async function fill_formula_btn_click(btn, k) {
   if (k) k();
 }
 
+const columnSummary = (col) => {
+  if (!col) return "Unknown";
+  switch (col.type) {
+    case "Field":
+      return `Field ${col.field_name} ${col.fieldview}`;
+    case "Link":
+      return `Link ${col.link_text}`;
+    case "JoinField":
+      return `Join ${col.join_field}`;
+    case "ViewLink":
+      return `View ${col.view}`;
+    case "Action":
+      return `Action ${col.action_name}`;
+    default:
+      return "Unknown";
+  }
+};
+
 /*
 https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
 Copyright (c) 2015 Jeff Green
