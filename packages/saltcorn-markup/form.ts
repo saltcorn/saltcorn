@@ -259,8 +259,13 @@ const mkFormRowForRepeat = (
       div(ul({ id: "myEditor", class: "sortableLists list-group" }))
     ),
     div(
-      { class: "col-6", id: "menuForm" },
-      hdr.fields.map(mkFormRow({}, errors, formStyle, labelCols))
+      { class: "col-6 mb-3", id: "menuForm" },
+      hdr.fields.map(mkFormRow({}, errors, formStyle, labelCols)),
+      button(
+        { type: "button", id: "btnUpdate", class: "btn btn-primary me-2" },
+        "Update"
+      ),
+      button({ type: "button", id: "btnAdd", class: "btn btn-primary" }, "Add")
     ),
     script(
       domReady(`
@@ -275,12 +280,16 @@ const mkFormRowForRepeat = (
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
               labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
-              maxLevel: 1 // (Optional) Default is -1 (no level limit)
+              maxLevel: 0 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
   editor.setForm($('#menuForm'));
-  //editor.setUpdateButton($('#btnUpdate'));
-  editor.setData(${JSON.stringify(v[hdr.form_name])});`)
+  editor.setUpdateButton($('#btnUpdate'));
+  editor.setData(${JSON.stringify(v[hdr.form_name])});
+  $('.btnEdit').click(()=>setTimeout(()=>apply_showif(),0));
+  $('#btnAdd').click(function(){
+    editor.add();
+  });`)
     )
   );
 };
