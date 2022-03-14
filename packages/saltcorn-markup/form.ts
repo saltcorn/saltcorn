@@ -260,6 +260,7 @@ const mkFormRowForRepeat = (
     ),
     div(
       { class: "col-6 mb-3", id: "menuForm" },
+      hdr.fields.forEach((f: any) => (f.class = `${f.class || ""} item-menu`)),
       hdr.fields.map(mkFormRow({}, errors, formStyle, labelCols)),
       button(
         { type: "button", id: "btnUpdate", class: "btn btn-primary me-2" },
