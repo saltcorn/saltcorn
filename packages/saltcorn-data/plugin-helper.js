@@ -143,6 +143,17 @@ const calcfldViewOptions = contract(
           );
           for (const jf of f.reftable.fields) {
             fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+            if (jf.is_fkey) {
+              const jtable = Table.findOne(jf.reftable_name);
+              const jfieldOpts = calcfldViewOptions(
+                jtable.fields,
+                isEdit ? "show" : mode
+              );
+              for (const jf2 of jtable.fields) {
+                fvs[`${f.name}.${jf.name}.${jf2.name}`] =
+                  jfieldOpts.field_view_options[jf2.name];
+              }
+            }
           }
         }
 
