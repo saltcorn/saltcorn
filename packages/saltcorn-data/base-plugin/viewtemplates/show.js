@@ -340,6 +340,24 @@ const set_join_fieldviews = async ({ layout, fields }) => {
           segment.field_type = field.type.name;
       } else {
         //const [refNm, through, targetNm] = keypath;
+        let oldFields = fields;
+        let field;
+        for (const refNm of keypath) {
+          field = oldFields.find((f) => f.name === refNm);
+          if (field.is_fkey) {
+            const reftable = Table.findOne({ name: field.reftable_name });
+            oldFields = reftable.fields;
+          } else break;
+        }
+        if (field && field.type === "File") segment.field_type = "File";
+        else if (
+          field &&
+          field.type &&
+          field.type.name &&
+          field.type.fieldviews &&
+          field.type.fieldviews[fieldview]
+        )
+          segment.field_type = field.type.name;
       }
     },
   });
