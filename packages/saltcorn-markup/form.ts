@@ -298,10 +298,10 @@ const mkFormRowForRepeat = (
     const vs = JSON.parse(editor.getString())
     const form = $('#menuForm').closest("form")
     
-    //console.log('submit', vs)
+    //console.log(vs)
     vs.forEach((v,ix)=>{
       Object.entries(v).forEach(([k,v])=>{
-        //console.log(k, typeof v, v)
+        //console.log(ix, k, typeof v, v)
         form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
       })
     })     
