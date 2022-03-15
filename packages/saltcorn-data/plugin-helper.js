@@ -145,7 +145,7 @@ const calcfldViewOptions = contract(
             fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
             if (jf.is_fkey) {
               const jtable = Table.findOne(jf.reftable_name);
-              if (jtable) {
+              if (jtable && jtable2.fields) {
                 const jfieldOpts = calcfldViewOptions(
                   jtable.fields,
                   isEdit ? "show" : mode
@@ -155,7 +155,7 @@ const calcfldViewOptions = contract(
                     jfieldOpts.field_view_options[jf2.name];
                   if (jf2.is_fkey) {
                     const jtable2 = Table.findOne(jf2.reftable_name);
-                    if (jtable2) {
+                    if (jtable2 && jtable2.fields) {
                       const jfield2Opts = calcfldViewOptions(
                         jtable2.fields,
                         isEdit ? "show" : mode
