@@ -527,7 +527,7 @@ router.post(
         setTimeout(() => {
           if (process.send) process.send("RestartServer");
           else process.exit(0);
-        }, 100);
+        }, 500);
       });
     }
   })
