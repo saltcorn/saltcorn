@@ -384,34 +384,32 @@ router.get(
                   tr(
                     th(req.__("Saltcorn version")),
                     td(
-                      packagejson.version,
-                      isRoot && can_update && !git_commit
-                        ? post_btn(
-                            "/admin/upgrade",
-                            req.__("Upgrade"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm",
-                              formClass: "d-inline",
-                            }
-                          )
-                        : isRoot && is_latest
-                        ? span(
-                            { class: "badge bg-primary ms-2" },
-                            req.__("Latest")
-                          ) +
-                          (!git_commit
-                            ? post_btn(
-                                "/admin/check-for-upgrade",
-                                req.__("Check for updates"),
-                                req.csrfToken(),
-                                {
-                                  btnClass: "btn-primary btn-sm px-1 py-0",
-                                  formClass: "d-inline",
-                                }
-                              )
-                            : "")
-                        : ""
+                      packagejson.version +
+                        (isRoot && can_update
+                          ? post_btn(
+                              "/admin/upgrade",
+                              req.__("Upgrade"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : isRoot && is_latest
+                          ? span(
+                              { class: "badge bg-primary ms-2" },
+                              req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check for updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : "")
                     )
                   ),
                   git_commit &&
@@ -425,17 +423,7 @@ router.get(
                               git_commit,
                           },
                           git_commit.substring(0, 6)
-                        ),
-                        isRoot &&
-                          post_btn(
-                            "/admin/upgrade",
-                            req.__("Pull & Upgrade"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm px-1 py-0",
-                              formClass: "d-inline",
-                            }
-                          )
+                        )
                       )
                     ),
                   tr(th(req.__("Node.js version")), td(process.version)),
@@ -499,24 +487,13 @@ router.post(
       res.redirect("/admin");
     } else {
       res.write(req.__("Starting upgrade, please wait...\n"));
-      const git_commit = getGitRevision();
-      let child;
-      if (git_commit) {
-        child = spawn(
-          "cd ~/saltcorn && git reset --hard HEAD && git pull && git show --summary && lerna bootstrap && npm run tsc",
-          {
-            shell: true,
-            stdio: ["ignore", "pipe", process.stderr],
-          }
-        );
-      } else
-        child = spawn(
-          "npm",
-          ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
-          {
-            stdio: ["ignore", "pipe", process.stderr],
-          }
-        );
+      const child = spawn(
+        "npm",
+        ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
+        {
+          stdio: ["ignore", "pipe", process.stderr],
+        }
+      );
       child.stdout.on("data", (data) => {
         res.write(data);
       });
@@ -526,8 +503,8 @@ router.post(
         );
         setTimeout(() => {
           if (process.send) process.send("RestartServer");
-          else process.exit(0);
-        }, 500);
+          process.exit(0);
+        }, 100);
       });
     }
   })
