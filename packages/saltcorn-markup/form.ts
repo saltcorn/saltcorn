@@ -247,7 +247,9 @@ const mkFormRow =
     labelCols: any
   ): ((hdr: any) => string) =>
   (hdr: any): string =>
-    hdr.isRepeat
+    hdr.isRepeat && hdr.fancyMenuEditor
+      ? mkFormRowForRepeatFancy(v, errors, formStyle, labelCols, hdr)
+      : hdr.isRepeat
       ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
       : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
@@ -259,7 +261,7 @@ const mkFormRow =
  * @param {object} hdr
  * @returns {div}
  */
-const mkFormRowForRepeat = (
+const mkFormRowForRepeatFancy = (
   v: any,
   errors: any[],
   formStyle: string,
@@ -336,7 +338,7 @@ const mkFormRowForRepeat = (
  * @param {object} hdr
  * @returns {div}
  */
-const mkFormRowForRepeat1 = (
+const mkFormRowForRepeat = (
   v: any,
   errors: any[],
   formStyle: string,
