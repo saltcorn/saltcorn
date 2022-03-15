@@ -318,11 +318,11 @@ const mkFormRowForRepeat = (
     //console.log(vs)
     vs.forEach((v,ix)=>{
       Object.entries(v).forEach(([k,v])=>{
-        console.log(ix, k, typeof v, v)
+        //console.log(ix, k, typeof v, v)
         form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
       })
     })     
-    //$(this).unbind('submit').submit(); // continue the submit unbind preventDefault
+    $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
    })`)
     )
   );
