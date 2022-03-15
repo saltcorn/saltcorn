@@ -305,7 +305,7 @@ const mkFormRowForRepeat = (
   editor.setForm($('#menuForm'));
   editor.setUpdateButton($('#btnUpdate'));
   editor.setData(${JSON.stringify(v[hdr.form_name])});
-  $('.btnEdit').click(()=>setTimeout(()=>apply_showif(),0));
+  $('.btnEdit').click(()=>setTimeout(apply_showif,0));
   $('#btnAdd').click(function(){
     editor.add();
   });
