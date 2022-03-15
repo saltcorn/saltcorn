@@ -127,6 +127,7 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
 }
 
 function freeVariables(expression: string): Set<string> {
+  if (!expression) return new Set();
   const freeVars: string[] = [];
   const ast: any = parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,

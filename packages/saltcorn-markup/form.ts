@@ -295,8 +295,16 @@ const mkFormRowForRepeat = (
   $('#menuForm').closest("form").submit(function(event) {
 
     event.preventDefault(); //this will prevent the default submit
-   
-    console.log('submit?')     
+    const vs = JSON.parse(editor.getString())
+    const form = $('#menuForm').closest("form")
+    
+    //console.log('submit', vs)
+    vs.forEach((v,ix)=>{
+      Object.entries(v).forEach(([k,v])=>{
+        //console.log(k, typeof v, v)
+        form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
+      })
+    })     
     $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
    })`)
     )
