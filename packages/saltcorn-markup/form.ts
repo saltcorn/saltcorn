@@ -94,6 +94,17 @@ const formRowWrap = (
           h5(text(hdr.label)),
           hdr.sublabel && p(i(hdr.sublabel))
         )
+      : hdr.type?.name === "Bool" && fStyle === "vert"
+      ? div(
+          { class: "form-check" },
+          inner,
+          label(
+            {
+              for: `input${text_attr(hdr.form_name)}`,
+            },
+            text(hdr.label)
+          )
+        ) + (hdr.sublabel ? i(text(hdr.sublabel)) : "")
       : [
           div(
             { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
@@ -120,10 +131,15 @@ const formRowWrap = (
  * @returns {function}
  */
 const innerField =
-  (v: any, errors: any[], nameAdd: string = ""): ((hdr: any) => string) =>
+  (
+    v: any,
+    errors: any[],
+    nameAdd: string = "",
+    classAdd: string = ""
+  ): ((hdr: any) => string) =>
   (hdr: any): string => {
     const name: any = hdr.form_name + nameAdd;
-    const validClass = errors[name] ? "is-invalid" : "";
+    const validClass = errors[name] ? `is-invalid ${classAdd}` : classAdd;
     const maybe_disabled = hdr.disabled ? " disabled data-disabled" : "";
 
     switch (hdr.input_type) {
@@ -301,11 +317,11 @@ const mkFormRowForRepeat = (
     //console.log(vs)
     vs.forEach((v,ix)=>{
       Object.entries(v).forEach(([k,v])=>{
-        //console.log(ix, k, typeof v, v)
+        console.log(ix, k, typeof v, v)
         form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
       })
     })     
-    $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
+    //$(this).unbind('submit').submit(); // continue the submit unbind preventDefault
    })`)
     )
   );
@@ -461,7 +477,14 @@ const mkFormRowForField =
     } else
       return formRowWrap(
         hdr,
-        innerField(v, errors, nameAdd)(hdr),
+        innerField(
+          v,
+          errors,
+          nameAdd,
+          hdr.type?.name === "Bool" && formStyle === "vert"
+            ? "form-check-input"
+            : ""
+        )(hdr),
         errorFeedback,
         formStyle,
         labelCols
