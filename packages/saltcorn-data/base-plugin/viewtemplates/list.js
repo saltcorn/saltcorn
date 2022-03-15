@@ -41,6 +41,7 @@ const {
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
+const { assert } = require("console");
 
 /**
  * @param {object} context
@@ -414,7 +415,8 @@ const run = async (
     create_view_location,
   },
   stateWithId,
-  extraOpts
+  extraOpts,
+  { listQuery }
 ) => {
   const table = await Table.findOne(
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
@@ -462,6 +464,9 @@ const run = async (
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
 
+  const queryRes = listQuery(state);
+  console.log({ queryRes });
+
   const where = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
@@ -482,7 +487,6 @@ const run = async (
     let where1 = jsexprToWhere(default_state.include_fml, state);
     mergeIntoWhere(where, where1);
   }
-
   let rows = await table.getJoinedRows({
     where,
     joinFields,
@@ -680,4 +684,9 @@ module.exports = {
     maybeAdd(create_view_label);
     return strings;
   },
+  queries: (opts) => ({
+    listQuery(state) {
+      return 1;
+    },
+  }),
 };

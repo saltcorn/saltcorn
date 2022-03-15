@@ -376,12 +376,16 @@ class View {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
     try {
+      const queries = this?.viewtemplateObj?.queries
+        ? this.viewtemplateObj!.queries(this.configuration)
+        : {};
       return await this.viewtemplateObj!.run(
         table_id,
         this.name,
         this.configuration,
         removeEmptyStrings(query),
-        extraArgs
+        extraArgs,
+        queries
       );
     } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
