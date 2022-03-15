@@ -525,7 +525,8 @@ router.post(
           `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
         );
         setTimeout(() => {
-          process.exit(0);
+          if (process.send) process.send("RestartServer");
+          else process.exit(0);
         }, 100);
       });
     }
