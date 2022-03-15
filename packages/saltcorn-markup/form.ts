@@ -311,6 +311,10 @@ const mkFormRowForRepeatFancy = (
   $('#btnAdd').click(function(){
     editor.add();
   });
+
+  $("#btnUpdate").click(function(){
+    editor.update();
+  });
   $('#menuForm').closest("form").submit(function(event) {
 
     event.preventDefault(); //this will prevent the default submit
