@@ -291,7 +291,14 @@ const mkFormRowForRepeat = (
   $('.btnEdit').click(()=>setTimeout(()=>apply_showif(),0));
   $('#btnAdd').click(function(){
     editor.add();
-  });`)
+  });
+  $('#menuForm').closest("form").submit(function(event) {
+
+    event.preventDefault(); //this will prevent the default submit
+   
+    console.log('submit?')     
+    $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
+   })`)
     )
   );
 };
