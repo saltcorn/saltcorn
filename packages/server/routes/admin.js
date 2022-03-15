@@ -502,6 +502,7 @@ router.post(
           `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
         );
         setTimeout(() => {
+          if (process.send) process.send("RestartServer");
           process.exit(0);
         }, 100);
       });

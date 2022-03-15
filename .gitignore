@@ -122,3 +122,4 @@ package-lock.json
 .vagrant/
 !packages/saltcorn-builder/dist/builder_bundle.js
 !packages/saltcorn-builder/package-lock.json
+!/package-lock.json
