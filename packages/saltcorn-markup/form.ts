@@ -274,10 +274,12 @@ const mkFormRowForRepeatFancy = (
     { class: "row w-100" },
     div(
       { class: "col-6" },
+      h5("Columns"),
       div(ul({ id: "myEditor", class: "sortableLists list-group" }))
     ),
     div(
       { class: "col-6 mb-3", id: "menuForm" },
+      h5("Column configuration"),
       hdr.fields.forEach((f: any) => (f.class = `${f.class || ""} item-menu`)),
       hdr.fields.map(mkFormRow({}, errors, "vert", labelCols)),
       button(
