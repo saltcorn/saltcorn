@@ -327,7 +327,9 @@ const mkFormRowForRepeatFancy = (
     vs.forEach((v,ix)=>{
       Object.entries(v).forEach(([k,v])=>{
         //console.log(ix, k, typeof v, v)
-        form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
+        if(typeof v === "boolean")
+          form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+(v?'on':'')+'"></input>')
+        else form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
       })
     })     
     $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
