@@ -330,6 +330,7 @@ const set_join_fieldviews = async ({ layout, fields }) => {
           if (!field) break;
           if (field.is_fkey) {
             const reftable = Table.findOne({ name: field.reftable_name });
+            if (!reftable) break;
             oldFields = reftable.fields;
           } else break;
         }
