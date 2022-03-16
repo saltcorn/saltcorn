@@ -387,7 +387,6 @@ const field_picker_fields = contract(
     const fldOptions = fields.map((f) => f.name);
     const { field_view_options } = calcfldViewOptions(fields, "list");
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
-    console.log(Object.keys(fieldViewConfigForms));
     const fvConfigFields = [];
     for (const [field_name, fvOptFields] of Object.entries(
       fieldViewConfigForms
