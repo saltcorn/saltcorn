@@ -17,7 +17,18 @@ const test_view_render = async (
   res: any
 ) => {
   try {
-    await view.run({}, { res, req });
+    const sfs = await view.get_state_fields();
+    if (view.table_id && sfs.some((f) => f.primary_key || f.name === "id")) {
+      const table = Table.findOne({ id: view.table_id });
+      const pk = table!.pk_name;
+      const rows = await table!.getRows({}, { orderBy: "RANDOM()", limit: 5 });
+      for (const row of rows) {
+        await view.run({ [pk]: row[pk] }, { res, req });
+      }
+      if (sfs.every((f) => !f.required)) await view.run({}, { res, req });
+    } else {
+      await view.run({}, { res, req });
+    }
     passes.push(`View ${view.name} renders OK`);
   } catch (e: any) {
     errors.push(`View ${view.name} render: ${e.message}`);
