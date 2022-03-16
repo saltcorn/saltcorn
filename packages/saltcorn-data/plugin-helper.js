@@ -211,7 +211,9 @@ const calcfldViewOptions = contract(
  */
 const calcfldViewConfig = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.promise(is.obj())),
-  async (fields, isEdit) => {
+  async (fields, isEdit, nrecurse = 2) => {
+    console.log("\ncalcfldViewConfig", fields[0].table_id);
+
     const fieldViewConfigForms = {};
     for (const f of fields) {
       f.fill_table();
@@ -228,14 +230,22 @@ const calcfldViewConfig = contract(
           );
       }
       if (f.type === "Key") {
-        if (f.reftable && f.reftable.fields) {
-          const joinedCfg = await calcfldViewConfig(f.reftable.fields, isEdit);
-          Object.entries(joinedCfg).forEach(([nm, o]) => {
-            fieldViewConfigForms[`${f.name}.${nm}`] = o;
-          });
+        if (f.reftable_name && nrecurse > 0) {
+          const reftable = Table.findOne({ name: f.reftable_name });
+          if (reftable && reftable.fields) {
+            const joinedCfg = await calcfldViewConfig(
+              reftable.fields,
+              isEdit,
+              nrecurse - 1
+            );
+            Object.entries(joinedCfg).forEach(([nm, o]) => {
+              fieldViewConfigForms[`${f.name}.${nm}`] = o;
+            });
+          }
         }
       }
     }
+    console.log("\nend tableid ", fields[0].table_id);
     return fieldViewConfigForms;
   }
 );
@@ -377,6 +387,7 @@ const field_picker_fields = contract(
     const fldOptions = fields.map((f) => f.name);
     const { field_view_options } = calcfldViewOptions(fields, "list");
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+    console.log(Object.keys(fieldViewConfigForms));
     const fvConfigFields = [];
     for (const [field_name, fvOptFields] of Object.entries(
       fieldViewConfigForms
