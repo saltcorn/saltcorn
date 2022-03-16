@@ -65,10 +65,13 @@ const plugin_with_routes = {
       await db.query('create extension if not exists "uuid-ossp";');
   },
   external_tables: {
-    exttab: json_list_to_external_table(() => [{ name: "Sam", age: 56 }], [
-      { name: "name", type: "String" },
-      { name: "age", type: "Integer" },
-    ]),
+    exttab: json_list_to_external_table(
+      () => [{ name: "Sam", age: 56 }],
+      [
+        { name: "name", type: "String" },
+        { name: "age", type: "Integer" },
+      ]
+    ),
   },
   types: [
     {
@@ -172,6 +175,7 @@ const mockReqRes = {
     getLocale: () => "en",
     __: (s: any) => s,
     user: { id: 1, role_id: 1 },
+    isAuthenticated: () => true,
   },
   res: { redirect() {}, json() {}, send() {}, __: (s: any) => s },
 };

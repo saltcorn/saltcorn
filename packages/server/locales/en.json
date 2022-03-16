@@ -878,5 +878,8 @@
   "Enter your two-factor code in order to disable it": "Enter your two-factor code in order to disable it",
   "Allow the user to enter a new key that is not in the schema": "Allow the user to enter a new key that is not in the schema",
   "Check for updates": "Check for updates",
-  "Versions refreshed": "Versions refreshed"
+  "Versions refreshed": "Versions refreshed",
+  "Configuration check": "Configuration check",
+  "Configuration errors": "Configuration errors",
+  "Configuration checks passed": "Configuration checks passed"
 }
