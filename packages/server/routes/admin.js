@@ -794,7 +794,7 @@ router.get(
         },
         {
           type: "card",
-          title: req.__("Configuration checks"),
+          title: req.__("Configuration checks passed"),
           contents: div(pre(code(passes.join("\n")))),
         },
       ],
