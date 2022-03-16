@@ -810,9 +810,9 @@ const columnSummary = (col) => {
     case "JoinField":
       return `Join ${col.join_field}`;
     case "ViewLink":
-      return `View ${col.view}`;
+      return `View ${col.view_label || col.view.split(":")[1] || ""}`;
     case "Action":
-      return `Action ${col.action_name}`;
+      return `Action ${col.action_label || col.action_name}`;
     default:
       return "Unknown";
   }
