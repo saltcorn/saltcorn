@@ -376,7 +376,7 @@ class View {
   async run(
     query: any,
     extraArgs: RunExtra,
-    remote: boolean = true
+    remote: boolean = false
   ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
