@@ -18,18 +18,24 @@ const test_view_render = async (
 ) => {
   try {
     const sfs = await view.get_state_fields();
+    let nrenders = 0;
     if (view.table_id && sfs.some((f) => f.primary_key || f.name === "id")) {
       const table = Table.findOne({ id: view.table_id });
       const pk = table!.pk_name;
       const rows = await table!.getRows({}, { orderBy: "RANDOM()", limit: 5 });
       for (const row of rows) {
+        nrenders += 1;
         await view.run({ [pk]: row[pk] }, { res, req });
       }
-      if (sfs.every((f) => !f.required)) await view.run({}, { res, req });
+      if (sfs.every((f) => !f.required)) {
+        nrenders += 1;
+        await view.run({}, { res, req });
+      }
     } else {
+      nrenders += 1;
       await view.run({}, { res, req });
     }
-    passes.push(`View ${view.name} renders OK`);
+    passes.push(`View ${view.name} x${nrenders} renders OK`);
   } catch (e: any) {
     errors.push(`View ${view.name} render: ${e.message}`);
   }
