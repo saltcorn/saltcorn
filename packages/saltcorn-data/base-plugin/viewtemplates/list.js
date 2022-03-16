@@ -464,7 +464,7 @@ const run = async (
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
 
-  const queryRes = listQuery(state);
+  const queryRes = await listQuery(state);
   console.log({ queryRes });
 
   const where = await stateFieldsToWhere({ fields, state });

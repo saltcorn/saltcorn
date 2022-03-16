@@ -376,7 +376,7 @@ class View {
   async run(
     query: any,
     extraArgs: RunExtra,
-    remote: boolean = false
+    remote: boolean = true
   ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
@@ -387,7 +387,7 @@ class View {
         this.configuration,
         removeEmptyStrings(query),
         extraArgs,
-        this.queries(remote)
+        this.queries(remote, extraArgs.req)
       );
     } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
@@ -395,24 +395,32 @@ class View {
     }
   }
 
-  queries(remote?: boolean) {
+  queries(remote?: boolean, req?: any) {
     if (remote) {
       const { getState } = require("../db/state");
 
-      const base_url = getState().getConfig(
-        "base_url",
-        "http://localhost:3000"
-      ); //TODO default from req
+      const base_url =
+        getState().getConfig("base_url") || "http://localhost:3000"; //TODO default from req
       const queries: any = {};
-      Object.entries(this?.viewtemplateObj?.queries || {}).forEach(([k, v]) => {
+      const vtQueries = this.queries(false);
+
+      Object.entries(vtQueries).forEach(([k, v]) => {
         queries[k] = (...args: any[]) => {
-          return fetch(`${base_url}/api/viewQuery/${this.name}/${k}`, {
+          const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
+          //TODO need to authenticate !
+          return fetch(url, {
             method: "post",
-            body: JSON.stringify(args),
-            headers: { "Content-Type": "application/json" },
-          });
+            body: JSON.stringify({ args }),
+            headers: {
+              "Content-Type": "application/json",
+              "CSRF-Token": req.csrfToken(),
+            },
+          })
+            .then((resp: any) => resp.json())
+            .then((resp: any) => resp.success);
         };
       });
+
       return queries;
     } else {
       return this?.viewtemplateObj?.queries
