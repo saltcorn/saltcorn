@@ -212,8 +212,6 @@ const calcfldViewOptions = contract(
 const calcfldViewConfig = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.promise(is.obj())),
   async (fields, isEdit, nrecurse = 2) => {
-    console.log("\ncalcfldViewConfig", fields[0].table_id);
-
     const fieldViewConfigForms = {};
     for (const f of fields) {
       f.fill_table();
@@ -245,7 +243,6 @@ const calcfldViewConfig = contract(
         }
       }
     }
-    console.log("\nend tableid ", fields[0].table_id);
     return fieldViewConfigForms;
   }
 );
