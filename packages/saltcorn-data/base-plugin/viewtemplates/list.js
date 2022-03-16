@@ -464,7 +464,7 @@ const run = async (
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
 
-  const queryRes = await listQuery(state);
+  const queryRes = await listQuery(stateWithId);
   console.log({ queryRes });
 
   const where = await stateFieldsToWhere({ fields, state });
@@ -684,8 +684,8 @@ module.exports = {
     maybeAdd(create_view_label);
     return strings;
   },
-  queries: (opts) => ({
-    async listQuery(state) {
+  queries: ({ table_id, viewname, configuration: { columns } }) => ({
+    async listQuery(stateWithId) {
       return 1;
     },
   }),

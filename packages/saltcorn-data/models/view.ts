@@ -396,13 +396,16 @@ class View {
   }
 
   queries(remote?: boolean, req?: any) {
+    const queryObj = this?.viewtemplateObj?.queries
+      ? this.viewtemplateObj!.queries(this)
+      : {};
     if (remote) {
       const { getState } = require("../db/state");
 
       const base_url =
         getState().getConfig("base_url") || "http://localhost:3000"; //TODO default from req
       const queries: any = {};
-      const vtQueries = this.queries(false);
+      const vtQueries = queryObj;
 
       Object.entries(vtQueries).forEach(([k, v]) => {
         queries[k] = (...args: any[]) => {
@@ -423,9 +426,7 @@ class View {
 
       return queries;
     } else {
-      return this?.viewtemplateObj?.queries
-        ? this.viewtemplateObj!.queries(this.configuration)
-        : {};
+      return queryObj;
     }
   }
 
