@@ -36,6 +36,9 @@ const {
   button,
   span,
   p,
+  code,
+  h5,
+  pre,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -50,6 +53,9 @@ const {
   create_backup,
   restore,
 } = require("@saltcorn/admin-models/models/backup");
+const {
+  runConfigurationCheck,
+} = require("@saltcorn/admin-models/models/config-check");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const {
@@ -362,6 +368,18 @@ router.get(
                     spinner: true,
                   }
                 )
+              ),
+              hr(),
+
+              a(
+                {
+                  href: "/admin/configuration-check",
+                  class: "btn btn-info",
+                  onClick: "press_store_button(this)",
+                },
+                i({ class: "fas fa-stethoscope" }),
+                " ",
+                req.__("Configuration check")
               ),
               hr(),
 
@@ -735,6 +753,49 @@ router.get(
           type: "card",
           title: req.__("Clear all"),
           contents: div(renderForm(clearAllForm(req), req.csrfToken())),
+        },
+      ],
+    });
+  })
+);
+
+router.get(
+  "/configuration-check",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { passes, errors, pass } = await runConfigurationCheck(req);
+    const mkError = (err) =>
+      div(
+        { class: "alert alert-danger", role: "alert" },
+        pre({ class: "mb-0" }, code(err))
+      );
+    res.sendWrap(req.__(`Admin`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Admin"), href: "/admin" },
+            { text: req.__("Configuration check") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Configuration errors"),
+          contents: div(
+            pass
+              ? div(
+                  { class: "alert alert-success", role: "alert" },
+                  i({ class: "fas fa-check-circle fa-lg me-2" }),
+                  h5({ class: "d-inline" }, "No errors")
+                )
+              : errors.map(mkError)
+          ),
+        },
+        {
+          type: "card",
+          title: req.__("Configuration checks"),
+          contents: div(pre(code(passes.join("\n")))),
         },
       ],
     });
