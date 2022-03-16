@@ -38,6 +38,7 @@ const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
+const db = require("@saltcorn/data/db");
 
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const { editRoleForm } = require("../markup/forms.js");
@@ -534,7 +535,23 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
   if (wfres.renderForm)
     res.sendWrap(
-      req.__(`View configuration`),
+      {
+        title: req.__(`View configuration`),
+        headers: [
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/iconset-fontawesome5-3-1.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.js`,
+          },
+          {
+            css: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.min.css`,
+          },
+        ],
+      },
       wrap(renderForm(wfres.renderForm, req.csrfToken()))
     );
   else if (wfres.renderBuilder) {

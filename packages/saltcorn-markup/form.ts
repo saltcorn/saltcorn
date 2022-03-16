@@ -17,6 +17,7 @@ const {
   span,
   script,
   domReady,
+  ul,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -93,6 +94,17 @@ const formRowWrap = (
           h5(text(hdr.label)),
           hdr.sublabel && p(i(hdr.sublabel))
         )
+      : hdr.type?.name === "Bool" && fStyle === "vert"
+      ? div(
+          { class: "form-check" },
+          inner,
+          label(
+            {
+              for: `input${text_attr(hdr.form_name)}`,
+            },
+            text(hdr.label)
+          )
+        ) + (hdr.sublabel ? i(text(hdr.sublabel)) : "")
       : [
           div(
             { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
@@ -119,10 +131,15 @@ const formRowWrap = (
  * @returns {function}
  */
 const innerField =
-  (v: any, errors: any[], nameAdd: string = ""): ((hdr: any) => string) =>
+  (
+    v: any,
+    errors: any[],
+    nameAdd: string = "",
+    classAdd: string = ""
+  ): ((hdr: any) => string) =>
   (hdr: any): string => {
     const name: any = hdr.form_name + nameAdd;
-    const validClass = errors[name] ? "is-invalid" : "";
+    const validClass = errors[name] ? `is-invalid ${classAdd}` : classAdd;
     const maybe_disabled = hdr.disabled ? " disabled data-disabled" : "";
 
     switch (hdr.input_type) {
@@ -230,9 +247,96 @@ const mkFormRow =
     labelCols: any
   ): ((hdr: any) => string) =>
   (hdr: any): string =>
-    hdr.isRepeat
+    hdr.isRepeat && hdr.fancyMenuEditor
+      ? mkFormRowForRepeatFancy(v, errors, formStyle, labelCols, hdr)
+      : hdr.isRepeat
       ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
       : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
+
+/**
+ * @param {object[]} v
+ * @param {object[]} errors
+ * @param {string} formStyle
+ * @param {object[]} labelCols
+ * @param {object} hdr
+ * @returns {div}
+ */
+const mkFormRowForRepeatFancy = (
+  v: any,
+  errors: any[],
+  formStyle: string,
+  labelCols: number,
+  hdr: any
+): string => {
+  // console.log(v);
+
+  return div(
+    { class: "row w-100" },
+    div(
+      { class: "col-6" },
+      h5("Columns"),
+      div(ul({ id: "myEditor", class: "sortableLists list-group" }))
+    ),
+    div(
+      { class: "col-6 mb-3", id: "menuForm" },
+      h5("Column configuration"),
+      hdr.fields.forEach((f: any) => (f.class = `${f.class || ""} item-menu`)),
+      hdr.fields.map(mkFormRow({}, errors, "vert", labelCols)),
+      button(
+        { type: "button", id: "btnUpdate", class: "btn btn-primary me-2" },
+        "Update"
+      ),
+      button({ type: "button", id: "btnAdd", class: "btn btn-primary" }, "Add")
+    ),
+    script(
+      domReady(`
+      var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
+
+      var sortableListOptions = {
+        placeholderCss: {'background-color': "#cccccc"},
+    
+    };
+    let editor = new MenuEditor('myEditor', 
+              { 
+              listOptions: sortableListOptions, 
+              iconPicker: iconPickerOptions,
+              getLabelText: columnSummary,
+              onUpdate: apply_showif,
+              labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
+              maxLevel: 0 // (Optional) Default is -1 (no level limit)
+              // Valid levels are from [0, 1, 2, 3,...N]
+              });
+  editor.setForm($('#menuForm'));
+  editor.setUpdateButton($('#btnUpdate'));
+  editor.setData(${JSON.stringify(v[hdr.form_name])});
+  $('.btnEdit').click(()=>setTimeout(apply_showif,0));
+  $('#btnAdd').click(function(){
+    editor.add();
+  });
+
+  $("#btnUpdate").click(function(){
+    editor.update();
+  });
+  $('#menuForm').closest("form").submit(function(event) {
+
+    event.preventDefault(); //this will prevent the default submit
+    const vs = JSON.parse(editor.getString())
+    const form = $('#menuForm').closest("form")
+    
+    //console.log(vs)
+    vs.forEach((v,ix)=>{
+      Object.entries(v).forEach(([k,v])=>{
+        //console.log(ix, k, typeof v, v)
+        if(typeof v === "boolean")
+          form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+(v?'on':'')+'"></input>')
+        else form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
+      })
+    })     
+    $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
+   })`)
+    )
+  );
+};
 
 /**
  * @param {object[]} v
@@ -384,7 +488,14 @@ const mkFormRowForField =
     } else
       return formRowWrap(
         hdr,
-        innerField(v, errors, nameAdd)(hdr),
+        innerField(
+          v,
+          errors,
+          nameAdd,
+          hdr.type?.name === "Bool" && formStyle === "vert"
+            ? "form-check-input"
+            : ""
+        )(hdr),
         errorFeedback,
         formStyle,
         labelCols
