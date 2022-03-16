@@ -685,7 +685,7 @@ module.exports = {
     return strings;
   },
   queries: (opts) => ({
-    listQuery(state) {
+    async listQuery(state) {
       return 1;
     },
   }),

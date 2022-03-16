@@ -33,6 +33,7 @@ import type Workflow from "./workflow";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+const fetch = require("node-fetch");
 
 /**
  * View Class
@@ -372,24 +373,51 @@ class View {
    * @param extraArgs
    * @returns {Promise<*>}
    */
-  async run(query: any, extraArgs: RunExtra): Promise<any> {
+  async run(
+    query: any,
+    extraArgs: RunExtra,
+    remote: boolean = false
+  ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
     try {
-      const queries = this?.viewtemplateObj?.queries
-        ? this.viewtemplateObj!.queries(this.configuration)
-        : {};
       return await this.viewtemplateObj!.run(
         table_id,
         this.name,
         this.configuration,
         removeEmptyStrings(query),
         extraArgs,
-        queries
+        this.queries(remote)
       );
     } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
+    }
+  }
+
+  queries(remote?: boolean) {
+    if (remote) {
+      const { getState } = require("../db/state");
+
+      const base_url = getState().getConfig(
+        "base_url",
+        "http://localhost:3000"
+      ); //TODO default from req
+      const queries: any = {};
+      Object.entries(this?.viewtemplateObj?.queries || {}).forEach(([k, v]) => {
+        queries[k] = (...args: any[]) => {
+          return fetch(`${base_url}/api/viewQuery/${this.name}/${k}`, {
+            method: "post",
+            body: JSON.stringify(args),
+            headers: { "Content-Type": "application/json" },
+          });
+        };
+      });
+      return queries;
+    } else {
+      return this?.viewtemplateObj?.queries
+        ? this.viewtemplateObj!.queries(this.configuration)
+        : {};
     }
   }
 
