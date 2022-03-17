@@ -96,6 +96,14 @@ const test_view_config = async (
   res: any
 ) => {
   try {
+    let hasErrors = false;
+    if (view.viewtemplateObj?.configCheck) {
+      const errs = await view.viewtemplateObj?.configCheck(view.configuration);
+      if (errs && Array.isArray(errs) && errs.length > 0) {
+        hasErrors = true;
+        errors.push(...errs);
+      }
+    }
     const configFlow = await view.get_config_flow(req);
     await configFlow.run(
       {
@@ -106,7 +114,7 @@ const test_view_config = async (
       },
       req
     );
-    passes.push(`View ${view.name} config OK`);
+    if (!hasErrors) passes.push(`View ${view.name} config OK`);
   } catch (e: any) {
     errors.push(`View ${view.name} config: ${e.message}`);
   }
