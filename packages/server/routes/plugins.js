@@ -647,9 +647,10 @@ router.get(
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
     const filepath = req.params[0];
-    const location = getState().plugin_locations[
-      plugin.includes("@") ? plugin.split("@")[0] : plugin
-    ];
+    const location =
+      getState().plugin_locations[
+        plugin.includes("@") ? plugin.split("@")[0] : plugin
+      ];
     if (location) {
       const safeFile = path
         .normalize(filepath)
@@ -841,7 +842,8 @@ router.get(
       await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     }
     req.flash("success", req.__(`Plugins up-to-date`));
-
+    if (process.send)
+      process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
     res.redirect(`/plugins`);
   })
 );
