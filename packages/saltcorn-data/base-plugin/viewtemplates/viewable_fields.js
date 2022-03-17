@@ -211,8 +211,15 @@ const parse_view_select = (s) => {
       return { type, viewname: vrest };
     case "ChildList":
     case "OneToOneShow":
-      const [viewnm, tbl, fld] = vrest.split(".");
-      return { type, viewname: viewnm, table_name: tbl, field_name: fld };
+      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+      return {
+        type,
+        viewname: viewnm,
+        table_name: tbl,
+        field_name: fld,
+        throughTable,
+        through,
+      };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
