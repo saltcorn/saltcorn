@@ -6,7 +6,7 @@ import View from "@saltcorn/data/models/view";
 import File from "@saltcorn/data/models/file";
 import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
-import Plugin from "@saltcorn/data/models/plugin";
+import Trigger from "@saltcorn/data/models/trigger";
 import mocks from "@saltcorn/data/tests/mocks";
 
 const test_table = async (table: Table, passes: string[], errors: string[]) => {
@@ -119,6 +119,34 @@ const test_view_config = async (
     errors.push(`View ${view.name} config: ${e.message}`);
   }
 };
+const test_trigger = async (
+  trigger: Trigger,
+  passes: string[],
+  errors: string[]
+) => {
+  try {
+    const action = getState().actions[trigger.action];
+    if (!action) {
+      errors.push(
+        `Trigger ${trigger.name} action not found: ${trigger.action}`
+      );
+      return;
+    }
+    if (action.configCheck) {
+      const table = trigger.table_id
+        ? Table.findOne({ id: trigger.table_id })
+        : undefined;
+      const errs = await action.configCheck({ table, ...trigger });
+      if (errs && Array.isArray(errs) && errs.length > 0) {
+        errors.push(...errs);
+      } else {
+        passes.push(`Trigger ${trigger.name} config OK`);
+      }
+    }
+  } catch (e: any) {
+    errors.push(`Trigger ${trigger.name} config: ${e.message}`);
+  }
+};
 
 export const runConfigurationCheck = async (req: any) => {
   const errors: string[] = [];
@@ -143,6 +171,10 @@ export const runConfigurationCheck = async (req: any) => {
   for (const view of views) {
     await test_view_render(view, passes, errors, req, res);
     await test_view_config(view, passes, errors, req, res);
+  }
+  const triggers = Trigger.find({});
+  for (const trigger of triggers) {
+    await test_trigger(trigger, passes, errors);
   }
 
   return { errors, passes, pass: errors.length === 0 };
