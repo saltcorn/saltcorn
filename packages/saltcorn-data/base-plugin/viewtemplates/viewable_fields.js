@@ -311,12 +311,14 @@ const view_linker = contract(
         };
       case "ChildList":
       case "OneToOneShow":
-        const [viewnm, tbl, fld] = vrest.split(".");
+        const [viewnm, tbl, fld, through] = vrest.split(".");
+        const varPath = through ? `${fld}.${through}` : fld;
+        console.log({ vrest, fld, through, varPath });
         return {
           label: viewnm,
           key: (r) =>
             link_view(
-              `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
+              `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id}`,
               get_label(viewnm, r),
               in_modal,
               link_style,
