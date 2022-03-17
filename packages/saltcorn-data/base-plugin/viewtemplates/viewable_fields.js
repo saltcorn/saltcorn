@@ -311,9 +311,8 @@ const view_linker = contract(
         };
       case "ChildList":
       case "OneToOneShow":
-        const [viewnm, tbl, fld, through] = vrest.split(".");
-        const varPath = through ? `${fld}.${through}` : fld;
-        console.log({ vrest, fld, through, varPath });
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
         return {
           label: viewnm,
           key: (r) =>

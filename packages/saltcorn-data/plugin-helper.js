@@ -269,13 +269,19 @@ const get_link_view_opts = contract(
       }));
     const link_view_names = new Set();
     const child_views = await get_child_views(table, viewname);
-    for (const { relation, related_table, through, views } of child_views) {
+    for (const {
+      relation,
+      related_table,
+      through,
+      throughTable,
+      views,
+    } of child_views) {
       for (const view of views) {
-        if (through) {
-          const name = `${view.name}.${related_table.name}.${relation.name}.${through.name}`;
+        if (through && throughTable) {
+          const name = `${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`;
           link_view_names.add(name);
           link_view_opts.push({
-            name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${through.name}`,
+            name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
             label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           });
         } else {
@@ -816,6 +822,7 @@ const get_child_views = contract(
             relation,
             related_table,
             through: relfield,
+            throughTable: reltable,
             views,
           });
       }
