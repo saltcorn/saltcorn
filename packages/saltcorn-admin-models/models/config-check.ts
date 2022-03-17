@@ -98,7 +98,7 @@ const test_view_config = async (
   try {
     let hasErrors = false;
     if (view.viewtemplateObj?.configCheck) {
-      const errs = await view.viewtemplateObj?.configCheck(view.configuration);
+      const errs = await view.viewtemplateObj?.configCheck(view);
       if (errs && Array.isArray(errs) && errs.length > 0) {
         hasErrors = true;
         errors.push(...errs);
