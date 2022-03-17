@@ -14,7 +14,10 @@ const { getState } = require("../../db/state");
 const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
-const { get_expression_function } = require("../../models/expression");
+const {
+  get_expression_function,
+  expressionChecker,
+} = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
 const Library = require("../../models/library");
 
@@ -745,5 +748,23 @@ module.exports = {
    */
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
+  },
+  configCheck: async ({
+    name,
+    configuration: { view_when_done, formula_destinations },
+  }) => {
+    const errs = [];
+    const vwd = await View.findOne({ name: view_when_done });
+    if (!vwd)
+      errs.push(`In View ${name}, view when done ${view_when_done} not found`);
+    for (const { expression } of formula_destinations || []) {
+      if (expression)
+        expressionChecker(
+          expression,
+          `In View ${name}, destination formula ${expression} error: `,
+          errs
+        );
+    }
+    return errs;
   },
 };

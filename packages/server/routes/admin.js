@@ -787,7 +787,7 @@ router.get(
               ? div(
                   { class: "alert alert-success", role: "alert" },
                   i({ class: "fas fa-check-circle fa-lg me-2" }),
-                  h5({ class: "d-inline" }, "No errors")
+                  h5({ class: "d-inline" }, "No errors detected")
                 )
               : errors.map(mkError)
           ),
