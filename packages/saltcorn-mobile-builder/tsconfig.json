@@ -20,5 +20,12 @@
     "module": "commonjs",
     "target": "ES2020"
   },
-  "exclude": ["node_modules", "dist", "*.test.*", "webpack.config.js", "bundle"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "*.test.*",
+    "webpack.config.js",
+    "bundle",
+    "plugin_packages"
+  ]
 }

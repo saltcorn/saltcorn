@@ -1,5 +1,15 @@
 const { mergeWithCustomize, merge } = require("webpack-merge");
 const { join } = require("path");
+const { PluginManager } = require("live-plugin-manager");
+const {
+  staticDependencies,
+  requirePlugin,
+} = require("@saltcorn/server/load_plugins");
+
+const manager = new PluginManager({
+  pluginsPath: join(__dirname, "plugin_packages", "node_modules"),
+  staticDependencies,
+});
 
 const dataCfg = require(join(
   require.resolve("@saltcorn/data"),
@@ -28,24 +38,26 @@ const addDependOn = (dataEntryPoint, b) => {
   return merge({}, copy, b);
 };
 
-const buildPluginCfgs = (env) => {
-  return Object.keys(env)
-    .filter((key) => key.endsWith("_plugin_cfg"))
-    .map((varName) => {
-      const { dir, name } = JSON.parse(env[varName]);
-      const packageJSON = require(join(dir, "package.json"));
-      let genericEntry = {};
-      genericEntry[name] = {
-        import: join(dir, packageJSON.main),
-        dependOn: ["markup", "data"],
-      };
-      return {
-        entry: genericEntry,
-      };
+const buildPluginEntries = async (env) => {
+  const plugins = JSON.parse(env.plugins);
+  let result = [];
+  for (plugin of plugins) {
+    await requirePlugin(plugin, false, manager);
+    const info = manager.getInfo(plugin.location);
+    let genericEntry = {};
+    genericEntry[plugin.name] = {
+      import: info.mainFile,
+      dependOn: ["markup", "data"],
+    };
+    result.push({
+      entry: genericEntry,
     });
+  }
+  return result;
 };
 
-module.exports = (env) => {
+module.exports = async (env) => {
+  const pluginEntries = env.plugins ? await buildPluginEntries(env) : [];
   return mergeWithCustomize({
     customizeArray(a, b, key) {
       if (key === "library") {
@@ -65,5 +77,5 @@ module.exports = (env) => {
       }
       return undefined;
     },
-  })(dataCfg, markupCfg, basePluginCfg, sbAdmin2Cfg, ...buildPluginCfgs(env));
+  })(dataCfg, markupCfg, basePluginCfg, sbAdmin2Cfg, ...pluginEntries);
 };

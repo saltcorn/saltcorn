@@ -41,23 +41,36 @@ const dummyReq = {
   csrfToken: () => "",
 };
 
+const dummmyRes = {
+  redirect: (path) => {
+    const url = new URL(path, "http://localhost");
+    window.router
+      .resolve({
+        pathname: `get${url.pathname}`,
+        queryParams: url.search.substring(1),
+      })
+      .then((page) => {
+        document.getElementById("content-div").innerHTML = page.content;
+      });
+  },
+};
+
 export const postView = async (context) => {
-  console.log("push view ->->");
-  console.log(context.params.viewname);
   let body = {};
-  for (var pair of context.formData.entries()) {
-    console.log(pair[0] + ", " + pair[1]);
-    body[pair[0]] = pair[1];
+  let redirect = undefined;
+  let sp = new URLSearchParams(context.query);
+  for (const [k, v] of sp.entries()) {
+    body[k] = v;
+    if (k === "redirect") redirect = v;
   }
-  const views = await saltcorn.data.models.View.find({
+  const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-
-  await views[0].runPost({}, body, {
-    res: {},
+  await view.runPost({}, body, {
     req: dummyReq,
+    res: dummmyRes,
+    redirect,
   });
-
   return {};
 };
 
@@ -77,5 +90,7 @@ export const getView = async (context) => {
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   const contents = await view.run_possibly_on_page(query, dummyReq, {});
   let help = { above: [contents] };
-  return wrap(context.params.viewname, help, state);
+  return {
+    content: wrap(context.params.viewname, help, state),
+  };
 };

@@ -671,8 +671,7 @@ const runPost = async (
           ? `?${pk.name}=${text(row[relation])}`
           : get_query(row);
       }
-      if (isNode()) res.redirect(`${target}${query}`);
-      else linkCallback(`get${target}${query}`);
+      res.redirect(`${target}${query}`);
     }
   }
 };

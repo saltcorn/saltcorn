@@ -1,4 +1,4 @@
-function linkCallback(url) {
+function splitPathQuery(url) {
   let path = url;
   let query = undefined;
   const queryStart = url.indexOf("?");
@@ -6,32 +6,88 @@ function linkCallback(url) {
     path = url.substring(0, queryStart);
     query = url.substring(queryStart);
   }
-  window.router.resolve({ pathname: path, queryParams: query }).then((html) => {
-    document.getElementById("content-div").innerHTML = html;
+  return { path, query };
+}
+
+function handleRoute(route, query, reload) {
+  window.router.resolve({ pathname: route, query: query }).then((page) => {
+    if (page.redirect) {
+      handleRoute(page.redirect, query);
+    } else if (page.content) {
+      document.getElementById("content-div").innerHTML = page.content;
+    } else if (reload) {
+      window.location.reload(true);
+    }
   });
 }
 
-function submitCallback(e, path) {
+function combineFormAndQuery(form, query) {
+  let paramsList = [];
+  const formData = new FormData(form[0]);
+  for (const [k, v] of formData.entries()) {
+    paramsList.push(`${k}=${v}`);
+  }
+  let sp = new URLSearchParams(query);
+  for (let [k, v] of sp.entries()) {
+    if (k === "redirect") v = `get${v}`;
+    paramsList.push(`${k}=${v}`);
+  }
+  return paramsList.length > 0 ? `?${paramsList.join("&")}` : undefined;
+}
+
+function execLink(url) {
+  console.log("exec");
+  console.log(url);
+  let path = url;
+  let query = undefined;
+  const queryStart = url.indexOf("?");
+  if (queryStart > 0) {
+    path = url.substring(0, queryStart);
+    query = url.substring(queryStart);
+  }
+  console.log(path);
+  console.log(query);
+  window.router
+    .resolve({ pathname: `get${path}`, queryParams: query })
+    .then((page) => {
+      document.getElementById("content-div").innerHTML = page.content;
+    });
+}
+
+function stateFormSubmit(e, path) {
   let formData = new FormData(e);
   let sp = new URLSearchParams(formData);
   window.router
     .resolve({ pathname: path, queryParams: sp.toString() })
-    .then((html) => {
-      document.getElementById("content-div").innerHTML = html;
+    .then((page) => {
+      document.getElementById("content-div").innerHTML = page.content;
     });
 }
 
-function local_post_btn(e) {
+function local_post_btn(e, reload) {
   const form = $(e).closest("form");
   const url = form.attr("action");
   const method = form.attr("method");
-  let formData = new FormData(form[0]);
-  const route = `${method}${url}`;
-  console.log(route);
+  const { path, query } = splitPathQuery(url);
+  handleRoute(`${method}${path}`, combineFormAndQuery(form, query), reload);
+}
+
+function local_set_state_fields(kvs, href) {
+  let queryParams = [];
+  Object.entries(kvs).forEach((kv) => {
+    if (kv[1].unset && kv[1].unset === true) {
+    } else queryParams.push(`${kv[0]}=${kv[1]}`);
+  });
   window.router
-    .resolve({ pathname: route, formData: formData })
-    .then((html) => {
-      // TODO CH no reload
-      window.location.reload(true);
+    .resolve({ pathname: href, queryParams: queryParams.join("&") })
+    .then((page) => {
+      document.getElementById("content-div").innerHTML = page.content;
     });
+}
+
+function localSortBy(k, desc, viewname) {
+  local_set_state_fields(
+    { _sortby: k, _sortdesc: desc ? "on" : { unset: true } },
+    `get/view/${viewname}`
+  );
 }

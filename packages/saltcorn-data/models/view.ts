@@ -601,7 +601,7 @@ class View {
         values: removeEmptyStrings(query),
       });
       if (!db.is_node)
-        form.onSubmit = `javascript:submitCallback(this, 'get/view/${encodeURIComponent(
+        form.onSubmit = `javascript:stateFormSubmit(this, 'get/view/${encodeURIComponent(
           this.name
         )}')`;
       await form.fill_fkey_options(true);

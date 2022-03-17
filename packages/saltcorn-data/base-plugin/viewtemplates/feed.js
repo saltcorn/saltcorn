@@ -371,9 +371,7 @@ const run = async (
       const target = `/view/${encodeURIComponent(
         view_to_create
       )}${stateToQueryString(state)}`;
-      const hrefVal = isNode()
-        ? target
-        : `javascript:linkCallback('get${target}');`;
+      const hrefVal = isNode() ? target : `javascript:execLink('${target}');`;
       create_link = link_view(
         hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,

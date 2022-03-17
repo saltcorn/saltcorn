@@ -20,7 +20,6 @@ module.exports = {
   resolve: {
     alias: {
       "@saltcorn/types": join(typesDir, "dist"),
-      "@saltcorn/markup/tags": join(__dirname, "dist", "tags"),
     },
   },
 };

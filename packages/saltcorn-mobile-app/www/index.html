@@ -52,12 +52,12 @@
         state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
         await loadPlugins(state);
         await initRoutes();
-        // TODO ch generic entry point
-        window.router
-          .resolve({ pathname: "get/view/Contacts" })
-          .then((html) => {
-            document.getElementById("content-div").innerHTML = html;
-          });
+        const entryView = new URLSearchParams(window.location.search).get(
+          "entry_view"
+        );
+        window.router.resolve({ pathname: entryView }).then((page) => {
+          document.getElementById("content-div").innerHTML = page.content;
+        });
       });
     </script>
   </head>

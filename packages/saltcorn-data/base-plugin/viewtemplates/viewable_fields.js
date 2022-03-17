@@ -29,20 +29,16 @@ const { isNode } = require("../../webpack-helper");
  */
 const action_url = (viewname, table, action_name, r, colId, colIdNm) => {
   if (action_name === "Delete")
-    return `/delete/${table.name}/${r.id}${
-      isNode() ? `?redirect=/view/${viewname}` : ""
-    }`; // TODO CH delete redirect
+    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack") return { javascript: "history.back()" };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}${
-      isNode() ? `?redirect=/view/${viewname}` : ""
-    }`; // TODO CH toggle redirect
+    return `/edit/toggle/${table.name}/${r.id}/${field_name}$?redirect=/view/${viewname}`;
   }
   return {
     javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
   };
-}
+};
 
 /**
  * @param {string} url
@@ -130,9 +126,7 @@ const get_view_link_query = (fields, view) => {
   if (fUniqueString)
     return (r) =>
       r && r[fUniqueString.name]
-        ? `?${fUniqueString.name}=${encodeURIComponent(
-            r[fUniqueString.name]
-          )}`
+        ? `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`
         : `?${pk_name}=${r[pk_name]}`;
   const fUnique = fields.find((f) => f.is_unique);
   if (fUnique)
@@ -140,7 +134,7 @@ const get_view_link_query = (fields, view) => {
   else {
     return (r) => `?${pk_name}=${r[pk_name]}`;
   }
-}
+};
 
 /**
  * @function
@@ -187,7 +181,7 @@ const make_link = (
       return a(attrs, txt);
     },
   };
-}
+};
 
 /**
  * @param {string} s
@@ -261,13 +255,10 @@ const view_linker = (
       const get_query = get_view_link_query(fields, viewrow || {});
       return {
         label: vnm,
-        key: (r) =>
-          link_view(
-            isNode()
-              ? `/view/${encodeURIComponent(vnm)}${get_query(r)}`
-              : `javascript:linkCallback('get/view/${encodeURIComponent(
-                  vnm
-                )}${get_query(r)}')`,
+        key: (r) => {
+          const target = `/view/${encodeURIComponent(vnm)}${get_query(r)}`;
+          return link_view(
+            isNode() ? target : `javascript:execLink('${target}')`,
             get_label(vnm, r),
             in_modal,
             link_style,
@@ -278,7 +269,8 @@ const view_linker = (
             link_bordercol,
             link_textcol,
             in_dropdown && "dropdown-item"
-          ),
+          );
+        },
       };
     case "Independent":
       const ivnm = vrest;
@@ -354,7 +346,7 @@ const view_linker = (
     default:
       throw new Error(view);
   }
-}
+};
 
 /**
  * @param {string} nm
@@ -388,7 +380,15 @@ const flapMaipish = (xs, f) => {
  * @param {*} __
  * @returns {object[]}
  */
-const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) => {
+const get_viewable_fields = (
+  viewname,
+  table,
+  fields,
+  columns,
+  isShow,
+  req,
+  __
+) => {
   const dropdown_actions = [];
   const tfields = flapMaipish(columns, (column) => {
     const role = req.user ? req.user.role_id : 10;
@@ -596,7 +596,7 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) 
               : f.listKey,
           sortlink:
             !f.calculated || f.stored
-              ? sortlinkForName(f.name, req)
+              ? sortlinkForName(f.name, req, viewname)
               : undefined,
         }
       );
@@ -631,13 +631,13 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) 
     });
   }
   return tfields;
-}
+};
 /**
  * @param {string} fname
  * @param {object} req
  * @returns {string}
  */
-const sortlinkForName = (fname, req) => {
+const sortlinkForName = (fname, req, viewname) => {
   const { _sortby, _sortdesc } = req.query || {};
   const desc =
     typeof _sortdesc == "undefined"
@@ -645,7 +645,9 @@ const sortlinkForName = (fname, req) => {
       : _sortdesc
       ? "false"
       : "true";
-  return `javascript:sortby('${text(fname)}', ${desc})`;
+  return isNode()
+    ? `javascript:sortby('${text(fname)}', ${desc})`
+    : `javascript:localSortBy('${text(fname)}', ${desc}, '${viewname}')`;
 };
 
 /**
@@ -694,7 +696,7 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };
-}
+};
 
 /**
  * @param {object} table

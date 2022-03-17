@@ -1,7 +1,15 @@
 import { Command, Flags } from "@oclif/core";
 import { spawnSync } from "child_process";
-import { copyFileSync, existsSync, mkdirSync, rmSync, readdirSync } from "fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from "fs";
 import { join } from "path";
+import { Builder, parseString } from "xml2js";
 import db from "@saltcorn/data/db/index";
 import Plugin from "@saltcorn/data/models/plugin";
 
@@ -14,6 +22,11 @@ export default class BuildAppCommand extends Command {
       char: "p",
       description: "Platforms to build for space separated list",
       multiple: true,
+    }),
+    entryPoint: Flags.string({
+      name: "entry point",
+      char: "v",
+      description: "Entry Point",
     }),
   };
 
@@ -35,43 +48,22 @@ export default class BuildAppCommand extends Command {
 
   staticPlugins = ["base", "sbadmin2"];
 
-  plugins = Array<Plugin>();
-
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
-    await this.loadPlugins();
+    if (!flags.entryPoint) {
+      throw new Error("please specify an entry point for the first view");
+    }
     this.copyPublics();
     this.copyPluginSources();
-    this.bundlePackages();
+    await this.bundlePackages();
     this.copyBundlesToApp();
     this.copySqliteDbToApp();
     if (flags.platforms) {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
     }
-    this.buildApk();
-    rmSync(this.tempPluginDir, { recursive: true, force: true });
+    this.buildApk(flags.entryPoint);
   }
-
-  loadPlugins = async () => {
-    this.plugins = (await Plugin.find()).filter(
-      (plugin: Plugin) => !this.staticPlugins.includes(plugin.name)
-    );
-    if (this.plugins.length > 0) {
-      if (!existsSync(this.tempPluginDir))
-        mkdirSync(this.tempPluginDir, { recursive: true });
-      spawnSync("npm", ["init", "-y"], {
-        stdio: "inherit",
-        cwd: join(this.packageRoot, "plugins"),
-      });
-      for (const plugin of this.plugins) {
-        spawnSync("npm", ["install", plugin.location], {
-          stdio: "inherit",
-          cwd: this.tempPluginDir,
-        });
-      }
-    }
-  };
 
   copyPublics = () => {
     if (!existsSync(join(this.wwwDir, "plugin_sources")))
@@ -130,20 +122,18 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  bundlePackages = () => {
-    const pluginCfgs = this.plugins.map((plugin: Plugin) => {
-      const varName = `${plugin.name}_plugin_cfg`;
-      const cfg = {
-        dir: join(this.packageRoot, "plugins", "node_modules", plugin.location),
-        name: plugin.name,
-      };
-      return `${varName}=${JSON.stringify(cfg)}`;
-    });
-
-    spawnSync("npm", ["run", "build", "--", "--env", ...pluginCfgs], {
-      stdio: "inherit",
-      cwd: this.packageRoot,
-    });
+  bundlePackages = async () => {
+    const plugins = (await Plugin.find()).filter(
+      (plugin: Plugin) => !this.staticPlugins.includes(plugin.name)
+    );
+    spawnSync(
+      "npm",
+      ["run", "build", "--", "--env", `plugins=${JSON.stringify(plugins)}`],
+      {
+        stdio: "inherit",
+        cwd: this.packageRoot,
+      }
+    );
   };
 
   copyBundlesToApp = () => {
@@ -174,7 +164,25 @@ export default class BuildAppCommand extends Command {
     });
   };
 
-  buildApk = () => {
+  buildApk = (entryPoint: string) => {
+    const cfgFile = join(this.appDir, "config.xml");
+    const xml = readFileSync(cfgFile).toString();
+    parseString(xml, (err: any, result: any) => {
+      if (err) {
+        throw new Error(err);
+      }
+      if (
+        result.widget &&
+        result.widget.content &&
+        result.widget.content.length === 1 &&
+        result.widget.content[0].$
+      ) {
+        result.widget.content[0].$.src = `index.html?entry_view=get/view/${entryPoint}`;
+      } else {
+        throw new Error("config.xml is missing a content element");
+      }
+      writeFileSync(cfgFile, new Builder().buildObject(result));
+    });
     spawnSync("npm", ["run", "build-app"], {
       stdio: "inherit",
       cwd: this.appDir,
