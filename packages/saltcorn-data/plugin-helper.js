@@ -272,18 +272,18 @@ const get_link_view_opts = contract(
     for (const { relation, related_table, through, views } of child_views) {
       for (const view of views) {
         if (through) {
-          const name = `${view.name}.${through.name}.${related_table.name}.${relation.name}`;
+          const name = `${view.name}.${related_table.name}.${relation.name}.${through.name}`;
           link_view_names.add(name);
           link_view_opts.push({
-            name: `ChildList:${view.name}.${through.name}.${related_table.name}.${relation.name}`,
-            label: `${view.name} [${view.viewtemplate} ${through.name}.${related_table.name}.${relation.label}]`,
+            name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${through.name}`,
+            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           });
         } else {
           const name = `${view.name}.${related_table.name}.${relation.name}`;
           link_view_names.add(name);
           link_view_opts.push({
             name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
-            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
+            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
           });
         }
       }
