@@ -211,8 +211,15 @@ const parse_view_select = (s) => {
       return { type, viewname: vrest };
     case "ChildList":
     case "OneToOneShow":
-      const [viewnm, tbl, fld] = vrest.split(".");
-      return { type, viewname: viewnm, table_name: tbl, field_name: fld };
+      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+      return {
+        type,
+        viewname: viewnm,
+        table_name: tbl,
+        field_name: fld,
+        throughTable,
+        through,
+      };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
@@ -311,12 +318,13 @@ const view_linker = contract(
         };
       case "ChildList":
       case "OneToOneShow":
-        const [viewnm, tbl, fld] = vrest.split(".");
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
         return {
           label: viewnm,
           key: (r) =>
             link_view(
-              `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
+              `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id}`,
               get_label(viewnm, r),
               in_modal,
               link_style,
