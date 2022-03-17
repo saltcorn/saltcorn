@@ -802,7 +802,7 @@ const get_child_views = contract(
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
       child_views.push({ relation, related_table, views });
-      possibleThroughTables.add(`${related_table}.${relation.name}`);
+      possibleThroughTables.add(`${related_table.name}.${relation.name}`);
     }
     if (nrecurse > 0)
       for (const possibleThroughTable of possibleThroughTables) {
