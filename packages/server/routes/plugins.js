@@ -14,7 +14,7 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, restart_tenant } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -52,6 +52,7 @@ const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
 const { sleep } = require("@saltcorn/data/utils");
+const { loadAllPlugins } = require("../load_plugins");
 
 /**
  * @type {object}
@@ -842,8 +843,9 @@ router.get(
       await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     }
     req.flash("success", req.__(`Plugins up-to-date`));
-    if (process.send)
-      process.send({ refresh: "plugins", tenant: db.getTenantSchema() });
+    await restart_tenant(loadAllPlugins);
+    process.send &&
+      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
     res.redirect(`/plugins`);
   })
 );
