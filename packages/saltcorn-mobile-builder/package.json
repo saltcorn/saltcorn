@@ -3,19 +3,19 @@
   "description": "plugin to to build a mobile app from a tenant application",
   "homepage": "https://saltcorn.com",
   "repository": "github:saltcorn/saltcorn",
-  "version": "0.7.0-beta.4",
+  "version": "0.7.1-beta.1",
   "author": "Christian Hugo",
   "scripts": {
     "build": "webpack --mode development"
   },
   "dependencies": {
     "@oclif/core": "^1.2.0",
-    "@saltcorn/markup": "^0.7.0-beta.4",
-    "@saltcorn/data": "^0.7.0-beta.4",
-    "@saltcorn/server": "^0.7.0-beta.4",
-    "@saltcorn/base-plugin": "^0.7.0-beta.4",
-    "@saltcorn/sbadmin2": "^0.7.0-beta.4",
-    "@saltcorn/mobile-app": "^0.7.0-beta.4",
+    "@saltcorn/markup": "^0.7.1-beta.1",
+    "@saltcorn/data": "^0.7.1-beta.1",
+    "@saltcorn/server": "^0.7.1-beta.1",
+    "@saltcorn/base-plugin": "^0.7.1-beta.1",
+    "@saltcorn/sbadmin2": "^0.7.1-beta.1",
+    "@saltcorn/mobile-app": "^0.7.1-beta.1",
     "live-plugin-manager": "^0.16.0",
     "xml2js": "0.4.23"
   },

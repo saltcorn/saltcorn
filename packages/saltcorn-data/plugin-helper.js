@@ -128,6 +128,32 @@ const calcfldViewOptions = (fields, mode) => {
         );
         for (const jf of f.reftable.fields) {
           fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+          if (jf.is_fkey) {
+            const jtable = Table.findOne(jf.reftable_name);
+            if (jtable && jtable.fields) {
+              const jfieldOpts = calcfldViewOptions(
+                jtable.fields,
+                isEdit ? "show" : mode
+              );
+              for (const jf2 of jtable.fields) {
+                fvs[`${f.name}.${jf.name}.${jf2.name}`] =
+                  jfieldOpts.field_view_options[jf2.name];
+                if (jf2.is_fkey) {
+                  const jtable2 = Table.findOne(jf2.reftable_name);
+                  if (jtable2 && jtable2.fields) {
+                    const jfield2Opts = calcfldViewOptions(
+                      jtable2.fields,
+                      isEdit ? "show" : mode
+                    );
+                    for (const jf3 of jtable2.fields) {
+                      fvs[`${f.name}.${jf.name}.${jf2.name}.${jf3.name}`] =
+                        jfield2Opts.field_view_options[jf3.name];
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
 
@@ -167,7 +193,7 @@ const calcfldViewOptions = (fields, mode) => {
  * @param {boolean}
  * @returns {Promise<object>}
  */
-const calcfldViewConfig = async (fields, isEdit) => {
+const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
   const fieldViewConfigForms = {};
   for (const f of fields) {
     f.fill_table();
@@ -184,11 +210,18 @@ const calcfldViewConfig = async (fields, isEdit) => {
         );
     }
     if (f.type === "Key") {
-      if (f.reftable && f.reftable.fields) {
-        const joinedCfg = await calcfldViewConfig(f.reftable.fields, isEdit);
-        Object.entries(joinedCfg).forEach(([nm, o]) => {
-          fieldViewConfigForms[`${f.name}.${nm}`] = o;
-        });
+      if (f.reftable_name && nrecurse > 0) {
+        const reftable = Table.findOne({ name: f.reftable_name });
+        if (reftable && reftable.fields) {
+          const joinedCfg = await calcfldViewConfig(
+            reftable.fields,
+            isEdit,
+            nrecurse - 1
+          );
+          Object.entries(joinedCfg).forEach(([nm, o]) => {
+            fieldViewConfigForms[`${f.name}.${nm}`] = o;
+          });
+        }
       }
     }
   }
@@ -350,7 +383,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   }
   const link_view_opts = await get_link_view_opts(table, viewname);
 
-  const { parent_field_list } = await table.get_parent_relations(true);
+  const { parent_field_list } = await table.get_parent_relations(true, true);
   const { child_field_list, child_relations } =
     await table.get_child_relations();
   const aggStatOptions = {};
@@ -719,7 +752,6 @@ const get_child_views = async (table, viewname) => {
   return child_views;
 }
 
-
 /**
  * get_parent_views Contract
  * @function
@@ -774,7 +806,6 @@ const get_onetoone_views = async (table, viewname) => {
   return child_views;
 }
 
-
 /**
  * picked_fields_to_query Contract
  * @function
@@ -809,12 +840,19 @@ const picked_fields_to_query = (columns, fields) => {
               ref: refNm,
               target: targetNm,
             };
-          } else {
+          } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
             joinFields[`${refNm}_${through}_${targetNm}`] = {
               ref: refNm,
               target: targetNm,
               through,
+            };
+          } else if (kpath.length === 4) {
+            const [refNm, through1, through2, targetNm] = kpath;
+            joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through: [through1, through2],
             };
           }
         }
@@ -887,13 +925,21 @@ const picked_fields_to_query = (columns, fields) => {
             target: targetNm,
             rename_object: [refNm, targetNm],
           };
-        } else {
+        } else if (kpath.length === 3) {
           const [refNm, through, targetNm] = kpath;
           joinFields[`${refNm}_${through}_${targetNm}`] = {
             ref: refNm,
             target: targetNm,
             through,
             rename_object: [refNm, through, targetNm],
+          };
+        } else if (kpath.length === 4) {
+          const [refNm, through1, through2, targetNm] = kpath;
+          joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+            ref: refNm,
+            target: targetNm,
+            through: [through1, through2],
+            rename_object: [refNm, through1, through2, targetNm],
           };
         }
     });

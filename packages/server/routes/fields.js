@@ -631,13 +631,13 @@ router.post(
     if (fieldName.includes(".")) {
       //join field
       const kpath = fieldName.split(".");
-
       if (kpath.length === 2 && row[kpath[0]]) {
         const field = fields.find((f) => f.name === kpath[0]);
         const reftable = await Table.findOne({ name: field.reftable_name });
         const targetField = (await reftable.getFields()).find(
           (f) => f.name === kpath[1]
         );
+        //console.log({ kpath, fieldview, targetField });
         let fv = targetField.type.fieldviews[fieldview];
         if (!fv) {
           fv =
@@ -653,6 +653,25 @@ router.post(
         readState(configuration, configFields);
         res.send(fv.run(refRow[kpath[1]], req, configuration));
         return;
+      } else if (row[kpath[0]]) {
+        let oldTable = table;
+        let oldRow = row;
+        for (const ref of kpath) {
+          const ofields = await oldTable.getFields();
+          const field = ofields.find((f) => f.name === ref);
+          if (field.is_fkey) {
+            const reftable = await Table.findOne({ name: field.reftable_name });
+            if (!oldRow[ref]) break;
+            const q = { [reftable.pk_name]: oldRow[ref] };
+            oldRow = await reftable.getRow(q);
+            oldTable = reftable;
+          }
+        }
+        if (oldRow) {
+          const value = oldRow[kpath[kpath.length - 1]];
+          res.send(value);
+          return;
+        }
       }
       res.send("");
       return;

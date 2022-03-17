@@ -127,12 +127,15 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
 }
 
 function freeVariables(expression: string): Set<string> {
+  if (!expression) return new Set();
   const freeVars: string[] = [];
   const ast: any = parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
     allowAwaitOutsideFunction: true,
     locations: false,
   });
+  //console.log(JSON.stringify(ast, null, 2));
+
   traverse(ast, {
     leave: function (node) {
       //console.log(node);
@@ -159,6 +162,21 @@ function freeVariables(expression: string): Set<string> {
           freeVars.pop();
           freeVars.push(
             `${node.object.object.name}.${node.object.property.name}.${node.property.name}`
+          );
+        } else if (
+          node.object.type === "MemberExpression" &&
+          node.object.object.type === "MemberExpression" &&
+          node.object.object.property.type === "Identifier" &&
+          node.object.object.object.type === "Identifier" &&
+          node.object.property.type === "Identifier" &&
+          node.property.type === "Identifier"
+        ) {
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.pop();
+          freeVars.push(
+            `${node.object.object.object.name}.${node.object.object.property.name}.${node.object.property.name}.${node.property.name}`
           );
         }
       }

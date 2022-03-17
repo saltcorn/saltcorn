@@ -479,8 +479,10 @@ const get_viewable_fields = (
           [refNm, targetNm] = keypath;
           key = `${refNm}_${targetNm}`;
         } else {
-          [refNm, through, targetNm] = keypath;
-          key = `${refNm}_${through}_${targetNm}`;
+          const keypath = column.join_field.split(".");
+          refNm = keypath[0];
+          targetNm = keypath[keypath.length - 1];
+          key = keypath.join("_");
         }
       }
       if (column.field_type) type = getState().types[column.field_type];

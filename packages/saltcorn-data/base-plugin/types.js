@@ -653,16 +653,20 @@ const string = {
    * @param {object} param
    * @returns {object|true}
    */
-  validate: ({ min_length, max_length, regexp, re_invalid_error }) => (x) => {
-    if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
-    if (isdef(min_length) && x.length < min_length)
-      return { error: `Must be at least ${min_length} characters` };
-    if (isdef(max_length) && x.length > max_length)
-      return { error: `Must be at most ${max_length} characters` };
-    if (isdef(regexp) && !new RegExp(regexp).test(x))
-      return { error: re_invalid_error || `Does not match regular expression` };
-    return true;
-  },
+  validate:
+    ({ min_length, max_length, regexp, re_invalid_error }) =>
+    (x) => {
+      if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
+      if (isdef(min_length) && x.length < min_length)
+        return { error: `Must be at least ${min_length} characters` };
+      if (isdef(max_length) && x.length > max_length)
+        return { error: `Must be at most ${max_length} characters` };
+      if (isdef(regexp) && !new RegExp(regexp).test(x))
+        return {
+          error: re_invalid_error || `Does not match regular expression`,
+        };
+      return true;
+    },
 
   /**
    * @param {object} param
@@ -775,11 +779,13 @@ const int = {
    * @param {object} param
    * @returns {boolean}
    */
-  validate: ({ min, max }) => (x) => {
-    if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
-    if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
-    return true;
-  },
+  validate:
+    ({ min, max }) =>
+    (x) => {
+      if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+      if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+      return true;
+    },
 };
 
 /**
@@ -945,11 +951,13 @@ const float = {
    * @param {object} param
    * @returns {object|boolean}
    */
-  validate: ({ min, max }) => (x) => {
-    if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
-    if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
-    return true;
-  },
+  validate:
+    ({ min, max }) =>
+    (x) => {
+      if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+      if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+      return true;
+    },
 };
 
 /**
@@ -1144,7 +1152,10 @@ const date = {
    * @param {object} param
    * @returns {boolean}
    */
-  validate: ({}) => (v) => v instanceof Date && !isNaN(v),
+  validate:
+    ({}) =>
+    (v) =>
+      v instanceof Date && !isNaN(v),
 };
 
 /**
@@ -1176,15 +1187,15 @@ const bool = {
     show: {
       isEdit: false,
       run: (v) =>
-        v === true
+        typeof v === "undefined" || v === null
+          ? ""
+          : !!v
           ? i({
               class: "fas fa-lg fa-check-circle text-success",
             })
-          : v === false
-          ? i({
+          : i({
               class: "fas fa-lg fa-times-circle text-danger",
-            })
-          : "",
+            }),
     },
     /**
      * @namespace

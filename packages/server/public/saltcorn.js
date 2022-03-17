@@ -8,6 +8,16 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
+//avoids hiding in overflow:hidden
+function init_bs5_dropdowns() {
+  $("body").on("show.bs.dropdown", "[data-bs-toggle=dropdown]", function () {
+    let target;
+    if (!$("#page-inner-content").length) target = $("body");
+    else target = $("#page-inner-content");
+    let dropdown = bootstrap.Dropdown.getInstance(this);
+    $(dropdown._menu).insertAfter(target);
+  });
+}
 function sortby(k, desc) {
   set_state_fields({ _sortby: k, _sortdesc: desc ? "on" : { unset: true } });
 }
@@ -293,6 +303,7 @@ function initialize_page() {
     el.text(date.toLocaleDateString(locale, options));
   });
   $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+  init_bs5_dropdowns();
 }
 
 $(initialize_page);
@@ -511,7 +522,8 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function press_store_button(clicked) {
-  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
+  const width = $(clicked).width();
+  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
 }
 
 function ajax_modal(url, opts = {}) {
@@ -767,15 +779,18 @@ async function fill_formula_btn_click(btn, k) {
   );
   const rec = get_form_record($(btn), true);
   const rec_ids = get_form_record($(btn));
+
   for (const fv of free_vars) {
     if (fv.includes(".")) {
       const kpath = fv.split(".");
       const [refNm, targetNm] = kpath;
       const reffield = table.fields.find((f) => f.name === refNm);
-      const resp = await $.ajax(
-        `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
-      );
-      rec[refNm] = resp.success[0];
+      if (reffield && reffield.reftable_name) {
+        const resp = await $.ajax(
+          `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
+        );
+        rec[refNm] = resp.success[0];
+      }
     }
   }
   const val = new Function(
@@ -785,6 +800,24 @@ async function fill_formula_btn_click(btn, k) {
   $(btn).closest(".input-group").find("input").val(val);
   if (k) k();
 }
+
+const columnSummary = (col) => {
+  if (!col) return "Unknown";
+  switch (col.type) {
+    case "Field":
+      return `Field ${col.field_name} ${col.fieldview}`;
+    case "Link":
+      return `Link ${col.link_text}`;
+    case "JoinField":
+      return `Join ${col.join_field}`;
+    case "ViewLink":
+      return `View ${col.view_label || col.view.split(":")[1] || ""}`;
+    case "Action":
+      return `Action ${col.action_label || col.action_name}`;
+    default:
+      return "Unknown";
+  }
+};
 
 /*
 https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
