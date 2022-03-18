@@ -112,6 +112,8 @@ function get_form_record(e, select_labels) {
     .each(function () {
       if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
         rec[$(this).attr("name")] = $(this).find("option:selected").text();
+      else if ($(this).prop("type") === "checkbox")
+        rec[$(this).attr("name")] = $(this).prop("checked");
       else rec[$(this).attr("name")] = $(this).val();
     });
   return rec;
