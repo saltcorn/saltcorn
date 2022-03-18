@@ -147,6 +147,10 @@ const prefixFieldsInWhere = (inputWhere: GenObj, tablePrefix: string) => {
     if (k === "_fts") whereObj[k] = { table: tablePrefix, ...inputWhere[k] };
     else if (k === "not") {
       whereObj.not = prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else if (k === "or") {
+      whereObj.or = Array.isArray(inputWhere[k])
+        ? inputWhere[k].map((w: GenObj) => prefixFieldsInWhere(w, tablePrefix))
+        : prefixFieldsInWhere(inputWhere[k], tablePrefix);
     } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
   });
   return whereObj;
