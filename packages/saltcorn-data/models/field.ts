@@ -31,9 +31,10 @@ const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   const { getState } = require("../db/state");
   if (!field.reftype)
     throw new Error("Unable to find the type, 'reftype' is undefined.");
-  const type = getState().types[
-    typeof field.reftype === "string" ? field.reftype : field.reftype.name
-  ];
+  const type =
+    getState().types[
+      typeof field.reftype === "string" ? field.reftype : field.reftype.name
+    ];
   const parsed = type.read(v);
   return parsed || (v ? { error: "Unable to read key" } : null);
 };
@@ -350,7 +351,7 @@ class Field implements AbstractField {
         ].sql_name
       } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
-      }")`;
+      }")${this.attributes?.on_delete_cascade ? " on delete cascade" : ""}`;
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
@@ -683,7 +684,9 @@ class Field implements AbstractField {
         this.name
       )}" FOREIGN KEY ("${sqlsanitize(
         this.name
-      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)`;
+      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)${
+        this.attributes?.on_delete_cascade ? " on delete cascade" : ""
+      }`;
       await db.query(q);
     }
   }
