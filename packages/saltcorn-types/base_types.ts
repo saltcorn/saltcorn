@@ -188,7 +188,8 @@ export type ViewTemplate = {
     viewname: string,
     opts: any,
     state: any,
-    arg4: RunExtra
+    arg4: RunExtra,
+    queries: any
   ) => Promise<string>;
   runMany?: (
     table_id: number,
@@ -241,6 +242,7 @@ export type ViewTemplate = {
     name: string,
     configuration: any
   ) => Promise<Array<AbstractTrigger>>;
+  queries?: (configuration?: any) => Record<string, any>;
 };
 
 export type Action = (

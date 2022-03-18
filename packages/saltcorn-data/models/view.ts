@@ -34,6 +34,7 @@ import type Workflow from "./workflow";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+const fetch = require("node-fetch");
 
 /**
  * View Class
@@ -373,7 +374,11 @@ class View {
    * @param extraArgs
    * @returns {Promise<*>}
    */
-  async run(query: any, extraArgs: RunExtra): Promise<any> {
+  async run(
+    query: any,
+    extraArgs: RunExtra,
+    remote: boolean = false
+  ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
     try {
@@ -382,11 +387,47 @@ class View {
         this.name,
         this.configuration,
         removeEmptyStrings(query),
-        extraArgs
+        extraArgs,
+        this.queries(remote, extraArgs.req)
       );
     } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
+    }
+  }
+
+  queries(remote?: boolean, req?: any) {
+    const queryObj = this?.viewtemplateObj?.queries
+      ? this.viewtemplateObj!.queries(this)
+      : {};
+    if (remote) {
+      const { getState } = require("../db/state");
+
+      const base_url =
+        getState().getConfig("base_url") || "http://localhost:3000"; //TODO default from req
+      const queries: any = {};
+      const vtQueries = queryObj;
+
+      Object.entries(vtQueries).forEach(([k, v]) => {
+        queries[k] = (...args: any[]) => {
+          const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
+          //TODO need to authenticate !
+          return fetch(url, {
+            method: "post",
+            body: JSON.stringify({ args }),
+            headers: {
+              "Content-Type": "application/json",
+              "CSRF-Token": req.csrfToken(),
+            },
+          })
+            .then((resp: any) => resp.json())
+            .then((resp: any) => resp.success);
+        };
+      });
+
+      return queries;
+    } else {
+      return queryObj;
     }
   }
 
