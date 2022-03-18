@@ -24,7 +24,7 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
         );
         continue;
       }
-      if (field.is_fkey) {
+      if (field.is_fkey && field.type !== "File") {
         const reftable = Table.findOne({ name: field.reftable_name });
         if (!reftable) {
           mkError(

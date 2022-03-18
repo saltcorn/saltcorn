@@ -30,7 +30,7 @@ const Table = require("../../models/table");
  */
 const action_url = contract(
   is.fun([is.str, is_tablely, is.str, is.obj()], is.any),
-  (viewname, table, action_name, r, colId, colIdNm) => {
+  (viewname, table, action_name, r, colId, colIdNm, confirm) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
     else if (action_name === "GoBack") return { javascript: "history.back()" };
@@ -38,8 +38,9 @@ const action_url = contract(
       const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
     }
+    const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
     return {
-      javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
+      javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
     };
   }
 );
@@ -448,7 +449,8 @@ const get_viewable_fields = contract(
               column.action_name,
               r,
               column.action_name,
-              "action_name"
+              "action_name",
+              column.confirm
             );
             const label = column.action_label_formula
               ? eval_expression(column.action_label, r)
