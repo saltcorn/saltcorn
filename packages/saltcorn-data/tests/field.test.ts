@@ -74,6 +74,18 @@ describe("Field", () => {
     expect(f.is_fkey).toBe(true);
     expect(f.sql_bare_type).toBe("int");
   });
+  it("switches delete cascade on and off", async () => {
+    const f = await Field.findOne({ name: "favbook" });
+    await f.update({
+      ...f,
+      attributes: { ...f.attributes, on_delete_cascade: true },
+    });
+    await f.update({
+      ...f,
+      attributes: { ...f.attributes, on_delete_cascade: false },
+    });
+  });
+
   it("generates fkeys", async () => {
     const f = await Field.findOne({ name: "favbook" });
     const v = await f.generate();
