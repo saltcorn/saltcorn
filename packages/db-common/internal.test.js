@@ -197,6 +197,18 @@ describe("mkWhere", () => {
       values: [5, 7],
       where: 'where ("id"=$1 or "x">$2)',
     });
+    expect(
+      mkWhere({ or: [{ id: 5 }, { x: [{ gt: 7 }, { lt: 12 }] }] })
+    ).toStrictEqual({
+      values: [5, 7, 12],
+      where: 'where ("id"=$1 or "x">$2 and "x"<$3)',
+    });
+    expect(
+      mkWhere({ y: 6, or: [{ id: 5 }, { x: [{ gt: 7 }, { lt: 12 }] }] })
+    ).toStrictEqual({
+      values: [6, 5, 7, 12],
+      where: 'where "y"=$1 and ("id"=$2 or "x">$3 and "x"<$4)',
+    });
     expect(mkWhere({ or: [{ id: 5 }, { x: 7, y: 8 }] })).toStrictEqual({
       values: [5, 7, 8],
       where: 'where ("id"=$1 or "x"=$2 and "y"=$3)',
