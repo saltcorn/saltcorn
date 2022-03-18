@@ -31,9 +31,10 @@ const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   const { getState } = require("../db/state");
   if (!field.reftype)
     throw new Error("Unable to find the type, 'reftype' is undefined.");
-  const type = getState().types[
-    typeof field.reftype === "string" ? field.reftype : field.reftype.name
-  ];
+  const type =
+    getState().types[
+      typeof field.reftype === "string" ? field.reftype : field.reftype.name
+    ];
   const parsed = type.read(v);
   return parsed || (v ? { error: "Unable to read key" } : null);
 };
@@ -350,7 +351,7 @@ class Field implements AbstractField {
         ].sql_name
       } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
-      }")`;
+      }")${this.attributes?.on_delete_cascade ? " on delete cascade" : ""}`;
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
@@ -502,17 +503,17 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async alter_sql_type(new_field: Field) {
-    if (!this.table) {
-      throw new Error(
-        `To add the field '${new_field.name}', 'table' must be set.`
-      );
-    }
     let new_sql_type = new_field.sql_type;
     let def = "";
     let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
 
     const schema = db.getTenantSchemaPrefix();
     this.fill_table();
+    if (!this.table) {
+      throw new Error(
+        `To add the field '${new_field.name}', 'table' must be set.`
+      );
+    }
     if (new_field.primary_key) {
       await db.query(
         `ALTER TABLE ${schema}"${sqlsanitize(
@@ -533,6 +534,30 @@ class Field implements AbstractField {
         )}" add column "${sqlsanitize(
           this.name
         )}" ${new_sql_type} primary key ${def};`
+      );
+    } else if (
+      new_field.is_fkey &&
+      this.reftable_name &&
+      new_field.reftable_name === this.reftable_name &&
+      ((new_field.attributes?.on_delete_cascade &&
+        !this.attributes?.on_delete_cascade) ||
+        (!new_field.attributes?.on_delete_cascade &&
+          this.attributes?.on_delete_cascade))
+    ) {
+      //add or remove on delete cascade - https://stackoverflow.com/a/10356720
+
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" drop constraint "${sqlsanitize(this.table.name)}_${sqlsanitize(
+          this.name
+        )}_fkey", add constraint "${sqlsanitize(this.table.name)}_${sqlsanitize(
+          this.name
+        )}_fkey" foreign key ("${sqlsanitize(
+          this.name
+        )}") references ${schema}"${sqlsanitize(this.reftable_name)}"(id)${
+          new_field.attributes?.on_delete_cascade ? " on delete cascade" : ""
+        }`
       );
     } else
       await db.query(
@@ -679,11 +704,13 @@ class Field implements AbstractField {
 
       const q = `alter table ${schema}"${sqlsanitize(
         table.name
-      )}" ADD CONSTRAINT "fkey_${sqlsanitize(table.name)}_${sqlsanitize(
+      )}" ADD CONSTRAINT "${sqlsanitize(table.name)}_${sqlsanitize(
         this.name
-      )}" FOREIGN KEY ("${sqlsanitize(
+      )}_fkey" FOREIGN KEY ("${sqlsanitize(
         this.name
-      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)`;
+      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)${
+        this.attributes?.on_delete_cascade ? " on delete cascade" : ""
+      }`;
       await db.query(q);
     }
   }
