@@ -754,7 +754,9 @@ module.exports = {
     configuration: { view_when_done, formula_destinations },
   }) => {
     const errs = [];
-    const vwd = await View.findOne({ name: view_when_done });
+    const vwd = await View.findOne({
+      name: (view_when_done || "").split(".")[0],
+    });
     if (!vwd)
       errs.push(`In View ${name}, view when done ${view_when_done} not found`);
     for (const { expression } of formula_destinations || []) {
