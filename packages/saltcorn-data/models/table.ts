@@ -1151,6 +1151,7 @@ class Table implements AbstractTable {
     let joinq = "";
     let joinTables: string[] = [];
     let joinFields: JoinField = opts.joinFields || {};
+    let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
 
     fields
@@ -1247,7 +1248,7 @@ class Table implements AbstractTable {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
     let placeCounter = values.length;
-    Object.entries<AggregationOptions>(opts.aggregations || {}).forEach(
+    Object.entries<AggregationOptions>(aggregations).forEach(
       ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
         let whereStr = "";
         if (where && !subselect) {
@@ -1295,7 +1296,11 @@ class Table implements AbstractTable {
       limit: opts.limit,
       orderBy:
         opts.orderBy &&
-        (orderByIsObject(opts.orderBy) ? opts.orderBy : "a." + opts.orderBy),
+        (orderByIsObject(opts.orderBy)
+          ? opts.orderBy
+          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          ? opts.orderBy
+          : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
