@@ -47,6 +47,7 @@ import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
 import utils from "../utils";
+import { num_between } from "@saltcorn/types/generators";
 const { prefixFieldsInWhere } = utils;
 const {
   InvalidConfiguration,
@@ -1157,6 +1158,7 @@ class Table implements AbstractTable {
     let joinq = "";
     let joinTables: string[] = [];
     let joinFields: JoinField = opts.joinFields || {};
+    let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
 
     fields
@@ -1253,7 +1255,7 @@ class Table implements AbstractTable {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
     let placeCounter = values.length;
-    Object.entries<AggregationOptions>(opts.aggregations || {}).forEach(
+    Object.entries<AggregationOptions>(aggregations).forEach(
       ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
         let whereStr = "";
         if (where && !subselect) {
@@ -1301,7 +1303,11 @@ class Table implements AbstractTable {
       limit: opts.limit,
       orderBy:
         opts.orderBy &&
-        (orderByIsObject(opts.orderBy) ? opts.orderBy : "a." + opts.orderBy),
+        (orderByIsObject(opts.orderBy)
+          ? opts.orderBy
+          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          ? opts.orderBy
+          : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
@@ -1336,27 +1342,33 @@ class Table implements AbstractTable {
           if (v.rename_object.length === 2) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
               x[v.rename_object[0]] = {
                 ...x[v.rename_object[0]],
                 [v.rename_object[1]]: x[k],
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
               return oldf(x);
             };
           } else if (v.rename_object.length === 3) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
               x[v.rename_object[0]] = {
                 ...x[v.rename_object[0]],
                 [v.rename_object[1]]: {
                   ...x[v.rename_object[0]]?.[v.rename_object[1]],
                   [v.rename_object[2]]: x[k],
                 },
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
               return oldf(x);
             };
           } else if (v.rename_object.length === 4) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
+
               x[v.rename_object[0]] = {
                 ...x[v.rename_object[0]],
                 [v.rename_object[1]]: {
@@ -1368,6 +1380,7 @@ class Table implements AbstractTable {
                     [v.rename_object[3]]: x[k],
                   },
                 },
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
 
               return oldf(x);

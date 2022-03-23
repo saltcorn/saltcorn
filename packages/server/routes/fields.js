@@ -181,6 +181,7 @@ const fieldFlow = (req) =>
       var attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
+      attributes.on_delete_cascade = context.on_delete_cascade;
       const {
         table_id,
         name,
@@ -376,6 +377,14 @@ const fieldFlow = (req) =>
                 label: req.__("Summary field"),
                 input_type: "select",
                 options: keyfields,
+              }),
+              new Field({
+                name: "on_delete_cascade",
+                label: req.__("On delete cascade"),
+                type: "Bool",
+                sublabel: req.__(
+                  "If the parent row is deleted, automatically delete the child rows."
+                ),
               }),
             ],
           });

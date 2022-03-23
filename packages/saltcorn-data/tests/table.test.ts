@@ -289,6 +289,7 @@ describe("Table get data", () => {
     });
     expect(pats.length).toStrictEqual(2);
     expect(pats[0].favbook.author).toBe("Herman Melville");
+    expect(pats[0].favbook.id).toBe(1);
   });
   it("should rename joined rows doubly", async () => {
     const readings = await Table.findOne({ name: "readings" });

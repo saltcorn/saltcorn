@@ -245,15 +245,30 @@ const get_link_view_opts = async (table, viewname) => {
     }));
   const link_view_names = new Set();
   const child_views = await get_child_views(table, viewname);
-  for (const { relation, related_table, views } of child_views) {
+  for (const {
+    relation,
+    related_table,
+    through,
+    throughTable,
+    views,
+  } of child_views) {
     for (const view of views) {
-      const name = `${view.name}.${related_table.name}.${relation.name}`;
-      link_view_names.add(name);
-      link_view_opts.push({
-        name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
-        label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
-      });
-    }
+      if (through && throughTable) {
+        const name = `${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`;
+        link_view_names.add(name);
+        link_view_opts.push({
+          name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
+          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
+        });
+      } else {
+        const name = `${view.name}.${related_table.name}.${relation.name}`;
+        link_view_names.add(name);
+        link_view_opts.push({
+          name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
+          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
+        });
+      }
+    }   
   }
 
   const parent_views = await get_parent_views(table, viewname);
@@ -737,18 +752,36 @@ const field_picker_fields = async ({ table, viewname, req }) => {
  * @param {string} viewname
  * @returns {Promise<object[]>}
  */
-const get_child_views = async (table, viewname) => {
+const get_child_views = async (table, viewname, nrecurse = 2) => {
   const rels = await Field.find({ reftable_name: table.name });
+  const possibleThroughTables = new Set();
   var child_views = [];
   for (const relation of rels) {
-    const related_table = await Table.findOne({ id: relation.table_id });
+    const related_table = Table.findOne({ id: relation.table_id });
     const views = await View.find_table_views_where(
       related_table.id,
       ({ state_fields, viewrow }) =>
         viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
     );
     child_views.push({ relation, related_table, views });
+    possibleThroughTables.add(`${related_table.name}.${relation.name}`);
   }
+  if (nrecurse > 0)
+    for (const possibleThroughTable of possibleThroughTables) {
+      const [tableName, fieldName] = possibleThroughTable.split(".");
+      const reltable = Table.findOne({ name: tableName });
+      const relfields = await reltable.getFields();
+      const relfield = relfields.find((f) => f.name === fieldName);
+      const cviews = await get_child_views(reltable, null, nrecurse - 1);
+      for (const { relation, related_table, views } of cviews)
+        child_views.push({
+          relation,
+          related_table,
+          through: relfield,
+          throughTable: reltable,
+          views,
+        });
+    }
   return child_views;
 }
 

@@ -74,6 +74,45 @@ describe("Field", () => {
     expect(f.is_fkey).toBe(true);
     expect(f.sql_bare_type).toBe("int");
   });
+  it("switches delete cascade on and off", async () => {
+    const f = await Field.findOne({ name: "favbook" });
+    const {
+      table_id,
+      name,
+      label,
+      required,
+      is_unique,
+      calculated,
+      expression,
+      stored,
+      description,
+      reftable_name,
+      attributes,
+    } = f;
+    const fldRow = {
+      table_id,
+      name,
+      label,
+      required,
+      is_unique,
+      reftable_name,
+      attributes,
+      calculated,
+      expression,
+      stored,
+      description,
+    };
+    if (db.isSQLite) return;
+    await f.update({
+      ...fldRow,
+      attributes: { ...f.attributes, on_delete_cascade: true },
+    });
+    await f.update({
+      ...fldRow,
+      attributes: { ...f.attributes, on_delete_cascade: false },
+    });
+  });
+
   it("generates fkeys", async () => {
     const f = await Field.findOne({ name: "favbook" });
     const v = await f.generate();

@@ -27,16 +27,17 @@ const { isNode } = require("../../webpack-helper");
  * @param {colIdNm} colIdNm missing in contract
  * @returns {any}
  */
-const action_url = (viewname, table, action_name, r, colId, colIdNm) => {
+const action_url = (viewname, table, action_name, r, colId, colIdNm, confirm) => {
   if (action_name === "Delete")
     return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack") return { javascript: "history.back()" };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}$?redirect=/view/${viewname}`;
+    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
   }
+  const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
-    javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
+    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
   };
 };
 
@@ -196,8 +197,15 @@ const parse_view_select = (s) => {
       return { type, viewname: vrest };
     case "ChildList":
     case "OneToOneShow":
-      const [viewnm, tbl, fld] = vrest.split(".");
-      return { type, viewname: viewnm, table_name: tbl, field_name: fld };
+      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+      return {
+        type,
+        viewname: viewnm,
+        table_name: tbl,
+        field_name: fld,
+        throughTable,
+        through,
+      };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
@@ -293,12 +301,13 @@ const view_linker = (
       };
     case "ChildList":
     case "OneToOneShow":
-      const [viewnm, tbl, fld] = vrest.split(".");
+      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+      const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
       return {
         label: viewnm,
         key: (r) =>
           link_view(
-            `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
+            `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id}`,
             get_label(viewnm, r),
             in_modal,
             link_style,
@@ -322,7 +331,7 @@ const view_linker = (
           return r[pfld]
             ? link_view(
                 `/view/${encodeURIComponent(pviewnm)}?${reffield.refname}=${
-                  r[pfld]
+                  typeof r[pfld] === "object" ? r[pfld].id : r[pfld]
                 }`,
                 get_label(
                   typeof summary_field === "undefined"
@@ -380,15 +389,7 @@ const flapMaipish = (xs, f) => {
  * @param {*} __
  * @returns {object[]}
  */
-const get_viewable_fields = (
-  viewname,
-  table,
-  fields,
-  columns,
-  isShow,
-  req,
-  __
-) => {
+const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) => {
   const dropdown_actions = [];
   const tfields = flapMaipish(columns, (column) => {
     const role = req.user ? req.user.role_id : 10;
@@ -411,7 +412,8 @@ const get_viewable_fields = (
             column.action_name,
             r,
             column.action_name,
-            "action_name"
+            "action_name",
+            column.confirm
           );
           const label = column.action_label_formula
             ? eval_expression(column.action_label, r)
@@ -475,15 +477,9 @@ const get_viewable_fields = (
         key = `${ref}_${ontable}_${target}`;
       } else {
         const keypath = column.join_field.split(".");
-        if (keypath.length === 2) {
-          [refNm, targetNm] = keypath;
-          key = `${refNm}_${targetNm}`;
-        } else {
-          const keypath = column.join_field.split(".");
-          refNm = keypath[0];
-          targetNm = keypath[keypath.length - 1];
-          key = keypath.join("_");
-        }
+        refNm = keypath[0];
+        targetNm = keypath[keypath.length - 1];
+        key = keypath.join("_");
       }
       if (column.field_type) type = getState().types[column.field_type];
       if (
@@ -633,7 +629,7 @@ const get_viewable_fields = (
     });
   }
   return tfields;
-};
+}
 /**
  * @param {string} fname
  * @param {object} req

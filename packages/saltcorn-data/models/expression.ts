@@ -27,6 +27,11 @@ function expressionValidator(s: string): true | string {
   }
 }
 
+function expressionChecker(s: string, prefix: string, errors: string[]) {
+  const result = expressionValidator(s);
+  if (typeof result === "string") errors.push(prefix + result);
+}
+
 type StringToFunction = Record<string, Function>;
 type ExtendedNode = {
   left?: ExtendedNode;
@@ -384,6 +389,7 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
 };
 export = {
   expressionValidator,
+  expressionChecker,
   apply_calculated_fields,
   get_async_expression_function,
   get_expression_function,

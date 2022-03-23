@@ -10,13 +10,17 @@ jQuery.fn.swapWith = function (to) {
 
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
-  $("body").on("show.bs.dropdown", "[data-bs-toggle=dropdown]", function () {
-    let target;
-    if (!$("#page-inner-content").length) target = $("body");
-    else target = $("#page-inner-content");
-    let dropdown = bootstrap.Dropdown.getInstance(this);
-    $(dropdown._menu).insertAfter(target);
-  });
+  $("body").on(
+    "show.bs.dropdown",
+    "table [data-bs-toggle=dropdown]",
+    function () {
+      let target;
+      if (!$("#page-inner-content").length) target = $("body");
+      else target = $("#page-inner-content");
+      let dropdown = bootstrap.Dropdown.getInstance(this);
+      $(dropdown._menu).insertAfter(target);
+    }
+  );
 }
 function sortby(k, desc) {
   set_state_fields({ _sortby: k, _sortdesc: desc ? "on" : { unset: true } });
@@ -108,6 +112,8 @@ function get_form_record(e, select_labels) {
     .each(function () {
       if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
         rec[$(this).attr("name")] = $(this).find("option:selected").text();
+      else if ($(this).prop("type") === "checkbox")
+        rec[$(this).attr("name")] = $(this).prop("checked");
       else rec[$(this).attr("name")] = $(this).val();
     });
   return rec;
@@ -814,6 +820,8 @@ const columnSummary = (col) => {
       return `View ${col.view_label || col.view.split(":")[1] || ""}`;
     case "Action":
       return `Action ${col.action_label || col.action_name}`;
+    case "Aggregation":
+      return `${col.stat} ${col.agg_field} ${col.agg_relation}`;
     default:
       return "Unknown";
   }

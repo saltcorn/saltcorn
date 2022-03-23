@@ -724,6 +724,7 @@ const features = {
   no_plugin_fieldview_length_check: true,
   bootstrap5: true,
   version_plugin_serve_path: true,
+  prefix_or_in_queries: true,
 };
 
 export = {

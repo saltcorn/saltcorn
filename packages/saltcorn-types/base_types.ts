@@ -183,6 +183,7 @@ export type ViewTemplate = {
   }) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;
+  configCheck?: (cfg: any) => Promise<string[]>;
   run: (
     table_id: string | number | undefined,
     viewname: string,
