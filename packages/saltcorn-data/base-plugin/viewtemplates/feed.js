@@ -296,7 +296,8 @@ const run = async (
     ...cols
   },
   state,
-  extraArgs
+  extraArgs,
+  { countRowsQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -327,11 +328,7 @@ const run = async (
   });
   let paginate = "";
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
-    const fields = await table.getFields();
-
-    const where = await stateFieldsToWhere({ fields, state });
-
-    const nrows = await table.countRows(where);
+    const nrows = await countRowsQuery();
     if (nrows > qextra.limit || current_page > 1) {
       paginate = pagination({
         current_page,
@@ -446,4 +443,17 @@ module.exports = {
     if (create_view_label) return [create_view_label];
     else return [];
   },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async countRowsQuery() {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const where = await stateFieldsToWhere({ fields, state });
+      return await table.countRows(where);
+    },
+  }),
 };

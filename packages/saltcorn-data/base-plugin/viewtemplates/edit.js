@@ -343,15 +343,10 @@ const run = async (
   viewname,
   { columns, layout, auto_save },
   state,
-  { res, req }
+  { res, req },
+  { editQuery }
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
-  const { uniques, nonUniques } = splitUniques(fields, state);
-  let row = null;
-  if (Object.keys(uniques).length > 0) {
-    row = await table.getRow(uniques);
-  }
+  const { table, row, fields } = await editQuery(state);
   return await render({
     table,
     fields,
@@ -381,24 +376,10 @@ const runMany = async (
   viewname,
   { columns, layout, auto_save },
   state,
-  extra
+  extra,
+  { editManyQuery }
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
-  const qstate = await stateFieldsToWhere({ fields, state });
-  const q = await stateFieldsToQuery({ state, fields });
-
-  const rows = await table.getJoinedRows({
-    where: qstate,
-    joinFields,
-    aggregations,
-    ...(extra && extra.limit && { limit: extra.limit }),
-    ...(extra && extra.offset && { offset: extra.offset }),
-    ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
-    ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
-    ...q,
-  });
+  const { table, fields, rows } = editManyQuery();
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -560,7 +541,8 @@ const runPost = async (
   { columns, layout, fixed, view_when_done, formula_destinations, auto_save },
   state,
   body,
-  { res, req, redirect }
+  { res, req, redirect },
+  { tryInsertQuery, tryUpdateQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -582,7 +564,7 @@ const runPost = async (
     await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
-    let row;
+    let row; // TODO ch  move whole block to query?
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
@@ -606,10 +588,7 @@ const runPost = async (
     }
     const originalID = id;
     if (typeof id === "undefined") {
-      const ins_res = await table.tryInsertRow(
-        row,
-        req.user ? +req.user.id : undefined
-      );
+      const ins_res = await tryInsertQuery(row);
       if (ins_res.success) {
         id = ins_res.success;
         row[pk.name] = id;
@@ -619,11 +598,7 @@ const runPost = async (
         return;
       }
     } else {
-      const upd_res = await table.tryUpdateRow(
-        row,
-        id,
-        req.user ? +req.user.id : undefined
-      );
+      const upd_res = await tryUpdateQuery(row, id);
       if (upd_res.error) {
         req.flash("error", text_attr(upd_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
@@ -679,14 +654,7 @@ const runPost = async (
   }
 };
 
-/**
- * @param {object} opts
- * @param {object} opts.body
- * @param {string} opts.table_id
- * @param {object} opts.req
- * @returns {Promise<boolean>}
- */
-const authorise_post = async ({ body, table_id, req }) => {
+const doAuthPost = async ({ body, table_id, req }) => {
   const table = await Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
@@ -705,6 +673,20 @@ const authorise_post = async ({ body, table_id, req }) => {
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
+};
+
+/**
+ * @param {object} opts
+ * @param {object} opts.body
+ * @param {string} opts.table_id
+ * @param {object} opts.req
+ * @returns {Promise<boolean>}
+ */
+const authorise_post = async (
+  { body, table_id, req },
+  { authorizePostQuery }
+) => {
+  return await authorizePostQuery(body, table_id);
 };
 module.exports = {
   /** @type {string} */
@@ -726,20 +708,8 @@ module.exports = {
    * @param {...*} opts.rest
    * @returns {Promise<boolean>}
    */
-  authorise_get: async ({ query, table_id, req }) => {
-    let body = query || {};
-    if (Object.keys(body).length == 1) {
-      const table = await Table.findOne({ id: table_id });
-      if (table.ownership_field_id || table.ownership_formula) {
-        const fields = await table.getFields();
-        const { uniques } = splitUniques(fields, body);
-        if (Object.keys(uniques).length > 0) {
-          body = await table.getRow(uniques);
-          return table.is_owner(req.user, body);
-        }
-      }
-    }
-    return authorise_post({ body, table_id, req });
+  authorise_get: async ({ query, table_id, req }, { authorizeGetQuery }) => {    
+    return await authorizeGetQuery(query, table_id);
   },
   /**
    * @param {object} opts
@@ -749,4 +719,83 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async editQuery(state) {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const { uniques } = splitUniques(fields, state);
+      const row =
+        Object.keys(uniques).length > 0 ? await table.getRow(uniques) : null;
+      return { table, fields, row };
+    },
+
+    async editManyQuery(state) {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const { joinFields, aggregations } = picked_fields_to_query(
+        columns,
+        fields
+      );
+      const qstate = await stateFieldsToWhere({ fields, state });
+      const q = await stateFieldsToQuery({ state, fields });
+
+      const rows = await table.getJoinedRows({
+        where: qstate,
+        joinFields,
+        aggregations,
+        ...(extra && extra.limit && { limit: extra.limit }),
+        ...(extra && extra.offset && { offset: extra.offset }),
+        ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
+        ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
+        ...q,
+      });
+      return {
+        table,
+        fields,
+        rows,
+      };
+    },
+    async tryInsertQuery(row) {
+      const table = await Table.findOne({ id: table_id });
+      const ins_res = await table.tryInsertRow(
+        row,
+        req.user ? +req.user.id : undefined
+      );
+      return ins_res;
+    },
+
+    async tryUpdateQuery(row, id) {
+      const table = await Table.findOne({ id: table_id });
+      const upd_res = await table.tryUpdateRow(
+        row,
+        id,
+        req.user ? +req.user.id : undefined
+      );
+      return upd_res;
+    },
+
+    async authorizePostQuery(body, table_id/*overwrites*/) {
+      return await doAuthPost({ body, table_id, req });
+    },
+    async authorizeGetQuery(query, table_id) {
+      let body = query || {};
+      if (Object.keys(body).length == 1) {
+        const table = await Table.findOne({ id: table_id });
+        if (table.ownership_field_id || table.ownership_formula) {
+          const fields = await table.getFields();
+          const { uniques } = splitUniques(fields, body);
+          if (Object.keys(uniques).length > 0) {
+            body = await table.getRow(uniques);
+            return table.is_owner(req.user, body);
+          }
+        }
+      }
+      return doAuthPost({ body, table_id, req });
+    },
+  }),
 };

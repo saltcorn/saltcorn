@@ -42,7 +42,6 @@ const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration } = require("../../utils");
 const { isNode } = require("../../webpack-helper");
-const { assert } = require("console");
 
 /**
  * @param {object} context
@@ -474,7 +473,7 @@ const run = async (
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
 
-  if (rows && rows.length === rows_per_page || current_page > 1) {
+  if ((rows && rows.length === rows_per_page) || current_page > 1) {
     const nrows = rowCount;
     if (nrows > rows_per_page || current_page > 1) {
       page_opts.pagination = {
@@ -573,7 +572,8 @@ const run_action = async (
   viewname,
   { columns, layout },
   body,
-  { req, res }
+  { req, res },
+  { getRowQuery },
 ) => {
   const col = columns.find(
     (c) =>
@@ -583,7 +583,7 @@ const run_action = async (
   );
 
   const table = await Table.findOne({ id: table_id });
-  const row = await table.getRow({ id: body.id });
+  const row = await getRowQuery(body.id);
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
   if (state_action) {
@@ -661,6 +661,7 @@ module.exports = {
     table_id,
     viewname,
     configuration: { columns, default_state },
+    req,
   }) => ({
     async listQuery(state) {
       const table = await Table.findOne(
@@ -681,17 +682,14 @@ module.exports = {
           (default_state && default_state._order_field) || table.pk_name;
       if (!q.orderDesc)
         q.orderDesc = default_state && default_state._descending;
-      //console.log(table);
-      if (
-        table.ownership_field_id &&
-        role > table.min_role_read &&
-        extraOpts.req
-      ) {
+
+      const role = req && req.user ? req.user.role_id : 10;
+      if (table.ownership_field_id && role > table.min_role_read && req) {
         const owner_field = fields.find(
           (f) => f.id === table.ownership_field_id
         );
         mergeIntoWhere(where, {
-          [owner_field.name]: extraOpts.req.user ? extraOpts.req.user.id : -1,
+          [owner_field.name]: req.user ? req.user.id : -1,
         });
       }
       //console.log({ i: default_state.include_fml });
@@ -707,15 +705,15 @@ module.exports = {
       });
 
       //TODO this will mean that limit is not respected. change filter to jsexprToWhere
-      if (
-        table.ownership_formula &&
-        role > table.min_role_read &&
-        extraOpts.req
-      ) {
+      if (table.ownership_formula && role > table.min_role_read && req) {
         rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
       }
       const rowCount = await table.countRows();
       return { rows, rowCount };
+    },
+    async getRowQuery(id) {
+      const table = await Table.findOne({ id: table_id });
+      return await table.getRow({ id });
     },
   }),
 };

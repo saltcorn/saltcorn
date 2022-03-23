@@ -237,7 +237,8 @@ const run = async (
   viewname,
   { columns, layout, page_title, page_title_formula },
   state,
-  extra
+  extra,
+  { showQuery }
 ) => {
   //console.log(columns);
   //console.log(layout);
@@ -253,16 +254,9 @@ const run = async (
       })
     );
   }
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
-  readState(state, fields);
-  const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
-  if (Object.keys(qstate).length === 0) return extra.req.__("No row selected");
-  const rows = await tbl.getJoinedRows({
-    where: qstate,
-    joinFields,
-    aggregations,
-    limit: 5,
-  });
+  const { rows, message } = await showQuery(state, fields);
+  if (message)
+    return extra.req.__(message);
   if (rows.length > 1)
     rows.sort((a, b) => {
       let diff = 0;
@@ -462,38 +456,17 @@ const runMany = async (
   viewname,
   { columns, layout },
   state,
-  extra
+  extra,
+  { runManyQuery }
 ) => {
   const tbl = await Table.findOne({ id: table_id });
-  const fields = await tbl.getFields();
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
-  const qstate = await stateFieldsToWhere({ fields, state });
-  const q = await stateFieldsToQuery({ state, fields });
-  if (extra && extra.where) mergeIntoWhere(qstate, extra.where);
-  const role =
-    extra && extra.req && extra.req.user ? extra.req.user.role_id : 10;
-  if (tbl.ownership_field_id && role > tbl.min_role_read && extra.req) {
-    const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
-    if (qstate[owner_field.name])
-      qstate[owner_field.name] = [
-        qstate[owner_field.name],
-        extra.req.user ? extra.req.user.id : -1,
-      ];
-    else qstate[owner_field.name] = extra.req.user ? extra.req.user.id : -1;
-  }
-  let rows = await tbl.getJoinedRows({
-    where: qstate,
-    joinFields,
-    aggregations,
-    ...(extra && extra.limit && { limit: extra.limit }),
-    ...(extra && extra.offset && { offset: extra.offset }),
-    ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
-    ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
-    ...q,
+  const rows = await runManyQuery(state, {
+    where: extra.where,
+    limit: extra.limit,
+    offset: extra.offset,
+    orderBy: extra.orderBy,
+    orderDesc: extra.orderDesc,
   });
-  if (tbl.ownership_formula && role > tbl.min_role_read && extra.req) {
-    rows = rows.filter((row) => tbl.is_owner(extra.req.user, row));
-  }
   const rendered = await renderRows(
     tbl,
     viewname,
@@ -685,25 +658,12 @@ const run_action = async (
   viewname,
   { columns, layout },
   body,
-  { req, res }
+  { req, res },
+  { actionQuery },
 ) => {
-  const col = columns.find(
-    (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
-  );
-  const table = await Table.findOne({ id: table_id });
-  const row = await table.getRow({ id: body.id });
-  try {
-    const result = await run_action_column({
-      col,
-      req,
-      table,
-      row,
-      referrer: req.get("Referrer"),
-    });
-    return { json: { success: "ok", ...(result || {}) } };
-  } catch (e) {
+  const result = actionQuery();
+  if( result.json.error ) {
     Crash.create(e, req);
-    return { json: { error: e.message || e } };
   }
 };
 
@@ -729,21 +689,108 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  authorise_get: async ({ query, table_id, req }) => {
-    let body = query || {};
-    const user_id = req.user ? req.user.id : null;
-
-    if (user_id && Object.keys(body).length == 1) {
+  authorise_get: async ({ query, table_id }) => {
+    return await authorizeGetQuery(query, table_id)
+  },
+  queries: ({ table_id, viewname, configuration: { columns }, req }) => ({
+    async showQuery(state, fields) {
+      const { joinFields, aggregations } = picked_fields_to_query(
+        columns,
+        fields
+      );
+      readState(state, fields);
+      const qstate = await stateFieldsToWhere({
+        fields,
+        state,
+        approximate: true,
+      });
+      if (Object.keys(qstate).length === 0)
+        return {
+          rows: null,
+          message: "No row selected",
+        };
+      const tbl = await Table.findOne(table_id);
+      const rows = await tbl.getJoinedRows({
+        where: qstate,
+        joinFields,
+        aggregations,
+        limit: 5,
+      });
+      return {
+        rows,
+        message: null,
+      };
+    },
+    async runManyQuery(state, {
+      where, limit, offset, orderBy, orderDesc,
+    }) {
+      const tbl = await Table.findOne({ id: table_id });
+      const fields = await tbl.getFields();
+      const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+      const qstate = await stateFieldsToWhere({ fields, state });
+      const q = await stateFieldsToQuery({ state, fields });
+      if (where) mergeIntoWhere(qstate, where);
+      const role =
+        req && req.user ? req.user.role_id : 10;
+      if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
+        const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
+        if (qstate[owner_field.name])
+          qstate[owner_field.name] = [
+            qstate[owner_field.name],
+            req.user ? req.user.id : -1,
+          ];
+        else qstate[owner_field.name] = req.user ? req.user.id : -1;
+      }
+      let rows = await tbl.getJoinedRows({
+        where: qstate,
+        joinFields,
+        aggregations,
+        ...(limit && { limit: limit }),
+        ...(offset && { offset: offset }),
+        ...(orderBy && { orderBy: orderBy }),
+        ...(orderDesc && { orderDesc: orderDesc }),
+        ...q,
+      });
+      if (tbl.ownership_formula && role > tbl.min_role_read && req) {
+        rows = rows.filter((row) => tbl.is_owner(req.user, row));
+      }
+      return rows;
+    },
+    async actionQuery() {
+      const col = columns.find(
+        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+      );
       const table = await Table.findOne({ id: table_id });
-      if (table.ownership_field_id || table.ownership_formula) {
-        const fields = await table.getFields();
-        const { uniques } = splitUniques(fields, body);
-        if (Object.keys(uniques).length > 0) {
-          const row = await table.getRow(uniques);
-          return table.is_owner(req.user, row);
+      const row = await table.getRow({ id: body.id });
+      try {
+        const result = await run_action_column({
+          col,
+          req,
+          table,
+          row,
+          referrer: req.get("Referrer"),
+        });
+        return { json: { success: "ok", ...(result || {}) } };
+      } catch (e) {
+        return { json: { error: e.message || e } };
+      }
+    },
+    async authorizeGetQuery(query, table_id) {
+      let body = query || {};
+      const user_id = req.user ? req.user.id : null;
+  
+      if (user_id && Object.keys(body).length == 1) {
+        const table = await Table.findOne({ id: table_id });
+        if (table.ownership_field_id || table.ownership_formula) {
+          const fields = await table.getFields();
+          const { uniques } = splitUniques(fields, body);
+          if (Object.keys(uniques).length > 0) {
+            const row = await table.getRow(uniques);
+            return table.is_owner(req.user, row);
+          }
         }
       }
+      return false;  
     }
-    return false;
-  },
+  }),
 };

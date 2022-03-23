@@ -157,6 +157,25 @@ export const select = async (
   return tq.rows;
 };
 
+export const listTables = async () => {
+  const sql = "SELECT * FROM sqlite_master where type='table'";
+  const tq = await query(sql);
+  return tq.rows;
+};
+
+export const dropTable = async(name: string) => {
+  await query(`DROP TABLE ${name}`);
+};
+
+export const dropUserDefinedTables = async () => {
+  const tables = await listTables();
+  for (const { name } of tables) {
+    if(!name.startsWith("_sc_") && name !== "users") {
+      dropTable(name);
+    }
+  }
+};
+
 // TODO Utility function - needs ti be moved out this module
 
 /**

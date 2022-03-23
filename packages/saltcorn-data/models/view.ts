@@ -337,26 +337,38 @@ class View {
    * @param {*} arg
    * @returns {Promise<object>}
    */
-  async authorise_post(arg: {
-    body: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }): Promise<boolean> {
+  async authorise_post(
+    arg: {
+      body: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    remote: boolean = false
+  ): Promise<boolean> {
     if (!this.viewtemplateObj?.authorise_post) return false;
-    return await this.viewtemplateObj.authorise_post(arg);
+    return await this.viewtemplateObj.authorise_post(
+      arg,
+      this.queries(remote, arg.req)
+    );
   }
 
   /**
    * @param {*} arg
    * @returns {Promise<object>}
    */
-  async authorise_get(arg: {
-    query: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }): Promise<boolean> {
+  async authorise_get(
+    arg: {
+      query: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    remote: boolean = false
+  ): Promise<boolean> {
     if (!this.viewtemplateObj?.authorise_get) return false;
-    return await this.viewtemplateObj.authorise_get(arg);
+    return await this.viewtemplateObj.authorise_get(
+      arg,
+      this.queries(remote, arg.req)
+    );
   }
 
   /**
@@ -398,7 +410,7 @@ class View {
 
   queries(remote?: boolean, req?: any) {
     const queryObj = this?.viewtemplateObj?.queries
-      ? this.viewtemplateObj!.queries(this)
+      ? this.viewtemplateObj!.queries({ ...this, req })
       : {};
     if (remote) {
       const { getState } = require("../db/state");
@@ -476,7 +488,8 @@ class View {
    */
   async runMany(
     query: GenObj,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    remote: boolean = false
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
     try {
@@ -491,7 +504,8 @@ class View {
           this.name,
           this.configuration,
           query,
-          extraArgs
+          extraArgs,
+          this.queries(remote, extraArgs.req)
         );
       }
       if (this.viewtemplateObj?.renderRows) {
@@ -534,7 +548,8 @@ class View {
   async runPost(
     query: GenObj,
     body: GenObj,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    remote: boolean = false
   ): Promise<any> {
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.runPost)
@@ -547,7 +562,8 @@ class View {
       this.configuration,
       removeEmptyStrings(query),
       removeEmptyStrings(body),
-      extraArgs
+      extraArgs,
+      this.queries(remote, extraArgs.req)
     );
   }
 
@@ -562,7 +578,8 @@ class View {
     route: string,
     body: any,
     res: NonNullable<any>,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    remote: boolean = false
   ): Promise<any> {
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.routes)
@@ -575,7 +592,8 @@ class View {
       this.name,
       this.configuration,
       body,
-      extraArgs
+      extraArgs,
+      this.queries(remote, extraArgs.req)
     );
     if (result && result.json) res.json(result.json);
     else if (result && result.html) res.send(result.html);

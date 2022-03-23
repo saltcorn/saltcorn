@@ -196,7 +196,8 @@ export type ViewTemplate = {
     viewname: string,
     { columns, layout }: { columns: Array<Column>; layout: Layout },
     state: any,
-    extra: RunExtra
+    extra: RunExtra,
+    queries: any
   ) => Promise<string[]>;
   renderRows?: (
     table: AbstractTable,
@@ -210,16 +211,22 @@ export type ViewTemplate = {
     viewname: string,
     configuration: { default_state: any }
   ) => Promise<void>;
-  authorise_post?: (opts: {
-    body: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }) => Promise<boolean>;
-  authorise_get?: (opts: {
-    query: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }) => Promise<boolean>;
+  authorise_post?: (
+    opts: {
+      body: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    queries: any
+  ) => Promise<boolean>;
+  authorise_get?: (
+    opts: {
+      query: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    queries: any
+  ) => Promise<boolean>;
   runPost?: (
     table_id: number | number | undefined,
     viewname: string,
@@ -232,7 +239,8 @@ export type ViewTemplate = {
     },
     state: GenObj,
     body: GenObj,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    queries: any
   ) => Promise<void>;
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
@@ -242,7 +250,7 @@ export type ViewTemplate = {
     name: string,
     configuration: any
   ) => Promise<Array<AbstractTrigger>>;
-  queries?: (configuration?: any) => Record<string, any>;
+  queries?: (configuration?: any, req?: any) => Record<string, any>;
 };
 
 export type Action = (
@@ -250,7 +258,8 @@ export type Action = (
   viewname: string,
   optsOne: any,
   body: any,
-  optsTwo: ReqRes
+  optsTwo: ReqRes,
+  queries: any
 ) => Promise<any>;
 
 export type PluginFunction = {

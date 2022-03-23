@@ -57,7 +57,8 @@ export default class BuildAppCommand extends Command {
     this.copyPluginSources();
     await this.bundlePackages();
     this.copyBundlesToApp();
-    this.copySqliteDbToApp();
+    // TODO ch postgres
+    await this.copySqliteDbToApp();
     if (flags.platforms) {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
@@ -147,8 +148,13 @@ export default class BuildAppCommand extends Command {
     }
   };
 
-  copySqliteDbToApp = () => {
-    copyFileSync(db.connectObj.sqlite_path, join(this.wwwDir, "scdb.sqlite"));
+  copySqliteDbToApp = async () => {
+    const dbPath = join(this.wwwDir, "scdb.sqlite");
+    copyFileSync(db.connectObj.sqlite_path, dbPath);
+    let connectObj = db.connectObj;
+    connectObj.sqlite_path = dbPath;
+    await db.changeConnection(connectObj);
+    await db.dropUserDefinedTables();
   };
 
   validatePlatforms = (platforms: string[]) => {
