@@ -328,7 +328,7 @@ const run = async (
   });
   let paginate = "";
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
-    const nrows = await countRowsQuery();
+    const nrows = await countRowsQuery(state);
     if (nrows > qextra.limit || current_page > 1) {
       paginate = pagination({
         current_page,
@@ -449,7 +449,7 @@ module.exports = {
     configuration: { columns, default_state },
     req,
   }) => ({
-    async countRowsQuery() {
+    async countRowsQuery(state) {
       const table = await Table.findOne({ id: table_id });
       const fields = await table.getFields();
       const where = await stateFieldsToWhere({ fields, state });
