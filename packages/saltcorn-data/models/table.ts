@@ -45,6 +45,7 @@ import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
 import utils from "../utils";
+import { num_between } from "@saltcorn/types/generators";
 const { prefixFieldsInWhere } = utils;
 const {
   InvalidConfiguration,
@@ -1334,27 +1335,33 @@ class Table implements AbstractTable {
           if (v.rename_object.length === 2) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
               x[v.rename_object[0]] = {
                 ...x[v.rename_object[0]],
                 [v.rename_object[1]]: x[k],
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
               return oldf(x);
             };
           } else if (v.rename_object.length === 3) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
               x[v.rename_object[0]] = {
                 ...x[v.rename_object[0]],
                 [v.rename_object[1]]: {
                   ...x[v.rename_object[0]]?.[v.rename_object[1]],
                   [v.rename_object[2]]: x[k],
                 },
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
               return oldf(x);
             };
           } else if (v.rename_object.length === 4) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
+
               x[v.rename_object[0]] = {
                 ...x[v.rename_object[0]],
                 [v.rename_object[1]]: {
@@ -1366,6 +1373,7 @@ class Table implements AbstractTable {
                     [v.rename_object[3]]: x[k],
                   },
                 },
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
 
               return oldf(x);
