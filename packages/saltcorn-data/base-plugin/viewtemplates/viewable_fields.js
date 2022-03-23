@@ -349,7 +349,7 @@ const view_linker = contract(
             return r[pfld]
               ? link_view(
                   `/view/${encodeURIComponent(pviewnm)}?${reffield.refname}=${
-                    r[pfld]
+                    typeof r[pfld] === "object" ? r[pfld].id : r[pfld]
                   }`,
                   get_label(
                     typeof summary_field === "undefined"
