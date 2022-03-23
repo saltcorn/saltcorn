@@ -45,7 +45,8 @@ const link_view = (
   textStyle = "",
   link_bgcol,
   link_bordercol,
-  link_textcol
+  link_textcol,
+  extraClass
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -61,6 +62,7 @@ const link_view = (
           link_style,
           link_size,
           !link_style && "btn btn-link",
+          extraClass,
         ],
         type: "button",
         onClick: `ajax_modal('${url}')`,
@@ -73,7 +75,7 @@ const link_view = (
     return a(
       {
         href: url,
-        class: [textStyle, link_style, link_size],
+        class: [textStyle, link_style, link_size, extraClass],
         style,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
@@ -141,6 +143,32 @@ const calcfldViewOptions = contract(
           );
           for (const jf of f.reftable.fields) {
             fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
+            if (jf.is_fkey) {
+              const jtable = Table.findOne(jf.reftable_name);
+              if (jtable && jtable.fields) {
+                const jfieldOpts = calcfldViewOptions(
+                  jtable.fields,
+                  isEdit ? "show" : mode
+                );
+                for (const jf2 of jtable.fields) {
+                  fvs[`${f.name}.${jf.name}.${jf2.name}`] =
+                    jfieldOpts.field_view_options[jf2.name];
+                  if (jf2.is_fkey) {
+                    const jtable2 = Table.findOne(jf2.reftable_name);
+                    if (jtable2 && jtable2.fields) {
+                      const jfield2Opts = calcfldViewOptions(
+                        jtable2.fields,
+                        isEdit ? "show" : mode
+                      );
+                      for (const jf3 of jtable2.fields) {
+                        fvs[`${f.name}.${jf.name}.${jf2.name}.${jf3.name}`] =
+                          jfield2Opts.field_view_options[jf3.name];
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
 
@@ -148,8 +176,10 @@ const calcfldViewOptions = contract(
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
         });
       } else if (f.type && f.type.fieldviews) {
-        const tfvs = Object.entries(f.type.fieldviews).filter(([k, fv]) =>
-          f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter
+        const tfvs = Object.entries(f.type.fieldviews).filter(
+          ([k, fv]) =>
+            (f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter) &&
+            !(mode !== "list" && fv.expandColumns)
         );
         let tfvs_ordered = [];
         if (isEdit) {
@@ -181,7 +211,7 @@ const calcfldViewOptions = contract(
  */
 const calcfldViewConfig = contract(
   is.fun([is.array(is.class("Field")), is.bool], is.promise(is.obj())),
-  async (fields, isEdit) => {
+  async (fields, isEdit, nrecurse = 2) => {
     const fieldViewConfigForms = {};
     for (const f of fields) {
       f.fill_table();
@@ -198,11 +228,18 @@ const calcfldViewConfig = contract(
           );
       }
       if (f.type === "Key") {
-        if (f.reftable && f.reftable.fields) {
-          const joinedCfg = await calcfldViewConfig(f.reftable.fields, isEdit);
-          Object.entries(joinedCfg).forEach(([nm, o]) => {
-            fieldViewConfigForms[`${f.name}.${nm}`] = o;
-          });
+        if (f.reftable_name && nrecurse > 0) {
+          const reftable = Table.findOne({ name: f.reftable_name });
+          if (reftable && reftable.fields) {
+            const joinedCfg = await calcfldViewConfig(
+              reftable.fields,
+              isEdit,
+              nrecurse - 1
+            );
+            Object.entries(joinedCfg).forEach(([nm, o]) => {
+              fieldViewConfigForms[`${f.name}.${nm}`] = o;
+            });
+          }
         }
       }
     }
@@ -232,14 +269,29 @@ const get_link_view_opts = contract(
       }));
     const link_view_names = new Set();
     const child_views = await get_child_views(table, viewname);
-    for (const { relation, related_table, views } of child_views) {
+    for (const {
+      relation,
+      related_table,
+      through,
+      throughTable,
+      views,
+    } of child_views) {
       for (const view of views) {
-        const name = `${view.name}.${related_table.name}.${relation.name}`;
-        link_view_names.add(name);
-        link_view_opts.push({
-          name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
-          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
-        });
+        if (through && throughTable) {
+          const name = `${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`;
+          link_view_names.add(name);
+          link_view_opts.push({
+            name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
+            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
+          });
+        } else {
+          const name = `${view.name}.${related_table.name}.${relation.name}`;
+          link_view_names.add(name);
+          link_view_opts.push({
+            name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
+            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
+          });
+        }
       }
     }
 
@@ -345,7 +397,7 @@ const field_picker_fields = contract(
       }
     }
     const fldOptions = fields.map((f) => f.name);
-    const { field_view_options } = calcfldViewOptions(fields, "show");
+    const { field_view_options } = calcfldViewOptions(fields, "list");
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
     const fvConfigFields = [];
     for (const [field_name, fvOptFields] of Object.entries(
@@ -376,11 +428,9 @@ const field_picker_fields = contract(
     }
     const link_view_opts = await get_link_view_opts(table, viewname);
 
-    const { parent_field_list } = await table.get_parent_relations(true);
-    const {
-      child_field_list,
-      child_relations,
-    } = await table.get_child_relations();
+    const { parent_field_list } = await table.get_parent_relations(true, true);
+    const { child_field_list, child_relations } =
+      await table.get_child_relations();
     const aggStatOptions = {};
     const agg_field_opts = child_relations.map(({ table, key_field }) => {
       aggStatOptions[`${table.name}.${key_field.name}`] = [
@@ -659,7 +709,12 @@ const field_picker_fields = contract(
         required: false,
         showIf: { type: "Link" },
       },
-
+      {
+        name: "in_dropdown",
+        label: __("Place in dropdown"),
+        type: "Bool",
+        showIf: { type: ["Action", "ViewLink", "Link"] },
+      },
       {
         name: "agg_relation",
         label: __("Relation"),
@@ -730,7 +785,7 @@ const field_picker_fields = contract(
  */
 const get_child_views = contract(
   is.fun(
-    [is_tablely, is.str],
+    [is_tablely, is.maybe(is.str)],
     is.promise(
       is.array(
         is.obj({
@@ -741,18 +796,36 @@ const get_child_views = contract(
       )
     )
   ),
-  async (table, viewname) => {
+  async (table, viewname, nrecurse = 2) => {
     const rels = await Field.find({ reftable_name: table.name });
+    const possibleThroughTables = new Set();
     var child_views = [];
     for (const relation of rels) {
-      const related_table = await Table.findOne({ id: relation.table_id });
+      const related_table = Table.findOne({ id: relation.table_id });
       const views = await View.find_table_views_where(
         related_table.id,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
       child_views.push({ relation, related_table, views });
+      possibleThroughTables.add(`${related_table.name}.${relation.name}`);
     }
+    if (nrecurse > 0)
+      for (const possibleThroughTable of possibleThroughTables) {
+        const [tableName, fieldName] = possibleThroughTable.split(".");
+        const reltable = Table.findOne({ name: tableName });
+        const relfields = await reltable.getFields();
+        const relfield = relfields.find((f) => f.name === fieldName);
+        const cviews = await get_child_views(reltable, null, nrecurse - 1);
+        for (const { relation, related_table, views } of cviews)
+          child_views.push({
+            relation,
+            related_table,
+            through: relfield,
+            throughTable: reltable,
+            views,
+          });
+      }
     return child_views;
   }
 );
@@ -875,12 +948,19 @@ const picked_fields_to_query = contract(
                 ref: refNm,
                 target: targetNm,
               };
-            } else {
+            } else if (kpath.length === 3) {
               const [refNm, through, targetNm] = kpath;
               joinFields[`${refNm}_${through}_${targetNm}`] = {
                 ref: refNm,
                 target: targetNm,
                 through,
+              };
+            } else if (kpath.length === 4) {
+              const [refNm, through1, through2, targetNm] = kpath;
+              joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+                ref: refNm,
+                target: targetNm,
+                through: [through1, through2],
               };
             }
           }
@@ -953,13 +1033,21 @@ const picked_fields_to_query = contract(
               target: targetNm,
               rename_object: [refNm, targetNm],
             };
-          } else {
+          } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
             joinFields[`${refNm}_${through}_${targetNm}`] = {
               ref: refNm,
               target: targetNm,
               through,
               rename_object: [refNm, through, targetNm],
+            };
+          } else if (kpath.length === 4) {
+            const [refNm, through1, through2, targetNm] = kpath;
+            joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+              ref: refNm,
+              target: targetNm,
+              through: [through1, through2],
+              rename_object: [refNm, through1, through2, targetNm],
             };
           }
       });
@@ -1109,106 +1197,107 @@ const initial_config_all_fields = contract(
       is.promise(is.obj({ columns: is.array(is.obj()), layout: is.obj() }))
     )
   ),
-  (isEdit) => async ({ table_id, exttable_name }) => {
-    const table = await Table.findOne(
-      table_id ? { id: table_id } : { name: exttable_name }
-    );
+  (isEdit) =>
+    async ({ table_id, exttable_name }) => {
+      const table = await Table.findOne(
+        table_id ? { id: table_id } : { name: exttable_name }
+      );
 
-    const fields = (await table.getFields()).filter(
-      (f) => !f.primary_key && (!isEdit || !f.calculated)
-    );
-    var cfg = { columns: [] };
-    var aboves = [null];
-    fields.forEach((f) => {
-      if (!f.type) return;
-      const flabel = {
-        above: [
-          null,
-          {
-            type: "blank",
-            block: false,
-            contents: f.label,
-            textStyle: "",
-            ...(isEdit ? { labelFor: f.name } : {}),
-          },
-        ],
-      };
-      if (
-        f.is_fkey &&
-        f.type !== "File" &&
-        f.reftable_name !== "users" &&
-        !isEdit
-      ) {
-        cfg.columns.push({
-          type: "JoinField",
-          join_field: `${f.name}.${f.attributes.summary_field}`,
-        });
-        aboves.push({
-          widths: [2, 10],
-          besides: [
-            flabel,
+      const fields = (await table.getFields()).filter(
+        (f) => !f.primary_key && (!isEdit || !f.calculated)
+      );
+      var cfg = { columns: [] };
+      var aboves = [null];
+      fields.forEach((f) => {
+        if (!f.type) return;
+        const flabel = {
+          above: [
+            null,
             {
-              above: [
-                null,
-                {
-                  type: "join_field",
-                  block: false,
-                  textStyle: "",
-                  join_field: `${f.name}.${f.attributes.summary_field}`,
-                },
-              ],
+              type: "blank",
+              block: false,
+              contents: f.label,
+              textStyle: "",
+              ...(isEdit ? { labelFor: f.name } : {}),
             },
           ],
-        });
-      } else if (f.reftable_name !== "users") {
-        const fvNm = f.type.fieldviews
-          ? Object.entries(f.type.fieldviews).find(
-              ([nm, fv]) => fv.isEdit === isEdit
-            )[0]
-          : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
-        cfg.columns.push({
-          field_name: f.name,
-          type: "Field",
-          fieldview: fvNm,
-          state_field: true,
-        });
-        aboves.push({
-          widths: [2, 10],
-          besides: [
-            flabel,
-            {
-              above: [
-                null,
-                {
-                  type: "field",
-                  block: false,
-                  fieldview: fvNm,
-                  textStyle: "",
-                  field_name: f.name,
-                },
-              ],
-            },
-          ],
-        });
-      }
-      aboves.push({ type: "line_break" });
-    });
-    if (isEdit)
-      aboves.push({
-        type: "action",
-        block: false,
-        minRole: 10,
-        action_name: "Save",
+        };
+        if (
+          f.is_fkey &&
+          f.type !== "File" &&
+          f.reftable_name !== "users" &&
+          !isEdit
+        ) {
+          cfg.columns.push({
+            type: "JoinField",
+            join_field: `${f.name}.${f.attributes.summary_field}`,
+          });
+          aboves.push({
+            widths: [2, 10],
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "join_field",
+                    block: false,
+                    textStyle: "",
+                    join_field: `${f.name}.${f.attributes.summary_field}`,
+                  },
+                ],
+              },
+            ],
+          });
+        } else if (f.reftable_name !== "users") {
+          const fvNm = f.type.fieldviews
+            ? Object.entries(f.type.fieldviews).find(
+                ([nm, fv]) => fv.isEdit === isEdit
+              )[0]
+            : f.type === "File" && !isEdit
+            ? Object.keys(getState().fileviews)[0]
+            : f.type === "File" && isEdit
+            ? "upload"
+            : f.type === "Key"
+            ? "select"
+            : undefined;
+          cfg.columns.push({
+            field_name: f.name,
+            type: "Field",
+            fieldview: fvNm,
+            state_field: true,
+          });
+          aboves.push({
+            widths: [2, 10],
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: fvNm,
+                    textStyle: "",
+                    field_name: f.name,
+                  },
+                ],
+              },
+            ],
+          });
+        }
+        aboves.push({ type: "line_break" });
       });
-    cfg.layout = { above: aboves };
-    return cfg;
-  }
+      if (isEdit)
+        aboves.push({
+          type: "action",
+          block: false,
+          minRole: 10,
+          action_name: "Save",
+        });
+      cfg.layout = { above: aboves };
+      return cfg;
+    }
 );
 
 /**

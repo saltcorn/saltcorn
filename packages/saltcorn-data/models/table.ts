@@ -45,6 +45,7 @@ import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
 import utils from "../utils";
+import { num_between } from "@saltcorn/types/generators";
 const { prefixFieldsInWhere } = utils;
 const {
   InvalidConfiguration,
@@ -1041,7 +1042,10 @@ class Table implements AbstractTable {
    * @param allow_double
    * @returns {Promise<{parent_relations: object[], parent_field_list: object[]}>}
    */
-  async get_parent_relations(allow_double?: boolean): Promise<ParentRelations> {
+  async get_parent_relations(
+    allow_double?: boolean,
+    allow_triple?: boolean
+  ): Promise<ParentRelations> {
     const fields = await this.getFields();
     let parent_relations = [];
     let parent_field_list = [];
@@ -1069,6 +1073,21 @@ class Table implements AbstractTable {
                 (f: Field) => !f.calculated || f.stored
               )) {
                 parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+                if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                  const gpfTbl = Table.findOne({
+                    name: gpf.reftable_name,
+                  });
+                  if (gpfTbl) {
+                    const gpfFields = await gpfTbl.getFields();
+                    for (const ggpf of gpfFields.filter(
+                      (f: Field) => !f.calculated || f.stored
+                    )) {
+                      parent_field_list.push(
+                        `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`
+                      );
+                    }
+                  }
+                }
               }
 
             parent_relations.push({ key_field: pf, through: f, table: table1 });
@@ -1133,6 +1152,7 @@ class Table implements AbstractTable {
     let joinq = "";
     let joinTables: string[] = [];
     let joinFields: JoinField = opts.joinFields || {};
+    let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
 
     fields
@@ -1169,41 +1189,53 @@ class Table implements AbstractTable {
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
         if (ontable)
-          joinq += ` left join ${schema}"${sqlsanitize(
+          joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
           )}" ${jtNm} on ${jtNm}."${sqlsanitize(ref)}"=a."${reffield.refname}"`;
         else
-          joinq += ` left join ${schema}"${sqlsanitize(
+          joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
           )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
       }
       if (through) {
-        const throughTable = await Table.findOne({
-          name: reffield.reftable_name,
-        });
-        if (!throughTable)
-          throw new InvalidConfiguration(
-            `Join-through table ${reffield.reftable_name} not found`
+        const throughs = Array.isArray(through) ? through : [through];
+        let last_reffield = reffield;
+        let jtNm1;
+        let lastJtNm = jtNm;
+        for (const through1 of throughs) {
+          const throughTable = await Table.findOne({
+            name: last_reffield.reftable_name,
+          });
+          if (!throughTable)
+            throw new InvalidConfiguration(
+              `Join-through table ${last_reffield.reftable_name} not found`
+            );
+          const throughTableFields = await throughTable.getFields();
+          const throughRefField = throughTableFields.find(
+            (f: Field) => f.name === through1
           );
-        const throughTableFields = await throughTable.getFields();
-        const throughRefField = throughTableFields.find(
-          (f: Field) => f.name === through
-        );
-        if (!throughRefField)
-          throw new InvalidConfiguration(
-            `Reference field field ${through} not found in table ${throughTable.name}`
-          );
-        const finalTable = throughRefField.reftable_name;
-        const jtNm1 = `${sqlsanitize(reftable)}_jt_${sqlsanitize(
-          through
-        )}_jt_${sqlsanitize(ref)}`;
-        if (!joinTables.includes(jtNm1)) {
-          if (!finalTable)
-            throw new Error("Unable to build a joind without a reftable_name.");
-          joinTables.push(jtNm1);
-          joinq += ` left join ${schema}"${sqlsanitize(
-            finalTable
-          )}" ${jtNm1} on ${jtNm1}.id=${jtNm}."${sqlsanitize(through)}"`;
+          if (!throughRefField)
+            throw new InvalidConfiguration(
+              `Reference field field ${through} not found in table ${throughTable.name}`
+            );
+          const finalTable = throughRefField.reftable_name;
+          jtNm1 = `${sqlsanitize(
+            last_reffield.reftable_name as string
+          )}_jt_${sqlsanitize(through1)}_jt_${sqlsanitize(ref)}`;
+
+          if (!joinTables.includes(jtNm1)) {
+            if (!finalTable)
+              throw new Error(
+                "Unable to build a joind without a reftable_name."
+              );
+            joinTables.push(jtNm1);
+            joinq += `\n left join ${schema}"${sqlsanitize(
+              finalTable
+            )}" ${jtNm1} on ${jtNm1}.id=${lastJtNm}."${sqlsanitize(through1)}"`;
+          }
+
+          last_reffield = throughRefField;
+          lastJtNm = jtNm1;
         }
         fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
       } else {
@@ -1217,7 +1249,7 @@ class Table implements AbstractTable {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
     let placeCounter = values.length;
-    Object.entries<AggregationOptions>(opts.aggregations || {}).forEach(
+    Object.entries<AggregationOptions>(aggregations).forEach(
       ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
         let whereStr = "";
         if (where && !subselect) {
@@ -1265,7 +1297,11 @@ class Table implements AbstractTable {
       limit: opts.limit,
       orderBy:
         opts.orderBy &&
-        (orderByIsObject(opts.orderBy) ? opts.orderBy : "a." + opts.orderBy),
+        (orderByIsObject(opts.orderBy)
+          ? opts.orderBy
+          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          ? opts.orderBy
+          : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
@@ -1299,27 +1335,53 @@ class Table implements AbstractTable {
           if (v.rename_object.length === 2) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
               x[v.rename_object[0]] = {
-                [v.rename_object[1]]: x[k],
                 ...x[v.rename_object[0]],
+                [v.rename_object[1]]: x[k],
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
               return oldf(x);
             };
           } else if (v.rename_object.length === 3) {
             const oldf = f;
             f = (x: any) => {
+              const origId = x[v.rename_object[0]];
               x[v.rename_object[0]] = {
-                [v.rename_object[1]]: {
-                  [v.rename_object[2]]: x[k],
-                  ...x[v.rename_object[1]],
-                },
                 ...x[v.rename_object[0]],
+                [v.rename_object[1]]: {
+                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
+                  [v.rename_object[2]]: x[k],
+                },
+                ...(typeof origId === "number" ? { id: origId } : {}),
               };
+              return oldf(x);
+            };
+          } else if (v.rename_object.length === 4) {
+            const oldf = f;
+            f = (x: any) => {
+              const origId = x[v.rename_object[0]];
+
+              x[v.rename_object[0]] = {
+                ...x[v.rename_object[0]],
+                [v.rename_object[1]]: {
+                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
+                  [v.rename_object[2]]: {
+                    ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
+                      v.rename_object[2]
+                    ],
+                    [v.rename_object[3]]: x[k],
+                  },
+                },
+                ...(typeof origId === "number" ? { id: origId } : {}),
+              };
+
               return oldf(x);
             };
           }
         }
       });
+
       return calcRow.map(f);
     } else return calcRow;
   }

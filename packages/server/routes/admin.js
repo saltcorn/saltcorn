@@ -36,6 +36,9 @@ const {
   button,
   span,
   p,
+  code,
+  h5,
+  pre,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -50,6 +53,9 @@ const {
   create_backup,
   restore,
 } = require("@saltcorn/admin-models/models/backup");
+const {
+  runConfigurationCheck,
+} = require("@saltcorn/admin-models/models/config-check");
 const fs = require("fs");
 const load_plugins = require("../load_plugins");
 const {
@@ -71,6 +77,7 @@ const {
 } = require("../markup/admin");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
+const { getConfigFile } = require("@saltcorn/data/db/connect");
 
 /**
  * @type {object}
@@ -99,7 +106,7 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
-      "multitenancy_enabled",
+      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     ],
     action: "/admin",
     submitLabel: req.__("Save"),
@@ -365,6 +372,18 @@ router.get(
               hr(),
 
               a(
+                {
+                  href: "/admin/configuration-check",
+                  class: "btn btn-info",
+                  onClick: "press_store_button(this)",
+                },
+                i({ class: "fas fa-stethoscope" }),
+                " ",
+                req.__("Configuration check")
+              ),
+              hr(),
+
+              a(
                 { href: "/admin/clear-all", class: "btn btn-danger" },
                 i({ class: "fas fa-trash-alt" }),
                 " ",
@@ -398,6 +417,15 @@ router.get(
                           ? span(
                               { class: "badge bg-primary ms-2" },
                               req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check for updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
                             )
                           : "")
                     )
@@ -492,13 +520,22 @@ router.post(
           `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
         );
         setTimeout(() => {
+          if (process.send) process.send("RestartServer");
           process.exit(0);
         }, 100);
       });
     }
   })
 );
-
+router.post(
+  "/check-for-upgrade",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    await getState().deleteConfig("latest_npm_version");
+    req.flash("success", req.__(`Versions refreshed`));
+    res.redirect(`/admin/system`);
+  })
+);
 /**
  * @name post/backup
  * @function
@@ -716,6 +753,49 @@ router.get(
           type: "card",
           title: req.__("Clear all"),
           contents: div(renderForm(clearAllForm(req), req.csrfToken())),
+        },
+      ],
+    });
+  })
+);
+
+router.get(
+  "/configuration-check",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { passes, errors, pass } = await runConfigurationCheck(req);
+    const mkError = (err) =>
+      div(
+        { class: "alert alert-danger", role: "alert" },
+        pre({ class: "mb-0" }, code(err))
+      );
+    res.sendWrap(req.__(`Admin`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings") },
+            { text: req.__("Admin"), href: "/admin" },
+            { text: req.__("Configuration check") },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__("Configuration errors"),
+          contents: div(
+            pass
+              ? div(
+                  { class: "alert alert-success", role: "alert" },
+                  i({ class: "fas fa-check-circle fa-lg me-2" }),
+                  h5({ class: "d-inline" }, "No errors detected")
+                )
+              : errors.map(mkError)
+          ),
+        },
+        {
+          type: "card",
+          title: req.__("Configuration checks passed"),
+          contents: div(pre(code(passes.join("\n")))),
         },
       ],
     });

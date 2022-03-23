@@ -17,6 +17,7 @@ const {
   span,
   script,
   domReady,
+  ul,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -83,6 +84,7 @@ const formRowWrap = (
       class: ["form-group", isHoriz(fStyle) && "row"],
       "data-disabled": hdr.disabled ? "true" : false,
       ...(hdr.showIf && {
+        style: "display: none;",
         "data-show-if": mkShowIf(hdr.showIf),
       }),
     },
@@ -92,6 +94,17 @@ const formRowWrap = (
           h5(text(hdr.label)),
           hdr.sublabel && p(i(hdr.sublabel))
         )
+      : hdr.type?.name === "Bool" && fStyle === "vert"
+      ? div(
+          { class: "form-check" },
+          inner,
+          label(
+            {
+              for: `input${text_attr(hdr.form_name)}`,
+            },
+            text(hdr.label)
+          )
+        ) + (hdr.sublabel ? i(text(hdr.sublabel)) : "")
       : [
           div(
             { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
@@ -117,103 +130,107 @@ const formRowWrap = (
  * @param {string} [nameAdd = ""]
  * @returns {function}
  */
-const innerField = (
-  v: any,
-  errors: any[],
-  nameAdd: string = ""
-): ((hdr: any) => string) => (hdr: any): string => {
-  const name: any = hdr.form_name + nameAdd;
-  const validClass = errors[name] ? "is-invalid" : "";
-  const maybe_disabled = hdr.disabled ? " disabled data-disabled" : "";
-  switch (hdr.input_type) {
-    case "fromtype":
-      return displayEdit(
-        hdr,
-        name,
-        v && isdef(v[hdr.form_name]) ? v[hdr.form_name] : hdr.default,
-        validClass
-      );
-    case "hidden":
-      return `<input type="hidden" class="form-control ${validClass} ${
-        hdr.class || ""
-      }" name="${text_attr(name)}" ${
-        v ? `value="${text_attr(v[hdr.form_name])}"` : ""
-      }>`;
-    case "select":
-      const opts = select_options(v, hdr);
-      return `<select class="form-control form-select ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
-        hdr.attributes && hdr.attributes.explainers
-          ? ` data-explainers="${encodeURIComponent(
-              JSON.stringify(hdr.attributes.explainers)
-            )}"`
-          : ""
-      }>${opts}</select>`;
-    case "textarea":
-      return `<textarea class="form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
-        v[hdr.form_name] || ""
-      )}</textarea>`;
-    case "code":
-      return `<textarea mode="${
-        (hdr.attributes || {}).mode || ""
-      }" class="to-code form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
-        v[hdr.form_name] || ""
-      }</textarea>`;
-    case "file":
-      if (hdr.attributes && hdr.attributes.select_file_where) {
-        hdr.input_type = "select";
-        return innerField(v, errors, nameAdd)(hdr);
-      } else
-        return `${
-          v[hdr.form_name] ? text(v[hdr.form_name]) : ""
-        }<input type="file" class="form-control-file ${validClass} ${
-          hdr.class || ""
-        }"${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-          name
-        )}">`;
-    case "search":
-      return search_bar(name, v && v[hdr.form_name]);
-    case "section_header":
-      return "";
-    case "custom_html":
-      return hdr.attributes.html;
-    default:
-      const the_input = `<input type="${
-        hdr.input_type
-      }" class="form-control ${validClass} ${
-        hdr.class || ""
-      }"${maybe_disabled} data-fieldname="${text_attr(
-        hdr.form_name
-      )}" name="${name}" id="input${text_attr(name)}"${
-        v && isdef(v[hdr.form_name])
-          ? ` value="${text_attr(v[hdr.form_name])}"`
-          : ""
-      }>`;
-      const inner = hdr.postText
-        ? div(
-            { class: "input-group" },
-            the_input,
+const innerField =
+  (
+    v: any,
+    errors: any[],
+    nameAdd: string = "",
+    classAdd: string = ""
+  ): ((hdr: any) => string) =>
+  (hdr: any): string => {
+    const name: any = hdr.form_name + nameAdd;
+    const validClass = errors[name] ? `is-invalid ${classAdd}` : classAdd;
+    const maybe_disabled = hdr.disabled ? " disabled data-disabled" : "";
 
-            span(
-              { class: "input-group-text", id: "basic-addon2" },
-              hdr.postText
+    switch (hdr.input_type) {
+      case "fromtype":
+        return displayEdit(
+          hdr,
+          name,
+          v && isdef(v[hdr.form_name]) ? v[hdr.form_name] : hdr.default,
+          validClass
+        );
+      case "hidden":
+        return `<input type="hidden" class="form-control ${validClass} ${
+          hdr.class || ""
+        }" name="${text_attr(name)}" ${
+          v ? `value="${text_attr(v[hdr.form_name])}"` : ""
+        }>`;
+      case "select":
+        const opts = select_options(v, hdr);
+        return `<select class="form-control form-select ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
+          hdr.attributes && hdr.attributes.explainers
+            ? ` data-explainers="${encodeURIComponent(
+                JSON.stringify(hdr.attributes.explainers)
+              )}"`
+            : ""
+        }>${opts}</select>`;
+      case "textarea":
+        return `<textarea class="form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
+          v[hdr.form_name] || ""
+        )}</textarea>`;
+      case "code":
+        return `<textarea mode="${
+          (hdr.attributes || {}).mode || ""
+        }" class="to-code form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
+          v[hdr.form_name] || ""
+        }</textarea>`;
+      case "file":
+        if (hdr.attributes && hdr.attributes.select_file_where) {
+          hdr.input_type = "select";
+          return innerField(v, errors, nameAdd)(hdr);
+        } else
+          return `${
+            v[hdr.form_name] ? text(v[hdr.form_name]) : ""
+          }<input type="file" class="form-control-file ${validClass} ${
+            hdr.class || ""
+          }"${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
+            name
+          )}">`;
+      case "search":
+        return search_bar(name, v && v[hdr.form_name]);
+      case "section_header":
+        return "";
+      case "custom_html":
+        return hdr.attributes.html;
+      default:
+        const the_input = `<input type="${
+          hdr.input_type
+        }" class="form-control ${validClass} ${
+          hdr.class || ""
+        }"${maybe_disabled} data-fieldname="${text_attr(
+          hdr.form_name
+        )}" name="${name}" id="input${text_attr(name)}"${
+          v && isdef(v[hdr.form_name])
+            ? ` value="${text_attr(v[hdr.form_name])}"`
+            : ""
+        }>`;
+        const inner = hdr.postText
+          ? div(
+              { class: "input-group" },
+              the_input,
+
+              span(
+                { class: "input-group-text", id: "basic-addon2" },
+                hdr.postText
+              )
             )
-          )
-        : the_input;
-      return inner;
-  }
-};
+          : the_input;
+        return inner;
+    }
+  };
 
 /**
  * @param {object[]} v
@@ -222,15 +239,104 @@ const innerField = (
  * @param {object[]} labelCols
  * @returns {function}
  */
-const mkFormRow = (
+const mkFormRow =
+  (
+    v: any,
+    errors: any[],
+    formStyle: string,
+    labelCols: any
+  ): ((hdr: any) => string) =>
+  (hdr: any): string =>
+    hdr.isRepeat && hdr.fancyMenuEditor
+      ? mkFormRowForRepeatFancy(v, errors, formStyle, labelCols, hdr)
+      : hdr.isRepeat
+      ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
+      : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
+
+/**
+ * @param {object[]} v
+ * @param {object[]} errors
+ * @param {string} formStyle
+ * @param {object[]} labelCols
+ * @param {object} hdr
+ * @returns {div}
+ */
+const mkFormRowForRepeatFancy = (
   v: any,
   errors: any[],
   formStyle: string,
-  labelCols: any
-): ((hdr: any) => string) => (hdr: any): string =>
-  hdr.isRepeat
-    ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
-    : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
+  labelCols: number,
+  hdr: any
+): string => {
+  // console.log(v);
+
+  return div(
+    { class: "row w-100" },
+    div(
+      { class: "col-6" },
+      h5("Columns"),
+      div(ul({ id: "myEditor", class: "sortableLists list-group" }))
+    ),
+    div(
+      { class: "col-6 mb-3", id: "menuForm" },
+      h5("Column configuration"),
+      hdr.fields.forEach((f: any) => (f.class = `${f.class || ""} item-menu`)),
+      hdr.fields.map(mkFormRow({}, errors, "vert", labelCols)),
+      button(
+        { type: "button", id: "btnUpdate", class: "btn btn-primary me-2" },
+        "Update"
+      ),
+      button({ type: "button", id: "btnAdd", class: "btn btn-primary" }, "Add")
+    ),
+    script(
+      domReady(`
+      var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
+
+      var sortableListOptions = {
+        placeholderCss: {'background-color': "#cccccc"},
+    
+    };
+    let editor = new MenuEditor('myEditor', 
+              { 
+              listOptions: sortableListOptions, 
+              iconPicker: iconPickerOptions,
+              getLabelText: columnSummary,
+              onUpdate: apply_showif,
+              labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
+              maxLevel: 0 // (Optional) Default is -1 (no level limit)
+              // Valid levels are from [0, 1, 2, 3,...N]
+              });
+  editor.setForm($('#menuForm'));
+  editor.setUpdateButton($('#btnUpdate'));
+  editor.setData(${JSON.stringify(v[hdr.form_name])});
+  $('.btnEdit').click(()=>setTimeout(apply_showif,0));
+  $('#btnAdd').click(function(){
+    editor.add();
+  });
+
+  $("#btnUpdate").click(function(){
+    editor.update();
+  });
+  $('#menuForm').closest("form").submit(function(event) {
+
+    event.preventDefault(); //this will prevent the default submit
+    const vs = JSON.parse(editor.getString())
+    const form = $('#menuForm').closest("form")
+    
+    //console.log(vs)
+    vs.forEach((v,ix)=>{
+      Object.entries(v).forEach(([k,v])=>{
+        //console.log(ix, k, typeof v, v)
+        if(typeof v === "boolean")
+          form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+(v?'on':'')+'"></input>')
+        else form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
+      })
+    })     
+    $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
+   })`)
+    )
+  );
+};
 
 /**
  * @param {object[]} v
@@ -256,7 +362,7 @@ const mkFormRowForRepeat = (
     i({ class: "fas fa-plus" })
   );
   const icons = div(
-    { class: "float-right" },
+    { class: "float-end" },
     span(
       { onclick: "rep_up(this)" },
       i({ class: "fa fa-arrow-up pull-right" })
@@ -364,28 +470,37 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
  * @param {string} [nameAdd = ""]
  * @returns {function}
  */
-const mkFormRowForField = (
-  v: any,
-  errors: any[],
-  formStyle: string,
-  labelCols: number,
-  nameAdd: string = ""
-): ((hdr: any) => string) => (hdr: any): string => {
-  const name: any = hdr.form_name + nameAdd;
-  const errorFeedback = errors[name]
-    ? `<div class="invalid-feedback">${text(errors[name])}</div>`
-    : "";
-  if (hdr.input_type === "hidden") {
-    return innerField(v, errors, nameAdd)(hdr);
-  } else
-    return formRowWrap(
-      hdr,
-      innerField(v, errors, nameAdd)(hdr),
-      errorFeedback,
-      formStyle,
-      labelCols
-    );
-};
+const mkFormRowForField =
+  (
+    v: any,
+    errors: any[],
+    formStyle: string,
+    labelCols: number,
+    nameAdd: string = ""
+  ): ((hdr: any) => string) =>
+  (hdr: any): string => {
+    const name: any = hdr.form_name + nameAdd;
+    const errorFeedback = errors[name]
+      ? `<div class="invalid-feedback">${text(errors[name])}</div>`
+      : "";
+    if (hdr.input_type === "hidden") {
+      return innerField(v, errors, nameAdd)(hdr);
+    } else
+      return formRowWrap(
+        hdr,
+        innerField(
+          v,
+          errors,
+          nameAdd,
+          hdr.type?.name === "Bool" && formStyle === "vert"
+            ? "form-check-input"
+            : ""
+        )(hdr),
+        errorFeedback,
+        formStyle,
+        labelCols
+      );
+  };
 
 /**
  * @param {object} form
@@ -395,8 +510,24 @@ const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
     join_field(segment: any) {
       if (segment.sourceURL)
-        return div({ "data-source-url": segment.sourceURL }, "join data");
+        return div({ "data-source-url": segment.sourceURL });
       return "";
+    },
+    tabs(segment: any, go: any) {
+      if (segment.tabsStyle !== "Value switch") return false;
+      return segment.titles
+        .map((t: any, ix: number) =>
+          div(
+            {
+              style: "display: none;",
+              "data-show-if": mkShowIf({
+                [segment.field]: typeof t.value === "undefined" ? t : t.value,
+              }),
+            },
+            go(segment.contents[ix])
+          )
+        )
+        .join("");
     },
     field(segment: any) {
       const field0 = form.fields.find((f) => f.name === segment.field_name);

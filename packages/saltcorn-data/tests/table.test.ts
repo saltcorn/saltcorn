@@ -257,6 +257,23 @@ describe("Table get data", () => {
     expect(reads.length).toStrictEqual(3);
     expect(reads[0].author).toBe("Herman Melville");
   });
+  it("should get triple joined rows", async () => {
+    const readings = await Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const reads = await readings.getJoinedRows({
+      orderBy: "id",
+      joinFields: {
+        publisher: {
+          ref: "patient_id",
+          through: ["favbook", "publisher"],
+          target: "name",
+        },
+      },
+    });
+    expect(reads.length).toStrictEqual(3);
+    //expect(reads[0].name).toBe("AK Press");
+    expect(reads[2].publisher).toBe("AK Press");
+  });
   it("should rename joined rows signly", async () => {
     const patients = await Table.findOne({ name: "patients" });
     assertIsSet(patients);
@@ -272,6 +289,7 @@ describe("Table get data", () => {
     });
     expect(pats.length).toStrictEqual(2);
     expect(pats[0].favbook.author).toBe("Herman Melville");
+    expect(pats[0].favbook.id).toBe(1);
   });
   it("should rename joined rows doubly", async () => {
     const readings = await Table.findOne({ name: "readings" });
@@ -487,6 +505,8 @@ describe("relations", () => {
     assertIsSet(table);
     const rels = await table.get_parent_relations();
     expect(rels.parent_field_list).toEqual([
+      "publisher.id",
+      "publisher.name",
       "myreviews.book->book",
       "myreviews.book->id",
       "myreviews.book->rating",
@@ -512,6 +532,7 @@ describe("relations", () => {
       "patient_id.favbook.author",
       "patient_id.favbook.id",
       "patient_id.favbook.pages",
+      "patient_id.favbook.publisher",
       "patient_id.id",
       "patient_id.name",
       "patient_id.parent",
@@ -519,6 +540,36 @@ describe("relations", () => {
       "patient_id.parent.id",
       "patient_id.parent.name",
       "patient_id.parent.parent",
+    ]);
+    expect(rels.parent_relations.length).toBe(3);
+  });
+  it("get triple relations", async () => {
+    const table = await Table.findOne({ name: "readings" });
+    assertIsSet(table);
+    const rels = await table.get_parent_relations(true, true);
+    expect(rels.parent_field_list).toEqual([
+      "patient_id.favbook",
+      "patient_id.favbook.author",
+      "patient_id.favbook.id",
+      "patient_id.favbook.pages",
+      "patient_id.favbook.publisher",
+      "patient_id.favbook.publisher.id",
+      "patient_id.favbook.publisher.name",
+      "patient_id.id",
+      "patient_id.name",
+      "patient_id.parent",
+      "patient_id.parent.favbook",
+      "patient_id.parent.favbook.author",
+      "patient_id.parent.favbook.id",
+      "patient_id.parent.favbook.pages",
+      "patient_id.parent.favbook.publisher",
+      "patient_id.parent.id",
+      "patient_id.parent.name",
+      "patient_id.parent.parent",
+      "patient_id.parent.parent.favbook",
+      "patient_id.parent.parent.id",
+      "patient_id.parent.parent.name",
+      "patient_id.parent.parent.parent",
     ]);
     expect(rels.parent_relations.length).toBe(3);
   });

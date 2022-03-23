@@ -10,7 +10,7 @@ import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow } from "./utils";
 
 export /**
- * @param {object} props 
+ * @param {object} props
  * @param {string} props.agg_relation
  * @param {string} props.agg_field
  * @param {string} props.stat
@@ -21,13 +21,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const Aggregation = ({
-  agg_relation,
-  agg_field,
-  stat,
-  block,
-  textStyle,
-}) => {
+const Aggregation = ({ agg_relation, agg_field, stat, block, textStyle }) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -76,7 +70,7 @@ const AggregationSettings = () => {
           </td>
           <td>
             <select
-              className="form-control"
+              className="form-control form-select"
               value={agg_relation}
               onChange={(e) =>
                 setProp((prop) => {
@@ -100,7 +94,7 @@ const AggregationSettings = () => {
           </td>
           <td>
             <select
-              className="form-control"
+              className="form-control form-select"
               value={agg_field}
               onChange={(e) =>
                 setProp((prop) => (prop.agg_field = e.target.value))
@@ -121,7 +115,7 @@ const AggregationSettings = () => {
           <td>
             <select
               value={stat}
-              className="form-control"
+              className="form-control form-select"
               onChange={(e) => setProp((prop) => (prop.stat = e.target.value))}
             >
               <option value={"Count"}>Count</option>
@@ -129,6 +123,7 @@ const AggregationSettings = () => {
               <option value={"Sum"}>Sum</option>
               <option value={"Max"}>Max</option>
               <option value={"Min"}>Min</option>
+              <option value={"Array_Agg"}>Array_Agg</option>
               {options.fields
                 .filter((f) => f.type.name === "Date")
                 .map((f) => (
@@ -163,8 +158,8 @@ const AggregationSettings = () => {
   );
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Aggregation.craft = {
   displayName: "Aggregation",

@@ -109,7 +109,7 @@ const ViewSettings = () => {
         <label>View to {options.mode === "show" ? "embed" : "show"}</label>
         <select
           value={view}
-          className="form-control"
+          className="form-control form-select"
           onChange={(e) => {
             setProp((prop) => (prop.view = e.target.value));
           }}
@@ -127,7 +127,7 @@ const ViewSettings = () => {
             <label>State</label>
             <select
               value={state}
-              className="form-control"
+              className="form-control form-select"
               onChange={setAProp("state")}
             >
               <option value="shared">Shared</option>

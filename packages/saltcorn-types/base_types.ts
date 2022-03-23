@@ -180,6 +180,7 @@ export type ViewTemplate = {
   }) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;
+  configCheck?: (cfg: any) => Promise<string[]>;
   run: (
     table_id: string | number | undefined,
     viewname: string,
@@ -236,7 +237,7 @@ export type ViewTemplate = {
 };
 
 export type Action = (
-  table_id: number,
+  table_id: number | undefined | null,
   viewname: string,
   optsOne: any,
   body: any,

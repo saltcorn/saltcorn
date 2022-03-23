@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/admin-models",
-  "version": "0.6.4",
+  "version": "0.7.1-beta.2",
   "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -25,10 +25,10 @@
     "dist/**/*"
   ],
   "dependencies": {
-    "@saltcorn/types": "0.6.4",
-    "@saltcorn/markup": "0.6.4",
-    "@saltcorn/db-common": "0.6.4",
-    "@saltcorn/data": "0.6.4",
+    "@saltcorn/types": "0.7.1-beta.2",
+    "@saltcorn/markup": "0.7.1-beta.2",
+    "@saltcorn/db-common": "0.7.1-beta.2",
+    "@saltcorn/data": "0.7.1-beta.2",
     "adm-zip": "0.5.5",
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",

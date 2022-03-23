@@ -25,14 +25,14 @@ const db = require("../db");
 // todo add translation
 
 /**
- * @param {object} opts
- * @param {object} opts.row
- * @param {object} opts.table
- * @param {object} opts.channel
- * @param {object} opts.configuration
- * @param {object} opts.user
- * @param {...*} opts.rest
- * @returns {Promise<object>}
+ * @param opts
+ * @param opts.row
+ * @param opts.table
+ * @param opts.channel
+ * @param opts.configuration
+ * @param opts.user
+ * @param opts.rest
+ * @returns
  */
 const run_code = async ({
   row,

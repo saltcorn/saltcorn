@@ -8,6 +8,10 @@ function lookupIntToString(cell, formatterParams, onRendered) {
   const res = formatterParams.values[val];
   return res;
 }
+function deleteIcon() {
+  //plain text value
+  return '<i class="far fa-trash-alt"></i>';
+}
 
 function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
   var input = $("<input type='text'/>");

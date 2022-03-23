@@ -20,6 +20,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   fields: Array<Field>;
   isRepeat = true;
   showIf?: any;
+  fancyMenuEditor: boolean;
 
   /**
    * FieldRepeat constructor
@@ -34,6 +35,7 @@ class FieldRepeat implements AbstractFieldRepeat {
     );
     this.isRepeat = true;
     this.showIf = o.showIf;
+    this.fancyMenuEditor = o.fancyMenuEditor || false;
   }
 
   /**
@@ -95,6 +97,7 @@ namespace FieldRepeat {
     label?: string;
     fields: Array<Field>;
     showIf?: any;
+    fancyMenuEditor?: boolean;
   };
 }
 type FieldRepeatCfg = FieldRepeat.FieldRepeatCfg;

@@ -159,7 +159,7 @@ const ColumnsSettings = () => {
                 <td>/12</td>
                 <td>
                   <select
-                    className="form-control"
+                    className="form-control form-select"
                     value={breakpoints[ix]}
                     onChange={(e) =>
                       setProp((prop) => (prop.breakpoints[ix] = e.target.value))

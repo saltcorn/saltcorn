@@ -1,29 +1,30 @@
+[![Saltcorn Banner](https://user-images.githubusercontent.com/66894759/159173453-2ca63e71-1ff5-4f1e-b551-58b157b0de52.png)](https://saltcorn.com)
+
+[![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)](https://github.com/saltcorn/saltcorn/actions/workflows/nodejs.yml) [![OpenCollective](https://img.shields.io/badge/OpenCollective-1F87FF?style=flat&logo=OpenCollective&logoColor=black)](https://opencollective.com/saltcorn)
+
 # Saltcorn
-
-![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)
-
 Saltcorn is an extensible open source no-code database application builder. Use it to build web applications based on relational data with flexible views, datatypes and layouts.
 
-This repository contains the core codebase, including the code necessary to self host an instance and to host a multitenant instance.
+This repository contains the core codebase, including the code necessary to self-host an instance and to host a multitenant instance.
 
 ## Trying out Saltcorn
 
-A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new database under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create)
-this service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of saltcorn.
+A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new application under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create).
+This service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of saltcorn.
 
-For self hosting, a 1 GB virtual private server is sufficient to run Saltcorn unless you expect high traffic volumes. Installation instructions are given below. If hosting on DigitalOcean, which offers a 1GB virtual machine for $5 per month, please consider using my [referral code](https://m.do.co/c/a1bcfb757fda) which will give you $100 credit over 60 days.
+For self-hosting, a 1 GB virtual private server is sufficient to run Saltcorn unless you expect high traffic volumes. Installation instructions are given below. If hosting on DigitalOcean, which offers a 1GB virtual machine for $5 per month, please consider using my [referral code](https://m.do.co/c/a1bcfb757fda) which will give you $100 credit over 60 days.
 
 ## Acknowledgements
 
-Saltcorn is using PostgreSQL, node.js, [node-postgres](https://node-postgres.com/), express, [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/), [jQuery-Menu-Editor](https://github.com/davicotico/jQuery-Menu-Editor), [Blockly](https://developers.google.com/blockly) and other awesome free and open source projects.
+Saltcorn is using [PostgreSQL](https://github.com/postgres/postgres), [node.js](https://github.com/nodejs/node), [node-postgres](https://node-postgres.com/), [express](https://github.com/expressjs/express), [live-plugin-manager](https://www.npmjs.com/package/live-plugin-manager), [craft.js](https://craft.js.org/), [jQuery-Menu-Editor](https://github.com/davicotico/jQuery-Menu-Editor), [Blockly](https://developers.google.com/blockly) and other awesome free and open source projects.
 
 ## Quickstart with Docker
 
-You can run a local instance for quick test by running the following command:
+You can run a local instance for quick testing by running the following command:
 
 `cd ./deploy/examples/test && docker-compose up -d`
 
-and then point your browser to http://localhost:3000
+and then go to http://localhost:3000 in your web browser.
 
 ## Quick install server on Debian/Ubuntu
 
@@ -37,10 +38,10 @@ npx saltcorn-install -y
 ```
 
 The first two lines will install Node.js 14. The last line will call the Saltcorn install script
-accepting all the defaults, Which installs PostgreSQL and sets up Saltcorn as a service
+accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
-If you want a different port or a different database backend, or not install as a service, You
+If you want a different port, different database backend, or to not install as a service, you
 can omit the final `-y` to get an interactive installation:
 
 ```
@@ -86,7 +87,7 @@ mkdir -p ~/.config/
 
 then run
 
-`saltcorn setup` and follow instructions
+`saltcorn setup` and follow the instructions given.
 
 ### Setup (manual)
 
@@ -166,7 +167,7 @@ sudo systemctl enable saltcorn
 
 #### SSL certificate
 
-Use cloudflare or lets encrypt to get a free SSL certificate (for https).
+Use [Let's Encrypt](https://letsencrypt.org/) or [Cloudflare](https://www.cloudflare.com/ssl/) to get a free SSL certificate (for https).
 
 ## Install from source (for saltcorn developers)
 
@@ -207,7 +208,7 @@ npm install --legacy-peer-deps
 npm run tsc
 ```
 
-to install everything. If successful, you should now be able to run `saltcorn` in your shell
+to install everything. If successful, you should now be able to run `saltcorn` in your shell.
 
 ## Packages
 

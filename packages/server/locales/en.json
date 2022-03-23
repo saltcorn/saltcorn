@@ -867,5 +867,21 @@
 	"Save before going back": "Save before going back",
 	"Reload after going back": "Reload after going back",
 	"2FA policy": "2FA policy",
-	"Steps to go back": "Steps to go back"
+	"Steps to go back": "Steps to go back",
+	"Place in dropdown": "Place in dropdown",
+	"Hide null columns": "Hide null columns",
+	"Do not display a column if it contains entirely missing values": "Do not display a column if it contains entirely missing values",
+	"Show a warning to users creating a tenant disclaiming warrenty of availability or security": "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
+	"Set to 0 for expration at the end of browser session": "Set to 0 for expration at the end of browser session",
+	"Could not verify code": "Could not verify code",
+	"Disable two-factor authentication": "Disable two-factor authentication",
+	"Enter your two-factor code in order to disable it": "Enter your two-factor code in order to disable it",
+	"Allow the user to enter a new key that is not in the schema": "Allow the user to enter a new key that is not in the schema",
+	"Check for updates": "Check for updates",
+	"Versions refreshed": "Versions refreshed",
+	"Configuration check": "Configuration check",
+	"Configuration errors": "Configuration errors",
+	"Configuration checks passed": "Configuration checks passed",
+	"On delete cascade": "On delete cascade",
+	"If the parent row is deleted, automatically delete the child rows.": "If the parent row is deleted, automatically delete the child rows."
 }

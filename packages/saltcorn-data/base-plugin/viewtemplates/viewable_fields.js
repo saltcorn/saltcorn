@@ -4,7 +4,7 @@
  * @subcategory base-plugin
  */
 const { post_btn, link } = require("@saltcorn/markup");
-const { text, a, i } = require("@saltcorn/markup/tags");
+const { text, a, i, div, button } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { contract, is } = require("contractis");
 const { is_column, is_tablely } = require("../../contracts");
@@ -16,6 +16,7 @@ const { traverseSync } = require("../../models/layout");
 const { structuredClone } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
+const Table = require("../../models/table");
 
 /**
  * @function
@@ -29,7 +30,7 @@ const View = require("../../models/view");
  */
 const action_url = contract(
   is.fun([is.str, is_tablely, is.str, is.obj()], is.any),
-  (viewname, table, action_name, r, colId, colIdNm) => {
+  (viewname, table, action_name, r, colId, colIdNm, confirm) => {
     if (action_name === "Delete")
       return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
     else if (action_name === "GoBack") return { javascript: "history.back()" };
@@ -37,8 +38,9 @@ const action_url = contract(
       const field_name = action_name.replace("Toggle ", "");
       return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
     }
+    const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
     return {
-      javascript: `view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
+      javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r.id}});`,
     };
   }
 );
@@ -74,6 +76,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
+    block,
   },
   __ = (s) => s
 ) => {
@@ -104,6 +107,7 @@ const action_link = (
       icon: action_icon,
       style,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
+      formClass: !block && "d-inline",
     });
 };
 
@@ -165,6 +169,7 @@ const make_link = contract(
       link_url,
       link_url_formula,
       link_target_blank,
+      in_dropdown,
     },
     fields,
     __ = (s) => s
@@ -187,6 +192,7 @@ const make_link = contract(
         }
         const attrs = { href };
         if (link_target_blank) attrs.target = "_blank";
+        if (in_dropdown) attrs.class = "dropdown-item";
         return a(attrs, txt);
       },
     };
@@ -206,8 +212,15 @@ const parse_view_select = (s) => {
       return { type, viewname: vrest };
     case "ChildList":
     case "OneToOneShow":
-      const [viewnm, tbl, fld] = vrest.split(".");
-      return { type, viewname: viewnm, table_name: tbl, field_name: fld };
+      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+      return {
+        type,
+        viewname: viewnm,
+        table_name: tbl,
+        field_name: fld,
+        throughTable,
+        through,
+      };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
       return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
@@ -252,6 +265,7 @@ const view_linker = contract(
       link_bgcol,
       link_bordercol,
       link_textcol,
+      in_dropdown,
     },
     fields,
     __ = (s) => s
@@ -280,7 +294,8 @@ const view_linker = contract(
               textStyle,
               link_bgcol,
               link_bordercol,
-              link_textcol
+              link_textcol,
+              in_dropdown && "dropdown-item"
             ),
         };
       case "Independent":
@@ -298,17 +313,19 @@ const view_linker = contract(
               textStyle,
               link_bgcol,
               link_bordercol,
-              link_textcol
+              link_textcol,
+              in_dropdown && "dropdown-item"
             ),
         };
       case "ChildList":
       case "OneToOneShow":
-        const [viewnm, tbl, fld] = vrest.split(".");
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
         return {
           label: viewnm,
           key: (r) =>
             link_view(
-              `/view/${encodeURIComponent(viewnm)}?${fld}=${r.id}`,
+              `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id}`,
               get_label(viewnm, r),
               in_modal,
               link_style,
@@ -317,7 +334,8 @@ const view_linker = contract(
               textStyle,
               link_bgcol,
               link_bordercol,
-              link_textcol
+              link_textcol,
+              in_dropdown && "dropdown-item"
             ),
         };
       case "ParentShow":
@@ -331,7 +349,7 @@ const view_linker = contract(
             return r[pfld]
               ? link_view(
                   `/view/${encodeURIComponent(pviewnm)}?${reffield.refname}=${
-                    r[pfld]
+                    typeof r[pfld] === "object" ? r[pfld].id : r[pfld]
                   }`,
                   get_label(
                     typeof summary_field === "undefined"
@@ -346,7 +364,8 @@ const view_linker = contract(
                   textStyle,
                   link_bgcol,
                   link_bordercol,
-                  link_textcol
+                  link_textcol,
+                  in_dropdown && "dropdown-item"
                 )
               : "";
           },
@@ -365,6 +384,17 @@ const action_requires_write = (nm) => {
   if (!nm) return false;
   if (nm === "Delete") return true;
   if (nm.startsWith("Toggle")) return true;
+};
+
+// flapMap if f returns array
+const flapMaipish = (xs, f) => {
+  const res = [];
+  for (const x of xs) {
+    const y = f(x);
+    if (Array.isArray(y)) res.push(...y);
+    else res.push(y);
+  }
+  return res;
 };
 
 /**
@@ -396,176 +426,248 @@ const get_viewable_fields = contract(
       })
     )
   ),
-  (viewname, table, fields, columns, isShow, req, __) =>
-    columns
-      .map((column) => {
-        const role = req.user ? req.user.role_id : 10;
-        const user_id = req.user ? req.user.id : null;
-        const setWidth = column.col_width
-          ? { width: `${column.col_width}${column.col_width_units}` }
-          : {};
-        if (column.type === "Action")
-          return {
-            ...setWidth,
-            label: column.header_label ? text(__(column.header_label)) : "",
-            key: (r) => {
-              if (action_requires_write(column.action_name)) {
-                if (table.min_role_write < role && !table.is_owner(req.user, r))
-                  return "";
-              }
-              const url = action_url(
-                viewname,
-                table,
-                column.action_name,
-                r,
-                column.action_name,
-                "action_name"
+  (viewname, table, fields, columns, isShow, req, __) => {
+    const dropdown_actions = [];
+    const tfields = flapMaipish(columns, (column) => {
+      const role = req.user ? req.user.role_id : 10;
+      const user_id = req.user ? req.user.id : null;
+      const setWidth = column.col_width
+        ? { width: `${column.col_width}${column.col_width_units}` }
+        : {};
+      if (column.type === "Action") {
+        const action_col = {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) => {
+            if (action_requires_write(column.action_name)) {
+              if (table.min_role_write < role && !table.is_owner(req.user, r))
+                return "";
+            }
+            const url = action_url(
+              viewname,
+              table,
+              column.action_name,
+              r,
+              column.action_name,
+              "action_name",
+              column.confirm
+            );
+            const label = column.action_label_formula
+              ? eval_expression(column.action_label, r)
+              : __(column.action_label) || column.action_name;
+            if (url.javascript)
+              return a(
+                {
+                  href: "javascript:" + url.javascript,
+                  class: column.in_dropdown
+                    ? "dropdown-item"
+                    : column.action_style === "btn-link"
+                    ? ""
+                    : `btn ${column.action_style || "btn-primary"} ${
+                        column.action_size || ""
+                      }`,
+                },
+                label
               );
-              const label = column.action_label_formula
-                ? eval_expression(column.action_label, r)
-                : __(column.action_label) || column.action_name;
-              if (url.javascript)
-                return a(
-                  {
-                    href: "javascript:" + url.javascript,
-                    class:
-                      column.action_style === "btn-link"
-                        ? ""
-                        : `btn ${column.action_style || "btn-primary"} ${
-                            column.action_size || ""
-                          }`,
-                  },
-                  label
-                );
-              else
-                return post_btn(url, label, req.csrfToken(), {
-                  small: true,
-                  ajax: true,
-                  reload_on_done: true,
-                  confirm: column.confirm,
-                  btnClass: column.action_style || "btn-primary",
-                  req,
-                });
+            else
+              return post_btn(url, label, req.csrfToken(), {
+                small: true,
+                ajax: true,
+                reload_on_done: true,
+                confirm: column.confirm,
+                btnClass: column.in_dropdown
+                  ? "dropdown-item"
+                  : column.action_style || "btn-primary",
+                req,
+              });
+          },
+        };
+        if (column.in_dropdown) {
+          dropdown_actions.push(action_col);
+          return false;
+        } else return action_col;
+      } else if (column.type === "ViewLink") {
+        if (!column.view) return;
+        const r = view_linker(column, fields, __);
+        if (column.header_label) r.label = text(__(column.header_label));
+        Object.assign(r, setWidth);
+        if (column.in_dropdown) {
+          dropdown_actions.push(r);
+          return false;
+        } else return r;
+      } else if (column.type === "Link") {
+        const r = make_link(column, fields, __);
+        if (column.header_label) r.label = text(__(column.header_label));
+        Object.assign(r, setWidth);
+        if (column.in_dropdown) {
+          dropdown_actions.push(r);
+          return false;
+        } else return r;
+      } else if (column.type === "JoinField") {
+        //console.log(column);
+        let refNm, targetNm, through, key, type;
+        if (column.join_field.includes("->")) {
+          const [relation, target] = column.join_field.split("->");
+          const [ontable, ref] = relation.split(".");
+          targetNm = target;
+          refNm = ref;
+          key = `${ref}_${ontable}_${target}`;
+        } else {
+          const keypath = column.join_field.split(".");
+          refNm = keypath[0];
+          targetNm = keypath[keypath.length - 1];
+          key = keypath.join("_");
+        }
+        if (column.field_type) type = getState().types[column.field_type];
+        if (
+          column.join_fieldview &&
+          type?.fieldviews?.[column.join_fieldview]?.expandColumns
+        ) {
+          const reffield = fields.find((f) => f.name === refNm);
+          const reftable = Table.findOne({
+            name: reffield.reftable_name,
+          });
+          const field = reftable.fields.find((f) => f.name === targetNm);
+          return type.fieldviews[column.join_fieldview].expandColumns(
+            field,
+            {
+              ...field.attributes,
+              ...column,
             },
-          };
-        else if (column.type === "ViewLink") {
-          if (!column.view) return;
-          const r = view_linker(column, fields, __);
-          if (column.header_label) r.label = text(__(column.header_label));
-          Object.assign(r, setWidth);
-          return r;
-        } else if (column.type === "Link") {
-          const r = make_link(column, fields, __);
-          if (column.header_label) r.label = text(__(column.header_label));
-          Object.assign(r, setWidth);
-          return r;
-        } else if (column.type === "JoinField") {
-          //console.log(column);
-          let refNm, targetNm, through, key, type;
-          if (column.join_field.includes("->")) {
-            const [relation, target] = column.join_field.split("->");
-            const [ontable, ref] = relation.split(".");
-            targetNm = target;
-            refNm = ref;
-            key = `${ref}_${ontable}_${target}`;
-          } else {
-            const keypath = column.join_field.split(".");
-            if (keypath.length === 2) {
-              [refNm, targetNm] = keypath;
-              key = `${refNm}_${targetNm}`;
-            } else {
-              [refNm, through, targetNm] = keypath;
-              key = `${refNm}_${through}_${targetNm}`;
-            }
-          }
-          if (column.field_type) type = getState().types[column.field_type];
-          return {
-            ...setWidth,
-            label: column.header_label
-              ? text(__(column.header_label))
-              : text(targetNm),
-            key:
-              column.join_fieldview &&
-              type &&
-              type.fieldviews &&
-              type.fieldviews[column.join_fieldview]
-                ? (row) =>
-                    type.fieldviews[column.join_fieldview].run(
-                      row[key],
-                      req,
-                      column
-                    )
-                : (row) => text(row[key]),
-            // sortlink: `javascript:sortby('${text(targetNm)}')`
-          };
-        } else if (column.type === "Aggregation") {
-          const [table, fld] = column.agg_relation.split(".");
-          const targetNm = (
-            column.stat.replace(" ", "") +
-            "_" +
-            table +
-            "_" +
-            fld +
-            db.sqlsanitize(column.aggwhere || "")
-          ).toLowerCase();
-
-          return {
-            ...setWidth,
-            label: column.header_label
-              ? text(column.header_label)
-              : text(column.stat + " " + table),
-            key: targetNm,
-            // sortlink: `javascript:sortby('${text(targetNm)}')`
-          };
-        } else if (column.type === "Field") {
-          //console.log(column);
-          let f = fields.find((fld) => fld.name === column.field_name);
-          let f_with_val = f;
-          if (f && f.attributes && f.attributes.localized_by) {
-            const locale = req.getLocale();
-            const localized_fld_nm = f.attributes.localized_by[locale];
-            f_with_val =
-              fields.find((fld) => fld.name === localized_fld_nm) || f;
-          }
-          const isNum = f && f.type && f.type.name === "Integer";
-          return (
-            f && {
-              ...setWidth,
-              align: isNum ? "right" : undefined,
-              label: headerLabelForName(column, f, req, __),
-              key:
-                column.fieldview && f.type === "File"
-                  ? (row) =>
-                      row[f.name] &&
-                      getState().fileviews[column.fieldview].run(
-                        row[f.name],
-                        row[`${f.name}__filename`]
-                      )
-                  : column.fieldview &&
-                    f.type.fieldviews &&
-                    f.type.fieldviews[column.fieldview]
-                  ? (row) =>
-                      f.type.fieldviews[column.fieldview].run(
-                        row[f_with_val.name],
-                        req,
-                        { ...f.attributes, ...column.configuration }
-                      )
-                  : isShow
-                  ? f.type.showAs
-                    ? (row) => f.type.showAs(row[f_with_val.name])
-                    : (row) => text(row[f_with_val.name])
-                  : f.listKey,
-              sortlink:
-                !f.calculated || f.stored
-                  ? sortlinkForName(f.name, req)
-                  : undefined,
-            }
+            column
           );
         }
-      })
-      .filter((v) => !!v)
-);
 
+        return {
+          ...setWidth,
+          label: column.header_label
+            ? text(__(column.header_label))
+            : text(targetNm),
+          row_key: key,
+          key:
+            column.join_fieldview &&
+            type &&
+            type.fieldviews &&
+            type.fieldviews[column.join_fieldview]
+              ? (row) =>
+                  type.fieldviews[column.join_fieldview].run(
+                    row[key],
+                    req,
+                    column
+                  )
+              : (row) => text(row[key]),
+          // sortlink: `javascript:sortby('${text(targetNm)}')`
+        };
+      } else if (column.type === "Aggregation") {
+        const [table, fld] = column.agg_relation.split(".");
+        const targetNm = (
+          column.stat.replace(" ", "") +
+          "_" +
+          table +
+          "_" +
+          fld +
+          db.sqlsanitize(column.aggwhere || "")
+        ).toLowerCase();
+
+        return {
+          ...setWidth,
+          label: column.header_label
+            ? text(column.header_label)
+            : text(column.stat + " " + table),
+          key: targetNm,
+          // sortlink: `javascript:sortby('${text(targetNm)}')`
+        };
+      } else if (column.type === "Field") {
+        //console.log(column);
+        let f = fields.find((fld) => fld.name === column.field_name);
+        let f_with_val = f;
+        if (f && f.attributes && f.attributes.localized_by) {
+          const locale = req.getLocale();
+          const localized_fld_nm = f.attributes.localized_by[locale];
+          f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
+        }
+        const isNum = f && f.type && f.type.name === "Integer";
+        if (
+          column.fieldview &&
+          f.type?.fieldviews?.[column.fieldview]?.expandColumns
+        ) {
+          return f.type.fieldviews[column.fieldview].expandColumns(
+            f,
+            {
+              ...f.attributes,
+              ...column.configuration,
+            },
+            column
+          );
+        }
+
+        return (
+          f && {
+            ...setWidth,
+            align: isNum ? "right" : undefined,
+            label: headerLabelForName(column, f, req, __),
+            row_key: f_with_val.name,
+            key:
+              column.fieldview && f.type === "File"
+                ? (row) =>
+                    row[f.name] &&
+                    getState().fileviews[column.fieldview].run(
+                      row[f.name],
+                      row[`${f.name}__filename`]
+                    )
+                : column.fieldview &&
+                  f.type.fieldviews &&
+                  f.type.fieldviews[column.fieldview]
+                ? (row) =>
+                    f.type.fieldviews[column.fieldview].run(
+                      row[f_with_val.name],
+                      req,
+                      { ...f.attributes, ...column.configuration }
+                    )
+                : isShow
+                ? f.type.showAs
+                  ? (row) => f.type.showAs(row[f_with_val.name])
+                  : (row) => text(row[f_with_val.name])
+                : f.listKey,
+            sortlink:
+              !f.calculated || f.stored
+                ? sortlinkForName(f.name, req)
+                : undefined,
+          }
+        );
+      }
+    }).filter((v) => !!v);
+    if (dropdown_actions.length > 0) {
+      tfields.push({
+        label: "Action",
+        key: (r) =>
+          div(
+            { class: "dropdown" },
+            button(
+              {
+                class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+                "data-boundary": "viewport",
+                type: "button",
+                id: `actiondd${r.id}`,
+                "data-bs-toggle": "dropdown",
+                "aria-haspopup": "true",
+                "aria-expanded": "false",
+              },
+              "Action"
+            ),
+            div(
+              {
+                class: "dropdown-menu dropdown-menu-end",
+                "aria-labelledby": `actiondd${r.id}`,
+              },
+              dropdown_actions.map((acol) => acol.key(r))
+            )
+          ),
+      });
+    }
+    return tfields;
+  }
+);
 /**
  * @param {string} fname
  * @param {object} req
@@ -667,6 +769,11 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
           if (f.calculated)
             f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
           f.attributes = { ...column.configuration, ...f.attributes };
+          if (
+            typeof column.block !== "undefined" &&
+            typeof f.attributes.block === "undefined"
+          )
+            f.attributes.block = column.block;
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({

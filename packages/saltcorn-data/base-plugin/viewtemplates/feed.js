@@ -378,7 +378,7 @@ const run = async (
     }
   }
   const create_link_div = isright
-    ? div({ class: "float-right" }, create_link)
+    ? div({ class: "float-end" }, create_link)
     : create_link;
 
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;

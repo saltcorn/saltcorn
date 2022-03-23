@@ -259,8 +259,8 @@ router.get(
       });
     }
     jsfields.push({
-      formatter: "buttonCross",
-      title: i({ class: "far fa-trash-alt" }),
+      formatter: "__deleteIcon",
+      title: "",
       width: 40,
       hozAlign: "center",
       headerSort: false,
@@ -306,7 +306,8 @@ router.get(
               { href: `/table/${table.id || table.name}`, text: table.name },
               { text: req.__("Data") },
             ],
-            right:
+            right: div(
+              { class: "d-flex" },
               button(
                 {
                   class: "btn btn-sm btn-primary me-2",
@@ -314,9 +315,9 @@ router.get(
                 },
                 i({ class: "fas fa-plus me-1" }),
                 "Add row"
-              ) +
+              ),
               div(
-                { class: "dropdown d-inline" },
+                { class: "dropdown" },
                 button(
                   {
                     class: "btn btn-sm btn-outline-secondary dropdown-toggle",
@@ -331,7 +332,7 @@ router.get(
                 ),
                 div(
                   {
-                    class: "dropdown-menu",
+                    class: "dropdown-menu dropdown-menu-end",
                     "aria-labelledby": "btnHideCols",
                   },
                   form(
@@ -350,7 +351,8 @@ router.get(
                     )
                   )
                 )
-              ),
+              )
+            ),
           },
           {
             type: "blank",

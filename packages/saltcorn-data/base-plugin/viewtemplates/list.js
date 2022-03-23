@@ -128,6 +128,7 @@ const configuration_workflow = (req) =>
             fields: [
               new FieldRepeat({
                 name: "columns",
+                fancyMenuEditor: true,
                 fields: field_picker_repeat,
               }),
               ...(create_view_opts.length > 0
@@ -290,6 +291,14 @@ const configuration_workflow = (req) =>
             sublabel: req.__("Do not display the header"),
             type: "Bool",
           });
+          formfields.push({
+            name: "hide_null_columns",
+            label: req.__("Hide null columns"),
+            sublabel: req.__(
+              "Do not display a column if it contains entirely missing values"
+            ),
+            type: "Bool",
+          });
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -439,8 +448,8 @@ const run = async (
     extraOpts && extraOpts.req && extraOpts.req.user
       ? extraOpts.req.user.role_id
       : 10;
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
   await set_join_fieldviews({ columns, fields });
+  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
 
   const tfields = get_viewable_fields(
     viewname,
@@ -544,13 +553,32 @@ const run = async (
   }
 
   const create_link_div = isright
-    ? div({ class: "float-right" }, create_link)
+    ? div({ class: "float-end" }, create_link)
     : create_link;
 
-  const tableHtml = mkTable(tfields, rows, page_opts);
+  const tableHtml = mkTable(
+    default_state?.hide_null_columns
+      ? remove_null_cols(tfields, rows)
+      : tfields,
+    rows,
+    page_opts
+  );
 
   return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
+const remove_null_cols = (tfields, rows) =>
+  tfields.filter((tfield) => {
+    const key = tfield.row_key || tfield.key;
+    if (!(typeof key === "string" || Array.isArray(key))) return true; //unable to tell if should be removed
+    const is_not_null_simple = (row) =>
+      row[key] !== null && typeof row[key] !== "undefined";
+    const is_not_null_array = (row) =>
+      row[key[0]] !== null &&
+      typeof row[key[0]] !== "undefined" &&
+      typeof row[key[0]][key[1]] !== "undefined";
+    if (Array.isArray(key)) return rows.some(is_not_null_array);
+    else return rows.some(is_not_null_simple);
+  });
 
 /**
  * @param {number} table_id

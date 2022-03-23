@@ -252,11 +252,17 @@ describe("free variables", () => {
   it("record double access", () => {
     expect([...freeVariables("x.k.y")]).toEqual(["x.k.y"]);
   });
+  it("record triple access", () => {
+    expect([...freeVariables("1+x.k.y.z")]).toEqual(["x.k.y.z"]);
+  });
   it("record single and double access", () => {
     expect([...freeVariables("x.k.y+x.z")]).toEqual(["x.k.y", "x.z"]);
   });
   it("record double access with function", () => {
     expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
+  });
+  it("chain record access", () => {
+    expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
   });
 });
 describe("jsexprToWhere", () => {

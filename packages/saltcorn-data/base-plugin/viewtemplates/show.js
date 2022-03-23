@@ -23,7 +23,15 @@ const {
   translateLayout,
 } = require("../../models/layout");
 
-const { div, text, span, a, text_attr, i } = require("@saltcorn/markup/tags");
+const {
+  div,
+  text,
+  span,
+  a,
+  text_attr,
+  i,
+  button,
+} = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
 const {
@@ -130,16 +138,15 @@ const configuration_workflow = (req) =>
             context.viewname
           );
           const roles = await User.get_roles();
-          const { parent_field_list } = await table.get_parent_relations(true);
-          const {
-            child_field_list,
-            child_relations,
-          } = await table.get_child_relations();
+          const { parent_field_list } = await table.get_parent_relations(
+            true,
+            true
+          );
+          const { child_field_list, child_relations } =
+            await table.get_child_relations();
           var agg_field_opts = {};
           child_relations.forEach(({ table, key_field }) => {
-            agg_field_opts[
-              `${table.name}.${key_field.name}`
-            ] = table.fields
+            agg_field_opts[`${table.name}.${key_field.name}`] = table.fields
               .filter((f) => !f.calculated || f.stored)
               .map((f) => f.name);
           });
@@ -314,14 +321,19 @@ const set_join_fieldviews = async ({ layout, fields }) => {
       const { join_field, fieldview } = segment;
       if (!fieldview) return;
       const keypath = join_field.split(".");
-      if (keypath.length === 2) {
-        const [refNm, targetNm] = keypath;
-        const ref = fields.find((f) => f.name === refNm);
-        if (!ref) return;
-        const table = await Table.findOne({ name: ref.reftable_name });
-        if (!table) return;
-        const reffields = await table.getFields();
-        const field = reffields.find((f) => f.name === targetNm);
+      if (keypath.length > 1) {
+        //const [refNm, through, targetNm] = keypath;
+        let oldFields = fields;
+        let field;
+        for (const refNm of keypath) {
+          field = oldFields.find((f) => f.name === refNm);
+          if (!field) break;
+          if (field.is_fkey) {
+            const reftable = Table.findOne({ name: field.reftable_name });
+            if (!reftable) break;
+            oldFields = reftable.fields;
+          } else break;
+        }
         if (field && field.type === "File") segment.field_type = "File";
         else if (
           field &&
@@ -331,8 +343,6 @@ const set_join_fieldviews = async ({ layout, fields }) => {
           field.type.fieldviews[fieldview]
         )
           segment.field_type = field.type.name;
-      } else {
-        //const [refNm, through, targetNm] = keypath;
       }
     },
   });
@@ -407,7 +417,11 @@ const renderRows = async (
             break;
           case "ChildList":
           case "OneToOneShow":
-            state = { [view.view_select.field_name]: row[pk_name] };
+            state = {
+              [view.view_select.through
+                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.field_name}`
+                : view.view_select.field_name]: row[pk_name],
+            };
             break;
           case "ParentShow":
             //todo set by pk name of parent tablr
@@ -602,12 +616,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const [relation, target] = join_field.split("->");
         const [ontable, ref] = relation.split(".");
         value = row[`${ref}_${ontable}_${target}`];
-      } else if (keypath.length === 2) {
-        const [refNm, targetNm] = keypath;
-        value = row[`${refNm}_${targetNm}`];
       } else {
-        const [refNm, through, targetNm] = keypath;
-        value = row[`${refNm}_${through}_${targetNm}`];
+        value = row[join_field.split(".").join("_")];
       }
       if (field_type === "File") {
         return value ? getState().fileviews[fieldview].run(value, "") : "";
@@ -640,6 +650,17 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
     view_link(view) {
       const { key } = view_linker(view, fields);
       return key(row);
+    },
+    tabs(segment, go) {
+      if (segment.tabsStyle !== "Value switch") return false;
+      const value = row[segment.field];
+      const ix = segment.titles.findIndex((t) =>
+        typeof t.value === "undefined"
+          ? `${t}` === `${value}`
+          : value === t.value
+      );
+      if (ix === -1) return "";
+      return go(segment.contents[ix]);
     },
   };
   return renderLayout({

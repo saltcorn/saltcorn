@@ -111,6 +111,51 @@ function accessAllowed(req, user, trigger) {
   return role <= trigger.min_role;
 }
 
+router.get(
+  "/:tableName/distinct/:fieldName",
+  //passport.authenticate("api-bearer", { session: false }),
+  error_catcher(async (req, res, next) => {
+    let { tableName, fieldName } = req.params;
+    const table = await Table.findOne(
+      strictParseInt(tableName)
+        ? { id: strictParseInt(tableName) }
+        : { name: tableName }
+    );
+    if (!table) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user, table)) {
+          const field = (await table.getFields()).find(
+            (f) => f.name === fieldName
+          );
+          if (!field) {
+            res.status(404).json({ error: req.__("Not found") });
+            return;
+          }
+          let dvs;
+          if (
+            field.is_fkey ||
+            (field.type.name === "String" && field.attributes?.options)
+          ) {
+            dvs = await field.distinct_values();
+          } else {
+            dvs = await table.distinctValues(fieldName);
+          }
+          res.json({ success: dvs });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 /**
  * Select Table rows using GET
  * @name get/:tableName/

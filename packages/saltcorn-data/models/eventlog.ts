@@ -65,8 +65,11 @@ class EventLog {
    * @returns {Promise<EventLog>}
    */
   static async findOneWithUser(id: number): Promise<EventLog> {
-    const { rows } = await db.query(
-      "select el.*, u.email from _sc_event_log el left join users u on el.user_id = u.id where el.id = $1",
+    const schema = db.getTenantSchemaPrefix();
+    const {
+      rows,
+    } = await db.query(
+      `select el.*, u.email from ${schema}_sc_event_log el left join ${schema}users u on el.user_id = u.id where el.id = $1`,
       [id]
     );
     const u = rows[0];

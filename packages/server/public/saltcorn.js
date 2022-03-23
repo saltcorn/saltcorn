@@ -8,6 +8,20 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
+//avoids hiding in overflow:hidden
+function init_bs5_dropdowns() {
+  $("body").on(
+    "show.bs.dropdown",
+    "table [data-bs-toggle=dropdown]",
+    function () {
+      let target;
+      if (!$("#page-inner-content").length) target = $("body");
+      else target = $("#page-inner-content");
+      let dropdown = bootstrap.Dropdown.getInstance(this);
+      $(dropdown._menu).insertAfter(target);
+    }
+  );
+}
 function sortby(k, desc) {
   set_state_fields({ _sortby: k, _sortdesc: desc ? "on" : { unset: true } });
 }
@@ -98,6 +112,8 @@ function get_form_record(e, select_labels) {
     .each(function () {
       if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
         rec[$(this).attr("name")] = $(this).find("option:selected").text();
+      else if ($(this).prop("type") === "checkbox")
+        rec[$(this).attr("name")] = $(this).prop("checked");
       else rec[$(this).attr("name")] = $(this).val();
     });
   return rec;
@@ -292,7 +308,8 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  $('a[data-bs-toggle="tab"]').historyTabs();
+  $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+  init_bs5_dropdowns();
 }
 
 $(initialize_page);
@@ -423,7 +440,7 @@ function tristateClick(nm) {
   }
 }
 
-function notifyAlert(note) {
+function notifyAlert(note, spin) {
   if (Array.isArray(note)) {
     note.forEach(notifyAlert);
     return;
@@ -438,10 +455,16 @@ function notifyAlert(note) {
   }
 
   $("#alerts-area")
-    .append(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+    .append(`<div class="alert alert-${type} alert-dismissible fade show ${
+    spin ? "d-flex align-items-center" : ""
+  }" role="alert">
   ${txt}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-  </button>
+  ${
+    spin
+      ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
+      : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+  </button>`
+  }
 </div>`);
 }
 
@@ -505,7 +528,8 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function press_store_button(clicked) {
-  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>');
+  const width = $(clicked).width();
+  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
 }
 
 function ajax_modal(url, opts = {}) {
@@ -751,15 +775,57 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
-function fill_formula_btn_click(btn) {
+async function fill_formula_btn_click(btn, k) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
+  const free_vars = JSON.parse(
+    decodeURIComponent($(btn).attr("data-formula-free-vars"))
+  );
+  const table = JSON.parse(
+    decodeURIComponent($(btn).attr("data-formula-table"))
+  );
   const rec = get_form_record($(btn), true);
+  const rec_ids = get_form_record($(btn));
+
+  for (const fv of free_vars) {
+    if (fv.includes(".")) {
+      const kpath = fv.split(".");
+      const [refNm, targetNm] = kpath;
+      const reffield = table.fields.find((f) => f.name === refNm);
+      if (reffield && reffield.reftable_name) {
+        const resp = await $.ajax(
+          `/api/${reffield.reftable_name}?id=${rec_ids[refNm]}`
+        );
+        rec[refNm] = resp.success[0];
+      }
+    }
+  }
   const val = new Function(
     `{${Object.keys(rec).join(",")}}`,
     "return " + formula
   )(rec);
   $(btn).closest(".input-group").find("input").val(val);
+  if (k) k();
 }
+
+const columnSummary = (col) => {
+  if (!col) return "Unknown";
+  switch (col.type) {
+    case "Field":
+      return `Field ${col.field_name} ${col.fieldview}`;
+    case "Link":
+      return `Link ${col.link_text}`;
+    case "JoinField":
+      return `Join ${col.join_field}`;
+    case "ViewLink":
+      return `View ${col.view_label || col.view.split(":")[1] || ""}`;
+    case "Action":
+      return `Action ${col.action_label || col.action_name}`;
+    case "Aggregation":
+      return `${col.stat} ${col.agg_field} ${col.agg_relation}`;
+    default:
+      return "Unknown";
+  }
+};
 
 /*
 https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js

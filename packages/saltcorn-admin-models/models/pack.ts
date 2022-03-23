@@ -66,8 +66,8 @@ const view_pack = async (name: string): Promise<ViewPack> => {
   const view = await View.findOne({ name });
   if (!view) throw new Error(`Unable to find view '${name}'`);
   const table = await Table.findOne({ id: view.table_id });
-  if (!table)
-    throw new Error(`Unable to find table with id '${view.table_id}'`);
+  //if (!table)
+  //  throw new Error(`Unable to find table with id '${view.table_id}'`);
   return {
     name: view.name,
     viewtemplate: view.viewtemplate,

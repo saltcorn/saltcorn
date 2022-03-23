@@ -14,7 +14,7 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, restart_tenant } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -52,6 +52,7 @@ const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
 const { sleep } = require("@saltcorn/data/utils");
+const { loadAllPlugins } = require("../load_plugins");
 
 /**
  * @type {object}
@@ -435,7 +436,7 @@ const store_actions_dropdown = (req) =>
     ),
     div(
       {
-        class: "dropdown-menu dropdown-menu-right",
+        class: "dropdown-menu dropdown-menu-end",
         "aria-labelledby": "dropdownMenuButton",
       },
       a(
@@ -450,6 +451,7 @@ const store_actions_dropdown = (req) =>
           {
             class: "dropdown-item",
             href: `/plugins/upgrade`,
+            onClick: `notifyAlert('Upgrading plugins...', true)`,
           },
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed plugins")
@@ -646,7 +648,10 @@ router.get(
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
     const filepath = req.params[0];
-    const location = getState().plugin_locations[plugin];
+    const location =
+      getState().plugin_locations[
+        plugin.includes("@") ? plugin.split("@")[0] : plugin
+      ];
     if (location) {
       const safeFile = path
         .normalize(filepath)
@@ -838,7 +843,9 @@ router.get(
       await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     }
     req.flash("success", req.__(`Plugins up-to-date`));
-
+    await restart_tenant(loadAllPlugins);
+    process.send &&
+      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
     res.redirect(`/plugins`);
   })
 );

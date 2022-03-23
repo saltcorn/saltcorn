@@ -265,7 +265,7 @@ const packTab = (req, packlist) =>
     { class: "pb-3 pt-2 pe-4" },
     p(req.__("Instead of building, get up and running in no time with packs")),
     p(
-      { class: "font-italic" },
+      { class: "fst-italic" },
       req.__(
         "Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs."
       )

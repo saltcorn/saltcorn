@@ -10,7 +10,6 @@ const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const { isAdmin, setTenant, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
-const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");

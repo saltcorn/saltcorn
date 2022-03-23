@@ -181,6 +181,7 @@ const fieldFlow = (req) =>
       var attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
+      attributes.on_delete_cascade = context.on_delete_cascade;
       const {
         table_id,
         name,
@@ -376,6 +377,14 @@ const fieldFlow = (req) =>
                 label: req.__("Summary field"),
                 input_type: "select",
                 options: keyfields,
+              }),
+              new Field({
+                name: "on_delete_cascade",
+                label: req.__("On delete cascade"),
+                type: "Bool",
+                sublabel: req.__(
+                  "If the parent row is deleted, automatically delete the child rows."
+                ),
               }),
             ],
           });
@@ -631,14 +640,19 @@ router.post(
     if (fieldName.includes(".")) {
       //join field
       const kpath = fieldName.split(".");
-
       if (kpath.length === 2 && row[kpath[0]]) {
         const field = fields.find((f) => f.name === kpath[0]);
         const reftable = await Table.findOne({ name: field.reftable_name });
         const targetField = (await reftable.getFields()).find(
           (f) => f.name === kpath[1]
         );
-        const fv = targetField.type.fieldviews[fieldview];
+        //console.log({ kpath, fieldview, targetField });
+        let fv = targetField.type.fieldviews[fieldview];
+        if (!fv) {
+          fv =
+            targetField.type.fieldviews.show ||
+            targetField.type.fieldviews.as_text;
+        }
         const q = { [reftable.pk_name]: row[kpath[0]] };
         const refRow = await reftable.getRow(q);
         const configuration = req.query;
@@ -648,6 +662,25 @@ router.post(
         readState(configuration, configFields);
         res.send(fv.run(refRow[kpath[1]], req, configuration));
         return;
+      } else if (row[kpath[0]]) {
+        let oldTable = table;
+        let oldRow = row;
+        for (const ref of kpath) {
+          const ofields = await oldTable.getFields();
+          const field = ofields.find((f) => f.name === ref);
+          if (field.is_fkey) {
+            const reftable = await Table.findOne({ name: field.reftable_name });
+            if (!oldRow[ref]) break;
+            const q = { [reftable.pk_name]: oldRow[ref] };
+            oldRow = await reftable.getRow(q);
+            oldTable = reftable;
+          }
+        }
+        if (oldRow) {
+          const value = oldRow[kpath[kpath.length - 1]];
+          res.send(value);
+          return;
+        }
       }
       res.send("");
       return;

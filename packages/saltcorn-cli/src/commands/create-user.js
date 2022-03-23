@@ -17,12 +17,18 @@ class CreateUserCommand extends Command {
    */
   async run() {
     const User = require("@saltcorn/data/models/user");
+
     const { flags } = this.parse(CreateUserCommand);
     if (flags.admin && flags.role && flags.role !== "admin") {
       console.error("Error: specify at most one of admin and role");
       this.exit(1);
     }
-
+    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+    const { init_multi_tenant } = require("@saltcorn/data/db/state");
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+    await loadAllPlugins();
+    const tenants = await getAllTenants();
+    await init_multi_tenant(loadAllPlugins, undefined, tenants);
     await maybe_as_tenant(flags.tenant, async () => {
       let role_id = flags.admin ? 1 : 8;
       if (flags.role) {

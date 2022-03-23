@@ -224,6 +224,7 @@ const pageBuilderData = async (req, context) => {
     roles,
     fixed_state_fields,
     next_button_label: "Done",
+    fonts: getState().fonts,
   };
 };
 
