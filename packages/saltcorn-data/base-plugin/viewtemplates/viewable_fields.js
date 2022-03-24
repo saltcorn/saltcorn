@@ -170,6 +170,7 @@ const make_link = contract(
       link_url_formula,
       link_target_blank,
       in_dropdown,
+      in_modal,
     },
     fields,
     __ = (s) => s
@@ -193,6 +194,11 @@ const make_link = contract(
         const attrs = { href };
         if (link_target_blank) attrs.target = "_blank";
         if (in_dropdown) attrs.class = "dropdown-item";
+        if (in_modal)
+          return a(
+            { ...attrs, href: `javascript:ajax_modal('${href}');` },
+            txt
+          );
         return a(attrs, txt);
       },
     };

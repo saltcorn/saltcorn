@@ -626,13 +626,7 @@ const field_picker_fields = contract(
         required: false,
         showIf: { type: "ViewLink" },
       },
-      {
-        name: "in_modal",
-        label: __("Open in popup modal?"),
-        type: "Bool",
-        required: false,
-        showIf: { type: "ViewLink" },
-      },
+
       {
         name: "link_style",
         label: __("Link Style"),
@@ -708,6 +702,13 @@ const field_picker_fields = contract(
         type: "Bool",
         required: false,
         showIf: { type: "Link" },
+      },
+      {
+        name: "in_modal",
+        label: __("Open in popup modal?"),
+        type: "Bool",
+        required: false,
+        showIf: { type: ["ViewLink", "Link"] },
       },
       {
         name: "in_dropdown",
