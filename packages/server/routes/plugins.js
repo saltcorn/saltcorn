@@ -961,6 +961,15 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (!isRoot && plugin.unsafe) {
+      req.flash(
+        "error",
+        req.__("Cannot install unsafe plugins on subdomain tenants")
+      );
+      res.redirect(`/plugins`);
+      return;
+    }
     delete plugin.id;
     await load_plugins.loadAndSaveNewPlugin(plugin);
     const plugin_module = getState().plugins[name];
