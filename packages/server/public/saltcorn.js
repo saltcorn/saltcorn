@@ -329,17 +329,36 @@ function enable_codemirror(f) {
 }
 
 //https://stackoverflow.com/a/6021027
-function updateQueryStringParameter(uri, key, value) {
+function updateQueryStringParameter(uri1, key, value) {
+  let hash = "";
+  let uri = uri1;
+  if (uri && uri.includes("#")) {
+    let uris = uri1.split("#");
+    hash = "#" + uris[1];
+    uri = uris[0];
+  }
+
   var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
-    return uri.replace(re, "$1" + key + "=" + encodeURIComponent(value) + "$2");
+    return (
+      uri.replace(re, "$1" + key + "=" + encodeURIComponent(value) + "$2") +
+      hash
+    );
   } else {
-    return uri + separator + key + "=" + encodeURIComponent(value);
+    return uri + separator + key + "=" + encodeURIComponent(value) + hash;
   }
 }
 
-function removeQueryStringParameter(uri, key) {
+function removeQueryStringParameter(uri1, key) {
+  let hash = "";
+  let uri = uri1;
+  if (uri && uri.includes("#")) {
+    let uris = uri1.split("#");
+    hash = "#" + uris[1];
+    uri = uris[0];
+  }
+
   var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
@@ -347,7 +366,7 @@ function removeQueryStringParameter(uri, key) {
   }
   if (uri[uri.length - 1] === "?" || uri[uri.length - 1] === "&")
     uri = uri.substring(0, uri.length - 1);
-  return uri;
+  return uri + hash;
 }
 
 function select_id(id) {
