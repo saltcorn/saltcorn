@@ -11,6 +11,7 @@ export type PluginCfg = {
   description?: string;
   has_theme?: boolean;
   has_auth?: boolean;
+  unsafe?: boolean;
   deploy_private_key?: string;
 };
 
