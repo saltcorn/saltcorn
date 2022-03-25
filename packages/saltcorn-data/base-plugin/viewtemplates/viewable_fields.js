@@ -170,6 +170,7 @@ const make_link = contract(
       link_url_formula,
       link_target_blank,
       in_dropdown,
+      in_modal,
     },
     fields,
     __ = (s) => s
@@ -193,6 +194,11 @@ const make_link = contract(
         const attrs = { href };
         if (link_target_blank) attrs.target = "_blank";
         if (in_dropdown) attrs.class = "dropdown-item";
+        if (in_modal)
+          return a(
+            { ...attrs, href: `javascript:ajax_modal('${href}');` },
+            txt
+          );
         return a(attrs, txt);
       },
     };
@@ -266,6 +272,7 @@ const view_linker = contract(
       link_bordercol,
       link_textcol,
       in_dropdown,
+      extra_state_fml,
     },
     fields,
     __ = (s) => s
@@ -274,6 +281,13 @@ const view_linker = contract(
       if (!view_label || view_label.length === 0) return def;
       if (!view_label_formula) return view_label;
       return eval_expression(view_label, row);
+    };
+    const get_extra_state = (row) => {
+      if (!extra_state_fml) return "";
+      const o = eval_expression(extra_state_fml, row);
+      return Object.entries(o)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&");
     };
     const [vtype, vrest] = view.split(":");
     switch (vtype) {
@@ -295,7 +309,8 @@ const view_linker = contract(
               link_bgcol,
               link_bordercol,
               link_textcol,
-              in_dropdown && "dropdown-item"
+              in_dropdown && "dropdown-item",
+              get_extra_state(r)
             ),
         };
       case "Independent":
@@ -314,7 +329,8 @@ const view_linker = contract(
               link_bgcol,
               link_bordercol,
               link_textcol,
-              in_dropdown && "dropdown-item"
+              in_dropdown && "dropdown-item",
+              get_extra_state(r)
             ),
         };
       case "ChildList":
@@ -335,7 +351,8 @@ const view_linker = contract(
               link_bgcol,
               link_bordercol,
               link_textcol,
-              in_dropdown && "dropdown-item"
+              in_dropdown && "dropdown-item",
+              get_extra_state(r)
             ),
         };
       case "ParentShow":
@@ -365,7 +382,8 @@ const view_linker = contract(
                   link_bgcol,
                   link_bordercol,
                   link_textcol,
-                  in_dropdown && "dropdown-item"
+                  in_dropdown && "dropdown-item",
+                  get_extra_state(r)
                 )
               : "";
           },
