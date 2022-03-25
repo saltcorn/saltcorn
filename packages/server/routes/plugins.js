@@ -149,6 +149,7 @@ const local_has_theme = (name) => {
  */
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
@@ -156,15 +157,18 @@ const get_store_items = async () => {
   const schema = db.getTenantSchema();
   const installed_plugin_names = installed_plugins.map((p) => p.name);
   const store_plugin_names = instore.map((p) => p.name);
-  const plugins_item = instore.map((plugin) => ({
-    name: plugin.name,
-    installed: installed_plugin_names.includes(plugin.name),
-    plugin: true,
-    description: plugin.description,
-    documentation_link: plugin.documentation_link,
-    has_theme: plugin.has_theme,
-    has_auth: plugin.has_auth,
-  }));
+  const plugins_item = instore
+    .map((plugin) => ({
+      name: plugin.name,
+      installed: installed_plugin_names.includes(plugin.name),
+      plugin: true,
+      description: plugin.description,
+      documentation_link: plugin.documentation_link,
+      has_theme: plugin.has_theme,
+      has_auth: plugin.has_auth,
+      unsafe: plugin.unsafe,
+    }))
+    .filter((p) => !p.unsafe || isRoot);
   const local_logins = installed_plugins
     .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
