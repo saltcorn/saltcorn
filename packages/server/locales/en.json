@@ -883,5 +883,7 @@
 	"Configuration errors": "Configuration errors",
 	"Configuration checks passed": "Configuration checks passed",
 	"On delete cascade": "On delete cascade",
-	"If the parent row is deleted, automatically delete the child rows.": "If the parent row is deleted, automatically delete the child rows."
+	"If the parent row is deleted, automatically delete the child rows.": "If the parent row is deleted, automatically delete the child rows.",
+	"Extra state Formula": "Extra state Formula",
+	"Cannot install unsafe plugins on subdomain tenants": "Cannot install unsafe plugins on subdomain tenants"
 }

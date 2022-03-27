@@ -147,11 +147,22 @@ describe("mkWhere", () => {
     });
     expect(
       mkWhere({
+        _fts: {
+          fields: [fld("name"), fld("description")],
+          searchTerm: "foo bar",
+        },
+      })
+    ).toStrictEqual({
+      values: ["foo bar"],
+      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ plainto_tsquery('english', $1)`,
+    });
+    expect(
+      mkWhere({
         _fts: { fields: [fld("name"), fld("description")], searchTerm: "foo" },
       })
     ).toStrictEqual({
-      values: ["foo"],
-      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ plainto_tsquery('english', $1)`,
+      values: ["foo:*"],
+      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ to_tsquery('english', $1)`,
     });
     expect(
       mkWhere(

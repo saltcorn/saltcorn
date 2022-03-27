@@ -513,6 +513,7 @@ const available_languages = {
   pt: "Português",
   ar: "العربية",
   it: "Italiano",
+  zh: "中文",
 };
 /**
  * Get Config variable value by key (contract)

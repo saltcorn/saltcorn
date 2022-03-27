@@ -629,10 +629,14 @@ router.post(
  */
 router.post(
   "/show-calculated/:tableName/:fieldName/:fieldview",
-  isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
+    const role = req.user && req.user.id ? req.user.role_id : 10;
+    if (role > table.min_role_read) {
+      res.status(401).send("");
+      return;
+    }
     const fields = await table.getFields();
     const row = { ...req.body };
     readState(row, fields);
@@ -643,6 +647,10 @@ router.post(
       if (kpath.length === 2 && row[kpath[0]]) {
         const field = fields.find((f) => f.name === kpath[0]);
         const reftable = await Table.findOne({ name: field.reftable_name });
+        if (role > reftable.min_role_read) {
+          res.status(401).send("");
+          return;
+        }
         const targetField = (await reftable.getFields()).find(
           (f) => f.name === kpath[1]
         );
@@ -671,6 +679,10 @@ router.post(
           if (field.is_fkey) {
             const reftable = await Table.findOne({ name: field.reftable_name });
             if (!oldRow[ref]) break;
+            if (role > reftable.min_role_read) {
+              res.status(401).send("");
+              return;
+            }
             const q = { [reftable.pk_name]: oldRow[ref] };
             oldRow = await reftable.getRow(q);
             oldTable = reftable;

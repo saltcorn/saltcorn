@@ -36,7 +36,7 @@ const { jsexprToWhere, freeVariables } = require("./models/expression");
  * @returns {button|a}
  */
 const link_view = (
-  url,
+  url0,
   label,
   popup,
   link_style = "",
@@ -46,7 +46,8 @@ const link_view = (
   link_bgcol,
   link_bordercol,
   link_textcol,
-  extraClass
+  extraClass,
+  extraState
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -54,6 +55,11 @@ const link_view = (
           link_bordercol || "#000000"
         }; color: ${link_textcol || "#000000"}`
       : null;
+  let url = url0;
+  if (extraState) {
+    if (url.includes("?")) url = `${url0}&${extraState}`;
+    else url = `${url0}?${extraState}`;
+  }
   if (popup) {
     return button(
       {
@@ -626,13 +632,7 @@ const field_picker_fields = contract(
         required: false,
         showIf: { type: "ViewLink" },
       },
-      {
-        name: "in_modal",
-        label: __("Open in popup modal?"),
-        type: "Bool",
-        required: false,
-        showIf: { type: "ViewLink" },
-      },
+
       {
         name: "link_style",
         label: __("Link Style"),
@@ -675,6 +675,14 @@ const field_picker_fields = contract(
         showIf: { type: "ViewLink" },
       },
       {
+        name: "extra_state_fml",
+        label: __("Extra state Formula"),
+        sublabel:
+          "Formula for JavaScript object that will be added to state parameters",
+        type: "String",
+        showIf: { type: "ViewLink" },
+      },
+      {
         name: "link_text",
         label: __("Link text"),
         type: "String",
@@ -708,6 +716,13 @@ const field_picker_fields = contract(
         type: "Bool",
         required: false,
         showIf: { type: "Link" },
+      },
+      {
+        name: "in_modal",
+        label: __("Open in popup modal?"),
+        type: "Bool",
+        required: false,
+        showIf: { type: ["ViewLink", "Link"] },
       },
       {
         name: "in_dropdown",
