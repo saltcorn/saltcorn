@@ -149,20 +149,20 @@ const ViewSettings = () => {
                 />
               </Fragment>
             )}
-          {state === "shared" && (
-            <Fragment>
-              {" "}
-              <label>Extra state Formula</label>
-              <input
-                type="text"
-                className="viewlink-label form-control"
-                value={extra_state_fml}
-                onChange={(e) =>
-                  setProp((prop) => (prop.extra_state_fml = e.target.value))
-                }
-              />
-            </Fragment>
-          )}
+        </Fragment>
+      )}
+      {(state === "shared" || options.mode === "page") && (
+        <Fragment>
+          {" "}
+          <label>Extra state Formula</label>
+          <input
+            type="text"
+            className="viewlink-label form-control"
+            value={extra_state_fml}
+            onChange={(e) =>
+              setProp((prop) => (prop.extra_state_fml = e.target.value))
+            }
+          />
         </Fragment>
       )}
       {view ? (
