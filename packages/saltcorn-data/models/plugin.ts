@@ -32,6 +32,7 @@ class Plugin {
   description?: string;
   has_theme?: boolean;
   has_auth?: boolean;
+  unsafe?: boolean;
   deploy_private_key?: string;
 
   /**
@@ -48,6 +49,7 @@ class Plugin {
     this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
     this.has_auth = o.has_auth;
+    this.unsafe = o.unsafe;
     this.deploy_private_key = o.deploy_private_key;
     this.configuration = stringToJSON(o.configuration);
   }
