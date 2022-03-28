@@ -387,53 +387,57 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
  * @param {object} [args = {}]
  * @return {function}
  */
-export const fetchFieldPreview = (args = {}) => (changes = {}) => {
-  const { node_id, options, name, fieldview, setPreviews } = {
-    ...args,
-    ...changes,
+export const fetchFieldPreview =
+  (args = {}) =>
+  (changes = {}) => {
+    const { node_id, options, name, fieldview, setPreviews } = {
+      ...args,
+      ...changes,
+    };
+    const configuration = {
+      ...(args.configuration || {}),
+      ...(changes.configuration || {}),
+    };
+    fetchPreview({
+      options,
+      node_id,
+      setPreviews,
+      url: `/field/preview/${options.tableName}/${name}/${fieldview}`,
+      body: { configuration },
+    });
   };
-  const configuration = {
-    ...(args.configuration || {}),
-    ...(changes.configuration || {}),
-  };
-  fetchPreview({
-    options,
-    node_id,
-    setPreviews,
-    url: `/field/preview/${options.tableName}/${name}/${fieldview}`,
-    body: { configuration },
-  });
-};
 
 /**
  * @function
  * @param {object} [args = {}]
  * @return {function}
  */
-export const fetchViewPreview = (args = {}) => (changes = {}) => {
-  const { node_id, options, view, setPreviews, configuration } = {
-    ...args,
-    ...changes,
-  };
-  let viewname,
-    body = configuration ? { ...configuration } : {};
-  if (view.includes(":")) {
-    const [reltype, rest] = view.split(":");
-    const [vnm] = rest.split(".");
-    viewname = vnm;
-    body.reltype = reltype;
-    body.path = rest;
-  } else viewname = view;
+export const fetchViewPreview =
+  (args = {}) =>
+  (changes = {}) => {
+    const { node_id, options, view, setPreviews, configuration } = {
+      ...args,
+      ...changes,
+    };
+    let viewname,
+      body = configuration ? { ...configuration } : {};
+    if (view.includes(":")) {
+      const [reltype, rest] = view.split(":");
+      const [vnm] = rest.split(".");
+      viewname = vnm;
+      body.reltype = reltype;
+      body.path = rest;
+    } else viewname = view;
 
-  fetchPreview({
-    options,
-    node_id,
-    setPreviews,
-    url: `/view/${viewname}/preview`,
-    body,
-    isView: true,
-  });
-};
+    fetchPreview({
+      options,
+      node_id,
+      setPreviews,
+      url: `/view/${viewname}/preview`,
+      body,
+      isView: true,
+    });
+  };
 
 export /**
  * @param {object} props
@@ -650,8 +654,11 @@ const ConfigField = ({
   if (field.input_type === "fromtype") field.input_type = null;
   if (field.type && field.type.name === "String" && field.attributes.options) {
     field.input_type = "select";
-    field.options = field.attributes.options;
-    if (!field.required) field.options.unshift("");
+    field.options =
+      typeof field.attributes.options === "string"
+        ? field.attributes.options.split(",").map((s) => s.trim())
+        : field.attributes.options;
+    if (!field.required && field.options) field.options.unshift("");
   }
   const dispatch = {
     String() {

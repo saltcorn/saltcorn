@@ -79,6 +79,7 @@ const ViewSettings = () => {
     name: node.data.props.name,
     view: node.data.props.view,
     state: node.data.props.state,
+    extra_state_fml: node.data.props.extra_state_fml,
     configuration: node.data.props.configuration, // fixed states
     node_id: node.id,
   }));
@@ -90,6 +91,7 @@ const ViewSettings = () => {
     state,
     node_id,
     configuration,
+    extra_state_fml,
   } = node;
   const options = useContext(optionsCtx);
   const views = options.views;
@@ -147,6 +149,20 @@ const ViewSettings = () => {
                 />
               </Fragment>
             )}
+        </Fragment>
+      )}
+      {(state === "shared" || options.mode === "page") && (
+        <Fragment>
+          {" "}
+          <label>Extra state Formula</label>
+          <input
+            type="text"
+            className="viewlink-label form-control"
+            value={extra_state_fml}
+            onChange={(e) =>
+              setProp((prop) => (prop.extra_state_fml = e.target.value))
+            }
+          />
         </Fragment>
       )}
       {view ? (

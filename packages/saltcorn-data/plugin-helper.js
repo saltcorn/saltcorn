@@ -129,8 +129,10 @@ const calcfldViewOptions = contract(
     const isFilter = mode === "filter";
     let fvs = {};
     const handlesTextStyle = {};
+    const blockDisplay = {};
     fields.forEach((f) => {
       handlesTextStyle[f.name] = [];
+      blockDisplay[f.name] = [];
       if (f.type === "File") {
         if (!isEdit && !isFilter)
           fvs[f.name] = Object.keys(getState().fileviews);
@@ -180,6 +182,7 @@ const calcfldViewOptions = contract(
 
         Object.entries(getState().keyFieldviews).forEach(([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
+          if (v && v.blockDisplay) blockDisplay[f.name].push(k);
         });
       } else if (f.type && f.type.fieldviews) {
         const tfvs = Object.entries(f.type.fieldviews).filter(
@@ -201,11 +204,12 @@ const calcfldViewOptions = contract(
         } else tfvs_ordered = tfvs.filter(([k, fv]) => !fv.isFilter);
         fvs[f.name] = tfvs_ordered.map(([k, fv]) => {
           if (fv && fv.handlesTextStyle) handlesTextStyle[f.name].push(k);
+          if (fv && fv.blockDisplay) blockDisplay[f.name].push(k);
           return k;
         });
       }
     });
-    return { field_view_options: fvs, handlesTextStyle };
+    return { field_view_options: fvs, handlesTextStyle, blockDisplay };
   }
 );
 

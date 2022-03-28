@@ -23,6 +23,7 @@ import type {
   PageCfg,
   PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
+const { eval_expression } = require("./expression");
 
 const { remove_from_menu } = config;
 const {
@@ -213,7 +214,13 @@ class Page {
               : "no view specified")
         );
       } else if (segment.state === "shared") {
-        const mystate = view.combine_state_and_default_state(querystate);
+        const extra_state = segment.extra_state_fml
+          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
+          : {};
+        const mystate = view.combine_state_and_default_state({
+          ...querystate,
+          ...extra_state,
+        });
         segment.contents = await view.run(mystate, extraArgs);
       } else {
         const table = Table.findOne({ id: view.table_id });
