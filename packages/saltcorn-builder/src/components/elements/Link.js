@@ -86,6 +86,7 @@ const LinkSettings = () => {
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
     nofollow: node.data.props.nofollow,
+    in_modal: node.data.props.in_modal,
     link_src: node.data.props.link_src,
     target_blank: node.data.props.target_blank,
     link_style: node.data.props.link_style,
@@ -105,6 +106,7 @@ const LinkSettings = () => {
     nofollow,
     target_blank,
     link_src,
+    in_modal,
   } = node;
   const options = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -247,6 +249,18 @@ const LinkSettings = () => {
         />
         <label className="form-check-label">Open in new tab</label>
       </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={in_modal}
+          onChange={(e) =>
+            setProp((prop) => (prop.in_modal = e.target.checked))
+          }
+        />
+        <label className="form-check-label">Open in popup modal?</label>
+      </div>
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
@@ -285,6 +299,7 @@ Link.craft = {
       "link_bgcol",
       "link_bordercol",
       "link_textcol",
+      "in_modal",
     ],
   },
 };
