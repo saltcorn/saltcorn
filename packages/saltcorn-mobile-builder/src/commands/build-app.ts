@@ -47,6 +47,8 @@ export default class BuildAppCommand extends Command {
   tempPluginDir = join(this.packageRoot, "plugins");
 
   staticPlugins = ["base", "sbadmin2"];
+  // host localhost of the android emulator, only for development,
+  serverPath = "http://10.0.2.2:3000";
 
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
@@ -63,7 +65,7 @@ export default class BuildAppCommand extends Command {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
     }
-    this.buildApk(flags.entryPoint);
+    this.buildApk(flags.entryPoint, this.serverPath);
   }
 
   copyPublics = () => {
@@ -170,7 +172,7 @@ export default class BuildAppCommand extends Command {
     });
   };
 
-  buildApk = (entryPoint: string) => {
+  buildApk = (entryPoint: string, serverPath: string) => {
     const cfgFile = join(this.appDir, "config.xml");
     const xml = readFileSync(cfgFile).toString();
     parseString(xml, (err: any, result: any) => {
@@ -183,7 +185,7 @@ export default class BuildAppCommand extends Command {
         result.widget.content.length === 1 &&
         result.widget.content[0].$
       ) {
-        result.widget.content[0].$.src = `index.html?entry_view=get/view/${entryPoint}`;
+        result.widget.content[0].$.src = `index.html?entry_view=get/view/${entryPoint}&server_path=${serverPath}`;
       } else {
         throw new Error("config.xml is missing a content element");
       }

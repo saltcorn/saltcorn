@@ -114,7 +114,6 @@ function accessAllowed(req, user, trigger) {
 
 router.post(
   "/viewQuery/:viewName/:queryName",
-  //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     let { viewName, queryName } = req.params;
     const view = await View.findOne({ name: viewName });
@@ -122,18 +121,16 @@ router.post(
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
-    const role = req.user && req.user.id ? req.user.role_id : 10;
-
     await passport.authenticate(
-      "api-bearer",
+      "jwt",
       { session: false },
       async function (err, user, info) {
+        const role = user && user.id ? user.role_id : 10;
         if (
           role <= view.min_role ||
           (await view.authorise_get({ req, ...view })) // TODO set query to state
         ) {
-          // TODO authorize view access
-          const queries = view.queries(false);
+          const queries = view.queries(false, req);
           if (queries[queryName]) {
             const { args } = req.body;
             const resp = await queries[queryName](...args);

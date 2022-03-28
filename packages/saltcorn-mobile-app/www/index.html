@@ -7,6 +7,7 @@
     <script src="plugin_sources/jquery.easing.min.js"></script>
     <script src="plugin_sources/sb-admin-2.min.js"></script>
     <script src="https://unpkg.com/universal-router/universal-router.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
     <script src="js/utils.js"></script>
 
@@ -18,6 +19,7 @@
 
     <script type="module">
       import { initRoutes } from "./js/routes/init.js";
+      import { renderLoginForm } from "./js/login_form.js";
 
       const staticPlugins = ["base", "sbadmin2"];
 
@@ -52,12 +54,18 @@
         state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
         await loadPlugins(state);
         await initRoutes();
-        const entryView = new URLSearchParams(window.location.search).get(
-          "entry_view"
-        );
-        window.router.resolve({ pathname: entryView }).then((page) => {
-          document.getElementById("content-div").innerHTML = page.content;
-        });
+        const sp = new URLSearchParams(window.location.search);
+        const entryView = sp.get("entry_view");
+        const serverPath = sp.get("server_path");
+        window.localStorage.setItem("server_path", serverPath);
+        if (window.localStorage.getItem("auth_jwt")) {
+          window.router.resolve({ pathname: entryView }).then((page) => {
+            document.getElementById("content-div").innerHTML = page.content;
+          });
+        } else {
+          document.getElementById("content-div").innerHTML =
+            renderLoginForm(entryView);
+        }
       });
     </script>
   </head>

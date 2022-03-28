@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const envPaths = require("env-paths");
 const is = require("contractis/is");
+const crypto = require("crypto");
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
@@ -88,6 +89,7 @@ const getConnectObject = (connSpec = {}) => {
   setKey("password", "PGPASSWORD");
   setKey("database", "PGDATABASE");
   setKey("session_secret", "SALTCORN_SESSION_SECRET");
+  setKey("jwt_secret", "SALTCORN_JWT_SECRET");
   setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
   setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
   setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", { default: "public" });
@@ -101,7 +103,9 @@ const getConnectObject = (connSpec = {}) => {
   });
 
   if (!connObj.session_secret) connObj.session_secret = is.str.generate();
-  connObj.version_tag = require("crypto")
+  if (!connObj.jwt_secret)
+    connObj.jwt_secret = crypto.randomBytes(64).toString("hex");
+  connObj.version_tag = crypto
     .createHash("sha256")
     .update(`${connObj.session_secret}${git_commit || sc_version}`)
     .digest("hex")

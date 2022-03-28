@@ -406,7 +406,7 @@ const authWrap = ({
                     </div>
                     ${renderForm(formModify(form), csrfToken)}
                     ${renderAuthLinks(authLinks)}
-                    ${afterForm}
+                    ${afterForm ? afterForm : ""}
                   </div>
                 </div>
               </div>

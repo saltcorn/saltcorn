@@ -61,6 +61,8 @@ const fs = require("fs");
 const base32 = require("thirty-two");
 const qrcode = require("qrcode");
 const totp = require("notp").totp;
+const jwt = require("jsonwebtoken");
+
 /**
  * @type {object}
  * @const
@@ -195,6 +197,24 @@ const getAuthLinks = (current, noMethods) => {
       });
     });
   return links;
+};
+
+const loginWithJwt = async (req, res) => {
+  a;
+  const { email, password } = req.query;
+  const user = await User.findOne({ email });
+  if (user && user.checkPassword(password)) {
+    const jwt_secret = db.connectObj.jwt_secret;
+    const token = jwt.sign(
+      {
+        sub: email,
+        iss: "saltcorn@saltcorn",
+        aud: "saltcorn-mobile-app",
+      },
+      jwt_secret
+    );
+    res.json(token);
+  }
 };
 
 /**
@@ -973,15 +993,19 @@ router.get(
   "/login-with/:method",
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
-    const auth = getState().auth_methods[method];
-    if (auth) {
-      passport.authenticate(method, auth.parameters)(req, res, next);
+    if (method === "jwt") {
+      await loginWithJwt(req, res);
     } else {
-      req.flash(
-        "danger",
-        req.__("Unknown authentication method %s", text(method))
-      );
-      res.redirect("/");
+      const auth = getState().auth_methods[method];
+      if (auth) {
+        passport.authenticate(method, auth.parameters)(req, res, next);
+      } else {
+        req.flash(
+          "danger",
+          req.__("Unknown authentication method %s", text(method))
+        );
+        res.redirect("/");
+      }
     }
   })
 );

@@ -40,12 +40,25 @@ const is = require("contractis/is");
 const Trigger = require("@saltcorn/data/models/trigger");
 const s3storage = require("./s3storage");
 const TotpStrategy = require("passport-totp").Strategy;
+const JwtStrategy = require("passport-jwt").Strategy;
+const ExtractJwt = require("passport-jwt").ExtractJwt;
+const cors = require("cors");
+
 const locales = Object.keys(available_languages);
 // i18n configuration
 const i18n = new I18n({
   locales,
   directory: path.join(__dirname, "locales"),
 });
+// jwt config
+const jwt_secret = db.connectObj.jwt_secret;
+const jwtOpts = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("jwt"),
+  secretOrKey: jwt_secret,
+  issuer: "saltcorn@saltcorn",
+  audience: "saltcorn-mobile-app",
+};
+
 // todo console.log app instance info when app starts - avoid to show secrets (password, etc)
 
 /**
@@ -68,6 +81,8 @@ const getApp = async (opts = {}) => {
   // https://www.npmjs.com/package/helmet
   // helmet is secure app by adding HTTP headers
   app.use(helmet());
+  // TODO ch find a better solution
+  app.use(cors());
   app.use(
     express.json({
       limit: "5mb",
@@ -193,6 +208,23 @@ const getApp = async (opts = {}) => {
     })
   );
   passport.use(
+    new JwtStrategy(jwtOpts, (jwt_payload, done) => {
+      User.findOne({ email: jwt_payload.sub }).then((u) => {
+        if (u) {
+          return done(null, {
+            email: u.email,
+            id: u.id,
+            role_id: u.role_id,
+            language: u.language,
+            tenant: db.getTenantSchema(),
+          });
+        } else {
+          return done(null, { role_id: 10 });
+        }
+      });
+    })
+  );
+  passport.use(
     new TotpStrategy(function (user, done) {
       // setup function, supply key and period to done callback
       User.findOne({ id: user.pending_user.id }).then((u) => {
@@ -217,7 +249,8 @@ const getApp = async (opts = {}) => {
   const csurf = csrf();
   if (!opts.disableCsrf)
     app.use(function (req, res, next) {
-      if (req.url.startsWith("/api/")) return next();
+      if (req.url.startsWith("/api/") || req.url === "/auth/login-with/jwt")
+        return next();
       csurf(req, res, next);
     });
   else

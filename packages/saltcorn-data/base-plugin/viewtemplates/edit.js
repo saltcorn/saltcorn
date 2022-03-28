@@ -349,7 +349,9 @@ const run = async (
   { res, req },
   { editQuery }
 ) => {
-  const { table, row, fields } = await editQuery(state);
+  const { row } = await editQuery(state);
+  const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
   return await render({
     table,
     fields,
@@ -711,7 +713,7 @@ module.exports = {
    * @param {...*} opts.rest
    * @returns {Promise<boolean>}
    */
-  authorise_get: async ({ query, table_id, req }, { authorizeGetQuery }) => {    
+  authorise_get: async ({ query, table_id, req }, { authorizeGetQuery }) => {
     return await authorizeGetQuery(query, table_id);
   },
   /**
@@ -734,7 +736,7 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       const row =
         Object.keys(uniques).length > 0 ? await table.getRow(uniques) : null;
-      return { table, fields, row };
+      return { row };
     },
 
     async editManyQuery(state) {
@@ -782,7 +784,7 @@ module.exports = {
       return upd_res;
     },
 
-    async authorizePostQuery(body, table_id/*overwrites*/) {
+    async authorizePostQuery(body, table_id /*overwrites*/) {
       return await doAuthPost({ body, table_id, req });
     },
     async authorizeGetQuery(query, table_id) {

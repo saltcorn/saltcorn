@@ -36,8 +36,6 @@ function combineFormAndQuery(form, query) {
 }
 
 function execLink(url) {
-  console.log("exec");
-  console.log(url);
   let path = url;
   let query = undefined;
   const queryStart = url.indexOf("?");
@@ -45,8 +43,6 @@ function execLink(url) {
     path = url.substring(0, queryStart);
     query = url.substring(queryStart);
   }
-  console.log(path);
-  console.log(query);
   window.router
     .resolve({ pathname: `get${path}`, queryParams: query })
     .then((page) => {
@@ -62,6 +58,35 @@ function stateFormSubmit(e, path) {
     .then((page) => {
       document.getElementById("content-div").innerHTML = page.content;
     });
+}
+
+const login = (email, password) => {
+  const serverPath = localStorage.getItem("server_path");
+  return new Promise((resolve, reject) => {
+    axios({
+      url: `${serverPath}/auth/login-with/jwt`,
+      type: "GET",
+      params: {
+        email,
+        password,
+      },
+    })
+      .then((response) => {
+        resolve(response.data);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+async function loginFormSubmit(e, entryView) {
+  let formData = new FormData(e);
+  const token = await login(formData.get("email"), formData.get("password"));
+  window.localStorage.setItem("auth_jwt", token);
+  window.router.resolve({ pathname: entryView }).then((page) => {
+    document.getElementById("content-div").innerHTML = page.content;
+  });
 }
 
 function local_post_btn(e, reload) {

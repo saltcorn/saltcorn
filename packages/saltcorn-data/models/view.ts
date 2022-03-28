@@ -34,7 +34,10 @@ import type Workflow from "./workflow";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
-const fetch = require("node-fetch");
+import axios from "axios";
+import { isNode } from "../webpack-helper";
+
+declare let window: any;
 
 /**
  * View Class
@@ -389,7 +392,7 @@ class View {
   async run(
     query: any,
     extraArgs: RunExtra,
-    remote: boolean = false
+    remote: boolean = !isNode()
   ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
@@ -416,24 +419,20 @@ class View {
       const { getState } = require("../db/state");
 
       const base_url =
-        getState().getConfig("base_url") || "http://localhost:3000"; //TODO default from req
+        getState().getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
       const vtQueries = queryObj;
 
       Object.entries(vtQueries).forEach(([k, v]) => {
-        queries[k] = (...args: any[]) => {
+        queries[k] = async (...args: any[]) => {
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
-          //TODO need to authenticate !
-          return fetch(url, {
-            method: "post",
-            body: JSON.stringify({ args }),
-            headers: {
-              "Content-Type": "application/json",
-              "CSRF-Token": req.csrfToken(),
-            },
-          })
-            .then((resp: any) => resp.json())
-            .then((resp: any) => resp.success);
+          const token = window.localStorage.getItem("auth_jwt");
+          let response = await axios.post(
+            url,
+            { args },
+            { headers: { Authorization: `jwt ${token}` } }
+          );
+          return response.data.success;
         };
       });
 
@@ -489,7 +488,7 @@ class View {
   async runMany(
     query: GenObj,
     extraArgs: RunExtra,
-    remote: boolean = false
+    remote: boolean = !isNode()
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
     try {
@@ -549,7 +548,7 @@ class View {
     query: GenObj,
     body: GenObj,
     extraArgs: RunExtra,
-    remote: boolean = false
+    remote: boolean = !isNode()
   ): Promise<any> {
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.runPost)
