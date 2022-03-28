@@ -28,6 +28,8 @@ const select = {
   type: "Key",
   /** @type {boolean} */
   isEdit: true,
+  blockDisplay: true,
+
   /**
    * @type {object[]}
    */
@@ -94,6 +96,8 @@ const two_level_select = {
   type: "Key",
   /** @type {boolean} */
   isEdit: true,
+  blockDisplay: true,
+
   /**
    * @type {object[]}
    */
@@ -221,6 +225,8 @@ const search_or_create = {
   type: "Key",
   /** @type {boolean} */
   isEdit: true,
+  blockDisplay: true,
+
   /**
    * @param {object} field
    * @returns {Promise<object[]>}

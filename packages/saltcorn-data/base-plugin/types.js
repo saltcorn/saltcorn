@@ -47,6 +47,7 @@ const number_slider = (type) => ({
     //{ name: "also_entry", type: "Bool", label: "Also entry" },
   ],
   isEdit: true,
+  blockDisplay: true,
   run: (nm, v, attrs = {}, cls, required, field) =>
     input({
       type: "range",
@@ -106,6 +107,8 @@ const number_limit = (type, direction) => ({
     input({
       type: "number",
       class: ["form-control", cls],
+      blockDisplay: true,
+
       disabled: attrs.disabled,
       onChange: `set_state_field('_${direction}_${nm}', this.value)`,
       step:
@@ -298,6 +301,8 @@ const string = {
      */
     edit: {
       isEdit: true,
+      blockDisplay: true,
+
       configFields: (field) => [
         ...(field.attributes.options &&
         field.attributes.options.length > 0 &&
@@ -379,6 +384,8 @@ const string = {
     },
     fill_formula_btn: {
       isEdit: true,
+      blockDisplay: true,
+
       configFields: [
         {
           name: "formula",
@@ -466,6 +473,8 @@ const string = {
     },
     make_unique: {
       isEdit: true,
+      blockDisplay: true,
+
       configFields: [
         {
           name: "placeholder",
@@ -530,6 +539,8 @@ const string = {
      */
     textarea: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
@@ -604,6 +615,8 @@ const string = {
      */
     password: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "password",
@@ -728,6 +741,8 @@ const int = {
      */
     edit: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
@@ -831,6 +846,8 @@ const color = {
      */
     edit: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "color",
@@ -903,6 +920,8 @@ const float = {
      */
     edit: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
@@ -1083,6 +1102,8 @@ const date = {
      */
     edit: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "text",
@@ -1106,6 +1127,8 @@ const date = {
      */
     editDay: {
       isEdit: true,
+      blockDisplay: true,
+
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "text",
