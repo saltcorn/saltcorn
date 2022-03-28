@@ -215,7 +215,7 @@ class Page {
         );
       } else if (segment.state === "shared") {
         const extra_state = segment.extra_state_fml
-          ? eval_expression(segment.extra_state_fml, {})
+          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
           : {};
         const mystate = view.combine_state_and_default_state({
           ...querystate,
