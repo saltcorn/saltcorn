@@ -375,13 +375,16 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
+
       return wrap(
         segment,
         isTop,
         ix,
         a(
           {
-            href: segment.url,
+            href: segment.in_modal
+              ? `javascript:ajax_modal('${segment.url}');`
+              : segment.url,
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,

@@ -422,7 +422,11 @@ const renderRows = async (
             state = { id: row[view.view_select.field_name] };
             break;
         }
-        segment.contents = await view.run(state, extra);
+        const extra_state = segment.extra_state_fml
+          ? eval_expression(segment.extra_state_fml, row, extra.req.user)
+          : {};
+        const state1 = { ...state, ...extra_state };
+        segment.contents = await view.run(state1, extra);
       }
     });
     const user_id = extra.req.user ? extra.req.user.id : null;

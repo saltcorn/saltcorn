@@ -71,10 +71,8 @@ const configuration_workflow = (req) =>
             }
           }
 
-          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
-            fields,
-            "edit"
-          );
+          const { field_view_options, handlesTextStyle, blockDisplay } =
+            calcfldViewOptions(fields, "edit");
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
@@ -156,6 +154,7 @@ const configuration_workflow = (req) =>
             field_view_options,
             parent_field_list,
             handlesTextStyle,
+            blockDisplay,
             roles,
             actions,
             fieldViewConfigForms,

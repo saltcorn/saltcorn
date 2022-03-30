@@ -142,6 +142,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           view={segment.view}
           name={segment.name}
           state={segment.state}
+          extra_state_fml={segment.extra_state_fml}
           configuration={segment.configuration || {}}
         />
       );
@@ -437,6 +438,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           node.props.name === "not_assigned" ? rand_ident() : node.props.name,
         state: node.props.state,
         configuration: node.props.configuration,
+        extra_state_fml: node.props.extra_state_fml,
       };
     }
 
