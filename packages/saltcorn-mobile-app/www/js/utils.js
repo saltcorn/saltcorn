@@ -60,33 +60,29 @@ function stateFormSubmit(e, path) {
     });
 }
 
-const login = (email, password) => {
+async function login(email, password) {
   const serverPath = localStorage.getItem("server_path");
-  return new Promise((resolve, reject) => {
-    axios({
-      url: `${serverPath}/auth/login-with/jwt`,
-      type: "GET",
-      params: {
-        email,
-        password,
-      },
-    })
-      .then((response) => {
-        resolve(response.data);
-      })
-      .catch((error) => {
-        reject(error);
-      });
-  });
-};
+  try {
+    const response = await apiCall("GET", `${serverPath}/auth/login-with/jwt`, {
+      email,
+      password,
+    });
+    return response.data;
+  } catch (error) {
+    // TODO ch message
+    return null;
+  }
+}
 
 async function loginFormSubmit(e, entryView) {
   let formData = new FormData(e);
   const token = await login(formData.get("email"), formData.get("password"));
-  window.localStorage.setItem("auth_jwt", token);
-  window.router.resolve({ pathname: entryView }).then((page) => {
-    document.getElementById("content-div").innerHTML = page.content;
-  });
+  if (token) {
+    window.localStorage.setItem("auth_jwt", token);
+    window.router.resolve({ pathname: entryView }).then((page) => {
+      document.getElementById("content-div").innerHTML = page.content;
+    });
+  }
 }
 
 function local_post_btn(e, reload) {
@@ -115,4 +111,22 @@ function localSortBy(k, desc, viewname) {
     { _sortby: k, _sortdesc: desc ? "on" : { unset: true } },
     `get/view/${viewname}`
   );
+}
+
+async function apiCall(method, path, params) {
+  const serverPath = localStorage.getItem("server_path");
+  const token = window.localStorage.getItem("auth_jwt");
+  const url = `${serverPath}${path}`;
+  try {
+    return await axios({
+      url: url,
+      method: method,
+      params: params,
+      headers: { Authorization: `jwt ${token}` },
+    });
+  } catch (error) {
+    console.log(`error while calling: ${method} ${url}`);
+    console.log(JSON.stringify(error));
+    throw error;
+  }
 }

@@ -46,6 +46,7 @@
       }
 
       document.addEventListener("deviceready", async () => {
+        axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         await saltcorn.data.db.init();
         const state = saltcorn.data.state.getState();
         await state.refresh_tables();
@@ -58,6 +59,7 @@
         const entryView = sp.get("entry_view");
         const serverPath = sp.get("server_path");
         window.localStorage.setItem("server_path", serverPath);
+        // window.localStorage.removeItem("auth_jwt");
         if (window.localStorage.getItem("auth_jwt")) {
           window.router.resolve({ pathname: entryView }).then((page) => {
             document.getElementById("content-div").innerHTML = page.content;

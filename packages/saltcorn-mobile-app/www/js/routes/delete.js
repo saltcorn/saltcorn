@@ -1,14 +1,12 @@
 // post/delete/:name/:id
 export const deleteRows = async (context) => {
   const { name, id } = context.params;
-  let redirect = new URLSearchParams(context.query).get("redirect");
-  const table = await saltcorn.data.models.Table.findOne({ name });
   try {
-    // TODO ch call service
-    await table.deleteRows({ id });
+    await apiCall("POST", `/delete/${name}/${id}`);
+    const redirect = new URLSearchParams(context.query).get("redirect");
+    return { redirect };
   } catch (error) {
-    console.log("error while deleting");
-    console.log(error);
+    // TODO ch message?
+    return null;
   }
-  return { redirect };
 };

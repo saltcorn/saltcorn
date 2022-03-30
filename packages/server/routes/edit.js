@@ -44,7 +44,8 @@ router.post(
         "error",
         req.__("Not allowed to write to table %s", table.name)
       );
-    if (req.get("referer")) res.redirect(req.get("referer"));
+    if (req.xhr) res.send("OK");
+    else if (req.get("referer")) res.redirect(req.get("referer"));
     else res.redirect(redirect || `/list/${table.name}`);
   })
 );

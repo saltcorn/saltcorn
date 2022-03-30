@@ -30,7 +30,6 @@ const {
 } = require("./routes/utils.js");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const path = require("path");
-const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
 const wrapper = require("./wrapper");
 const csrf = require("csurf");
@@ -59,7 +58,14 @@ const jwtOpts = {
   audience: "saltcorn-mobile-app",
 };
 
-// todo console.log app instance info when app starts - avoid to show secrets (password, etc)
+const jwtWithoutSession = (req) => {
+  return (
+    ExtractJwt.fromAuthHeaderWithScheme("jwt")(req) &&
+    !(req.cookies && req.cookies["connect.sid"])
+  );
+};
+
+// todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
 
 /**
  * @param {object} [opts = {}]
@@ -108,7 +114,7 @@ const getApp = async (opts = {}) => {
   app.use(getSessionStore());
 
   app.use(passport.initialize());
-  app.use(passport.session());
+  app.use(passport.authenticate(["jwt", "session"]));
   app.use(flash());
 
   //static serving
@@ -249,8 +255,13 @@ const getApp = async (opts = {}) => {
   const csurf = csrf();
   if (!opts.disableCsrf)
     app.use(function (req, res, next) {
-      if (req.url.startsWith("/api/") || req.url === "/auth/login-with/jwt")
+      if (
+        req.url.startsWith("/api/") ||
+        req.url === "/auth/login-with/jwt" ||
+        jwtWithoutSession(req)
+      ) {
         return next();
+      }
       csurf(req, res, next);
     });
   else
