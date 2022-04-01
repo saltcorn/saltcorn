@@ -257,19 +257,16 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 sublabel: req.__(
-                  "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
+                  "This is the view to which the user will be sent when the form is submitted. The view you specify here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
                 ),
                 //fieldview: "radio_group",
                 attributes: {
-                  options: ["View", "Formula", "Back to referrer"],
+                  options: ["View", "Formula", "Back to referer"],
                 },
               },
               {
                 name: "view_when_done",
                 label: req.__("Default view when done"),
-                sublabel: req.__(
-                  "This is the view to which the user will be sent when the form is submitted"
-                ),
                 type: "String",
                 required: true,
                 attributes: {
@@ -352,7 +349,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  { columns, layout, auto_save },
+  { columns, layout, auto_save, destination_type },
   state,
   { res, req }
 ) => {
@@ -374,6 +371,7 @@ const run = async (
     res,
     state,
     auto_save,
+    destination_type,
   });
 };
 
@@ -513,8 +511,10 @@ const render = async ({
   state,
   res,
   auto_save,
+  destination_type,
 }) => {
   const form = await getForm(table, viewname, columns, layout, state.id, req);
+
   if (auto_save) form.onChange = `saveAndContinue(this)`;
   if (row) {
     form.values = row;
@@ -527,7 +527,10 @@ const render = async ({
     }
     form.hidden(table.pk_name);
   }
-
+  if (destination_type === "Back to referer") {
+    form.hidden("_referer");
+    form.values._referer = req.headers.referer;
+  }
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
@@ -567,7 +570,15 @@ const render = async ({
 const runPost = async (
   table_id,
   viewname,
-  { columns, layout, fixed, view_when_done, formula_destinations, auto_save },
+  {
+    columns,
+    layout,
+    fixed,
+    view_when_done,
+    formula_destinations,
+    auto_save,
+    destination_type,
+  },
   state,
   body,
   { res, req, redirect }
@@ -648,20 +659,24 @@ const runPost = async (
       res.redirect(redirect);
       return;
     }
-    if (!view_when_done) {
-      res.redirect(`/`);
-      return;
-    }
 
     let use_view_when_done = view_when_done;
-    for (const { view, expression } of formula_destinations || []) {
-      if (expression) {
-        const f = get_expression_function(expression, fields);
-        if (f(row)) {
-          use_view_when_done = view;
-          continue;
+    if (destination_type === "Back to referer" && body._referer) {
+      res.redirect(body._referer);
+      return;
+    } else if (destination_type !== "View")
+      for (const { view, expression } of formula_destinations || []) {
+        if (expression) {
+          const f = get_expression_function(expression, fields);
+          if (f(row)) {
+            use_view_when_done = view;
+            continue;
+          }
         }
       }
+    if (!use_view_when_done) {
+      res.redirect(`/`);
+      return;
     }
     const [viewname_when_done, relation] = use_view_when_done.split(".");
     const nxview = await View.findOne({ name: viewname_when_done });
