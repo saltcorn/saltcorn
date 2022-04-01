@@ -243,7 +243,7 @@ describe("Table get data", () => {
       },
     });
     expect(rows.length).toStrictEqual(2);
-    expect(rows[1].fans).toStrictEqual([1]);
+    expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
   });
   it("should get joined rows with latest aggregations", async () => {
     const patients = await Table.findOne({ name: "patients" });
