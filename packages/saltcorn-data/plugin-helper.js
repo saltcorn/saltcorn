@@ -277,7 +277,10 @@ const get_link_view_opts = contract(
         label: `${v.name} [${v.viewtemplate} ${table.name}]`,
         name: `Own:${v.name}`,
       }));
-    const link_view_names = new Set();
+    const link_view_opts_push = (o) => {
+      if (!link_view_opts.map((v) => v.name).includes(o.name))
+        link_view_opts.push(o);
+    };
     const child_views = await get_child_views(table, viewname);
     for (const {
       relation,
@@ -288,16 +291,12 @@ const get_link_view_opts = contract(
     } of child_views) {
       for (const view of views) {
         if (through && throughTable) {
-          const name = `${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`;
-          link_view_names.add(name);
-          link_view_opts.push({
+          link_view_opts_push({
             name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
             label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           });
         } else {
-          const name = `${view.name}.${related_table.name}.${relation.name}`;
-          link_view_names.add(name);
-          link_view_opts.push({
+          link_view_opts_push({
             name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
             label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
           });
@@ -308,7 +307,7 @@ const get_link_view_opts = contract(
     const parent_views = await get_parent_views(table, viewname);
     for (const { relation, related_table, views } of parent_views) {
       for (const view of views) {
-        link_view_opts.push({
+        link_view_opts_push({
           name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${relation.name}.${related_table.name}]`,
         });
@@ -317,19 +316,17 @@ const get_link_view_opts = contract(
     const onetoone_views = await get_onetoone_views(table, viewname);
     for (const { relation, related_table, views } of onetoone_views) {
       for (const view of views) {
-        const name = `${view.name}.${related_table.name}.${relation.name}`;
-        if (!link_view_names.has(name))
-          link_view_opts.push({
-            name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
-            label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
-          });
+        link_view_opts_push({
+          name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
+          label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
+        });
       }
     }
     const independent_views = await View.find_all_views_where(
       ({ state_fields }) => !state_fields.some((sf) => sf.required)
     );
     independent_views.forEach((view) => {
-      link_view_opts.push({
+      link_view_opts_push({
         label: `${view.name} [${view.viewtemplate}]`,
         name: `Independent:${view.name}`,
       });
