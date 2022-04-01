@@ -376,13 +376,15 @@ const mkFormRowForRepeat = (
     )
   );
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
-    return (
+    return div(
+      hdr.showIf
+        ? {
+            "data-show-if": mkShowIf(hdr.showIf),
+          }
+        : {},
       div(
         {
           class: `repeats-${hdr.form_name}`,
-          ...(hdr.showIf && {
-            "data-show-if": mkShowIf(hdr.showIf),
-          }),
         },
         v[hdr.form_name].map((vi: any, ix: number) => {
           return div(
@@ -399,16 +401,19 @@ const mkFormRowForRepeat = (
             })
           );
         })
-      ) + adder
+      ),
+      adder
     );
   } else {
-    return (
+    return div(
+      hdr.showIf
+        ? {
+            "data-show-if": mkShowIf(hdr.showIf),
+          }
+        : {},
       div(
         {
           class: `repeats-${hdr.form_name}`,
-          ...(hdr.showIf && {
-            "data-show-if": mkShowIf(hdr.showIf),
-          }),
         },
         div(
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
@@ -417,7 +422,8 @@ const mkFormRowForRepeat = (
             return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
           })
         )
-      ) + adder
+      ),
+      adder
     );
   }
 };
