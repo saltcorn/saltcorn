@@ -228,6 +228,23 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
+  it("should get fkey aggregations", async () => {
+    const books = await Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const rows = await books.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "parent",
+          aggregate: "array_agg",
+        },
+      },
+    });
+    expect(rows.length).toStrictEqual(2);
+    expect(rows[1].fans).toStrictEqual([1]);
+  });
   it("should get joined rows with latest aggregations", async () => {
     const patients = await Table.findOne({ name: "patients" });
     assertIsSet(patients);
