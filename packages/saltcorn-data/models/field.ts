@@ -410,12 +410,13 @@ class Field implements AbstractField {
    */
 
   showIfEnabled(whole_rec: any) {
-    if (!this.showIf) return false;
+    if (!this.showIf) return true;
     for (const [k, v] of Object.entries(this.showIf)) {
       if (Array.isArray(v) && !v.includes(whole_rec[k])) return false;
       if (typeof v === "boolean" && !whole_rec[k]) return false;
       if (whole_rec[k] !== v) return false;
     }
+    return true;
   }
 
   validate(whole_rec: any): ResultMessage {
@@ -436,7 +437,7 @@ class Field implements AbstractField {
       if (this.required && this.type !== "File") {
         if (this.showIfEnabled(whole_rec))
           return { error: "Unable to read " + (<Type>type)?.name };
-        else return { success: null };
+        return { success: null };
       } else return { success: null };
     const tyvalres =
       instanceOfType(type) && type.validate
