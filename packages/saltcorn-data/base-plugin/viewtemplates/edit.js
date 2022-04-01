@@ -244,9 +244,6 @@ const configuration_workflow = (req) =>
             })
           );
           return new Form({
-            blurb: req.__(
-              "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
-            ),
             fields: [
               {
                 name: "auto_save",
@@ -255,30 +252,43 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "destination_type",
+                label: "Destination type",
+                type: "String",
+                required: true,
+                sublabel: req.__(
+                  "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
+                ),
+                //fieldview: "radio_group",
+                attributes: {
+                  options: ["View", "Formula", "Back to referrer"],
+                },
+              },
+              {
                 name: "view_when_done",
                 label: req.__("Default view when done"),
                 sublabel: req.__(
-                  "This is the view to which the user will be sent when the form is submitted, unless a formula below is true."
+                  "This is the view to which the user will be sent when the form is submitted"
                 ),
                 type: "String",
                 required: true,
                 attributes: {
                   options: done_view_opts,
                 },
+                showIf: { destination_type: "View" },
               },
-              {
-                label: req.__(
-                  "Alternative destinations if formula evaluates to true"
-                ),
-                sublabel: req.__(
-                  "You can send the user to an different view depending on the day the user has submitted. Ignore this option if you always want to send the user to the same destination"
-                ),
-                input_type: "section_header",
-              },
+
               new FieldRepeat({
                 name: "formula_destinations",
+                showIf: { destination_type: "Formula" },
                 fields: [
-                  { type: "String", name: "expression", label: "Formula" },
+                  {
+                    type: "String",
+                    name: "expression",
+                    label: "Formula",
+                    sublabel:
+                      "if this formula evaluates to true, use the following view",
+                  },
                   {
                     name: "view",
                     label: req.__("View"),
