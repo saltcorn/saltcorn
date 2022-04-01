@@ -231,19 +231,21 @@ describe("Table get data", () => {
   it("should get fkey aggregations", async () => {
     const books = await Table.findOne({ name: "books" });
     assertIsSet(books);
-    const rows = await books.getJoinedRows({
-      orderBy: "id",
-      aggregations: {
-        fans: {
-          table: "patients",
-          ref: "favbook",
-          field: "parent",
-          aggregate: "array_agg",
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows({
+        orderBy: "id",
+        aggregations: {
+          fans: {
+            table: "patients",
+            ref: "favbook",
+            field: "parent",
+            aggregate: "array_agg",
+          },
         },
-      },
-    });
-    expect(rows.length).toStrictEqual(2);
-    expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
+      });
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
+    }
   });
   it("should get joined rows with latest aggregations", async () => {
     const patients = await Table.findOne({ name: "patients" });
