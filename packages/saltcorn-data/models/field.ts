@@ -408,6 +408,16 @@ class Field implements AbstractField {
    * @param {object} whole_rec
    * @returns {object}
    */
+
+  showIfEnabled(whole_rec: any) {
+    if (!this.showIf) return false;
+    for (const [k, v] of Object.entries(this.showIf)) {
+      if (Array.isArray(v) && !v.includes(whole_rec[k])) return false;
+      if (typeof v === "boolean" && !whole_rec[k]) return false;
+      if (whole_rec[k] !== v) return false;
+    }
+  }
+
   validate(whole_rec: any): ResultMessage {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
@@ -423,9 +433,11 @@ class Field implements AbstractField {
           : typeObj.read(whole_rec[this.form_name], this.attributes);
     }
     if (typeof readval === "undefined" || readval === null)
-      if (this.required && this.type !== "File")
-        return { error: "Unable to read " + (<Type>type)?.name };
-      else return { success: null };
+      if (this.required && this.type !== "File") {
+        if (this.showIfEnabled(whole_rec))
+          return { error: "Unable to read " + (<Type>type)?.name };
+        else return { success: null };
+      } else return { success: null };
     const tyvalres =
       instanceOfType(type) && type.validate
         ? type.validate(this.attributes || {})(readval)
