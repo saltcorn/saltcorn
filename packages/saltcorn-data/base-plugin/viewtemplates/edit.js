@@ -266,7 +266,7 @@ const configuration_workflow = (req) =>
               },
               {
                 name: "view_when_done",
-                label: req.__("Default view when done"),
+                label: req.__("Destination view"),
                 type: "String",
                 required: true,
                 attributes: {
