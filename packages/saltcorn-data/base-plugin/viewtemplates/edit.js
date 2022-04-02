@@ -529,7 +529,7 @@ const render = async ({
   }
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
-    form.values._referer = req.headers.referer;
+    form.values._referer = req.headers?.referer;
   }
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
