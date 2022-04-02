@@ -775,21 +775,25 @@ module.exports = {
   },
   configCheck: async ({
     name,
-    configuration: { view_when_done, formula_destinations },
+    configuration: { view_when_done, destination_type, formula_destinations },
   }) => {
     const errs = [];
-    const vwd = await View.findOne({
-      name: (view_when_done || "").split(".")[0],
-    });
-    if (!vwd)
-      errs.push(`In View ${name}, view when done ${view_when_done} not found`);
-    for (const { expression } of formula_destinations || []) {
-      if (expression)
-        expressionChecker(
-          expression,
-          `In View ${name}, destination formula ${expression} error: `,
-          errs
+    if (destination_type !== "Back to referer") {
+      const vwd = await View.findOne({
+        name: (view_when_done || "").split(".")[0],
+      });
+      if (!vwd)
+        errs.push(
+          `In View ${name}, view when done ${view_when_done} not found`
         );
+      for (const { expression } of formula_destinations || []) {
+        if (expression)
+          expressionChecker(
+            expression,
+            `In View ${name}, destination formula ${expression} error: `,
+            errs
+          );
+      }
     }
     return errs;
   },
