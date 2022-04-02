@@ -567,6 +567,10 @@ function ajax_modal(url, opts = {}) {
       </div>
     </div>
   </div>`);
+  } else if ($("#scmodal").hasClass("show")) {
+    var myModalEl = document.getElementById("scmodal");
+    var modal = bootstrap.Modal.getInstance(myModalEl);
+    modal.dispose();
   }
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   else $("#scmodal").removeClass("no-submit-reload");

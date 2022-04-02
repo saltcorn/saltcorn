@@ -1265,7 +1265,27 @@ class Table implements AbstractTable {
           values.push(...whereAndValues.values);
           placeCounter += whereAndValues.values.length;
         }
-        if (aggregate.startsWith("Latest ")) {
+        const aggTable = Table.findOne({ name: table });
+        const aggField = aggTable?.fields?.find((f) => f.name === field);
+        if (
+          aggField?.is_fkey &&
+          aggField.attributes.summary_field &&
+          aggregate.toLowerCase() === "array_agg"
+        ) {
+          const newFld = `(select array_agg(aggjoin."${sqlsanitize(
+            aggField.attributes.summary_field
+          )}") from ${schema}"${sqlsanitize(
+            table
+          )}" aggto join ${schema}"${sqlsanitize(
+            aggField.reftable_name as string
+          )}" aggjoin on aggto."${sqlsanitize(
+            field
+          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a.id${
+            whereStr ? ` and ${whereStr}` : ""
+          }) ${sqlsanitize(fldnm)}`;
+
+          fldNms.push(newFld);
+        } else if (aggregate.startsWith("Latest ")) {
           const dateField = aggregate.replace("Latest ", "");
           fldNms.push(
             `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
@@ -1329,6 +1349,8 @@ class Table implements AbstractTable {
     const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
+    //console.log(sql);
+    //console.log(res.rows);
 
     const calcRow = apply_calculated_fields(res.rows, fields);
 

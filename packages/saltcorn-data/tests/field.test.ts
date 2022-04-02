@@ -178,7 +178,45 @@ describe("validate bool field", () => {
   const res1 = field.validate({});
   expect(res1).toStrictEqual({ success: false });
 });
+describe("validate required field", () => {
+  it("validates required field", async () => {
+    const field = new Field({
+      name: "age",
+      label: "Age",
+      type: "Integer",
+      required: true,
+    });
+    expect(field.form_name).toBe("age");
 
+    const res = field.validate({ age: 17 });
+    expect(res).toStrictEqual({ success: 17 });
+  });
+  it("fails on required field", async () => {
+    const field = new Field({
+      name: "age",
+      label: "Age",
+      type: "Integer",
+      required: true,
+    });
+    expect(field.form_name).toBe("age");
+
+    const res = field.validate({ name: "Sam" });
+    expect(res).toStrictEqual({ error: "Unable to read Integer" });
+  });
+  it("validates required field if not shown", async () => {
+    const field = new Field({
+      name: "age",
+      label: "Age",
+      type: "Integer",
+      showIf: { foo: "bar" },
+      required: true,
+    });
+    expect(field.form_name).toBe("age");
+
+    const res = field.validate({ name: "Sam" });
+    expect(res).toStrictEqual({ success: null });
+  });
+});
 describe("validate parent field", () => {
   const field = new Field({
     name: "age",

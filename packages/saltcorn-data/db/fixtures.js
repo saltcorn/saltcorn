@@ -66,6 +66,7 @@ module.exports =
       type: "Key",
       reftable: patients,
       required: false,
+      attributes: { summary_field: "name" },
     });
     await View.create({
       table_id: table.id,
