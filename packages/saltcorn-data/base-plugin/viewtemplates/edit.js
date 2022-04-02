@@ -20,7 +20,7 @@ const {
 } = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
 const Library = require("../../models/library");
-
+const { check_view_columns } = require("../../plugin-testing");
 const {
   initial_config_all_fields,
   calcfldViewOptions,
@@ -773,10 +773,11 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  configCheck: async ({
-    name,
-    configuration: { view_when_done, destination_type, formula_destinations },
-  }) => {
+  configCheck: async (view) => {
+    const {
+      name,
+      configuration: { view_when_done, destination_type, formula_destinations },
+    } = view;
     const errs = [];
     if (destination_type !== "Back to referer") {
       const vwd = await View.findOne({
@@ -795,6 +796,7 @@ module.exports = {
           );
       }
     }
+    errs.push(...(await check_view_columns(view, view.configuration.columns)));
     return errs;
   },
 };

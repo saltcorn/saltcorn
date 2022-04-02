@@ -8,6 +8,7 @@ const { getState } = require("./db/state");
 const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
 const Field = require("./models/field");
+const Table = require("./models/table");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -121,4 +122,42 @@ const auto_test_plugin = async (plugin) => {
   //is each header reachable
 };
 
-module.exports = { auto_test_plugin, generate_attributes };
+const check_view_columns = async (view, columns) => {
+  const errs = [];
+  const table = Table.findOne({ id: view.table_id });
+  let fields;
+  if (table) fields = await table.getFields();
+  for (const column of columns) {
+    switch (column.type) {
+      case "Field":
+        //field exists
+        if (
+          table.name === "users" &&
+          ["remember", "passwordRepeat", "password"].includes(column.field_name)
+        )
+          break;
+        const f = fields.find((fld) => fld.name === column.field_name);
+        if (!f) {
+          errs.push(
+            `In view ${view.name}, field ${column.field_name} does not exist in table ${table.name}`
+          );
+          break;
+        }
+        if (
+          column.fieldview &&
+          !f.is_fkey &&
+          !f.type.fieldviews[column.fieldview]
+        )
+          errs.push(
+            `In view ${view.name}, field ${column.field_name} of type ${field.type.name} table ${table.name} does not have fieldview ${column.fieldview}`
+          );
+        break;
+
+      default:
+        break;
+    }
+  }
+  return errs;
+};
+
+module.exports = { auto_test_plugin, generate_attributes, check_view_columns };
