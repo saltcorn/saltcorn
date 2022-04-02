@@ -26,7 +26,7 @@ describe("config check", () => {
       mockReqRes.req
     );
     expect(errors).toStrictEqual([]);
-    expect(passes).toBeGreaterThan(2000);
+    expect(passes.length).toBeGreaterThan(10);
     expect(pass).toBe(true);
   });
 });

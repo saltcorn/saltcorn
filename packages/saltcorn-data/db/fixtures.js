@@ -121,6 +121,7 @@ module.exports =
         fixed: {
           pages: 678,
         },
+        view_when_done: "authorlist",
       },
       min_role: 10,
     });
@@ -179,6 +180,7 @@ module.exports =
       type: "Key",
       reftable: table,
       required: false,
+      attributes: { summary_field: "author" },
     });
     await Field.create({
       table: disc_books,
@@ -186,6 +188,7 @@ module.exports =
       label: "discussant",
       type: "Key",
       reftable_name: "users",
+      attributes: { summary_field: "email" },
       required: false,
     });
     const publisher = await Table.create("publisher");
