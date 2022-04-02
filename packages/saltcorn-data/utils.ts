@@ -6,7 +6,6 @@ import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Where } from "@saltcorn/db-common/internal";
-import { isNode } from "./webpack-helper";
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -168,6 +167,16 @@ const isStale = (date: Date | string, hours: number = 24): boolean => {
   return new Date(date).valueOf() < now.valueOf() - oneday;
 };
 
+declare const window: any;
+
+const isNode = () => {
+  return typeof window === "undefined";
+};
+
+const isWeb = (req: any) => {
+  return isNode() && !req.smr;
+};
+
 export = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -187,4 +196,6 @@ export = {
   sleep,
   mergeIntoWhere,
   isStale,
+  isNode,
+  isWeb,
 };

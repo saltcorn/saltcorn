@@ -14,7 +14,7 @@ const crypto = require("crypto");
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
-const { isNode } = require("../webpack-helper");
+const { isNode } = require("../utils");
 
 /**
  * Default data path?

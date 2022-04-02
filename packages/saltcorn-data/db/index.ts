@@ -10,7 +10,8 @@ import * as singleTenant from "@saltcorn/db-common/single-tenant";
 
 import { sqlsanitize, mkWhere, Where } from "@saltcorn/db-common/internal";
 
-import { isNode } from "../webpack-helper";
+import utils from "../utils";
+const { isNode } = utils;
 import { getConnectObject as getConnectObjectMobile } from "./connect_mobile";
 const { getConnectObject, is_sqlite } = require("./connect");
 

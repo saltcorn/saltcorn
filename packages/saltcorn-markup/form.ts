@@ -638,13 +638,13 @@ const renderFormLayout = (form: Form): string => {
         );
       }
       const isNode = typeof window === "undefined";
-      if (isNode) {
+      if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
           ? 'onClick="ajaxSubmitForm(this)" type="button"'
           : 'type="submit"';
         return mkBtn(submitAttr);
       }
-      return mkBtn('onClick="local_post_btn(this)" type="button"');
+      return mkBtn('type="submit"');
     },
   };
   return renderLayout({ blockDispatch, layout: form.layout });
@@ -712,6 +712,8 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const top = `<form action="${form.action}"${
+    form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
+  }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   } class="form-namespace ${form.class || ""}" method="${
     form.methodGET ? "get" : "post"

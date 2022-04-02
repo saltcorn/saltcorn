@@ -10,11 +10,12 @@ import Form from "./form";
 import utils from "../utils";
 const {
   removeEmptyStrings,
-  numberToBool,
   stringToJSON,
   InvalidConfiguration,
   satisfies,
   structuredClone,
+  isNode,
+  isWeb,
 } = utils;
 const { remove_from_menu } = require("./config");
 import tags from "@saltcorn/markup/tags";
@@ -35,7 +36,6 @@ import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
-import { isNode } from "../webpack-helper";
 
 declare let window: any;
 
@@ -411,9 +411,9 @@ class View {
     }
   }
 
-  queries(remote?: boolean, req?: any) {
+  queries(remote?: boolean, req?: any, res?: any) {
     const queryObj = this?.viewtemplateObj?.queries
-      ? this.viewtemplateObj!.queries({ ...this, req })
+      ? this.viewtemplateObj!.queries({ ...this, req, res })
       : {};
     if (remote) {
       const { getState } = require("../db/state");
@@ -430,7 +430,13 @@ class View {
           let response = await axios.post(
             url,
             { args },
-            { headers: { Authorization: `jwt ${token}` } }
+            {
+              headers: {
+                Authorization: `jwt ${token}`,
+                "X-Requested-With": "XMLHttpRequest",
+                "X-Saltcorn-Client": "mobile-app",
+              },
+            }
           );
           return response.data.success;
         };
@@ -623,7 +629,7 @@ class View {
    * @param {object} req
    * @returns {Promise<Form|null>}
    */
-  async get_state_form(query: any, req: ReqFunction): Promise<Form | null> {
+  async get_state_form(query: any, req: any): Promise<Form | null> {
     this.check_viewtemplate();
     const vt_display_state_form = this.viewtemplateObj!.display_state_form;
     const display_state_form =
@@ -649,7 +655,7 @@ class View {
       });
       const form = new Form({
         methodGET: true,
-        action: db.is_node
+        action: isWeb(req)
           ? `/view/${encodeURIComponent(this.name)}`
           : "javascript:void(0);", // onsubmit without reload
         fields,
@@ -658,7 +664,7 @@ class View {
         __: req.__,
         values: removeEmptyStrings(query),
       });
-      if (!db.is_node)
+      if (!isWeb(req))
         form.onSubmit = `javascript:stateFormSubmit(this, 'get/view/${encodeURIComponent(
           this.name
         )}')`;
@@ -671,7 +677,7 @@ class View {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async get_config_flow(req: ReqFunction): Promise<Workflow> {
+  async get_config_flow(req: any): Promise<Workflow> {
     this.check_viewtemplate();
     if (!this.id)
       throw new InvalidConfiguration(
@@ -718,10 +724,6 @@ function typeWithDefinedMember<T>(object: any, member: string): object is T {
     object[member] !== null
   );
 }
-
-type ReqFunction = {
-  __: (arg0: string) => string;
-};
 
 namespace View {
   export type FindViewsPred = (arg0: {

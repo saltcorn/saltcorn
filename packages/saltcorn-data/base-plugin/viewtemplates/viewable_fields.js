@@ -11,11 +11,10 @@ const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
-const { structuredClone } = require("../../utils");
+const { structuredClone, isWeb } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode } = require("../../webpack-helper");
 
 /**
  * @function
@@ -27,7 +26,15 @@ const { isNode } = require("../../webpack-helper");
  * @param {colIdNm} colIdNm missing in contract
  * @returns {any}
  */
-const action_url = (viewname, table, action_name, r, colId, colIdNm, confirm) => {
+const action_url = (
+  viewname,
+  table,
+  action_name,
+  r,
+  colId,
+  colIdNm,
+  confirm
+) => {
   if (action_name === "Delete")
     return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack") return { javascript: "history.back()" };
@@ -181,10 +188,7 @@ const make_link = (
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = "dropdown-item";
       if (in_modal)
-        return a(
-          { ...attrs, href: `javascript:ajax_modal('${href}');` },
-          txt
-        );
+        return a({ ...attrs, href: `javascript:ajax_modal('${href}');` }, txt);
       return a(attrs, txt);
     },
   };
@@ -255,7 +259,8 @@ const view_linker = (
     extra_state_fml,
   },
   fields,
-  __ = (s) => s
+  __ = (s) => s,
+  isWeb = true
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -280,7 +285,7 @@ const view_linker = (
         key: (r) => {
           const target = `/view/${encodeURIComponent(vnm)}${get_query(r)}`;
           return link_view(
-            isNode() ? target : `javascript:execLink('${target}')`,
+            isWeb ? target : `javascript:execLink('${target}')`,
             get_label(vnm, r),
             in_modal,
             link_style,
@@ -292,7 +297,7 @@ const view_linker = (
             link_textcol,
             in_dropdown && "dropdown-item",
             get_extra_state(r)
-          )
+          );
         },
       };
     case "Independent":
@@ -407,7 +412,15 @@ const flapMaipish = (xs, f) => {
  * @param {*} __
  * @returns {object[]}
  */
-const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) => {
+const get_viewable_fields = (
+  viewname,
+  table,
+  fields,
+  columns,
+  isShow,
+  req,
+  __
+) => {
   const dropdown_actions = [];
   const tfields = flapMaipish(columns, (column) => {
     const role = req.user ? req.user.role_id : 10;
@@ -469,7 +482,7 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) 
       } else return action_col;
     } else if (column.type === "ViewLink") {
       if (!column.view) return;
-      const r = view_linker(column, fields, __);
+      const r = view_linker(column, fields, __, isWeb(req));
       if (column.header_label) r.label = text(__(column.header_label));
       Object.assign(r, setWidth);
       if (column.in_dropdown) {
@@ -647,7 +660,7 @@ const get_viewable_fields = (viewname, table, fields, columns, isShow, req, __) 
     });
   }
   return tfields;
-}
+};
 /**
  * @param {string} fname
  * @param {object} req
@@ -661,7 +674,7 @@ const sortlinkForName = (fname, req, viewname) => {
       : _sortdesc
       ? "false"
       : "true";
-  return isNode()
+  return isWeb(req)
     ? `javascript:sortby('${text(fname)}', ${desc})`
     : `javascript:localSortBy('${text(fname)}', ${desc}, '${viewname}')`;
 };
@@ -723,7 +736,15 @@ const splitUniques = (fields, state, fuzzyStrings) => {
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const getForm = async (table, viewname, columns, layout0, id, req) => {
+const getForm = async (
+  table,
+  viewname,
+  columns,
+  layout0,
+  id,
+  req,
+  isRemote
+) => {
   const fields = await table.getFields();
 
   const tfields = (columns || [])
@@ -776,7 +797,7 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
       }
     })
     .filter((tf) => !!tf);
-  const path = isNode() ? req.baseUrl + req.path : "";
+  const path = isWeb(req) ? req.baseUrl + req.path : "";
   let action = `/view/${viewname}`;
   if (path && path.startsWith("/auth/")) action = path;
   const layout = structuredClone(layout0);
@@ -788,9 +809,11 @@ const getForm = async (table, viewname, columns, layout0, id, req) => {
     },
   });
   const form = new Form({
-    action,
+    action: isRemote ? "javascript:void(0)" : action,
+    onSubmit: isRemote ? `javascript:formSubmit(this, '${action}')` : undefined,
     fields: tfields,
     layout,
+    req,
   });
   if (id) form.hidden("id");
   return form;

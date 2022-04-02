@@ -35,7 +35,7 @@ function combineFormAndQuery(form, query) {
   return paramsList.length > 0 ? `?${paramsList.join("&")}` : undefined;
 }
 
-function execLink(url) {
+async function execLink(url) {
   let path = url;
   let query = undefined;
   const queryStart = url.indexOf("?");
@@ -43,29 +43,54 @@ function execLink(url) {
     path = url.substring(0, queryStart);
     query = url.substring(queryStart);
   }
-  window.router
-    .resolve({ pathname: `get${path}`, queryParams: query })
-    .then((page) => {
-      document.getElementById("content-div").innerHTML = page.content;
-    });
+  const page = await window.router.resolve({
+    pathname: `get${path}`,
+    queryParams: query,
+  });
+  document.getElementById("content-div").innerHTML = page.content;
 }
 
-function stateFormSubmit(e, path) {
+async function formSubmit(e, path) {
+  const formData = new FormData(e);
+  let body = {};
+  let redirect;
+  for (const [k, v] of formData.entries()) {
+    body[k] = v;
+  }
+  try {
+    const response = await apiCall({
+      method: e.method,
+      path,
+      body,
+    });
+    redirect = response.data.redirect;
+  } catch (error) {
+    // TODO ch message
+    return null;
+  }
+  const page = await window.router.resolve(`get${redirect}`);
+  document.getElementById("content-div").innerHTML = page.content;
+}
+
+async function stateFormSubmit(e, path) {
   let formData = new FormData(e);
   let sp = new URLSearchParams(formData);
-  window.router
-    .resolve({ pathname: path, queryParams: sp.toString() })
-    .then((page) => {
-      document.getElementById("content-div").innerHTML = page.content;
-    });
+  const page = await window.router.resolve({
+    pathname: path,
+    queryParams: sp.toString(),
+  });
+  document.getElementById("content-div").innerHTML = page.content;
 }
 
 async function login(email, password) {
-  const serverPath = localStorage.getItem("server_path");
   try {
-    const response = await apiCall("GET", `${serverPath}/auth/login-with/jwt`, {
-      email,
-      password,
+    const response = await apiCall({
+      method: "GET",
+      path: "/auth/login-with/jwt",
+      params: {
+        email,
+        password,
+      },
     });
     return response.data;
   } catch (error) {
@@ -79,9 +104,8 @@ async function loginFormSubmit(e, entryView) {
   const token = await login(formData.get("email"), formData.get("password"));
   if (token) {
     window.localStorage.setItem("auth_jwt", token);
-    window.router.resolve({ pathname: entryView }).then((page) => {
-      document.getElementById("content-div").innerHTML = page.content;
-    });
+    const page = await window.router.resolve({ pathname: entryView });
+    document.getElementById("content-div").innerHTML = page.content;
   }
 }
 
@@ -93,27 +117,27 @@ function local_post_btn(e, reload) {
   handleRoute(`${method}${path}`, combineFormAndQuery(form, query), reload);
 }
 
-function local_set_state_fields(kvs, href) {
+async function local_set_state_fields(kvs, href) {
   let queryParams = [];
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true) {
     } else queryParams.push(`${kv[0]}=${kv[1]}`);
   });
-  window.router
-    .resolve({ pathname: href, queryParams: queryParams.join("&") })
-    .then((page) => {
-      document.getElementById("content-div").innerHTML = page.content;
-    });
+  const page = await window.router.resolve({
+    pathname: href,
+    queryParams: queryParams.join("&"),
+  });
+  document.getElementById("content-div").innerHTML = page.content;
 }
 
-function localSortBy(k, desc, viewname) {
-  local_set_state_fields(
+async function localSortBy(k, desc, viewname) {
+  await local_set_state_fields(
     { _sortby: k, _sortdesc: desc ? "on" : { unset: true } },
     `get/view/${viewname}`
   );
 }
 
-async function apiCall(method, path, params) {
+async function apiCall({ method, path, params, body }) {
   const serverPath = localStorage.getItem("server_path");
   const token = window.localStorage.getItem("auth_jwt");
   const url = `${serverPath}${path}`;
@@ -122,7 +146,12 @@ async function apiCall(method, path, params) {
       url: url,
       method: method,
       params: params,
-      headers: { Authorization: `jwt ${token}` },
+      headers: {
+        Authorization: `jwt ${token}`,
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Saltcorn-Client": "mobile-app",
+      },
+      data: body,
     });
   } catch (error) {
     console.log(`error while calling: ${method} ${url}`);

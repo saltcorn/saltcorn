@@ -14,7 +14,6 @@ const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
-const { post_btn, link } = require("@saltcorn/markup");
 const { getState } = require("../../db/state");
 const {
   eachView,
@@ -59,6 +58,7 @@ const {
   structuredClone,
   InvalidConfiguration,
   mergeIntoWhere,
+  isWeb,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -255,8 +255,7 @@ const run = async (
     );
   }
   const { rows, message } = await showQuery(state, fields);
-  if (message)
-    return extra.req.__(message);
+  if (message) return extra.req.__(message);
   if (rows.length > 1)
     rows.sort((a, b) => {
       let diff = 0;
@@ -625,7 +624,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       return action_link(url, req, segment);
     },
     view_link(view) {
-      const { key } = view_linker(view, fields);
+      const { key } = view_linker(view, fields, isWeb(req));
       return key(row);
     },
     tabs(segment, go) {
@@ -667,10 +666,10 @@ const run_action = async (
   { columns, layout },
   body,
   { req, res },
-  { actionQuery },
+  { actionQuery }
 ) => {
   const result = actionQuery();
-  if( result.json.error ) {
+  if (result.json.error) {
     Crash.create(e, req);
   }
 };
@@ -698,7 +697,7 @@ module.exports = {
     return getStringsForI18n(layout);
   },
   authorise_get: async ({ query, table_id }) => {
-    return await authorizeGetQuery(query, table_id)
+    return await authorizeGetQuery(query, table_id);
   },
   queries: ({ table_id, viewname, configuration: { columns }, req }) => ({
     async showQuery(state, fields) {
@@ -729,17 +728,17 @@ module.exports = {
         message: null,
       };
     },
-    async runManyQuery(state, {
-      where, limit, offset, orderBy, orderDesc,
-    }) {
+    async runManyQuery(state, { where, limit, offset, orderBy, orderDesc }) {
       const tbl = await Table.findOne({ id: table_id });
       const fields = await tbl.getFields();
-      const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+      const { joinFields, aggregations } = picked_fields_to_query(
+        columns,
+        fields
+      );
       const qstate = await stateFieldsToWhere({ fields, state });
       const q = await stateFieldsToQuery({ state, fields });
       if (where) mergeIntoWhere(qstate, where);
-      const role =
-        req && req.user ? req.user.role_id : 10;
+      const role = req && req.user ? req.user.role_id : 10;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
         const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
         if (qstate[owner_field.name])
@@ -786,7 +785,7 @@ module.exports = {
     async authorizeGetQuery(query, table_id) {
       let body = query || {};
       const user_id = req.user ? req.user.id : null;
-  
+
       if (user_id && Object.keys(body).length == 1) {
         const table = await Table.findOne({ id: table_id });
         if (table.ownership_field_id || table.ownership_formula) {
@@ -798,7 +797,7 @@ module.exports = {
           }
         }
       }
-      return false;  
-    }
+      return false;
+    },
   }),
 };

@@ -45,8 +45,7 @@ const {
   getStringsForI18n,
   translateLayout,
 } = require("../../models/layout");
-const { asyncMap } = require("../../utils");
-const { isNode } = require("../../webpack-helper");
+const { asyncMap, isWeb } = require("../../utils");
 
 /**
  * @param {object} req
@@ -348,21 +347,7 @@ const run = async (
   { res, req },
   { editQuery }
 ) => {
-  const { row } = await editQuery(state);
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
-  return await render({
-    table,
-    fields,
-    viewname,
-    columns,
-    layout,
-    row,
-    req,
-    res,
-    state,
-    auto_save,
-  });
+  return await editQuery(state);
 };
 
 /**
@@ -488,8 +473,17 @@ const render = async ({
   state,
   res,
   auto_save,
+  isRemote,
 }) => {
-  const form = await getForm(table, viewname, columns, layout, state.id, req);
+  const form = await getForm(
+    table,
+    viewname,
+    columns,
+    layout,
+    state.id,
+    req,
+    isRemote
+  );
   if (auto_save) form.onChange = `saveAndContinue(this)`;
   if (row) {
     form.values = row;
@@ -502,7 +496,6 @@ const render = async ({
     }
     form.hidden(table.pk_name);
   }
-
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
@@ -516,10 +509,8 @@ const render = async ({
     }
   });
   await form.fill_fkey_options();
-
   await transformForm({ form, table, req, row, res });
-
-  return renderForm(form, req.csrfToken());
+  return renderForm(form, !isRemote ? req.csrfToken() : false);
 };
 
 /**
@@ -609,8 +600,8 @@ const runPost = async (
         return;
       }
     }
-    if (req.xhr && !originalID) {
-      res.json({ id });
+    if (req.xhr && !originalID && !req.smr) {
+      res.json({ id, view_when_done });
       return;
     }
     if (redirect) {
@@ -653,7 +644,12 @@ const runPost = async (
           ? `?${pk.name}=${text(row[relation])}`
           : get_query(row);
       }
-      res.redirect(`${target}${query}`);
+      const redirectPath = `${target}${query}`;
+      if (!isWeb(req)) {
+        res.json({ redirect: redirectPath });
+      } else {
+        res.redirect(redirectPath);
+      }
     }
   }
 };
@@ -725,9 +721,10 @@ module.exports = {
   },
   queries: ({
     table_id,
-    viewname,
-    configuration: { columns, default_state },
+    name,
+    configuration: { columns, default_state, layout, auto_save },
     req,
+    res,
   }) => ({
     async editQuery(state) {
       const table = await Table.findOne({ id: table_id });
@@ -735,7 +732,20 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       const row =
         Object.keys(uniques).length > 0 ? await table.getRow(uniques) : null;
-      return { row };
+      const isRemote = !isWeb(req);
+      return await render({
+        table,
+        fields,
+        viewname: name,
+        columns,
+        layout,
+        row,
+        req,
+        res,
+        state,
+        auto_save,
+        isRemote,
+      });
     },
 
     async editManyQuery(state) {

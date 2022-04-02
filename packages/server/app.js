@@ -58,13 +58,6 @@ const jwtOpts = {
   audience: "saltcorn-mobile-app",
 };
 
-const jwtWithoutSession = (req) => {
-  return (
-    ExtractJwt.fromAuthHeaderWithScheme("jwt")(req) &&
-    !(req.cookies && req.cookies["connect.sid"])
-  );
-};
-
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
 
 /**
@@ -115,6 +108,17 @@ const getApp = async (opts = {}) => {
 
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
+  app.use((req, res, next) => {
+    if (
+      ExtractJwt.fromAuthHeaderWithScheme("jwt")(req) &&
+      req.cookies &&
+      req.cookies["connect.sid"]
+    )
+      throw new Error(
+        "Don't set a session cookie and JSON Web Token at the same time."
+      );
+    next();
+  });
   app.use(flash());
 
   //static serving
@@ -258,7 +262,7 @@ const getApp = async (opts = {}) => {
       if (
         req.url.startsWith("/api/") ||
         req.url === "/auth/login-with/jwt" ||
-        jwtWithoutSession(req)
+        ExtractJwt.fromAuthHeaderWithScheme("jwt")(req)
       ) {
         return next();
       }
@@ -269,6 +273,13 @@ const getApp = async (opts = {}) => {
       req.csrfToken = () => "";
       next();
     });
+
+  app.use(function (req, res, next) {
+    if (req.headers["x-saltcorn-client"] === "mobile-app") {
+      req.smr = true; // saltcorn-mobile-request
+    }
+    return next();
+  });
 
   mountRoutes(app);
   // set tenant homepage as / root

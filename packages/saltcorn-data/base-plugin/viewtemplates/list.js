@@ -40,8 +40,7 @@ const {
 } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
-const { InvalidConfiguration } = require("../../utils");
-const { isNode } = require("../../webpack-helper");
+const { InvalidConfiguration, isWeb } = require("../../utils");
 
 /**
  * @param {object} context
@@ -426,7 +425,9 @@ const run = async (
   const appState = getState();
   const locale = extraOpts.req.getLocale();
   const __ = (s) =>
-    isNode() ? appState.i18n.__({ phrase: s, locale }) || s : undefined;
+    isWeb(extraOpts.req)
+      ? appState.i18n.__({ phrase: s, locale }) || s
+      : undefined;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
@@ -516,7 +517,9 @@ const run = async (
       const target = `/view/${encodeURIComponent(
         view_to_create
       )}${stateToQueryString(state)}`;
-      const hrefVal = isNode() ? target : `javascript:execLink('${target}');`;
+      const hrefVal = isWeb(extraOpts.req)
+        ? target
+        : `javascript:execLink('${target}');`;
       create_link = link_view(
         hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
@@ -573,7 +576,7 @@ const run_action = async (
   { columns, layout },
   body,
   { req, res },
-  { getRowQuery },
+  { getRowQuery }
 ) => {
   const col = columns.find(
     (c) =>

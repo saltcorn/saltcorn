@@ -133,7 +133,7 @@ router.post(
           const queries = view.queries(false, req);
           if (queries[queryName]) {
             const { args } = req.body;
-            const resp = await queries[queryName](...args);
+            const resp = await queries[queryName](...args, true);
             res.json({ success: resp });
           } else {
             res.status(404).json({ error: req.__("Not found") });
