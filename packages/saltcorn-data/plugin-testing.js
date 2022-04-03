@@ -9,6 +9,7 @@ const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
 const Field = require("./models/field");
 const Table = require("./models/table");
+const { expressionValidator } = require("models/expression");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -127,8 +128,14 @@ const check_view_columns = async (view, columns) => {
   const table = Table.findOne({ id: view.table_id });
   let fields;
   if (table) fields = await table.getFields();
+  const check_formula = (s) => {
+    const v = expressionValidator(s, loc);
+    if (v === true) return;
+    if (typeof v === "string") errs.push(`In view ${view.name}, ${loc} ${v}`);
+  };
   for (const column of columns) {
     switch (column.type) {
+      // in general, if formula checked, make sure it is present
       case "Field":
         //field exists
         if (
@@ -153,6 +160,11 @@ const check_view_columns = async (view, columns) => {
           );
         break;
       case "Action":
+        if (column.action_label_formula)
+          check_formula(
+            column.action_label,
+            `Label for action ${column.action_name}`
+          );
         if (
           column.action_name.startsWith("Toggle ") ||
           column.action_name.startsWith("Login with ") ||
@@ -172,8 +184,26 @@ const check_view_columns = async (view, columns) => {
             `In view ${view.name}, action ${column.action_name} does not exist`
           );
       case "ViewLink":
-      case "View":
+        if (column.view_label_formula)
+          check_formula(column.view_label, `Label for view link`);
+        if (column.extra_state_fml)
+          check_formula(
+            column.extra_state_fml,
+            `View link extra state formula`
+          );
+        break;
 
+      case "View":
+        break;
+      case "JoinField":
+        break;
+      case "Link":
+        if (column.link_text_formula)
+          check_formula(column.link_text, `Link text`);
+        if (column.link_url_formula) check_formula(column.link_url, `Link URL`);
+        break;
+      case "Aggregation":
+        break;
       default:
         break;
     }
