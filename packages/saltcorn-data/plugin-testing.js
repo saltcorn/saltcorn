@@ -128,7 +128,7 @@ const check_view_columns = async (view, columns) => {
   const table = Table.findOne({ id: view.table_id });
   let fields;
   if (table) fields = await table.getFields();
-  const check_formula = (s) => {
+  const check_formula = (s, loc) => {
     const v = expressionValidator(s, loc);
     if (v === true) return;
     if (typeof v === "string") errs.push(`In view ${view.name}, ${loc} ${v}`);
