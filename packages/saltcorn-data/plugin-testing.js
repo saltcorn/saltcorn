@@ -156,7 +156,7 @@ const check_view_columns = async (view, columns) => {
           !f.type.fieldviews[column.fieldview]
         )
           errs.push(
-            `In view ${view.name}, field ${column.field_name} of type ${field.type.name} table ${table.name} does not have fieldview ${column.fieldview}`
+            `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table.name} does not have fieldview ${column.fieldview}`
           );
         break;
       case "Action":
