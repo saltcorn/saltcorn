@@ -82,7 +82,7 @@ describe("edit view", () => {
       .post("/view/authoredit")
       .send("author=Chekov")
 
-      .expect(toRedirect("/"));
+      .expect(toRedirect("/view/authorlist"));
   });
 });
 

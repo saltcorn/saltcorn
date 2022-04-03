@@ -20,7 +20,7 @@ const {
 } = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
 const Library = require("../../models/library");
-
+const { check_view_columns } = require("../../plugin-testing");
 const {
   initial_config_all_fields,
   calcfldViewOptions,
@@ -266,7 +266,7 @@ const configuration_workflow = (req) =>
               },
               {
                 name: "view_when_done",
-                label: req.__("Default view when done"),
+                label: req.__("Destination view"),
                 type: "String",
                 required: true,
                 attributes: {
@@ -529,7 +529,7 @@ const render = async ({
   }
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
-    form.values._referer = req.headers.referer;
+    form.values._referer = req.headers?.referer;
   }
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
@@ -773,24 +773,30 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  configCheck: async ({
-    name,
-    configuration: { view_when_done, formula_destinations },
-  }) => {
+  configCheck: async (view) => {
+    const {
+      name,
+      configuration: { view_when_done, destination_type, formula_destinations },
+    } = view;
     const errs = [];
-    const vwd = await View.findOne({
-      name: (view_when_done || "").split(".")[0],
-    });
-    if (!vwd)
-      errs.push(`In View ${name}, view when done ${view_when_done} not found`);
-    for (const { expression } of formula_destinations || []) {
-      if (expression)
-        expressionChecker(
-          expression,
-          `In View ${name}, destination formula ${expression} error: `,
-          errs
+    if (destination_type !== "Back to referer") {
+      const vwd = await View.findOne({
+        name: (view_when_done || "").split(".")[0],
+      });
+      if (!vwd)
+        errs.push(
+          `In View ${name}, view when done ${view_when_done} not found`
         );
+      for (const { expression } of formula_destinations || []) {
+        if (expression)
+          expressionChecker(
+            expression,
+            `In View ${name}, destination formula ${expression} error: `,
+            errs
+          );
+      }
     }
+    errs.push(...(await check_view_columns(view, view.configuration.columns)));
     return errs;
   },
 };

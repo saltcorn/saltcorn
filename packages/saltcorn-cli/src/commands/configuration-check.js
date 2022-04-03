@@ -4,7 +4,7 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
  * ConfigurationCheckCommand Class
@@ -16,20 +16,13 @@ class ConfigurationCheckCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const User = require("@saltcorn/data/models/user");
-
     const { flags } = this.parse(ConfigurationCheckCommand);
-
-    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-    const { init_multi_tenant } = require("@saltcorn/data/db/state");
-    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+    await init_some_tenants(flags.tenant);
     const {
       runConfigurationCheck,
     } = require("@saltcorn/admin-models/models/config-check");
     const { mockReqRes } = require("@saltcorn/data/tests/mocks");
-    await loadAllPlugins();
-    const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, undefined, tenants);
+
     const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
       const { passes, errors, pass } = await runConfigurationCheck(
