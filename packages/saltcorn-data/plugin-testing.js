@@ -9,7 +9,7 @@ const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
 const Field = require("./models/field");
 const Table = require("./models/table");
-const { expressionValidator } = require("models/expression");
+const { expressionValidator } = require("./models/expression");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
