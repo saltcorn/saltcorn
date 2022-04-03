@@ -152,6 +152,27 @@ const check_view_columns = async (view, columns) => {
             `In view ${view.name}, field ${column.field_name} of type ${field.type.name} table ${table.name} does not have fieldview ${column.fieldview}`
           );
         break;
+      case "Action":
+        if (
+          column.action_name.startsWith("Toggle ") ||
+          column.action_name.startsWith("Login with ") ||
+          [
+            "GoBack",
+            "Delete",
+            "Save",
+            "Reset",
+            "SaveAndContinue",
+            "Login",
+            "Sign up",
+          ].includes(column.action_name)
+        )
+          break;
+        if (!getState().actions[column.action_name])
+          errs.push(
+            `In view ${view.name}, action ${column.action_name} does not exist`
+          );
+      case "ViewLink":
+      case "View":
 
       default:
         break;
