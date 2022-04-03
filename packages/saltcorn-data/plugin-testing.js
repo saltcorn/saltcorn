@@ -9,6 +9,7 @@ const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
 const Field = require("./models/field");
 const Table = require("./models/table");
+const Trigger = require("./models/trigger");
 const { expressionValidator } = require("./models/expression");
 
 const auto_test_wrap = (wrap) => {
@@ -125,7 +126,13 @@ const auto_test_plugin = async (plugin) => {
 
 const check_view_columns = async (view, columns) => {
   const errs = [];
-  const table = Table.findOne({ id: view.table_id });
+  const table = Table.findOne(
+    view.table_id
+      ? { id: view.table_id }
+      : view.exttable_name
+      ? { name: view.exttable_name }
+      : { id: -1 }
+  );
   let fields;
   if (table) fields = await table.getFields();
   const check_formula = (s, loc) => {
@@ -133,20 +140,25 @@ const check_view_columns = async (view, columns) => {
     if (v === true) return;
     if (typeof v === "string") errs.push(`In view ${view.name}, ${loc} ${v}`);
   };
+  const trigger_actions = (
+    await Trigger.find({
+      when_trigger: { or: ["API call", "Never"] },
+    })
+  ).map((tr) => tr.name);
   for (const column of columns) {
     switch (column.type) {
       // in general, if formula checked, make sure it is present
       case "Field":
         //field exists
         if (
-          table.name === "users" &&
+          table?.name === "users" &&
           ["remember", "passwordRepeat", "password"].includes(column.field_name)
         )
           break;
         const f = fields.find((fld) => fld.name === column.field_name);
         if (!f) {
           errs.push(
-            `In view ${view.name}, field ${column.field_name} does not exist in table ${table.name}`
+            `In view ${view.name}, field ${column.field_name} does not exist in table ${table?.name}`
           );
           break;
         }
@@ -156,7 +168,7 @@ const check_view_columns = async (view, columns) => {
           !f.type.fieldviews[column.fieldview]
         )
           errs.push(
-            `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table.name} does not have fieldview ${column.fieldview}`
+            `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table?.name} does not have fieldview ${column.fieldview}`
           );
         break;
       case "Action":
@@ -179,7 +191,10 @@ const check_view_columns = async (view, columns) => {
           ].includes(column.action_name)
         )
           break;
-        if (!getState().actions[column.action_name])
+        if (
+          !getState().actions[column.action_name] &&
+          !trigger_actions.includes(column.action_name)
+        )
           errs.push(
             `In view ${view.name}, action ${column.action_name} does not exist`
           );
