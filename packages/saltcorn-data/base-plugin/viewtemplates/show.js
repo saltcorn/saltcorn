@@ -22,6 +22,7 @@ const {
   getStringsForI18n,
   translateLayout,
 } = require("../../models/layout");
+const { check_view_columns } = require("../../plugin-testing");
 
 const {
   div,
@@ -753,5 +754,8 @@ module.exports = {
       }
     }
     return false;
+  },
+  configCheck: async (view) => {
+    return await check_view_columns(view, view.configuration.columns);
   },
 };
