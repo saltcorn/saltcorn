@@ -840,7 +840,7 @@ const columnSummary = (col) => {
     case "JoinField":
       return `Join ${col.join_field}`;
     case "ViewLink":
-      return `View ${col.view_label || col.view.split(":")[1] || ""}`;
+      return `View link ${col.view_label || col.view.split(":")[1] || ""}`;
     case "Action":
       return `Action ${col.action_label || col.action_name}`;
     case "Aggregation":

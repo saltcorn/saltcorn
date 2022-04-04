@@ -21,6 +21,7 @@ const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToWhere, freeVariables } = require("./models/expression");
+const { traverse } = require("./models/layout");
 /**
  *
  * @param {string} url
@@ -938,7 +939,7 @@ const get_onetoone_views = contract(
  */
 const picked_fields_to_query = contract(
   is.fun([is.array(is_column), is.array(is.class("Field"))], is_table_query),
-  (columns, fields) => {
+  (columns, fields, layout) => {
     var joinFields = {};
     var aggregations = {};
     let freeVars = new Set(); // for join fields
@@ -991,6 +992,11 @@ const picked_fields_to_query = contract(
             ...freeVars,
             ...freeVariables(column.view_label),
           ]);
+        if (column.extra_state_fml)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(column.extra_state_fml),
+          ]);
         if (column.view && column.view.split) {
           const [vtype, vrest] = column.view.split(":");
           if (vtype === "ParentShow") {
@@ -1037,6 +1043,17 @@ const picked_fields_to_query = contract(
         ]);
       }
     });
+    if (layout) {
+      traverse(layout, {
+        view(v) {
+          if (v.extra_state_fml)
+            freeVars = new Set([
+              ...freeVars,
+              ...freeVariables(v.extra_state_fml),
+            ]);
+        },
+      });
+    }
     [...freeVars]
       .filter((v) => v.includes("."))
       .map((v) => {

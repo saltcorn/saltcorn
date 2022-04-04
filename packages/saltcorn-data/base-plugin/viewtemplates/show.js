@@ -254,7 +254,11 @@ const run = async (
       })
     );
   }
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  const { joinFields, aggregations } = picked_fields_to_query(
+    columns,
+    fields,
+    layout
+  );
   readState(state, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   if (Object.keys(qstate).length === 0) return extra.req.__("No row selected");
@@ -475,7 +479,11 @@ const runMany = async (
 ) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await tbl.getFields();
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  const { joinFields, aggregations } = picked_fields_to_query(
+    columns,
+    fields,
+    layout
+  );
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
   if (extra && extra.where) mergeIntoWhere(qstate, extra.where);
