@@ -19,6 +19,7 @@ const {
   input,
   link,
   form,
+  domReady,
 } = tags;
 
 /**
@@ -109,5 +110,10 @@ export = /**
     );
     document.addEventListener('DOMContentLoaded',
       function(){window.onerror=globalErrorCatcher},false);
-    ;`)
+    ;`),
+    script(
+      domReady(`window.set_state_fields = ()=>{};
+      window.set_state_field = ()=>{};
+      window.pjax_to = ()=>{};`)
+    )
   );
