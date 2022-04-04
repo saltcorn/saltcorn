@@ -991,6 +991,11 @@ const picked_fields_to_query = contract(
             ...freeVars,
             ...freeVariables(column.view_label),
           ]);
+        if (column.extra_state_fml)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(column.extra_state_fml),
+          ]);
         if (column.view && column.view.split) {
           const [vtype, vrest] = column.view.split(":");
           if (vtype === "ParentShow") {
