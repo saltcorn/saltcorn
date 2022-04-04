@@ -652,16 +652,16 @@ router.get(
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
     const filepath = req.params[0];
+    const hasVersion = plugin.includes("@");
     const location =
-      getState().plugin_locations[
-        plugin.includes("@") ? plugin.split("@")[0] : plugin
-      ];
+      getState().plugin_locations[hasVersion ? plugin.split("@")[0] : plugin];
     if (location) {
       const safeFile = path
         .normalize(filepath)
         .replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "public", safeFile);
-      if (fs.existsSync(fullpath)) res.sendFile(fullpath, { maxAge: "1d" });
+      if (fs.existsSync(fullpath))
+        res.sendFile(fullpath, { maxAge: hasVersion ? "100d" : "1d" });
       else res.status(404).send(req.__("Not found"));
     } else {
       res.status(404).send(req.__("Not found"));
