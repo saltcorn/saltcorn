@@ -108,7 +108,12 @@ router.post(
     }
     const contents = await view.run(query, { req, res });
 
-    res.send(contents);
+    res.send(
+      contents.replace(
+        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+        ""
+      )
+    );
   })
 );
 
