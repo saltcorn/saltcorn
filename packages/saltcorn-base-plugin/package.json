@@ -15,7 +15,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "devDependencies": {
-    "jest": "^25.1.0"
+    "jest": "26.6.3"
   },
   "jest": {
     "testEnvironment": "node"
