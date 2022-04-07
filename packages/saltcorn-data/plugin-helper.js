@@ -293,7 +293,7 @@ const get_link_view_opts = contract(
       for (const view of views) {
         if (through && throughTable) {
           link_view_opts_push({
-            name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
+            name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
             label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           });
         } else {
@@ -1205,6 +1205,23 @@ const stateFieldsToWhere = contract(
               inSelect: {
                 table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
                 field: db.sqlsanitize(jFieldNm),
+                where: { [db.sqlsanitize(lblField)]: v },
+              },
+            },
+          ];
+        } else if (kpath.length === 4) {
+          const [jtNm, jFieldNm, tblName, lblField] = kpath;
+          qstate.id = [
+            ...(qstate.id ? [qstate.id] : []),
+            {
+              // where id in (select jFieldNm from jtnm where lblField=v)
+              inSelect: {
+                table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+                field: db.sqlsanitize(jFieldNm),
+                valField: "id",
+                through: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(
+                  tblName
+                )}"`,
                 where: { [db.sqlsanitize(lblField)]: v },
               },
             },
