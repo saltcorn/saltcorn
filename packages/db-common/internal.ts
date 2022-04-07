@@ -2,7 +2,6 @@
  * @category db-common
  * @module internal
  */
-import { GenObj } from "@saltcorn/types/common_types";
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 /**
@@ -427,19 +426,16 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
 
 export type Row = { [key: string]: any };
 
-export const prefixFieldsInWhere = (
-  inputWhere: GenObj,
-  tablePrefix: string
-) => {
+export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   if (!inputWhere) return {};
-  const whereObj: GenObj = {};
+  const whereObj: Where = {};
   Object.keys(inputWhere).forEach((k) => {
     if (k === "_fts") whereObj[k] = { table: tablePrefix, ...inputWhere[k] };
     else if (k === "not") {
       whereObj.not = prefixFieldsInWhere(inputWhere[k], tablePrefix);
     } else if (k === "or") {
       whereObj.or = Array.isArray(inputWhere[k])
-        ? inputWhere[k].map((w: GenObj) => prefixFieldsInWhere(w, tablePrefix))
+        ? inputWhere[k].map((w: Where) => prefixFieldsInWhere(w, tablePrefix))
         : prefixFieldsInWhere(inputWhere[k], tablePrefix);
     } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
   });

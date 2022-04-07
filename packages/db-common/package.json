@@ -24,9 +24,7 @@
   "files": [
     "dist/**/*"
   ],
-  "dependencies": {
-    "@saltcorn/types": "0.7.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "jest": "26.6.3",
     "@types/node": "^16.11.9",
