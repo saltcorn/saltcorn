@@ -293,7 +293,7 @@ const get_link_view_opts = contract(
       for (const view of views) {
         if (through && throughTable) {
           link_view_opts_push({
-            name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
+            name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
             label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           });
         } else {
