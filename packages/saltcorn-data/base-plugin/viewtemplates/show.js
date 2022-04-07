@@ -424,7 +424,7 @@ const renderRows = async (
           case "OneToOneShow":
             state = {
               [view.view_select.through
-                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.field_name}`
+                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
                 : view.view_select.field_name]: row[pk_name],
             };
             break;

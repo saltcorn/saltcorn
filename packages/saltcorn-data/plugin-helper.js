@@ -1209,6 +1209,23 @@ const stateFieldsToWhere = contract(
               },
             },
           ];
+        } else if (kpath.length === 4) {
+          const [jtNm, jFieldNm, tblName, lblField] = kpath;
+          qstate.id = [
+            ...(qstate.id ? [qstate.id] : []),
+            {
+              // where id in (select jFieldNm from jtnm where lblField=v)
+              inSelect: {
+                table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+                field: db.sqlsanitize(jFieldNm),
+                valField: "id",
+                through: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(
+                  tblName
+                )}"`,
+                where: { [db.sqlsanitize(lblField)]: v },
+              },
+            },
+          ];
         }
       }
     });
