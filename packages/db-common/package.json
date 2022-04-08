@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/db-common",
-  "version": "0.7.1-beta.2",
+  "version": "0.7.1",
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -26,7 +26,7 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "jest": "^25.1.0",
+    "jest": "26.6.3",
     "@types/node": "^16.11.9",
     "typescript": "^4.4.4"
   },

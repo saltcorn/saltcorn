@@ -567,6 +567,10 @@ function ajax_modal(url, opts = {}) {
       </div>
     </div>
   </div>`);
+  } else if ($("#scmodal").hasClass("show")) {
+    var myModalEl = document.getElementById("scmodal");
+    var modal = bootstrap.Modal.getInstance(myModalEl);
+    modal.dispose();
   }
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   else $("#scmodal").removeClass("no-submit-reload");
@@ -836,7 +840,7 @@ const columnSummary = (col) => {
     case "JoinField":
       return `Join ${col.join_field}`;
     case "ViewLink":
-      return `View ${col.view_label || col.view.split(":")[1] || ""}`;
+      return `View link ${col.view_label || col.view.split(":")[1] || ""}`;
     case "Action":
       return `Action ${col.action_label || col.action_name}`;
     case "Aggregation":

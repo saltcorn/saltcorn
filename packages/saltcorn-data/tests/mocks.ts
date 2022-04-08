@@ -176,6 +176,8 @@ const mockReqRes = {
     __: (s: any) => s,
     user: { id: 1, role_id: 1 },
     isAuthenticated: () => true,
+    headers: {},
+    query: {},
   },
   res: { redirect() {}, json() {}, send() {}, __: (s: any) => s },
 };

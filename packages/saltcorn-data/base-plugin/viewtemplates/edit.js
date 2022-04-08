@@ -20,7 +20,7 @@ const {
 } = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
 const Library = require("../../models/library");
-
+const { check_view_columns } = require("../../plugin-testing");
 const {
   initial_config_all_fields,
   calcfldViewOptions,
@@ -70,10 +70,8 @@ const configuration_workflow = (req) =>
             }
           }
 
-          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
-            fields,
-            "edit"
-          );
+          const { field_view_options, handlesTextStyle, blockDisplay } =
+            calcfldViewOptions(fields, "edit");
           const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
@@ -155,6 +153,7 @@ const configuration_workflow = (req) =>
             field_view_options,
             parent_field_list,
             handlesTextStyle,
+            blockDisplay,
             roles,
             actions,
             fieldViewConfigForms,
@@ -245,9 +244,6 @@ const configuration_workflow = (req) =>
             })
           );
           return new Form({
-            blurb: req.__(
-              "The view you choose here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
-            ),
             fields: [
               {
                 name: "auto_save",
@@ -256,30 +252,40 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
-                name: "view_when_done",
-                label: req.__("Default view when done"),
+                name: "destination_type",
+                label: "Destination type",
+                type: "String",
+                required: true,
                 sublabel: req.__(
-                  "This is the view to which the user will be sent when the form is submitted, unless a formula below is true."
+                  "This is the view to which the user will be sent when the form is submitted. The view you specify here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place."
                 ),
+                //fieldview: "radio_group",
+                attributes: {
+                  options: ["View", "Formula", "Back to referer"],
+                },
+              },
+              {
+                name: "view_when_done",
+                label: req.__("Destination view"),
                 type: "String",
                 required: true,
                 attributes: {
                   options: done_view_opts,
                 },
+                showIf: { destination_type: "View" },
               },
-              {
-                label: req.__(
-                  "Alternative destinations if formula evaluates to true"
-                ),
-                sublabel: req.__(
-                  "You can send the user to an different view depending on the day the user has submitted. Ignore this option if you always want to send the user to the same destination"
-                ),
-                input_type: "section_header",
-              },
+
               new FieldRepeat({
                 name: "formula_destinations",
+                showIf: { destination_type: "Formula" },
                 fields: [
-                  { type: "String", name: "expression", label: "Formula" },
+                  {
+                    type: "String",
+                    name: "expression",
+                    label: "Formula",
+                    sublabel:
+                      "if this formula evaluates to true, use the following view",
+                  },
                   {
                     name: "view",
                     label: req.__("View"),
@@ -343,7 +349,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  { columns, layout, auto_save },
+  { columns, layout, auto_save, destination_type },
   state,
   { res, req }
 ) => {
@@ -365,6 +371,7 @@ const run = async (
     res,
     state,
     auto_save,
+    destination_type,
   });
 };
 
@@ -504,8 +511,10 @@ const render = async ({
   state,
   res,
   auto_save,
+  destination_type,
 }) => {
   const form = await getForm(table, viewname, columns, layout, state.id, req);
+
   if (auto_save) form.onChange = `saveAndContinue(this)`;
   if (row) {
     form.values = row;
@@ -518,7 +527,10 @@ const render = async ({
     }
     form.hidden(table.pk_name);
   }
-
+  if (destination_type === "Back to referer") {
+    form.hidden("_referer");
+    form.values._referer = req.headers?.referer;
+  }
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
@@ -558,7 +570,15 @@ const render = async ({
 const runPost = async (
   table_id,
   viewname,
-  { columns, layout, fixed, view_when_done, formula_destinations, auto_save },
+  {
+    columns,
+    layout,
+    fixed,
+    view_when_done,
+    formula_destinations,
+    auto_save,
+    destination_type,
+  },
   state,
   body,
   { res, req, redirect }
@@ -639,20 +659,24 @@ const runPost = async (
       res.redirect(redirect);
       return;
     }
-    if (!view_when_done) {
-      res.redirect(`/`);
-      return;
-    }
 
     let use_view_when_done = view_when_done;
-    for (const { view, expression } of formula_destinations || []) {
-      if (expression) {
-        const f = get_expression_function(expression, fields);
-        if (f(row)) {
-          use_view_when_done = view;
-          continue;
+    if (destination_type === "Back to referer" && body._referer) {
+      res.redirect(body._referer);
+      return;
+    } else if (destination_type !== "View")
+      for (const { view, expression } of formula_destinations || []) {
+        if (expression) {
+          const f = get_expression_function(expression, fields);
+          if (f(row)) {
+            use_view_when_done = view;
+            continue;
+          }
         }
       }
+    if (!use_view_when_done) {
+      res.redirect(`/`);
+      return;
     }
     const [viewname_when_done, relation] = use_view_when_done.split(".");
     const nxview = await View.findOne({ name: viewname_when_done });
@@ -749,24 +773,30 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  configCheck: async ({
-    name,
-    configuration: { view_when_done, formula_destinations },
-  }) => {
+  configCheck: async (view) => {
+    const {
+      name,
+      configuration: { view_when_done, destination_type, formula_destinations },
+    } = view;
     const errs = [];
-    const vwd = await View.findOne({
-      name: (view_when_done || "").split(".")[0],
-    });
-    if (!vwd)
-      errs.push(`In View ${name}, view when done ${view_when_done} not found`);
-    for (const { expression } of formula_destinations || []) {
-      if (expression)
-        expressionChecker(
-          expression,
-          `In View ${name}, destination formula ${expression} error: `,
-          errs
+    if (destination_type !== "Back to referer") {
+      const vwd = await View.findOne({
+        name: (view_when_done || "").split(".")[0],
+      });
+      if (!vwd)
+        errs.push(
+          `In View ${name}, view when done ${view_when_done} not found`
         );
+      for (const { expression } of formula_destinations || []) {
+        if (expression)
+          expressionChecker(
+            expression,
+            `In View ${name}, destination formula ${expression} error: `,
+            errs
+          );
+      }
     }
+    errs.push(...(await check_view_columns(view, view.configuration.columns)));
     return errs;
   },
 };

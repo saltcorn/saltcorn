@@ -46,7 +46,8 @@ const Field = ({
   const { previews, setPreviews } = useContext(previewCtx);
   const myPreview = previews[node_id];
   const options = useContext(optionsCtx);
-
+  const blockDisplays = (options.blockDisplay || {})[name];
+  const blockDisplay = blockDisplays && blockDisplays.includes(fieldview);
   useEffect(() => {
     fetchFieldPreview({
       options,
@@ -60,7 +61,9 @@ const Field = ({
   return (
     <div
       className={`${textStyle} ${selected ? "selected-node" : ""} ${
-        isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
+        isBlock(block, inline, textStyle) || blockDisplay
+          ? "d-block"
+          : "d-inline-block"
       }`}
       ref={(dom) => connect(drag(dom))}
     >
@@ -106,6 +109,7 @@ const FieldSettings = () => {
 
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
+  const blockDisplay = (options.blockDisplay || {})[name];
   const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);
@@ -184,17 +188,19 @@ const FieldSettings = () => {
               </td>
             </tr>
           )}
-          <tr>
-            <td></td>
-            <td>
-              <BlockOrInlineSetting
-                block={block}
-                inline={inline}
-                textStyle={textStyle}
-                setProp={setProp}
-              />
-            </td>
-          </tr>
+          {!(blockDisplay && blockDisplay.includes(fieldview)) && (
+            <tr>
+              <td></td>
+              <td>
+                <BlockOrInlineSetting
+                  block={block}
+                  inline={inline}
+                  textStyle={textStyle}
+                  setProp={setProp}
+                />
+              </td>
+            </tr>
+          )}
           {!(handlesTextStyle && handlesTextStyle.includes(fieldview)) && (
             <TextStyleRow textStyle={textStyle} setProp={setProp} />
           )}

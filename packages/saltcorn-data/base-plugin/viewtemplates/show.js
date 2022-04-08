@@ -22,6 +22,7 @@ const {
   getStringsForI18n,
   translateLayout,
 } = require("../../models/layout");
+const { check_view_columns } = require("../../plugin-testing");
 
 const {
   div,
@@ -253,7 +254,11 @@ const run = async (
       })
     );
   }
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  const { joinFields, aggregations } = picked_fields_to_query(
+    columns,
+    fields,
+    layout
+  );
   readState(state, fields);
   const qstate = await stateFieldsToWhere({ fields, state, approximate: true });
   if (Object.keys(qstate).length === 0) return extra.req.__("No row selected");
@@ -419,7 +424,7 @@ const renderRows = async (
           case "OneToOneShow":
             state = {
               [view.view_select.through
-                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.field_name}`
+                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
                 : view.view_select.field_name]: row[pk_name],
             };
             break;
@@ -428,7 +433,11 @@ const renderRows = async (
             state = { id: row[view.view_select.field_name] };
             break;
         }
-        segment.contents = await view.run(state, extra);
+        const extra_state = segment.extra_state_fml
+          ? eval_expression(segment.extra_state_fml, row, extra.req.user)
+          : {};
+        const state1 = { ...state, ...extra_state };
+        segment.contents = await view.run(state1, extra);
       }
     });
     const user_id = extra.req.user ? extra.req.user.id : null;
@@ -470,7 +479,11 @@ const runMany = async (
 ) => {
   const tbl = await Table.findOne({ id: table_id });
   const fields = await tbl.getFields();
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
+  const { joinFields, aggregations } = picked_fields_to_query(
+    columns,
+    fields,
+    layout
+  );
   const qstate = await stateFieldsToWhere({ fields, state });
   const q = await stateFieldsToQuery({ state, fields });
   if (extra && extra.where) mergeIntoWhere(qstate, extra.where);
@@ -749,5 +762,8 @@ module.exports = {
       }
     }
     return false;
+  },
+  configCheck: async (view) => {
+    return await check_view_columns(view, view.configuration.columns);
   },
 };

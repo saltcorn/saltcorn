@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/base-plugin",
-  "version": "0.7.1-beta.2",
+  "version": "0.7.1",
   "description": "Base plugin for saltcorn",
   "main": "index.js",
   "repository": "github:saltcorn/saltcorn",
@@ -10,12 +10,12 @@
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "dependencies": {
-    "@saltcorn/data": "0.7.1-beta.2"
+    "@saltcorn/data": "0.7.1"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
   "devDependencies": {
-    "jest": "^25.1.0"
+    "jest": "26.6.3"
   },
   "jest": {
     "testEnvironment": "node"

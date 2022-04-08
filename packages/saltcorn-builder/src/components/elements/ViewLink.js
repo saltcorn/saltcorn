@@ -33,7 +33,7 @@ export /**
  * @returns {tr}
  * @category saltcorn-builder
  * @subcategory components
- * @namespace 
+ * @namespace
  */
 const ViewLink = ({
   name,
@@ -99,6 +99,7 @@ const ViewLinkSettings = () => {
     link_bgcol: node.data.props.link_bgcol,
     link_bordercol: node.data.props.link_bordercol,
     link_textcol: node.data.props.link_textcol,
+    extra_state_fml: node.data.props.extra_state_fml,
   }));
   const {
     actions: { setProp },
@@ -109,6 +110,7 @@ const ViewLinkSettings = () => {
     isFormula,
     inModal,
     textStyle,
+    extra_state_fml,
   } = node;
   const options = useContext(optionsCtx);
   return (
@@ -148,6 +150,20 @@ const ViewLinkSettings = () => {
               </OrFormula>
             </td>
           </tr>
+          <tr>
+            <td colSpan="2">
+              <label>Extra state Formula</label>
+              <input
+                type="text"
+                className="viewlink-label form-control"
+                value={extra_state_fml}
+                onChange={(e) =>
+                  setProp((prop) => (prop.extra_state_fml = e.target.value))
+                }
+              />
+            </td>
+          </tr>
+
           <ButtonOrLinkSettingsRows
             setProp={setProp}
             keyPrefix="link_"
@@ -203,6 +219,7 @@ ViewLink.craft = {
       "link_bgcol",
       "link_bordercol",
       "link_textcol",
+      "extra_state_fml",
     ],
   },
 };

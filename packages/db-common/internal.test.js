@@ -186,7 +186,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: [7],
-      where: 'where "id" in (select bar from foo where "baz"=$1)',
+      where: 'where "id" in (select "bar" from foo where "baz"=$1)',
     });
     expect(
       mkWhere({
@@ -196,7 +196,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: [45, 7, "Alice"],
-      where: `where "age"=$1 and "id" in (select bar from foo where "baz"=$2) and "name"=$3`,
+      where: `where "age"=$1 and "id" in (select "bar" from foo where "baz"=$2) and "name"=$3`,
     });
   });
   it("should query or", () => {
