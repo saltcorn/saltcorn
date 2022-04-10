@@ -3,10 +3,10 @@
  * @module base-plugin/viewtemplates/viewable_fields
  * @subcategory base-plugin
  */
-const { post_btn, link } = require("@saltcorn/markup");
+const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
-const { link_view, strictParseInt } = require("../../plugin-helper");
+const { link_view } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
@@ -304,9 +304,10 @@ const view_linker = (
       const ivnm = vrest;
       return {
         label: ivnm,
-        key: (r) =>
-          link_view(
-            `/view/${encodeURIComponent(ivnm)}`,
+        key: (r) => {
+          const target = `/view/${encodeURIComponent(ivnm)}`;
+          return link_view(
+            isWeb ? target : `javascript:execLink('${target}')`,
             get_label(ivnm, r),
             in_modal,
             link_style,
@@ -318,7 +319,8 @@ const view_linker = (
             link_textcol,
             in_dropdown && "dropdown-item",
             get_extra_state(r)
-          ),
+          );
+        },
       };
     case "ChildList":
     case "OneToOneShow":
@@ -326,9 +328,12 @@ const view_linker = (
       const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
       return {
         label: viewnm,
-        key: (r) =>
-          link_view(
-            `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id}`,
+        key: (r) => {
+          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+            r.id
+          }`;
+          return link_view(
+            isWeb ? target : `javascript:execLink('${target}')`,
             get_label(viewnm, r),
             in_modal,
             link_style,
@@ -340,7 +345,8 @@ const view_linker = (
             link_textcol,
             in_dropdown && "dropdown-item",
             get_extra_state(r)
-          ),
+          );
+        },
       };
     case "ParentShow":
       const [pviewnm, ptbl, pfld] = vrest.split(".");
@@ -350,29 +356,28 @@ const view_linker = (
         key: (r) => {
           const reffield = fields.find((f) => f.name === pfld);
           const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
-          return r[pfld]
-            ? link_view(
-                `/view/${encodeURIComponent(pviewnm)}?${reffield.refname}=${
-                  typeof r[pfld] === "object" ? r[pfld].id : r[pfld]
-                }`,
-                get_label(
-                  typeof summary_field === "undefined"
-                    ? pviewnm
-                    : summary_field,
-                  r
-                ),
-                in_modal,
-                link_style,
-                link_size,
-                link_icon,
-                textStyle,
-                link_bgcol,
-                link_bordercol,
-                link_textcol,
-                in_dropdown && "dropdown-item",
-                get_extra_state(r)
-              )
-            : "";
+          if (r[pfld]) {
+            const target = `/view/${encodeURIComponent(pviewnm)}?${
+              reffield.refname
+            }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+            return link_view(
+              isWeb ? target : `javascript:execLink('${target}')`,
+              get_label(
+                typeof summary_field === "undefined" ? pviewnm : summary_field,
+                r
+              ),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r)
+            );
+          } else return "";
         },
       };
     default:
@@ -676,7 +681,7 @@ const sortlinkForName = (fname, req, viewname) => {
       : "true";
   return isWeb(req)
     ? `javascript:sortby('${text(fname)}', ${desc})`
-    : `javascript:localSortBy('${text(fname)}', ${desc}, '${viewname}')`;
+    : `javascript:sortBy('${text(fname)}', ${desc}, '${viewname}')`;
 };
 
 /**

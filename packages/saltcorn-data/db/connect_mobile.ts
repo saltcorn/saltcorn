@@ -1,3 +1,5 @@
+declare const window: any;
+
 export const getConnectObject = () => {
   return {
     sqlite_path: "default",
@@ -5,5 +7,6 @@ export const getConnectObject = () => {
     default_schema: "public",
     fixed_configuration: {},
     inherit_configuration: [],
+    version_tag: window.config.version_tag,
   };
 };

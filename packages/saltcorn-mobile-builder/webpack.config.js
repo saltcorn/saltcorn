@@ -42,12 +42,12 @@ const buildPluginEntries = async (env) => {
   const plugins = JSON.parse(env.plugins);
   let result = [];
   for (plugin of plugins) {
-    await requirePlugin(plugin, false, manager);
-    const info = manager.getInfo(plugin.location);
-    let genericEntry = {};
-    genericEntry[plugin.name] = {
-      import: info.mainFile,
-      dependOn: ["markup", "data"],
+    const requireResult = await requirePlugin(plugin, false, manager);
+    const genericEntry = {
+      [plugin.name]: {
+        import: requireResult.mainFile,
+        dependOn: ["markup", "data"],
+      },
     };
     result.push({
       entry: genericEntry,

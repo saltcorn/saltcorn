@@ -6,12 +6,18 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  copySync,
+  writeSync,
   writeFileSync,
-} from "fs";
+} from "fs-extra";
 import { join } from "path";
-import { Builder, parseString } from "xml2js";
 import db from "@saltcorn/data/db/index";
 import Plugin from "@saltcorn/data/models/plugin";
+const { PluginManager } = require("live-plugin-manager");
+const {
+  staticDependencies,
+  requirePlugin,
+} = require("@saltcorn/server/load_plugins");
 
 export default class BuildAppCommand extends Command {
   static description = "build mobile app from tenant";
@@ -50,13 +56,22 @@ export default class BuildAppCommand extends Command {
   // host localhost of the android emulator, only for development,
   serverPath = "http://10.0.2.2:3000";
 
+  manager = new PluginManager({
+    pluginsPath: join(this.packageRoot, "plugin_packages", "node_modules"),
+    staticDependencies,
+  });
+
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
     if (!flags.entryPoint) {
       throw new Error("please specify an entry point for the first view");
     }
-    this.copyPublics();
-    this.copyPluginSources();
+    this.copyStaticAssets();
+    this.copySbadmin2Deps();
+    this.writeCfgFile({
+      entryPoint: flags.entryPoint,
+      serverPath: this.serverPath,
+    });
     await this.bundlePackages();
     this.copyBundlesToApp();
     // TODO ch postgres
@@ -65,64 +80,56 @@ export default class BuildAppCommand extends Command {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
     }
-    this.buildApk(flags.entryPoint, this.serverPath);
+    this.buildApk();
   }
 
-  copyPublics = () => {
-    if (!existsSync(join(this.wwwDir, "plugin_sources")))
-      mkdirSync(join(this.wwwDir, "public"), { recursive: true });
-    copyFileSync(
-      join(this.serverRoot, "public/jquery-3.6.0.min.js"),
-      join(this.wwwDir, "public", "jquery-3.6.0.min.js")
+  copyStaticAssets = () => {
+    const assetsDst = join(
+      this.wwwDir,
+      "static_assets",
+      db.connectObj.version_tag
     );
-    copyFileSync(
-      join(this.serverRoot, "public/saltcorn.js"),
-      join(this.wwwDir, "public", "saltcorn.js")
-    );
-    copyFileSync(
-      join(this.serverRoot, "public/saltcorn.css"),
-      join(this.wwwDir, "public", "saltcorn.css")
-    );
+    if (!existsSync(assetsDst)) {
+      mkdirSync(assetsDst, { recursive: true });
+    }
+    const srcPrefix = join(this.serverRoot, "public");
+    const srcFiles = ["jquery-3.6.0.min.js", "saltcorn.js", "saltcorn.css"];
+    for (const srcFile of srcFiles) {
+      copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
+    }
   };
 
-  copyPluginSources = () => {
-    if (!existsSync(join(this.wwwDir, "plugin_sources")))
-      mkdirSync(join(this.wwwDir, "plugin_sources"), { recursive: true });
-    copyFileSync(
-      join(
-        this.sbadmin2Root,
-        "node_modules/startbootstrap-sb-admin-2-bs5/vendor/fontawesome-free/css/all.min.css"
-      ),
-      join(this.wwwDir, "plugin_sources", "all.min.css")
+  copySbadmin2Deps = () => {
+    const sbadmin2Dst = join(
+      this.wwwDir,
+      "plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0"
     );
-    copyFileSync(
-      join(
-        this.sbadmin2Root,
-        "node_modules/startbootstrap-sb-admin-2-bs5/vendor/bootstrap/js/bootstrap.bundle.min.js"
-      ),
-      join(this.wwwDir, "plugin_sources", "bootstrap.bundle.min.js")
+    if (!existsSync(sbadmin2Dst)) {
+      mkdirSync(sbadmin2Dst, { recursive: true });
+    }
+    const srcPrefix = join(
+      this.sbadmin2Root,
+      "node_modules/startbootstrap-sb-admin-2-bs5"
     );
-    copyFileSync(
-      join(
-        this.sbadmin2Root,
-        "node_modules/startbootstrap-sb-admin-2-bs5/vendor/jquery-easing/jquery.easing.min.js"
-      ),
-      join(this.wwwDir, "plugin_sources", "jquery.easing.min.js")
-    );
-    copyFileSync(
-      join(
-        this.sbadmin2Root,
-        "node_modules/startbootstrap-sb-admin-2-bs5/css/sb-admin-2.css"
-      ),
-      join(this.wwwDir, "plugin_sources", "sb-admin-2.css")
-    );
-    copyFileSync(
-      join(
-        this.sbadmin2Root,
-        "node_modules/startbootstrap-sb-admin-2-bs5/js/sb-admin-2.min.js"
-      ),
-      join(this.wwwDir, "plugin_sources", "sb-admin-2.min.js")
-    );
+    const srcFiles = [
+      "vendor/fontawesome-free/css/all.min.css",
+      "vendor/bootstrap/js/bootstrap.bundle.min.js",
+      "vendor/jquery-easing/jquery.easing.min.js",
+      "css/sb-admin-2.css",
+      "js/sb-admin-2.min.js",
+    ];
+    for (const srcFile of srcFiles) {
+      copySync(join(srcPrefix, srcFile), join(sbadmin2Dst, srcFile));
+    }
+  };
+
+  writeCfgFile = ({ entryPoint, serverPath }: Record<string, string>) => {
+    let cfg = {
+      version_tag: db.connectObj.version_tag,
+      entry_view: `get/view/${entryPoint}`,
+      server_path: `${serverPath}`,
+    };
+    writeFileSync(join(this.wwwDir, "config"), JSON.stringify(cfg));
   };
 
   bundlePackages = async () => {
@@ -137,13 +144,31 @@ export default class BuildAppCommand extends Command {
         cwd: this.packageRoot,
       }
     );
+    for (const plugin of plugins) {
+      const required = await requirePlugin(plugin, false, this.manager);
+      const srcPublicDir = join(required.location, "public");
+      if (existsSync(srcPublicDir)) {
+        const dstPublicDir = join(
+          this.wwwDir,
+          "plugins",
+          "public",
+          plugin.name
+        );
+        if (!existsSync(dstPublicDir)) {
+          mkdirSync(dstPublicDir, { recursive: true });
+        }
+        for (const dirEntry of readdirSync(srcPublicDir)) {
+          copySync(join(srcPublicDir, dirEntry), join(dstPublicDir, dirEntry));
+        }
+      }
+    }
   };
 
   copyBundlesToApp = () => {
     if (!existsSync(this.appBundlesDir))
       mkdirSync(this.appBundlesDir, { recursive: true });
     for (let bundleName of readdirSync(this.bundleDir)) {
-      copyFileSync(
+      copySync(
         join(this.bundleDir, bundleName),
         join(this.appBundlesDir, bundleName)
       );
@@ -172,25 +197,7 @@ export default class BuildAppCommand extends Command {
     });
   };
 
-  buildApk = (entryPoint: string, serverPath: string) => {
-    const cfgFile = join(this.appDir, "config.xml");
-    const xml = readFileSync(cfgFile).toString();
-    parseString(xml, (err: any, result: any) => {
-      if (err) {
-        throw new Error(err);
-      }
-      if (
-        result.widget &&
-        result.widget.content &&
-        result.widget.content.length === 1 &&
-        result.widget.content[0].$
-      ) {
-        result.widget.content[0].$.src = `index.html?entry_view=get/view/${entryPoint}&server_path=${serverPath}`;
-      } else {
-        throw new Error("config.xml is missing a content element");
-      }
-      writeFileSync(cfgFile, new Builder().buildObject(result));
-    });
+  buildApk = () => {
     spawnSync("npm", ["run", "build-app"], {
       stdio: "inherit",
       cwd: this.appDir,

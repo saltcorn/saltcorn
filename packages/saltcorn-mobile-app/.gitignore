@@ -118,3 +118,6 @@ bundles/
 plugin_sources/
 public/
 *.sqlite
+
+plugins/
+static_assets/

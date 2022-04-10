@@ -2,7 +2,7 @@
   "name": "saltcorn-monorepo",
   "private": true,
   "devDependencies": {
-    "jest": "^25.1.0",
+    "jest": "^27.1.0",
     "lerna": "^3.20.2",
     "supertest": "^4.0.2",
     "typedoc": "^0.22.11",

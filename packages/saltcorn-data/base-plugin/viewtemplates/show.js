@@ -624,7 +624,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       return action_link(url, req, segment);
     },
     view_link(view) {
-      const { key } = view_linker(view, fields, isWeb(req));
+      const { key } = view_linker(view, fields, (s) => s, isWeb(req));
       return key(row);
     },
     tabs(segment, go) {

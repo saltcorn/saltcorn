@@ -579,7 +579,7 @@ const runPost = async (
     if (req.xhr) res.status(422);
     await form.fill_fkey_options();
     await transformForm({ form, table, req });
-    res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+    res.sendWrap(viewname, renderForm(form, req.csrfToken ? req.csrfToken() : false )); 
   } else {
     let row; // TODO ch  move whole block to query?
     const pk = fields.find((f) => f.primary_key);
@@ -611,7 +611,7 @@ const runPost = async (
         row[pk.name] = id;
       } else {
         req.flash("error", text_attr(ins_res.error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        res.sendWrap(viewname, renderForm(form, req.csrfToken ? req.csrfToken() : false));
         return;
       }
     } else {

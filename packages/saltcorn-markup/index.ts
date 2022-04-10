@@ -41,7 +41,7 @@ const buildButtonCallback = (
 ): string => {
   const isNode = typeof window === "undefined";
   if (isNode) return `ajax_post_btn(this, ${reload_on_done}, ${reload_delay})`;
-  else return `local_post_btn(this, ${reload_on_done})`;
+  else return "local_post_btn(this)";
 };
 
 /**

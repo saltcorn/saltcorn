@@ -297,7 +297,8 @@ module.exports = {
     req,
   }) => ({
     async getRowQuery(uniques) {
-      myrow = await table.getRow(uniques);
+      const table = await Table.findOne({ id: table_id });
+      return await table.getRow(uniques);
     },
   }),
 };

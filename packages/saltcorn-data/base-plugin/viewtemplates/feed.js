@@ -21,7 +21,7 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
-const { InvalidConfiguration, isWeb } = require("../../utils");
+const { InvalidConfiguration, isNode, isWeb } = require("../../utils");
 const { getState } = require("../../db/state");
 const { jsexprToWhere } = require("../../models/expression");
 
@@ -303,8 +303,9 @@ const run = async (
   readState(state, fields);
   const appState = getState();
   const locale = extraArgs.req.getLocale();
-  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
-
+  const __ = isNode()
+    ? (s) => appState.i18n.__({ phrase: s, locale }) || s
+    : (s) => s;
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     throw new InvalidConfiguration(

@@ -60,7 +60,7 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "^25.1.0",
+    "jest": "^27.1.0",
     "supertest": "^4.0.2"
   },
   "scripts": {

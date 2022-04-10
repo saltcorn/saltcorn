@@ -1,30 +1,11 @@
-const get_headers = () => {
+const getHeaders = (versionTag) => {
   const stdHeaders = [
-    { css: "public/saltcorn.css" },
-    { script: "public/saltcorn.js" },
+    { css: `static_assets/${versionTag}/saltcorn.css` },
+    { script: "js/delegates.js"}
   ];
   return [...stdHeaders];
 };
 
-const wrap = (title, contents, state) => {
-  const bodyClass = "";
-  const alerts = [];
-  const role_id = 1;
-  const role = role_id;
-  const layout = state.getLayout({ role_id: role_id });
-
-  const wrappedIn = layout.wrap({
-    title,
-    brand: {},
-    menu: [],
-    alerts,
-    body: contents.above.join(""),
-    headers: get_headers(),
-    role,
-    bodyClass,
-  });
-  return wrappedIn;
-};
 
 const ident = (s) => s;
 
@@ -42,17 +23,6 @@ const dummyReq = {
 };
 
 const dummmyRes = {
-  redirect: (path) => {
-    const url = new URL(path, "http://localhost");
-    window.router
-      .resolve({
-        pathname: `get${url.pathname}`,
-        queryParams: url.search.substring(1),
-      })
-      .then((page) => {
-        document.getElementById("content-div").innerHTML = page.content;
-      });
-  },
 };
 
 export const postView = async (context) => {
@@ -89,8 +59,18 @@ export const getView = async (context) => {
   const state = saltcorn.data.state.getState();
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   const contents = await view.run_possibly_on_page(query, dummyReq, {});
-  let help = { above: [contents] };
+  const layout = state.getLayout({ role_id: 1 });
+  const versionTag = window.config.version_tag;
+  const wrapped = layout.wrap({ 
+    title: viewname, 
+    body: contents, 
+    alerts: [], 
+    role: 1, 
+    headers: getHeaders(versionTag),
+    bodyClass: "",
+    brand: {},
+  });
   return {
-    content: wrap(context.params.viewname, help, state),
+    content: wrapped
   };
 };

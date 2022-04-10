@@ -23,15 +23,18 @@ const buildForm = (entryView) => {
   });
 };
 
-export const renderLoginForm = (entryView) => {
-  let loginForm = buildForm(entryView);
+export const renderLoginForm = (entryView, version_tag) => {
+  const loginForm = buildForm(entryView);
   const layout = saltcorn.data.state.getState().layouts["sbadmin2"];
   return layout.authWrap({
     title: "login",
     form: loginForm,
     authLinks: { signup: "/auth/signup" }, // TODO ch '/auth/signup' link
     alerts: [],
-    headers: [],
+    headers: [
+      { css: `static_assets/${version_tag}/saltcorn.css` },
+      { script: "js/delegates.js"},
+    ],
     csrfToken: false,
   });
 };
