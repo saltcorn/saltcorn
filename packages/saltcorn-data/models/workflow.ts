@@ -70,9 +70,19 @@ class Workflow implements AbstractWorkflow {
         if (!form.submitLabel)
           form.submitLabel =
             stepIx === this.steps.length - 1
-              ? this.__("Save")
+              ? this.__("Finish")
               : this.__("Next") + " &raquo;";
 
+        if (context.id)
+          form.additionalButtons = [
+            ...(form.additionalButtons || []),
+            {
+              label: this.__("Save"),
+              id: "btnsavewf",
+              class: "btn btn-primary",
+              onclick: "saveAndContinue(this)",
+            },
+          ];
         return {
           renderForm: form,
           context,
@@ -158,8 +168,19 @@ class Workflow implements AbstractWorkflow {
       if (!form.submitLabel)
         form.submitLabel =
           stepIx === this.steps.length - 1
-            ? this.__("Save")
+            ? this.__("Finish")
             : this.__("Next") + " &raquo;";
+
+      if (context.id)
+        form.additionalButtons = [
+          ...(form.additionalButtons || []),
+          {
+            label: this.__("Save"),
+            id: "btnsavewf",
+            class: "btn btn-primary",
+            onclick: "saveAndContinue(this)",
+          },
+        ];
       return {
         renderForm: form,
         context,
