@@ -318,20 +318,9 @@ const mkFormRowForRepeatFancy = (
     editor.update();
   });
   $('#menuForm').closest("form").submit(function(event) {
-
     event.preventDefault(); //this will prevent the default submit
-    const vs = JSON.parse(editor.getString())
-    const form = $('#menuForm').closest("form")
-    
-    //console.log(vs)
-    vs.forEach((v,ix)=>{
-      Object.entries(v).forEach(([k,v])=>{
-        //console.log(ix, k, typeof v, v)
-        if(typeof v === "boolean")
-          form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+(v?'on':'')+'"></input>')
-        else form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
-      })
-    })     
+
+    repeaterCopyValuesToForm($('#menuForm').closest("form"), editor)
     $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
    })`)
     )

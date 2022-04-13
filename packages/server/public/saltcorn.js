@@ -618,14 +618,14 @@ function saveAndContinue(e, k) {
   return false;
 }
 
-function applyViewConfig(e,url) {
+function applyViewConfig(e, url) {
   var form = $(e).closest("form");
   var form_data = form.serializeArray();
-  const cfg = {}
-  form_data.forEach(item=>{
-    if(!["_csrf","stepName", "contextEnc"].includes(item.name))
-    cfg[item.name]=item.value
-  })
+  const cfg = {};
+  form_data.forEach((item) => {
+    if (!["_csrf", "stepName", "contextEnc"].includes(item.name))
+      cfg[item.name] = item.value;
+  });
   $.ajax(url, {
     type: "POST",
     dataType: "json",
@@ -634,15 +634,26 @@ function applyViewConfig(e,url) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) {
-    
-    },
+    error: function (request) {},
   });
 
   return false;
 }
 
+const repeaterCopyValuesToForm = (form,editor) => {
+  const vs = JSON.parse(editor.getString())
+  
+  //console.log(vs)
+  vs.forEach((v,ix)=>{
+    Object.entries(v).forEach(([k,v])=>{
+      //console.log(ix, k, typeof v, v)
+      if(typeof v === "boolean")
+        form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+(v?'on':'')+'"></input>')
+      else form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
+    })
+  })     
 
+};
 
 function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
@@ -860,7 +871,7 @@ const columnSummary = (col) => {
   if (!col) return "Unknown";
   switch (col.type) {
     case "Field":
-      return `Field ${col.field_name} ${col.fieldview||""}`;
+      return `Field ${col.field_name} ${col.fieldview || ""}`;
     case "Link":
       return `Link ${col.link_text}`;
     case "JoinField":
