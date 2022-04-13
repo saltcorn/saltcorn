@@ -640,19 +640,24 @@ function applyViewConfig(e, url) {
   return false;
 }
 
-const repeaterCopyValuesToForm = (form,editor) => {
-  const vs = JSON.parse(editor.getString())
-  
+const repeaterCopyValuesToForm = (form, editor) => {
+  const vs = JSON.parse(editor.getString());
   //console.log(vs)
-  vs.forEach((v,ix)=>{
-    Object.entries(v).forEach(([k,v])=>{
+  const setVal = (k, ix, v) => {
+    const $e = form.find(`input[name="${k}_${ix}"]`);
+    if ($e.length) $e.val(v);
+    else
+      form.append(
+        `<input type="hidden" name="${k}_${ix}" value="${v}"></input>`
+      );
+  };
+  vs.forEach((v, ix) => {
+    Object.entries(v).forEach(([k, v]) => {
       //console.log(ix, k, typeof v, v)
-      if(typeof v === "boolean")
-        form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+(v?'on':'')+'"></input>')
-      else form.append('<input type="hidden" name="'+k+'_'+ix+'" value="'+v+'"></input>')
-    })
-  })     
-
+      if (typeof v === "boolean") setVal(k, ix, v ? "on" : "");
+      else setVal(k, ix, v);
+    });
+  });
 };
 
 function ajaxSubmitForm(e) {
