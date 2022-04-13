@@ -301,7 +301,10 @@ const mkFormRowForRepeatFancy = (
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
               getLabelText: columnSummary,
-              onUpdate: apply_showif,
+              onUpdate: ()=>{
+                apply_showif();
+                repeaterCopyValuesToForm($('#menuForm').closest("form"), editor);
+              },
               labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
               maxLevel: 0 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
@@ -312,10 +315,12 @@ const mkFormRowForRepeatFancy = (
   $('.btnEdit').click(()=>setTimeout(apply_showif,0));
   $('#btnAdd').click(function(){
     editor.add();
+    repeaterCopyValuesToForm($('#menuForm').closest("form"), editor)
   });
 
   $("#btnUpdate").click(function(){
     editor.update();
+    repeaterCopyValuesToForm($('#menuForm').closest("form"), editor)
   });
   $('#menuForm').closest("form").submit(function(event) {
     event.preventDefault(); //this will prevent the default submit
