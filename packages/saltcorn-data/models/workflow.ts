@@ -14,6 +14,7 @@ import type {
 import db from "../db";
 
 import type Field from "./field";
+import Form from "./form";
 
 const { getState } = require("../db/state");
 const { applyAsync, apply } = require("../utils");
@@ -73,16 +74,8 @@ class Workflow implements AbstractWorkflow {
               ? this.__("Finish")
               : this.__("Next") + " &raquo;";
 
-        if (context.id)
-          form.additionalButtons = [
-            ...(form.additionalButtons || []),
-            {
-              label: this.__("Apply"),
-              id: "btnsavewf",
-              class: "btn btn-primary",
-              onclick: "saveAndContinue(this)",
-            },
-          ];
+        if (context.id) addApplyButtonToForm(form, this);
+
         return {
           renderForm: form,
           context,
@@ -118,7 +111,8 @@ class Workflow implements AbstractWorkflow {
         : toCtx0;
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
-  }
+  } 
+
 
   /**
    * @param {object} context
@@ -171,16 +165,7 @@ class Workflow implements AbstractWorkflow {
             ? this.__("Finish")
             : this.__("Next") + " &raquo;";
 
-      if (context.id)
-        form.additionalButtons = [
-          ...(form.additionalButtons || []),
-          {
-            label: this.__("Apply"),
-            id: "btnsavewf",
-            class: "btn btn-primary",
-            onclick: "saveAndContinue(this)",
-          },
-        ];
+      if (context.id) addApplyButtonToForm(form, this);
       return {
         renderForm: form,
         context,
@@ -225,6 +210,19 @@ class Workflow implements AbstractWorkflow {
   }
 }
 
+
+
+function addApplyButtonToForm(form: Form, that:AbstractWorkflow) {
+  form.additionalButtons = [
+    ...(form.additionalButtons || []),
+    {
+      label: that.__("Apply"),
+      id: "btnsavewf",
+      class: "btn btn-primary",
+      onclick: "saveAndContinue(this)",
+    },
+  ];
+}
 namespace Workflow {
   export type WorkflowCfg = {
     steps?: any[];
