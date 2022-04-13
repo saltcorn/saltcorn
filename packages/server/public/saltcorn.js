@@ -834,7 +834,7 @@ const columnSummary = (col) => {
   if (!col) return "Unknown";
   switch (col.type) {
     case "Field":
-      return `Field ${col.field_name} ${col.fieldview}`;
+      return `Field ${col.field_name} ${col.fieldview||""}`;
     case "Link":
       return `Link ${col.link_text}`;
     case "JoinField":
