@@ -77,7 +77,7 @@ class Workflow implements AbstractWorkflow {
           form.additionalButtons = [
             ...(form.additionalButtons || []),
             {
-              label: this.__("Save"),
+              label: this.__("Apply"),
               id: "btnsavewf",
               class: "btn btn-primary",
               onclick: "saveAndContinue(this)",
@@ -175,7 +175,7 @@ class Workflow implements AbstractWorkflow {
         form.additionalButtons = [
           ...(form.additionalButtons || []),
           {
-            label: this.__("Save"),
+            label: this.__("Apply"),
             id: "btnsavewf",
             class: "btn btn-primary",
             onclick: "saveAndContinue(this)",
