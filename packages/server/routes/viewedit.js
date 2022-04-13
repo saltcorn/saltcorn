@@ -708,6 +708,39 @@ router.post(
 );
 
 /**
+ * @name post/saveconfig/:id
+ * @function
+ * @memberof module:routes/viewedit~vieweditRouter
+ * @function
+ */
+router.post(
+  "/saveconfig/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    if (id && req.body) {
+      const view = await View.findOne({ id });
+      const configFlow = await view.get_config_flow(req);
+      const step = await configFlow.singleStepForm(req.body, req);
+      if (step?.renderForm) {
+        if (!step.renderForm.hasErrors) {
+          let newcfg = { ...view.configuration, ...step.renderForm.values };
+          await View.update({ configuration: newcfg }, +id);
+          res.json({ success: "ok" });
+        } else {
+          res.json({ error: step.renderForm.errorSummary });
+        }
+      } else {
+        res.json({ error: "no form" });
+      }
+    } else {
+      res.json({ error: "no view" });
+    }
+  })
+);
+
+/**
  * @name post/setrole/:id
  * @function
  * @memberof module:routes/viewedit~vieweditRouter

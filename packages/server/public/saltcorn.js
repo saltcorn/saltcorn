@@ -623,8 +623,7 @@ function applyViewConfig(e, url) {
   var form_data = form.serializeArray();
   const cfg = {};
   form_data.forEach((item) => {
-    if (!["_csrf", "stepName", "contextEnc"].includes(item.name))
-      cfg[item.name] = item.value;
+    cfg[item.name] = item.value;
   });
   $.ajax(url, {
     type: "POST",

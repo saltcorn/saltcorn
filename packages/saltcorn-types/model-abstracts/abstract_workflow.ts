@@ -17,6 +17,7 @@ export interface AbstractWorkflow {
   __: any;
 
   run: (body: any, req: any) => Promise<RunResult | undefined>;
+  singleStepForm: (body: any, req: any) => Promise<RunResult | undefined>;
   runStep: (context: any, stepIx: number) => Promise<RunResult | undefined>;
   title: (step: any, stepIx: number) => string;
 }
