@@ -607,7 +607,7 @@ const get_viewable_fields = contract(
         const isNum = f && f.type && f.type.name === "Integer";
         if (
           column.fieldview &&
-          f.type?.fieldviews?.[column.fieldview]?.expandColumns
+          f?.type?.fieldviews?.[column.fieldview]?.expandColumns
         ) {
           return f.type.fieldviews[column.fieldview].expandColumns(
             f,

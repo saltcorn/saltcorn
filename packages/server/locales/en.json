@@ -888,5 +888,6 @@
 	"Cannot install unsafe plugins on subdomain tenants": "Cannot install unsafe plugins on subdomain tenants",
 	"Default order descending?": "Default order descending?",
 	"This is the view to which the user will be sent when the form is submitted. The view you specify here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place.": "This is the view to which the user will be sent when the form is submitted. The view you specify here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place.",
-	"Destination view": "Destination view"
+	"Destination view": "Destination view",
+	"Finish": "Finish"
 }
