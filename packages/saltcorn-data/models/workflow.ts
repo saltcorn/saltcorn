@@ -65,7 +65,7 @@ class Workflow implements AbstractWorkflow {
         if (!form.submitLabel)
           form.submitLabel =
             stepIx === this.steps.length - 1
-              ? this.__("Finish")
+              ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
 
         addApplyButtonToForm(form, this, context);
@@ -111,7 +111,7 @@ class Workflow implements AbstractWorkflow {
         if (!form.submitLabel)
           form.submitLabel =
             stepIx === this.steps.length - 1
-              ? this.__("Finish")
+              ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
 
         addApplyButtonToForm(form, this, context);
@@ -201,7 +201,7 @@ class Workflow implements AbstractWorkflow {
       if (!form.submitLabel)
         form.submitLabel =
           stepIx === this.steps.length - 1
-            ? this.__("Finish")
+            ? this.__("Finish") + " &raquo;"
             : this.__("Next") + " &raquo;";
 
       addApplyButtonToForm(form, this, context);
@@ -254,13 +254,13 @@ function addApplyButtonToForm(
   that: AbstractWorkflow,
   context: any
 ) {
-  if (context.id && context.viewname) {
+  if (context.viewname) { //TODO what if plugin has viewname as param
     form.additionalButtons = [
       ...(form.additionalButtons || []),
       {
-        label: that.__("Apply"),
+        label: that.__("Save"),
         id: "btnsavewf",
-        class: "btn btn-primary",
+        class: "btn btn-outline-primary",
         onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.id}')`,
       },
     ];
