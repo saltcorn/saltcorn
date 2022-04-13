@@ -618,6 +618,32 @@ function saveAndContinue(e, k) {
   return false;
 }
 
+function applyViewConfig(e,url) {
+  var form = $(e).closest("form");
+  var form_data = form.serializeArray();
+  const cfg = {}
+  form_data.forEach(item=>{
+    if(!["_csrf","stepName", "contextEnc"].includes(item.name))
+    cfg[item.name]=item.value
+  })
+  $.ajax(url, {
+    type: "POST",
+    dataType: "json",
+    contentType: "application/json",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: JSON.stringify(cfg),
+    error: function (request) {
+    
+    },
+  });
+
+  return false;
+}
+
+
+
 function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
   var url = form.attr("action");

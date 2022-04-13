@@ -74,7 +74,7 @@ class Workflow implements AbstractWorkflow {
               ? this.__("Finish")
               : this.__("Next") + " &raquo;";
 
-        if (context.id) addApplyButtonToForm(form, this);
+        addApplyButtonToForm(form, this, context);
 
         return {
           renderForm: form,
@@ -111,8 +111,7 @@ class Workflow implements AbstractWorkflow {
         : toCtx0;
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
-  } 
-
+  }
 
   /**
    * @param {object} context
@@ -165,7 +164,7 @@ class Workflow implements AbstractWorkflow {
             ? this.__("Finish")
             : this.__("Next") + " &raquo;";
 
-      if (context.id) addApplyButtonToForm(form, this);
+      addApplyButtonToForm(form, this, context);
       return {
         renderForm: form,
         context,
@@ -210,18 +209,22 @@ class Workflow implements AbstractWorkflow {
   }
 }
 
-
-
-function addApplyButtonToForm(form: Form, that:AbstractWorkflow) {
-  form.additionalButtons = [
-    ...(form.additionalButtons || []),
-    {
-      label: that.__("Apply"),
-      id: "btnsavewf",
-      class: "btn btn-primary",
-      onclick: "saveAndContinue(this)",
-    },
-  ];
+function addApplyButtonToForm(
+  form: Form,
+  that: AbstractWorkflow,
+  context: any
+) {
+  if (context.id && context.viewname) {
+    form.additionalButtons = [
+      ...(form.additionalButtons || []),
+      {
+        label: that.__("Apply"),
+        id: "btnsavewf",
+        class: "btn btn-primary",
+        onclick: `applyViewConfig(this, '/viewedit/savebuilder/${context.id}')`,
+      },
+    ];
+  }
 }
 namespace Workflow {
   export type WorkflowCfg = {
