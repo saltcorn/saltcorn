@@ -582,8 +582,11 @@ router.get(
       return;
     }
     const configFlow = await view.get_config_flow(req);
+    const hasConfig =
+      view.configuration && Object.keys(view.configuration).length > 0;
     const wfres = await configFlow.run(
       {
+        id: hasConfig ? view.id : undefined,
         table_id: view.table_id,
         exttable_name: view.exttable_name,
         viewname: name,
