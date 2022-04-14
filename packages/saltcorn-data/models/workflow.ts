@@ -254,14 +254,15 @@ function addApplyButtonToForm(
   that: AbstractWorkflow,
   context: any
 ) {
-  if (context.viewname) { //TODO what if plugin has viewname as param
+  if (context.viewname) {
+    //TODO what if plugin has viewname as param
     form.additionalButtons = [
       ...(form.additionalButtons || []),
       {
         label: that.__("Save"),
         id: "btnsavewf",
         class: "btn btn-outline-primary",
-        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.id}')`,
+        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}')`,
       },
     ];
   }

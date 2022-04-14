@@ -714,19 +714,19 @@ router.post(
  * @function
  */
 router.post(
-  "/saveconfig/:id",
+  "/saveconfig/:viewname",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { viewname } = req.params;
 
-    if (id && req.body) {
-      const view = await View.findOne({ id });
+    if (viewname && req.body) {
+      const view = await View.findOne({ name: viewname });
       const configFlow = await view.get_config_flow(req);
       const step = await configFlow.singleStepForm(req.body, req);
       if (step?.renderForm) {
         if (!step.renderForm.hasErrors) {
           let newcfg = { ...view.configuration, ...step.renderForm.values };
-          await View.update({ configuration: newcfg }, +id);
+          await View.update({ configuration: newcfg }, view.id);
           res.json({ success: "ok" });
         } else {
           res.json({ error: step.renderForm.errorSummary });
