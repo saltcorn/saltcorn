@@ -725,7 +725,16 @@ router.post(
       const step = await configFlow.singleStepForm(req.body, req);
       if (step?.renderForm) {
         if (!step.renderForm.hasErrors) {
-          let newcfg = { ...view.configuration, ...step.renderForm.values };
+          let newcfg;
+          if (step.contextField)
+            newcfg = {
+              ...view.configuration,
+              [step.contextField]: {
+                ...view.configuration?.[step.contextField],
+                ...step.renderForm.values,
+              },
+            };
+          else newcfg = { ...view.configuration, ...step.renderForm.values };
           await View.update({ configuration: newcfg }, view.id);
           res.json({ success: "ok" });
         } else {

@@ -77,6 +77,7 @@ class Workflow implements AbstractWorkflow {
         currentStep: stepIx + 1,
         maxSteps: this.steps.length,
         title: this.title(step, stepIx),
+        contextField: step.contextField
       };
     }
   }

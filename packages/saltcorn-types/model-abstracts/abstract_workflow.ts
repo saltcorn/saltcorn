@@ -8,6 +8,7 @@ export type RunResult = {
   maxSteps: number;
   title: string;
   renderBuilder?: GenObj;
+  contextField?: string;
 };
 
 export interface AbstractWorkflow {
