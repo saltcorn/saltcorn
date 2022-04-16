@@ -512,6 +512,7 @@ const render = ({
         overflow,
         rotate,
         style,
+        bgResponsiveWidths,
         htmlElement,
       } = segment;
       if (hide) return "";
@@ -626,6 +627,15 @@ const render = ({
             useImgTagAsBg &&
             img({
               class: `containerbgimage `,
+              srcset: bgResponsiveWidths
+                ? bgResponsiveWidths
+                    .split(",")
+                    .map(
+                      (w: string) =>
+                        `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
+                    )
+                    .join(",")
+                : null,
               style: { "object-fit": imageSize || "contain" },
               alt: "",
               src: `/files/serve/${bgFileId}`,
