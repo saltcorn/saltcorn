@@ -46,6 +46,7 @@
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
     "qrcode": "1.5.0",
+    "sharp": "0.30.3",
     "socket.io": "4.2.0",
     "thirty-two": "1.0.2",
     "tmp-promise": "^3.0.2",

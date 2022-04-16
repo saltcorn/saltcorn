@@ -9,6 +9,7 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
+const sharp = require("sharp");
 
 const {
   mkTable,
@@ -43,6 +44,8 @@ const {
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin");
+const fsp = require("fs").promises;
+const fs = require("fs");
 
 /**
  * @type {object}
@@ -180,6 +183,54 @@ router.get(
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
+    } else {
+      req.flash("warning", req.__("Not authorized"));
+      res.redirect("/");
+    }
+  })
+);
+
+/**
+ * @name get/resize/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
+router.get(
+  "/resize/:id/:width_str",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const user_id = req.user && req.user.id;
+    const { id, width_str } = req.params;
+    let file;
+    if (typeof strictParseInt(id) !== "undefined")
+      file = await File.findOne({ id });
+    else file = await File.findOne({ filename: id });
+
+    if (!file) {
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
+      return;
+    }
+    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+      res.type(file.mimetype);
+      const cacheability = file.min_role_read === 10 ? "public" : "private";
+      res.set("Cache-Control", `${cacheability}, max-age=86400`);
+      //TODO s3
+      if (file.s3_store) s3storage.serveObject(file, res, false);
+      else {
+        const width = strictParseInt(width_str);
+        if (!width) {
+          res.sendFile(file.location);
+          return;
+        }
+        const fnm = `${file.location}_w${width}`;
+        if (!fs.existsSync(fnm)) {
+          await sharp(file.location).resize({ width }).toFile(fnm);
+        }
+        res.sendFile(fnm);
+      }
     } else {
       req.flash("warning", req.__("Not authorized"));
       res.redirect("/");
