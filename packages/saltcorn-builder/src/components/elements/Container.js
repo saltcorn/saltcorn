@@ -229,6 +229,7 @@ const ContainerSettings = () => {
     rotate: node.data.props.rotate,
     display: node.data.props.display,
     style: node.data.props.style,
+    bgResponsiveWidths: node.data.props.bgResponsiveWidths,
   }));
   const {
     actions: { setProp },
@@ -257,6 +258,7 @@ const ContainerSettings = () => {
     fullPageWidth,
     overflow,
     htmlElement,
+    bgResponsiveWidths,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -520,6 +522,26 @@ const ContainerSettings = () => {
                   </select>
                 </td>
               </tr>
+              {imageSize !== "repeat" && (
+                <tr>
+                  <td>
+                    <label>Responsive widths</label>
+                  </td>
+
+                  <td>
+                    <input
+                      type="text"
+                      value={bgResponsiveWidths}
+                      className="form-control"
+                      onChange={setAProp("bgResponsiveWidths")}
+                    />
+                    <small>
+                      <i>List of widths to serve resized images,
+                         e.g. 300, 400, 600</i>
+                    </small>
+                  </td>
+                </tr>
+              )}
             </Fragment>
           )}
           {bgType === "Color" && (
