@@ -553,6 +553,8 @@ const render = ({
         if (s === "right") return "end";
         return s;
       };
+      const hasImgBg = renderBg && bgType === "Image" && bgFileId && +bgFileId;
+      const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
       return wrap(
         segment,
         isTop,
@@ -592,7 +594,7 @@ const render = ({
                 ? ` overflow: ${overflow};`
                 : ""
             } ${
-              renderBg && bgType === "Image" && bgFileId && +bgFileId
+              hasImgBg && !useImgTagAsBg
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize === "repeat" ? "auto" : imageSize || "contain"
                   }; background-repeat: ${
@@ -620,10 +622,8 @@ const render = ({
                 }
               : {}),
           },
-          renderBg &&
-            bgType === "Image" &&
-            bgFileId &&
-            +bgFileId &&
+          hasImgBg &&
+            !useImgTagAsBg &&
             div(
               { style: "display:none" },
               img({
@@ -633,6 +633,14 @@ const render = ({
                 src: `/files/serve/${bgFileId}`,
               })
             ),
+          hasImgBg &&
+            useImgTagAsBg &&
+            img({
+              class: "containerbgimage",
+              alt: "",
+              src: `/files/serve/${bgFileId}`,
+            }),
+
           go(segment.contents)
         )
       );
