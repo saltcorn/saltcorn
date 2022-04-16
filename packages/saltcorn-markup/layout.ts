@@ -636,7 +636,8 @@ const render = ({
           hasImgBg &&
             useImgTagAsBg &&
             img({
-              class: "containerbgimage",
+              class: `containerbgimage `,
+              style: { "object-fit": imageSize || "contain" },
               alt: "",
               src: `/files/serve/${bgFileId}`,
             }),
