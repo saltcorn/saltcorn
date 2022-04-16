@@ -623,17 +623,6 @@ const render = ({
               : {}),
           },
           hasImgBg &&
-            !useImgTagAsBg &&
-            div(
-              { style: "display:none" },
-              img({
-                height: "1",
-                width: "1",
-                alt: "",
-                src: `/files/serve/${bgFileId}`,
-              })
-            ),
-          hasImgBg &&
             useImgTagAsBg &&
             img({
               class: `containerbgimage `,
