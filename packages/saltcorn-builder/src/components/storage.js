@@ -206,6 +206,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           }
           bgFileId={segment.bgFileId}
           imageSize={segment.imageSize || "contain"}
+          imgResponsiveWidths={segment.imgResponsiveWidths}
           bgType={segment.bgType || "None"}
           style={segment.style || {}}
           bgColor={segment.bgColor || "#ffffff"}
@@ -373,6 +374,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           bgFileId: node.props.bgFileId,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,
+          imgResponsiveWidths: node.props.imgResponsiveWidths,
           bgColor: node.props.bgColor,
           setTextColor: node.props.setTextColor,
           textColor: node.props.textColor,

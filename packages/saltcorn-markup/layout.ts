@@ -318,6 +318,15 @@ const render = ({
           class: segment.style && segment.style.width ? null : "w-100",
           alt: segment.alt,
           style: segment.style,
+          srcset: segment.imgResponsiveWidths && srctype === "File"
+                ? segment.imgResponsiveWidths
+                    .split(",")
+                    .map(
+                      (w: string) =>
+                        `/files/resize/${segment.fileid}/${w.trim()} ${w.trim()}w`
+                    )
+                    .join(",")
+                : undefined,
           src:
             srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
         })
@@ -512,6 +521,7 @@ const render = ({
         overflow,
         rotate,
         style,
+        imgResponsiveWidths,
         htmlElement,
       } = segment;
       if (hide) return "";
@@ -553,6 +563,8 @@ const render = ({
         if (s === "right") return "end";
         return s;
       };
+      const hasImgBg = renderBg && bgType === "Image" && bgFileId && +bgFileId;
+      const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
       return wrap(
         segment,
         isTop,
@@ -592,7 +604,7 @@ const render = ({
                 ? ` overflow: ${overflow};`
                 : ""
             } ${
-              renderBg && bgType === "Image" && bgFileId && +bgFileId
+              hasImgBg && !useImgTagAsBg
                 ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
                     imageSize === "repeat" ? "auto" : imageSize || "contain"
                   }; background-repeat: ${
@@ -620,19 +632,24 @@ const render = ({
                 }
               : {}),
           },
-          renderBg &&
-            bgType === "Image" &&
-            bgFileId &&
-            +bgFileId &&
-            div(
-              { style: "display:none" },
-              img({
-                height: "1",
-                width: "1",
-                alt: "",
-                src: `/files/serve/${bgFileId}`,
-              })
-            ),
+          hasImgBg &&
+            useImgTagAsBg &&
+            img({
+              class: `containerbgimage `,
+              srcset: imgResponsiveWidths
+                ? imgResponsiveWidths
+                    .split(",")
+                    .map(
+                      (w: string) =>
+                        `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
+                    )
+                    .join(",")
+                : undefined,
+              style: { "object-fit": imageSize || "contain" },
+              alt: "",
+              src: `/files/serve/${bgFileId}`,
+            }),
+
           go(segment.contents)
         )
       );
