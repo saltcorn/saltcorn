@@ -318,6 +318,15 @@ const render = ({
           class: segment.style && segment.style.width ? null : "w-100",
           alt: segment.alt,
           style: segment.style,
+          srcset: segment.imgResponsiveWidths && srctype === "File"
+                ? segment.imgResponsiveWidths
+                    .split(",")
+                    .map(
+                      (w: string) =>
+                        `/files/resize/${segment.fileid}/${w.trim()} ${w.trim()}w`
+                    )
+                    .join(",")
+                : undefined,
           src:
             srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
         })
@@ -512,7 +521,7 @@ const render = ({
         overflow,
         rotate,
         style,
-        bgResponsiveWidths,
+        imgResponsiveWidths,
         htmlElement,
       } = segment;
       if (hide) return "";
@@ -627,15 +636,15 @@ const render = ({
             useImgTagAsBg &&
             img({
               class: `containerbgimage `,
-              srcset: bgResponsiveWidths
-                ? bgResponsiveWidths
+              srcset: imgResponsiveWidths
+                ? imgResponsiveWidths
                     .split(",")
                     .map(
                       (w: string) =>
                         `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
                     )
                     .join(",")
-                : null,
+                : undefined,
               style: { "object-fit": imageSize || "contain" },
               alt: "",
               src: `/files/serve/${bgFileId}`,

@@ -229,7 +229,7 @@ const ContainerSettings = () => {
     rotate: node.data.props.rotate,
     display: node.data.props.display,
     style: node.data.props.style,
-    bgResponsiveWidths: node.data.props.bgResponsiveWidths,
+    imgResponsiveWidths: node.data.props.imgResponsiveWidths,
   }));
   const {
     actions: { setProp },
@@ -258,7 +258,7 @@ const ContainerSettings = () => {
     fullPageWidth,
     overflow,
     htmlElement,
-    bgResponsiveWidths,
+    imgResponsiveWidths,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -531,9 +531,9 @@ const ContainerSettings = () => {
                   <td>
                     <input
                       type="text"
-                      value={bgResponsiveWidths}
+                      value={imgResponsiveWidths}
                       className="form-control"
-                      onChange={setAProp("bgResponsiveWidths")}
+                      onChange={setAProp("imgResponsiveWidths")}
                     />
                     <small>
                       <i>List of widths to serve resized images,
