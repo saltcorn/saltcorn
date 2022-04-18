@@ -452,13 +452,39 @@ const transformForm = async ({ form, table, req, row, res }) => {
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
     async view(segment) {
+      //console.log(segment);
+      const view_select = parse_view_select(segment.view);
+      //console.log({ view_select });
+
+      const view = await View.findOne({ name: view_select.viewname });
+      if (view.viewtemplate === "Edit" && view_select.type === "ChildList") {
+        const childTable = Table.findOne({ id: view.table_id });
+        const childForm = await getForm(
+          childTable,
+          view.name,
+          view.configuration.columns,
+          view.configuration.layout,
+          row?.id,
+          req
+        );
+        //console.log(childForm);
+        const fr = new FieldRepeat({
+          name: view_select.field_name,
+          label: view_select.field_name,
+          fields: childForm.fields,
+          layout: childForm.Layout,
+        });
+        form.fields.push(fr);
+        segment.type = "field_repeat";
+        segment.field_repeat = fr;
+        return;
+      }
+
       if (!row) {
         segment.type = "blank";
         segment.contents = "";
         return;
       }
-      const view_select = parse_view_select(segment.view);
-      const view = await View.findOne({ name: view_select.viewname });
       if (!view)
         throw new InvalidConfiguration(
           `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
