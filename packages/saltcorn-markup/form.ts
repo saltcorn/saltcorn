@@ -557,14 +557,14 @@ const renderFormLayout = (form: Form): string => {
       //mkFormRowForRepeat({}, [], "", 3, field_repeat)
     },
     field(segment: any) {
+      const [repeat_name, field_name] = segment.field_name.split(".");
+      const in_repeat = !!field_name;
       const field0 = segment.field_name.includes(".")
         ? (
             form.fields.find(
-              (f) => f.name === segment.field_name.split(".")[0]
+              (f) => f.name === repeat_name
             ) as AbstractFieldRepeat
-          )?.fields.find(
-            (f: any) => f.name === segment.field_name.split(".")[1]
-          )
+          )?.fields.find((f: any) => f.name === field_name)
         : form.fields.find((f) => f.name === segment.field_name);
       const field = { ...field0 };
       if (!field0) {
@@ -581,7 +581,13 @@ const renderFormLayout = (form: Form): string => {
           : "";
         if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
-        return innerField(form.values, form.errors)(field) + errorFeedback;
+        return (
+          innerField(
+            form.values,
+            form.errors,
+            in_repeat ? "_0" : undefined
+          )(field) + errorFeedback
+        );
       } else return "";
     },
     action({
