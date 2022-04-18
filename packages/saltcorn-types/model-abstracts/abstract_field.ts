@@ -50,6 +50,7 @@ export type FieldCfg = {
 
 export interface AbstractFieldRepeat {
   name: string;
+  fields: FieldCfg[]
 }
 
 export const instanceOfField = (object: any): object is AbstractField => {

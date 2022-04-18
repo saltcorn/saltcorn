@@ -44,6 +44,7 @@ const {
   traverse,
   getStringsForI18n,
   translateLayout,
+  traverseSync,
 } = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
@@ -467,6 +468,14 @@ const transformForm = async ({ form, table, req, row, res }) => {
           row?.id,
           req
         );
+        traverseSync(childForm.layout, {
+          field(segment) {
+            segment.field_name = `${view_select.field_name}.${segment.field_name}`
+          }
+        })
+        /*childForm.fields.forEach(f=>{
+          
+        })*/
         //console.log(childForm);
         const fr = new FieldRepeat({
           name: view_select.field_name,

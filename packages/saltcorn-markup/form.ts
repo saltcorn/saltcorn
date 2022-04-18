@@ -24,7 +24,11 @@ import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { isdef, select_options, search_bar } = helpers;
 import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
-import { instanceOfField } from "@saltcorn/types/model-abstracts/abstract_field";
+import {
+  AbstractFieldRepeat,
+  instanceOfField,
+} from "@saltcorn/types/model-abstracts/abstract_field";
+import { FieldLike } from "@saltcorn/types/base_types";
 
 /**
  * @param {string} s
@@ -553,8 +557,19 @@ const renderFormLayout = (form: Form): string => {
       //mkFormRowForRepeat({}, [], "", 3, field_repeat)
     },
     field(segment: any) {
-      const field0 = form.fields.find((f) => f.name === segment.field_name);
+      const field0 = segment.field_name.includes(".")
+        ? (
+            form.fields.find(
+              (f) => f.name === segment.field_name.split(".")[0]
+            ) as AbstractFieldRepeat
+          )?.fields.find(
+            (f: any) => f.name === segment.field_name.split(".")[1]
+          )
+        : form.fields.find((f) => f.name === segment.field_name);
       const field = { ...field0 };
+      if (!field0) {
+        console.log("missing field", segment);
+      }
       if (instanceOfField(field) && field.input_type !== "hidden") {
         if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
         if (instanceOfField(field0)) field.form_name = field0.form_name;
