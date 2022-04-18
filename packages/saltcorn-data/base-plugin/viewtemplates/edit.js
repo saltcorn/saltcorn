@@ -472,7 +472,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
           name: view_select.field_name,
           label: view_select.field_name,
           fields: childForm.fields,
-          layout: childForm.Layout,
+          layout: childForm.layout,
         });
         form.fields.push(fr);
         segment.type = "field_repeat";

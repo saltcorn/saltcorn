@@ -331,6 +331,26 @@ const mkFormRowForRepeatFancy = (
     )
   );
 };
+const repeater_icons = div(
+  { class: "float-end" },
+  span({ onclick: "rep_up(this)" }, i({ class: "fa fa-arrow-up pull-right" })),
+  "&nbsp;",
+  span({ onclick: "rep_del(this)" }, i({ class: "fa fa-times pull-right" })),
+  "&nbsp;",
+  span(
+    { onclick: "rep_down(this)" },
+    i({ class: "fa fa-arrow-down pull-right" })
+  )
+);
+const repeater_adder = (form_name: string) =>
+  a(
+    {
+      class: "btn btn-sm btn-outline-primary mb-3",
+      href: `javascript:add_repeater('${form_name}')`,
+      title: "Add",
+    },
+    i({ class: "fas fa-plus" })
+  );
 
 /**
  * @param {object[]} v
@@ -347,28 +367,7 @@ const mkFormRowForRepeat = (
   labelCols: number,
   hdr: any
 ): string => {
-  const adder = a(
-    {
-      class: "btn btn-sm btn-outline-primary mb-3",
-      href: `javascript:add_repeater('${hdr.form_name}')`,
-      title: "Add",
-    },
-    i({ class: "fas fa-plus" })
-  );
-  const icons = div(
-    { class: "float-end" },
-    span(
-      { onclick: "rep_up(this)" },
-      i({ class: "fa fa-arrow-up pull-right" })
-    ),
-    "&nbsp;",
-    span({ onclick: "rep_del(this)" }, i({ class: "fa fa-times pull-right" })),
-    "&nbsp;",
-    span(
-      { onclick: "rep_down(this)" },
-      i({ class: "fa fa-arrow-down pull-right" })
-    )
-  );
+  const adder = repeater_adder(hdr.form_name);
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
     return div(
       hdr.showIf
@@ -383,7 +382,7 @@ const mkFormRowForRepeat = (
         v[hdr.form_name].map((vi: any, ix: number) => {
           return div(
             { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
-            icons,
+            repeater_icons,
             hdr.fields.map((f: any) => {
               return mkFormRowForField(
                 vi,
@@ -411,7 +410,7 @@ const mkFormRowForRepeat = (
         },
         div(
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
-          icons,
+          repeater_icons,
           hdr.fields.map((f: any) => {
             return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
           })
@@ -528,6 +527,30 @@ const renderFormLayout = (form: Form): string => {
           )
         )
         .join("");
+    },
+    field_repeat({ field_repeat }: any, go: any) {
+      //console.log(field_repeat);
+      const hdr = field_repeat;
+      return div(
+        hdr.showIf
+          ? {
+              "data-show-if": mkShowIf(hdr.showIf),
+            }
+          : {},
+        div(
+          {
+            class: `repeats-${hdr.form_name}`,
+          },
+          div(
+            { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
+            repeater_icons,
+            go(field_repeat.layout)
+          )
+        ),
+        repeater_adder(hdr.form_name)
+      );
+
+      //mkFormRowForRepeat({}, [], "", 3, field_repeat)
     },
     field(segment: any) {
       const field0 = form.fields.find((f) => f.name === segment.field_name);
