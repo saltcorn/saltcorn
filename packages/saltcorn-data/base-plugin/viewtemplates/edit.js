@@ -657,19 +657,20 @@ const runPost = async (
     await form.fill_fkey_options();
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
-    let row0;
+    let row;
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
       const use_fixed = await fill_presets(table, req, fixed);
-      row0 = { ...use_fixed, ...form.values };
+      row = { ...use_fixed, ...form.values };
     } else {
-      row0 = form.values;
+      row = { ...form.values };
     }
-    const row = {};
-    for (const field of form.fields.filter((f) => !f.isRepeat)) {
-      row[field.name] = row0[field.name];
+
+    for (const field of form.fields.filter((f) => f.isRepeat)) {
+      delete row[field.name];
     }
+
     const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
       if (req.files && req.files[field.name]) {
