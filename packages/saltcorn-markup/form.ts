@@ -24,7 +24,11 @@ import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { isdef, select_options, search_bar } = helpers;
 import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
-import { instanceOfField } from "@saltcorn/types/model-abstracts/abstract_field";
+import {
+  AbstractFieldRepeat,
+  instanceOfField,
+} from "@saltcorn/types/model-abstracts/abstract_field";
+import { FieldLike } from "@saltcorn/types/base_types";
 
 /**
  * @param {string} s
@@ -331,6 +335,26 @@ const mkFormRowForRepeatFancy = (
     )
   );
 };
+const repeater_icons = div(
+  { class: "float-end" },
+  span({ onclick: "rep_up(this)" }, i({ class: "fa fa-arrow-up pull-right" })),
+  "&nbsp;",
+  span({ onclick: "rep_del(this)" }, i({ class: "fa fa-times pull-right" })),
+  "&nbsp;",
+  span(
+    { onclick: "rep_down(this)" },
+    i({ class: "fa fa-arrow-down pull-right" })
+  )
+);
+const repeater_adder = (form_name: string) =>
+  a(
+    {
+      class: "btn btn-sm btn-outline-primary mb-3",
+      href: `javascript:add_repeater('${form_name}')`,
+      title: "Add",
+    },
+    i({ class: "fas fa-plus" })
+  );
 
 /**
  * @param {object[]} v
@@ -347,28 +371,7 @@ const mkFormRowForRepeat = (
   labelCols: number,
   hdr: any
 ): string => {
-  const adder = a(
-    {
-      class: "btn btn-sm btn-outline-primary mb-3",
-      href: `javascript:add_repeater('${hdr.form_name}')`,
-      title: "Add",
-    },
-    i({ class: "fas fa-plus" })
-  );
-  const icons = div(
-    { class: "float-end" },
-    span(
-      { onclick: "rep_up(this)" },
-      i({ class: "fa fa-arrow-up pull-right" })
-    ),
-    "&nbsp;",
-    span({ onclick: "rep_del(this)" }, i({ class: "fa fa-times pull-right" })),
-    "&nbsp;",
-    span(
-      { onclick: "rep_down(this)" },
-      i({ class: "fa fa-arrow-down pull-right" })
-    )
-  );
+  const adder = repeater_adder(hdr.form_name);
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
     return div(
       hdr.showIf
@@ -383,7 +386,7 @@ const mkFormRowForRepeat = (
         v[hdr.form_name].map((vi: any, ix: number) => {
           return div(
             { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
-            icons,
+            repeater_icons,
             hdr.fields.map((f: any) => {
               return mkFormRowForField(
                 vi,
@@ -411,7 +414,7 @@ const mkFormRowForRepeat = (
         },
         div(
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
-          icons,
+          repeater_icons,
           hdr.fields.map((f: any) => {
             return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
           })
@@ -529,8 +532,60 @@ const renderFormLayout = (form: Form): string => {
         )
         .join("");
     },
+    field_repeat({ field_repeat }: any, go: any) {
+      const hdr = field_repeat;
+
+      return div(
+        hdr.showIf
+          ? {
+              "data-show-if": mkShowIf(hdr.showIf),
+            }
+          : {},
+        div(
+          {
+            class: `repeats-${hdr.form_name}`,
+          },
+          field_repeat.metadata?.rows && field_repeat.metadata?.rows.length > 0
+            ? field_repeat.metadata.rows.map((row: any, ix: number) => {
+                field_repeat.metadata.current_row = row;
+                field_repeat.metadata.current_ix = ix;
+                return div(
+                  {
+                    class: `form-repeat form-namespace repeat-${hdr.form_name}`,
+                  },
+                  repeater_icons,
+                  go(field_repeat.layout),
+                  field_repeat.fields
+                    .filter(
+                      (f: FieldLike) => f.input_type === "hidden" && f.name
+                    )
+                    .map((f: FieldLike) => innerField(row, [], `_${ix}`)(f))
+                );
+              })
+            : div(
+                { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
+                repeater_icons,
+                go(field_repeat.layout)
+              )
+        ),
+        repeater_adder(hdr.form_name)
+      );
+
+      //mkFormRowForRepeat({}, [], "", 3, field_repeat)
+    },
     field(segment: any) {
-      const field0 = form.fields.find((f) => f.name === segment.field_name);
+      const [repeat_name, field_name] = segment.field_name.split(".");
+      const in_repeat = !!field_name;
+      const field0 = segment.field_name.includes(".")
+        ? (
+            form.fields.find(
+              (f) => f.name === repeat_name
+            ) as AbstractFieldRepeat
+          )?.fields.find((f: any) => f.name === field_name)
+        : form.fields.find((f) => f.name === segment.field_name);
+      const repeater = in_repeat
+        ? form.fields.find((f) => f.name === repeat_name)
+        : null;
       const field = { ...field0 };
       if (instanceOfField(field) && field.input_type !== "hidden") {
         if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
@@ -543,7 +598,17 @@ const renderFormLayout = (form: Form): string => {
           : "";
         if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
-        return innerField(form.values, form.errors)(field) + errorFeedback;
+        return (
+          innerField(
+            in_repeat
+              ? (repeater as any)?.metadata?.current_row || {}
+              : form.values,
+            form.errors,
+            in_repeat
+              ? `_${(repeater as any)?.metadata?.current_ix || 0}`
+              : undefined
+          )(field) + errorFeedback
+        );
       } else return "";
     },
     action({

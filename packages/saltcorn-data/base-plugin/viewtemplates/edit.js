@@ -44,6 +44,7 @@ const {
   traverse,
   getStringsForI18n,
   translateLayout,
+  traverseSync,
 } = require("../../models/layout");
 const { asyncMap } = require("../../utils");
 
@@ -452,13 +453,59 @@ const transformForm = async ({ form, table, req, row, res }) => {
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
     async view(segment) {
+      //console.log(segment);
+      const view_select = parse_view_select(segment.view);
+      //console.log({ view_select });
+
+      const view = await View.findOne({ name: view_select.viewname });
+      if (view.viewtemplate === "Edit" && view_select.type === "ChildList") {
+        const childTable = Table.findOne({ id: view.table_id });
+        const childForm = await getForm(
+          childTable,
+          view.name,
+          view.configuration.columns,
+          view.configuration.layout,
+          row?.id,
+          req
+        );
+        traverseSync(childForm.layout, {
+          field(segment) {
+            segment.field_name = `${view_select.field_name}.${segment.field_name}`;
+          },
+        });
+
+        const fr = new FieldRepeat({
+          name: view_select.field_name,
+          label: view_select.field_name,
+          fields: childForm.fields,
+          layout: childForm.layout,
+          metadata: {
+            table_id: childTable.id,
+            relation: view_select.field_name,
+          },
+        });
+        if (row?.id) {
+          const childRows = await childTable.getRows({
+            [view_select.field_name]: row.id,
+          });
+          fr.metadata.rows = childRows;
+          if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
+            fr.fields.push({
+              name: childTable.pk_name,
+              input_type: "hidden",
+            });
+        }
+        form.fields.push(fr);
+        segment.type = "field_repeat";
+        segment.field_repeat = fr;
+        return;
+      }
+
       if (!row) {
         segment.type = "blank";
         segment.contents = "";
         return;
       }
-      const view_select = parse_view_select(segment.view);
-      const view = await View.findOne({ name: view_select.viewname });
       if (!view)
         throw new InvalidConfiguration(
           `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
@@ -596,11 +643,18 @@ const runPost = async (
     }
   });
   setDateLocales(form, req.getLocale());
+  await transformForm({
+    form,
+    table,
+    req,
+    row: body[table.pk_name]
+      ? { [table.pk_name]: body[table.pk_name] }
+      : undefined,
+  });
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options();
-    await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
     let row;
@@ -610,8 +664,13 @@ const runPost = async (
       const use_fixed = await fill_presets(table, req, fixed);
       row = { ...use_fixed, ...form.values };
     } else {
-      row = form.values;
+      row = { ...form.values };
     }
+
+    for (const field of form.fields.filter((f) => f.isRepeat)) {
+      delete row[field.name];
+    }
+
     const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
       if (req.files && req.files[field.name]) {
@@ -649,6 +708,35 @@ const runPost = async (
         req.flash("error", text_attr(upd_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
+      }
+    }
+
+    for (const field of form.fields.filter((f) => f.isRepeat)) {
+      const childTable = Table.findOne({ id: field.metadata?.table_id });
+      for (const childRow of form.values[field.name]) {
+        childRow[field.metadata?.relation] = id;
+        if (childRow[childTable.pk_name]) {
+          const upd_res = await childTable.tryUpdateRow(
+            childRow,
+            childRow[childTable.pk_name],
+            req.user ? +req.user.id : undefined
+          );
+          if (upd_res.error) {
+            req.flash("error", text_attr(upd_res.error));
+            res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+            return;
+          }
+        } else {
+          const ins_res = await childTable.tryInsertRow(
+            childRow,
+            req.user ? +req.user.id : undefined
+          );
+          if (ins_res.error) {
+            req.flash("error", text_attr(ins_res.error));
+            res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+            return;
+          }
+        }
       }
     }
     if (req.xhr && !originalID) {
