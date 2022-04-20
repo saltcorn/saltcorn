@@ -489,6 +489,11 @@ const transformForm = async ({ form, table, req, row, res }) => {
             [view_select.field_name]: row.id,
           });
           fr.metadata.rows = childRows;
+          if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
+            fr.fields.push({
+              name: childTable.pk_name,
+              input_type: "hidden",
+            });
         }
         form.fields.push(fr);
         segment.type = "field_repeat";

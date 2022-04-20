@@ -533,8 +533,8 @@ const renderFormLayout = (form: Form): string => {
         .join("");
     },
     field_repeat({ field_repeat }: any, go: any) {
-      //console.log(field_repeat);
       const hdr = field_repeat;
+
       return div(
         hdr.showIf
           ? {
@@ -554,7 +554,12 @@ const renderFormLayout = (form: Form): string => {
                     class: `form-repeat form-namespace repeat-${hdr.form_name}`,
                   },
                   repeater_icons,
-                  go(field_repeat.layout)
+                  go(field_repeat.layout),
+                  field_repeat.fields
+                    .filter(
+                      (f: FieldLike) => f.input_type === "hidden" && f.name
+                    )
+                    .map((f: FieldLike) => innerField(row, [], `_${ix}`)(f))
                 );
               })
             : div(
