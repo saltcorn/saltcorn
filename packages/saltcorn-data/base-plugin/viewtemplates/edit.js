@@ -702,10 +702,17 @@ const runPost = async (
       const childTable = Table.findOne({ id: field.metadata?.table_id });
       for (const childRow of form.values[field.name]) {
         childRow[field.metadata?.relation] = id;
-        await childTable.tryInsertRow(
-          childRow,
-          req.user ? +req.user.id : undefined
-        );
+        if (childRow[childTable.pk_name])
+          await childTable.tryUpdateRow(
+            childRow,
+            childRow[childTable.pk_name],
+            req.user ? +req.user.id : undefined
+          );
+        else
+          await childTable.tryInsertRow(
+            childRow,
+            req.user ? +req.user.id : undefined
+          );
       }
     }
     if (req.xhr && !originalID) {
