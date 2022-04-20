@@ -8,8 +8,8 @@ export interface AbstractField {
   sourceURL?: string;
   fieldview?: string;
   attributes: any;
-  required: boolean;
-  primary_key: boolean;
+  required?: boolean;
+  primary_key?: boolean;
   // 'form_name' is actually a getter
   form_name: string;
 }
@@ -50,7 +50,7 @@ export type FieldCfg = {
 
 export interface AbstractFieldRepeat {
   name: string;
-  fields: FieldCfg[]
+  fields: FieldCfg[];
 }
 
 export const instanceOfField = (object: any): object is AbstractField => {
