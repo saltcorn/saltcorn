@@ -470,9 +470,9 @@ const transformForm = async ({ form, table, req, row, res }) => {
         );
         traverseSync(childForm.layout, {
           field(segment) {
-            segment.field_name = `${view_select.field_name}.${segment.field_name}`
-          }
-        })
+            segment.field_name = `${view_select.field_name}.${segment.field_name}`;
+          },
+        });
         /*childForm.fields.forEach(f=>{
           
         })*/
@@ -482,6 +482,10 @@ const transformForm = async ({ form, table, req, row, res }) => {
           label: view_select.field_name,
           fields: childForm.fields,
           layout: childForm.layout,
+          metadata: {
+            table_id: childTable.id,
+            relation: view_select.field_name,
+          },
         });
         form.fields.push(fr);
         segment.type = "field_repeat";
@@ -631,21 +635,25 @@ const runPost = async (
     }
   });
   setDateLocales(form, req.getLocale());
+  await transformForm({ form, table, req });
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options();
-    await transformForm({ form, table, req });
     res.sendWrap(viewname, renderForm(form, req.csrfToken()));
   } else {
-    let row;
+    let row0;
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
       const use_fixed = await fill_presets(table, req, fixed);
-      row = { ...use_fixed, ...form.values };
+      row0 = { ...use_fixed, ...form.values };
     } else {
-      row = form.values;
+      row0 = form.values;
+    }
+    const row = {};
+    for (const field of form.fields.filter((f) => !f.isRepeat)) {
+      row[field.name] = row0[field.name];
     }
     const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
@@ -684,6 +692,17 @@ const runPost = async (
         req.flash("error", text_attr(upd_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
         return;
+      }
+    }
+
+    for (const field of form.fields.filter((f) => f.isRepeat)) {
+      const childTable = Table.findOne({ id: field.metadata?.table_id });
+      for (const childRow of form.values[field.name]) {
+        childRow[field.metadata?.relation] = id;
+        await childTable.tryInsertRow(
+          childRow,
+          req.user ? +req.user.id : undefined
+        );
       }
     }
     if (req.xhr && !originalID) {

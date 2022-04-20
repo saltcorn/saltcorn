@@ -23,6 +23,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   isRepeat = true;
   showIf?: any;
   fancyMenuEditor: boolean;
+  metadata?: any;
 
   /**
    * FieldRepeat constructor
@@ -38,6 +39,7 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.layout = o.layout;
     this.isRepeat = true;
     this.showIf = o.showIf;
+    this.metadata = o.metadata;
     this.fancyMenuEditor = o.fancyMenuEditor || false;
   }
 
@@ -101,6 +103,7 @@ namespace FieldRepeat {
     fields: Array<Field>;
     layout?: Layout;
     showIf?: any;
+    metadata?: any;
     fancyMenuEditor?: boolean;
   };
 }
