@@ -643,7 +643,14 @@ const runPost = async (
     }
   });
   setDateLocales(form, req.getLocale());
-  await transformForm({ form, table, req });
+  await transformForm({
+    form,
+    table,
+    req,
+    row: body[table.pk_name]
+      ? { [table.pk_name]: body[table.pk_name] }
+      : undefined,
+  });
   form.validate(body);
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
@@ -707,17 +714,29 @@ const runPost = async (
       const childTable = Table.findOne({ id: field.metadata?.table_id });
       for (const childRow of form.values[field.name]) {
         childRow[field.metadata?.relation] = id;
-        if (childRow[childTable.pk_name])
-          await childTable.tryUpdateRow(
+        console.log(childRow);
+        if (childRow[childTable.pk_name]) {
+          const upd_res = await childTable.tryUpdateRow(
             childRow,
             childRow[childTable.pk_name],
             req.user ? +req.user.id : undefined
           );
-        else
-          await childTable.tryInsertRow(
+          if (upd_res.error) {
+            req.flash("error", text_attr(upd_res.error));
+            res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+            return;
+          }
+        } else {
+          const ins_res = await childTable.tryInsertRow(
             childRow,
             req.user ? +req.user.id : undefined
           );
+          if (ins_res.error) {
+            req.flash("error", text_attr(ins_res.error));
+            res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+            return;
+          }
+        }
       }
     }
     if (req.xhr && !originalID) {
