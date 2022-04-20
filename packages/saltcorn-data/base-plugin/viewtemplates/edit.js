@@ -714,7 +714,6 @@ const runPost = async (
       const childTable = Table.findOne({ id: field.metadata?.table_id });
       for (const childRow of form.values[field.name]) {
         childRow[field.metadata?.relation] = id;
-        console.log(childRow);
         if (childRow[childTable.pk_name]) {
           const upd_res = await childTable.tryUpdateRow(
             childRow,
