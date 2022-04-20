@@ -473,10 +473,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
             segment.field_name = `${view_select.field_name}.${segment.field_name}`;
           },
         });
-        /*childForm.fields.forEach(f=>{
-          
-        })*/
-        //console.log(childForm);
+
         const fr = new FieldRepeat({
           name: view_select.field_name,
           label: view_select.field_name,
@@ -487,6 +484,12 @@ const transformForm = async ({ form, table, req, row, res }) => {
             relation: view_select.field_name,
           },
         });
+        if (row?.id) {
+          const childRows = await childTable.getRows({
+            [view_select.field_name]: row.id,
+          });
+          fr.metadata.rows = childRows;
+        }
         form.fields.push(fr);
         segment.type = "field_repeat";
         segment.field_repeat = fr;

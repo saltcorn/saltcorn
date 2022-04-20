@@ -545,11 +545,23 @@ const renderFormLayout = (form: Form): string => {
           {
             class: `repeats-${hdr.form_name}`,
           },
-          div(
-            { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
-            repeater_icons,
-            go(field_repeat.layout)
-          )
+          field_repeat.metadata?.rows && field_repeat.metadata?.rows.length > 0
+            ? field_repeat.metadata.rows.map((row: any, ix: number) => {
+                field_repeat.metadata.current_row = row;
+                field_repeat.metadata.current_ix = ix;
+                return div(
+                  {
+                    class: `form-repeat form-namespace repeat-${hdr.form_name}`,
+                  },
+                  repeater_icons,
+                  go(field_repeat.layout)
+                );
+              })
+            : div(
+                { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
+                repeater_icons,
+                go(field_repeat.layout)
+              )
         ),
         repeater_adder(hdr.form_name)
       );
@@ -566,10 +578,10 @@ const renderFormLayout = (form: Form): string => {
             ) as AbstractFieldRepeat
           )?.fields.find((f: any) => f.name === field_name)
         : form.fields.find((f) => f.name === segment.field_name);
+      const repeater = in_repeat
+        ? form.fields.find((f) => f.name === repeat_name)
+        : null;
       const field = { ...field0 };
-      if (!field0) {
-        console.log("missing field", segment);
-      }
       if (instanceOfField(field) && field.input_type !== "hidden") {
         if (field.sourceURL) return div({ "data-source-url": field.sourceURL });
         if (instanceOfField(field0)) field.form_name = field0.form_name;
@@ -583,9 +595,13 @@ const renderFormLayout = (form: Form): string => {
         field.attributes = { ...field.attributes, ...segment.configuration };
         return (
           innerField(
-            form.values,
+            in_repeat
+              ? (repeater as any)?.metadata?.current_row || {}
+              : form.values,
             form.errors,
-            in_repeat ? "_0" : undefined
+            in_repeat
+              ? `_${(repeater as any)?.metadata?.current_ix || 0}`
+              : undefined
           )(field) + errorFeedback
         );
       } else return "";
