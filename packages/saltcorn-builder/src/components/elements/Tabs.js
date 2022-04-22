@@ -88,35 +88,47 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
           } builder ${selected ? "selected-node" : ""}`}
           ref={(dom) => connect(drag(dom))}
         >
-          {ntimes(ntabs, (ix) => (
-            <li key={ix} className="nav-item" role="presentation">
-              <a
-                className={`nav-link ${ix === showTab ? `active` : ""}`}
-                onClick={() => setShowTab(ix)}
-              >
-                {titles[ix] &&
-                  (typeof titles[ix].label === "undefined"
-                    ? titles[ix]
-                    : titles[ix].label === ""
-                    ? "(empty)"
-                    : titles[ix].label)}
-              </a>
-            </li>
-          ))}
+          {ntimes(ntabs, (ix) => {
+            const targetIx =
+              titles[ix].value === "undefined" ? ix : titles[ix].value;
+            return (
+              <li key={ix} className="nav-item" role="presentation">
+                <a
+                  className={`nav-link ${targetIx === showTab ? `active` : ""}`}
+                  onClick={() => setShowTab(targetIx)}
+                >
+                  {titles[ix] &&
+                    (typeof titles[ix].label === "undefined"
+                      ? titles[ix]
+                      : titles[ix].label === ""
+                      ? "(empty)"
+                      : titles[ix].label)}
+                </a>
+              </li>
+            );
+          })}
         </ul>
         <div className="tab-content" id="myTabContent">
-          {ntimes(ntabs, (ix) => (
-            <div
-              key={ix}
-              className={`tab-pane fade ${ix === showTab ? `show active` : ""}`}
-              role="tabpanel"
-              aria-labelledby="home-tab"
-            >
-              <Element canvas id={`Tab${ix}`} is={Column}>
-                {contents[ix]}
-              </Element>
-            </div>
-          ))}
+          {ntimes(ntabs, (ix) => {
+            const useIx =
+              typeof titles[ix].value === "undefined" ? ix : titles[ix].value;
+
+            if (useIx !== showTab) return null;
+            return (
+              <div
+                key={ix}
+                className={`tab-pane fade ${
+                  useIx === showTab ? `show active` : ""
+                }`}
+                role="tabpanel"
+                aria-labelledby="home-tab"
+              >
+                <Element canvas id={`Tab${useIx}`} is={Column}>
+                  {contents[useIx]}
+                </Element>
+              </div>
+            );
+          })}
         </div>
       </Fragment>
     );
@@ -162,7 +174,9 @@ const TabsSettings = () => {
         })
         .then(function (data) {
           if (data.success) {
+            console.log("data", data.success);
             const len = data.success.length;
+
             setProp((prop) => (prop.ntabs = len));
             setProp((prop) => (prop.titles = data.success));
           }

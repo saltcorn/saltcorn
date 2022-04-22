@@ -224,6 +224,14 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         </Element>
       );
     } else if (segment.type === "tabs") {
+      let contentsArray = segment.contents.map(toTag);
+      let contents;
+      if (segment.tabsStyle === "Value switch") {
+        contents = {};
+        segment.titles.forEach(({ label, value }, ix) => {
+          contents[value] = contentsArray[ix];
+        });
+      } else contents = contentsArray;
       return (
         <Tabs
           key={ix}
@@ -233,7 +241,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           deeplink={segment.deeplink}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
-          contents={segment.contents.map(toTag)}
+          contents={contents}
         />
       );
     } else if (segment.besides) {
@@ -418,11 +426,16 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       };
     }
     if (node.displayName === Tabs.craft.displayName) {
+      console.log("save titles", node.props.titles);
+      let contents;
+      if (node.props.tabsStyle === "Value switch") {
+      } else
+        contents = ntimes(node.props.ntabs, (ix) =>
+          go(nodes[node.linkedNodes["Tab" + ix]])
+        );
       return {
         type: "tabs",
-        contents: ntimes(node.props.ntabs, (ix) =>
-          go(nodes[node.linkedNodes["Tab" + ix]])
-        ),
+        contents,
         titles: node.props.titles,
         tabsStyle: node.props.tabsStyle,
         field: node.props.field,
