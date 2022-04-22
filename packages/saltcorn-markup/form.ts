@@ -630,6 +630,8 @@ const renderFormLayout = (form: Form): string => {
               action_bordercol || "#000000"
             }; color: ${action_textcol || "#000000"}`
           : null;
+      const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
+
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
 
@@ -662,13 +664,13 @@ const renderFormLayout = (form: Form): string => {
         if (action_url) {
           const dest = (configuration && configuration.after_delete_url) || "/";
           return mkBtn(
-            `onClick="ajax_post('${action_url}', {success:()=>window.location.href='${dest}'})" type="button"`
+            `onClick="${confirmStr}ajax_post('${action_url}', {success:()=>window.location.href='${dest}'})" type="button"`
           );
         } else return "";
       }
       if (action_name === "Reset") {
         return mkBtn(
-          `onClick="$(this).closest('form').trigger('reset')" type="button"`
+          `onClick="${confirmStr}$(this).closest('form').trigger('reset')" type="button"`
         );
       }
       if (action_name === "GoBack") {

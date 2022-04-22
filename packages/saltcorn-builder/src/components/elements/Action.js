@@ -165,7 +165,7 @@ const ActionSettings = () => {
           <MinRoleSettingRow minRole={minRole} setProp={setProp} />
         </tbody>
       </table>
-      {options.mode === "show" ? (
+      {options.mode === "show" || name === "Delete" || name === "Reset" ? (
         <div className="form-check">
           <input
             className="form-check-input"
