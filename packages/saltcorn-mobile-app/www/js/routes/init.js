@@ -3,7 +3,7 @@ import { getView, postView } from "./view.js";
 import { postToggleField } from "./edit.js";
 
 export const initRoutes = async () => {
-  let routes = [
+  const routes = [
     {
       path: "post/view/:viewname",
       action: postView,

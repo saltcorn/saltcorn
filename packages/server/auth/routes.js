@@ -200,7 +200,6 @@ const getAuthLinks = (current, noMethods) => {
 };
 
 const loginWithJwt = async (req, res) => {
-  a;
   const { email, password } = req.query;
   const user = await User.findOne({ email });
   if (user && user.checkPassword(password)) {
@@ -208,6 +207,7 @@ const loginWithJwt = async (req, res) => {
     const token = jwt.sign(
       {
         sub: email,
+        role_id: user.role_id,
         iss: "saltcorn@saltcorn",
         aud: "saltcorn-mobile-app",
       },

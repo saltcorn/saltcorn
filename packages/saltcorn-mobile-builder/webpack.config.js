@@ -43,10 +43,13 @@ const buildPluginEntries = async (env) => {
   let result = [];
   for (plugin of plugins) {
     const requireResult = await requirePlugin(plugin, false, manager);
+    const additionalDependencies = requireResult.plugin_module?.dependencies
+      ? requireResult.plugin_module.dependencies
+      : [];
     const genericEntry = {
       [plugin.name]: {
         import: requireResult.mainFile,
-        dependOn: ["markup", "data"],
+        dependOn: ["markup", "data", ...additionalDependencies],
       },
     };
     result.push({

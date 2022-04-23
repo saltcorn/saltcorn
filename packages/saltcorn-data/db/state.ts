@@ -119,6 +119,8 @@ class State {
   verifier: any;
   i18n: I18n.I18n;
   roomEmitter?: Function;
+  localTableIds: number[];
+  role_id?: number;
 
   /**
    * State constructor
@@ -158,6 +160,7 @@ class State {
       locales: [],
       directory: join(__dirname, "..", "app-locales"),
     });
+    this.localTableIds = new Array<number>();
   }
 
   /**

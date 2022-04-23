@@ -4,10 +4,8 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
-  readFileSync,
   readdirSync,
   copySync,
-  writeSync,
   writeFileSync,
 } from "fs-extra";
 import { join } from "path";
@@ -19,6 +17,9 @@ const {
   requirePlugin,
 } = require("@saltcorn/server/load_plugins");
 
+/**
+ *
+ */
 export default class BuildAppCommand extends Command {
   static description = "build mobile app from tenant";
 
@@ -34,27 +35,21 @@ export default class BuildAppCommand extends Command {
       char: "v",
       description: "Entry Point",
     }),
+    localUserTables: Flags.string({
+      name: "local user tables",
+      char: "l",
+      description: "user defined tables that should be replicated into the app",
+      multiple: true,
+    }),
   };
 
   supportedPlatforms = ["android", "browser"]; // TODO ios
 
   packageRoot = join(__dirname, "../../");
-  bundleDir = join(this.packageRoot, "bundle");
-  saltcornMarkupRoot = join(require.resolve("@saltcorn/markup"), "../../");
   appDir = join(require.resolve("@saltcorn/mobile-app"), "..");
   wwwDir = join(require.resolve("@saltcorn/mobile-app"), "..", "www");
-  appBundlesDir = join(
-    require.resolve("@saltcorn/mobile-app"),
-    "../www/js/bundles"
-  );
-  sbadmin2Root = join(require.resolve("@saltcorn/sbadmin2"), "..");
-  serverRoot = join(require.resolve("@saltcorn/server"), "..");
-
-  tempPluginDir = join(this.packageRoot, "plugins");
 
   staticPlugins = ["base", "sbadmin2"];
-  // host localhost of the android emulator, only for development,
-  serverPath = "http://10.0.2.2:3000";
 
   manager = new PluginManager({
     pluginsPath: join(this.packageRoot, "plugin_packages", "node_modules"),
@@ -66,16 +61,19 @@ export default class BuildAppCommand extends Command {
     if (!flags.entryPoint) {
       throw new Error("please specify an entry point for the first view");
     }
+    const localUserTables = flags.localUserTables ? flags.localUserTables : [];
     this.copyStaticAssets();
     this.copySbadmin2Deps();
     this.writeCfgFile({
       entryPoint: flags.entryPoint,
-      serverPath: this.serverPath,
+      serverPath: "http://10.0.2.2:3000", // host localhost of the android emulator, only for development,
+      localUserTables: localUserTables,
     });
     await this.bundlePackages();
     this.copyBundlesToApp();
+    await this.installNpmPackages();
     // TODO ch postgres
-    await this.copySqliteDbToApp();
+    await this.copySqliteDbToApp(localUserTables);
     if (flags.platforms) {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
@@ -92,7 +90,8 @@ export default class BuildAppCommand extends Command {
     if (!existsSync(assetsDst)) {
       mkdirSync(assetsDst, { recursive: true });
     }
-    const srcPrefix = join(this.serverRoot, "public");
+    const serverRoot = join(require.resolve("@saltcorn/server"), "..");
+    const srcPrefix = join(serverRoot, "public");
     const srcFiles = ["jquery-3.6.0.min.js", "saltcorn.js", "saltcorn.css"];
     for (const srcFile of srcFiles) {
       copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
@@ -107,8 +106,9 @@ export default class BuildAppCommand extends Command {
     if (!existsSync(sbadmin2Dst)) {
       mkdirSync(sbadmin2Dst, { recursive: true });
     }
+    const sbadmin2Root = join(require.resolve("@saltcorn/sbadmin2"), "..");
     const srcPrefix = join(
-      this.sbadmin2Root,
+      sbadmin2Root,
       "node_modules/startbootstrap-sb-admin-2-bs5"
     );
     const srcFiles = [
@@ -123,11 +123,12 @@ export default class BuildAppCommand extends Command {
     }
   };
 
-  writeCfgFile = ({ entryPoint, serverPath }: Record<string, string>) => {
+  writeCfgFile = ({ entryPoint, serverPath, localUserTables }: any) => {
     let cfg = {
       version_tag: db.connectObj.version_tag,
       entry_view: `get/view/${entryPoint}`,
-      server_path: `${serverPath}`,
+      server_path: serverPath,
+      localUserTables,
     };
     writeFileSync(join(this.wwwDir, "config"), JSON.stringify(cfg));
   };
@@ -165,23 +166,46 @@ export default class BuildAppCommand extends Command {
   };
 
   copyBundlesToApp = () => {
-    if (!existsSync(this.appBundlesDir))
-      mkdirSync(this.appBundlesDir, { recursive: true });
-    for (let bundleName of readdirSync(this.bundleDir)) {
+    const localBundleDir = join(this.packageRoot, "bundle");
+    const appBundlesDir = join(
+      require.resolve("@saltcorn/mobile-app"),
+      "../www/js/bundles"
+    );
+    if (!existsSync(appBundlesDir))
+      mkdirSync(appBundlesDir, { recursive: true });
+    for (let bundleName of readdirSync(localBundleDir)) {
       copySync(
-        join(this.bundleDir, bundleName),
-        join(this.appBundlesDir, bundleName)
+        join(localBundleDir, bundleName),
+        join(appBundlesDir, bundleName)
       );
     }
   };
 
-  copySqliteDbToApp = async () => {
+  installNpmPackages = async () => {
+    const npmTargetDir = join(this.wwwDir, "npm_packages");
+    if (!existsSync(npmTargetDir)) mkdirSync(npmTargetDir, { recursive: true });
+    const info = await this.manager.install("jwt-decode", "3.1.2");
+    copySync(
+      join(info.location, "build/jwt-decode.js"),
+      join(npmTargetDir, "jwt-decode.js")
+    );
+  };
+
+  copySqliteDbToApp = async (localUserTables: string[]) => {
     const dbPath = join(this.wwwDir, "scdb.sqlite");
     copyFileSync(db.connectObj.sqlite_path, dbPath);
     let connectObj = db.connectObj;
     connectObj.sqlite_path = dbPath;
     await db.changeConnection(connectObj);
-    await db.dropUserDefinedTables();
+    const tablesToDrop = (await db.listUserDefinedTables())
+      .filter(
+        (table: any) =>
+          !localUserTables.find(
+            (current) => current.toUpperCase() === table.name.toUpperCase()
+          )
+      )
+      .map(({ name }: { name: string }) => name);
+    await db.dropTables(tablesToDrop);
   };
 
   validatePlatforms = (platforms: string[]) => {

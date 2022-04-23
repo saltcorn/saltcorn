@@ -163,16 +163,19 @@ export const listTables = async () => {
   return tq.rows;
 };
 
-export const dropTable = async(name: string) => {
+export const listUserDefinedTables = async () => {
+  return (await listTables()).filter(
+    ({ name }: { name: string }) => !name.startsWith("_sc_") && name !== "users"
+  );
+};
+
+export const dropTable = async (name: string) => {
   await query(`DROP TABLE ${name}`);
 };
 
-export const dropUserDefinedTables = async () => {
-  const tables = await listTables();
-  for (const { name } of tables) {
-    if(!name.startsWith("_sc_") && name !== "users") {
-      dropTable(name);
-    }
+export const dropTables = async (tables: string[]) => {
+  for (const table of tables) {
+    await dropTable(table);
   }
 };
 

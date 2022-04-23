@@ -60,7 +60,6 @@ export const query = (statement: string, params?: any): Promise<any> => {
       statement,
       params,
       (results: any) => {
-        if (results.rows.length === 0) return resolve([]);
         let rows = Array<any>();
         for (let i = 0; i < results.rows.length; i++)
           rows.push(results.rows.item(i));

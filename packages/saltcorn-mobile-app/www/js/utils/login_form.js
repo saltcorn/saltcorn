@@ -33,7 +33,7 @@ export const renderLoginForm = (entryView, version_tag) => {
     alerts: [],
     headers: [
       { css: `static_assets/${version_tag}/saltcorn.css` },
-      { script: "js/delegates.js"},
+      { script: "js/utils/iframe_view_utils.js" },
     ],
     csrfToken: false,
   });

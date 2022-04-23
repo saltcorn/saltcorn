@@ -349,7 +349,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  { },
+  {},
   state,
   { res, req },
   { editQuery }
@@ -579,7 +579,10 @@ const runPost = async (
     if (req.xhr) res.status(422);
     await form.fill_fkey_options();
     await transformForm({ form, table, req });
-    res.sendWrap(viewname, renderForm(form, req.csrfToken ? req.csrfToken() : false )); 
+    res.sendWrap(
+      viewname,
+      renderForm(form, req.csrfToken ? req.csrfToken() : false)
+    );
   } else {
     let row; // TODO ch  move whole block to query?
     const pk = fields.find((f) => f.primary_key);
@@ -611,7 +614,10 @@ const runPost = async (
         row[pk.name] = id;
       } else {
         req.flash("error", text_attr(ins_res.error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken ? req.csrfToken() : false));
+        res.sendWrap(
+          viewname,
+          renderForm(form, req.csrfToken ? req.csrfToken() : false)
+        );
         return;
       }
     } else {
@@ -672,7 +678,7 @@ const runPost = async (
       }
       const redirectPath = `${target}${query}`;
       if (!isWeb(req)) {
-        res.json({ redirect: redirectPath });
+        res.json({ redirect: `get${redirectPath}` });
       } else {
         res.redirect(redirectPath);
       }
@@ -748,10 +754,16 @@ module.exports = {
   queries: ({
     table_id,
     name,
-    configuration: { columns, default_state, layout, auto_save, destination_type },
+    configuration: {
+      columns,
+      default_state,
+      layout,
+      auto_save,
+      destination_type,
+    },
     req,
     res,
-  }) => ({    
+  }) => ({
     async editQuery(state) {
       const table = await Table.findOne({ id: table_id });
       const fields = await table.getFields();

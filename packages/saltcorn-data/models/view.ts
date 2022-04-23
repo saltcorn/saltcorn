@@ -464,7 +464,12 @@ class View {
    * @param {*} res
    * @returns {Promise<object>}
    */
-  async run_possibly_on_page(query: any, req: any, res: any): Promise<string> {
+  async run_possibly_on_page(
+    query: any,
+    req: any,
+    res: any,
+    remote: boolean = false
+  ): Promise<string> {
     const view = this;
     this.check_viewtemplate();
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
@@ -476,7 +481,7 @@ class View {
       }
     }
     const state = view.combine_state_and_default_state(query);
-    const resp = await view.run(state, { res, req });
+    const resp = await view.run(state, { res, req }, remote);
     const state_form = await view.get_state_form(state, req);
     const contents = div(
       state_form ? renderForm(state_form, req.csrfToken()) : "",
@@ -556,6 +561,10 @@ class View {
     extraArgs: RunExtra,
     remote: boolean = !isNode()
   ): Promise<any> {
+    const { getState } = require("../db/state");
+    if (getState().localTableIds.indexOf(this.table_id) >= 0) {
+      remote = false;
+    }
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.runPost)
       throw new InvalidConfiguration(

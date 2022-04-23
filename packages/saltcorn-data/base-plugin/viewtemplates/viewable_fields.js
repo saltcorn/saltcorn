@@ -815,7 +815,9 @@ const getForm = async (
   });
   const form = new Form({
     action: isRemote ? "javascript:void(0)" : action,
-    onSubmit: isRemote ? `javascript:formSubmit(this, '${action}')` : undefined,
+    onSubmit: isRemote
+      ? `javascript:formSubmit(this, '/view/', '${viewname}')`
+      : undefined,
     fields: tfields,
     layout,
     req,

@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script src="cordova.js"></script>
+    <script src="js/utils/global_utils.js"></script>
+    <script src="js/utils/iframe_view_utils.js"></script>
+    <script src="js/mocks/response.js"></script>
+    <script src="js/mocks/request.js"></script>
+    <script src="npm_packages/jwt-decode.js"></script>
     <script src="https://unpkg.com/universal-router/universal-router.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script type="module">
       import { initRoutes } from "./js/routes/init.js";
-      import { renderLoginForm } from "./js/login_form.js";
+      import { renderLoginForm } from "./js/utils/login_form.js";
 
       const staticPlugins = ["base", "sbadmin2"];
 
@@ -34,6 +39,7 @@
           await loadPlugin(plugin);
           state.registerPlugin(plugin.name, saltcorn[plugin.name]);
         }
+        return plugins;
       }
 
       function readCfg() {
@@ -65,7 +71,6 @@
       async function addScripts(version_tag) {
         const scripts = [
           `static_assets/${version_tag}/jquery-3.6.0.min.js`,
-          "js/utils.js",
           "js/bundles/common_chunks.bundle.js",
           "js/bundles/markup.bundle.js",
           "js/bundles/data.bundle.js",
@@ -76,6 +81,24 @@
           await addScript(script);
         }
       }
+
+      async function getTableIds(tableNames) {
+        return (await saltcorn.data.models.Table.find())
+          .filter((table) => tableNames.indexOf(table.name) > -1)
+          .map((table) => table.id);
+      }
+
+      const addPluginScriptTagsToCfg = (pluginRows) => {
+        window.config.pluginHeaders = [];
+        for (const row of pluginRows) {
+          const pluginHeaders = saltcorn[row.name].headers;
+          if (pluginHeaders) {
+            for (const header of pluginHeaders) {
+              window.config.pluginHeaders.push(header);
+            }
+          }
+        }
+      };
 
       document.addEventListener("deviceready", async () => {
         const config = await readCfg();
@@ -88,19 +111,24 @@
         await state.refresh_pages();
         state.registerPlugin("base", saltcorn.base_plugin);
         state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
-        await loadPlugins(state);
+        state.localTableIds = await getTableIds(config.localUserTables);
+        addPluginScriptTagsToCfg(await loadPlugins(state));
         await initRoutes();
-        window.localStorage.removeItem("auth_jwt");
-        const entryView = window.config.entry_view;
-        if (
-          window.localStorage.getItem("auth_jwt") &&
-          window.localStorage.getItem("auth_jwt") !== "undefined"
-        ) {
+        const entryView = config.entry_view;
+        const jwt = localStorage.getItem("auth_jwt");
+        if (jwt && jwt !== "undefined") {
+          const decodedJwt = jwt_decode(jwt);
+          saltcorn.data.state.getState().role_id = decodedJwt?.role_id
+            ? decodedJwt.role_id
+            : 10;
           window.currentLocation = entryView;
-          const page = await window.router.resolve({ pathname: entryView });
-          replaceIframeContent(page.content);
+          const page = await router.resolve({
+            pathname: entryView,
+            fullWrap: true,
+          });
+          replaceIframe(page.content);
         } else {
-          replaceIframeContent(renderLoginForm(entryView, config.version_tag));
+          replaceIframe(renderLoginForm(entryView, config.version_tag));
         }
       });
     </script>
