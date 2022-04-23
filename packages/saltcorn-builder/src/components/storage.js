@@ -330,6 +330,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
    * @returns {object}
    */
   const go = (node) => {
+    if (!node) return;
     const matchElement = allElements.find(
       (e) =>
         e.craft.related &&
