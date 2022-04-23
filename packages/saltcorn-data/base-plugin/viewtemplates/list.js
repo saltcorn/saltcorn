@@ -41,6 +41,7 @@ const {
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration, isWeb } = require("../../utils");
+const { check_view_columns } = require("../../plugin-testing");
 
 /**
  * @param {object} context
@@ -719,4 +720,7 @@ module.exports = {
       return await table.getRow({ id });
     },
   }),
+  configCheck: async (view) => {
+    return await check_view_columns(view, view.configuration.columns);
+  },
 };

@@ -5,7 +5,8 @@
 import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
-import { Where } from "@saltcorn/db-common/internal";
+import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
+const fs = require("fs");
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -137,22 +138,6 @@ const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
     else where[k] = [where[k], v];
   });
   return where;
-};
-
-const prefixFieldsInWhere = (inputWhere: GenObj, tablePrefix: string) => {
-  if (!inputWhere) return {};
-  const whereObj: GenObj = {};
-  Object.keys(inputWhere).forEach((k) => {
-    if (k === "_fts") whereObj[k] = { table: tablePrefix, ...inputWhere[k] };
-    else if (k === "not") {
-      whereObj.not = prefixFieldsInWhere(inputWhere[k], tablePrefix);
-    } else if (k === "or") {
-      whereObj.or = Array.isArray(inputWhere[k])
-        ? inputWhere[k].map((w: GenObj) => prefixFieldsInWhere(w, tablePrefix))
-        : prefixFieldsInWhere(inputWhere[k], tablePrefix);
-    } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
-  });
-  return whereObj;
 };
 
 /**

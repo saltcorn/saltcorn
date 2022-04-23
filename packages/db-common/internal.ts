@@ -127,7 +127,7 @@ export type Where = {
     | any; // TODO Value
 };
 
-/**
+export /**
  *
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -137,17 +137,39 @@ const subSelectWhere =
   (phs: PlaceHolderStack) =>
   (
     k: string,
-    v: { inSelect: { where: Where; field: string; table: string } }
+    v: {
+      inSelect: {
+        where: Where;
+        field: string;
+        table: string;
+        through?: string;
+        valField?: string;
+      };
+    }
   ): string => {
-    const whereObj = v.inSelect.where;
-    const wheres = whereObj ? Object.entries(whereObj) : [];
-    const where =
-      whereObj && wheres.length > 0
-        ? "where " + wheres.map(whereClause(phs)).join(" and ")
-        : "";
-    return `${quote(sqlsanitizeAllowDots(k))} in (select ${
-      v.inSelect.field
-    } from ${v.inSelect.table} ${where})`;
+    if (v.inSelect.through && v.inSelect.valField) {
+      const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
+      const wheres = whereObj ? Object.entries(whereObj) : [];
+      const where =
+        whereObj && wheres.length > 0
+          ? "where " + wheres.map(whereClause(phs)).join(" and ")
+          : "";
+      return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
+        v.inSelect.valField
+      }" from ${v.inSelect.table} ss1 join ${
+        v.inSelect.through
+      } ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
+    } else {
+      const whereObj = v.inSelect.where;
+      const wheres = whereObj ? Object.entries(whereObj) : [];
+      const where =
+        whereObj && wheres.length > 0
+          ? "where " + wheres.map(whereClause(phs)).join(" and ")
+          : "";
+      return `${quote(sqlsanitizeAllowDots(k))} in (select "${
+        v.inSelect.field
+      }" from ${v.inSelect.table} ${where})`;
+    }
   };
 
 /**
@@ -403,3 +425,19 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
 };
 
 export type Row = { [key: string]: any };
+
+export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
+  if (!inputWhere) return {};
+  const whereObj: Where = {};
+  Object.keys(inputWhere).forEach((k) => {
+    if (k === "_fts") whereObj[k] = { table: tablePrefix, ...inputWhere[k] };
+    else if (k === "not") {
+      whereObj.not = prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else if (k === "or") {
+      whereObj.or = Array.isArray(inputWhere[k])
+        ? inputWhere[k].map((w: Where) => prefixFieldsInWhere(w, tablePrefix))
+        : prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
+  });
+  return whereObj;
+};

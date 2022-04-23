@@ -5,7 +5,7 @@ export type AdditionalButton = {
   label: string;
   id: string;
   class: string;
-  onClick?: string;
+  onclick?: string;
 };
 
 export interface AbstractForm {

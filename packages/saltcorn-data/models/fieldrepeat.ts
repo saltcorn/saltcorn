@@ -8,6 +8,7 @@ const { contract, is } = require("contractis");
 import Field from "./field";
 import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
 import { SuccessMessage } from "@saltcorn/types/common_types";
+import type { Layout } from "@saltcorn/types/base_types";
 
 /**
  * FieldRepeat Class
@@ -18,9 +19,11 @@ class FieldRepeat implements AbstractFieldRepeat {
   name: string;
   type: string;
   fields: Array<Field>;
+  layout?: Layout;
   isRepeat = true;
   showIf?: any;
   fancyMenuEditor: boolean;
+  metadata?: any;
 
   /**
    * FieldRepeat constructor
@@ -33,8 +36,10 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.fields = o.fields.map((f) =>
       f.constructor.name === Object.name ? new Field(f) : f
     );
+    this.layout = o.layout;
     this.isRepeat = true;
     this.showIf = o.showIf;
+    this.metadata = o.metadata;
     this.fancyMenuEditor = o.fancyMenuEditor || false;
   }
 
@@ -96,7 +101,9 @@ namespace FieldRepeat {
     name: string;
     label?: string;
     fields: Array<Field>;
+    layout?: Layout;
     showIf?: any;
+    metadata?: any;
     fancyMenuEditor?: boolean;
   };
 }

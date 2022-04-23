@@ -21,6 +21,7 @@ const {
   getStringsForI18n,
   translateLayout,
 } = require("../../models/layout");
+const { check_view_columns } = require("../../plugin-testing");
 
 const {
   div,
@@ -412,7 +413,7 @@ const renderRows = async (
           case "OneToOneShow":
             state = {
               [view.view_select.through
-                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.field_name}`
+                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
                 : view.view_select.field_name]: row[pk_name],
             };
             break;
@@ -699,11 +700,12 @@ module.exports = {
   authorise_get: async ({ query, table_id }) => {
     return await authorizeGetQuery(query, table_id);
   },
-  queries: ({ table_id, viewname, configuration: { columns }, req }) => ({
+  queries: ({ table_id, viewname, configuration: { columns, layout }, req }) => ({
     async showQuery(state, fields) {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
-        fields
+        fields,
+        layout
       );
       readState(state, fields);
       const qstate = await stateFieldsToWhere({
@@ -733,7 +735,8 @@ module.exports = {
       const fields = await tbl.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
-        fields
+        fields,
+        layout
       );
       const qstate = await stateFieldsToWhere({ fields, state });
       const q = await stateFieldsToQuery({ state, fields });
@@ -800,4 +803,7 @@ module.exports = {
       return false;
     },
   }),
+  configCheck: async (view) => {
+    return await check_view_columns(view, view.configuration.columns);
+  },
 };

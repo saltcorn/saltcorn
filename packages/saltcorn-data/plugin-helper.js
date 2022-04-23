@@ -14,6 +14,7 @@ const { link } = require("@saltcorn/markup");
 const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToWhere, freeVariables } = require("./models/expression");
+const { traverse } = require("./models/layout");
 /**
  *
  * @param {string} url
@@ -268,7 +269,7 @@ const get_link_view_opts = async (table, viewname) => {
     for (const view of views) {
       if (through && throughTable) {
         link_view_opts_push({
-          name: `ChildList:${view.name}.${related_table.name}.${relation.name}.${throughTable.name}.${through.name}`,
+          name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
         });
       } else {
@@ -863,7 +864,7 @@ const get_onetoone_views = async (table, viewname) => {
  * @throws {InvalidConfiguration}
  * @returns {object}
  */
-const picked_fields_to_query = (columns, fields) => {
+const picked_fields_to_query = (columns, fields, layout) => {
   var joinFields = {};
   var aggregations = {};
   let freeVars = new Set(); // for join fields
@@ -916,6 +917,11 @@ const picked_fields_to_query = (columns, fields) => {
           ...freeVars,
           ...freeVariables(column.view_label),
         ]);
+      if (column.extra_state_fml)
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.extra_state_fml),
+        ]);
       if (column.view && column.view.split) {
         const [vtype, vrest] = column.view.split(":");
         if (vtype === "ParentShow") {
@@ -962,6 +968,17 @@ const picked_fields_to_query = (columns, fields) => {
       ]);
     }
   });
+  if (layout) {
+    traverse(layout, {
+      view(v) {
+        if (v.extra_state_fml)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(v.extra_state_fml),
+          ]);
+      },
+    });
+  }
   [...freeVars]
     .filter((v) => v.includes("."))
     .map((v) => {
@@ -1101,6 +1118,23 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
             inSelect: {
               table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
               field: db.sqlsanitize(jFieldNm),
+              where: { [db.sqlsanitize(lblField)]: v },
+            },
+          },
+        ];
+      } else if (kpath.length === 4) {
+        const [jtNm, jFieldNm, tblName, lblField] = kpath;
+        qstate.id = [
+          ...(qstate.id ? [qstate.id] : []),
+          {
+            // where id in (select jFieldNm from jtnm where lblField=v)
+            inSelect: {
+              table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+              field: db.sqlsanitize(jFieldNm),
+              valField: "id",
+              through: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(
+                tblName
+              )}"`,
               where: { [db.sqlsanitize(lblField)]: v },
             },
           },
