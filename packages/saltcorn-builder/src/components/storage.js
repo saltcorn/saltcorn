@@ -429,6 +429,10 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       console.log("save titles", node.props.titles);
       let contents;
       if (node.props.tabsStyle === "Value switch") {
+        contents = node.props.titles.map(({ value }, ix) => {
+          const useIx = typeof value === "undefined" ? ix : value;
+          return go(nodes[node.linkedNodes["Tab" + useIx]]);
+        });
       } else
         contents = ntimes(node.props.ntabs, (ix) =>
           go(nodes[node.linkedNodes["Tab" + ix]])

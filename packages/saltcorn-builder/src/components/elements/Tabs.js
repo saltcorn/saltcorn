@@ -113,21 +113,31 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
             const useIx =
               typeof titles[ix].value === "undefined" ? ix : titles[ix].value;
 
-            if (useIx !== showTab) return null;
-            return (
-              <div
-                key={ix}
-                className={`tab-pane fade ${
-                  useIx === showTab ? `show active` : ""
-                }`}
-                role="tabpanel"
-                aria-labelledby="home-tab"
-              >
-                <Element canvas id={`Tab${useIx}`} is={Column}>
-                  {contents[useIx]}
-                </Element>
-              </div>
-            );
+            if (useIx !== showTab)
+              return (
+                <div class="d-none" key={ix}>
+                  <Element canvas id={`Tab${useIx}`} is={Column}>
+                    {contents[useIx]}
+                  </Element>
+                </div>
+              );
+            //d-none display of useIx is bug workaround? needed
+            else
+              return (
+                <div
+                  key={ix}
+                  className={`tab-pane fade ${
+                    useIx === showTab ? `show active` : ""
+                  }`}
+                  role="tabpanel"
+                  aria-labelledby="home-tab"
+                >
+                  <div class="d-none">{useIx}</div>
+                  <Element canvas id={`Tab${useIx}`} is={Column}>
+                    {contents[useIx]}
+                  </Element>
+                </div>
+              );
           })}
         </div>
       </Fragment>
