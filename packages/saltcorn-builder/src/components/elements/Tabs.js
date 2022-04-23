@@ -184,7 +184,6 @@ const TabsSettings = () => {
         })
         .then(function (data) {
           if (data.success) {
-            console.log("data", data.success);
             const len = data.success.length;
 
             setProp((prop) => (prop.ntabs = len));

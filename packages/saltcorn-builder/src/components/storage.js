@@ -427,7 +427,6 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       };
     }
     if (node.displayName === Tabs.craft.displayName) {
-      console.log("save titles", node.props.titles);
       let contents;
       if (node.props.tabsStyle === "Value switch") {
         contents = node.props.titles.map(({ value }, ix) => {
