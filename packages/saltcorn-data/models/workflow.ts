@@ -14,6 +14,7 @@ import type {
 import db from "../db";
 
 import type Field from "./field";
+import Form from "./form";
 
 const { getState } = require("../db/state");
 const { applyAsync, apply } = require("../utils");
@@ -38,7 +39,48 @@ class Workflow implements AbstractWorkflow {
     this.action = o.action;
     this.__ = (s: any) => s;
   }
+  async singleStepForm(body?: any, req?: any): Promise<RunResult | undefined> {
+    if (req) this.__ = (s: any) => req.__(s);
+    if (!body || !body.stepName) {
+      return this.runStep(body || {}, 0);
+    }
+    const { stepName, contextEnc, ...stepBody } = body;
 
+    const context = JSON.parse(decodeURIComponent(contextEnc));
+    const stepIx = this.steps.findIndex((step) => step.name === stepName);
+    if (stepIx === -1) {
+      //error
+    }
+    const step = this.steps[stepIx];
+    if (step.form) {
+      const form = await applyAsync(step.form, context);
+
+      const valres = form.validate(stepBody);
+      if (valres.errors) {
+        form.hidden("stepName", "contextEnc");
+        form.values.stepName = step.name;
+        form.values.contextEnc = contextEnc;
+
+        if (this.action) form.action = this.action;
+        if (!form.submitLabel)
+          form.submitLabel =
+            stepIx === this.steps.length - 1
+              ? this.__("Finish") + " &raquo;"
+              : this.__("Next") + " &raquo;";
+
+        addApplyButtonToForm(form, this, context);
+      }
+      return {
+        renderForm: form,
+        context,
+        stepName: step.name,
+        currentStep: stepIx + 1,
+        maxSteps: this.steps.length,
+        title: this.title(step, stepIx),
+        contextField: step.contextField
+      };
+    }
+  }
   /**
    * @param {object} body
    * @param {object} req
@@ -70,8 +112,10 @@ class Workflow implements AbstractWorkflow {
         if (!form.submitLabel)
           form.submitLabel =
             stepIx === this.steps.length - 1
-              ? this.__("Save")
+              ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
+
+        addApplyButtonToForm(form, this, context);
 
         return {
           renderForm: form,
@@ -158,8 +202,10 @@ class Workflow implements AbstractWorkflow {
       if (!form.submitLabel)
         form.submitLabel =
           stepIx === this.steps.length - 1
-            ? this.__("Save")
+            ? this.__("Finish") + " &raquo;"
             : this.__("Next") + " &raquo;";
+
+      addApplyButtonToForm(form, this, context);
       return {
         renderForm: form,
         context,
@@ -204,6 +250,24 @@ class Workflow implements AbstractWorkflow {
   }
 }
 
+function addApplyButtonToForm(
+  form: Form,
+  that: AbstractWorkflow,
+  context: any
+) {
+  if (context.viewname) {
+    //TODO what if plugin has viewname as param
+    form.additionalButtons = [
+      ...(form.additionalButtons || []),
+      {
+        label: that.__("Save"),
+        id: "btnsavewf",
+        class: "btn btn-outline-primary",
+        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}')`,
+      },
+    ];
+  }
+}
 namespace Workflow {
   export type WorkflowCfg = {
     steps?: any[];

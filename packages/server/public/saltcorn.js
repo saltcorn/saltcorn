@@ -618,6 +618,47 @@ function saveAndContinue(e, k) {
   return false;
 }
 
+function applyViewConfig(e, url) {
+  var form = $(e).closest("form");
+  var form_data = form.serializeArray();
+  const cfg = {};
+  form_data.forEach((item) => {
+    cfg[item.name] = item.value;
+  });
+  $.ajax(url, {
+    type: "POST",
+    dataType: "json",
+    contentType: "application/json",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: JSON.stringify(cfg),
+    error: function (request) {},
+  });
+
+  return false;
+}
+
+const repeaterCopyValuesToForm = (form, editor) => {
+  const vs = JSON.parse(editor.getString());
+  //console.log(vs)
+  const setVal = (k, ix, v) => {
+    const $e = form.find(`input[name="${k}_${ix}"]`);
+    if ($e.length) $e.val(v);
+    else
+      form.append(
+        `<input type="hidden" name="${k}_${ix}" value="${v}"></input>`
+      );
+  };
+  vs.forEach((v, ix) => {
+    Object.entries(v).forEach(([k, v]) => {
+      //console.log(ix, k, typeof v, v)
+      if (typeof v === "boolean") setVal(k, ix, v ? "on" : "");
+      else setVal(k, ix, v);
+    });
+  });
+};
+
 function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
   var url = form.attr("action");
@@ -834,7 +875,7 @@ const columnSummary = (col) => {
   if (!col) return "Unknown";
   switch (col.type) {
     case "Field":
-      return `Field ${col.field_name} ${col.fieldview}`;
+      return `Field ${col.field_name} ${col.fieldview || ""}`;
     case "Link":
       return `Link ${col.link_text}`;
     case "JoinField":

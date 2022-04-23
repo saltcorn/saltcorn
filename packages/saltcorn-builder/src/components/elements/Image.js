@@ -71,6 +71,7 @@ const ImageSettings = () => {
     block: node.data.props.block,
     style: node.data.props.style,
     isFormula: node.data.props.isFormula,
+    imgResponsiveWidths: node.data.props.imgResponsiveWidths,
   }));
   const {
     actions: { setProp },
@@ -82,6 +83,7 @@ const ImageSettings = () => {
     block,
     isFormula,
     filepath,
+    imgResponsiveWidths,
     style,
   } = node;
   const options = useContext(optionsCtx);
@@ -254,6 +256,27 @@ const ImageSettings = () => {
           )}
           {srctype !== "Upload" && (
             <tr>
+              <td>
+                <label>Responsive widths</label>
+              </td>
+
+              <td>
+                <input
+                  type="text"
+                  value={imgResponsiveWidths}
+                  className="form-control"
+                  onChange={setAProp("imgResponsiveWidths")}
+                />
+                <small>
+                  <i>
+                    List of widths to serve resized images, e.g. 300, 400, 600
+                  </i>
+                </small>
+              </td>
+            </tr>
+          )}
+          {srctype !== "Upload" && (
+            <tr>
               <td colSpan="2">
                 <BlockSetting block={block} setProp={setProp} />
               </td>
@@ -290,6 +313,7 @@ Image.craft = {
       { name: "fileid", default: 0 },
       "field",
       "block",
+      "imgResponsiveWidths",
       { name: "style", default: {} },
     ],
   },
