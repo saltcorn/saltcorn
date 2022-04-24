@@ -106,3 +106,4 @@ dist
 plugin_packages/
 sessions.sqlite
 
+bundle/

@@ -21,9 +21,10 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, isNode, isWeb } = require("../../utils");
 const { getState } = require("../../db/state");
 const { jsexprToWhere } = require("../../models/expression");
+
 /**
  * @param {object} req
  * @returns {Workflow}
@@ -294,15 +295,17 @@ const run = async (
     ...cols
   },
   state,
-  extraArgs
+  extraArgs,
+  { countRowsQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   readState(state, fields);
   const appState = getState();
   const locale = extraArgs.req.getLocale();
-  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
-
+  const __ = isNode()
+    ? (s) => appState.i18n.__({ phrase: s, locale }) || s
+    : (s) => s;
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     throw new InvalidConfiguration(
@@ -325,11 +328,7 @@ const run = async (
   });
   let paginate = "";
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
-    const fields = await table.getFields();
-
-    const where = await stateFieldsToWhere({ fields, state });
-
-    const nrows = await table.countRows(where);
+    const nrows = await countRowsQuery(state);
     if (nrows > qextra.limit || current_page > 1) {
       paginate = pagination({
         current_page,
@@ -366,10 +365,14 @@ const run = async (
         );
       create_link = await create_view.run(state, extraArgs);
     } else {
+      const target = `/view/${encodeURIComponent(
+        view_to_create
+      )}${stateToQueryString(state)}`;
+      const hrefVal = isWeb(extraArgs.req)
+        ? target
+        : `javascript:execLink('${target}');`;
       create_link = link_view(
-        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
-          state
-        )}`,
+        hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup",
         create_view_display === "Popup" && "btn btn-secondary",
@@ -442,4 +445,17 @@ module.exports = {
     if (create_view_label) return [create_view_label];
     else return [];
   },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async countRowsQuery(state) {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const where = await stateFieldsToWhere({ fields, state });
+      return await table.countRows(where);
+    },
+  }),
 };

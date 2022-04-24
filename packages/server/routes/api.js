@@ -20,6 +20,7 @@ const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
 const Trigger = require("@saltcorn/data/models/trigger");
 //const load_plugins = require("../load_plugins");
@@ -110,6 +111,40 @@ function accessAllowed(req, user, trigger) {
 
   return role <= trigger.min_role;
 }
+
+router.post(
+  "/viewQuery/:viewName/:queryName",
+  error_catcher(async (req, res, next) => {
+    let { viewName, queryName } = req.params;
+    const view = await View.findOne({ name: viewName });
+    if (!view) {
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    await passport.authenticate(
+      "jwt",
+      { session: false },
+      async function (err, user, info) {
+        const role = user && user.id ? user.role_id : 10;
+        if (
+          role <= view.min_role ||
+          (await view.authorise_get({ req, ...view })) // TODO set query to state
+        ) {
+          const queries = view.queries(false, req);
+          if (queries[queryName]) {
+            const { args } = req.body;
+            const resp = await queries[queryName](...args, true);
+            res.json({ success: resp });
+          } else {
+            res.status(404).json({ error: req.__("Not found") });
+          }
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
 
 router.get(
   "/:tableName/distinct/:fieldName",

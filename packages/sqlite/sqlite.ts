@@ -21,6 +21,13 @@ import type {
   Row,
 } from "@saltcorn/db-common/internal";
 
+import {
+  buildInsertSql,
+  mkVal,
+  doCount,
+  doDeleteWhere,
+} from "@saltcorn/db-common/sqlite-commons";
+
 let sqliteDatabase: Database | null = null;
 let connectObj: any = null;
 let current_filepath: string;
@@ -150,24 +157,29 @@ export const select = async (
   return tq.rows;
 };
 
-// TODO Utility function - needs ti be moved out this module
-/**
- * @param {any} v
- * @returns {boolean}
- * @function
- */
-export const reprAsJson = (v: any): boolean =>
-  typeof v === "object" && v !== null && !(v instanceof Date);
+export const listTables = async () => {
+  const sql = "SELECT * FROM sqlite_master where type='table'";
+  const tq = await query(sql);
+  return tq.rows;
+};
 
-/**
- * @param {object[]} opts
- * @param {*} opts.k
- * @param {any} opts.v
- * @returns {string|any}
- * @function
- */
-export const mkVal = ([k, v]: [string, any]): Value =>
-  reprAsJson(v) ? JSON.stringify(v) : v;
+export const listUserDefinedTables = async () => {
+  return (await listTables()).filter(
+    ({ name }: { name: string }) => !name.startsWith("_sc_") && name !== "users"
+  );
+};
+
+export const dropTable = async (name: string) => {
+  await query(`DROP TABLE ${name}`);
+};
+
+export const dropTables = async (tables: string[]) => {
+  for (const table of tables) {
+    await dropTable(table);
+  }
+};
+
+// TODO Utility function - needs ti be moved out this module
 
 /**
  * Drop unique constraint
@@ -201,10 +213,7 @@ export const deleteWhere = async (
   tbl: string,
   whereObj: Where
 ): Promise<void> => {
-  const { where, values } = mkWhere(whereObj, true);
-  const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
-
-  const tq = await query(sql, values);
+  await doDeleteWhere(tbl, whereObj, query);
 };
 
 /**
@@ -220,27 +229,7 @@ export const insert = async (
   obj: Row,
   opts: { noid?: boolean; ignoreExisting?: boolean } = {}
 ): Promise<string | void> => {
-  const kvs = Object.entries(obj);
-  const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
-  const valPosList = kvs
-    .map(([k, v], ix: any) =>
-      v && v.next_version_by_id
-        ? `coalesce((select max(_version) from "${sqlsanitize(
-            tbl
-          )}" where id=${+v.next_version_by_id}), 0)+1`
-        : reprAsJson(v)
-        ? "json(?)"
-        : "?"
-    )
-    .join();
-  const valList = kvs
-    .filter(([k, v]: [any, any]) => !(v && v.next_version_by_id))
-    .map(mkVal);
-  const ignoreExisting = opts.ignoreExisting ? "or ignore" : "";
-  const sql = `insert ${ignoreExisting} into "${sqlsanitize(
-    tbl
-  )}"(${fnameList}) values(${valPosList})`;
-
+  const { sql, valList } = buildInsertSql(tbl, obj, opts);
   await query(sql, valList);
   if (opts.noid) return;
   // TBD Support of primary key column different from id
@@ -288,10 +277,7 @@ export const selectMaybeOne = async (
  * @function
  */
 export const count = async (tbl: string, whereObj: Where) => {
-  const { where, values } = mkWhere(whereObj, true);
-  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
-  const tq = await query(sql, values);
-  return parseInt(tq.rows[0]["COUNT(*)"]);
+  return await doCount(tbl, whereObj, query);
 };
 
 /**

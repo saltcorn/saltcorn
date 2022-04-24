@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "chaos-guinea-pig": "^0.1.0",
-    "jest": "26.6.3",
+    "jest": "^27.1.0",
     "supertest": "^4.0.2"
   },
   "scripts": {

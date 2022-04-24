@@ -2,7 +2,6 @@
  * @category saltcorn-data
  * @module utils
  */
-const v8 = require("v8");
 import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
@@ -54,7 +53,8 @@ const applyAsync = async (f: Function | any, x: any) => {
 };
 
 const structuredClone = (obj: any) => {
-  return deserialize(serialize(obj));
+  if (isNode()) return deserialize(serialize(obj));
+  else return JSON.parse(JSON.stringify(obj));
 };
 
 class InvalidAdminAction extends Error {
@@ -152,6 +152,16 @@ const isStale = (date: Date | string, hours: number = 24): boolean => {
   return new Date(date).valueOf() < now.valueOf() - oneday;
 };
 
+declare const window: any;
+
+const isNode = () => {
+  return typeof window === "undefined";
+};
+
+const isWeb = (req: any) => {
+  return isNode() && !req.smr;
+};
+
 export = {
   removeEmptyStrings,
   removeDefaultColor,
@@ -171,4 +181,6 @@ export = {
   sleep,
   mergeIntoWhere,
   isStale,
+  isNode,
+  isWeb,
 };

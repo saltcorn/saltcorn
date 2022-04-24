@@ -212,7 +212,8 @@ const run = async (
     participant_maxread_field,
   },
   state,
-  { req, res }
+  { req, res },
+  { getRowQuery, updateQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -233,18 +234,16 @@ const run = async (
     );
 
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  const [
-    part_table_name,
-    part_key_to_room,
-    part_user_field,
-  ] = participant_field.split(".");
+  const [part_table_name, part_key_to_room, part_user_field] =
+    participant_field.split(".");
 
   // check we participate
-  const parttable = Table.findOne({ name: part_table_name });
-  const partRow = await parttable.getRow({
-    [part_user_field]: req.user ? req.user.id : 0,
-    [part_key_to_room]: +state.id,
-  });
+  const partRow = await getRowQuery(
+    state.id,
+    part_table_name,
+    part_user_field,
+    part_key_to_room
+  );
   if (!partRow) return "You are not a participant in this room";
 
   const v = await View.findOne({ name: msgview });
@@ -266,19 +265,18 @@ const run = async (
     vresps.map((r) => r.row.id)
   );
   if (participant_maxread_field) {
-    const [
-      part_table_name1,
-      part_key_to_room1,
-      part_maxread_field,
-    ] = participant_maxread_field.split(".");
+    const [part_table_name1, part_key_to_room1, part_maxread_field] =
+      participant_maxread_field.split(".");
     const max_read_id = Math.max.apply(
       Math,
       vresps.map((r) => r.row.id)
     );
     if (vresps.length > 0)
-      await parttable.updateRow(
-        { [part_maxread_field]: max_read_id },
-        partRow.id
+      await updateQuery(
+        partRow,
+        part_table_name,
+        max_read_id,
+        part_maxread_field
       );
   }
   const form = await getForm(msgtable, viewname, columns, layout, null, req);
@@ -323,7 +321,8 @@ const ack_read = async (
   viewname,
   { participant_field, participant_maxread_field },
   body,
-  { req, res }
+  { req, res },
+  { ackReadQuery }
 ) => {
   if (!participant_maxread_field)
     return {
@@ -332,38 +331,7 @@ const ack_read = async (
       },
     };
 
-  const [
-    part_table_name,
-    part_key_to_room,
-    part_user_field,
-  ] = participant_field.split(".");
-  const [
-    part_table_name1,
-    part_key_to_room1,
-    part_maxread_field,
-  ] = participant_maxread_field.split(".");
-
-  const parttable = Table.findOne({ name: part_table_name });
-  // check we participate
-
-  const partRow = await parttable.getRow({
-    [part_user_field]: req.user ? req.user.id : 0,
-    [part_key_to_room]: +body.room_id,
-  });
-
-  if (!partRow)
-    return {
-      json: {
-        error: "Not participating",
-      },
-    };
-
-  await parttable.updateRow({ [part_maxread_field]: body.id }, partRow.id);
-  return {
-    json: {
-      success: "ok",
-    },
-  };
+  return await ackReadQuery(participant_field, participant_maxread_field, body);
 };
 
 /**
@@ -394,22 +362,10 @@ const fetch_older_msg = async (
     participant_maxread_field,
   },
   body,
-  { req, res }
+  { req, res },
+  { fetchOlderMsgQuery }
 ) => {
-  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  const [
-    part_table_name,
-    part_key_to_room,
-    part_user_field,
-  ] = participant_field.split(".");
-  const parttable = Table.findOne({ name: part_table_name });
-  // check we participate
-
-  const partRow = await parttable.getRow({
-    [part_user_field]: req.user ? req.user.id : 0,
-    [part_key_to_room]: +body.room_id,
-  });
-
+  const partRow = await fetchOlderMsgQuery();
   if (!partRow)
     return {
       json: {
@@ -417,6 +373,7 @@ const fetch_older_msg = async (
       },
     };
 
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const v = await View.findOne({ name: msgview });
   const vresps = await v.runMany(
     { [msgkey_to_room]: +body.room_id },
@@ -474,57 +431,18 @@ const submit_msg_ajax = async (
     participant_maxread_field,
   },
   body,
-  { req, res }
+  { req, res },
+  { submitAjaxQuery }
 ) => {
-  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  const [
-    part_table_name,
-    part_key_to_room,
-    part_user_field,
-  ] = participant_field.split(".");
-  const parttable = Table.findOne({ name: part_table_name });
-  // check we participate
-
-  const partRow = await parttable.getRow({
-    [part_user_field]: req.user ? req.user.id : 0,
-    [part_key_to_room]: +body.room_id,
-  });
-
-  if (!partRow)
-    return {
-      json: {
-        error: "Not participating",
-      },
-    };
-
-  const formview = await View.findOne({ name: msgform });
-  if (!formview)
-    throw new InvalidConfiguration("Message form view does not exist");
-  const { columns, layout, fixed } = formview.configuration;
-  const msgtable = Table.findOne({ name: msgtable_name });
-
-  const form = await getForm(msgtable, viewname, columns, layout, null, req);
-  form.validate(req.body);
-  if (!form.hasErrors) {
-    const use_fixed = await fill_presets(msgtable, req, fixed);
-    const row = {
-      ...form.values,
-      ...use_fixed,
-      [msgkey_to_room]: body.room_id,
-      [msgsender_field]: req.user.id,
-    };
-    const msgid = await msgtable.tryInsertRow(row, req.user.id);
-    if (participant_maxread_field) {
-      const [
-        part_table_name1,
-        part_key_to_room1,
-        part_maxread_field,
-      ] = participant_maxread_field.split(".");
-      await parttable.updateRow(
-        { [part_maxread_field]: msgid.success },
-        partRow.id
-      );
-    }
+  const queryResult = await submitAjaxQuery(
+    msg_relation,
+    participant_field,
+    body,
+    msgform,
+    msgsender_field,
+    participant_maxread_field
+  );
+  if (!queryResult.json.error) {
     const v = await View.findOne({ name: msgview });
     const myhtml = await v.run({ id: msgid.success }, { req, res });
     const newreq = { ...req, user: { ...req.user, id: 0 } };
@@ -542,11 +460,7 @@ const submit_msg_ajax = async (
       },
     };
   } else {
-    return {
-      json: {
-        error: form.errors,
-      },
-    };
+    return queryResult;
   }
 };
 
@@ -624,12 +538,10 @@ module.exports = {
    * @returns {Promise<object>}
    */
   authorize_join: async ({ participant_field }, room_id, user) => {
+    // TODO ch authorize_join query
     if (!user) return false;
-    const [
-      part_table_name,
-      part_key_to_room,
-      part_user_field,
-    ] = participant_field.split(".");
+    const [part_table_name, part_key_to_room, part_user_field] =
+      participant_field.split(".");
 
     // TODO check we participate
     const parttable = Table.findOne({ name: part_table_name });
@@ -644,6 +556,137 @@ module.exports = {
   getStringsForI18n() {
     return [];
   },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async getRowQuery(
+      state_id,
+      part_table_name,
+      part_user_field,
+      part_key_to_room
+    ) {
+      const parttable = Table.findOne({ name: part_table_name });
+      return await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +state_id,
+      });
+    },
+    async updateQuery(
+      partRow,
+      part_table_name,
+      max_read_id,
+      part_maxread_field
+    ) {
+      const parttable = Table.findOne({ name: part_table_name });
+      await parttable.updateRow(
+        { [part_maxread_field]: max_read_id },
+        partRow.id
+      );
+    },
+    async submitAjaxQuery(msg_relation, participant_field, body, msgform) {
+      const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const parttable = Table.findOne({ name: part_table_name });
+      // check we participate
+
+      const partRow = await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +body.room_id,
+      });
+
+      if (!partRow)
+        return {
+          json: {
+            error: "Not participating",
+          },
+        };
+
+      const formview = await View.findOne({ name: msgform });
+      if (!formview)
+        throw new InvalidConfiguration("Message form view does not exist");
+      const { columns, layout, fixed } = formview.configuration;
+      const msgtable = Table.findOne({ name: msgtable_name });
+
+      const form = await getForm(
+        msgtable,
+        viewname,
+        columns,
+        layout,
+        null,
+        req
+      );
+      form.validate(req.body);
+      if (!form.hasErrors) {
+        const use_fixed = await fill_presets(msgtable, req, fixed);
+        const row = {
+          ...form.values,
+          ...use_fixed,
+          [msgkey_to_room]: body.room_id,
+          [msgsender_field]: req.user.id,
+        };
+        const msgid = await msgtable.tryInsertRow(row, req.user.id);
+        if (participant_maxread_field) {
+          const [part_table_name1, part_key_to_room1, part_maxread_field] =
+            participant_maxread_field.split(".");
+          await parttable.updateRow(
+            { [part_maxread_field]: msgid.success },
+            partRow.id
+          );
+        }
+        return {
+          json: {},
+        };
+      } else {
+        return {
+          json: {
+            error: form.errors,
+          },
+        };
+      }
+    },
+    async ackReadQuery(participant_field, participant_maxread_field, body) {
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const [part_table_name1, part_key_to_room1, part_maxread_field] =
+        participant_maxread_field.split(".");
+
+      const parttable = Table.findOne({ name: part_table_name });
+      // check we participate
+
+      const partRow = await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +body.room_id,
+      });
+
+      if (!partRow)
+        return {
+          json: {
+            error: "Not participating",
+          },
+        };
+
+      await parttable.updateRow({ [part_maxread_field]: body.id }, partRow.id);
+      return {
+        json: {
+          success: "ok",
+        },
+      };
+    },
+    async fetchOlderMsgQuery(participant_field, body) {
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const parttable = Table.findOne({ name: part_table_name });
+      // check we participate
+      return await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +body.room_id,
+      });
+    },
+  }),
 };
 /*todo:
 

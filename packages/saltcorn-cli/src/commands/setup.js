@@ -14,12 +14,13 @@ const { is } = require("contractis");
 const path = require("path");
 const fs = require("fs");
 const inquirer = require("inquirer");
-var tcpPortUsed = require("tcp-port-used");
+const tcpPortUsed = require("tcp-port-used");
 const { spawnSync } = require("child_process");
-var sudo = require("sudo");
+const sudo = require("sudo");
+const crypto = require("crypto");
 
 /**
- * 
+ *
  * @returns {string}
  */
 const gen_password = () => {
@@ -28,8 +29,12 @@ const gen_password = () => {
   else return gen_password();
 };
 
+const genJwtSecret = () => {
+  return crypto.randomBytes(64).toString("hex");
+};
+
 /**
- * 
+ *
  * @returns {Promise<object>}
  */
 const askDevServer = async () => {
@@ -58,8 +63,8 @@ const askDevServer = async () => {
 };
 
 /**
- * 
- * @param {*} mod 
+ *
+ * @param {*} mod
  */
 const unloadModule = (mod) => {
   var name = require.resolve(mod);
@@ -73,7 +78,12 @@ const setupDevMode = async () => {
   const dbPath = path.join(defaultDataPath, "scdb.sqlite");
   fs.promises.mkdir(defaultDataPath, { recursive: true });
   const session_secret = gen_password();
-  await write_connection_config({ sqlite_path: dbPath, session_secret });
+  const jwt_secret = genJwtSecret();
+  await write_connection_config({
+    sqlite_path: dbPath,
+    session_secret,
+    jwt_secret,
+  });
 
   if (!fs.existsSync(dbPath)) {
     unloadModule("@saltcorn/data/db");
@@ -115,8 +125,8 @@ const check_db = async () => {
 };
 
 /**
- * 
- * @param {*} args 
+ *
+ * @param {*} args
  * @returns {Promise<void>}
  */
 const asyncSudo = (args) => {
@@ -136,8 +146,8 @@ const asyncSudo = (args) => {
 };
 
 /**
- * 
- * @param {*} args 
+ *
+ * @param {*} args
  * @returns {Promise<void>}
  */
 const asyncSudoPostgres = (args) => {
@@ -145,8 +155,8 @@ const asyncSudoPostgres = (args) => {
 };
 
 /**
- * 
- * @param {string} for_who 
+ *
+ * @param {string} for_who
  * @returns {Promise<string>}
  */
 const get_password = async (for_who) => {
@@ -204,6 +214,7 @@ const install_db = async () => {
     `ALTER SCHEMA public OWNER TO ${user};`,
   ]);
   const session_secret = await get_password("session secret");
+  const jwt_secret = genJwtSecret();
   await write_connection_config({
     host: "localhost",
     port: 5432,
@@ -211,12 +222,13 @@ const install_db = async () => {
     user,
     password: scpass,
     session_secret,
+    jwt_secret,
     multi_tenant: false,
   });
 };
 
 /**
- * 
+ *
  * @returns {Promise<object>}
  */
 const prompt_connection = async () => {
@@ -236,6 +248,7 @@ const prompt_connection = async () => {
     required: true,
   });
   const session_secret = await get_password("session secret");
+  const jwt_secret = genJwtSecret();
   return {
     host: host || "localhost",
     port: port || 5432,
@@ -243,6 +256,7 @@ const prompt_connection = async () => {
     user: user || "saltcorn",
     password: password,
     session_secret,
+    jwt_secret,
     multi_tenant: false,
   };
 };
@@ -256,8 +270,8 @@ const setup_connection_config = async () => {
 };
 
 /**
- * 
- * @param {object} connobj 
+ *
+ * @param {object} connobj
  * @returns {Promise<void>}
  */
 const write_connection_config = async (connobj) => {
@@ -290,9 +304,9 @@ const setup_connection = async () => {
 };
 
 /**
- * 
- * @param {object} db 
- * @param {string} tblname 
+ *
+ * @param {object} db
+ * @param {string} tblname
  * @returns {Promise<boolean>}
  */
 const table_exists = async (db, tblname) => {

@@ -51,10 +51,8 @@ const configuration_workflow = () =>
             context.table_id || context.exttable_name
           );
           const fields = await table.getFields();
-          const {
-            child_field_list,
-            child_relations,
-          } = await table.get_child_relations();
+          const { child_field_list, child_relations } =
+            await table.get_child_relations();
           const roles = await User.get_roles();
           for (const cr of child_relations) {
             const cfields = await cr.table.getFields();
@@ -126,7 +124,14 @@ const initial_config = async () => ({ layout: {}, columns: [] });
  * @param {object} extra
  * @returns {Promise<Layout>}
  */
-const run = async (table_id, viewname, { columns, layout }, state, extra) => {
+const run = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  state,
+  extra,
+  { distinctValuesQuery }
+) => {
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
@@ -134,47 +139,7 @@ const run = async (table_id, viewname, { columns, layout }, state, extra) => {
   const fields = await table.getFields();
   readState(state, fields);
 
-  const role = extra.req.user ? extra.req.user.role_id : 10;
-  const distinct_values = {};
-  for (const col of columns) {
-    if (col.type === "DropDownFilter") {
-      const field = fields.find((f) => f.name === col.field_name);
-      if (table.external) {
-        distinct_values[col.field_name] = (
-          await table.distinctValues(col.field_name)
-        ).map((x) => ({ label: x, value: x }));
-      } else if (field)
-        distinct_values[col.field_name] = await field.distinct_values(
-          extra.req,
-          jsexprToWhere(col.where)
-        );
-      else if (col.field_name.includes(".")) {
-        const kpath = col.field_name.split(".");
-        if (kpath.length === 3) {
-          const [jtNm, jFieldNm, lblField] = kpath;
-          const jtable = await Table.findOne({ name: jtNm });
-          if (!jtable)
-            throw new InvalidConfiguration(
-              `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
-            );
-          const jfields = await jtable.getFields();
-          const jfield = jfields.find((f) => f.name === lblField);
-          if (jfield)
-            distinct_values[col.field_name] = await jfield.distinct_values(
-              extra.req,
-              jsexprToWhere(col.where)
-            );
-        }
-      }
-      const dvs = distinct_values[col.field_name];
-      if (dvs && dvs[0]) {
-        if (dvs[0].value !== "") {
-          dvs.unshift({ label: "", value: "" });
-        }
-      }
-    }
-  }
-
+  const { distinct_values, role } = await distinctValuesQuery();
   const badges = [];
   Object.entries(state).forEach(([k, v]) => {
     if (typeof v === "undefined") return;
@@ -375,4 +340,56 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async distinctValuesQuery() {
+      const table = await Table.findOne(table_id);
+      const fields = await table.getFields();
+      let distinct_values = {};
+      const role = req.user ? req.user.role_id : 10;
+      for (const col of columns) {
+        if (col.type === "DropDownFilter") {
+          const field = fields.find((f) => f.name === col.field_name);
+          if (table.external) {
+            distinct_values[col.field_name] = (
+              await table.distinctValues(col.field_name)
+            ).map((x) => ({ label: x, value: x }));
+          } else if (field)
+            distinct_values[col.field_name] = await field.distinct_values(
+              req,
+              jsexprToWhere(col.where)
+            );
+          else if (col.field_name.includes(".")) {
+            const kpath = col.field_name.split(".");
+            if (kpath.length === 3) {
+              const [jtNm, jFieldNm, lblField] = kpath;
+              const jtable = await Table.findOne({ name: jtNm });
+              if (!jtable)
+                throw new InvalidConfiguration(
+                  `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
+                );
+              const jfields = await jtable.getFields();
+              const jfield = jfields.find((f) => f.name === lblField);
+              if (jfield)
+                distinct_values[col.field_name] = await jfield.distinct_values(
+                  req,
+                  jsexprToWhere(col.where)
+                );
+            }
+          }
+          const dvs = distinct_values[col.field_name];
+          if (dvs && dvs[0]) {
+            if (dvs[0].value !== "") {
+              dvs.unshift({ label: "", value: "" });
+            }
+          }
+        }
+      }
+      return { distinct_values, role };
+    },
+  }),
 };
