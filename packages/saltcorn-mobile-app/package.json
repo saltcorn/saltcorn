@@ -1,0 +1,30 @@
+{
+  "name": "@saltcorn/mobile-app",
+  "displayName": "Saltcorn mobile app",
+  "version": "0.7.2-beta.0",
+  "description": "Apache Cordova application with @saltcorn/markup",
+  "main": "index.js",
+  "scripts": {
+    "add-platform": "cordova platform add",
+    "build-app": "cordova build"
+  },
+  "author": "Christian Hugo",
+  "license": "MIT",
+  "cordova": {
+    "platforms": [
+      "android"
+    ],
+    "plugins": {
+      "cordova-sqlite-ext": {},
+      "cordova-plugin-file": {}
+    }
+  },
+  "dependencies": {
+    "cordova": "^11.0.0",
+    "cordova-sqlite-ext": "^6.0.0"
+  },
+  "devDependencies": {
+    "cordova-android": "^10.1.1",
+    "cordova-plugin-file": "^6.0.2"
+  }
+}

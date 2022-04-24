@@ -46,7 +46,7 @@ const {
   translateLayout,
   traverseSync,
 } = require("../../models/layout");
-const { asyncMap } = require("../../utils");
+const { asyncMap, isWeb } = require("../../utils");
 
 /**
  * @param {object} req
@@ -350,30 +350,12 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  { columns, layout, auto_save, destination_type },
+  {},
   state,
-  { res, req }
+  { res, req },
+  { editQuery }
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
-  const { uniques, nonUniques } = splitUniques(fields, state);
-  let row = null;
-  if (Object.keys(uniques).length > 0) {
-    row = await table.getRow(uniques);
-  }
-  return await render({
-    table,
-    fields,
-    viewname,
-    columns,
-    layout,
-    row,
-    req,
-    res,
-    state,
-    auto_save,
-    destination_type,
-  });
+  return await editQuery(state);
 };
 
 /**
@@ -391,24 +373,10 @@ const runMany = async (
   viewname,
   { columns, layout, auto_save },
   state,
-  extra
+  extra,
+  { editManyQuery }
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
-  const qstate = await stateFieldsToWhere({ fields, state });
-  const q = await stateFieldsToQuery({ state, fields });
-
-  const rows = await table.getJoinedRows({
-    where: qstate,
-    joinFields,
-    aggregations,
-    ...(extra && extra.limit && { limit: extra.limit }),
-    ...(extra && extra.offset && { offset: extra.offset }),
-    ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
-    ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
-    ...q,
-  });
+  const { table, fields, rows } = editManyQuery();
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -530,6 +498,7 @@ const transformForm = async ({ form, table, req, row, res }) => {
     },
   });
   translateLayout(form.layout, req.getLocale());
+
   if (req.xhr) form.xhrSubmit = true;
   setDateLocales(form, req.getLocale());
 };
@@ -559,8 +528,17 @@ const render = async ({
   res,
   auto_save,
   destination_type,
+  isRemote,
 }) => {
-  const form = await getForm(table, viewname, columns, layout, state.id, req);
+  const form = await getForm(
+    table,
+    viewname,
+    columns,
+    layout,
+    state.id,
+    req,
+    isRemote
+  );
 
   if (auto_save) form.onChange = `saveAndContinue(this)`;
   if (row) {
@@ -574,6 +552,7 @@ const render = async ({
     }
     form.hidden(table.pk_name);
   }
+
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
     form.values._referer = req.headers?.referer;
@@ -591,10 +570,8 @@ const render = async ({
     }
   });
   await form.fill_fkey_options();
-
   await transformForm({ form, table, req, row, res });
-
-  return renderForm(form, req.csrfToken());
+  return renderForm(form, !isRemote ? req.csrfToken() : false);
 };
 
 /**
@@ -628,7 +605,8 @@ const runPost = async (
   },
   state,
   body,
-  { res, req, redirect }
+  { res, req, redirect },
+  { tryInsertQuery, tryUpdateQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -655,9 +633,12 @@ const runPost = async (
   if (form.hasErrors) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options();
-    res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+    res.sendWrap(
+      viewname,
+      renderForm(form, req.csrfToken ? req.csrfToken() : false)
+    );
   } else {
-    let row;
+    let row; // TODO ch  move whole block to query?
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
@@ -686,24 +667,20 @@ const runPost = async (
     }
     const originalID = id;
     if (typeof id === "undefined") {
-      const ins_res = await table.tryInsertRow(
-        row,
-        req.user ? +req.user.id : undefined
-      );
+      const ins_res = await tryInsertQuery(row);
       if (ins_res.success) {
         id = ins_res.success;
         row[pk.name] = id;
       } else {
         req.flash("error", text_attr(ins_res.error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        res.sendWrap(
+          viewname,
+          renderForm(form, req.csrfToken ? req.csrfToken() : false)
+        );
         return;
       }
     } else {
-      const upd_res = await table.tryUpdateRow(
-        row,
-        id,
-        req.user ? +req.user.id : undefined
-      );
+      const upd_res = await tryUpdateQuery(row, id);
       if (upd_res.error) {
         req.flash("error", text_attr(upd_res.error));
         res.sendWrap(viewname, renderForm(form, req.csrfToken()));
@@ -716,10 +693,9 @@ const runPost = async (
       for (const childRow of form.values[field.name]) {
         childRow[field.metadata?.relation] = id;
         if (childRow[childTable.pk_name]) {
-          const upd_res = await childTable.tryUpdateRow(
+          const upd_res = await childTable.tryUpdateQuery(
             childRow,
-            childRow[childTable.pk_name],
-            req.user ? +req.user.id : undefined
+            childRow[childTable.pk_name]
           );
           if (upd_res.error) {
             req.flash("error", text_attr(upd_res.error));
@@ -739,8 +715,8 @@ const runPost = async (
         }
       }
     }
-    if (req.xhr && !originalID) {
-      res.json({ id });
+    if (req.xhr && !originalID && !req.smr) {
+      res.json({ id, view_when_done });
       return;
     }
     if (redirect) {
@@ -768,7 +744,6 @@ const runPost = async (
     }
     const [viewname_when_done, relation] = use_view_when_done.split(".");
     const nxview = await View.findOne({ name: viewname_when_done });
-    //console.log()
     if (!nxview) {
       req.flash(
         "warning",
@@ -777,28 +752,28 @@ const runPost = async (
       res.redirect(`/`);
     } else {
       const state_fields = await nxview.get_state_fields();
+      let target = `/view/${text(viewname_when_done)}`;
+      let query = "";
       if (
         (nxview.table_id === table_id || relation) &&
         state_fields.some((sf) => sf.name === pk.name)
       ) {
         const get_query = get_view_link_query(fields);
-        const query = relation
+        query = relation
           ? `?${pk.name}=${text(row[relation])}`
           : get_query(row);
-        res.redirect(`/view/${text(viewname_when_done)}${query}`);
-      } else res.redirect(`/view/${text(viewname_when_done)}`);
+      }
+      const redirectPath = `${target}${query}`;
+      if (!isWeb(req)) {
+        res.json({ redirect: `get${redirectPath}` });
+      } else {
+        res.redirect(redirectPath);
+      }
     }
   }
 };
 
-/**
- * @param {object} opts
- * @param {object} opts.body
- * @param {string} opts.table_id
- * @param {object} opts.req
- * @returns {Promise<boolean>}
- */
-const authorise_post = async ({ body, table_id, req }) => {
+const doAuthPost = async ({ body, table_id, req }) => {
   const table = await Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
@@ -817,6 +792,20 @@ const authorise_post = async ({ body, table_id, req }) => {
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
+};
+
+/**
+ * @param {object} opts
+ * @param {object} opts.body
+ * @param {string} opts.table_id
+ * @param {object} opts.req
+ * @returns {Promise<boolean>}
+ */
+const authorise_post = async (
+  { body, table_id, req },
+  { authorizePostQuery }
+) => {
+  return await authorizePostQuery(body, table_id);
 };
 module.exports = {
   /** @type {string} */
@@ -838,20 +827,8 @@ module.exports = {
    * @param {...*} opts.rest
    * @returns {Promise<boolean>}
    */
-  authorise_get: async ({ query, table_id, req }) => {
-    let body = query || {};
-    if (Object.keys(body).length == 1) {
-      const table = await Table.findOne({ id: table_id });
-      if (table.ownership_field_id || table.ownership_formula) {
-        const fields = await table.getFields();
-        const { uniques } = splitUniques(fields, body);
-        if (Object.keys(uniques).length > 0) {
-          body = await table.getRow(uniques);
-          return table.is_owner(req.user, body);
-        }
-      }
-    }
-    return authorise_post({ body, table_id, req });
+  authorise_get: async ({ query, table_id, req }, { authorizeGetQuery }) => {
+    return await authorizeGetQuery(query, table_id);
   },
   /**
    * @param {object} opts
@@ -861,6 +838,108 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
+  queries: ({
+    table_id,
+    name,
+    configuration: {
+      columns,
+      default_state,
+      layout,
+      auto_save,
+      destination_type,
+    },
+    req,
+    res,
+  }) => ({
+    async editQuery(state) {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const { uniques } = splitUniques(fields, state);
+      let row = null;
+      if (Object.keys(uniques).length > 0) {
+        row = await table.getRow(uniques);
+      }
+      const isRemote = !isWeb(req);
+      return await render({
+        table,
+        fields,
+        viewname: name,
+        columns,
+        layout,
+        row,
+        req,
+        res,
+        state,
+        auto_save,
+        destination_type,
+        isRemote,
+      });
+    },
+
+    async editManyQuery(state) {
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
+      const { joinFields, aggregations } = picked_fields_to_query(
+        columns,
+        fields
+      );
+      const qstate = await stateFieldsToWhere({ fields, state });
+      const q = await stateFieldsToQuery({ state, fields });
+
+      const rows = await table.getJoinedRows({
+        where: qstate,
+        joinFields,
+        aggregations,
+        ...(extra && extra.limit && { limit: extra.limit }),
+        ...(extra && extra.offset && { offset: extra.offset }),
+        ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
+        ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
+        ...q,
+      });
+      return {
+        table,
+        fields,
+        rows,
+      };
+    },
+    async tryInsertQuery(row) {
+      const table = await Table.findOne({ id: table_id });
+      const ins_res = await table.tryInsertRow(
+        row,
+        req.user ? +req.user.id : undefined
+      );
+      return ins_res;
+    },
+
+    async tryUpdateQuery(row, id) {
+      const table = await Table.findOne({ id: table_id });
+      const upd_res = await table.tryUpdateRow(
+        row,
+        id,
+        req.user ? +req.user.id : undefined
+      );
+      return upd_res;
+    },
+
+    async authorizePostQuery(body, table_id /*overwrites*/) {
+      return await doAuthPost({ body, table_id, req });
+    },
+    async authorizeGetQuery(query, table_id) {
+      let body = query || {};
+      if (Object.keys(body).length == 1) {
+        const table = await Table.findOne({ id: table_id });
+        if (table.ownership_field_id || table.ownership_formula) {
+          const fields = await table.getFields();
+          const { uniques } = splitUniques(fields, body);
+          if (Object.keys(uniques).length > 0) {
+            body = await table.getRow(uniques);
+            return table.is_owner(req.user, body);
+          }
+        }
+      }
+      return doAuthPost({ body, table_id, req });
+    },
+  }),
   configCheck: async (view) => {
     const {
       name,

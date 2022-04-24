@@ -11,6 +11,9 @@
       "path": "./packages/sqlite/tsconfig.ref.json"
     },
     {
+      "path": "./packages/sqlite-mobile/tsconfig.ref.json"
+    },
+    {
       "path": "./packages/saltcorn-markup/tsconfig.ref.json"
     },
     {
@@ -18,6 +21,9 @@
     },
     {
       "path": "./packages/saltcorn-admin-models/tsconfig.ref.json"
+    },
+    {
+      "path": "./packages/saltcorn-mobile-builder/tsconfig.ref.json"
     }
   ]
 }

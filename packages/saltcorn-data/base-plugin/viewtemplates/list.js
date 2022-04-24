@@ -40,7 +40,7 @@ const {
 } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, isWeb } = require("../../utils");
 const { check_view_columns } = require("../../plugin-testing");
 
 /**
@@ -416,7 +416,8 @@ const run = async (
     create_view_location,
   },
   stateWithId,
-  extraOpts
+  extraOpts,
+  { listQuery }
 ) => {
   const table = await Table.findOne(
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
@@ -424,7 +425,10 @@ const run = async (
   const fields = await table.getFields();
   const appState = getState();
   const locale = extraOpts.req.getLocale();
-  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
+  const __ = (s) =>
+    isWeb(extraOpts.req)
+      ? appState.i18n.__({ phrase: s, locale }) || s
+      : undefined;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
@@ -450,7 +454,6 @@ const run = async (
       ? extraOpts.req.user.role_id
       : 10;
   await set_join_fieldviews({ columns, fields });
-  const { joinFields, aggregations } = picked_fields_to_query(columns, fields);
 
   const tfields = get_viewable_fields(
     viewname,
@@ -464,46 +467,16 @@ const run = async (
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
 
-  const where = await stateFieldsToWhere({ fields, state });
-  const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
+  const { rows, rowCount } = await listQuery(state);
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
-  if (!q.limit) q.limit = rows_per_page;
-  if (!q.orderBy)
-    q.orderBy = (default_state && default_state._order_field) || table.pk_name;
-  if (!q.orderDesc) q.orderDesc = default_state && default_state._descending;
   const current_page = parseInt(state._page) || 1;
-  //console.log(table);
-  if (table.ownership_field_id && role > table.min_role_read && extraOpts.req) {
-    const owner_field = fields.find((f) => f.id === table.ownership_field_id);
-    mergeIntoWhere(where, {
-      [owner_field.name]: extraOpts.req.user ? extraOpts.req.user.id : -1,
-    });
-  }
-  //console.log({ i: default_state.include_fml });
-  if (default_state?.include_fml) {
-    let where1 = jsexprToWhere(default_state.include_fml, state);
-    mergeIntoWhere(where, where1);
-  }
-
-  let rows = await table.getJoinedRows({
-    where,
-    joinFields,
-    aggregations,
-    ...q,
-  });
-
-  //TODO this will mean that limit is not respected. change filter to jsexprToWhere
-  if (table.ownership_formula && role > table.min_role_read && extraOpts.req) {
-    rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
-  }
-
   var page_opts =
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
 
-  if (rows.length === rows_per_page || current_page > 1) {
-    const nrows = await table.countRows(where);
+  if ((rows && rows.length === rows_per_page) || current_page > 1) {
+    const nrows = rowCount;
     if (nrows > rows_per_page || current_page > 1) {
       page_opts.pagination = {
         current_page,
@@ -512,6 +485,7 @@ const run = async (
       };
     }
   }
+
   if (default_state && default_state._omit_header) {
     page_opts.noHeader = true;
   }
@@ -541,10 +515,14 @@ const run = async (
         );
       create_link = await create_view.run(state, extraOpts);
     } else {
+      const target = `/view/${encodeURIComponent(
+        view_to_create
+      )}${stateToQueryString(state)}`;
+      const hrefVal = isWeb(extraOpts.req)
+        ? target
+        : `javascript:execLink('${target}');`;
       create_link = link_view(
-        `/view/${encodeURIComponent(view_to_create)}${stateToQueryString(
-          state
-        )}`,
+        hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup",
         create_view_display === "Popup" && "btn btn-secondary",
@@ -598,7 +576,8 @@ const run_action = async (
   viewname,
   { columns, layout },
   body,
-  { req, res }
+  { req, res },
+  { getRowQuery }
 ) => {
   const col = columns.find(
     (c) =>
@@ -608,7 +587,7 @@ const run_action = async (
   );
 
   const table = await Table.findOne({ id: table_id });
-  const row = await table.getRow({ id: body.id });
+  const row = await getRowQuery(body.id);
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
   if (state_action) {
@@ -682,6 +661,65 @@ module.exports = {
     maybeAdd(create_view_label);
     return strings;
   },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async listQuery(state) {
+      const table = await Table.findOne(
+        typeof table_id === "string" ? { name: table_id } : { id: table_id }
+      );
+      const fields = await table.getFields();
+      const { joinFields, aggregations } = picked_fields_to_query(
+        columns,
+        fields
+      );
+      const where = await stateFieldsToWhere({ fields, state });
+      const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
+      const rows_per_page =
+        (default_state && default_state._rows_per_page) || 20;
+      if (!q.limit) q.limit = rows_per_page;
+      if (!q.orderBy)
+        q.orderBy =
+          (default_state && default_state._order_field) || table.pk_name;
+      if (!q.orderDesc)
+        q.orderDesc = default_state && default_state._descending;
+
+      const role = req && req.user ? req.user.role_id : 10;
+      if (table.ownership_field_id && role > table.min_role_read && req) {
+        const owner_field = fields.find(
+          (f) => f.id === table.ownership_field_id
+        );
+        mergeIntoWhere(where, {
+          [owner_field.name]: req.user ? req.user.id : -1,
+        });
+      }
+      //console.log({ i: default_state.include_fml });
+      if (default_state?.include_fml) {
+        let where1 = jsexprToWhere(default_state.include_fml, state);
+        mergeIntoWhere(where, where1);
+      }
+      let rows = await table.getJoinedRows({
+        where,
+        joinFields,
+        aggregations,
+        ...q,
+      });
+
+      //TODO this will mean that limit is not respected. change filter to jsexprToWhere
+      if (table.ownership_formula && role > table.min_role_read && req) {
+        rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
+      }
+      const rowCount = await table.countRows();
+      return { rows, rowCount };
+    },
+    async getRowQuery(id) {
+      const table = await Table.findOne({ id: table_id });
+      return await table.getRow({ id });
+    },
+  }),
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);
   },

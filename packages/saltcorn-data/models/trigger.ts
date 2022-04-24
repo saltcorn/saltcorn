@@ -9,7 +9,10 @@ import db = require("../db");
 import EventLog from "./eventlog";
 import Table from "./table";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
-import type { TriggerCfg } from "@saltcorn/types/model-abstracts/abstract_trigger";
+import type {
+  TriggerCfg,
+  AbstractTrigger,
+} from "@saltcorn/types/model-abstracts/abstract_trigger";
 
 const { satisfies } = require("../utils");
 
@@ -17,7 +20,7 @@ const { satisfies } = require("../utils");
  * Trigger class
  * @category saltcorn-data
  */
-class Trigger {
+class Trigger implements AbstractTrigger {
   name?: string;
   action: string;
   description?: string;
@@ -94,7 +97,7 @@ class Trigger {
    * @returns {Promise<Trigger[]>}
    */
   static async findDB(
-    where: Where,
+    where?: Where,
     selectopts?: SelectOptions
   ): Promise<Trigger[]> {
     const db_flds = await db.select("_sc_triggers", where, selectopts);

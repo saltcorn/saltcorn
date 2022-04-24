@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="cordova.js"></script>
+    <script src="js/utils/global_utils.js"></script>
+    <script src="js/utils/iframe_view_utils.js"></script>
+    <script src="js/mocks/response.js"></script>
+    <script src="js/mocks/request.js"></script>
+    <script src="npm_packages/jwt-decode.js"></script>
+    <script src="https://unpkg.com/universal-router/universal-router.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="module">
+      import { initRoutes } from "./js/routes/init.js";
+      import { renderLoginForm } from "./js/utils/login_form.js";
+
+      const staticPlugins = ["base", "sbadmin2"];
+
+      async function addScript(path) {
+        return new Promise((resolve, reject) => {
+          let script = document.createElement("script");
+          document.head.appendChild(script);
+          script.onload = () => {
+            resolve();
+          };
+          // TODO reject after some seconds
+          script.src = path;
+        });
+      }
+
+      async function loadPlugin(plugin) {
+        return addScript(`js/bundles/${plugin.name}.bundle.js`);
+      }
+
+      async function loadPlugins(state) {
+        let plugins = (await saltcorn.data.models.Plugin.find()).filter(
+          (plugin) => !staticPlugins.includes(plugin.name)
+        );
+        for (const plugin of plugins) {
+          await loadPlugin(plugin);
+          state.registerPlugin(plugin.name, saltcorn[plugin.name]);
+        }
+        return plugins;
+      }
+
+      function readCfg() {
+        let wwwDir = cordova.file.applicationDirectory + "www";
+        return new Promise((resolve, reject) => {
+          window.resolveLocalFileSystemURL(wwwDir, function (fs) {
+            fs.getFile(
+              "config",
+              { create: false, exclusive: false },
+              function (fileEntry) {
+                fileEntry.file(function (file) {
+                  let reader = new FileReader();
+                  reader.onloadend = function (e) {
+                    resolve(JSON.parse(this.result));
+                  };
+                  reader.readAsText(file);
+                });
+              },
+              function (err) {
+                console.log("unable to read config");
+                console.log(err);
+                reject(err);
+              }
+            );
+          });
+        });
+      }
+
+      async function addScripts(version_tag) {
+        const scripts = [
+          `static_assets/${version_tag}/jquery-3.6.0.min.js`,
+          "js/bundles/common_chunks.bundle.js",
+          "js/bundles/markup.bundle.js",
+          "js/bundles/data.bundle.js",
+          "js/bundles/base_plugin.bundle.js",
+          "js/bundles/sbadmin2.bundle.js",
+        ];
+        for (const script of scripts) {
+          await addScript(script);
+        }
+      }
+
+      async function getTableIds(tableNames) {
+        return (await saltcorn.data.models.Table.find())
+          .filter((table) => tableNames.indexOf(table.name) > -1)
+          .map((table) => table.id);
+      }
+
+      const addPluginScriptTagsToCfg = (pluginRows) => {
+        window.config.pluginHeaders = [];
+        for (const row of pluginRows) {
+          const pluginHeaders = saltcorn[row.name].headers;
+          if (pluginHeaders) {
+            for (const header of pluginHeaders) {
+              window.config.pluginHeaders.push(header);
+            }
+          }
+        }
+      };
+
+      document.addEventListener("deviceready", async () => {
+        const config = await readCfg();
+        window.config = config;
+        await addScripts(config.version_tag);
+        await saltcorn.data.db.init();
+        const state = saltcorn.data.state.getState();
+        await state.refresh_tables();
+        await state.refresh_views();
+        await state.refresh_pages();
+        state.registerPlugin("base", saltcorn.base_plugin);
+        state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
+        state.localTableIds = await getTableIds(config.localUserTables);
+        addPluginScriptTagsToCfg(await loadPlugins(state));
+        await initRoutes();
+        const entryView = config.entry_view;
+        const jwt = localStorage.getItem("auth_jwt");
+        if (jwt && jwt !== "undefined") {
+          const decodedJwt = jwt_decode(jwt);
+          saltcorn.data.state.getState().role_id = decodedJwt?.role_id
+            ? decodedJwt.role_id
+            : 10;
+          window.currentLocation = entryView;
+          const page = await router.resolve({
+            pathname: entryView,
+            fullWrap: true,
+          });
+          replaceIframe(page.content);
+        } else {
+          replaceIframe(renderLoginForm(entryView, config.version_tag));
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <iframe
+      id="content-iframe"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        z-index: 999999;
+      "
+    >
+      <p>Your browser does not support iframes.</p>
+    </iframe>
+  </body>
+</html>

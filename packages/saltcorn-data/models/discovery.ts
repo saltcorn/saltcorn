@@ -74,7 +74,11 @@ const findType = (sql_name: string): any => {
     // interval: "Date"
   }[sql_name];
   if (fixed) return fixed;
-  const t = Object.entries(getState().types).find(
+  const state = getState();
+  if (!state) {
+    throw new Error("unable to get state");
+  }
+  const t = Object.entries(state.types).find(
     ([k, v]: [k: string, v: any]) => v.sql_name === sql_name
   );
   if (t) {

@@ -10,17 +10,27 @@ import * as singleTenant from "@saltcorn/db-common/single-tenant";
 
 import { sqlsanitize, mkWhere, Where } from "@saltcorn/db-common/internal";
 
+import utils from "../utils";
+const { isNode } = utils;
+import { getConnectObject as getConnectObjectMobile } from "./connect_mobile";
 const { getConnectObject, is_sqlite } = require("./connect");
 
+const reset = require("./reset_schema");
+
 /** @type {any} */
-const connectObj = getConnectObject();
+const connectObj = isNode() ? getConnectObject() : getConnectObjectMobile();
 
 /** @type {boolean} */
 const isSQLite = is_sqlite(connectObj);
 
+const is_node = isNode();
+
 const initDbModule = (): any => {
   let dbmodule = null;
-  if (isSQLite) {
+  if (!isNode()) {
+    dbmodule = require("@saltcorn/sqlite-mobile/sqlite-cordova");
+    dbmodule.setConnectionObject(connectObj);
+  } else if (isSQLite) {
     dbmodule = require("@saltcorn/sqlite/sqlite");
     dbmodule.init(getConnectObject);
   } else {
@@ -49,8 +59,10 @@ const dbExports: any = {
   sqlsanitize,
   connectObj,
   isSQLite,
+  is_node,
   ...dbModule,
   mkWhere: (q: Where) => mkWhere(q, isSQLite),
   getTenantSchemaPrefix,
+  reset,
 };
 export = dbExports;

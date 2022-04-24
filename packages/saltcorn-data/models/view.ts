@@ -7,14 +7,16 @@
 
 import db from "../db";
 import Form from "./form";
+import utils from "../utils";
 const {
   removeEmptyStrings,
-  numberToBool,
   stringToJSON,
   InvalidConfiguration,
   satisfies,
   structuredClone,
-} = require("../utils");
+  isNode,
+  isWeb,
+} = utils;
 const { remove_from_menu } = require("./config");
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
@@ -33,6 +35,9 @@ import type Workflow from "./workflow";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import axios from "axios";
+
+declare let window: any;
 
 /**
  * View Class
@@ -335,26 +340,38 @@ class View {
    * @param {*} arg
    * @returns {Promise<object>}
    */
-  async authorise_post(arg: {
-    body: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }): Promise<boolean> {
+  async authorise_post(
+    arg: {
+      body: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    remote: boolean = false
+  ): Promise<boolean> {
     if (!this.viewtemplateObj?.authorise_post) return false;
-    return await this.viewtemplateObj.authorise_post(arg);
+    return await this.viewtemplateObj.authorise_post(
+      arg,
+      this.queries(remote, arg.req)
+    );
   }
 
   /**
    * @param {*} arg
    * @returns {Promise<object>}
    */
-  async authorise_get(arg: {
-    query: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }): Promise<boolean> {
+  async authorise_get(
+    arg: {
+      query: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    remote: boolean = false
+  ): Promise<boolean> {
     if (!this.viewtemplateObj?.authorise_get) return false;
-    return await this.viewtemplateObj.authorise_get(arg);
+    return await this.viewtemplateObj.authorise_get(
+      arg,
+      this.queries(remote, arg.req)
+    );
   }
 
   /**
@@ -372,7 +389,11 @@ class View {
    * @param extraArgs
    * @returns {Promise<*>}
    */
-  async run(query: any, extraArgs: RunExtra): Promise<any> {
+  async run(
+    query: any,
+    extraArgs: RunExtra,
+    remote: boolean = !isNode()
+  ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
     try {
@@ -381,11 +402,49 @@ class View {
         this.name,
         this.configuration,
         removeEmptyStrings(query),
-        extraArgs
+        extraArgs,
+        this.queries(remote, extraArgs.req)
       );
     } catch (error: any) {
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
+    }
+  }
+
+  queries(remote?: boolean, req?: any, res?: any) {
+    const queryObj = this?.viewtemplateObj?.queries
+      ? this.viewtemplateObj!.queries({ ...this, req, res })
+      : {};
+    if (remote) {
+      const { getState } = require("../db/state");
+
+      const base_url =
+        getState().getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
+      const queries: any = {};
+      const vtQueries = queryObj;
+
+      Object.entries(vtQueries).forEach(([k, v]) => {
+        queries[k] = async (...args: any[]) => {
+          const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
+          const token = window.localStorage.getItem("auth_jwt");
+          let response = await axios.post(
+            url,
+            { args },
+            {
+              headers: {
+                Authorization: `jwt ${token}`,
+                "X-Requested-With": "XMLHttpRequest",
+                "X-Saltcorn-Client": "mobile-app",
+              },
+            }
+          );
+          return response.data.success;
+        };
+      });
+
+      return queries;
+    } else {
+      return queryObj;
     }
   }
 
@@ -406,9 +465,10 @@ class View {
    * @returns {Promise<object>}
    */
   async run_possibly_on_page(
-    query: NonNullable<any>,
-    req: NonNullable<any>,
-    res: NonNullable<any>
+    query: any,
+    req: any,
+    res: any,
+    remote: boolean = false
   ): Promise<string> {
     const view = this;
     this.check_viewtemplate();
@@ -421,7 +481,7 @@ class View {
       }
     }
     const state = view.combine_state_and_default_state(query);
-    const resp = await view.run(state, { res, req });
+    const resp = await view.run(state, { res, req }, remote);
     const state_form = await view.get_state_form(state, req);
     const contents = div(
       state_form ? renderForm(state_form, req.csrfToken()) : "",
@@ -438,7 +498,8 @@ class View {
    */
   async runMany(
     query: GenObj,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    remote: boolean = !isNode()
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
     try {
@@ -453,7 +514,8 @@ class View {
           this.name,
           this.configuration,
           query,
-          extraArgs
+          extraArgs,
+          this.queries(remote, extraArgs.req)
         );
       }
       if (this.viewtemplateObj?.renderRows) {
@@ -496,8 +558,13 @@ class View {
   async runPost(
     query: GenObj,
     body: GenObj,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    remote: boolean = !isNode()
   ): Promise<any> {
+    const { getState } = require("../db/state");
+    if (getState().localTableIds.indexOf(this.table_id) >= 0) {
+      remote = false;
+    }
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.runPost)
       throw new InvalidConfiguration(
@@ -509,7 +576,8 @@ class View {
       this.configuration,
       removeEmptyStrings(query),
       removeEmptyStrings(body),
-      extraArgs
+      extraArgs,
+      this.queries(remote, extraArgs.req)
     );
   }
 
@@ -524,7 +592,8 @@ class View {
     route: string,
     body: any,
     res: NonNullable<any>,
-    extraArgs: RunExtra
+    extraArgs: RunExtra,
+    remote: boolean = false
   ): Promise<any> {
     this.check_viewtemplate();
     if (!this.viewtemplateObj!.routes)
@@ -537,7 +606,8 @@ class View {
       this.name,
       this.configuration,
       body,
-      extraArgs
+      extraArgs,
+      this.queries(remote, extraArgs.req)
     );
     if (result && result.json) res.json(result.json);
     else if (result && result.html) res.send(result.html);
@@ -568,7 +638,7 @@ class View {
    * @param {object} req
    * @returns {Promise<Form|null>}
    */
-  async get_state_form(query: any, req: ReqFunction): Promise<Form | null> {
+  async get_state_form(query: any, req: any): Promise<Form | null> {
     this.check_viewtemplate();
     const vt_display_state_form = this.viewtemplateObj!.display_state_form;
     const display_state_form =
@@ -594,13 +664,19 @@ class View {
       });
       const form = new Form({
         methodGET: true,
-        action: `/view/${encodeURIComponent(this.name)}`,
+        action: isWeb(req)
+          ? `/view/${encodeURIComponent(this.name)}`
+          : "javascript:void(0);", // onsubmit without reload
         fields,
         submitLabel: req.__("Apply"),
         isStateForm: true,
         __: req.__,
         values: removeEmptyStrings(query),
       });
+      if (!isWeb(req))
+        form.onSubmit = `javascript:stateFormSubmit(this, 'get/view/${encodeURIComponent(
+          this.name
+        )}')`;
       await form.fill_fkey_options(true);
       return form;
     } else return null;
@@ -610,7 +686,7 @@ class View {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async get_config_flow(req: ReqFunction): Promise<Workflow> {
+  async get_config_flow(req: any): Promise<Workflow> {
     this.check_viewtemplate();
     if (!this.id)
       throw new InvalidConfiguration(
@@ -657,10 +733,6 @@ function typeWithDefinedMember<T>(object: any, member: string): object is T {
     object[member] !== null
   );
 }
-
-type ReqFunction = {
-  __: (arg0: string) => string;
-};
 
 namespace View {
   export type FindViewsPred = (arg0: {
