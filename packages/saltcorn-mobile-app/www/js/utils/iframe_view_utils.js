@@ -101,12 +101,17 @@ function updateQueryStringParameter(queryStr, key, value) {
     return `${key}=${value}`;
   }
   let params = [];
+  let updated = false;
   for (const [k, v] of new URLSearchParams(queryStr).entries()) {
     if (k === key) {
       params.push(`${key}=${value}`);
+      updated = true;
     } else {
       params.push(`${k}=${v}`);
     }
+  }
+  if (!updated) {
+    params.push(`${key}=${value}`);
   }
   return params.join("&");
 }
@@ -139,6 +144,9 @@ async function sortBy(k, desc, viewname) {
     `get/view/${viewname}`
   );
 }
-async function gopage(n, pagesize, extra = {}) {
-  /* paging not implemented yet */
+async function gopage(n, pagesize, extra) {
+  await setStateFields(
+    { ...extra, _page: n, _pagesize: pagesize },
+    `get/view/${extra.view}`
+  );
 }

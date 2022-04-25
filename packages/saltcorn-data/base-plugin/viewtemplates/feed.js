@@ -330,10 +330,12 @@ const run = async (
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
     const nrows = await countRowsQuery(state);
     if (nrows > qextra.limit || current_page > 1) {
+      const goPageExtra = isWeb(extraArgs.req) ? "{}" : `{ view:'${viewname}' }`;
       paginate = pagination({
         current_page,
         pages: Math.ceil(nrows / qextra.limit),
-        get_page_link: (n) => `javascript:gopage(${n}, ${qextra.limit})`,
+        get_page_link: (n) =>
+          `javascript:gopage(${n}, ${qextra.limit}, ${goPageExtra})`,
       });
     }
   }
