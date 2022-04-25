@@ -478,12 +478,11 @@ const run = async (
   if ((rows && rows.length === rows_per_page) || current_page > 1) {
     const nrows = rowCount;
     if (nrows > rows_per_page || current_page > 1) {
-      const goPageExtra = isWeb(extraOpts.req) ? "{}" : `{ view:'${viewname}' }`;
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
         get_page_link: (n) =>
-          `javascript:gopage(${n}, ${rows_per_page}, ${goPageExtra})`,
+          `javascript:gopage(${n}, ${rows_per_page}, { _paged_view:'${viewname}' })`,
       };
     }
   }

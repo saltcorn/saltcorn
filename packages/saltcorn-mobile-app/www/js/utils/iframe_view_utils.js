@@ -147,6 +147,6 @@ async function sortBy(k, desc, viewname) {
 async function gopage(n, pagesize, extra) {
   await setStateFields(
     { ...extra, _page: n, _pagesize: pagesize },
-    `get/view/${extra.view}`
+    parent.currentLocation
   );
 }
