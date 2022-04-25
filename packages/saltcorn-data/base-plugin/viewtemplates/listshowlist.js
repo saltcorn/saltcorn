@@ -171,7 +171,8 @@ const run = async (
   viewname,
   { list_view, show_view, list_width, subtables },
   state,
-  extraArgs
+  extraArgs,
+  { getRowQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -208,7 +209,7 @@ const run = async (
     var id;
     if (state.id) id = state.id;
     else {
-      myrow = await table.getRow(uniques);
+      myrow = getRowQuery(uniques);
       if (!myrow) return `Not found`;
       id = myrow.id;
     }
@@ -232,7 +233,7 @@ const run = async (
             break;
           case "ParentShow":
             const [pvname, preltblnm, prelfld] = rel.split(".");
-            if (!myrow) myrow = await table.getRow({ id });
+            if (!myrow) myrow = await getRowQuery({ id });
             if (!myrow) continue;
             const ptab_name = prelfld;
             const psubview = await View.findOne({ name: pvname });
@@ -289,4 +290,15 @@ module.exports = {
    */
   display_state_form: ({ list_view, _omit_state_form }) =>
     !!list_view && !_omit_state_form,
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }) => ({
+    async getRowQuery(uniques) {
+      const table = await Table.findOne({ id: table_id });
+      return await table.getRow(uniques);
+    },
+  }),
 };

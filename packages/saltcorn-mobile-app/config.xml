@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<widget id="saltcorn.mobile.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+  <name>SaltcornMobileApp</name>
+  <description>Apache Cordova application with @saltcorn/markup</description>
+  <platform name="android">
+    <edit-config file="app/src/main/AndroidManifest.xml" target="/manifest/application" mode="merge">
+      <application android:usesCleartextTraffic="true"/>
+    </edit-config>
+    <preference name="Scheme" value="http"/>
+    <preference name="MixedContentMode" value="2"/>
+  </platform>
+  <content src="index.html"/>
+  <access origin="*"/>
+</widget>

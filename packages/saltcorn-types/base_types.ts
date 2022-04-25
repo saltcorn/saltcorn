@@ -8,10 +8,13 @@ import type {
   TablePack,
 } from "./model-abstracts/abstract_table";
 import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
-import type { TriggerPack } from "./model-abstracts/abstract_trigger";
+import type {
+  AbstractTrigger,
+  TriggerPack,
+} from "./model-abstracts/abstract_trigger";
 import type { InputType } from "./model-abstracts/abstract_field";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
-import type { Type, ReqRes } from "./common_types";
+import type { Type, ReqRes, GenObj } from "./common_types";
 import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
 import type { ViewPack } from "./model-abstracts/abstract_view";
@@ -186,14 +189,16 @@ export type ViewTemplate = {
     viewname: string,
     opts: any,
     state: any,
-    arg4: RunExtra
+    arg4: RunExtra,
+    queries: any
   ) => Promise<string>;
   runMany?: (
     table_id: number,
     viewname: string,
     { columns, layout }: { columns: Array<Column>; layout: Layout },
     state: any,
-    extra: RunExtra
+    extra: RunExtra,
+    queries: any
   ) => Promise<string[]>;
   renderRows?: (
     table: AbstractTable,
@@ -207,16 +212,22 @@ export type ViewTemplate = {
     viewname: string,
     configuration: { default_state: any }
   ) => Promise<void>;
-  authorise_post?: (opts: {
-    body: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }) => Promise<boolean>;
-  authorise_get?: (opts: {
-    query: any;
-    table_id: number;
-    req: NonNullable<any>;
-  }) => Promise<boolean>;
+  authorise_post?: (
+    opts: {
+      body: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    queries: any
+  ) => Promise<boolean>;
+  authorise_get?: (
+    opts: {
+      query: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    queries: any
+  ) => Promise<boolean>;
   runPost?: (
     table_id: number | number | undefined,
     viewname: string,
@@ -227,13 +238,20 @@ export type ViewTemplate = {
       view_when_done: any;
       formula_destinations: any;
     },
-    state: string,
-    body: string,
-    extraArgs: RunExtra
+    state: GenObj,
+    body: GenObj,
+    extraArgs: RunExtra,
+    queries: any
   ) => Promise<void>;
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
   routes?: Record<string, Action>;
+  virtual_triggers?: (
+    table_id: number | undefined, // TODO ch
+    name: string,
+    configuration: any
+  ) => Promise<Array<AbstractTrigger>>;
+  queries?: (configuration?: any, req?: any) => Record<string, any>;
 };
 
 export type Action = (
@@ -241,7 +259,8 @@ export type Action = (
   viewname: string,
   optsOne: any,
   body: any,
-  optsTwo: ReqRes
+  optsTwo: ReqRes,
+  queries: any
 ) => Promise<any>;
 
 export type PluginFunction = {
@@ -255,6 +274,7 @@ type MaybeCfgFun<Type> = (a: Type) => (arg0: any) => Type | Type | undefined;
 
 export type Plugin = {
   sc_plugin_api_version: number;
+  plugin_name?: string;
   headers: MaybeCfgFun<Array<Header>>;
   functions: MaybeCfgFun<PluginFunction | ((arg1: any) => any)>;
   layout: MaybeCfgFun<PluginLayout>;
@@ -275,6 +295,7 @@ export type Plugin = {
         ]) => string);
   };
   dependencies: string[];
+  [key: string]: any;
 };
 
 export type Pack = {

@@ -389,7 +389,7 @@ const authWrap = ({
                     </div>
                     ${renderForm(formModify(form), csrfToken)}
                     ${renderAuthLinks(authLinks)}
-                    ${afterForm}
+                    ${afterForm ? afterForm : ""}
                   </div>
                 </div>
               </div>
@@ -428,7 +428,7 @@ const wrap = ({
     title,
     `id="page-top" class="${bodyClass || ""}"`,
     `<div id="wrapper">
-      ${sidebar(brand, menu, currentUrl)}
+      ${db.is_node ? sidebar(brand, menu, currentUrl) : ""}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">

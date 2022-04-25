@@ -7,12 +7,8 @@
 import db from "../db";
 import View from "./view";
 import Table from "./table";
-const {
-  eachView,
-  traverseSync,
-  getStringsForI18n,
-  translateLayout,
-} = require("./layout");
+import layout from "./layout";
+const { eachView, traverseSync, getStringsForI18n, translateLayout } = layout;
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
 import config from "./config";

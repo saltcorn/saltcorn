@@ -1,0 +1,40 @@
+{
+  "name": "@saltcorn/mobile-builder",
+  "description": "plugin to to build a mobile app from a tenant application",
+  "homepage": "https://saltcorn.com",
+  "repository": "github:saltcorn/saltcorn",
+  "version": "0.7.2-beta.0",
+  "author": "Christian Hugo",
+  "scripts": {
+    "build": "webpack --mode development"
+  },
+  "dependencies": {
+    "@oclif/core": "^1.2.0",
+    "@saltcorn/markup": "^0.7.2-beta.0",
+    "@saltcorn/data": "^0.7.2-beta.0",
+    "@saltcorn/server": "^0.7.2-beta.0",
+    "@saltcorn/base-plugin": "^0.7.2-beta.0",
+    "@saltcorn/sbadmin2": "^0.7.2-beta.0",
+    "@saltcorn/mobile-app": "^0.7.2-beta.0",
+    "fs-extra": "^10.0.1",
+    "live-plugin-manager": "^0.16.0",
+    "xml2js": "0.4.23"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.12",
+    "webpack-merge": "^5.8.0",
+    "webpack": "5.68.0",
+    "webpack-cli": "4.9.2",
+    "@types/xml2js": "0.4.9"
+  },
+  "files": [
+    "/dist"
+  ],
+  "license": "MIT",
+  "oclif": {
+    "commands": "./dist/commands"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

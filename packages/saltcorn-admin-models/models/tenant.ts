@@ -179,7 +179,10 @@ const create_tenant = async ({
         loadAndSaveNewPlugin,
       });
     }
-    process_send({ createTenant: t });
+    if (db.is_node) {
+      // TODO ch
+      process_send({ createTenant: t });
+    }
   }
 };
 

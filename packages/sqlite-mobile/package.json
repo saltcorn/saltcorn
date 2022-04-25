@@ -1,0 +1,38 @@
+{
+  "name": "@saltcorn/sqlite-mobile",
+  "version": "0.7.2-beta.0",
+  "description": "cordova-sqlite-storage structures for Saltcorn, open-source no-code platform",
+  "homepage": "https://saltcorn.com",
+  "scripts": {
+    "test": "echo \"Error: no test specified\"",
+    "tsc": "tsc -p tsconfig.json",
+    "clean": "rm -rf ./dist/*"
+  },
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "exports": {
+    "./*": "./dist/*.js"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "@saltcorn/db-common": "0.7.2-beta.0"
+  },
+  "repository": "github:saltcorn/saltcorn",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.9",
+    "typescript": "^4.4.4"
+  }
+}

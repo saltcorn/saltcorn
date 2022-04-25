@@ -50,6 +50,7 @@ class Form implements AbstractForm {
   validator?: (arg0: any) => any;
   hasErrors: boolean;
   xhrSubmit: boolean;
+  onSubmit?: string;
   req: any;
   __?: any;
 
@@ -81,6 +82,7 @@ class Form implements AbstractForm {
     this.validator = o.validator;
     this.hasErrors = false;
     this.xhrSubmit = !!o.xhrSubmit;
+    this.onSubmit = o.onSubmit;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
     if (o.validate) this.validate(o.validate);
@@ -227,6 +229,7 @@ namespace Form {
     onChange?: string;
     validator?: (arg0: any) => any;
     xhrSubmit?: boolean;
+    onSubmit?: string;
     req?: any;
     validate?: any;
     __?: any;
