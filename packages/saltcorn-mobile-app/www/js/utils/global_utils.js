@@ -40,10 +40,14 @@ function replaceIframe(content) {
 }
 
 function replaceIframeInnerContent(content) {
-  let iframe = document.getElementById("content-iframe");
-  let iframeDocument = iframe.contentWindow.document;
+  const iframe = document.getElementById("content-iframe");
+  const iframeDocument = iframe.contentWindow.document;
   let innerContentDiv = iframeDocument.getElementById("page-inner-content");
   innerContentDiv.innerHTML = content;
+  let scripts = innerContentDiv.getElementsByTagName("script");
+  for (let script of scripts) {
+    iframe.contentWindow.eval(script.innerHTML);
+  }
 }
 
 function handleRoute(route, query) {
