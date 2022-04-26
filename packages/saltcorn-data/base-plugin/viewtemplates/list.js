@@ -481,7 +481,8 @@ const run = async (
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
-        get_page_link: (n) => `javascript:gopage(${n}, ${rows_per_page})`,
+        get_page_link: (n) =>
+          `javascript:gopage(${n}, ${rows_per_page}, { _paged_view:'${viewname}' })`,
       };
     }
   }
