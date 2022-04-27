@@ -101,7 +101,7 @@ export default class BuildAppCommand extends Command {
   copySbadmin2Deps = () => {
     const sbadmin2Dst = join(
       this.wwwDir,
-      "plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.0"
+      "plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5"
     );
     if (!existsSync(sbadmin2Dst)) {
       mkdirSync(sbadmin2Dst, { recursive: true });
