@@ -233,3 +233,13 @@ footer.bs-mobile-nav-footer {
   height: 100%;
   z-index: -1;
 }
+
+input.hideupdownbtns::-webkit-outer-spin-button,
+input.hideupdownbtns::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input.hideupdownbtns[type="number"] {
+  -moz-appearance: textfield;
+}

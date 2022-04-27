@@ -100,7 +100,45 @@ const progress_bar = (type) => ({
     ),
 });
 
-const number_limit = (type, direction) => ({
+const number_limit = (direction) => ({
+  isEdit: false,
+  isFilter: true,
+  configFields: [
+    { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
+  ],
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+    const onChange = `set_state_field('_${direction}_${nm}', this.value)`;
+    return attrs?.stepper_btns
+      ? number_stepper(
+          undefined,
+          isdef(state[`_${direction}_${nm}`])
+            ? text_attr(state[`_${direction}_${nm}`])
+            : undefined,
+          {
+            ...attrs,
+            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val())`,
+          },
+          cls,
+          undefined,
+          `numlim_${nm}_${direction}`
+        )
+      : input({
+          type: "number",
+          class: ["form-control", cls],
+          blockDisplay: true,
+          disabled: attrs.disabled,
+          onChange,
+          step: 1,
+          ...(attrs.max && { max: attrs.max }),
+          ...(attrs.min && { min: attrs.min }),
+          ...(isdef(state[`_${direction}_${nm}`]) && {
+            value: text_attr(state[`_${direction}_${nm}`]),
+          }),
+        });
+  },
+});
+
+const float_number_limit = (direction) => ({
   isEdit: false,
   isFilter: true,
   run: (nm, v, attrs = {}, cls, required, field, state = {}) =>
@@ -111,12 +149,7 @@ const number_limit = (type, direction) => ({
 
       disabled: attrs.disabled,
       onChange: `set_state_field('_${direction}_${nm}', this.value)`,
-      step:
-        type === "Integer"
-          ? "1"
-          : attrs.decimal_places
-          ? Math.pow(10, -attrs.decimal_places)
-          : "0.01",
+      step: attrs.decimal_places ? Math.pow(10, -attrs.decimal_places) : "0.01",
       ...(attrs.max && { max: attrs.max }),
       ...(attrs.min && { min: attrs.min }),
       ...(isdef(state[`_${direction}_${nm}`]) && {
@@ -124,6 +157,44 @@ const number_limit = (type, direction) => ({
       }),
     }),
 });
+
+const number_stepper = (name, v, attrs, cls, fieldname, id) =>
+  div(
+    { class: "input-group" },
+    button(
+      {
+        class: "btn btn-outline-secondary",
+        type: "button",
+        onClick: `$('#${id}').val(Math.max(${
+          isdef(attrs.min) ? attrs.min : "-Infinity"
+        },+$('#${id}').val()-1));${attrs.onChange || ""}`,
+      },
+      i({ class: "fas fa-minus" })
+    ),
+    input({
+      type: "number",
+      class: ["form-control", "hideupdownbtns", cls],
+      disabled: attrs.disabled,
+      "data-fieldname": fieldname,
+      name,
+      onChange: attrs.onChange,
+      id,
+      step: "1",
+      ...(attrs.max && { max: attrs.max }),
+      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(v) && { value: text_attr(v) }),
+    }),
+    button(
+      {
+        class: "btn btn-outline-secondary",
+        type: "button",
+        onClick: `$('#${id}').val(Math.min(${
+          isdef(attrs.max) ? attrs.max : "Infinity"
+        },+$('#${id}').val()+1));${attrs.onChange || ""}`,
+      },
+      i({ class: "fas fa-plus" })
+    )
+  );
 
 /**
  * @param {string} v
@@ -742,26 +813,33 @@ const int = {
     edit: {
       isEdit: true,
       blockDisplay: true,
-
-      run: (nm, v, attrs, cls, required, field) =>
-        input({
-          type: "number",
-          class: ["form-control", cls],
-          disabled: attrs.disabled,
-          "data-fieldname": text_attr(field.name),
-          name: text_attr(nm),
-          onChange: attrs.onChange,
-          id: `input${text_attr(nm)}`,
-          step: "1",
-          ...(attrs.max && { max: attrs.max }),
-          ...(attrs.min && { min: attrs.min }),
-          ...(isdef(v) && { value: text_attr(v) }),
-        }),
+      configFields: [
+        { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
+      ],
+      run: (nm, v, attrs, cls, required, field) => {
+        const id = `input${text_attr(nm)}`;
+        const name = text_attr(nm);
+        return attrs?.stepper_btns
+          ? number_stepper(name, v, attrs, cls, text_attr(field.name), id)
+          : input({
+              type: "number",
+              class: ["form-control", cls],
+              disabled: attrs.disabled,
+              "data-fieldname": text_attr(field.name),
+              name,
+              onChange: attrs.onChange,
+              id,
+              step: "1",
+              ...(attrs.max && { max: attrs.max }),
+              ...(attrs.min && { min: attrs.min }),
+              ...(isdef(v) && { value: text_attr(v) }),
+            });
+      },
     },
     number_slider: number_slider("Integer"),
     progress_bar: progress_bar("Integer"),
-    above_input: number_limit("Integer", "gte"),
-    below_input: number_limit("Integer", "lte"),
+    above_input: number_limit("gte"),
+    below_input: number_limit("lte"),
   },
   /** @type {object[]}  */
   attributes: [
@@ -941,8 +1019,8 @@ const float = {
     },
     number_slider: number_slider("Float"),
     progress_bar: progress_bar("Float"),
-    above_input: number_limit("Float", "gte"),
-    below_input: number_limit("Float", "lte"),
+    above_input: float_number_limit("gte"),
+    below_input: float_number_limit("lte"),
   },
   /** @type {object[]} */
   attributes: [
