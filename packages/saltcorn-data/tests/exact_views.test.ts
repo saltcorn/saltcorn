@@ -450,7 +450,7 @@ describe("Show view", () => {
       columns: [
         {
           type: "Field",
-          fieldview: "show",
+          fieldview: "showDay",
           field_name: "date",
           state_field: "on",
         },
@@ -471,7 +471,7 @@ describe("Show view", () => {
           state_field: "on",
         },
       ],
-      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-19T10:34:00.000Z" locale-options="%7B%7D">11/19/2019, 10:34:00 AM</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Michael Douglas</td><td style="text-align:right">37</td></tr></tbody></table></div>`,
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-11T10:34:00.000Z" locale-date-options="%7B%7D">11/11/2019</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Michael Douglas</td><td style="text-align:right">37</td></tr></tbody></table></div>`,
     });
     await test_show({
       id: 1,
@@ -627,7 +627,7 @@ describe("Show view", () => {
           configuration: {},
         },
       ],
-      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="row w-100"><div class="col-2">Publisher</div><div class="col-10"></div></div><br /><div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-19T10:34:00.000Z" locale-options="%7B%7D">11/19/2019, 10:34:00 AM</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr></tbody></table></div>`,
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="row w-100"><div class="col-2">Publisher</div><div class="col-10"></div></div><br /><div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-11T10:34:00.000Z" locale-date-options="%7B%7D">11/11/2019</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr></tbody></table></div>`,
     });
   });
 });
