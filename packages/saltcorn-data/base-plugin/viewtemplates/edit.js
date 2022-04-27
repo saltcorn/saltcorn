@@ -693,7 +693,7 @@ const runPost = async (
       for (const childRow of form.values[field.name]) {
         childRow[field.metadata?.relation] = id;
         if (childRow[childTable.pk_name]) {
-          const upd_res = await childTable.tryUpdateQuery(
+          const upd_res = await childTable.tryUpdateRow(
             childRow,
             childRow[childTable.pk_name]
           );
