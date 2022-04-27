@@ -41,7 +41,7 @@ const mkTester =
     assertIsSet(tbl);
     const v = await View.create({
       table_id: tbl.id,
-      name,
+      name: rest.name || name,
       viewtemplate,
       configuration: rest,
       min_role: 10,
@@ -533,6 +533,160 @@ describe("Edit view", () => {
       layout,
       columns,
       response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+    });
+  });
+  it("should render edit-in-edit", async () => {
+    const innerEdit = {
+      layout: {
+        above: [
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Date",
+                    labelFor: "date",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "date",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Normalised",
+                    labelFor: "normalised",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "normalised",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Temperature",
+                    labelFor: "temperature",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "temperature",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "date",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "normalised",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "temperature",
+          configuration: {},
+        },
+      ],
+    };
+    await test_edit({
+      name: "innerReads",
+      ...innerEdit,
+      table: "readings",
+      response: `<form action="/view/innerReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date" id="inputdate"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised" id="inputnormalised"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature" id="inputtemperature" step="1"></div></div></form>`,
     });
   });
 });
