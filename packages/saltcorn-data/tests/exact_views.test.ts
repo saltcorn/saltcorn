@@ -442,6 +442,194 @@ describe("Show view", () => {
 <button type="submit"  class=" btn  btn-primary ">Delete</button></form></div>`,
     });
   });
+  it("should render double join embedded", async () => {
+    await test_list({
+      name: "ListReadings",
+      noDelete: true,
+      table: "readings",
+      columns: [
+        {
+          type: "Field",
+          fieldview: "show",
+          field_name: "date",
+          state_field: "on",
+        },
+        {
+          type: "Field",
+          fieldview: "show",
+          field_name: "normalised",
+          state_field: "on",
+        },
+        {
+          type: "JoinField",
+          join_field: "patient_id.name",
+        },
+        {
+          type: "Field",
+          fieldview: "show",
+          field_name: "temperature",
+          state_field: "on",
+        },
+      ],
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-19T10:34:00.000Z" locale-options="%7B%7D">11/19/2019, 10:34:00 AM</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Michael Douglas</td><td style="text-align:right">37</td></tr></tbody></table></div>`,
+    });
+    await test_show({
+      id: 1,
+      layout: {
+        above: [
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Author",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "as_text",
+                    textStyle: "",
+                    field_name: "author",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Pages",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "show",
+                    textStyle: "",
+                    field_name: "pages",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Publisher",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "join_field",
+                    block: false,
+                    textStyle: "",
+                    join_field: "publisher.name",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            name: "46d4bc",
+            type: "view",
+            view: "ChildList:ListReadings.patients.favbook.readings.patient_id",
+            state: "shared",
+            configuration: {},
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          field_name: "author",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "show",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {},
+        },
+        {
+          type: "JoinField",
+          block: false,
+          textStyle: "",
+          join_field: "publisher.name",
+          configuration: {},
+        },
+      ],
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="row w-100"><div class="col-2">Publisher</div><div class="col-10"></div></div><br /><div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-19T10:34:00.000Z" locale-options="%7B%7D">11/19/2019, 10:34:00 AM</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr></tbody></table></div>`,
+    });
+  });
 });
 describe("Edit view", () => {
   it("should render exactly", async () => {
@@ -942,7 +1130,7 @@ describe("Edit view", () => {
       id: 1,
       ...outerEdit,
       table: "patients",
-      response: `<form action="/view/PatientEditWithReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2"><label for="inputfavbook">Favourite book</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><span style="margin-bottom:1.5rem"><div class="row w-100" style="margin-bottom:1.5rem"><div class="col-2"><label for="inputname">Name</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div></span><div class="row w-100"><div class="col-2"><label for="inputparent">Parent</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><div><div class="repeats-patient_id"><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_0" id="inputdate_0" value="19/12/2019, 10:34:31"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_0" id="inputnormalised_0" checked></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_0" id="inputtemperature_0" step="1" value="37"></div></div><input type="hidden" class="form-control  " name="id_0" value="1"></div><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_1" id="inputdate_1"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_1" id="inputnormalised_1"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_1" id="inputtemperature_1" step="1" value="39"></div></div><input type="hidden" class="form-control  " name="id_1" value="2"></div></div><a class="btn btn-sm btn-outline-primary mb-3" href="javascript:add_repeater('patient_id')" title="Add"><i class="fas fa-plus"></i></a></div><button type="submit" class="btn btn-primary ">Save</button><button onClick="$(this).closest('form').trigger('reset')" type="button" class="btn btn-primary ">Reset</button><button onClick="if(confirm('Are you sure?'))ajax_post('/delete/patients/1', {success:()=>window.location.href='/'})" type="button" class="btn btn-primary ">Delete</button></form>`,
+      response: `<form action="/view/PatientEditWithReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2"><label for="inputfavbook">Favourite book</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><span style="margin-bottom:1.5rem"><div class="row w-100" style="margin-bottom:1.5rem"><div class="col-2"><label for="inputname">Name</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div></span><div class="row w-100"><div class="col-2"><label for="inputparent">Parent</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><div><div class="repeats-patient_id"><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_0" id="inputdate_0" value="19/12/2019, 10:34:00"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_0" id="inputnormalised_0" checked></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_0" id="inputtemperature_0" step="1" value="37"></div></div><input type="hidden" class="form-control  " name="id_0" value="1"></div><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_1" id="inputdate_1"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_1" id="inputnormalised_1"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_1" id="inputtemperature_1" step="1" value="39"></div></div><input type="hidden" class="form-control  " name="id_1" value="2"></div></div><a class="btn btn-sm btn-outline-primary mb-3" href="javascript:add_repeater('patient_id')" title="Add"><i class="fas fa-plus"></i></a></div><button type="submit" class="btn btn-primary ">Save</button><button onClick="$(this).closest('form').trigger('reset')" type="button" class="btn btn-primary ">Reset</button><button onClick="if(confirm('Are you sure?'))ajax_post('/delete/patients/1', {success:()=>window.location.href='/'})" type="button" class="btn btn-primary ">Delete</button></form>`,
     });
   });
 });

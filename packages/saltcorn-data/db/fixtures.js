@@ -230,7 +230,7 @@ module.exports =
       temperature: 37,
       patient_id: kirk_id,
       normalised: true,
-      date: new Date(2019, 11, 19, 10, 34, 31, 0),
+      date: new Date(2019, 11, 19, 10, 34, 0, 0),
     });
     await db.insert("readings", {
       temperature: 39,
