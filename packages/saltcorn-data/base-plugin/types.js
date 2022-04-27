@@ -1193,7 +1193,9 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string" ? v : v.toLocaleString(attrs.locale)
+              typeof v === "string"
+                ? new Date(v).toLocaleString(attrs.locale)
+                : v.toLocaleString(attrs.locale)
             ),
           }),
         }),
@@ -1218,7 +1220,9 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string" ? v : v.toLocaleDateString(attrs.locale)
+              typeof v === "string"
+                ? new Date(v).toLocaleDateString(attrs.locale)
+                : v.toLocaleDateString(attrs.locale)
             ),
           }),
         }),
