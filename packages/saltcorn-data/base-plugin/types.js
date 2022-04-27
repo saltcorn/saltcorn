@@ -1107,7 +1107,7 @@ const date = {
       isEdit: false,
       run: (d, req) =>
         typeof d === "string"
-          ? text(d)
+          ? localeDateTime(new Date(d))
           : d && d.toISOString
           ? localeDateTime(d)
           : "",
@@ -1121,7 +1121,7 @@ const date = {
       isEdit: false,
       run: (d, req) =>
         typeof d === "string"
-          ? text(d)
+          ? localeDate(new Date(d))
           : d && d.toISOString
           ? localeDate(d)
           : "",
