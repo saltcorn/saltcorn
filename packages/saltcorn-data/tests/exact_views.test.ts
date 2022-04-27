@@ -53,7 +53,7 @@ const mkTester =
     );
     if (res !== response) console.log(res);
     expect(res).toBe(response);
-    await v.delete();
+    if (!rest.noDelete) await v.delete();
   };
 
 const test_page = async ({
@@ -685,8 +685,257 @@ describe("Edit view", () => {
     await test_edit({
       name: "innerReads",
       ...innerEdit,
+      noDelete: true,
       table: "readings",
       response: `<form action="/view/innerReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date" id="inputdate"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised" id="inputnormalised"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature" id="inputtemperature" step="1"></div></div></form>`,
+    });
+    const outerEdit = {
+      layout: {
+        above: [
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Favourite book",
+                    labelFor: "favbook",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "select",
+                    textStyle: "",
+                    field_name: "favbook",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {
+              "margin-bottom": "1.5rem",
+            },
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Name",
+                    labelFor: "name",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "name",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Parent",
+                    labelFor: "parent",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "select",
+                    textStyle: "",
+                    field_name: "parent",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            name: "2d9725",
+            type: "view",
+            view: "ChildList:innerReads.readings.patient_id",
+            state: "shared",
+            configuration: {},
+          },
+          {
+            type: "action",
+            block: false,
+            rndid: "8b4200",
+            minRole: 10,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Save",
+            action_size: "",
+            action_bgcol: "",
+            action_label: "",
+            action_style: "btn-primary",
+            configuration: {},
+            action_textcol: "",
+            action_bordercol: "",
+          },
+          {
+            type: "action",
+            block: false,
+            rndid: "9ae75c",
+            confirm: false,
+            minRole: 10,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Reset",
+            action_label: "",
+            configuration: {},
+          },
+          {
+            type: "action",
+            block: false,
+            rndid: "621bba",
+            confirm: true,
+            minRole: 10,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Delete",
+            action_size: "",
+            action_bgcol: "",
+            action_label: "",
+            action_style: "btn-primary",
+            configuration: {},
+            action_textcol: "",
+            action_bordercol: "",
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "select",
+          textStyle: "",
+          field_name: "favbook",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "name",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "select",
+          textStyle: "",
+          field_name: "parent",
+          configuration: {},
+        },
+        {
+          type: "Action",
+          rndid: "8b4200",
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Save",
+          action_size: "",
+          action_bgcol: "",
+          action_label: "",
+          action_style: "btn-primary",
+          configuration: {},
+          action_textcol: "",
+          action_bordercol: "",
+        },
+        {
+          type: "Action",
+          rndid: "9ae75c",
+          confirm: false,
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Reset",
+          action_label: "",
+          configuration: {},
+        },
+        {
+          type: "Action",
+          rndid: "621bba",
+          confirm: true,
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Delete",
+          action_size: "",
+          action_bgcol: "",
+          action_label: "",
+          action_style: "btn-primary",
+          configuration: {},
+          action_textcol: "",
+          action_bordercol: "",
+        },
+      ],
+    };
+    await test_edit({
+      name: "PatientEditWithReads",
+      ...outerEdit,
+      table: "patients",
+      response: `<form action="/view/PatientEditWithReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2"><label for="inputfavbook">Favourite book</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><span style="margin-bottom:1.5rem"><div class="row w-100" style="margin-bottom:1.5rem"><div class="col-2"><label for="inputname">Name</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div></span><div class="row w-100"><div class="col-2"><label for="inputparent">Parent</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><div><div class="repeats-patient_id"><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_0" id="inputdate_0"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_0" id="inputnormalised_0"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_0" id="inputtemperature_0" step="1"></div></div></div></div><a class="btn btn-sm btn-outline-primary mb-3" href="javascript:add_repeater('patient_id')" title="Add"><i class="fas fa-plus"></i></a></div><button type="submit" class="btn btn-primary ">Save</button><button onClick="$(this).closest('form').trigger('reset')" type="button" class="btn btn-primary ">Reset</button></form>`,
     });
   });
 });
