@@ -279,7 +279,7 @@ const SearchElem = ({ connectors }) => (
     title="Search bar"
     label="Search"
   >
-    <SearchBar />
+    <Element canvas is={SearchBar}></Element>
   </WrapElem>
 );
 /**
