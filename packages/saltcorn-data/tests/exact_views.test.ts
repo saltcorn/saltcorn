@@ -53,7 +53,7 @@ const mkTester =
     assertIsSet(tbl);
     const viewCfg: any = {
       table_id: tbl.id,
-      name,
+      name: rest.name || name,
       viewtemplate,
       configuration: rest,
       min_role: 10,
@@ -66,10 +66,12 @@ const mkTester =
       mockReqRes,
       remoteQueries
     );
-    if (res !== response) console.log(res);
+    //if (res !== response) console.log(res);
     expect(res).toBe(response);
-    if (remoteQueries) await deleteViewFromServer(v.id!);
-    await v.delete();
+    if (!rest.noDelete) {
+      await v.delete();
+      if (remoteQueries) await deleteViewFromServer(v.id!);
+    }
   };
 
 const test_page = async ({
@@ -460,6 +462,194 @@ describe("Show view", () => {
 <button type="submit"  class=" btn  btn-primary ">Delete</button></form></div>`,
     });
   });
+  it("should render double join embedded exactly", async () => {
+    await test_list({
+      name: "ListReadings",
+      noDelete: true,
+      table: "readings",
+      columns: [
+        {
+          type: "Field",
+          fieldview: "showDay",
+          field_name: "date",
+          state_field: "on",
+        },
+        {
+          type: "Field",
+          fieldview: "show",
+          field_name: "normalised",
+          state_field: "on",
+        },
+        {
+          type: "JoinField",
+          join_field: "patient_id.name",
+        },
+        {
+          type: "Field",
+          fieldview: "show",
+          field_name: "temperature",
+          state_field: "on",
+        },
+      ],
+      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-11T10:34:00.000Z" locale-date-options="%7B%7D">11/11/2019</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Michael Douglas</td><td style="text-align:right">37</td></tr></tbody></table></div>`,
+    });
+    await test_show({
+      id: 1,
+      layout: {
+        above: [
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Author",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "as_text",
+                    textStyle: "",
+                    field_name: "author",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Pages",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "show",
+                    textStyle: "",
+                    field_name: "pages",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Publisher",
+                    labelFor: "",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "join_field",
+                    block: false,
+                    textStyle: "",
+                    join_field: "publisher.name",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            name: "46d4bc",
+            type: "view",
+            view: "ChildList:ListReadings.patients.favbook.readings.patient_id",
+            state: "shared",
+            configuration: {},
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          field_name: "author",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "show",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {},
+        },
+        {
+          type: "JoinField",
+          block: false,
+          textStyle: "",
+          join_field: "publisher.name",
+          configuration: {},
+        },
+      ],
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="row w-100"><div class="col-2">Publisher</div><div class="col-10"></div></div><br /><div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('date', false)">Date</a></th><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>name</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th></tr></thead><tbody><tr><td><time datetime="2019-11-11T10:34:00.000Z" locale-date-options="%7B%7D">11/11/2019</time></td><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Kirk Douglas</td><td style="text-align:right">37</td></tr><tr><td></td><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Kirk Douglas</td><td style="text-align:right">39</td></tr></tbody></table></div>`,
+    });
+  });
 });
 describe("Edit view", () => {
   it("should render exactly", async () => {
@@ -557,6 +747,416 @@ describe("Edit view", () => {
         : `<form action="javascript:void(0)" onsubmit="javascript:formSubmit(this, '/view/', 'testedit')"  class="form-namespace " method="post"><input type="hidden" name="_csrf" value="false"><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
   });
+  it("should render edit-in-edit", async () => {
+    const innerEdit = {
+      layout: {
+        above: [
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Date",
+                    labelFor: "date",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "editDay",
+                    textStyle: "",
+                    field_name: "date",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Normalised",
+                    labelFor: "normalised",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "normalised",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Temperature",
+                    labelFor: "temperature",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "temperature",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "editDay",
+          textStyle: "",
+          field_name: "date",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "normalised",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "temperature",
+          configuration: {},
+        },
+      ],
+    };
+    await test_edit({
+      name: "innerReads",
+      ...innerEdit,
+      noDelete: true,
+      table: "readings",
+      response: `<form action="/view/innerReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date" id="inputdate"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised" id="inputnormalised"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature" id="inputtemperature" step="1"></div></div></form>`,
+    });
+    const outerEdit = {
+      layout: {
+        above: [
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Favourite book",
+                    labelFor: "favbook",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "select",
+                    textStyle: "",
+                    field_name: "favbook",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            style: {
+              "margin-bottom": "1.5rem",
+            },
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Name",
+                    labelFor: "name",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "name",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            style: {},
+            widths: [2, 10],
+            besides: [
+              {
+                above: [
+                  null,
+                  {
+                    font: "",
+                    type: "blank",
+                    block: false,
+                    style: {},
+                    inline: false,
+                    contents: "Parent",
+                    labelFor: "parent",
+                    isFormula: {},
+                    textStyle: "",
+                  },
+                ],
+              },
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "select",
+                    textStyle: "",
+                    field_name: "parent",
+                    configuration: {},
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
+            type: "line_break",
+          },
+          {
+            name: "2d9725",
+            type: "view",
+            view: "ChildList:innerReads.readings.patient_id",
+            state: "shared",
+            configuration: {},
+          },
+          {
+            type: "action",
+            block: false,
+            rndid: "8b4200",
+            minRole: 10,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Save",
+            action_size: "",
+            action_bgcol: "",
+            action_label: "",
+            action_style: "btn-primary",
+            configuration: {},
+            action_textcol: "",
+            action_bordercol: "",
+          },
+          {
+            type: "action",
+            block: false,
+            rndid: "9ae75c",
+            confirm: false,
+            minRole: 10,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Reset",
+            action_label: "",
+            configuration: {},
+          },
+          {
+            type: "action",
+            block: false,
+            rndid: "621bba",
+            confirm: true,
+            minRole: 10,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Delete",
+            action_size: "",
+            action_bgcol: "",
+            action_label: "",
+            action_style: "btn-primary",
+            configuration: {},
+            action_textcol: "",
+            action_bordercol: "",
+          },
+        ],
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "select",
+          textStyle: "",
+          field_name: "favbook",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "name",
+          configuration: {},
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "select",
+          textStyle: "",
+          field_name: "parent",
+          configuration: {},
+        },
+        {
+          type: "Action",
+          rndid: "8b4200",
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Save",
+          action_size: "",
+          action_bgcol: "",
+          action_label: "",
+          action_style: "btn-primary",
+          configuration: {},
+          action_textcol: "",
+          action_bordercol: "",
+        },
+        {
+          type: "Action",
+          rndid: "9ae75c",
+          confirm: false,
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Reset",
+          action_label: "",
+          configuration: {},
+        },
+        {
+          type: "Action",
+          rndid: "621bba",
+          confirm: true,
+          minRole: 10,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Delete",
+          action_size: "",
+          action_bgcol: "",
+          action_label: "",
+          action_style: "btn-primary",
+          configuration: {},
+          action_textcol: "",
+          action_bordercol: "",
+        },
+      ],
+    };
+    await test_edit({
+      name: "PatientEditWithReads",
+      ...outerEdit,
+      table: "patients",
+      response: `<form action="/view/PatientEditWithReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2"><label for="inputfavbook">Favourite book</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><span style="margin-bottom:1.5rem"><div class="row w-100" style="margin-bottom:1.5rem"><div class="col-2"><label for="inputname">Name</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div></span><div class="row w-100"><div class="col-2"><label for="inputparent">Parent</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><div><div class="repeats-patient_id"><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_0" id="inputdate_0"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_0" id="inputnormalised_0"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_0" id="inputtemperature_0" step="1"></div></div></div></div><a class="btn btn-sm btn-outline-primary mb-3" href="javascript:add_repeater('patient_id')" title="Add"><i class="fas fa-plus"></i></a></div><button type="submit" class="btn btn-primary ">Save</button><button onClick="$(this).closest('form').trigger('reset')" type="button" class="btn btn-primary ">Reset</button></form>`,
+    });
+    await test_edit({
+      name: "PatientEditWithReads",
+      id: 1,
+      ...outerEdit,
+      table: "patients",
+      response: `<form action="/view/PatientEditWithReads" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2"><label for="inputfavbook">Favourite book</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><span style="margin-bottom:1.5rem"><div class="row w-100" style="margin-bottom:1.5rem"><div class="col-2"><label for="inputname">Name</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div></span><div class="row w-100"><div class="col-2"><label for="inputparent">Parent</label></div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><div><div class="repeats-patient_id"><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_0" id="inputdate_0" value="11/11/2019"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_0" id="inputnormalised_0" checked></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_0" id="inputtemperature_0" step="1" value="37"></div></div><input type="hidden" class="form-control  " name="id_0" value="1"></div><div class="form-repeat form-namespace repeat-patient_id"><div class="float-end"><span onclick="rep_up(this)"><i class="fa fa-arrow-up pull-right"></i></span>&nbsp;<span onclick="rep_del(this)"><i class="fa fa-times pull-right"></i></span>&nbsp;<span onclick="rep_down(this)"><i class="fa fa-arrow-down pull-right"></i></span></div><div class="row w-100"><div class="col-2"><label for="inputdate">Date</label></div><div class="col-10"><input type="text" class="form-control  " data-fieldname="date" name="date_1" id="inputdate_1"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputnormalised">Normalised</label></div><div class="col-10"><input class="me-2 mt-1  " data-fieldname="normalised" type="checkbox" name="normalised_1" id="inputnormalised_1"></div></div><br /><div class="row w-100"><div class="col-2"><label for="inputtemperature">Temperature</label></div><div class="col-10"><input type="number" class="form-control  " data-fieldname="temperature" name="temperature_1" id="inputtemperature_1" step="1" value="39"></div></div><input type="hidden" class="form-control  " name="id_1" value="2"></div></div><a class="btn btn-sm btn-outline-primary mb-3" href="javascript:add_repeater('patient_id')" title="Add"><i class="fas fa-plus"></i></a></div><button type="submit" class="btn btn-primary ">Save</button><button onClick="$(this).closest('form').trigger('reset')" type="button" class="btn btn-primary ">Reset</button><button onClick="if(confirm('Are you sure?'))ajax_post('/delete/patients/1', {success:()=>window.location.href='/'})" type="button" class="btn btn-primary ">Delete</button></form>`,
+    });
+  });
 });
 describe("List view", () => {
   it("should render exactly", async () => {
@@ -617,7 +1217,7 @@ describe("List view", () => {
         : '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortBy(\'name\', false, \'testlist\')">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th></th><th></th></tr></thead><tbody><tr><td>Kirk Douglas</td><td></td><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="javascript:execLink(\'/view/authorshow?id=1\')">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {local_post_btn(this)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="javascript:execLink(\'/view/authorshow?id=2\')">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {local_post_btn(this)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>',
     });
   });
-  it("should render list view with where aggregations", async () => {
+  it("should render list view with where aggregations exactly", async () => {
     await test_list({
       table: "books",
       columns: [
@@ -653,7 +1253,7 @@ describe("List view", () => {
         : `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortBy('author', false, 'testlist')">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`,
     });
   });
-  it("should render triply joined formulae list view", async () => {
+  it("should render triply joined formulae list view exactly", async () => {
     await test_list({
       table: "readings",
       columns: [

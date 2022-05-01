@@ -567,13 +567,18 @@ const get_viewable_fields = (
         fld +
         db.sqlsanitize(column.aggwhere || "")
       ).toLowerCase();
-
+      let key = targetNm;
+      if (column.stat.toLowerCase() === "array_agg")
+        key = (r) =>
+          Array.isArray(r[targetNm])
+            ? r[targetNm].map((v) => v.toString()).join(", ")
+            : "";
       return {
         ...setWidth,
         label: column.header_label
           ? text(column.header_label)
           : text(column.stat + " " + table),
-        key: targetNm,
+        key,
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
     } else if (column.type === "Field") {

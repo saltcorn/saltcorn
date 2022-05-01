@@ -53,7 +53,7 @@ const Link = ({
     <span
       className={`${textStyle} is-builder-link ${
         selected ? "selected-node" : ""
-      } ${isFormula.text ? "font-monospace" : ""} ${link_style} ${link_size}`}
+      } ${isFormula?.text ? "font-monospace" : ""} ${link_style} ${link_size}`}
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
       style={
@@ -67,7 +67,7 @@ const Link = ({
       }
     >
       <DynamicFontAwesomeIcon icon={link_icon} className="me-1" />
-      {isFormula.text ? `=${text}` : text}
+      {isFormula?.text ? `=${text}` : text}
     </span>
   );
 };

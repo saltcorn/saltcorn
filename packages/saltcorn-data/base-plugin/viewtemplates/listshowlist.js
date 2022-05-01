@@ -221,13 +221,21 @@ const run = async (
           case "OneToOneShow":
             const [vname, reltblnm, relfld] = rel.split(".");
             const tab_name = reltblnm;
+            let subviewPaging = {};
+            if (state._paged_view && state._paged_view === vname) {
+              subviewPaging._page = state._page;
+              subviewPaging._pagesize = state._pagesize;
+            }
             const subview = await View.findOne({ name: vname });
             if (!subview)
               throw new InvalidConfiguration(
                 `View ${viewname} incorrectly configured: cannot find view ${vname}`
               );
             else {
-              const subresp = await subview.run({ [relfld]: id }, extraArgs);
+              const subresp = await subview.run(
+                { [relfld]: id, ...subviewPaging },
+                extraArgs
+              );
               reltbls[tab_name] = subresp;
             }
             break;
