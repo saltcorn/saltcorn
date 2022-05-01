@@ -58,6 +58,11 @@ const jwtOpts = {
   audience: "saltcorn-mobile-app",
 };
 
+const disabledCsurf = (req, res, next) => {
+  req.csrfToken = () => "";
+  next();
+};
+
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
 
 /**
@@ -263,16 +268,11 @@ const getApp = async (opts = {}) => {
         req.url.startsWith("/api/") ||
         req.url === "/auth/login-with/jwt" ||
         ExtractJwt.fromAuthHeaderWithScheme("jwt")(req)
-      ) {
-        return next();
-      }
+      )
+        return disabledCsurf(req, res, next);
       csurf(req, res, next);
     });
-  else
-    app.use((req, res, next) => {
-      req.csrfToken = () => "";
-      next();
-    });
+  else app.use(disabledCsurf);
 
   app.use(function (req, res, next) {
     if (req.headers["x-saltcorn-client"] === "mobile-app") {

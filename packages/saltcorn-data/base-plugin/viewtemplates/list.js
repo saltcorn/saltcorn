@@ -426,9 +426,7 @@ const run = async (
   const appState = getState();
   const locale = extraOpts.req.getLocale();
   const __ = (s) =>
-    isWeb(extraOpts.req)
-      ? appState.i18n.__({ phrase: s, locale }) || s
-      : undefined;
+    isWeb(extraOpts.req) ? appState.i18n.__({ phrase: s, locale }) || s : s;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {

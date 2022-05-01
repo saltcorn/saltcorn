@@ -8,6 +8,13 @@ import Page from "../models/page";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { assertIsSet } from "./assertions";
+import {
+  prepareQueryEnviroment,
+  sendViewToServer,
+  deleteViewFromServer,
+} from "./remote_query_helper";
+
+let remoteQueries = false;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -15,6 +22,11 @@ afterAll(db.close);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+  if (process.env.REMOTE_QUERIES === "true") {
+    getState().setConfig("base_url", "http://localhost:3000");
+    remoteQueries = true;
+    prepareQueryEnviroment();
+  }
 });
 const mkTester =
   ({
@@ -39,20 +51,24 @@ const mkTester =
   }) => {
     const tbl = await Table.findOne({ name: rest.table || table });
     assertIsSet(tbl);
-    const v = await View.create({
+    const viewCfg: any = {
       table_id: tbl.id,
       name,
       viewtemplate,
       configuration: rest,
       min_role: 10,
-    });
+    };
+    const v = await View.create(viewCfg);
+    if (remoteQueries) await sendViewToServer(viewCfg);
 
     const res = await v.run(
       id ? { id } : set_id ? { id: set_id } : {},
-      mockReqRes
+      mockReqRes,
+      remoteQueries
     );
     if (res !== response) console.log(res);
     expect(res).toBe(response);
+    if (remoteQueries) await deleteViewFromServer(v.id!);
     await v.delete();
   };
 
@@ -206,7 +222,9 @@ describe("Show view", () => {
           in_modal: true,
         },
       ],
-      response: `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" type="button" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
+      response: !remoteQueries
+        ? `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" type="button" onClick="ajax_modal('/view/authorshow?id=1')">foo it</button></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`
+        : `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><button class="btn btn-link" type="button" onClick="ajax_modal('javascript:execLink('/view/authorshow?id=1')')">foo it</button></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
     });
     await test_show({
       layout: {
@@ -526,13 +544,17 @@ describe("Edit view", () => {
     await test_edit({
       layout,
       columns,
-      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+      response: !remoteQueries
+        ? `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`
+        : `<form action="javascript:void(0)" onsubmit="javascript:formSubmit(this, '/view/', 'testedit')"  class="form-namespace " method="post"><input type="hidden" name="_csrf" value="false"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
     await test_edit({
       id: 1,
       layout,
       columns,
-      response: `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
+      response: !remoteQueries
+        ? `<form action="/view/testedit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`
+        : `<form action="javascript:void(0)" onsubmit="javascript:formSubmit(this, '/view/', 'testedit')"  class="form-namespace " method="post"><input type="hidden" name="_csrf" value="false"><input type="hidden" class="form-control  " name="id" value="1"><div class="row w-100"><div class="col-2">Name</div><div class="col-10"><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname" value="Kirk Douglas"></div></div><br /><div class="row w-100"><div class="col-2">Favourite book</div><div class="col-10"><select class="form-control form-select   " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value=""></option><option value="1" selected>Herman Melville</option><option value="2">Leo Tolstoy</option></select></div></div><br /><div class="row w-100"><div class="col-2">Parent</div><div class="col-10"><select class="form-control form-select   " data-fieldname="parent" name="parent" id="inputparent"><option value=""></option><option value="1">Kirk Douglas</option><option value="2">Michael Douglas</option></select></div></div><br /><button type="submit" class="btn btn-primary ">Save</button></form>`,
     });
   });
 });
@@ -590,8 +612,9 @@ describe("List view", () => {
           header_label: "",
         },
       ],
-      response:
-        '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'name\', false)">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th></th><th></th></tr></thead><tbody><tr><td>Kirk Douglas</td><td></td><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=1">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=2">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>',
+      response: !remoteQueries
+        ? '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'name\', false)">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th></th><th></th></tr></thead><tbody><tr><td>Kirk Douglas</td><td></td><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=1">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="/view/authorshow?id=2">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {ajax_post_btn(this, true, undefined)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>'
+        : '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortBy(\'name\', false, \'testlist\')">Name</a></th><th>name</th><th>author</th><th>Helloer</th><th>authorshow</th><th>readings</th><th></th><th></th></tr></thead><tbody><tr><td>Kirk Douglas</td><td></td><td>Herman Melville</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:1});" class="btn btn-primary ">say hi</a></td><td><a href="javascript:execLink(\'/view/authorshow?id=1\')">6</a></td><td>2</td><td><a href="https://lmgtfy.app/?q=Kirk Douglas">KIRK DOUGLAS</a></td><td><form action="/delete/patients/1?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {local_post_btn(this)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr><tr><td>Michael Douglas</td><td>Kirk Douglas</td><td>Leo Tolstoy</td><td><a href="javascript:view_post(\'testlist\', \'run_action\', {action_name:\'run_js_code\', id:2});" class="btn btn-primary ">say hi</a></td><td><a href="javascript:execLink(\'/view/authorshow?id=2\')">7</a></td><td>1</td><td><a href="https://lmgtfy.app/?q=Michael Douglas">MICHAEL DOUGLAS</a></td><td><form action="/delete/patients/2?redirect=/view/testlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="if(confirm(\'Are you sure?\')) {local_post_btn(this)}" class=" btn btn-sm btn-outline-primary">Delete</button></form></td></tr></tbody></table></div>',
     });
   });
   it("should render list view with where aggregations", async () => {
@@ -625,7 +648,9 @@ describe("List view", () => {
           header_label: "count 1",
         },
       ],
-      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('author', false)">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`,
+      response: !remoteQueries
+        ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('author', false)">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`
+        : `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortBy('author', false, 'testlist')">Author</a></th><th>Count patients</th><th>count 1</th></tr></thead><tbody><tr><td>Herman Melville</td><td>1</td><td>1</td></tr><tr><td>Leo Tolstoy</td><td>1</td><td>0</td></tr></tbody></table></div>`,
     });
   });
   it("should render triply joined formulae list view", async () => {
@@ -665,7 +690,9 @@ describe("List view", () => {
           link_text_formula: "on",
         },
       ],
-      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>author</th><th>publisher</th></tr></thead><tbody><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">39</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Michael Douglas</a></td><td><a href="http://bbc.co.uk">Leo Tolstoy</a></td><td><a href="http://bbc.co.uk">AK Press</a></td></tr></tbody></table></div>`,
+      response: !remoteQueries
+        ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>author</th><th>publisher</th></tr></thead><tbody><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">39</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Michael Douglas</a></td><td><a href="http://bbc.co.uk">Leo Tolstoy</a></td><td><a href="http://bbc.co.uk">AK Press</a></td></tr></tbody></table></div>`
+        : `<div class="table-responsive"><table class="table table-sm"><thead><tr><th style="text-align: right"><a href="javascript:sortBy('temperature', false, 'testlist')">Temperature</a></th><th>name</th><th>author</th><th>publisher</th></tr></thead><tbody><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">39</td><td><a href="http://bbc.co.uk">Kirk Douglas</a></td><td><a href="http://bbc.co.uk">Herman Melville</a></td><td><a href="http://bbc.co.uk"></a></td></tr><tr><td style="text-align:right">37</td><td><a href="http://bbc.co.uk">Michael Douglas</a></td><td><a href="http://bbc.co.uk">Leo Tolstoy</a></td><td><a href="http://bbc.co.uk">AK Press</a></td></tr></tbody></table></div>`,
     });
   });
   it("should render triply joined with dropdown list view", async () => {
@@ -739,13 +766,21 @@ describe("List view", () => {
           header_label: "",
         },
       ],
-      response: `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>author</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>showreads</th><th></th><th>Action</th></tr></thead><tbody><tr><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Herman Melville</td><td style="text-align:right">37</td><td></td><td><a href="/view/showreads?id=1">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd1"><form action="/delete/readings/1?redirect=/view/testlist" method="post">
+      response: !remoteQueries
+        ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby('normalised', false)">Normalised</a></th><th>author</th><th style="text-align: right"><a href="javascript:sortby('temperature', false)">Temperature</a></th><th>name</th><th>showreads</th><th></th><th>Action</th></tr></thead><tbody><tr><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Herman Melville</td><td style="text-align:right">37</td><td></td><td><a href="/view/showreads?id=1">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd1"><form action="/delete/readings/1?redirect=/view/testlist" method="post">
   <input type="hidden" name="_csrf" value="">
 <button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=1')">showreads</button></div></div></td></tr><tr><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Herman Melville</td><td style="text-align:right">39</td><td></td><td><a href="/view/showreads?id=2">showreads</a></td><td><a href="http://bbc.co.uk">Foo 9</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd2"><form action="/delete/readings/2?redirect=/view/testlist" method="post">
   <input type="hidden" name="_csrf" value="">
 <button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=2')">showreads</button></div></div></td></tr><tr><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Leo Tolstoy</td><td style="text-align:right">37</td><td>AK Press</td><td><a href="/view/showreads?id=3">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd3"><form action="/delete/readings/3?redirect=/view/testlist" method="post">
   <input type="hidden" name="_csrf" value="">
-<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=3')">showreads</button></div></div></td></tr></tbody></table></div>`,
+<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('/view/showreads?id=3')">showreads</button></div></div></td></tr></tbody></table></div>`
+        : `<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortBy('normalised', false, 'testlist')">Normalised</a></th><th>author</th><th style="text-align: right"><a href="javascript:sortBy('temperature', false, 'testlist')">Temperature</a></th><th>name</th><th>showreads</th><th></th><th>Action</th></tr></thead><tbody><tr><td><i class="fas fa-lg fa-check-circle text-success"></i></td><td>Herman Melville</td><td style="text-align:right">37</td><td></td><td><a href="javascript:execLink('/view/showreads?id=1')">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd1"><form action="/delete/readings/1?redirect=/view/testlist" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="button" onclick="local_post_btn(this)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('javascript:execLink('/view/showreads?id=1')')">showreads</button></div></div></td></tr><tr><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Herman Melville</td><td style="text-align:right">39</td><td></td><td><a href="javascript:execLink('/view/showreads?id=2')">showreads</a></td><td><a href="http://bbc.co.uk">Foo 9</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd2"><form action="/delete/readings/2?redirect=/view/testlist" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="button" onclick="local_post_btn(this)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('javascript:execLink('/view/showreads?id=2')')">showreads</button></div></div></td></tr><tr><td><i class="fas fa-lg fa-times-circle text-danger"></i></td><td>Leo Tolstoy</td><td style="text-align:right">37</td><td>AK Press</td><td><a href="javascript:execLink('/view/showreads?id=3')">showreads</a></td><td><a href="http://bbc.co.uk">Foo 7</a></td><td><div class="dropdown"><button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-boundary="viewport" type="button" id="actiondd3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button><div class="dropdown-menu dropdown-menu-end" aria-labelledby="actiondd3"><form action="/delete/readings/3?redirect=/view/testlist" method="post">
+  <input type="hidden" name="_csrf" value="">
+<button type="button" onclick="local_post_btn(this)" class=" btn btn-sm dropdown-item">Delete</button></form><button class="btn btn-link dropdown-item" type="button" onClick="ajax_modal('javascript:execLink('/view/showreads?id=3')')">showreads</button></div></div></td></tr></tbody></table></div>`,
     });
   });
 });
@@ -839,8 +874,9 @@ describe("Page", () => {
             type: "view",
             view: "authorlist",
             state: "shared",
-            contents:
-              '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>authorshow</th><th></th><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
+            contents: !remoteQueries
+              ? '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>authorshow</th><th></th><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>'
+              : '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortBy(\'author\', false, \'authorlist\')">Author</a></th><th>authorshow</th><th></th><th>Count patients</th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="javascript:execLink(\'/view/authorshow?id=1\')">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="local_post_btn(this)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="javascript:execLink(\'/view/authorshow?id=2\')">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="local_post_btn(this)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
           },
           {
             name: "18a8cc",
