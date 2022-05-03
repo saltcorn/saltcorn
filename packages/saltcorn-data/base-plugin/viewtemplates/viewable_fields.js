@@ -686,7 +686,7 @@ const sortlinkForName = (fname, req, viewname) => {
       : "true";
   return isWeb(req)
     ? `javascript:sortby('${text(fname)}', ${desc})`
-    : `javascript:sortBy('${text(fname)}', ${desc}, '${viewname}')`;
+    : `javascript:sortby('${text(fname)}', ${desc}, '${viewname}')`;
 };
 
 /**

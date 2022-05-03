@@ -138,7 +138,7 @@ async function setStateFields(kvs, href) {
   parent.handleRoute(href, queryParams.join("&"));
 }
 
-async function sortBy(k, desc, viewname) {
+async function sortby(k, desc, viewname) {
   await setStateFields(
     { _sortby: k, _sortdesc: desc ? "on" : { unset: true } },
     `get/view/${viewname}`

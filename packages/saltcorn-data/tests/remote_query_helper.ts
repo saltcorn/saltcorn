@@ -5,8 +5,6 @@ import axios from "axios";
 declare let global: any;
 
 export const prepareQueryEnviroment = () => {
-  // sign() returns '***' in github actions,
-  // I'm using an optional env variable as workaround
   const token = process.env.JSON_WEB_TOKEN
     ? process.env.JSON_WEB_TOKEN
     : sign(
