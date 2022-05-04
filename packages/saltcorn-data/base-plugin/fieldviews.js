@@ -295,4 +295,52 @@ const search_or_create = {
     );
   },
 };
-module.exports = { select, search_or_create, radio_select, two_level_select };
+
+const search_join_field = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  blockDisplay: true,
+
+  isEdit: false,
+  isFilter: true,
+  configFields: async (field) => {
+    const reftable = await Table.findOne({ name: field.reftable_name });
+    if (!reftable) return [];
+    const fields = await reftable.getFields();
+    return [
+      {
+        name: "joinfield",
+        label: "Join field",
+        type: "String",
+        required: true,
+        attributes: {
+          options: fields.map((v) => ({
+            label: v.name,
+            value: `${reftable.name}->${v.name}`,
+          })),
+        },
+      },
+    ];
+  },
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+    console.log(field, attrs);
+    return input({
+      type: "text",
+      class: ["form-control", "blur-on-enter-keypress", cls],
+
+      disabled: attrs.disabled,
+      onBlur: `set_state_field('${nm}.${encodeURIComponent(
+        attrs.joinfield
+      )}', this.value)`,
+      value: text_attr(state[`${nm}.${attrs.joinfield}`] || ""),
+    });
+  },
+};
+module.exports = {
+  select,
+  search_or_create,
+  radio_select,
+  two_level_select,
+  search_join_field,
+};

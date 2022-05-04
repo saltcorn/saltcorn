@@ -219,6 +219,9 @@ if (localStorage.getItem("reload_on_init")) {
   location.reload();
 }
 function initialize_page() {
+  $(".blur-on-enter-keypress").bind("keyup", function (e) {
+    if (e.keyCode === 13) e.target.blur();
+  });
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();

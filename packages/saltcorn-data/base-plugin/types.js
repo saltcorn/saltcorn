@@ -141,11 +141,11 @@ const number_limit = (direction) => ({
 const float_number_limit = (direction) => ({
   isEdit: false,
   isFilter: true,
+  blockDisplay: true,
   run: (nm, v, attrs = {}, cls, required, field, state = {}) =>
     input({
       type: "number",
       class: ["form-control", cls],
-      blockDisplay: true,
 
       disabled: attrs.disabled,
       onChange: `set_state_field('_${direction}_${nm}', this.value)`,
