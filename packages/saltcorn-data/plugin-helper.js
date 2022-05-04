@@ -1087,6 +1087,18 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       qstate[k] = { ilike: v };
     } else if (field && field.type.name === "Bool" && state[k] === "?") {
       // omit
+    } else if (
+      typeof v === "object" &&
+      Object.keys(v).length === 1 &&
+      field?.type?.name === "JSON"
+    ) {
+      qstate[k] = [
+        ...(qstate[k] ? [qstate[k]] : []),
+        {
+          // where jFieldNm in (select id from jtnm where lblField=v)
+          json: [Object.keys(v)[0], Object.values(v)[0]],
+        },
+      ];
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
         ? { or: v.map(field.type.read) }
