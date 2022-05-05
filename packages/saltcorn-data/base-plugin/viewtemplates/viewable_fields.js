@@ -15,6 +15,7 @@ const { structuredClone, isWeb } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
+const { isNode } = require("../../utils");
 
 /**
  * @function
@@ -188,7 +189,15 @@ const make_link = (
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = "dropdown-item";
       if (in_modal)
-        return a({ ...attrs, href: `javascript:ajax_modal('${href}');` }, txt);
+        return a(
+          {
+            ...attrs,
+            href: isNode()
+              ? `javascript:ajax_modal('${href}');`
+              : `javascript:mobile_modal('${href}');`,
+          },
+          txt
+        );
       return a(attrs, txt);
     },
   };
@@ -285,7 +294,7 @@ const view_linker = (
         key: (r) => {
           const target = `/view/${encodeURIComponent(vnm)}${get_query(r)}`;
           return link_view(
-            isWeb ? target : `javascript:execLink('${target}')`,
+            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             get_label(vnm, r),
             in_modal,
             link_style,
@@ -307,7 +316,7 @@ const view_linker = (
         key: (r) => {
           const target = `/view/${encodeURIComponent(ivnm)}`;
           return link_view(
-            isWeb ? target : `javascript:execLink('${target}')`,
+            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             get_label(ivnm, r),
             in_modal,
             link_style,
@@ -333,7 +342,7 @@ const view_linker = (
             r.id
           }`;
           return link_view(
-            isWeb ? target : `javascript:execLink('${target}')`,
+            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             get_label(viewnm, r),
             in_modal,
             link_style,
@@ -361,7 +370,7 @@ const view_linker = (
               reffield.refname
             }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
             return link_view(
-              isWeb ? target : `javascript:execLink('${target}')`,
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(
                 typeof summary_field === "undefined" ? pviewnm : summary_field,
                 r

@@ -517,7 +517,7 @@ const run = async (
       const target = `/view/${encodeURIComponent(
         view_to_create
       )}${stateToQueryString(state)}`;
-      const hrefVal = isWeb(extraOpts.req)
+      const hrefVal = isWeb(extraOpts.req) || create_view_display === "Popup"
         ? target
         : `javascript:execLink('${target}');`;
       create_link = link_view(
