@@ -226,11 +226,12 @@ module.exports =
       favbook: 2,
       parent: kirk_id,
     });
+    const date = new Date("2019-11-11T10:34:00.000Z");
     await db.insert("readings", {
       temperature: 37,
       patient_id: kirk_id,
       normalised: true,
-      date: new Date("2019-11-11T10:34:00.000Z"),
+      date: db.isSQLite ? date.toString() : date,
     });
     await db.insert("readings", {
       temperature: 39,

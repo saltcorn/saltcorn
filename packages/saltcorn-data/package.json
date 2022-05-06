@@ -5,6 +5,7 @@
   "homepage": "https://saltcorn.com",
   "scripts": {
     "test": "jest tests --runInBand",
+    "remote-queries-test": "REMOTE_QUERIES=true jest tests/exact_views.test.ts",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\"",
     "build": "webpack --mode development"
@@ -87,6 +88,7 @@
     "@types/dumb-passwords": "^0.2.1",
     "@types/estraverse": "^5.1.1",
     "@types/jest": "^27.0.3",
+    "@types/jsonwebtoken": "^8.5.1",
     "@types/mjml": "4.7.0",
     "@types/node": "^16.11.12",
     "@types/node-fetch": "2.5.12",
@@ -94,6 +96,7 @@
     "@types/uuid": "^8.3.3",
     "chaos-guinea-pig": "^0.1.0",
     "jest": "^27.1.0",
+    "jsonwebtoken": "^8.5.1",
     "ts-jest": "^27.1.0",
     "typescript": "^4.4.4",
     "webpack": "5.68.0",
