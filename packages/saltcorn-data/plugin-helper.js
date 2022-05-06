@@ -15,6 +15,7 @@ const { button, a, label, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToWhere, freeVariables } = require("./models/expression");
 const { traverse } = require("./models/layout");
+const { isNode } = require("./utils");
 /**
  *
  * @param {string} url
@@ -65,7 +66,7 @@ const link_view = (
           extraClass,
         ],
         type: "button",
-        onClick: `ajax_modal('${url}')`,
+        onClick: isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`,
         style,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",

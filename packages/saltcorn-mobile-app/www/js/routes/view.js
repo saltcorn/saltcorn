@@ -86,5 +86,5 @@ export const getView = async (context) => {
         alerts: [],
         role: state.role_id,
       });
-  return { content: wrappedContent };
+  return { content: wrappedContent, title: viewname };
 };

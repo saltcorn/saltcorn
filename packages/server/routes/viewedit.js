@@ -775,3 +775,12 @@ router.post(
     res.redirect("/viewedit");
   })
 );
+
+router.post(
+  "/test/inserter",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const view = await View.create(req.body);
+    res.json({ view });
+  })
+);

@@ -426,6 +426,10 @@ const transformForm = async ({ form, table, req, row, res }) => {
       //console.log({ view_select });
 
       const view = await View.findOne({ name: view_select.viewname });
+      if (!view)
+        throw new InvalidConfiguration(
+          `Cannot find embedded view: ${view_select.viewname}`
+        );
       if (view.viewtemplate === "Edit" && view_select.type === "ChildList") {
         const childTable = Table.findOne({ id: view.table_id });
         const childForm = await getForm(
