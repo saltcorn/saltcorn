@@ -184,3 +184,11 @@ function mobile_modal(url, opts = {}) {
     // onOpen onClose initialize_page?
   });
 }
+
+async function view_post(viewname, route, data, onDone) {
+  const result = await parent.router.resolve({
+    pathname: `post/view/${viewname}/${route}`,
+    data,
+  });
+  common_done(result);
+}

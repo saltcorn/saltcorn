@@ -92,7 +92,7 @@ export default class BuildAppCommand extends Command {
     }
     const serverRoot = join(require.resolve("@saltcorn/server"), "..");
     const srcPrefix = join(serverRoot, "public");
-    const srcFiles = ["jquery-3.6.0.min.js", "saltcorn.js", "saltcorn.css"];
+    const srcFiles = ["jquery-3.6.0.min.js", "saltcorn-common.js", "saltcorn.js", "saltcorn.css"];
     for (const srcFile of srcFiles) {
       copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
     }

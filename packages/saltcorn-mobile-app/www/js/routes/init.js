@@ -1,5 +1,5 @@
 import { deleteRows } from "./delete.js";
-import { getView, postView } from "./view.js";
+import { getView, postView, postViewRoute } from "./view.js";
 import { postToggleField } from "./edit.js";
 
 export const initRoutes = async () => {
@@ -7,6 +7,10 @@ export const initRoutes = async () => {
     {
       path: "post/view/:viewname",
       action: postView,
+    },
+    {
+      path: "post/view/:viewname/:route",
+      action: postViewRoute,
     },
     {
       path: "get/view/:viewname",
