@@ -426,9 +426,7 @@ const run = async (
   const appState = getState();
   const locale = extraOpts.req.getLocale();
   const __ = (s) =>
-    isWeb(extraOpts.req)
-      ? appState.i18n.__({ phrase: s, locale }) || s
-      : undefined;
+    isWeb(extraOpts.req) ? appState.i18n.__({ phrase: s, locale }) || s : s;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
@@ -519,7 +517,7 @@ const run = async (
       const target = `/view/${encodeURIComponent(
         view_to_create
       )}${stateToQueryString(state)}`;
-      const hrefVal = isWeb(extraOpts.req)
+      const hrefVal = isWeb(extraOpts.req) || create_view_display === "Popup"
         ? target
         : `javascript:execLink('${target}');`;
       create_link = link_view(

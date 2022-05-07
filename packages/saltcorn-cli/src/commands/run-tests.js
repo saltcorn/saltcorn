@@ -32,26 +32,34 @@ class RunTestsCommand extends Command {
     return res;
   }
 
+  async prepareTestServer(env, port) {
+    let serverEnv = JSON.parse(JSON.stringify(env));
+    serverEnv.SQLITE_FILEPATH = "/tmp/sctestdb_server";
+    spawnSync("packages/saltcorn-cli/bin/saltcorn", ["fixtures", "-r"], {
+      stdio: "inherit",
+      env: serverEnv,
+    });
+
+    const server = spawn(
+      "packages/saltcorn-cli/bin/saltcorn",
+      ["serve", "-p", port],
+      {
+        stdio: "inherit",
+        env: serverEnv,
+      }
+    );
+    await sleep(2000);
+    return server;
+  }
+
   /**
    *
    * @param {*} env
    * @returns {Promise<void>}
    */
   async e2etest(env) {
-    spawnSync("packages/saltcorn-cli/bin/saltcorn", ["fixtures", "-r"], {
-      stdio: "inherit",
-      env,
-    });
-
-    const server = spawn(
-      "packages/saltcorn-cli/bin/saltcorn",
-      ["serve", "-p", "2987"],
-      {
-        stdio: "inherit",
-        env,
-      }
-    );
-    await sleep(2000);
+    const port = 2987;
+    const server = await this.prepareTestServer(env, port);
     const res = await this.do_test(
       "npm",
       ["run", "gotest"],
@@ -63,6 +71,23 @@ class RunTestsCommand extends Command {
     if (res.status !== 0) this.exit(res.status);
   }
 
+  /**
+   *
+   * @param {*} env
+   */
+  async remoteQueryTest(env, jestParams) {
+    const port = 3000;
+    env.jwt_secret = require("@saltcorn/data/db").connectObj.jwt_secret;
+    const server = await this.prepareTestServer(env, port);
+    const res = await this.do_test(
+      "npm",
+      ["run", "remote-queries-test", ...jestParams],
+      env,
+      "packages/saltcorn-data"
+    );
+    server.kill();
+    if (res.status !== 0) this.exit(res.status);
+  }
   /**
    *
    * @param {object} args
@@ -91,9 +116,6 @@ class RunTestsCommand extends Command {
     this.validateCall(args, flags);
     var env;
 
-    spawnSync("npm", ["run", "tsc"], {
-      stdio: "inherit",
-    });
     const db = require("@saltcorn/data/db");
     if (db.isSQLite) {
       const testdbpath = "/tmp/sctestdb";
@@ -103,6 +125,9 @@ class RunTestsCommand extends Command {
       await db.changeConnection({ database: "saltcorn_test" });
       env = { ...process.env, PGDATABASE: "saltcorn_test" };
     }
+    spawnSync("npm", ["run", "tsc"], {
+      stdio: "inherit",
+    });
     const fixtures = require("@saltcorn/data/db/fixtures");
     const reset = require("@saltcorn/data/db/reset_schema");
     await reset();
@@ -123,6 +148,8 @@ class RunTestsCommand extends Command {
     }
     if (args.package === "core") {
       await this.do_test("npm", ["run", "test", ...jestParams], env);
+    } else if (args.package === "view-queries") {
+      await this.remoteQueryTest(env, jestParams);
     } else if (args.package === "e2e") {
       await this.e2etest(env);
     } else if (args.package) {

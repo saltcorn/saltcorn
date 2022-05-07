@@ -48,6 +48,10 @@ function replaceIframeInnerContent(content) {
   for (let script of scripts) {
     iframe.contentWindow.eval(script.innerHTML);
   }
+  const scmodal = iframe.contentWindow.$("#scmodal");  
+  if (scmodal) {
+    scmodal.modal("hide");
+  }
 }
 
 function handleRoute(route, query) {
