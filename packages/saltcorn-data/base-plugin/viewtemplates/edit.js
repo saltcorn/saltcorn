@@ -459,7 +459,7 @@ const transformForm = async ({ form, table, req, row, res, getRowQuery }) => {
         });
         if (row?.id) {
           const childRows = getRowQuery
-            ? await getRowQuery(view.table_id, row.id)
+            ? await getRowQuery(view.table_id, view_select, row.id)
             : await childTable.getRows({
                 [view_select.field_name]: row.id,
               });
@@ -948,7 +948,7 @@ module.exports = {
       }
       return doAuthPost({ body, table_id, req });
     },
-    async getRowQuery(table_id, row_id) {
+    async getRowQuery(table_id, view_select, row_id) {
       const childTable = Table.findOne({ id: table_id });
       return await childTable.getRows({
         [view_select.field_name]: row_id,
