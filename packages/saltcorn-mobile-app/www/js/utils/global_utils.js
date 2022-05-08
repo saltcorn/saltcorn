@@ -48,21 +48,31 @@ function replaceIframeInnerContent(content) {
   for (let script of scripts) {
     iframe.contentWindow.eval(script.innerHTML);
   }
-  const scmodal = iframe.contentWindow.$("#scmodal");  
+  const scmodal = iframe.contentWindow.$("#scmodal");
   if (scmodal) {
     scmodal.modal("hide");
   }
 }
 
-function handleRoute(route, query) {
+async function gotoEntryView() {
+  const entryPath = config.entry_view;
+  const page = await router.resolve({
+    pathname: entryPath,
+  });
+  window.currentLocation = entryPath;
+  window.currentQuery = undefined;
+  replaceIframeInnerContent(page.content);
+}
+
+async function handleRoute(route, query) {
+  if (route === "/") return await gotoEntryView();
   window.currentLocation = route;
   window.currentQuery = query;
-  router.resolve({ pathname: route, query: query }).then((page) => {
-    if (page.redirect) {
-      const { path, query } = splitPathQuery(page.redirect);
-      handleRoute(path, query);
-    } else if (page.content) {
-      replaceIframeInnerContent(page.content);
-    }
-  });
+  const page = await router.resolve({ pathname: route, query: query });
+  if (page.redirect) {
+    const { path, query } = splitPathQuery(page.redirect);
+    await handleRoute(path, query);
+  } else if (page.content) {
+    replaceIframeInnerContent(page.content);
+  }
 }

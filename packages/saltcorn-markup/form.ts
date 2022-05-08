@@ -2,7 +2,6 @@
  * @category saltcorn-markup
  * @module form
  */
-declare const window: any;
 
 import tags = require("./tags");
 const {
@@ -30,6 +29,9 @@ import {
   instanceOfField,
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { FieldLike } from "@saltcorn/types/base_types";
+
+declare const window: any;
+const isNode = typeof window === "undefined";
 
 /**
  * @param {string} s
@@ -664,9 +666,15 @@ const renderFormLayout = (form: Form): string => {
       if (action_name === "Delete") {
         if (action_url) {
           const dest = (configuration && configuration.after_delete_url) || "/";
-          return mkBtn(
-            `onClick="${confirmStr}ajax_post('${action_url}', {success:()=>window.location.href='${dest}'})" type="button"`
-          );
+          if (isNode && !form.req?.smr) {
+            return mkBtn(
+              `onClick="${confirmStr}ajax_post('${action_url}', {success:()=>window.location.href='${dest}'})" type="button"`
+            );
+          } else {
+            return mkBtn(
+              `onClick="${confirmStr}local_post('${action_url}', {after_delete_url:'${dest}'})" type="button"`
+            );
+          }
         } else return "";
       }
       if (action_name === "Reset") {
@@ -704,7 +712,6 @@ const renderFormLayout = (form: Form): string => {
           )
         );
       }
-      const isNode = typeof window === "undefined";
       if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
           ? 'onClick="ajaxSubmitForm(this)" type="button"'

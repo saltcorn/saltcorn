@@ -18,7 +18,7 @@ function combineFormAndQuery(form, query) {
  */
 async function execLink(url) {
   const { path, query } = parent.splitPathQuery(url);
-  parent.handleRoute(`get${path}`, query);
+  await parent.handleRoute(`get${path}`, query);
 }
 
 /**
@@ -30,7 +30,7 @@ async function execLink(url) {
 async function formSubmit(e, urlSuffix, viewname) {
   e.submit();
   const queryStr = new URLSearchParams(new FormData(e)).toString();
-  parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr);
+  await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr);
 }
 
 async function login(email, password) {
@@ -68,12 +68,15 @@ async function loginFormSubmit(e, entryView) {
   }
 }
 
-function local_post_btn(e) {
+async function local_post_btn(e) {
   const form = $(e).closest("form");
   const url = form.attr("action");
   const method = form.attr("method");
   const { path, query } = parent.splitPathQuery(url);
-  parent.handleRoute(`${method}${path}`, combineFormAndQuery(form, query));
+  await parent.handleRoute(
+    `${method}${path}`,
+    combineFormAndQuery(form, query)
+  );
 }
 
 /**
@@ -83,7 +86,7 @@ function local_post_btn(e) {
  */
 async function stateFormSubmit(e, path) {
   const formQuery = new URLSearchParams(new FormData(e)).toString();
-  parent.handleRoute(path, formQuery);
+  await parent.handleRoute(path, formQuery);
 }
 
 function removeQueryStringParameter(queryStr, key) {
@@ -135,7 +138,7 @@ async function setStateFields(kvs, href) {
   for (const [k, v] of new URLSearchParams(parent.currentQuery).entries()) {
     queryParams.push(`${k}=${v}`);
   }
-  parent.handleRoute(href, queryParams.join("&"));
+  await parent.handleRoute(href, queryParams.join("&"));
 }
 
 async function sortby(k, desc, viewname) {
@@ -175,14 +178,16 @@ function mobile_modal(url, opts = {}) {
   }
   const { path, query } = parent.splitPathQuery(url);
   // submitReload ?
-  parent.router.resolve({ pathname: `get${path}`, query: query }).then((page) => {
-    const modalContent = page.content;
-    const title = page.title;
-    if (title) $("#scmodal .modal-title").html(title);
-    $("#scmodal .modal-body").html(modalContent);
-    new bootstrap.Modal($("#scmodal")).show();
-    // onOpen onClose initialize_page?
-  });
+  parent.router
+    .resolve({ pathname: `get${path}`, query: query })
+    .then((page) => {
+      const modalContent = page.content;
+      const title = page.title;
+      if (title) $("#scmodal .modal-title").html(title);
+      $("#scmodal .modal-body").html(modalContent);
+      new bootstrap.Modal($("#scmodal")).show();
+      // onOpen onClose initialize_page?
+    });
 }
 
 async function view_post(viewname, route, data, onDone) {
@@ -191,4 +196,13 @@ async function view_post(viewname, route, data, onDone) {
     data,
   });
   common_done(result);
+}
+
+async function local_post(url, args) {
+  const result = await parent.router.resolve({
+    pathname: `post${url}`,
+    data: args,
+  });
+  if (result.redirect) await parent.handleRoute(result.redirect);
+  else common_done(result);
 }

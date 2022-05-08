@@ -9,7 +9,11 @@ export const deleteRows = async (context) => {
     } else {
       await apiCall({ method: "POST", path: `/delete/${name}/${id}` });
     }
-    const redirect = new URLSearchParams(context.query).get("redirect");
+    const redirect = context.data?.after_delete_url
+      ? context.data.after_delete_url === "/"
+        ? "/"
+        : `get${new URL(context.data?.after_delete_url).pathname}`
+      : new URLSearchParams(context.query).get("redirect");
     return { redirect };
   } catch (error) {
     // TODO ch message?
