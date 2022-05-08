@@ -360,7 +360,7 @@ class SetupCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    console.log("Run setip");
+    console.log("Run setup");
     const mode = await askDevServer();
     if (mode == "server") {
       // check if i already know how to connect
