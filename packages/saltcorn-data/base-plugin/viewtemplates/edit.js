@@ -647,7 +647,7 @@ const runPost = async (
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
     );
   } else {
-    let row; // TODO ch  move whole block to query?
+    let row;
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
