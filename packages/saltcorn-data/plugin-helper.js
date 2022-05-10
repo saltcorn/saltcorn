@@ -1054,7 +1054,11 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
   var qstate = {};
   Object.entries(state).forEach(([k, v]) => {
     if (k === "_fts") {
-      qstate[k] = { searchTerm: v.replace(/\0/g, ""), fields };
+      qstate[k] = {
+        searchTerm: v.replace(/\0/g, ""),
+        fields,
+        schema: db.getTenantSchema(),
+      };
       return;
     }
     const field = fields.find((fld) => fld.name == k);

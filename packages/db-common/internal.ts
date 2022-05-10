@@ -81,11 +81,10 @@ const sqlitePlaceHolderStack = (): PlaceHolderStack => {
  * @returns {string}
  */
 const whereFTS = (
-  v: { fields: any[]; table?: string; searchTerm: string },
+  v: { fields: any[]; table?: string; searchTerm: string; schema?: string },
   phs: PlaceHolderStack
 ): string => {
-  const { fields, table } = v;
-  console.log(table);
+  const { fields, table, schema } = v;
 
   let fldsArray = fields
     .filter((f: any) => f.type && f.type.sql_name === "text")
@@ -100,14 +99,12 @@ const whereFTS = (
   fields
     .filter((f: any) => f.is_fkey && f?.attributes?.include_fts)
     .forEach((f) => {
-      console.log(f);
-
       fldsArray.push(
-        `coalesce((select ${f.attributes.summary_field} from "${
-          f.reftable_name
-        }" rt where rt.id=${table ? `"${sqlsanitize(table)}".` : ""}"${
-          f.name
-        }"),'')`
+        `coalesce((select ${f.attributes.summary_field} from ${
+          schema ? `"${schema}".` : ""
+        }"${f.reftable_name}" rt where rt.id=${
+          table ? `"${sqlsanitize(table)}".` : ""
+        }"${f.name}"),'')`
       );
     });
   let flds = fldsArray.join(" || ' ' || ");
@@ -126,7 +123,7 @@ const whereFTS = (
 export type Value = string | number | boolean | Date | Value[];
 
 export type Where = {
-  _fts?: { fields: any[]; table?: string; searchTerm: string };
+  _fts?: { fields: any[]; table?: string; searchTerm: string; schema?: string };
   or?: Where[];
   not?: Where | symbol;
   eq?: Value[];
