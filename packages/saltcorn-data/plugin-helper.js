@@ -1113,6 +1113,16 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       // where jFieldNm in (select id from jtnm where lblField=v)
       const [jFieldNm, krest] = k.split(".");
       const [jtNm, lblField] = krest.split("->");
+      let where = { [db.sqlsanitize(lblField)]: v };
+      const jTable = Table.findOne({ name: jtNm });
+      const lblFld = (jTable.fields || []).find((f) => f.name === lblField);
+      if (
+        lblFld &&
+        lblFld.type?.name === "String" &&
+        !lblFld.attributes?.options
+      )
+        where = { [db.sqlsanitize(lblField)]: { ilike: v } };
+
       qstate[jFieldNm] = [
         ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
         {
@@ -1120,7 +1130,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
           inSelect: {
             table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
             field: "id",
-            where: { [db.sqlsanitize(lblField)]: v },
+            where,
           },
         },
       ];
