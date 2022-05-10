@@ -85,7 +85,9 @@ const whereFTS = (
   phs: PlaceHolderStack
 ): string => {
   const { fields, table } = v;
-  let flds = fields
+  console.log(table);
+
+  let fldsArray = fields
     .filter((f: any) => f.type && f.type.sql_name === "text")
     .map(
       (f: any) =>
@@ -94,8 +96,21 @@ const whereFTS = (
           ? `"${sqlsanitize(table)}"."${sqlsanitize(f.name)}"`
           : `"${sqlsanitize(f.name)}"`) +
         ",'')"
-    )
-    .join(" || ' ' || ");
+    );
+  fields
+    .filter((f: any) => f.is_fkey && f?.attributes?.include_fts)
+    .forEach((f) => {
+      console.log(f);
+
+      fldsArray.push(
+        `coalesce((select ${f.attributes.summary_field} from "${
+          f.reftable_name
+        }" rt where rt.id=${table ? `"${sqlsanitize(table)}".` : ""}"${
+          f.name
+        }"),'')`
+      );
+    });
+  let flds = fldsArray.join(" || ' ' || ");
   const prefixMatch = !v.searchTerm?.includes(" ");
   const searchTerm = prefixMatch ? `${v.searchTerm}:*` : v.searchTerm;
 
