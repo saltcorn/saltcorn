@@ -324,7 +324,6 @@ const search_join_field = {
     ];
   },
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
-    console.log(field, attrs);
     return input({
       type: "text",
       class: ["form-control", "blur-on-enter-keypress", cls],
