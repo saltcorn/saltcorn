@@ -1,3 +1,8 @@
+function press_store_button(clicked) {
+  const width = $(clicked).width();
+  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+}
+
 function notifyAlert(note, spin) {
   if (Array.isArray(note)) {
     note.forEach(notifyAlert);

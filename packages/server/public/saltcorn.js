@@ -497,11 +497,6 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
   });
 }
 
-function press_store_button(clicked) {
-  const width = $(clicked).width();
-  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
-}
-
 function ajax_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal", class="modal">

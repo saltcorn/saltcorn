@@ -112,7 +112,7 @@ export default class BuildAppCommand extends Command {
       "node_modules/startbootstrap-sb-admin-2-bs5"
     );
     const srcFiles = [
-      "vendor/fontawesome-free/css/all.min.css",
+      "vendor/fontawesome-free",
       "vendor/bootstrap/js/bootstrap.bundle.min.js",
       "vendor/jquery-easing/jquery.easing.min.js",
       "css/sb-admin-2.css",
