@@ -206,3 +206,11 @@ async function local_post(url, args) {
   if (result.redirect) await parent.handleRoute(result.redirect);
   else common_done(result);
 }
+
+async function local_post_json(url) {
+  const result = await parent.router.resolve({
+    pathname: `post${url}`,
+  });
+  if (result.redirect) await parent.handleRoute(result.redirect);
+  else common_done(result);
+}
