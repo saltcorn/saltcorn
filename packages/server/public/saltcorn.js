@@ -70,9 +70,12 @@ function apply_showif() {
 
     var options = data[1][val];
     var current = e.attr("data-selected");
+    //console.log({ val, options, current, data });
     e.empty();
     (options || []).forEach((o) => {
-      if (!(o && o.label && o.value)) {
+      if (
+        !(o && typeof o.label !== "undefined" && typeof o.value !== "undefined")
+      ) {
         if (`${current}` === `${o}`)
           e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
@@ -404,6 +407,7 @@ function select_id(id) {
 }
 
 function set_state_field(key, value) {
+  console.log("set_state_field", key, value);
   pjax_to(updateQueryStringParameter(window.location.href, key, value));
 }
 
