@@ -40,6 +40,9 @@ const isNode = typeof window === "undefined";
 const rmInitialDot = (s: string): string =>
   s && s[0] === "." ? s.replace(".", "") : s;
 
+const buildActionAttribute = (form: Form): string =>
+  isNode && !form.req?.smr ? form.action! : "javascript:void(0)";
+
 /**
  * @param {object} sIf
  * @returns {string}
@@ -627,6 +630,7 @@ const renderFormLayout = (form: Form): string => {
       action_bordercol,
       action_textcol,
     }: any) {
+      const isMobile = !isNode || form.req?.smr;
       let style =
         action_style === "btn-custom-color"
           ? `background-color: ${action_bgcol || "#000000"};border-color: ${
@@ -690,13 +694,19 @@ const renderFormLayout = (form: Form): string => {
             : `history.go(${-1 * configuration.steps})`;
         if (configuration.save_first)
           return mkBtn(
-            `onClick="${reload}saveAndContinue(this,()=>${doNav})" type="button"`
+            `onClick="${reload}saveAndContinue(this,${
+              isMobile ? `'${form.action}'` : `()=>${doNav}`
+            })" type="button"`
           );
         else return mkBtn(`onClick="${reload}${doNav}" type="button"`);
       }
       if (action_name === "SaveAndContinue") {
         return (
-          mkBtn('onClick="saveAndContinue(this)" type="button"') +
+          mkBtn(
+            `onClick="saveAndContinue(this,${
+              isMobile ? `'${form.action}'` : undefined
+            })" type="button"`
+          ) +
           script(
             // cant use currentScript in callback
             `((myScript)=>{` +
@@ -704,7 +714,9 @@ const renderFormLayout = (form: Form): string => {
             $(myScript).closest('form').find('input').keydown(function (e) {
             if (e.keyCode == 13) {
                 e.preventDefault();
-                saveAndContinue(myScript);
+                saveAndContinue(myScript,${
+                  isMobile ? `'${form.action}'` : undefined
+                });
                 return false;
             }
         });`) +
@@ -785,7 +797,7 @@ const renderForm = (
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.input_type === "file");
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${form.action}"${
+  const top = `<form action="${buildActionAttribute(form)}"${
     form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
   }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
@@ -850,9 +862,11 @@ const mkForm = (
     csrfToken === false
       ? ""
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form ${form.id ? `id="${form.id}" ` : ""}action="${
-    form.action
-  }"${form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""} ${
+  const top = `<form ${
+    form.id ? `id="${form.id}" ` : ""
+  }action="${buildActionAttribute(form)}"${
+    form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""
+  } ${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
     form.class || ""

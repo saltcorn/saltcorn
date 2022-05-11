@@ -33,6 +33,22 @@ async function formSubmit(e, urlSuffix, viewname) {
   await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr);
 }
 
+async function saveAndContinue(e, action) {
+  const form = $(e).closest("form");
+  // TODO ch form.onSubmit() eith empty handler
+  const queryStr = new URLSearchParams(new FormData(form[0])).toString();
+  const res = await parent.router.resolve({
+    pathname: `post${action}`,
+    query: queryStr,
+  });
+  if (res.id && form.find("input[name=id")) {
+    form.append(
+      `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
+    );
+  }
+  // TODO ch error (request.responseText?) and complete
+}
+
 async function login(email, password) {
   try {
     const response = await parent.apiCall({
