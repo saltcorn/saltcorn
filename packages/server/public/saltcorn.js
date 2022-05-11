@@ -407,7 +407,6 @@ function select_id(id) {
 }
 
 function set_state_field(key, value) {
-  console.log("set_state_field", key, value);
   pjax_to(updateQueryStringParameter(window.location.href, key, value));
 }
 
