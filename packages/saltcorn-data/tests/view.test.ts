@@ -7,6 +7,7 @@ const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { GenObj } from "../../saltcorn-types/dist/common_types";
+import { renderEditInEditConfig } from "./remote_query_helper";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -85,6 +86,38 @@ describe("View", () => {
       id: 3,
       pages: 678,
       publisher: null,
+    });
+  });
+  it("should runPost with edit in edit", async () => {
+    const readingsTbl = await Table.findOne({ name: "readings" });
+    assertIsSet(readingsTbl);
+    await View.create({
+      name: "innerReads",
+      table_id: readingsTbl.id,
+      min_role: 10,
+      configuration: renderEditInEditConfig.innerEdit,
+      viewtemplate: "Edit",
+    });
+    const patientsTable = await Table.findOne({ name: "patients" });
+    assertIsSet(patientsTable);
+    const v = await View.create({
+      table_id: patientsTable.id,
+      name: "PatientEditWithReads",
+      viewtemplate: "Edit",
+      configuration: renderEditInEditConfig.outerEdit,
+      min_role: 10,
+    });
+    await v.runPost(
+      {},
+      { id: 1, favbook: 1, name: "foo", parent: 2 },
+      mockReqRes
+    );
+    const rows = await db.select("patients", {});
+    expect(rows).toContainEqual({
+      favbook: 1,
+      name: "foo",
+      parent: 2,
+      id: 1,
     });
   });
   it("should find", async () => {
