@@ -1,11 +1,9 @@
 const getHeaders = (versionTag) => {
-  console.log("get Headers ->->");
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
+    { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: "js/utils/iframe_view_utils.js" },
   ];
-  console.log([...stdHeaders, ...window.config.pluginHeaders]);
-
   return [...stdHeaders, ...window.config.pluginHeaders];
 };
 
@@ -39,6 +37,26 @@ export const postView = async (context) => {
       res: response,
       redirect,
     },
+    isRemoteTable(view)
+  );
+  return response.getJson();
+};
+
+/**
+ *
+ * @param {*} context
+ */
+export const postViewRoute = async (context) => {
+  const view = await saltcorn.data.models.View.findOne({
+    name: context.params.viewname,
+  });
+  const response = new MobileResponse();
+  const request = new MobileRequest();
+  await view.runRoute(
+    context.params.route,
+    context.data,
+    response,
+    { req: request, res: response },
     isRemoteTable(view)
   );
   return response.getJson();
