@@ -17,6 +17,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
+const { isNode } = require("../utils");
 
 /**
  * select namespace
@@ -278,7 +279,11 @@ const search_or_create = {
       ) +
       a(
         {
-          href: `javascript:ajax_modal('/view/${attrs.viewname}',{submitReload: false,onClose: soc_process_${nm}})`,
+          href: `javascript:${
+            isNode() ? "ajax_modal" : "mobile_modal"
+          }('/view/${
+            attrs.viewname
+          }',{submitReload: false,onClose: soc_process_${nm}})`,
         },
         attrs.label || "Or create new"
       ) +

@@ -13,6 +13,7 @@ function MobileRequest() {
       console.log("flash ->->");
       console.log(str);
     },
+    get: (key) => { return "" },
     csrfToken: () => "",
   };
 }

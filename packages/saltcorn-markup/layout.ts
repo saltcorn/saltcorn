@@ -29,7 +29,8 @@ const { alert, breadcrumbs } = require("./layout_utils");
 import helpers = require("./helpers");
 import renderMJML from "./mjml-layout";
 const { search_bar } = helpers;
-import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
+
+declare const window: any;
 
 /**
  * @param {any|any[]} [alerts]
@@ -392,7 +393,9 @@ const render = ({
         a(
           {
             href: segment.in_modal
-              ? `javascript:ajax_modal('${segment.url}');`
+              ? typeof window === "undefined" ? 
+                `javascript:ajax_modal('${segment.url}');` : 
+                `javascript:mobile_modal('${segment.url}');`
               : segment.url,
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
