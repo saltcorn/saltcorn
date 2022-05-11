@@ -145,8 +145,10 @@ const two_level_select = {
 
   run: (nm, v, attrs, cls, reqd, field) => {
     const options2 = {};
+
     Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
       options2[id] = options;
+      if (attrs.isFilter) options2[id].unshift({ label: "", value: "" });
     });
     const calcOptions = [`_${field.name}_toplevel`, options2];
     return (
@@ -156,13 +158,9 @@ const two_level_select = {
             field.class || ""
           } d-inline`,
           "data-fieldname": `_${field.name}_toplevel`,
+          onChange: attrs.isFilter ? "apply_showif()" : undefined,
         },
-        select_options_first_level(
-          v,
-          field,
-          (attrs || {}).force_required,
-          (attrs || {}).neutral_label
-        )
+        select_options_first_level(v, field, attrs || {}, attrs || {})
       ) +
       tags.select(
         {
@@ -170,8 +168,10 @@ const two_level_select = {
             field.class || ""
           }  d-inline`,
           "data-fieldname": field.form_name,
+          "data-selected": v,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
+          onChange: attrs.onChange,
           "data-calc-options": encodeURIComponent(JSON.stringify(calcOptions)),
         },
         option({ value: "" }, "")
@@ -179,13 +179,19 @@ const two_level_select = {
     );
   },
 };
-const select_options_first_level = (v, hdr, force_required, neutral_label) => {
-  return Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
+const select_options_first_level = (
+  v,
+  hdr,
+  { force_required, neutral_label, isFilter }
+) => {
+  const os = Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
     option(
       { value: id, selected: options.map((o) => o.value).includes(v) },
       label
     )
   );
+  if (isFilter) os.unshift(option({ value: "" }, ""));
+  return os;
 };
 
 /**
@@ -300,4 +306,51 @@ const search_or_create = {
     );
   },
 };
-module.exports = { select, search_or_create, radio_select, two_level_select };
+
+const search_join_field = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  blockDisplay: true,
+
+  isEdit: false,
+  isFilter: true,
+  configFields: async (field) => {
+    const reftable = await Table.findOne({ name: field.reftable_name });
+    if (!reftable) return [];
+    const fields = await reftable.getFields();
+    return [
+      {
+        name: "joinfield",
+        label: "Join field",
+        type: "String",
+        required: true,
+        attributes: {
+          options: fields.map((v) => ({
+            label: v.name,
+            value: `${reftable.name}->${v.name}`,
+          })),
+        },
+      },
+    ];
+  },
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+    return input({
+      type: "text",
+      class: ["form-control", "blur-on-enter-keypress", cls],
+
+      disabled: attrs.disabled,
+      onBlur: `set_state_field('${nm}.${encodeURIComponent(
+        attrs.joinfield
+      )}', this.value)`,
+      value: text_attr(state[`${nm}.${attrs.joinfield}`] || ""),
+    });
+  },
+};
+module.exports = {
+  select,
+  search_or_create,
+  radio_select,
+  two_level_select,
+  search_join_field,
+};

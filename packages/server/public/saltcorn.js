@@ -70,10 +70,12 @@ function apply_showif() {
 
     var options = data[1][val];
     var current = e.attr("data-selected");
-    //console.log(val, options, current,data)
+    //console.log({ val, options, current, data });
     e.empty();
     (options || []).forEach((o) => {
-      if (!(o && o.label && o.value)) {
+      if (
+        !(o && typeof o.label !== "undefined" && typeof o.value !== "undefined")
+      ) {
         if (`${current}` === `${o}`)
           e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
@@ -219,6 +221,9 @@ if (localStorage.getItem("reload_on_init")) {
   location.reload();
 }
 function initialize_page() {
+  $(".blur-on-enter-keypress").bind("keyup", function (e) {
+    if (e.keyCode === 13) e.target.blur();
+  });
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();
@@ -310,6 +315,34 @@ function initialize_page() {
   });
   $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
+
+  // Initialize Sliders - https://stackoverflow.com/a/31083391
+  var sliderSections = document.getElementsByClassName("range-slider");
+  for (var x = 0; x < sliderSections.length; x++) {
+    var sliders = sliderSections[x].getElementsByTagName("input");
+    for (var y = 0; y < sliders.length; y++) {
+      if (sliders[y].type === "range") {
+        sliders[y].oninput = function () {
+          // Get slider values
+          var parent = this.parentNode;
+          var slides = parent.getElementsByTagName("input");
+          var slide1 = parseFloat(slides[0].value);
+          var slide2 = parseFloat(slides[1].value);
+          // Neither slider will clip the other, so make sure we determine which is larger
+          if (slide1 > slide2) {
+            var tmp = slide2;
+            slide2 = slide1;
+            slide1 = tmp;
+          }
+
+          var displayElement = parent.getElementsByClassName("rangeValues")[0];
+          displayElement.innerHTML = slide1 + " - " + slide2;
+        };
+        // Manually trigger event first time to display values
+        sliders[y].oninput();
+      }
+    }
+  }
 }
 
 $(initialize_page);
