@@ -161,7 +161,7 @@ const run = async (
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);
       field.fieldview = fieldview;
-      Object.assign(field.attributes, configuration)
+      Object.assign(field.attributes, configuration);
       await field.fill_fkey_options();
       segment.field = field;
     },
@@ -191,6 +191,7 @@ const run = async (
             {
               onChange: `set_state_field('${field_name}', this.value)`,
               ...field.attributes,
+              isFilter: true,
               ...configuration,
             },
             "",
@@ -316,7 +317,10 @@ const run = async (
       );
     },
   };
-  return renderLayout({ blockDispatch, layout, role, req: extra.req });
+  return div(
+    { class: "form-namespace" },
+    renderLayout({ blockDispatch, layout, role, req: extra.req })
+  );
 };
 
 /**

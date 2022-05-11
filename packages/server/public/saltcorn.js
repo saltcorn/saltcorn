@@ -70,7 +70,6 @@ function apply_showif() {
 
     var options = data[1][val];
     var current = e.attr("data-selected");
-    //console.log(val, options, current,data)
     e.empty();
     (options || []).forEach((o) => {
       if (!(o && o.label && o.value)) {

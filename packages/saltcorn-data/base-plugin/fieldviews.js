@@ -144,13 +144,11 @@ const two_level_select = {
 
   run: (nm, v, attrs, cls, reqd, field) => {
     const options2 = {};
-    console.log({ field});
 
     Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
       options2[id] = options;
     });
     const calcOptions = [`_${field.name}_toplevel`, options2];
-    console.log({calcOptions});
     return (
       tags.select(
         {
@@ -158,6 +156,7 @@ const two_level_select = {
             field.class || ""
           } d-inline`,
           "data-fieldname": `_${field.name}_toplevel`,
+          onChange: attrs.isFilter ? "apply_showif()" : undefined,
         },
         select_options_first_level(
           v,
