@@ -33,7 +33,7 @@ export const postView = async (context) => {
     {},
     body,
     {
-      req: new MobileRequest(),
+      req: new MobileRequest(context.xhr),
       res: response,
       redirect,
     },
@@ -51,7 +51,7 @@ export const postViewRoute = async (context) => {
     name: context.params.viewname,
   });
   const response = new MobileResponse();
-  const request = new MobileRequest();
+  const request = new MobileRequest(context.xhr);
   await view.runRoute(
     context.params.route,
     context.data,
@@ -82,7 +82,7 @@ export const getView = async (context) => {
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   const viewContent = await view.run_possibly_on_page(
     query,
-    new MobileRequest(),
+    new MobileRequest(context.xhr),
     new MobileResponse(),
     isRemoteTable(view)
   );

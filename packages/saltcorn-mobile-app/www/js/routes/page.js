@@ -11,7 +11,7 @@ export const postPageAction = async (context) => {
   const result = await saltcorn.data.plugin_helper.run_action_column({
     col,
     referrer: "",
-    req: new MobileRequest(),
+    req: new MobileRequest(context.xhr),
   });
   return result || {};
 };

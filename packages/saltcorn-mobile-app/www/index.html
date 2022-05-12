@@ -121,7 +121,7 @@
           saltcorn.data.state.getState().role_id = decodedJwt?.role_id
             ? decodedJwt.role_id
             : 10;
-          window.currentLocation = entryView;
+          addRoute({ routes: entryView, query: undefined });
           const page = await router.resolve({
             pathname: entryView,
             fullWrap: true,

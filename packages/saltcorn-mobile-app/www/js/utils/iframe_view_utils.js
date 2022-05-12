@@ -40,6 +40,7 @@ async function saveAndContinue(e, action) {
   const res = await parent.router.resolve({
     pathname: `post${action}`,
     query: queryStr,
+    xhr: true,
   });
   if (res.id && form.find("input[name=id")) {
     form.append(
@@ -75,7 +76,7 @@ async function loginFormSubmit(e, entryView) {
     parent.saltcorn.data.state.getState().role_id = decodedJwt?.role_id
       ? decodedJwt.role_id
       : 10;
-    parent.currentLocation = entryView;
+    parent.addRoute({ route: entryView, query: undefined });
     const page = await parent.router.resolve({
       pathname: entryView,
       fullWrap: true,
@@ -137,21 +138,22 @@ function updateQueryStringParameter(queryStr, key, value) {
 
 async function setStateFields(kvs, href) {
   let queryParams = [];
+  let currentQuery = parent.currentQuery();
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true) {
-      parent.currentQuery = removeQueryStringParameter(
-        parent.currentQuery,
+      currentQuery = removeQueryStringParameter(
+        currentQuery,
         kv[0]
       );
     } else {
-      parent.currentQuery = updateQueryStringParameter(
-        parent.currentQuery,
+      currentQuery = updateQueryStringParameter(
+        currentQuery,
         kv[0],
         kv[1]
       );
     }
   });
-  for (const [k, v] of new URLSearchParams(parent.currentQuery).entries()) {
+  for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
     queryParams.push(`${k}=${v}`);
   }
   await parent.handleRoute(href, queryParams.join("&"));
@@ -167,7 +169,7 @@ async function sortby(k, desc, viewname) {
 async function gopage(n, pagesize, extra) {
   await setStateFields(
     { ...extra, _page: n, _pagesize: pagesize },
-    parent.currentLocation
+    parent.currentLocation()
   );
 }
 

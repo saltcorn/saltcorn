@@ -728,7 +728,7 @@ const runPost = async (
         }
       }
     }
-    if ((req.xhr || !isNode()) && !originalID && !req.smr) {
+    if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done });
       return;
     }
