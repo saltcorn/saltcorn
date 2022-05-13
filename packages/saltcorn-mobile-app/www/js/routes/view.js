@@ -91,7 +91,7 @@ export const getView = async (context) => {
   const wrappedContent = context.fullWrap
     ? layout.wrap({
         title: viewname,
-        body: viewContent,
+        body: { above: [viewContent] },
         alerts: [],
         role: state.role_id,
         headers: getHeaders(window.config.version_tag),
@@ -100,7 +100,7 @@ export const getView = async (context) => {
       })
     : layout.renderBody({
         title: viewname,
-        body: viewContent,
+        body: { above: [viewContent] },
         alerts: [],
         role: state.role_id,
       });
