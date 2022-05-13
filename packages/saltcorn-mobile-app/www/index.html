@@ -121,7 +121,7 @@
           saltcorn.data.state.getState().role_id = decodedJwt?.role_id
             ? decodedJwt.role_id
             : 10;
-          addRoute({ routes: entryView, query: undefined });
+          addRoute({ route: entryView, query: undefined });
           const page = await router.resolve({
             pathname: entryView,
             fullWrap: true,
@@ -130,6 +130,10 @@
         } else {
           replaceIframe(renderLoginForm(entryView, config.version_tag));
         }
+      });
+
+      document.addEventListener("backbutton", async () => {
+        await goBack(1, true);
       });
     </script>
   </head>

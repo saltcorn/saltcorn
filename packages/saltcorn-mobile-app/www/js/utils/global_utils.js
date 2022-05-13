@@ -75,7 +75,7 @@ async function gotoEntryView() {
   const page = await router.resolve({
     pathname: entryPath,
   });
-  addRoute({ entryPath, query, undefined });
+  addRoute({ entryPath, query: undefined });
   replaceIframeInnerContent(page.content);
 }
 
@@ -94,11 +94,15 @@ async function handleRoute(route, query) {
   }
 }
 
-async function goBack(exitOnFirstPage = false) {
-  if (routingHistory.length <= 1) {
-    throw new Error("Exit"); // suspend the app
+async function goBack(steps = 1, exitOnFirstPage = false) {
+  if (exitOnFirstPage && routingHistory.length === 1) {
+    navigator.app.exitApp();
+  } else if (routingHistory.length <= steps) {
+    routingHistory = [];
+    await gotoEntryView();
+  } else {
+    routingHistory = routingHistory.slice(0, routingHistory.length - steps);
+    const newCurrent = routingHistory.pop();
+    await handleRoute(newCurrent.route, newCurrent.query);
   }
-  routingHistory.pop();
-  const newCurrent = routingHistory.pop();
-  await handleRoute(newCurrent.route, newCurrent.query);
 }

@@ -689,9 +689,14 @@ const renderFormLayout = (form: Form): string => {
       if (action_name === "GoBack") {
         const isWeb = isNode && !form.req?.smr;
         const reload = configuration.reload_after ? "reload_on_init();" : "";
-        const doNav = !configuration.steps || configuration.steps !== 1
-            ? isWeb ? "history.back()" : "parent.goBack()"
-            : isWeb ? `history.go(${-1 * configuration.steps})` : "parent.goBack()";
+        const doNav =
+          !configuration.steps || configuration.steps === 1
+            ? isWeb
+              ? "history.back()"
+              : "parent.goBack()"
+            : isWeb
+            ? `history.go(${-1 * configuration.steps})`
+            : `parent.goBack(${configuration.steps})`;
         if (configuration.save_first)
           return mkBtn(
             `onClick="${reload}saveAndContinue(this,${
