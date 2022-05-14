@@ -33,7 +33,7 @@ async function formSubmit(e, urlSuffix, viewname) {
   await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr);
 }
 
-async function saveAndContinue(e, action) {
+async function saveAndContinue(e, action, k) {
   const form = $(e).closest("form");
   submitWithEmptyAction(form[0]);
   const queryStr = new URLSearchParams(new FormData(form[0])).toString();
@@ -47,7 +47,8 @@ async function saveAndContinue(e, action) {
       `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
     );
   }
-  // TODO ch error (request.responseText?) and complete
+  if (k) await k();
+  // TODO ch error (request.responseText?)
 }
 
 async function login(email, password) {
@@ -141,16 +142,9 @@ async function setStateFields(kvs, href) {
   let currentQuery = parent.currentQuery();
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true) {
-      currentQuery = removeQueryStringParameter(
-        currentQuery,
-        kv[0]
-      );
+      currentQuery = removeQueryStringParameter(currentQuery, kv[0]);
     } else {
-      currentQuery = updateQueryStringParameter(
-        currentQuery,
-        kv[0],
-        kv[1]
-      );
+      currentQuery = updateQueryStringParameter(currentQuery, kv[0], kv[1]);
     }
   });
   for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
@@ -231,4 +225,8 @@ async function local_post_json(url) {
   });
   if (result.redirect) await parent.handleRoute(result.redirect);
   else common_done(result);
+}
+
+function reload_on_init() {
+  console.log("not yet supported");
 }

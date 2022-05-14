@@ -697,13 +697,14 @@ const renderFormLayout = (form: Form): string => {
             : isWeb
             ? `history.go(${-1 * configuration.steps})`
             : `parent.goBack(${configuration.steps})`;
-        if (configuration.save_first)
+        if (configuration.save_first) {
+          const complete = `()=>${doNav}`;
           return mkBtn(
             `onClick="${reload}saveAndContinue(this,${
-              isMobile ? `'${form.action}'` : `()=>${doNav}`
+              isMobile ? `'${form.action}', ${complete}` : complete
             })" type="button"`
           );
-        else return mkBtn(`onClick="${reload}${doNav}" type="button"`);
+        } else return mkBtn(`onClick="${reload}${doNav}" type="button"`);
       }
       if (action_name === "SaveAndContinue") {
         return (
