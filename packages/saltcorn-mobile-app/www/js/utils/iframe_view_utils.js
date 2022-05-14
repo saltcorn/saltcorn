@@ -35,7 +35,7 @@ async function formSubmit(e, urlSuffix, viewname) {
 
 async function saveAndContinue(e, action) {
   const form = $(e).closest("form");
-  // TODO ch form.onSubmit() eith empty handler
+  submitWithEmptyAction(form[0]);
   const queryStr = new URLSearchParams(new FormData(form[0])).toString();
   const res = await parent.router.resolve({
     pathname: `post${action}`,

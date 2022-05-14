@@ -62,3 +62,10 @@ function common_done(res, isWeb = true) {
     else window.location.href = res.goto;
   }
 }
+
+function submitWithEmptyAction(form) {
+  var formAction = form.action;
+  form.action = "javascript:void(0)";
+  form.submit();
+  form.action = formAction;
+}

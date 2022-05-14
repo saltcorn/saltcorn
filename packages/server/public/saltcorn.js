@@ -570,6 +570,7 @@ function ajax_modal(url, opts = {}) {
 
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
+  submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
   $.ajax(url, {
