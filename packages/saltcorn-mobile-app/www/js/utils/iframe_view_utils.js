@@ -227,6 +227,44 @@ async function local_post_json(url) {
   else common_done(result);
 }
 
+async function make_unique_field(
+  id,
+  table_id,
+  field_name,
+  elem,
+  space,
+  start,
+  always_append,
+  char_type
+) {
+  const value = $(elem).val();
+  if (!value) return;
+  const path = `/api/${table_id}?approximate=true&${encodeURIComponent(
+    field_name
+  )}=${encodeURIComponent(value)}&fields=${encodeURIComponent(field_name)}`;
+  try {
+    // TODO ch support local tables
+    const response = await parent.apiCall({
+      method: "GET",
+      path,
+    });
+    if (response.data.success) {
+      unique_field_from_rows(
+        response.data.success,
+        id,
+        field_name,
+        space,
+        start,
+        always_append,
+        char_type,
+        value
+      );
+    }
+  } catch (error) {
+    console.log("unable to 'make_unique_field'");
+  }
+}
+
 function reload_on_init() {
   console.log("not yet supported");
 }
