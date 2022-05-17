@@ -172,7 +172,11 @@ describe("File", () => {
 
 describe("Library", () => {
   it("should create", async () => {
-    await Library.create({ name: "Foos", icon: "fa-cog", layout: {} });
+    await Library.create({
+      name: "Foos",
+      icon: "fa-cog",
+      layout: { above: [{ type: "search_bar" }] },
+    });
     const libs = await Library.find({});
     expect(libs.length).toBe(1);
     const suitable = libs[0].suitableFor("page");
@@ -180,6 +184,18 @@ describe("Library", () => {
     const lib = await Library.findOne({ name: "Foos" });
     expect(lib.icon).toBe("fa-cog");
     await lib.update({ icon: "fa-bar" });
+    await lib.delete();
+  });
+  it("should create with field", async () => {
+    await Library.create({
+      name: "Bars",
+      icon: "fa-cog",
+      layout: { above: [{ type: "field" }] },
+    });
+    const lib = await Library.findOne({ name: "Bars" });
+    expect(lib.suitableFor("page")).toBe(false);
+    expect(lib.suitableFor("show")).toBe(true);
+    expect(lib.icon).toBe("fa-cog");
     await lib.delete();
   });
 });
