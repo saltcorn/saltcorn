@@ -12,6 +12,8 @@
     <script type="module">
       import { initRoutes } from "./js/routes/init.js";
       import { renderLoginForm } from "./js/utils/login_form.js";
+      import { handleTables } from "./js/utils/tables_utils.js";
+      import { readJSON } from "./js/utils/file_helpers.js";
 
       const staticPlugins = ["base", "sbadmin2"];
 
@@ -40,32 +42,6 @@
           state.registerPlugin(plugin.name, saltcorn[plugin.name]);
         }
         return plugins;
-      }
-
-      function readCfg() {
-        let wwwDir = cordova.file.applicationDirectory + "www";
-        return new Promise((resolve, reject) => {
-          window.resolveLocalFileSystemURL(wwwDir, function (fs) {
-            fs.getFile(
-              "config",
-              { create: false, exclusive: false },
-              function (fileEntry) {
-                fileEntry.file(function (file) {
-                  let reader = new FileReader();
-                  reader.onloadend = function (e) {
-                    resolve(JSON.parse(this.result));
-                  };
-                  reader.readAsText(file);
-                });
-              },
-              function (err) {
-                console.log("unable to read config");
-                console.log(err);
-                reject(err);
-              }
-            );
-          });
-        });
       }
 
       async function addScripts(version_tag) {
@@ -101,10 +77,13 @@
       };
 
       document.addEventListener("deviceready", async () => {
-        const config = await readCfg();
-        window.config = config;
+        window.config = await readJSON(
+          "config",
+          `${cordova.file.applicationDirectory}www`
+        );
         await addScripts(config.version_tag);
         await saltcorn.data.db.init();
+        await handleTables();
         const state = saltcorn.data.state.getState();
         await state.refresh_tables();
         await state.refresh_views();

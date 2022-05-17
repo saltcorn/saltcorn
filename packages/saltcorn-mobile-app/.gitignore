@@ -123,3 +123,4 @@ plugins/
 static_assets/
 npm_packages/
 config
+tables.json

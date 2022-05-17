@@ -169,6 +169,12 @@ export const listUserDefinedTables = async () => {
   );
 };
 
+export const listScTables = async () => {
+  return (await listTables()).filter(({ name }: { name: string }) =>
+    name.startsWith("_sc_")
+  );
+};
+
 export const dropTable = async (name: string) => {
   await query(`DROP TABLE ${name}`);
 };
