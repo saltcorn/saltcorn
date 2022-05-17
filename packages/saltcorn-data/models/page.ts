@@ -227,7 +227,7 @@ class Page {
       action(segment: any) {
         const url =
           segment.action_name === "GoBack"
-            ? `javascript:history.back()`
+            ? `javascript:${isNode() ? "history.back()" : "parent.goBack()"}`
             : `javascript:${
                 isNode() ? "ajax_post_json" : "local_post_json"
               }('/page/${pagename}/action/${segment.rndid}')`;

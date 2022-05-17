@@ -62,3 +62,44 @@ function common_done(res, isWeb = true) {
     else window.location.href = res.goto;
   }
 }
+
+function submitWithEmptyAction(form) {
+  var formAction = form.action;
+  form.action = "javascript:void(0)";
+  form.submit();
+  form.action = formAction;
+}
+
+function unique_field_from_rows(
+  rows,
+  id,
+  field_name,
+  space,
+  start,
+  always_append,
+  char_type,
+  value
+) {
+  const gen_char = (i) => {
+    switch (char_type) {
+      case "Lowercase Letters":
+        return String.fromCharCode("a".charCodeAt(0) + i);
+      case "Uppercase Letters":
+        return String.fromCharCode("A".charCodeAt(0) + i);
+      default:
+        return i;
+    }
+  };
+  const vals = rows
+    .map((o) => o[field_name])
+    .filter((s) => s.startsWith(value));
+  if (vals.includes(value) || always_append) {
+    for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
+      const newname = `${value}${space ? " " : ""}${gen_char(i)}`;
+      if (!vals.includes(newname)) {
+        $("#" + id).val(newname);
+        return;
+      }
+    }
+  }
+}

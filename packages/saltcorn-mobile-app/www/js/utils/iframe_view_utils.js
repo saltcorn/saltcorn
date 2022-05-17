@@ -33,6 +33,24 @@ async function formSubmit(e, urlSuffix, viewname) {
   await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr);
 }
 
+async function saveAndContinue(e, action, k) {
+  const form = $(e).closest("form");
+  submitWithEmptyAction(form[0]);
+  const queryStr = new URLSearchParams(new FormData(form[0])).toString();
+  const res = await parent.router.resolve({
+    pathname: `post${action}`,
+    query: queryStr,
+    xhr: true,
+  });
+  if (res.id && form.find("input[name=id")) {
+    form.append(
+      `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
+    );
+  }
+  if (k) await k();
+  // TODO ch error (request.responseText?)
+}
+
 async function login(email, password) {
   try {
     const response = await parent.apiCall({
@@ -59,7 +77,7 @@ async function loginFormSubmit(e, entryView) {
     parent.saltcorn.data.state.getState().role_id = decodedJwt?.role_id
       ? decodedJwt.role_id
       : 10;
-    parent.currentLocation = entryView;
+    parent.addRoute({ route: entryView, query: undefined });
     const page = await parent.router.resolve({
       pathname: entryView,
       fullWrap: true,
@@ -121,21 +139,15 @@ function updateQueryStringParameter(queryStr, key, value) {
 
 async function setStateFields(kvs, href) {
   let queryParams = [];
+  let currentQuery = parent.currentQuery();
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true) {
-      parent.currentQuery = removeQueryStringParameter(
-        parent.currentQuery,
-        kv[0]
-      );
+      currentQuery = removeQueryStringParameter(currentQuery, kv[0]);
     } else {
-      parent.currentQuery = updateQueryStringParameter(
-        parent.currentQuery,
-        kv[0],
-        kv[1]
-      );
+      currentQuery = updateQueryStringParameter(currentQuery, kv[0], kv[1]);
     }
   });
-  for (const [k, v] of new URLSearchParams(parent.currentQuery).entries()) {
+  for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
     queryParams.push(`${k}=${v}`);
   }
   await parent.handleRoute(href, queryParams.join("&"));
@@ -151,7 +163,7 @@ async function sortby(k, desc, viewname) {
 async function gopage(n, pagesize, extra) {
   await setStateFields(
     { ...extra, _page: n, _pagesize: pagesize },
-    parent.currentLocation
+    parent.currentLocation()
   );
 }
 
@@ -213,4 +225,46 @@ async function local_post_json(url) {
   });
   if (result.redirect) await parent.handleRoute(result.redirect);
   else common_done(result);
+}
+
+async function make_unique_field(
+  id,
+  table_id,
+  field_name,
+  elem,
+  space,
+  start,
+  always_append,
+  char_type
+) {
+  const value = $(elem).val();
+  if (!value) return;
+  const path = `/api/${table_id}?approximate=true&${encodeURIComponent(
+    field_name
+  )}=${encodeURIComponent(value)}&fields=${encodeURIComponent(field_name)}`;
+  try {
+    // TODO ch support local tables
+    const response = await parent.apiCall({
+      method: "GET",
+      path,
+    });
+    if (response.data.success) {
+      unique_field_from_rows(
+        response.data.success,
+        id,
+        field_name,
+        space,
+        start,
+        always_append,
+        char_type,
+        value
+      );
+    }
+  } catch (error) {
+    console.log("unable to 'make_unique_field'");
+  }
+}
+
+function reload_on_init() {
+  console.log("not yet supported");
 }

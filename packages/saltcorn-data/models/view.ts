@@ -664,9 +664,7 @@ class View {
       });
       const form = new Form({
         methodGET: true,
-        action: isWeb(req)
-          ? `/view/${encodeURIComponent(this.name)}`
-          : "javascript:void(0);", // onsubmit without reload
+        action: `/view/${encodeURIComponent(this.name)}`,
         fields,
         submitLabel: req.__("Apply"),
         isStateForm: true,

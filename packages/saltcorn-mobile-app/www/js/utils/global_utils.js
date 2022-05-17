@@ -1,3 +1,19 @@
+let routingHistory = [];
+
+function currentLocation() {
+  if (routingHistory.length == 0) return undefined;
+  return routingHistory[routingHistory.length - 1].route;
+}
+
+function currentQuery() {
+  if (routingHistory.length == 0) return undefined;
+  return routingHistory[routingHistory.length - 1].query;
+}
+
+function addRoute(routeEntry) {
+  routingHistory.push(routeEntry);
+}
+
 async function apiCall({ method, path, params, body }) {
   const serverPath = config.server_path;
   const token = localStorage.getItem("auth_jwt");
@@ -59,20 +75,34 @@ async function gotoEntryView() {
   const page = await router.resolve({
     pathname: entryPath,
   });
-  window.currentLocation = entryPath;
-  window.currentQuery = undefined;
+  addRoute({ entryPath, query: undefined });
   replaceIframeInnerContent(page.content);
 }
 
 async function handleRoute(route, query) {
   if (route === "/") return await gotoEntryView();
-  window.currentLocation = route;
-  window.currentQuery = query;
-  const page = await router.resolve({ pathname: route, query: query });
+  addRoute({ route, query });
+  const page = await router.resolve({
+    pathname: route,
+    query: query,
+  });
   if (page.redirect) {
     const { path, query } = splitPathQuery(page.redirect);
     await handleRoute(path, query);
   } else if (page.content) {
     replaceIframeInnerContent(page.content);
+  }
+}
+
+async function goBack(steps = 1, exitOnFirstPage = false) {
+  if (exitOnFirstPage && routingHistory.length === 1) {
+    navigator.app.exitApp();
+  } else if (routingHistory.length <= steps) {
+    routingHistory = [];
+    await gotoEntryView();
+  } else {
+    routingHistory = routingHistory.slice(0, routingHistory.length - steps);
+    const newCurrent = routingHistory.pop();
+    await handleRoute(newCurrent.route, newCurrent.query);
   }
 }
