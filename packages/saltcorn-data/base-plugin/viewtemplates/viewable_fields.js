@@ -38,7 +38,8 @@ const action_url = (
 ) => {
   if (action_name === "Delete")
     return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
-  else if (action_name === "GoBack") return { javascript: "history.back()" };
+  else if (action_name === "GoBack")
+    return { javascript: isNode() ? "history.back()" : "parent.goBack()" };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
     return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
@@ -828,7 +829,7 @@ const getForm = async (
     },
   });
   const form = new Form({
-    action: isRemote ? "javascript:void(0)" : action,
+    action: action,
     onSubmit: isRemote
       ? `javascript:formSubmit(this, '/view/', '${viewname}')`
       : undefined,

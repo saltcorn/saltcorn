@@ -18,7 +18,7 @@ const {
   get_expression_function,
   expressionChecker,
 } = require("../../models/expression");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, isNode } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
 const {
@@ -547,8 +547,10 @@ const render = async ({
     req,
     isRemote
   );
-
-  if (auto_save) form.onChange = `saveAndContinue(this)`;
+  if (auto_save)
+    form.onChange = `saveAndContinue(this, ${
+      !isWeb(req) ? `'${form.action}'` : undefined
+    })`;
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -619,7 +621,9 @@ const runPost = async (
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
-  if (auto_save) form.onChange = `saveAndContinue(this)`;
+  if (auto_save) form.onChange = `saveAndContinue(this, ${
+    !isWeb(req) ? `'${form.action}'` : undefined
+  })`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
