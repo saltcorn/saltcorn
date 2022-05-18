@@ -12,6 +12,7 @@ import { join } from "path";
 import db from "@saltcorn/data/db/index";
 import Plugin from "@saltcorn/data/models/plugin";
 import { Row } from "@saltcorn/db-common/internal";
+const reset = require("@saltcorn/data/db/reset_schema");
 const { PluginManager } = require("live-plugin-manager");
 const {
   staticDependencies,
@@ -73,9 +74,8 @@ export default class BuildAppCommand extends Command {
     await this.bundlePackages();
     this.copyBundlesToApp();
     await this.installNpmPackages();
-    // TODO ch postgres
-    await this.copySqliteDbToApp(localUserTables);
-    await this.buildTablesFile();
+    await this.buildTablesFile(localUserTables);
+    await this.createSqliteDb();
     if (flags.platforms) {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
@@ -198,39 +198,33 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  copySqliteDbToApp = async (localUserTables: string[]) => {
+  createSqliteDb = async () => {
     const dbPath = join(this.wwwDir, "scdb.sqlite");
-    copyFileSync(db.connectObj.sqlite_path, dbPath);
     let connectObj = db.connectObj;
     connectObj.sqlite_path = dbPath;
     await db.changeConnection(connectObj);
-    const tablesToDrop = (await db.listUserDefinedTables())
-      .filter(
-        (table: any) =>
-          !localUserTables.find(
-            (current) => current.toUpperCase() === table.name.toUpperCase()
-          )
-      )
-      .map(({ name }: { name: string }) => name);
-    await db.dropTables(tablesToDrop);
+    await reset();
   };
 
-  buildTablesFile = async () => {
-    const scTables = (await db.listScTables()).filter(
-      (table: Row) =>
-        ["_sc_migrations", "_sc_errors"].indexOf(table.name) === -1
-    );
-    const tables = await Promise.all(
-      scTables.map(async (row: Row) => {
-        const dbData = await db.select(row.name);
-        return { table: row.name, rows: dbData };
-      })
+  buildTablesFile = async (localUserTables: string[]) => {
+    const scTables = await Promise.all(
+      (
+        await db.listScTables()
+      )
+        .filter(
+          (table: Row) =>
+            ["_sc_migrations", "_sc_errors"].indexOf(table.name) === -1
+        )
+        .map(async (row: Row) => {
+          const dbData = await db.select(row.name);
+          return { table: row.name, rows: dbData };
+        })
     );
     writeFileSync(
       join(this.wwwDir, "tables.json"),
       JSON.stringify({
         created_at: new Date(),
-        tables,
+        sc_tables: scTables,
       })
     );
   };
