@@ -462,7 +462,7 @@ describe("actions", () => {
       .expect(toRedirect("/actions/"));
   });
 });
-describe("localizer", () => {
+/*describe("localizer", () => {
   itShouldRedirectUnauthToLogin("/site-structure/localizer");
   itShouldRedirectUnauthToLogin("/site-structure/localizer/add-lang");
   it("redirects site struct to menu", async () => {
@@ -525,7 +525,7 @@ describe("localizer", () => {
       .send("value=Hej+verden")
       .expect(toRedirect("/site-structure/localizer/edit/da"));
   });
-});
+});*/
 
 /**
  * Pages tests
