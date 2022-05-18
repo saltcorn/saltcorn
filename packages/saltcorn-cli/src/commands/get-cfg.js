@@ -4,7 +4,7 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
  * SetCfgCommand Class
@@ -17,15 +17,17 @@ class SetCfgCommand extends Command {
    */
   async run() {
     const { args, flags } = this.parse(SetCfgCommand);
+    await init_some_tenants(flags.tenant);
+
     await maybe_as_tenant(flags.tenant, async () => {
       if (flags.plugin) {
         const Plugin = require("@saltcorn/data/models/plugin");
         const plugin = await Plugin.findOne({ name: flags.plugin });
-        console.log(JSON.stringify(plugin.configuration[args.key]));
+        console.log(JSON.stringify(plugin.configuration[args.key], null, 2));
         await plugin.upsert();
       } else {
         const { getState } = require("@saltcorn/data/db/state");
-        console.log(JSON.stringify(getState().getConfig(args.key)));
+        console.log(JSON.stringify(getState().getConfig(args.key), null, 2));
       }
     });
     this.exit(0);
