@@ -39,6 +39,16 @@ describe("Action", () => {
     const trigger1 = await Trigger.findOne({ id: trigger.id });
     expect(!!trigger1).toBe(true);
     expect(trigger1.id).toBe(trigger.id);
+    expect(trigger1.toJson).toStrictEqual({
+      action: "incrementCounter",
+      channel: null,
+      configuration: {},
+      description: null,
+      min_role: null,
+      name: null,
+      table_name: "patients",
+      when_trigger: "Insert",
+    });
   });
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(1);
@@ -131,6 +141,9 @@ describe("Action", () => {
     assertIsSet(trigger);
     expect(trigger.action).toBe("webhook");
   });
+  it("should have options", async () => {
+    expect(Trigger.when_options).toContain("Insert");
+  });
   it("should get triggers", async () => {
     const table = await Table.findOne({ name: "books" });
     assertIsSet(table);
@@ -187,6 +200,8 @@ describe("Events", () => {
       FooHappened: true,
       BarWasHere: true,
       BarWasHere_channel: "Baz",
+      Insert: true,
+      Insert_readings: true
     });
     await getState().refresh_config();
   });
@@ -212,6 +227,14 @@ describe("Events", () => {
     expect(evs.length).toBe(0);
     await sleep(100);
     const evs1 = await EventLog.find({ event_type: "BarWasHere" });
+    expect(evs1.length).toBe(1);
+  });
+  it("should emit table event", async () => {
+    await Trigger.emitEvent("Insert", "readings");
+    const evs = await EventLog.find({ event_type: "Insert" });
+    expect(evs.length).toBe(0);
+    await sleep(100);
+    const evs1 = await EventLog.find({ event_type: "Insert" });
     expect(evs1.length).toBe(1);
   });
 });

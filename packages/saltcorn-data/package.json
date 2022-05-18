@@ -109,7 +109,8 @@
       ".*\\.js$"
     ],
     "coveragePathIgnorePatterns": [
-      "/migrations/"
+      "/migrations/",
+      "/tests/"
     ],
     "moduleNameMapper": {
       "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
