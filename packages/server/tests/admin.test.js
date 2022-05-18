@@ -485,3 +485,67 @@ describe("clear all page", () => {
       .expect(toRedirect("/auth/create_first_user"));
   });
 });
+describe("localizer", () => {
+  itShouldRedirectUnauthToLogin("/site-structure/localizer");
+  itShouldRedirectUnauthToLogin("/site-structure/localizer/add-lang");
+  it("redirects site struct to menu", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/menu"));
+  });
+   it("shows languages", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Languages"));
+  });
+  it("shows add language form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer/add-lang")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Locale identifier short code"));
+  });
+  it("add language", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/site-structure/localizer/save-lang")
+      .set("Cookie", loginCookie)
+      .send("name=dansk")
+      .send("locale=da")
+      .expect(toRedirect("/site-structure/localizer/edit/da"));
+  });
+  it("shows new in languages", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("dansk"));
+  });
+
+  it("shows edit language form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer/edit/da")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Hello world"));
+  });
+  it("set string language", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/site-structure/localizer/save-string/da/Hello%20world")
+      .set("Cookie", loginCookie)
+      .send("value=Hej+verden")
+      .expect(toRedirect("/site-structure/localizer/edit/da"));
+  });
+});

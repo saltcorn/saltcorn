@@ -890,5 +890,8 @@
 	"This is the view to which the user will be sent when the form is submitted. The view you specify here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place.": "This is the view to which the user will be sent when the form is submitted. The view you specify here can be ignored depending on the context of the form, for instance if it appears in a pop-up the redirect will not take place.",
 	"Destination view": "Destination view",
 	"Finish": "Finish",
-	"Include in full-text search": "Include in full-text search"
+	"Include in full-text search": "Include in full-text search",
+	"Strings": "Strings",
+	"In default language": "In default language",
+	"In %s": "In %s"
 }
