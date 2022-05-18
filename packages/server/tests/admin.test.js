@@ -12,6 +12,7 @@ const {
   respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const { sleep } = require("@saltcorn/data/tests/mocks");
 const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
@@ -30,7 +31,12 @@ beforeAll(async () => {
     4
   );
 });
-afterAll(db.close);
+
+afterAll(async () => {
+  await sleep(200);
+  db.close();
+});
+
 const adminPageContains = (specs) =>
   it("adminPageContains " + specs.map((s) => s[1]).join(","), async () => {
     const app = await getApp({ disableCsrf: true });
@@ -456,6 +462,71 @@ describe("actions", () => {
       .expect(toRedirect("/actions/"));
   });
 });
+describe("localizer", () => {
+  itShouldRedirectUnauthToLogin("/site-structure/localizer");
+  itShouldRedirectUnauthToLogin("/site-structure/localizer/add-lang");
+  it("redirects site struct to menu", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/menu"));
+  });
+  it("shows languages", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Languages"));
+  });
+  it("shows add language form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer/add-lang")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Locale identifier short code"));
+  });
+  it("add language", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/site-structure/localizer/save-lang")
+      .set("Cookie", loginCookie)
+      .send("name=dansk")
+      .send("locale=da")
+      .expect(toRedirect("/site-structure/localizer/edit/da"));
+  });
+  it("shows new in languages", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("dansk"));
+  });
+
+  it("shows edit language form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/site-structure/localizer/edit/da")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Hello world"));
+  });
+  it("set string language", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/site-structure/localizer/save-string/da/Hello%20world")
+      .set("Cookie", loginCookie)
+      .send("value=Hej+verden")
+      .expect(toRedirect("/site-structure/localizer/edit/da"));
+  });
+});
+
 /**
  * Pages tests
  */

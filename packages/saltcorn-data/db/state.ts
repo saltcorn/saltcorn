@@ -224,8 +224,10 @@ class State {
     const localeDir = join(__dirname, "..", "app-locales", this.tenant);
     try {
       //avoid race condition
-      if (!existsSync(localeDir)) await mkdir(localeDir);
-    } catch {}
+      if (!existsSync(localeDir)) await mkdir(localeDir, { recursive: true });
+    } catch (e) {
+      console.error("app-locale create error", e);
+    }
     const allStrings = this.getConfig("localizer_strings", {});
     for (const lang of Object.keys(this.getConfig("localizer_languages", {}))) {
       //write json file

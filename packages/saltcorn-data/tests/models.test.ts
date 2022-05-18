@@ -172,14 +172,59 @@ describe("File", () => {
 
 describe("Library", () => {
   it("should create", async () => {
-    await Library.create({ name: "Foos", icon: "fa-cog", layout: {} });
+    await Library.create({
+      name: "Foos",
+      icon: "fa-cog",
+      layout: { above: [{ type: "search_bar" }] },
+    });
     const libs = await Library.find({});
     expect(libs.length).toBe(1);
     const suitable = libs[0].suitableFor("page");
     expect(suitable).toBe(true);
     const lib = await Library.findOne({ name: "Foos" });
     expect(lib.icon).toBe("fa-cog");
+    expect(lib.toJson).toStrictEqual({
+      icon: "fa-cog",
+      layout: { above: [{ type: "search_bar" }] },
+      name: "Foos",
+    });
     await lib.update({ icon: "fa-bar" });
+    await lib.delete();
+  });
+  it("should create with field", async () => {
+    await Library.create({
+      name: "Bars",
+      icon: "fa-cog",
+      layout: {
+        above: [
+          { type: "field" },
+          { type: "aggregation" },
+          { type: "view_link" },
+          { type: "join_field" },
+        ],
+      },
+    });
+    const lib = await Library.findOne({ name: "Bars" });
+    expect(lib.suitableFor("page")).toBe(false);
+    expect(lib.suitableFor("show")).toBe(true);
+    expect(lib.icon).toBe("fa-cog");
+    await lib.delete();
+  });
+  it("should create with filter", async () => {
+    await Library.create({
+      name: "Bars",
+      icon: "fa-cog",
+      layout: {
+        above: [
+          { type: "dropdown_filter" },
+          { type: "toggle_filter" },
+        ],
+      },
+    });
+    const lib = await Library.findOne({ name: "Bars" });
+    expect(lib.suitableFor("show")).toBe(false);
+    expect(lib.suitableFor("filter")).toBe(true);
+    expect(lib.icon).toBe("fa-cog");
     await lib.delete();
   });
 });
