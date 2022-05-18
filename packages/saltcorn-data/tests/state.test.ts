@@ -5,6 +5,12 @@ import User from "../models/user";
 const { getState } = state;
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 
+getState().registerPlugin("base", require("../base-plugin"));
+beforeAll(async () => {
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
+
 afterAll(db.close);
 
 describe("State constants", () => {
@@ -29,12 +35,31 @@ describe("State constants", () => {
   });
 });
 
-describe("State user query", () => {
+describe("State queries", () => {
   it("should query layout and 2fa policy", async () => {
     const user = await User.findOne({ role_id: 1 });
     const layout = getState().getLayout(user);
     expect(typeof layout.wrap).toBe("function");
     const twofapol = getState().get2FApolicy(user);
     expect(twofapol).toBe("Optional");
+  });
+  it("should query i18n strings", async () => {
+    expect(getState().getStringsForI18n()).toStrictEqual([
+      "Hello world",
+      "<h1> foo</h1>",
+      "Click here",
+      "header",
+      "Bye bye",
+    ]);
+  });
+  it("should query type names", async () => {
+    expect(getState().type_names).toStrictEqual([
+      "String",
+      "Integer",
+      "Bool",
+      "Date",
+      "Float",
+      "Color",
+    ]);
   });
 });
