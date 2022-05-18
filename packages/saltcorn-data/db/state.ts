@@ -224,7 +224,7 @@ class State {
     const localeDir = join(__dirname, "..", "app-locales", this.tenant);
     try {
       //avoid race condition
-      if (!existsSync(localeDir)) await mkdir(localeDir);
+      if (!existsSync(localeDir)) await mkdir(localeDir, { recursive: true });
     } catch (e) {
       console.error("app-locale create error", e);
     }
