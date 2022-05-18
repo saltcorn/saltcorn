@@ -225,7 +225,9 @@ class State {
     try {
       //avoid race condition
       if (!existsSync(localeDir)) await mkdir(localeDir);
-    } catch {}
+    } catch (e) {
+      console.error("app-locale create error", e);
+    }
     const allStrings = this.getConfig("localizer_strings", {});
     for (const lang of Object.keys(this.getConfig("localizer_languages", {}))) {
       //write json file
