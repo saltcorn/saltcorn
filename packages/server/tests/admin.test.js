@@ -12,6 +12,7 @@ const {
   respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const { sleep } = require("@saltcorn/data/tests/mocks");
 const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
@@ -30,7 +31,12 @@ beforeAll(async () => {
     4
   );
 });
-afterAll(db.close);
+
+afterAll(async () => {
+  await sleep(200);
+  db.close();
+});
+
 const adminPageContains = (specs) =>
   it("adminPageContains " + specs.map((s) => s[1]).join(","), async () => {
     const app = await getApp({ disableCsrf: true });
@@ -467,7 +473,7 @@ describe("localizer", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/menu"));
   });
-   it("shows languages", async () => {
+  it("shows languages", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
