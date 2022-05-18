@@ -63,3 +63,17 @@ describe("State queries", () => {
     ]);
   });
 });
+describe("State room emission", () => {
+  it("should survive emit when not set", async () => {
+    getState().emitRoom("hello", 5);
+  });
+  it("should use roomEmitter", async () => {
+    let msg;
+    const myEmit = (...args: any[]) => {
+      msg = args;
+    };
+    getState().setRoomEmitter(myEmit);
+    getState().emitRoom("hello", 5);
+    expect(msg).toStrictEqual(["hello", 5]);
+  });
+});
