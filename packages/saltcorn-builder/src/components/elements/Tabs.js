@@ -115,7 +115,7 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
 
             if (useIx !== showTab)
               return (
-                <div class="d-none" key={ix}>
+                <div className="d-none" key={ix}>
                   <Element canvas id={`Tab${useIx}`} is={Column}>
                     {contents[useIx]}
                   </Element>
@@ -132,7 +132,7 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
                   role="tabpanel"
                   aria-labelledby="home-tab"
                 >
-                  <div class="d-none">{useIx}</div>
+                  <div className="d-none">{useIx}</div>
                   <Element canvas id={`Tab${useIx}`} is={Column}>
                     {contents[useIx]}
                   </Element>
