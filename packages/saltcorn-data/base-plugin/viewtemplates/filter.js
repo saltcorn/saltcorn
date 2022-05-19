@@ -32,6 +32,7 @@ const {
   eachView,
   translateLayout,
   getStringsForI18n,
+  traverse,
 } = require("../../models/layout");
 const { InvalidConfiguration } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
@@ -155,19 +156,29 @@ const run = async (
       });
     }
   });
-  await eachView(layout, async (segment) => {
-    const view = await View.findOne({ name: segment.view });
-    if (!view)
-      throw new InvalidConfiguration(
-        `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
-      );
-    else segment.contents = await view.run(state, extra);
+  await traverse(layout, {
+    field: async (segment) => {
+      const { field_name, fieldview, configuration } = segment;
+      let field = fields.find((fld) => fld.name === field_name);
+      field.fieldview = fieldview;
+      Object.assign(field.attributes, configuration);
+      await field.fill_fkey_options();
+      segment.field = field;
+    },
+    view: async (segment) => {
+      const view = await View.findOne({ name: segment.view });
+      if (!view)
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
+        );
+      else segment.contents = await view.run(state, extra);
+    },
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
     field(segment) {
-      const { field_name, fieldview, configuration } = segment;
-      let field = fields.find((fld) => fld.name === field_name);
+      const { field_name, fieldview, configuration, field } = segment;
+
       if (!field) return "";
       //console.log({ fieldview, field });
       if (fieldview && field.type && field.type === "Key") {
@@ -180,11 +191,12 @@ const run = async (
             {
               onChange: `set_state_field('${field_name}', this.value)`,
               ...field.attributes,
+              isFilter: true,
               ...configuration,
             },
             "",
             false,
-            segment,
+            field,
             state
           );
         }
@@ -202,12 +214,13 @@ const run = async (
             state[field_name],
             {
               onChange: `set_state_field('${field_name}', this.value)`,
+              isFilter: true,
               ...field.attributes,
               ...configuration,
             },
             "",
             false,
-            segment,
+            field,
             state
           );
       }
@@ -304,7 +317,10 @@ const run = async (
       );
     },
   };
-  return renderLayout({ blockDispatch, layout, role, req: extra.req });
+  return div(
+    { class: "form-namespace" },
+    renderLayout({ blockDispatch, layout, role, req: extra.req })
+  );
 };
 
 /**

@@ -9,8 +9,6 @@ import View from "./view";
 import Table from "./table";
 import layout from "./layout";
 const { eachView, traverseSync, getStringsForI18n, translateLayout } = layout;
-import tags from "@saltcorn/markup/tags";
-const { div } = tags;
 import config from "./config";
 import type { Layout, RunExtra } from "@saltcorn/types/base_types";
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
@@ -19,18 +17,16 @@ import type {
   PageCfg,
   PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
-const { eval_expression } = require("./expression");
+import expression from "./expression";
+const { eval_expression } = expression;
 
 const { remove_from_menu } = config;
 const {
   action_link,
   fill_presets,
 } = require("../base-plugin/viewtemplates/viewable_fields");
-const {
-  InvalidConfiguration,
-  satisfies,
-  structuredClone,
-} = require("../utils");
+import utils from "../utils";
+const { InvalidConfiguration, satisfies, structuredClone, isNode } = utils;
 
 /**
  * Page Class
@@ -231,8 +227,10 @@ class Page {
       action(segment: any) {
         const url =
           segment.action_name === "GoBack"
-            ? `javascript:history.back()`
-            : `javascript:ajax_post_json('/page/${pagename}/action/${segment.rndid}')`;
+            ? `javascript:${isNode() ? "history.back()" : "parent.goBack()"}`
+            : `javascript:${
+                isNode() ? "ajax_post_json" : "local_post_json"
+              }('/page/${pagename}/action/${segment.rndid}')`;
         const html = action_link(url, extraArgs.req, segment);
         segment.type = "blank";
         segment.contents = html;

@@ -24,6 +24,7 @@ const {
   text_attr,
   script,
   domReady,
+  section,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
@@ -38,13 +39,12 @@ const eqStr = (x, y) => `${x}` === `${y}`;
 
 const number_slider = (type) => ({
   configFields: (field) => [
-    ...(!isdef(field.attributes.max) && !isdef(field.attributes.min)
-      ? [
-          { name: "min", type, required: false },
-          { name: "max", type, required: false },
-        ]
+    ...(!isdef(field.attributes.min)
+      ? [{ name: "min", type, required: false }]
       : []),
-    //{ name: "also_entry", type: "Bool", label: "Also entry" },
+    ...(!isdef(field.attributes.max)
+      ? [{ name: "max", type, required: false }]
+      : []),
   ],
   isEdit: true,
   blockDisplay: true,
@@ -63,11 +63,60 @@ const number_slider = (type) => ({
           ? Math.pow(10, -attrs.decimal_places)
           : "0.01",
       id: `input${text_attr(nm)}`,
-      ...(attrs.max && { max: attrs.max }),
-      ...(attrs.min && { min: attrs.min }),
+      ...(isdef(attrs.max) && { max: attrs.max }),
+      ...(isdef(attrs.min) && { min: attrs.min }),
       ...(isdef(v) && { value: text_attr(v) }),
     }),
 });
+const range_interval = (type) => ({
+  configFields: (field) => [
+    ...(!isdef(field.attributes.min)
+      ? [{ name: "min", type, required: false }]
+      : []),
+    ...(!isdef(field.attributes.max)
+      ? [{ name: "max", type, required: false }]
+      : []),
+  ],
+  isEdit: false,
+  isFilter: true,
+  blockDisplay: true,
+  /* https://stackoverflow.com/a/31083391 */
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+    return section(
+      { class: ["range-slider", cls] },
+      span({ class: "rangeValues" }),
+      input({
+        ...(isdef(state[`_gte_${nm}`])
+          ? {
+              value: text_attr(state[`_gte_${nm}`]),
+            }
+          : isdef(attrs.min)
+          ? { value: text_attr(attrs.min) }
+          : {}),
+        ...(isdef(attrs.max) && { max: attrs.max }),
+        ...(isdef(attrs.min) && { min: attrs.min }),
+        type: "range",
+        disabled: attrs.disabled,
+        onChange: `set_state_field('_gte_${nm}', this.value)`,
+      }),
+      input({
+        ...(isdef(state[`_lte_${nm}`])
+          ? {
+              value: text_attr(state[`_lte_${nm}`]),
+            }
+          : isdef(attrs.max)
+          ? { value: text_attr(attrs.max) }
+          : {}),
+        ...(isdef(attrs.max) && { max: attrs.max }),
+        ...(isdef(attrs.min) && { min: attrs.min }),
+        type: "range",
+        disabled: attrs.disabled,
+        onChange: `set_state_field('_lte_${nm}', this.value)`,
+      })
+    );
+  },
+});
+
 const progress_bar = (type) => ({
   configFields: (field) => [
     ...(!isdef(field.attributes.min)
@@ -103,10 +152,11 @@ const progress_bar = (type) => ({
 const number_limit = (direction) => ({
   isEdit: false,
   isFilter: true,
+  blockDisplay: true,
   configFields: [
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
-  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+  run: (nm, v, attrs = {}, cls, requiZred, field, state = {}) => {
     const onChange = `set_state_field('_${direction}_${nm}', this.value)`;
     return attrs?.stepper_btns
       ? number_stepper(
@@ -125,7 +175,6 @@ const number_limit = (direction) => ({
       : input({
           type: "number",
           class: ["form-control", cls],
-          blockDisplay: true,
           disabled: attrs.disabled,
           onChange,
           step: 1,
@@ -141,11 +190,11 @@ const number_limit = (direction) => ({
 const float_number_limit = (direction) => ({
   isEdit: false,
   isFilter: true,
+  blockDisplay: true,
   run: (nm, v, attrs = {}, cls, required, field, state = {}) =>
     input({
       type: "number",
       class: ["form-control", cls],
-      blockDisplay: true,
 
       disabled: attrs.disabled,
       onChange: `set_state_field('_${direction}_${nm}', this.value)`,
@@ -837,6 +886,7 @@ const int = {
       },
     },
     number_slider: number_slider("Integer"),
+    range_interval: range_interval("Integer"),
     progress_bar: progress_bar("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
@@ -1018,6 +1068,7 @@ const float = {
         }),
     },
     number_slider: number_slider("Float"),
+    range_interval: range_interval("Float"),
     progress_bar: progress_bar("Float"),
     above_input: float_number_limit("gte"),
     below_input: float_number_limit("lte"),

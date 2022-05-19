@@ -108,7 +108,9 @@ const runScheduler = async ({
   watchReaper,
   port,
   disableScheduler,
-  eachTenant,
+  eachTenant = (f: () => Promise<any>) => {
+    return f();
+  },
 }:
   | {
       stop_when?: () => boolean;

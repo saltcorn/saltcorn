@@ -20,6 +20,7 @@ const {
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
+const { isNode } = require("../utils");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
@@ -43,6 +44,8 @@ const run_code = async ({
   ...rest
 }) => {
   if (run_where === "Client page") return { eval_js: code };
+  if (!isNode() && run_where === "Server")
+    return { error: "Running server code is not yet implemented." };
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {
@@ -238,11 +241,8 @@ module.exports = {
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
       const { participant_field } = view.configuration;
-      const [
-        part_table_name,
-        part_key_to_room,
-        part_user_field,
-      ] = participant_field.split(".");
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
       const roomtable = Table.findOne({ id: view.table_id });
       const parttable = Table.findOne({ name: part_table_name });
 

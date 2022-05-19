@@ -1,4 +1,4 @@
-const db = require("./index.js");
+import db from "../db";
 const Table = require("../models/table");
 
 afterAll(db.close);

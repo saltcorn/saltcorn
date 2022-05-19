@@ -1,3 +1,19 @@
+let routingHistory = [];
+
+function currentLocation() {
+  if (routingHistory.length == 0) return undefined;
+  return routingHistory[routingHistory.length - 1].route;
+}
+
+function currentQuery() {
+  if (routingHistory.length == 0) return undefined;
+  return routingHistory[routingHistory.length - 1].query;
+}
+
+function addRoute(routeEntry) {
+  routingHistory.push(routeEntry);
+}
+
 async function apiCall({ method, path, params, body }) {
   const serverPath = config.server_path;
   const token = localStorage.getItem("auth_jwt");
@@ -48,21 +64,45 @@ function replaceIframeInnerContent(content) {
   for (let script of scripts) {
     iframe.contentWindow.eval(script.innerHTML);
   }
-  const scmodal = iframe.contentWindow.$("#scmodal");  
+  const scmodal = iframe.contentWindow.$("#scmodal");
   if (scmodal) {
     scmodal.modal("hide");
   }
 }
 
-function handleRoute(route, query) {
-  window.currentLocation = route;
-  window.currentQuery = query;
-  router.resolve({ pathname: route, query: query }).then((page) => {
-    if (page.redirect) {
-      const { path, query } = splitPathQuery(page.redirect);
-      handleRoute(path, query);
-    } else if (page.content) {
-      replaceIframeInnerContent(page.content);
-    }
+async function gotoEntryView() {
+  const entryPath = config.entry_view;
+  const page = await router.resolve({
+    pathname: entryPath,
   });
+  addRoute({ entryPath, query: undefined });
+  replaceIframeInnerContent(page.content);
+}
+
+async function handleRoute(route, query) {
+  if (route === "/") return await gotoEntryView();
+  addRoute({ route, query });
+  const page = await router.resolve({
+    pathname: route,
+    query: query,
+  });
+  if (page.redirect) {
+    const { path, query } = splitPathQuery(page.redirect);
+    await handleRoute(path, query);
+  } else if (page.content) {
+    replaceIframeInnerContent(page.content);
+  }
+}
+
+async function goBack(steps = 1, exitOnFirstPage = false) {
+  if (exitOnFirstPage && routingHistory.length === 1) {
+    navigator.app.exitApp();
+  } else if (routingHistory.length <= steps) {
+    routingHistory = [];
+    await gotoEntryView();
+  } else {
+    routingHistory = routingHistory.slice(0, routingHistory.length - steps);
+    const newCurrent = routingHistory.pop();
+    await handleRoute(newCurrent.route, newCurrent.query);
+  }
 }

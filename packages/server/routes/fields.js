@@ -181,6 +181,7 @@ const fieldFlow = (req) =>
       var attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
+      attributes.include_fts = context.include_fts;
       attributes.on_delete_cascade = context.on_delete_cascade;
       const {
         table_id,
@@ -370,6 +371,11 @@ const fieldFlow = (req) =>
               value: f.name,
               label: f.label,
             }));
+          const textfields = orderedFields
+            .filter(
+              (f) => (!f.calculated || f.stored) && f.type?.sql_name === "text"
+            )
+            .map((f) => f.name);
           return new Form({
             fields: [
               new Field({
@@ -377,6 +383,12 @@ const fieldFlow = (req) =>
                 label: req.__("Summary field"),
                 input_type: "select",
                 options: keyfields,
+              }),
+              new Field({
+                name: "include_fts",
+                label: req.__("Include in full-text search"),
+                type: "Bool",
+                showIf: { summary_field: textfields },
               }),
               new Field({
                 name: "on_delete_cascade",

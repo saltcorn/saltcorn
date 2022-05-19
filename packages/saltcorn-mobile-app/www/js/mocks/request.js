@@ -1,4 +1,4 @@
-function MobileRequest() {
+function MobileRequest(xhr = false) {
   const roleId = saltcorn.data.state.getState().role_id
     ? saltcorn.data.state.getState().role_id
     : 10;
@@ -13,6 +13,10 @@ function MobileRequest() {
       console.log("flash ->->");
       console.log(str);
     },
+    get: (key) => {
+      return "";
+    },
     csrfToken: () => "",
+    xhr,
   };
 }

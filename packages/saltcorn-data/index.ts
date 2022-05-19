@@ -10,6 +10,11 @@ export { state };
 
 export * as models from "./models/index";
 
+const pluginHelper = require("./plugin-helper");
+export namespace plugin_helper {
+  export const { run_action_column } = pluginHelper;
+}
+
 export let migrations: any = {};
 function requireAll(context: any) {
   for (let key of context.keys()) {

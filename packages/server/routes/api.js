@@ -215,7 +215,7 @@ router.get(
     }
 
     await passport.authenticate(
-      "api-bearer",
+      ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table)) {

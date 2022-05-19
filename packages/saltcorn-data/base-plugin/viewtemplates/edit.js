@@ -18,7 +18,7 @@ const {
   get_expression_function,
   expressionChecker,
 } = require("../../models/expression");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, isNode } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
 const {
@@ -374,7 +374,7 @@ const runMany = async (
   { columns, layout, auto_save },
   state,
   extra,
-  { editManyQuery }
+  { editManyQuery, getRowQuery }
 ) => {
   const { table, fields, rows } = editManyQuery();
   return await asyncMap(rows, async (row) => {
@@ -389,6 +389,7 @@ const runMany = async (
       res: extra.res,
       state,
       auto_save,
+      getRowQuery,
     });
     return { html, row };
   });
@@ -404,7 +405,7 @@ const runMany = async (
  * @throws {InvalidConfiguration}
  * @returns {Promise<void>}
  */
-const transformForm = async ({ form, table, req, row, res }) => {
+const transformForm = async ({ form, table, req, row, res, getRowQuery }) => {
   await traverse(form.layout, {
     action(segment) {
       if (segment.action_name === "Delete") {
@@ -457,9 +458,11 @@ const transformForm = async ({ form, table, req, row, res }) => {
           },
         });
         if (row?.id) {
-          const childRows = await childTable.getRows({
-            [view_select.field_name]: row.id,
-          });
+          const childRows = getRowQuery
+            ? await getRowQuery(view.table_id, view_select, row.id)
+            : await childTable.getRows({
+                [view_select.field_name]: row.id,
+              });
           fr.metadata.rows = childRows;
           if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
             fr.fields.push({
@@ -533,6 +536,7 @@ const render = async ({
   auto_save,
   destination_type,
   isRemote,
+  getRowQuery,
 }) => {
   const form = await getForm(
     table,
@@ -543,8 +547,10 @@ const render = async ({
     req,
     isRemote
   );
-
-  if (auto_save) form.onChange = `saveAndContinue(this)`;
+  if (auto_save)
+    form.onChange = `saveAndContinue(this, ${
+      !isWeb(req) ? `'${form.action}'` : undefined
+    })`;
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -574,7 +580,7 @@ const render = async ({
     }
   });
   await form.fill_fkey_options();
-  await transformForm({ form, table, req, row, res });
+  await transformForm({ form, table, req, row, res, getRowQuery });
   return renderForm(form, !isRemote ? req.csrfToken() : false);
 };
 
@@ -610,12 +616,14 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery }
+  { tryInsertQuery, tryUpdateQuery, getRowQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
-  if (auto_save) form.onChange = `saveAndContinue(this)`;
+  if (auto_save) form.onChange = `saveAndContinue(this, ${
+    !isWeb(req) ? `'${form.action}'` : undefined
+  })`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
@@ -632,6 +640,7 @@ const runPost = async (
     row: body[table.pk_name]
       ? { [table.pk_name]: body[table.pk_name] }
       : undefined,
+    getRowQuery,
   });
   form.validate(body);
   if (form.hasErrors) {
@@ -642,7 +651,7 @@ const runPost = async (
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
     );
   } else {
-    let row; // TODO ch  move whole block to query?
+    let row;
     const pk = fields.find((f) => f.primary_key);
     let id = pk.type.read(body[pk.name]);
     if (typeof id === "undefined") {
@@ -942,6 +951,12 @@ module.exports = {
         }
       }
       return doAuthPost({ body, table_id, req });
+    },
+    async getRowQuery(table_id, view_select, row_id) {
+      const childTable = Table.findOne({ id: table_id });
+      return await childTable.getRows({
+        [view_select.field_name]: row_id,
+      });
     },
   }),
   configCheck: async (view) => {

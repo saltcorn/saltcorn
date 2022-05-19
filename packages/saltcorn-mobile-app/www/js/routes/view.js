@@ -1,11 +1,9 @@
 const getHeaders = (versionTag) => {
-  console.log("get Headers ->->");
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
+    { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: "js/utils/iframe_view_utils.js" },
   ];
-  console.log([...stdHeaders, ...window.config.pluginHeaders]);
-
   return [...stdHeaders, ...window.config.pluginHeaders];
 };
 
@@ -35,10 +33,30 @@ export const postView = async (context) => {
     {},
     body,
     {
-      req: new MobileRequest(),
+      req: new MobileRequest(context.xhr),
       res: response,
       redirect,
     },
+    isRemoteTable(view)
+  );
+  return response.getJson();
+};
+
+/**
+ *
+ * @param {*} context
+ */
+export const postViewRoute = async (context) => {
+  const view = await saltcorn.data.models.View.findOne({
+    name: context.params.viewname,
+  });
+  const response = new MobileResponse();
+  const request = new MobileRequest(context.xhr);
+  await view.runRoute(
+    context.params.route,
+    context.data,
+    response,
+    { req: request, res: response },
     isRemoteTable(view)
   );
   return response.getJson();
@@ -64,7 +82,7 @@ export const getView = async (context) => {
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   const viewContent = await view.run_possibly_on_page(
     query,
-    new MobileRequest(),
+    new MobileRequest(context.xhr),
     new MobileResponse(),
     isRemoteTable(view)
   );
@@ -73,7 +91,7 @@ export const getView = async (context) => {
   const wrappedContent = context.fullWrap
     ? layout.wrap({
         title: viewname,
-        body: viewContent,
+        body: { above: [viewContent] },
         alerts: [],
         role: state.role_id,
         headers: getHeaders(window.config.version_tag),
@@ -82,7 +100,7 @@ export const getView = async (context) => {
       })
     : layout.renderBody({
         title: viewname,
-        body: viewContent,
+        body: { above: [viewContent] },
         alerts: [],
         role: state.role_id,
       });

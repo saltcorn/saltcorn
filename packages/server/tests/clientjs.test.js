@@ -14,6 +14,7 @@ const load_script = (fnm) => {
 };
 
 load_script("jquery-3.6.0.min.js");
+load_script("saltcorn-common.js");
 load_script("saltcorn.js");
 
 test("updateQueryStringParameter", () => {

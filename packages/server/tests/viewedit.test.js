@@ -8,6 +8,7 @@ const {
   toInclude,
   toNotInclude,
   resetToFixtures,
+  succeedJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const View = require("@saltcorn/data/models/view");
@@ -369,5 +370,98 @@ describe("viewedit new Show", () => {
       .post("/viewedit/delete/" + id)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
+  });
+});
+describe("Library", () => {
+  it("should save new from builder", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/library/savefrombuilder/")
+      .set("Cookie", loginCookie)
+      .send({
+        layout: {
+          columns: [],
+          layout: {
+            type: "card",
+            contents: {
+              above: [
+                null,
+                {
+                  besides: [
+                    {
+                      above: [
+                        null,
+                        {
+                          type: "blank",
+                          contents: "Hello world",
+                          block: false,
+                          inline: false,
+                          textStyle: "",
+                          isFormula: {},
+                          labelFor: "",
+                          style: {},
+                          font: "",
+                        },
+                      ],
+                    },
+                    {
+                      above: [
+                        null,
+                        {
+                          type: "blank",
+                          contents: "Bye bye",
+                          block: false,
+                          inline: false,
+                          textStyle: "",
+                          isFormula: {},
+                          labelFor: "",
+                          style: {},
+                          font: "",
+                        },
+                      ],
+                    },
+                  ],
+                  breakpoints: ["", ""],
+                  style: {},
+                  widths: [6, 6],
+                },
+              ],
+            },
+            title: "header",
+            style: {},
+          },
+        },
+        icon: "far fa-angry",
+        name: "ShinyCard",
+      })
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWith(() => true));
+  });
+  it("shows library with item", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/library/list")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("ShinyCard"));
+  });
+  it("deletes in library", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/library/delete/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/library/list"));
+  });
+  it("shows empty library", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/library/list")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Library"))
+      .expect(toNotInclude("ShinyCard"))
   });
 });
