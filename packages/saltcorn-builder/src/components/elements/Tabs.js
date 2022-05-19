@@ -89,8 +89,9 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
           ref={(dom) => connect(drag(dom))}
         >
           {ntimes(ntabs, (ix) => {
+            if (!titles[ix]) return null;
             const targetIx =
-              titles[ix].value === "undefined" ? ix : titles[ix].value;
+              typeof titles[ix].value === "undefined" ? ix : titles[ix].value;
             return (
               <li key={ix} className="nav-item" role="presentation">
                 <a
@@ -110,6 +111,8 @@ const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
         </ul>
         <div className="tab-content" id="myTabContent">
           {ntimes(ntabs, (ix) => {
+            if (!titles[ix]) return null;
+
             const useIx =
               typeof titles[ix].value === "undefined" ? ix : titles[ix].value;
 
