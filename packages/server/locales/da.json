@@ -487,7 +487,7 @@
 	"Role to create tenants": "Role to create tenants",
 	"Minimum user role required to create a new tenant": "Minimum user role required to create a new tenant",
 	"Create tenant warning": "Create tenant warning",
-	"Show a warning to users creating a tenant disclaiming warrenty of availability or security": "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
+	"Show a warning to users creating a tenant disclaiming warranty of availability or security": "Show a warning to users creating a tenant disclaiming warranty of availability or security",
 	"Multitenancy settings": "Multitenancy settings",
 	"Actions available": "Actions available",
 	"Event types": "Event types",
