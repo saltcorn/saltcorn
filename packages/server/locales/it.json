@@ -293,7 +293,7 @@
 	"new": "nuovo",
 	"Password does not match": "La password non corrisponde",
 	"Not allowed to write to table %s": "Non autorizzato a scrivere nella tabella %s",
-	"Login sucessful": "Accesso riuscito",
+	"Login successful": "Accesso riuscito",
 	"Welcome, %s!": "Benvenuto, %s!",
 	"Error: missing name or file": "Errore: nome o file mancante",
 	"Restart server.": "Riavvia il server.",

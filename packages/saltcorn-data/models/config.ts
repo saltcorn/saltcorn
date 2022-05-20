@@ -251,7 +251,7 @@ const configTypes: ConfigTypes = {
     label: "Create tenant warning",
     default: true,
     blurb:
-      "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
+      "Show a warning to users creating a tenant disclaiming warranty of availability or security",
   },
   /** @type {object} */
   tenant_template: {
@@ -425,13 +425,13 @@ const configTypes: ConfigTypes = {
   cookie_duration: {
     type: "Integer",
     label: "Cookie duration (hours)",
-    sublabel: "Set to 0 for expration at the end of browser session",
+    sublabel: "Set to 0 for expiration at the end of browser session",
     default: 0,
   },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",
-    sublabel: "Set to 0 for expration at the end of browser session",
+    sublabel: "Set to 0 for expiration at the end of browser session",
     default: 30 * 24,
   },
   /** @type {object} */
