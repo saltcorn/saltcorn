@@ -99,3 +99,36 @@ export const doDeleteWhere = async (
   const sql = `delete FROM "${sqlsanitize(tbl)}" ${where}`;
   const tq = await queryFunc(sql, values);
 };
+
+/**
+ *
+ * @param queryFunc
+ * @returns
+ */
+export const doListTables = async (queryFunc: any) => {
+  const sql = "SELECT * FROM sqlite_master where type='table'";
+  const tq = await queryFunc(sql);
+  return tq.rows;
+};
+
+/**
+ *
+ * @param queryFunc
+ * @returns
+ */
+export const doListUserDefinedTables = async (queryFunc: any) => {
+  return (await doListTables(queryFunc)).filter(
+    ({ name }: { name: string }) => !name.startsWith("_sc_") && name !== "users"
+  );
+};
+
+/**
+ *
+ * @param queryFunc
+ * @returns
+ */
+export const doListScTables = async (queryFunc: any) => {
+  return (await doListTables(queryFunc)).filter(({ name }: { name: string }) =>
+    name.startsWith("_sc_")
+  );
+};

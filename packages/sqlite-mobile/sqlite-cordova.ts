@@ -16,6 +16,9 @@ import {
   doCount,
   doDeleteWhere,
   mkVal,
+  doListTables,
+  doListUserDefinedTables,
+  doListScTables,
 } from "@saltcorn/db-common/sqlite-commons";
 
 declare let window: any;
@@ -131,10 +134,21 @@ export const drop_reset_schema = () => {
   );
 };
 
+/**
+ *
+ * @param tbl
+ * @param whereObj
+ * @returns
+ */
 export const count = async (tbl: string, whereObj: Where) => {
   return await doCount(tbl, whereObj, query);
 };
 
+/**
+ *
+ * @param tbl
+ * @param whereObj
+ */
 export const deleteWhere = async (
   tbl: string,
   whereObj: Where
@@ -142,6 +156,12 @@ export const deleteWhere = async (
   await doDeleteWhere(tbl, whereObj, query);
 };
 
+/**
+ *
+ * @param tbl
+ * @param where
+ * @returns
+ */
 export const selectMaybeOne = async (
   tbl: string,
   where: Where
@@ -151,6 +171,12 @@ export const selectMaybeOne = async (
   else return rows[0];
 };
 
+/**
+ *
+ * @param tbl
+ * @param where
+ * @returns
+ */
 export const selectOne = async (tbl: string, where: Where): Promise<Row> => {
   const rows = await select(tbl, where);
   if (rows.length === 0) {
@@ -159,6 +185,12 @@ export const selectOne = async (tbl: string, where: Where): Promise<Row> => {
   } else return rows[0];
 };
 
+/**
+ *
+ * @param tbl
+ * @param obj
+ * @param id
+ */
 export const update = async (
   tbl: string,
   obj: Row,
@@ -170,4 +202,28 @@ export const update = async (
   valList.push(id);
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
+};
+
+/**
+ *
+ * @returns
+ */
+export const listTables = async () => {
+  return await doListTables(query);
+};
+
+/**
+ *
+ * @returns
+ */
+export const listUserDefinedTables = async () => {
+  return await doListUserDefinedTables(query);
+};
+
+/**
+ *
+ * @returns
+ */
+export const listScTables = async () => {
+  return await doListScTables(query);
 };

@@ -4,6 +4,7 @@
     "packages/saltcorn-admin-models",
     "packages/saltcorn-types",
     "packages/sqlite",
+    "packages/sqlite-mobile",
     "packages/saltcorn-markup",
     "packages/saltcorn-data",
     "packages/db-common"

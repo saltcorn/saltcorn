@@ -213,13 +213,21 @@ class Page {
           ...querystate,
           ...extra_state,
         });
-        segment.contents = await view.run(mystate, extraArgs);
+        segment.contents = await view.run(
+          mystate,
+          extraArgs,
+          view.isRemoteTable()
+        );
       } else {
         const table = Table.findOne({ id: view.table_id });
         const state = segment.configuration || this.fixed_states[segment.name];
         const filled = await fill_presets(table, extraArgs.req, state);
         const mystate = view.combine_state_and_default_state(filled || {});
-        segment.contents = await view.run(mystate, extraArgs);
+        segment.contents = await view.run(
+          mystate,
+          extraArgs,
+          view.isRemoteTable()
+        );
       }
     });
     const pagename = this.name;
