@@ -26,6 +26,9 @@ import {
   mkVal,
   doCount,
   doDeleteWhere,
+  doListTables,
+  doListUserDefinedTables,
+  doListScTables,
 } from "@saltcorn/db-common/sqlite-commons";
 
 let sqliteDatabase: Database | null = null;
@@ -157,28 +160,42 @@ export const select = async (
   return tq.rows;
 };
 
+/**
+ *
+ * @returns
+ */
 export const listTables = async () => {
-  const sql = "SELECT * FROM sqlite_master where type='table'";
-  const tq = await query(sql);
-  return tq.rows;
+  return await doListTables(query);
 };
 
+/**
+ *
+ * @returns
+ */
 export const listUserDefinedTables = async () => {
-  return (await listTables()).filter(
-    ({ name }: { name: string }) => !name.startsWith("_sc_") && name !== "users"
-  );
+  return await doListUserDefinedTables(query);
 };
 
+/**
+ *
+ * @returns
+ */
 export const listScTables = async () => {
-  return (await listTables()).filter(({ name }: { name: string }) =>
-    name.startsWith("_sc_")
-  );
+  return await doListScTables(query);
 };
 
+/**
+ *
+ * @param name
+ */
 export const dropTable = async (name: string) => {
   await query(`DROP TABLE ${name}`);
 };
 
+/**
+ *
+ * @param tables
+ */
 export const dropTables = async (tables: string[]) => {
   for (const table of tables) {
     await dropTable(table);

@@ -7,12 +7,6 @@ const getHeaders = (versionTag) => {
   return [...stdHeaders, ...window.config.pluginHeaders];
 };
 
-function isRemoteTable(view) {
-  if (!view.table_id) return false;
-  const localTableIds = saltcorn.data.state.getState().localTableIds;
-  return localTableIds.indexOf(view.table_id) < 0;
-}
-
 /**
  *
  * @param {*} context
@@ -37,7 +31,7 @@ export const postView = async (context) => {
       res: response,
       redirect,
     },
-    isRemoteTable(view)
+    view.isRemoteTable()
   );
   return response.getJson();
 };
@@ -57,7 +51,7 @@ export const postViewRoute = async (context) => {
     context.data,
     response,
     { req: request, res: response },
-    isRemoteTable(view)
+    view.isRemoteTable()
   );
   return response.getJson();
 };
@@ -84,7 +78,7 @@ export const getView = async (context) => {
     query,
     new MobileRequest(context.xhr),
     new MobileResponse(),
-    isRemoteTable(view)
+    view.isRemoteTable()
   );
   const state = saltcorn.data.state.getState();
   const layout = state.getLayout({ role_id: state.role_id });

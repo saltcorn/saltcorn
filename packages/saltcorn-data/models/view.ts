@@ -720,6 +720,17 @@ class View {
       }
     }
   }
+
+  /**
+   * saltcorn-mobile-app helper.
+   * Check if the table of a view is local or server-side
+   * @returns true if server-side table
+   */
+  isRemoteTable(): boolean {
+    if (isNode() || !this.table_id) return false;
+    const { getState } = require("../db/state");
+    return getState().localTableIds.indexOf(this.table_id) < 0;
+  }
 }
 
 function typeWithDefinedMember<T>(object: any, member: string): object is T {

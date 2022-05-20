@@ -729,13 +729,15 @@ class Field implements AbstractField {
   }
 
   /**
-   * @param {object} fld
-   * @param {boolean} [bare = false]
-   * @returns {Promise<Field>}
+   * @param fld
+   * @param bare
+   * @param id - optional id, if set, no '_sc_fields' entry is inserted
+   * @returns
    */
   static async create(
     fld: Field | FieldCfg,
-    bare: boolean = false
+    bare: boolean = false,
+    id?: string
   ): Promise<Field> {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
@@ -794,21 +796,23 @@ class Field implements AbstractField {
         ]);
       }
     }
-    f.id = await db.insert("_sc_fields", {
-      table_id: f.table_id,
-      name: f.name,
-      label: f.label,
-      type: f.is_fkey ? f.type : (<Type>f.type)?.name,
-      reftable_name: f.is_fkey ? f.reftable_name : undefined,
-      reftype: f.is_fkey ? f.reftype : undefined,
-      refname: f.is_fkey ? f.refname : undefined,
-      required: f.required,
-      is_unique: f.is_unique,
-      attributes: f.attributes,
-      calculated: f.calculated,
-      expression: f.expression,
-      stored: f.stored,
-    });
+    f.id = id
+      ? id
+      : await db.insert("_sc_fields", {
+          table_id: f.table_id,
+          name: f.name,
+          label: f.label,
+          type: f.is_fkey ? f.type : (<Type>f.type)?.name,
+          reftable_name: f.is_fkey ? f.reftable_name : undefined,
+          reftype: f.is_fkey ? f.reftype : undefined,
+          refname: f.is_fkey ? f.refname : undefined,
+          required: f.required,
+          is_unique: f.is_unique,
+          attributes: f.attributes,
+          calculated: f.calculated,
+          expression: f.expression,
+          stored: f.stored,
+        });
     await require("../db/state").getState().refresh_tables();
 
     if (table.versioned && !f.calculated) {

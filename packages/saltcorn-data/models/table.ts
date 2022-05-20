@@ -267,11 +267,13 @@ class Table implements AbstractTable {
    * Create table
    * @param name - table name
    * @param options - table fields
+   * @param id - optional id, if set, no '_sc_tables' entry is inserted
    * @returns {Promise<Table>} table
    */
   static async create(
     name: string,
-    options: SelectOptions | TablePack = {}
+    options: SelectOptions | TablePack = {},
+    id?: string
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -290,14 +292,16 @@ class Table implements AbstractTable {
       ownership_formula: options.ownership_formula,
       description: options.description || "",
     };
-    // insert table defintion into _sc_tables
-    const id = await db.insert("_sc_tables", tblrow);
-    // add primary key columnt ID
-    await db.query(
-      `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-          values($1,'id','ID','Integer', '{}', true, true, true)`,
-      [id]
-    );
+    if (!id) {
+      // insert table defintion into _sc_tables
+      id = await db.insert("_sc_tables", tblrow);
+      // add primary key columnt ID
+      await db.query(
+        `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+            values($1,'id','ID','Integer', '{}', true, true, true)`,
+        [id]
+      );
+    }
     // create table
 
     const table = new Table({ ...tblrow, id });
