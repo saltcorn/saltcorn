@@ -153,8 +153,7 @@ class Trigger implements AbstractTrigger {
       const table = Table.findOne(table_name);
       rest.table_id = table.id;
     }
-    const fid = await db.insert("_sc_triggers", rest);
-    trigger.id = fid;
+    trigger.id = await db.insert("_sc_triggers", rest);
     await require("../db/state").getState().refresh_triggers();
     return trigger;
   }
@@ -193,7 +192,7 @@ class Trigger implements AbstractTrigger {
         findArgs.table_id = table.id;
       } else if (channel) findArgs.channel = channel;
 
-      const triggers = await Trigger.find(findArgs);
+      const triggers = Trigger.find(findArgs);
 
       for (const trigger of triggers) {
         const action = getState().actions[trigger.action];
@@ -208,7 +207,7 @@ class Trigger implements AbstractTrigger {
             ...(payload || {}),
           }));
       }
-      EventLog.create({
+      await EventLog.create({
         event_type: eventType,
         channel,
         user_id: (<any>(userPW || {})).id || null,
@@ -232,9 +231,9 @@ class Trigger implements AbstractTrigger {
   ): Promise<void> {
     const triggers = await Trigger.getTableTriggers(when_trigger, table);
     for (const trigger of triggers) {
-      await trigger.run!(row); // getTableTriggers ensures run is set
+      trigger.run!(row); // getTableTriggers ensures run is set
     }
-    EventLog.create({
+    await EventLog.create({
       event_type: when_trigger,
       channel: table.name,
       user_id: null,
@@ -273,7 +272,7 @@ class Trigger implements AbstractTrigger {
   ): Promise<Trigger[]> {
     const { getState } = require("../db/state");
 
-    const triggers = await Trigger.find({ when_trigger, table_id: table.id });
+    const triggers = Trigger.find({ when_trigger, table_id: table.id });
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
       trigger.run = (row: Row) =>

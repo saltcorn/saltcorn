@@ -650,7 +650,7 @@
 	"Not allowed": "Not allowed",
 	"You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work.": "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work.",
 	"Create tenant warning": "Create tenant warning",
-	"Show a warning to users creating a tenant disclaiming warranty of availability or security": "Show a warning to users creating a tenant disclaiming warranty of availability or security",
+	"Show a warning to users creating a tenant disclaiming warranty of availability or security": "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
 	"A list view shown on the left, to select rows": "A list view shown on the left, to select rows",
 	"The view to show the selected row": "The view to show the selected row",
 	"Location": "Location",
@@ -871,8 +871,6 @@
 	"Place in dropdown": "Place in dropdown",
 	"Hide null columns": "Hide null columns",
 	"Do not display a column if it contains entirely missing values": "Do not display a column if it contains entirely missing values",
-	"Show a warning to users creating a tenant disclaiming warranty of availability or security": "Show a warning to users creating a tenant disclaiming warrenty of availability or security",
-	"Set to 0 for expiration at the end of browser session": "Set to 0 for expiration at the end of browser session",
 	"Could not verify code": "Could not verify code",
 	"Disable two-factor authentication": "Disable two-factor authentication",
 	"Enter your two-factor code in order to disable it": "Enter your two-factor code in order to disable it",
@@ -893,5 +891,6 @@
 	"Include in full-text search": "Include in full-text search",
 	"Strings": "Strings",
 	"In default language": "In default language",
-	"In %s": "In %s"
+	"In %s": "In %s",
+	"Enable TWA": "Enable TWA"
 }

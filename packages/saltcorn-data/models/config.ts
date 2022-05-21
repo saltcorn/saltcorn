@@ -544,7 +544,7 @@ const isFixedConfig = (key: string): boolean =>
  */
 const getAllConfig = async (): Promise<ConfigTypes | void> => {
   const cfgs = await db.select("_sc_config");
-  var cfg: ConfigTypes = {};
+  let cfg: ConfigTypes = {};
   cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
     if (key === "testMigration")
       //legacy invalid cfg
@@ -571,7 +571,7 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
  * @returns {Promise<object>}
  */
 const getAllConfigOrDefaults = async (): Promise<ConfigTypes> => {
-  var cfgs: ConfigTypes = {};
+  let cfgs: ConfigTypes = {};
   const cfgInDB = await getAllConfig();
   if (cfgInDB)
     Object.entries(configTypes).forEach(
@@ -762,7 +762,7 @@ const get_base_url = (req?: any): string => {
   const cfg = getState().getConfig("base_url", "");
   if (cfg) return ensure_final_slash(cfg);
   if (!req || !req.get) return "/";
-  var ports = "";
+  let ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
     const hosts = host.split(":");
