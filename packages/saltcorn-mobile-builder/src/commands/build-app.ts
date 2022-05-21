@@ -11,6 +11,8 @@ import {
 import { join } from "path";
 import db from "@saltcorn/data/db/index";
 import Plugin from "@saltcorn/data/models/plugin";
+import { Row } from "@saltcorn/db-common/internal";
+const reset = require("@saltcorn/data/db/reset_schema");
 const { PluginManager } = require("live-plugin-manager");
 const {
   staticDependencies,
@@ -72,8 +74,8 @@ export default class BuildAppCommand extends Command {
     await this.bundlePackages();
     this.copyBundlesToApp();
     await this.installNpmPackages();
-    // TODO ch postgres
-    await this.copySqliteDbToApp(localUserTables);
+    await this.buildTablesFile(localUserTables);
+    await this.createSqliteDb();
     if (flags.platforms) {
       this.validatePlatforms(flags.platforms);
       this.addPlatforms(flags.platforms);
@@ -92,7 +94,12 @@ export default class BuildAppCommand extends Command {
     }
     const serverRoot = join(require.resolve("@saltcorn/server"), "..");
     const srcPrefix = join(serverRoot, "public");
-    const srcFiles = ["jquery-3.6.0.min.js", "saltcorn-common.js", "saltcorn.js", "saltcorn.css"];
+    const srcFiles = [
+      "jquery-3.6.0.min.js",
+      "saltcorn-common.js",
+      "saltcorn.js",
+      "saltcorn.css",
+    ];
     for (const srcFile of srcFiles) {
       copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
     }
@@ -191,21 +198,35 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  copySqliteDbToApp = async (localUserTables: string[]) => {
+  createSqliteDb = async () => {
     const dbPath = join(this.wwwDir, "scdb.sqlite");
-    copyFileSync(db.connectObj.sqlite_path, dbPath);
     let connectObj = db.connectObj;
     connectObj.sqlite_path = dbPath;
     await db.changeConnection(connectObj);
-    const tablesToDrop = (await db.listUserDefinedTables())
-      .filter(
-        (table: any) =>
-          !localUserTables.find(
-            (current) => current.toUpperCase() === table.name.toUpperCase()
-          )
+    await reset();
+  };
+
+  buildTablesFile = async (localUserTables: string[]) => {
+    const scTables = await Promise.all(
+      (
+        await db.listScTables()
       )
-      .map(({ name }: { name: string }) => name);
-    await db.dropTables(tablesToDrop);
+        .filter(
+          (table: Row) =>
+            ["_sc_migrations", "_sc_errors"].indexOf(table.name) === -1
+        )
+        .map(async (row: Row) => {
+          const dbData = await db.select(row.name);
+          return { table: row.name, rows: dbData };
+        })
+    );
+    writeFileSync(
+      join(this.wwwDir, "tables.json"),
+      JSON.stringify({
+        created_at: new Date(),
+        sc_tables: scTables,
+      })
+    );
   };
 
   validatePlatforms = (platforms: string[]) => {

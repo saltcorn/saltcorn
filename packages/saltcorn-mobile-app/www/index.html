@@ -12,6 +12,11 @@
     <script type="module">
       import { initRoutes } from "./js/routes/init.js";
       import { renderLoginForm } from "./js/utils/login_form.js";
+      import {
+        updateDbIfNecessary,
+        getTableIds,
+      } from "./js/utils/table_utils.js";
+      import { readJSON } from "./js/utils/file_helpers.js";
 
       const staticPlugins = ["base", "sbadmin2"];
 
@@ -42,32 +47,6 @@
         return plugins;
       }
 
-      function readCfg() {
-        let wwwDir = cordova.file.applicationDirectory + "www";
-        return new Promise((resolve, reject) => {
-          window.resolveLocalFileSystemURL(wwwDir, function (fs) {
-            fs.getFile(
-              "config",
-              { create: false, exclusive: false },
-              function (fileEntry) {
-                fileEntry.file(function (file) {
-                  let reader = new FileReader();
-                  reader.onloadend = function (e) {
-                    resolve(JSON.parse(this.result));
-                  };
-                  reader.readAsText(file);
-                });
-              },
-              function (err) {
-                console.log("unable to read config");
-                console.log(err);
-                reject(err);
-              }
-            );
-          });
-        });
-      }
-
       async function addScripts(version_tag) {
         const scripts = [
           `static_assets/${version_tag}/jquery-3.6.0.min.js`,
@@ -80,12 +59,6 @@
         for (const script of scripts) {
           await addScript(script);
         }
-      }
-
-      async function getTableIds(tableNames) {
-        return (await saltcorn.data.models.Table.find())
-          .filter((table) => tableNames.indexOf(table.name) > -1)
-          .map((table) => table.id);
       }
 
       const addPluginScriptTagsToCfg = (pluginRows) => {
@@ -101,18 +74,21 @@
       };
 
       document.addEventListener("deviceready", async () => {
-        const config = await readCfg();
-        window.config = config;
+        window.config = await readJSON(
+          "config",
+          `${cordova.file.applicationDirectory}www`
+        );
         await addScripts(config.version_tag);
         await saltcorn.data.db.init();
         const state = saltcorn.data.state.getState();
+        state.registerPlugin("base", saltcorn.base_plugin);
+        state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
+        addPluginScriptTagsToCfg(await loadPlugins(state));
+        await updateDbIfNecessary();
         await state.refresh_tables();
         await state.refresh_views();
         await state.refresh_pages();
-        state.registerPlugin("base", saltcorn.base_plugin);
-        state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
         state.localTableIds = await getTableIds(config.localUserTables);
-        addPluginScriptTagsToCfg(await loadPlugins(state));
         await initRoutes();
         const entryView = config.entry_view;
         const jwt = localStorage.getItem("auth_jwt");
