@@ -73,6 +73,11 @@
         }
       };
 
+      const setVersionTtag = () => {
+        let iframe = document.getElementById("content-iframe");
+        iframe.contentWindow._sc_version_tag = window.config.version_tag;
+      };
+
       document.addEventListener("deviceready", async () => {
         window.config = await readJSON(
           "config",
@@ -90,6 +95,7 @@
         await state.refresh_pages();
         state.localTableIds = await getTableIds(config.localUserTables);
         await initRoutes();
+        setVersionTtag();
         const entryView = config.entry_view;
         const jwt = localStorage.getItem("auth_jwt");
         if (jwt && jwt !== "undefined") {

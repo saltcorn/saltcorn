@@ -265,6 +265,23 @@ async function make_unique_field(
   }
 }
 
+async function select_id(id) {
+  const newQuery = updateQueryStringParameter(parent.currentQuery(), "id", id);
+  await parent.handleRoute(parent.currentLocation(), newQuery);
+}
+
+async function check_state_field(that) {
+  const name = that.name;
+  const newQuery = that.checked ?
+    updateQueryStringParameter(parent.currentQuery(), name, that.value) :
+    removeQueryStringParameter(name);
+  await parent.handleRoute(parent.currentLocation(), newQuery);
+}
+
+async function clear_state() {
+  await parent.handleRoute(parent.currentLocation(), undefined);
+}
+
 function reload_on_init() {
   console.log("not yet supported");
 }
