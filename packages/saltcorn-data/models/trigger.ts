@@ -207,7 +207,7 @@ class Trigger implements AbstractTrigger {
             ...(payload || {}),
           }));
       }
-      await EventLog.create({
+      EventLog.create({
         event_type: eventType,
         channel,
         user_id: (<any>(userPW || {})).id || null,
@@ -233,7 +233,7 @@ class Trigger implements AbstractTrigger {
     for (const trigger of triggers) {
       trigger.run!(row); // getTableTriggers ensures run is set
     }
-    await EventLog.create({
+    EventLog.create({
       event_type: when_trigger,
       channel: table.name,
       user_id: null,
