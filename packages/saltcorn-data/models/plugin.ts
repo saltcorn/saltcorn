@@ -120,7 +120,7 @@ class Plugin {
       const { version } = await requirePlugin(this, true);
       if (version && version !== old_version) {
         this.version = version;
-        this.upsert();
+        await this.upsert();
       }
     } else {
       await requirePlugin(this, true);
@@ -149,7 +149,7 @@ class Plugin {
   }
 
   /**
-   * List plugins availabe in store
+   * List plugins available in store
    * @returns {Promise<*>}
    */
   static async store_plugins_available(): Promise<Array<Plugin>> {

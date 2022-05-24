@@ -3,10 +3,17 @@ const { is } = require("contractis");
 const { execSync } = require("child_process");
 const os = require("os");
 
-const asyncSudo = (args, allowFail) => {
+/**
+ * Execute os  sudo command with args
+ * @param args - args
+ * @param allowFail - if true allows to fail of sudo
+ * @param dryRun - if true it does not execute sudo but displays commands (to test purposes)
+ * @returns {Promise<unknown>}
+ */
+const asyncSudo = (args, allowFail, dryRun) => {
   console.log(">", args.join(" "));
-  return new Promise(function (resolve, reject) {
-    var child = sudo(args, { cachePassword: true });
+  if(!dryRun) return new Promise(function (resolve, reject) {
+    let child = sudo(args, { cachePassword: true });
     //var child = sudo(['ls'], {cachePassword: true})
     child.stdout.on("data", function (data) {
       console.log(data.toString());
@@ -20,20 +27,36 @@ const asyncSudo = (args, allowFail) => {
     });
   });
 };
-
-const asyncSudoUser = (user, args) => {
+/**
+ * Execute OS commands. For current user uses direct exec instead of sudo
+ * @param user - user
+ * @param args - args
+ * @param allowFail - if true than allow OS process execution fail
+ * @param dryRun - if true than it does not execute sudo but displays commands (to test purposes)
+ * @returns {Promise<*>}
+ */
+const asyncSudoUser = (user, args, allowFail, dryRun) => {
   if (os.userInfo().username === user) {
     console.log(">", args.join(" "));
     execSync(args.join(" "), {
       stdio: "inherit",
     });
-  } else return asyncSudo(["sudo", "-iu", user, ...args]);
+  } else return asyncSudo(["sudo", "-iu", user, ...args], allowFail,dryRun);
 };
-
-const asyncSudoPostgres = (args) => {
-  return asyncSudoUser("postgres", args);
+/**
+ * Execute sudo for postgres user with arguments
+ * @param args
+ * @param allowFail - if true than allow OS process execution fail
+ * @param dryRun
+ * @returns {Promise<*>}
+ */
+const asyncSudoPostgres = (args, allowFail, dryRun) => {
+  return asyncSudoUser("postgres", args, allowFail, dryRun);
 };
-
+/**
+ * Generate random password. At least 8 characters
+ * @returns {*}
+ */
 const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
   if (s.length > 7) return s;

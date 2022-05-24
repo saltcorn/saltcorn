@@ -892,5 +892,7 @@
 	"Strings": "Strings",
 	"In default language": "In default language",
 	"In %s": "In %s",
-	"Enable TWA": "Enable TWA"
+	"Enable TWA": "Enable TWA",
+	"Or enter this code:": "Or enter this code:",
+	"Disable TWA": "Disable TWA"
 }

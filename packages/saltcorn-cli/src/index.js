@@ -18,6 +18,7 @@
  * @property {module:commands/localize-plugin} localize-plugin
  * @property {module:commands/make-migration} make-migration
  * @property {module:commands/migrate} migrate
+ * @property {module:commands/modify-user} modify-user
  * @property {module:commands/plugins} plugins
  * @property {module:commands/release} release
  * @property {module:commands/reset-schema} reset-schema
@@ -27,8 +28,8 @@
  * @property {module:commands/setup} setup
  * @property {module:commands/test-plugin} test-plugin
  * @property {module:commands/transform-field} transform-field
- * 
+ *
  * @category saltcorn-cli
- */ 
+ */
 
 module.exports = require("@oclif/command");

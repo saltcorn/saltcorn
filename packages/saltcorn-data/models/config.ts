@@ -528,7 +528,7 @@ const getConfig = async (key: string, def?: any): Promise<any> => {
 };
 
 /**
- * Returns true if key is defined in fixed_configration for tenant
+ * Returns true if key is defined in fixed_configuration for tenant
  * @param {string} key
  * @returns {boolean}
  */

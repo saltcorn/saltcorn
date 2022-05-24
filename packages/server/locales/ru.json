@@ -782,5 +782,7 @@
 	"Two-factor authentication is enabled": "Двухфакторная аутентификация включена",
 	"Disable TWA": "Отключить TWA",
 	"Enable TWA": "Включить TWA",
-	"Deleted all rows": "Удалены все строки"
+	"Deleted all rows": "Удалены все строки",
+	"Use this link: <a href=\"%s\">%s</a> to revisit your application at any time.": "Use this link: <a href=\"%s\">%s</a> to revisit your application at any time.",
+	"To login to a previously created application, go to: ": "To login to a previously created application, go to: "
 }
