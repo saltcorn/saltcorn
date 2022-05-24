@@ -78,7 +78,7 @@ class ReleaseCommand extends Command {
     // 1. update version
     // 2. update dependencies for other packages
     // 3. publish
-    spawnSync("npm", ["install"], {
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
