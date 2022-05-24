@@ -93,7 +93,7 @@ class ReleaseCommand extends Command {
     // 3. run npm update
     // 3. publish
     updatePkgJson("saltcorn-cli");
-    spawnSync("npm", ["update"], {
+    spawnSync("npm", ["update","--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
