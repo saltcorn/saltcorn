@@ -302,17 +302,22 @@ function jsonWhere(
       : `${quote(sqlsanitizeAllowDots(f))}->>'${sqlsanitizeAllowDots(sf)}'`;
 
   if (Array.isArray(v)) return `${lhs(k, v[0])}=${phs.push(v[1])}`;
-  else
+  else {
     return andArray(
-      Object.entries(v).map(
-        ([kj, vj]) => `${lhs(k, kj)}=${phs.push(vj as Value)}`
+      Object.entries(v).map(([kj, vj]) =>
+        vj.ilike
+          ? `${lhs(k, kj)} ${
+              phs.is_sqlite ? "LIKE" : "ILIKE"
+            } '%' || ${phs.push(vj.ilike as Value)} || '%'`
+          : `${lhs(k, kj)}=${phs.push(vj as Value)}`
       )
     );
+  }
 }
 
 function andArray(ss: string[]): string {
   if (ss.length === 1) return ss[0];
-  else return "(" + ss.join(" and ") + ")";
+  else return ss.join(" and ");
 }
 
 type WhereAndVals = {

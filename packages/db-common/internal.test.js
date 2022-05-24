@@ -57,6 +57,14 @@ describe("mkWhere", () => {
       where: `where "foo"->>'bar'=$1`,
     });
   });
+  it("should query json approx", () => {
+    expect(mkWhere({ foo: { json: { bar: { ilike: "baz" } } } })).toStrictEqual(
+      {
+        values: ["baz"],
+        where: `where "foo"->>'bar' ILIKE '%' || $1 || '%'`,
+      }
+    );
+  });
 
   it("should set id", () => {
     expect(mkWhere({ id: 5 })).toStrictEqual({
