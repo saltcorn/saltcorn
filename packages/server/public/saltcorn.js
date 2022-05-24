@@ -621,7 +621,7 @@ function applyViewConfig(e, url) {
 
 const repeaterCopyValuesToForm = (form, editor) => {
   const vs = JSON.parse(editor.getString());
-  //console.log(vs)
+  const allNames = new Set([]);
   const setVal = (k, ix, v) => {
     const $e = form.find(`input[name="${k}_${ix}"]`);
     if ($e.length) $e.val(v);
@@ -633,9 +633,16 @@ const repeaterCopyValuesToForm = (form, editor) => {
   vs.forEach((v, ix) => {
     Object.entries(v).forEach(([k, v]) => {
       //console.log(ix, k, typeof v, v)
+      allNames.add(k);
       if (typeof v === "boolean") setVal(k, ix, v ? "on" : "");
       else setVal(k, ix, v);
     });
+  });
+  //delete
+  [...allNames].forEach((k) => {
+    for (let ix = vs.length; ix < vs.length + 20; ix++) {
+      $(`input[name=${k}_${ix}]`).remove();
+    }
   });
 };
 
