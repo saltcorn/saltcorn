@@ -1097,6 +1097,12 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       Object.keys(v).length === 1 &&
       field?.type?.name === "JSON"
     ) {
+      qstate[k] = [
+        ...(qstate[k] ? [qstate[k]] : []),
+        {
+          json: [Object.keys(v)[0], Object.values(v)[0]],
+        },
+      ];
       if (field.attributes?.hasSchema) {
         const s = field.attributes.schema.find(
           (f) => f.key === Object.keys(v)[0]
