@@ -829,7 +829,8 @@ class Field implements AbstractField {
       const nrows = await table.countRows({});
       if (nrows > 0) {
         const table1 = await Table.findOne({ id: f.table_id });
-
+        
+        //intentionally omit await
         recalculate_for_stored(table1); //not waiting as there could be a lot of data
       }
     }
