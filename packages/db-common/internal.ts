@@ -280,13 +280,7 @@ const whereClause =
       : typeof (v || {}).inSelect !== "undefined"
       ? subSelectWhere(phs)(k, v)
       : typeof (v || {}).json !== "undefined"
-      ? phs.is_sqlite
-        ? `json_extract(${quote(
-            sqlsanitizeAllowDots(k)
-          )}, '$.${sqlsanitizeAllowDots(v.json[0])}')=${phs.push(v.json[1])}`
-        : `${quote(sqlsanitizeAllowDots(k))}->>'${sqlsanitizeAllowDots(
-            v.json[0]
-          )}'=${phs.push(v.json[1])}`
+      ? jsonWhere(k, v.json, phs)
       : v === null
       ? `${quote(sqlsanitizeAllowDots(k))} is null`
       : k === "not"
@@ -294,6 +288,32 @@ const whereClause =
       : `${quote(sqlsanitizeAllowDots(k))}=${
           typeof v === "symbol" ? v.description : phs.push(v)
         }`;
+
+function jsonWhere(
+  k: string,
+  v: any[] | Object,
+  phs: PlaceHolderStack
+): string {
+  const lhs = (f: string, sf: string) =>
+    phs.is_sqlite
+      ? `json_extract(${quote(
+          sqlsanitizeAllowDots(f)
+        )}, '$.${sqlsanitizeAllowDots(sf)}')`
+      : `${quote(sqlsanitizeAllowDots(f))}->>'${sqlsanitizeAllowDots(sf)}'`;
+
+  if (Array.isArray(v)) return `${lhs(k, v[0])}=${phs.push(v[1])}`;
+  else
+    return andArray(
+      Object.entries(v).map(
+        ([kj, vj]) => `${lhs(k, kj)}=${phs.push(vj as Value)}`
+      )
+    );
+}
+
+function andArray(ss: string[]): string {
+  if (ss.length === 1) return ss[0];
+  else return "(" + ss.join(" and ") + ")";
+}
 
 type WhereAndVals = {
   where: string;
