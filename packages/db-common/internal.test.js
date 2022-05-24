@@ -65,6 +65,20 @@ describe("mkWhere", () => {
       }
     );
   });
+  it("should query json gt", () => {
+    expect(mkWhere({ foo: { json: { bar: { gt: 6 } } } })).toStrictEqual({
+      values: [6],
+      where: `where "foo"->>'bar' > $1`,
+    });
+  });
+  it("should query json gt and lt", () => {
+    expect(mkWhere({ foo: { json: { bar: { gt: 6, lt: 1 } } } })).toStrictEqual(
+      {
+        values: [6, 1],
+        where: `where "foo"->>'bar' > $1 and "foo"->>'bar' < $2`,
+      }
+    );
+  });
 
   it("should set id", () => {
     expect(mkWhere({ id: 5 })).toStrictEqual({
