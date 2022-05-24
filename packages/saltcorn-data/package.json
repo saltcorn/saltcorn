@@ -43,7 +43,7 @@
     "@saltcorn/types": "0.7.2-beta.4",
     "@saltcorn/markup": "0.7.2-beta.4",
     "@saltcorn/db-common": "0.7.2-beta.4",
-    "@saltcorn/sqlite-mobile": "0.7.2-beta.0",
+    "@saltcorn/sqlite-mobile": "0.7.2-beta.4",
     "acorn": "^8.0.3",
     "astring": "^1.4.3",
     "axios": "^0.26.1",
