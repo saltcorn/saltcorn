@@ -58,7 +58,7 @@ class ReleaseCommand extends Command {
       );
     };
     const compileTsFiles = () => {
-      spawnSync("npm", ["install"], {
+      spawnSync("npm", ["install","--legacy-peer-deps"], {
         stdio: "inherit",
         cwd: ".",
       });
