@@ -47,7 +47,8 @@ USAGE
 * [`saltcorn list-tenants`](#saltcorn-list-tenants)
 * [`saltcorn localize-plugin PLUGIN PATH`](#saltcorn-localize-plugin-plugin-path)
 * [`saltcorn make-migration`](#saltcorn-make-migration)
-* [`saltcorn saltcorn migrate`](#saltcorn-saltcorn-migrate)
+* [`saltcorn migrate`](#saltcorn-migrate)
+* [`saltcorn modify-user`](#saltcorn-modify-user)
 * [`saltcorn plugins`](#saltcorn-plugins)
 * [`saltcorn plugins:inspect PLUGIN...`](#saltcorn-pluginsinspect-plugin)
 * [`saltcorn plugins:install PLUGIN...`](#saltcorn-pluginsinstall-plugin)
@@ -324,13 +325,13 @@ DESCRIPTION
 
 _See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/make-migration.js)_
 
-## `saltcorn saltcorn migrate`
+## `saltcorn migrate`
 
 Run Database structure migrations
 
 ```
 USAGE
-  $ saltcorn saltcorn migrate
+  $ saltcorn migrate
 
 DESCRIPTION
   ...
@@ -345,6 +346,36 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/migrate.js)_
+
+## `saltcorn modify-user`
+
+Modify (update) user
+
+```
+USAGE
+  $ saltcorn modify-user USER_EMAIL
+
+ARGUMENTS
+  USER_EMAIL  User to modify
+
+OPTIONS
+  -a, --admin              make user be Admin
+  -e, --email=email        new email
+  -i, --imode              interactive mode
+  -p, --password=password  new password
+  -r, --role=role          new role (can conflict with -a option)
+  -t, --tenant=tenant      tenant
+
+DESCRIPTION
+  Command changes the user specified by USER_EMAIL.
+
+  You can change the user group, password and email.
+
+  NOTE that -a and -r role (--role=role) can give conflict.
+
+```
+
+_See code: [src/commands/modify-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/modify-user.js)_
 
 ## `saltcorn plugins`
 

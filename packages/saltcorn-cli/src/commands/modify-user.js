@@ -108,7 +108,26 @@ ModifyUserCommand.args = [
 /**
  * @type {string}
  */
-ModifyUserCommand.description = `Modify (update) user`;
+ModifyUserCommand.description = `Modify (update) user.
+
+Command changes the user specified by USER_EMAIL.
+
+You can change the user group, password and email.
+
+NOTE that -a and -r role (--role=role) can give conflict.
+`;
+
+/**
+ * @type {string}
+ */
+ModifyUserCommand.help = `Modify (update) user.
+
+Command changes the user specified by USER_EMAIL.
+
+You can change the user group, password and email.
+
+NOTE that -a and -r role (--role=role) can give conflict.
+`;
 
 /**
  * @type {object}
@@ -125,16 +144,13 @@ ModifyUserCommand.flags = {
   }),
   role: flags.string({
     char: "r",
-    description: "new role",
+    description: "new role (can conflict with -a option)",
   }),
   password: flags.string({
     char: "p",
     description: "new password",
   }),
-  imode: flags.string({
-    char: "i",
-    description: "interactive mode",
-  }),
+  imode: flags.boolean({ char: "i", description: "interactive mode" }),
 };
 
 module.exports = ModifyUserCommand;
