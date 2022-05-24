@@ -24,6 +24,7 @@ class ReleaseCommand extends Command {
       "@saltcorn/e2e": { dir: "e2e" },
       "@saltcorn/db-common": { dir: "db-common", publish: true },
       "@saltcorn/sqlite": { dir: "sqlite", publish: true },
+      "@saltcorn/sqlite-mobile": { dir: "sqlite-mobile", publish: true },
       "@saltcorn/postgres": { dir: "postgres", publish: true },
       "@saltcorn/types": { dir: "saltcorn-types", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
@@ -37,6 +38,8 @@ class ReleaseCommand extends Command {
       "@saltcorn/base-plugin": { dir: "saltcorn-base-plugin", publish: true },
       //"saltcorn-cli", publish: true},
       "@saltcorn/markup": { dir: "saltcorn-markup", publish: true },
+      "@saltcorn/mobile-app": { dir: "saltcorn-mobile-app", publish: true },
+      "@saltcorn/mobile-builder": { dir: "saltcorn-mobile-builder", publish: true },
       "@saltcorn/sbadmin2": { dir: "saltcorn-sbadmin2", publish: true },
     };
 
