@@ -1038,7 +1038,7 @@ router.post(
 );
 
 /**
- * @param {object}} req
+ * @param {object} req
  * @param {object} res
  * @returns {void}
  */
@@ -1236,14 +1236,14 @@ const userSettings = async ({ req, res, pwform, user }) => {
                           href: "/auth/twofa/disable/totp",
                           class: "btn btn-danger mt-2",
                         },
-                        "Disable"
+                        req.__("Disable TWA")
                       )
                     : a(
                         {
                           href: "/auth/twofa/setup/totp",
                           class: "btn btn-primary mt-2",
                         },
-                        "Enable"
+                        req.__("Enable TWA")
                       )
                 ),
               ],
@@ -1565,7 +1565,7 @@ router.get(
       contents: [
         h4(req.__("1. Scan this QR code in your Authenticator app")),
         img({ src: image }),
-        p("Or enter this code:"),
+        p(req.__("Or enter this code:")),
         code(pre(encodedKey.toString())),
         h4(
           req.__(
@@ -1693,7 +1693,7 @@ const randomKey = function (len) {
     chars = "abcdefghijklmnopqrstuvwxyz0123456789",
     charlen = chars.length;
 
-  for (var i = 0; i < len; ++i) {
+  for (let i = 0; i < len; ++i) {
     buf.push(chars[getRandomInt(0, charlen - 1)]);
   }
 

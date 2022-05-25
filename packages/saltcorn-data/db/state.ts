@@ -212,7 +212,7 @@ class State {
     this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
     });
-    this.refresh_i18n();
+    await this.refresh_i18n();
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
@@ -375,7 +375,7 @@ class State {
 
   /**
    * Get copy of config parameter
-   * @param {sring} key - key of parameter
+   * @param {string} key - key of parameter
    * @param {string} [def] - default value
    * @returns {string}
    */
@@ -398,11 +398,11 @@ class State {
     ) {
       await setConfig(key, value);
       this.configs[key] = { value };
-      if (key.startsWith("localizer_")) this.refresh_i18n();
+      if (key.startsWith("localizer_")) await this.refresh_i18n();
       if (db.is_node)
         process_send({ refresh: "config", tenant: db.getTenantSchema() });
       else {
-        this.refresh_config(true);
+        await this.refresh_config(true);
       }
     }
   }
@@ -420,7 +420,7 @@ class State {
     if (db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
     else {
-      this.refresh_config(true);
+      await this.refresh_config(true);
     }
   }
 
@@ -630,7 +630,7 @@ const getState = (): State | undefined => {
   else return tenants[ten];
 };
 // list of all tenants
-var tenants: Record<string, State> = { public: singleton };
+const tenants: Record<string, State> = { public: singleton };
 // list of tenants with other domains
 const otherdomaintenants: Record<string, string> = {};
 
@@ -677,6 +677,7 @@ const set_tenant_base_url = (tenant_subdomain: string, value?: string) => {
  * Switch to multi_tenant
  * @param {object} plugin_loader
  * @param {boolean} disableMigrate - if true then dont migrate db
+ * @param {string[]} tenantList
  * @returns {Promise<void>}
  */
 const init_multi_tenant = async (

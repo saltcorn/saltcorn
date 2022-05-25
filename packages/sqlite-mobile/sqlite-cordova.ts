@@ -58,6 +58,12 @@ export const init = (): Promise<void> => {
  * @returns
  */
 export const query = (statement: string, params?: any): Promise<any> => {
+  if (params?.length) {
+    /// https://github.com/storesafe/cordova-sqlite-storage/issues/545
+    params = params.map((param: any) =>
+      param === false ? 0 : param === true ? 1 : param
+    );
+  }
   return new Promise((resolve, reject) => {
     db.executeSql(
       statement,

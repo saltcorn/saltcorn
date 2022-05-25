@@ -137,7 +137,7 @@ function updateQueryStringParameter(queryStr, key, value) {
   return params.join("&");
 }
 
-async function setStateFields(kvs, href) {
+async function set_state_fields(kvs, href) {
   let queryParams = [];
   let currentQuery = parent.currentQuery();
   Object.entries(kvs).forEach((kv) => {
@@ -153,15 +153,26 @@ async function setStateFields(kvs, href) {
   await parent.handleRoute(href, queryParams.join("&"));
 }
 
+async function set_state_field(key, value) {
+  const query = updateQueryStringParameter(parent.currentQuery(), key, value);
+  await parent.handleRoute(parent.currentLocation(), query);
+}
+
+async function unset_state_field(key) {
+  const href = parent.currentLocation();
+  const query = removeQueryStringParameter(parent.currentLocation(), key);
+  await parent.handleRoute(href, query);
+}
+
 async function sortby(k, desc, viewname) {
-  await setStateFields(
+  await set_state_fields(
     { _sortby: k, _sortdesc: desc ? "on" : { unset: true } },
     `get/view/${viewname}`
   );
 }
 
 async function gopage(n, pagesize, extra) {
-  await setStateFields(
+  await set_state_fields(
     { ...extra, _page: n, _pagesize: pagesize },
     parent.currentLocation()
   );

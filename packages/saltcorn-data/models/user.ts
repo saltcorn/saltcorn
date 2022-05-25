@@ -179,17 +179,16 @@ class User {
     const hashpw = await User.hashPassword(u.password);
     const ex = await User.findOne({ email: u.email });
     if (ex) return { error: `User with this email already exists` };
-    const id = await db.insert("users", {
+    u.id = await db.insert("users", {
       email: u.email,
       password: hashpw,
       role_id: u.role_id,
       ...rest,
     });
-    u.id = id;
-    Trigger.runTableTriggers(
-      "Insert",
-      Table.findOne({ name: "users" }) as Table,
-      u
+    await Trigger.runTableTriggers(
+        "Insert",
+        Table.findOne({name: "users"}) as Table,
+        u
     );
     return u;
   }
@@ -266,7 +265,7 @@ class User {
    */
   async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
-    this.destroy_sessions();
+    await this.destroy_sessions();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
   }
 
@@ -333,7 +332,6 @@ class User {
    * @returns {string}
    */
   static unacceptable_password_reason(pw: string): string | undefined {
-    if (typeof pw !== "string") return "Not a string";
     if (pw.length < 8) return "Too short";
     if (check(pw)) return "Too common";
   }
@@ -350,7 +348,7 @@ class User {
 
   /**
    * Verification with token
-   * @param email - email sting
+   * @param email - email string
    * @param verification_token - verification token string
    * @returns {Promise<{error: string}|boolean>} true if verification passed, error string if not
    */
@@ -362,8 +360,6 @@ class User {
     verification_token: string;
   }): Promise<true | ErrorMessage> {
     if (
-      typeof verification_token !== "string" ||
-      typeof email !== "string" ||
       verification_token.length < 10 ||
       !email
     )
@@ -407,8 +403,6 @@ class User {
     password: string;
   }): Promise<SuccessMessage | ErrorMessage> {
     if (
-      typeof reset_password_token !== "string" ||
-      typeof email !== "string" ||
       reset_password_token.length < 10
     )
       return {
@@ -453,8 +447,7 @@ class User {
    * @returns {Promise<*>}
    */
   static async get_roles(): Promise<string[]> {
-    const rs = await db.select("_sc_roles", {}, { orderBy: "id" });
-    return rs;
+    return await db.select("_sc_roles", {}, { orderBy: "id" });
   }
 
   /**
