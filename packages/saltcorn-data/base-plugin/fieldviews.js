@@ -186,7 +186,7 @@ const select_options_first_level = (
 ) => {
   const os = Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
     option(
-      { value: id, selected: options.map((o) => o.value).includes(v) },
+      { value: id, selected: (options || []).map((o) => o.value).includes(v) },
       label
     )
   );
