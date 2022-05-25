@@ -20,7 +20,7 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
       - run: npm run tsc
       - run: npm install --legacy-peer-deps
-      - run: npm run docs
+      - run: export NODE_OPTIONS=--max-old-space-size=4096 npm run docs
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
