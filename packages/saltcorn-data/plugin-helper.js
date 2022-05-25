@@ -1094,6 +1094,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       // omit
     } else if (
       typeof v === "object" &&
+      v &&
       Object.keys(v).length === 1 &&
       field?.type?.name === "JSON"
     ) {
