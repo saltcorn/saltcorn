@@ -669,7 +669,7 @@ const run_action = async (
   { req, res },
   { actionQuery }
 ) => {
-  const result = actionQuery();
+  const result = await actionQuery();
   if (result.json.error) {
     Crash.create(e, req);
   }
