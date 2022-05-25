@@ -520,6 +520,8 @@ module.exports = {
      */
     run: async ({ configuration: { table } }) => {
       const table_for_recalc = await Table.findOne({ name: table });
+      
+      //intentionally omit await
       recalculate_for_stored(table_for_recalc);
     },
   },

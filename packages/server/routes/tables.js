@@ -1437,7 +1437,7 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-
+    //intentionally omit await
     recalculate_for_stored(table);
 
     req.flash("success", req.__("Started recalculating stored fields"));
