@@ -376,7 +376,7 @@ const runMany = async (
   extra,
   { editManyQuery, getRowQuery }
 ) => {
-  const { table, fields, rows } = editManyQuery();
+  const { table, fields, rows } = await editManyQuery();
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
