@@ -68,14 +68,14 @@ describe("mkWhere", () => {
   it("should query json gte", () => {
     expect(mkWhere({ foo: { json: { bar: { gte: 6 } } } })).toStrictEqual({
       values: [6],
-      where: `where "foo"->>'bar' >= $1`,
+      where: `where "foo"->'bar' >= $1`,
     });
   });
   it("should query json gte and lte", () => {
     expect(mkWhere({ foo: { json: { bar: { gte: 6, lte: 1 } } } })).toStrictEqual(
       {
         values: [6, 1],
-        where: `where "foo"->>'bar' >= $1 and "foo"->>'bar' <= $2`,
+        where: `where "foo"->'bar' >= $1 and "foo"->'bar' <= $2`,
       }
     );
   });
