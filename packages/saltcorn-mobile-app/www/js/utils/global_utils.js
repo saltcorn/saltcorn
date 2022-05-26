@@ -68,6 +68,7 @@ function replaceIframeInnerContent(content) {
   if (scmodal) {
     scmodal.modal("hide");
   }
+  iframe.contentWindow.initialize_page();
 }
 
 async function gotoEntryView() {
