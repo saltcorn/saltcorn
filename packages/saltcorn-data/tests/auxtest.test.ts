@@ -90,6 +90,15 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({ attrs: [{ json: { name: { ilike: "Tom" } } }] });
   });
+  it("json field int bounds", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { attrs: { cars__gte: 2, cars__lte: 4 } },
+    });
+    expect(w).toStrictEqual({
+      attrs: [{ json: { cars: { gte: 2, lte: 4 } } }],
+    });
+  });
 });
 describe("satisfies", () => {
   it("works", async () => {
