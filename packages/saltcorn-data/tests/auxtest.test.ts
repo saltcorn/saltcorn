@@ -36,21 +36,59 @@ describe("plugin helper", () => {
   });
 });
 describe("stateFieldsToWhere", () => {
-  const fields = [{ name: "astr", type: { name: "String" } }];
+  const fields = [
+    { name: "astr", type: { name: "String" } },
+    { name: "age", type: { name: "Integer" } },
+    { name: "props", type: { name: "JSON" } },
+    {
+      name: "attrs",
+      type: { name: "JSON" },
+      attributes: {
+        hasSchema: true,
+        schema: [{ key: "name", type: "String" }],
+      },
+    },
+  ];
   it("normal field", async () => {
     const w = stateFieldsToWhere({
       fields,
-      state: { astr: "foo" },
+      state: { astr: "foo", bstr: "bar" },
     });
     expect(w).toStrictEqual({ astr: { ilike: "foo" } });
+  });
+  it("int field bounds", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _gte_age: 5, _lte_age: 15 },
+    });
+    expect(w).toStrictEqual({
+      age: [
+        { equal: true, gt: 5 },
+        { equal: true, lt: 15 },
+      ],
+    });
   });
   it("normal field not approx", async () => {
     const w = stateFieldsToWhere({
       fields,
-      state: { astr: "foo", bstr: "bar" },
+      state: { astr: "foo" },
       approximate: false,
     });
     expect(w).toStrictEqual({ astr: "foo" });
+  });
+  it("json field", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { props: { name: "Tom" } },
+    });
+    expect(w).toStrictEqual({ props: [{ json: { name: "Tom" } }] });
+  });
+  it("json field schema string", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { attrs: { name: "Tom" } },
+    });
+    expect(w).toStrictEqual({ attrs: [{ json: { name: { ilike: "Tom" } } }] });
   });
 });
 describe("satisfies", () => {
