@@ -2,7 +2,11 @@ import View from "../models/view";
 import db from "../db/index";
 import Table from "../models/table";
 
-const { get_parent_views, get_child_views } = require("../plugin-helper");
+const {
+  get_parent_views,
+  get_child_views,
+  stateFieldsToWhere,
+} = require("../plugin-helper");
 const { getState } = require("../db/state");
 const { satisfies } = require("../utils");
 
@@ -31,7 +35,24 @@ describe("plugin helper", () => {
     expect(x[1].views.map((v: View) => v.name)).toStrictEqual(["patientlist"]);
   });
 });
-
+describe("stateFieldsToWhere", () => {
+  const fields = [{ name: "astr", type: { name: "String" } }];
+  it("normal field", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { astr: "foo" },
+    });
+    expect(w).toStrictEqual({ astr: { ilike: "foo" } });
+  });
+  it("normal field not approx", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { astr: "foo", bstr: "bar" },
+      approximate: false,
+    });
+    expect(w).toStrictEqual({ astr: "foo" });
+  });
+});
 describe("satisfies", () => {
   it("works", async () => {
     expect(satisfies({ x: 5 })({ x: 5 })).toBe(true);
