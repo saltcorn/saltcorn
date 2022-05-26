@@ -1102,12 +1102,12 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       Object.entries(v).forEach(([kj, vj]) => {
         if (kj.endsWith("__lte")) {
           json[kj.replace("__lte", "")] = {
-            lte: vj,
+            lte: +vj,
             ...(json[kj.replace("__lte", "")] || {}),
           };
         } else if (kj.endsWith("__gte")) {
           json[kj.replace("__gte", "")] = {
-            gte: vj,
+            gte: +vj,
             ...(json[kj.replace("__gte", "")] || {}),
           };
         } else {
