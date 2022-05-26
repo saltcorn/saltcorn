@@ -4,8 +4,9 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 
+// todo update logic based on modify-user command
 /**
  * CreateUserCommand Class
  * @extends oclif.Command
@@ -16,6 +17,7 @@ class CreateUserCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
+
     const User = require("@saltcorn/data/models/user");
 
     const { flags } = this.parse(CreateUserCommand);
@@ -23,12 +25,10 @@ class CreateUserCommand extends Command {
       console.error("Error: specify at most one of admin and role");
       this.exit(1);
     }
-    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-    const { init_multi_tenant } = require("@saltcorn/data/db/state");
-    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-    await loadAllPlugins();
-    const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, undefined, tenants);
+    // init tenant
+    await init_some_tenants(flags.tenant);
+
+    // run function as specified tenant
     await maybe_as_tenant(flags.tenant, async () => {
       let role_id = flags.admin ? 1 : 8;
       if (flags.role) {
@@ -43,7 +43,11 @@ class CreateUserCommand extends Command {
       const email = flags.email || (await cli.prompt("Email address"));
       const password =
         flags.password || (await cli.prompt("Password", { type: "hide" }));
-      await User.create({ email, password, role_id });
+      const u = await User.create({ email, password, role_id });
+      if(u instanceof User)
+        console.log(`Success: User ${email} created successfully in tenant ${flags.tenant}`);
+      else
+        console.error(`Error: ${u.error}`);
     });
     this.exit(0);
   }

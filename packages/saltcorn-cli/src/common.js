@@ -2,10 +2,11 @@
  * @category saltcorn-cli
  * @module common
  */
-
+// todo need to be reorganized
 /**
- * @param {object} ten
- * @param {function} f
+ * Execute function for specified tenant
+ * @param {object} ten - specified tenant
+ * @param {function} f  - function
  * @returns {Promise<void>}
  */
 const maybe_as_tenant = async (ten, f) => {
@@ -13,7 +14,11 @@ const maybe_as_tenant = async (ten, f) => {
   const db = require("@saltcorn/data/db");
   return await db.runWithTenant(ten, f);
 };
-
+/**
+ * Init specified tenant
+ * @param tenant - specified tenant
+ * @returns {Promise<void>}
+ */
 const init_some_tenants = async (tenant) => {
   const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
   const { init_multi_tenant } = require("@saltcorn/data/db/state");
@@ -24,6 +29,7 @@ const init_some_tenants = async (tenant) => {
 };
 
 /**
+ * parse JSON or String
  * @param {string} s
  * @returns {object}
  */
@@ -36,12 +42,14 @@ const parseJSONorString = (s) => {
 };
 
 /**
- * @param {numer} ms
+ * Sleep ms miliseconds
+ * @param {number} ms
  * @returns {Promise<void>}
  */
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
 module.exports = {
   maybe_as_tenant,
   parseJSONorString,

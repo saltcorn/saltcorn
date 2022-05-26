@@ -477,5 +477,6 @@
 	"SSL": "SSL",
 	"Generate": "Generate",
 	"Two-factor authentication": "Two-factor authentication",
-	"Two-factor authentication is disabled": "Two-factor authentication is disabled"
+	"Two-factor authentication is disabled": "Two-factor authentication is disabled",
+	"Enable TWA": "Enable TWA"
 }

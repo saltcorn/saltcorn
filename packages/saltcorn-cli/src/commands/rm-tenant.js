@@ -3,7 +3,7 @@
  * @module commands/rm-tenant
  */
 const { Command, flags } = require("@oclif/command");
-
+// todo ask before do remove if flag -f does not set
 /**
  * RmTenantCommand Class
  * @extends oclif.Command

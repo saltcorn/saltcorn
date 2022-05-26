@@ -2,7 +2,7 @@
 
 ### Install
 
-`pip3 install requests pytest`
+`pip3 install requests pytest pyotp`
 
 ### To run
 
