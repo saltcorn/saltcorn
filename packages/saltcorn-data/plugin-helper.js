@@ -1092,14 +1092,11 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       qstate[k] = { ilike: v };
     } else if (field && field.type.name === "Bool" && state[k] === "?") {
       // omit
-    } else if (
-      typeof v === "object" &&
-      v &&
-      field?.type?.name === "JSON"
-    ) {
+    } else if (typeof v === "object" && v && field?.type?.name === "JSON") {
       let json = {};
-
+      if(Object.values(v).length ===1 && Object.values(v)[0]==="") return
       Object.entries(v).forEach(([kj, vj]) => {
+        if (vj === "") return;
         if (kj.endsWith("__lte")) {
           json[kj.replace("__lte", "")] = {
             lte: +vj,
