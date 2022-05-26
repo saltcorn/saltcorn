@@ -313,14 +313,14 @@ function jsonWhere(
           ? `${lhs(k, kj)} ${
               phs.is_sqlite ? "LIKE" : "ILIKE"
             } '%' || ${phs.push(vj.ilike as Value)} || '%'`
-          : isdef(vj.gte) || isdef(vj.lte)
+          : isdef(vj.gt) || isdef(vj.lt)
           ? andArray(
               [
-                isdef(vj.gte)
-                  ? `${lhs(k, kj)} >= ${phs.push(vj.gte as Value)}`
+                isdef(vj.gt)
+                  ? `${lhs(k, kj)} > ${phs.push(vj.gt as Value)}`
                   : "",
-                isdef(vj.lte)
-                  ? `${lhs(k, kj)} <= ${phs.push(vj.lte as Value)}`
+                isdef(vj.lt)
+                  ? `${lhs(k, kj)} < ${phs.push(vj.lt as Value)}`
                   : "",
               ].filter((s) => s)
             )
