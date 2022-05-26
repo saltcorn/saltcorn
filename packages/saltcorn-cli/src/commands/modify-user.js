@@ -6,11 +6,9 @@
 // todo support for  users without emails (using user.id)
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant } = require("../common");
-const {loadAllPlugins} = require("@saltcorn/server/load_plugins");
-const { init_multi_tenant } = require("@saltcorn/data/db/state");
-const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 const User = require("@saltcorn/data/models/user");
+
 
 /**
  * ModifyUserCommand Class
@@ -23,6 +21,8 @@ class ModifyUserCommand extends Command {
    */
   async run() {
 
+    const User = require("@saltcorn/data/models/user");
+
     const { args } = this.parse(ModifyUserCommand);
     const { flags } = this.parse(ModifyUserCommand);
 
@@ -31,11 +31,9 @@ class ModifyUserCommand extends Command {
       this.exit(1);
     }
 
-    await loadAllPlugins();
-    // get list of tenants
-    const tenants = await getAllTenants();
-    // init all tenants - can spend a lot of time (if you have many tenants)
-    await init_multi_tenant(loadAllPlugins, undefined, tenants);
+    // init tenant
+    await init_some_tenants(flags.tenant);
+
     // run function as specified tenant
     await maybe_as_tenant(flags.tenant, async () => {
       // role_id
@@ -70,8 +68,18 @@ class ModifyUserCommand extends Command {
           console.error(`Error: ${User.unacceptable_password_reason(password)}`);
           this.exit(1);
         }
+      // check that user with new email does not exists
+      const u_new_email = await User.findOne({ email });
+      if(u_new_email !== null){
+        console.error(`Error: Cannot change email from ${args.user_email} to ${email}. User with email ${email} exists`);
+        this.exit(1);
+      }
       // try to find user
       const u = await User.findOne({ email: args.user_email });
+      if(u === null){
+        console.error(`Error: User ${args.user_email} is not found`);
+        this.exit(1);
+      }
       if(!u instanceof User){
         console.error(`Error: ${u.error}`);
         this.exit(1);
@@ -89,9 +97,9 @@ class ModifyUserCommand extends Command {
         await u.changePasswordTo(password, false);
 
       if(email)
-        console.log(`User ${email} updated successfully in tenant ${flags.tenant}`);
+        console.log(`Success: User ${email} updated successfully in tenant ${flags.tenant}`);
       else
-        console.log(`User ${args.user_email} updated successfully in tenant ${flags.tenant}`);
+        console.log(`Success: User ${args.user_email} updated successfully in tenant ${flags.tenant}`);
 
     });
     this.exit(0);
