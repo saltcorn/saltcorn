@@ -265,6 +265,29 @@ async function make_unique_field(
   }
 }
 
+async function buildEncodedImage(fileId, elementId) {
+  const response = await parent.apiCall({
+    method: "GET",
+    path: `/files/download/${fileId}`,
+    responseType: "blob",
+  });
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64Encoded = reader.result;
+    $(`#${elementId}`)[0].src = base64Encoded;
+  };
+  reader.readAsDataURL(response.data);
+}
+
+function openFile(fileId) {
+  const serverPath = parent.config.server_path;
+  const token = localStorage.getItem("auth_jwt");
+  parent.cordova.InAppBrowser.open(
+    `${serverPath}/files/serve/${fileId}?jwt=${token}`,
+    "_self"
+  );
+}
+
 function reload_on_init() {
   console.log("not yet supported");
 }

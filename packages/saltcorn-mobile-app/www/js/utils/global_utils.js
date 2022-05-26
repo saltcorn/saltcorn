@@ -14,7 +14,7 @@ function addRoute(routeEntry) {
   routingHistory.push(routeEntry);
 }
 
-async function apiCall({ method, path, params, body }) {
+async function apiCall({ method, path, params, body, responseType }) {
   const serverPath = config.server_path;
   const token = localStorage.getItem("auth_jwt");
   const url = `${serverPath}${path}`;
@@ -28,6 +28,7 @@ async function apiCall({ method, path, params, body }) {
         "X-Requested-With": "XMLHttpRequest",
         "X-Saltcorn-Client": "mobile-app",
       },
+      responseType: responseType ? responseType : "json",
       data: body,
     });
   } catch (error) {

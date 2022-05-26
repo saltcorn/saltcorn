@@ -45,7 +45,7 @@ export async function readJSON(fileName, dirName) {
   });
 }
 
-export async function writeJSON(fileName, dirName, content) {
+export async function write(fileName, dirName, content) {
   const dirEntry = await getDirEntry(dirName);
   return new Promise((resolve, reject) => {
     dirEntry.getFile(
@@ -60,7 +60,7 @@ export async function writeJSON(fileName, dirName, content) {
             console.log("Failed file write: " + e.toString());
             reject(e);
           };
-          fileWriter.write(JSON.stringify(content));
+          fileWriter.write(content);
         });
       },
       function (err) {
@@ -70,4 +70,8 @@ export async function writeJSON(fileName, dirName, content) {
       }
     );
   });
+}
+
+export async function writeJSON(fileName, dirName, content) {
+  await write(fileName, dirName, JSON.stringify(content));
 }
