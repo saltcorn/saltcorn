@@ -7,7 +7,6 @@
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
-const User = require("@saltcorn/data/models/user");
 
 
 /**
