@@ -106,7 +106,7 @@ describe("stateFieldsToWhere", () => {
       fields: myFields,
       state: { "favbook.books->author": "Herman" },
     });
-    if (!db.isSQLite)
+    if (db.isSQLite)
       expect(w).toStrictEqual({
         favbook: [
           {
