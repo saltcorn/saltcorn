@@ -160,6 +160,7 @@ const run = async (
     field: async (segment) => {
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);
+      if (!field) return;
       field.fieldview = fieldview;
       Object.assign(field.attributes, configuration);
       await field.fill_fkey_options();

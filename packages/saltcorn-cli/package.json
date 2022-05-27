@@ -32,7 +32,8 @@
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.26.10",
-    "globby": "^10.0.2"
+    "globby": "^10.0.2",
+    "ts-node": "^9.1.1"
   },
   "engines": {
     "node": ">=8.0.0"

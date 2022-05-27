@@ -1,6 +1,16 @@
 #! /usr/bin/env node
-
-const { cli } = require("cli-ux");
+/**
+ * npx saltcorn-install
+ *
+ * Script intended to quick install of Saltcorn to server.
+ *
+ * Script creates basic  infrastructure for Saltcorn including database installation,
+ * system service creation and os user creation.
+ *
+ * @type {path.PlatformPath | path}
+ */
+// todo test scripts
+//const { cli } = require("cli-ux");
 const path = require("path");
 const fs = require("fs");
 const inquirer = require("inquirer");
@@ -14,6 +24,7 @@ const {
   asyncSudoPostgres,
   gen_password,
 } = require("./utils");
+//const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
 //https://github.com/sindresorhus/is-root/blob/main/index.js
 const isRoot = process.getuid && process.getuid() === 0;
@@ -22,12 +33,24 @@ if (process.argv.includes("--help")) {
   console.log("Install saltcorn\n");
   console.log("OPTIONS:");
   console.log(
-    "  -y, --yes\tNon-interactive, accept all defaults: \n\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit\n"
+    "  -y, --yes\tNon-interactive, accept all defaults: \n"+
+    "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit\n"+
+    "  -v, --verbose\tVerbose mode, show debug information\n"+
+    "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n"+
+    "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n"
   );
   process.exit(0);
 }
 const yes = process.argv.includes("-y") || process.argv.includes("--yes");
+const verbose = process.argv.includes("-v") || process.argv.includes("--verbose");
+const expert = process.argv.includes("-e") || process.argv.includes("--expert");
+const dryRun = process.argv.includes("-d") || process.argv.includes("--dryrun");
 
+/**
+ * Define saltcorn config dir and path
+ * @param user
+ * @returns {{configFilePath: string, configFileDir: string}}
+ */
 const get_paths = (user) => {
   const me = os.userInfo().username;
   let configFileDir = envPaths("", { suffix: "" }).config;
@@ -39,17 +62,27 @@ const get_paths = (user) => {
   const configFilePath = path.join(configFileDir, ".saltcorn");
   return { configFileDir, configFilePath };
 };
-
-const write_connection_config = async (connobj, user) => {
+/**
+ * Write configuration file ${user}/.config/.saltcorn
+ * @param connobj - DB connection object
+ * @param user - OS user
+ * @param dryRun
+ * @returns {Promise<void>}
+ */
+const write_connection_config = async (connobj, user, dryRun) => {
   const { configFilePath, configFileDir } = get_paths(user);
-  await asyncSudo(["mkdir", "-p", configFileDir]);
-  await asyncSudo(["chown", `${user}:${user}`, configFileDir]);
-  fs.writeFileSync("/tmp/.saltcorn", JSON.stringify(connobj), { mode: 0o600 });
-  await asyncSudo(["mv", "/tmp/.saltcorn", configFilePath]);
-  await asyncSudo(["chown", `${user}:${user}`, configFilePath]);
+  await asyncSudo(["mkdir", "-p", configFileDir], false, dryRun);
+  await asyncSudo(["chown", `${user}:${user}`, configFileDir], false, dryRun);
+  if(!dryRun)
+    fs.writeFileSync("/tmp/.saltcorn", JSON.stringify(connobj), { mode: 0o600 });
+  await asyncSudo(["mv", "/tmp/.saltcorn", configFilePath], false, dryRun);
+  await asyncSudo(["chown", `${user}:${user}`, configFilePath], false, dryRun);
 };
-
-const askUser = async () => {
+/**
+ * Ask for OS user name (Not in Expert Mode)
+ * @returns {Promise<string|*>}
+ */
+const askUserNonExpertMode = async () => {
   if (yes) return "saltcorn";
   if (isRoot) return "saltcorn";
   const me = os.userInfo().username;
@@ -74,11 +107,50 @@ const askUser = async () => {
   ]);
   return responses.user;
 };
+/**
+ * Ask for OS User Name
+ * @returns {Promise<string|*>}
+ */
+const askUser = async () => {
+  let user = "saltcorn";
+  if(!expert) return await askUserNonExpertMode();
 
+  const responses = await inquirer.prompt([
+    {
+      name: "user",
+      message: "Which OS user will run Saltcorn?",
+      type: "input",
+      default: user,
+    },
+  ]);
+  return responses.user;
+};
+/**
+ * Ask for Database Name
+ * @returns {Promise<string|*>}
+ */
+const askDatabaseName = async () => {
+  let dbName = "saltcorn";
+  if(!expert) return dbName;
+
+  const responses = await inquirer.prompt([
+    {
+      name: "dbName",
+      message: "Which database name will be used for Saltcorn?",
+      type: "input",
+      default: dbName,
+    },
+  ]);
+  return responses.dbName;
+};
+/**
+ * Ask for Database options
+ * @returns {Promise<string|*|string>}
+ */
 const askDatabase = async () => {
   const inUse = await tcpPortUsed.check(5432, "127.0.0.1");
   if (inUse) {
-    console.log("Found PostgreSQL running");
+    console.log("Found PostgreSQL running at 127.0.0.1 port 5432");
     return "pg-local-running";
   }
 
@@ -103,6 +175,11 @@ const askDatabase = async () => {
   ]);
   return responses.database;
 };
+/**
+ * Ask for Server running mode: dev, server
+ * @param db - db type
+ * @returns {Promise<string|*>}
+ */
 const askDevServer = async (db) => {
   if (process.platform !== "linux") {
     console.log("Non-linux platform, continuing development-mode install");
@@ -129,18 +206,56 @@ const askDevServer = async (db) => {
   ]);
   return responses.mode;
 };
-const askPort = async (mode) => {
-  if (mode === "dev") return 3000;
-  if (yes) return 80;
-  const port = await cli.prompt(
-    "Port Saltcorn HTTP server will listen on [80]",
-    { required: false }
-  );
+/**
+ * Ask for HTTP port. If mode is dev than port 3000. Otherwise, default value is 80.
+ * @param mode
+ * @returns {Promise<number|number>}
+ */
+const askHttpPort = async (mode) => {
+  let port = mode === "dev"? 3000 : 80;
+  if(!expert) {
+    if (yes) return 80;
+  }
+  const responses = await inquirer.prompt([
+    {
+      name: "port",
+      message: "Port Saltcorn HTTP server will listen on?",
+      type: "number",
+      default: port,
+    },
+  ]);
+  return responses.port;
+};
+/**
+ * Ask for System Service Name
+ * @returns {Promise<string|*>}
+ */
+const askOsService = async () => {
+  let osService = "saltcorn";
+  if(!expert) return osService;
 
-  return +port ? +port : 80;
+  const responses = await inquirer.prompt([
+    {
+      name: "osService",
+      message: "Which System Service name will be used for Saltcorn?",
+      type: "input",
+      default: osService,
+    },
+  ]);
+  return responses.osService;
 };
 
-const installSystemPackages = async (osInfo, user, db, mode, port) => {
+/**
+ * Install System packages
+ * @param osInfo - OS Info
+ * @param user - user
+ * @param db - db type
+ * @param mode - dev or server
+ * @param port - http port
+ * @param dryRun - if true then test run
+ * @returns {Promise<void>}
+ */
+const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   const distro_code = `${osInfo.distro} ${osInfo.codename}`;
   let python;
   switch (distro_code) {
@@ -167,10 +282,19 @@ const installSystemPackages = async (osInfo, user, db, mode, port) => {
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
 
-  await asyncSudo(["apt", "install", "-y", ...packages]);
+  await asyncSudo(["apt", "install", "-y", ...packages], false, dryRun);
 };
-
-const installSaltcorn = async (osInfo, user, db, mode, port) => {
+/**
+ * Install Saltcorn
+ * @param osInfo
+ * @param user
+ * @param db -
+ * @param mode - server running mode
+ * @param port
+ * @param dryRun
+ * @returns {Promise<void>}
+ */
+const installSaltcorn = async (osInfo, user, db, mode, port, dryRun) => {
   /*
 adduser --disabled-password --gecos "" saltcorn
 sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
@@ -178,21 +302,22 @@ sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
 sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsafe
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
  */
-  if (user === "saltcorn")
+  //if (user === "saltcorn")
+  if (user !== "root")
     await asyncSudo(
-      ["adduser", "--disabled-password", "--gecos", '""', "saltcorn"],
-      true
+      ["adduser", "--disabled-password", "--gecos", '""', user],
+      true, dryRun
     );
   const { configFileDir } = get_paths(user);
 
-  await asyncSudoUser(user, ["mkdir", "-p", configFileDir]);
+  await asyncSudoUser(user, ["mkdir", "-p", configFileDir], false, dryRun);
   await asyncSudoUser(user, [
     "npm",
     "config",
     "set",
     "prefix",
     `/home/${user}/.local/`,
-  ]);
+  ], false, dryRun);
   await asyncSudoUser(user, [
     "npm",
     "install",
@@ -200,64 +325,85 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     "--legacy-peer-deps",
     "@saltcorn/cli@latest",
     "--unsafe",
-  ]);
+  ], false, dryRun);
   await asyncSudo([
     "bash",
     "-c",
     `echo 'export PATH=/home/${user}/.local/bin:$PATH' >> /home/${user}/.bashrc`,
-  ]);
+  ], false, dryRun);
 };
-
-const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
+/**
+ * Setup Postgres server
+ * @param osInfo
+ * @param user
+ * @param db
+ * @param mode
+ * @param dbName
+ * @param pg_pass
+ * @returns {Promise<void>}
+ */
+const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
     "-c",
     `CREATE USER ${user} WITH CREATEDB;`,
-  ]);
+  ], false, dryRun);
   await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
     "-c",
     `ALTER USER ${user} WITH PASSWORD '${pg_pass}';`,
-  ]);
+  ], false, dryRun);
 
-  await asyncSudoUser(user, ["createdb", "saltcorn"]);
+  await asyncSudoUser(user, ["createdb", dbName], false, dryRun);
   await asyncSudoPostgres([
     "psql",
     "-U",
     "postgres",
     "-d",
-    "saltcorn",
+    dbName,
     "-c",
     `ALTER SCHEMA public OWNER TO ${user};`,
-  ]);
+  ], false, dryRun);
 };
-
+/** main logic of script **/
 (async () => {
+  // get OS info
   const osInfo = await si.osInfo();
   // for me (only if not root) or create saltcorn user
-  if (process.argv.includes("-v")) console.log({ osInfo });
+  if (verbose) console.log({ osInfo });
+  // ask for OS user
   const user = await askUser();
-  if (process.argv.includes("-v")) console.log({ user });
+  if (verbose) console.log({ user });
 
-  // postgres or sqlite
+  // ask for database - postgres or sqlite
   const db = await askDatabase();
-  if (process.argv.includes("-v")) console.log({ db });
+  if (verbose) console.log({ db });
 
+  // ask for db name
+  const dbName = await askDatabaseName();
+  if (verbose) console.log({ dbName });
+
+  // ask for server running mode
   const mode = await askDevServer(db);
-  if (process.argv.includes("-v")) console.log({ mode });
+  if (verbose) console.log({ mode });
 
-  const port = await askPort(mode);
-  if (process.argv.includes("-v")) console.log({ port });
+  // ask for port
+  const port = await askHttpPort(mode);
+  if (verbose) console.log({ port });
+
+  // ask for system service name
+  const osService = expert ? await askOsService() : "saltcorn";
+  if (verbose) console.log({ osService });
 
   // install system pkg
-  await installSystemPackages(osInfo, user, db, mode, port);
+  await installSystemPackages(osInfo, user, db, mode, port, dryRun);
 
   // global saltcorn install
-  await installSaltcorn(osInfo, user, db, mode, port);
+  await installSaltcorn(osInfo, user, db, mode, port, dryRun);
 
   const session_secret = gen_password();
 
@@ -265,12 +411,13 @@ const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
   if (db === "sqlite") {
     const dbdir = envPaths("saltcorn", { suffix: "" });
     const dbPath = path.join(dbdir, "scdb.sqlite");
-    fs.promises.mkdir(dbdir, {
+    await fs.promises.mkdir(dbdir, {
       recursive: true,
     });
     await write_connection_config(
       { sqlite_path: dbPath, session_secret },
-      user
+      user,
+      dryRun
     );
 
     return;
@@ -278,27 +425,28 @@ const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
 
   // set up pg role, db
   const pg_pass = gen_password();
-  await setupPostgres(osInfo, user, db, mode, port, pg_pass);
+  await setupPostgres(osInfo, user, db, mode, dbName, pg_pass);
 
   //save cfg
   await write_connection_config(
     {
       host: "localhost",
       port: 5432,
-      database: "saltcorn",
+      database: dbName,
       user,
       password: pg_pass,
       session_secret,
       multi_tenant: false,
     },
-    user
+    user,
+    dryRun
   );
   //initialize schema
   await asyncSudoUser(user, [
     `/home/${user}/.local/bin/saltcorn`,
     "reset-schema",
     "-f",
-  ]);
+  ], false, dryRun);
 
   if (mode === "dev") return;
 
@@ -308,10 +456,11 @@ const setupPostgres = async (osInfo, user, db, mode, port, pg_pass) => {
       "bash",
       "-c",
       "setcap 'cap_net_bind_service=+ep' `which node`",
-    ]);
+    ], false, dryRun);
 
   //systemd unit
-  fs.writeFileSync(
+  if(!dryRun)
+    fs.writeFileSync(
     "/tmp/saltcorn.service",
     `[Unit]
 Description=saltcorn
@@ -333,11 +482,12 @@ WantedBy=multi-user.target`
   await asyncSudo([
     "mv",
     "/tmp/saltcorn.service",
-    "/lib/systemd/system/saltcorn.service",
-  ]);
-  await asyncSudo(["systemctl", "daemon-reload"]);
-  await asyncSudo(["systemctl", "start", "saltcorn"]);
-  await asyncSudo(["systemctl", "enable", "saltcorn"]);
+    `/lib/systemd/system/${osService}.service`,
+  ], false, dryRun);
+  // start systemd service
+  await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
+  await asyncSudo(["systemctl", "start", osService], false, dryRun);
+  await asyncSudo(["systemctl", "enable", osService], false, dryRun);
 })().catch((e) => {
   console.error(e.message || e);
   process.exit(1);
