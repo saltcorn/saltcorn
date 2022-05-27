@@ -7,8 +7,6 @@
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
-const reset = require("@saltcorn/data/db/reset_schema");
-const db = require("./reset-schema");
 
 
 /**
@@ -28,9 +26,6 @@ class DeleteUserCommand extends Command {
     const { flags } = this.parse(DeleteUserCommand);
 
 
-    // init tenant
-    await init_some_tenants(flags.tenant);
-
     // run function as specified tenant
     await maybe_as_tenant(flags.tenant, async () => {
         // try to find user
@@ -48,8 +43,9 @@ class DeleteUserCommand extends Command {
         // todo handle errors
         if (!flags.force) {
           const ans = await cli.confirm(
-            `This will delete user "${args.user_email} from ${flags.tenant}.\nContinue (y/n)?`
-          );
+            `This will delete user ${args.user_email} ${
+              typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
+            }.\nContinue (y/n)?`);
           if (!ans) {
             console.log(`Success: Command execution canceled`);
             this.exit(1);
@@ -59,7 +55,9 @@ class DeleteUserCommand extends Command {
 
         // delete user
         await u.delete();
-        console.log(`Success: User ${args.user_email} deleted in tenant ${flags.tenant}`);
+        console.log(`Success: User ${args.user_email} deleted  ${
+          typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
+          }`);
 
       }
 
