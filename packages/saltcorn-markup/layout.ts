@@ -23,6 +23,8 @@ const {
   li,
   i,
   genericElement,
+  script,
+  domReady,
 } = tags;
 const { alert, breadcrumbs } = require("./layout_utils");
 
@@ -310,27 +312,42 @@ const render = ({
       );
     }
     if (segment.type === "image") {
+      const isWeb = typeof window === "undefined" && !req?.smr;
       const srctype = segment.srctype || "File";
+      const elementId = `_sc_file_id_${segment.fileid}_`;
+      const image = img({
+        class: segment.style && segment.style.width ? null : "w-100",
+        alt: segment.alt,
+        style: segment.style,
+        srcset:
+          segment.imgResponsiveWidths && srctype === "File"
+            ? segment.imgResponsiveWidths
+                .split(",")
+                .map(
+                  (w: string) =>
+                    `/files/resize/${segment.fileid}/${w.trim()} ${w.trim()}w`
+                )
+                .join(",")
+            : undefined,
+        src: isWeb
+          ? srctype === "File"
+            ? `/files/serve/${segment.fileid}`
+            : segment.url
+          : undefined,
+        id: elementId,
+      });
       return wrap(
         segment,
         isTop,
         ix,
-        img({
-          class: segment.style && segment.style.width ? null : "w-100",
-          alt: segment.alt,
-          style: segment.style,
-          srcset: segment.imgResponsiveWidths && srctype === "File"
-                ? segment.imgResponsiveWidths
-                    .split(",")
-                    .map(
-                      (w: string) =>
-                        `/files/resize/${segment.fileid}/${w.trim()} ${w.trim()}w`
-                    )
-                    .join(",")
-                : undefined,
-          src:
-            srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
-        })
+        isWeb
+          ? image
+          : div(
+              image,
+              script(
+                domReady(`buildEncodedImage(${segment.fileid}, '${elementId}')`)
+              )
+            )
       );
     }
     if (segment.type === "dropdown_menu") {
@@ -393,9 +410,9 @@ const render = ({
         a(
           {
             href: segment.in_modal
-              ? typeof window === "undefined" ? 
-                `javascript:ajax_modal('${segment.url}');` : 
-                `javascript:mobile_modal('${segment.url}');`
+              ? typeof window === "undefined"
+                ? `javascript:ajax_modal('${segment.url}');`
+                : `javascript:mobile_modal('${segment.url}');`
               : segment.url,
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
@@ -512,8 +529,6 @@ const render = ({
         showIfFormulaInputs,
         show_for_owner,
         borderDirection,
-        borderRadius,
-        borderRadiusUnit,
         borderColor,
         url,
         hoverColor,
@@ -568,6 +583,34 @@ const render = ({
       };
       const hasImgBg = renderBg && bgType === "Image" && bgFileId && +bgFileId;
       const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
+      let image = undefined;
+      if (hasImgBg && useImgTagAsBg) {
+        const isWeb = typeof window === "undefined" && !req?.smr;
+        const elementId = `_sc_file_id_${bgFileId}_`;
+        const imgTag = img({
+          class: `containerbgimage `,
+          srcset: imgResponsiveWidths
+            ? imgResponsiveWidths
+                .split(",")
+                .map(
+                  (w: string) =>
+                    `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
+                )
+                .join(",")
+            : undefined,
+          style: { "object-fit": imageSize || "contain" },
+          alt: "",
+          src: isWeb ? `/files/serve/${bgFileId}` : undefined,
+          id: elementId,
+        });
+        image = isWeb
+          ? imgTag
+          : div(
+              imgTag,
+              script(domReady(`buildEncodedImage(${bgFileId}, '${elementId}')`))
+            );
+      }
+
       return wrap(
         segment,
         isTop,
@@ -635,23 +678,7 @@ const render = ({
                 }
               : {}),
           },
-          hasImgBg &&
-            useImgTagAsBg &&
-            img({
-              class: `containerbgimage `,
-              srcset: imgResponsiveWidths
-                ? imgResponsiveWidths
-                    .split(",")
-                    .map(
-                      (w: string) =>
-                        `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
-                    )
-                    .join(",")
-                : undefined,
-              style: { "object-fit": imageSize || "contain" },
-              alt: "",
-              src: `/files/serve/${bgFileId}`,
-            }),
+          hasImgBg && useImgTagAsBg && image,
 
           go(segment.contents)
         )
