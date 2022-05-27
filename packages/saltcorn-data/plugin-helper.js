@@ -1092,31 +1092,41 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       qstate[k] = { ilike: v };
     } else if (field && field.type.name === "Bool" && state[k] === "?") {
       // omit
-    } else if (
-      typeof v === "object" &&
-      v &&
-      Object.keys(v).length === 1 &&
-      field?.type?.name === "JSON"
-    ) {
+    } else if (typeof v === "object" && v && field?.type?.name === "JSON") {
+      let json = {};
+      if(Object.values(v).length ===1 && Object.values(v)[0]==="") return
+      Object.entries(v).forEach(([kj, vj]) => {
+        if (vj === "") return;
+        if (kj.endsWith("__lte")) {
+          json[kj.replace("__lte", "")] = {
+            lte: +vj,
+            ...(json[kj.replace("__lte", "")] || {}),
+          };
+        } else if (kj.endsWith("__gte")) {
+          json[kj.replace("__gte", "")] = {
+            gte: +vj,
+            ...(json[kj.replace("__gte", "")] || {}),
+          };
+        } else {
+          json[kj] = vj;
+
+          if (field.attributes?.hasSchema) {
+            const s = field.attributes.schema.find(
+              (f) => f.key === Object.keys(v)[0]
+            );
+            if (s?.type === "String") {
+              json[kj] = { ilike: vj };
+            }
+          }
+        }
+      });
+
       qstate[k] = [
         ...(qstate[k] ? [qstate[k]] : []),
         {
-          json: [Object.keys(v)[0], Object.values(v)[0]],
+          json,
         },
       ];
-      if (field.attributes?.hasSchema) {
-        const s = field.attributes.schema.find(
-          (f) => f.key === Object.keys(v)[0]
-        );
-        if (s?.type === "String") {
-          qstate[k] = [
-            ...(qstate[k] ? [qstate[k]] : []),
-            {
-              json: { [Object.keys(v)[0]]: { ilike: Object.values(v)[0] } },
-            },
-          ];
-        }
-      }
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
         ? { or: v.map(field.type.read) }

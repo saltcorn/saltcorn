@@ -298,33 +298,35 @@ function jsonWhere(
   v: any[] | Object,
   phs: PlaceHolderStack
 ): string {
-  const lhs = (f: string, sf: string) =>
+  const lhs = (f: string, sf: string, convText: boolean) =>
     phs.is_sqlite
       ? `json_extract(${quote(
           sqlsanitizeAllowDots(f)
         )}, '$.${sqlsanitizeAllowDots(sf)}')`
-      : `${quote(sqlsanitizeAllowDots(f))}->>'${sqlsanitizeAllowDots(sf)}'`;
+      : `${quote(sqlsanitizeAllowDots(f))}${
+          convText ? "->>" : "->"
+        }'${sqlsanitizeAllowDots(sf)}'`;
 
-  if (Array.isArray(v)) return `${lhs(k, v[0])}=${phs.push(v[1])}`;
+  if (Array.isArray(v)) return `${lhs(k, v[0], true)}=${phs.push(v[1])}`;
   else {
     return andArray(
       Object.entries(v).map(([kj, vj]) =>
         vj.ilike
-          ? `${lhs(k, kj)} ${
+          ? `${lhs(k, kj, true)} ${
               phs.is_sqlite ? "LIKE" : "ILIKE"
             } '%' || ${phs.push(vj.ilike as Value)} || '%'`
-          : isdef(vj.gt) || isdef(vj.lt)
+          : isdef(vj.gte) || isdef(vj.lte)
           ? andArray(
               [
-                isdef(vj.gt)
-                  ? `${lhs(k, kj)} > ${phs.push(vj.gt as Value)}`
+                isdef(vj.gte)
+                  ? `${lhs(k, kj, false)} >= ${phs.push(vj.gte as Value)}`
                   : "",
-                isdef(vj.lt)
-                  ? `${lhs(k, kj)} < ${phs.push(vj.lt as Value)}`
+                isdef(vj.lte)
+                  ? `${lhs(k, kj, false)} <= ${phs.push(vj.lte as Value)}`
                   : "",
               ].filter((s) => s)
             )
-          : `${lhs(k, kj)}=${phs.push(vj as Value)}`
+          : `${lhs(k, kj, true)}=${phs.push(vj as Value)}`
       )
     );
   }

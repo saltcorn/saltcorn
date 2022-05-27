@@ -99,6 +99,8 @@ export default class BuildAppCommand extends Command {
       "saltcorn-common.js",
       "saltcorn.js",
       "saltcorn.css",
+      "codemirror.js",
+      "codemirror.css",
     ];
     for (const srcFile of srcFiles) {
       copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
