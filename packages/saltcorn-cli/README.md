@@ -591,10 +591,16 @@ Remove a tenant
 
 ```
 USAGE
-  $ saltcorn rm-tenant TENANT
+  $ saltcorn rm-tenant
 
-ARGUMENTS
-  TENANT  Tenant to remove
+OPTIONS
+  -f, --force          force
+  -t, --tenant=tenant  (required) tenant
+
+DESCRIPTION
+  Attention! All tenant data will be lost!
+  It recommended to make backup of tenant before perform this command.
+
 ```
 
 _See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/rm-tenant.js)_

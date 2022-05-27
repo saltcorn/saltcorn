@@ -3,7 +3,8 @@
  * @module commands/rm-tenant
  */
 const { Command, flags } = require("@oclif/command");
-// todo ask before do remove if flag -f does not set
+const {cli} = require("cli-ux");
+
 /**
  * RmTenantCommand Class
  * @extends oclif.Command
@@ -14,9 +15,23 @@ class RmTenantCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args } = this.parse(RmTenantCommand);
+
+
+    const { flags } = this.parse(RmTenantCommand);
+
     const { deleteTenant } = require("@saltcorn/admin-models/models/tenant");
-    await deleteTenant(args.tenant);
+
+    if (!flags.force) {
+      const ans = await cli.confirm(
+        `This will delete tenant ${flags.tenant}. Attention! All tenant data will be lost!\nContinue (y/n)?`);
+      if (!ans) {
+        console.log(`Success: Command execution canceled`);
+        this.exit(1);
+      }
+    }
+    // make changes
+    await deleteTenant(flags.tenant);
+
     this.exit(0);
   }
 }
@@ -24,18 +39,33 @@ class RmTenantCommand extends Command {
 /**
  * @type {object}
  */
-RmTenantCommand.args = [
+RmTenantCommand.args = []; /*[
   { name: "tenant", required: true, description: "Tenant to remove" },
 ];
-
+*/
 /**
  * @type {string}
  */
-RmTenantCommand.description = `Remove a tenant`;
+RmTenantCommand.description = `Remove a tenant.
+Attention! All tenant data will be lost!
+It recommended to make backup of tenant before perform this command.
+`;
 
 /**
  * @type {object}
  */
-RmTenantCommand.flags = {};
+RmTenantCommand.help = RmTenantCommand.description;
+
+/**
+ * @type {object}
+ */
+RmTenantCommand.flags = {
+  force: flags.boolean({ char: "f", description: "force" }),
+  tenant: flags.string({
+    char: "t",
+    description: "tenant",
+    required: true,
+  }),
+};
 
 module.exports = RmTenantCommand;

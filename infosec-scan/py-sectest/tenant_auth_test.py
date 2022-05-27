@@ -5,8 +5,8 @@ from scsession import SaltcornSession
 class Test:
     def setup_class(self):
         SaltcornSession.cli("reset-schema", "-f")
-        SaltcornSession.cli("rm-tenant", "sub1")
-        SaltcornSession.cli("rm-tenant", "sub2")
+        SaltcornSession.cli("rm-tenant", "-f", "-t", "sub1")
+        SaltcornSession.cli("rm-tenant", "-f", "-t", "sub2")
         SaltcornSession.cli("create-tenant", "sub1")
         SaltcornSession.cli("create-tenant", "sub2")
         SaltcornSession.cli("create-user", "-e","sub2@foo.com", "-a", "-p", "tyrh5h544yt45", "-t","sub2")
@@ -15,8 +15,8 @@ class Test:
         self.sess = SaltcornSession(3001)
     def teardown_class(self):
         self.sess.close()
-        SaltcornSession.cli("rm-tenant", "sub1")
-        SaltcornSession.cli("rm-tenant", "sub2")
+        SaltcornSession.cli("rm-tenant", "-f", "-t", "sub1")
+        SaltcornSession.cli("rm-tenant", "-f", "-t", "sub2")
 
     def cannot_access_admin(self):
         self.sess.get('/table')
