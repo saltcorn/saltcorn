@@ -99,6 +99,25 @@ describe("stateFieldsToWhere", () => {
       attrs: [{ json: { cars: { gte: 2, lte: 4 } } }],
     });
   });
+  it("join field", async () => {
+    const table = Table.findOne({ name: "patients" });
+    const myFields = await table?.getFields();
+    const w = stateFieldsToWhere({
+      fields: myFields,
+      state: { "favbook.books->author": "Herman" },
+    });
+    expect(w).toStrictEqual({
+      favbook: [
+        {
+          inSelect: {
+            field: "id",
+            table: '"public"."books"',
+            where: { author: { ilike: "Herman" } },
+          },
+        },
+      ],
+    });
+  });
 });
 describe("satisfies", () => {
   it("works", async () => {
