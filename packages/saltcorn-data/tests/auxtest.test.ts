@@ -1,5 +1,5 @@
 import View from "../models/view";
-import db from "../db/index";
+import db from "../db";
 import Table from "../models/table";
 
 const {
@@ -106,17 +106,30 @@ describe("stateFieldsToWhere", () => {
       fields: myFields,
       state: { "favbook.books->author": "Herman" },
     });
-    expect(w).toStrictEqual({
-      favbook: [
-        {
-          inSelect: {
-            field: "id",
-            table: '"public"."books"',
-            where: { author: { ilike: "Herman" } },
+    if (!db.isSQLite)
+      expect(w).toStrictEqual({
+        favbook: [
+          {
+            inSelect: {
+              field: "id",
+              table: '"books"',
+              where: { author: { ilike: "Herman" } },
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
+    else
+      expect(w).toStrictEqual({
+        favbook: [
+          {
+            inSelect: {
+              field: "id",
+              table: '"public"."books"',
+              where: { author: { ilike: "Herman" } },
+            },
+          },
+        ],
+      });
   });
 });
 describe("satisfies", () => {
