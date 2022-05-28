@@ -211,7 +211,7 @@ function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
 function initialize_page() {
-  console.log("init page");
+  //console.log("init page");
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
   });
