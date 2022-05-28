@@ -584,8 +584,8 @@ const render = ({
       const hasImgBg = renderBg && bgType === "Image" && bgFileId && +bgFileId;
       const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
       let image = undefined;
+      const isWeb = typeof window === "undefined" && !req?.smr;
       if (hasImgBg && useImgTagAsBg) {
-        const isWeb = typeof window === "undefined" && !req?.smr;
         const elementId = `_sc_file_id_${bgFileId}_`;
         const imgTag = img({
           class: `containerbgimage `,
@@ -610,7 +610,12 @@ const render = ({
               script(domReady(`buildEncodedImage(${bgFileId}, '${elementId}')`))
             );
       }
-
+      const bgImageScriptId = // in really rare cases not unique, but shouldn't cause problems
+        !isWeb && hasImgBg && !useImgTagAsBg
+          ? `_segment_${ix}_bg_file_${bgFileId}_${Math.floor(
+              Math.random() * 100000
+            )}`
+          : undefined;
       return wrap(
         segment,
         isTop,
@@ -641,7 +646,7 @@ const render = ({
               "width"
             )}${sizeProp("widthPct", "width", "%")}border${
               borderDirection ? `-${borderDirection}` : ""
-            }: ${borderWidth || 0}px ${borderStyle} ${
+            }: ${borderWidth || 0}px ${borderStyle || "none"} ${
               borderColor || "black"
             };${sizeProp("borderRadius", "border-radius")}${ppBox(
               "padding"
@@ -651,7 +656,11 @@ const render = ({
                 : ""
             } ${
               hasImgBg && !useImgTagAsBg
-                ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
+                ? ` ${
+                    isWeb
+                      ? `background-image: url('/files/serve/${bgFileId}');`
+                      : ""
+                  } background-size: ${
                     imageSize === "repeat" ? "auto" : imageSize || "contain"
                   }; background-repeat: ${
                     imageSize === "repeat" ? "repeat" : "no-repeat"
@@ -681,7 +690,15 @@ const render = ({
           hasImgBg && useImgTagAsBg && image,
 
           go(segment.contents)
-        )
+        ) +
+          (!isWeb && hasImgBg && !useImgTagAsBg
+            ? script(
+                domReady(
+                  `buildEncodedBgImage(${bgFileId}, '${bgImageScriptId}')`
+                ),
+                { id: bgImageScriptId }
+              )
+            : "")
       );
     }
 

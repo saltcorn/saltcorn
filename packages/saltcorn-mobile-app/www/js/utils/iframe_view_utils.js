@@ -277,17 +277,16 @@ async function make_unique_field(
 }
 
 async function buildEncodedImage(fileId, elementId) {
-  const response = await parent.apiCall({
-    method: "GET",
-    path: `/files/download/${fileId}`,
-    responseType: "blob",
+  const base64Encoded = await parent.loadEncodedFile(fileId);
+  $(`#${elementId}`)[0].src = base64Encoded;
+}
+
+async function buildEncodedBgImage(fileId, elementId) {
+  const base64Encoded = await parent.loadEncodedFile(fileId);
+  // ensure that not unique IDs work, but should not happen
+  $(`#${elementId}`).each(function () {
+    $(this).prev()[0].style.backgroundImage = `url("${base64Encoded}")`;
   });
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    const base64Encoded = reader.result;
-    $(`#${elementId}`)[0].src = base64Encoded;
-  };
-  reader.readAsDataURL(response.data);
 }
 
 function openFile(fileId) {
@@ -306,9 +305,9 @@ async function select_id(id) {
 
 async function check_state_field(that) {
   const name = that.name;
-  const newQuery = that.checked ?
-    updateQueryStringParameter(parent.currentQuery(), name, that.value) :
-    removeQueryStringParameter(name);
+  const newQuery = that.checked
+    ? updateQueryStringParameter(parent.currentQuery(), name, that.value)
+    : removeQueryStringParameter(name);
   await parent.handleRoute(parent.currentLocation(), newQuery);
 }
 

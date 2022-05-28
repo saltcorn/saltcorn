@@ -38,6 +38,24 @@ async function apiCall({ method, path, params, body, responseType }) {
   }
 }
 
+async function loadEncodedFile(fileId) {
+  const response = await apiCall({
+    method: "GET",
+    path: `/files/download/${fileId}`,
+    responseType: "blob",
+  });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      return resolve(reader.result);
+    };
+    reader.onerror = (error) => {
+      return reject(error);
+    };
+    reader.readAsDataURL(response.data);
+  });
+}
+
 function splitPathQuery(url) {
   let path = url;
   let query = undefined;
