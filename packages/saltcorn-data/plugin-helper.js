@@ -1053,7 +1053,7 @@ const addOrCreateList = (container, key, x) => {
  */
 const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
   var qstate = {};
-  Object.entries(state).forEach(([k, v]) => {
+  Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts") {
       qstate[k] = {
         searchTerm: v.replace(/\0/g, ""),
@@ -1094,7 +1094,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       // omit
     } else if (typeof v === "object" && v && field?.type?.name === "JSON") {
       let json = {};
-      if(Object.values(v).length ===1 && Object.values(v)[0]==="") return
+      if (Object.values(v).length === 1 && Object.values(v)[0] === "") return;
       Object.entries(v).forEach(([kj, vj]) => {
         if (vj === "") return;
         if (kj.endsWith("__lte")) {
