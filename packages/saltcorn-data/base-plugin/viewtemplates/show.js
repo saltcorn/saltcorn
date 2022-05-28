@@ -700,7 +700,12 @@ module.exports = {
   authorise_get: async ({ query, table_id }) => {
     return await authorizeGetQuery(query, table_id);
   },
-  queries: ({ table_id, viewname, configuration: { columns, layout }, req }) => ({
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, layout },
+    req,
+  }) => ({
     async showQuery(state, fields) {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
@@ -767,6 +772,7 @@ module.exports = {
       return rows;
     },
     async actionQuery() {
+      const body = req.body;
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
