@@ -6,7 +6,7 @@
 // todo support for  users without emails (using user.id)
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant, init_some_tenants } = require("../common");
+const { maybe_as_tenant } = require("../common");
 
 
 /**

@@ -1,4 +1,5 @@
 /**
+ * Set up new saltcorn configuration
  * @category saltcorn-cli
  * @module commands/setup
  */
@@ -20,20 +21,25 @@ const sudo = require("sudo");
 const crypto = require("crypto");
 
 /**
- *
+ * Generate password for user
  * @returns {string}
  */
+// todo deduplicate code - the same function in User
 const gen_password = () => {
   const s = is.str.generate().replace(" ", "");
   if (s.length > 7) return s;
   else return gen_password();
 };
-
+/**
+ * Generate jwt secret
+ * @returns {string}
+ */
 const genJwtSecret = () => {
   return crypto.randomBytes(64).toString("hex");
 };
 
 /**
+ * Ask for platform run mode (dev - run manually, server - run as system service)
  *
  * @returns {Promise<object>}
  */
@@ -63,7 +69,7 @@ const askDevServer = async () => {
 };
 
 /**
- *
+ * Unload module
  * @param {*} mod
  */
 const unloadModule = (mod) => {
@@ -72,6 +78,7 @@ const unloadModule = (mod) => {
 };
 
 /**
+ * Set up platform run mode (dev - run manually, server - run as system service)
  * @returns {Promise<void>}
  */
 const setupDevMode = async () => {
@@ -95,6 +102,8 @@ const setupDevMode = async () => {
 };
 
 /**
+ * Check for locally running database (ip 127.0.0.1, port 5432)
+ *
  * @returns {Promise<void>}
  */
 const check_db = async () => {
@@ -125,7 +134,7 @@ const check_db = async () => {
 };
 
 /**
- *
+ * Execute Linux commands
  * @param {*} args
  * @returns {Promise<void>}
  */
@@ -146,7 +155,7 @@ const asyncSudo = (args) => {
 };
 
 /**
- *
+ * Execute Postgres commands
  * @param {*} args
  * @returns {Promise<void>}
  */
@@ -155,7 +164,7 @@ const asyncSudoPostgres = (args) => {
 };
 
 /**
- *
+ * Ask for passworf
  * @param {string} for_who
  * @returns {Promise<string>}
  */
@@ -173,6 +182,7 @@ const get_password = async (for_who) => {
 };
 
 /**
+ * Install Database
  * @returns {Promise<void>}
  */
 const install_db = async () => {
@@ -228,7 +238,7 @@ const install_db = async () => {
 };
 
 /**
- *
+ * Ask for Database parameters
  * @returns {Promise<object>}
  */
 const prompt_connection = async () => {
@@ -262,6 +272,7 @@ const prompt_connection = async () => {
 };
 
 /**
+ * Write platform config
  * @returns {Promise<void>}
  */
 const setup_connection_config = async () => {
@@ -310,10 +321,10 @@ const setup_connection = async () => {
  * @returns {Promise<boolean>}
  */
 const table_exists = async (db, tblname) => {
-  const { rows } = await db.query(`SELECT EXISTS 
+  const { rows } = await db.query(`SELECT EXISTS
     (
         SELECT 1
-        FROM information_schema.tables 
+        FROM information_schema.tables
         WHERE table_schema = 'public'
         AND table_name = '${tblname}'
     );`);
@@ -381,7 +392,7 @@ class SetupCommand extends Command {
  */
 SetupCommand.description = `Set up a new system
 ...
-This will attempt to install or connect a database, and set up a 
+This will attempt to install or connect a database, and set up a
 configuration file
 `;
 
