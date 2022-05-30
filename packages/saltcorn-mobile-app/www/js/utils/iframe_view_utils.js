@@ -276,6 +276,28 @@ async function make_unique_field(
   }
 }
 
+async function buildEncodedImage(fileId, elementId) {
+  const base64Encoded = await parent.loadEncodedFile(fileId);
+  $(`#${elementId}`)[0].src = base64Encoded;
+}
+
+async function buildEncodedBgImage(fileId, elementId) {
+  const base64Encoded = await parent.loadEncodedFile(fileId);
+  // ensure that not unique IDs work, but should not happen
+  $(`#${elementId}`).each(function () {
+    $(this).prev()[0].style.backgroundImage = `url("${base64Encoded}")`;
+  });
+}
+
+function openFile(fileId) {
+  const serverPath = parent.config.server_path;
+  const token = localStorage.getItem("auth_jwt");
+  parent.cordova.InAppBrowser.open(
+    `${serverPath}/files/serve/${fileId}?jwt=${token}`,
+    "_self"
+  );
+}
+
 async function select_id(id) {
   const newQuery = updateQueryStringParameter(parent.currentQuery(), "id", id);
   await parent.handleRoute(parent.currentLocation(), newQuery);
@@ -283,9 +305,9 @@ async function select_id(id) {
 
 async function check_state_field(that) {
   const name = that.name;
-  const newQuery = that.checked ?
-    updateQueryStringParameter(parent.currentQuery(), name, that.value) :
-    removeQueryStringParameter(name);
+  const newQuery = that.checked
+    ? updateQueryStringParameter(parent.currentQuery(), name, that.value)
+    : removeQueryStringParameter(name);
   await parent.handleRoute(parent.currentLocation(), newQuery);
 }
 

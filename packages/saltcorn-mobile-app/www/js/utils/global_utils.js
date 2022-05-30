@@ -14,7 +14,7 @@ function addRoute(routeEntry) {
   routingHistory.push(routeEntry);
 }
 
-async function apiCall({ method, path, params, body }) {
+async function apiCall({ method, path, params, body, responseType }) {
   const serverPath = config.server_path;
   const token = localStorage.getItem("auth_jwt");
   const url = `${serverPath}${path}`;
@@ -28,6 +28,7 @@ async function apiCall({ method, path, params, body }) {
         "X-Requested-With": "XMLHttpRequest",
         "X-Saltcorn-Client": "mobile-app",
       },
+      responseType: responseType ? responseType : "json",
       data: body,
     });
   } catch (error) {
@@ -35,6 +36,24 @@ async function apiCall({ method, path, params, body }) {
     console.log(JSON.stringify(error));
     throw error;
   }
+}
+
+async function loadEncodedFile(fileId) {
+  const response = await apiCall({
+    method: "GET",
+    path: `/files/download/${fileId}`,
+    responseType: "blob",
+  });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      return resolve(reader.result);
+    };
+    reader.onerror = (error) => {
+      return reject(error);
+    };
+    reader.readAsDataURL(response.data);
+  });
 }
 
 function splitPathQuery(url) {

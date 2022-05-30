@@ -739,7 +739,7 @@ const renderFormLayout = (form: Form): string => {
       return mkBtn('type="submit"');
     },
   };
-  return renderLayout({ blockDispatch, layout: form.layout });
+  return renderLayout({ blockDispatch, layout: form.layout, req: form.req });
 };
 
 /**
