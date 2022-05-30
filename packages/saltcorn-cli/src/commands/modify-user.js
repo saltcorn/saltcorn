@@ -51,6 +51,7 @@ class ModifyUserCommand extends Command {
       let email;
       if (flags.email) email = flags.email;
       else if (flags.imode) email = await cli.prompt("New Email address", { default : args.user_email });
+      if(email === args.user_email) email = undefined; // little trick - we won't update email if it already same
       if (email)
         if (!User.valid_email(email)){
           console.error(`Error: Email is invalid`);
@@ -61,7 +62,7 @@ class ModifyUserCommand extends Command {
       // todo check for repeated passwords
       let password;
       if (flags.password) password = flags.password;
-      else if (flags.imode) password = await cli.prompt("Password", { type: "hide" });
+      else if (flags.imode) password = await cli.prompt("New Password", { type: "hide" });
       if (password)
         if (User.unacceptable_password_reason(password)){
           console.error(`Error: ${User.unacceptable_password_reason(password)}`);
@@ -69,7 +70,7 @@ class ModifyUserCommand extends Command {
         }
       // check that user with new email does not exists
       const u_new_email = await User.findOne({ email });
-      if(u_new_email !== null){
+      if(u_new_email !== null&&args.user_email!==email){
         console.error(`Error: Cannot change email from ${args.user_email} to ${email}. User with email ${email} exists`);
         this.exit(1);
       }
@@ -89,16 +90,15 @@ class ModifyUserCommand extends Command {
         await u.update({ email, role_id });
       else if(email)
         await u.update({ email });
-      else
+      else if(role_id)
         await u.update({ role_id });
 
       if (password)
         await u.changePasswordTo(password, false);
 
-      if(email)
-        console.log(`Success: User ${email} updated successfully in tenant ${flags.tenant}`);
-      else
-        console.log(`Success: User ${args.user_email} updated successfully in tenant ${flags.tenant}`);
+      console.log(`Success: User ${email?email:args.user_email} updated successfully ${
+          typeof flags.tenant !== "undefined" ? "in tenant " + flags.tenant : ""
+        }`);
 
     });
     this.exit(0);
