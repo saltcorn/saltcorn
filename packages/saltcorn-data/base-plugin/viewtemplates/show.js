@@ -611,7 +611,9 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       const [table, fld] = agg_relation.split(".");
       const targetNm = (stat + "_" + table + "_" + fld).toLowerCase();
       const val = row[targetNm];
-      return text(val);
+      if (stat.toLowerCase() === "array_agg")
+        return val.map((v) => text(v.toString())).join(", ");
+      else return text(val);
     },
     action(segment) {
       const url = action_url(
