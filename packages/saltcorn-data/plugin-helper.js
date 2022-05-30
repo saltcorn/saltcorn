@@ -861,9 +861,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
   var joinFields = {};
   var aggregations = {};
   let freeVars = new Set(); // for join fields
-  const joinFieldNames = new Set(
-    fields.filter((f) => f.is_fkey).map((f) => f.name)
-  );
+
   (columns || []).forEach((column) => {
     if (column.type === "JoinField") {
       if (column.join_field && column.join_field.split) {
@@ -966,9 +964,17 @@ const picked_fields_to_query = (columns, fields, layout) => {
       },
     });
   }
+  add_free_variables_to_joinfields(freeVars, joinFields, fields);
+  return { joinFields, aggregations };
+};
+
+const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
+  const joinFieldNames = new Set(
+    fields.filter((f) => f.is_fkey).map((f) => f.name)
+  );
   [...freeVars]
     .filter((v) => v.includes("."))
-    .map((v) => {
+    .forEach((v) => {
       const kpath = v.split(".");
       if (joinFieldNames.has(kpath[0]))
         if (kpath.length === 2) {
@@ -996,7 +1002,6 @@ const picked_fields_to_query = (columns, fields, layout) => {
           };
         }
     });
-  return { joinFields, aggregations };
 };
 
 /**
@@ -1494,4 +1499,5 @@ module.exports = {
   strictParseInt,
   run_action_column,
   json_list_to_external_table,
+  add_free_variables_to_joinfields,
 };
