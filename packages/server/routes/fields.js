@@ -296,6 +296,12 @@ const fieldFlow = (req) =>
                   input_type: "select",
                   options: roles.map((r) => ({ value: r.id, label: r.role })),
                 },
+                {
+                  name: "also_delete_file",
+                  type: "Bool",
+                  label: req.__("Cascade delete to file"),
+                  sublabel: req.__("Deleting a row will also delete the file referenced by this field")
+                },
               ],
             });
           } else {

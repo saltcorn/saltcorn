@@ -382,7 +382,14 @@ class Table implements AbstractTable {
   async deleteRows(where: Where) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
-    if (triggers.length > 0) {
+    const fields = await this.getFields();
+    const deleteFileFields = fields.filter(
+      (f) => f.type === "File" && f.attributes?.also_delete_file
+    );
+    const deleteFiles = [];
+    if (triggers.length > 0 || deleteFileFields.length > 0) {
+      const File = require("./file");
+
       const rows = await this.getRows(where);
       for (const trigger of triggers) {
         for (const row of rows) {
@@ -390,9 +397,20 @@ class Table implements AbstractTable {
           await trigger.run!(row);
         }
       }
+      for (const deleteFile of deleteFileFields) {
+        for (const row of rows) {
+          if (row[deleteFile.name]) {
+            const file = await File.findOne({ id: row[deleteFile.name] });
+            deleteFiles.push(file);
+          }
+        }
+      }
     }
     await db.deleteWhere(this.name, where);
     await this.resetSequence();
+    for (const file of deleteFiles) {
+      await file.delete();
+    }
   }
 
   /**

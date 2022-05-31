@@ -51,8 +51,12 @@ const i18n = new I18n({
 });
 // jwt config
 const jwt_secret = db.connectObj.jwt_secret;
+const jwt_extractor = ExtractJwt.fromExtractors([
+  ExtractJwt.fromAuthHeaderWithScheme("jwt"),
+  ExtractJwt.fromUrlQueryParameter("jwt"),
+]);
 const jwtOpts = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("jwt"),
+  jwtFromRequest: jwt_extractor,
   secretOrKey: jwt_secret,
   issuer: "saltcorn@saltcorn",
   audience: "saltcorn-mobile-app",
@@ -114,11 +118,7 @@ const getApp = async (opts = {}) => {
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
   app.use((req, res, next) => {
-    if (
-      ExtractJwt.fromAuthHeaderWithScheme("jwt")(req) &&
-      req.cookies &&
-      req.cookies["connect.sid"]
-    )
+    if (jwt_extractor(req) && req.cookies && req.cookies["connect.sid"])
       throw new Error(
         "Don't set a session cookie and JSON Web Token at the same time."
       );
@@ -267,7 +267,7 @@ const getApp = async (opts = {}) => {
       if (
         req.url.startsWith("/api/") ||
         req.url === "/auth/login-with/jwt" ||
-        ExtractJwt.fromAuthHeaderWithScheme("jwt")(req)
+        jwt_extractor(req)
       )
         return disabledCsurf(req, res, next);
       csurf(req, res, next);
