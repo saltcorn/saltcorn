@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y wget
 
-RUN wget -qO - https://deb.nodesource.com/setup_14.x | bash -
+RUN wget -qO - https://deb.nodesource.com/setup_16.x | bash -
 
 RUN apt-get install -y \
 	python3-pip nodejs python-is-python3 \
@@ -19,16 +19,13 @@ RUN pip3 install --upgrade tensorflow && \
         sklearn \
         matplotlib 
 
-RUN npm install -g lerna
-
 ENV SALTCORN_DISABLE_UPGRADE "true"
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
 
 WORKDIR /opt/saltcorn
 
 COPY . /opt/saltcorn
-RUN lerna bootstrap --ignore @saltcorn/e2e
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run tsc
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"
