@@ -92,6 +92,11 @@ RestoreCommand.args = [
 RestoreCommand.description = `Restore a previously backed up database (zip or sqlc format)`;
 
 /**
+ * @type {string}
+ */
+RestoreCommand.help = `Restore a previously backed up database (zip or sqlc format)`;
+
+/**
  * @type {object}
  */
 RestoreCommand.flags = {

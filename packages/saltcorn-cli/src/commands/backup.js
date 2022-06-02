@@ -7,13 +7,12 @@ const { execSync } = require("child_process");
 const dateFormat = require("dateformat");
 const os = require("os");
 const { getConnectObject } = require("@saltcorn/data/db/connect");
-const env = process.env;
-var day = dateFormat(new Date(), "yyyymmdd");
+const day = dateFormat(new Date(), "yyyymmdd");
 const connobj = getConnectObject();
 
 const pgdb = connobj.database;
 
-var default_filenm = `${day}-${pgdb}-${os.hostname}.sqlc`;
+const default_filenm = `${day}-${pgdb}-${os.hostname}.sqlc`;
 
 /**
  * BackupCommand Class
@@ -66,6 +65,11 @@ class BackupCommand extends Command {
  * @type {string}
  */
 BackupCommand.description = `Backup the PostgreSQL database to a file with pg_dump or zip`;
+
+/**
+ * @type {string}
+ */
+BackupCommand.help = `Backup the PostgreSQL database to a file with pg_dump or zip`;
 
 /**
  * @type {object}

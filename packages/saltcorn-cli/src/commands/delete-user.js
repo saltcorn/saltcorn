@@ -95,7 +95,7 @@ Command deletes the user specified by USER_EMAIL.
  * @type {object}
  */
 DeleteUserCommand.flags = {
-  force: flags.boolean({ char: "f", description: "force" }),
+  force: flags.boolean({ char: "f", description: "force command execution" }),
   tenant: flags.string({
     char: "t",
     description: "tenant",
