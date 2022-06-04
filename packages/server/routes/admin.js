@@ -23,9 +23,6 @@ const {
   div,
   a,
   hr,
-  form,
-  input,
-  label,
   i,
   h4,
   table,
@@ -33,7 +30,6 @@ const {
   td,
   th,
   tr,
-  button,
   span,
   p,
   code,
@@ -61,7 +57,7 @@ const load_plugins = require("../load_plugins");
 const {
   restore_backup,
   send_admin_page,
-  send_files_page,
+  //send_files_page,
   config_fields_form,
   save_config_from_form,
   flash_restart_if_required,
@@ -90,8 +86,9 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} req
- * @returns {Promise<Form>}
+ * Site identity form
+ * @param {object} req -http request
+ * @returns {Promise<Form>} form
  */
 const site_id_form = (req) =>
   config_fields_form({
@@ -112,7 +109,7 @@ const site_id_form = (req) =>
     submitLabel: req.__("Save"),
   });
 /**
- * Email settings form definition
+ * Email settings form
  * @param {object} req request
  * @returns {Promise<Form>} form
  */
@@ -137,6 +134,7 @@ const email_form = async (req) => {
 };
 
 /**
+ * Router get /
  * @name get
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -145,7 +143,6 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const form = await site_id_form(req);
     send_admin_page({
       res,
@@ -527,6 +524,9 @@ router.post(
     }
   })
 );
+/**
+ * /check-for-updates
+ */
 router.post(
   "/check-for-upgrade",
   isAdmin,
@@ -548,8 +548,8 @@ router.post(
     const fileName = await create_backup();
     res.type("application/zip");
     res.attachment(fileName);
-    var file = fs.createReadStream(fileName);
-    file.on("end", function () {
+      const file = fs.createReadStream(fileName);
+      file.on("end", function () {
       fs.unlink(fileName, function () {});
     });
     file.pipe(res);
@@ -579,8 +579,9 @@ router.post(
 );
 
 /**
+ * Clear All Form
  * @param {object} req
- * @returns {Form}
+ * @returns {Form} form
  */
 const clearAllForm = (req) =>
   new Form({
@@ -694,6 +695,7 @@ router.post(
       try {
         const file_store = db.connectObj.file_store;
         const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
           packageRoot: path.resolve(__dirname, ".."),
@@ -709,6 +711,7 @@ router.post(
           subject: domain,
           altnames,
         });
+        // letsencrypt
         await getState().setConfig("letsencrypt", true);
         req.flash(
           "success",
@@ -758,7 +761,9 @@ router.get(
     });
   })
 );
-
+/**
+ * /confiuration-check
+ */
 router.get(
   "/configuration-check",
   isAdmin,
@@ -863,6 +868,7 @@ router.post(
     if (form.values.plugins) {
       const ps = await Plugin.find();
       for (const p of ps) {
+        // todo configurable list of mandatory plugins
         if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
       }
       await getState().refresh_plugins();
@@ -902,6 +908,8 @@ router.post(
         req.logout();
         req.session = null;
       }
+      // todo make configurable - redirect to create first user
+      // redirect to create first user
       res.redirect(`/auth/create_first_user`);
     } else {
       req.flash(
