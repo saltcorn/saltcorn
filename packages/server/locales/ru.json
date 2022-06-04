@@ -788,5 +788,6 @@
 	"Has channels?": "Связано с каналом?",
 	"Menu, search, languages and tenants": "Меню, поиск, языки и подсайты(тенанты)",
 	"Images and other files for download": "Изображения и другие файлы для загрузки",
-	"Channels to create events for. Separate by comma; leave blank for all": "Channels to create events for. Separate by comma; leave blank for all"
+	"Channels to create events for. Separate by comma; leave blank for all": "Каналы, для которых создаются собятия. Разделяются ; Не заполняйте, чтобы использовать события для всех каналов",
+	"Event Name": "Имя события"
 }
