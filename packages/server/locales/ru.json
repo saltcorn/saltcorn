@@ -125,7 +125,7 @@
 	"Install pack": "Установить пакет",
 	"Instead of building, get up and running in no time with packs": "Вместо создания приложения с нуля руками, просто выберите подходящие пакеты, установите их и пользуйтесь созданным приложением.",
 	"Packs are collections of tables, views and plugins that give you a full application which you can then edit to suit your needs.": "Пакеты - это коллекции таблиц, представлений и плагинов, поставляемые в виде готового приложения, которое вы затем можете редактировать в соответствии со своими потребностями.",
-	"Name": "Название",
+	"Name": "Наименование",
 	"Description": "Описание",
 	"Go to pack store »": "Перейти в менеджер пакетов »",
 	"Learn": "Изучайте",
@@ -700,7 +700,7 @@
 	"Storage": "Хранилище",
 	"Table or Channel": "Таблица или Канал",
 	"Event types": "Типы событий",
-	"Custom": "Custom",
+	"Custom": "Пользовательские события",
 	"Log settings": "Настройки логов",
 	"Event log": "Лог событий",
 	"Custom Events": "Пользовательские События (Events)",
@@ -772,7 +772,7 @@
 	"For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to plugin folder in file system, e.g.C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.": "Для npm  пакета - наименование npm пакета, например, @saltcorn/html или saltcorn-gantt, точное название уточните на npmjs.com, при установки из локальной файловой системы сервера (local) - абсолютный путь к папке плагина в файловой системе, например, C:\\gitsrc\\any-bootstrap-theme\\, в случае github - название (name) проекта github.",
 	"Version of plugin, latest is default value": "Версия плагина, значение по-умолчанию - latest",
 	"Private SSH key": "Приватный ключ SSH",
-	"Setup two-factor authentication": "Настройть двухфакторную аутентификацию",
+	"Setup two-factr authentication": "Настройть двухфакторную аутентификацию",
 	"Setup two-factor authentication with Time-based One-Time Password (TOTP)": "Настроить двухфакторную аутентфикацию с применением Time-based One-Time Password (TOTP)",
 	"1. Scan this QR code in your Authenticator app": "1. Отсканируйте данный QR код в удобном Вам приложении Аутентфикатор (Authenticator)",
 	"2. Enter the six-digit code generated in your Authenticator app": "2. Введите 6-ти значный секретный код, сгенерированный в приложении Аутентификатор (Authenticator)",
@@ -784,5 +784,9 @@
 	"Enable TWA": "Включить TWA",
 	"Deleted all rows": "Удалены все строки",
 	"Use this link: <a href=\"%s\">%s</a> to revisit your application at any time.": "В дальнешем используйте ссылку: <a href=\"%s\">%s</a> для входа в созданное приложение.",
-	"To login to a previously created application, go to: ": "Чтобы авторизоваться в ранее созданном приложении, перейдите по ссылке: "
+	"To login to a previously created application, go to: ": "Чтобы авторизоваться в ранее созданном приложении, перейдите по ссылке: ",
+	"Has channels?": "Связано с каналом?",
+	"Menu, search, languages and tenants": "Меню, поиск, языки и подсайты(тенанты)",
+	"Images and other files for download": "Изображения и другие файлы для загрузки",
+	"Channels to create events for. Separate by comma; leave blank for all": "Channels to create events for. Separate by comma; leave blank for all"
 }
