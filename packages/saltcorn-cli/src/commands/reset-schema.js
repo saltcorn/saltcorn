@@ -32,6 +32,7 @@ class ResetCommand extends Command {
         if (ans) await reset(false, schema);
       }
     });
+    console.log(`Success: Command execution successfully`);
     this.exit(0);
   }
 }
@@ -40,6 +41,14 @@ class ResetCommand extends Command {
  * @type {string}
  */
 ResetCommand.description = `Reset the database
+...
+This will delete all existing information
+`;
+
+/**
+ * @type {string}
+ */
+ResetCommand.help = `Reset the database
 ...
 This will delete all existing information
 `;
