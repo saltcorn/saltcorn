@@ -188,7 +188,7 @@ class Plugin {
   static async store_plugins_available_from_store(): Promise<Array<Plugin>> {
     //console.log("fetch plugins");
     // TODO support of other store URLs
-    const response = await fetch("http://store.saltcorn.com/api/extensions");
+    const response = await fetch("https://store.saltcorn.com/api/extensions");
     const json = await response.json();
     return json.success.map((p: PluginCfg) => new Plugin(p));
   }
@@ -201,7 +201,7 @@ class Plugin {
   static async store_by_name(name: string): Promise<Plugin | null> {
     // TODO support of other store URLs
     const response = await fetch(
-      "http://store.saltcorn.com/api/extensions?name=" +
+      "https://store.saltcorn.com/api/extensions?name=" +
         encodeURIComponent(name)
     );
     const json = await response.json();
