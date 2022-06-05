@@ -1,4 +1,5 @@
 /**
+ * Admin Menu (Settings...)
  * @category server
  * @module markup/admin
  * @subcategory markup
@@ -6,7 +7,7 @@
 
 const {
   div,
-  hr,
+  //hr,
   form,
   input,
   label,
@@ -18,10 +19,10 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
-  getConfig,
-  setConfig,
-  getAllConfigOrDefaults,
-  deleteConfig,
+  //getConfig,
+  //setConfig,
+  //getAllConfigOrDefaults,
+  //deleteConfig,
   configTypes,
   isFixedConfig,
 } = require("@saltcorn/data/models/config");
@@ -33,6 +34,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 
 /**
+ * Restore Backup
  * @param {*} csrf
  * @param {*} inner
  * @param {string} action
@@ -65,6 +67,7 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
   );
 
 /**
+ * Add Edit Bar
  * @param {object} opts
  * @param {*} opts.role
  * @param {*} opts.title
@@ -91,6 +94,7 @@ const add_edit_bar = ({ role, title, contents, what, url, req }) => {
 };
 
 /**
+ * Send Settings Page
  * @param {object} opts
  * @param {*} opts.req,
  * @param {*} opts.res,
@@ -140,6 +144,7 @@ const send_settings_page = ({
           ),
         },
       ];
+  // headers
   const title = headers
     ? {
         title: req.__(active_sub),
@@ -175,6 +180,7 @@ const send_settings_page = ({
 };
 
 /**
+ * Send InfoArch Page
  * @param {object} args
  * @returns {void}
  */
@@ -202,6 +208,7 @@ const send_infoarch_page = (args) => {
 };
 
 /**
+ * Send Users Page
  * @param {object} args
  * @returns {void}
  */
@@ -221,6 +228,7 @@ const send_users_page = (args) => {
 };
 
 /**
+ * Send Files Page
  * @param {object} args
  * @returns {void}
  */
@@ -237,6 +245,7 @@ const send_files_page = (args) => {
 };
 
 /**
+ * Send Events Page
  * @param {object} args
  * @returns {void}
  */
@@ -257,11 +266,12 @@ const send_events_page = (args) => {
 };
 
 /**
+ * Send Admin page
  * @param {object} args
  * @returns {void}
  */
 const send_admin_page = (args) => {
-  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  //const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
     main_section: "About application",
     main_section_href: "/admin",
@@ -276,6 +286,7 @@ const send_admin_page = (args) => {
 };
 
 /**
+ * View Attributes
  * @param {object} key
  * @returns {Promise<object>}
  */
@@ -292,6 +303,7 @@ const viewAttributes = async (key) => {
 };
 
 /**
+ * Flash start if required
  * @param {*} cfgForm
  * @param {*} req
  * @returns {void}
@@ -308,6 +320,7 @@ const flash_restart_if_required = (cfgForm, req) => {
 };
 
 /**
+ * Flash restart
  * @param {object} req
  * @returns {void}
  */
@@ -321,6 +334,7 @@ const flash_restart = (req) => {
 };
 
 /**
+ * Config fields form
  * @param {object} opts
  * @param {string[]} opts.field_names
  * @param {object} opts.req
@@ -335,6 +349,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
 
   for (const name of field_names) {
     values[name] = state.getConfig(name);
+    //console.log(`config field name: %s`,name);
     if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
       continue;
     const isView = (configTypes[name].type || "").startsWith("View ");
@@ -386,6 +401,7 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
 };
 
 /**
+ * Save config fields from page
  * @param {*} form
  * @returns {Promise<void>}
  */
@@ -400,17 +416,17 @@ const save_config_from_form = async (form) => {
 };
 
 /**
- * @returns {string}
+ * Get Base Domain
+ * @returns {string} base domain
  */
 const getBaseDomain = () => {
   const base_url = getState().getConfig("base_url");
   if (!base_url) return null;
-  const domain = base_url
+  return base_url
     .toLowerCase()
     .replace("https://", "")
     .replace("http://", "")
     .replace(/\//g, "");
-  return domain;
 };
 
 /**

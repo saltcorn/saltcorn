@@ -1,4 +1,5 @@
 /**
+ * Menu Editor
  * @category server
  * @module routes/menu
  * @subcategory routes
@@ -6,18 +7,18 @@
 
 const Router = require("express-promise-router");
 
-const Field = require("@saltcorn/data/models/field");
+//const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { isAdmin, setTenant, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
-const File = require("@saltcorn/data/models/file");
+//const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
 const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
+const { renderForm } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
@@ -33,7 +34,7 @@ const router = new Router();
 module.exports = router;
 
 /**
- *
+ * Menu Form
  * @param {object} req
  * @returns {Promise<Form>}
  */
@@ -246,9 +247,11 @@ const menuForm = async (req) => {
 //create -- new
 
 /**
+ * Menu Editor Script
  * @param {object[]} menu_items
  * @returns {string}
  */
+// todo move to file the content of menuEditorScript
 const menuEditorScript = (menu_items) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
   let lastState;
@@ -262,7 +265,7 @@ const menuEditorScript = (menu_items) => `
   }
   var sortableListOptions = {
       placeholderCss: {'background-color': "#cccccc"},
-      onChange: ajax_save_menu,
+      onChange: ajax_save_menu
   };
   editor = new MenuEditor('myEditor', 
               { 
@@ -285,7 +288,7 @@ const menuEditorScript = (menu_items) => `
     editor.update();
     ajax_save_menu(true);
     location.reload();
-});
+  });
   // Calling the add method
   $('#btnAdd').click(function(){
       editor.add();
@@ -360,6 +363,7 @@ router.get(
   })
 );
 /**
+ * jQME to Menu
  * @param {object[]} menu_items
  * @returns {object[]}
  */
