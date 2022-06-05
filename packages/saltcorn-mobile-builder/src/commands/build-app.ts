@@ -115,11 +115,17 @@ export default class BuildAppCommand extends Command {
     if (!existsSync(sbadmin2Dst)) {
       mkdirSync(sbadmin2Dst, { recursive: true });
     }
-    const sbadmin2Root = join(require.resolve("@saltcorn/sbadmin2"), "..");
-    const srcPrefix = join(
-      sbadmin2Root,
+    const devPath = join(
+      __dirname, 
+      "../../../../",
       "node_modules/startbootstrap-sb-admin-2-bs5"
     );
+    const prodPath = join(
+      require.resolve("@saltcorn/cli"),
+      "../..",
+      "node_modules/startbootstrap-sb-admin-2-bs5"
+    );
+    const srcPrefix = existsSync(devPath) ? devPath : prodPath;
     const srcFiles = [
       "vendor/fontawesome-free",
       "vendor/bootstrap/js/bootstrap.bundle.min.js",
