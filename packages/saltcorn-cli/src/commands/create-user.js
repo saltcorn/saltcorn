@@ -45,7 +45,9 @@ class CreateUserCommand extends Command {
         flags.password || (await cli.prompt("Password", { type: "hide" }));
       const u = await User.create({ email, password, role_id });
       if(u instanceof User)
-        console.log(`Success: User ${email} created successfully in tenant ${flags.tenant}`);
+        console.log(`Success: User ${email} created successfully ${
+          typeof flags.tenant !== "undefined" ? "in tenant " + flags.tenant : ""
+        }`);
       else
         console.error(`Error: ${u.error}`);
     });

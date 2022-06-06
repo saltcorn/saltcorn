@@ -56,9 +56,9 @@ const insertTenant =
     // add email
     const saneEmail = typeof email !== "undefined" ? email : "";
     // add description
-    const saneDescription = description !== "undefined" ? description : null;
+    const saneDescription = description !== "undefined" ? description : "";
     // add info about tenant into main site
-    const id = await db.insert(
+    await db.insert(
       "_sc_tenants",
       { subdomain: saneDomain, email: saneEmail, description: saneDescription },
       { noid: true }
@@ -70,7 +70,7 @@ const insertTenant =
 /**
  * Switch to Tenant:
  * - change current base_url
- * @param subdomain tenant name (subdomain)
+ * @param domain tenant name (subdomain)
  * @param newurl base url of tenant
  */
 const switchToTenant = async (
@@ -85,6 +85,18 @@ const switchToTenant = async (
     if (newurl) await setConfig("base_url", newurl);
   });
 };
+/**
+ * Copy template data into tenant (targer)
+ * - create backup from template tenant
+ * - restore backup to target tenant
+ * - clean up user_id in files
+ * - delete users (including sequence reset)
+ *
+ * @param tenant_template [String] - template tenant
+ * @param target [String] - target tenant
+ * @param state - unused
+ * @param loadAndSaveNewPlugin
+ */
 const copy_tenant_template = async ({
   tenant_template,
   target,
@@ -96,13 +108,18 @@ const copy_tenant_template = async ({
   state: any;
   loadAndSaveNewPlugin: (plugin: Plugin) => void;
 }) => {
-  // TODO use a hygenic name for backup file
+  // TODO use a hygienic name for backup file
+  // create backup of template backup
   const backupFile = await db.runWithTenant(tenant_template, create_backup);
   await db.runWithTenant(target, async () => {
+    // restore backup to target tenant
     await restore(backupFile, loadAndSaveNewPlugin, true);
 
+    // clean up user_id for files
     await db.updateWhere("_sc_files", { user_id: null }, {});
+    // delete users in target tenant
     await db.deleteWhere("users", {});
+    // reset of user sequence
     await db.reset_sequence("users");
     //
   });
@@ -112,6 +129,8 @@ const copy_tenant_template = async ({
 /**
  * Delete Tenant
  * Note! This is deleting all tenant data in database!
+ * - drop database schema
+ * - delete information about tenant from main site
  * @function
  * @param {string} sub
  * @returns {Promise<void>}
@@ -135,7 +154,7 @@ const domain_sanitize = (s: string): string =>
   sqlsanitize(s.replace(".", "").toLowerCase());
 
 /**
- * Call fuction f for each Tenant
+ * Call function f for each Tenant
  * @param f - called function
  * @returns {Promise<void>} no result
  */
@@ -149,6 +168,7 @@ const eachTenant = async (f: () => Promise<any>): Promise<void> => {
 
 /**
  * Create tenant
+ * - use template if it set up
  * @param {string} t
  * @param {object} plugin_loader
  * @param {string} newurl

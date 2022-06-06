@@ -156,11 +156,12 @@ class RunTestsCommand extends Command {
       const cwd = "packages/" + args.package;
       await this.do_test("npm", ["run", "test", ...jestParams], env, cwd);
     } else {
-      const lerna = process.platform === "win32" ? "lerna.cmd" : "lerna";
+      const cwd = ".";
       await this.do_test(
-        lerna,
-        ["run", "test", "--stream", ...jestParams],
-        env
+        "npm",
+        ["--workspaces", "run", "test", ...jestParams],
+        env,
+        cwd
       );
       //await this.e2etest(env);
     }

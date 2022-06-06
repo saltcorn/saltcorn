@@ -14,11 +14,10 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
-    "lib": ["ES2020"],
+    "lib": ["ES2021"],
     "module": "commonjs",
-    "target": "ES2020",
-    "resolveJsonModule": true
+    "target": "ES2021"
   },
-  "exclude": ["node_modules", "dist/**"],
+  "exclude": ["node_modules", "dist/**", ],
   "include": ["**/*", "**/*.json"]
 }

@@ -611,7 +611,9 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       const [table, fld] = agg_relation.split(".");
       const targetNm = (stat + "_" + table + "_" + fld).toLowerCase();
       const val = row[targetNm];
-      return text(val);
+      if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
+        return val.map((v) => text(v.toString())).join(", ");
+      else return text(val);
     },
     action(segment) {
       const url = action_url(
@@ -700,7 +702,12 @@ module.exports = {
   authorise_get: async ({ query, table_id }) => {
     return await authorizeGetQuery(query, table_id);
   },
-  queries: ({ table_id, viewname, configuration: { columns, layout }, req }) => ({
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, layout },
+    req,
+  }) => ({
     async showQuery(state, fields) {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
@@ -767,6 +774,7 @@ module.exports = {
       return rows;
     },
     async actionQuery() {
+      const body = req.body;
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );

@@ -20,7 +20,7 @@ $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.7.2-beta.5 linux-x64 node-v14.19.2
+@saltcorn/cli/0.7.2-beta.5 linux-x64 node-v16.14.0
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
@@ -38,6 +38,7 @@ USAGE
 * [`saltcorn create-tenant TENANT`](#saltcorn-create-tenant-tenant)
 * [`saltcorn create-user`](#saltcorn-create-user)
 * [`saltcorn delete-tenants`](#saltcorn-delete-tenants)
+* [`saltcorn delete-user`](#saltcorn-delete-user)
 * [`saltcorn fixtures`](#saltcorn-fixtures)
 * [`saltcorn get-cfg KEY`](#saltcorn-get-cfg-key)
 * [`saltcorn help [COMMAND]`](#saltcorn-help-command)
@@ -172,6 +173,25 @@ USAGE
 ```
 
 _See code: [src/commands/delete-tenants.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/delete-tenants.js)_
+
+## `saltcorn delete-user`
+
+Delete user
+
+USAGE
+$ saltcorn delete-user USER_EMAIL
+
+ARGUMENTS
+USER_EMAIL  User to delete
+
+OPTIONS
+-f, --force          force
+-t, --tenant=tenant  tenant
+
+DESCRIPTION
+Command deletes the user specified by USER_EMAIL
+
+_See code: [src/commands/delete-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/delete-user.js)_
 
 ## `saltcorn fixtures`
 
@@ -571,10 +591,16 @@ Remove a tenant
 
 ```
 USAGE
-  $ saltcorn rm-tenant TENANT
+  $ saltcorn rm-tenant
 
-ARGUMENTS
-  TENANT  Tenant to remove
+OPTIONS
+  -f, --force          force
+  -t, --tenant=tenant  (required) tenant
+
+DESCRIPTION
+  Attention! All tenant data will be lost!
+  It recommended to make backup of tenant before perform this command.
+
 ```
 
 _See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/rm-tenant.js)_

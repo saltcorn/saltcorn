@@ -254,13 +254,14 @@ function applyViewConfig(e, url) {
 function ajaxSubmitForm(e) {
   var form = $(e).closest("form");
   var url = form.attr("action");
-  var form_data = form.serialize();
   $.ajax(url, {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
     },
-    data: form_data,
+    data: new FormData(form[0]),
+    processData: false,
+    contentType: false,
     success: function () {
       var no_reload = $("#scmodal").hasClass("no-submit-reload");
       $("#scmodal").modal("hide");

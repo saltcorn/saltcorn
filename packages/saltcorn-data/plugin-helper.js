@@ -861,9 +861,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
   var joinFields = {};
   var aggregations = {};
   let freeVars = new Set(); // for join fields
-  const joinFieldNames = new Set(
-    fields.filter((f) => f.is_fkey).map((f) => f.name)
-  );
+
   (columns || []).forEach((column) => {
     if (column.type === "JoinField") {
       if (column.join_field && column.join_field.split) {
@@ -966,9 +964,17 @@ const picked_fields_to_query = (columns, fields, layout) => {
       },
     });
   }
+  add_free_variables_to_joinfields(freeVars, joinFields, fields);
+  return { joinFields, aggregations };
+};
+
+const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
+  const joinFieldNames = new Set(
+    fields.filter((f) => f.is_fkey).map((f) => f.name)
+  );
   [...freeVars]
     .filter((v) => v.includes("."))
-    .map((v) => {
+    .forEach((v) => {
       const kpath = v.split(".");
       if (joinFieldNames.has(kpath[0]))
         if (kpath.length === 2) {
@@ -996,7 +1002,6 @@ const picked_fields_to_query = (columns, fields, layout) => {
           };
         }
     });
-  return { joinFields, aggregations };
 };
 
 /**
@@ -1053,7 +1058,7 @@ const addOrCreateList = (container, key, x) => {
  */
 const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
   var qstate = {};
-  Object.entries(state).forEach(([k, v]) => {
+  Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts") {
       qstate[k] = {
         searchTerm: v.replace(/\0/g, ""),
@@ -1094,7 +1099,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
       // omit
     } else if (typeof v === "object" && v && field?.type?.name === "JSON") {
       let json = {};
-      if(Object.values(v).length ===1 && Object.values(v)[0]==="") return
+      if (Object.values(v).length === 1 && Object.values(v)[0] === "") return;
       Object.entries(v).forEach(([kj, vj]) => {
         if (vj === "") return;
         if (kj.endsWith("__lte")) {
@@ -1494,4 +1499,5 @@ module.exports = {
   strictParseInt,
   run_action_column,
   json_list_to_external_table,
+  add_free_variables_to_joinfields,
 };

@@ -894,5 +894,7 @@
 	"In %s": "In %s",
 	"Enable TWA": "Enable TWA",
 	"Or enter this code:": "Or enter this code:",
-	"Disable TWA": "Disable TWA"
+	"Disable TWA": "Disable TWA",
+	"Cascade delete to file": "Cascade delete to file",
+	"Deleting a row will also delete the file referenced by this field": "Deleting a row will also delete the file referenced by this field"
 }
