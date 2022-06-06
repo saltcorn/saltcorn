@@ -30,7 +30,7 @@ import type {
   RunExtra,
 } from "@saltcorn/types/base_types";
 import type Table from "./table";
-import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
@@ -165,7 +165,7 @@ class View {
     table: number | Tablely | string,
     pred: FindViewsPred
   ): Promise<Array<View>> {
-    var link_view_opts = [];
+    let link_view_opts = [];
     const link_views = await View.find(
       typeWithDefinedMember<Table>(table, "id")
         ? {
@@ -215,7 +215,7 @@ class View {
    * @returns {Promise<object>}
    */
   static async find_all_views_where(pred: FindViewsPred): Promise<Array<View>> {
-    var link_view_opts = [];
+    let link_view_opts = [];
     const link_views = await View.find({}, { orderBy: "name", nocase: true });
 
     for (const viewrow of link_views) {
@@ -260,7 +260,7 @@ class View {
       delete v.is_public;
     }
     const { table, ...row } = v;
-    // insert view defintion into _sc_views
+    // insert view definition into _sc_views
     const id = await db.insert("_sc_views", row);
     // refresh views list cache
     await require("../db/state").getState().refresh_views();
@@ -338,6 +338,7 @@ class View {
 
   /**
    * @param {*} arg
+   * @param {boolean} remote
    * @returns {Promise<object>}
    */
   async authorise_post(
@@ -357,6 +358,7 @@ class View {
 
   /**
    * @param {*} arg
+   * @param {boolean} remote
    * @returns {Promise<object>}
    */
   async authorise_get(
@@ -385,8 +387,9 @@ class View {
 
   /**
    * Run (Execute) View
-   * @param query
-   * @param extraArgs
+   * @param {any} query
+   * @param  {RunExtra} extraArgs
+   * @param {boolean}  remote
    * @returns {Promise<*>}
    */
   async run(
@@ -421,9 +424,9 @@ class View {
       const base_url =
         getState().getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
-      const vtQueries = queryObj;
+      //const vtQueries = queryObj;
 
-      Object.entries(vtQueries).forEach(([k, v]) => {
+      Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
           const token = window.localStorage.getItem("auth_jwt");
@@ -462,6 +465,7 @@ class View {
    * @param {*} query
    * @param {*} req
    * @param {*} res
+   * @param {boolean} remote
    * @returns {Promise<object>}
    */
   async run_possibly_on_page(
@@ -476,23 +480,24 @@ class View {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
-        const contents = await db_page.run(query, { res, req });
-        return contents;
+        // return contents
+        return await db_page.run(query, { res, req });
       }
     }
     const state = view.combine_state_and_default_state(query);
     const resp = await view.run(state, { res, req }, remote);
     const state_form = await view.get_state_form(state, req);
-    const contents = div(
+    // return contents
+    return div(
       state_form ? renderForm(state_form, req.csrfToken()) : "",
       resp
     );
-    return contents;
   }
 
   /**
    * @param {*} query
    * @param {*} extraArgs
+   * @param {boolean} remote
    * @throws {InvalidConfiguration}
    * @returns {Promise<object>}
    */
@@ -553,6 +558,7 @@ class View {
    * @param {*} query
    * @param {*} body
    * @param {*} extraArgs
+   * @param {boolean} remote
    * @returns {Promise<object>}
    */
   async runPost(
@@ -586,6 +592,7 @@ class View {
    * @param {*} body
    * @param {*} res
    * @param {*} extraArgs
+   * @param {boolean} remote
    * @returns {Promise<void>}
    */
   async runRoute(

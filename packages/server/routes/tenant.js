@@ -1,4 +1,5 @@
 /**
+ * Tenant(s) Route
  * @category server
  * @module routes/tenant
  * @subcategory routes
@@ -36,22 +37,23 @@ const {
   code,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
-const url = require("url");
+//const url = require("url");
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
 const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
   send_infoarch_page,
-  send_admin_page,
+  //send_admin_page,
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
-const {
-  create_backup,
-  restore,
-} = require("@saltcorn/admin-models/models/backup");
+// todo add button backup / restore for particular tenant (available in admin tenants screens)
+//const {
+//  create_backup,
+//  restore,
+//} = require("@saltcorn/admin-models/models/backup");
 
 /**
  * @type {object}
@@ -116,6 +118,7 @@ const is_ip_address = (hostname) => {
 };
 
 /**
+ * Create tenant screen runnning
  * @name get/create
  * @function
  * @memberof module:routes/tenant~tenantRouter
@@ -146,6 +149,7 @@ router.get(
         )
       );
     let create_tenant_warning = "";
+    // todo add custom create tenant  warning message
     if (getState().getConfig("create_tenant_warning"))
       create_tenant_warning = div(
         {
@@ -200,9 +204,8 @@ const getNewURL = (req, subdomain) => {
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
   const hostname = req.hostname;
-  const newurl = `${req.protocol}://${subdomain}.${hostname}${ports}/`;
-
-  return newurl;
+  // return newurl
+  return `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 };
 
 /**
@@ -307,7 +310,7 @@ router.post(
 );
 
 /**
- * List tenants HTTP GET Web UI
+ * List tenants ( on /tenant/list)
  * @name get/list
  * @function
  * @memberof module:routes/tenant~tenantRouter

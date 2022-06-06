@@ -41,7 +41,7 @@ const {
   getState,
   restart_tenant,
   getTenant,
-  get_other_domain_tenant,
+  //get_other_domain_tenant,
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("../load_plugins");
@@ -103,6 +103,8 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
+      "plugins_store_endpoint",
+      "packs_store_endpoint",
       ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     ],
     action: "/admin",

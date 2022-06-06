@@ -789,5 +789,9 @@
 	"Menu, search, languages and tenants": "Меню, поиск, языки и подсайты(тенанты)",
 	"Images and other files for download": "Изображения и другие файлы для загрузки",
 	"Channels to create events for. Separate by comma; leave blank for all": "Каналы, для которых создаются собятия. Разделяются ; Не заполняйте, чтобы использовать события для всех каналов",
-	"Event Name": "Имя события"
+	"Event Name": "Имя события",
+	"Plugins (Extensions) Store endpoint": "Plugins (Extensions) Store endpoint",
+	"Packs Store endpoint": "Packs Store endpoint",
+	"The endpoint of plugins store.": "The endpoint of plugins store.",
+	"The endpoint of packs store.": "The endpoint of packs store."
 }
