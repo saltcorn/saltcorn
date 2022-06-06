@@ -241,7 +241,8 @@ export type ViewTemplate = {
     state: GenObj,
     body: GenObj,
     extraArgs: RunExtra,
-    queries: any
+    queries: any,
+    remote?: boolean
   ) => Promise<void>;
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
