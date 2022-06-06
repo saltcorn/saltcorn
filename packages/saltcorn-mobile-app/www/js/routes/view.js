@@ -27,7 +27,7 @@ export const postView = async (context) => {
     {},
     body,
     {
-      req: new MobileRequest(context.xhr),
+      req: new MobileRequest(context.xhr, context.files),
       res: response,
       redirect,
     },

@@ -99,12 +99,13 @@ async function gotoEntryView() {
   replaceIframeInnerContent(page.content);
 }
 
-async function handleRoute(route, query) {
+async function handleRoute(route, query, files) {
   if (route === "/") return await gotoEntryView();
   addRoute({ route, query });
   const page = await router.resolve({
     pathname: route,
     query: query,
+    files: files,
   });
   if (page.redirect) {
     const { path, query } = splitPathQuery(page.redirect);

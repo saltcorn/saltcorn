@@ -8,9 +8,13 @@
 import db from "../db";
 import { v4 as uuidv4 } from "uuid";
 import { join } from "path";
-const { asyncMap } = require("../utils");
+const { asyncMap, isNode } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import axios from "axios";
+import FormData from "form-data";
+
+declare let window: any;
 
 /**
  * File Descriptor class
@@ -228,6 +232,29 @@ class File {
     await require("../db/state").getState().refresh_files();
 
     return file;
+  }
+
+  /**
+   * This is a mobile-app function, it uploads a file to the saltcorn server.
+   * @param f file to upload
+   * @returns JSON response from POST 'file/upload'
+   */
+  static async upload(f: any): Promise<any> {
+    const { getState } = require("../db/state");
+    const base_url = getState().getConfig("base_url") || "http://10.0.2.2:3000";
+    const url = `${base_url}/files/upload`;
+    const token = window.localStorage.getItem("auth_jwt");
+    const formData = new FormData();
+    formData.append("file", f);
+    const response = await axios.post(url, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `jwt ${token}`,
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Saltcorn-Client": "mobile-app",
+      },
+    });
+    return response.data.success;
   }
 }
 

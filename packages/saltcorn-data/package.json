@@ -19,7 +19,6 @@
     "./base-plugin/*": "./dist/base-plugin/*.js",
     "./base-plugin": "./dist/base-plugin/index.js",
     "./base-plugin/viewtemplate/*": "./dist/base-plugin/viewtemplate/*.js",
-    "./db/": "./dist/db/index.js",
     "./db": "./dist/db/index.js",
     "./db/*": "./dist/db/*.js",
     "./models/*": "./dist/models/*.js"

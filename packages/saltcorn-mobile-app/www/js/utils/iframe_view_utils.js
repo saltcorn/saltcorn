@@ -29,8 +29,14 @@ async function execLink(url) {
  */
 async function formSubmit(e, urlSuffix, viewname) {
   e.submit();
-  const queryStr = new URLSearchParams(new FormData(e)).toString();
-  await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr);
+  const files = {};
+  const urlParams = new URLSearchParams();
+  for (const entry of new FormData(e).entries()) {
+    if (entry[1] instanceof File) files[entry[0]] = entry[1];
+    else urlParams.append(entry[0], entry[1]);
+  }
+  const queryStr = urlParams.toString();
+  await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
 }
 
 async function saveAndContinue(e, action, k) {
@@ -294,7 +300,8 @@ function openFile(fileId) {
   const token = localStorage.getItem("auth_jwt");
   parent.cordova.InAppBrowser.open(
     `${serverPath}/files/serve/${fileId}?jwt=${token}`,
-    "_self"
+    "_self",
+    "clearcache=yes,clearsessioncache=yes,location=no"
   );
 }
 

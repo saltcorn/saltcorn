@@ -1,4 +1,4 @@
-function MobileRequest(xhr = false) {
+function MobileRequest(xhr = false, files = undefined) {
   const roleId = saltcorn.data.state.getState().role_id
     ? saltcorn.data.state.getState().role_id
     : 10;
@@ -18,5 +18,6 @@ function MobileRequest(xhr = false) {
     },
     csrfToken: () => "",
     xhr,
+    files,
   };
 }

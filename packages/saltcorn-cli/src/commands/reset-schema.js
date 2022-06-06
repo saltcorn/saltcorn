@@ -17,7 +17,7 @@ class ResetCommand extends Command {
    */
   async run() {
     const reset = require("@saltcorn/data/db/reset_schema");
-    const db = require("@saltcorn/data/db/");
+    const db = require("@saltcorn/data/db");
     const { flags } = this.parse(ResetCommand);
     await maybe_as_tenant(flags.tenant, async () => {
       const schema = db.getTenantSchema();
