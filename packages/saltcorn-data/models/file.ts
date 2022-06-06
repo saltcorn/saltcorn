@@ -234,6 +234,11 @@ class File {
     return file;
   }
 
+  /**
+   * This is a mobile-app function, it uploads a file to the saltcorn server.
+   * @param f file to upload
+   * @returns JSON response from POST 'file/upload'
+   */
   static async upload(f: any): Promise<any> {
     const { getState } = require("../db/state");
     const base_url = getState().getConfig("base_url") || "http://10.0.2.2:3000";
