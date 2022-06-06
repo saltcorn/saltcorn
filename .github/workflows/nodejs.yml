@@ -35,17 +35,13 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: "14.x"
+          node-version: "16.x"
       - run: psql -d saltcorn_test --command='create extension "uuid-ossp";'
         env:
           PGHOST: localhost
           PGUSER: postgres
           PGDATABASE: saltcorn_test
           PGPASSWORD: postgres
-      - run: npm install -g lerna
-      - run: lerna bootstrap --no-ci
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
       - run: npm install --legacy-peer-deps
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"

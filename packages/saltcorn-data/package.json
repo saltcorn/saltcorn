@@ -90,7 +90,7 @@
     "@types/jest": "^27.0.3",
     "@types/jsonwebtoken": "^8.5.1",
     "@types/mjml": "4.7.0",
-    "@types/node": "^16.11.12",
+    "@types/node": "^16.11.7",
     "@types/node-fetch": "2.5.12",
     "@types/nodemailer": "^6.4.4",
     "@types/uuid": "^8.3.3",
