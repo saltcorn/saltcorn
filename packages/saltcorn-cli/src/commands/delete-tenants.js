@@ -27,27 +27,31 @@ class DeleteTenantsCommand extends Command {
 
     for (const ten of tensExamine) {
       let nusers, ntables, nviews, npages;
-      await db.runWithTenant(ten.subdomain, async () => {
-        nusers = await db.count("users");
-        ntables = await db.count("_sc_tables");
-        nviews = await db.count("_sc_views");
-        npages = await db.count("_sc_pages");
-      });
-      if (nusers < 2 && ntables < 2 && nviews < 1 && npages < 1) {
-        console.log("deleting ", ten.subdomain, {
-          nusers,
-          ntables,
-          nviews,
-          npages,
+      try {
+        await db.runWithTenant(ten.subdomain, async () => {
+          nusers = await db.count("users");
+          ntables = await db.count("_sc_tables");
+          nviews = await db.count("_sc_views");
+          npages = await db.count("_sc_pages");
         });
-        await deleteTenant(ten.subdomain);
-      } else {
-        console.log("leaving", ten.subdomain, {
-          nusers,
-          ntables,
-          nviews,
-          npages,
-        });
+        if (nusers < 2 && ntables < 2 && nviews < 1 && npages < 1) {
+          console.log("deleting ", ten.subdomain, {
+            nusers,
+            ntables,
+            nviews,
+            npages,
+          });
+          await deleteTenant(ten.subdomain);
+        } else {
+          console.log("leaving", ten.subdomain, {
+            nusers,
+            ntables,
+            nviews,
+            npages,
+          });
+        }
+      } catch (e) {
+        console.error("Error in tenant", ten.subdomain, e);
       }
     }
     this.exit(0);
