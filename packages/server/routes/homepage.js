@@ -1,4 +1,6 @@
 /**
+ * Default Home Page (Wellcome page)
+ * Opens for new site without any data
  * @category server
  * @module routes/homepage
  * @subcategory routes
@@ -10,11 +12,11 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
-const { link, renderForm, mkTable, post_btn } = require("@saltcorn/markup");
-const { ul, li, div, small, a, h5, p, i } = require("@saltcorn/markup/tags");
+const { link, mkTable } = require("@saltcorn/markup");
+const { div, a, p, i } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
-const { restore_backup } = require("../markup/admin");
+// const { restore_backup } = require("../markup/admin");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -22,6 +24,7 @@ const { fileUploadForm } = require("../markup/forms");
 const { get_base_url } = require("./utils.js");
 
 /**
+ * Tables List
  * @param {*} tables
  * @param {object} req
  * @returns {Table}
@@ -39,6 +42,7 @@ const tableTable = (tables, req) =>
   );
 
 /**
+ * Tables Card
  * @param {*} tables
  * @param {object} req
  * @returns {object}
@@ -68,6 +72,7 @@ const tableCard = (tables, req) => ({
 });
 
 /**
+ * Views List
  * @param {*} views
  * @param {object} req
  * @returns {Table}
@@ -89,6 +94,7 @@ const viewTable = (views, req) =>
   );
 
 /**
+ * Views Card
  * @param {*} views
  * @param {object} req
  * @returns {object}
@@ -120,6 +126,7 @@ const viewCard = (views, req) => ({
 });
 
 /**
+ * Pages List
  * @param {*} pages
  * @param {object} req
  * @returns {Table}
@@ -141,6 +148,7 @@ const pageTable = (pages, req) =>
   );
 
 /**
+ * Page Card
  * @param {*} pages
  * @param {object} req
  * @returns {object}
@@ -173,13 +181,14 @@ const pageCard = (pages, req) => ({
 });
 
 /**
+ * Files Tab
  * @param {object} req
  * @returns {Promise<div>}
  */
 const filesTab = async (req) => {
   const files = await File.find({}, { orderBy: "filename", cached: true });
   return div(
-    files.length == 0
+    files.length === 0
       ? p(req.__("No files"))
       : mkTable(
           [
@@ -197,7 +206,10 @@ const filesTab = async (req) => {
 };
 
 /**
+ * Users Tab
  * @param {object} req
+ * @param users
+ * @param roleMap
  * @returns {Promise<div>}
  */
 const usersTab = async (req, users, roleMap) => {
@@ -221,7 +233,9 @@ const usersTab = async (req, users, roleMap) => {
 };
 
 /**
+ * Actions (Triggers) Tab
  * @param {object} req
+ * @param triggers
  * @returns {Promise<div>}
  */
 const actionsTab = async (req, triggers) => {
@@ -234,7 +248,7 @@ const actionsTab = async (req, triggers) => {
         { class: "mt-2 pe-2" },
         i(req.__("Triggers run actions in response to events."))
       ),
-    triggers.length == 0
+    triggers.length === 0
       ? p(req.__("No triggers"))
       : mkTable(
           [
@@ -260,6 +274,12 @@ const actionsTab = async (req, triggers) => {
     )
   );
 };
+/**
+ * Plugins and Packs Tab
+ * @param req
+ * @param packlist
+ * @returns {*}
+ */
 const packTab = (req, packlist) =>
   div(
     { class: "pb-3 pt-2 pe-4" },
@@ -286,7 +306,11 @@ const packTab = (req, packlist) =>
       req.__("Go to pack store »")
     )
   );
-
+/**
+ * Help Card
+ * @param req
+ * @returns {*}
+ */
 const helpCard = (req) =>
   div(
     { class: "pb-3 pt-2 pe-4" },
@@ -321,6 +345,7 @@ const helpCard = (req) =>
   );
 
 /**
+ * Wellcome page
  * @param {object} req
  * @returns {Promise<object>}
  */
@@ -393,6 +418,7 @@ const welcome_page = async (req) => {
 };
 
 /**
+ * No Views logged in
  * @param {object} req
  * @param {object} res
  * @returns {Promise<void>}
@@ -423,6 +449,7 @@ const no_views_logged_in = async (req, res) => {
 };
 
 /**
+ * Get Config respounce
  * @param {number} role_id
  * @param {object} res
  * @param {object} req
@@ -430,6 +457,7 @@ const no_views_logged_in = async (req, res) => {
  */
 const get_config_response = async (role_id, res, req) => {
   const modernCfg = getState().getConfig("home_page_by_role", false);
+  // predefined roles
   const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
     role_id
   ];
@@ -472,7 +500,7 @@ module.exports =
       const hasUsers = await User.nonEmpty();
       if (!hasUsers) {
         res.redirect("/auth/create_first_user");
-        return;
+        // return;
       } else res.redirect("/auth/login");
     } else {
       await no_views_logged_in(req, res);

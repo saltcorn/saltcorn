@@ -10,7 +10,10 @@
  * @property {module:commands/backup} backup
  * @property {module:commands/create-tenant} create-tenant
  * @property {module:commands/create-user} create-user
+ * @property {module:commands/create-user} delete-tenants
+ * @property {module:commands/create-user} delete-user
  * @property {module:commands/fixtures} fixtures
+ * @property {module:commands/fixtures} get-cfg
  * @property {module:commands/info} info
  * @property {module:commands/install-pack} install-pack
  * @property {module:commands/install-plugin} install-plugin
@@ -25,7 +28,10 @@
  * @property {module:commands/restore} restore
  * @property {module:commands/rm-tenant} rm-tenant
  * @property {module:commands/run-benchmark} run-benchmark
+ * @property {module:commands/run-benchmark} run-test
+ * @property {module:commands/setup} scheduler
  * @property {module:commands/setup} setup
+ * @property {module:commands/setup} setup-benchmark
  * @property {module:commands/test-plugin} test-plugin
  * @property {module:commands/transform-field} transform-field
  *

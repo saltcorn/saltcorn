@@ -5,7 +5,7 @@
  * @subcategory routes
  */
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher, get_base_url } = require("./utils.js");
+const { isAdmin, error_catcher } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 
@@ -21,19 +21,19 @@ module.exports = router;
 const {
   mkTable,
   renderForm,
-  link,
-  post_btn,
-  settingsDropdown,
-  post_dropdown_item,
+  //link,
+  //post_btn,
+  //settingsDropdown,
+  //post_dropdown_item,
   post_delete_btn,
   localeDateTime,
 } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
-  code,
+  //code,
   a,
-  span,
+  //span,
   tr,
   table,
   tbody,
@@ -74,7 +74,7 @@ const logSettingsForm = async (req) => {
         name: w + "_channel",
         label: w + " channel",
         sublabel:
-          "Channels to create events for. Separate by comma; leave blank for all",
+          req.__("Channels to create events for. Separate by comma; leave blank for all"),
         type: "String",
         showIf: { [w]: true },
       });
@@ -168,25 +168,25 @@ router.get(
 /**
  * @returns {Form}
  */
-const customEventForm = () =>
-  new Form({
-    action: "/eventlog/custom/new",
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
-    fields: [
-      {
-        name: "name",
-        label: "Name",
-        type: "String",
-      },
-      {
-        name: "hasChannel",
-        label: "Has channels?",
-        type: "Bool",
-      },
-    ],
-  });
-
+const customEventForm = async (req) => {
+    return new Form({
+        action: "/eventlog/custom/new",
+        submitButtonClass: "btn-outline-primary",
+        onChange: "remove_outline(this)",
+        fields: [
+            {
+                name: "name",
+                label: req.__("Event Name"),
+                type: "String",
+            },
+            {
+                name: "hasChannel",
+                label: req.__("Has channels?"),
+                type: "Bool",
+            },
+        ],
+    });
+};
 /**
  * @name get/custom/new
  * @function
@@ -197,7 +197,7 @@ router.get(
   "/custom/new",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = customEventForm();
+    const form = await customEventForm(req);
     send_events_page({
       res,
       req,
@@ -222,7 +222,7 @@ router.post(
   "/custom/new",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = customEventForm();
+    const form = await customEventForm(req);
     form.validate(req.body);
     if (form.hasErrors) {
       send_events_page({
@@ -323,7 +323,7 @@ router.get(
       { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
     );
     if (evlog.length === rows_per_page || current_page > 1) {
-      const nrows = await EventLog.count();
+      const nrows = await EventLog.count({});
       if (nrows > rows_per_page || current_page > 1) {
         page_opts.pagination = {
           current_page,

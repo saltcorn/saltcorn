@@ -3,18 +3,28 @@
  * @module wrapper
  */
 const { getState } = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db");
-const { ul, li, h3, div, small } = require("@saltcorn/markup/tags");
+//const db = require("@saltcorn/data/db");
+const { h3, div, small } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const renderLayout = require("@saltcorn/markup/layout");
-
+/**
+ * get flashes
+ * @param req
+ * @returns {T[]}
+ */
 const getFlashes = (req) =>
-  ["error", "success", "danger", "warning"]
+  ["error", "success", "danger", "warning","information"]
     .map((type) => {
       return { type, msg: req.flash(type) };
     })
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
-
+/**
+ * Get extra menu
+ * @param role
+ * @param state
+ * @param req
+ * @returns {*}
+ */
 const get_extra_menu = (role, state, req) => {
   let cfg = getState().getConfig("unrolled_menu_items", []);
   if (!cfg || cfg.length === 0) {
@@ -43,7 +53,11 @@ const get_extra_menu = (role, state, req) => {
       }));
   return transform(cfg);
 };
-
+/**
+ * Get menu
+ * @param req
+ * @returns {(false|{section: *, items}|{section: *, items: [{link: string, icon: string, label: *},{link: string, icon: string, label: *},{link: string, icon: string, label: *},{icon: string, subitems: [{link: string, icon: string, label: *},{link: string, icon: string, label: *},{link: string, icon: string, altlinks: string[], label: *},{link: string, altlinks: string[], icon: string, label: *},{link: string, icon: string, label: *},null], label: *}]}|{section: *, isUser: boolean, items: ([{icon: string, subitems: [{label: *},{icon: string, link: string, label: *},{link: string, icon: string, label: *}], label: *, isUser: boolean}]|*[])})[]}
+ */
 const get_menu = (req) => {
   const isAuth = req.user && req.user.id;
   const state = getState();
@@ -82,8 +96,13 @@ const get_menu = (req) => {
           ? [{ link: "/auth/login", label: req.__("Login") }]
           : []),
       ];
-  const schema = db.getTenantSchema();
+  // const schema = db.getTenantSchema();
+  // Admin role id (todo move to common constants)
   const isAdmin = role === 1;
+    /*
+     * Admin Menu items
+     *
+     */
   const adminItems = [
     { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
     { link: "/viewedit", icon: "far fa-eye", label: req.__("Views") },
@@ -126,7 +145,8 @@ const get_menu = (req) => {
     },
   ];
 
-  const menu = [
+  // return menu
+  return [
     extra_menu.length > 0 && {
       section: req.__("Menu"),
       items: extra_menu,
@@ -141,9 +161,16 @@ const get_menu = (req) => {
       items: authItems,
     },
   ].filter((s) => s);
-  return menu;
-};
 
+};
+/**
+ * Get Headers
+ * @param req
+ * @param version_tag
+ * @param description
+ * @param extras
+ * @returns {*[]}
+ */
 const get_headers = (req, version_tag, description, extras = []) => {
   const state = getState();
   const favicon = state.getConfig("favicon_id", null);
@@ -188,6 +215,11 @@ const get_headers = (req, version_tag, description, extras = []) => {
     ...from_cfg,
   ];
 };
+/**
+ * Get brand
+ * @param state
+ * @returns {{name: *, logo: (string|undefined)}}
+ */
 const get_brand = (state) => {
   const logo_id = state.getConfig("site_logo_id", "");
   return {
@@ -196,6 +228,12 @@ const get_brand = (state) => {
   };
 };
 module.exports = (version_tag) =>
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
   function (req, res, next) {
     const role = (req.user || {}).role_id || 10;
 
@@ -220,7 +258,7 @@ module.exports = (version_tag) =>
           })
         );
       } else {
-        var links = [];
+        let links = [];
         if (authLinks.login)
           links.push(
             link(authLinks.login, req.__("Already have an account? Login"))
@@ -301,7 +339,12 @@ module.exports = (version_tag) =>
     };
     next();
   };
-
+/**
+ * Default render to HTML
+ * @param s
+ * @param role
+ * @returns {string|string|*}
+ */
 const defaultRenderToHtml = (s, role) =>
   typeof s === "string"
     ? s

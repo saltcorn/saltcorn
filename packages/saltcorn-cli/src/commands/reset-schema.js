@@ -32,6 +32,7 @@ class ResetCommand extends Command {
         if (ans) await reset(false, schema);
       }
     });
+    console.log(`Success: Command execution successfully`);
     this.exit(0);
   }
 }
@@ -45,10 +46,18 @@ This will delete all existing information
 `;
 
 /**
+ * @type {string}
+ */
+ResetCommand.help = `Reset the database
+...
+This will delete all existing information
+`;
+
+/**
  * @type {object}
  */
 ResetCommand.flags = {
-  force: flags.boolean({ char: "f", description: "force" }),
+  force: flags.boolean({ char: "f", description: "force command execution" }),
   tenant: flags.string({
     char: "t",
     description: "tenant",

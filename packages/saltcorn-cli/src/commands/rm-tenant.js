@@ -54,13 +54,16 @@ It recommended to make backup of tenant before perform this command.
 /**
  * @type {object}
  */
-RmTenantCommand.help = RmTenantCommand.description;
+RmTenantCommand.help = `Remove a tenant.
+Attention! All tenant data will be lost!
+It recommended to make backup of tenant before perform this command.
+`;
 
 /**
  * @type {object}
  */
 RmTenantCommand.flags = {
-  force: flags.boolean({ char: "f", description: "force" }),
+  force: flags.boolean({ char: "f", description: "force command execution" }),
   tenant: flags.string({
     char: "t",
     description: "tenant",

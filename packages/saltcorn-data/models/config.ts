@@ -495,17 +495,37 @@ const configTypes: ConfigTypes = {
     blurb:
       "The secret access key associated with your Amazon S3 Access Key ID.",
   },
+  /** @type {object} */
+  plugins_store_endpoint: {
+    type: "String",
+    input_type: "String",
+    label: "Plugins (Extensions) Store endpoint",
+    default: "https://store.saltcorn.com/api/extensions",
+    //root_only: true,
+    blurb:
+        "The endpoint of plugins store.",
+  },
+  /** @type {object} */
+  packs_store_endpoint: {
+    type: "String",
+    input_type: "String",
+    label: "Packs Store endpoint",
+    default: "https://store.saltcorn.com/api/packs",
+    //root_only: true,
+    blurb:
+        "The endpoint of packs store.",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
   en: "English",
-  fr: "français",
+  fr: "Français",
   de: "Deutsch",
-  da: "dansk",
+  da: "Dansk",
   es: "Español",
   no: "Norsk",
   sv: "Svenska",
-  ru: "русский",
+  ru: "Русский",
   nl: "Nederlands",
   pt: "Português",
   ar: "العربية",

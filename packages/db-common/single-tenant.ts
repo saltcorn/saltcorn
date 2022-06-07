@@ -13,14 +13,16 @@ export const init = (connObjPara: any): void => {
 };
 
 /**
+ * Get tenant schema name
  * @returns {string}
  */
 export const getTenantSchema = (): string => {
-  if (!connObj) throw new Error("The connection object is not initalized");
+  if (!connObj) throw new Error("The connection object is not initialized");
   return connObj.default_schema;
 };
 
 /**
+ * Returns true if platform runs multi tenant mode
  * @returns {false}
  */
 export const is_it_multi_tenant = (): boolean => false;
@@ -31,6 +33,7 @@ export const is_it_multi_tenant = (): boolean => false;
 export const enable_multi_tenant = (): void => {};
 
 /**
+ * Run function with tenant
  * @param {*} t
  * @param {function} f
  * @returns {*}

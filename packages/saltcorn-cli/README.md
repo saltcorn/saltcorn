@@ -77,6 +77,11 @@ Add Saltcorn schema to existing database
 ```
 USAGE
   $ saltcorn add-schema
+
+OPTIONS
+  -f, --force  force
+
+
 ```
 
 _See code: [src/commands/add-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/add-schema.js)_

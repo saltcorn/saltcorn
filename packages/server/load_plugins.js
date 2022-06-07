@@ -77,9 +77,8 @@ const loadPlugin = async (plugin, force) => {
 };
 
 /**
- *
+ * Git pull or clone
  * @param plugin
- * @param force
  */
 const gitPullOrClone = async (plugin) => {
   await fs.promises.mkdir("git_plugins", { recursive: true });
@@ -106,9 +105,16 @@ const gitPullOrClone = async (plugin) => {
   if (plugin.deploy_private_key) await fs.promises.unlink(keyfnm);
   return dir;
 };
-
+/**
+ * Install plugin
+ * @param plugin - plugin name
+ * @param force - force flag
+ * @param manager - plugin manager
+ * @returns {Promise<{plugin_module: *}|{plugin_module: any}>}
+ */
 const requirePlugin = async (plugin, force, manager = defaultManager) => {
   const installed_plugins = (await manager.list()).map((p) => p.name);
+  // todo as idea is to make list of mandatory plugins configurable
   if (
     ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(plugin.location)
   ) {
@@ -164,6 +170,7 @@ const loadAllPlugins = async () => {
  * Load Plugin and its dependencies and save into local installation
  * @param plugin
  * @param force
+ * @param noSignalOrDB
  * @returns {Promise<void>}
  */
 const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {

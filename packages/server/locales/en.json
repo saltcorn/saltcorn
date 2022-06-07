@@ -896,5 +896,12 @@
 	"Or enter this code:": "Or enter this code:",
 	"Disable TWA": "Disable TWA",
 	"Cascade delete to file": "Cascade delete to file",
-	"Deleting a row will also delete the file referenced by this field": "Deleting a row will also delete the file referenced by this field"
+	"Deleting a row will also delete the file referenced by this field": "Deleting a row will also delete the file referenced by this field",
+	"Has channels?": "Has channels?",
+	"Channels to create events for. Separate by comma; leave blank for all": "Channels to create events for. Separate by comma; leave blank for all",
+	"Event Name": "Event Name",
+	"Plugins (Extensions) Store endpoint": "Plugins (Extensions) Store endpoint",
+	"Packs Store endpoint": "Packs Store endpoint",
+	"The endpoint of plugins store.": "The endpoint of plugins store.",
+	"The endpoint of packs store.": "The endpoint of packs store."
 }

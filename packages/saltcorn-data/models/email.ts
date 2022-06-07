@@ -5,9 +5,9 @@
  */
 import { createTransport, Transporter } from "nodemailer";
 const { getState } = require("../db/state");
-import tags from "@saltcorn/markup/tags";
+//import tags from "@saltcorn/markup/tags";
 import mjml from "@saltcorn/markup/mjml-tags";
-const { div } = tags;
+//const { div } = tags;
 import View from "./view";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db/index";

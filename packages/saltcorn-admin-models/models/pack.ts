@@ -1,4 +1,5 @@
 /**
+ * Packs
  * @category saltcorn-admin-models
  * @module pack
  */
@@ -28,6 +29,7 @@ import type { RolePack } from "@saltcorn/types/model-abstracts/abstract_role";
 const { isStale } = require("@saltcorn/data/utils");
 
 /**
+ * Table Pack
  * @function
  * @param {string} name
  * @returns {Promise<object>}
@@ -59,6 +61,7 @@ const table_pack = async (name: string): Promise<TablePack> => {
 };
 
 /**
+ * View Pack
  * @function
  * @param name
  */
@@ -80,6 +83,7 @@ const view_pack = async (name: string): Promise<ViewPack> => {
 };
 
 /**
+ * Plugin pack
  * @function
  * @param {string} name
  * @returns {Promise<object>}
@@ -98,6 +102,7 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
 };
 
 /**
+ * Page Pack
  * @function
  * @param {string} name
  * @returns {Promise<object>}
@@ -118,6 +123,7 @@ const page_pack = async (name: string): Promise<PagePack> => {
 };
 
 /**
+ * Library pack
  * @function
  * @param {string} name
  * @returns {Promise<object>}
@@ -128,6 +134,7 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
 };
 
 /**
+ * Trigger pack
  * @function
  * @param {string} name
  * @returns {Promise<object>}
@@ -138,6 +145,7 @@ const trigger_pack = async (name: string): Promise<TriggerPack> => {
 };
 
 /**
+ * Role pack
  * @function
  * @param {string} role
  * @returns {Promise<object>}
@@ -147,6 +155,7 @@ const role_pack = async (role: string): Promise<RolePack> => {
 };
 
 /**
+ * Can install pock
  * @function
  * @param {string} pack
  * @returns {Promise<boolean|object>}
@@ -198,6 +207,7 @@ const can_install_pack = async (
 };
 
 /**
+ * Uninstall pack
  * @function
  * @param {string} pack
  * @param {string} name
@@ -220,7 +230,7 @@ const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
       for (const field of fields) {
         if (field.is_fkey) await field.delete();
       }
-      const triggers = await Trigger.find({ table_id: table.id });
+      const triggers = Trigger.find({table_id: table.id});
       for (const trigger of triggers) {
         await trigger.delete();
       }
@@ -393,6 +403,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
 };
 
 /**
+ * Fetch available packs from store
  * @function
  * @returns {Promise<object[]>}
  */
@@ -400,8 +411,13 @@ const fetch_available_packs_from_store = async (): Promise<
   Array<{ name: string }>
 > => {
   //console.log("fetch packs");
+  //const { getState } = require("../db/state");
+  const packs_store_endpoint = getState().getConfig("packs_store_endpoint", false);
+  //console.log(`[fetch_available_packs_from_store] packs_store_endpoint:%s`, packs_store_endpoint);
+
   const response = await fetch(
-    "http://store.saltcorn.com/api/packs?fields=name,description"
+      //"http://store.saltcorn.com/api/packs?fields=name,description"
+      packs_store_endpoint+"?fields=name,description"
   );
 
   const json = await response.json();
@@ -409,6 +425,7 @@ const fetch_available_packs_from_store = async (): Promise<
 };
 
 /**
+ * Fetch pack by name
  * @function
  * @param {string} name
  * @returns {Promise<object|null>}
@@ -416,8 +433,14 @@ const fetch_available_packs_from_store = async (): Promise<
 const fetch_pack_by_name = async (
   name: string
 ): Promise<{ name: string; pack: any } | null> => {
+
+  //const { getState } = require("../db/state");
+  const packs_store_endpoint = getState().getConfig("packs_store_endpoint", false);
+  //console.log(`[fetch_pack_by_name] packs_store_endpoint:%s`, packs_store_endpoint);
+
   const response = await fetch(
-    "http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
+    //"http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
+    packs_store_endpoint+"?name=" + encodeURIComponent(name)
   );
   const json = await response.json();
   if (json.success.length == 1) return json.success[0];

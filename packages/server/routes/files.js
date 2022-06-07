@@ -1,4 +1,5 @@
 /**
+ * Files Route
  * @category server
  * @module routes/files
  * @subcategory routes
@@ -15,28 +16,12 @@ const {
   mkTable,
   renderForm,
   link,
-  post_btn,
+  //post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, setTenant } = require("./utils.js");
-const {
-  span,
-  h5,
-  h1,
-  h4,
-  nbsp,
-  p,
-  a,
-  div,
-  form,
-  input,
-  select,
-  button,
-  option,
-  text,
-  label,
-} = require("@saltcorn/markup/tags");
-const { csrfField } = require("./utils");
+const { h1, div, text } = require("@saltcorn/markup/tags");
+// const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
 const {
@@ -44,7 +29,7 @@ const {
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin");
-const fsp = require("fs").promises;
+// const fsp = require("fs").promises;
 const fs = require("fs");
 
 /**
@@ -58,6 +43,7 @@ const router = new Router();
 module.exports = router;
 
 /**
+ * Edit file Role form
  * @param {*} file
  * @param {*} roles
  * @param {*} req
@@ -81,6 +67,7 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
+    // todo limit select from file by 10 or 20
     const rows = await File.find({}, { orderBy: "filename" });
     const roles = await User.get_roles();
     send_files_page({
