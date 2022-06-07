@@ -230,7 +230,7 @@ const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
       for (const field of fields) {
         if (field.is_fkey) await field.delete();
       }
-      const triggers = Trigger.find({table_id: table.id});
+      const triggers = Trigger.find({ table_id: table.id });
       for (const trigger of triggers) {
         await trigger.delete();
       }
@@ -283,8 +283,8 @@ const install_pack = async (
   bare_tables = false
 ): Promise<void> => {
   const Plugin = (await import("@saltcorn/data/models/plugin")).default;
-  const existingPlugins = await Plugin.find({});
   for (const plugin of pack.plugins) {
+    const existingPlugins = await Plugin.find({});
     if (!existingPlugins.some((ep) => ep.name === plugin.name)) {
       const p = new Plugin(plugin);
       await loadAndSaveNewPlugin(p);
@@ -412,12 +412,15 @@ const fetch_available_packs_from_store = async (): Promise<
 > => {
   //console.log("fetch packs");
   //const { getState } = require("../db/state");
-  const packs_store_endpoint = getState().getConfig("packs_store_endpoint", false);
+  const packs_store_endpoint = getState().getConfig(
+    "packs_store_endpoint",
+    false
+  );
   //console.log(`[fetch_available_packs_from_store] packs_store_endpoint:%s`, packs_store_endpoint);
 
   const response = await fetch(
-      //"http://store.saltcorn.com/api/packs?fields=name,description"
-      packs_store_endpoint+"?fields=name,description"
+    //"http://store.saltcorn.com/api/packs?fields=name,description"
+    packs_store_endpoint + "?fields=name,description"
   );
 
   const json = await response.json();
@@ -433,14 +436,16 @@ const fetch_available_packs_from_store = async (): Promise<
 const fetch_pack_by_name = async (
   name: string
 ): Promise<{ name: string; pack: any } | null> => {
-
   //const { getState } = require("../db/state");
-  const packs_store_endpoint = getState().getConfig("packs_store_endpoint", false);
+  const packs_store_endpoint = getState().getConfig(
+    "packs_store_endpoint",
+    false
+  );
   //console.log(`[fetch_pack_by_name] packs_store_endpoint:%s`, packs_store_endpoint);
 
   const response = await fetch(
     //"http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
-    packs_store_endpoint+"?name=" + encodeURIComponent(name)
+    packs_store_endpoint + "?name=" + encodeURIComponent(name)
   );
   const json = await response.json();
   if (json.success.length == 1) return json.success[0];
