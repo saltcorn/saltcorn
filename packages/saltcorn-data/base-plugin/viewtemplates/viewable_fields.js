@@ -267,6 +267,7 @@ const view_linker = (
     link_textcol,
     in_dropdown,
     extra_state_fml,
+    link_target_blank,
   },
   fields,
   __ = (s) => s,
@@ -306,7 +307,8 @@ const view_linker = (
             link_bordercol,
             link_textcol,
             in_dropdown && "dropdown-item",
-            get_extra_state(r)
+            get_extra_state(r),
+            link_target_blank
           );
         },
       };
@@ -328,7 +330,8 @@ const view_linker = (
             link_bordercol,
             link_textcol,
             in_dropdown && "dropdown-item",
-            get_extra_state(r)
+            get_extra_state(r),
+            link_target_blank
           );
         },
       };
@@ -354,7 +357,8 @@ const view_linker = (
             link_bordercol,
             link_textcol,
             in_dropdown && "dropdown-item",
-            get_extra_state(r)
+            get_extra_state(r),
+            link_target_blank
           );
         },
       };
@@ -385,7 +389,8 @@ const view_linker = (
               link_bordercol,
               link_textcol,
               in_dropdown && "dropdown-item",
-              get_extra_state(r)
+              get_extra_state(r),
+              link_target_blank
             );
           } else return "";
         },

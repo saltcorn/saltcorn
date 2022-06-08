@@ -586,11 +586,11 @@ router.get(
       view.configuration && Object.keys(view.configuration).length > 0;
     const wfres = await configFlow.run(
       {
+        ...view.configuration,
         id: hasConfig ? view.id : undefined,
         table_id: view.table_id,
         exttable_name: view.exttable_name,
         viewname: name,
-        ...view.configuration,
       },
       req
     );
