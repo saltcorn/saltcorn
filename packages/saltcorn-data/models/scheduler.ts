@@ -142,9 +142,9 @@ const runScheduler = async ({
 
     stopit = await stop_when();
     if (stopit) return;
-    const isHourly = intervalIsNow("Hourly");
-    const isDaily = intervalIsNow("Daily");
-    const isWeekly = intervalIsNow("Weekly");
+    const isHourly = await intervalIsNow("Hourly");
+    const isDaily = await intervalIsNow("Daily");
+    const isWeekly = await intervalIsNow("Weekly");
     console.log({ isHourly, isDaily, isWeekly, now: new Date() });
 
     await eachTenant(async () => {

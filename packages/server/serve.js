@@ -268,6 +268,13 @@ module.exports =
         });
       } else {
         await nonGreenlockWorkerSetup(appargs, port);
+        runScheduler({
+          port,
+          watchReaper,
+          disableScheduler,
+          eachTenant,
+          auto_backup_now,
+        });
       }
       Trigger.emitEvent("Startup");
     } else {
