@@ -145,7 +145,7 @@ const runScheduler = async ({
     const isHourly = await intervalIsNow("Hourly");
     const isDaily = await intervalIsNow("Daily");
     const isWeekly = await intervalIsNow("Weekly");
-    console.log({ isHourly, isDaily, isWeekly, now: new Date() });
+    //console.log({ isHourly, isDaily, isWeekly, now: new Date() });
 
     await eachTenant(async () => {
       const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
