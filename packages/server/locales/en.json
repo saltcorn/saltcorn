@@ -908,5 +908,6 @@
 	"Automated backup": "Automated backup",
 	"Frequency": "Frequency",
 	"Destination": "Destination",
-	"Directory": "Directory"
+	"Directory": "Directory",
+	"Backup settings updated": "Backup settings updated"
 }

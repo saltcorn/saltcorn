@@ -293,6 +293,17 @@ router.get(
   "/backup",
   isAdmin,
   error_catcher(async (req, res) => {
+    const backupForm = autoBackupForm(req);
+    backupForm.values.auto_backup_frequency = getState().getConfig(
+      "auto_backup_frequency"
+    );
+    backupForm.values.auto_backup_destination = getState().getConfig(
+      "auto_backup_destination"
+    );
+    backupForm.values.auto_backup_directory = getState().getConfig(
+      "auto_backup_directory"
+    );
+
     send_admin_page({
       res,
       req,
@@ -328,7 +339,7 @@ router.get(
           {
             type: "card",
             title: req.__("Automated backup"),
-            contents: div(renderForm(autoBackupForm(req), req.csrfToken())),
+            contents: div(renderForm(backupForm, req.csrfToken())),
           },
         ],
       },
@@ -371,6 +382,31 @@ const autoBackupForm = (req) =>
       },
     ],
   });
+
+router.post(
+  "/set-auto-backup",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await autoBackupForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Backup",
+        contents: {
+          type: "card",
+          title: req.__("Backup settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Backup settings updated"));
+      res.redirect("/admin/backup");
+    }
+  })
+);
 
 /**
  * @name get/system
