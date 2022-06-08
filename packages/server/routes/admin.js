@@ -303,6 +303,7 @@ router.get(
     backupForm.values.auto_backup_directory = getState().getConfig(
       "auto_backup_directory"
     );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     send_admin_page({
       res,
@@ -336,11 +337,13 @@ router.get(
               ],
             },
           },
-          {
-            type: "card",
-            title: req.__("Automated backup"),
-            contents: div(renderForm(backupForm, req.csrfToken())),
-          },
+          isRoot
+            ? {
+                type: "card",
+                title: req.__("Automated backup"),
+                contents: div(renderForm(backupForm, req.csrfToken())),
+              }
+            : { type: "blank", contents: "" },
         ],
       },
     });
