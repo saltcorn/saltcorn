@@ -20,7 +20,7 @@ $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (-v|--version|version)
-@saltcorn/cli/0.7.2-beta.5 linux-x64 node-v16.14.0
+@saltcorn/cli/0.7.2-beta.6 darwin-arm64 node-v16.15.1
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
@@ -33,12 +33,11 @@ USAGE
 <!-- commands -->
 * [`saltcorn add-schema`](#saltcorn-add-schema)
 * [`saltcorn backup`](#saltcorn-backup)
-* [`saltcorn build-app`](#saltcorn-build-app)
 * [`saltcorn configuration-check`](#saltcorn-configuration-check)
 * [`saltcorn create-tenant TENANT`](#saltcorn-create-tenant-tenant)
 * [`saltcorn create-user`](#saltcorn-create-user)
 * [`saltcorn delete-tenants`](#saltcorn-delete-tenants)
-* [`saltcorn delete-user`](#saltcorn-delete-user)
+* [`saltcorn delete-user USER_EMAIL`](#saltcorn-delete-user-user_email)
 * [`saltcorn fixtures`](#saltcorn-fixtures)
 * [`saltcorn get-cfg KEY`](#saltcorn-get-cfg-key)
 * [`saltcorn help [COMMAND]`](#saltcorn-help-command)
@@ -48,8 +47,8 @@ USAGE
 * [`saltcorn list-tenants`](#saltcorn-list-tenants)
 * [`saltcorn localize-plugin PLUGIN PATH`](#saltcorn-localize-plugin-plugin-path)
 * [`saltcorn make-migration`](#saltcorn-make-migration)
-* [`saltcorn migrate`](#saltcorn-migrate)
-* [`saltcorn modify-user`](#saltcorn-modify-user)
+* [`saltcorn saltcorn migrate`](#saltcorn-saltcorn-migrate)
+* [`saltcorn modify-user USER_EMAIL`](#saltcorn-modify-user-user_email)
 * [`saltcorn plugins`](#saltcorn-plugins)
 * [`saltcorn plugins:inspect PLUGIN...`](#saltcorn-pluginsinspect-plugin)
 * [`saltcorn plugins:install PLUGIN...`](#saltcorn-pluginsinstall-plugin)
@@ -59,7 +58,7 @@ USAGE
 * [`saltcorn release VERSION`](#saltcorn-release-version)
 * [`saltcorn reset-schema`](#saltcorn-reset-schema)
 * [`saltcorn restore FILE`](#saltcorn-restore-file)
-* [`saltcorn rm-tenant TENANT`](#saltcorn-rm-tenant-tenant)
+* [`saltcorn rm-tenant`](#saltcorn-rm-tenant)
 * [`saltcorn run-benchmark [BASEURL]`](#saltcorn-run-benchmark-baseurl)
 * [`saltcorn run-tests [PACKAGE]`](#saltcorn-run-tests-package)
 * [`saltcorn scheduler`](#saltcorn-scheduler)
@@ -79,12 +78,10 @@ USAGE
   $ saltcorn add-schema
 
 OPTIONS
-  -f, --force  force
-
-
+  -f, --force  force command execution
 ```
 
-_See code: [src/commands/add-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/add-schema.js)_
+_See code: [src/commands/add-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/add-schema.js)_
 
 ## `saltcorn backup`
 
@@ -100,23 +97,7 @@ OPTIONS
   -z, --zip            zip format
 ```
 
-_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/backup.js)_
-
-## `saltcorn build-app`
-
-build mobile app from tenant
-
-```
-USAGE
-  $ saltcorn build-app
-
-OPTIONS
-  -l, --localUserTables=localUserTables  user defined tables that should be replicated into the app
-  -p, --platforms=platforms              Platforms to build for space separated list
-  -v, --entryPoint=entryPoint            Entry Point
-```
-
-_See code: [@saltcorn/mobile-builder](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/dist/commands/build-app.js)_
+_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/backup.js)_
 
 ## `saltcorn configuration-check`
 
@@ -130,7 +111,7 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/configuration-check.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/configuration-check.js)_
+_See code: [src/commands/configuration-check.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/configuration-check.js)_
 
 ## `saltcorn create-tenant TENANT`
 
@@ -148,7 +129,7 @@ OPTIONS
   -e, --email=email              Email of owner of tenant
 ```
 
-_See code: [src/commands/create-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/create-tenant.js)_
+_See code: [src/commands/create-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/create-tenant.js)_
 
 ## `saltcorn create-user`
 
@@ -166,7 +147,7 @@ OPTIONS
   -t, --tenant=tenant      tenant
 ```
 
-_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/create-user.js)_
+_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/create-user.js)_
 
 ## `saltcorn delete-tenants`
 
@@ -177,26 +158,28 @@ USAGE
   $ saltcorn delete-tenants
 ```
 
-_See code: [src/commands/delete-tenants.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/delete-tenants.js)_
+_See code: [src/commands/delete-tenants.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/delete-tenants.js)_
 
-## `saltcorn delete-user`
+## `saltcorn delete-user USER_EMAIL`
 
-Delete user
+Delete user.
 
+```
 USAGE
-$ saltcorn delete-user USER_EMAIL
+  $ saltcorn delete-user USER_EMAIL
 
 ARGUMENTS
-USER_EMAIL  User to delete
+  USER_EMAIL  User to delete
 
 OPTIONS
--f, --force          force
--t, --tenant=tenant  tenant
+  -f, --force          force command execution
+  -t, --tenant=tenant  tenant
 
 DESCRIPTION
-Command deletes the user specified by USER_EMAIL
+  Command deletes the user specified by USER_EMAIL.
+```
 
-_See code: [src/commands/delete-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/delete-user.js)_
+_See code: [src/commands/delete-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/delete-user.js)_
 
 ## `saltcorn fixtures`
 
@@ -215,7 +198,7 @@ DESCRIPTION
   This manual step it is never required for users and rarely required for developers
 ```
 
-_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/fixtures.js)_
+_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/fixtures.js)_
 
 ## `saltcorn get-cfg KEY`
 
@@ -233,7 +216,7 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/get-cfg.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/get-cfg.js)_
+_See code: [src/commands/get-cfg.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/get-cfg.js)_
 
 ## `saltcorn help [COMMAND]`
 
@@ -271,7 +254,7 @@ ALIASES
   $ saltcorn paths
 ```
 
-_See code: [src/commands/info.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/info.js)_
+_See code: [src/commands/info.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/info.js)_
 
 ## `saltcorn install-pack`
 
@@ -287,7 +270,7 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/install-pack.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/install-pack.js)_
+_See code: [src/commands/install-pack.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/install-pack.js)_
 
 ## `saltcorn install-plugin`
 
@@ -303,7 +286,7 @@ OPTIONS
   -t, --tenant=tenant        tenant
 ```
 
-_See code: [src/commands/install-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/install-plugin.js)_
+_See code: [src/commands/install-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/install-plugin.js)_
 
 ## `saltcorn list-tenants`
 
@@ -314,7 +297,7 @@ USAGE
   $ saltcorn list-tenants
 ```
 
-_See code: [src/commands/list-tenants.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/list-tenants.js)_
+_See code: [src/commands/list-tenants.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/list-tenants.js)_
 
 ## `saltcorn localize-plugin PLUGIN PATH`
 
@@ -332,7 +315,7 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/localize-plugin.js)_
+_See code: [src/commands/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/localize-plugin.js)_
 
 ## `saltcorn make-migration`
 
@@ -348,15 +331,15 @@ DESCRIPTION
   unless you are a developer.
 ```
 
-_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/make-migration.js)_
+_See code: [src/commands/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/make-migration.js)_
 
-## `saltcorn migrate`
+## `saltcorn saltcorn migrate`
 
 Run Database structure migrations
 
 ```
 USAGE
-  $ saltcorn migrate
+  $ saltcorn saltcorn migrate
 
 DESCRIPTION
   ...
@@ -370,11 +353,11 @@ DESCRIPTION
   servers and need to control when the migrations are run.
 ```
 
-_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/migrate.js)_
+_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/migrate.js)_
 
-## `saltcorn modify-user`
+## `saltcorn modify-user USER_EMAIL`
 
-Modify (update) user
+Modify (update) user.
 
 ```
 USAGE
@@ -397,10 +380,9 @@ DESCRIPTION
   You can change the user group, password and email.
 
   NOTE that -a and -r role (--role=role) can give conflict.
-
 ```
 
-_See code: [src/commands/modify-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/modify-user.js)_
+_See code: [src/commands/modify-user.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/modify-user.js)_
 
 ## `saltcorn plugins`
 
@@ -552,7 +534,7 @@ ARGUMENTS
   VERSION  New version number
 ```
 
-_See code: [src/commands/release.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/release.js)_
+_See code: [src/commands/release.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/release.js)_
 
 ## `saltcorn reset-schema`
 
@@ -563,7 +545,7 @@ USAGE
   $ saltcorn reset-schema
 
 OPTIONS
-  -f, --force          force
+  -f, --force          force command execution
   -t, --tenant=tenant  tenant
 
 DESCRIPTION
@@ -571,7 +553,7 @@ DESCRIPTION
   This will delete all existing information
 ```
 
-_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/reset-schema.js)_
+_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/reset-schema.js)_
 
 ## `saltcorn restore FILE`
 
@@ -588,27 +570,26 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/restore.js)_
+_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/restore.js)_
 
-## `saltcorn rm-tenant TENANT`
+## `saltcorn rm-tenant`
 
-Remove a tenant
+Remove a tenant.
 
 ```
 USAGE
   $ saltcorn rm-tenant
 
 OPTIONS
-  -f, --force          force
+  -f, --force          force command execution
   -t, --tenant=tenant  (required) tenant
 
 DESCRIPTION
   Attention! All tenant data will be lost!
   It recommended to make backup of tenant before perform this command.
-
 ```
 
-_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/rm-tenant.js)_
+_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/rm-tenant.js)_
 
 ## `saltcorn run-benchmark [BASEURL]`
 
@@ -627,7 +608,7 @@ OPTIONS
   -t, --token=token          API Token for reporting results
 ```
 
-_See code: [src/commands/run-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/run-benchmark.js)_
+_See code: [src/commands/run-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/run-benchmark.js)_
 
 ## `saltcorn run-tests [PACKAGE]`
 
@@ -647,7 +628,7 @@ OPTIONS
   --watchAll                   Watch files for changes and rerun all tests.
 ```
 
-_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/run-tests.js)_
+_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/run-tests.js)_
 
 ## `saltcorn scheduler`
 
@@ -661,7 +642,7 @@ OPTIONS
   -v, --verbose  Verbose
 ```
 
-_See code: [src/commands/scheduler.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/scheduler.js)_
+_See code: [src/commands/scheduler.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/scheduler.js)_
 
 ## `saltcorn serve`
 
@@ -681,7 +662,7 @@ OPTIONS
   -v, --verbose      Verbose
 ```
 
-_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/serve.js)_
+_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/serve.js)_
 
 ## `saltcorn set-cfg KEY VALUE`
 
@@ -700,7 +681,7 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/set-cfg.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/set-cfg.js)_
+_See code: [src/commands/set-cfg.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/set-cfg.js)_
 
 ## `saltcorn setup`
 
@@ -715,11 +696,11 @@ OPTIONS
 
 DESCRIPTION
   ...
-  This will attempt to install or connect a database, and set up a 
+  This will attempt to install or connect a database, and set up a
   configuration file
 ```
 
-_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/setup.js)_
+_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/setup.js)_
 
 ## `saltcorn setup-benchmark`
 
@@ -733,7 +714,7 @@ OPTIONS
   -t, --tenant=tenant  tenant
 ```
 
-_See code: [src/commands/setup-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/setup-benchmark.js)_
+_See code: [src/commands/setup-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/setup-benchmark.js)_
 
 ## `saltcorn test-plugin PATH`
 
@@ -751,7 +732,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/test-plugin.js)_
+_See code: [src/commands/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/test-plugin.js)_
 
 ## `saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]`
 
@@ -768,5 +749,5 @@ ARGUMENTS
   TENANT      tenant name
 ```
 
-_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.5/src/commands/transform-field.js)_
+_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v0.7.2-beta.6/src/commands/transform-field.js)_
 <!-- commandsstop -->
