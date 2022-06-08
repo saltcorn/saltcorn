@@ -42,7 +42,8 @@ const link_view = (
   link_bordercol,
   link_textcol,
   extraClass,
-  extraState
+  extraState,
+  link_target_blank
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -78,6 +79,7 @@ const link_view = (
         href: url,
         class: [textStyle, link_style, link_size, extraClass],
         style,
+        target: link_target_blank ? "_blank" : undefined,
       },
       link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
       text(label)
@@ -682,7 +684,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       label: __("Open in new tab"),
       type: "Bool",
       required: false,
-      showIf: { type: "Link" },
+      showIf: { type: ["ViewLink", "Link"] },
     },
     {
       name: "in_modal",
