@@ -300,29 +300,25 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Backup"),
-        contents: table(
-          tbody(
-            tr(
-              td(
-                div(
-                  post_btn("/admin/backup", req.__("Backup"), req.csrfToken())
-                )
-              ),
-              td(p({ class: "ms-4 pt-2" }, req.__("Download a backup")))
+        contents: {
+          besides: [
+            div(
+              post_btn(
+                "/admin/backup",
+                i({ class: "fas fa-download me-2" }) +
+                  req.__("Download a backup"),
+                req.csrfToken()
+              )
             ),
-            tr(td(div({ class: "my-4" }))),
-            tr(
-              td(
-                restore_backup(req.csrfToken(), [
-                  i({ class: "fas fa-2x fa-upload" }),
-                  "<br/>",
-                  req.__("Restore"),
-                ])
-              ),
-              td(p({ class: "ms-4" }, req.__("Restore a backup")))
-            )
-          )
-        ),
+            div(
+              restore_backup(req.csrfToken(), [
+                i({ class: "fas fa-2x fa-upload me-2" }),
+                "",
+                req.__("Restore a backup"),
+              ])
+            ),
+          ],
+        },
       },
     });
   })
@@ -550,8 +546,8 @@ router.post(
     const fileName = await create_backup();
     res.type("application/zip");
     res.attachment(fileName);
-      const file = fs.createReadStream(fileName);
-      file.on("end", function () {
+    const file = fs.createReadStream(fileName);
+    file.on("end", function () {
       fs.unlink(fileName, function () {});
     });
     file.pipe(res);
@@ -794,7 +790,10 @@ router.get(
               ? div(
                   { class: "alert alert-success", role: "alert" },
                   i({ class: "fas fa-check-circle fa-lg me-2" }),
-                  h5({ class: "d-inline" }, req.__("No errors detected during configuration check"))
+                  h5(
+                    { class: "d-inline" },
+                    req.__("No errors detected during configuration check")
+                  )
                 )
               : errors.map(mkError)
           ),
