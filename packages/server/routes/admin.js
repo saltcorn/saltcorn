@@ -298,34 +298,79 @@ router.get(
       req,
       active_sub: "Backup",
       contents: {
-        type: "card",
-        title: req.__("Backup"),
-        contents: {
-          besides: [
-            div(
-              post_btn(
-                "/admin/backup",
-                i({ class: "fas fa-download me-2" }) +
-                  req.__("Download a backup"),
-                req.csrfToken(),
-                {
-                  btnClass: "btn-outline-primary",
-                }
-              )
-            ),
-            div(
-              restore_backup(req.csrfToken(), [
-                i({ class: "fas fa-2x fa-upload me-2" }),
-                "",
-                req.__("Restore a backup"),
-              ])
-            ),
-          ],
-        },
+        above: [
+          {
+            type: "card",
+            title: req.__("Manual backup"),
+            contents: {
+              besides: [
+                div(
+                  post_btn(
+                    "/admin/backup",
+                    i({ class: "fas fa-download me-2" }) +
+                      req.__("Download a backup"),
+                    req.csrfToken(),
+                    {
+                      btnClass: "btn-outline-primary",
+                    }
+                  )
+                ),
+                div(
+                  restore_backup(req.csrfToken(), [
+                    i({ class: "fas fa-2x fa-upload me-2" }),
+                    "",
+                    req.__("Restore a backup"),
+                  ])
+                ),
+              ],
+            },
+          },
+          {
+            type: "card",
+            title: req.__("Automated backup"),
+            contents: div(renderForm(autoBackupForm(req), req.csrfToken())),
+          },
+        ],
       },
     });
   })
 );
+
+/**
+ * Auto backup Form
+ * @param {object} req
+ * @returns {Form} form
+ */
+const autoBackupForm = (req) =>
+  new Form({
+    action: "/admin/set-auto-backup",
+    fields: [
+      {
+        type: "String",
+        label: req.__("Frequency"),
+        name: "auto_backup_frequency",
+        required: true,
+        attributes: { options: ["Never", "Daily", "Weekly"] },
+      },
+      {
+        type: "String",
+        label: req.__("Destination"),
+        name: "auto_backup_destination",
+        required: true,
+        showIf: { auto_backup_frequency: ["Daily", "Weekly"] },
+        attributes: { options: ["Saltcorn files", "Local directory"] },
+      },
+      {
+        type: "String",
+        label: req.__("Directory"),
+        name: "auto_backup_directory",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "Local directory",
+        },
+      },
+    ],
+  });
 
 /**
  * @name get/system
