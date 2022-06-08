@@ -9,8 +9,8 @@ import Page from "@saltcorn/data/models/page";
 import Plugin from "@saltcorn/data/models/plugin";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
-import { writeFile, mkdir, copyFile, readFile } from "fs/promises";
-import { existsSync, readdirSync } from "fs";
+import { writeFile, mkdir, copyFile, readFile, unlink } from "fs/promises";
+import { existsSync, fstat, readdirSync } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
 import stringify from "csv-stringify/lib/sync";
@@ -328,4 +328,24 @@ const restore = async (
   return err;
 };
 
-export = { create_backup, restore, create_csv_from_rows };
+const auto_backup_now = async () => {
+  const fileName = await create_backup();
+  const destination = getState().getConfig("auto_backup_destination");
+  switch (destination) {
+    case "Saltcorn files":
+      break;
+    case "Local directory":
+      console.log(fileName);
+
+      const directory = getState().getConfig("auto_backup_directory");
+      await copyFile(fileName, join(directory, fileName));
+      break;
+
+    default:
+      throw new Error("Unknown destination: " + destination);
+      break;
+  }
+  await unlink(fileName);
+};
+
+export = { create_backup, restore, create_csv_from_rows, auto_backup_now };

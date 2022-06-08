@@ -48,6 +48,7 @@ const { loadAllPlugins } = require("../load_plugins");
 const {
   create_backup,
   restore,
+  auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
 const {
   runConfigurationCheck,
@@ -358,6 +359,17 @@ router.get(
 const autoBackupForm = (req) =>
   new Form({
     action: "/admin/set-auto-backup",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    submitLabel: "Save settings",
+    additionalButtons: [
+      {
+        label: "Backup now",
+        id: "btnBackupNow",
+        class: "btn btn-outline-secondary",
+        onclick: "ajax_post('/admin/auto-backup-now')",
+      },
+    ],
     fields: [
       {
         type: "String",
@@ -408,6 +420,19 @@ router.post(
       req.flash("success", req.__("Backup settings updated"));
       res.redirect("/admin/backup");
     }
+  })
+);
+router.post(
+  "/auto-backup-now",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      await auto_backup_now();
+      req.flash("success", req.__("Backup successful"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+    res.json({ reload_page: true });
   })
 );
 

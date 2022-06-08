@@ -909,5 +909,6 @@
 	"Frequency": "Frequency",
 	"Destination": "Destination",
 	"Directory": "Directory",
-	"Backup settings updated": "Backup settings updated"
+	"Backup settings updated": "Backup settings updated",
+	"Backup successful": "Backup successful"
 }
