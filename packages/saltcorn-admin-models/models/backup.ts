@@ -121,6 +121,15 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
   const files = await db.select("_sc_files");
   for (const f of files) {
     const base = basename(f.location);
+    //exclude auto backups
+    if (
+      base.startsWith(
+        `sc-backup-${getState().getConfig("site_name", "Saltcorn")}`
+      ) &&
+      f.mime_sub === "zip" &&
+      !f.user_id
+    )
+      continue;
     await copyFile(f.location, join(dirpath, base));
     f.location = base;
   }
