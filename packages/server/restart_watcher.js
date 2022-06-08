@@ -17,6 +17,7 @@ const relevantPackages = [
   "db-common",
   "postgres",
   "saltcorn-data",
+  "saltcorn-admin-models",
   "saltcorn-markup",
   "saltcorn-sbadmin2",
   "server",
@@ -28,7 +29,6 @@ const relevantPackages = [
  */
 const excludePatterns = [
   /\/node_modules/,
-  /\/public/,
   /\.git/,
   /\.docs/,
   /\.docs/,
