@@ -307,7 +307,10 @@ router.get(
                 "/admin/backup",
                 i({ class: "fas fa-download me-2" }) +
                   req.__("Download a backup"),
-                req.csrfToken()
+                req.csrfToken(),
+                {
+                  btnClass: "btn-outline-primary",
+                }
               )
             ),
             div(
