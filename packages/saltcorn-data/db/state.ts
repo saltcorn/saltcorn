@@ -179,7 +179,12 @@ class State {
     const layoutvs = Object.values(this.layouts);
     return layoutvs[layoutvs.length - 1];
   }
-
+  /**
+   * Get Two factor authentication policy
+   * Based on role of user
+   * @param {object} user
+   * @returns {string}
+   */
   get2FApolicy(user: User) {
     const role_id = user ? +user.role_id : 10;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
@@ -190,7 +195,7 @@ class State {
 
   /**
    * Refresh State cache for all Saltcorn main objects
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal - refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh(noSignal: boolean) {
@@ -204,7 +209,7 @@ class State {
 
   /**
    * Refresh config
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh_config(noSignal: boolean) {
@@ -250,7 +255,7 @@ class State {
 
   /**
    * Refresh views
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh_views(noSignal: boolean) {
@@ -273,7 +278,7 @@ class State {
 
   /**
    * Refresh triggers
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh_triggers(noSignal: boolean) {
@@ -284,7 +289,7 @@ class State {
 
   /**
    * Refresh pages
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh_pages(noSignal: boolean) {
@@ -296,7 +301,7 @@ class State {
 
   /**
    * Refresh files
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
@@ -312,7 +317,7 @@ class State {
 
   /**
    * Refresh tables & fields
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh_tables(noSignal: boolean) {
@@ -356,8 +361,8 @@ class State {
   /**
    * Get config parameter by key
    * @param {string} key - key of config paramter
-   * @param {string} [def] - default value
-   * @returns {string}
+   * @param {*} [def] - default value
+   * @returns {*}
    */
   getConfig(key: string, def?: any) {
     const fixed = db.connectObj.fixed_configuration[key];
@@ -374,10 +379,10 @@ class State {
   }
 
   /**
-   * Get copy of config parameter
+   * Get copy of config parameter (which can be safely mutated)
    * @param {string} key - key of parameter
-   * @param {string} [def] - default value
-   * @returns {string}
+   * @param {*} [def] - default value
+   * @returns {*}
    */
   getConfigCopy(key: string, def: any) {
     return structuredClone(this.getConfig(key, def));
@@ -387,7 +392,7 @@ class State {
    *
    * Set value of config parameter
    * @param {string} key - key of parameter
-   * @param {string} value - value of parameter
+   * @param {*} value - value of parameter
    * @returns {Promise<void>}
    */
   async setConfig(key: string, value: any) {
@@ -542,7 +547,7 @@ class State {
   /**
    * Remove plugin
    * @param {string} name
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal removal to other cluster processes.
    * @returns {Promise<void>}
    */
   async remove_plugin(name: string, noSignal: boolean) {
@@ -554,7 +559,7 @@ class State {
 
   /**
    * Reload plugins
-   * @param {boolean} noSignal
+   * @param {boolean} noSignal - Do not signal reload to other cluster processes.
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal?: boolean) {
@@ -583,6 +588,7 @@ class State {
   }
 
   /**
+   * Collect translatable strings from configuration
    * @returns {string[]}
    */
   getStringsForI18n() {
@@ -597,7 +603,7 @@ class State {
   }
 
   /**
-   *
+   * Set the function which will be called when a message enters a room
    * @param {function} f
    */
   setRoomEmitter(f: Function) {
@@ -605,20 +611,21 @@ class State {
   }
 
   /**
-   *
-   * @param {*} args
+   * Send a message to a room
+   * @param {...*} args
    */
   emitRoom(...args: any[]) {
     if (this.roomEmitter) this.roomEmitter(...args);
   }
 }
 
-// the state is singleton
+// the root tenant's state is singleton
 const singleton = new State("public");
 
 // return current State object
 
 /**
+ * Get the state in the current tenant
  * @function
  * @returns {State}
  */
@@ -635,7 +642,7 @@ const tenants: Record<string, State> = { public: singleton };
 const otherdomaintenants: Record<string, string> = {};
 
 /**
- * Get other domain tenant
+ * Get tenant that has another domain (not subdomain)
  * @param {string} hostname
  * @returns {object}
  */
