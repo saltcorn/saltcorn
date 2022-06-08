@@ -10,7 +10,7 @@ import Plugin from "@saltcorn/data/models/plugin";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
 import { writeFile, mkdir, copyFile, readFile, unlink } from "fs/promises";
-import { existsSync, fstat, readdirSync } from "fs";
+import { existsSync, fstat, readdirSync, statSync } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
 import stringify from "csv-stringify/lib/sync";
@@ -28,6 +28,7 @@ const {
 const { asyncMap } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
+import User from "@saltcorn/data/models/user";
 
 /**
  * @function
@@ -333,10 +334,20 @@ const auto_backup_now = async () => {
   const destination = getState().getConfig("auto_backup_destination");
   switch (destination) {
     case "Saltcorn files":
+      const newPath = File.get_new_path(fileName);
+      const stats = statSync(fileName);
+      await copyFile(fileName, newPath);
+      await File.create({
+        filename: fileName,
+        location: newPath,
+        uploaded_at: new Date(),
+        size_kb: Math.round(stats.size / 1024),
+        mime_super: "application",
+        mime_sub: "zip",
+        min_role_read: 1,
+      });
       break;
     case "Local directory":
-      console.log(fileName);
-
       const directory = getState().getConfig("auto_backup_directory");
       await copyFile(fileName, join(directory, fileName));
       break;
