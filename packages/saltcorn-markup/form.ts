@@ -337,7 +337,9 @@ const mkFormRowForRepeatFancy = (
 
     repeaterCopyValuesToForm($('#menuForm').closest("form"), editor)
     $(this).unbind('submit').submit(); // continue the submit unbind preventDefault
-   })`)
+   })
+   setTimeout(()=>repeaterCopyValuesToForm($('#menuForm').closest("form"), editor), 0);
+   `)
     )
   );
 };
