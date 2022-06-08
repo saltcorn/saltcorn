@@ -9,8 +9,8 @@ import Page from "@saltcorn/data/models/page";
 import Plugin from "@saltcorn/data/models/plugin";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
-import { writeFile, mkdir, copyFile, readFile } from "fs/promises";
-import { existsSync, readdirSync } from "fs";
+import { writeFile, mkdir, copyFile, readFile, unlink } from "fs/promises";
+import { existsSync, fstat, readdirSync, statSync } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
 import stringify from "csv-stringify/lib/sync";
@@ -28,6 +28,7 @@ const {
 const { asyncMap } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
+import User from "@saltcorn/data/models/user";
 
 /**
  * @function
@@ -120,6 +121,15 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
   const files = await db.select("_sc_files");
   for (const f of files) {
     const base = basename(f.location);
+    //exclude auto backups
+    if (
+      base.startsWith(
+        `sc-backup-${getState().getConfig("site_name", "Saltcorn")}`
+      ) &&
+      f.mime_sub === "zip" &&
+      !f.user_id
+    )
+      continue;
     await copyFile(f.location, join(dirpath, base));
     f.location = base;
   }
@@ -328,4 +338,34 @@ const restore = async (
   return err;
 };
 
-export = { create_backup, restore, create_csv_from_rows };
+const auto_backup_now = async () => {
+  const fileName = await create_backup();
+  const destination = getState().getConfig("auto_backup_destination");
+  switch (destination) {
+    case "Saltcorn files":
+      const newPath = File.get_new_path(fileName);
+      const stats = statSync(fileName);
+      await copyFile(fileName, newPath);
+      await File.create({
+        filename: fileName,
+        location: newPath,
+        uploaded_at: new Date(),
+        size_kb: Math.round(stats.size / 1024),
+        mime_super: "application",
+        mime_sub: "zip",
+        min_role_read: 1,
+      });
+      break;
+    case "Local directory":
+      const directory = getState().getConfig("auto_backup_directory");
+      await copyFile(fileName, join(directory, fileName));
+      break;
+
+    default:
+      throw new Error("Unknown destination: " + destination);
+      break;
+  }
+  await unlink(fileName);
+};
+
+export = { create_backup, restore, create_csv_from_rows, auto_backup_now };

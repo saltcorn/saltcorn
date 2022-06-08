@@ -48,6 +48,7 @@ const { loadAllPlugins } = require("../load_plugins");
 const {
   create_backup,
   restore,
+  auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
 const {
   runConfigurationCheck,
@@ -293,38 +294,145 @@ router.get(
   "/backup",
   isAdmin,
   error_catcher(async (req, res) => {
+    const backupForm = autoBackupForm(req);
+    backupForm.values.auto_backup_frequency = getState().getConfig(
+      "auto_backup_frequency"
+    );
+    backupForm.values.auto_backup_destination = getState().getConfig(
+      "auto_backup_destination"
+    );
+    backupForm.values.auto_backup_directory = getState().getConfig(
+      "auto_backup_directory"
+    );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
     send_admin_page({
       res,
       req,
       active_sub: "Backup",
       contents: {
-        type: "card",
-        title: req.__("Backup"),
-        contents: table(
-          tbody(
-            tr(
-              td(
+        above: [
+          {
+            type: "card",
+            title: req.__("Manual backup"),
+            contents: {
+              besides: [
                 div(
-                  post_btn("/admin/backup", req.__("Backup"), req.csrfToken())
-                )
-              ),
-              td(p({ class: "ms-4 pt-2" }, req.__("Download a backup")))
-            ),
-            tr(td(div({ class: "my-4" }))),
-            tr(
-              td(
-                restore_backup(req.csrfToken(), [
-                  i({ class: "fas fa-2x fa-upload" }),
-                  "<br/>",
-                  req.__("Restore"),
-                ])
-              ),
-              td(p({ class: "ms-4" }, req.__("Restore a backup")))
-            )
-          )
-        ),
+                  post_btn(
+                    "/admin/backup",
+                    i({ class: "fas fa-download me-2" }) +
+                      req.__("Download a backup"),
+                    req.csrfToken(),
+                    {
+                      btnClass: "btn-outline-primary",
+                    }
+                  )
+                ),
+                div(
+                  restore_backup(req.csrfToken(), [
+                    i({ class: "fas fa-2x fa-upload me-2" }),
+                    "",
+                    req.__("Restore a backup"),
+                  ])
+                ),
+              ],
+            },
+          },
+          isRoot
+            ? {
+                type: "card",
+                title: req.__("Automated backup"),
+                contents: div(renderForm(backupForm, req.csrfToken())),
+              }
+            : { type: "blank", contents: "" },
+        ],
       },
     });
+  })
+);
+
+/**
+ * Auto backup Form
+ * @param {object} req
+ * @returns {Form} form
+ */
+const autoBackupForm = (req) =>
+  new Form({
+    action: "/admin/set-auto-backup",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    submitLabel: "Save settings",
+    additionalButtons: [
+      {
+        label: "Backup now",
+        id: "btnBackupNow",
+        class: "btn btn-outline-secondary",
+        onclick: "ajax_post('/admin/auto-backup-now')",
+      },
+    ],
+    fields: [
+      {
+        type: "String",
+        label: req.__("Frequency"),
+        name: "auto_backup_frequency",
+        required: true,
+        attributes: { options: ["Never", "Daily", "Weekly"] },
+      },
+      {
+        type: "String",
+        label: req.__("Destination"),
+        name: "auto_backup_destination",
+        required: true,
+        showIf: { auto_backup_frequency: ["Daily", "Weekly"] },
+        attributes: { options: ["Saltcorn files", "Local directory"] },
+      },
+      {
+        type: "String",
+        label: req.__("Directory"),
+        name: "auto_backup_directory",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "Local directory",
+        },
+      },
+    ],
+  });
+
+router.post(
+  "/set-auto-backup",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await autoBackupForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Backup",
+        contents: {
+          type: "card",
+          title: req.__("Backup settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Backup settings updated"));
+      res.redirect("/admin/backup");
+    }
+  })
+);
+router.post(
+  "/auto-backup-now",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      await auto_backup_now();
+      req.flash("success", req.__("Backup successful"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+    res.json({ reload_page: true });
   })
 );
 
@@ -550,8 +658,8 @@ router.post(
     const fileName = await create_backup();
     res.type("application/zip");
     res.attachment(fileName);
-      const file = fs.createReadStream(fileName);
-      file.on("end", function () {
+    const file = fs.createReadStream(fileName);
+    file.on("end", function () {
       fs.unlink(fileName, function () {});
     });
     file.pipe(res);
@@ -794,7 +902,10 @@ router.get(
               ? div(
                   { class: "alert alert-success", role: "alert" },
                   i({ class: "fas fa-check-circle fa-lg me-2" }),
-                  h5({ class: "d-inline" }, req.__("No errors detected during configuration check"))
+                  h5(
+                    { class: "d-inline" },
+                    req.__("No errors detected during configuration check")
+                  )
                 )
               : errors.map(mkError)
           ),

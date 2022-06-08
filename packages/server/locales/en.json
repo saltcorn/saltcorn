@@ -903,5 +903,12 @@
 	"Plugins (Extensions) Store endpoint": "Plugins (Extensions) Store endpoint",
 	"Packs Store endpoint": "Packs Store endpoint",
 	"The endpoint of plugins store.": "The endpoint of plugins store.",
-	"The endpoint of packs store.": "The endpoint of packs store."
+	"The endpoint of packs store.": "The endpoint of packs store.",
+	"Manual backup": "Manual backup",
+	"Automated backup": "Automated backup",
+	"Frequency": "Frequency",
+	"Destination": "Destination",
+	"Directory": "Directory",
+	"Backup settings updated": "Backup settings updated",
+	"Backup successful": "Backup successful"
 }
