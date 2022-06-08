@@ -22,7 +22,20 @@ const sleepUntil = (date: Date, plusSeconds: number): Promise<void> => {
   const ms = waitTill.getTime() - now.getTime();
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+const intervalIsNow = async (name: string): Promise<boolean> => {
+  const state = getState();
+  const cfgField = `next_${name.toLowerCase()}_event`;
+  const now = new Date();
+  let due = state.getConfigCopy(cfgField, false);
+  //console.log({due, name, now});
+  if (!due) {
+    //first run, set rnd due
+    return false;
+  }
+  due = new Date(due);
 
+  return due < now;
+};
 /**
  * @param {string} name
  * @param {number} hours
@@ -111,6 +124,7 @@ const runScheduler = async ({
   eachTenant = (f: () => Promise<any>) => {
     return f();
   },
+  auto_backup_now = () => {},
 }:
   | {
       stop_when?: () => boolean;
@@ -128,6 +142,11 @@ const runScheduler = async ({
 
     stopit = await stop_when();
     if (stopit) return;
+    const isHourly = intervalIsNow("Hourly");
+    const isDaily = intervalIsNow("Daily");
+    const isWeekly = intervalIsNow("Weekly");
+    console.log({ isHourly, isDaily, isWeekly, now: new Date() });
+
     await eachTenant(async () => {
       const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
@@ -161,6 +180,14 @@ const runScheduler = async ({
         }
       }
     });
+    //auto backup
+    const auto_backup_freq = getState().getConfig("auto_backup_frequency");
+    if (
+      (auto_backup_freq === "Daily" && isDaily) ||
+      (auto_backup_freq === "Weekly" && isWeekly)
+    ) {
+      await auto_backup_now();
+    }
   };
 
   let i = 0;
