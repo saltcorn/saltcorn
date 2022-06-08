@@ -304,8 +304,7 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  if($.fn.historyTabs)
-    $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+  if ($.fn.historyTabs) $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
 
   // Initialize Sliders - https://stackoverflow.com/a/31083391
@@ -424,7 +423,8 @@ function common_done(res, isWeb = true) {
         link.click();
       });
   }
-  if (res.goto && !isWeb) // TODO ch
+  if (res.goto && !isWeb)
+    // TODO ch
     notifyAlert({
       type: "danger",
       text: "Goto is not supported in a mobile deployment.",
@@ -457,7 +457,7 @@ const repeaterCopyValuesToForm = (form, editor) => {
   //delete
   [...allNames].forEach((k) => {
     for (let ix = vs.length; ix < vs.length + 20; ix++) {
-      $(`input[name=${k}_${ix}]`).remove();
+      $(`input[name="${k}_${ix}"]`).remove();
     }
   });
 };
