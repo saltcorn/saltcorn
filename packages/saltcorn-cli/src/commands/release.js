@@ -39,8 +39,20 @@ class ReleaseCommand extends Command {
       //"saltcorn-cli", publish: true},
       "@saltcorn/markup": { dir: "saltcorn-markup", publish: true },
       "@saltcorn/mobile-app": { dir: "saltcorn-mobile-app", publish: true },
-      "@saltcorn/mobile-builder": { dir: "saltcorn-mobile-builder", publish: true },
+      "@saltcorn/mobile-builder": {
+        dir: "saltcorn-mobile-builder",
+        publish: true,
+      },
       "@saltcorn/sbadmin2": { dir: "saltcorn-sbadmin2", publish: true },
+    };
+
+    const updateDependencies = (json, dpkgnm, version) => {
+      if (json.dependencies && json.dependencies[dpkgnm])
+        json.dependencies[dpkgnm] = version;
+      if (json.devDependencies && json.devDependencies[dpkgnm])
+        json.devDependencies[dpkgnm] = version;
+      if (json.optionalDependencies && json.optionalDependencies[dpkgnm])
+        json.optionalDependencies[dpkgnm] = version;
     };
 
     const updatePkgJson = (dir) => {
@@ -48,20 +60,16 @@ class ReleaseCommand extends Command {
       json.version = version;
       if (json.dependencies || json.devDependencies)
         Object.keys(pkgs).forEach((dpkgnm) => {
-          if (json.dependencies && json.dependencies[dpkgnm])
-            json.dependencies[dpkgnm] = version;
-          if (json.devDependencies && json.devDependencies[dpkgnm])
-            json.devDependencies[dpkgnm] = version;
-          if (json.optionalDependencies && json.optionalDependencies[dpkgnm])
-            json.optionalDependencies[dpkgnm] = version;
+          updateDependencies(json, dpkgnm, version);
         });
+      updateDependencies(json, "@saltcorn/cli", version);
       fs.writeFileSync(
         `packages/${dir}/package.json`,
         JSON.stringify(json, null, 2)
       );
     };
     const compileTsFiles = () => {
-      spawnSync("npm", ["install","--legacy-peer-deps"], {
+      spawnSync("npm", ["install", "--legacy-peer-deps"], {
         stdio: "inherit",
         cwd: ".",
       });
