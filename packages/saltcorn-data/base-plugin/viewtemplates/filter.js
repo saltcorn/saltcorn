@@ -179,6 +179,19 @@ const run = async (
         );
       else segment.contents = await view.run(state, extra);
     },
+    link: (segment) => {
+      console.log(segment);
+      if (segment.transfer_state) {
+        segment.url +=
+          `?` +
+          Object.entries(state)
+            .map(
+              ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+            )
+            .join("&");
+      }
+      console.log(segment.url, state);
+    },
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
