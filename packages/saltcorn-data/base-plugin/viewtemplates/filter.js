@@ -183,13 +183,12 @@ const run = async (
       if (segment.transfer_state) {
         segment.url +=
           `?` +
-          Object.entries(state)
+          Object.entries(state || {})
             .map(
               ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
             )
             .join("&");
       }
-      console.log(segment.url, state);
     },
   });
   translateLayout(layout, extra.req.getLocale());
