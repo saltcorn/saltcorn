@@ -154,7 +154,9 @@ const LinkSettings = () => {
                 <option>URL</option>
                 {(options.pages || []).length > 0 && <option>Page</option>}
                 {(options.views || []).length > 0 &&
-                  options.mode === "page" && <option>View</option>}
+                  ["page", "filter"].includes(options.mode) && (
+                    <option>View</option>
+                  )}
               </select>
             </td>
           </tr>
@@ -187,8 +189,10 @@ const LinkSettings = () => {
                   onChange={setAProp("url")}
                 >
                   <option></option>
-                  {(options.pages || []).map((p) => (
-                    <option value={`/page/${p.name}`}>{p.name}</option>
+                  {(options.pages || []).map((p, ix) => (
+                    <option key={ix} value={`/page/${p.name}`}>
+                      {p.name}
+                    </option>
                   ))}
                 </select>
               </td>
@@ -206,8 +210,8 @@ const LinkSettings = () => {
                   onChange={setAProp("url")}
                 >
                   <option></option>
-                  {(options.views || []).map((p) => (
-                    <option value={`/view/${p.name}`}>
+                  {(options.views || []).map((p, ix) => (
+                    <option key={ix} value={`/view/${p.name}`}>
                       {p.name} [{p.viewtemplate}]
                     </option>
                   ))}
