@@ -4,6 +4,7 @@
  * @subcategory base-plugin
  */
 const User = require("../../models/user");
+const Page = require("../../models/page");
 const View = require("../../models/view");
 const Table = require("../../models/table");
 const Field = require("../../models/field");
@@ -76,6 +77,7 @@ const configuration_workflow = () =>
           const views = own_link_views.map((v) => ({
             label: v.name,
             name: v.name,
+            viewtemplate: v.viewtemplate,
           }));
           for (const field of fields) {
             const presets = field.presets;
@@ -90,12 +92,15 @@ const configuration_workflow = () =>
             fields,
             "filter"
           );
+          const pages = await Page.find();
+
           return {
             fields,
             tableName: table.name,
             roles,
             actions,
             views,
+            pages,
             library,
             field_view_options,
             fieldViewConfigForms,
@@ -173,6 +178,17 @@ const run = async (
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
       else segment.contents = await view.run(state, extra);
+    },
+    link: (segment) => {
+      if (segment.transfer_state) {
+        segment.url +=
+          `?` +
+          Object.entries(state || {})
+            .map(
+              ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+            )
+            .join("&");
+      }
     },
   });
   translateLayout(layout, extra.req.getLocale());
