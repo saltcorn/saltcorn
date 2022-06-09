@@ -180,7 +180,6 @@ const run = async (
       else segment.contents = await view.run(state, extra);
     },
     link: (segment) => {
-      console.log(segment);
       if (segment.transfer_state) {
         segment.url +=
           `?` +
