@@ -17,6 +17,7 @@ const relevantPackages = [
   "db-common",
   "postgres",
   "saltcorn-data",
+  "saltcorn-builder",
   "saltcorn-admin-models",
   "saltcorn-markup",
   "saltcorn-sbadmin2",
