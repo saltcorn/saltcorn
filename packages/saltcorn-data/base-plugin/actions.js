@@ -610,7 +610,12 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
           validator: expressionValidator,
+        },
+        {
+          input_type: "section_header",
+          label: " ",
           sublabel: div("Variables in scope: ", vars),
+          showIf: { run_where: "Server" },
         },
         {
           name: "run_where",
