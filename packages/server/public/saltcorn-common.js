@@ -218,7 +218,6 @@ function initialize_page() {
   $(".validate-expression").bind("input", function (e) {
     const target = $(e.target);
     const next = target.next();
-    console.log(target[0]);
     if (next.hasClass("expr-error")) next.remove();
     const val = target.val();
     if (target.hasClass("validate-expression-conditional")) {
