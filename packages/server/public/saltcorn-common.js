@@ -215,8 +215,8 @@ function initialize_page() {
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
   });
-  $(".validate-expression").bind("input", function (e) {
-    const target = $(e.target);
+
+  const validate_expression_elem = (target) => {
     const next = target.next();
     if (next.hasClass("expr-error")) next.remove();
     const val = target.val();
@@ -234,6 +234,20 @@ function initialize_page() {
       ${error.message}
     </small>`);
     }
+  };
+  $(".validate-expression").bind("input", function (e) {
+    const target = $(e.target);
+    validate_expression_elem(target);
+  });
+  $(".validate-expression-conditional").each(function () {
+    const theInput = $(this);
+    console.log(theInput[0]);
+    theInput
+      .closest(".form-namespace")
+      .find(`[name="${theInput.attr("name")}_formula"]`)
+      .bind("change", function (e) {
+        validate_expression_elem(theInput);
+      });
   });
 
   $("form").change(apply_showif);
