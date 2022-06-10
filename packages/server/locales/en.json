@@ -910,5 +910,7 @@
 	"Destination": "Destination",
 	"Directory": "Directory",
 	"Backup settings updated": "Backup settings updated",
-	"Backup successful": "Backup successful"
+	"Backup successful": "Backup successful",
+	"Expiration in days": "Expiration in days",
+	"Delete old backup files in this directory after the set number of days": "Delete old backup files in this directory after the set number of days"
 }
