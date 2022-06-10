@@ -16,7 +16,6 @@ const { getMailTransport, viewToEmailHtml } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
-  expressionValidator,
 } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
@@ -609,7 +608,14 @@ module.exports = {
           label: "Code",
           input_type: "code",
           attributes: { mode: "application/javascript" },
-          validator: expressionValidator,
+          validator(s) {
+            try {
+              Function(s);
+              return true;
+            } catch (e) {
+              return e.message;
+            }
+          },
         },
         {
           input_type: "section_header",
