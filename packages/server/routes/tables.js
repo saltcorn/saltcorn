@@ -21,7 +21,10 @@ const {
   post_delete_btn,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const { recalculate_for_stored } = require("@saltcorn/data/models/expression");
+const {
+  recalculate_for_stored,
+  expressionValidator,
+} = require("@saltcorn/data/models/expression");
 const { isAdmin, error_catcher, setTenant } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -101,6 +104,7 @@ const tableForm = async (table, req) => {
             {
               name: "ownership_formula",
               label: req.__("Ownership formula"),
+              validator: expressionValidator,
               type: "String",
               sublabel:
                 req.__("User is treated as owner if true. In scope: ") +
@@ -878,10 +882,20 @@ router.post(
       const { id, _csrf, ...rest } = v;
       const table = await Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
+      let hasError = false;
       if (!rest.versioned) rest.versioned = false;
-      if (rest.ownership_field_id === "_formula")
+      if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
-      else rest.ownership_formula = null;
+        const fmlValidRes = expressionValidator(rest.ownership_formula);
+        console.log({ fmlValidRes });
+        if (typeof fmlValidRes === "string") {
+          req.flash(
+            "error",
+            req.__(`Invalid ownership formula: %s`, fmlValidRes)
+          );
+          hasError = true;
+        }
+      } else rest.ownership_formula = null;
       await table.update(rest);
       if (!old_versioned && rest.versioned)
         req.flash(
@@ -893,7 +907,7 @@ router.post(
           "success",
           req.__("Table saved with version history disabled")
         );
-      else req.flash("success", req.__("Table saved"));
+      else if (!hasError) req.flash("success", req.__("Table saved"));
 
       res.redirect(`/table/${id}`);
     }

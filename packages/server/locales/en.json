@@ -910,5 +910,6 @@
 	"Destination": "Destination",
 	"Directory": "Directory",
 	"Backup settings updated": "Backup settings updated",
-	"Backup successful": "Backup successful"
+	"Backup successful": "Backup successful",
+	"Invalid ownership formula: %s": "Invalid ownership formula: %s"
 }
