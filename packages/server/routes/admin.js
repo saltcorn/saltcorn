@@ -304,6 +304,9 @@ router.get(
     backupForm.values.auto_backup_directory = getState().getConfig(
       "auto_backup_directory"
     );
+    backupForm.values.auto_backup_expire_days = getState().getConfig(
+      "auto_backup_expire_days"
+    );
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     send_admin_page({
@@ -390,6 +393,18 @@ const autoBackupForm = (req) =>
         type: "String",
         label: req.__("Directory"),
         name: "auto_backup_directory",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "Local directory",
+        },
+      },
+      {
+        type: "Integer",
+        label: req.__("Expiratiom in days"),
+        sublabel: req.__(
+          "Delete old backup files in this directory after the set number of days"
+        ),
+        name: "auto_backup_expire_days",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "Local directory",
