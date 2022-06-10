@@ -241,7 +241,6 @@ function initialize_page() {
   });
   $(".validate-expression-conditional").each(function () {
     const theInput = $(this);
-    console.log(theInput[0]);
     theInput
       .closest(".form-namespace")
       .find(`[name="${theInput.attr("name")}_formula"]`)
