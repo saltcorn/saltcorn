@@ -520,7 +520,7 @@ module.exports = {
      */
     run: async ({ configuration: { table } }) => {
       const table_for_recalc = await Table.findOne({ name: table });
-      
+
       //intentionally omit await
       recalculate_for_stored(table_for_recalc);
     },
@@ -608,7 +608,20 @@ module.exports = {
           label: "Code",
           input_type: "code",
           attributes: { mode: "application/javascript" },
+          validator(s) {
+            try {
+              Function(s);
+              return true;
+            } catch (e) {
+              return e.message;
+            }
+          },
+        },
+        {
+          input_type: "section_header",
+          label: " ",
           sublabel: div("Variables in scope: ", vars),
+          showIf: { run_where: "Server" },
         },
         {
           name: "run_where",

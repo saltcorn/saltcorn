@@ -192,6 +192,7 @@ const configuration_workflow = (req) =>
               {
                 name: "page_title",
                 label: req.__("Page title"),
+                class: "validate-expression validate-expression-conditional",
                 type: "String",
               },
               {

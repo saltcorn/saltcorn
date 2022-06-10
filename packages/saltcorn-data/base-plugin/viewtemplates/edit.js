@@ -284,6 +284,7 @@ const configuration_workflow = (req) =>
                     type: "String",
                     name: "expression",
                     label: "Formula",
+                    class: "validate-expression",
                     sublabel:
                       "if this formula evaluates to true, use the following view",
                   },

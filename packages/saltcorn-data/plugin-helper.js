@@ -521,6 +521,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     {
       name: "action_label",
       label: __("Action Label"),
+      class: "validate-expression validate-expression-conditional",
       type: "String",
       showIf: { type: "Action" },
     },
@@ -590,6 +591,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "view_label",
       label: __("View label"),
       sublabel: __("Leave blank for default label."),
+      class: "validate-expression validate-expression-conditional",
       type: "String",
       required: false,
       showIf: { type: "ViewLink" },
@@ -649,12 +651,14 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       sublabel:
         "Formula for JavaScript object that will be added to state parameters",
       type: "String",
+      class: "validate-expression",
       showIf: { type: "ViewLink" },
     },
     {
       name: "link_text",
       label: __("Link text"),
       type: "String",
+      class: "validate-expression validate-expression-conditional",
       required: true,
       showIf: { type: "Link" },
     },
@@ -668,6 +672,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     {
       name: "link_url",
       label: __("Link URL"),
+      class: "validate-expression validate-expression-conditional",
       type: "String",
       required: true,
       showIf: { type: "Link" },
@@ -725,6 +730,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "aggwhere",
       label: __("Where"),
       sublabel: __("Formula"),
+      class: "validate-expression",
       type: "String",
       required: false,
       showIf: { type: "Aggregation" },
