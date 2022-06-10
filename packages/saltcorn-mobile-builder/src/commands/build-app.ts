@@ -116,7 +116,7 @@ export default class BuildAppCommand extends Command {
       mkdirSync(sbadmin2Dst, { recursive: true });
     }
     const devPath = join(
-      __dirname, 
+      __dirname,
       "../../../../",
       "node_modules/startbootstrap-sb-admin-2-bs5"
     );
@@ -199,10 +199,20 @@ export default class BuildAppCommand extends Command {
   installNpmPackages = async () => {
     const npmTargetDir = join(this.wwwDir, "npm_packages");
     if (!existsSync(npmTargetDir)) mkdirSync(npmTargetDir, { recursive: true });
-    const info = await this.manager.install("jwt-decode", "3.1.2");
+    const jwtInfo = await this.manager.install("jwt-decode", "3.1.2");
     copySync(
-      join(info.location, "build/jwt-decode.js"),
+      join(jwtInfo.location, "build/jwt-decode.js"),
       join(npmTargetDir, "jwt-decode.js")
+    );
+    const routerInfo = await this.manager.install("universal-router", "9.1.0");
+    copySync(
+      join(routerInfo.location, "universal-router.min.js"),
+      join(npmTargetDir, "universal-router.min.js")
+    );
+    const axiosInfo = await this.manager.install("axios", "0.27.2");
+    copySync(
+      join(axiosInfo.location, "dist", "axios.min.js"),
+      join(npmTargetDir, "axios.min.js")
     );
   };
 
@@ -215,24 +225,21 @@ export default class BuildAppCommand extends Command {
   };
 
   buildTablesFile = async (localUserTables: string[]) => {
-    const scTables = await Promise.all(
-      (
-        await db.listScTables()
-      )
-        .filter(
-          (table: Row) =>
-            ["_sc_migrations", "_sc_errors"].indexOf(table.name) === -1
-        )
-        .map(async (row: Row) => {
-          const dbData = await db.select(row.name);
-          return { table: row.name, rows: dbData };
-        })
+    const scTables = (await db.listScTables()).filter(
+      (table: Row) =>
+        ["_sc_migrations", "_sc_errors"].indexOf(table.name) === -1
+    );
+    const tablesWithData = await Promise.all(
+      scTables.map(async (row: Row) => {
+        const dbData = await db.select(row.name);
+        return { table: row.name, rows: dbData };
+      })
     );
     writeFileSync(
       join(this.wwwDir, "tables.json"),
       JSON.stringify({
         created_at: new Date(),
-        sc_tables: scTables,
+        sc_tables: tablesWithData,
       })
     );
   };

@@ -7,68 +7,109 @@
     <script src="js/mocks/response.js"></script>
     <script src="js/mocks/request.js"></script>
     <script src="npm_packages/jwt-decode.js"></script>
-    <script src="https://unpkg.com/universal-router/universal-router.min.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="npm_packages/universal-router.min.js"></script>
+    <script src="npm_packages/axios.min.js"></script>
     <script type="module">
       import { initRoutes } from "./js/routes/init.js";
       import { renderLoginForm } from "./js/utils/login_form.js";
       import {
-        updateDbIfNecessary,
+        updateDb,
         getTableIds,
+        dbUpdateNeeded,
+        updateScPlugins,
       } from "./js/utils/table_utils.js";
       import { readJSON } from "./js/utils/file_helpers.js";
 
       const staticPlugins = ["base", "sbadmin2"];
 
-      async function addScript(path) {
+      async function addScript(scriptObj) {
+        let waited = 0;
+        const maxWait = 3000;
+
+        const moduleAvailable = () =>
+          window.saltcorn && window.saltcorn[scriptObj.name];
+
         return new Promise((resolve, reject) => {
           let script = document.createElement("script");
           document.head.appendChild(script);
-          script.onload = () => {
-            resolve();
+
+          const waitForModule = () => {
+            waited += 100;
+            if (waited >= maxWait) reject(`unable to load '${scriptObj.name}'`);
+            console.log("waiting for " + scriptObj.name);
+            setTimeout(function () {
+              if (moduleAvailable()) return resolve();
+              else waitForModule();
+            }, 100);
           };
-          // TODO reject after some seconds
-          script.src = path;
+
+          script.onload = () => {
+            if (!scriptObj.name || moduleAvailable()) return resolve();
+            waitForModule();
+          };
+          script.src = scriptObj.src;
         });
       }
 
       async function loadPlugin(plugin) {
-        return addScript(`js/bundles/${plugin.name}.bundle.js`);
+        await addScript({
+          src: `js/bundles/${plugin.name}.bundle.js`,
+          name: plugin.name,
+        });
       }
 
       async function loadPlugins(state) {
-        let plugins = (await saltcorn.data.models.Plugin.find()).filter(
+        const plugins = (await saltcorn.data.models.Plugin.find()).filter(
           (plugin) => !staticPlugins.includes(plugin.name)
         );
         for (const plugin of plugins) {
           await loadPlugin(plugin);
-          state.registerPlugin(plugin.name, saltcorn[plugin.name]);
+          state.registerPlugin(
+            plugin.name,
+            saltcorn[plugin.name],
+            plugin.configuration
+          );
         }
         return plugins;
       }
 
       async function addScripts(version_tag) {
         const scripts = [
-          `static_assets/${version_tag}/jquery-3.6.0.min.js`,
-          "js/bundles/common_chunks.bundle.js",
-          "js/bundles/markup.bundle.js",
-          "js/bundles/data.bundle.js",
-          "js/bundles/base_plugin.bundle.js",
-          "js/bundles/sbadmin2.bundle.js",
+          { src: `static_assets/${version_tag}/jquery-3.6.0.min.js` },
+          { src: "js/bundles/common_chunks.bundle.js" },
+          { src: "js/bundles/markup.bundle.js", name: "markup" },
+          { src: "js/bundles/data.bundle.js", name: "data" },
+          { src: "js/bundles/base_plugin.bundle.js", name: "base_plugin" },
+          { src: "js/bundles/sbadmin2.bundle.js", name: "sbadmin2" },
         ];
         for (const script of scripts) {
           await addScript(script);
         }
       }
 
-      const addPluginScriptTagsToCfg = (pluginRows) => {
+      /*
+        A plugin exports headers either as array, as key values object, or
+        as a function with a configuration parameter that returns an Array.
+       */
+      const collectPluginHeaders = (pluginRows) => {
         window.config.pluginHeaders = [];
         for (const row of pluginRows) {
           const pluginHeaders = saltcorn[row.name].headers;
           if (pluginHeaders) {
-            for (const header of pluginHeaders) {
-              window.config.pluginHeaders.push(header);
-            }
+            if (Array.isArray(pluginHeaders))
+              for (const header of pluginHeaders) {
+                window.config.pluginHeaders.push(header);
+              }
+            else if (typeof pluginHeaders === "function") {
+              const headerResult = pluginHeaders(row.configuration);
+              if (Array.isArray(headerResult)) {
+                for (const header of headerResult)
+                  window.config.pluginHeaders.push(header);
+              }
+            } else
+              for (const [key, value] of Object.entries(pluginHeaders)) {
+                window.config.pluginHeaders.push(value);
+              }
           }
         }
       };
@@ -83,13 +124,24 @@
           "config",
           `${cordova.file.applicationDirectory}www`
         );
+        const tablesJSON = await readJSON(
+          "tables.json",
+          `${cordova.file.applicationDirectory}${"www"}`
+        );
         await addScripts(config.version_tag);
         await saltcorn.data.db.init();
+        const updateNeeded = await dbUpdateNeeded(tablesJSON);
+        if (updateNeeded) {
+          // update '_sc_plugins' first because of loadPlugins()
+          await updateScPlugins(tablesJSON);
+        }
         const state = saltcorn.data.state.getState();
         state.registerPlugin("base", saltcorn.base_plugin);
         state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
-        addPluginScriptTagsToCfg(await loadPlugins(state));
-        await updateDbIfNecessary();
+        collectPluginHeaders(await loadPlugins(state));
+        if (updateNeeded) {
+          await updateDb(tablesJSON);
+        }
         await state.refresh_tables();
         await state.refresh_views();
         await state.refresh_pages();
