@@ -400,7 +400,7 @@ const autoBackupForm = (req) =>
       },
       {
         type: "Integer",
-        label: req.__("Expiratiom in days"),
+        label: req.__("Expiration in days"),
         sublabel: req.__(
           "Delete old backup files in this directory after the set number of days"
         ),
