@@ -215,6 +215,21 @@ function initialize_page() {
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
   });
+  $(".validate-expression").bind("input", function (e) {
+    const target = $(e.target);
+    const next = target.next();
+    if (next.hasClass("expr-error")) next.remove();
+    const val = target.val();
+    if (!val) return;
+    try {
+      Function("return " + val);
+    } catch (error) {
+      target.after(`<small class="text-danger font-monospace d-block expr-error">
+      ${error.message}
+    </small>`);
+    }
+  });
+
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();
