@@ -106,6 +106,7 @@ const tableForm = async (table, req) => {
               label: req.__("Ownership formula"),
               validator: expressionValidator,
               type: "String",
+              class: "validate-expression",
               sublabel:
                 req.__("User is treated as owner if true. In scope: ") +
                 ["user", ...fields.map((f) => f.name)]
