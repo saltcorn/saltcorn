@@ -16,6 +16,7 @@ const { getMailTransport, viewToEmailHtml } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
+  expressionValidator,
 } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
@@ -520,7 +521,7 @@ module.exports = {
      */
     run: async ({ configuration: { table } }) => {
       const table_for_recalc = await Table.findOne({ name: table });
-      
+
       //intentionally omit await
       recalculate_for_stored(table_for_recalc);
     },
@@ -608,6 +609,7 @@ module.exports = {
           label: "Code",
           input_type: "code",
           attributes: { mode: "application/javascript" },
+          validator: expressionValidator,
           sublabel: div("Variables in scope: ", vars),
         },
         {
