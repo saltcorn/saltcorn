@@ -6,7 +6,11 @@
  */
 
 import db from "../db";
-const { recalculate_for_stored, jsexprToWhere } = require("./expression");
+const {
+  recalculate_for_stored,
+  jsexprToWhere,
+  eval_expression,
+} = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
 const { InvalidAdminAction } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -262,12 +266,21 @@ class Field implements AbstractField {
         this.reftable_name,
         this.type === "File" ? this.attributes.select_file_where : where
       );
-
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : "id");
+      const get_label = this.attributes?.label_formula
+        ? (r: Row) => {
+            try {
+              return eval_expression(this.attributes?.label_formula, r);
+            } catch (error: any) {
+              error.message = `Error in formula ${this.attributes?.label_formula} for select label:\n${error.message}`;
+              throw error;
+            }
+          }
+        : (r: Row) => r[summary_field];
       const dbOpts = rows.map((r: Row) => ({
-        label: r[summary_field],
+        label: get_label(r),
         value: r[this.refname],
       }));
       const allOpts =
@@ -829,7 +842,7 @@ class Field implements AbstractField {
       const nrows = await table.countRows({});
       if (nrows > 0) {
         const table1 = await Table.findOne({ id: f.table_id });
-        
+
         //intentionally omit await
         recalculate_for_stored(table1); //not waiting as there could be a lot of data
       }

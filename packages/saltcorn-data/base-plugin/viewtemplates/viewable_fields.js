@@ -853,6 +853,7 @@ const getForm = async (
  * @returns {Promise<object>}
  */
 const fill_presets = async (table, req, fixed) => {
+  if (!table) return fixed;
   const fields = await table.getFields();
   Object.keys(fixed || {}).forEach((k) => {
     if (k.startsWith("preset_")) {
