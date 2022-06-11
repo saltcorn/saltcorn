@@ -35,7 +35,8 @@
 
           const waitForModule = () => {
             waited += 100;
-            if (waited >= maxWait) reject(`unable to load '${scriptObj.name}'`);
+            if (waited >= maxWait)
+              return reject(`unable to load '${scriptObj.name}'`);
             console.log("waiting for " + scriptObj.name);
             setTimeout(function () {
               if (moduleAvailable()) return resolve();
