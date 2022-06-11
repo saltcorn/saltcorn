@@ -113,6 +113,12 @@ const ViewLinkSettings = () => {
     extra_state_fml,
   } = node;
   const options = useContext(optionsCtx);
+  let errorString = false;
+  try {
+    Function("return " + extra_state_fml);
+  } catch (error) {
+    errorString = error.message;
+  }
   return (
     <div>
       <table className="w-100">
@@ -161,6 +167,11 @@ const ViewLinkSettings = () => {
                   setProp((prop) => (prop.extra_state_fml = e.target.value))
                 }
               />
+              {errorString ? (
+                <small className="text-danger font-monospace d-block">
+                  {errorString}
+                </small>
+              ) : null}
             </td>
           </tr>
 

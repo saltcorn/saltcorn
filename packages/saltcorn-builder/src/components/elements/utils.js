@@ -110,6 +110,14 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
       }
     });
   };
+  let errorString = false;
+  if (isFormula[nodekey]) {
+    try {
+      Function("return " + node[nodekey]);
+    } catch (error) {
+      errorString = error.message;
+    }
+  }
   return mode !== "show" ? (
     children
   ) : (
@@ -119,7 +127,7 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
           <input
             type="text"
             className="form-control text-to-display"
-            value={node[nodekey]}
+            value={node[nodekey] || ""}
             onChange={(e) => {
               if (e.target) {
                 const target_value = e.target.value;
@@ -145,6 +153,11 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
       {isFormula[nodekey] && (
         <div style={{ marginTop: "-5px" }}>
           <small className="text-muted font-monospace">FORMULA</small>
+          {errorString ? (
+            <small className="text-danger font-monospace d-block">
+              {errorString}
+            </small>
+          ) : null}
         </div>
       )}
     </Fragment>

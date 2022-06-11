@@ -515,21 +515,23 @@ const configTypes: ConfigTypes = {
   },
   auto_backup_frequency: {
     type: "String",
-    input_type: "String",
     label: "Auto backup frequency",
     default: "Never",
   },
   auto_backup_destination: {
     type: "String",
-    input_type: "String",
     label: "Auto backup Destination",
     default: "Saltcorn files",
   },
   auto_backup_directory: {
     type: "String",
-    input_type: "String",
     label: "Auto backup directory",
     default: "",
+  },
+  auto_backup_expire_days: {
+    type: "Integer",
+    label: "Auto backup expiration days",
+    default: null,
   },
 };
 // TODO move list of languages from code to configuration
