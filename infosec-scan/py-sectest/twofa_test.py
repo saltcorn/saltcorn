@@ -63,6 +63,8 @@ class Test:
         assert self.sess.status == 200
         assert "Your tables" in self.sess.content
         self.sess.get('/view/patientlist')
+        if(self.sess.status == 302):
+            print(self.sess.content)
         assert self.sess.status == 200
         assert "Michael Douglas" in self.sess.content
 
