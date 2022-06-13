@@ -351,6 +351,8 @@ class Field implements AbstractField {
    */
   get sql_type(): string {
     if (this.is_fkey) {
+      this.fill_table();
+
       if (!this.reftype || !this.reftable_name) {
         throw new Error(
           "'reftype' and 'reftable_name' must be set if 'is_fkey' is true."
@@ -362,7 +364,9 @@ class Field implements AbstractField {
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
         ].sql_name
-      } references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
+      } constraint "${sqlsanitize(this!.table!.name)}_${sqlsanitize(
+        this.name
+      )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
       }")${this.attributes?.on_delete_cascade ? " on delete cascade" : ""}`;
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
