@@ -298,7 +298,7 @@ describe("Field update", () => {
 
     const fc = await Field.create({
       table,
-      name: "read2",
+      name: "read3",
       label: "Reading",
       type: "Key to books",
       required: false,
@@ -321,6 +321,26 @@ describe("Field update", () => {
     //db.set_sql_logging();
     if (!db.isSQLite) {
       await fc.update({ type: "Float" });
+    }
+  });
+  it("changes fkey ref table", async () => {
+    const table = await Table.findOne({ name: "changingtable" });
+
+    const fc = await Field.create({
+      table,
+      name: "read2",
+      label: "Reading",
+      type: "Key to books",
+      required: false,
+      attributes: { summary_field: "author" },
+    });
+    //db.set_sql_logging();
+
+    if (!db.isSQLite) {
+      await fc.update({
+        type: "Key to patients",
+        attributes: { summary_field: "author" },
+      });
     }
   });
 });

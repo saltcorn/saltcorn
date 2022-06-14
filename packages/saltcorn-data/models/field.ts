@@ -137,7 +137,7 @@ class Field implements AbstractField {
       this.refname = "id";
     } else {
       this.reftable_name = o.reftable_name || (o.reftable && o.reftable.name);
-      if (!this.reftable_name && o.type && typeof o.type === "string")
+      if (o.type && typeof o.type === "string" && o.type.startsWith("Key to "))
         this.reftable_name = o.type.replace("Key to ", "");
       this.reftable = o.reftable;
       this.type = "Key";
@@ -535,7 +535,9 @@ class Field implements AbstractField {
   async alter_sql_type(new_field: Field) {
     let new_sql_type = new_field.sql_type;
     let def = "";
-    let using = `USING ("${sqlsanitize(this.name)}"::${new_sql_type})`;
+    let using = `USING ("${sqlsanitize(this.name)}"::${
+      new_field.sql_bare_type
+    })`;
 
     const schema = db.getTenantSchemaPrefix();
     this.fill_table();
@@ -568,11 +570,12 @@ class Field implements AbstractField {
     } else if (
       new_field.is_fkey &&
       this.reftable_name &&
-      new_field.reftable_name === this.reftable_name &&
+      new_field.reftable_name &&
       ((new_field.attributes?.on_delete_cascade &&
         !this.attributes?.on_delete_cascade) ||
         (!new_field.attributes?.on_delete_cascade &&
-          this.attributes?.on_delete_cascade))
+          this.attributes?.on_delete_cascade) ||
+        new_field.reftable_name !== this.reftable_name)
     ) {
       //add or remove on delete cascade - https://stackoverflow.com/a/10356720
 
@@ -581,11 +584,13 @@ class Field implements AbstractField {
           this.table.name
         )}" drop constraint "${sqlsanitize(this.table.name)}_${sqlsanitize(
           this.name
-        )}_fkey", add constraint "${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_fkey" foreign key ("${sqlsanitize(
-          this.name
-        )}") references ${schema}"${sqlsanitize(this.reftable_name)}"(id)${
+        )}_fkey", add constraint "${sqlsanitize(
+          new_field!.table!.name
+        )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
+          new_field.name
+        )}") references ${schema}"${sqlsanitize(
+          new_field!.reftable_name
+        )}"(id)${
           new_field.attributes?.on_delete_cascade ? " on delete cascade" : ""
         }`
       );
@@ -616,6 +621,7 @@ class Field implements AbstractField {
    */
   async update(v: Row): Promise<void> {
     const f = new Field({ ...this, ...v });
+
     const rename: boolean = f.name !== this.name;
     if (rename && !this.table?.name) {
       throw new Error("");
@@ -633,7 +639,10 @@ class Field implements AbstractField {
     if (typeof v.required !== "undefined" && !!v.required !== !!this.required)
       await this.toggle_not_null(!!v.required);
 
-    if (f.sql_type !== this.sql_type) {
+    if (
+      f.sql_type !== this.sql_type ||
+      this.reftable_name !== f.reftable_name
+    ) {
       await this.alter_sql_type(f);
     }
     if (rename) {
