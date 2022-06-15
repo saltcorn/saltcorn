@@ -1,7 +1,6 @@
 import { Command, Flags } from "@oclif/core";
 import { spawnSync } from "child_process";
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -43,13 +42,18 @@ export default class BuildAppCommand extends Command {
       description: "user defined tables that should be replicated into the app",
       multiple: true,
     }),
+    useDocker: Flags.boolean({
+      name: "user docker build container",
+      char: "d",
+      description: "Use a docker container to build the app.",
+    }),
   };
 
-  supportedPlatforms = ["android", "browser"]; // TODO ios
+  supportedPlatforms = ["android", "iOS"];
 
   packageRoot = join(__dirname, "../../");
   appDir = join(require.resolve("@saltcorn/mobile-app"), "..");
-  wwwDir = join(require.resolve("@saltcorn/mobile-app"), "..", "www");
+  wwwDir = join(this.appDir, "www");
 
   staticPlugins = ["base", "sbadmin2"];
 
@@ -58,11 +62,22 @@ export default class BuildAppCommand extends Command {
     staticDependencies,
   });
 
-  async run() {
-    const { flags } = await this.parse(BuildAppCommand);
+  validateParameters = (flags: any) => {
     if (!flags.entryPoint) {
       throw new Error("please specify an entry point for the first view");
     }
+    if (!flags.platforms) {
+      throw new Error("please specify cordova platforms (android or iOS)");
+    }
+    for (const platform of flags.platforms)
+      if (!this.supportedPlatforms.includes(platform))
+        throw new Error(`The platform '${platform}' is not supported`);
+  };
+
+  async run() {
+    const { flags } = await this.parse(BuildAppCommand);
+    this.validateParameters(flags);
+
     const localUserTables = flags.localUserTables ? flags.localUserTables : [];
     this.copyStaticAssets();
     this.copySbadmin2Deps();
@@ -76,11 +91,7 @@ export default class BuildAppCommand extends Command {
     await this.installNpmPackages();
     await this.buildTablesFile(localUserTables);
     await this.createSqliteDb();
-    if (flags.platforms) {
-      this.validatePlatforms(flags.platforms);
-      this.addPlatforms(flags.platforms);
-    }
-    this.buildApk();
+    this.buildApk(flags);
   }
 
   copyStaticAssets = () => {
@@ -244,23 +255,56 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  validatePlatforms = (platforms: string[]) => {
-    for (const platform of platforms)
-      if (!this.supportedPlatforms.includes(platform))
-        throw new Error(`The platform '${platform}' is not supported`);
-  };
+  buildApk = (flags: any) => {
+    const addPlatforms = () => {
+      spawnSync("npm", ["run", "add-platform", "--", ...flags.platforms], {
+        stdio: "inherit",
+        cwd: this.appDir,
+      });
+    };
+    const runBuildContainer = (options: any): any => {
+      return spawnSync(
+        "docker",
+        [
+          "run",
+          "-v",
+          `${this.appDir}:/saltcorn-mobile-app`,
+          "saltcorn/cordova-builder",
+        ],
+        options
+      );
+    };
 
-  addPlatforms = (platforms: string[]) => {
-    spawnSync("npm", ["run", "add-platform", "--", ...platforms], {
-      stdio: "inherit",
-      cwd: this.appDir,
-    });
-  };
-
-  buildApk = () => {
-    spawnSync("npm", ["run", "build-app"], {
-      stdio: "inherit",
-      cwd: this.appDir,
-    });
+    if (!flags.useDocker) {
+      addPlatforms();
+      spawnSync("npm", ["run", "build-app"], {
+        stdio: "inherit",
+        cwd: this.appDir,
+      });
+    } else {
+      const spawnOptions: any = {
+        stdio: "inherit",
+        cwd: ".",
+      };
+      // try docker without sudo
+      const result = runBuildContainer(spawnOptions);
+      if (result.status === 0) {
+        console.log("Success");
+      } else if (result.status === 1 || result.status === 125) {
+        // try docker rootless
+        spawnOptions.env = {
+          DOCKER_HOST: `unix://${process.env.XDG_RUNTIME_DIR}/docker.sock`,
+        };
+        if (!runBuildContainer(spawnOptions)) {
+          console.log("Unable to run the docker build image.");
+          console.log(
+            "Try installing the docker rootless mode, or add the current user to the 'docker' group."
+          );
+        }
+      } else {
+        console.log("An error occured");
+        console.log(result);
+      }
+    }
   };
 }
