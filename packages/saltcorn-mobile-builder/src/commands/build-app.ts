@@ -49,7 +49,7 @@ export default class BuildAppCommand extends Command {
     }),
   };
 
-  supportedPlatforms = ["android", "iOS"];
+  supportedPlatforms = ["android", "ios"];
 
   packageRoot = join(__dirname, "../../");
   appDir = join(require.resolve("@saltcorn/mobile-app"), "..");
@@ -91,7 +91,7 @@ export default class BuildAppCommand extends Command {
     await this.installNpmPackages();
     await this.buildTablesFile(localUserTables);
     await this.createSqliteDb();
-    this.buildApk(flags);
+    process.exit(this.buildApk(flags));
   }
 
   copyStaticAssets = () => {
@@ -163,14 +163,15 @@ export default class BuildAppCommand extends Command {
     const plugins = (await Plugin.find()).filter(
       (plugin: Plugin) => !this.staticPlugins.includes(plugin.name)
     );
-    spawnSync(
+    const result = spawnSync(
       "npm",
       ["run", "build", "--", "--env", `plugins=${JSON.stringify(plugins)}`],
       {
-        stdio: "inherit",
+        stdio: "pipe",
         cwd: this.packageRoot,
       }
     );
+    console.log(result.output.toString());
     for (const plugin of plugins) {
       const required = await requirePlugin(plugin, false, this.manager);
       const srcPublicDir = join(required.location, "public");
@@ -262,8 +263,8 @@ export default class BuildAppCommand extends Command {
         cwd: this.appDir,
       });
     };
-    const runBuildContainer = (options: any): any => {
-      return spawnSync(
+    const runBuildContainer = (options: any): any =>
+      spawnSync(
         "docker",
         [
           "run",
@@ -273,38 +274,42 @@ export default class BuildAppCommand extends Command {
         ],
         options
       );
-    };
 
     if (!flags.useDocker) {
       addPlatforms();
-      spawnSync("npm", ["run", "build-app"], {
+      return spawnSync("npm", ["run", "build-app", "--", ...flags.platforms], {
         stdio: "inherit",
         cwd: this.appDir,
-      });
+      }).status;
     } else {
       const spawnOptions: any = {
-        stdio: "inherit",
         cwd: ".",
       };
       // try docker without sudo
-      const result = runBuildContainer(spawnOptions);
+      let result = runBuildContainer(spawnOptions);
       if (result.status === 0) {
-        console.log("Success");
+        console.log(result.output.toString());
       } else if (result.status === 1 || result.status === 125) {
         // try docker rootless
         spawnOptions.env = {
           DOCKER_HOST: `unix://${process.env.XDG_RUNTIME_DIR}/docker.sock`,
         };
-        if (!runBuildContainer(spawnOptions)) {
+        result = runBuildContainer(spawnOptions);
+        if (result.status === 0) {
+          console.log(result.output.toString());
+        } else {
           console.log("Unable to run the docker build image.");
           console.log(
-            "Try installing the docker rootless mode, or add the current user to the 'docker' group."
+            "Try installing 'docker rootless' mode, or add the current user to the 'docker' group."
           );
+          console.log(result);
+          console.log(result.output.toString());
         }
       } else {
         console.log("An error occured");
         console.log(result);
       }
+      return result.status;
     }
   };
 }

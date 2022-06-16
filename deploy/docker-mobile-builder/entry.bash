@@ -13,4 +13,4 @@ npm run add-platform android
 echo "calling cordova clean";
 cordova clean
 echo "calling cordova build";
-cordova build
+cordova build android

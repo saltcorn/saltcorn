@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "add-platform": "cordova platform add",
-    "build-app": "cordova build"
+    "build-app": "cordova build "
   },
   "author": "Christian Hugo",
   "license": "MIT",

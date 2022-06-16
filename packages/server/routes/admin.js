@@ -35,6 +35,12 @@ const {
   code,
   h5,
   pre,
+  button,
+  form,
+  label,
+  input,
+  select,
+  option,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -467,6 +473,9 @@ router.get(
     const can_update =
       !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
+    const views = await View.find();
+    const execBuildMsg =
+      "This is still under development and might run a bit longer.";
 
     send_admin_page({
       res,
@@ -502,6 +511,104 @@ router.get(
                 i({ class: "fas fa-stethoscope" }),
                 " ",
                 req.__("Configuration check")
+              ),
+              hr(),
+              form(
+                {
+                  action: "/admin/build-mobile-app",
+                  method: "post",
+                  class: "border p-3",
+                },
+                input({
+                  type: "hidden",
+                  name: "_csrf",
+                  value: req.csrfToken(),
+                }),
+
+                div(
+                  { class: "container" },
+                  div(
+                    { class: "row pb-2" },
+                    div({ class: "col-sm-4 fw-bold" }, "entry view"),
+                    div({ class: "col-sm-4 fw-bold" }, "platform"),
+                    div(
+                      {
+                        class: "col-sm-1 fw-bold d-flex justify-content-center",
+                      },
+                      "docker"
+                    )
+                  ),
+                  div(
+                    { class: "row pb-3" },
+                    div(
+                      { class: "col-sm-4" },
+                      select(
+                        {
+                          class: "form-control",
+                          name: "entryView",
+                          id: "entryViewInput",
+                        },
+                        views
+                          .map((view) =>
+                            option({ value: view.name }, view.name)
+                          )
+                          .join(",")
+                      )
+                    ),
+                    div(
+                      { class: "col-sm-4" },
+
+                      div(
+                        { class: "container ps-0" },
+                        div(
+                          { class: "row" },
+                          div({ class: "col-sm-8" }, "android"),
+                          div(
+                            { class: "col-sm" },
+                            input({
+                              type: "checkbox",
+                              class: "form-check-input",
+                              name: "androidPlatform",
+                              id: "androidCheckboxId",
+                            })
+                          )
+                        ),
+                        div(
+                          { class: "row" },
+                          div({ class: "col-sm-8" }, "iOS"),
+                          div(
+                            { class: "col-sm" },
+                            input({
+                              type: "checkbox",
+                              class: "form-check-input",
+                              name: "iOSPlatform",
+                              id: "iOSCheckboxId",
+                            })
+                          )
+                        )
+                      )
+                    ),
+                    div(
+                      { class: "col-sm-1 d-flex justify-content-center" },
+                      input({
+                        type: "checkbox",
+                        class: "form-check-input",
+                        name: "useDocker",
+                        id: "dockerCheckboxId",
+                      })
+                    )
+                  )
+                ),
+                button(
+                  {
+                    type: "submit",
+                    onClick: `notifyAlert('${execBuildMsg}'); press_store_button(this);`,
+                    class: "btn btn-warning",
+                  },
+                  i({ class: "fas fa-hammer pe-2" }),
+
+                  "Build mobile app"
+                )
               ),
               hr(),
 
@@ -931,6 +1038,47 @@ router.get(
           contents: div(pre(code(passes.join("\n")))),
         },
       ],
+    });
+  })
+);
+
+router.post(
+  "/build-mobile-app",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { entryView, androidPlatform, iOSPlatform, useDocker } = req.body;
+    if (entryView.length === 0) {
+      req.flash("error", `The 'entry view' may not be empty.`);
+      return res.redirect("/admin/system");
+    }
+    if (!View.findOne({ name: entryView })) {
+      req.flash("error", `The view '${entryView}' does not exist.`);
+      return res.redirect("/admin/system");
+    }
+    const spawnParams = ["build-app", "-v", entryView];
+    if (useDocker) spawnParams.push("-d", "-p", "android");
+    else if (androidPlatform) spawnParams.push("-p", "android");
+    if (iOSPlatform) spawnParams.push("-p", "ios");
+    const child = spawn("saltcorn", spawnParams, {
+      stdio: ["ignore", "pipe", process.stderr],
+      cwd: ".",
+    });
+    child.stdout.on("data", (data) => {
+      console.log(data.toString());
+    });
+    child.on("exit", function (code, signal) {
+      const resultMsg =
+        code === 0 ? "The build was successfully" : "Unable to build the app";
+      console.log(resultMsg);
+      res.sendWrap(req.__(`Admin`), {
+        above: [
+          {
+            type: "card",
+            title: req.__("Build Result"),
+            contents: div(resultMsg),
+          },
+        ],
+      });
     });
   })
 );
