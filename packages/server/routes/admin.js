@@ -1064,7 +1064,7 @@ router.post(
       cwd: ".",
     });
     child.stdout.on("data", (data) => {
-      console.log(data.toString());
+      // console.log(data.toString());
     });
     child.on("exit", function (code, signal) {
       const resultMsg =
