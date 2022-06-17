@@ -675,8 +675,8 @@ const run_action = async (
   const result = await actionQuery();
   if (result.json.error) {
     Crash.create({ message: result.json.error, stack: "" }, req);
-    return { json: { error: result.json.error } };
   }
+  return result;
 };
 
 module.exports = {
