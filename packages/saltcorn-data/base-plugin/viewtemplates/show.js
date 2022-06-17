@@ -676,6 +676,8 @@ const run_action = async (
   if (result.json.error) {
     Crash.create({ message: result.json.error, stack: "" }, req);
     return { json: { error: result.json.error } };
+  } else {
+    return result;
   }
 };
 
