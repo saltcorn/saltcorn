@@ -87,7 +87,7 @@ const post_btn = (
   `<form action="${text(href)}" method="post"${
     formClass ? ` class="${formClass}"` : ""
   }>
-  <input type="hidden" name="_csrf" value="${csrfToken}">
+  ${ajax ? "" : `<input type="hidden" name="_csrf" value="${csrfToken}">`}
 <button ${ajax ? 'type="button"' : 'type="submit"'} ${
     onClick
       ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
