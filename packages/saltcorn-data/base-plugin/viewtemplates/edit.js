@@ -433,7 +433,10 @@ const transformForm = async ({
           segment.type = "blank";
           segment.contents = "";
         }
-      } else if (!builtInActions.includes(segment.action_name)) {
+      } else if (
+        !["Sign up", ...builtInActions].includes(segment.action_name) &&
+        !segment.action_name.startsWith("Login")
+      ) {
         const url = action_url(
           viewname,
           table,
