@@ -18,7 +18,7 @@ const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-const { post_btn, renderForm } = require("@saltcorn/markup");
+const { post_btn, renderForm, mkTable, link } = require("@saltcorn/markup");
 const {
   div,
   a,
@@ -141,6 +141,23 @@ const email_form = async (req) => {
     "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
   return form;
 };
+
+const app_files_table = (file, req) =>
+  mkTable(
+    [
+      {
+        label: req.__("Filename"),
+        key: (r) => div(r.filename),
+      },
+      { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+      { label: req.__("Media type"), key: (r) => r.mimetype },
+      {
+        label: req.__("Download"),
+        key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+      },
+    ],
+    [file]
+  );
 
 /**
  * Router get /
@@ -517,7 +534,7 @@ router.get(
                 {
                   action: "/admin/build-mobile-app",
                   method: "post",
-                  class: "border p-3",
+                  class: "border p-2",
                 },
                 input({
                   type: "hidden",
@@ -526,7 +543,7 @@ router.get(
                 }),
 
                 div(
-                  { class: "container" },
+                  { class: "container ps-2" },
                   div(
                     { class: "row pb-2" },
                     div({ class: "col-sm-4 fw-bold" }, "entry view"),
@@ -1055,7 +1072,8 @@ router.post(
       req.flash("error", `The view '${entryView}' does not exist.`);
       return res.redirect("/admin/system");
     }
-    const spawnParams = ["build-app", "-v", entryView];
+    const appOut = path.join(__dirname, "..", "mobile-app-out");
+    const spawnParams = ["build-app", "-v", entryView, "-c", appOut];
     if (useDocker) spawnParams.push("-d", "-p", "android");
     else if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) spawnParams.push("-p", "ios");
@@ -1066,19 +1084,33 @@ router.post(
     child.stdout.on("data", (data) => {
       // console.log(data.toString());
     });
-    child.on("exit", function (code, signal) {
-      const resultMsg =
-        code === 0 ? "The build was successfully" : "Unable to build the app";
-      console.log(resultMsg);
-      res.sendWrap(req.__(`Admin`), {
-        above: [
-          {
-            type: "card",
-            title: req.__("Build Result"),
-            contents: div(resultMsg),
-          },
-        ],
-      });
+    child.on("exit", async function (code, signal) {
+      if (code === 0) {
+        const file = await File.from_existing_file(
+          appOut,
+          "app-debug.apk",
+          req.user.id
+        );
+        res.sendWrap(req.__(`Admin`), {
+          above: [
+            {
+              type: "card",
+              title: req.__("Build Result"),
+              contents: div("The build was successfully"),
+            },
+            app_files_table(file, req),
+          ],
+        });
+      } else
+        res.sendWrap(req.__(`Admin`), {
+          above: [
+            {
+              type: "card",
+              title: req.__("Build Result"),
+              contents: div("Unable to build the app"),
+            },
+          ],
+        });
     });
   })
 );

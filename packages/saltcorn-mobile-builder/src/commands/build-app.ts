@@ -47,6 +47,11 @@ export default class BuildAppCommand extends Command {
       char: "d",
       description: "Use a docker container to build the app.",
     }),
+    copyAppDirectory: Flags.directory({
+      name: "app target-directory",
+      char: "c",
+      description: "If set, the app file will be copied here",
+    }),
   };
 
   supportedPlatforms = ["android", "ios"];
@@ -91,7 +96,9 @@ export default class BuildAppCommand extends Command {
     await this.installNpmPackages();
     await this.buildTablesFile(localUserTables);
     await this.createSqliteDb();
-    process.exit(this.buildApk(flags));
+    const resultCode = this.buildApp(flags);
+    if (resultCode === 0 && flags.copyAppDirectory) await this.copyApp(flags);
+    return resultCode;
   }
 
   copyStaticAssets = () => {
@@ -256,7 +263,7 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  buildApk = (flags: any) => {
+  buildApp = (flags: any) => {
     const addPlatforms = () => {
       spawnSync("npm", ["run", "add-platform", "--", ...flags.platforms], {
         stdio: "inherit",
@@ -311,5 +318,24 @@ export default class BuildAppCommand extends Command {
       }
       return result.status;
     }
+  };
+
+  copyApp = async (flags: any) => {
+    if (!existsSync(flags.copyAppDirectory)) {
+      mkdirSync(flags.copyAppDirectory);
+    }
+    const apkName = "app-debug.apk";
+    const apkFile = join(
+      this.appDir,
+      "platforms",
+      "android",
+      "app",
+      "build",
+      "outputs",
+      "apk",
+      "debug",
+      apkName
+    );
+    copySync(apkFile, join(flags.copyAppDirectory, apkName));
   };
 }
