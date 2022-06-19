@@ -52,6 +52,16 @@ export default class BuildAppCommand extends Command {
       char: "c",
       description: "If set, the app file will be copied here",
     }),
+    appFileName: Flags.string({
+      name: "app file name",
+      char: "a",
+      description: "",
+    }),
+    serverURL: Flags.string({
+      name: "server URL",
+      char: "s",
+      description: "",
+    }),
   };
 
   supportedPlatforms = ["android", "ios"];
@@ -88,7 +98,7 @@ export default class BuildAppCommand extends Command {
     this.copySbadmin2Deps();
     this.writeCfgFile({
       entryPoint: flags.entryPoint,
-      serverPath: "http://10.0.2.2:3000", // host localhost of the android emulator, only for development,
+      serverPath: flags.serverURL ? flags.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: localUserTables,
     });
     await this.bundlePackages();
@@ -98,7 +108,7 @@ export default class BuildAppCommand extends Command {
     await this.createSqliteDb();
     const resultCode = this.buildApp(flags);
     if (resultCode === 0 && flags.copyAppDirectory) await this.copyApp(flags);
-    return resultCode;
+    process.exit(resultCode);
   }
 
   copyStaticAssets = () => {
@@ -263,60 +273,82 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  buildApp = (flags: any) => {
-    const addPlatforms = () => {
-      spawnSync("npm", ["run", "add-platform", "--", ...flags.platforms], {
-        stdio: "inherit",
+  addPlatforms = (platforms: string[]) => {
+    const result = spawnSync(
+      "npm",
+      ["run", "add-platform", "--", ...platforms],
+      {
         cwd: this.appDir,
-      });
-    };
-    const runBuildContainer = (options: any): any =>
-      spawnSync(
-        "docker",
-        [
-          "run",
-          "-v",
-          `${this.appDir}:/saltcorn-mobile-app`,
-          "saltcorn/cordova-builder",
-        ],
-        options
-      );
+      }
+    );
+    console.log(result.output.toString());
+  };
 
-    if (!flags.useDocker) {
-      addPlatforms();
-      return spawnSync("npm", ["run", "build-app", "--", ...flags.platforms], {
-        stdio: "inherit",
-        cwd: this.appDir,
-      }).status;
-    } else {
-      const spawnOptions: any = {
-        cwd: ".",
+  callBuild = (platforms: string[]) => {
+    this.addPlatforms(platforms);
+    const result = spawnSync("npm", ["run", "build-app", "--", ...platforms], {
+      cwd: this.appDir,
+    });
+    console.log(result.output.toString());
+    return result.status;
+  };
+
+  runBuildContainer = (options: any): any =>
+    spawnSync(
+      "docker",
+      [
+        "run",
+        "-v",
+        `${this.appDir}:/saltcorn-mobile-app`,
+        "saltcorn/cordova-builder",
+      ],
+      options
+    );
+
+  buildApkInContainer = () => {
+    const spawnOptions: any = {
+      cwd: ".",
+    };
+    // try docker without sudo
+    let result = this.runBuildContainer(spawnOptions);
+    if (result.status === 0) {
+      console.log(result.output.toString());
+    } else if (result.status === 1 || result.status === 125) {
+      // try docker rootless
+      spawnOptions.env = {
+        DOCKER_HOST: `unix://${process.env.XDG_RUNTIME_DIR}/docker.sock`,
       };
-      // try docker without sudo
-      let result = runBuildContainer(spawnOptions);
+      result = this.runBuildContainer(spawnOptions);
       if (result.status === 0) {
         console.log(result.output.toString());
-      } else if (result.status === 1 || result.status === 125) {
-        // try docker rootless
-        spawnOptions.env = {
-          DOCKER_HOST: `unix://${process.env.XDG_RUNTIME_DIR}/docker.sock`,
-        };
-        result = runBuildContainer(spawnOptions);
-        if (result.status === 0) {
-          console.log(result.output.toString());
-        } else {
-          console.log("Unable to run the docker build image.");
-          console.log(
-            "Try installing 'docker rootless' mode, or add the current user to the 'docker' group."
-          );
-          console.log(result);
-          console.log(result.output.toString());
-        }
       } else {
-        console.log("An error occured");
+        console.log("Unable to run the docker build image.");
+        console.log(
+          "Try installing 'docker rootless' mode, or add the current user to the 'docker' group."
+        );
         console.log(result);
+        console.log(result.output.toString());
       }
-      return result.status;
+    } else {
+      console.log("An error occured");
+      console.log(result);
+    }
+    return result.status;
+  };
+
+  /**
+   * build '.apk / .ipa' files with cordova (only android is tested)
+   * @param flags
+   * @returns
+   */
+  buildApp = (flags: any) => {
+    if (!flags.useDocker) {
+      return this.callBuild(flags.platforms);
+    } else {
+      let code = this.buildApkInContainer();
+      if (code === 0 && flags.platforms.indexOf("ios") > -1)
+        code = this.callBuild(["ios"]);
+      return code;
     }
   };
 
@@ -336,6 +368,7 @@ export default class BuildAppCommand extends Command {
       "debug",
       apkName
     );
-    copySync(apkFile, join(flags.copyAppDirectory, apkName));
+    const targetFile = flags.appFileName ? flags.appFileName : apkName;
+    copySync(apkFile, join(flags.copyAppDirectory, targetFile));
   };
 }

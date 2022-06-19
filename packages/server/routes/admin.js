@@ -41,6 +41,8 @@ const {
   input,
   select,
   option,
+  fieldset,
+  legend,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -492,7 +494,7 @@ router.get(
     const dbversion = await db.getVersion(true);
     const views = await View.find();
     const execBuildMsg =
-      "This is still under development and might run a bit longer.";
+      "This is still under development and might run longer.";
 
     send_admin_page({
       res,
@@ -534,97 +536,141 @@ router.get(
                 {
                   action: "/admin/build-mobile-app",
                   method: "post",
-                  class: "border p-2",
                 },
-                input({
-                  type: "hidden",
-                  name: "_csrf",
-                  value: req.csrfToken(),
-                }),
 
-                div(
-                  { class: "container ps-2" },
+                fieldset(
+                  { class: "border p-2" },
+                  input({
+                    type: "hidden",
+                    name: "_csrf",
+                    value: req.csrfToken(),
+                  }),
                   div(
-                    { class: "row pb-2" },
-                    div({ class: "col-sm-4 fw-bold" }, "entry view"),
-                    div({ class: "col-sm-4 fw-bold" }, "platform"),
+                    { class: "container ps-2" },
+                    legend("Mobile app"),
                     div(
-                      {
-                        class: "col-sm-1 fw-bold d-flex justify-content-center",
-                      },
-                      "docker"
-                    )
-                  ),
-                  div(
-                    { class: "row pb-3" },
-                    div(
-                      { class: "col-sm-4" },
-                      select(
+                      { class: "row pb-2" },
+                      div({ class: "col-sm-4 fw-bold" }, "Entry view"),
+                      div({ class: "col-sm-4 fw-bold" }, "Platform"),
+                      div(
                         {
-                          class: "form-control",
-                          name: "entryView",
-                          id: "entryViewInput",
+                          class:
+                            "col-sm-1 fw-bold d-flex justify-content-center",
                         },
-                        views
-                          .map((view) =>
-                            option({ value: view.name }, view.name)
-                          )
-                          .join(",")
+                        "docker"
                       )
                     ),
                     div(
-                      { class: "col-sm-4" },
-
+                      { class: "row" },
                       div(
-                        { class: "container ps-0" },
+                        { class: "col-sm-4" },
+                        select(
+                          {
+                            class: "form-control",
+                            name: "entryView",
+                            id: "entryViewInput",
+                          },
+                          views
+                            .map((view) =>
+                              option({ value: view.name }, view.name)
+                            )
+                            .join(",")
+                        )
+                      ),
+                      div(
+                        { class: "col-sm-4" },
+
                         div(
-                          { class: "row" },
-                          div({ class: "col-sm-8" }, "android"),
+                          { class: "container ps-0" },
                           div(
-                            { class: "col-sm" },
-                            input({
-                              type: "checkbox",
-                              class: "form-check-input",
-                              name: "androidPlatform",
-                              id: "androidCheckboxId",
-                            })
-                          )
-                        ),
-                        div(
-                          { class: "row" },
-                          div({ class: "col-sm-8" }, "iOS"),
+                            { class: "row" },
+                            div({ class: "col-sm-8" }, "android"),
+                            div(
+                              { class: "col-sm" },
+                              input({
+                                type: "checkbox",
+                                class: "form-check-input",
+                                name: "androidPlatform",
+                                id: "androidCheckboxId",
+                              })
+                            )
+                          ),
                           div(
-                            { class: "col-sm" },
-                            input({
-                              type: "checkbox",
-                              class: "form-check-input",
-                              name: "iOSPlatform",
-                              id: "iOSCheckboxId",
-                            })
+                            { class: "row" },
+                            div({ class: "col-sm-8" }, "iOS"),
+                            div(
+                              { class: "col-sm" },
+                              input({
+                                type: "checkbox",
+                                class: "form-check-input",
+                                name: "iOSPlatform",
+                                id: "iOSCheckboxId",
+                              })
+                            )
                           )
                         )
+                      ),
+                      div(
+                        { class: "col-sm-1 d-flex justify-content-center" },
+                        input({
+                          type: "checkbox",
+                          class: "form-check-input",
+                          name: "useDocker",
+                          id: "dockerCheckboxId",
+                        })
                       )
                     ),
                     div(
-                      { class: "col-sm-1 d-flex justify-content-center" },
-                      input({
-                        type: "checkbox",
-                        class: "form-check-input",
-                        name: "useDocker",
-                        id: "dockerCheckboxId",
-                      })
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "appNameInputId",
+                            class: "form-label fw-bold",
+                          },
+                          "App file"
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "appFile",
+                          id: "appFileInputId",
+                          placeholder: "app-debug",
+                        })
+                      )
+                    ),
+                    div(
+                      { class: "row pb-3" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "serverURLInputId",
+                            class: "form-label fw-bold",
+                          },
+                          "Server URL"
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "serverURL",
+                          id: "serverURLInputId",
+                          placeholder: "http://10.0.2.2:3000",
+                        })
+                      )
                     )
-                  )
-                ),
-                button(
-                  {
-                    type: "submit",
-                    onClick: `notifyAlert('${execBuildMsg}'); press_store_button(this);`,
-                    class: "btn btn-warning",
-                  },
-                  i({ class: "fas fa-hammer pe-2" }),
+                  ),
+                  button(
+                    {
+                      type: "submit",
+                      onClick: `notifyAlert('${execBuildMsg}'); press_store_button(this);`,
+                      class: "btn btn-warning",
+                    },
+                    i({ class: "fas fa-hammer pe-2" }),
 
-                  "Build mobile app"
+                    "Build mobile app"
+                  )
                 )
               ),
               hr(),
@@ -1063,32 +1109,47 @@ router.post(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { entryView, androidPlatform, iOSPlatform, useDocker } = req.body;
-    if (entryView.length === 0) {
-      req.flash("error", `The 'entry view' may not be empty.`);
+    let {
+      entryView,
+      androidPlatform,
+      iOSPlatform,
+      useDocker,
+      appFile,
+      serverURL,
+    } = req.body;
+    if (!androidPlatform && !iOSPlatform) {
+      req.flash(
+        "error",
+        req.__("Please select at least one platform (android or iOS).")
+      );
       return res.redirect("/admin/system");
     }
-    if (!View.findOne({ name: entryView })) {
-      req.flash("error", `The view '${entryView}' does not exist.`);
+    if (!androidPlatform && useDocker) {
+      req.flash("error", req.__("Only the android build supports docker."));
       return res.redirect("/admin/system");
     }
+    if (appFile && !appFile.endsWith(".apk")) appFile = `${appFile}.apk`;
     const appOut = path.join(__dirname, "..", "mobile-app-out");
     const spawnParams = ["build-app", "-v", entryView, "-c", appOut];
-    if (useDocker) spawnParams.push("-d", "-p", "android");
-    else if (androidPlatform) spawnParams.push("-p", "android");
+    if (useDocker) spawnParams.push("-d");
+    if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) spawnParams.push("-p", "ios");
+    if (appFile) spawnParams.push("-a", appFile);
+    if (serverURL) spawnParams.push("-s", serverURL);
     const child = spawn("saltcorn", spawnParams, {
       stdio: ["ignore", "pipe", process.stderr],
       cwd: ".",
     });
+    const childOutputs = [];
     child.stdout.on("data", (data) => {
       // console.log(data.toString());
+      childOutputs.push(data.toString());
     });
     child.on("exit", async function (code, signal) {
       if (code === 0) {
         const file = await File.from_existing_file(
           appOut,
-          "app-debug.apk",
+          appFile ? appFile : "app-debug.apk",
           req.user.id
         );
         res.sendWrap(req.__(`Admin`), {
@@ -1109,6 +1170,7 @@ router.post(
               title: req.__("Build Result"),
               contents: div("Unable to build the app"),
             },
+            childOutputs.join("<br/>"),
           ],
         });
     });

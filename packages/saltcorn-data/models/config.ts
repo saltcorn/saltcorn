@@ -10,6 +10,8 @@ const { getConfigFile, configFilePath } = require("../db/connect");
 
 import { writeFileSync } from "fs";
 import { tz } from "moment-timezone";
+import utils from "../utils";
+const { isNode } = utils;
 const allTimezones = tz.names();
 const defaultTimezone = tz.guess();
 
@@ -631,13 +633,20 @@ const getAllConfigOrDefaults = async (): Promise<ConfigTypes> => {
  */
 // TODO move db specific to pg/sqlite
 const setConfig = async (key: string, value: any): Promise<void> => {
-  if (db.isSQLite)
-    await db.query(
-      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
-                    on conflict (key) do update set value = json($value)`,
-      { $key: key, $value: JSON.stringify({ v: value }) }
-    );
-  else
+  if (db.isSQLite) {
+    if (isNode()) {
+      await db.query(
+        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
+                      on conflict (key) do update set value = json($value)`,
+        { $key: key, $value: JSON.stringify({ v: value }) }
+      );
+    } else
+      await db.query(
+        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values(?1, json(?2)) 
+                      on conflict (key) do update set value = json($value)`,
+        [key, JSON.stringify({ v: value })]
+      );
+  } else
     await db.query(
       `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
                     on conflict (key) do update set value = $2`,
