@@ -643,7 +643,7 @@ const setConfig = async (key: string, value: any): Promise<void> => {
     } else
       await db.query(
         `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values(?1, json(?2)) 
-                      on conflict (key) do update set value = json($value)`,
+                      on conflict (key) do update set value = json(?2)`,
         [key, JSON.stringify({ v: value })]
       );
   } else
