@@ -497,7 +497,7 @@ const repeaterCopyValuesToForm = (form, editor) => {
     const m = name.match(/_(\d+)$/);
     if (!m || !m[1]) return;
     const ix = parseInt(m[1], 10);
-    if (typeof ix !== "number") return;
+    if (typeof ix !== "number" || isNaN(ix)) return;
     if (ix >= vs.length) $(this).remove();
   });
 };
