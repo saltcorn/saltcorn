@@ -386,7 +386,9 @@ const runMany = async (
   extra,
   { editManyQuery, getRowQuery }
 ) => {
-  const { table, fields, rows } = await editManyQuery();
+  const { table, fields, rows } = isNode()
+    ? await editManyQuery(state, extra) // quick fix
+    : await editManyQuery(state); // TODO ch change query call signature
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -612,7 +614,7 @@ const render = async ({
   });
   await form.fill_fkey_options();
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
-  return renderForm(form, !isRemote ? req.csrfToken() : false);
+  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
 };
 
 /**
@@ -964,7 +966,8 @@ module.exports = {
       });
     },
 
-    async editManyQuery(state) {
+    // TODO ch move 'extra' to query signature (quick fix)
+    async editManyQuery(state, extra) {
       const table = await Table.findOne({ id: table_id });
       const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
