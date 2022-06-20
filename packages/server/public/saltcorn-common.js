@@ -471,7 +471,7 @@ function common_done(res, isWeb = true) {
 
 const repeaterCopyValuesToForm = (form, editor) => {
   const vs = JSON.parse(editor.getString());
-  const allNames = new Set([]);
+
   const setVal = (k, ix, v) => {
     const $e = form.find(`input[name="${k}_${ix}"]`);
     if ($e.length) $e.val(v);
@@ -483,16 +483,22 @@ const repeaterCopyValuesToForm = (form, editor) => {
   vs.forEach((v, ix) => {
     Object.entries(v).forEach(([k, v]) => {
       //console.log(ix, k, typeof v, v)
-      allNames.add(k);
       if (typeof v === "boolean") setVal(k, ix, v ? "on" : "");
       else setVal(k, ix, v);
     });
   });
   //delete
-  [...allNames].forEach((k) => {
-    for (let ix = vs.length; ix < vs.length + 20; ix++) {
-      $(`input[name="${k}_${ix}"]`).remove();
-    }
+  //for (let ix = vs.length; ix < vs.length + 20; ix++) {
+  // $(`input[name="${k}_${ix}"]`).remove();
+  //}
+  $(`input[type=hidden]`).each(function () {
+    const name = $(this).attr("name");
+    if (!name) return;
+    const m = name.match(/_(\d+)$/);
+    if (!m || !m[1]) return;
+    const ix = parseInt(m[1], 10);
+    if (typeof ix !== "number") return;
+    if (ix >= vs.length) $(this).remove();
   });
 };
 function align_dropdown(id) {
