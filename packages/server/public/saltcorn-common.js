@@ -215,6 +215,40 @@ function initialize_page() {
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
   });
+
+  const validate_expression_elem = (target) => {
+    const next = target.next();
+    if (next.hasClass("expr-error")) next.remove();
+    const val = target.val();
+    if (target.hasClass("validate-expression-conditional")) {
+      const box = target
+        .closest(".form-namespace")
+        .find(`[name="${target.attr("name")}_formula"]`);
+      if (!box.prop("checked")) return;
+    }
+    if (!val) return;
+    try {
+      Function("return " + val);
+    } catch (error) {
+      target.after(`<small class="text-danger font-monospace d-block expr-error">
+      ${error.message}
+    </small>`);
+    }
+  };
+  $(".validate-expression").bind("input", function (e) {
+    const target = $(e.target);
+    validate_expression_elem(target);
+  });
+  $(".validate-expression-conditional").each(function () {
+    const theInput = $(this);
+    theInput
+      .closest(".form-namespace")
+      .find(`[name="${theInput.attr("name")}_formula"]`)
+      .bind("change", function (e) {
+        validate_expression_elem(theInput);
+      });
+  });
+
   $("form").change(apply_showif);
   apply_showif();
   apply_showif();

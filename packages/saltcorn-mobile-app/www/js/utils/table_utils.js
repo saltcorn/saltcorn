@@ -1,14 +1,27 @@
 import { fileExists, readJSON, writeJSON } from "./file_helpers.js";
 
-async function updateScTables(tablesJSON) {
+const historyFile = "update_history";
+
+async function updateScTables(tablesJSON, skipScPlugins = true) {
   saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
   for (const { table, rows } of tablesJSON.sc_tables) {
+    if (skipScPlugins && table === "_sc_plugins") continue;
     await saltcorn.data.db.deleteWhere(table);
     for (const row of rows) {
       await saltcorn.data.db.insert(table, row);
     }
   }
   saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+}
+
+export async function updateScPlugins(tablesJSON) {
+  const { table, rows } = tablesJSON.sc_tables.find(
+    ({ table }) => table === "_sc_plugins"
+  );
+  await saltcorn.data.db.deleteWhere(table);
+  for (const row of rows) {
+    await saltcorn.data.db.insert(table, row);
+  }
 }
 
 async function handleUserDefinedTables() {
@@ -35,23 +48,20 @@ async function tablesUptodate(tables, historyFile) {
   return tables.created_at.valueOf() < history.updated_at.valueOf();
 }
 
-export async function updateDbIfNecessary() {
-  const historyFile = "update_history";
-  const tablesJSON = await readJSON(
-    "tables.json",
-    `${cordova.file.applicationDirectory}${"www"}`
-  );
-  if (
+export async function dbUpdateNeeded(tablesJSON) {
+  return (
     !(await fileExists(`${cordova.file.dataDirectory}${historyFile}`)) ||
     !(await tablesUptodate(tablesJSON, historyFile))
-  ) {
-    await updateScTables(tablesJSON);
-    await saltcorn.data.state.getState().refresh_tables();
-    await handleUserDefinedTables();
-    await writeJSON(historyFile, cordova.file.dataDirectory, {
-      updated_at: new Date(),
-    });
-  }
+  );
+}
+
+export async function updateDb(tablesJSON) {
+  await updateScTables(tablesJSON);
+  await saltcorn.data.state.getState().refresh_tables();
+  await handleUserDefinedTables();
+  await writeJSON(historyFile, cordova.file.dataDirectory, {
+    updated_at: new Date(),
+  });
 }
 
 export async function getTableIds(tableNames) {

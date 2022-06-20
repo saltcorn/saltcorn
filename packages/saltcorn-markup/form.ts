@@ -620,6 +620,7 @@ const renderFormLayout = (form: Form): string => {
       } else return "";
     },
     action({
+      action_link,
       action_name,
       action_label,
       action_url,
@@ -732,6 +733,8 @@ const renderFormLayout = (form: Form): string => {
           )
         );
       }
+      if (action_link) return action_link;
+
       if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
           ? 'onClick="ajaxSubmitForm(this)" type="button"'

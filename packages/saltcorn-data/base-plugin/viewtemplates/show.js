@@ -192,6 +192,7 @@ const configuration_workflow = (req) =>
               {
                 name: "page_title",
                 label: req.__("Page title"),
+                class: "validate-expression validate-expression-conditional",
                 type: "String",
               },
               {
@@ -673,8 +674,9 @@ const run_action = async (
 ) => {
   const result = await actionQuery();
   if (result.json.error) {
-    Crash.create(e, req);
+    Crash.create({ message: result.json.error, stack: "" }, req);
   }
+  return result;
 };
 
 module.exports = {

@@ -253,6 +253,7 @@ const configuration_workflow = (req) =>
           formfields.push({
             name: "include_fml",
             label: req.__("Row inclusion formula"),
+            class: "validate-expression",
             sublabel: req.__("Only include rows where this formula is true"),
             type: "String",
           });
@@ -517,9 +518,10 @@ const run = async (
       const target = `/view/${encodeURIComponent(
         view_to_create
       )}${stateToQueryString(state)}`;
-      const hrefVal = isWeb(extraOpts.req) || create_view_display === "Popup"
-        ? target
-        : `javascript:execLink('${target}');`;
+      const hrefVal =
+        isWeb(extraOpts.req) || create_view_display === "Popup"
+          ? target
+          : `javascript:execLink('${target}');`;
       create_link = link_view(
         hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,

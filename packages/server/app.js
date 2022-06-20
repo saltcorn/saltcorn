@@ -100,7 +100,9 @@ const getApp = async (opts = {}) => {
     })
   );
   // extenetede url encoding in use
-  app.use(express.urlencoded({ limit: "5mb", extended: true }));
+  app.use(
+    express.urlencoded({ limit: "5mb", extended: true, parameterLimit: 50000 })
+  );
 
   // cookies
   app.use(require("cookie-parser")());

@@ -502,8 +502,7 @@ const configTypes: ConfigTypes = {
     label: "Plugins (Extensions) Store endpoint",
     default: "https://store.saltcorn.com/api/extensions",
     //root_only: true,
-    blurb:
-        "The endpoint of plugins store.",
+    blurb: "The endpoint of plugins store.",
   },
   /** @type {object} */
   packs_store_endpoint: {
@@ -512,8 +511,27 @@ const configTypes: ConfigTypes = {
     label: "Packs Store endpoint",
     default: "https://store.saltcorn.com/api/packs",
     //root_only: true,
-    blurb:
-        "The endpoint of packs store.",
+    blurb: "The endpoint of packs store.",
+  },
+  auto_backup_frequency: {
+    type: "String",
+    label: "Auto backup frequency",
+    default: "Never",
+  },
+  auto_backup_destination: {
+    type: "String",
+    label: "Auto backup Destination",
+    default: "Saltcorn files",
+  },
+  auto_backup_directory: {
+    type: "String",
+    label: "Auto backup directory",
+    default: "",
+  },
+  auto_backup_expire_days: {
+    type: "Integer",
+    label: "Auto backup expiration days",
+    default: null,
   },
 };
 // TODO move list of languages from code to configuration

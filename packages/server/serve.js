@@ -43,6 +43,7 @@ const {
   eachTenant,
   getAllTenants,
 } = require("@saltcorn/admin-models/models/tenant");
+const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**
@@ -135,7 +136,13 @@ const onMessageFromWorker =
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
       masterState.started = true;
-      runScheduler({ port, watchReaper, disableScheduler, eachTenant });
+      runScheduler({
+        port,
+        watchReaper,
+        disableScheduler,
+        eachTenant,
+        auto_backup_now,
+      });
       require("./systemd")({ port });
       return true;
     } else if (msg === "RestartServer") {
@@ -261,6 +268,13 @@ module.exports =
         });
       } else {
         await nonGreenlockWorkerSetup(appargs, port);
+        runScheduler({
+          port,
+          watchReaper,
+          disableScheduler,
+          eachTenant,
+          auto_backup_now,
+        });
       }
       Trigger.emitEvent("Startup");
     } else {

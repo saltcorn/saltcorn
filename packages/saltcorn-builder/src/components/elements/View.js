@@ -105,6 +105,12 @@ const ViewSettings = () => {
       setProp((prop) => (prop[key] = target_value));
     }
   };
+  let errorString = false;
+  try {
+    Function("return " + extra_state_fml);
+  } catch (error) {
+    errorString = error.message;
+  }
   return (
     <div>
       <div>
@@ -163,6 +169,11 @@ const ViewSettings = () => {
               setProp((prop) => (prop.extra_state_fml = e.target.value))
             }
           />
+          {errorString ? (
+            <small className="text-danger font-monospace d-block">
+              {errorString}
+            </small>
+          ) : null}
         </Fragment>
       )}
       {view ? (

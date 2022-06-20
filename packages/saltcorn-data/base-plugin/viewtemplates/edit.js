@@ -7,9 +7,12 @@ const Field = require("../../models/field");
 const File = require("../../models/file");
 const Table = require("../../models/table");
 const User = require("../../models/user");
+const Crash = require("../../models/crash");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
+const Trigger = require("../../models/trigger");
+
 const { getState } = require("../../db/state");
 const { text, text_attr } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
@@ -31,6 +34,7 @@ const {
   stateFieldsToWhere,
   stateFieldsToQuery,
   strictParseInt,
+  run_action_column,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -39,6 +43,8 @@ const {
   parse_view_select,
   get_view_link_query,
   objToQueryString,
+  action_url,
+  action_link,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -48,10 +54,13 @@ const {
 } = require("../../models/layout");
 const { asyncMap, isWeb } = require("../../utils");
 
+const builtInActions = ["Save", "SaveAndContinue", "Reset", "GoBack", "Delete"];
+
 /**
  * @param {object} req
  * @returns {Workflow}
  */
+
 const configuration_workflow = (req) =>
   new Workflow({
     steps: [
@@ -78,13 +87,13 @@ const configuration_workflow = (req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
 
-          const actions = [
-            "Save",
-            "SaveAndContinue",
-            "Reset",
-            "GoBack",
-            "Delete",
-          ];
+          const actions = [...builtInActions];
+          const triggers = await Trigger.find({
+            when_trigger: { or: ["API call", "Never"] },
+          });
+          triggers.forEach((tr) => {
+            actions.push(tr.name);
+          });
           const actionConfigForms = {
             Delete: [
               {
@@ -284,6 +293,7 @@ const configuration_workflow = (req) =>
                     type: "String",
                     name: "expression",
                     label: "Formula",
+                    class: "validate-expression",
                     sublabel:
                       "if this formula evaluates to true, use the following view",
                   },
@@ -376,7 +386,9 @@ const runMany = async (
   extra,
   { editManyQuery, getRowQuery }
 ) => {
-  const { table, fields, rows } = await editManyQuery();
+  const { table, fields, rows } = isNode()
+    ? await editManyQuery(state, extra) // quick fix
+    : await editManyQuery(state); // TODO ch change query call signature
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -405,7 +417,15 @@ const runMany = async (
  * @throws {InvalidConfiguration}
  * @returns {Promise<void>}
  */
-const transformForm = async ({ form, table, req, row, res, getRowQuery }) => {
+const transformForm = async ({
+  form,
+  table,
+  req,
+  row,
+  res,
+  getRowQuery,
+  viewname,
+}) => {
   await traverse(form.layout, {
     action(segment) {
       if (segment.action_name === "Delete") {
@@ -415,6 +435,19 @@ const transformForm = async ({ form, table, req, row, res, getRowQuery }) => {
           segment.type = "blank";
           segment.contents = "";
         }
+      } else if (
+        !["Sign up", ...builtInActions].includes(segment.action_name) &&
+        !segment.action_name.startsWith("Login")
+      ) {
+        const url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid"
+        );
+        segment.action_link = action_link(url, req, segment);
       }
     },
     join_field(segment) {
@@ -580,8 +613,8 @@ const render = async ({
     }
   });
   await form.fill_fkey_options();
-  await transformForm({ form, table, req, row, res, getRowQuery });
-  return renderForm(form, !isRemote ? req.csrfToken() : false);
+  await transformForm({ form, table, req, row, res, getRowQuery, viewname });
+  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
 };
 
 /**
@@ -643,6 +676,7 @@ const runPost = async (
       ? { [table.pk_name]: body[table.pk_name] }
       : undefined,
     getRowQuery,
+    viewname,
   });
   form.validate(body);
   if (form.hasErrors) {
@@ -835,6 +869,34 @@ const authorise_post = async (
 ) => {
   return await authorizePostQuery(body, table_id);
 };
+
+/**
+ * @param {number} table_id
+ * @param {*} viewname
+ * @param {object} opts
+ * @param {object[]} opts.columns
+ * @param {*} opts.layout
+ * @param {*} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {*} optsTwo.res
+ * @returns {Promise<object>}
+ */
+const run_action = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  body,
+  { req, res },
+  { actionQuery }
+) => {
+  const result = await actionQuery();
+  if (result.json.error) {
+    Crash.create({ message: result.json.error, stack: "" }, req);
+  }
+  return result;
+};
+
 module.exports = {
   /** @type {string} */
   name: "Edit",
@@ -904,7 +966,8 @@ module.exports = {
       });
     },
 
-    async editManyQuery(state) {
+    // TODO ch move 'extra' to query signature (quick fix)
+    async editManyQuery(state, extra) {
       const table = await Table.findOne({ id: table_id });
       const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -973,7 +1036,29 @@ module.exports = {
         [view_select.field_name]: row_id,
       });
     },
+    async actionQuery() {
+      const body = req.body;
+      const col = columns.find(
+        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+      );
+      const table = await Table.findOne({ id: table_id });
+      const row = body.id ? await table.getRow({ id: body.id }) : undefined;
+      try {
+        const result = await run_action_column({
+          col,
+          req,
+          table,
+          row,
+          referrer: req.get("Referrer"),
+        });
+        return { json: { success: "ok", ...(result || {}) } };
+      } catch (e) {
+        return { json: { error: e.message || e } };
+      }
+    },
   }),
+  routes: { run_action },
+
   configCheck: async (view) => {
     const {
       name,

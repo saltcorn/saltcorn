@@ -151,6 +151,7 @@ const configuration_workflow = (req) =>
               {
                 name: "include_fml",
                 label: req.__("Row inclusion formula"),
+                class: "validate-expression",
                 sublabel: req.__(
                   "Only include rows where this formula is true"
                 ),

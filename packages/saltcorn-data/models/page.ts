@@ -243,6 +243,18 @@ class Page {
         segment.type = "blank";
         segment.contents = html;
       },
+      link: (segment) => {
+        if (segment.transfer_state) {
+          segment.url +=
+            `?` +
+            Object.entries(querystate || {})
+              .map(
+                ([k, v]: any) =>
+                  `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+              )
+              .join("&");
+        }
+      },
     });
 
     translateLayout(this.layout, extraArgs.req.getLocale());

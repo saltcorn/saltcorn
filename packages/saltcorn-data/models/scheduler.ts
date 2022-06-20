@@ -9,6 +9,8 @@ import db from "../db";
 const { getState } = require("../db/state");
 import fetch from "node-fetch";
 import EventLog from "./eventlog";
+import mocks from "../tests/mocks";
+const { mockReqRes } = mocks;
 
 /**
  * @param {Date} date
@@ -22,7 +24,20 @@ const sleepUntil = (date: Date, plusSeconds: number): Promise<void> => {
   const ms = waitTill.getTime() - now.getTime();
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+const intervalIsNow = async (name: string): Promise<boolean> => {
+  const state = getState();
+  const cfgField = `next_${name.toLowerCase()}_event`;
+  const now = new Date();
+  let due = state.getConfigCopy(cfgField, false);
+  //console.log({due, name, now});
+  if (!due) {
+    //first run, set rnd due
+    return false;
+  }
+  due = new Date(due);
 
+  return due < now;
+};
 /**
  * @param {string} name
  * @param {number} hours
@@ -111,6 +126,7 @@ const runScheduler = async ({
   eachTenant = (f: () => Promise<any>) => {
     return f();
   },
+  auto_backup_now = () => {},
 }:
   | {
       stop_when?: () => boolean;
@@ -128,6 +144,11 @@ const runScheduler = async ({
 
     stopit = await stop_when();
     if (stopit) return;
+    const isHourly = await intervalIsNow("Hourly");
+    const isDaily = await intervalIsNow("Daily");
+    const isWeekly = await intervalIsNow("Weekly");
+    //console.log({ isHourly, isDaily, isWeekly, now: new Date() });
+
     await eachTenant(async () => {
       const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
@@ -151,7 +172,7 @@ const runScheduler = async ({
       ];
       for (const trigger of allTriggers) {
         try {
-          await trigger.runWithoutRow();
+          await trigger.runWithoutRow(mockReqRes);
         } catch (e) {
           if (isRoot)
             await Crash.create(e, {
@@ -161,6 +182,14 @@ const runScheduler = async ({
         }
       }
     });
+    //auto backup
+    const auto_backup_freq = getState().getConfig("auto_backup_frequency");
+    if (
+      (auto_backup_freq === "Daily" && isDaily) ||
+      (auto_backup_freq === "Weekly" && isWeekly)
+    ) {
+      await auto_backup_now();
+    }
   };
 
   let i = 0;

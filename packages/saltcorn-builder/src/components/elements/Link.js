@@ -95,6 +95,7 @@ const LinkSettings = () => {
     link_bgcol: node.data.props.link_bgcol,
     link_bordercol: node.data.props.link_bordercol,
     link_textcol: node.data.props.link_textcol,
+    transfer_state: node.data.props.transfer_state,
   }));
   const {
     actions: { setProp },
@@ -107,6 +108,7 @@ const LinkSettings = () => {
     target_blank,
     link_src,
     in_modal,
+    transfer_state,
   } = node;
   const options = useContext(optionsCtx);
   const setAProp = (key) => (e) => {
@@ -154,7 +156,9 @@ const LinkSettings = () => {
                 <option>URL</option>
                 {(options.pages || []).length > 0 && <option>Page</option>}
                 {(options.views || []).length > 0 &&
-                  options.mode === "page" && <option>View</option>}
+                  ["page", "filter"].includes(options.mode) && (
+                    <option>View</option>
+                  )}
               </select>
             </td>
           </tr>
@@ -187,8 +191,10 @@ const LinkSettings = () => {
                   onChange={setAProp("url")}
                 >
                   <option></option>
-                  {(options.pages || []).map((p) => (
-                    <option value={`/page/${p.name}`}>{p.name}</option>
+                  {(options.pages || []).map((p, ix) => (
+                    <option key={ix} value={`/page/${p.name}`}>
+                      {p.name}
+                    </option>
                   ))}
                 </select>
               </td>
@@ -206,8 +212,8 @@ const LinkSettings = () => {
                   onChange={setAProp("url")}
                 >
                   <option></option>
-                  {(options.views || []).map((p) => (
-                    <option value={`/view/${p.name}`}>
+                  {(options.views || []).map((p, ix) => (
+                    <option key={ix} value={`/view/${p.name}`}>
                       {p.name} [{p.viewtemplate}]
                     </option>
                   ))}
@@ -261,6 +267,22 @@ const LinkSettings = () => {
         />
         <label className="form-check-label">Open in popup modal?</label>
       </div>
+
+      {["filter", "page"].includes(options.mode) && (
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            name="block"
+            type="checkbox"
+            checked={transfer_state}
+            onChange={(e) =>
+              setProp((prop) => (prop.transfer_state = e.target.checked))
+            }
+          />
+          <label className="form-check-label">Transfer state</label>
+        </div>
+      )}
+
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
     </div>
@@ -300,6 +322,7 @@ Link.craft = {
       "link_bordercol",
       "link_textcol",
       "in_modal",
+      "transfer_state",
     ],
   },
 };

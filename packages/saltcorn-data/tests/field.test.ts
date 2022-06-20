@@ -68,8 +68,14 @@ describe("Field", () => {
     const f = await Field.findOne({ name: "favbook" });
     await f.fill_fkey_options();
     expect(f.options).toContainEqual({ label: "Leo Tolstoy", value: 2 });
-    if (db.isSQLite) expect(f.sql_type).toBe('int references "books" ("id")');
-    else expect(f.sql_type).toBe('int references "public"."books" ("id")');
+    if (db.isSQLite)
+      expect(f.sql_type).toBe(
+        'int constraint "patients_favbook_fkey" references "books" ("id")'
+      );
+    else
+      expect(f.sql_type).toBe(
+        'int constraint "patients_favbook_fkey" references "public"."books" ("id")'
+      );
 
     expect(f.is_fkey).toBe(true);
     expect(f.sql_bare_type).toBe("int");
@@ -263,6 +269,80 @@ describe("user presets", () => {
   const presets = field.presets;
   assertIsSet(presets);
   expect(presets.LoggedIn({ user: { id: 5 } })).toBe(5);
+});
+
+describe("Field update", () => {
+  // type to type when empty
+  // fkey change target table
+  it("creates table", async () => {
+    await Table.create("changingtable");
+  });
+  it("changes to on delete cascade", async () => {
+    const table = await Table.findOne({ name: "changingtable" });
+
+    const fc = await Field.create({
+      table,
+      name: "read1",
+      label: "Reading",
+      type: "Key to books",
+      required: false,
+      attributes: { summary_field: "author" },
+    });
+    if (!db.isSQLite) {
+      await fc.update({ attributes: { on_delete_cascade: true } });
+      await fc.update({ attributes: { on_delete_cascade: false } });
+    }
+  });
+  it("changes to required", async () => {
+    const table = await Table.findOne({ name: "changingtable" });
+
+    const fc = await Field.create({
+      table,
+      name: "read3",
+      label: "Reading",
+      type: "Key to books",
+      required: false,
+      attributes: { summary_field: "author" },
+    });
+    if (!db.isSQLite) {
+      await fc.update({ required: true });
+      await fc.update({ required: false });
+    }
+  });
+  it("changes int to float", async () => {
+    const table = await Table.findOne({ name: "changingtable" });
+
+    const fc = await Field.create({
+      table,
+      name: "beans",
+      label: "bean count",
+      type: "Integer",
+    });
+    //db.set_sql_logging();
+    if (!db.isSQLite) {
+      await fc.update({ type: "Float" });
+    }
+  });
+  it("changes fkey ref table", async () => {
+    const table = await Table.findOne({ name: "changingtable" });
+
+    const fc = await Field.create({
+      table,
+      name: "read2",
+      label: "Reading",
+      type: "Key to books",
+      required: false,
+      attributes: { summary_field: "author" },
+    });
+    //db.set_sql_logging();
+
+    if (!db.isSQLite) {
+      await fc.update({
+        type: "Key to patients",
+        attributes: { summary_field: "author" },
+      });
+    }
+  });
 });
 
 describe("Field.distinct_values", () => {

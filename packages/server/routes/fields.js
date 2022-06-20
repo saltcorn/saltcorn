@@ -300,7 +300,9 @@ const fieldFlow = (req) =>
                   name: "also_delete_file",
                   type: "Bool",
                   label: req.__("Cascade delete to file"),
-                  sublabel: req.__("Deleting a row will also delete the file referenced by this field")
+                  sublabel: req.__(
+                    "Deleting a row will also delete the file referenced by this field"
+                  ),
                 },
               ],
             });
@@ -337,6 +339,7 @@ const fieldFlow = (req) =>
                 label: req.__("Formula"),
                 // todo sublabel
                 type: "String",
+                class: "validate-expression",
                 validator: expressionValidator,
               }),
               new Field({
