@@ -443,6 +443,7 @@ const submit_msg_ajax = async (
     participant_maxread_field
   );
   if (!queryResult.json.error) {
+    const msgid = queryResult.json.msgid;
     const v = await View.findOne({ name: msgview });
     const myhtml = await v.run({ id: msgid.success }, { req, res });
     const newreq = { ...req, user: { ...req.user, id: 0 } };
@@ -586,7 +587,14 @@ module.exports = {
         partRow.id
       );
     },
-    async submitAjaxQuery(msg_relation, participant_field, body, msgform) {
+    async submitAjaxQuery(
+      msg_relation,
+      participant_field,
+      body,
+      msgform,
+      msgsender_field,
+      participant_maxread_field
+    ) {
       const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
@@ -638,7 +646,7 @@ module.exports = {
           );
         }
         return {
-          json: {},
+          json: { msgid },
         };
       } else {
         return {

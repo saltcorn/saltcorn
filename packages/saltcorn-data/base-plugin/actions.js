@@ -610,7 +610,10 @@ module.exports = {
           attributes: { mode: "application/javascript" },
           validator(s) {
             try {
-              Function(s);
+              let AsyncFunction = Object.getPrototypeOf(
+                async function () {}
+              ).constructor;
+              AsyncFunction(s);
               return true;
             } catch (e) {
               return e.message;

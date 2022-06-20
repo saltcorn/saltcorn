@@ -618,6 +618,7 @@ router.get(
         console: fakeConsole,
         table,
         row,
+        req,
         ...(row || {}),
         Table,
         user: req.user,

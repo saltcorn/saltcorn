@@ -9,6 +9,8 @@ import db from "../db";
 const { getState } = require("../db/state");
 import fetch from "node-fetch";
 import EventLog from "./eventlog";
+import mocks from "../tests/mocks";
+const { mockReqRes } = mocks;
 
 /**
  * @param {Date} date
@@ -170,7 +172,7 @@ const runScheduler = async ({
       ];
       for (const trigger of allTriggers) {
         try {
-          await trigger.runWithoutRow();
+          await trigger.runWithoutRow(mockReqRes);
         } catch (e) {
           if (isRoot)
             await Crash.create(e, {
