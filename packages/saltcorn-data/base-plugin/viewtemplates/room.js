@@ -443,6 +443,7 @@ const submit_msg_ajax = async (
     participant_maxread_field
   );
   if (!queryResult.json.error) {
+    const msgid = queryResult.json.msgid;
     const v = await View.findOne({ name: msgview });
     const myhtml = await v.run({ id: msgid.success }, { req, res });
     const newreq = { ...req, user: { ...req.user, id: 0 } };
@@ -645,7 +646,7 @@ module.exports = {
           );
         }
         return {
-          json: {},
+          json: { msgid },
         };
       } else {
         return {
