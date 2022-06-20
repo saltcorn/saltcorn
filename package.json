@@ -5,7 +5,8 @@
     "jest": "^27.1.0",
     "supertest": "^4.0.2",
     "typedoc": "^0.22.11",
-    "typescript": "^4.4.4"
+    "typescript": "^4.4.4",
+    "minipass": "3.1.6"
   },
   "scripts": {
     "dev": "nodemon packages/saltcorn/index.js",
