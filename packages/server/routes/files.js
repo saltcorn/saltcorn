@@ -10,7 +10,7 @@ const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
-const sharp = require("sharp");
+const resizer = require("resize-with-sharp-or-jimp");
 
 const {
   mkTable,
@@ -214,7 +214,11 @@ router.get(
         }
         const fnm = `${file.location}_w${width}`;
         if (!fs.existsSync(fnm)) {
-          await sharp(file.location).resize({ width }).toFile(fnm);
+          await resizer({
+            fromFileName: file.location,
+            width,
+            toFileName: fnm,
+          });
         }
         res.sendFile(fnm);
       }
