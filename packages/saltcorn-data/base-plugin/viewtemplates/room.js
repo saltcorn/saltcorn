@@ -586,7 +586,14 @@ module.exports = {
         partRow.id
       );
     },
-    async submitAjaxQuery(msg_relation, participant_field, body, msgform) {
+    async submitAjaxQuery(
+      msg_relation,
+      participant_field,
+      body,
+      msgform,
+      msgsender_field,
+      participant_maxread_field
+    ) {
       const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
