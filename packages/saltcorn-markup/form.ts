@@ -687,7 +687,9 @@ const renderFormLayout = (form: Form): string => {
             );
           } else {
             return mkBtn(
-              `onClick="${confirmStr}local_post('${action_url}', {after_delete_url:'${dest}'})" type="button"`
+              `onClick="${confirmStr}local_post('${action_url}', {after_delete_url:'${
+                dest || "/"
+              }'})" type="button"`
             );
           }
         } else return "";
