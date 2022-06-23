@@ -582,3 +582,9 @@ function unique_field_from_rows(
     }
   }
 }
+
+function cancel_form(form) {
+  if (!form) return;
+  $(form).append(`<input type="hidden" name="_cancel" value="on">`);
+  $(form).submit();
+}

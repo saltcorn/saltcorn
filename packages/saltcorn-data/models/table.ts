@@ -594,7 +594,9 @@ class Table implements AbstractTable {
       await db.insert(this.name + "__history", {
         ...v,
         [pk_name]: id,
-        _version: 1,
+        _version: {
+          next_version_by_id: +id,
+        },
         _userid,
         _time: new Date(),
       });

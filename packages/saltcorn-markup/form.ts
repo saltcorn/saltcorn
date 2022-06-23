@@ -672,14 +672,24 @@ const renderFormLayout = (form: Form): string => {
 
       if (action_name === "Delete") {
         if (action_url) {
-          const dest = (configuration && configuration.after_delete_url) || "/";
+          const dest = configuration && configuration.after_delete_url;
           if (isNode && !form.req?.smr) {
             return mkBtn(
-              `onClick="${confirmStr}ajax_post('${action_url}', {success:()=>window.location.href='${dest}'})" type="button"`
+              `onClick="${confirmStr}ajax_post('${action_url}', {success:()=>{${
+                form.req?.xhr ? `close_saltcorn_modal();` : ""
+              }${
+                dest
+                  ? `window.location.href='${dest}';`
+                  : form.req?.xhr
+                  ? `location.reload();`
+                  : `history.back();`
+              }}})" type="button"`
             );
           } else {
             return mkBtn(
-              `onClick="${confirmStr}local_post('${action_url}', {after_delete_url:'${dest}'})" type="button"`
+              `onClick="${confirmStr}local_post('${action_url}', {after_delete_url:'${
+                dest || "/"
+              }'})" type="button"`
             );
           }
         } else return "";
@@ -687,6 +697,11 @@ const renderFormLayout = (form: Form): string => {
       if (action_name === "Reset") {
         return mkBtn(
           `onClick="${confirmStr}$(this).closest('form').trigger('reset')" type="button"`
+        );
+      }
+      if (action_name === "Cancel") {
+        return mkBtn(
+          `onClick="${confirmStr}cancel_form($(this).closest('form'))" type="button"`
         );
       }
       if (action_name === "GoBack") {
