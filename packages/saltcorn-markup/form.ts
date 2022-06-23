@@ -697,6 +697,11 @@ const renderFormLayout = (form: Form): string => {
           `onClick="${confirmStr}$(this).closest('form').trigger('reset')" type="button"`
         );
       }
+      if (action_name === "Cancel") {
+        return mkBtn(
+          `onClick="${confirmStr}cancel_form($(this).closest('form'))" type="button"`
+        );
+      }
       if (action_name === "GoBack") {
         const isWeb = isNode && !form.req?.smr;
         const reload = configuration.reload_after ? "reload_on_init();" : "";
