@@ -84,6 +84,8 @@ class ReleaseCommand extends Command {
         cwd: `packages/${dir}/`,
       });
 
+    const rootPackageJson = require(`../../../../package.json`);
+
     compileTsFiles();
     //for each package:
     // 1. update version
@@ -104,7 +106,11 @@ class ReleaseCommand extends Command {
     // 3. run npm update
     // 3. publish
     updatePkgJson("saltcorn-cli");
-    spawnSync("npm", ["update","--legacy-peer-deps"], {
+    fs.writeFileSync(
+      `package.json`,
+      JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
+    );
+    spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
@@ -113,7 +119,7 @@ class ReleaseCommand extends Command {
       cwd: `packages/saltcorn-cli/`,
     });
     publish("saltcorn-cli");
-
+    fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
