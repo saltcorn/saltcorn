@@ -55,7 +55,14 @@ const {
 const { asyncMap, isWeb } = require("../../utils");
 const db = require("../../db");
 
-const builtInActions = ["Save", "SaveAndContinue", "Reset", "GoBack", "Delete"];
+const builtInActions = [
+  "Save",
+  "SaveAndContinue",
+  "Reset",
+  "GoBack",
+  "Delete",
+  "Cancel",
+];
 
 /**
  * @param {object} req
@@ -688,8 +695,9 @@ const runPost = async (
     getRowQuery,
     viewname,
   });
+  const cancel = body._cancel;
   form.validate(body);
-  if (form.hasErrors) {
+  if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options();
     res.sendWrap(
@@ -703,6 +711,9 @@ const runPost = async (
     if (typeof id === "undefined") {
       const use_fixed = await fill_presets(table, req, fixed);
       row = { ...use_fixed, ...form.values };
+    } else if (cancel) {
+      //get row
+      row = await table.getRow({ id });
     } else {
       row = { ...form.values };
     }
@@ -738,51 +749,53 @@ const runPost = async (
       }
     }
     const originalID = id;
-    if (typeof id === "undefined") {
-      const ins_res = await tryInsertQuery(row);
-      if (ins_res.success) {
-        id = ins_res.success;
-        row[pk.name] = id;
-      } else {
-        req.flash("error", text_attr(ins_res.error));
-        res.sendWrap(
-          viewname,
-          renderForm(form, req.csrfToken ? req.csrfToken() : false)
-        );
-        return;
-      }
-    } else {
-      const upd_res = await tryUpdateQuery(row, id);
-      if (upd_res.error) {
-        req.flash("error", text_attr(upd_res.error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-        return;
-      }
-    }
-
-    for (const field of form.fields.filter((f) => f.isRepeat)) {
-      const childTable = Table.findOne({ id: field.metadata?.table_id });
-      for (const childRow of form.values[field.name]) {
-        childRow[field.metadata?.relation] = id;
-        if (childRow[childTable.pk_name]) {
-          const upd_res = await childTable.tryUpdateRow(
-            childRow,
-            childRow[childTable.pk_name]
-          );
-          if (upd_res.error) {
-            req.flash("error", text_attr(upd_res.error));
-            res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-            return;
-          }
+    if (!cancel) {
+      if (typeof id === "undefined") {
+        const ins_res = await tryInsertQuery(row);
+        if (ins_res.success) {
+          id = ins_res.success;
+          row[pk.name] = id;
         } else {
-          const ins_res = await childTable.tryInsertRow(
-            childRow,
-            req.user ? +req.user.id : undefined
+          req.flash("error", text_attr(ins_res.error));
+          res.sendWrap(
+            viewname,
+            renderForm(form, req.csrfToken ? req.csrfToken() : false)
           );
-          if (ins_res.error) {
-            req.flash("error", text_attr(ins_res.error));
-            res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-            return;
+          return;
+        }
+      } else {
+        const upd_res = await tryUpdateQuery(row, id);
+        if (upd_res.error) {
+          req.flash("error", text_attr(upd_res.error));
+          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+          return;
+        }
+      }
+
+      for (const field of form.fields.filter((f) => f.isRepeat)) {
+        const childTable = Table.findOne({ id: field.metadata?.table_id });
+        for (const childRow of form.values[field.name]) {
+          childRow[field.metadata?.relation] = id;
+          if (childRow[childTable.pk_name]) {
+            const upd_res = await childTable.tryUpdateRow(
+              childRow,
+              childRow[childTable.pk_name]
+            );
+            if (upd_res.error) {
+              req.flash("error", text_attr(upd_res.error));
+              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              return;
+            }
+          } else {
+            const ins_res = await childTable.tryInsertRow(
+              childRow,
+              req.user ? +req.user.id : undefined
+            );
+            if (ins_res.error) {
+              req.flash("error", text_attr(ins_res.error));
+              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              return;
+            }
           }
         }
       }

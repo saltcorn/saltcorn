@@ -162,6 +162,13 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
   });
 }
 
+function close_saltcorn_modal() {
+  var myModalEl = document.getElementById("scmodal");
+  if (!myModalEl) return;
+  var modal = bootstrap.Modal.getInstance(myModalEl);
+  if (modal) modal.dispose();
+}
+
 function ajax_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal", class="modal">
@@ -179,9 +186,7 @@ function ajax_modal(url, opts = {}) {
     </div>
   </div>`);
   } else if ($("#scmodal").hasClass("show")) {
-    var myModalEl = document.getElementById("scmodal");
-    var modal = bootstrap.Modal.getInstance(myModalEl);
-    modal.dispose();
+    close_saltcorn_modal();
   }
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   else $("#scmodal").removeClass("no-submit-reload");

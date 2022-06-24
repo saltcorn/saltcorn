@@ -664,7 +664,7 @@ const get_viewable_fields = (
           { class: "dropdown" },
           button(
             {
-              class: "btn btn-sm btn-outline-secondary dropdown-toggle",
+              class: "btn btn-sm btn-xs btn-outline-secondary dropdown-toggle",
               "data-boundary": "viewport",
               type: "button",
               id: `actiondd${r.id}`,
