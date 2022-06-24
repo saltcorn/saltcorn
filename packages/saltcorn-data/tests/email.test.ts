@@ -37,26 +37,26 @@ describe("MJML Mail Transformations", () => {
   it("transform simple to html", async () => {
     const v = await View.findOne({ name: "authorshow" });
     const html = await email.viewToEmailHtml(v, { id: 1 });
-    //writeFileSync("emailout1", html);
+    writeFileSync("emailout1", trimLines(html));
     expect(trimLines(html)).toBe(
       trimLines(`<!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title></title><!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]--><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style type="text/css">#outlook a { padding:0; }
       body { margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%; }
       table, td { border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt; }
       img { border:0;height:auto;line-height:100%; outline:none;text-decoration:none;-ms-interpolation-mode:bicubic; }
       p { display:block;margin:13px 0; }</style><!--[if mso]>
-    <noscript>
-    <xml>
-    <o:OfficeDocumentSettings>
+      <noscript>
+      <xml>
+      <o:OfficeDocumentSettings>
       <o:AllowPNG/>
       <o:PixelsPerInch>96</o:PixelsPerInch>
-    </o:OfficeDocumentSettings>
-    </xml>
-    </noscript>
-    <![endif]--><!--[if lte mso 11]>
-    <style type="text/css">
+      </o:OfficeDocumentSettings>
+      </xml>
+      </noscript>
+      <![endif]--><!--[if lte mso 11]>
+      <style type="text/css">
       .mj-outlook-group-fix { width:100% !important; }
-    </style>
-    <![endif]--><style type="text/css"></style><style type="text/css"></style></head><body style="word-spacing:normal;"><div></div></body></html>`)
+      </style>
+      <![endif]--><!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css"><style type="text/css">@import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);</style><!--<![endif]--><style type="text/css"></style><style type="text/css"></style></head><body style="word-spacing:normal;"><div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;">Herman Melville</div></div></body></html>`)
     );
   });
   it("transform complex to html", async () => {
