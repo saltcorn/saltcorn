@@ -51,7 +51,7 @@ const viewToEmailHtml = async (view: any, state: any) => {
   const html = mjml2html(mjmlMarkup, { minify: true });
   if (html.errors && html.errors.length > 0) {
     html.errors.forEach((e) => {
-      console.error("MJML error: ", e);
+      //console.error("MJML error: ", e);
     });
   }
 
