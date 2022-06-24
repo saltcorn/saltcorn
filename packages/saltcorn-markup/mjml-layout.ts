@@ -149,7 +149,7 @@ const render = ({
       return wrap(segment, isTop, ix, blockDispatch[segment.type](segment, go));
     }
     if (segment.type === "blank") {
-      return wrap(segment, isTop, ix, segment.contents || "");
+      return wrap(segment, isTop, ix, mjml.text(segment.contents) || "");
     }
 
     if (segment.type === "view") {
