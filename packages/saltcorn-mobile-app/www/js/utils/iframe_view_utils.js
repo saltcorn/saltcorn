@@ -322,6 +322,16 @@ async function clear_state() {
   await parent.handleRoute(parent.currentLocation(), undefined);
 }
 
+async function view_post(viewname, route, data, onDone) {
+  const response = await parent.apiCall({
+    method: "POST",
+    path: "/view/" + viewname + "/" + route,
+    body: typeof data === "string" ? data : JSON.stringify(data),
+  });
+  if (onDone) onDone(response.data);
+  common_done(response);
+}
+
 function reload_on_init() {
   console.log("not yet supported");
 }

@@ -101,6 +101,7 @@ export default class BuildAppCommand extends Command {
       "saltcorn.css",
       "codemirror.js",
       "codemirror.css",
+      "socket.io.min.js",
     ];
     for (const srcFile of srcFiles) {
       copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));

@@ -207,15 +207,19 @@ class Field implements AbstractField {
   }
 
   /**
-   * Fill fkey options???
-   * @param {boolean} [force_allow_none = false]
-   * @param {object} where
-   * @returns {Promise<void>}
+   * Fills 'this.options' with values available via foreign key
+   * Could be used for <options /> in a <select/> to select a user
+   * @param [force_allow_none = false]
+   * @param where
+   * @param extraCtx
+   * @param optionsQuery remote/local query to load rows from 'reftable_name'
+   * @returns
    */
   async fill_fkey_options(
     force_allow_none: boolean = false,
     where0?: Where,
-    extraCtx: any = {}
+    extraCtx: any = {},
+    optionsQuery?: any
   ): Promise<void> {
     const where =
       where0 ||
@@ -262,10 +266,17 @@ class Field implements AbstractField {
       (this.type !== "File" ||
         typeof this.attributes.select_file_where !== "undefined")
     ) {
-      const rows = await db.select(
-        this.reftable_name,
-        this.type === "File" ? this.attributes.select_file_where : where
-      );
+      const rows = !optionsQuery
+        ? await db.select(
+            this.reftable_name,
+            this.type === "File" ? this.attributes.select_file_where : where
+          )
+        : await optionsQuery(
+            this.reftable_name,
+            this.type,
+            this.attributes,
+            where
+          );
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : "id");

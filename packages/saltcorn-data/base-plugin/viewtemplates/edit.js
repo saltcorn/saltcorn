@@ -53,6 +53,7 @@ const {
   traverseSync,
 } = require("../../models/layout");
 const { asyncMap, isWeb } = require("../../utils");
+const db = require("../../db");
 
 const builtInActions = ["Save", "SaveAndContinue", "Reset", "GoBack", "Delete"];
 
@@ -384,11 +385,18 @@ const runMany = async (
   { columns, layout, auto_save },
   state,
   extra,
-  { editManyQuery, getRowQuery }
+  { editManyQuery, getRowQuery, optionsQuery }
 ) => {
-  const { table, fields, rows } = isNode()
-    ? await editManyQuery(state, extra) // quick fix
-    : await editManyQuery(state); // TODO ch change query call signature
+  let { table, fields, rows } = await editManyQuery(state, {
+    limit: extra.limit,
+    offset: extra.offset,
+    orderBy: extra.orderBy,
+    orderDesc: extra.orderDesc,
+  });
+  if (!isNode()) {
+    table = Table.findOne({ id: table.id });
+    fields = await table.getFields();
+  }
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -402,6 +410,7 @@ const runMany = async (
       state,
       auto_save,
       getRowQuery,
+      optionsQuery,
     });
     return { html, row };
   });
@@ -570,6 +579,7 @@ const render = async ({
   destination_type,
   isRemote,
   getRowQuery,
+  optionsQuery,
 }) => {
   const form = await getForm(
     table,
@@ -612,7 +622,7 @@ const render = async ({
       }
     }
   });
-  await form.fill_fkey_options();
+  await form.fill_fkey_options(false, optionsQuery);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
   return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
 };
@@ -965,9 +975,7 @@ module.exports = {
         isRemote,
       });
     },
-
-    // TODO ch move 'extra' to query signature (quick fix)
-    async editManyQuery(state, extra) {
+    async editManyQuery(state, { limit, offset, orderBy, orderDesc }) {
       const table = await Table.findOne({ id: table_id });
       const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -981,10 +989,10 @@ module.exports = {
         where: qstate,
         joinFields,
         aggregations,
-        ...(extra && extra.limit && { limit: extra.limit }),
-        ...(extra && extra.offset && { offset: extra.offset }),
-        ...(extra && extra.orderBy && { orderBy: extra.orderBy }),
-        ...(extra && extra.orderDesc && { orderDesc: extra.orderDesc }),
+        ...(limit && { limit: limit }),
+        ...(offset && { offset: offset }),
+        ...(orderBy && { orderBy: orderBy }),
+        ...(orderDesc && { orderDesc: orderDesc }),
         ...q,
       });
       return {
@@ -1055,6 +1063,13 @@ module.exports = {
       } catch (e) {
         return { json: { error: e.message || e } };
       }
+    },
+    async optionsQuery(reftable_name, type, attributes, where) {
+      const rows = await db.select(
+        reftable_name,
+        type === "File" ? attributes.select_file_where : where
+      );
+      return rows;
     },
   }),
   routes: { run_action },

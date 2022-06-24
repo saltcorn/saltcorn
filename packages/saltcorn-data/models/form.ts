@@ -106,11 +106,19 @@ class Form implements AbstractForm {
   /**
    * @param {boolean} [force_allow_none = false]
    */
-  async fill_fkey_options(force_allow_none: boolean = false): Promise<void> {
+  async fill_fkey_options(
+    force_allow_none: boolean = false,
+    optionsQuery?: any
+  ): Promise<void> {
     //console.log(this.values);
     for (const f of this.fields) {
       if (hasFieldMembers(f))
-        await f.fill_fkey_options(force_allow_none, undefined, this.values);
+        await f.fill_fkey_options(
+          force_allow_none,
+          undefined,
+          this.values,
+          optionsQuery
+        );
     }
   }
 

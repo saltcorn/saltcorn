@@ -6,6 +6,10 @@ function MobileResponse() {
     jsonData = data;
   }
 
+  function redirect(path) {
+    json({ redirect: path });
+  }
+
   function send(data) {
     sendData = data;
   }
@@ -20,6 +24,7 @@ function MobileResponse() {
 
   return {
     json,
+    redirect,
     send,
     getJson,
     getSendData,
