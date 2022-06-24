@@ -136,7 +136,9 @@ const render = ({
       segment.constructor === Object
     )
       return "";
-    if (typeof segment === "string") return wrap(segment, isTop, ix, segment);
+    if (typeof segment === "string")
+      if (segment[0] === "<") return wrap(segment, isTop, ix, segment);
+      else return wrap(segment, isTop, ix, mjml.text(segment));
     if (Array.isArray(segment))
       return wrap(
         segment,
@@ -146,7 +148,10 @@ const render = ({
       );
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
-      return wrap(segment, isTop, ix, blockDispatch[segment.type](segment, go));
+      const rendered = blockDispatch[segment.type](segment, go);
+      if (rendered && rendered[0] === "<")
+        return wrap(segment, isTop, ix, rendered);
+      else return wrap(segment, isTop, ix, mjml.text(rendered));
     }
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, mjml.text(segment.contents) || "");

@@ -30,7 +30,9 @@ describe("MJML Mail Transformations", () => {
   it("transform simple to mjml", async () => {
     const v = await View.findOne({ name: "authorshow" });
     const ml = await email.viewToMjml(v, { id: 1 });
-    expect(ml).toBe(`<mjml><mj-body>Herman Melville</mj-body></mjml>`);
+    expect(ml).toBe(
+      `<mjml><mj-body><mj-text>Herman Melville</mj-text></mj-body></mjml>`
+    );
   });
   it("transform simple to html", async () => {
     const v = await View.findOne({ name: "authorshow" });
