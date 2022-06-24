@@ -219,14 +219,6 @@ function mobile_modal(url, opts = {}) {
     });
 }
 
-async function view_post(viewname, route, data, onDone) {
-  const result = await parent.router.resolve({
-    pathname: `post/view/${viewname}/${route}`,
-    data,
-  });
-  common_done(result);
-}
-
 async function local_post(url, args) {
   const result = await parent.router.resolve({
     pathname: `post${url}`,
@@ -326,7 +318,7 @@ async function view_post(viewname, route, data, onDone) {
   const response = await parent.apiCall({
     method: "POST",
     path: "/view/" + viewname + "/" + route,
-    body: typeof data === "string" ? data : JSON.stringify(data),
+    body: data,
   });
   if (onDone) onDone(response.data);
   common_done(response);
