@@ -37,7 +37,7 @@ describe("MJML Mail Transformations", () => {
   it("transform simple to html", async () => {
     const v = await View.findOne({ name: "authorshow" });
     const html = await email.viewToEmailHtml(v, { id: 1 });
-    writeFileSync("emailout1", trimLines(html));
+    //writeFileSync("emailout1", trimLines(html));
     expect(trimLines(html)).toBe(
       trimLines(`<!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title></title><!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]--><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style type="text/css">#outlook a { padding:0; }
       body { margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%; }

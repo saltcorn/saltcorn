@@ -196,16 +196,18 @@ const render = ({
         segment,
         isTop,
         ix,
-        a(
-          {
-            href: segment.url,
-            class: [segment.link_style || "", segment.link_size || ""],
-            target: segment.target_blank ? "_blank" : false,
-            rel: segment.nofollow ? "nofollow" : false,
-            style,
-          },
-          segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
-          segment.text
+        mjml.raw(
+          a(
+            {
+              href: segment.url,
+              class: [segment.link_style || "", segment.link_size || ""],
+              target: segment.target_blank ? "_blank" : false,
+              rel: segment.nofollow ? "nofollow" : false,
+              style,
+            },
+            segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
+            segment.text
+          )
         )
       );
     }
@@ -446,7 +448,7 @@ const render = ({
     }
 
     if (segment.type === "line_break") {
-      return "<br />";
+      return mjml.raw("<br />");
     }
 
     if (segment.above) {
@@ -468,7 +470,7 @@ const render = ({
             {
               width: `${Math.round(
                 (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
-              )}`,
+              )}%`,
             },
             go(t, false, ixb)
           )
