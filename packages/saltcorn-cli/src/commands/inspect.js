@@ -47,7 +47,7 @@ class InspectCommand extends Command {
 /**
  * @type {string}
  */
-InspectCommand.description = `Inspect an entity's JSON spresentation, or list entities`;
+InspectCommand.description = `Inspect an entity's JSON representation, or list entities`;
 
 /**
  * @type {object}
