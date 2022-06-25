@@ -21,7 +21,7 @@ const {
   get_expression_function,
   expressionChecker,
 } = require("../../models/expression");
-const { InvalidConfiguration, isNode } = require("../../utils");
+const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
 const {
@@ -399,6 +399,7 @@ const runMany = async (
     offset: extra.offset,
     orderBy: extra.orderBy,
     orderDesc: extra.orderDesc,
+    where: extra.where,
   });
   if (!isNode()) {
     table = Table.findOne({ id: table.id });
@@ -988,7 +989,7 @@ module.exports = {
         isRemote,
       });
     },
-    async editManyQuery(state, { limit, offset, orderBy, orderDesc }) {
+    async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
       const table = await Table.findOne({ id: table_id });
       const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -997,7 +998,7 @@ module.exports = {
       );
       const qstate = await stateFieldsToWhere({ fields, state });
       const q = await stateFieldsToQuery({ state, fields });
-
+      if (where) mergeIntoWhere(qstate, where);
       const rows = await table.getJoinedRows({
         where: qstate,
         joinFields,

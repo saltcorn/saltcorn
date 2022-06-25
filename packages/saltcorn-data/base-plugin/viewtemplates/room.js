@@ -251,7 +251,7 @@ const run = async (
     { [msgkey_to_room]: state.id },
     { req, res, orderBy: "id", orderDesc: true, limit }
   );
-  if (isNode()) vresps.reverse();
+  vresps.reverse();
   const n_retrieved = vresps.length;
 
   const msglist = vresps.map((r) => r.html).join("");
