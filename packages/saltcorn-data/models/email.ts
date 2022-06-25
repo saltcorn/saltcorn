@@ -49,6 +49,12 @@ const viewToMjml = async (view: any, state: any) => {
 const viewToEmailHtml = async (view: any, state: any) => {
   const mjmlMarkup = await viewToMjml(view, state);
   const html = mjml2html(mjmlMarkup, { minify: true });
+  if (html.errors && html.errors.length > 0) {
+    html.errors.forEach((e) => {
+      //console.error("MJML error: ", e);
+    });
+  }
+
   return html.html;
 };
 
