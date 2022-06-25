@@ -1324,6 +1324,37 @@ describe("external tables", () => {
   });
 });
 
+describe("unique history clash", () => {
+  it("should create table", async () => {
+    const table = await Table.create("unihistory");
+
+    await Field.create({
+      table,
+      label: "Name",
+      type: "String",
+      is_unique: true,
+    });
+  });
+  it("should enable versioning", async () => {
+    const table = await Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+    table.versioned = true;
+    await table.update(table);
+  });
+  it("should not error on history with unique", async () => {
+    const table = await Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+
+    await table.insertRow({ name: "Bartimaeus" });
+    const row = await table.getRow({ name: "Bartimaeus" });
+    expect(row!.name).toBe("Bartimaeus");
+    await table.deleteRows({ id: row!.id });
+    await table.insertRow({ name: "Bartimaeus" });
+    const row1 = await table.getRow({ name: "Bartimaeus" });
+    expect(row1!.name).toBe("Bartimaeus");
+  });
+});
+
 describe("distance ordering", () => {
   it("should create table", async () => {
     const tc = await Table.create("geotable1");

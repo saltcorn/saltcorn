@@ -294,3 +294,7 @@ section.range-slider input:last-of-type::-moz-range-track {
 section.range-slider input[type="range"]::-moz-focus-outer {
   border: 0;
 }
+
+.btn-xs {
+  padding: 0.1rem 0.4rem !important;
+}
