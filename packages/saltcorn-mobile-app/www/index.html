@@ -147,6 +147,7 @@
         await state.refresh_views();
         await state.refresh_pages();
         state.localTableIds = await getTableIds(config.localUserTables);
+        await state.setConfig("base_url", window.config.server_path);
         await initRoutes();
         setVersionTtag();
         const entryView = config.entry_view;

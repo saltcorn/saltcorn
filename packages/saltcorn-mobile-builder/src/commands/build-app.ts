@@ -1,7 +1,6 @@
 import { Command, Flags } from "@oclif/core";
 import { spawnSync } from "child_process";
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -43,13 +42,33 @@ export default class BuildAppCommand extends Command {
       description: "user defined tables that should be replicated into the app",
       multiple: true,
     }),
+    useDocker: Flags.boolean({
+      name: "user docker build container",
+      char: "d",
+      description: "Use a docker container to build the app.",
+    }),
+    copyAppDirectory: Flags.directory({
+      name: "app target-directory",
+      char: "c",
+      description: "If set, the app file will be copied here",
+    }),
+    appFileName: Flags.string({
+      name: "app file name",
+      char: "a",
+      description: "",
+    }),
+    serverURL: Flags.string({
+      name: "server URL",
+      char: "s",
+      description: "",
+    }),
   };
 
-  supportedPlatforms = ["android", "browser"]; // TODO ios
+  supportedPlatforms = ["android", "ios"];
 
   packageRoot = join(__dirname, "../../");
   appDir = join(require.resolve("@saltcorn/mobile-app"), "..");
-  wwwDir = join(require.resolve("@saltcorn/mobile-app"), "..", "www");
+  wwwDir = join(this.appDir, "www");
 
   staticPlugins = ["base", "sbadmin2"];
 
@@ -58,17 +77,28 @@ export default class BuildAppCommand extends Command {
     staticDependencies,
   });
 
-  async run() {
-    const { flags } = await this.parse(BuildAppCommand);
+  validateParameters = (flags: any) => {
     if (!flags.entryPoint) {
       throw new Error("please specify an entry point for the first view");
     }
+    if (!flags.platforms) {
+      throw new Error("please specify cordova platforms (android or iOS)");
+    }
+    for (const platform of flags.platforms)
+      if (!this.supportedPlatforms.includes(platform))
+        throw new Error(`The platform '${platform}' is not supported`);
+  };
+
+  async run() {
+    const { flags } = await this.parse(BuildAppCommand);
+    this.validateParameters(flags);
+
     const localUserTables = flags.localUserTables ? flags.localUserTables : [];
     this.copyStaticAssets();
     this.copySbadmin2Deps();
     this.writeCfgFile({
       entryPoint: flags.entryPoint,
-      serverPath: "http://10.0.2.2:3000", // host localhost of the android emulator, only for development,
+      serverPath: flags.serverURL ? flags.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: localUserTables,
     });
     await this.bundlePackages();
@@ -76,11 +106,9 @@ export default class BuildAppCommand extends Command {
     await this.installNpmPackages();
     await this.buildTablesFile(localUserTables);
     await this.createSqliteDb();
-    if (flags.platforms) {
-      this.validatePlatforms(flags.platforms);
-      this.addPlatforms(flags.platforms);
-    }
-    this.buildApk();
+    const resultCode = this.buildApp(flags);
+    if (resultCode === 0 && flags.copyAppDirectory) await this.copyApp(flags);
+    process.exit(resultCode);
   }
 
   copyStaticAssets = () => {
@@ -152,14 +180,15 @@ export default class BuildAppCommand extends Command {
     const plugins = (await Plugin.find()).filter(
       (plugin: Plugin) => !this.staticPlugins.includes(plugin.name)
     );
-    spawnSync(
+    const result = spawnSync(
       "npm",
       ["run", "build", "--", "--env", `plugins=${JSON.stringify(plugins)}`],
       {
-        stdio: "inherit",
+        stdio: "pipe",
         cwd: this.packageRoot,
       }
     );
+    console.log(result.output.toString());
     for (const plugin of plugins) {
       const required = await requirePlugin(plugin, false, this.manager);
       const srcPublicDir = join(required.location, "public");
@@ -244,23 +273,102 @@ export default class BuildAppCommand extends Command {
     );
   };
 
-  validatePlatforms = (platforms: string[]) => {
-    for (const platform of platforms)
-      if (!this.supportedPlatforms.includes(platform))
-        throw new Error(`The platform '${platform}' is not supported`);
-  };
-
   addPlatforms = (platforms: string[]) => {
-    spawnSync("npm", ["run", "add-platform", "--", ...platforms], {
-      stdio: "inherit",
-      cwd: this.appDir,
-    });
+    const result = spawnSync(
+      "npm",
+      ["run", "add-platform", "--", ...platforms],
+      {
+        cwd: this.appDir,
+      }
+    );
+    console.log(result.output.toString());
   };
 
-  buildApk = () => {
-    spawnSync("npm", ["run", "build-app"], {
-      stdio: "inherit",
+  callBuild = (platforms: string[]) => {
+    this.addPlatforms(platforms);
+    const result = spawnSync("npm", ["run", "build-app", "--", ...platforms], {
       cwd: this.appDir,
     });
+    console.log(result.output.toString());
+    return result.status;
+  };
+
+  runBuildContainer = (options: any): any =>
+    spawnSync(
+      "docker",
+      [
+        "run",
+        "-v",
+        `${this.appDir}:/saltcorn-mobile-app`,
+        "saltcorn/cordova-builder",
+      ],
+      options
+    );
+
+  buildApkInContainer = () => {
+    const spawnOptions: any = {
+      cwd: ".",
+    };
+    // try docker without sudo
+    let result = this.runBuildContainer(spawnOptions);
+    if (result.status === 0) {
+      console.log(result.output.toString());
+    } else if (result.status === 1 || result.status === 125) {
+      // try docker rootless
+      spawnOptions.env = {
+        DOCKER_HOST: `unix://${process.env.XDG_RUNTIME_DIR}/docker.sock`,
+      };
+      result = this.runBuildContainer(spawnOptions);
+      if (result.status === 0) {
+        console.log(result.output.toString());
+      } else {
+        console.log("Unable to run the docker build image.");
+        console.log(
+          "Try installing 'docker rootless' mode, or add the current user to the 'docker' group."
+        );
+        console.log(result);
+        console.log(result.output.toString());
+      }
+    } else {
+      console.log("An error occured");
+      console.log(result);
+    }
+    return result.status;
+  };
+
+  /**
+   * build '.apk / .ipa' files with cordova (only android is tested)
+   * @param flags
+   * @returns
+   */
+  buildApp = (flags: any) => {
+    if (!flags.useDocker) {
+      return this.callBuild(flags.platforms);
+    } else {
+      let code = this.buildApkInContainer();
+      if (code === 0 && flags.platforms.indexOf("ios") > -1)
+        code = this.callBuild(["ios"]);
+      return code;
+    }
+  };
+
+  copyApp = async (flags: any) => {
+    if (!existsSync(flags.copyAppDirectory)) {
+      mkdirSync(flags.copyAppDirectory);
+    }
+    const apkName = "app-debug.apk";
+    const apkFile = join(
+      this.appDir,
+      "platforms",
+      "android",
+      "app",
+      "build",
+      "outputs",
+      "apk",
+      "debug",
+      apkName
+    );
+    const targetFile = flags.appFileName ? flags.appFileName : apkName;
+    copySync(apkFile, join(flags.copyAppDirectory, targetFile));
   };
 }

@@ -8,11 +8,13 @@
 import db from "../db";
 import { v4 as uuidv4 } from "uuid";
 import { join } from "path";
-const { asyncMap, isNode } = require("../utils");
+const { asyncMap } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import axios from "axios";
 import FormData from "form-data";
+import { renameSync, statSync } from "fs";
+import { lookup } from "mime-types";
 
 declare let window: any;
 
@@ -149,7 +151,7 @@ class File {
    * @param file
    * @param user_id
    * @param min_role_read
-   * @returns {Promise<File>}
+   * @returns
    */
   static async from_req_files(
     file: {
@@ -186,6 +188,32 @@ class File {
         s3_store: !!file.s3object,
       });
     }
+  }
+
+  /**
+   * create a '_sc_files' entry from an existing file.
+   * The old file will be moved to an new location.
+   *
+   * @param directory directory of existing file
+   * @param name name of existing file
+   * @param userId id of creating user
+   * @returns the new File object
+   */
+  static async from_existing_file(
+    directory: string,
+    name: string,
+    userId: number
+  ) {
+    const fullPath = join(directory, name);
+    const file: any = {
+      mimetype: lookup(fullPath),
+      name: name,
+      mv: (newPath: string) => {
+        renameSync(fullPath, newPath);
+      },
+      size: statSync(fullPath).size,
+    };
+    return await File.from_req_files(file, userId);
   }
 
   /**
