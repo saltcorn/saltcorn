@@ -531,148 +531,149 @@ router.get(
                 " ",
                 req.__("Configuration check")
               ),
-              hr(),
-              form(
-                {
-                  action: "/admin/build-mobile-app",
-                  method: "post",
-                },
+              isRoot && hr(),
+              isRoot &&
+                form(
+                  {
+                    action: "/admin/build-mobile-app",
+                    method: "post",
+                  },
 
-                fieldset(
-                  { class: "border p-2" },
-                  input({
-                    type: "hidden",
-                    name: "_csrf",
-                    value: req.csrfToken(),
-                  }),
-                  div(
-                    { class: "container ps-2" },
-                    legend("Mobile app"),
+                  fieldset(
+                    { class: "border p-2" },
+                    input({
+                      type: "hidden",
+                      name: "_csrf",
+                      value: req.csrfToken(),
+                    }),
                     div(
-                      { class: "row pb-2" },
-                      div({ class: "col-sm-4 fw-bold" }, "Entry view"),
-                      div({ class: "col-sm-4 fw-bold" }, "Platform"),
+                      { class: "container ps-2" },
+                      legend("Mobile app"),
                       div(
-                        {
-                          class:
-                            "col-sm-1 fw-bold d-flex justify-content-center",
-                        },
-                        "docker"
-                      )
-                    ),
-                    div(
-                      { class: "row" },
-                      div(
-                        { class: "col-sm-4" },
-                        select(
+                        { class: "row pb-2" },
+                        div({ class: "col-sm-4 fw-bold" }, "Entry view"),
+                        div({ class: "col-sm-4 fw-bold" }, "Platform"),
+                        div(
                           {
-                            class: "form-control",
-                            name: "entryView",
-                            id: "entryViewInput",
+                            class:
+                              "col-sm-1 fw-bold d-flex justify-content-center",
                           },
-                          views
-                            .map((view) =>
-                              option({ value: view.name }, view.name)
-                            )
-                            .join(",")
+                          "docker"
                         )
                       ),
                       div(
-                        { class: "col-sm-4" },
-
+                        { class: "row" },
                         div(
-                          { class: "container ps-0" },
+                          { class: "col-sm-4" },
+                          select(
+                            {
+                              class: "form-control",
+                              name: "entryView",
+                              id: "entryViewInput",
+                            },
+                            views
+                              .map((view) =>
+                                option({ value: view.name }, view.name)
+                              )
+                              .join(",")
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+
                           div(
-                            { class: "row" },
-                            div({ class: "col-sm-8" }, "android"),
+                            { class: "container ps-0" },
                             div(
-                              { class: "col-sm" },
-                              input({
-                                type: "checkbox",
-                                class: "form-check-input",
-                                name: "androidPlatform",
-                                id: "androidCheckboxId",
-                              })
-                            )
-                          ),
-                          div(
-                            { class: "row" },
-                            div({ class: "col-sm-8" }, "iOS"),
+                              { class: "row" },
+                              div({ class: "col-sm-8" }, "android"),
+                              div(
+                                { class: "col-sm" },
+                                input({
+                                  type: "checkbox",
+                                  class: "form-check-input",
+                                  name: "androidPlatform",
+                                  id: "androidCheckboxId",
+                                })
+                              )
+                            ),
                             div(
-                              { class: "col-sm" },
-                              input({
-                                type: "checkbox",
-                                class: "form-check-input",
-                                name: "iOSPlatform",
-                                id: "iOSCheckboxId",
-                              })
+                              { class: "row" },
+                              div({ class: "col-sm-8" }, "iOS"),
+                              div(
+                                { class: "col-sm" },
+                                input({
+                                  type: "checkbox",
+                                  class: "form-check-input",
+                                  name: "iOSPlatform",
+                                  id: "iOSCheckboxId",
+                                })
+                              )
                             )
                           )
+                        ),
+                        div(
+                          { class: "col-sm-1 d-flex justify-content-center" },
+                          input({
+                            type: "checkbox",
+                            class: "form-check-input",
+                            name: "useDocker",
+                            id: "dockerCheckboxId",
+                          })
                         )
                       ),
                       div(
-                        { class: "col-sm-1 d-flex justify-content-center" },
-                        input({
-                          type: "checkbox",
-                          class: "form-check-input",
-                          name: "useDocker",
-                          id: "dockerCheckboxId",
-                        })
+                        { class: "row pb-2" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "appNameInputId",
+                              class: "form-label fw-bold",
+                            },
+                            "App file"
+                          ),
+                          input({
+                            type: "text",
+                            class: "form-control",
+                            name: "appFile",
+                            id: "appFileInputId",
+                            placeholder: "app-debug",
+                          })
+                        )
+                      ),
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "serverURLInputId",
+                              class: "form-label fw-bold",
+                            },
+                            "Server URL"
+                          ),
+                          input({
+                            type: "text",
+                            class: "form-control",
+                            name: "serverURL",
+                            id: "serverURLInputId",
+                            placeholder: "http://10.0.2.2:3000",
+                          })
+                        )
                       )
                     ),
-                    div(
-                      { class: "row pb-2" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "appNameInputId",
-                            class: "form-label fw-bold",
-                          },
-                          "App file"
-                        ),
-                        input({
-                          type: "text",
-                          class: "form-control",
-                          name: "appFile",
-                          id: "appFileInputId",
-                          placeholder: "app-debug",
-                        })
-                      )
-                    ),
-                    div(
-                      { class: "row pb-3" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "serverURLInputId",
-                            class: "form-label fw-bold",
-                          },
-                          "Server URL"
-                        ),
-                        input({
-                          type: "text",
-                          class: "form-control",
-                          name: "serverURL",
-                          id: "serverURLInputId",
-                          placeholder: "http://10.0.2.2:3000",
-                        })
-                      )
-                    )
-                  ),
-                  button(
-                    {
-                      type: "submit",
-                      onClick: `notifyAlert('${execBuildMsg}'); press_store_button(this);`,
-                      class: "btn btn-warning",
-                    },
-                    i({ class: "fas fa-hammer pe-2" }),
+                    button(
+                      {
+                        type: "submit",
+                        onClick: `notifyAlert('${execBuildMsg}'); press_store_button(this);`,
+                        class: "btn btn-warning",
+                      },
+                      i({ class: "fas fa-hammer pe-2" }),
 
-                    "Build mobile app"
+                      "Build mobile app"
+                    )
                   )
-                )
-              ),
+                ),
               hr(),
 
               a(
