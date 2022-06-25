@@ -34,7 +34,11 @@ import helpers = require("./helpers");
  * @param {string} inner
  * @returns {div|span|string}
  */
-const applyTextStyle = (segment: any, inner: string): string => {
+const applyTextStyle = (
+  segment: any,
+  inner: string,
+  isText?: boolean
+): string => {
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
@@ -42,25 +46,26 @@ const applyTextStyle = (segment: any, inner: string): string => {
   const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
+  const wrapText = isText ? (s: string) => mjml.text(s) : (s: string) => s;
   switch (segment.textStyle) {
     case "h1":
-      return h1({ style }, inner);
+      return wrapText(h1({ style }, inner));
     case "h2":
-      return h2({ style }, inner);
+      return wrapText(h2({ style }, inner));
     case "h3":
-      return h3({ style }, inner);
+      return wrapText(h3({ style }, inner));
     case "h4":
-      return h4({ style }, inner);
+      return wrapText(h4({ style }, inner));
     case "h5":
-      return h5({ style }, inner);
+      return wrapText(h5({ style }, inner));
     case "h6":
-      return h6({ style }, inner);
+      return wrapText(h6({ style }, inner));
     default:
       return segment.block
         ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
         : segment.textStyle || hasStyle
-        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
-        : inner;
+        ? mjml.text({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        : wrapText(inner);
   }
 };
 
@@ -116,7 +121,13 @@ const render = ({
   req,
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
-  function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
+  function wrap(
+    segment: any,
+    isTop: boolean,
+    ix: number,
+    inner: string,
+    isText?: boolean
+  ) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
@@ -124,9 +135,9 @@ const render = ({
       return segment.labelFor
         ? label(
             { for: `input${text(segment.labelFor)}` },
-            applyTextStyle(segment, iconTag + inner)
+            applyTextStyle(segment, iconTag + inner, isText)
           )
-        : applyTextStyle(segment, iconTag + inner);
+        : applyTextStyle(segment, iconTag + inner, isText);
   }
   function go(segment: any, isTop: boolean = false, ix: number = 0): string {
     if (!segment) return "";
@@ -138,7 +149,7 @@ const render = ({
       return "";
     if (typeof segment === "string")
       if (segment[0] === "<") return wrap(segment, isTop, ix, segment);
-      else return wrap(segment, isTop, ix, mjml.text(segment));
+      else return wrap(segment, isTop, ix, segment, true);
     if (Array.isArray(segment))
       return wrap(
         segment,
@@ -151,10 +162,10 @@ const render = ({
       const rendered = blockDispatch[segment.type](segment, go);
       if (rendered && rendered[0] === "<")
         return wrap(segment, isTop, ix, rendered);
-      else return wrap(segment, isTop, ix, mjml.text(rendered));
+      else return wrap(segment, isTop, ix, rendered, true);
     }
     if (segment.type === "blank") {
-      return wrap(segment, isTop, ix, mjml.text(segment.contents) || "");
+      return wrap(segment, isTop, ix, segment.contents || "", true);
     }
 
     if (segment.type === "view") {
