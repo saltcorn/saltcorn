@@ -30,7 +30,7 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, isNode } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");
@@ -213,7 +213,7 @@ const run = async (
   },
   state,
   { req, res },
-  { getRowQuery, updateQuery }
+  { getRowQuery, updateQuery, optionsQuery }
 ) => {
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
@@ -284,8 +284,7 @@ const run = async (
   form.class = `room-${state.id}`;
   form.hidden("room_id");
   form.values = { room_id: state.id };
-  await form.fill_fkey_options();
-
+  await form.fill_fkey_options(false, optionsQuery);
   return div(
     n_retrieved === limit &&
       button(
@@ -365,7 +364,7 @@ const fetch_older_msg = async (
   { req, res },
   { fetchOlderMsgQuery }
 ) => {
-  const partRow = await fetchOlderMsgQuery();
+  const partRow = await fetchOlderMsgQuery(participant_field, body);
   if (!partRow)
     return {
       json: {
@@ -693,6 +692,13 @@ module.exports = {
         [part_user_field]: req.user ? req.user.id : 0,
         [part_key_to_room]: +body.room_id,
       });
+    },
+    async optionsQuery(reftable_name, type, attributes, where) {
+      const rows = await db.select(
+        reftable_name,
+        type === "File" ? attributes.select_file_where : where
+      );
+      return rows;
     },
   }),
 };

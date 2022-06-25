@@ -74,14 +74,35 @@ function replaceIframe(content) {
   iframe.contentWindow.document.close();
 }
 
-function replaceIframeInnerContent(content) {
+function addScriptToIframeHead(iframeDoc, script) {
+  return new Promise((resolve, reject) => {
+    const srcAttr = script.attributes.getNamedItem("src").value;
+    const existingScripts = iframeDoc.head.getElementsByTagName("script");
+    for (const existing of existingScripts) {
+      const existingSrc = existing.attributes.getNamedItem("src");
+      if (existingSrc && existingSrc.value === srcAttr) return resolve(); // already there
+    }
+    const scriptEl = iframeDoc.createElement("script");
+    iframeDoc.head.appendChild(scriptEl);
+    scriptEl.onload = () => {
+      resolve();
+    };
+    scriptEl.src = srcAttr;
+  });
+}
+
+async function replaceIframeInnerContent(content) {
   const iframe = document.getElementById("content-iframe");
   const iframeDocument = iframe.contentWindow.document;
   let innerContentDiv = iframeDocument.getElementById("page-inner-content");
   innerContentDiv.innerHTML = content;
   let scripts = innerContentDiv.getElementsByTagName("script");
   for (let script of scripts) {
-    iframe.contentWindow.eval(script.innerHTML);
+    if (script.attributes.getNamedItem("src")) {
+      await addScriptToIframeHead(iframe.contentWindow.document, script);
+    } else {
+      iframe.contentWindow.eval(script.innerHTML);
+    }
   }
   const scmodal = iframe.contentWindow.$("#scmodal");
   if (scmodal) {
@@ -96,7 +117,7 @@ async function gotoEntryView() {
     pathname: entryPath,
   });
   addRoute({ entryPath, query: undefined });
-  replaceIframeInnerContent(page.content);
+  await replaceIframeInnerContent(page.content);
 }
 
 async function handleRoute(route, query, files) {
@@ -111,7 +132,7 @@ async function handleRoute(route, query, files) {
     const { path, query } = splitPathQuery(page.redirect);
     await handleRoute(path, query);
   } else if (page.content) {
-    replaceIframeInnerContent(page.content);
+    await replaceIframeInnerContent(page.content);
   }
 }
 

@@ -366,42 +366,6 @@ function test_formula(tablename, stored) {
   });
 }
 
-function init_room(viewname, room_id) {
-  const socket = io({ transports: ["websocket"] });
-  socket.emit("join_room", [viewname, room_id]);
-  socket.on("message", (msg) => {
-    if (msg.not_for_user_id) {
-      const my_user_id = $(`.msglist-${room_id}`).attr("data-user-id");
-      if (+my_user_id === +msg.not_for_user_id) return;
-    }
-    if (msg.append) $(`.msglist-${room_id}`).append(msg.append);
-    if (msg.pls_ack_msg_id)
-      view_post(viewname, "ack_read", { room_id, id: msg.pls_ack_msg_id });
-  });
-
-  $(`form.room-${room_id}`).submit((e) => {
-    e.preventDefault();
-    var form_data = $(`form.room-${room_id}`).serialize();
-    view_post(viewname, "submit_msg_ajax", form_data, (vpres) => {
-      if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
-      $(`form.room-${room_id}`).trigger("reset");
-    });
-  });
-}
-function room_older(viewname, room_id, btn) {
-  view_post(
-    viewname,
-    "fetch_older_msg",
-    { room_id, lt_msg_id: +$(btn).attr("data-lt-msg-id") },
-    (res) => {
-      if (res.prepend) $(`.msglist-${room_id}`).prepend(res.prepend);
-      if (res.new_fetch_older_lt)
-        $(btn).attr("data-lt-msg-id", res.new_fetch_older_lt);
-      if (res.remove_fetch_older) $(btn).remove();
-    }
-  );
-}
-
 async function fill_formula_btn_click(btn, k) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
   const free_vars = JSON.parse(

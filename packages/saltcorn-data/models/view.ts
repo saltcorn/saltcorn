@@ -488,10 +488,7 @@ class View {
     const resp = await view.run(state, { res, req }, remote);
     const state_form = await view.get_state_form(state, req);
     // return contents
-    return div(
-      state_form ? renderForm(state_form, req.csrfToken()) : "",
-      resp
-    );
+    return div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp);
   }
 
   /**

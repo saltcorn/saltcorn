@@ -13,8 +13,8 @@ export type SuccessMessage = {
 };
 
 export type ReqRes = {
-  req: NonNullable<any>;
-  res: NonNullable<any>;
+  req?: any;
+  res?: any;
 };
 
 export type ResultMessage = ErrorMessage | SuccessMessage;
