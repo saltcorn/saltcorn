@@ -280,6 +280,7 @@ const send_admin_page = (args) => {
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
+      { text: "Mobile app", href: "/admin/build-mobile-app" },
     ],
     ...args,
   });
