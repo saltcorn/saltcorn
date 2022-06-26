@@ -32,6 +32,7 @@ ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-7.1.1-all.zip
 RUN cordova build
 
 # prepare entry point
+WORKDIR /
 COPY entry.bash ./
 RUN chmod u+x entry.bash
 ENTRYPOINT ["./entry.bash"]
