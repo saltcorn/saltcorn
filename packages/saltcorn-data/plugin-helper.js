@@ -1229,6 +1229,10 @@ const initial_config_all_fields =
     );
     var cfg = { columns: [] };
     var aboves = [null];
+    const style = {
+      "margin-bottom": "1.5rem",
+    };
+
     fields.forEach((f) => {
       if (!f.type) return;
       const flabel = {
@@ -1255,6 +1259,7 @@ const initial_config_all_fields =
         });
         aboves.push({
           widths: [2, 10],
+          style,
           besides: [
             flabel,
             {
@@ -1290,6 +1295,7 @@ const initial_config_all_fields =
         });
         aboves.push({
           widths: [2, 10],
+          style,
           besides: [
             flabel,
             {
@@ -1307,7 +1313,6 @@ const initial_config_all_fields =
           ],
         });
       }
-      aboves.push({ type: "line_break" });
     });
     if (isEdit)
       aboves.push({

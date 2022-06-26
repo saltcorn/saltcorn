@@ -701,7 +701,7 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  authorise_get: async ({ query, table_id }) => {
+  authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
     return await authorizeGetQuery(query, table_id);
   },
   queries: ({

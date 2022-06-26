@@ -37,7 +37,7 @@ class SetCfgCommand extends Command {
 /**
  * @type {string}
  */
-SetCfgCommand.description = `Get a configuration value`;
+SetCfgCommand.description = `Get a configuration value. The value is printed to stdout as a JSON value`;
 
 /**
  * @type {object[]}

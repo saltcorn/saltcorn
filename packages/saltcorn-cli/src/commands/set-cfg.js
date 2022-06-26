@@ -5,7 +5,7 @@
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant, parseJSONorString } = require("../common");
-
+const fs = require("fs");
 /**
  * SetCfgCommand Class
  * @extends oclif.Command
@@ -17,15 +17,28 @@ class SetCfgCommand extends Command {
    */
   async run() {
     const { args, flags } = this.parse(SetCfgCommand);
+    if (!!args.value + !!flags.stdin + !!flags.file !== 1) {
+      console.error(
+        "Must supply one value, as argument, stdin (with -i), or file (with -f)"
+      );
+      this.exit(1);
+    }
+
+    const theValue = flags.stdin
+      ? fs.readFileSync(0, "utf-8")
+      : flags.file
+      ? fs.readFileSync(flags.file, "utf-8")
+      : args.value;
+
     await maybe_as_tenant(flags.tenant, async () => {
       if (flags.plugin) {
         const Plugin = require("@saltcorn/data/models/plugin");
         const plugin = await Plugin.findOne({ name: flags.plugin });
-        plugin.configuration[args.key] = parseJSONorString(args.value);
+        plugin.configuration[args.key] = parseJSONorString(theValue);
         await plugin.upsert();
       } else {
         const { getState } = require("@saltcorn/data/db/state");
-        await getState().setConfig(args.key, parseJSONorString(args.value));
+        await getState().setConfig(args.key, parseJSONorString(theValue));
       }
     });
     this.exit(0);
@@ -35,7 +48,7 @@ class SetCfgCommand extends Command {
 /**
  * @type {string}
  */
-SetCfgCommand.description = `Set a configuration value`;
+SetCfgCommand.description = `Set a configuration value. The supplied value (argument, or file stdin) will be parsed as JSON. If this fails, it is stored as a string.`;
 
 /**
  * @type {object[]}
@@ -44,7 +57,6 @@ SetCfgCommand.args = [
   { name: "key", required: true, description: "Configuration key" },
   {
     name: "value",
-    required: true,
     description: "Configuration value (JSON or string)",
   },
 ];
@@ -60,6 +72,14 @@ SetCfgCommand.flags = {
   plugin: flags.string({
     char: "p",
     description: "plugin",
+  }),
+  file: flags.string({
+    char: "f",
+    description: "file",
+  }),
+  stdin: flags.boolean({
+    char: "i",
+    description: "read value from stdin",
   }),
 };
 

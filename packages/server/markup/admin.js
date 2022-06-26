@@ -271,7 +271,7 @@ const send_events_page = (args) => {
  * @returns {void}
  */
 const send_admin_page = (args) => {
-  //const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
     main_section: "About application",
     main_section_href: "/admin",
@@ -280,6 +280,9 @@ const send_admin_page = (args) => {
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
+      ...(isRoot
+        ? [{ text: "Mobile app", href: "/admin/build-mobile-app" }]
+        : []),
     ],
     ...args,
   });
