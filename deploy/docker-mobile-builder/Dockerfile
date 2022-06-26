@@ -18,7 +18,21 @@ RUN wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip \
 
 RUN npm install -g cordova
 
+# create an empty project, the first init seems to take longer
+WORKDIR /init_project
+RUN cordova create project
+WORKDIR /init_project/project
+RUN cordova platform add android
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV ANDROID_SDK_ROOT=/android_sdk
+ENV GRADLE_HOME=/opt/gradle-7.1.1
+ENV PATH=$PATH:/opt/gradle-7.1.1/bin
+# stop gradle from downloading itself
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-7.1.1-all.zip
+RUN cordova build
+
 # prepare entry point
+WORKDIR /
 COPY entry.bash ./
 RUN chmod u+x entry.bash
 ENTRYPOINT ["./entry.bash"]
