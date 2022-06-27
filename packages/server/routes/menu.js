@@ -84,7 +84,15 @@ const menuForm = async (req) => {
         input_type: "select",
         class: "menutype item-menu",
         required: true,
-        options: ["View", "Page", "Link", "Header", "Dynamic", "Search"],
+        options: [
+          "View",
+          "Page",
+          "Link",
+          "Header",
+          "Dynamic",
+          "Search",
+          "Separator",
+        ],
       },
       {
         name: "text",
@@ -92,6 +100,9 @@ const menuForm = async (req) => {
         class: "item-menu",
         input_type: "text",
         required: true,
+        showIf: {
+          type: ["View", "Page", "Link", "Header", "Dynamic", "Search"],
+        },
       },
       {
         name: "icon_btn",
@@ -271,6 +282,7 @@ const menuEditorScript = (menu_items) => `
               { 
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
+              getLabelText: (item) => item?.text || item?.type,
               labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
               maxLevel: 1 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]

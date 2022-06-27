@@ -98,11 +98,13 @@ const navSubitems = ({
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
       subitems.map((si) =>
-        a(
-          { class: ["dropdown-item", si.style || ""], href: si.link },
-          si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
-          si.label
-        )
+        si?.type === "Separator"
+          ? hr({ class: "mx-3 my-1" })
+          : a(
+              { class: ["dropdown-item", si.style || ""], href: si.link },
+              si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
+              si.label
+            )
       )
     )
   );
@@ -137,6 +139,8 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                 text(s.label)
               )
             )
+          : s.type === "Separator"
+          ? div({ class: "border-start", style: "width:1px" })
           : s.type === "Search"
           ? li(
               form(
@@ -339,17 +343,16 @@ const logit = (x: any, s: any): any => {
  * @param {number} len
  * @returns {function}
  */
-const standardBreadcrumbItem = (len: number) => (
-  { href, text }: { href?: string; text: string },
-  ix: number
-): string =>
-  li(
-    {
-      class: ["breadcrumb-item", ix == len - 1 && "active"],
-      "aria-current": ix == len - 1 && "page",
-    },
-    href ? a({ href }, text) : text
-  );
+const standardBreadcrumbItem =
+  (len: number) =>
+  ({ href, text }: { href?: string; text: string }, ix: number): string =>
+    li(
+      {
+        class: ["breadcrumb-item", ix == len - 1 && "active"],
+        "aria-current": ix == len - 1 && "page",
+      },
+      href ? a({ href }, text) : text
+    );
 
 /**
  * @param {object} opts
