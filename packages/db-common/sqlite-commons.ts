@@ -101,6 +101,46 @@ export const doDeleteWhere = async (
 };
 
 /**
+ * Add unique constraint
+ * @param table_name - table name
+ * @param field_names - list of columns (members of constraint)
+ * @returns no result
+ */
+export const do_add_unique_constraint = async (
+  table_name: string,
+  field_names: string[],
+  query_func: any,
+  logger?: any
+): Promise<void> => {
+  const sql = `create unique index ${sqlsanitize(table_name)}_${field_names
+    .map((f) => sqlsanitize(f))
+    .join("_")}_unique on "${sqlsanitize(table_name)}"(${field_names
+    .map((f) => `"${sqlsanitize(f)}"`)
+    .join(",")});`;
+  if (logger) logger(sql);
+  await query_func(sql);
+};
+
+/**
+ * Drop unique constraint
+ * @param table_name - table name
+ * @param field_names - list of columns (members of constraint)
+ * @returns no results
+ */
+export const do_drop_unique_constraint = async (
+  table_name: string,
+  field_names: string[],
+  query_func: any,
+  logger?: any
+): Promise<void> => {
+  const sql = `drop index ${sqlsanitize(table_name)}_${field_names
+    .map((f) => sqlsanitize(f))
+    .join("_")}_unique;`;
+  if (logger) logger(sql);
+  await query_func(sql);
+};
+
+/**
  *
  * @param queryFunc
  * @returns
