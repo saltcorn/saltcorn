@@ -299,7 +299,7 @@ section.range-slider input[type="range"]::-moz-focus-outer {
   padding: 0.1rem 0.4rem !important;
 }
 
-table.table-grid {
+table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
   border: 1px solid black;
   border-collapse: collapse;
 }
