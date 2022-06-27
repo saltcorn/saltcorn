@@ -20,6 +20,7 @@ const saltcornMocks = {
   "../models/email": join(mocksDir, "models", "email"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
+  "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
 };
 
 const dbMocks = {
@@ -60,6 +61,7 @@ module.exports = {
       os: require.resolve("os-browserify/browser"),
       vm: require.resolve("vm-browserify"),
       zlib: require.resolve("browserify-zlib"),
+      constants: require.resolve("constants-browserify"),
     },
     alias: {
       ...nodeMocks,

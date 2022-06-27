@@ -19,6 +19,8 @@ import {
   doListTables,
   doListUserDefinedTables,
   doListScTables,
+  do_add_unique_constraint,
+  do_drop_unique_constraint,
 } from "@saltcorn/db-common/sqlite-commons";
 
 declare let window: any;
@@ -208,6 +210,32 @@ export const update = async (
   valList.push(id);
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
+};
+
+/**
+ * Add unique constraint
+ * @param table_name - table name
+ * @param field_names - list of columns (members of constraint)
+ * @returns no result
+ */
+export const add_unique_constraint = async (
+  table_name: string,
+  field_names: string[]
+): Promise<void> => {
+  await do_add_unique_constraint(table_name, field_names, query);
+};
+
+/**
+ * Drop unique constraint
+ * @param table_name - table name
+ * @param field_names - list of columns (members of constraint)
+ * @returns no results
+ */
+export const drop_unique_constraint = async (
+  table_name: string,
+  field_names: string[]
+): Promise<void> => {
+  await do_drop_unique_constraint(table_name, field_names, query);
 };
 
 /**

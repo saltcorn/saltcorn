@@ -48,6 +48,7 @@
     "axios": "^0.26.1",
     "bcryptjs": "^2.4.3",
     "blockly": "^6.20210701.0",
+    "constants-browserify": "^1.0.0",
     "contractis": "^0.1.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",

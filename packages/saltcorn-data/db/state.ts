@@ -217,7 +217,10 @@ class State {
     this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
     });
-    await this.refresh_i18n();
+    if (db.is_node) {
+      // TODO ch mobile i18n
+      await this.refresh_i18n();
+    }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
   }
