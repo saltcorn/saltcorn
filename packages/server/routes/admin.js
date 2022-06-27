@@ -1193,6 +1193,20 @@ router.post(
           ],
         });
     });
+    child.on("error", function (msg) {
+      const message = msg.message ? msg.message : msg.code;
+      const stack = msg.stack ? msg.stack : "";
+      res.sendWrap(req.__(`Admin`), {
+        above: [
+          {
+            type: "card",
+            title: req.__("Build Result"),
+            contents: div("Unable to build the app"),
+          },
+          `${message} <br/> ${stack}`,
+        ],
+      });
+    });
   })
 );
 
