@@ -45,6 +45,8 @@ const subItem = (currentUrl) => (item) =>
         item.icon ? i({ class: `fa-fw mr-05 ${item.icon}` }) : "",
         item.label
       )
+    : item.type === "Separator"
+    ? hr({ class: "sidebar-divider my-0" })
     : h6({ class: "collapse-header" }, item.label);
 
 /**
@@ -85,6 +87,7 @@ const active = (currentUrl, item) =>
  */
 const sideBarItem = (currentUrl) => (item) => {
   const is_active = active(currentUrl, item);
+  if (item.type === "Separator") return hr({ class: "sidebar-divider my-0" });
   return li(
     { class: ["nav-item", is_active && "active"] },
     item.subitems
