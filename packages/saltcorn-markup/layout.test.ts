@@ -43,9 +43,20 @@ describe("layout", () => {
 });
 
 describe("MJML layout", () => {
+  const blockDispatch = {};
   it("renders empty layout", () => {
-    const blockDispatch = {};
-    const layout = { above: [] };
-    expect(renderMJML({ blockDispatch: {}, layout: {} })).toBe("");
+    expect(renderMJML({ blockDispatch, layout: {} })).toBe("");
+  });
+  it("renders text layout", () => {
+    const layout = { type: "blank", contents: "Hello world" };
+    expect(renderMJML({ blockDispatch, layout })).toBe(
+      "<mj-text>Hello world</mj-text>"
+    );
+  });
+  it("renders text header", () => {
+    const layout = { type: "blank", contents: "Hello world", textStyle: "h1" };
+    expect(renderMJML({ blockDispatch, layout })).toBe(
+      "<mj-text><h1>Hello world</h1></mj-text>"
+    );
   });
 });
