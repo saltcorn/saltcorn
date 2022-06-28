@@ -1173,13 +1173,11 @@ class Table implements AbstractTable {
 
   async field_options(
     nrecurse: number = 0,
-    fieldWhere: Where = {},
+    fieldWhere: (f: Field) => boolean = () => true,
     prefix: string = ""
   ): Promise<string[]> {
     const fields = await this.getFields();
-    const these = fields
-      .filter((f) => satisfies(fieldWhere)(f))
-      .map((f) => prefix + f.name);
+    const these = fields.filter(fieldWhere).map((f) => prefix + f.name);
     const those: string[] = [];
     if (nrecurse > 0)
       for (const field of fields) {

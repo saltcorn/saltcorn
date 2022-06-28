@@ -197,6 +197,12 @@ class Field implements AbstractField {
     return sqlsanitize(label.toLowerCase().replace(" ", "_"));
   }
 
+  get type_name(): string | undefined {
+    if (typeof this.type === "string") return this.type;
+    else if (this.type?.name) return this.type.name;
+    else if (this.typename) return this.typename;
+  }
+
   /**
    * ???
    * @returns {string}

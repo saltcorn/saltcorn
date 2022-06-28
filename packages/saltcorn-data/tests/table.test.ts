@@ -1477,9 +1477,9 @@ describe("field_options", () => {
       "parent.parent",
     ]);
   });
-  /* it("should find string fields", async () => {
+  it("should find string fields", async () => {
     const table = await Table.findOne({ name: "patients" });
-    const opts = await table?.field_options(1, { type: "String" });
-    expect(opts).toStrictEqual(1);
-  });*/
+    const opts = await table?.field_options(1, (f) => f.type_name === "String");
+    expect(opts).toStrictEqual(["name", "favbook.author", "parent.name"]);
+  });
 });
