@@ -1,5 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import render = require("./layout");
+import renderMJML = require("./mjml-layout");
+
 import tags = require("./tags");
 const { p } = tags;
 
@@ -37,5 +39,13 @@ describe("layout", () => {
     expect(render({ blockDispatch, layout: markup })).toBe(
       '<div class="row w-100"><div class="col-6">hello</div><div class="col-6">world</div></div><div class="row w-100"><div class="col-6">bar</div><div class="col-6">foo</div></div>'
     );
+  });
+});
+
+describe("MJML layout", () => {
+  it("renders empty layout", () => {
+    const blockDispatch = {};
+    const layout = { above: [] };
+    expect(renderMJML({ blockDispatch: {}, layout: {} })).toBe("");
   });
 });
