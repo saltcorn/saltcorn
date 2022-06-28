@@ -129,15 +129,12 @@ const render = ({
     isText?: boolean
   ) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    if (isTop && blockDispatch && blockDispatch.wrapTop)
-      return blockDispatch.wrapTop(segment, ix, inner);
-    else
-      return segment.labelFor
-        ? label(
-            { for: `input${text(segment.labelFor)}` },
-            applyTextStyle(segment, iconTag + inner, isText)
-          )
-        : applyTextStyle(segment, iconTag + inner, isText);
+    return segment.labelFor
+      ? label(
+          { for: `input${text(segment.labelFor)}` },
+          applyTextStyle(segment, iconTag + inner, isText)
+        )
+      : applyTextStyle(segment, iconTag + inner, isText);
   }
   function go(segment: any, isTop: boolean = false, ix: number = 0): string {
     if (!segment) return "";
