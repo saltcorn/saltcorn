@@ -310,35 +310,16 @@ const run = async (
  * @param {object[]} opts.fields
  * @returns {Promise<void>}
  */
-const set_join_fieldviews = async ({ layout, fields }) => {
+const set_join_fieldviews = async ({ table, layout, fields }) => {
   await traverse(layout, {
     join_field: async (segment) => {
       const { join_field, fieldview } = segment;
       if (!fieldview) return;
-      const keypath = join_field.split(".");
-      if (keypath.length > 1) {
-        //const [refNm, through, targetNm] = keypath;
-        let oldFields = fields;
-        let field;
-        for (const refNm of keypath) {
-          field = oldFields.find((f) => f.name === refNm);
-          if (!field) break;
-          if (field.is_fkey) {
-            const reftable = Table.findOne({ name: field.reftable_name });
-            if (!reftable) break;
-            oldFields = reftable.fields;
-          } else break;
-        }
-        if (field && field.type === "File") segment.field_type = "File";
-        else if (
-          field &&
-          field.type &&
-          field.type.name &&
-          field.type.fieldviews &&
-          field.type.fieldviews[fieldview]
-        )
-          segment.field_type = field.type.name;
-      }
+      const field = await table.getField(join_field);
+
+      if (field && field.type === "File") segment.field_type = "File";
+      else if (field?.type.name && field?.type?.fieldviews[fieldview])
+        segment.field_type = field.type.name;
     },
   });
 };
@@ -379,7 +360,7 @@ const renderRows = async (
     views[nm] = view;
     return view;
   };
-  await set_join_fieldviews({ layout, fields });
+  await set_join_fieldviews({ table, layout, fields });
 
   const owner_field = await table.owner_fieldname();
   return await asyncMap(rows, async (row) => {
