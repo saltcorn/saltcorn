@@ -637,8 +637,8 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Get Fields list for table
-   * @returns {Promise<Field[]>}
+   * Get a field, possibly by relation
+   * @returns {Promise<Field | undefined>}
    */
   async getField(path: string): Promise<Field | undefined> {
     const fields = await this.getFields();
