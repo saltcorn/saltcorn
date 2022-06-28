@@ -20,6 +20,7 @@ const emailMockReqRes = {
   req: {
     ...mockReqRes.req,
     generate_email: true,
+    get_base_url: () => getState().getConfig("base_url"),
   },
   res: mockReqRes.res,
 };
