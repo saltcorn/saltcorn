@@ -1403,3 +1403,52 @@ describe("distance ordering", () => {
     expect(george_rows[0].name).toBe("George");
   });
 });
+
+describe("getField", () => {
+  it("should find own field", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const field = await table.getField("name");
+    expect(field?.name).toBe("name");
+    expect(field?.id).toBe(7);
+  });
+  it("should find single join field", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const field = await table.getField("favbook.pages");
+    expect(field?.name).toBe("pages");
+
+    expect(field?.id).toBe(5);
+  });
+  it("should find double join field", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const field = await table.getField("favbook.publisher.name");
+    expect(field?.name).toBe("name");
+    expect(field?.id).toBe(19);
+  });
+  it("should find triple join field", async () => {
+    const table = await Table.findOne({ name: "readings" });
+    assertIsSet(table);
+    const field = await table.getField("patient_id.favbook.publisher.name");
+    expect(field?.name).toBe("name");
+    expect(field?.id).toBe(19);
+  });
+  it("should find own key field", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const field = await table.getField("favbook");
+    expect(field?.name).toBe("favbook");
+    expect(field?.is_fkey).toBe(true);
+    expect(field?.id).toBe(8);
+  });
+  it("should find single join key field", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const field = await table.getField("favbook.publisher");
+    expect(field?.name).toBe("publisher");
+    expect(field?.is_fkey).toBe(true);
+
+    expect(field?.id).toBe(20);
+  });
+});

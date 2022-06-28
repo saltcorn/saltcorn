@@ -637,6 +637,28 @@ class Table implements AbstractTable {
   }
 
   /**
+   * Get Fields list for table
+   * @returns {Promise<Field[]>}
+   */
+  async getField(path: string): Promise<Field | undefined> {
+    const fields = await this.getFields();
+    if (path.includes(".")) {
+      const keypath = path.split(".");
+      let field,
+        theFields = fields;
+      for (let i = 0; i < keypath.length; i++) {
+        const refNm = keypath[i];
+        field = theFields.find((f) => f.name === refNm);
+        if (!field || !field.reftable_name) break;
+        const table = await Table.findOne({ name: field.reftable_name });
+        if (!table) break;
+        theFields = await table.getFields();
+      }
+      return field;
+    } else return fields.find((f) => f.name === path);
+  }
+
+  /**
    * Create history table
    * @returns {Promise<void>}
    */
