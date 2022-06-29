@@ -144,6 +144,10 @@ function add_tabulator_row() {
 }
 
 function delete_tabulator_row(e, cell) {
+  const def = cell.getColumn().getDefinition();
+  if (def && def.formatterParams && def.formatterParams.confirm) {
+    if (!confirm("Are you sure you want to delete this row?")) return;
+  }
   const row = cell.getRow().getData();
   if (!row.id) {
     cell.getRow().delete();
