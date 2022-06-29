@@ -129,15 +129,12 @@ const render = ({
     isText?: boolean
   ) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    if (isTop && blockDispatch && blockDispatch.wrapTop)
-      return blockDispatch.wrapTop(segment, ix, inner);
-    else
-      return segment.labelFor
-        ? label(
-            { for: `input${text(segment.labelFor)}` },
-            applyTextStyle(segment, iconTag + inner, isText)
-          )
-        : applyTextStyle(segment, iconTag + inner, isText);
+    return segment.labelFor
+      ? label(
+          { for: `input${text(segment.labelFor)}` },
+          applyTextStyle(segment, iconTag + inner, isText)
+        )
+      : applyTextStyle(segment, iconTag + inner, isText);
   }
   function go(segment: any, isTop: boolean = false, ix: number = 0): string {
     if (!segment) return "";
@@ -181,16 +178,19 @@ const render = ({
     }
     if (segment.type === "image") {
       const srctype = segment.srctype || "File";
+      const base_url = req.get_base_url();
       return wrap(
         segment,
         isTop,
         ix,
         mjml.image({
-          class: segment.style && segment.style.width ? null : "w-100",
+          //class: segment.style && segment.style.width ? null : "w-100",
           alt: segment.alt,
           style: segment.style,
           src:
-            srctype === "File" ? `/files/serve/${segment.fileid}` : segment.url,
+            srctype === "File"
+              ? `${base_url}/files/serve/${segment.fileid}`
+              : segment.url,
         })
       );
     }
@@ -380,7 +380,7 @@ const render = ({
         ix,
         mjml.section(
           {
-            class: [
+            /*class: [
               customClass || false,
               hAlign && `text-${hAlign}`,
               vAlign === "middle" && "d-flex align-items-center",
@@ -392,7 +392,7 @@ const render = ({
               url && "with-link",
               hoverColor && `hover-${hoverColor}`,
               fullPageWidth && "full-page-width",
-            ],
+            ],*/
             onclick: segment.url ? `location.href='${segment.url}'` : false,
 
             style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
@@ -473,7 +473,7 @@ const render = ({
 
       markup = mjml.section(
         {
-          class: ["row", segment.style && segment.style.width ? null : "w-100"],
+          /*class: ["row", segment.style && segment.style.width ? null : "w-100"],*/
           style: segment.style,
         },
         segment.besides.map((t: any, ixb: number) =>

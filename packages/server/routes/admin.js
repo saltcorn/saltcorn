@@ -1164,8 +1164,8 @@ router.post(
       // console.log(data.toString());
       childOutputs.push(data.toString());
     });
-    child.on("exit", async function (code, signal) {
-      if (code === 0) {
+    child.on("exit", async function (exitCode, signal) {
+      if (exitCode === 0) {
         const file = await File.from_existing_file(
           appOut,
           appFile ? appFile : "app-debug.apk",
@@ -1187,9 +1187,11 @@ router.post(
             {
               type: "card",
               title: req.__("Build Result"),
-              contents: div("Unable to build the app"),
+              contents: div(
+                "Unable to build the app:",
+                pre(code(childOutputs.join("<br/>")))
+              ),
             },
-            childOutputs.join("<br/>"),
           ],
         });
     });
@@ -1201,9 +1203,12 @@ router.post(
           {
             type: "card",
             title: req.__("Build Result"),
-            contents: div("Unable to build the app"),
+            contents: div(
+              p("Unable to build the app:"),
+              pre(code(message)),
+              pre(code(stack))
+            ),
           },
-          `${message} <br/> ${stack}`,
         ],
       });
     });

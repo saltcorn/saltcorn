@@ -1452,3 +1452,34 @@ describe("getField", () => {
     expect(field?.id).toBe(20);
   });
 });
+
+describe("field_options", () => {
+  it("should find own fields", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    const opts = await table?.field_options();
+    expect(opts).toStrictEqual(["favbook", "id", "name", "parent"]);
+  });
+  it("should find one-level join fields", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    const opts = await table?.field_options(1);
+    expect(opts).toStrictEqual([
+      "favbook",
+      "id",
+      "name",
+      "parent",
+      "favbook.author",
+      "favbook.id",
+      "favbook.pages",
+      "favbook.publisher",
+      "parent.favbook",
+      "parent.id",
+      "parent.name",
+      "parent.parent",
+    ]);
+  });
+  it("should find string fields", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    const opts = await table?.field_options(1, (f) => f.type_name === "String");
+    expect(opts).toStrictEqual(["name", "favbook.author", "parent.name"]);
+  });
+});

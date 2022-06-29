@@ -1171,6 +1171,32 @@ class Table implements AbstractTable {
     return { parent_relations, parent_field_list };
   }
 
+  async field_options(
+    nrecurse: number = 0,
+    fieldWhere: (f: Field) => boolean = () => true,
+    prefix: string = ""
+  ): Promise<string[]> {
+    const fields = await this.getFields();
+    const these = fields.filter(fieldWhere).map((f) => prefix + f.name);
+    const those: string[] = [];
+    if (nrecurse > 0)
+      for (const field of fields) {
+        if (field.is_fkey) {
+          const thatTable = Table.findOne({ name: field.reftable_name });
+          if (thatTable) {
+            those.push(
+              ...(await thatTable.field_options(
+                nrecurse - 1,
+                fieldWhere,
+                prefix + field.name + "."
+              ))
+            );
+          }
+        }
+      }
+    return [...these, ...those];
+  }
+
   /**
    * Get child relations for table
    * @returns {Promise<{child_relations: object[], child_field_list: object[]}>}
