@@ -150,36 +150,40 @@ const runScheduler = async ({
     //console.log({ isHourly, isDaily, isWeekly, now: new Date() });
 
     await eachTenant(async () => {
-      const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+      try {
+        const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-      EventLog.create({
-        event_type: "Often",
-        channel: null,
-        user_id: null,
-        payload: null,
-        occur_at: new Date(),
-      });
+        EventLog.create({
+          event_type: "Often",
+          channel: null,
+          user_id: null,
+          payload: null,
+          occur_at: new Date(),
+        });
 
-      const triggers = await Trigger.find({ when_trigger: "Often" });
-      const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
-      const trsDaily = await getIntervalTriggersDueNow("Daily", 24);
-      const trsWeekly = await getIntervalTriggersDueNow("Weekly", 24 * 7);
-      const allTriggers = [
-        ...triggers,
-        ...trsHourly,
-        ...trsDaily,
-        ...trsWeekly,
-      ];
-      for (const trigger of allTriggers) {
-        try {
-          await trigger.runWithoutRow(mockReqRes);
-        } catch (e) {
-          if (isRoot)
-            await Crash.create(e, {
-              url: `trigger: action ${trigger.action} id ${trigger.id}`,
-              headers: {},
-            });
+        const triggers = await Trigger.find({ when_trigger: "Often" });
+        const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
+        const trsDaily = await getIntervalTriggersDueNow("Daily", 24);
+        const trsWeekly = await getIntervalTriggersDueNow("Weekly", 24 * 7);
+        const allTriggers = [
+          ...triggers,
+          ...trsHourly,
+          ...trsDaily,
+          ...trsWeekly,
+        ];
+        for (const trigger of allTriggers) {
+          try {
+            await trigger.runWithoutRow(mockReqRes);
+          } catch (e) {
+            if (isRoot)
+              await Crash.create(e, {
+                url: `trigger: action ${trigger.action} id ${trigger.id}`,
+                headers: {},
+              });
+          }
         }
+      } catch (e) {
+        console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
       }
     });
     //auto backup
