@@ -62,4 +62,37 @@ describe("select fieldview", () => {
       '<select class="form-control form-select  " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value="">None</option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select>'
     );
   });
+  it("should render with where", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    const configuration = {
+      neutral_label: "None",
+      where: `pages== 728`,
+    };
+    const fieldSpec: any = {
+      name: "favbook",
+      label: "Favbook",
+      table: patients,
+      type: "Key to books",
+      block: false,
+      fieldview: "select",
+      textStyle: "",
+      field_name: "favbook",
+      configuration,
+      attributes: { summary_field: "author", ...configuration },
+    };
+    const field = new Field(fieldSpec);
+    await field.fill_fkey_options();
+    const fieldview = getState().keyFieldviews[field.fieldview as string];
+    const res = fieldview.run(
+      "favbook",
+      null,
+      fieldSpec.configuration,
+      "",
+      false,
+      field
+    );
+    expect(res).toBe(
+      '<select class="form-control form-select  " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value="">None</option><option value="2">Leo Tolstoy</option></select>'
+    );
+  });
 });
