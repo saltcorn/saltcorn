@@ -522,7 +522,8 @@ module.exports = {
       const table_for_recalc = await Table.findOne({ name: table });
 
       //intentionally omit await
-      recalculate_for_stored(table_for_recalc);
+      if (table_for_recalc) recalculate_for_stored(table_for_recalc);
+      else return { error: "recalculate_stored_fields: table not found" };
     },
   },
 
