@@ -2,6 +2,7 @@ sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exis
 sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
 
 adduser --disabled-password --gecos "" saltcorn
+usermod -a -G docker saltcorn
 sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
 sudo -iu saltcorn createdb saltcorn 
 sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
