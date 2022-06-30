@@ -287,7 +287,7 @@ const run = async (
       }&email=${encodeURIComponent(row.email)}`;
     }
   }
-  await set_join_fieldviews({ layout, fields });
+  await set_join_fieldviews({ table: tbl, layout, fields });
 
   const rendered = (
     await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]])
