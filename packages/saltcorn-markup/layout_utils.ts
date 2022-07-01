@@ -286,7 +286,7 @@ const navbar = (
 ): string =>
   nav(
     {
-      class: `navbar navbar-expand-md ${opts.class || ""} ${
+      class: `navbar d-print-none navbar-expand-md ${opts.class || ""} ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
       } ${opts.fixedTop ? "fixed-top" : ""}`,
       id: "mainNav",
