@@ -122,7 +122,7 @@ const configTypes: ConfigTypes = {
   allow_signup: {
     type: "Bool",
     label: "Allow signups",
-    default: false,
+    default: true,
     blurb: "Allow users to sign up for a new user account",
   },
   /** @type {object} */
