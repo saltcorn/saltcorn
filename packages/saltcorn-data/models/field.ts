@@ -239,7 +239,7 @@ class Field implements AbstractField {
     if (isDynamic) {
       const fakeEnv: any = {};
       formFieldNames!.forEach((nm) => {
-        fakeEnv[nm] = nm;
+        fakeEnv[nm] = "$" + nm;
       });
       this.attributes.dynamic_where = {
         table: this.reftable_name,

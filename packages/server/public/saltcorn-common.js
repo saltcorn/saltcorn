@@ -95,7 +95,7 @@ function apply_showif() {
     );
     console.log(dynwhere);
     const qs = Object.entries(dynwhere.whereParsed)
-      .map(([k, v]) => (rec[v] ? `${k}=${rec[v]}` : ""))
+      .map(([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`)
       .join("&");
     var current = e.attr("data-selected");
     e.change(function (ec) {
