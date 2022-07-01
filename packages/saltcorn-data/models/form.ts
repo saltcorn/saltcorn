@@ -111,13 +111,15 @@ class Form implements AbstractForm {
     optionsQuery?: any
   ): Promise<void> {
     //console.log(this.values);
+    const formFieldNames = this.fields.map((f) => f.name);
     for (const f of this.fields) {
       if (hasFieldMembers(f))
         await f.fill_fkey_options(
           force_allow_none,
           undefined,
           this.values,
-          optionsQuery
+          optionsQuery,
+          formFieldNames
         );
     }
   }
