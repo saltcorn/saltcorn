@@ -71,6 +71,7 @@ const select = {
    * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) => {
+    //console.log(attrs);
     if (attrs.disabled)
       return (
         input({
