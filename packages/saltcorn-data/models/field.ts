@@ -236,7 +236,14 @@ class Field implements AbstractField {
     const isDynamic = (formFieldNames || []).some((nm) =>
       (this.attributes.where || "").includes("$" + nm)
     );
-    if (isDynamic) this.attributes.dynamic_where = true;
+    if (isDynamic) {
+      this.attributes.dynamic_where = {
+        table: this.reftable_name,
+        refname: this.refname,
+        where: this.attributes.where,
+        summary_field: this.attributes.summary_field,
+      };
+    }
     //console.log({ where, isDynamic, awhere: this.attributes.where });
 
     if (
