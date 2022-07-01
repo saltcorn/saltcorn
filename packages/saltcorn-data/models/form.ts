@@ -110,14 +110,19 @@ class Form implements AbstractForm {
     force_allow_none: boolean = false,
     optionsQuery?: any
   ): Promise<void> {
-    //console.log(this.values);
+    //console.log(this.fields);
+    const formFieldNames = this.fields
+      // @ts-ignore
+      .filter((f) => f?.input_type !== "hidden")
+      .map((f) => f.name);
     for (const f of this.fields) {
       if (hasFieldMembers(f))
         await f.fill_fkey_options(
           force_allow_none,
           undefined,
           this.values,
-          optionsQuery
+          optionsQuery,
+          formFieldNames
         );
     }
   }

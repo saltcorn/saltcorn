@@ -225,14 +225,33 @@ class Field implements AbstractField {
     force_allow_none: boolean = false,
     where0?: Where,
     extraCtx: any = {},
-    optionsQuery?: any
+    optionsQuery?: any,
+    formFieldNames?: string[]
   ): Promise<void> {
     const where =
       where0 ||
       (this.attributes.where
         ? jsexprToWhere(this.attributes.where, extraCtx)
         : undefined);
-    //console.log(where);
+    const isDynamic = (formFieldNames || []).some((nm) =>
+      (this.attributes.where || "").includes("$" + nm)
+    );
+    if (isDynamic) {
+      const fakeEnv: any = {};
+      formFieldNames!.forEach((nm) => {
+        fakeEnv[nm] = "$" + nm;
+      });
+      this.attributes.dynamic_where = {
+        table: this.reftable_name,
+        refname: this.refname,
+        where: this.attributes.where,
+        whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
+        summary_field: this.attributes.summary_field,
+        required: this.required,
+      };
+    }
+    //console.log({ where, isDynamic, awhere: this.attributes.where });
+
     if (
       this.is_fkey &&
       this.fieldview === "two_level_select" &&

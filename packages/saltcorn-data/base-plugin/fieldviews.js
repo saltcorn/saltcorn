@@ -71,6 +71,7 @@ const select = {
    * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) => {
+    //console.log(attrs);
     if (attrs.disabled)
       return (
         input({
@@ -88,6 +89,14 @@ const select = {
         "data-fieldname": field.form_name,
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
+        ...(attrs?.dynamic_where
+          ? {
+              "data-selected": v,
+              "data-fetch-options": encodeURIComponent(
+                JSON.stringify(attrs?.dynamic_where)
+              ),
+            }
+          : {}),
       },
       select_options(
         v,

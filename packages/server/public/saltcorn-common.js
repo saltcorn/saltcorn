@@ -87,6 +87,39 @@ function apply_showif() {
       e.attr("data-selected", ec.target.value);
     });
   });
+  $("[data-fetch-options]").each(function (ix, element) {
+    const e = $(element);
+    const rec = get_form_record(e);
+    const dynwhere = JSON.parse(
+      decodeURIComponent(e.attr("data-fetch-options"))
+    );
+    //console.log(dynwhere);
+    const qs = Object.entries(dynwhere.whereParsed)
+      .map(([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`)
+      .join("&");
+    var current = e.attr("data-selected");
+    e.change(function (ec) {
+      e.attr("data-selected", ec.target.value);
+    });
+    $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
+      if (resp.success) {
+        e.empty();
+        if (!dynwhere.required) e.append($(`<option></option>`));
+        resp.success.forEach((r) => {
+          e.append(
+            $(
+              `<option ${
+                `${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
+              } value="${r[dynwhere.refname]}">${
+                r[dynwhere.summary_field]
+              }</option>`
+            )
+          );
+        });
+      }
+    });
+  });
+
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
     const rec = get_form_record(e);
@@ -631,4 +664,3 @@ function cancel_form(form) {
   $(form).append(`<input type="hidden" name="_cancel" value="on">`);
   $(form).submit();
 }
-
