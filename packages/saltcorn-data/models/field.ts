@@ -247,6 +247,7 @@ class Field implements AbstractField {
         where: this.attributes.where,
         whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
         summary_field: this.attributes.summary_field,
+        required: this.required,
       };
     }
     //console.log({ where, isDynamic, awhere: this.attributes.where });

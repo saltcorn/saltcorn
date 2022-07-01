@@ -104,7 +104,7 @@ function apply_showif() {
     $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
       if (resp.success) {
         e.empty();
-
+        if (!dynwhere.required) e.append($(`<option></option>`));
         resp.success.forEach((r) => {
           e.append(
             $(
