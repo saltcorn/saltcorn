@@ -245,7 +245,7 @@ const configTypes: ConfigTypes = {
     type: "Role",
     label: "Role to create tenants",
     blurb: "Minimum user role required to create a new tenant",
-    default: "10",
+    default: "1",
   },
   /** @type {object} */
   create_tenant_warning: {
