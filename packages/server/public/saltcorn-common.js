@@ -93,7 +93,7 @@ function apply_showif() {
     const dynwhere = JSON.parse(
       decodeURIComponent(e.attr("data-fetch-options"))
     );
-    console.log(dynwhere);
+    //console.log(dynwhere);
     const qs = Object.entries(dynwhere.whereParsed)
       .map(([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`)
       .join("&");
