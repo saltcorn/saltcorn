@@ -122,7 +122,7 @@ const configTypes: ConfigTypes = {
   allow_signup: {
     type: "Bool",
     label: "Allow signups",
-    default: true,
+    default: false,
     blurb: "Allow users to sign up for a new user account",
   },
   /** @type {object} */
@@ -245,7 +245,7 @@ const configTypes: ConfigTypes = {
     type: "Role",
     label: "Role to create tenants",
     blurb: "Minimum user role required to create a new tenant",
-    default: "10",
+    default: "1",
   },
   /** @type {object} */
   create_tenant_warning: {
