@@ -237,10 +237,15 @@ class Field implements AbstractField {
       (this.attributes.where || "").includes("$" + nm)
     );
     if (isDynamic) {
+      const fakeEnv: any = {};
+      formFieldNames!.forEach((nm) => {
+        fakeEnv[nm] = nm;
+      });
       this.attributes.dynamic_where = {
         table: this.reftable_name,
         refname: this.refname,
         where: this.attributes.where,
+        whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
         summary_field: this.attributes.summary_field,
       };
     }

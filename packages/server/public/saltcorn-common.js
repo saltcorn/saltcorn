@@ -94,14 +94,17 @@ function apply_showif() {
       decodeURIComponent(e.attr("data-fetch-options"))
     );
     console.log(dynwhere);
-    const qs = "";
+    const qs = Object.entries(dynwhere.whereParsed)
+      .map(([k, v]) => (rec[v] ? `${k}=${rec[v]}` : ""))
+      .join("&");
     var current = e.attr("data-selected");
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
     });
     $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
-      console.log(resp);
       if (resp.success) {
+        e.empty();
+
         resp.success.forEach((r) => {
           e.append(
             $(
@@ -115,7 +118,6 @@ function apply_showif() {
         });
       }
     });
-    //e.empty();
   });
 
   $("[data-source-url]").each(function (ix, element) {
