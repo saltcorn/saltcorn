@@ -10,6 +10,7 @@ const {
   toInclude,
   toNotInclude,
 } = require("../auth/testhelp");
+const { getState } = require("@saltcorn/data/db/state");
 
 afterAll(db.close);
 
@@ -24,6 +25,8 @@ describe("tenant routes", () => {
   if (!db.isSQLite) {
     it("shows create form", async () => {
       db.enable_multi_tenant();
+      await getState().setConfig("role_to_create_tenant", "10");
+
       const app = await getApp({ disableCsrf: true });
       await request(app).get("/tenant/create").expect(toInclude("subdomain"));
     });
@@ -37,6 +40,8 @@ describe("tenant routes", () => {
     });
     it("creates tenant with capital letter", async () => {
       db.enable_multi_tenant();
+      await getState().setConfig("role_to_create_tenant", "10");
+
       const app = await getApp({ disableCsrf: true });
       await request(app)
         .post("/tenant/create")
@@ -46,6 +51,7 @@ describe("tenant routes", () => {
     });
     it("rejects existing tenant", async () => {
       db.enable_multi_tenant();
+      await getState().setConfig("role_to_create_tenant", "10");
       const app = await getApp({ disableCsrf: true });
       await request(app)
         .post("/tenant/create")
