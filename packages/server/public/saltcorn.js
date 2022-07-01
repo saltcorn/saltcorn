@@ -296,7 +296,11 @@ function ajax_post(url, args) {
       "CSRF-Token": _sc_globalCsrf,
     },
     ...(args || {}),
-  }).done(ajax_done);
+  })
+    .done(ajax_done)
+    .fail((e) =>
+      ajax_done(e.responseJSON || { error: "Unknown error: " + e.responseText })
+    );
 }
 function ajax_post_btn(e, reload_on_done, reload_delay) {
   var form = $(e).closest("form");
