@@ -379,6 +379,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: req.__(`Edit %s view`, viewname),
           contents: renderForm(form, req.csrfToken()),
         },
@@ -416,6 +417,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: req.__(`Create view`),
           contents: renderForm(form, req.csrfToken()),
         },
@@ -453,6 +455,7 @@ router.post(
           },
           {
             type: "card",
+            class: "mt-0",
             title: req.__(`Edit view`),
             contents: renderForm(form, req.csrfToken()),
           },
@@ -528,6 +531,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
       },
       {
         type: noCard ? "container" : "card",
+        class: !noCard && "mt-0",
         title: wfres.title,
         contents,
       },
