@@ -49,7 +49,7 @@ const tableTable = (tables, req) =>
  */
 const tableCard = (tables, req) => ({
   type: "card",
-  class: "welcome-page-entity-list",
+  class: "welcome-page-entity-list mt-1",
   title: link("/table", req.__("Tables")),
   contents:
     (tables.length <= 1
@@ -102,7 +102,7 @@ const viewTable = (views, req) =>
 const viewCard = (views, req) => ({
   type: "card",
   title: link("/viewedit", req.__("Views")),
-  class: "welcome-page-entity-list",
+  class: "welcome-page-entity-list mt-1",
   bodyClass: "py-0  pe-0",
   contents:
     (views.length <= 1
@@ -156,7 +156,7 @@ const pageTable = (pages, req) =>
 const pageCard = (pages, req) => ({
   type: "card",
   title: link("/pageedit", req.__("Pages")),
-  class: "welcome-page-entity-list",
+  class: "welcome-page-entity-list mt-1",
   contents:
     (pages.length <= 1
       ? p(
@@ -369,9 +369,9 @@ const welcome_page = async (req) => {
     above: [
       {
         besides: [
-          pageCard(pages, req),
-          viewCard(views, req),
           tableCard(tables, req),
+          viewCard(views, req),
+          pageCard(pages, req),
         ],
       },
       {
@@ -380,7 +380,7 @@ const welcome_page = async (req) => {
             type: "card",
             //title: req.__("Install pack"),
             bodyClass: "py-0 pe-0",
-            class: "welcome-page-entity-list",
+            class: "welcome-page-entity-list mt-2",
 
             tabContents:
               triggers.length > 0
@@ -399,7 +399,7 @@ const welcome_page = async (req) => {
             type: "card",
             //title: req.__("Learn"),
             bodyClass: "py-0 pe-0",
-            class: "welcome-page-entity-list",
+            class: "welcome-page-entity-list mt-2",
             tabContents:
               users.length > 4
                 ? {

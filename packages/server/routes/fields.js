@@ -488,6 +488,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: wizardCardTitle(field.label, wf, wfres),
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
@@ -524,6 +525,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: wizardCardTitle(req.__(`New field`), wf, wfres),
           contents: renderForm(wfres.renderForm, req.csrfToken()),
         },
@@ -589,6 +591,7 @@ router.post(
           },
           {
             type: "card",
+            class: "mt-0",
             title: wizardCardTitle(
               wfres.context.label || req.__("New field"),
               wf,

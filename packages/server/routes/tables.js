@@ -448,6 +448,7 @@ router.get(
           },
           {
             type: "card",
+            class: "mt-0",
             title: cardHeaderTabs([
               { label: req.__("Your tables"), href: "/table" },
               {
@@ -801,15 +802,12 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Tables"), href: "/table" },
-            { text: table.name },
+            { text: span({ class: "fw-bold text-body" }, table.name) },
           ],
         },
         {
-          type: "pageHeader",
-          title: req.__(`%s table`, table.name),
-        },
-        {
           type: "card",
+          class: "mt-0",
           title: req.__("Fields"),
           contents: fieldCard,
         },
@@ -1076,6 +1074,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: cardHeaderTabs([
             { label: req.__("Your tables"), href: "/table", active: true },
             {

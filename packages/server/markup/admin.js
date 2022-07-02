@@ -124,6 +124,7 @@ const send_settings_page = ({
     : [
         {
           type: "card",
+          class: "mt-0",
           contents: div(
             { class: "d-flex" },
             ul(

@@ -326,6 +326,7 @@ router.get(
         {
           type: "card",
           title: req.__("Your pages"),
+          class: "mt-0",
           contents: getPageList(pages, roles, req),
         },
         {

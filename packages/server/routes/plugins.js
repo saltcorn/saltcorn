@@ -506,6 +506,7 @@ const plugin_store_html = (items, req) => {
       },
       {
         type: "card",
+        class: "mt-0",
         contents: div(
           { class: "d-flex justify-content-between" },
           storeNavPills(req),

@@ -432,7 +432,8 @@ const render = ({
         div(
           {
             class: [
-              "card mt-4",
+              "card",
+              !(segment.class || "").includes("mt-") && "mt-4",
               segment.shadow === false ? false : "shadow",
               segment.class,
               segment.url && "with-link",
