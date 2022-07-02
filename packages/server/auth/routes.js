@@ -1195,6 +1195,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         ? [
             {
               type: "card",
+              class: "mt-0",
               title: userSetsName,
               contents: usersets,
             },
@@ -1203,6 +1204,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
       {
         type: "card",
         title: req.__("User"),
+        class: !usersets && "mt-0",
         contents: table(
           tbody(
             tr(

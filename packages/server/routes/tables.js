@@ -448,6 +448,7 @@ router.get(
           },
           {
             type: "card",
+            class: "mt-0",
             title: cardHeaderTabs([
               { label: req.__("Your tables"), href: "/table" },
               {
@@ -1076,6 +1077,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: cardHeaderTabs([
             { label: req.__("Your tables"), href: "/table", active: true },
             {

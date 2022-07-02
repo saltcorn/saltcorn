@@ -197,6 +197,7 @@ router.get(
         },
         {
           type: "card",
+          class: "mt-0",
           title: req.__("Your views"),
           contents: [
             viewMarkup,
