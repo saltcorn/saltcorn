@@ -121,6 +121,7 @@ class State {
   roomEmitter?: Function;
   localTableIds: number[];
   role_id?: number;
+  user_name?: string;
 
   /**
    * State constructor

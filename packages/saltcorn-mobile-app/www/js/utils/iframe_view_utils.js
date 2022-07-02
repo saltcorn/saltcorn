@@ -80,9 +80,9 @@ async function loginFormSubmit(e, entryView) {
   if (token) {
     parent.localStorage.setItem("auth_jwt", token);
     const decodedJwt = parent.jwt_decode(token);
-    parent.saltcorn.data.state.getState().role_id = decodedJwt?.role_id
-      ? decodedJwt.role_id
-      : 10;
+    const state = parent.saltcorn.data.state.getState();
+    state.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
+    state.user_name = decodedJwt.sub;
     parent.addRoute({ route: entryView, query: undefined });
     const page = await parent.router.resolve({
       pathname: entryView,

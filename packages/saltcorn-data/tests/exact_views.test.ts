@@ -26,7 +26,7 @@ beforeAll(async () => {
   if (process.env.REMOTE_QUERIES === "true") {
     getState().setConfig("base_url", "http://localhost:3000");
     remoteQueries = true;
-    prepareQueryEnviroment();
+    await prepareQueryEnviroment();
   }
 });
 const mkTester =

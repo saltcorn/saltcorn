@@ -227,7 +227,11 @@ const getApp = async (opts = {}) => {
   passport.use(
     new JwtStrategy(jwtOpts, (jwt_payload, done) => {
       User.findOne({ email: jwt_payload.sub }).then((u) => {
-        if (u) {
+        if (
+          u &&
+          u.last_mobile_login &&
+          u.last_mobile_login <= jwt_payload.iat
+        ) {
           return done(null, {
             email: u.email,
             id: u.id,

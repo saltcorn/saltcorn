@@ -120,6 +120,16 @@
         iframe.contentWindow._sc_version_tag = window.config.version_tag;
       };
 
+      const checkJWT = async () => {
+        const jwt = localStorage.getItem("auth_jwt");
+        if (!jwt || jwt === "undefined") return false;
+        const response = await apiCall({
+          method: "GET",
+          path: "/auth/authenticated",
+        });
+        return response.data.authenticated;
+      };
+
       document.addEventListener("deviceready", async () => {
         window.config = await readJSON(
           "config",
@@ -151,12 +161,11 @@
         await initRoutes();
         setVersionTtag();
         const entryView = config.entry_view;
-        const jwt = localStorage.getItem("auth_jwt");
-        if (jwt && jwt !== "undefined") {
-          const decodedJwt = jwt_decode(jwt);
-          saltcorn.data.state.getState().role_id = decodedJwt?.role_id
-            ? decodedJwt.role_id
-            : 10;
+        if (await checkJWT()) {
+          const decodedJwt = jwt_decode(localStorage.getItem("auth_jwt"));
+          const state = saltcorn.data.state.getState();
+          state.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
+          state.user_name = decodedJwt.sub;
           addRoute({ route: entryView, query: undefined });
           const page = await router.resolve({
             pathname: entryView,
@@ -164,7 +173,12 @@
           });
           replaceIframe(page.content);
         } else {
-          replaceIframe(renderLoginForm(entryView, config.version_tag));
+          const page = await router.resolve({
+            pathname: "get/auth/login",
+            entryView: entryView,
+            versionTag: config.version_tag,
+          });
+          replaceIframe(page.content);
         }
       });
 
