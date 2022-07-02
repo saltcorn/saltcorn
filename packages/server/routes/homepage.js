@@ -380,7 +380,7 @@ const welcome_page = async (req) => {
             type: "card",
             //title: req.__("Install pack"),
             bodyClass: "py-0 pe-0",
-            class: "welcome-page-entity-list",
+            class: "welcome-page-entity-list mt-2",
 
             tabContents:
               triggers.length > 0
@@ -399,7 +399,7 @@ const welcome_page = async (req) => {
             type: "card",
             //title: req.__("Learn"),
             bodyClass: "py-0 pe-0",
-            class: "welcome-page-entity-list",
+            class: "welcome-page-entity-list mt-2",
             tabContents:
               users.length > 4
                 ? {
