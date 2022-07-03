@@ -67,6 +67,15 @@ function splitPathQuery(url) {
   return { path, query };
 }
 
+async function callLogout() {
+  const page = await router.resolve({
+    pathname: "get/auth/logout",
+    entryView: config.entry_view,
+    versionTag: config.version_tag,
+  });
+  replaceIframe(page.content);
+}
+
 function replaceIframe(content) {
   let iframe = document.getElementById("content-iframe");
   iframe.contentWindow.document.open();

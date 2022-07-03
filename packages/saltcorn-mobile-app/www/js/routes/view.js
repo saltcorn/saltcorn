@@ -1,10 +1,38 @@
-const getHeaders = (versionTag) => {
+const getHeaders = () => {
+  const versionTag = window.config.version_tag;
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: "js/utils/iframe_view_utils.js" },
   ];
   return [...stdHeaders, ...window.config.pluginHeaders];
+};
+
+const getMenu = () => {
+  const userName = saltcorn.data.state.getState().user_name;
+  const authItems = [
+    {
+      label: "User",
+      icon: "far fa-user",
+      isUser: true,
+      subitems: [
+        { label: userName },
+        {
+          link: `javascript:parent.callLogout();`,
+          icon: "fas fa-sign-out-alt",
+          label: "Logout",
+        },
+      ],
+    },
+  ];
+
+  return [
+    {
+      section: "User",
+      isUser: true,
+      items: authItems,
+    },
+  ];
 };
 
 /**
@@ -88,7 +116,8 @@ export const getView = async (context) => {
         body: { above: [viewContent] },
         alerts: [],
         role: state.role_id,
-        headers: getHeaders(window.config.version_tag),
+        menu: getMenu(),
+        headers: getHeaders(),
         bodyClass: "",
         brand: {},
       })

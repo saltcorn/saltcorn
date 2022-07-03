@@ -1,10 +1,12 @@
 import db from "../db";
 import { sign } from "jsonwebtoken";
 import axios from "axios";
+import User from "../models/user";
 
 declare let global: any;
 
-export const prepareQueryEnviroment = () => {
+export const prepareQueryEnviroment = async () => {
+  const user = await User.findOne({ email: "admin@foo.com" });
   const token = process.env.JSON_WEB_TOKEN
     ? process.env.JSON_WEB_TOKEN
     : sign(
@@ -13,6 +15,7 @@ export const prepareQueryEnviroment = () => {
           role_id: 1,
           iss: "saltcorn@saltcorn",
           aud: "saltcorn-mobile-app",
+          iat: user?.last_mobile_login?.valueOf(),
         },
         db.connectObj.jwt_secret
       );

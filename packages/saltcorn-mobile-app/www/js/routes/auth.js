@@ -23,7 +23,7 @@ const buildForm = (entryView) => {
   });
 };
 
-export const renderLoginForm = (entryView, version_tag) => {
+const renderLoginForm = (entryView, version_tag) => {
   const loginForm = buildForm(entryView);
   const layout = saltcorn.data.state.getState().layouts["sbadmin2"];
   return layout.authWrap({
@@ -37,4 +37,19 @@ export const renderLoginForm = (entryView, version_tag) => {
     ],
     csrfToken: false,
   });
+};
+
+export const getLoginForm = async (context) => {
+  return { content: renderLoginForm(context.entryView, context.versionTag) };
+};
+
+export const logout = async (context) => {
+  const response = await apiCall({ method: "GET", path: "/auth/logout" });
+  if (response.data.success) {
+    localStorage.removeItem("auth_jwt");
+    return { content: renderLoginForm(context.entryView, context.versionTag) };
+  } else {
+    console.log("unable to logout out");
+    return {};
+  }
 };

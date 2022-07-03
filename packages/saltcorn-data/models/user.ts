@@ -59,6 +59,7 @@ class User {
   reset_password_token?: string | null; // 10 chars length
   reset_password_expiry?: Date | null;
   role_id: number;
+  last_mobile_login?: Date;
   [key: string]: any;
 
   /**
@@ -91,6 +92,7 @@ class User {
         ? o.reset_password_expiry
         : null;
     this.role_id = o.role_id ? +o.role_id : 8;
+    this.last_mobile_login = o.last_mobile_login;
     Object.assign(this, safeUserFields(o));
   }
 
@@ -186,9 +188,9 @@ class User {
       ...rest,
     });
     await Trigger.runTableTriggers(
-        "Insert",
-        Table.findOne({name: "users"}) as Table,
-        u
+      "Insert",
+      Table.findOne({ name: "users" }) as Table,
+      u
     );
     return u;
   }
@@ -359,10 +361,7 @@ class User {
     email: string;
     verification_token: string;
   }): Promise<true | ErrorMessage> {
-    if (
-      verification_token.length < 10 ||
-      !email
-    )
+    if (verification_token.length < 10 || !email)
       return { error: "Invalid token" };
     const u = await User.findOne({ email, verification_token });
     if (!u) return { error: "Invalid token" };
@@ -402,9 +401,7 @@ class User {
     reset_password_token: string;
     password: string;
   }): Promise<SuccessMessage | ErrorMessage> {
-    if (
-      reset_password_token.length < 10
-    )
+    if (reset_password_token.length < 10)
       return {
         error: "Invalid token or invalid token length or incorrect email",
       };
@@ -485,6 +482,14 @@ class User {
       if (err) req.flash("danger", err);
     });
   }
+
+  /**
+   * update 'last_mobile_login' columnwill
+   * @param date new login_date or null for logout (invalidates all jwts)
+   */
+  async updateLastMobileLogin(date: Date | null): Promise<void> {
+    await db.update("users", { last_mobile_login: date }, this.id);
+  }
 }
 
 namespace User {
@@ -501,6 +506,7 @@ namespace User {
     role_id?: number | string;
     reset_password_token?: string; // 10 chars length
     reset_password_expiry?: Date | number | string;
+    last_mobile_login?: Date;
     [key: string]: any;
   };
 }

@@ -203,6 +203,7 @@ const loginWithJwt = async (req, res) => {
   const { email, password } = req.query;
   const user = await User.findOne({ email });
   if (user && user.checkPassword(password)) {
+    const now = new Date().valueOf();
     const jwt_secret = db.connectObj.jwt_secret;
     const token = jwt.sign(
       {
@@ -210,9 +211,11 @@ const loginWithJwt = async (req, res) => {
         role_id: user.role_id,
         iss: "saltcorn@saltcorn",
         aud: "saltcorn-mobile-app",
+        iat: now,
       },
       jwt_secret
     );
+    if (!user.last_mobile_login) user.updateLastMobileLogin(now);
     res.json(token);
   }
 };
@@ -249,18 +252,24 @@ router.get(
  * @function
  * @memberof module:auth/routes~routesRouter
  */
-router.get("/logout", (req, res, next) => {
-  req.logout();
-  if (req.session.destroy)
-    req.session.destroy((err) => {
-      if (err) return next(err);
-      req.logout();
-      res.redirect("/auth/login");
-    });
-  else {
+router.get("/logout", async (req, res, next) => {
+  if (req.smr && req.user?.id) {
+    const user = await User.findOne({ id: req.user.id });
+    await user.updateLastMobileLogin(null);
+    res.json({ success: true });
+  } else if (req.logout) {
     req.logout();
-    req.session = null;
-    res.redirect("/auth/login");
+    if (req.session.destroy)
+      req.session.destroy((err) => {
+        if (err) return next(err);
+        req.logout();
+        res.redirect("/auth/login");
+      });
+    else {
+      req.logout();
+      req.session = null;
+      res.redirect("/auth/login");
+    }
   }
 });
 
@@ -978,6 +987,11 @@ router.post(
       }
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
+    if (req.smr) {
+      const dbUser = await User.findOne({ id: req.user.id });
+      if (!dbUser.last_mobile_login)
+        await dbUser.updateLastMobileLogin(new Date());
+    }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
     } else res.redirect("/");
@@ -1007,6 +1021,17 @@ router.get(
         res.redirect("/");
       }
     }
+  })
+);
+
+/*
+  returns if 'req.user' is an authenticated user
+ */
+router.get(
+  "/authenticated",
+  error_catcher((req, res, next) => {
+    const isAuth = req.user && req.user.id ? true : false;
+    res.json({ authenticated: isAuth });
   })
 );
 
