@@ -415,23 +415,6 @@ router.get(
         above: [
           {
             type: "card",
-            title: req.__("Restoring automated backup"),
-            contents: div(
-              ol(
-                li("Download one of the backups below"),
-                li(
-                  a({ href: "/admin/clear-all" }, "Clear this application"),
-                  " ",
-                  "(tick all boxes)"
-                ),
-                li(
-                  "When prompted to create the first user, click the link to restore a backup"
-                )
-              )
-            ),
-          },
-          {
-            type: "card",
             title: req.__("Download automated backup"),
             contents: div(
               ul(
@@ -447,6 +430,24 @@ router.get(
                     )
                   )
                 )
+              )
+            ),
+          },
+          {
+            type: "card",
+            title: req.__("Restoring automated backup"),
+            contents: div(
+              ol(
+                li("Download one of the backups above"),
+                li(
+                  a({ href: "/admin/clear-all" }, "Clear this application"),
+                  " ",
+                  "(tick all boxes)"
+                ),
+                li(
+                  "When prompted to create the first user, click the link to restore a backup"
+                ),
+                li("Select the downloaded backup file")
               )
             ),
           },
