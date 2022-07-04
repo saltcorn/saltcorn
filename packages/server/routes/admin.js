@@ -45,6 +45,7 @@ const {
   legend,
   ul,
   li,
+  ol,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -406,7 +407,6 @@ router.get(
     const backupFiles = fileNms.filter(
       (fnm) => fnm.startsWith("sc-backup") && fnm.endsWith(".zip")
     );
-    console.log(backupFiles);
     send_admin_page({
       res,
       req,
@@ -415,12 +415,62 @@ router.get(
         above: [
           {
             type: "card",
+            title: req.__("Restoring automated backup"),
+            contents: div(
+              ol(
+                li("Download one of the backups below"),
+                li(
+                  a({ href: "/admin/clear-all" }, "Clear this application"),
+                  " ",
+                  "(tick all boxes)"
+                ),
+                li(
+                  "When prompted to create the first user, click the link to restore a backup"
+                )
+              )
+            ),
+          },
+          {
+            type: "card",
             title: req.__("Download automated backup"),
-            contents: div(ul(backupFiles.map((fnm) => li(fnm)))),
+            contents: div(
+              ul(
+                backupFiles.map((fnm) =>
+                  li(
+                    a(
+                      {
+                        href: `/admin/auto-backup-download/${encodeURIComponent(
+                          fnm
+                        )}`,
+                      },
+                      fnm
+                    )
+                  )
+                )
+              )
+            ),
           },
         ],
       },
     });
+  })
+);
+
+router.get(
+  "/auto-backup-download/:filename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { filename } = req.params;
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (
+      !isRoot ||
+      !(filename.startsWith("sc-backup") && filename.endsWith(".zip"))
+    ) {
+      res.redirect("/admin/backup");
+      return;
+    }
+    const auto_backup_directory = getState().getConfig("auto_backup_directory");
+    res.download(path.join(auto_backup_directory, filename), filename);
   })
 );
 
