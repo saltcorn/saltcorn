@@ -48,6 +48,7 @@ import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
 import utils from "../utils";
 import { num_between } from "@saltcorn/types/generators";
+import { devNull } from "os";
 const { prefixFieldsInWhere } = utils;
 const {
   InvalidConfiguration,
@@ -974,6 +975,7 @@ class Table implements AbstractTable {
         }
       } else {
         await new Promise<void>((resolve, reject) => {
+          const imported_pk_set = new Set();
           csvtojson({
             includeColumns: colRe,
           })
@@ -989,13 +991,35 @@ class Table implements AbstractTable {
                   });
 
                   const rowOk = readStateStrict(rec, fields);
-                  if (rowOk)
-                    await db.insert(this.name, rec, {
-                      noid: true,
-                      client,
-                      pk_name,
-                    });
-                  else rejects += 1;
+                  if (rowOk) {
+                    if (typeof rec[this.pk_name] !== "undefined") {
+                      //TODO replace with upsert - optimisation
+                      if (imported_pk_set.has(rec[this.pk_name]))
+                        throw new Error(
+                          "Duplicate primary key values: " + rec[this.pk_name]
+                        );
+                      imported_pk_set.add(rec[this.pk_name]);
+                      const existing = await db.selectMaybeOne(this.name, {
+                        [this.pk_name]: rec[this.pk_name],
+                      });
+                      if (existing)
+                        await db.update(this.name, rec, rec[this.pk_name], {
+                          pk_name,
+                          client,
+                        });
+                      else
+                        await db.insert(this.name, rec, {
+                          noid: true,
+                          client,
+                          pk_name,
+                        });
+                    } else
+                      await db.insert(this.name, rec, {
+                        noid: true,
+                        client,
+                        pk_name,
+                      });
+                  } else rejects += 1;
                 } catch (e: any) {
                   await client.query("ROLLBACK");
 
