@@ -687,6 +687,7 @@ module.exports = {
   },
   queries: ({
     table_id,
+    exttable_name,
     viewname,
     configuration: { columns, layout },
     req,
@@ -708,7 +709,7 @@ module.exports = {
           rows: null,
           message: "No row selected",
         };
-      const tbl = await Table.findOne(table_id);
+      const tbl = await Table.findOne(table_id || exttable_name);
       const rows = await tbl.getJoinedRows({
         where: qstate,
         joinFields,
