@@ -612,7 +612,8 @@ Gordon Kane, 217`;
   });
   it("should replace when id given", async () => {
     const csv = `id,author,Pages
-1, Noam Chomsky, 540`;
+1, Noam Chomsky, 540
+17, David Harvey, 612`;
     const fnm = "/tmp/testreplaceid.csv";
     await writeFile(fnm, csv);
     const table = await Table.findOne({ name: "books" });
@@ -620,9 +621,9 @@ Gordon Kane, 217`;
     expect(!!table).toBe(true);
     const rowsBefore = await table.countRows();
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 1 rows into table books" });
+    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
     const rowsAfter = await table.countRows();
-    expect(rowsAfter).toBe(rowsBefore);
+    expect(rowsAfter).toBe(rowsBefore + 1);
     const row = await table.getRow({ id: 1 });
     expect(row?.pages).toBe(540);
   });
