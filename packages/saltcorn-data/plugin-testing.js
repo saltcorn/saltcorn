@@ -139,7 +139,7 @@ const check_view_columns = async (view, columns) => {
     const v = expressionValidator(s, loc);
     if (v === true) return;
     if (typeof v === "string")
-      errs.push(`In view ${view.name}, ${loc} '${s}':\n${v}`);
+      errs.push(`In view ${view.name}, ${loc} ${s}\n${v}`);
   };
   const trigger_actions = (
     await Trigger.find({
@@ -167,12 +167,11 @@ const check_view_columns = async (view, columns) => {
           column.fieldview &&
           !f.is_fkey &&
           !f.type.fieldviews[column.fieldview]
-        ) {
-          console.log(f.type.fieldviews);
+        )
           errs.push(
             `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table?.name} does not have fieldview ${column.fieldview}`
           );
-        }
+
         break;
       case "Action":
         if (column.action_label_formula)
