@@ -776,7 +776,7 @@ Pencil, 0.5,2, t`;
     const res = await Table.create_from_csv("Invoice4", fnm);
     assertIsErrorMsg(res);
 
-    expect(res.error).toContain("Invoice4");
+    expect(res.error).toContain("Error");
     const table = await Table.findOne({ name: "Invoice4" });
     expect(table).toBe(null);
   });

@@ -975,6 +975,7 @@ class Table implements AbstractTable {
         }
       } else {
         await new Promise<void>((resolve, reject) => {
+          const imported_pk_set = new Set();
           csvtojson({
             includeColumns: colRe,
           })
@@ -993,6 +994,11 @@ class Table implements AbstractTable {
                   if (rowOk) {
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
+                      if (imported_pk_set.has(rec[this.pk_name]))
+                        throw new Error(
+                          "Duplicate primary key values: " + rec[this.pk_name]
+                        );
+                      imported_pk_set.add(rec[this.pk_name]);
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
