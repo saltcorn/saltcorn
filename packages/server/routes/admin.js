@@ -43,6 +43,8 @@ const {
   option,
   fieldset,
   legend,
+  ul,
+  li,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -370,9 +372,52 @@ router.get(
             ? {
                 type: "card",
                 title: req.__("Automated backup"),
-                contents: div(renderForm(backupForm, req.csrfToken())),
+                contents: div(
+                  renderForm(backupForm, req.csrfToken()),
+                  a(
+                    { href: "/admin/auto-backup-list" },
+                    "Restore/download automated backups &raquo;"
+                  )
+                ),
               }
             : { type: "blank", contents: "" },
+        ],
+      },
+    });
+  })
+);
+
+/**
+ * @name get/backup
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/auto-backup-list",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (!isRoot) {
+      res.redirect("/admin/backup");
+      return;
+    }
+    const auto_backup_directory = getState().getConfig("auto_backup_directory");
+    const fileNms = await fs.promises.readdir(auto_backup_directory);
+    const backupFiles = fileNms.filter(
+      (fnm) => fnm.startsWith("sc-backup") && fnm.endsWith(".zip")
+    );
+    console.log(backupFiles);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Download automated backup"),
+            contents: div(ul(backupFiles.map((fnm) => li(fnm)))),
+          },
         ],
       },
     });
