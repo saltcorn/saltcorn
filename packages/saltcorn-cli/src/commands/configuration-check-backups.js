@@ -30,6 +30,9 @@ class ConfigurationCheckBackupsCommand extends Command {
       return;
     }
     const ten = "_cfgcheck";
+    try {
+      await deleteTenant(ten);
+    } catch (e) {}
     for (const file of argv) {
       if (file.endsWith(".zip")) {
         console.log(file);
@@ -48,11 +51,29 @@ class ConfigurationCheckBackupsCommand extends Command {
           const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
           const err = await restore(file, savePlugin, true);
           if (err) {
+            console.error("Error on restoring backup: " + file);
             console.error(err);
+            await deleteTenant(ten);
+
             this.exit(1);
           }
+
           //cfgcheck, fail if errs
+          const { passes, errors, pass } = await runConfigurationCheck(
+            mockReqRes.req
+          );
+
+          if (!pass) {
+            console.error("Configuration error in backup file: " + file);
+
+            errors.forEach((s) => console.error(s + "\n"));
+            console.error(`FAIL - ${errors.length} checks failed`);
+            await deleteTenant(ten);
+
+            that.exit(1);
+          }
         });
+        await deleteTenant(ten);
       }
     }
 
