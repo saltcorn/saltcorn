@@ -39,15 +39,21 @@ class ConfigurationCheckBackupsCommand extends Command {
 
     const ten = "cfgcheckbackuptenannt";
     await deleteTenant(ten);
+    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+    const { init_multi_tenant } = require("@saltcorn/data/db/state");
+    await loadAllPlugins();
     for (const file of argv) {
+      let hasError = false;
       if (file.endsWith(".zip")) {
         console.log(file);
         //create tenant, reset schema
         await switchToTenant(await insertTenant(ten, "", ""), "");
+        await init_multi_tenant(loadAllPlugins, undefined, [ten]);
 
         await db.runWithTenant(ten, async () => {
           //restore
           const { restore } = require("@saltcorn/admin-models/models/backup");
+          await loadAllPlugins();
 
           const load_plugins = require("@saltcorn/server/load_plugins");
           const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
@@ -55,27 +61,23 @@ class ConfigurationCheckBackupsCommand extends Command {
           if (err) {
             console.error("Error on restoring backup: " + file);
             console.error(err);
-            await deleteTenant(ten);
+            hasError = true;
+          } else {
+            const { passes, errors, pass } = await runConfigurationCheck(
+              mockReqRes.req
+            );
 
-            this.exit(1);
-          }
+            if (!pass) {
+              console.error("Configuration error in backup file: " + file);
 
-          //cfgcheck, fail if errs
-          const { passes, errors, pass } = await runConfigurationCheck(
-            mockReqRes.req
-          );
-
-          if (!pass) {
-            console.error("Configuration error in backup file: " + file);
-
-            errors.forEach((s) => console.error(s + "\n"));
-            console.error(`FAIL - ${errors.length} checks failed`);
-            await deleteTenant(ten);
-
-            that.exit(1);
+              errors.forEach((s) => console.error(s + "\n"));
+              console.error(`FAIL - ${errors.length} checks failed`);
+              hasError = true;
+            }
           }
         });
         await deleteTenant(ten);
+        if (hasError) this.exit(1);
       }
     }
 
