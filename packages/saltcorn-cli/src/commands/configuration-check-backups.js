@@ -24,23 +24,25 @@ class ConfigurationCheckBackupsCommand extends Command {
     } = require("@saltcorn/admin-models/models/config-check");
     const { mockReqRes } = require("@saltcorn/data/tests/mocks");
     const db = require("@saltcorn/data/db");
+    const {
+      insertTenant,
+      switchToTenant,
+      deleteTenant,
+    } = require("@saltcorn/admin-models/models/tenant");
+
     if (!db.is_it_multi_tenant()) {
       console.error("Multitenancy not enabled");
       this.exit(0);
       return;
     }
-    const ten = "_cfgcheck";
-    try {
-      await deleteTenant(ten);
-    } catch (e) {}
+    //db.set_sql_logging(true);
+
+    const ten = "cfgcheckbackuptenannt";
+    await deleteTenant(ten);
     for (const file of argv) {
       if (file.endsWith(".zip")) {
         console.log(file);
         //create tenant, reset schema
-        const {
-          insertTenant,
-          switchToTenant,
-        } = require("@saltcorn/admin-models/models/tenant");
         await switchToTenant(await insertTenant(ten, "", ""), "");
 
         await db.runWithTenant(ten, async () => {
