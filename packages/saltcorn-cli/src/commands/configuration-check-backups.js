@@ -73,7 +73,7 @@ class ConfigurationCheckBackupsCommand extends Command {
               errors.forEach((s) => console.error(s + "\n"));
               console.error(`FAIL - ${errors.length} checks failed`);
               hasError = true;
-            }
+            } else console.log("Pass");
           }
         });
         await deleteTenant(ten);
