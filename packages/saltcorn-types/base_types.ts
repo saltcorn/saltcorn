@@ -173,7 +173,7 @@ export type RunExtra = {
 export type ViewTemplate = {
   name: string;
   get_state_fields?: (
-    arg0: number,
+    arg0: number | string,
     arg1: string,
     arg2: any
   ) => Promise<Array<FieldLike>>;

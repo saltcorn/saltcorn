@@ -135,10 +135,11 @@ class View {
     if (
       this.viewtemplateObj &&
       this.viewtemplateObj.get_state_fields &&
-      this.table_id
+      (this.exttable_name || this.table_id)
     ) {
       return await this.viewtemplateObj.get_state_fields(
-        this.table_id,
+        // @ts-ignore
+        this.exttable_name || this.table_id,
         this.name,
         this.configuration
       );

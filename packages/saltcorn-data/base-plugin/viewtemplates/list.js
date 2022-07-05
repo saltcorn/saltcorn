@@ -336,7 +336,9 @@ const configuration_workflow = (req) =>
  * @returns {function}
  */
 const get_state_fields = async (table_id, viewname, { columns }) => {
-  const table_fields = await Field.find({ table_id });
+  const table = Table.findOne(table_id);
+  const table_fields = await table.getFields();
+  //console.log(table_fields);
   var state_fields = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column) => {
@@ -648,13 +650,16 @@ module.exports = {
   },
   queries: ({
     table_id,
+    exttable_name,
     viewname,
     configuration: { columns, default_state },
     req,
   }) => ({
     async listQuery(state) {
       const table = await Table.findOne(
-        typeof table_id === "string" ? { name: table_id } : { id: table_id }
+        typeof exttable_name === "string"
+          ? { name: exttable_name }
+          : { id: table_id }
       );
       const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(

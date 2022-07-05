@@ -918,5 +918,6 @@
 	"Build mobile app": "Build mobile app",
 	"Build Result": "Build Result",
 	"Download automated backup": "Download automated backup",
-	"Restoring automated backup": "Restoring automated backup"
+	"Restoring automated backup": "Restoring automated backup",
+	"No errors detected during configuration check": "No errors detected during configuration check"
 }
