@@ -191,7 +191,6 @@ function ensure_modal_exists_and_closed() {
 }
 
 function expand_thumbnail(img_id, filename) {
-  console.log("expand_thumbnail");
   ensure_modal_exists_and_closed();
   $("#scmodal .modal-body").html(
     `<img src="/files/serve/${img_id}" style="width: 100%">`
