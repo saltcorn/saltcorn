@@ -76,7 +76,7 @@ module.exports = {
      */
     run: (file_id, file_name) => {
       if (isNode())
-        return img({ src: `/files/download/${file_id}`, style: "width: 100%" });
+        return img({ src: `/files/serve/${file_id}`, style: "width: 100%" });
       else {
         const elementId = `_sc_file_id_${file_id}_`;
         return div(
@@ -90,12 +90,16 @@ module.exports = {
     configFields: () => [
       { name: "width", type: "Integer", label: "Width (px)" },
       { name: "height", type: "Integer", label: "Height (px)" },
+      { name: "expand", type: "Bool", label: "Click to expand" },
     ],
     run: (file_id, file_name, cfg) => {
-      const { width, height } = cfg || {};
+      const { width, height, expand } = cfg || {};
       if (isNode())
         return img({
           src: `/files/resize/${file_id}/${width}${height ? `/${height}` : ""}`,
+          onclick: expand
+            ? `expand_thumbnail(${file_id}, '${encodeURIComponent(file_name)}')`
+            : undefined,
         });
       else {
         const elementId = `_sc_file_id_${file_id}_`;

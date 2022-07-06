@@ -169,7 +169,7 @@ function close_saltcorn_modal() {
   if (modal) modal.dispose();
 }
 
-function ajax_modal(url, opts = {}) {
+function ensure_modal_exists_and_closed() {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal", class="modal">
     <div class="modal-dialog">
@@ -188,6 +188,20 @@ function ajax_modal(url, opts = {}) {
   } else if ($("#scmodal").hasClass("show")) {
     close_saltcorn_modal();
   }
+}
+
+function expand_thumbnail(img_id, filename) {
+  console.log("expand_thumbnail");
+  ensure_modal_exists_and_closed();
+  $("#scmodal .modal-body").html(
+    `<img src="/files/serve/${img_id}" style="width: 100%">`
+  );
+  $("#scmodal .modal-title").html(decodeURIComponent(filename));
+  new bootstrap.Modal($("#scmodal")).show();
+}
+
+function ajax_modal(url, opts = {}) {
+  ensure_modal_exists_and_closed();
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   else $("#scmodal").removeClass("no-submit-reload");
   $.ajax(url, {
