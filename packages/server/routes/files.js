@@ -184,11 +184,11 @@ router.get(
  * @function
  */
 router.get(
-  "/resize/:id/:width_str",
+  "/resize/:id/:width_str/:height_str?",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
-    const { id, width_str } = req.params;
+    const { id, width_str, height_str } = req.params;
     let file;
     if (typeof strictParseInt(id) !== "undefined")
       file = await File.findOne({ id });
@@ -208,15 +208,17 @@ router.get(
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else {
         const width = strictParseInt(width_str);
+        const height = height_str ? strictParseInt(height_str) : null;
         if (!width) {
           res.sendFile(file.location);
           return;
         }
-        const fnm = `${file.location}_w${width}`;
+        const fnm = `${file.location}_w${width}${height ? `_h${height}` : ""}`;
         if (!fs.existsSync(fnm)) {
           await resizer({
             fromFileName: file.location,
             width,
+            height,
             toFileName: fnm,
           });
         }
