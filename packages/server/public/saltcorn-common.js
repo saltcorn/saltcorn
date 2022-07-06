@@ -63,8 +63,8 @@ function apply_showif() {
       .val();
 
     var options = data[1][val];
-    var current = e.attr("data-selected");
-    //console.log({ val, options, current, data });
+    var current = e.attr("data-selected") || e.val();
+    //console.log({ field: e.attr("name"), target: data[0], val, current });
     e.empty();
     (options || []).forEach((o) => {
       if (
