@@ -15,6 +15,8 @@
     "@oclif/plugin-help": "^3.3.1",
     "@saltcorn/admin-models": "0.7.3-beta.3",
     "@saltcorn/data": "0.7.3-beta.3",
+    "@saltcorn/mobile-app": "0.7.3-beta.3",
+    "@saltcorn/mobile-builder": "0.7.3-beta.3",
     "@saltcorn/server": "0.7.3-beta.3",
     "cli-ux": "^5.6.7",
     "contractis": "^0.1.0",
@@ -52,8 +54,7 @@
     "commands": "./src/commands",
     "bin": "saltcorn",
     "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
+      "@oclif/plugin-help"
     ]
   },
   "repository": "github:saltcorn/saltcorn",

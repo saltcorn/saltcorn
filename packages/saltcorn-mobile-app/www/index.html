@@ -53,7 +53,7 @@
 
       async function loadPlugin(plugin) {
         await addScript({
-          src: `js/bundles/${plugin.name}.bundle.js`,
+          src: `js/bundle/${plugin.name}.bundle.js`,
           name: plugin.name,
         });
       }
@@ -76,11 +76,11 @@
       async function addScripts(version_tag) {
         const scripts = [
           { src: `static_assets/${version_tag}/jquery-3.6.0.min.js` },
-          { src: "js/bundles/common_chunks.bundle.js" },
-          { src: "js/bundles/markup.bundle.js", name: "markup" },
-          { src: "js/bundles/data.bundle.js", name: "data" },
-          { src: "js/bundles/base_plugin.bundle.js", name: "base_plugin" },
-          { src: "js/bundles/sbadmin2.bundle.js", name: "sbadmin2" },
+          { src: "js/bundle/common_chunks.bundle.js" },
+          { src: "js/bundle/markup.bundle.js", name: "markup" },
+          { src: "js/bundle/data.bundle.js", name: "data" },
+          { src: "js/bundle/base_plugin.bundle.js", name: "base_plugin" },
+          { src: "js/bundle/sbadmin2.bundle.js", name: "sbadmin2" },
         ];
         for (const script of scripts) {
           await addScript(script);
