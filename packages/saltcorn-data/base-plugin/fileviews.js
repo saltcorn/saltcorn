@@ -86,4 +86,21 @@ module.exports = {
       }
     },
   },
+  Thumbnail: {
+    configFields: () => [
+      { name: "width", type: "Integer", label: "Width (px)" },
+      { name: "height", type: "Integer", label: "Height (px)" },
+    ],
+    run: (file_id, file_name) => {
+      if (isNode())
+        return img({ src: `/files/download/${file_id}`, style: "width: 100%" });
+      else {
+        const elementId = `_sc_file_id_${file_id}_`;
+        return div(
+          img({ style: "width: 100%", id: elementId }),
+          script(domReady(`buildEncodedImage(${file_id}, '${elementId}')`))
+        );
+      }
+    },
+  },
 };
