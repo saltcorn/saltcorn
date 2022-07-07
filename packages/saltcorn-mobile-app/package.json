@@ -20,6 +20,9 @@
       "cordova-plugin-inappbrowser": {}
     }
   },
+  "overrides": {
+    "ansi-regex": "4.1.1"
+  },
   "dependencies": {
     "cordova": "^11.0.0",
     "cordova-sqlite-ext": "^6.0.0"
