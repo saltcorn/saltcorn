@@ -19,5 +19,5 @@
     "module": "commonjs",
     "target": "ES2021"
   },
-  "exclude": ["node_modules", "dist", "*.test.*"]
+  "exclude": ["node_modules", "dist", "*.test.*", "webpack.config.js"]
 }

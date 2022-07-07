@@ -17,14 +17,15 @@
     "@saltcorn/sbadmin2": "0.7.3-beta.3",
     "@saltcorn/mobile-app": "0.7.3-beta.3",
     "fs-extra": "^10.0.1",
-    "live-plugin-manager": "^0.16.0"
-  },
-  "devDependencies": {
-    "@types/node": "^16.11.7",
+    "live-plugin-manager": "^0.16.0",
     "webpack-merge": "^5.8.0",
     "webpack": "5.68.0",
     "webpack-cli": "4.9.2"
   },
+  "devDependencies": {
+    "@types/node": "^16.11.7"
+  },
+  "main": "./dist/index.js",
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*.js"
@@ -36,9 +37,10 @@
       ]
     }
   },
-
   "files": [
-    "/dist"
+    "/dist",
+    "webpack.config.js",
+    "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "license": "MIT",
   "publishConfig": {

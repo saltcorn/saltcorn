@@ -5,7 +5,7 @@ import { Row } from "@saltcorn/db-common/internal";
 const reset = require("@saltcorn/data/db/reset_schema");
 
 /**
- *
+ * copy files from 'server/public' into the www folder (with a version_tag prefix)
  * @param buildDir directory where the app will be build
  */
 export function copyStaticAssets(buildDir: string) {
@@ -31,7 +31,7 @@ export function copyStaticAssets(buildDir: string) {
 }
 
 /**
- *
+ * copy files from 'startbootstrap-sb-admin-2-bs5' into the www directory
  * @param buildDir directory where the app will be build
  */
 export function copySbadmin2Deps(buildDir: string) {
@@ -67,7 +67,7 @@ export function copySbadmin2Deps(buildDir: string) {
 }
 
 /**
- *
+ * create a cfg file, the app use this configs
  * @param param0
  */
 export function writeCfgFile({
@@ -87,7 +87,8 @@ export function writeCfgFile({
 }
 
 /**
- *
+ * create a file with all data from the db
+ * the app updates its local db from this
  * @param buildDir directory where the app will be build
  */
 export async function buildTablesFile(buildDir: string) {
@@ -111,7 +112,8 @@ export async function buildTablesFile(buildDir: string) {
 }
 
 /**
- *
+ * init an empty db
+ * after the first startup, this db will be updated from the tables.json
  * @param buildDir directory where the app will be build
  */
 export async function createSqliteDb(buildDir: string) {

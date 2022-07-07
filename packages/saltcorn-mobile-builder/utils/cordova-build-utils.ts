@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, copySync, rmSync } from "fs-extra";
 import { join } from "path";
 
 /**
- *
+ * copy saltcorn-mobile-app as a template to buildDir
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
  */

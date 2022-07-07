@@ -3,7 +3,7 @@
     "include": ["jest"]
   },
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
 
     "outDir": "./dist",
     "allowJs": true,
