@@ -8,6 +8,9 @@
     "saltcorn": "./bin/saltcorn"
   },
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
+  "overrides": {
+    "ansi-regex": "4.1.1"
+  },
   "dependencies": {
     "@oclif/command": "^1.8.16",
     "@oclif/config": "^1.18.3",
