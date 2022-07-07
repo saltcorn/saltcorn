@@ -610,6 +610,23 @@ Gordon Kane, 217`;
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
   });
+  it("should replace when id given", async () => {
+    const csv = `id,author,Pages
+1, Noam Chomsky, 540
+17, David Harvey, 612`;
+    const fnm = "/tmp/testreplaceid.csv";
+    await writeFile(fnm, csv);
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    expect(!!table).toBe(true);
+    const rowsBefore = await table.countRows();
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    const rowsAfter = await table.countRows();
+    expect(rowsAfter).toBe(rowsBefore + 1);
+    const row = await table.getRow({ id: 1 });
+    expect(row?.pages).toBe(540);
+  });
   it("fail on required field", async () => {
     const csv = `author,Pagez
 Joe Celko, 856
@@ -759,7 +776,7 @@ Pencil, 0.5,2, t`;
     const res = await Table.create_from_csv("Invoice4", fnm);
     assertIsErrorMsg(res);
 
-    expect(res.error).toContain("Invoice4");
+    expect(res.error).toContain("Error");
     const table = await Table.findOne({ name: "Invoice4" });
     expect(table).toBe(null);
   });

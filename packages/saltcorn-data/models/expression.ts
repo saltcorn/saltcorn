@@ -20,7 +20,7 @@ import { PluginFunction } from "@saltcorn/types/base_types";
 function expressionValidator(s: string): true | string {
   if (!s || s.length == 0) return "Missing formula";
   try {
-    const f = new Script(s);
+    const f = new Script(`(${s})`); // handle record literals
     return true;
   } catch (e: any) {
     return e.message;

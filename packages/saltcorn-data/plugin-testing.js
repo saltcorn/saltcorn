@@ -138,7 +138,8 @@ const check_view_columns = async (view, columns) => {
   const check_formula = (s, loc) => {
     const v = expressionValidator(s, loc);
     if (v === true) return;
-    if (typeof v === "string") errs.push(`In view ${view.name}, ${loc} ${v}`);
+    if (typeof v === "string")
+      errs.push(`In view ${view.name}, ${loc} ${s}\n${v}`);
   };
   const trigger_actions = (
     await Trigger.find({
@@ -170,6 +171,7 @@ const check_view_columns = async (view, columns) => {
           errs.push(
             `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table?.name} does not have fieldview ${column.fieldview}`
           );
+
         break;
       case "Action":
         if (column.action_label_formula)
@@ -188,6 +190,7 @@ const check_view_columns = async (view, columns) => {
             "SaveAndContinue",
             "Login",
             "Sign up",
+            "Cancel",
           ].includes(column.action_name)
         )
           break;

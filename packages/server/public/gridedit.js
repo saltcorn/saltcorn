@@ -76,6 +76,8 @@ function isoDateTimeFormatter(cell, formatterParams, onRendered) {
 function isoDateFormatter(cell, formatterParams, onRendered) {
   const val = cell.getValue();
   if (!val) return "";
+  if (formatterParams && formatterParams.format)
+    return moment(val).format(formatterParams.format);
 
   return new Date(val).toLocaleDateString(window.detected_locale || "en");
 }

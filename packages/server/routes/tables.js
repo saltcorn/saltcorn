@@ -637,7 +637,9 @@ router.get(
     }
     var viewCard;
     if (fields.length > 0) {
-      const views = await View.find({ table_id: table.id });
+      const views = await View.find(
+        table.external ? { exttable_name: table.name } : { table_id: table.id }
+      );
       var viewCardContents;
       if (views.length > 0) {
         viewCardContents = mkTable(

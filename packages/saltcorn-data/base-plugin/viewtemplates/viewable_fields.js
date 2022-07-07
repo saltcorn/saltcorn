@@ -632,7 +632,8 @@ const get_viewable_fields = (
                   row[f.name] &&
                   getState().fileviews[column.fieldview].run(
                     row[f.name],
-                    row[`${f.name}__filename`]
+                    row[`${f.name}__filename`],
+                    column
                   )
               : column.fieldview &&
                 f.type.fieldviews &&

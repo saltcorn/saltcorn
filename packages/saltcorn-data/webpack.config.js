@@ -9,6 +9,7 @@ const nodeMocks = {
   v8: join(mocksDir, "node", "v8"),
   async_hooks: join(mocksDir, "node", "async_hooks"),
   child_process: join(mocksDir, "node", "child_process"),
+  "../package.json": join(__dirname, "package.json"),
 };
 
 const npmMocks = {

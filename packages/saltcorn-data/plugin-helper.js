@@ -212,6 +212,8 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
     const fieldviews =
       f.type === "Key"
         ? getState().keyFieldviews
+        : f.type === "File"
+        ? getState().fileviews
         : (f.type && f.type.fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews)) {
       if (fv.configFields)
