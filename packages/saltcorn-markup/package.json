@@ -24,7 +24,9 @@
     }
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "webpack.config.js",
+    "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
     "escape-html": "^1.0.3",

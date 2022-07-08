@@ -22,7 +22,8 @@
     }
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {},
   "devDependencies": {

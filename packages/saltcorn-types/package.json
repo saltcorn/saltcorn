@@ -23,7 +23,8 @@
     }
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

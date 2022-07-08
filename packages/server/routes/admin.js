@@ -1237,15 +1237,23 @@ router.post(
         "error",
         req.__("Please select at least one platform (android or iOS).")
       );
-      return res.redirect("/admin/system");
+      return res.redirect("/admin/build-mobile-app");
     }
     if (!androidPlatform && useDocker) {
       req.flash("error", req.__("Only the android build supports docker."));
-      return res.redirect("/admin/system");
+      return res.redirect("/admin/build-mobile-app");
     }
     if (appFile && !appFile.endsWith(".apk")) appFile = `${appFile}.apk`;
     const appOut = path.join(__dirname, "..", "mobile-app-out");
-    const spawnParams = ["build-app", "-v", entryView, "-c", appOut];
+    const spawnParams = [
+      "build-app",
+      "-v",
+      entryView,
+      "-c",
+      appOut,
+      "-b",
+      "/tmp/mobile_app_build",
+    ];
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) spawnParams.push("-p", "ios");

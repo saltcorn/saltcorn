@@ -38,10 +38,9 @@ const addDependOn = (dataEntryPoint, b) => {
   return merge({}, copy, b);
 };
 
-const buildPluginEntries = async (env) => {
-  const plugins = JSON.parse(env.plugins);
+const buildPluginEntries = async (plugins) => {
   let result = [];
-  for (plugin of plugins) {
+  for (plugin of JSON.parse(plugins)) {
     const requireResult = await requirePlugin(plugin, false, manager);
     const additionalDependencies = requireResult.plugin_module?.dependencies
       ? requireResult.plugin_module.dependencies
@@ -60,7 +59,7 @@ const buildPluginEntries = async (env) => {
 };
 
 module.exports = async (env) => {
-  const pluginEntries = env.plugins ? await buildPluginEntries(env) : [];
+  const pluginEntries = env.plugins ? await buildPluginEntries(env.plugins) : [];
   return mergeWithCustomize({
     customizeArray(a, b, key) {
       if (key === "library") {
@@ -71,7 +70,7 @@ module.exports = async (env) => {
     customizeObject(a, b, key) {
       if (key === "output") {
         const copy = { ...a };
-        copy.path = __dirname;
+        copy.path = env.output;
         return copy;
       }
       if (key === "entry") {
