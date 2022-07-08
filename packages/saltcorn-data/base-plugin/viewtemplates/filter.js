@@ -39,7 +39,10 @@ const { InvalidConfiguration } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
 const { getState } = require("../../db/state");
-
+const {
+  get_expression_function,
+  eval_expression,
+} = require("../../models/expression");
 /**
  * @returns {Workflow}
  */
@@ -173,11 +176,15 @@ const run = async (
     },
     view: async (segment) => {
       const view = await View.findOne({ name: segment.view });
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(segment.extra_state_fml, {}, extra.req.user)
+        : {};
+      const state1 = { ...state, ...extra_state };
       if (!view)
         throw new InvalidConfiguration(
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
-      else segment.contents = await view.run(state, extra);
+      else segment.contents = await view.run(state1, extra);
     },
     link: (segment) => {
       if (segment.transfer_state) {
