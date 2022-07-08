@@ -28,9 +28,7 @@ describe("backup files", () => {
       await reset();
       const restore_res = await restore(path.join(dir, file), savePlugin, true);
       expect(restore_res).toBe(undefined);
-      const { passes, errors, pass } = await runConfigurationCheck(
-        mockReqRes.req
-      );
+      const { errors, pass } = await runConfigurationCheck(mockReqRes.req);
       expect(errors).toStrictEqual([]);
       expect(pass).toBe(true);
     }
