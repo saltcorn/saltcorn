@@ -23,7 +23,14 @@ describe("backup files", () => {
       (fnm) => fnm.startsWith("sc-backup") && fnm.endsWith(".zip")
     );
     expect(backupFiles.length).toBeGreaterThanOrEqual(1);
-    const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
+    const savePlugin = (p) => {
+      if (p.source === "local") {
+        p.source = "npm";
+        p.location = p.name;
+        p.name = p.name.split("/")[1];
+      }
+      return load_plugins.loadAndSaveNewPlugin(p);
+    };
     for (const file of backupFiles) {
       await reset();
       const restore_res = await restore(path.join(dir, file), savePlugin, true);
