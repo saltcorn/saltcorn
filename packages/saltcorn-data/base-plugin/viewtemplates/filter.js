@@ -77,11 +77,25 @@ const configuration_workflow = () =>
             context.table_id || context.exttable_name,
             ({ viewrow }) => viewrow.name !== context.viewname
           );
-          const views = own_link_views.map((v) => ({
-            label: v.name,
-            name: v.name,
-            viewtemplate: v.viewtemplate,
-          }));
+          const own_view_names = new Set();
+          const views = own_link_views.map((v) => {
+            own_view_names.add(v.name);
+            return {
+              label: v.name,
+              name: v.name,
+              viewtemplate: v.viewtemplate,
+            };
+          });
+          const all_views = await View.find();
+          for (const v of all_views) {
+            if (!own_view_names.has(v.name)) {
+              views.push({
+                label: v.name,
+                name: v.name,
+                viewtemplate: v.viewtemplate,
+              });
+            }
+          }
           for (const field of fields) {
             const presets = field.presets;
             field.preset_options = presets ? Object.keys(presets) : [];
