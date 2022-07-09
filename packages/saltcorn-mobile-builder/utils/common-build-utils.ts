@@ -2,7 +2,7 @@ import db from "@saltcorn/data/db/index";
 import { join } from "path";
 import { existsSync, mkdirSync, copySync, writeFileSync } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
-const reset = require("@saltcorn/data/db/reset_schema");
+import { spawnSync } from "child_process";
 
 /**
  * copy files from 'server/public' into the www folder (with a version_tag prefix)
@@ -94,7 +94,8 @@ export function writeCfgFile({
 export async function buildTablesFile(buildDir: string) {
   const wwwDir = join(buildDir, "www");
   const scTables = (await db.listScTables()).filter(
-    (table: Row) => ["_sc_migrations", "_sc_errors"].indexOf(table.name) === -1
+    (table: Row) =>
+      ["_sc_migrations", "_sc_errors", "_sc_session"].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
     scTables.map(async (row: Row) => {
@@ -117,9 +118,12 @@ export async function buildTablesFile(buildDir: string) {
  * @param buildDir directory where the app will be build
  */
 export async function createSqliteDb(buildDir: string) {
-  const dbPath = join(buildDir, "www", "scdb.sqlite");
-  let connectObj = db.connectObj;
-  connectObj.sqlite_path = dbPath;
-  await db.changeConnection(connectObj);
-  await reset();
+  const result = spawnSync("saltcorn", ["reset-schema", "-f"], {
+    env: {
+      ...process.env,
+      FORCE_SQLITE: "true",
+      SQLITE_FILEPATH: join(buildDir, "www", "scdb.sqlite"),
+    },
+  });
+  console.log(result.output.toString());
 }

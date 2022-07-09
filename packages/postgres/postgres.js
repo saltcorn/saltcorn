@@ -379,6 +379,45 @@ const slugify = (s) =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
+/**
+ *
+ * @returns
+ */
+const listTables = async () => {
+  const tq = await pool.query(
+    `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}'`
+  );
+  return tq.rows.map((row) => {
+    return { name: row.table_name };
+  });
+};
+
+/**
+ *
+ * @returns
+ */
+const listUserDefinedTables = async () => {
+  const tq = await pool.query(
+    `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}' AND table_name NOT LIKE '_sc_%'`
+  );
+  return tq.rows.map((row) => {
+    return { name: row.table_name };
+  });
+};
+
+/**
+ *
+ * @returns
+ */
+const listScTables = async () => {
+  const tq = await pool.query(
+    `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}' AND table_name LIKE '_sc_%'`
+  );
+  return tq.rows.map((row) => {
+    return { name: row.table_name };
+  });
+};
+
 const postgresExports = {
   pool,
   /**
@@ -412,6 +451,9 @@ const postgresExports = {
   getVersion,
   copyFrom,
   slugify,
+  listTables,
+  listScTables,
+  listUserDefinedTables,
 };
 
 module.exports = (getConnectObjectPara) => {
@@ -420,8 +462,9 @@ module.exports = (getConnectObjectPara) => {
     const connectObj = getConnectObject();
     if (connectObj) {
       pool = new Pool(connectObj);
-      getTenantSchema = require("@saltcorn/db-common/tenants")(connectObj)
-        .getTenantSchema;
+      getTenantSchema = require("@saltcorn/db-common/tenants")(
+        connectObj
+      ).getTenantSchema;
       postgresExports.pool = pool;
     } else {
       throw new Error("Unable to retrieve a database connection object.");

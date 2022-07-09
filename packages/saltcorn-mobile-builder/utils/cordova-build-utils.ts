@@ -8,6 +8,7 @@ import { join } from "path";
  * @param templateDir directory of the template code that will be copied to 'buildDir'
  */
 export function prepareBuildDir(buildDir: string, templateDir: string) {
+  if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
   const result = spawnSync("npm", ["install", "--legacy-peer-deps"], {

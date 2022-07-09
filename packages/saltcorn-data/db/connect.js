@@ -111,11 +111,16 @@ const getConnectObject = (connSpec = {}) => {
     .digest("hex")
     .slice(0, 16);
 
-  if (process.env.DATABASE_URL) {
-    delete connObj[user];
-    delete connObj[password];
-    delete connObj[database];
-    delete connObj[sqlite_path];
+  if (process.env.FORCE_SQLITE === "true") {
+    delete connObj["user"];
+    delete connObj["password"];
+    delete connObj["database"];
+    return connObj;
+  } else if (process.env.DATABASE_URL) {
+    delete connObj["user"];
+    delete connObj["password"];
+    delete connObj["database"];
+    delete connObj["sqlite_path"];
     return { ...connObj, connectionString: process.env.DATABASE_URL };
   } else if (
     connObj.sqlite_path ||

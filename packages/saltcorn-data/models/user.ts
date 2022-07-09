@@ -488,7 +488,12 @@ class User {
    * @param date new login_date or null for logout (invalidates all jwts)
    */
   async updateLastMobileLogin(date: Date | null): Promise<void> {
-    await db.update("users", { last_mobile_login: date }, this.id);
+    const dateVal = !date
+      ? date
+      : db.isSQLite
+      ? date.valueOf()
+      : date.toISOString();
+    await db.update("users", { last_mobile_login: dateVal }, this.id);
   }
 }
 
