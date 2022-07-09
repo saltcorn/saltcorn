@@ -203,7 +203,7 @@ const loginWithJwt = async (req, res) => {
   const { email, password } = req.query;
   const user = await User.findOne({ email });
   if (user && user.checkPassword(password)) {
-    const now = new Date().valueOf();
+    const now = new Date();
     const jwt_secret = db.connectObj.jwt_secret;
     const token = jwt.sign(
       {
@@ -211,11 +211,11 @@ const loginWithJwt = async (req, res) => {
         role_id: user.role_id,
         iss: "saltcorn@saltcorn",
         aud: "saltcorn-mobile-app",
-        iat: now,
+        iat: now.valueOf(),
       },
       jwt_secret
     );
-    if (!user.last_mobile_login) user.updateLastMobileLogin(now);
+    if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
     res.json(token);
   }
 };
