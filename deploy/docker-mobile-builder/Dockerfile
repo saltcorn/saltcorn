@@ -35,4 +35,8 @@ RUN cordova build
 WORKDIR /
 COPY entry.bash ./
 RUN chmod u+x entry.bash
+
+RUN chmod o+rwx ~
+RUN chmod -R o+rwx ~/.config
+
 ENTRYPOINT ["./entry.bash"]
