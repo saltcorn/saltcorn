@@ -86,6 +86,7 @@ const {
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const { getConfigFile } = require("@saltcorn/data/db/connect");
+const os = require("os");
 
 /**
  * @type {object}
@@ -1252,7 +1253,7 @@ router.post(
       "-c",
       appOut,
       "-b",
-      "/tmp/mobile_app_build",
+      `${os.userInfo().homedir}/mobile_app_build`,
     ];
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
@@ -1260,11 +1261,15 @@ router.post(
     if (appFile) spawnParams.push("-a", appFile);
     if (serverURL) spawnParams.push("-s", serverURL);
     const child = spawn("saltcorn", spawnParams, {
-      stdio: ["ignore", "pipe", process.stderr],
+      stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
     const childOutputs = [];
     child.stdout.on("data", (data) => {
+      // console.log(data.toString());
+      childOutputs.push(data.toString());
+    });
+    child.stderr.on("data", (data) => {
       // console.log(data.toString());
       childOutputs.push(data.toString());
     });

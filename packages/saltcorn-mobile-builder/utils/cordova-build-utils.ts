@@ -1,6 +1,7 @@
-import { spawnSync } from "child_process";
+import { spawnSync, SpawnSyncReturns } from "child_process";
 import { existsSync, mkdirSync, copySync, rmSync } from "fs-extra";
 import { join } from "path";
+import { userInfo } from "os";
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
@@ -20,11 +21,11 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
 /**
  *
  * @param buildDir directory where the app will be build
- * @param options
  * @returns
  */
-export function runBuildContainer(buildDir: string, options: any): any {
-  return spawnSync(
+export function buildApkInContainer(buildDir: string) {
+  const info = userInfo();
+  const result = spawnSync(
     "docker",
     [
       "run",
@@ -32,43 +33,9 @@ export function runBuildContainer(buildDir: string, options: any): any {
       `${buildDir}:/saltcorn-mobile-app`,
       "saltcorn/cordova-builder",
     ],
-    options
+    { cwd: "." }
   );
-}
-
-/**
- *
- * @param buildDir directory where the app will be build
- * @returns
- */
-export function buildApkInContainer(buildDir: string) {
-  const spawnOptions: any = {
-    cwd: ".",
-  };
-  // try docker without sudo
-  let result = runBuildContainer(buildDir, spawnOptions);
-  if (result.status === 0) {
-    console.log(result.output.toString());
-  } else if (result.status === 1 || result.status === 125) {
-    // try docker rootless
-    spawnOptions.env = {
-      DOCKER_HOST: `unix://${process.env.XDG_RUNTIME_DIR}/docker.sock`,
-    };
-    result = runBuildContainer(buildDir, spawnOptions);
-    if (result.status === 0) {
-      console.log(result.output.toString());
-    } else {
-      console.log("Unable to run the docker build image.");
-      console.log(
-        "Try installing 'docker rootless' mode, or add the current user to the 'docker' group."
-      );
-      console.log(result);
-      console.log(result.output.toString());
-    }
-  } else {
-    console.log("An error occured");
-    console.log(result);
-  }
+  console.log(result.output.toString());
   return result.status;
 }
 

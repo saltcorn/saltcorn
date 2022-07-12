@@ -6,7 +6,8 @@
   "version": "0.7.3-beta.6",
   "author": "Christian Hugo",
   "scripts": {
-    "build": "webpack --mode development"
+    "build": "webpack --mode development",
+    "postinstall": "./docker/post-installer.bash"
   },
   "dependencies": {
     "@saltcorn/markup": "0.7.3-beta.6",
