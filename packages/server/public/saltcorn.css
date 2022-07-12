@@ -303,3 +303,20 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
   border: 1px solid black;
   border-collapse: collapse;
 }
+
+/* https://codepen.io/pezmotion/pen/RQERdm */
+
+.editStarRating {
+	direction: rtl;
+	unicode-bidi: bidi-override;
+	color: #ddd;
+}
+.editStarRating input {
+	display: none;
+}
+.editStarRating label:hover,
+.editStarRating label:hover ~ label,
+.editStarRating input:checked + label,
+.editStarRating input:checked + label ~ label {
+	color: #ffc107; 
+}
