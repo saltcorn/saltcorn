@@ -891,7 +891,7 @@ const int = {
     progress_bar: progress_bar("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
-    showStarRating: {
+    show_star_rating: {
       configFields: (field) => [
         ...(!isdef(field.attributes.min)
           ? [{ name: "min", type: "Integer", required: true, default: 1 }]
@@ -915,7 +915,7 @@ const int = {
           )
         ),
     },
-    editStarRating: {
+    edit_star_rating: {
       configFields: (field) => [
         ...(!isdef(field.attributes.min)
           ? [{ name: "min", type: "Integer", required: true, default: 1 }]
