@@ -890,6 +890,30 @@ const int = {
     progress_bar: progress_bar("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
+    showStarRating: {
+      configFields: (field) => [
+        ...(!isdef(field.attributes.min)
+          ? [{ name: "min", type: "Integer", required: true, default: 1 }]
+          : []),
+        ...(!isdef(field.attributes.max)
+          ? [{ name: "max", type: "Integer", required: true, default: 5 }]
+          : []),
+      ],
+      isEdit: false,
+      blockDisplay: true,
+      run: (v, req, attrs = {}) =>
+        div(
+          Array.from(
+            { length: attrs.max - attrs.min + 1 },
+            (_, i) => i + attrs.min
+          ).map((starVal) =>
+            i({
+              class: "fas fa-star",
+              style: { color: starVal <= v ? "#ffc107" : "#ddd" },
+            })
+          )
+        ),
+    },
   },
   /** @type {object[]}  */
   attributes: [
