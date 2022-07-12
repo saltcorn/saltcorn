@@ -445,7 +445,7 @@ const render = ({
             div(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h6({ class: "m-0 fw-bold text-primary" }, segment.title)
+                ? h5({ class: "m-0 fw-bold text-primary" }, segment.title)
                 : segment.title
             ),
           segment.tabContents &&
@@ -456,6 +456,7 @@ const render = ({
                 Object.keys(segment.tabContents).map((title, ix) =>
                   li(
                     { class: "nav-item" },
+
                     a(
                       {
                         class: ["nav-link", ix === 0 && "active"],
