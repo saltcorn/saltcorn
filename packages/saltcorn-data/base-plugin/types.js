@@ -22,6 +22,7 @@ const {
   span,
   img,
   text_attr,
+  label,
   script,
   domReady,
   section,
@@ -156,7 +157,7 @@ const number_limit = (direction) => ({
   configFields: [
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
-  run: (nm, v, attrs = {}, cls, requiZred, field, state = {}) => {
+  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
     const onChange = `set_state_field('_${direction}_${nm}', this.value)`;
     return attrs?.stepper_btns
       ? number_stepper(
@@ -890,6 +891,65 @@ const int = {
     progress_bar: progress_bar("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
+    showStarRating: {
+      configFields: (field) => [
+        ...(!isdef(field.attributes.min)
+          ? [{ name: "min", type: "Integer", required: true, default: 1 }]
+          : []),
+        ...(!isdef(field.attributes.max)
+          ? [{ name: "max", type: "Integer", required: true, default: 5 }]
+          : []),
+      ],
+      isEdit: false,
+      blockDisplay: true,
+      run: (v, req, attrs = {}) =>
+        div(
+          Array.from(
+            { length: attrs.max - attrs.min + 1 },
+            (_, i) => i + attrs.min
+          ).map((starVal) =>
+            i({
+              class: "fas fa-star",
+              style: { color: starVal <= v ? "#ffc107" : "#ddd" },
+            })
+          )
+        ),
+    },
+    editStarRating: {
+      configFields: (field) => [
+        ...(!isdef(field.attributes.min)
+          ? [{ name: "min", type: "Integer", required: true, default: 1 }]
+          : []),
+        ...(!isdef(field.attributes.max)
+          ? [{ name: "max", type: "Integer", required: true, default: 5 }]
+          : []),
+      ],
+      isEdit: true,
+      blockDisplay: true,
+      run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+        //https://codepen.io/pezmotion/pen/RQERdm
+        return div(
+          { class: "editStarRating" },
+          Array.from(
+            { length: attrs.max - attrs.min + 1 },
+            (_, i) => attrs.max - i
+          ).map(
+            (starVal) =>
+              input({
+                id: `input${text_attr(nm)}-${starVal}`,
+                type: "radio",
+                name: text_attr(nm),
+                value: starVal,
+                checked: v === starVal,
+              }) +
+              label(
+                { for: `input${text_attr(nm)}-${starVal}` },
+                i({ class: "fas fa-star" })
+              )
+          )
+        );
+      },
+    },
   },
   /** @type {object[]}  */
   attributes: [
