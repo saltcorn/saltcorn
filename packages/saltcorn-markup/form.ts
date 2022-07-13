@@ -465,7 +465,7 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
     return fieldview.run(
       name,
       v,
-      "",
+      v,
       attributes,
       extracls + " " + hdr.class,
       hdr.required,
