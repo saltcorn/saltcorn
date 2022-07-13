@@ -790,8 +790,9 @@ const getForm = async (
                 : "fromtype";
           }
           if (f.type === "File") {
-            if (getState().fileviews[column.fieldview])
-              f.fieldviewObj = getState().fileviews[column.fieldview];
+            const fvNm = column.fieldview || "upload";
+            if (getState().fileviews[fvNm])
+              f.fieldviewObj = getState().fileviews[fvNm];
             f.input_type =
               !f.fieldview || !f.fieldviewObj ? "file" : "fromtype";
           }
