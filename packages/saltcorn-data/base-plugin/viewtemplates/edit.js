@@ -606,7 +606,7 @@ const render = async ({
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
-      if (row[field.name]) {
+      if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
         const file = await File.findOne({ id: row[field.name] });
         form.values[field.name] = file.filename;
       }
@@ -725,7 +725,9 @@ const runPost = async (
 
     const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
-      if (req.files && req.files[field.name]) {
+      if (field.fieldviewObj?.setsFileId) {
+        //do nothing
+      } else if (req.files && req.files[field.name]) {
         if (!isNode() && !remote) {
           req.flash(
             "error",

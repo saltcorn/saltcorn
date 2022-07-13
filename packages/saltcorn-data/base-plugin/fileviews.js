@@ -3,10 +3,20 @@
  * @module base-plugin/fileview
  * @subcategory base-plugin
  */
-const { a, img, script, domReady } = require("@saltcorn/markup/tags");
+const {
+  a,
+  img,
+  script,
+  domReady,
+  select,
+  input,
+  div,
+  text,
+  text_attr,
+} = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
-const { div } = require("@saltcorn/markup");
+const { select_options } = require("@saltcorn/markup/helpers");
 
 module.exports = {
   /**
@@ -84,6 +94,43 @@ module.exports = {
           script(domReady(`buildEncodedImage(${file_id}, '${elementId}')`))
         );
       }
+    },
+  },
+  upload: {
+    isEdit: true,
+    multipartFormData: true,
+    valueIsFilename: true,
+    run: (nm, file_name, attrs, cls, reqd, field) => {
+      return (
+        text(file_name || "") +
+        input({
+          class: `${cls} ${field.class || ""}`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          type: "file",
+        })
+      );
+    },
+  },
+  select: {
+    isEdit: true,
+    setsFileId: true,
+    run: (nm, file_id, attrs, cls, reqd, field) => {
+      return select(
+        {
+          class: `form-control form-select ${cls} ${field.class || ""}`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+        },
+        select_options(
+          file_id,
+          field,
+          (attrs || {}).force_required,
+          (attrs || {}).neutral_label
+        )
+      );
     },
   },
   Thumbnail: {

@@ -121,8 +121,14 @@ const calcfldViewOptions = (fields, mode) => {
     handlesTextStyle[f.name] = [];
     blockDisplay[f.name] = [];
     if (f.type === "File") {
-      if (!isEdit && !isFilter) fvs[f.name] = Object.keys(getState().fileviews);
-      else fvs[f.name] = ["upload"];
+      if (!isEdit && !isFilter)
+        fvs[f.name] = Object.entries(getState().fileviews)
+          .filter(([k, v]) => !v.isEdit)
+          .map(([k, v]) => k);
+      else
+        fvs[f.name] = Object.entries(getState().fileviews)
+          .filter(([k, v]) => v.isEdit)
+          .map(([k, v]) => k);
     } else if (f.type === "Key") {
       if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
       else if (isFilter) {
