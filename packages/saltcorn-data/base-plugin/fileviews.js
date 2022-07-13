@@ -115,6 +115,7 @@ module.exports = {
   },
   select: {
     isEdit: true,
+    setsFileId: true,
     run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {

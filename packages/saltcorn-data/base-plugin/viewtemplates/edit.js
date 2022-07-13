@@ -725,7 +725,9 @@ const runPost = async (
 
     const file_fields = form.fields.filter((f) => f.type === "File");
     for (const field of file_fields) {
-      if (req.files && req.files[field.name]) {
+      if (field.fieldviewObj?.setsFileId) {
+        //do nothing
+      } else if (req.files && req.files[field.name]) {
         if (!isNode() && !remote) {
           req.flash(
             "error",
