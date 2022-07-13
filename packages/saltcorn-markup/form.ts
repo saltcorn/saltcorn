@@ -461,17 +461,7 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
       throw new Error(`Unknown type ${hdr.typename} in field ${name}`);
     else throw new Error(`Cannot find fieldview for field ${name}`);
   }
-  if (hdr.type === "File") {
-    return fieldview.run(
-      name,
-      v,
-      v,
-      attributes,
-      extracls + " " + hdr.class,
-      hdr.required,
-      hdr
-    );
-  } else if (fieldview.isEdit)
+  if (fieldview.isEdit)
     return fieldview.run(
       name,
       v,

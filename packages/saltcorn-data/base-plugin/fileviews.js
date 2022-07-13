@@ -98,7 +98,8 @@ module.exports = {
   upload: {
     isEdit: true,
     multipartFormData: true,
-    run: (nm, file_id, file_name, attrs, cls, reqd, field) => {
+    valueIsFilename: true,
+    run: (nm, file_name, attrs, cls, reqd, field) => {
       return (
         text(file_name || "") +
         input({
@@ -113,7 +114,7 @@ module.exports = {
   },
   select: {
     isEdit: true,
-    run: (nm, file_id, file_name, attrs, cls, reqd, field) => {
+    run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {
           class: `form-control form-select ${cls} ${field.class || ""}`,
