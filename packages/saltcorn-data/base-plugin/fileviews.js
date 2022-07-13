@@ -12,6 +12,7 @@ const {
   input,
   div,
   text,
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
