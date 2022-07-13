@@ -40,6 +40,7 @@
   },
   "files": [
     "/dist",
+    "/docker",
     "webpack.config.js",
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
