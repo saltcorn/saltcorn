@@ -286,11 +286,10 @@ class Field implements AbstractField {
         else this.options[row.first_level].options.push(opt);
       });
       //console.log(this.options);
-    } else if (
-      this.is_fkey &&
-      (this.type !== "File" ||
-        typeof this.attributes.select_file_where !== "undefined")
-    ) {
+    } else if (this.is_fkey) {
+      if (!this.attributes) this.attributes = {};
+      if (!this.attributes.select_file_where)
+        this.attributes.select_file_where = {};
       const rows = !optionsQuery
         ? await db.select(
             this.reftable_name,
