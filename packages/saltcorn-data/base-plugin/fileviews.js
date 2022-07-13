@@ -11,6 +11,7 @@ const {
   select,
   input,
   div,
+  text,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
