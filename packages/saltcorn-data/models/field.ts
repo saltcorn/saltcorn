@@ -131,7 +131,7 @@ class Field implements AbstractField {
       this.input_type = o.input_type || "fromtype";
     } else if (o.type === "File") {
       this.type = "File";
-      this.input_type = "file";
+      this.input_type = "fromtype";
       this.reftable_name = "_sc_files";
       this.reftype = "Integer";
       this.refname = "id";
