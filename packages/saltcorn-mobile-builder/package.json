@@ -7,7 +7,7 @@
   "author": "Christian Hugo",
   "scripts": {
     "build": "webpack --mode development",
-    "postinstall": "./docker/post-installer.bash"
+    "postinstall": "node ./docker/post-installer.js"
   },
   "dependencies": {
     "@saltcorn/markup": "0.7.3-beta.6",
