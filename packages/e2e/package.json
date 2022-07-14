@@ -1,12 +1,12 @@
 {
   "name": "@saltcorn/e2e",
-  "version": "0.7.3-beta.6",
+  "version": "0.7.3-beta.7",
   "description": "Pluggable nocode",
   "license": "MIT",
   "devDependencies": {
-    "@saltcorn/admin-models": "0.7.3-beta.6",
-    "@saltcorn/data": "0.7.3-beta.6",
-    "@saltcorn/server": "0.7.3-beta.6",
+    "@saltcorn/admin-models": "0.7.3-beta.7",
+    "@saltcorn/data": "0.7.3-beta.7",
+    "@saltcorn/server": "0.7.3-beta.7",
     "jest": "^27.1.0",
     "puppeteer": "^10.4.0"
   },
