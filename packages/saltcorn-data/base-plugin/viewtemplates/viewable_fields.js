@@ -789,6 +789,13 @@ const getForm = async (
                 ? "select"
                 : "fromtype";
           }
+          if (f.type === "File") {
+            const fvNm = column.fieldview || "upload";
+            if (getState().fileviews[fvNm])
+              f.fieldviewObj = getState().fileviews[fvNm];
+            f.input_type =
+              !f.fieldview || !f.fieldviewObj ? "file" : "fromtype";
+          }
           if (f.calculated)
             f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
           f.attributes = { ...column.configuration, ...f.attributes };

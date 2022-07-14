@@ -131,7 +131,7 @@ class Field implements AbstractField {
       this.input_type = o.input_type || "fromtype";
     } else if (o.type === "File") {
       this.type = "File";
-      this.input_type = "file";
+      this.input_type = this.fieldview ? "fromtype" : "file";
       this.reftable_name = "_sc_files";
       this.reftype = "Integer";
       this.refname = "id";
@@ -469,6 +469,15 @@ class Field implements AbstractField {
       if (whole_rec[k] !== v) return false;
     }
     return true;
+  }
+
+  get multipartFormData() {
+    if (this.type !== "File") return false;
+    if (this.input_type === "file") return true;
+    const { getState } = require("../db/state");
+    if (!this.fieldview) return false;
+    const fileview = getState().fileviews[this.fieldview];
+    return !!fileview?.multipartFormData;
   }
 
   validate(whole_rec: any): ResultMessage {

@@ -380,7 +380,12 @@ router.get(
         {
           type: "card",
           class: "mt-0",
-          title: req.__(`Edit %s view`, viewname),
+          title: req.__(
+            `%s view - %s on %s`,
+            viewname,
+            viewrow.viewtemplate,
+            viewrow.table_name
+          ),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
