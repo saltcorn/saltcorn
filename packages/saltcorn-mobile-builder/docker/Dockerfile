@@ -31,6 +31,11 @@ ENV PATH=$PATH:/opt/gradle-7.1.1/bin
 ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-7.1.1-all.zip
 RUN cordova build
 
+# due to a bug in npm that has been addressed since then
+# some files in '/root/.npm' are owned by root
+RUN chown -R 1000:1000 "/root/.npm"
+RUN chmod -R o+rwx "/root/.npm"
+
 # prepare entry point
 WORKDIR /
 COPY entry.bash ./
