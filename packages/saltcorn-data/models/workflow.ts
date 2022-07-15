@@ -77,7 +77,7 @@ class Workflow implements AbstractWorkflow {
         currentStep: stepIx + 1,
         maxSteps: this.steps.length,
         title: this.title(step, stepIx),
-        contextField: step.contextField
+        contextField: step.contextField,
       };
     }
   }
@@ -259,6 +259,12 @@ function addApplyButtonToForm(
     //TODO what if plugin has viewname as param
     form.additionalButtons = [
       ...(form.additionalButtons || []),
+      {
+        label: "&laquo; " + that.__("Back"),
+        id: "btnbackwf",
+        class: "btn btn-outline-primary",
+        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}')`,
+      },
       {
         label: that.__("Save"),
         id: "btnsavewf",
