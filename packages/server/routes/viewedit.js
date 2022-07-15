@@ -601,7 +601,7 @@ router.get(
         table_id: view.table_id,
         exttable_name: view.exttable_name,
         viewname: name,
-        ...(step ? { startStepName: step } : {}),
+        ...(step ? { stepName: step } : {}),
       },
       req
     );

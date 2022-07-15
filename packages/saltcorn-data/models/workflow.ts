@@ -91,8 +91,16 @@ class Workflow implements AbstractWorkflow {
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);
     }
+
     const { stepName, contextEnc, ...stepBody } = body;
 
+    if (!contextEnc) {
+      const startStepIx = this.steps.findIndex(
+        (step) => step.name === stepName
+      );
+
+      return this.runStep(stepBody || {}, startStepIx);
+    }
     const context = JSON.parse(decodeURIComponent(contextEnc));
     const stepIx = this.steps.findIndex((step) => step.name === stepName);
     if (stepIx === -1) {
