@@ -68,7 +68,7 @@ class Workflow implements AbstractWorkflow {
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
 
-        addApplyButtonToForm(form, this, context);
+        await addApplyButtonToForm(form, this, context);
       }
       return {
         renderForm: form,
@@ -115,7 +115,7 @@ class Workflow implements AbstractWorkflow {
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
 
-        addApplyButtonToForm(form, this, context);
+        await addApplyButtonToForm(form, this, context);
 
         return {
           renderForm: form,
@@ -205,7 +205,7 @@ class Workflow implements AbstractWorkflow {
             ? this.__("Finish") + " &raquo;"
             : this.__("Next") + " &raquo;";
 
-      addApplyButtonToForm(form, this, context);
+      await addApplyButtonToForm(form, this, context);
       return {
         renderForm: form,
         context,
@@ -250,21 +250,36 @@ class Workflow implements AbstractWorkflow {
   }
 }
 
-function addApplyButtonToForm(
+async function addApplyButtonToForm(
   form: Form,
   that: AbstractWorkflow,
   context: any
 ) {
   if (context.viewname) {
     //TODO what if plugin has viewname as param
+    //console.log(that.steps);
+    const currentStep = form.values.stepName;
+    let prevStep;
+    for (const step of that.steps) {
+      if (step.name === currentStep) break;
+      if (!step.onlyWhen) prevStep = step.name;
+      else {
+        const toRun = await applyAsync(step.onlyWhen, context);
+        if (toRun) prevStep = step.name;
+      }
+    }
     form.additionalButtons = [
       ...(form.additionalButtons || []),
-      {
-        label: "&laquo; " + that.__("Back"),
-        id: "btnbackwf",
-        class: "btn btn-outline-primary",
-        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}')`,
-      },
+      ...(prevStep
+        ? [
+            {
+              label: "&laquo; " + that.__("Back"),
+              id: "btnbackwf",
+              class: "btn btn-outline-primary",
+              onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}',()=>{location.href='/viewedit/config/${context.viewname}?step=${prevStep}'})`,
+            },
+          ]
+        : []),
       {
         label: that.__("Save"),
         id: "btnsavewf",
