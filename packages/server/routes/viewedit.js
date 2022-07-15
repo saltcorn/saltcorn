@@ -584,7 +584,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-
+    const { step } = req.query;
     const view = await View.findOne({ name });
     if (!view) {
       req.flash("error", `View not found: ${text(name)}`);
@@ -601,6 +601,7 @@ router.get(
         table_id: view.table_id,
         exttable_name: view.exttable_name,
         viewname: name,
+        ...(step ? { startStepName: step } : {}),
       },
       req
     );
