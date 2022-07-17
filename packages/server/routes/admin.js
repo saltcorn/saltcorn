@@ -213,9 +213,10 @@ router.post(
       flash_restart_if_required(form, req);
       await save_config_from_form(form);
 
-      req.flash("success", req.__("Site identity settings updated"));
-      if (!req.xhr) res.redirect("/admin");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Site identity settings updated"));
+        res.redirect("/admin");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -561,7 +562,6 @@ router.post(
       req.flash("success", req.__("Backup settings updated"));
       if (!req.xhr) res.redirect("/admin/backup");
       else res.json({ success: "ok" });
-
     }
   })
 );

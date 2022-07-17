@@ -73,8 +73,9 @@ const logSettingsForm = async (req) => {
       fields.push({
         name: w + "_channel",
         label: w + " channel",
-        sublabel:
-          req.__("Channels to create events for. Separate by comma; leave blank for all"),
+        sublabel: req.__(
+          "Channels to create events for. Separate by comma; leave blank for all"
+        ),
         type: "String",
         showIf: { [w]: true },
       });
@@ -82,8 +83,8 @@ const logSettingsForm = async (req) => {
   return new Form({
     action: "/eventlog/settings",
     blurb: req.__("Which events should be logged?"),
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
+    noSubmitButton: true,
+    onChange: "saveAndContinue(this)",
     fields,
   });
 };
@@ -169,23 +170,23 @@ router.get(
  * @returns {Form}
  */
 const customEventForm = async (req) => {
-    return new Form({
-        action: "/eventlog/custom/new",
-        submitButtonClass: "btn-outline-primary",
-        onChange: "remove_outline(this)",
-        fields: [
-            {
-                name: "name",
-                label: req.__("Event Name"),
-                type: "String",
-            },
-            {
-                name: "hasChannel",
-                label: req.__("Has channels?"),
-                type: "Bool",
-            },
-        ],
-    });
+  return new Form({
+    action: "/eventlog/custom/new",
+    submitButtonClass: "btn-outline-primary",
+    onChange: "remove_outline(this)",
+    fields: [
+      {
+        name: "name",
+        label: req.__("Event Name"),
+        type: "String",
+      },
+      {
+        name: "hasChannel",
+        label: req.__("Has channels?"),
+        type: "Bool",
+      },
+    ],
+  });
 };
 /**
  * @name get/custom/new
@@ -297,7 +298,8 @@ router.post(
     } else {
       await getState().setConfig("event_log_settings", form.values);
 
-      res.redirect(`/eventlog/settings`);
+      if (!req.xhr) res.redirect(`/eventlog/settings`);
+      else res.json({ success: "ok" });
     }
   })
 );
