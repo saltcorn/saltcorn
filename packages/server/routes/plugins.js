@@ -563,10 +563,12 @@ router.get(
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(plugin.configuration || {});
 
-    res.sendWrap(
-      req.__(`Configure %s Plugin`, plugin.name),
-      renderForm(wfres.renderForm, req.csrfToken())
-    );
+    res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
+      type: "card",
+      class: "mt-0",
+      title: req.__(`Configure %s Plugin`, plugin.name),
+      contents: renderForm(wfres.renderForm, req.csrfToken()),
+    });
   })
 );
 
@@ -590,10 +592,12 @@ router.post(
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(req.body);
     if (wfres.renderForm)
-      res.sendWrap(
-        req.__(`Configure %s Plugin`, plugin.name),
-        renderForm(wfres.renderForm, req.csrfToken())
-      );
+      res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
+        type: "card",
+        class: "mt-0",
+        title: req.__(`Configure %s Plugin`, plugin.name),
+        contents: renderForm(wfres.renderForm, req.csrfToken()),
+      });
     else {
       plugin.configuration = wfres;
       await plugin.upsert();
