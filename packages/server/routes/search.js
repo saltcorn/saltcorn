@@ -55,7 +55,8 @@ const searchConfigForm = (tables, views, req) => {
   );
   return new Form({
     action: "/search/config",
-    submitLabel: req.__("Save"),
+    noSubmitButton: true,
+    onChange: `saveAndContinue(this)`,
     blurb:
       blurb1 +
       (tbls_noviews.length > 0
@@ -111,7 +112,8 @@ router.post(
 
     if (result.success) {
       await getState().setConfig("globalSearch", result.success);
-      res.redirect("/search/config");
+      if (!req.xhr) res.redirect("/search/config");
+      else res.json({ success: "ok" });
     } else {
       send_infoarch_page({
         res,
