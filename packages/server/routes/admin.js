@@ -46,6 +46,8 @@ const {
   ul,
   li,
   ol,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -377,6 +379,11 @@ router.get(
                   a(
                     { href: "/admin/auto-backup-list" },
                     "Restore/download automated backups &raquo;"
+                  ),
+                  script(
+                    domReady(
+                      `$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`
+                    )
                   )
                 ),
               }
@@ -482,9 +489,8 @@ router.get(
 const autoBackupForm = (req) =>
   new Form({
     action: "/admin/set-auto-backup",
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
-    submitLabel: "Save settings",
+    onChange: `saveAndContinue(this);$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`,
+    noSubmitButton: true,
     additionalButtons: [
       {
         label: "Backup now",
@@ -553,7 +559,9 @@ router.post(
     } else {
       await save_config_from_form(form);
       req.flash("success", req.__("Backup settings updated"));
-      res.redirect("/admin/backup");
+      if (!req.xhr) res.redirect("/admin/backup");
+      else res.json({ success: "ok" });
+
     }
   })
 );
