@@ -83,8 +83,8 @@ const tableForm = async (table, req) => {
     .map((f) => ({ value: f.id, label: f.name }));
   const form = new Form({
     action: "/table",
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
+    noSubmitButton: true,
+    onChange: "saveAndContinue(this)",
     fields: [
       ...(!table.external
         ? [
@@ -910,7 +910,8 @@ router.post(
         );
       else if (!hasError) req.flash("success", req.__("Table saved"));
 
-      res.redirect(`/table/${id}`);
+      if (!req.xhr) res.redirect(`/table/${id}`);
+      else res.json({ success: "ok" });
     }
   })
 );
