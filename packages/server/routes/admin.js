@@ -216,7 +216,8 @@ router.post(
       await save_config_from_form(form);
 
       req.flash("success", req.__("Site identity settings updated"));
-      res.redirect("/admin");
+      if (!req.xhr) res.redirect("/admin");
+      else res.json({ success: "ok" });
     }
   })
 );
