@@ -28,6 +28,8 @@ class Workflow implements AbstractWorkflow {
   onDone: (context: any) => any;
   action?: string | undefined;
   __: any;
+  saveURL?: string;
+  startAtStepURL?: (stepName: string) => string;
 
   /**
    * Workflow constructor
@@ -263,28 +265,29 @@ async function addApplyButtonToForm(
   that: AbstractWorkflow,
   context: any
 ) {
-  if (context.viewname) {
+  if (that.saveURL) {
     //TODO what if plugin has viewname as param
     //console.log(that.steps);
     const currentStep = form.values.stepName;
     let prevStep;
-    for (const step of that.steps) {
-      if (step.name === currentStep) break;
-      if (!step.onlyWhen) prevStep = step.name;
-      else {
-        const toRun = await applyAsync(step.onlyWhen, context);
-        if (toRun) prevStep = step.name;
+    if (that.startAtStepURL)
+      for (const step of that.steps) {
+        if (step.name === currentStep) break;
+        if (!step.onlyWhen) prevStep = step.name;
+        else {
+          const toRun = await applyAsync(step.onlyWhen, context);
+          if (toRun) prevStep = step.name;
+        }
       }
-    }
     form.additionalButtons = [
       ...(form.additionalButtons || []),
-      ...(prevStep
+      ...(that.startAtStepURL && prevStep
         ? [
             {
               label: "&laquo; " + that.__("Back"),
               id: "btnbackwf",
               class: "btn btn-outline-primary",
-              onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}',()=>{location.href='/viewedit/config/${context.viewname}?step=${prevStep}'})`,
+              onclick: `applyViewConfig(this, '${that.saveURL}',()=>{location.href='${that.startAtStepURL(prevStep)}'})`,
             },
           ]
         : []),
@@ -292,7 +295,7 @@ async function addApplyButtonToForm(
         label: that.__("Save"),
         id: "btnsavewf",
         class: "btn btn-outline-primary",
-        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}')`,
+        onclick: `applyViewConfig(this, '${that.saveURL}')`,
       },
     ];
   }
