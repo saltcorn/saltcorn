@@ -378,9 +378,6 @@ const storage_form = async (req) => {
     ],
     action: "/files/storage",
   });
-  form.submitButtonClass = "btn-outline-primary";
-  form.submitLabel = req.__("Save");
-  form.onChange = "remove_outline(this)";
   return form;
 };
 
@@ -431,8 +428,11 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Storage settings updated"));
-      res.redirect("/files/storage");
+
+      if (!req.xhr) {
+        req.flash("success", req.__("Storage settings updated"));
+        res.redirect("/files/storage");
+      } else res.json({ success: "ok" });
     }
   })
 );

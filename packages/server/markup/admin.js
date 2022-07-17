@@ -345,7 +345,7 @@ const flash_restart = (req) => {
  * @param {*} opts.formArgs
  * @returns {Promise<Form>}
  */
-const config_fields_form = async ({ field_names, req, ...formArgs }) => {
+const config_fields_form = async ({ field_names, req, action, ...formArgs }) => {
   const values = {};
   const state = getState();
   const fields = [];
@@ -396,8 +396,9 @@ const config_fields_form = async ({ field_names, req, ...formArgs }) => {
   const form = new Form({
     fields,
     values,
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
+    action,
+    noSubmitButton: true,
+    onChange: `saveAndContinue(this)`,
     ...formArgs,
   });
   await form.fill_fkey_options();

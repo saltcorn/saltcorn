@@ -111,6 +111,9 @@ const ViewSettings = () => {
   } catch (error) {
     errorString = error.message;
   }
+  let viewname = view;
+  if (viewname && viewname.includes(":")) viewname = viewname.split(":")[1];
+  if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
   return (
     <div>
       <div>
@@ -180,7 +183,7 @@ const ViewSettings = () => {
         <a
           className="d-block mt-2"
           target="_blank"
-          href={`/viewedit/config/${view}`}
+          href={`/viewedit/config/${viewname}`}
         >
           Configure this view
         </a>

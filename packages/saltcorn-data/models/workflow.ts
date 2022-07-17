@@ -28,6 +28,9 @@ class Workflow implements AbstractWorkflow {
   onDone: (context: any) => any;
   action?: string | undefined;
   __: any;
+  saveURL?: string;
+  startAtStepURL?: (stepName: string) => string;
+  autoSave?: boolean;
 
   /**
    * Workflow constructor
@@ -68,7 +71,7 @@ class Workflow implements AbstractWorkflow {
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
 
-        addApplyButtonToForm(form, this, context);
+        await addApplyButtonToForm(form, this, context);
       }
       return {
         renderForm: form,
@@ -77,7 +80,7 @@ class Workflow implements AbstractWorkflow {
         currentStep: stepIx + 1,
         maxSteps: this.steps.length,
         title: this.title(step, stepIx),
-        contextField: step.contextField
+        contextField: step.contextField,
       };
     }
   }
@@ -91,8 +94,16 @@ class Workflow implements AbstractWorkflow {
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);
     }
+
     const { stepName, contextEnc, ...stepBody } = body;
 
+    if (!contextEnc) {
+      const startStepIx = this.steps.findIndex(
+        (step) => step.name === stepName
+      );
+
+      return this.runStep(stepBody || {}, startStepIx);
+    }
     const context = JSON.parse(decodeURIComponent(contextEnc));
     const stepIx = this.steps.findIndex((step) => step.name === stepName);
     if (stepIx === -1) {
@@ -115,7 +126,7 @@ class Workflow implements AbstractWorkflow {
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
 
-        addApplyButtonToForm(form, this, context);
+        await addApplyButtonToForm(form, this, context);
 
         return {
           renderForm: form,
@@ -205,7 +216,7 @@ class Workflow implements AbstractWorkflow {
             ? this.__("Finish") + " &raquo;"
             : this.__("Next") + " &raquo;";
 
-      addApplyButtonToForm(form, this, context);
+      await addApplyButtonToForm(form, this, context);
       return {
         renderForm: form,
         context,
@@ -250,21 +261,51 @@ class Workflow implements AbstractWorkflow {
   }
 }
 
-function addApplyButtonToForm(
+async function addApplyButtonToForm(
   form: Form,
   that: AbstractWorkflow,
   context: any
 ) {
-  if (context.viewname) {
+  if (that.saveURL) {
     //TODO what if plugin has viewname as param
+    //console.log(that.steps);
+    const currentStep = form.values.stepName;
+    let prevStep;
+    if (that.startAtStepURL)
+      for (const step of that.steps) {
+        if (step.name === currentStep) break;
+        if (!step.onlyWhen) prevStep = step.name;
+        else {
+          const toRun = await applyAsync(step.onlyWhen, context);
+          if (toRun) prevStep = step.name;
+        }
+      }
+    if (that.autoSave)
+      form.onChange = `applyViewConfig(this, '${that.saveURL}')`;
     form.additionalButtons = [
       ...(form.additionalButtons || []),
-      {
-        label: that.__("Save"),
-        id: "btnsavewf",
-        class: "btn btn-outline-primary",
-        onclick: `applyViewConfig(this, '/viewedit/saveconfig/${context.viewname}')`,
-      },
+      ...(that.startAtStepURL && prevStep
+        ? [
+            {
+              label: "&laquo; " + that.__("Back"),
+              id: "btnbackwf",
+              class: "btn btn-outline-primary",
+              onclick: `applyViewConfig(this, '${
+                that.saveURL
+              }',()=>{location.href='${that.startAtStepURL(prevStep)}'})`,
+            },
+          ]
+        : []),
+      ...(!that.autoSave
+        ? [
+            {
+              label: that.__("Save"),
+              id: "btnsavewf",
+              class: "btn btn-outline-primary",
+              onclick: `applyViewConfig(this, '${that.saveURL}')`,
+            },
+          ]
+        : []),
     ];
   }
 }

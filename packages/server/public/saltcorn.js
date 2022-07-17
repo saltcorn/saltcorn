@@ -248,7 +248,7 @@ function saveAndContinue(e, k) {
   return false;
 }
 
-function applyViewConfig(e, url) {
+function applyViewConfig(e, url, k) {
   var form = $(e).closest("form");
   var form_data = form.serializeArray();
   const cfg = {};
@@ -264,6 +264,9 @@ function applyViewConfig(e, url) {
     },
     data: JSON.stringify(cfg),
     error: function (request) {},
+    success: function (res) {
+      k && k(res);
+    },
   });
 
   return false;
