@@ -57,6 +57,7 @@ import {
 } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
+import { isEqual} from "lodash"
 const { Provider } = optionsCtx;
 
 /**
@@ -387,10 +388,43 @@ const Builder = ({ options, layout, mode }) => {
   const [previews, setPreviews] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const nodekeys = useRef([]);
+  const [saveTimeout, setSaveTimeout] = useState(false);
+  const [savedData, setSavedData] = useState(false);
+  const doSave = (query) => {
+    if (!query.serialize) return;
 
+    const data = craftToSaltcorn(JSON.parse(query.serialize()));
+    const urlroot = options.page_id ? "pageedit" : "viewedit";
+    if(savedData===false) {
+      //do not save on first call 
+      setSavedData(data.layout);  
+      return 
+    }
+    if (isEqual(savedData, data.layout)) return;
+    setSavedData(data.layout);
+
+    fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+      },
+      body: JSON.stringify(data),
+    });
+  };
+  const nodesChange = (query) => {
+    if (saveTimeout) clearTimeout(saveTimeout);
+
+    setSaveTimeout(
+      setTimeout(() => {
+        doSave(query);
+        setSaveTimeout(false);
+      }, 500)
+    );
+  };
   return (
     <ErrorBoundary>
-      <Editor onRender={RenderNode}>
+      <Editor onRender={RenderNode} onNodesChange={nodesChange}>
         <Provider value={options}>
           <PreviewCtx.Provider
             value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
@@ -458,7 +492,6 @@ const Builder = ({ options, layout, mode }) => {
               </div>
               <div className="col-sm-auto builder-sidebar">
                 <div style={{ width: "16rem" }}>
-                  <SaveButton />
                   <NextButton layout={layout} />
                   <HistoryPanel />
                   <ViewPageLink />
