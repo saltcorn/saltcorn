@@ -381,7 +381,9 @@ router.post(
     } else {
       await save_config_from_form(form);
       req.flash("success", req.__("User settings updated"));
-      res.redirect("/useradmin/settings");
+      if (!req.xhr) res.redirect("/useradmin/settings");
+      else res.json({ success: "ok" });
+
     }
   })
 );

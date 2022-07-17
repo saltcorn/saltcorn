@@ -141,10 +141,6 @@ const email_form = async (req) => {
     ],
     action: "/admin/email",
   });
-  form.submitButtonClass = "btn-outline-primary";
-  form.submitLabel = req.__("Save");
-  form.onChange =
-    "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
   return form;
 };
 
@@ -310,7 +306,8 @@ router.post(
     } else {
       await save_config_from_form(form);
       req.flash("success", req.__("Email settings updated"));
-      res.redirect("/admin/email");
+      if (!req.xhr) res.redirect("/admin/email");
+      else res.json({ success: "ok" });
     }
   })
 );
