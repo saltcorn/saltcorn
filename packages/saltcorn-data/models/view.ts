@@ -704,13 +704,15 @@ class View {
       const { table_id, ...configuration } = await oldOnDone(ctx);
 
       await View.update({ configuration }, this.id!);
-      return { 
+      return {
         redirect: `/viewedit`,
         flash: ["success", `View ${this.name || ""} saved`],
       };
     };
-    configFlow.saveURL = `/viewedit/saveconfig/${this.name}`
-    configFlow.startAtStepURL = stepNm=> `/viewedit/config/${this.name}?step=${stepNm}`
+    configFlow.saveURL = `/viewedit/saveconfig/${this.name}`;
+    configFlow.autoSave = true;
+    configFlow.startAtStepURL = (stepNm) =>
+      `/viewedit/config/${this.name}?step=${stepNm}`;
     return configFlow;
   }
 

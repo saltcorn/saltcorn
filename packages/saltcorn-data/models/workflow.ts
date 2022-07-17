@@ -30,6 +30,7 @@ class Workflow implements AbstractWorkflow {
   __: any;
   saveURL?: string;
   startAtStepURL?: (stepName: string) => string;
+  autoSave?: boolean;
 
   /**
    * Workflow constructor
@@ -279,6 +280,8 @@ async function addApplyButtonToForm(
           if (toRun) prevStep = step.name;
         }
       }
+    if (that.autoSave)
+      form.onChange = `applyViewConfig(this, '${that.saveURL}')`;
     form.additionalButtons = [
       ...(form.additionalButtons || []),
       ...(that.startAtStepURL && prevStep
@@ -287,16 +290,22 @@ async function addApplyButtonToForm(
               label: "&laquo; " + that.__("Back"),
               id: "btnbackwf",
               class: "btn btn-outline-primary",
-              onclick: `applyViewConfig(this, '${that.saveURL}',()=>{location.href='${that.startAtStepURL(prevStep)}'})`,
+              onclick: `applyViewConfig(this, '${
+                that.saveURL
+              }',()=>{location.href='${that.startAtStepURL(prevStep)}'})`,
             },
           ]
         : []),
-      {
-        label: that.__("Save"),
-        id: "btnsavewf",
-        class: "btn btn-outline-primary",
-        onclick: `applyViewConfig(this, '${that.saveURL}')`,
-      },
+      ...(!that.autoSave
+        ? [
+            {
+              label: that.__("Save"),
+              id: "btnsavewf",
+              class: "btn btn-outline-primary",
+              onclick: `applyViewConfig(this, '${that.saveURL}')`,
+            },
+          ]
+        : []),
     ];
   }
 }
