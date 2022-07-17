@@ -559,9 +559,26 @@ router.get(
     if (!module) {
       module = getState().plugins[getState().plugin_module_names[plugin.name]];
     }
+    console.log(module);
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
+    flow.autoSave = true;
+    flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(plugin.configuration || {});
+    if (module.layout) {
+      wfres.renderForm.additionalButtons = [
+        ...(wfres.renderForm.additionalButtons || []),
+        {
+          label: "Reload page to see changes",
+          id: "btnReloadNow",
+          class: "btn btn-outline-secondary",
+          onclick: "location.reload()",
+        },
+      ];
+      wfres.renderForm.onChange = `${
+        wfres.renderForm.onChange || ""
+      };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
+    }
 
     res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
       type: "card",
@@ -590,15 +607,31 @@ router.post(
     }
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
+    flow.autoSave = true;
+    flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(req.body);
-    if (wfres.renderForm)
+    if (wfres.renderForm) {
+      if (module.layout) {
+        wfres.renderForm.additionalButtons = [
+          ...(wfres.renderForm.additionalButtons || []),
+          {
+            label: "Reload page to see changes",
+            id: "btnReloadNow",
+            class: "btn btn-outline-secondary",
+            onclick: "location.reload()",
+          },
+        ];
+        wfres.renderForm.onChange = `${
+          wfres.renderForm.onChange || ""
+        };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
+      }
       res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
         type: "card",
         class: "mt-0",
         title: req.__(`Configure %s Plugin`, plugin.name),
         contents: renderForm(wfres.renderForm, req.csrfToken()),
       });
-    else {
+    } else {
       plugin.configuration = wfres;
       await plugin.upsert();
       await load_plugins.loadPlugin(plugin);
@@ -610,12 +643,42 @@ router.post(
           refresh_plugin_cfg: plugin.name,
           tenant: db.getTenantSchema(),
         });
-      await sleep(500); // Allow other workers to reload this plugin
+      if (module.layout) await sleep(500); // Allow other workers to reload this plugin
       res.redirect("/plugins");
     }
   })
 );
 
+router.post(
+  "/saveconfig/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
+    const flow = module.configuration_workflow();
+    const step = await flow.singleStepForm(req.body, req);
+    if (step?.renderForm) {
+      if (!step.renderForm.hasErrors) {
+        plugin.configuration = {
+          ...plugin.configuration,
+          ...step.renderForm.values,
+        };
+        await plugin.upsert();
+        await load_plugins.loadPlugin(plugin);
+        process.send &&
+          process.send({
+            refresh_plugin_cfg: plugin.name,
+            tenant: db.getTenantSchema(),
+          });
+        res.json({ success: "ok" });
+      }
+    }
+  })
+);
 /**
  * @name get/new
  * @function
