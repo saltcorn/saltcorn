@@ -559,7 +559,6 @@ router.get(
     if (!module) {
       module = getState().plugins[getState().plugin_module_names[plugin.name]];
     }
-    console.log(module);
     const flow = module.configuration_workflow();
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     flow.autoSave = true;
