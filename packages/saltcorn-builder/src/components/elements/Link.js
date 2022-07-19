@@ -146,9 +146,11 @@ const LinkSettings = () => {
                 className="form-control form-select"
                 onChange={(e) =>
                   setProp((prop) => {
-                    prop.link_src = e.target.value;
-                    if (e.target.value !== "URL") {
-                      prop.isFormula.url = false;
+                    if (e?.target) {
+                      prop.link_src = e.target.value;
+                      if (e.target.value !== "URL") {
+                        prop.isFormula.url = false;
+                      }
                     }
                   })
                 }
@@ -238,7 +240,7 @@ const LinkSettings = () => {
           type="checkbox"
           checked={nofollow}
           onChange={(e) =>
-            setProp((prop) => (prop.nofollow = e.target.checked))
+            e?.target && setProp((prop) => (prop.nofollow = e.target.checked))
           }
         />
         <label className="form-check-label">Nofollow</label>
@@ -250,7 +252,7 @@ const LinkSettings = () => {
           type="checkbox"
           checked={target_blank}
           onChange={(e) =>
-            setProp((prop) => (prop.target_blank = e.target.checked))
+            e?.target && setProp((prop) => (prop.target_blank = e.target.checked))
           }
         />
         <label className="form-check-label">Open in new tab</label>
@@ -262,7 +264,7 @@ const LinkSettings = () => {
           type="checkbox"
           checked={in_modal}
           onChange={(e) =>
-            setProp((prop) => (prop.in_modal = e.target.checked))
+            e?.target && setProp((prop) => (prop.in_modal = e.target.checked))
           }
         />
         <label className="form-check-label">Open in popup modal?</label>
@@ -276,7 +278,7 @@ const LinkSettings = () => {
             type="checkbox"
             checked={transfer_state}
             onChange={(e) =>
-              setProp((prop) => (prop.transfer_state = e.target.checked))
+              e?.target && setProp((prop) => (prop.transfer_state = e.target.checked))
             }
           />
           <label className="form-check-label">Transfer state</label>

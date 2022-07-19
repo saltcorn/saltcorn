@@ -130,7 +130,7 @@ const ViewLinkSettings = () => {
                 value={name}
                 className="form-control form-select"
                 onChange={(e) =>
-                  setProp((prop) => (prop.name = e.target.value))
+                  e?.target && setProp((prop) => (prop.name = e.target.value))
                 }
               >
                 {options.link_view_opts.map((f, ix) => (
@@ -150,6 +150,7 @@ const ViewLinkSettings = () => {
                   className="viewlink-label form-control"
                   value={label}
                   onChange={(e) =>
+                    e?.target &&
                     setProp((prop) => (prop.label = e.target.value))
                   }
                 />
@@ -164,6 +165,7 @@ const ViewLinkSettings = () => {
                 className="viewlink-label form-control"
                 value={extra_state_fml}
                 onChange={(e) =>
+                  e?.target &&
                   setProp((prop) => (prop.extra_state_fml = e.target.value))
                 }
               />
@@ -190,7 +192,7 @@ const ViewLinkSettings = () => {
           name="block"
           type="checkbox"
           checked={inModal}
-          onChange={(e) => setProp((prop) => (prop.inModal = e.target.checked))}
+          onChange={(e) => e?.target && setProp((prop) => (prop.inModal = e.target.checked))}
         />
         <label className="form-check-label">Open in popup modal?</label>
       </div>

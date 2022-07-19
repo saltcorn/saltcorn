@@ -140,15 +140,17 @@ const FieldSettings = () => {
                 value={name}
                 className="form-control form-select"
                 onChange={(e) => {
-                  setProp((prop) => (prop.name = e.target.value));
-                  const newfvs = options.field_view_options[e.target.value];
-                  if (newfvs && newfvs.length > 0) {
-                    setProp((prop) => (prop.fieldview = newfvs[0]));
-                    refetchPreview({
-                      name: e.target.value,
-                      fieldview: newfvs[0],
-                    });
-                  } else refetchPreview({ name: e.target.value });
+                  if (e?.target) {
+                    setProp((prop) => (prop.name = e.target.value));
+                    const newfvs = options.field_view_options[e.target.value];
+                    if (newfvs && newfvs.length > 0) {
+                      setProp((prop) => (prop.fieldview = newfvs[0]));
+                      refetchPreview({
+                        name: e.target.value,
+                        fieldview: newfvs[0],
+                      });
+                    } else refetchPreview({ name: e.target.value });
+                  }
                 }}
               >
                 {options.fields.map((f, ix) => (
@@ -170,13 +172,15 @@ const FieldSettings = () => {
                   value={fieldview}
                   className="form-control form-select"
                   onChange={(e) => {
-                    setProp((prop) => (prop.fieldview = e.target.value));
-                    setInitialConfig(
-                      setProp,
-                      e.target.value,
-                      getCfgFields(e.target.value)
-                    );
-                    refetchPreview({ fieldview: e.target.value });
+                    if (e?.target) {
+                      setProp((prop) => (prop.fieldview = e.target.value));
+                      setInitialConfig(
+                        setProp,
+                        e.target.value,
+                        getCfgFields(e.target.value)
+                      );
+                      refetchPreview({ fieldview: e.target.value });
+                    }
                   }}
                 >
                   {(fvs || []).map((fvnm, ix) => (

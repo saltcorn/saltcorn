@@ -122,7 +122,7 @@ const ViewSettings = () => {
           value={view}
           className="form-control form-select"
           onChange={(e) => {
-            setProp((prop) => (prop.view = e.target.value));
+            e?.target && setProp((prop) => (prop.view = e.target.value));
           }}
         >
           {views.map((f, ix) => (
@@ -169,7 +169,7 @@ const ViewSettings = () => {
             className="viewlink-label form-control"
             value={extra_state_fml}
             onChange={(e) =>
-              setProp((prop) => (prop.extra_state_fml = e.target.value))
+              e?.target && setProp((prop) => (prop.extra_state_fml = e.target.value))
             }
           />
           {errorString ? (

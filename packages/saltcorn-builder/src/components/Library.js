@@ -180,7 +180,7 @@ const Library = () => {
             type="text"
             className="form-control"
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={(e) => e?.target && setNewName(e.target.value)}
           />
           <br />
           <label>Icon</label>

@@ -74,9 +74,11 @@ const AggregationSettings = () => {
               value={agg_relation}
               onChange={(e) =>
                 setProp((prop) => {
-                  prop.agg_relation = e.target.value;
-                  const fs = options.agg_field_opts[e.target.value];
-                  if (fs && fs.length > 0) prop.agg_field = fs[0];
+                  if (e?.target) {
+                    prop.agg_relation = e.target.value;
+                    const fs = options.agg_field_opts[e.target.value];
+                    if (fs && fs.length > 0) prop.agg_field = fs[0];
+                  }
                 })
               }
             >
@@ -97,7 +99,7 @@ const AggregationSettings = () => {
               className="form-control form-select"
               value={agg_field}
               onChange={(e) =>
-                setProp((prop) => (prop.agg_field = e.target.value))
+                e?.target && setProp((prop) => (prop.agg_field = e.target.value))
               }
             >
               {(options.agg_field_opts[agg_relation] || []).map((f, ix) => (
@@ -116,7 +118,7 @@ const AggregationSettings = () => {
             <select
               value={stat}
               className="form-control form-select"
-              onChange={(e) => setProp((prop) => (prop.stat = e.target.value))}
+              onChange={(e) => e?.target && setProp((prop) => (prop.stat = e.target.value))}
             >
               <option value={"Count"}>Count</option>
               <option value={"Avg"}>Avg</option>
@@ -142,7 +144,7 @@ const AggregationSettings = () => {
               className="form-control"
               value={aggwhere}
               onChange={(e) =>
-                setProp((prop) => (prop.aggwhere = e.target.value))
+                e?.target && setProp((prop) => (prop.aggwhere = e.target.value))
               }
             />
           </td>
