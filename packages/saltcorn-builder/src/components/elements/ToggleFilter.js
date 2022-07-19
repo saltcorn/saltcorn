@@ -96,13 +96,15 @@ const ToggleFilterSettings = () => {
               value={name}
               className="form-control form-select"
               onChange={(e) => {
-                setProp((prop) => (prop.name = e.target.value));
-                const field = options.fields.find(
-                  (f) => f.name === e.target.value
-                );
-                const isBool = field && field.type.name === "Bool";
-                if (isBool) setProp((prop) => (prop.value = "on"));
-                setProp((prop) => (prop.preset_value = ""));
+                if (e?.target) {
+                  setProp((prop) => (prop.name = e.target.value));
+                  const field = options.fields.find(
+                    (f) => f.name === e.target.value
+                  );
+                  const isBool = field && field.type.name === "Bool";
+                  if (isBool) setProp((prop) => (prop.value = "on"));
+                  setProp((prop) => (prop.preset_value = ""));
+                }
               }}
             >
               {options.fields.map((f, ix) => (

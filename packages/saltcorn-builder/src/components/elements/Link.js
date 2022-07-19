@@ -146,9 +146,11 @@ const LinkSettings = () => {
                 className="form-control form-select"
                 onChange={(e) =>
                   setProp((prop) => {
-                    prop.link_src = e.target.value;
-                    if (e.target.value !== "URL") {
-                      prop.isFormula.url = false;
+                    if (e?.target) {
+                      prop.link_src = e.target.value;
+                      if (e.target.value !== "URL") {
+                        prop.isFormula.url = false;
+                      }
                     }
                   })
                 }

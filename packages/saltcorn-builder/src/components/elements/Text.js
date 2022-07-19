@@ -121,7 +121,9 @@ const Text = ({
             html={text}
             style={{ display: "inline" }}
             disabled={!editable}
-            onChange={(e) => setProp((props) => (props.text = e.target.value))}
+            onChange={(e) =>
+              e?.target && setProp((props) => (props.text = e.target.value))
+            }
           />
         </Fragment>
       ) : editable ? (

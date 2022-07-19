@@ -206,6 +206,7 @@ const TabsSettings = () => {
               value={tabsStyle}
               className="form-control form-select"
               onChange={(e) =>
+                e?.target &&
                 setProp((prop) => {
                   prop.tabsStyle = e.target.value;
                 })
@@ -230,7 +231,7 @@ const TabsSettings = () => {
                 value={field}
                 className="form-control form-select"
                 onChange={(e) => {
-                  setProp((prop) => (prop.field = e.target.value));
+                  e?.target && setProp((prop) => (prop.field = e.target.value));
                 }}
               >
                 {options.fields.map((f, ix) => (
@@ -256,6 +257,7 @@ const TabsSettings = () => {
                   min="0"
                   max="20"
                   onChange={(e) =>
+                    e?.target &&
                     setProp((prop) => (prop.ntabs = e.target.value))
                   }
                 />
@@ -273,6 +275,7 @@ const TabsSettings = () => {
                     className="form-control text-to-display"
                     value={titles[ix]}
                     onChange={(e) =>
+                      e?.target &&
                       setProp((prop) => (prop.titles[ix] = e.target.value))
                     }
                   />

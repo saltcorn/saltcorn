@@ -120,8 +120,10 @@ const ColumnsSettings = () => {
                 max="4"
                 onChange={(e) =>
                   setProp((prop) => {
-                    prop.ncols = e.target.value;
-                    prop.widths = resetWidths(e.target.value);
+                    if (e?.target) {
+                      prop.ncols = e.target.value;
+                      prop.widths = resetWidths(e.target.value);
+                    }
                   })
                 }
               />
@@ -149,6 +151,7 @@ const ColumnsSettings = () => {
                       min="1"
                       max={12 - (sum(widths) - widths[ix]) - 1}
                       onChange={(e) =>
+                        e?.target &&
                         setProp((prop) => (prop.widths[ix] = +e.target.value))
                       }
                     />
@@ -162,6 +165,7 @@ const ColumnsSettings = () => {
                     className="form-control form-select"
                     value={breakpoints[ix]}
                     onChange={(e) =>
+                      e?.target &&
                       setProp((prop) => (prop.breakpoints[ix] = e.target.value))
                     }
                   >

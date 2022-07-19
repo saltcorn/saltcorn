@@ -70,7 +70,7 @@ const DropDownFilterSettings = () => {
             <select
               value={name}
               className="form-control form-select"
-              onChange={(e) => setProp((prop) => (prop.name = e.target.value))}
+              onChange={(e) => e?.target && setProp((prop) => (prop.name = e.target.value))}
             >
               {options.fields.map((f, ix) => (
                 <option key={ix} value={f.name}>
@@ -89,7 +89,7 @@ const DropDownFilterSettings = () => {
               value={neutral_label}
               className="form-control"
               onChange={(e) =>
-                setProp((prop) => (prop.neutral_label = e.target.value))
+                e?.target && setProp((prop) => (prop.neutral_label = e.target.value))
               }
             />
           </td>
@@ -102,7 +102,7 @@ const DropDownFilterSettings = () => {
             <input
               value={where}
               className="form-control"
-              onChange={(e) => setProp((prop) => (prop.where = e.target.value))}
+              onChange={(e) => e?.target && setProp((prop) => (prop.where = e.target.value))}
             />
           </td>
         </tr>

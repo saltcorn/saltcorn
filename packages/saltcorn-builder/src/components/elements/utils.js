@@ -820,6 +820,7 @@ const ConfigField = ({
               className="w-50 form-control-sm d-inline dimunit"
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
+                e?.target &&
                 myOnChange(
                   isStyle
                     ? `${e.target.value}${styleDim || "px"}`

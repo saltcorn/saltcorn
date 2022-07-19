@@ -123,8 +123,8 @@ const ActionSettings = () => {
                 value={name}
                 className="form-control form-select"
                 onChange={(e) => {
-                  setProp((prop) => (prop.name = e.target.value));
-                  setInitialConfig(
+                  e?.target && setProp((prop) => (prop.name = e.target.value));
+                  e?.target && setInitialConfig(
                     setProp,
                     e.target.value,
                     getCfgFields(e.target.value)
@@ -151,7 +151,7 @@ const ActionSettings = () => {
                   className="form-control"
                   value={action_label}
                   onChange={(e) =>
-                    setProp((prop) => (prop.action_label = e.target.value))
+                    e?.target && setProp((prop) => (prop.action_label = e.target.value))
                   }
                 />
               </OrFormula>
