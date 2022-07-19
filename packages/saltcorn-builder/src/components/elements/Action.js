@@ -173,7 +173,7 @@ const ActionSettings = () => {
             type="checkbox"
             checked={confirm}
             onChange={(e) =>
-              setProp((prop) => (prop.confirm = e.target.checked))
+              e?.target && setProp((prop) => (prop.confirm = e.target.checked))
             }
           />
           <label className="form-check-label">User confirmation?</label>

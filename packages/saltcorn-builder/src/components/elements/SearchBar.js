@@ -102,7 +102,7 @@ const SearchBarSettings = () => {
           type="checkbox"
           checked={has_dropdown}
           onChange={(e) =>
-            setProp((prop) => (prop.has_dropdown = e.target.checked))
+            e?.target && setProp((prop) => (prop.has_dropdown = e.target.checked))
           }
         />
         <label className="form-check-label">Has Dropdown</label>
@@ -114,7 +114,7 @@ const SearchBarSettings = () => {
           type="checkbox"
           checked={show_badges}
           onChange={(e) =>
-            setProp((prop) => (prop.show_badges = e.target.checked))
+            e?.target && setProp((prop) => (prop.show_badges = e.target.checked))
           }
         />
         <label className="form-check-label">Show current state badges</label>

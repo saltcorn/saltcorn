@@ -192,7 +192,7 @@ const ViewLinkSettings = () => {
           name="block"
           type="checkbox"
           checked={inModal}
-          onChange={(e) => setProp((prop) => (prop.inModal = e.target.checked))}
+          onChange={(e) => e?.target && setProp((prop) => (prop.inModal = e.target.checked))}
         />
         <label className="form-check-label">Open in popup modal?</label>
       </div>

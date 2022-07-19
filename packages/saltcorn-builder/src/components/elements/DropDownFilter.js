@@ -122,7 +122,7 @@ const DropDownFilterSettings = () => {
                 type="checkbox"
                 checked={full_width}
                 onChange={(e) =>
-                  setProp((prop) => (prop.full_width = e.target.checked))
+                  e?.target && setProp((prop) => (prop.full_width = e.target.checked))
                 }
               />
               <label className="form-check-label">Full width</label>

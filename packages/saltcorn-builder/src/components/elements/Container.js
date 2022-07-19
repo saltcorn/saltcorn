@@ -351,6 +351,7 @@ const ContainerSettings = () => {
                   type="checkbox"
                   checked={fullPageWidth}
                   onChange={(e) =>
+                    e?.target &&
                     setProp((prop) => (prop.fullPageWidth = e.target.checked))
                   }
                 />
@@ -536,8 +537,10 @@ const ContainerSettings = () => {
                       onChange={setAProp("imgResponsiveWidths")}
                     />
                     <small>
-                      <i>List of widths to serve resized images,
-                         e.g. 300, 400, 600</i>
+                      <i>
+                        List of widths to serve resized images, e.g. 300, 400,
+                        600
+                      </i>
                     </small>
                   </td>
                 </tr>
@@ -612,6 +615,7 @@ const ContainerSettings = () => {
                   type="checkbox"
                   checked={setTextColor}
                   onChange={(e) =>
+                    e?.target &&
                     setProp((prop) => (prop.setTextColor = e.target.checked))
                   }
                 />
@@ -784,6 +788,7 @@ const ContainerSettings = () => {
                     }
                     onChange={(e) =>
                       setProp((prop) => {
+                        if (!e?.target) return;
                         if (!prop.showForRole || prop.showForRole.length === 0)
                           options.roles.forEach(
                             (r) => (prop.showForRole[r.id] = true)
@@ -807,7 +812,7 @@ const ContainerSettings = () => {
                     type="checkbox"
                     checked={show_for_owner}
                     onChange={(e) =>
-                      setProp(
+                      e?.target && setProp(
                         (prop) => (prop.show_for_owner = e.target.checked)
                       )
                     }

@@ -192,7 +192,7 @@ const TextSettings = () => {
             className="form-check-input"
             checked={isFormula.text}
             onChange={(e) =>
-              setProp((prop) => (prop.isFormula.text = e.target.checked))
+              e?.target && setProp((prop) => (prop.isFormula.text = e.target.checked))
             }
           />
           <label className="form-check-label">Formula?</label>
