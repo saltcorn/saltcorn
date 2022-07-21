@@ -49,6 +49,7 @@ import {
   faUndo,
   faRedo,
   faTrashAlt,
+  faSave,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   Accordion,
@@ -57,7 +58,7 @@ import {
 } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
-import { isEqual} from "lodash"
+import { isEqual } from "lodash";
 const { Provider } = optionsCtx;
 
 /**
@@ -389,16 +390,18 @@ const Builder = ({ options, layout, mode }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const nodekeys = useRef([]);
   const [saveTimeout, setSaveTimeout] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [savedData, setSavedData] = useState(false);
   const doSave = (query) => {
     if (!query.serialize) return;
 
     const data = craftToSaltcorn(JSON.parse(query.serialize()));
     const urlroot = options.page_id ? "pageedit" : "viewedit";
-    if(savedData===false) {
-      //do not save on first call 
-      setSavedData(data.layout);  
-      return 
+    if (savedData === false) {
+      //do not save on first call
+      setSavedData(data.layout);
+      setIsSaving(false);
+      return;
     }
     if (isEqual(savedData, data.layout)) return;
     setSavedData(data.layout);
@@ -410,11 +413,13 @@ const Builder = ({ options, layout, mode }) => {
         "CSRF-Token": options.csrfToken,
       },
       body: JSON.stringify(data),
+    }).then(() => {
+      setIsSaving(false);
     });
   };
   const nodesChange = (query) => {
     if (saveTimeout) clearTimeout(saveTimeout);
-
+    setIsSaving(true);
     setSaveTimeout(
       setTimeout(() => {
         doSave(query);
@@ -494,6 +499,11 @@ const Builder = ({ options, layout, mode }) => {
                 <div style={{ width: "16rem" }}>
                   <NextButton layout={layout} />
                   <HistoryPanel />
+                  <FontAwesomeIcon
+                    icon={faSave}
+                    title={isSaving ? "Saving..." : "All changes saved"}
+                    className={isSaving ? "text-muted" : ""}
+                  />
                   <ViewPageLink />
                   <SettingsPanel />
                 </div>
