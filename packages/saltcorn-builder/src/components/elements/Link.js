@@ -13,6 +13,7 @@ import {
   OrFormula,
   ButtonOrLinkSettingsRows,
   DynamicFontAwesomeIcon,
+  setAPropGen,
 } from "./utils";
 import optionsCtx from "../context";
 
@@ -111,12 +112,7 @@ const LinkSettings = () => {
     transfer_state,
   } = node;
   const options = useContext(optionsCtx);
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   return (
     <div>
       <table className="w-100">
@@ -144,16 +140,16 @@ const LinkSettings = () => {
               <select
                 value={link_src}
                 className="form-control form-select"
-                onChange={(e) =>
+                onChange={(e) => {
+                  if (!e.target) return;
+                  const value = e.target.value;
                   setProp((prop) => {
-                    if (e?.target) {
-                      prop.link_src = e.target.value;
-                      if (e.target.value !== "URL") {
-                        prop.isFormula.url = false;
-                      }
+                    prop.link_src = value;
+                    if (e.target.value !== "URL") {
+                      prop.isFormula.url = false;
                     }
-                  })
-                }
+                  });
+                }}
               >
                 <option>URL</option>
                 {(options.pages || []).length > 0 && <option>Page</option>}
@@ -239,9 +235,7 @@ const LinkSettings = () => {
           name="block"
           type="checkbox"
           checked={nofollow}
-          onChange={(e) =>
-            e?.target && setProp((prop) => (prop.nofollow = e.target.checked))
-          }
+          onChange={setAProp("nofollow", { checked: true })}
         />
         <label className="form-check-label">Nofollow</label>
       </div>
@@ -251,9 +245,7 @@ const LinkSettings = () => {
           name="block"
           type="checkbox"
           checked={target_blank}
-          onChange={(e) =>
-            e?.target && setProp((prop) => (prop.target_blank = e.target.checked))
-          }
+          onChange={setAProp("target_blank", { checked: true })}
         />
         <label className="form-check-label">Open in new tab</label>
       </div>
@@ -263,9 +255,7 @@ const LinkSettings = () => {
           name="block"
           type="checkbox"
           checked={in_modal}
-          onChange={(e) =>
-            e?.target && setProp((prop) => (prop.in_modal = e.target.checked))
-          }
+          onChange={setAProp("in_modal", { checked: true })}
         />
         <label className="form-check-label">Open in popup modal?</label>
       </div>
@@ -277,9 +267,7 @@ const LinkSettings = () => {
             name="block"
             type="checkbox"
             checked={transfer_state}
-            onChange={(e) =>
-              e?.target && setProp((prop) => (prop.transfer_state = e.target.checked))
-            }
+            onChange={setAProp("transfer_state", { checked: true })}
           />
           <label className="form-check-label">Transfer state</label>
         </div>
