@@ -213,6 +213,7 @@ function ajax_modal(url, opts = {}) {
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
         (opts.onClose || function () {})(res);
+        $("body").css("overflow", "");
       });
     },
   });
