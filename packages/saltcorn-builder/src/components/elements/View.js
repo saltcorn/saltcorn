@@ -114,6 +114,7 @@ const ViewSettings = () => {
   let viewname = view;
   if (viewname && viewname.includes(":")) viewname = viewname.split(":")[1];
   if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
+
   return (
     <div>
       <div>
@@ -121,9 +122,7 @@ const ViewSettings = () => {
         <select
           value={view}
           className="form-control form-select"
-          onChange={(e) => {
-            e?.target && setProp((prop) => (prop.view = e.target.value));
-          }}
+          onChange={setAProp("view")}
         >
           {views.map((f, ix) => (
             <option key={ix} value={f.name}>
@@ -168,9 +167,7 @@ const ViewSettings = () => {
             type="text"
             className="viewlink-label form-control"
             value={extra_state_fml}
-            onChange={(e) =>
-              e?.target && setProp((prop) => (prop.extra_state_fml = e.target.value))
-            }
+            onChange={setAProp("extra_state_fml")}
           />
           {errorString ? (
             <small className="text-danger font-monospace d-block">
