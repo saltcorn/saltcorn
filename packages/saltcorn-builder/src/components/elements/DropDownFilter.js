@@ -7,7 +7,7 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleRow } from "./utils";
+import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
 
 export /**
  * @param {object} props
@@ -59,6 +59,8 @@ const DropDownFilterSettings = () => {
     where: node.data.props.where,
   }));
   const options = useContext(optionsCtx);
+  const setAProp = setAPropGen(setProp);
+
   return (
     <table className="w-100">
       <tbody>
@@ -70,7 +72,7 @@ const DropDownFilterSettings = () => {
             <select
               value={name}
               className="form-control form-select"
-              onChange={(e) => e?.target && setProp((prop) => (prop.name = e.target.value))}
+              onChange={setAProp("name")}
             >
               {options.fields.map((f, ix) => (
                 <option key={ix} value={f.name}>
@@ -88,9 +90,7 @@ const DropDownFilterSettings = () => {
             <input
               value={neutral_label}
               className="form-control"
-              onChange={(e) =>
-                e?.target && setProp((prop) => (prop.neutral_label = e.target.value))
-              }
+              onChange={setAProp("neutral_label")}
             />
           </td>
         </tr>
@@ -102,7 +102,7 @@ const DropDownFilterSettings = () => {
             <input
               value={where}
               className="form-control"
-              onChange={(e) => e?.target && setProp((prop) => (prop.where = e.target.value))}
+              onChange={setAProp("where")}
             />
           </td>
         </tr>
@@ -121,9 +121,7 @@ const DropDownFilterSettings = () => {
                 name="block"
                 type="checkbox"
                 checked={full_width}
-                onChange={(e) =>
-                  e?.target && setProp((prop) => (prop.full_width = e.target.checked))
-                }
+                onChange={setAProp("full_width", { checked: true })}
               />
               <label className="form-check-label">Full width</label>
             </div>
@@ -134,8 +132,8 @@ const DropDownFilterSettings = () => {
   );
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 DropDownFilter.craft = {
   displayName: "DropDownFilter",

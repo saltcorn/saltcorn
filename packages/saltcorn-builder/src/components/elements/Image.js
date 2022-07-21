@@ -16,6 +16,7 @@ import {
   reactifyStyles,
   Accordion,
   OrFormula,
+  setAPropGen,
 } from "./utils";
 
 export /**
@@ -120,12 +121,7 @@ const ImageSettings = () => {
         });
     }
   };
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   return (
     <Accordion>
       <table accordiontitle="Select image">
