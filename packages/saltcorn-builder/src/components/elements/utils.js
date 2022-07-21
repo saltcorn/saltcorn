@@ -1054,12 +1054,7 @@ const ButtonOrLinkSettingsRows = ({
   values,
   linkFirst = false,
 }) => {
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
   return [
     <tr key="btnstyle">
