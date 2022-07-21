@@ -252,7 +252,7 @@ const ImageSettings = () => {
           )}
           {srctype !== "Upload" && (
             <tr>
-              <td>
+              <td style={{ verticalAlign: "top" }}>
                 <label>Responsive widths</label>
               </td>
 
