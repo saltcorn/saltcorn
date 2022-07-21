@@ -118,14 +118,14 @@ const ColumnsSettings = () => {
                 step="1"
                 min="1"
                 max="4"
-                onChange={(e) =>
+                onChange={(e) => {
+                  if (!e.target) return;
+                  const value = e.target.value;
                   setProp((prop) => {
-                    if (e?.target) {
-                      prop.ncols = e.target.value;
-                      prop.widths = resetWidths(e.target.value);
-                    }
-                  })
-                }
+                    prop.ncols = value;
+                    prop.widths = resetWidths(value);
+                  });
+                }}
               />
             </td>
           </tr>
@@ -150,10 +150,11 @@ const ColumnsSettings = () => {
                       step="1"
                       min="1"
                       max={12 - (sum(widths) - widths[ix]) - 1}
-                      onChange={(e) =>
-                        e?.target &&
-                        setProp((prop) => (prop.widths[ix] = +e.target.value))
-                      }
+                      onChange={(e) => {
+                        if (!e.target) return;
+                        const value = e.target.value;
+                        setProp((prop) => (prop.widths[ix] = +value));
+                      }}
                     />
                   ) : (
                     `${12 - sum(widths)}`
@@ -164,10 +165,11 @@ const ColumnsSettings = () => {
                   <select
                     className="form-control form-select"
                     value={breakpoints[ix]}
-                    onChange={(e) =>
-                      e?.target &&
-                      setProp((prop) => (prop.breakpoints[ix] = e.target.value))
-                    }
+                    onChange={(e) => {
+                      if (!e.target) return;
+                      const value = e.target.value;
+                      setProp((prop) => (prop.breakpoints[ix] = value));
+                    }}
                   >
                     <option disabled>Breakpoint</option>
                     <option value="">None</option>

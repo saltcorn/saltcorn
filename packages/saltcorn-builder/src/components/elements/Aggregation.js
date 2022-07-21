@@ -7,7 +7,7 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleRow } from "./utils";
+import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
 
 export /**
  * @param {object} props
@@ -61,6 +61,8 @@ const AggregationSettings = () => {
     textStyle: node.data.props.textStyle,
   }));
   const options = useContext(optionsCtx);
+  const setAProp = setAPropGen(setProp);
+
   return (
     <table>
       <tbody>
@@ -72,15 +74,15 @@ const AggregationSettings = () => {
             <select
               className="form-control form-select"
               value={agg_relation}
-              onChange={(e) =>
+              onChange={(e) => {
+                if (!e.target) return;
+                const value = e.target.value;
                 setProp((prop) => {
-                  if (e?.target) {
-                    prop.agg_relation = e.target.value;
-                    const fs = options.agg_field_opts[e.target.value];
-                    if (fs && fs.length > 0) prop.agg_field = fs[0];
-                  }
-                })
-              }
+                  prop.agg_relation = value;
+                  const fs = options.agg_field_opts[value];
+                  if (fs && fs.length > 0) prop.agg_field = fs[0];
+                });
+              }}
             >
               {options.child_field_list.map((f, ix) => (
                 <option key={ix} value={f}>
@@ -98,9 +100,7 @@ const AggregationSettings = () => {
             <select
               className="form-control form-select"
               value={agg_field}
-              onChange={(e) =>
-                e?.target && setProp((prop) => (prop.agg_field = e.target.value))
-              }
+              onChange={setAProp("agg_field")}
             >
               {(options.agg_field_opts[agg_relation] || []).map((f, ix) => (
                 <option key={ix} value={f}>
@@ -118,7 +118,7 @@ const AggregationSettings = () => {
             <select
               value={stat}
               className="form-control form-select"
-              onChange={(e) => e?.target && setProp((prop) => (prop.stat = e.target.value))}
+              onChange={setAProp("stat")}
             >
               <option value={"Count"}>Count</option>
               <option value={"Avg"}>Avg</option>
@@ -143,9 +143,7 @@ const AggregationSettings = () => {
               type="text"
               className="form-control"
               value={aggwhere}
-              onChange={(e) =>
-                e?.target && setProp((prop) => (prop.aggwhere = e.target.value))
-              }
+              onChange={setAProp("aggwhere")}
             />
           </td>
         </tr>

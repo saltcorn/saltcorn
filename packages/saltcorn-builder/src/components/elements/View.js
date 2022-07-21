@@ -15,6 +15,7 @@ import {
   MinRoleSetting,
   fetchViewPreview,
   ConfigForm,
+  setAPropGen,
 } from "./utils";
 
 export /**
@@ -99,12 +100,7 @@ const ViewSettings = () => {
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = useContext(previewCtx);
 
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   let errorString = false;
   try {
     Function("return " + extra_state_fml);
