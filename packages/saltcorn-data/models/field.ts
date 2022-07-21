@@ -472,8 +472,8 @@ class Field implements AbstractField {
   }
 
   get multipartFormData() {
-    if (this.type !== "File") return false;
     if (this.input_type === "file") return true;
+    if (this.type !== "File") return false;
     const { getState } = require("../db/state");
     if (!this.fieldview) return false;
     const fileview = getState().fileviews[this.fieldview];
