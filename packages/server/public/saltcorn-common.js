@@ -510,7 +510,7 @@ const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
     if ($e.length) $e.val(v);
     else
       form.append(
-        `<input type="hidden" name="${k}_${ix}" value="${v}"></input>`
+        `<input type="hidden" data-repeater-ix="${ix}" name="${k}_${ix}" value="${v}"></input>`
       );
   };
   vs.forEach((v, ix) => {
@@ -521,8 +521,8 @@ const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
     });
   });
   //delete
-  //for (let ix = vs.length; ix < vs.length + 20; ix++) {
-  // $(`input[name="${k}_${ix}"]`).remove();
+  //for (let ix = vs.length; ix < vs.length + 5; ix++) {
+  //  $(`input[data-repeater-ix="${ix}"]`).remove();
   //}
   $(`input[type=hidden]`).each(function () {
     const name = $(this).attr("name");
