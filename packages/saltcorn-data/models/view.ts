@@ -571,7 +571,10 @@ class View {
     remote: boolean = !isNode()
   ): Promise<any> {
     const { getState } = require("../db/state");
-    if (getState().mobileConfig.localTableIds.indexOf(this.table_id) >= 0) {
+    if (
+      !getState().mobileConfig ||
+      getState().mobileConfig.localTableIds.indexOf(this.table_id) >= 0
+    ) {
       remote = false;
     }
     this.check_viewtemplate();
