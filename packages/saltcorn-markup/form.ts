@@ -283,7 +283,7 @@ const mkFormRowForRepeatFancy = (
   return div(
     { class: "row w-100" },
     div(
-      { class: "col-6" },
+      { class: "col-6 mb-3" },
       h5("Columns"),
       div(ul({ id: "myEditor", class: "sortableLists list-group" }))
     ),
