@@ -45,6 +45,8 @@ const {
   ul,
   li,
   ol,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const {
@@ -141,10 +143,6 @@ const email_form = async (req) => {
     ],
     action: "/admin/email",
   });
-  form.submitButtonClass = "btn-outline-primary";
-  form.submitLabel = req.__("Save");
-  form.onChange =
-    "remove_outline(this);$('#testemail').attr('href','#').removeClass('btn-primary').addClass('btn-outline-primary')";
   return form;
 };
 
@@ -215,8 +213,10 @@ router.post(
       flash_restart_if_required(form, req);
       await save_config_from_form(form);
 
-      req.flash("success", req.__("Site identity settings updated"));
-      res.redirect("/admin");
+      if (!req.xhr) {
+        req.flash("success", req.__("Site identity settings updated"));
+        res.redirect("/admin");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -309,7 +309,8 @@ router.post(
     } else {
       await save_config_from_form(form);
       req.flash("success", req.__("Email settings updated"));
-      res.redirect("/admin/email");
+      if (!req.xhr) res.redirect("/admin/email");
+      else res.json({ success: "ok" });
     }
   })
 );
@@ -379,6 +380,11 @@ router.get(
                   a(
                     { href: "/admin/auto-backup-list" },
                     "Restore/download automated backups &raquo;"
+                  ),
+                  script(
+                    domReady(
+                      `$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`
+                    )
                   )
                 ),
               }
@@ -484,9 +490,8 @@ router.get(
 const autoBackupForm = (req) =>
   new Form({
     action: "/admin/set-auto-backup",
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
-    submitLabel: "Save settings",
+    onChange: `saveAndContinue(this);$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`,
+    noSubmitButton: true,
     additionalButtons: [
       {
         label: "Backup now",
@@ -555,7 +560,8 @@ router.post(
     } else {
       await save_config_from_form(form);
       req.flash("success", req.__("Backup settings updated"));
-      res.redirect("/admin/backup");
+      if (!req.xhr) res.redirect("/admin/backup");
+      else res.json({ success: "ok" });
     }
   })
 );

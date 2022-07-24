@@ -14,6 +14,7 @@ import {
   OrFormula,
   TextStyleSetting,
   ButtonOrLinkSettingsRows,
+  setAPropGen,
 } from "./utils";
 
 export /**
@@ -119,6 +120,8 @@ const ViewLinkSettings = () => {
   } catch (error) {
     errorString = error.message;
   }
+  const setAProp = setAPropGen(setProp);
+
   return (
     <div>
       <table className="w-100">
@@ -129,9 +132,7 @@ const ViewLinkSettings = () => {
               <select
                 value={name}
                 className="form-control form-select"
-                onChange={(e) =>
-                  setProp((prop) => (prop.name = e.target.value))
-                }
+                onChange={setAProp("name")}
               >
                 {options.link_view_opts.map((f, ix) => (
                   <option key={ix} value={f.name}>
@@ -149,9 +150,7 @@ const ViewLinkSettings = () => {
                   type="text"
                   className="viewlink-label form-control"
                   value={label}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.label = e.target.value))
-                  }
+                  onChange={setAProp("label")}
                 />
               </OrFormula>
             </td>
@@ -163,9 +162,7 @@ const ViewLinkSettings = () => {
                 type="text"
                 className="viewlink-label form-control"
                 value={extra_state_fml}
-                onChange={(e) =>
-                  setProp((prop) => (prop.extra_state_fml = e.target.value))
-                }
+                onChange={setAProp("extra_state_fml")}
               />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
@@ -190,7 +187,7 @@ const ViewLinkSettings = () => {
           name="block"
           type="checkbox"
           checked={inModal}
-          onChange={(e) => setProp((prop) => (prop.inModal = e.target.checked))}
+          onChange={setAProp("inModal", { checked: true })}
         />
         <label className="form-check-label">Open in popup modal?</label>
       </div>

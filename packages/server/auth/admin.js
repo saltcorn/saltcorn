@@ -381,7 +381,8 @@ router.post(
     } else {
       await save_config_from_form(form);
       req.flash("success", req.__("User settings updated"));
-      res.redirect("/useradmin/settings");
+      if (!req.xhr) res.redirect("/useradmin/settings");
+      else res.json({ success: "ok" });
     }
   })
 );
@@ -530,7 +531,7 @@ router.get(
     send_users_page({
       res,
       req,
-      active_sub: "Settings",
+      active_sub: "SSL",
       contents: {
         type: "card",
         title: req.__("Authentication settings"),
@@ -556,7 +557,7 @@ router.post(
       send_users_page({
         res,
         req,
-        active_sub: "Settings",
+        active_sub: "SSL",
         contents: {
           type: "card",
           title: req.__("Authentication settings"),
@@ -572,7 +573,9 @@ router.post(
           " " +
           a({ href: "/admin/system" }, req.__("Restart here"))
       );
-      res.redirect("/useradmin/ssl");
+      if (!req.xhr) {
+        res.redirect("/useradmin/ssl");
+      } else res.json({ success: "ok" });
     }
   })
 );

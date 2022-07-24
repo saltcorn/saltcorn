@@ -9,6 +9,7 @@ import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import { setAPropGen } from "./utils";
 
 export /**
  * @param {object} props
@@ -92,6 +93,7 @@ const SearchBarSettings = () => {
     has_dropdown: node.data.props.has_dropdown,
     show_badges: node.data.props.show_badges,
   }));
+  const setAProp = setAPropGen(setProp);
 
   return (
     <div>
@@ -101,9 +103,7 @@ const SearchBarSettings = () => {
           name="block"
           type="checkbox"
           checked={has_dropdown}
-          onChange={(e) =>
-            setProp((prop) => (prop.has_dropdown = e.target.checked))
-          }
+          onChange={setAProp("has_dropdown", { checked: true })}
         />
         <label className="form-check-label">Has Dropdown</label>
       </div>
@@ -113,9 +113,7 @@ const SearchBarSettings = () => {
           name="block"
           type="checkbox"
           checked={show_badges}
-          onChange={(e) =>
-            setProp((prop) => (prop.show_badges = e.target.checked))
-          }
+          onChange={setAProp("show_badges", { checked: true })}
         />
         <label className="form-check-label">Show current state badges</label>
       </div>

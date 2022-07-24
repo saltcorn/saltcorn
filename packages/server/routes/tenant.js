@@ -452,8 +452,10 @@ router.post(
     } else {
       await save_config_from_form(form);
 
-      req.flash("success", req.__("Tenant settings updated"));
-      res.redirect("/tenant/settings");
+      if (!req.xhr) {
+        req.flash("success", req.__("Tenant settings updated"));
+        res.redirect("/tenant/settings");
+      } else res.json({ success: "ok" });
     }
   })
 );

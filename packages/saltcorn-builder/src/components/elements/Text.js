@@ -17,6 +17,7 @@ import {
   isBlock,
   reactifyStyles,
   SettingsRow,
+  setAPropGen,
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
@@ -121,7 +122,9 @@ const Text = ({
             html={text}
             style={{ display: "inline" }}
             disabled={!editable}
-            onChange={(e) => setProp((props) => (props.text = e.target.value))}
+            onChange={(e) =>
+              e?.target && setProp((props) => (props.text = e.target.value))
+            }
           />
         </Fragment>
       ) : editable ? (
@@ -175,12 +178,7 @@ const TextSettings = () => {
     style,
   } = node;
   const { mode, fields } = useContext(optionsCtx);
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   return (
     <div>
       {mode === "show" && (
@@ -189,9 +187,11 @@ const TextSettings = () => {
             type="checkbox"
             className="form-check-input"
             checked={isFormula.text}
-            onChange={(e) =>
-              setProp((prop) => (prop.isFormula.text = e.target.checked))
-            }
+            onChange={(e) => {
+              if (!e.target) return;
+              const checked = e.target.checked;
+              setProp((prop) => (prop.isFormula.text = checked));
+            }}
           />
           <label className="form-check-label">Formula?</label>
         </div>

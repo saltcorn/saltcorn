@@ -140,15 +140,17 @@ const FieldSettings = () => {
                 value={name}
                 className="form-control form-select"
                 onChange={(e) => {
-                  setProp((prop) => (prop.name = e.target.value));
-                  const newfvs = options.field_view_options[e.target.value];
+                  if (!e.target) return;
+                  const value = e.target.value;
+                  setProp((prop) => (prop.name = value));
+                  const newfvs = options.field_view_options[value];
                   if (newfvs && newfvs.length > 0) {
                     setProp((prop) => (prop.fieldview = newfvs[0]));
                     refetchPreview({
-                      name: e.target.value,
+                      name: value,
                       fieldview: newfvs[0],
                     });
-                  } else refetchPreview({ name: e.target.value });
+                  } else refetchPreview({ name: value });
                 }}
               >
                 {options.fields.map((f, ix) => (
@@ -170,13 +172,12 @@ const FieldSettings = () => {
                   value={fieldview}
                   className="form-control form-select"
                   onChange={(e) => {
-                    setProp((prop) => (prop.fieldview = e.target.value));
-                    setInitialConfig(
-                      setProp,
-                      e.target.value,
-                      getCfgFields(e.target.value)
-                    );
-                    refetchPreview({ fieldview: e.target.value });
+                    if (!e.target) return;
+                    const value = e.target.value;
+
+                    setProp((prop) => (prop.fieldview = value));
+                    setInitialConfig(setProp, value, getCfgFields(value));
+                    refetchPreview({ fieldview: value });
                   }}
                 >
                   {(fvs || []).map((fvnm, ix) => (

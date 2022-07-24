@@ -16,6 +16,7 @@ import {
   setInitialConfig,
   ButtonOrLinkSettingsRows,
   DynamicFontAwesomeIcon,
+  setAPropGen,
 } from "./utils";
 
 export /**
@@ -110,6 +111,8 @@ const ActionSettings = () => {
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
+  const setAProp = setAPropGen(setProp);
+
   return (
     <div>
       <table className="w-100">
@@ -123,12 +126,10 @@ const ActionSettings = () => {
                 value={name}
                 className="form-control form-select"
                 onChange={(e) => {
-                  setProp((prop) => (prop.name = e.target.value));
-                  setInitialConfig(
-                    setProp,
-                    e.target.value,
-                    getCfgFields(e.target.value)
-                  );
+                  if (!e.target) return;
+                  const value = e.target.value;
+                  setProp((prop) => (prop.name = value));
+                  setInitialConfig(setProp, value, getCfgFields(value));
                 }}
               >
                 {options.actions.map((f, ix) => (
@@ -150,9 +151,7 @@ const ActionSettings = () => {
                   type="text"
                   className="form-control"
                   value={action_label}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.action_label = e.target.value))
-                  }
+                  onChange={setAProp("action_label")}
                 />
               </OrFormula>
             </td>
@@ -172,9 +171,7 @@ const ActionSettings = () => {
             name="block"
             type="checkbox"
             checked={confirm}
-            onChange={(e) =>
-              setProp((prop) => (prop.confirm = e.target.checked))
-            }
+            onChange={setAProp("confirm", { checked: true })}
           />
           <label className="form-check-label">User confirmation?</label>
         </div>

@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.7.3-beta.7",
+  "version": "0.7.3",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
@@ -36,7 +36,8 @@
     "react-dom": "16.13.1",
     "react-transition-group": "4.4.1",
     "webpack": "4.43.0",
-    "webpack-cli": "3.3.11"
+    "webpack-cli": "3.3.11",
+    "lodash": "4.17.11"
   },
   "publishConfig": {
     "access": "public"

@@ -717,6 +717,10 @@ class View {
         flash: ["success", `View ${this.name || ""} saved`],
       };
     };
+    configFlow.saveURL = `/viewedit/saveconfig/${this.name}`;
+    configFlow.autoSave = true;
+    configFlow.startAtStepURL = (stepNm) =>
+      `/viewedit/config/${this.name}?step=${stepNm}`;
     return configFlow;
   }
 

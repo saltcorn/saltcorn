@@ -820,6 +820,7 @@ const ConfigField = ({
               className="w-50 form-control-sm d-inline dimunit"
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
+                e?.target &&
                 myOnChange(
                   isStyle
                     ? `${e.target.value}${styleDim || "px"}`
@@ -1053,12 +1054,7 @@ const ButtonOrLinkSettingsRows = ({
   values,
   linkFirst = false,
 }) => {
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
   return [
     <tr key="btnstyle">
@@ -1228,3 +1224,13 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
 
 export const isBlock = (block, inline, textStyle) =>
   !textStyle || !textStyle.startsWith("h") ? block : !inline;
+
+export const setAPropGen =
+  (setProp) =>
+  (key, opts = {}) =>
+  (e) => {
+    if (e.target) {
+      const target_value = opts?.checked ? e.target.checked : e.target.value;
+      setProp((prop) => (prop[key] = target_value));
+    }
+  };

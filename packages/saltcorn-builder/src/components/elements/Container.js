@@ -18,6 +18,7 @@ import {
   SettingsRow,
   reactifyStyles,
   bstyleopt,
+  setAPropGen,
 } from "./utils";
 import {
   BorderOuter,
@@ -269,12 +270,7 @@ const ContainerSettings = () => {
    * @param {string} key
    * @returns {function}
    */
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   return (
     <Accordion>
       <div accordiontitle="Box" className="w-100">
@@ -350,9 +346,7 @@ const ContainerSettings = () => {
                   name="block"
                   type="checkbox"
                   checked={fullPageWidth}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.fullPageWidth = e.target.checked))
-                  }
+                  onChange={setAProp("fullPageWidth", { checked: true })}
                 />
                 <label className="form-check-label">
                   Expand to full page width
@@ -536,8 +530,10 @@ const ContainerSettings = () => {
                       onChange={setAProp("imgResponsiveWidths")}
                     />
                     <small>
-                      <i>List of widths to serve resized images,
-                         e.g. 300, 400, 600</i>
+                      <i>
+                        List of widths to serve resized images, e.g. 300, 400,
+                        600
+                      </i>
                     </small>
                   </td>
                 </tr>
@@ -611,9 +607,7 @@ const ContainerSettings = () => {
                   name="setTextColor"
                   type="checkbox"
                   checked={setTextColor}
-                  onChange={(e) =>
-                    setProp((prop) => (prop.setTextColor = e.target.checked))
-                  }
+                  onChange={setAProp("setTextColor", { checked: true })}
                 />
               </label>
             </td>
@@ -782,15 +776,17 @@ const ContainerSettings = () => {
                         ? true
                         : showForRole[id]
                     }
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      if (!e?.target) return;
+                      const checked = e.target.checked;
                       setProp((prop) => {
                         if (!prop.showForRole || prop.showForRole.length === 0)
                           options.roles.forEach(
                             (r) => (prop.showForRole[r.id] = true)
                           );
-                        prop.showForRole[id] = e.target.checked;
-                      })
-                    }
+                        prop.showForRole[id] = checked;
+                      });
+                    }}
                   />
                   <label className="form-check-label">{role}</label>
                 </div>
@@ -806,11 +802,7 @@ const ContainerSettings = () => {
                     name="block"
                     type="checkbox"
                     checked={show_for_owner}
-                    onChange={(e) =>
-                      setProp(
-                        (prop) => (prop.show_for_owner = e.target.checked)
-                      )
-                    }
+                    onChange={setAProp("show_for_owner", { checked: true })}
                   />
                   <label className="form-check-label">Owner</label>
                 </div>

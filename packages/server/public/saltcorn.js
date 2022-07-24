@@ -213,6 +213,7 @@ function ajax_modal(url, opts = {}) {
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
         (opts.onClose || function () {})(res);
+        $("body").css("overflow", "");
       });
     },
   });
@@ -248,7 +249,7 @@ function saveAndContinue(e, k) {
   return false;
 }
 
-function applyViewConfig(e, url) {
+function applyViewConfig(e, url, k) {
   var form = $(e).closest("form");
   var form_data = form.serializeArray();
   const cfg = {};
@@ -264,6 +265,9 @@ function applyViewConfig(e, url) {
     },
     data: JSON.stringify(cfg),
     error: function (request) {},
+    success: function (res) {
+      k && k(res);
+    },
   });
 
   return false;

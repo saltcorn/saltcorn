@@ -8,6 +8,7 @@ import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
+import { setAPropGen } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -194,6 +195,8 @@ const TabsSettings = () => {
           }
         });
   }, [field]);
+  const setAProp = setAPropGen(setProp);
+
   return (
     <table className="w-100" accordiontitle="Placement">
       <tbody>
@@ -205,11 +208,7 @@ const TabsSettings = () => {
             <select
               value={tabsStyle}
               className="form-control form-select"
-              onChange={(e) =>
-                setProp((prop) => {
-                  prop.tabsStyle = e.target.value;
-                })
-              }
+              onChange={setAProp("tabsStyle")}
             >
               <option>Tabs</option>
               <option>Pills</option>
@@ -229,9 +228,7 @@ const TabsSettings = () => {
               <select
                 value={field}
                 className="form-control form-select"
-                onChange={(e) => {
-                  setProp((prop) => (prop.field = e.target.value));
-                }}
+                onChange={setAProp("field")}
               >
                 {options.fields.map((f, ix) => (
                   <option key={ix} value={f.name}>
@@ -255,9 +252,7 @@ const TabsSettings = () => {
                   step="1"
                   min="0"
                   max="20"
-                  onChange={(e) =>
-                    setProp((prop) => (prop.ntabs = e.target.value))
-                  }
+                  onChange={setAProp("ntabs")}
                 />
               </td>
             </tr>
@@ -272,9 +267,11 @@ const TabsSettings = () => {
                     type="text"
                     className="form-control text-to-display"
                     value={titles[ix]}
-                    onChange={(e) =>
-                      setProp((prop) => (prop.titles[ix] = e.target.value))
-                    }
+                    onChange={(e) => {
+                      if (!e.target) return;
+                      const value = e.target.value;
+                      setProp((prop) => (prop.titles[ix] = value));
+                    }}
                   />
                 </td>
               </tr>
@@ -288,13 +285,7 @@ const TabsSettings = () => {
                       name="block"
                       type="checkbox"
                       checked={independent}
-                      onChange={(e) => {
-                        if (e.target) {
-                          setProp(
-                            (prop) => (prop.independent = e.target.checked)
-                          );
-                        }
-                      }}
+                      onChange={setAProp("independent", { checked: true })}
                     />
                     <label className="form-check-label">
                       Open independently
@@ -311,11 +302,7 @@ const TabsSettings = () => {
                       name="block"
                       type="checkbox"
                       checked={deeplink}
-                      onChange={(e) => {
-                        if (e.target) {
-                          setProp((prop) => (prop.deeplink = e.target.checked));
-                        }
-                      }}
+                      onChange={setAProp("deeplink", { checked: true })}
                     />
                     <label className="form-check-label">Deep link</label>
                   </div>

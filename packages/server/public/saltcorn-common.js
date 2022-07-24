@@ -502,7 +502,7 @@ function common_done(res, isWeb = true) {
   }
 }
 
-const repeaterCopyValuesToForm = (form, editor) => {
+const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
   const vs = JSON.parse(editor.getString());
 
   const setVal = (k, ix, v) => {
@@ -533,6 +533,7 @@ const repeaterCopyValuesToForm = (form, editor) => {
     if (typeof ix !== "number" || isNaN(ix)) return;
     if (ix >= vs.length) $(this).remove();
   });
+  !noTriggerChange && form.trigger("change");
 };
 function align_dropdown(id) {
   setTimeout(() => {

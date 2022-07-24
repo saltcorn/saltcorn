@@ -382,7 +382,20 @@ const workflowBreadcrumbItem = ({
             step.currentStep - 1 === ix && "active-step fw-bold",
           ],
         },
-        span(wfstep.name)
+        workflow.startAtStepURL &&
+          workflow.saveURL &&
+          step.currentStep - 1 !== ix
+          ? a(
+              {
+                href: `javascript:applyViewConfig($('form.form-namespace,form#scbuildform'), '${
+                  workflow.saveURL
+                }',()=>{location.href='${workflow.startAtStepURL(
+                  wfstep.name
+                )}'})`,
+              },
+              wfstep.name
+            )
+          : span(wfstep.name)
       )
     )
     .join("");

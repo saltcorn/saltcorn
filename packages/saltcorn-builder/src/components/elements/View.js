@@ -15,6 +15,7 @@ import {
   MinRoleSetting,
   fetchViewPreview,
   ConfigForm,
+  setAPropGen,
 } from "./utils";
 
 export /**
@@ -99,18 +100,17 @@ const ViewSettings = () => {
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = useContext(previewCtx);
 
-  const setAProp = (key) => (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
-      setProp((prop) => (prop[key] = target_value));
-    }
-  };
+  const setAProp = setAPropGen(setProp);
   let errorString = false;
   try {
     Function("return " + extra_state_fml);
   } catch (error) {
     errorString = error.message;
   }
+  let viewname = view;
+  if (viewname && viewname.includes(":")) viewname = viewname.split(":")[1];
+  if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
+
   return (
     <div>
       <div>
@@ -118,9 +118,7 @@ const ViewSettings = () => {
         <select
           value={view}
           className="form-control form-select"
-          onChange={(e) => {
-            setProp((prop) => (prop.view = e.target.value));
-          }}
+          onChange={setAProp("view")}
         >
           {views.map((f, ix) => (
             <option key={ix} value={f.name}>
@@ -165,9 +163,7 @@ const ViewSettings = () => {
             type="text"
             className="viewlink-label form-control"
             value={extra_state_fml}
-            onChange={(e) =>
-              setProp((prop) => (prop.extra_state_fml = e.target.value))
-            }
+            onChange={setAProp("extra_state_fml")}
           />
           {errorString ? (
             <small className="text-danger font-monospace d-block">
@@ -180,7 +176,7 @@ const ViewSettings = () => {
         <a
           className="d-block mt-2"
           target="_blank"
-          href={`/viewedit/config/${view}`}
+          href={`/viewedit/config/${viewname}`}
         >
           Configure this view
         </a>
