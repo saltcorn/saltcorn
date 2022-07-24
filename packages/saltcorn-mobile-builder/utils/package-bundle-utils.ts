@@ -85,4 +85,13 @@ export async function installNpmPackages(buildDir: string, manager: any) {
     join(axiosInfo.location, "dist", "axios.min.js"),
     join(npmTargetDir, "axios.min.js")
   );
+  const i18nInfo = await manager.install("@wikimedia/jquery.i18n", "1.0.7");
+  copySync(
+    join(i18nInfo.location, "src"),
+    join(npmTargetDir,"@wikimedia", "jquery.i18n")
+  );
+  copySync(
+    join(i18nInfo.location, "libs", "CLDRPluralRuleParser", "src", "CLDRPluralRuleParser.js"),
+    join(npmTargetDir,"@wikimedia", "CLDRPluralRuleParser.js")
+  );
 }

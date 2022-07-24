@@ -8,6 +8,8 @@ import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
 const { a, text, div, button, time, i } = tags;
+import layoutUtils = require("./layout_utils");
+const { alert } = layoutUtils;
 
 /**
  * @param {string} href
@@ -248,4 +250,5 @@ export = {
   div,
   a,
   i,
+  alert,
 };

@@ -12,7 +12,7 @@ import File from "../models/file";
 import Table from "../models/table";
 import Page from "../models/page";
 import Field from "../models/field";
-import { Plugin, PluginLayout, ViewTemplate } from "@saltcorn/types/base_types";
+import { Plugin, PluginLayout, ViewTemplate, MobileConfig } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import { ConfigTypes, SingleConfig } from "models/config";
 import User from "../models/user";
@@ -119,9 +119,7 @@ class State {
   verifier: any;
   i18n: I18n.I18n;
   roomEmitter?: Function;
-  localTableIds: number[];
-  role_id?: number;
-  user_name?: string;
+  mobileConfig?: MobileConfig;
 
   /**
    * State constructor
@@ -161,7 +159,6 @@ class State {
       locales: [],
       directory: join(__dirname, "..", "app-locales"),
     });
-    this.localTableIds = new Array<number>();
   }
 
   /**

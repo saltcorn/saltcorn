@@ -112,6 +112,13 @@ function accessAllowed(req, user, trigger) {
   return role <= trigger.min_role;
 }
 
+const getFlashes = (req) =>
+  ["error", "success", "danger", "warning", "information"]
+    .map((type) => {
+      return { type, msg: req.flash(type) };
+    })
+    .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
+
 router.post(
   "/viewQuery/:viewName/:queryName",
   error_catcher(async (req, res, next) => {
@@ -134,7 +141,7 @@ router.post(
           if (queries[queryName]) {
             const { args } = req.body;
             const resp = await queries[queryName](...args, true);
-            res.json({ success: resp });
+            res.json({ success: resp, alerts: getFlashes(req) });
           } else {
             res.status(404).json({ error: req.__("Not found") });
           }

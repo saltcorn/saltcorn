@@ -42,7 +42,6 @@ const {
   select,
   option,
   fieldset,
-  legend,
   ul,
   li,
   ol,
@@ -87,6 +86,7 @@ const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
+const Page = require("@saltcorn/data/models/page");
 
 /**
  * @type {object}
@@ -1058,12 +1058,39 @@ router.get(
   })
 );
 
+const dialogScript = `<script>
+function swapEntryInputs(activeTab, activeInput, disabledTab, disabledInput) {
+  activeTab.addClass("active");
+  activeInput.removeClass("d-none");
+  activeInput.addClass("d-block");
+  activeInput.attr("name", "entryPoint");
+  disabledTab.removeClass("active");
+  disabledInput.removeClass("d-block");
+  disabledInput.addClass("d-none");
+  disabledInput.removeAttr("name");
+}
+
+function showEntrySelect(type) {
+  const viewNavLin = $("#viewNavLinkID");
+  const pageNavLink = $("#pageNavLinkID");
+  const viewInp = $("#viewInputID");
+  const pageInp = $("#pageInputID");
+  if (type === "page") {
+    swapEntryInputs(pageNavLink, pageInp, viewNavLin, viewInp);
+  }
+  else if (type === "view") {
+    swapEntryInputs(viewNavLin, viewInp, pageNavLink, pageInp);
+  }
+  $("#entryPointTypeID").attr("value", type);
+}  
+</script>`;
+
 router.get(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req, res) => {
-    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const views = await View.find();
+    const pages = await Page.find();
     const execBuildMsg =
       "This is still under development and might run longer.";
 
@@ -1071,6 +1098,11 @@ router.get(
       res,
       req,
       active_sub: "Mobile app",
+      headers: [
+        {
+          headerTag: dialogScript,
+        },
+      ],
       contents: {
         above: [
           {
@@ -1088,11 +1120,17 @@ router.get(
                   name: "_csrf",
                   value: req.csrfToken(),
                 }),
+                input({
+                  type: "hidden",
+                  name: "entryPointType",
+                  value: "view",
+                  id: "entryPointTypeID",
+                }),
                 div(
                   { class: "container ps-2" },
                   div(
                     { class: "row pb-2" },
-                    div({ class: "col-sm-4 fw-bold" }, "Entry view"),
+                    div({ class: "col-sm-4 fw-bold" }, "Entry point"),
                     div({ class: "col-sm-4 fw-bold" }, "Platform"),
                     div(
                       {
@@ -1105,15 +1143,52 @@ router.get(
                     { class: "row" },
                     div(
                       { class: "col-sm-4" },
+                      // 'view/page' tabs
+                      ul(
+                        { class: "nav nav-pills" },
+                        li(
+                          {
+                            class: "nav-item",
+                            onClick: "showEntrySelect('view')",
+                          },
+                          div(
+                            { class: "nav-link active", id: "viewNavLinkID" },
+                            "View"
+                          )
+                        ),
+                        li(
+                          {
+                            class: "nav-item",
+                            onClick: "showEntrySelect('page')",
+                          },
+                          div(
+                            { class: "nav-link", id: "pageNavLinkID" },
+                            "Page"
+                          )
+                        )
+                      ),
+                      // select entry-view
                       select(
                         {
                           class: "form-control",
-                          name: "entryView",
-                          id: "entryViewInput",
+                          name: "entryPoint",
+                          id: "viewInputID",
                         },
                         views
                           .map((view) =>
                             option({ value: view.name }, view.name)
+                          )
+                          .join(",")
+                      ),
+                      // select entry-page
+                      select(
+                        {
+                          class: "form-control d-none",
+                          id: "pageInputID",
+                        },
+                        pages
+                          .map((page) =>
+                            option({ value: page.name }, page.name)
                           )
                           .join(",")
                       )
@@ -1197,7 +1272,7 @@ router.get(
                         class: "form-control",
                         name: "serverURL",
                         id: "serverURLInputId",
-                        placeholder: "http://10.0.2.2:3000",
+                        placeholder: getState().getConfig("base_url") || "",
                       })
                     )
                   )
@@ -1226,7 +1301,8 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let {
-      entryView,
+      entryPoint,
+      entryPointType,
       androidPlatform,
       iOSPlatform,
       useDocker,
@@ -1245,11 +1321,20 @@ router.post(
       return res.redirect("/admin/build-mobile-app");
     }
     if (appFile && !appFile.endsWith(".apk")) appFile = `${appFile}.apk`;
+    if (!serverURL || serverURL.length == 0) {
+      serverURL = getState().getConfig("base_url") || "";
+    }
+    if (!serverURL.startsWith("http")) {
+      req.flash("error", req.__("Please enter a valid server URL."));
+      return res.redirect("/admin/build-mobile-app");
+    }
     const appOut = path.join(__dirname, "..", "mobile-app-out");
     const spawnParams = [
       "build-app",
-      "-v",
-      entryView,
+      "-e",
+      entryPoint,
+      "-t",
+      entryPointType,
       "-c",
       appOut,
       "-b",

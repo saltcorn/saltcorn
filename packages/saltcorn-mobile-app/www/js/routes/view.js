@@ -1,39 +1,4 @@
-const getHeaders = () => {
-  const versionTag = window.config.version_tag;
-  const stdHeaders = [
-    { css: `static_assets/${versionTag}/saltcorn.css` },
-    { script: `static_assets/${versionTag}/saltcorn-common.js` },
-    { script: "js/utils/iframe_view_utils.js" },
-  ];
-  return [...stdHeaders, ...window.config.pluginHeaders];
-};
-
-const getMenu = () => {
-  const userName = saltcorn.data.state.getState().user_name;
-  const authItems = [
-    {
-      label: "User",
-      icon: "far fa-user",
-      isUser: true,
-      subitems: [
-        { label: userName },
-        {
-          link: `javascript:parent.callLogout();`,
-          icon: "fas fa-sign-out-alt",
-          label: "Logout",
-        },
-      ],
-    },
-  ];
-
-  return [
-    {
-      section: "User",
-      isUser: true,
-      items: authItems,
-    },
-  ];
-};
+import { parseQuery, wrapContents } from "./common.js";
 
 /**
  *
@@ -90,42 +55,15 @@ export const postViewRoute = async (context) => {
  * @returns
  */
 export const getView = async (context) => {
-  let query = {};
-  const parsedQuery =
-    typeof context.query === "string"
-      ? new URLSearchParams(context.query)
-      : undefined;
-  if (parsedQuery) {
-    for (let [key, value] of parsedQuery) {
-      query[key] = value;
-    }
-  }
-  const viewname = context.params.viewname;
+  const query = parseQuery(context.query);
+  const { viewname } = context.params;
   const view = saltcorn.data.models.View.findOne({ name: viewname });
-  const viewContent = await view.run_possibly_on_page(
+  const req = new MobileRequest(context.xhr);
+  const contents = await view.run_possibly_on_page(
     query,
-    new MobileRequest(context.xhr),
+    req,
     new MobileResponse(),
     view.isRemoteTable()
   );
-  const state = saltcorn.data.state.getState();
-  const layout = state.getLayout({ role_id: state.role_id });
-  const wrappedContent = context.fullWrap
-    ? layout.wrap({
-        title: viewname,
-        body: { above: [viewContent] },
-        alerts: [],
-        role: state.role_id,
-        menu: getMenu(),
-        headers: getHeaders(),
-        bodyClass: "",
-        brand: {},
-      })
-    : layout.renderBody({
-        title: viewname,
-        body: { above: [viewContent] },
-        alerts: [],
-        role: state.role_id,
-      });
-  return { content: wrappedContent, title: viewname };
+  return wrapContents(contents, viewname, context, req);
 };

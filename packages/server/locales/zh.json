@@ -179,7 +179,7 @@
 	"Pack %s installed": "已安装包 %s",
 	"Pack %s uninstalled": "包 %s 已卸载",
 	"Uninstall": "卸载",
-	"Result preview for ": "结果预览", // todo
+	"Result preview for ": "结果预览",
 	"Choose views for <a href=\"/search\">search results</a> for each table.<br/>Set to blank to omit table from global search.": "为每个表选择<a href=\"/search\">搜索结果</a>的视图。<br/>为空则可从全局搜索中忽略表。",
 	"These tables lack suitable views: ": "这些表缺少合适的视图:",
 	"Search configuration": "搜索配置",

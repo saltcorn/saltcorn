@@ -199,8 +199,7 @@ const getAuthLinks = (current, noMethods) => {
   return links;
 };
 
-const loginWithJwt = async (req, res) => {
-  const { email, password } = req.query;
+const loginWithJwt = async (email, password, res) => {
   const user = await User.findOne({ email });
   if (user && user.checkPassword(password)) {
     const now = new Date();
@@ -209,6 +208,7 @@ const loginWithJwt = async (req, res) => {
       {
         sub: email,
         role_id: user.role_id,
+        language: user.language ? user.language : "en",
         iss: "saltcorn@saltcorn",
         aud: "saltcorn-mobile-app",
         iat: now.valueOf(),
@@ -217,6 +217,10 @@ const loginWithJwt = async (req, res) => {
     );
     if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
     res.json(token);
+  } else {
+    res.json({
+      alerts: [{ type: "danger", msg: "Incorrect user or password" }],
+    });
   }
 };
 
@@ -900,8 +904,8 @@ router.post(
       } else {
         const u = await User.create({ email, password });
         await send_verification_email(u, req);
-
-        signup_login_with_user(u, req, res);
+        if (req.smr) await loginWithJwt(email, password, res);
+        else signup_login_with_user(u, req, res);
       }
     }
   })
@@ -1008,7 +1012,8 @@ router.get(
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     if (method === "jwt") {
-      await loginWithJwt(req, res);
+      const { email, password } = req.query;
+      await loginWithJwt(email, password, res);
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {
