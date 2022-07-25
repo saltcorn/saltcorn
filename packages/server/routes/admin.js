@@ -398,7 +398,11 @@ router.get(
             title: req.__("Snapshots"),
             contents: div(
               p(i("Snapshots...")),
-              renderForm(aSnapshotForm, req.csrfToken())
+              renderForm(aSnapshotForm, req.csrfToken()),
+              a(
+                { href: "/admin/snapshot-list" },
+                "Restore/download snapshots &raquo;"
+              )
             ),
           },
         ],
@@ -467,6 +471,44 @@ router.get(
                   "When prompted to create the first user, click the link to restore a backup"
                 ),
                 li("Select the downloaded backup file")
+              )
+            ),
+          },
+        ],
+      },
+    });
+  })
+);
+
+router.get(
+  "/snapshot-list",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const snaps = await Snapshot.find();
+    console.log({ snaps });
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Download snapshots"),
+            contents: div(
+              ul(
+                snaps.map((snap) =>
+                  li(
+                    a(
+                      {
+                        href: `/admin/snapshot-download/${encodeURIComponent(
+                          snap.id
+                        )}`,
+                      },
+                      moment(snap.created).fromNow()
+                    )
+                  )
+                )
               )
             ),
           },
