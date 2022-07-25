@@ -73,13 +73,14 @@ export function copySbadmin2Deps(buildDir: string) {
 export function writeCfgFile({
   buildDir,
   entryPoint,
+  entryPointType,
   serverPath,
   localUserTables,
 }: any) {
   const wwwDir = join(buildDir, "www");
   let cfg = {
     version_tag: db.connectObj.version_tag,
-    entry_view: `get/view/${entryPoint}`,
+    entry_point: `get/${entryPointType}/${entryPoint}`,
     server_path: serverPath,
     localUserTables,
   };
@@ -110,6 +111,15 @@ export async function buildTablesFile(buildDir: string) {
       sc_tables: tablesWithData,
     })
   );
+}
+
+/**
+ * copy files form 'server/locales' into the app
+ * @param buildDir directory where the app will be build
+ */
+export function copyTranslationFiles(buildDir: string) {
+  const localesDir = join(require.resolve("@saltcorn/server"), "..", "locales");
+  copySync(localesDir, join(buildDir, "www", "locales"));
 }
 
 /**

@@ -425,24 +425,29 @@ class View {
       const base_url =
         getState().getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
-      //const vtQueries = queryObj;
-
       Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
           const token = window.localStorage.getItem("auth_jwt");
-          let response = await axios.post(
-            url,
-            { args },
-            {
-              headers: {
-                Authorization: `jwt ${token}`,
-                "X-Requested-With": "XMLHttpRequest",
-                "X-Saltcorn-Client": "mobile-app",
-              },
-            }
-          );
-          return response.data.success;
+          try {
+            let response = await axios.post(
+              url,
+              { args },
+              {
+                headers: {
+                  Authorization: `jwt ${token}`,
+                  "X-Requested-With": "XMLHttpRequest",
+                  "X-Saltcorn-Client": "mobile-app",
+                },
+              }
+            );
+            for (const { type, msg } of response.data.alerts)
+              req.flash(type, msg);
+            return response.data.success;
+          } catch (error: any) {
+            error.message = `Unable to call POST ${url}:\n${error.message}`;
+            throw error;
+          }
         };
       });
 
@@ -566,7 +571,10 @@ class View {
     remote: boolean = !isNode()
   ): Promise<any> {
     const { getState } = require("../db/state");
-    if (getState().localTableIds.indexOf(this.table_id) >= 0) {
+    if (
+      !getState().mobileConfig ||
+      getState().mobileConfig.localTableIds.indexOf(this.table_id) >= 0
+    ) {
       remote = false;
     }
     this.check_viewtemplate();
@@ -739,7 +747,10 @@ class View {
   isRemoteTable(): boolean {
     if (isNode() || !this.table_id) return false;
     const { getState } = require("../db/state");
-    return getState().localTableIds.indexOf(this.table_id) < 0;
+    return (
+      getState().mobileConfig &&
+      getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0
+    );
   }
 }
 

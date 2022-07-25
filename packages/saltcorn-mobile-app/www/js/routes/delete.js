@@ -4,7 +4,7 @@ export const deleteRows = async (context) => {
   try {
     const table = await saltcorn.data.models.Table.findOne({ name });
     const state = saltcorn.data.state.getState();
-    if (state.localTableIds.indexOf(table.id) >= 0) {
+    if (state.mobileConfig.localTableIds.indexOf(table.id) >= 0) {
       await table.deleteRows({ id });
     } else {
       await apiCall({ method: "POST", path: `/delete/${name}/${id}` });

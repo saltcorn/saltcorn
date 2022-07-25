@@ -42,6 +42,22 @@ const safeUserFields = (o: UserCfg | User): any => {
   } = o;
   return rest;
 };
+
+/**
+ * prepare a Date for the user object
+ * @param date date in different formats
+ * @returns
+ */
+const convertDateParam = (
+  date?: Date | number | string | null
+): Date | null => {
+  return (typeof date === "string" && date.length > 0) ||
+    typeof date === "number"
+    ? new Date(date)
+    : date instanceof Date
+    ? date
+    : null;
+};
 /**
  * User
  * @category saltcorn-data
@@ -59,7 +75,7 @@ class User {
   reset_password_token?: string | null; // 10 chars length
   reset_password_expiry?: Date | null;
   role_id: number;
-  last_mobile_login?: Date;
+  last_mobile_login?: Date | null;
   [key: string]: any;
 
   /**
@@ -83,16 +99,9 @@ class User {
     this.disabled = !!o.disabled;
     if (o.id) this.id = +o.id as number;
     this.reset_password_token = o.reset_password_token || null;
-    this.reset_password_expiry =
-      (typeof o.reset_password_expiry === "string" &&
-        o.reset_password_expiry.length > 0) ||
-      typeof o.reset_password_expiry === "number"
-        ? new Date(o.reset_password_expiry)
-        : o.reset_password_expiry instanceof Date
-        ? o.reset_password_expiry
-        : null;
+    this.reset_password_expiry = convertDateParam(o.reset_password_expiry);
     this.role_id = o.role_id ? +o.role_id : 8;
-    this.last_mobile_login = o.last_mobile_login;
+    this.last_mobile_login = convertDateParam(o.last_mobile_login);
     Object.assign(this, safeUserFields(o));
   }
 
@@ -511,7 +520,7 @@ namespace User {
     role_id?: number | string;
     reset_password_token?: string; // 10 chars length
     reset_password_expiry?: Date | number | string;
-    last_mobile_login?: Date;
+    last_mobile_login?: Date | number | string;
     [key: string]: any;
   };
 }
