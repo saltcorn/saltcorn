@@ -62,6 +62,7 @@ const {
   restore,
   auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
+const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const {
   runConfigurationCheck,
 } = require("@saltcorn/admin-models/models/config-check");
@@ -337,6 +338,9 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
+    const aSnapshotForm = snapshotForm(req);
+    aSnapshotForm.values.snapshots_enabled =
+      getState().getConfig("snapshots_enabled");
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     send_admin_page({
@@ -389,6 +393,14 @@ router.get(
                 ),
               }
             : { type: "blank", contents: "" },
+          {
+            type: "card",
+            title: req.__("Snapshots"),
+            contents: div(
+              p(i("Snapshots...")),
+              renderForm(aSnapshotForm, req.csrfToken())
+            ),
+          },
         ],
       },
     });
@@ -540,6 +552,41 @@ const autoBackupForm = (req) =>
     ],
   });
 
+const snapshotForm = (req) =>
+  new Form({
+    action: "/admin/set-snapshot",
+    onChange: `saveAndContinue(this);`,
+    noSubmitButton: true,
+    additionalButtons: [
+      {
+        label: "Snapshot now",
+        id: "btnSnapNow",
+        class: "btn btn-outline-secondary",
+        onclick: "ajax_post('/admin/snapshot-now')",
+      },
+    ],
+    fields: [
+      {
+        type: "Bool",
+        label: req.__("Periodic snapshots enabled"),
+        name: "snapshots_enabled",
+        blurb: "Snapshot will be made every hour if there are changes",
+      },
+    ],
+  });
+router.post(
+  "/set-snapshot",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await snapshotForm(req);
+    form.validate(req.body);
+
+    await save_config_from_form(form);
+    req.flash("success", req.__("Snapshot settings updated"));
+    if (!req.xhr) res.redirect("/admin/backup");
+    else res.json({ success: "ok" });
+  })
+);
 router.post(
   "/set-auto-backup",
   isAdmin,
@@ -571,6 +618,20 @@ router.post(
   error_catcher(async (req, res) => {
     try {
       await auto_backup_now();
+      req.flash("success", req.__("Backup successful"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+    res.json({ reload_page: true });
+  })
+);
+
+router.post(
+  "/snapshot-now",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      await Snapshot.take_if_changed();
       req.flash("success", req.__("Backup successful"));
     } catch (e) {
       req.flash("error", e.message);
