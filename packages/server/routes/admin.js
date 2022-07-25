@@ -485,7 +485,6 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const snaps = await Snapshot.find();
-    console.log({ snaps });
     send_admin_page({
       res,
       req,
