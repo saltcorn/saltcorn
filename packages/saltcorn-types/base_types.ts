@@ -316,3 +316,15 @@ export type Column = {
 };
 
 export type Tablely = AbstractTable | { external: true };
+
+export type MobileConfig = {
+  version_tag: string;
+  entry_point: string;
+  // server_path <=> base_url
+  localTableIds: number[];
+  pluginHeaders?: string[];
+  role_id?: number;
+  user_name?: string;
+  language?: string;
+
+};

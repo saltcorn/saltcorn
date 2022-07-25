@@ -26,6 +26,9 @@ const {
   input,
 } = tags;
 
+declare const window: any;
+const isNode = typeof window === "undefined";
+
 /**
  * @param {string} item
  * @returns {string}
@@ -244,7 +247,10 @@ type LeftNavBarOpts = {
  */
 const leftNavBar = ({ name, logo }: LeftNavBarOpts): string[] => [
   a(
-    { class: "navbar-brand js-scroll-trigger", href: "/" },
+    {
+      class: "navbar-brand js-scroll-trigger",
+      href: isNode ? "/" : "javascript:parent.gotoEntryView()",
+    },
     logo &&
       img({
         src: logo,

@@ -921,5 +921,6 @@
 	"Restoring automated backup": "Restoring automated backup",
 	"No errors detected during configuration check": "No errors detected during configuration check",
 	"%s view - %s on %s": "%s view - %s on %s",
+	"Please select at least one platform (android or iOS).": "Please select at least one platform (android or iOS).",
 	"Back": "Back"
 }

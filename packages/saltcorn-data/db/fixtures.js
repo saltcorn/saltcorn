@@ -248,19 +248,19 @@ module.exports =
       email: "admin@foo.com",
       password: "AhGGr6rhu45",
       role_id: 1,
-      last_mobile_login: now,
+      last_mobile_login: db.isSQLite ? now.valueOf() : now,
     });
     await User.create({
       email: "staff@foo.com",
       password: "ghrarhr54hg",
       role_id: 4,
-      last_mobile_login: now,
+      last_mobile_login: db.isSQLite ? now.valueOf() : now,
     });
     await User.create({
       email: "user@foo.com",
       password: "GFeggwrwq45fjn",
       role_id: 8,
-      last_mobile_login: now,
+      last_mobile_login: db.isSQLite ? now.valueOf() : now,
     });
     await File.ensure_file_store();
     const mv = async (fnm) => {

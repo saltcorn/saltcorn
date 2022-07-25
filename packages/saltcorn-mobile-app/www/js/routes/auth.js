@@ -1,4 +1,6 @@
-const buildForm = (entryView) => {
+import { sbAdmin2Layout } from "./common.js";
+
+const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
     class: "login",
     fields: [
@@ -18,38 +20,75 @@ const buildForm = (entryView) => {
       }),
     ],
     action: "javascript:void(0);",
-    onSubmit: `javascript:loginFormSubmit(this, '${entryView}')`,
-    submitLabel: "Login",
   });
 };
 
-const renderLoginForm = (entryView, version_tag) => {
-  const loginForm = buildForm(entryView);
-  const layout = saltcorn.data.state.getState().layouts["sbadmin2"];
-  return layout.authWrap({
+const renderLoginView = (entryPoint, versionTag) => {
+  const form = prepareAuthForm(entryPoint);
+  form.onSubmit = `javascript:loginFormSubmit(this, '${entryPoint}')`;
+  form.submitLabel = "Login";
+  return sbAdmin2Layout().authWrap({
     title: "login",
-    form: loginForm,
-    authLinks: { signup: "/auth/signup" }, // TODO ch '/auth/signup' link
+    form: form,
+    authLinks: { signup: "javascript:execLink('/auth/signup')" },
     alerts: [],
     headers: [
-      { css: `static_assets/${version_tag}/saltcorn.css` },
+      { css: `static_assets/${versionTag}/saltcorn.css` },
       { script: "js/utils/iframe_view_utils.js" },
     ],
     csrfToken: false,
   });
 };
 
-export const getLoginForm = async (context) => {
-  return { content: renderLoginForm(context.entryView, context.versionTag) };
+const renderSignupView = (entryPoint, versionTag) => {
+  const form = prepareAuthForm(entryPoint);
+  form.onSubmit = `javascript:signupFormSubmit(this, '${entryPoint}')`;
+  form.submitLabel = "Sign up";
+  return sbAdmin2Layout().authWrap({
+    title: "signup",
+    form: form,
+    authLinks: { login: "javascript:execLink('/auth/login')" },
+    alerts: [],
+    headers: [
+      { css: `static_assets/${versionTag}/saltcorn.css` },
+      { script: "js/utils/iframe_view_utils.js" },
+    ],
+    csrfToken: false,
+  });
 };
 
-export const logout = async (context) => {
+export const getLoginView = async () => {
+  const config = saltcorn.data.state.getState().mobileConfig;
+  return {
+    content: renderLoginView(config.entry_point, config.version_tag),
+    replaceIframe: true,
+  };
+};
+
+export const getSignupView = async () => {
+  const config = saltcorn.data.state.getState().mobileConfig;
+  return {
+    content: renderSignupView(
+      config.entry_point,
+      config.version_tag
+    ),
+    replaceIframe: true,
+  };
+};
+
+export const logout = async () => {
+  const config = saltcorn.data.state.getState().mobileConfig;
   const response = await apiCall({ method: "GET", path: "/auth/logout" });
   if (response.data.success) {
     localStorage.removeItem("auth_jwt");
-    return { content: renderLoginForm(context.entryView, context.versionTag) };
+    return {
+      content: renderLoginView(
+        config.entry_point,
+        config.version_tag
+      ),
+    };
   } else {
-    console.log("unable to logout out");
+    console.log("unable to logout");
     return {};
   }
 };

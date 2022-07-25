@@ -57,38 +57,88 @@ async function saveAndContinue(e, action, k) {
   // TODO ch error (request.responseText?)
 }
 
-async function login(email, password) {
-  try {
-    const response = await parent.apiCall({
-      method: "GET",
-      path: "/auth/login-with/jwt",
-      params: {
-        email,
-        password,
-      },
+async function loginRequest(email, password, isSignup) {
+  const opts = isSignup
+    ? {
+        method: "POST",
+        path: "/auth/signup",
+        body: {
+          email,
+          password,
+        },
+      }
+    : {
+        method: "GET",
+        path: "/auth/login-with/jwt",
+        params: {
+          email,
+          password,
+        },
+      };
+  const response = await parent.apiCall(opts);
+  return response.data;
+}
+
+async function login(e, entryPoint, isSignup) {
+  const formData = new FormData(e);
+  const loginResult = await loginRequest(
+    formData.get("email"),
+    formData.get("password"),
+    isSignup
+  );
+  if (typeof loginResult === "string") { // use it as a token
+    parent.localStorage.setItem("auth_jwt", loginResult);
+    const decodedJwt = parent.jwt_decode(loginResult);
+    const config = parent.saltcorn.data.state.getState().mobileConfig;
+    config.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
+    config.user_name = decodedJwt.sub;
+    config.language = decodedJwt.language;
+    parent.$.i18n({
+      locale: config.language,
     });
-    return response.data;
+
+    parent.addRoute({ route: entryPoint, query: undefined });
+    const page = await parent.router.resolve({
+      pathname: entryPoint,
+      fullWrap: true,
+      alerts: [
+        {
+          type: "success",
+          msg: `Welcome '${config.user_name}'`,
+        },
+      ],
+    });
+    parent.replaceIframe(page.content);
+  }
+  else if(loginResult?.alerts) {
+    parent.showAlerts(loginResult?.alerts)
+  }
+  else {
+    throw new Error("The login failed.");
+  }
+}
+
+async function signupFormSubmit(e, entryView) {
+  try {
+    await login(e, entryView, true);
   } catch (error) {
-    // TODO ch message
-    return null;
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+    console.error(error);
   }
 }
 
 async function loginFormSubmit(e, entryView) {
-  let formData = new FormData(e);
-  const token = await login(formData.get("email"), formData.get("password"));
-  if (token) {
-    parent.localStorage.setItem("auth_jwt", token);
-    const decodedJwt = parent.jwt_decode(token);
-    const state = parent.saltcorn.data.state.getState();
-    state.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
-    state.user_name = decodedJwt.sub;
-    parent.addRoute({ route: entryView, query: undefined });
-    const page = await parent.router.resolve({
-      pathname: entryView,
-      fullWrap: true,
-    });
-    parent.replaceIframe(page.content);
+  try {
+    await login(e, entryView, false);
+  } catch (error) {
+    const msg = error.message ? error.message : "An error occured.";
+    parent.showAlerts([{ type: "error", msg }]);
+    console.error(error);
   }
 }
 
@@ -270,7 +320,13 @@ async function make_unique_field(
       );
     }
   } catch (error) {
-    console.log("unable to 'make_unique_field'");
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: "unable to 'make_unique_field'",
+      },
+    ]);
+    console.error(error);
   }
 }
 
@@ -288,7 +344,8 @@ async function buildEncodedBgImage(fileId, elementId) {
 }
 
 function openFile(fileId) {
-  const serverPath = parent.config.server_path;
+  const config = parent.saltcorn.data.state.getState().mobileConfig;
+  const serverPath = config.server_path;
   const token = localStorage.getItem("auth_jwt");
   parent.cordova.InAppBrowser.open(
     `${serverPath}/files/serve/${fileId}?jwt=${token}`,

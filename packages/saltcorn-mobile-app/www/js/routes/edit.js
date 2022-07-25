@@ -4,7 +4,7 @@ export const postToggleField = async (context) => {
   try {
     const table = await saltcorn.data.models.Table.findOne({ name });
     const state = saltcorn.data.state.getState();
-    if (state.localTableIds.indexOf(table.id) >= 0) {
+    if (state.mobileConfig.localTableIds.indexOf(table.id) >= 0) {
       await table.toggleBool(+id, field_name);
     } else {
       await apiCall({

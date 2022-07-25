@@ -43,6 +43,7 @@ class BuildAppCommand extends Command {
       platforms: flags.platforms,
       localUserTables: flags.localUserTables,
       entryPoint: flags.entryPoint,
+      entryPointType: flags.entryPointType ? flags.entryPointType : "view",
       serverURL: flags.serverURL,
       plugins: dynamicPlugins,
       copyTargetDir: flags.copyAppDirectory,
@@ -63,8 +64,14 @@ BuildAppCommand.flags = {
   }),
   entryPoint: flags.string({
     name: "entry point",
-    char: "v",
-    description: "Entry Point",
+    char: "e",
+    description: "This is the first view or page (see -t) after the login.",
+  }),
+  entryPointType: flags.string({
+    name: "entry point type",
+    char: "t",
+    description:
+      "Type of the entry point ('view' or 'page'). The default is 'view'.",
   }),
   localUserTables: flags.string({
     name: "local user tables",

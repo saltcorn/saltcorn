@@ -73,6 +73,9 @@
         return plugins;
       }
 
+      /**
+       * add <script> tags dynamically
+       */
       async function addScripts(version_tag) {
         const scripts = [
           { src: `static_assets/${version_tag}/jquery-3.6.0.min.js` },
@@ -81,6 +84,22 @@
           { src: "js/bundle/data.bundle.js", name: "data" },
           { src: "js/bundle/base_plugin.bundle.js", name: "base_plugin" },
           { src: "js/bundle/sbadmin2.bundle.js", name: "sbadmin2" },
+          { src: "npm_packages/@wikimedia/CLDRPluralRuleParser.js" },
+          { src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.js" },
+          {
+            src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.messagestore.js",
+          },
+          {
+            src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.fallbacks.js",
+          },
+          {
+            src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.language.js",
+          },
+          { src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.parser.js" },
+          { src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.emitter.js" },
+          {
+            src: "npm_packages/@wikimedia/jquery.i18n/jquery.i18n.emitter.bidi.js",
+          },
         ];
         for (const script of scripts) {
           await addScript(script);
@@ -92,31 +111,33 @@
         as a function with a configuration parameter that returns an Array.
        */
       const collectPluginHeaders = (pluginRows) => {
-        window.config.pluginHeaders = [];
+        const config = saltcorn.data.state.getState().mobileConfig;
+        config.pluginHeaders = [];
         for (const row of pluginRows) {
           const pluginHeaders = saltcorn[row.name].headers;
           if (pluginHeaders) {
             if (Array.isArray(pluginHeaders))
               for (const header of pluginHeaders) {
-                window.config.pluginHeaders.push(header);
+                config.pluginHeaders.push(header);
               }
             else if (typeof pluginHeaders === "function") {
               const headerResult = pluginHeaders(row.configuration);
               if (Array.isArray(headerResult)) {
                 for (const header of headerResult)
-                  window.config.pluginHeaders.push(header);
+                  config.pluginHeaders.push(header);
               }
             } else
               for (const [key, value] of Object.entries(pluginHeaders)) {
-                window.config.pluginHeaders.push(value);
+                config.pluginHeaders.push(value);
               }
           }
         }
       };
 
       const setVersionTtag = () => {
+        const config = saltcorn.data.state.getState().mobileConfig;
         let iframe = document.getElementById("content-iframe");
-        iframe.contentWindow._sc_version_tag = window.config.version_tag;
+        iframe.contentWindow._sc_version_tag = config.version_tag;
       };
 
       const checkJWT = async () => {
@@ -129,8 +150,29 @@
         return response.data.authenticated;
       };
 
-      document.addEventListener("deviceready", async () => {
-        window.config = await readJSON(
+      const initI18n = async () => {
+        for (const key of Object.keys(
+          saltcorn.data.models.config.available_languages
+        )) {
+          const localeFile = await readJSON(
+            `${key}.json`,
+            `${cordova.file.applicationDirectory}www/locales`
+          );
+          await new Promise((resolve, reject) => {
+            $.i18n()
+              .load({
+                [key]: localeFile,
+              })
+              .done(() => {
+                resolve();
+              });
+          });
+        }
+      };
+
+      // device is ready
+      const init = async () => {
+        const config = await readJSON(
           "config",
           `${cordova.file.applicationDirectory}www`
         );
@@ -139,47 +181,73 @@
           `${cordova.file.applicationDirectory}${"www"}`
         );
         await addScripts(config.version_tag);
-        await saltcorn.data.db.init();
-        const updateNeeded = await dbUpdateNeeded(tablesJSON);
-        if (updateNeeded) {
-          // update '_sc_plugins' first because of loadPlugins()
-          await updateScPlugins(tablesJSON);
-        }
-        const state = saltcorn.data.state.getState();
-        state.registerPlugin("base", saltcorn.base_plugin);
-        state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
-        collectPluginHeaders(await loadPlugins(state));
-        if (updateNeeded) {
-          await updateDb(tablesJSON);
-        }
-        await state.refresh_tables();
-        await state.refresh_views();
-        await state.refresh_pages();
-        state.localTableIds = await getTableIds(config.localUserTables);
-        await state.setConfig("base_url", window.config.server_path);
-        await initRoutes();
-        setVersionTtag();
-        const entryView = config.entry_view;
-        if (await checkJWT()) {
-          const decodedJwt = jwt_decode(localStorage.getItem("auth_jwt"));
+        saltcorn.data.db.connectObj.version_tag = config.version_tag;
+        // from here with jquery
+        $(async () => {
+          await saltcorn.data.db.init();
+          const updateNeeded = await dbUpdateNeeded(tablesJSON);
+          if (updateNeeded) {
+            // update '_sc_plugins' first because of loadPlugins()
+            await updateScPlugins(tablesJSON);
+          }
+          saltcorn.data.state.features.version_plugin_serve_path = false;
           const state = saltcorn.data.state.getState();
-          state.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
-          state.user_name = decodedJwt.sub;
-          addRoute({ route: entryView, query: undefined });
-          const page = await router.resolve({
-            pathname: entryView,
-            fullWrap: true,
-          });
-          replaceIframe(page.content);
-        } else {
-          const page = await router.resolve({
-            pathname: "get/auth/login",
-            entryView: entryView,
-            versionTag: config.version_tag,
-          });
-          replaceIframe(page.content);
-        }
-      });
+          state.mobileConfig = config;
+          state.registerPlugin("base", saltcorn.base_plugin);
+          state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
+          collectPluginHeaders(await loadPlugins(state));
+          if (updateNeeded) {
+            await updateDb(tablesJSON);
+          }
+          await state.refresh_tables();
+          await state.refresh_views();
+          await state.refresh_pages();
+          state.mobileConfig.localTableIds = await getTableIds(config.localUserTables);
+          await state.setConfig("base_url", config.server_path);
+          await initRoutes();
+          setVersionTtag();
+          const entryPoint = config.entry_point;
+          await initI18n();
+          try {
+            if (await checkJWT()) {
+              const decodedJwt = jwt_decode(localStorage.getItem("auth_jwt"));
+              const mobileConfig = state.mobileConfig;
+              mobileConfig.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
+              mobileConfig.user_name = decodedJwt.sub;
+              mobileConfig.language = decodedJwt.language;
+              $.i18n({
+                locale: mobileConfig.language,
+              });
+
+              addRoute({ route: entryPoint, query: undefined });
+              const page = await router.resolve({
+                pathname: entryPoint,
+                fullWrap: true,
+              });
+              replaceIframe(page.content);
+            } else {
+              const page = await router.resolve({
+                pathname: "get/auth/login",
+              });
+              replaceIframe(page.content);
+            }
+          } catch (error) {
+            const page = await router.resolve({
+              pathname: "get/error_page",
+              alerts: [
+                {
+                  type: "error",
+                  msg: error.message ? error.message : "An error occured.",
+                },
+              ],
+            });
+            replaceIframe(page.content);
+            console.error(error);
+          }
+        });
+      };
+
+      document.addEventListener("deviceready", init);
 
       document.addEventListener("backbutton", async () => {
         await goBack(1, true);

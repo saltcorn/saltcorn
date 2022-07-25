@@ -6,6 +6,7 @@ import {
   buildTablesFile,
   copySbadmin2Deps,
   copyStaticAssets,
+  copyTranslationFiles,
   createSqliteDb,
   writeCfgFile,
 } from "./utils/common-build-utils";
@@ -20,6 +21,8 @@ import {
   prepareBuildDir,
 } from "./utils/cordova-build-utils";
 
+type EntryPointType = "view" | "page";
+
 /**
  *
  */
@@ -31,6 +34,7 @@ export class MobileBuilder {
   platforms: string[];
   localUserTables: string[];
   entryPoint: string;
+  entryPointType: EntryPointType;
   serverURL: string;
   pluginManager: any;
   plugins: Plugin[];
@@ -50,6 +54,7 @@ export class MobileBuilder {
     platforms: string[];
     localUserTables?: string[];
     entryPoint: string;
+    entryPointType: EntryPointType;
     serverURL: string;
     plugins: Plugin[];
     copyTargetDir?: string;
@@ -62,6 +67,7 @@ export class MobileBuilder {
     this.platforms = cfg.platforms;
     this.localUserTables = cfg.localUserTables ? cfg.localUserTables : [];
     this.entryPoint = cfg.entryPoint;
+    this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -79,9 +85,11 @@ export class MobileBuilder {
     prepareBuildDir(this.buildDir, this.templateDir);
     copyStaticAssets(this.buildDir);
     copySbadmin2Deps(this.buildDir);
+    copyTranslationFiles(this.buildDir);
     writeCfgFile({
       buildDir: this.buildDir,
       entryPoint: this.entryPoint,
+      entryPointType: this.entryPointType,
       serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: this.localUserTables,
     });

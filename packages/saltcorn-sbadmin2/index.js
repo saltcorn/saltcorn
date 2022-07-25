@@ -431,7 +431,7 @@ const wrap = ({
     title,
     `id="page-top" class="${bodyClass || ""}"`,
     `<div id="wrapper">
-      ${db.is_node ? sidebar(brand, menu, currentUrl) : ""}
+      ${menu && menu.length > 0 ? sidebar(brand, menu, currentUrl) : ""}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">

@@ -1,8 +1,9 @@
 import { deleteRows } from "./delete.js";
 import { getView, postView, postViewRoute } from "./view.js";
 import { postToggleField } from "./edit.js";
-import { postPageAction } from "./page.js";
-import { getLoginForm, logout } from "./auth.js";
+import { postPageAction, getPage } from "./page.js";
+import { getLoginView, getSignupView, logout } from "./auth.js";
+import { getErrorView } from "./error.js";
 
 export const initRoutes = async () => {
   const routes = [
@@ -27,17 +28,29 @@ export const initRoutes = async () => {
       action: deleteRows,
     },
     {
-      path: "post/page/:pagename/action/:rndid",
+      path: "post/page/:page_name/action/:rndid",
       action: postPageAction,
     },
     {
+      path: "get/page/:page_name",
+      action: getPage,
+    },
+    {
       path: "get/auth/login",
-      action: getLoginForm,
+      action: getLoginView,
     },
     {
       path: "get/auth/logout",
       action: logout,
     },
+    {
+      path: "get/auth/signup",
+      action: getSignupView,
+    },
+    {
+      path: "get/error_page",
+      action: getErrorView,
+    }
   ];
   window.router = new window.UniversalRouter(routes);
 };
