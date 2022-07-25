@@ -82,6 +82,7 @@ const run_code = async ({
     sleep,
     fetchJSON,
     fetch,
+    URL,
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
