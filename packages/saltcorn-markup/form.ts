@@ -52,16 +52,16 @@ const mkShowIf = (sIf: any): string =>
     Object.entries(sIf)
       .map(([target, value]) =>
         typeof value === "boolean"
-          ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+          ? `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').prop('checked')===${JSON.stringify(value)}`
           : Array.isArray(value)
           ? `[${value
               .map((v) => `'${v}'`)
-              .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val())`
-          : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+          : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val()==='${value}'`
       )
@@ -283,7 +283,7 @@ const mkFormRowForRepeatFancy = (
   return div(
     { class: "row w-100" },
     div(
-      { class: "col-6" },
+      { class: "col-6 mb-3" },
       h5("Columns"),
       div(ul({ id: "myEditor", class: "sortableLists list-group" }))
     ),
@@ -322,7 +322,7 @@ const mkFormRowForRepeatFancy = (
   editor.setForm($('#menuForm'));
   editor.setUpdateButton($('#btnUpdate'));
   editor.setData(${JSON.stringify(v[hdr.form_name])});
-  $('.btnEdit').click(()=>setTimeout(apply_showif,0));
+  $('.btnEdit').click(()=>{setTimeout(()=>{apply_showif();apply_showif();},0)});
   $('#btnAdd').click(function(){
     editor.add();
     repeaterCopyValuesToForm($('#menuForm').closest("form"), editor)

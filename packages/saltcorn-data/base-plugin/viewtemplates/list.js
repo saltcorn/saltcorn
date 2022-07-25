@@ -135,6 +135,10 @@ const configuration_workflow = (req) =>
               ...(create_view_opts.length > 0
                 ? [
                     {
+                      input_type: "section_header",
+                      label: "View to create a new row",
+                    },
+                    {
                       name: "view_to_create",
                       label: req.__("Use view to create"),
                       sublabel: req.__(
