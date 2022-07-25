@@ -47,6 +47,8 @@ function apply_showif() {
         );
         e.data("data-show-if-fun", to_show);
       }
+      if (!e.data("data-closest-form-ns"))
+        e.data("data-closest-form-ns", e.closest(".form-namespace"));
       if (to_show(e))
         e.show()
           .find("input, textarea, button, select")

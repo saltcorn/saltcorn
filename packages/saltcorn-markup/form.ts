@@ -52,16 +52,16 @@ const mkShowIf = (sIf: any): string =>
     Object.entries(sIf)
       .map(([target, value]) =>
         typeof value === "boolean"
-          ? `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+          ? `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').prop('checked')===${JSON.stringify(value)}`
           : Array.isArray(value)
           ? `[${value
               .map((v) => `'${v}'`)
-              .join()}].includes(e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+              .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val())`
-          : `e.closest('.form-namespace').find('[data-fieldname=${rmInitialDot(
+          : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val()==='${value}'`
       )
