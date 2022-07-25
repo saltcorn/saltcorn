@@ -44,7 +44,7 @@ import path from "path";
  * @param {string} dirpath
  * @returns {Promise<void>}
  */
-const create_pack = async (dirpath: string): Promise<void> => {
+const create_pack_json = async (): Promise<object> => {
   const tables = await asyncMap(
     await Table.find({}),
     async (t: any) => await table_pack(t.name)
@@ -65,6 +65,16 @@ const create_pack = async (dirpath: string): Promise<void> => {
   const roles = await Role.find({});
   const library = (await Library.find({})).map((l: Library) => l.toJson);
   const pack = { tables, views, plugins, pages, triggers, roles, library };
+  return pack;
+};
+
+/**
+ * @function
+ * @param {string} dirpath
+ * @returns {Promise<void>}
+ */
+const create_pack = async (dirpath: string): Promise<void> => {
+  const pack = await create_pack_json();
 
   await writeFile(join(dirpath, "pack.json"), JSON.stringify(pack));
 };
@@ -393,4 +403,10 @@ const auto_backup_now = async () => {
   }
 };
 
-export = { create_backup, restore, create_csv_from_rows, auto_backup_now };
+export = {
+  create_backup,
+  restore,
+  create_csv_from_rows,
+  auto_backup_now,
+  create_pack_json,
+};
