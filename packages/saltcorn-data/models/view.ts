@@ -747,7 +747,10 @@ class View {
   isRemoteTable(): boolean {
     if (isNode() || !this.table_id) return false;
     const { getState } = require("../db/state");
-    return getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0;
+    return (
+      getState().mobileConfig &&
+      getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0
+    );
   }
 }
 
