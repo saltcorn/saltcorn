@@ -39,16 +39,24 @@ function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
-      var to_show = new Function(
-        "e",
-        "return " + decodeURIComponent(e.attr("data-show-if"))
-      );
+      let to_show = e.data("data-show-if-fun");
+      if (!to_show) {
+        to_show = new Function(
+          "e",
+          "return " + decodeURIComponent(e.attr("data-show-if"))
+        );
+        e.data("data-show-if-fun", to_show);
+      }
       if (to_show(e))
         e.show()
           .find("input, textarea, button, select")
           .prop("disabled", e.attr("data-disabled") || false);
       else
-        e.hide().find("input, textarea, button, select").prop("disabled", true);
+        e.hide()
+          .find(
+            "input:enabled, textarea:enabled, button:enabled, select:enabled"
+          )
+          .prop("disabled", true);
     } catch (e) {
       console.error(e);
     }
