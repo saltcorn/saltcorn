@@ -121,7 +121,12 @@ function apply_showif() {
               `<option ${
                 `${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
               } value="${r[dynwhere.refname]}">${
-                r[dynwhere.summary_field]
+                dynwhere.label_formula
+                  ? new Function(
+                      `{${Object.keys(r).join(",")}}`,
+                      "return " + dynwhere.label_formula
+                    )(r)
+                  : r[dynwhere.summary_field]
               }</option>`
             )
           );
