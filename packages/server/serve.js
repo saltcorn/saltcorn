@@ -44,6 +44,11 @@ const {
   getAllTenants,
 } = require("@saltcorn/admin-models/models/tenant");
 const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
+const Snapshot = require("@saltcorn/admin-models/models/snapshot");
+
+const take_snapshot = async () => {
+  return await Snapshot.take_if_changed();
+};
 
 // helpful https://gist.github.com/jpoehls/2232358
 /**
@@ -142,6 +147,7 @@ const onMessageFromWorker =
         disableScheduler,
         eachTenant,
         auto_backup_now,
+        take_snapshot,
       });
       require("./systemd")({ port });
       return true;
@@ -274,6 +280,7 @@ module.exports =
           disableScheduler,
           eachTenant,
           auto_backup_now,
+          take_snapshot,
         });
       }
       Trigger.emitEvent("Startup");

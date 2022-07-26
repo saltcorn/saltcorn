@@ -127,6 +127,7 @@ const runScheduler = async ({
     return f();
   },
   auto_backup_now = () => {},
+  take_snapshot = () => {},
 }:
   | {
       stop_when?: () => boolean;
@@ -193,6 +194,10 @@ const runScheduler = async ({
       (auto_backup_freq === "Weekly" && isWeekly)
     ) {
       await auto_backup_now();
+    }
+    const snapshots_enabled = getState().getConfig("snapshots_enabled");
+    if (snapshots_enabled && isHourly) {
+      await take_snapshot();
     }
   };
 

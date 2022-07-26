@@ -623,7 +623,9 @@ const snapshotForm = (req) =>
         type: "Bool",
         label: req.__("Periodic snapshots enabled"),
         name: "snapshots_enabled",
-        blurb: "Snapshot will be made every hour if there are changes",
+        sublabel: req.__(
+          "Snapshot will be made every hour if there are changes"
+        ),
       },
     ],
   });
