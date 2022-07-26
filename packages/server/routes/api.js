@@ -242,6 +242,7 @@ router.get(
             rows = await table.getJoinedRows(joinOpts);
           } else if (req_query && req_query !== {}) {
             const tbl_fields = await table.getFields();
+            readState(req_query, tbl_fields, req);
             const qstate = await stateFieldsToWhere({
               fields: tbl_fields,
               approximate: !!approximate,

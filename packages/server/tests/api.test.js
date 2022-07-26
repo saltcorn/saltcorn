@@ -98,7 +98,7 @@ describe("API read", () => {
     await request(app)
       .get("/api/patients/?favbook=")
       .set("Cookie", loginCookie)
-      .expect(succeedJsonWith((rows) => rows.length == 2));
+      .expect(succeedJsonWith((rows) => rows.length == 0));
   });
 
   it("should get books for public with search and one field", async () => {
