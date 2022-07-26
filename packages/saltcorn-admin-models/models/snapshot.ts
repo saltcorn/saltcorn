@@ -89,15 +89,16 @@ class Snapshot {
     const get_entity = (pack: any) => {
       switch (type) {
         case "view":
-          return pack.views[name];
+          return pack.views.find((v: any) => v.name === name);
           break;
-        case "pages":
-          return pack.pages[name];
+        case "page":
+          return pack.pages.find((p: any) => p.name === name);
           break;
       }
     };
     let last = get_entity(snaps[0].pack);
-    const history = last ? [last] : [];
+
+    const history = last ? [snaps[0]] : [];
     for (const snap of snaps) {
       const current = get_entity(snap.pack);
       if (!isEqual(last, current)) {
@@ -105,6 +106,7 @@ class Snapshot {
         last = current;
       }
     }
+
     return history;
   }
 }

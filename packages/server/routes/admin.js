@@ -539,7 +539,10 @@ router.get(
         [
           {
             label: "When",
-            key: (r) => `${r} (${moment(r.created).fromNow()})`,
+            key: (r) =>
+              `${new Date(r.created).toLocaleString(
+                req?.getLocale() || "en-GB"
+              )} (${moment(r.created).fromNow()})`,
           },
 
           {

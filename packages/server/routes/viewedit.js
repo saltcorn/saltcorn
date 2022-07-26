@@ -98,6 +98,13 @@ const view_dropdown = (view, req) =>
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
       req
     ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}')`,
+      },
+      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+    ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
       `/viewedit/delete/${view.id}`,
