@@ -925,5 +925,8 @@
 	"Back": "Back",
 	"Periodic snapshots enabled": "Periodic snapshots enabled",
 	"Snapshot will be made every hour if there are changes": "Snapshot will be made every hour if there are changes",
-	"Snapshots": "Snapshots"
+	"Snapshots": "Snapshots",
+	"Snapshot settings updated": "Snapshot settings updated",
+	"Download snapshots": "Download snapshots",
+	"Snapshot successful": "Snapshot successful"
 }
