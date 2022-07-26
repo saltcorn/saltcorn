@@ -71,7 +71,7 @@ const run_code = async ({
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
-  const f = vm.runInNewContext(`async () => {${code}}`, {
+  const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
     row,
