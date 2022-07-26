@@ -672,8 +672,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     try {
-      await Snapshot.take_if_changed();
-      req.flash("success", req.__("Backup successful"));
+      const taken = await Snapshot.take_if_changed();
+      if (taken) req.flash("success", req.__("Snapshot successful"));
+      else
+        req.flash("success", req.__("No changes detected, snapshot skipped"));
     } catch (e) {
       req.flash("error", e.message);
     }

@@ -42,6 +42,7 @@ class Snapshot {
     const us = await db.select("_sc_snapshots", where, selectopts);
     return us.map((u: any) => new Snapshot(u));
   }
+
   static async latest(): Promise<Snapshot | null> {
     const sns = await Snapshot.find(
       {},
@@ -51,16 +52,19 @@ class Snapshot {
     else return sns[0];
   }
 
-  static async take_if_changed(): Promise<undefined> {
+  static async take_if_changed(): Promise<boolean> {
     const latest = await Snapshot.latest();
+
     const current_pack = await backup.create_pack_json();
     if (!latest || !isEqual(latest.pack, current_pack)) {
       await db.insert("_sc_snapshots", {
         created: new Date(),
         pack: current_pack,
       });
+      return true;
+    } else {
+      return false;
     }
-    return;
   }
 }
 
