@@ -76,7 +76,7 @@ const send_verification_email = async (
     if (verification_view) {
       const verification_token = uuidv4();
       try {
-        await db.update("users", { verification_token }, user.id);
+        await user.update({ verification_token });
         user.verification_token = verification_token;
 
         const html = await viewToEmailHtml(verification_view, { id: user.id });

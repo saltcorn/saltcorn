@@ -13,6 +13,7 @@ import type {
   TriggerCfg,
   AbstractTrigger,
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
+import Crash = require("./crash");
 
 const { satisfies } = require("../utils");
 
@@ -232,7 +233,15 @@ class Trigger implements AbstractTrigger {
   ): Promise<void> {
     const triggers = await Trigger.getTableTriggers(when_trigger, table);
     for (const trigger of triggers) {
-      trigger.run!(row); // getTableTriggers ensures run is set
+      try {
+        await trigger.run!(row); // getTableTriggers ensures run is set
+      } catch (e) {
+        console.log(e);
+        Crash.create(e, {
+          url: "/",
+          headers: { when_trigger, table: table.name, trigger: trigger.name },
+        });
+      }
     }
     //intentionally omit await
     EventLog.create({

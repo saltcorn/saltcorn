@@ -84,6 +84,23 @@ describe("API read", () => {
         )
       );
   });
+  it("should handle fkey args ", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/?favbook=1")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((rows) => rows.length == 1));
+  });
+  it("should handle fkey args with no value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/?favbook=")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((rows) => rows.length == 0));
+  });
+
   it("should get books for public with search and one field", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
