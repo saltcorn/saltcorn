@@ -535,6 +535,11 @@ const configTypes: ConfigTypes = {
     label: "Auto backup expiration days",
     default: null,
   },
+  snapshots_enabled: {
+    type: "Bool",
+    label: "Snapshots enabled",
+    default: false,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

@@ -127,6 +127,7 @@ const runScheduler = async ({
     return f();
   },
   auto_backup_now = () => {},
+  take_snapshot = () => {},
 }:
   | {
       stop_when?: () => boolean;
@@ -181,6 +182,10 @@ const runScheduler = async ({
                 headers: {},
               });
           }
+        }
+        const snapshots_enabled = getState().getConfig("snapshots_enabled");
+        if (snapshots_enabled && isHourly) {
+          await take_snapshot();
         }
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);

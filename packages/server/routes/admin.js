@@ -18,7 +18,13 @@ const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-const { post_btn, renderForm, mkTable, link } = require("@saltcorn/markup");
+const {
+  post_btn,
+  renderForm,
+  mkTable,
+  link,
+  localeDateTime,
+} = require("@saltcorn/markup");
 const {
   div,
   a,
@@ -62,6 +68,7 @@ const {
   restore,
   auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
+const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const {
   runConfigurationCheck,
 } = require("@saltcorn/admin-models/models/config-check");
@@ -337,6 +344,9 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
+    const aSnapshotForm = snapshotForm(req);
+    aSnapshotForm.values.snapshots_enabled =
+      getState().getConfig("snapshots_enabled");
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     send_admin_page({
@@ -389,6 +399,22 @@ router.get(
                 ),
               }
             : { type: "blank", contents: "" },
+          {
+            type: "card",
+            title: req.__("Snapshots"),
+            contents: div(
+              p(
+                i(
+                  "Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns)."
+                )
+              ),
+              renderForm(aSnapshotForm, req.csrfToken()),
+              a(
+                { href: "/admin/snapshot-list" },
+                "List/download snapshots &raquo;"
+              )
+            ),
+          },
         ],
       },
     });
@@ -465,6 +491,101 @@ router.get(
 );
 
 router.get(
+  "/snapshot-list",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const snaps = await Snapshot.find();
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Download snapshots"),
+            contents: div(
+              ul(
+                snaps.map((snap) =>
+                  li(
+                    a(
+                      {
+                        href: `/admin/snapshot-download/${encodeURIComponent(
+                          snap.id
+                        )}`,
+                        target: "_blank",
+                      },
+                      moment(snap.created).fromNow()
+                    )
+                  )
+                )
+              )
+            ),
+          },
+        ],
+      },
+    });
+  })
+);
+
+router.get(
+  "/snapshot-download/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const snap = await Snapshot.findOne({ id });
+    res.send(snap.pack);
+  })
+);
+
+router.get(
+  "/snapshot-restore/:type/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { type, name } = req.params;
+    const snaps = await Snapshot.entity_history(type, name);
+    res.send(
+      mkTable(
+        [
+          {
+            label: "When",
+            key: (r) =>
+              `${localeDateTime(r.created)} (${moment(r.created).fromNow()})`,
+          },
+
+          {
+            label: req.__("Restore"),
+            key: (r) =>
+              post_btn(
+                `/admin/snapshot-restore/${type}/${name}/${r.id}`,
+                req.__("Restore"),
+                req.csrfToken()
+              ),
+          },
+        ],
+        snaps
+      )
+    );
+  })
+);
+
+router.post(
+  "/snapshot-restore/:type/:name/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { type, name, id } = req.params;
+    const snap = await Snapshot.findOne({ id });
+    await snap.restore_entity(type, name);
+    req.flash(
+      "success",
+      `${type} ${name} restored to snapshot saved ${moment(
+        snap.created
+      ).fromNow()}`
+    );
+    res.redirect(`/${type}edit`);
+  })
+);
+router.get(
   "/auto-backup-download/:filename",
   isAdmin,
   error_catcher(async (req, res) => {
@@ -540,6 +661,43 @@ const autoBackupForm = (req) =>
     ],
   });
 
+const snapshotForm = (req) =>
+  new Form({
+    action: "/admin/set-snapshot",
+    onChange: `saveAndContinue(this);`,
+    noSubmitButton: true,
+    additionalButtons: [
+      {
+        label: "Snapshot now",
+        id: "btnSnapNow",
+        class: "btn btn-outline-secondary",
+        onclick: "ajax_post('/admin/snapshot-now')",
+      },
+    ],
+    fields: [
+      {
+        type: "Bool",
+        label: req.__("Periodic snapshots enabled"),
+        name: "snapshots_enabled",
+        sublabel: req.__(
+          "Snapshot will be made every hour if there are changes"
+        ),
+      },
+    ],
+  });
+router.post(
+  "/set-snapshot",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await snapshotForm(req);
+    form.validate(req.body);
+
+    await save_config_from_form(form);
+    req.flash("success", req.__("Snapshot settings updated"));
+    if (!req.xhr) res.redirect("/admin/backup");
+    else res.json({ success: "ok" });
+  })
+);
 router.post(
   "/set-auto-backup",
   isAdmin,
@@ -572,6 +730,22 @@ router.post(
     try {
       await auto_backup_now();
       req.flash("success", req.__("Backup successful"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+    res.json({ reload_page: true });
+  })
+);
+
+router.post(
+  "/snapshot-now",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      const taken = await Snapshot.take_if_changed();
+      if (taken) req.flash("success", req.__("Snapshot successful"));
+      else
+        req.flash("success", req.__("No changes detected, snapshot skipped"));
     } catch (e) {
       req.flash("error", e.message);
     }

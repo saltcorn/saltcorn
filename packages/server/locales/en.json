@@ -922,5 +922,11 @@
 	"No errors detected during configuration check": "No errors detected during configuration check",
 	"%s view - %s on %s": "%s view - %s on %s",
 	"Please select at least one platform (android or iOS).": "Please select at least one platform (android or iOS).",
-	"Back": "Back"
+	"Back": "Back",
+	"Periodic snapshots enabled": "Periodic snapshots enabled",
+	"Snapshot will be made every hour if there are changes": "Snapshot will be made every hour if there are changes",
+	"Snapshots": "Snapshots",
+	"Snapshot settings updated": "Snapshot settings updated",
+	"Download snapshots": "Download snapshots",
+	"Snapshot successful": "Snapshot successful"
 }
