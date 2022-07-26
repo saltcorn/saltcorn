@@ -134,7 +134,7 @@ class User {
     this.password = password;
     const upd: Row = { password };
     if (expireToken) upd.reset_password_token = null;
-    await db.update("users", upd, this.id);
+    await this.update(upd);
   }
 
   /**
@@ -278,6 +278,11 @@ class User {
     const schema = db.getTenantSchemaPrefix();
     await this.destroy_sessions();
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
+    await Trigger.runTableTriggers(
+      "Delete",
+      Table.findOne({ name: "users" }) as Table,
+      this
+    );
   }
 
   /**
@@ -296,6 +301,11 @@ class User {
    */
   async update(row: Row): Promise<void> {
     await db.update("users", row, this.id);
+    await Trigger.runTableTriggers(
+      "Update",
+      Table.findOne({ name: "users" }) as Table,
+      { ...this, ...row }
+    );
   }
 
   /**
@@ -307,11 +317,7 @@ class User {
     const reset_password_expiry = new Date();
     reset_password_expiry.setDate(new Date().getDate() + 1);
     const reset_password_token = await hash(reset_password_token_uuid, 10);
-    await db.update(
-      "users",
-      { reset_password_token, reset_password_expiry },
-      this.id
-    );
+    await this.update({ reset_password_token, reset_password_expiry });
     return reset_password_token_uuid;
   }
 
@@ -321,7 +327,7 @@ class User {
    */
   async getNewAPIToken(): Promise<string> {
     const api_token = uuidv4();
-    await db.update("users", { api_token }, this.id);
+    await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
   }
@@ -332,7 +338,7 @@ class User {
    */
   async removeAPIToken(): Promise<null> {
     const api_token = null;
-    await db.update("users", { api_token }, this.id);
+    await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
   }
@@ -387,7 +393,7 @@ class User {
     const elevate_verified = +getState().getConfig("elevate_verified");
     if (elevate_verified)
       upd.role_id = Math.min(elevate_verified, this.role_id);
-    await db.update("users", upd, this.id);
+    await this.update(upd);
     Object.assign(this, upd);
     const Trigger = require("./trigger");
     Trigger.emitEvent("UserVerified", null, this, this);
@@ -502,7 +508,7 @@ class User {
       : db.isSQLite
       ? date.valueOf()
       : date.toISOString();
-    await db.update("users", { last_mobile_login: dateVal }, this.id);
+    await this.update({ last_mobile_login: dateVal });
   }
 }
 

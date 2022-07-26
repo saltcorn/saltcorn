@@ -693,7 +693,8 @@ router.post(
     } = form.values;
     if (id) {
       try {
-        await db.update("users", { email, role_id, ...rest }, id);
+        const u = await User.findOne({ id });
+        await u.update({ email, role_id, ...rest });
         req.flash("success", req.__(`User %s saved`, email));
       } catch (e) {
         req.flash("error", req.__(`Error editing user: %s`, e.message));
