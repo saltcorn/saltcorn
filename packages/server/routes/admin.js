@@ -411,7 +411,7 @@ router.get(
               renderForm(aSnapshotForm, req.csrfToken()),
               a(
                 { href: "/admin/snapshot-list" },
-                "Restore/download snapshots &raquo;"
+                "List/download snapshots &raquo;"
               )
             ),
           },
