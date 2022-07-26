@@ -18,7 +18,13 @@ const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-const { post_btn, renderForm, mkTable, link } = require("@saltcorn/markup");
+const {
+  post_btn,
+  renderForm,
+  mkTable,
+  link,
+  localeDateTime,
+} = require("@saltcorn/markup");
 const {
   div,
   a,
@@ -397,7 +403,11 @@ router.get(
             type: "card",
             title: req.__("Snapshots"),
             contents: div(
-              p(i("Snapshots...")),
+              p(
+                i(
+                  "Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns)."
+                )
+              ),
               renderForm(aSnapshotForm, req.csrfToken()),
               a(
                 { href: "/admin/snapshot-list" },
@@ -523,8 +533,8 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const snaps = await Snapshot.find({ id });
-    res.send(snaps[0].pack);
+    const snap = await Snapshot.findOne({ id });
+    res.send(snap.pack);
   })
 );
 
@@ -540,9 +550,7 @@ router.get(
           {
             label: "When",
             key: (r) =>
-              `${new Date(r.created).toLocaleString(
-                req?.getLocale() || "en-GB"
-              )} (${moment(r.created).fromNow()})`,
+              `${localeDateTime(r.created)} (${moment(r.created).fromNow()})`,
           },
 
           {
@@ -550,7 +558,8 @@ router.get(
             key: (r) =>
               post_btn(
                 `/admin/snapshot-restore/${type}/${name}/${r.id}`,
-                "Restore"
+                req.__("Restore"),
+                req.csrfToken()
               ),
           },
         ],
@@ -560,6 +569,22 @@ router.get(
   })
 );
 
+router.post(
+  "/snapshot-restore/:type/:name/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { type, name, id } = req.params;
+    const snap = await Snapshot.findOne({ id });
+    await snap.restore_entity(type, name);
+    req.flash(
+      "success",
+      `${type} ${name} restored to snapshot saved ${moment(
+        snap.created
+      ).fromNow()}`
+    );
+    res.redirect(`/${type}edit`);
+  })
+);
 router.get(
   "/auto-backup-download/:filename",
   isAdmin,

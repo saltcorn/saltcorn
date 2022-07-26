@@ -14,18 +14,22 @@ const {
 import backup from "./backup";
 const crypto = require("crypto");
 import { isEqual } from "lodash";
+import View from "@saltcorn/data/models/view";
+import { Pack } from "@saltcorn/types/base_types";
+import Page from "@saltcorn/data/models/page";
+import Table from "@saltcorn/data/models/table";
 
 type SnapshotCfg = {
   id?: number;
   created: Date;
-  pack: object;
+  pack: Pack;
   hash: string;
 };
 
 class Snapshot {
   id?: number;
   created: Date;
-  pack: object;
+  pack: Pack;
   hash: string;
 
   /**
@@ -45,6 +49,11 @@ class Snapshot {
   ): Promise<Snapshot[]> {
     const us = await db.select("_sc_snapshots", where, selectopts);
     return us.map((u: any) => new Snapshot(u));
+  }
+  static async findOne(where: Where): Promise<Snapshot | null> {
+    const us = await db.select("_sc_snapshots", where, { limit: 1 });
+    if (us.length === 0) return null;
+    else return new Snapshot(us[0]);
   }
 
   static async latest(): Promise<Snapshot | null> {
@@ -79,6 +88,22 @@ class Snapshot {
     } else {
       return false;
     }
+  }
+
+  async restore_entity(type: string, name: string): Promise<undefined> {
+    if (type === "View") {
+      const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
+        this.pack.views.find((v: any) => v.name === name) as any;
+      const view = await View.findOne({ name });
+      if (view) await View.update(viewNoTable, view.id!);
+    }
+    if (type === "page") {
+      const { root_page_for_roles, menu_label, ...pageSpec } =
+        this.pack.pages.find((p: any) => p.name === name) as any;
+      const page = await Page.findOne({ name });
+      if (page) await Page.update(page.id!, pageSpec!);
+    }
+    return;
   }
   static async entity_history(type: string, name: string): Promise<Snapshot[]> {
     const snaps = await Snapshot.find(
