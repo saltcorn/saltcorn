@@ -12,18 +12,20 @@ const {
   can_install_pack,
 } = pack;
 import backup from "./backup";
-import { isEqual } from "lodash";
+const crypto = require("crypto");
 
 type SnapshotCfg = {
   id?: number;
   created: Date;
   pack: object;
+  hash: string;
 };
 
 class Snapshot {
   id?: number;
   created: Date;
   pack: object;
+  hash: string;
 
   /**
    * Library constructor
@@ -33,6 +35,7 @@ class Snapshot {
     this.id = o.id;
     this.created = o.created;
     this.pack = o.pack;
+    this.hash = o.hash;
   }
 
   static async find(
@@ -56,10 +59,19 @@ class Snapshot {
     const latest = await Snapshot.latest();
 
     const current_pack = await backup.create_pack_json();
-    if (!latest || !isEqual(latest.pack, current_pack)) {
+
+    //comparing objects is not accurate (too many false positives) so we hash instead
+    const hash = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(current_pack))
+      .digest("hex")
+      .slice(0, 40);
+
+    if (!latest || latest.hash !== hash) {
       await db.insert("_sc_snapshots", {
         created: new Date(),
         pack: current_pack,
+        hash,
       });
       return true;
     } else {

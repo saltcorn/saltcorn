@@ -35,9 +35,7 @@
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
     "node-fetch": "2.6.2",
-    "tmp-promise": "^3.0.2",
-    "lodash": "^4.17.11",
-    "@types/lodash": "^4.14.182"
+    "tmp-promise": "^3.0.2"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {

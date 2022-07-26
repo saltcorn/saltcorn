@@ -503,6 +503,7 @@ router.get(
                         href: `/admin/snapshot-download/${encodeURIComponent(
                           snap.id
                         )}`,
+                        target: "_blank",
                       },
                       moment(snap.created).fromNow()
                     )
@@ -514,6 +515,17 @@ router.get(
         ],
       },
     });
+  })
+);
+
+router.get(
+  "/snapshot-download/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const snap = await Snapshot.findOne;
+    const snaps = await Snapshot.find({ id });
+    res.send(snaps[0].pack);
   })
 );
 
