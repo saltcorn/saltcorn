@@ -523,9 +523,37 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const snap = await Snapshot.findOne;
     const snaps = await Snapshot.find({ id });
     res.send(snaps[0].pack);
+  })
+);
+
+router.get(
+  "/snapshot-restore/:type/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { type, name } = req.params;
+    const snaps = await Snapshot.entity_history(type, name);
+    res.send(
+      mkTable(
+        [
+          {
+            label: "When",
+            key: (r) => `${r} (${moment(r.created).fromNow()})`,
+          },
+
+          {
+            label: req.__("Restore"),
+            key: (r) =>
+              post_btn(
+                `/admin/snapshot-restore/${type}/${name}/${r.id}`,
+                "Restore"
+              ),
+          },
+        ],
+        snaps
+      )
+    );
   })
 );
 

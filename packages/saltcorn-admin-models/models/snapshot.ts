@@ -13,6 +13,7 @@ const {
 } = pack;
 import backup from "./backup";
 const crypto = require("crypto");
+import { isEqual } from "lodash";
 
 type SnapshotCfg = {
   id?: number;
@@ -56,6 +57,7 @@ class Snapshot {
   }
 
   static async take_if_changed(): Promise<boolean> {
+    console.log("Snapshot.take_if_changed", new Date());
     const latest = await Snapshot.latest();
 
     const current_pack = await backup.create_pack_json();
@@ -77,6 +79,33 @@ class Snapshot {
     } else {
       return false;
     }
+  }
+  static async entity_history(type: string, name: string): Promise<Snapshot[]> {
+    const snaps = await Snapshot.find(
+      {},
+      { orderBy: "created", orderDesc: true }
+    );
+    if (snaps.length === 0) return [];
+    const get_entity = (pack: any) => {
+      switch (type) {
+        case "view":
+          return pack.views[name];
+          break;
+        case "pages":
+          return pack.pages[name];
+          break;
+      }
+    };
+    let last = get_entity(snaps[0].pack);
+    const history = last ? [last] : [];
+    for (const snap of snaps) {
+      const current = get_entity(snap.pack);
+      if (!isEqual(last, current)) {
+        history.push(snap);
+        last = current;
+      }
+    }
+    return history;
   }
 }
 
