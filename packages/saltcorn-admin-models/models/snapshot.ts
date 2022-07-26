@@ -66,7 +66,6 @@ class Snapshot {
   }
 
   static async take_if_changed(): Promise<boolean> {
-    console.log("Snapshot.take_if_changed", new Date());
     const latest = await Snapshot.latest();
 
     const current_pack = await backup.create_pack_json();
