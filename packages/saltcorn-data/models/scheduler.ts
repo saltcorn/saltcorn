@@ -183,6 +183,10 @@ const runScheduler = async ({
               });
           }
         }
+        const snapshots_enabled = getState().getConfig("snapshots_enabled");
+        if (snapshots_enabled && isHourly) {
+          await take_snapshot();
+        }
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
       }
@@ -194,10 +198,6 @@ const runScheduler = async ({
       (auto_backup_freq === "Weekly" && isWeekly)
     ) {
       await auto_backup_now();
-    }
-    const snapshots_enabled = getState().getConfig("snapshots_enabled");
-    if (snapshots_enabled && isHourly) {
-      await take_snapshot();
     }
   };
 
