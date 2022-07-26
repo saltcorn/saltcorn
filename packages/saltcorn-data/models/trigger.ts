@@ -239,7 +239,7 @@ class Trigger implements AbstractTrigger {
         console.log(e);
         Crash.create(e, {
           url: "/",
-          headers: {},
+          headers: { when_trigger, table: table.name, trigger: trigger.name },
         });
       }
     }
