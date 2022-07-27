@@ -562,6 +562,11 @@ class Table implements AbstractTable {
       )}"=NOT coalesce("${sqlsanitize(field_name)}", false) where id=$1`,
       [id]
     );
+    const fields = await this.getFields();
+    if (fields.some((f: Field) => f.calculated && f.stored)) {
+      await this.updateRow({}, id, undefined, false);
+    }
+
     const triggers = await Trigger.getTableTriggers("Update", this);
     if (triggers.length > 0) {
       const row = await this.getRow({ id });
