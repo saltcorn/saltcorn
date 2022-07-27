@@ -79,6 +79,11 @@ const DropDownFilterSettings = () => {
                   {f.label}
                 </option>
               ))}
+              {options.parent_field_list.map((f, ix) => (
+                <option key={ix} value={f}>
+                  {f}
+                </option>
+              ))}
             </select>
           </td>
         </tr>

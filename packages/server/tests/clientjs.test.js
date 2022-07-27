@@ -34,8 +34,18 @@ test("updateQueryStringParameter", () => {
   expect(removeQueryStringParameter("/foo?name=Bar&age=45", "age")).toBe(
     "/foo?name=Bar"
   );
+  expect(
+    updateQueryStringParameter("/foo", "publisher.publisher->name", "AK")
+  ).toBe("/foo?publisher.publisher->name=AK");
+  expect(
+    updateQueryStringParameter(
+      "/foo?publisher.publisher->name=AB",
+      "publisher.publisher->name",
+      "AK"
+    )
+  ).toBe("/foo?publisher.publisher->name=AK");
 });
-
+//publisher.publisher->name
 test("updateQueryStringParameter hash", () => {
   expect(updateQueryStringParameter("/foo#baz", "age", 43)).toBe(
     "/foo?age=43#baz"

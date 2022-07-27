@@ -58,6 +58,17 @@ const configuration_workflow = () =>
           const fields = await table.getFields();
           const { child_field_list, child_relations } =
             await table.get_child_relations();
+          const { parent_field_list } = await table.get_parent_relations();
+          const my_parent_field_list = parent_field_list
+            .map((pfield) => {
+              const kpath = pfield.split(".");
+              if (kpath.length === 2) {
+                const [jFieldNm, lblField] = kpath;
+                const jfld = fields.find((f) => f.name === jFieldNm);
+                return `${jFieldNm}.${jfld.reftable_name}->${lblField}`;
+              }
+            })
+            .filter((f) => f);
           const roles = await User.get_roles();
           for (const cr of child_relations) {
             const cfields = await cr.table.getFields();
@@ -114,6 +125,7 @@ const configuration_workflow = () =>
           return {
             fields,
             tableName: table.name,
+            parent_field_list: my_parent_field_list,
             roles,
             actions,
             views,
@@ -279,7 +291,11 @@ const run = async (
           name: `ddfilter${field_name}`,
           class: "form-control form-select d-inline",
           style: full_width ? undefined : "width: unset;",
-          onchange: `this.value=='' ? unset_state_field('${field_name}'): set_state_field('${field_name}', this.value)`,
+          onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
+            field_name
+          )}'): set_state_field('${encodeURIComponent(
+            field_name
+          )}', this.value)`,
         },
         (distinct_values[field_name] || []).map(({ label, value, jsvalue }) =>
           option(
@@ -417,7 +433,22 @@ module.exports = {
               req,
               jsexprToWhere(col.where)
             );
-          else if (col.field_name.includes(".")) {
+          else if (col.field_name.includes("->")) {
+            const [jFieldNm, krest] = col.field_name.split(".");
+            const [jtNm, lblField] = krest.split("->");
+            const jtable = await Table.findOne({ name: jtNm });
+            if (!jtable)
+              throw new InvalidConfiguration(
+                `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
+              );
+            const jfields = await jtable.getFields();
+            const jfield = jfields.find((f) => f.name === lblField);
+            if (jfield)
+              distinct_values[col.field_name] = await jfield.distinct_values(
+                req,
+                jsexprToWhere(col.where)
+              );
+          } else if (col.field_name.includes(".")) {
             const kpath = col.field_name.split(".");
             if (kpath.length === 3) {
               const [jtNm, jFieldNm, lblField] = kpath;
@@ -430,6 +461,13 @@ module.exports = {
               const jfield = jfields.find((f) => f.name === lblField);
               if (jfield)
                 distinct_values[col.field_name] = await jfield.distinct_values(
+                  req,
+                  jsexprToWhere(col.where)
+                );
+            } else if (kpath.length === 2) {
+              const target = await table.getField(col.field_name);
+              if (target)
+                distinct_values[col.field_name] = await target.distinct_values(
                   req,
                   jsexprToWhere(col.where)
                 );
