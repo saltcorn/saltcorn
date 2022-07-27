@@ -58,10 +58,7 @@ const configuration_workflow = () =>
           const fields = await table.getFields();
           const { child_field_list, child_relations } =
             await table.get_child_relations();
-          const { parent_field_list } = await table.get_parent_relations(
-            true,
-            true
-          );
+          const { parent_field_list } = await table.get_parent_relations();
           const roles = await User.get_roles();
           for (const cr of child_relations) {
             const cfields = await cr.table.getFields();
@@ -412,6 +409,7 @@ module.exports = {
       const role = req.user ? req.user.role_id : 10;
       for (const col of columns) {
         if (col.type === "DropDownFilter") {
+          console.log(col);
           const field = fields.find((f) => f.name === col.field_name);
           if (table.external) {
             distinct_values[col.field_name] = (
@@ -435,6 +433,13 @@ module.exports = {
               const jfield = jfields.find((f) => f.name === lblField);
               if (jfield)
                 distinct_values[col.field_name] = await jfield.distinct_values(
+                  req,
+                  jsexprToWhere(col.where)
+                );
+            } else if (kpath.length === 2) {
+              const target = await table.getField(col.field_name);
+              if (target)
+                distinct_values[col.field_name] = await target.distinct_values(
                   req,
                   jsexprToWhere(col.where)
                 );
