@@ -58,6 +58,10 @@ const configuration_workflow = () =>
           const fields = await table.getFields();
           const { child_field_list, child_relations } =
             await table.get_child_relations();
+          const { parent_field_list } = await table.get_parent_relations(
+            true,
+            true
+          );
           const roles = await User.get_roles();
           for (const cr of child_relations) {
             const cfields = await cr.table.getFields();
@@ -114,6 +118,7 @@ const configuration_workflow = () =>
           return {
             fields,
             tableName: table.name,
+            parent_field_list,
             roles,
             actions,
             views,
