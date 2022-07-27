@@ -379,7 +379,7 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
     );
     for (const row of rows) {
       try {
-        await table.updateRow({}, row.id);
+        await table.updateRow({}, row.id, undefined, false);
       } catch (e: any) {
         console.error(e);
       }

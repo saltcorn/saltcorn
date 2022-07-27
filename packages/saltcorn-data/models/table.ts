@@ -486,7 +486,12 @@ class Table implements AbstractTable {
    * @param _userid - user id
    * @returns {Promise<void>}
    */
-  async updateRow(v_in: any, id: number, _userid?: number): Promise<void> {
+  async updateRow(
+    v_in: any,
+    id: number,
+    _userid?: number,
+    noTrigger?: boolean
+  ): Promise<void> {
     let existing;
     let v;
     const fields = await this.getFields();
@@ -520,7 +525,7 @@ class Table implements AbstractTable {
         existing = await db.selectOne(this.name, { [pk_name]: id });
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
-    await Trigger.runTableTriggers("Update", this, newRow);
+    if (!noTrigger) await Trigger.runTableTriggers("Update", this, newRow);
   }
 
   /**
