@@ -4,6 +4,8 @@ const historyFile = "update_history";
 
 async function updateScTables(tablesJSON, skipScPlugins = true) {
   saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
+  // TODO drop tables with the same name and a new id
+  // could mean they were deleted and re-created
   for (const { table, rows } of tablesJSON.sc_tables) {
     if (skipScPlugins && table === "_sc_plugins") continue;
     await saltcorn.data.db.deleteWhere(table);
@@ -24,22 +26,26 @@ export async function updateScPlugins(tablesJSON) {
   }
 }
 
-async function handleUserDefinedTables() {
-  const tables = await saltcorn.data.models.Table.find();
+async function updateUserDefinedTables() {
   const existingTables = await saltcorn.data.db.listUserDefinedTables();
-  const skipIds = [1]; // skip user table
+  const tables = await saltcorn.data.models.Table.find();
   for (const table of tables) {
-    if (existingTables.find((row) => row.name === table.name)) {
-      skipIds.push(table.id);
-    } else if (table.name !== "users") {
+    if (
+      table.name !== "users" &&
+      !existingTables.find((row) => row.name === table.name)
+    ) {
       // CREATE TABLE without inserting into _sc_tables
       await saltcorn.data.models.Table.create(table.name, {}, table.id);
     }
-  }
-  const fields = await saltcorn.data.models.Field.find();
-  for (const field of fields) {
-    if (skipIds.indexOf(field.table_id) < 0 && field.name !== "id")
-      await saltcorn.data.models.Field.create(field, false, field.id);
+    const existingFields = (
+      await saltcorn.data.db.query(`PRAGMA table_info('${table.name}')`)
+    ).rows.map((row) => row.name);
+    for (const field of await table.getFields()) {
+      if (existingFields.indexOf(field.name) < 0) {
+        // field is new
+        await saltcorn.data.models.Field.create(field, false, field.id);
+      }
+    }
   }
 }
 
@@ -58,7 +64,7 @@ export async function dbUpdateNeeded(tablesJSON) {
 export async function updateDb(tablesJSON) {
   await updateScTables(tablesJSON);
   await saltcorn.data.state.getState().refresh_tables();
-  await handleUserDefinedTables();
+  await updateUserDefinedTables();
   await writeJSON(historyFile, cordova.file.dataDirectory, {
     updated_at: new Date(),
   });
