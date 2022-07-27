@@ -4,7 +4,13 @@
  * @subcategory components
  */
 
-import React, { useEffect, useContext, useState, Fragment } from "react";
+import React, {
+  useEffect,
+  useContext,
+  useState,
+  Fragment,
+  useRef,
+} from "react";
 import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -13,10 +19,11 @@ import faIcons from "./elements/faicons";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
+import { isEqual } from "lodash";
 
 /**
- * 
- * @param {object[]} xs 
+ *
+ * @param {object[]} xs
  * @returns {object[]}
  */
 const twoByTwos = (xs) => {
@@ -67,10 +74,38 @@ export /**
  * @subcategory components
  * @namespace
  */
-const InitNewElement = ({ nodekeys }) => {
+const InitNewElement = ({ nodekeys, setIsSaving }) => {
+  const [saveTimeout, setSaveTimeout] = useState(false);
+  const savedData = useRef(false);
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
+  const options = useContext(optionsCtx);
+  const doSave = (query) => {
+    if (!query.serialize) return;
+
+    const data = craftToSaltcorn(JSON.parse(query.serialize()));
+    const urlroot = options.page_id ? "pageedit" : "viewedit";
+    if (savedData.current === false) {
+      //do not save on first call
+      savedData.current = JSON.stringify(data.layout);
+      setIsSaving(false);
+      return;
+    }
+    if (isEqual(savedData.current, JSON.stringify(data.layout))) return;
+    savedData.current = JSON.stringify(data.layout);
+
+    fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+      },
+      body: JSON.stringify(data),
+    }).then(() => {
+      setIsSaving(false);
+    });
+  };
   const onNodesChange = (arg, arg1) => {
     const nodes = arg.getSerializedNodes();
     const newNodeIds = [];
@@ -98,6 +133,14 @@ const InitNewElement = ({ nodekeys }) => {
         actions.selectNode(id);
       }
     }
+    if (saveTimeout) clearTimeout(saveTimeout);
+    setIsSaving(true);
+    setSaveTimeout(
+      setTimeout(() => {
+        doSave(query);
+        setSaveTimeout(false);
+      }, 500)
+    );
   };
   useEffect(() => {
     const nodes = query.getSerializedNodes();
