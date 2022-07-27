@@ -515,7 +515,9 @@ router.get(
                         )}`,
                         target: "_blank",
                       },
-                      moment(snap.created).fromNow()
+                      `${localeDateTime(snap.created)} (${moment(
+                        snap.created
+                      ).fromNow()})`
                     )
                   )
                 )
