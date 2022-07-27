@@ -111,7 +111,7 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     });
   };
   let errorString = false;
-  if (isFormula[nodekey]) {
+  if (mode === "show" && isFormula[nodekey]) {
     try {
       Function("return " + node[nodekey]);
     } catch (error) {
