@@ -362,7 +362,7 @@ router.get(
     }
     const tables = await Table.find_with_external();
     const currentTable = tables.find(
-      (t) => t.id === viewrow.table_id || t.name === viewrow.exttable_name
+      (t) => (t.id && t.id === viewrow.table_id) || t.name === viewrow.exttable_name
     );
     viewrow.table_name = currentTable && currentTable.name;
     if (viewrow.slug && currentTable) {
