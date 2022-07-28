@@ -91,9 +91,9 @@ async function login(e, entryPoint, isSignup) {
     parent.localStorage.setItem("auth_jwt", loginResult);
     const decodedJwt = parent.jwt_decode(loginResult);
     const config = parent.saltcorn.data.state.getState().mobileConfig;
-    config.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
-    config.user_name = decodedJwt.sub;
-    config.language = decodedJwt.language;
+    config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 10;
+    config.user_name = decodedJwt.user.email;
+    config.language = decodedJwt.user.language;
     config.isPublicUser = false;
     parent.$.i18n({
       locale: config.language,

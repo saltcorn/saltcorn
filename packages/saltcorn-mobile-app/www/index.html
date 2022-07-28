@@ -214,11 +214,11 @@
             if (await checkJWT()) {
               const decodedJwt = jwt_decode(localStorage.getItem("auth_jwt"));
               const mobileConfig = state.mobileConfig;
-              mobileConfig.role_id = decodedJwt?.role_id
-                ? decodedJwt.role_id
+              mobileConfig.role_id = decodedJwt.user.role_id
+                ? decodedJwt.user.role_id
                 : 10;
-              mobileConfig.user_name = decodedJwt.sub;
-              mobileConfig.language = decodedJwt.language;
+              mobileConfig.user_name = decodedJwt.user.email;
+              mobileConfig.language = decodedJwt.user.language;
               mobileConfig.isPublicUser = false;
               $.i18n({
                 locale: mobileConfig.language,

@@ -2,8 +2,13 @@ import { parseQuery, wrapContents } from "./common.js";
 
 // post/page/:pagename/action/:rndid
 export const postPageAction = async (context) => {
+  const state = saltcorn.data.state.getState();
   const { page_name, rndid } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
+  const req = new MobileRequest(context.xhr);
+  if (state.mobileConfig.role_id > page.min_role) {
+    throw new Error(req.__("Not authorized")); 
+  }
   let col;
   saltcorn.data.models.layout.traverseSync(page.layout, {
     action(segment) {
@@ -13,17 +18,21 @@ export const postPageAction = async (context) => {
   const result = await saltcorn.data.plugin_helper.run_action_column({
     col,
     referrer: "",
-    req: new MobileRequest(context.xhr),
+    req
   });
   return result || {};
 };
 
 // get/page/pagename
 export const getPage = async (context) => {
+  const state = saltcorn.data.state.getState();
   const { page_name } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
-  const query = parseQuery(context.query);
   const req = new MobileRequest(context.xhr);
+  if (state.mobileConfig.role_id > page.min_role) {
+    throw new Error(req.__("Not authorized")); 
+  }
+  const query = parseQuery(context.query);
   const res = new MobileResponse();
   const contents = await page.run(query, { res, req });
   const title = "title"; // TODO
