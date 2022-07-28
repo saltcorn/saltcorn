@@ -187,7 +187,8 @@ const pageBuilderData = async (req, context) => {
   const fixed_state_fields = {};
   for (const view of views) {
     fixed_state_fields[view.name] = [];
-    const table = Table.findOne({ id: view.table_id });
+    const table = Table.findOne(view.table_id || view.exttable_name);
+    
     const fs = await view.get_state_fields();
     for (const frec of fs) {
       const f = new Field(frec);
