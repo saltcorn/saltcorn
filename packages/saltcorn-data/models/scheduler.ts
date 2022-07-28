@@ -188,8 +188,10 @@ const runScheduler = async ({
               });
           }
         }
+        const isThisTenantHourly = await intervalIsNow("Hourly");
+
         const snapshots_enabled = getState().getConfig("snapshots_enabled");
-        if (snapshots_enabled && isHourly) {
+        if (snapshots_enabled && isThisTenantHourly) {
           await take_snapshot();
         }
       } catch (e) {
