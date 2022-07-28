@@ -540,6 +540,28 @@ const configTypes: ConfigTypes = {
     label: "Snapshots enabled",
     default: false,
   },
+  log_level: {
+    input_type: "select",
+    label: "System logging verbosity",
+    default: "1",
+
+    options: [
+      { label: "0 - None", value: "0" },
+      { label: "1 - Some", value: "1" },
+      { label: "2 - Many", value: "2" },
+      { label: "3 - Most", value: "3" },
+      { label: "4 - All", value: "4" },
+    ],
+    attributes: {
+      explainers: {
+        "0": "Silent",
+        "1": "Errors",
+        "2": "Errors, pageloads",
+        "3": "Errors, pageloads, triggers, scheduler ticks",
+        "4": "Errors, pageloads, triggers, scheduler ticks, events, state refreshes",
+      },
+    },
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

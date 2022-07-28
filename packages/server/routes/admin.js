@@ -125,6 +125,7 @@ const site_id_form = (req) =>
       "page_custom_html",
       "development_mode",
       "log_sql",
+      "log_level",
       "plugins_store_endpoint",
       "packs_store_endpoint",
       ...(getConfigFile() ? ["multitenancy_enabled"] : []),
