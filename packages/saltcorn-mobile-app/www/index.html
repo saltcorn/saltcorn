@@ -202,7 +202,9 @@
           await state.refresh_tables();
           await state.refresh_views();
           await state.refresh_pages();
-          state.mobileConfig.localTableIds = await getTableIds(config.localUserTables);
+          state.mobileConfig.localTableIds = await getTableIds(
+            config.localUserTables
+          );
           await state.setConfig("base_url", config.server_path);
           await initRoutes();
           setVersionTtag();
@@ -212,9 +214,12 @@
             if (await checkJWT()) {
               const decodedJwt = jwt_decode(localStorage.getItem("auth_jwt"));
               const mobileConfig = state.mobileConfig;
-              mobileConfig.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
+              mobileConfig.role_id = decodedJwt?.role_id
+                ? decodedJwt.role_id
+                : 10;
               mobileConfig.user_name = decodedJwt.sub;
               mobileConfig.language = decodedJwt.language;
+              mobileConfig.isPublicUser = false;
               $.i18n({
                 locale: mobileConfig.language,
               });
