@@ -1419,10 +1419,20 @@ const json_list_to_external_table = (get_json_list, fields0) => {
   const getRows = async (where = {}, selopts = {}) => {
     let data_in = await get_json_list({ where, ...selopts });
     const restricts = Object.entries(where);
+    const sat = x => ([k, v]) => {
+      if (Array.isArray(v))
+        return v.every(v1 => sat(x)([k, v1]))
+      else if (v?.lt) return x[k] < +(v.lt)
+      else if (v?.gt) return x[k] > +(v.gt)
+      else if (v?.ilike)
+        return (x[k] || "").includes(v.ilike)
+
+      else return x[k] === v
+    }
     const data_filtered =
       restricts.length === 0
         ? data_in
-        : data_in.filter((x) => restricts.every(([k, v]) => x[k] === v));
+        : data_in.filter((x) => restricts.every(sat(x)));
     if (selopts.orderBy) {
       const cmp = selopts.orderDesc
         ? new Function(

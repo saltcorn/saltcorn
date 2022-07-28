@@ -415,9 +415,10 @@ module.exports = {
     viewname,
     configuration: { columns, default_state },
     req,
+    exttable_name
   }) => ({
     async distinctValuesQuery() {
-      const table = await Table.findOne(table_id);
+      const table = await Table.findOne(table_id || exttable_name);
       const fields = await table.getFields();
       let distinct_values = {};
       const role = req.user ? req.user.role_id : 10;
