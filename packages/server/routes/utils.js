@@ -128,6 +128,7 @@ const setTenant = (req, res, next) => {
       } else {
         db.runWithTenant(other_domain, () => {
           setLanguage(req, res, state);
+          state.log(5, `${req.method} ${req.originalUrl}`);
           next();
         });
       }
@@ -140,12 +141,14 @@ const setTenant = (req, res, next) => {
       } else {
         db.runWithTenant(ten, () => {
           setLanguage(req, res, state);
+          state.log(5, `${req.method} ${req.originalUrl}`);
           next();
         });
       }
     }
   } else {
     setLanguage(req, res);
+    getState().log(5, `${req.method} ${req.originalUrl}`);
     next();
   }
 };

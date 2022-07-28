@@ -36,6 +36,8 @@ router.get(
   "/:pagename",
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
+    const state = getState();
+    state.log(3, `Route /page/${pagename} user=${req.user?.id}`);
 
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const db_page = await Page.findOne({ name: pagename });
@@ -56,10 +58,12 @@ router.get(
           contents,
         })
       );
-    } else
+    } else {
+      state.log(2, `Page $pagename} not found or not authorized`);
       res
         .status(404)
         .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
+    }
   })
 );
 
