@@ -71,6 +71,8 @@ const getIntervalTriggersDueNow = async (
     due.setHours(due.getHours() + hours);
   }
   await state.setConfig(cfgField, due);
+  state.log(5, `Event ${name}`);
+
   EventLog.create({
     event_type: name,
     channel: null,
@@ -148,7 +150,10 @@ const runScheduler = async ({
     const isHourly = await intervalIsNow("Hourly");
     const isDaily = await intervalIsNow("Daily");
     const isWeekly = await intervalIsNow("Weekly");
-    //console.log({ isHourly, isDaily, isWeekly, now: new Date() });
+    getState().log(
+      4,
+      `Schduler tick ${JSON.stringify({ isHourly, isDaily, isWeekly })}`
+    );
 
     await eachTenant(async () => {
       try {
@@ -183,8 +188,10 @@ const runScheduler = async ({
               });
           }
         }
+        const isThisTenantHourly = await intervalIsNow("Hourly");
+
         const snapshots_enabled = getState().getConfig("snapshots_enabled");
-        if (snapshots_enabled && isHourly) {
+        if (snapshots_enabled && isThisTenantHourly) {
           await take_snapshot();
         }
       } catch (e) {

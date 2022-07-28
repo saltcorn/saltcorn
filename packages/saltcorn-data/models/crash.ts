@@ -7,7 +7,6 @@
 import db from "../db";
 import moment from "moment";
 import type { SelectOptions, Where } from "@saltcorn/db-common/internal";
-
 /**
  * Crash Class
  * @category saltcorn-data
@@ -106,6 +105,9 @@ class Crash {
       url: req.url,
       headers: req.headers,
     };
+    const { getState } = require("../db/state");
+
+    getState().log(1, `ERROR: ${err.stack}`);
     await db.runWithTenant(db.connectObj.default_schema, async () => {
       await db.insert("_sc_errors", payload);
     });

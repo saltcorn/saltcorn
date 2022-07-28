@@ -185,7 +185,8 @@ class Trigger implements AbstractTrigger {
       const { password, ...user }: any = userPW || {};
       const { getState } = require("../db/state");
       const findArgs: Where = { when_trigger: eventType };
-
+      const state = getState();
+      state.log(5, `Event ${eventType} ${channel} ${JSON.stringify(payload)}`);
       let table;
       if (channel && ["Insert", "Update", "Delete"].includes(channel)) {
         const Table = require("./table");
@@ -196,7 +197,9 @@ class Trigger implements AbstractTrigger {
       const triggers = Trigger.find(findArgs);
 
       for (const trigger of triggers) {
-        const action = getState().actions[trigger.action];
+        state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
+
+        const action = state.actions[trigger.action];
         action &&
           action.run &&
           (await action.run({
@@ -232,11 +235,17 @@ class Trigger implements AbstractTrigger {
     row: Row
   ): Promise<void> {
     const triggers = await Trigger.getTableTriggers(when_trigger, table);
+    const { getState } = require("../db/state");
+    const state = getState();
     for (const trigger of triggers) {
+      state.log(
+        4,
+        `Trigger run ${trigger.name} ${trigger.action} on ${when_trigger} ${table.name} id=${row?.id}`
+      );
+
       try {
         await trigger.run!(row); // getTableTriggers ensures run is set
       } catch (e) {
-        console.log(e);
         Crash.create(e, {
           url: "/",
           headers: { when_trigger, table: table.name, trigger: trigger.name },
@@ -260,7 +269,9 @@ class Trigger implements AbstractTrigger {
    */
   async runWithoutRow(runargs = {}): Promise<boolean> {
     const { getState } = require("../db/state");
-    const action = getState().actions[this.action];
+    const state = getState();
+    state.log(4, `Trigger run ${this.name} ${this.action} no row`);
+    const action = state.actions[this.action];
     return (
       action &&
       action.run &&

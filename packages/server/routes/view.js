@@ -20,6 +20,7 @@ const {
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
+const { getState } = require("@saltcorn/data/db/state");
 
 /**
  * @type {object}
@@ -44,8 +45,11 @@ router.get(
     const query = { ...req.query };
     const view = await View.findOne({ name: viewname });
     const role = req.user && req.user.id ? req.user.role_id : 10;
+    const state = getState();
+    state.log(3, `Route /view/${viewname} user=${req.user?.id}`);
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
+      state.log(2, `View ${viewname} not found`);
       res.redirect("/");
       return;
     }
@@ -56,6 +60,7 @@ router.get(
       !(await view.authorise_get({ query, req, ...view }))
     ) {
       req.flash("danger", req.__("Not authorized"));
+      state.log(2, `View ${viewname} not authorized`);
       res.redirect("/");
       return;
     }
@@ -123,13 +128,21 @@ router.post(
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 10;
+    const state = getState();
+    state.log(
+      3,
+      `Route /view/${viewname} viewroute ${route} user=${req.user?.id}`
+    );
 
     const view = await View.findOne({ name: viewname });
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
+      state.log(2, `View ${viewname} not found`);
       res.redirect("/");
     } else if (role > view.min_role) {
       req.flash("danger", req.__("Not authorized"));
+      state.log(2, `View ${viewname} viewroute ${route} not authorized`);
+
       res.redirect("/");
     } else {
       await view.runRoute(route, req.body, res, { res, req });
@@ -150,10 +163,12 @@ router.post(
     const { viewname } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const query = { ...req.query };
-
+    const state = getState();
+    state.log(3, `Route /view/${viewname} POST user=${req.user?.id}`);
     const view = await View.findOne({ name: viewname });
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
+      state.log(2, `View ${viewname} not found`);
       res.redirect("/");
       return;
     }
@@ -164,6 +179,8 @@ router.post(
       !(await view.authorise_post({ body: req.body, req, ...view }))
     ) {
       req.flash("danger", req.__("Not authorized"));
+      state.log(2, `View ${viewname} POST not authorized`);
+
       res.redirect("/");
     } else if (!view.runPost) {
       throw new InvalidConfiguration(

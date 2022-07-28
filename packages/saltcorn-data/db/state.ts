@@ -12,7 +12,12 @@ import File from "../models/file";
 import Table from "../models/table";
 import Page from "../models/page";
 import Field from "../models/field";
-import { Plugin, PluginLayout, ViewTemplate, MobileConfig } from "@saltcorn/types/base_types";
+import {
+  Plugin,
+  PluginLayout,
+  ViewTemplate,
+  MobileConfig,
+} from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import { ConfigTypes, SingleConfig } from "models/config";
 import User from "../models/user";
@@ -120,6 +125,7 @@ class State {
   i18n: I18n.I18n;
   roomEmitter?: Function;
   mobileConfig?: MobileConfig;
+  logLevel: number;
 
   /**
    * State constructor
@@ -159,6 +165,7 @@ class State {
       locales: [],
       directory: join(__dirname, "..", "app-locales"),
     });
+    this.logLevel = 1;
   }
 
   /**
@@ -191,6 +198,15 @@ class State {
     else return "Optional";
   }
 
+  log(min_level: number, msg: string) {
+    if (min_level <= this.logLevel) {
+      const ten = db.getTenantSchema();
+      const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
+      if (min_level === 1) console.error(s);
+      else console.log(s);
+    }
+  }
+
   /**
    * Refresh State cache for all Saltcorn main objects
    * @param {boolean} noSignal - Do not signal - refresh to other cluster processes.
@@ -215,6 +231,8 @@ class State {
     this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
     });
+    this.logLevel = +(this.configs.log_level.value || 1);
+    if (!noSignal) this.log(5, "Refresh config");
     if (db.is_node) {
       // TODO ch mobile i18n
       await this.refresh_i18n();
@@ -244,6 +262,8 @@ class State {
           JSON.stringify(strings, null, 2)
         );
     }
+    this.log(5, "Refresh i18n");
+
     this.i18n = new I18n.I18n();
     this.i18n.configure({
       locales: Object.keys(this.getConfig("localizer_languages", {})),
@@ -273,6 +293,8 @@ class State {
         this.virtual_triggers.push(...trs);
       }
     }
+    if (!noSignal) this.log(5, "Refresh views");
+
     if (!noSignal && db.is_node)
       process_send({ refresh: "views", tenant: db.getTenantSchema() });
   }
@@ -284,6 +306,8 @@ class State {
    */
   async refresh_triggers(noSignal: boolean) {
     this.triggers = await Trigger.findDB();
+    if (!noSignal) this.log(5, "Refresh triggers");
+
     if (!noSignal && db.is_node)
       process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
@@ -296,6 +320,8 @@ class State {
   async refresh_pages(noSignal: boolean) {
     const Page = require("../models/page");
     this.pages = await Page.find();
+    if (!noSignal) this.log(5, "Refresh pages");
+
     if (!noSignal && db.is_node)
       process_send({ refresh: "pages", tenant: db.getTenantSchema() });
   }
@@ -312,6 +338,8 @@ class State {
     for (const f of allfiles) {
       if (f.id) this.files[f.id] = f;
     }
+    if (!noSignal) this.log(5, "Refresh files");
+
     if (!noSignal && db.is_node)
       process_send({ refresh: "files", tenant: db.getTenantSchema() });
   }
@@ -355,6 +383,8 @@ class State {
       });
     }
     this.tables = allTables;
+    if (!noSignal) this.log(5, "Refresh table");
+
     if (!noSignal && db.is_node)
       process_send({ refresh: "tables", tenant: db.getTenantSchema() });
   }
