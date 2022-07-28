@@ -12,7 +12,12 @@ import File from "../models/file";
 import Table from "../models/table";
 import Page from "../models/page";
 import Field from "../models/field";
-import { Plugin, PluginLayout, ViewTemplate, MobileConfig } from "@saltcorn/types/base_types";
+import {
+  Plugin,
+  PluginLayout,
+  ViewTemplate,
+  MobileConfig,
+} from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import { ConfigTypes, SingleConfig } from "models/config";
 import User from "../models/user";
@@ -120,6 +125,7 @@ class State {
   i18n: I18n.I18n;
   roomEmitter?: Function;
   mobileConfig?: MobileConfig;
+  logLevel: number;
 
   /**
    * State constructor
@@ -159,6 +165,7 @@ class State {
       locales: [],
       directory: join(__dirname, "..", "app-locales"),
     });
+    this.logLevel = 1;
   }
 
   /**
@@ -191,6 +198,15 @@ class State {
     else return "Optional";
   }
 
+  log(min_level: number, msg: string) {
+    if (min_level >= this.logLevel) {
+      const ten = db.getTenantSchema();
+      const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
+      if (min_level === 1) console.error(s);
+      else console.log(s);
+    }
+  }
+
   /**
    * Refresh State cache for all Saltcorn main objects
    * @param {boolean} noSignal - Do not signal - refresh to other cluster processes.
@@ -215,6 +231,7 @@ class State {
     this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
     });
+    this.logLevel = +(this.configs.log_level.value || 1);
     if (db.is_node) {
       // TODO ch mobile i18n
       await this.refresh_i18n();
