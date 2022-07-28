@@ -199,7 +199,7 @@ class State {
   }
 
   log(min_level: number, msg: string) {
-    if (min_level >= this.logLevel) {
+    if (min_level <= this.logLevel) {
       const ten = db.getTenantSchema();
       const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
       if (min_level === 1) console.error(s);
