@@ -30,7 +30,8 @@ const getAuthLinks = (current, entryPoint) => {
   if (current !== "login") links.login = "javascript:execLink('/auth/login')";
   if (current !== "signup" && state.getConfig("allow_signup"))
     links.signup = "javascript:execLink('/auth/signup')";
-  links.publicUser = `javascript:publicLogin('${entryPoint}')`;
+  if (state.getConfig("public_user_link"))
+    links.publicUser = `javascript:publicLogin('${entryPoint}')`;
   return links;
 };
 
