@@ -140,6 +140,13 @@ const configTypes: ConfigTypes = {
     default: true,
     blurb: "Show the login link in the menu",
   },
+  public_user_link: {
+    type: "Bool",
+    label: "Show public user link",
+    default: true,
+    blurb:
+      "Show a link on the login menu to continue as public user. Only on mobile logins.",
+  },
   /** @type {object} */
   cookie_sessions: {
     type: "Bool",

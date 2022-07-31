@@ -86,13 +86,15 @@ async function login(e, entryPoint, isSignup) {
     formData.get("password"),
     isSignup
   );
-  if (typeof loginResult === "string") { // use it as a token
+  if (typeof loginResult === "string") {
+    // use it as a token
     parent.localStorage.setItem("auth_jwt", loginResult);
     const decodedJwt = parent.jwt_decode(loginResult);
     const config = parent.saltcorn.data.state.getState().mobileConfig;
-    config.role_id = decodedJwt?.role_id ? decodedJwt.role_id : 10;
-    config.user_name = decodedJwt.sub;
-    config.language = decodedJwt.language;
+    config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 10;
+    config.user_name = decodedJwt.user.email;
+    config.language = decodedJwt.user.language;
+    config.isPublicUser = false;
     parent.$.i18n({
       locale: config.language,
     });
@@ -104,17 +106,65 @@ async function login(e, entryPoint, isSignup) {
       alerts: [
         {
           type: "success",
-          msg: `Welcome '${config.user_name}'`,
+          msg: parent.$.i18n("Welcome to Saltcorn!"),
         },
       ],
     });
     parent.replaceIframe(page.content);
-  }
-  else if(loginResult?.alerts) {
-    parent.showAlerts(loginResult?.alerts)
-  }
-  else {
+  } else if (loginResult?.alerts) {
+    parent.showAlerts(loginResult?.alerts);
+  } else {
     throw new Error("The login failed.");
+  }
+}
+
+async function publicLogin(entryPoint) {
+  try {
+    const config = parent.saltcorn.data.state.getState().mobileConfig;
+    config.role_id = 10;
+    config.user_name = "public";
+    config.language = "en";
+    config.isPublicUser = true;
+    parent.$.i18n({
+      locale: config.language,
+    });
+    const page = await parent.router.resolve({
+      pathname: entryPoint,
+      fullWrap: true,
+      alerts: [
+        {
+          type: "success",
+          msg: parent.$.i18n("Welcome to Saltcorn!"),
+        },
+      ],
+    });
+    parent.replaceIframe(page.content);
+  } catch (error) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+  }
+}
+
+async function logout() {
+  const config = parent.saltcorn.data.state.getState().mobileConfig;
+  try {
+    const page = await parent.router.resolve({
+      pathname: "get/auth/logout",
+      entryView: config.entry_point,
+      versionTag: config.version_tag,
+    });
+    parent.replaceIframe(page.content);
+  } catch (error) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
   }
 }
 

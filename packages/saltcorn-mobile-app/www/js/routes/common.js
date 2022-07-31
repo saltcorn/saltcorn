@@ -31,22 +31,32 @@ export const sbAdmin2Layout = () => {
 };
 
 export const getMenu = () => {
-  const userName = saltcorn.data.state.getState().mobileConfig.user_name;
-  const authItems = [
-    {
-      label: "User",
-      icon: "far fa-user",
-      isUser: true,
-      subitems: [
-        { label: userName },
+  const state = saltcorn.data.state.getState();
+  const allowSignup = state.getConfig("allow_signup");
+  const mobileCfg = saltcorn.data.state.getState().mobileConfig;
+  const userName = mobileCfg.user_name;
+  const authItems = mobileCfg.isPublicUser
+    ? [
+        { link: "javascript:execLink('/auth/login')", label: "Login" },
+        ...(allowSignup
+          ? [{ link: "javascript:execLink('/auth/signup')", label: "Sign up" }]
+          : []),
+      ]
+    : [
         {
-          link: `javascript:parent.callLogout();`,
-          icon: "fas fa-sign-out-alt",
-          label: "Logout",
+          label: "User",
+          icon: "far fa-user",
+          isUser: true,
+          subitems: [
+            { label: userName },
+            {
+              link: `javascript:logout();`,
+              icon: "fas fa-sign-out-alt",
+              label: "Logout",
+            },
+          ],
         },
-      ],
-    },
-  ];
+      ];
 
   return [
     {

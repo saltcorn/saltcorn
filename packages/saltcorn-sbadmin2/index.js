@@ -288,6 +288,8 @@ const renderAuthLinks = (authLinks) => {
   if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
   if (authLinks.signup)
     links.push(link(authLinks.signup, "Create an account!"));
+  if (authLinks.publicUser)
+    links.push(link(authLinks.publicUser, "Continue as public user"));
   const meth_links = (authLinks.methods || [])
     .map(({ url, icon, label }) =>
       a(

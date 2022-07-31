@@ -1,6 +1,7 @@
-const iframeStyle =  "position: fixed; top: 0; left: 0; bottom: 0; right: 0; "
- + "width: 100%; height: 100%; border: none; margin: 0; padding: 0; "
- + "overflow: hidden; z-index: 999999; "
+const iframeStyle =
+  "position: fixed; top: 0; left: 0; bottom: 0; right: 0; " +
+  "width: 100%; height: 100%; border: none; margin: 0; padding: 0; " +
+  "overflow: hidden; z-index: 999999; ";
 
 const routingHistory = [];
 
@@ -21,24 +22,24 @@ function addRoute(routeEntry) {
 async function apiCall({ method, path, params, body, responseType }) {
   const config = saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
-  const token = localStorage.getItem("auth_jwt");
   const url = `${serverPath}${path}`;
+  const headers = {
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Saltcorn-Client": "mobile-app",
+  };
+  const token = localStorage.getItem("auth_jwt");
+  if (token) headers.Authorization = `jwt ${token}`;
   try {
     const result = await axios({
       url: url,
-      method: method,
-      params: params,
-      headers: {
-        Authorization: `jwt ${token}`,
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Saltcorn-Client": "mobile-app",
-      },
+      method,
+      params,
+      headers,
       responseType: responseType ? responseType : "json",
       data: body,
     });
     return result;
-  }
-  catch(error) {
+  } catch (error) {
     error.message = `Unable to call ${method} ${url}:\n${error.message}`;
     throw error;
   }
@@ -92,25 +93,6 @@ function splitPathQuery(url) {
   return { path, query };
 }
 
-async function callLogout() {
-  const config = saltcorn.data.state.getState().mobileConfig;
-  try {
-    const page = await router.resolve({
-      pathname: "get/auth/logout",
-      entryView: config.entry_point,
-      versionTag: config.version_tag,
-    });
-    replaceIframe(page.content);
-  } catch (error) {
-    showAlerts([
-      {
-        type: "error",
-        msg: error.message ? error.message : "An error occured.",
-      },
-    ]);
-  }
-}
-
 function replaceIframe(content) {
   const iframe = document.getElementById("content-iframe");
   iframe.remove();
@@ -118,7 +100,7 @@ function replaceIframe(content) {
   document.body.appendChild(newIframe);
   const config = saltcorn.data.state.getState().mobileConfig;
   newIframe.contentWindow._sc_version_tag = config.version_tag;
-  newIframe.setAttribute("style", iframeStyle)
+  newIframe.setAttribute("style", iframeStyle);
   newIframe.id = "content-iframe";
   newIframe.contentWindow.document.open();
   newIframe.contentWindow.document.write(content);
