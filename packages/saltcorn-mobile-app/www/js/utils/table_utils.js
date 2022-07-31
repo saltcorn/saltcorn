@@ -2,12 +2,24 @@ import { fileExists, readJSON, writeJSON } from "./file_helpers.js";
 
 const historyFile = "update_history";
 
+/**
+ * drop tables that are no longer in the 'tables.json' file
+ * the server db uses a serial (with postgres), so checking ids should suffice
+ */
+async function dropDeletedTables(incomingTables) {
+  const existingTables = await saltcorn.data.models.Table.find();
+  for (const table of existingTables) {
+    if (!incomingTables.find((row) => row.id === table.id)) {
+      saltcorn.data.db.query(`DROP TABLE ${table.name}`);
+    }
+  }
+}
+
 async function updateScTables(tablesJSON, skipScPlugins = true) {
   saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
-  // TODO drop tables with the same name and a new id
-  // could mean they were deleted and re-created
   for (const { table, rows } of tablesJSON.sc_tables) {
     if (skipScPlugins && table === "_sc_plugins") continue;
+    if (table === "_sc_tables") await dropDeletedTables(rows);
     await saltcorn.data.db.deleteWhere(table);
     for (const row of rows) {
       await saltcorn.data.db.insert(table, row);
