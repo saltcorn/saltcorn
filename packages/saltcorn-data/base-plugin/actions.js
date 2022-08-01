@@ -44,8 +44,10 @@ const run_code = async ({
   ...rest
 }) => {
   if (run_where === "Client page") return { eval_js: code };
-  if (!isNode() && run_where === "Server")
-    return { error: "Running server code is not yet implemented." };
+  if (!isNode() && run_where === "Server") {
+    // stop on the app and run the action server side
+    return { server_eval: true };
+  }
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {

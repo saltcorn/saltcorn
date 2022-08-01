@@ -18,13 +18,22 @@ const Table = require("../../models/table");
 const { isNode } = require("../../utils");
 
 /**
- * @function
+ * formats the column index of a view cfg
+ * @param {number|undefined} colIndex
+ * @returns json formatted attribute for run_action
+ */
+const columnIndex = (colIndex) =>
+  colIndex ? `, column_index: ${colIndex}` : "";
+
+/**
  * @param {string} viewname
  * @param {Table|object} table
  * @param {string} action_name
  * @param {object} r
- * @param {string} colId missing in contract
- * @param {colIdNm} colIdNm missing in contract
+ * @param {string} colId
+ * @param {string} colIdNm
+ * @param {string} confirm
+ * @param {number|undefined} index
  * @returns {any}
  */
 const action_url = (
@@ -34,7 +43,8 @@ const action_url = (
   r,
   colId,
   colIdNm,
-  confirm
+  confirm,
+  colIndex
 ) => {
   if (action_name === "Delete")
     return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
@@ -46,7 +56,9 @@ const action_url = (
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
-    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r?.id}});`,
+    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${
+      r?.id
+    }${columnIndex(colIndex)}});`,
   };
 };
 
@@ -413,8 +425,9 @@ const action_requires_write = (nm) => {
 // flapMap if f returns array
 const flapMaipish = (xs, f) => {
   const res = [];
+  let index = 0;
   for (const x of xs) {
-    const y = f(x);
+    const y = f(x, index++);
     if (Array.isArray(y)) res.push(...y);
     else res.push(y);
   }
@@ -442,7 +455,7 @@ const get_viewable_fields = (
   __
 ) => {
   const dropdown_actions = [];
-  const tfields = flapMaipish(columns, (column) => {
+  const tfields = flapMaipish(columns, (column, index) => {
     const role = req.user ? req.user.role_id : 10;
     const user_id = req.user ? req.user.id : null;
     const setWidth = column.col_width
@@ -464,7 +477,8 @@ const get_viewable_fields = (
             r,
             column.action_name,
             "action_name",
-            column.confirm
+            column.confirm,
+            index
           );
           const label = column.action_label_formula
             ? eval_expression(column.action_label, r)

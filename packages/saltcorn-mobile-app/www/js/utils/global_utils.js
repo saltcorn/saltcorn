@@ -193,3 +193,13 @@ async function goBack(steps = 1, exitOnFirstPage = false) {
     await handleRoute(newCurrent.route, newCurrent.query);
   }
 }
+
+function errorAlert(error) {
+  showAlerts([
+    {
+      type: "error",
+      msg: error.message ? error.message : "An error occured.",
+    },
+  ]);
+  console.error(error);
+}

@@ -571,10 +571,11 @@ const run_action = async (
   { getRowQuery }
 ) => {
   const col = columns.find(
-    (c) =>
+    (c, index) =>
       c.type === "Action" &&
       c.action_name === body.action_name &&
-      body.action_name
+      body.action_name &&
+      (body.column_index ? body.column_index === index : true)
   );
 
   const table = await Table.findOne({ id: table_id });

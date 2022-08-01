@@ -172,13 +172,7 @@ async function signupFormSubmit(e, entryView) {
   try {
     await login(e, entryView, true);
   } catch (error) {
-    parent.showAlerts([
-      {
-        type: "error",
-        msg: error.message ? error.message : "An error occured.",
-      },
-    ]);
-    console.error(error);
+    parent.errorAlert(error);
   }
 }
 
@@ -186,9 +180,7 @@ async function loginFormSubmit(e, entryView) {
   try {
     await login(e, entryView, false);
   } catch (error) {
-    const msg = error.message ? error.message : "An error occured.";
-    parent.showAlerts([{ type: "error", msg }]);
-    console.error(error);
+    parent.errorAlert(error);
   }
 }
 
@@ -320,20 +312,36 @@ function mobile_modal(url, opts = {}) {
 }
 
 async function local_post(url, args) {
-  const result = await parent.router.resolve({
-    pathname: `post${url}`,
-    data: args,
-  });
-  if (result.redirect) await parent.handleRoute(result.redirect);
-  else common_done(result);
+  try {
+    const result = await parent.router.resolve({
+      pathname: `post${url}`,
+      data: args,
+    });
+    if (result.redirect) await parent.handleRoute(result.redirect);
+    else common_done(result);
+  } catch (error) {
+    parent.errorAlert(error);
+  }
 }
 
 async function local_post_json(url) {
-  const result = await parent.router.resolve({
-    pathname: `post${url}`,
+  try {
+    const result = await parent.router.resolve({
+      pathname: `post${url}`,
+    });
+    if (result.server_eval) await evalServerCode(url);
+    if (result.redirect) await parent.handleRoute(result.redirect);
+    else common_done(result);
+  } catch (error) {
+    parent.errorAlert(error);
+  }
+}
+
+async function evalServerCode(url) {
+  await parent.apiCall({
+    method: "POST",
+    path: url,
   });
-  if (result.redirect) await parent.handleRoute(result.redirect);
-  else common_done(result);
 }
 
 async function make_unique_field(
@@ -422,13 +430,17 @@ async function clear_state() {
 }
 
 async function view_post(viewname, route, data, onDone) {
-  const response = await parent.apiCall({
-    method: "POST",
-    path: "/view/" + viewname + "/" + route,
-    body: data,
-  });
-  if (onDone) onDone(response.data);
-  common_done(response);
+  try {
+    const response = await parent.apiCall({
+      method: "POST",
+      path: "/view/" + viewname + "/" + route,
+      body: data,
+    });
+    if (onDone) onDone(response.data);
+    common_done(response.data);
+  } catch (error) {
+    parent.errorAlert(error);
+  }
 }
 
 function reload_on_init() {
