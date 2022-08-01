@@ -23,6 +23,18 @@ const prepareAuthForm = () => {
   });
 };
 
+// TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+const getAuthLinks = (current, entryPoint) => {
+  const links = { methods: [] };
+  const state = saltcorn.data.state.getState();
+  if (current !== "login") links.login = "javascript:execLink('/auth/login')";
+  if (current !== "signup" && state.getConfig("allow_signup"))
+    links.signup = "javascript:execLink('/auth/signup')";
+  if (state.getConfig("public_user_link"))
+    links.publicUser = `javascript:publicLogin('${entryPoint}')`;
+  return links;
+};
+
 const renderLoginView = (entryPoint, versionTag) => {
   const form = prepareAuthForm(entryPoint);
   form.onSubmit = `javascript:loginFormSubmit(this, '${entryPoint}')`;
@@ -30,7 +42,7 @@ const renderLoginView = (entryPoint, versionTag) => {
   return sbAdmin2Layout().authWrap({
     title: "login",
     form: form,
-    authLinks: { signup: "javascript:execLink('/auth/signup')" },
+    authLinks: getAuthLinks("login", entryPoint),
     alerts: [],
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
@@ -47,7 +59,7 @@ const renderSignupView = (entryPoint, versionTag) => {
   return sbAdmin2Layout().authWrap({
     title: "signup",
     form: form,
-    authLinks: { login: "javascript:execLink('/auth/login')" },
+    authLinks: getAuthLinks("signup", entryPoint),
     alerts: [],
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
@@ -68,10 +80,7 @@ export const getLoginView = async () => {
 export const getSignupView = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   return {
-    content: renderSignupView(
-      config.entry_point,
-      config.version_tag
-    ),
+    content: renderSignupView(config.entry_point, config.version_tag),
     replaceIframe: true,
   };
 };
@@ -82,10 +91,7 @@ export const logout = async () => {
   if (response.data.success) {
     localStorage.removeItem("auth_jwt");
     return {
-      content: renderLoginView(
-        config.entry_point,
-        config.version_tag
-      ),
+      content: renderLoginView(config.entry_point, config.version_tag),
     };
   } else {
     console.log("unable to logout");

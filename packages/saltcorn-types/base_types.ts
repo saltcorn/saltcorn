@@ -326,5 +326,5 @@ export type MobileConfig = {
   role_id?: number;
   user_name?: string;
   language?: string;
-
+  isPublicUser?: boolean;
 };

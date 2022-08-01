@@ -207,8 +207,13 @@ const loginWithJwt = async (email, password, res) => {
     const token = jwt.sign(
       {
         sub: email,
-        role_id: user.role_id,
-        language: user.language ? user.language : "en",
+        user: {
+          id: user.id,
+          email: user.email,
+          role_id: user.role_id,
+          language: user.language ? user.language : "en",
+          disabled: user.disabled,
+        },
         iss: "saltcorn@saltcorn",
         aud: "saltcorn-mobile-app",
         iat: now.valueOf(),

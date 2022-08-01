@@ -428,24 +428,28 @@ class View {
       Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
+          const headers: any = {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-Saltcorn-Client": "mobile-app",
+          };
           const token = window.localStorage.getItem("auth_jwt");
+          if (token) headers.Authorization = `jwt ${token}`;
           try {
             let response = await axios.post(
               url,
               { args },
               {
-                headers: {
-                  Authorization: `jwt ${token}`,
-                  "X-Requested-With": "XMLHttpRequest",
-                  "X-Saltcorn-Client": "mobile-app",
-                },
+                headers,
               }
             );
             for (const { type, msg } of response.data.alerts)
               req.flash(type, msg);
             return response.data.success;
           } catch (error: any) {
-            error.message = `Unable to call POST ${url}:\n${error.message}`;
+            if (error.request?.status === 401)
+              error.message = req.__("Not authorized");
+            else
+              error.message = `Unable to call POST ${url}:\n${error.message}`;
             throw error;
           }
         };

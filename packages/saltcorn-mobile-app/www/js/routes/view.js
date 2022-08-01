@@ -15,18 +15,26 @@ export const postView = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const response = new MobileResponse();
+  const req = new MobileRequest(context.xhr, context.files);
+  const res = new MobileResponse();
+  const state = saltcorn.data.state.getState();
+  if (
+    state.mobileConfig.role_id > view.min_role &&
+    !(await view.authorise_post({ body, req, ...view }))
+  ) {
+    throw new Error(req.__("Not authorized"));
+  }
   await view.runPost(
     {},
     body,
     {
-      req: new MobileRequest(context.xhr, context.files),
-      res: response,
+      req,
+      res,
       redirect,
     },
     view.isRemoteTable()
   );
-  return response.getJson();
+  return res.getJson();
 };
 
 /**
@@ -37,16 +45,20 @@ export const postViewRoute = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const response = new MobileResponse();
-  const request = new MobileRequest(context.xhr);
+  const req = new MobileRequest(context.xhr);
+  const res = new MobileResponse();
+  const state = saltcorn.data.state.getState();
+  if (state.mobileConfig.role_id > view.min_role) {
+    throw new Error(req.__("Not authorized"));
+  }
   await view.runRoute(
     context.params.route,
     context.data,
-    response,
-    { req: request, res: response },
+    res,
+    { req, res },
     view.isRemoteTable()
   );
-  return response.getJson();
+  return res.getJson();
 };
 
 /**
@@ -55,10 +67,17 @@ export const postViewRoute = async (context) => {
  * @returns
  */
 export const getView = async (context) => {
+  const state = saltcorn.data.state.getState();
   const query = parseQuery(context.query);
   const { viewname } = context.params;
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   const req = new MobileRequest(context.xhr);
+  if (
+    state.mobileConfig.role_id > view.min_role &&
+    !(await view.authorise_get({ query, req, ...view }))
+  ) {
+    throw new Error(req.__("Not authorized"));
+  }
   const contents = await view.run_possibly_on_page(
     query,
     req,
