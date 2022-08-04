@@ -5,7 +5,7 @@ export const postToggleField = async (context) => {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   if (mobileConfig.localTableIds.indexOf(table.id) >= 0) {
     if (mobileConfig.role_id > table.min_role_write)
-      throw new Error($.i18n("Not authorized"));
+      throw new Error(i18next.t("Not authorized"));
     await table.toggleBool(+id, field_name);
   } else {
     await apiCall({

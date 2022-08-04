@@ -95,10 +95,7 @@ async function login(e, entryPoint, isSignup) {
     config.user_name = decodedJwt.user.email;
     config.language = decodedJwt.user.language;
     config.isPublicUser = false;
-    parent.$.i18n({
-      locale: config.language,
-    });
-
+    await parent.i18next.changeLanguage(config.language);
     parent.addRoute({ route: entryPoint, query: undefined });
     const page = await parent.router.resolve({
       pathname: entryPoint,
@@ -106,7 +103,10 @@ async function login(e, entryPoint, isSignup) {
       alerts: [
         {
           type: "success",
-          msg: parent.$.i18n("Welcome to Saltcorn!"),
+          msg: parent.i18next.t("Welcome, %s!", {
+            postProcess: "sprintf",
+            sprintf: [config.user_name],
+          }),
         },
       ],
     });
@@ -125,16 +125,14 @@ async function publicLogin(entryPoint) {
     config.user_name = "public";
     config.language = "en";
     config.isPublicUser = true;
-    parent.$.i18n({
-      locale: config.language,
-    });
+    parent.i18next.changeLanguage(config.language);
     const page = await parent.router.resolve({
       pathname: entryPoint,
       fullWrap: true,
       alerts: [
         {
           type: "success",
-          msg: parent.$.i18n("Welcome to Saltcorn!"),
+          msg: parent.i18next.t("Welcome to Saltcorn!"),
         },
       ],
     });

@@ -5,7 +5,11 @@ function MobileRequest(xhr = false, files = undefined) {
   const flashMessages = [];
 
   return {
-    __: (s) =>  $.i18n(s),
+    __: (s, ...params) =>
+      i18next.t(s, {
+        postProcess: "sprintf",
+        sprintf: params,
+      }),
     getLocale: () => "en",
     user: {
       role_id: roleId,

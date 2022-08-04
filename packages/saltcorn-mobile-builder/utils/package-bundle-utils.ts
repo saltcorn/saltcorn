@@ -85,13 +85,17 @@ export async function installNpmPackages(buildDir: string, manager: any) {
     join(axiosInfo.location, "dist", "axios.min.js"),
     join(npmTargetDir, "axios.min.js")
   );
-  const i18nInfo = await manager.install("@wikimedia/jquery.i18n", "1.0.7");
+  const i18nNextInfo = await manager.install("i18next", "21.8.16");
   copySync(
-    join(i18nInfo.location, "src"),
-    join(npmTargetDir,"@wikimedia", "jquery.i18n")
+    join(i18nNextInfo.location, "i18next.min.js"),
+    join(npmTargetDir, "i18next.min.js")
+  );
+  const postProcInfo = await manager.install(
+    "i18next-sprintf-postprocessor",
+    "0.2.2"
   );
   copySync(
-    join(i18nInfo.location, "libs", "CLDRPluralRuleParser", "src", "CLDRPluralRuleParser.js"),
-    join(npmTargetDir,"@wikimedia", "CLDRPluralRuleParser.js")
+    join(postProcInfo.location, "i18nextSprintfPostProcessor.min.js"),
+    join(npmTargetDir, "i18nextSprintfPostProcessor.min.js")
   );
 }
