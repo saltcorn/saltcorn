@@ -828,7 +828,6 @@ const runPost = async (
       return;
     }
     const [viewname_when_done, relation] = use_view_when_done.split(".");
-    console.log({ view_when_done, use_view_when_done, relation, viewname_when_done });
     const nxview = await View.findOne({ name: viewname_when_done });
     if (!nxview) {
       req.flash(
