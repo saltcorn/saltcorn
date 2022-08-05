@@ -20,6 +20,7 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const {
   get_expression_function,
   expressionChecker,
+  eval_expression
 } = require("../../models/expression");
 const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
 const Library = require("../../models/library");
@@ -278,7 +279,7 @@ const configuration_workflow = (req) =>
                 ),
                 //fieldview: "radio_group",
                 attributes: {
-                  options: ["View", "Formula", "Back to referer"],
+                  options: ["View", "Formula", "URL formula", "Back to referer"],
                 },
               },
               {
@@ -291,7 +292,14 @@ const configuration_workflow = (req) =>
                 },
                 showIf: { destination_type: "View" },
               },
-
+              {
+                name: "dest_url_formula",
+                label: req.__("Destination URL Formula"),
+                type: "String",
+                required: true,
+                class: "validate-expression",
+                showIf: { destination_type: "URL formula" },
+              },
               new FieldRepeat({
                 name: "formula_destinations",
                 showIf: { destination_type: "Formula" },
@@ -661,6 +669,7 @@ const runPost = async (
     formula_destinations,
     auto_save,
     destination_type,
+    dest_url_formula
   },
   state,
   body,
@@ -813,6 +822,11 @@ const runPost = async (
     if (destination_type === "Back to referer" && body._referer) {
       res.redirect(body._referer);
       return;
+    } else if (destination_type === "URL formula" && dest_url_formula) {
+      const url = eval_expression(dest_url_formula, row)
+      res.redirect(url);
+      return;
+
     } else if (destination_type !== "View")
       for (const { view, expression } of formula_destinations || []) {
         if (expression) {
@@ -828,7 +842,6 @@ const runPost = async (
       return;
     }
     const [viewname_when_done, relation] = use_view_when_done.split(".");
-    console.log({ view_when_done, use_view_when_done, relation, viewname_when_done });
     const nxview = await View.findOne({ name: viewname_when_done });
     if (!nxview) {
       req.flash(

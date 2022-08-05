@@ -929,5 +929,6 @@
 	"Snapshot settings updated": "Snapshot settings updated",
 	"Download snapshots": "Download snapshots",
 	"Snapshot successful": "Snapshot successful",
-	"System logging verbosity": "System logging verbosity"
+	"System logging verbosity": "System logging verbosity",
+	"Destination URL Formula": "Destination URL Formula"
 }
