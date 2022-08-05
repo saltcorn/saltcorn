@@ -20,6 +20,7 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const {
   get_expression_function,
   expressionChecker,
+  eval_expression
 } = require("../../models/expression");
 const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
 const Library = require("../../models/library");
@@ -668,6 +669,7 @@ const runPost = async (
     formula_destinations,
     auto_save,
     destination_type,
+    dest_url_formula
   },
   state,
   body,
@@ -820,6 +822,11 @@ const runPost = async (
     if (destination_type === "Back to referer" && body._referer) {
       res.redirect(body._referer);
       return;
+    } else if (destination_type === "URL formula" && dest_url_formula) {
+      const url = eval_expression(dest_url_formula, row)
+      res.redirect(url);
+      return;
+
     } else if (destination_type !== "View")
       for (const { view, expression } of formula_destinations || []) {
         if (expression) {
