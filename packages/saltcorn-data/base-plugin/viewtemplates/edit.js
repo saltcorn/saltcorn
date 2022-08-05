@@ -278,7 +278,7 @@ const configuration_workflow = (req) =>
                 ),
                 //fieldview: "radio_group",
                 attributes: {
-                  options: ["View", "Formula", "Back to referer"],
+                  options: ["View", "Formula", "URL formula", "Back to referer"],
                 },
               },
               {
@@ -291,7 +291,14 @@ const configuration_workflow = (req) =>
                 },
                 showIf: { destination_type: "View" },
               },
-
+              {
+                name: "dest_url_formula",
+                label: req.__("Destination URL Formula"),
+                type: "String",
+                required: true,
+                class: "validate-expression",
+                showIf: { destination_type: "URL formula" },
+              },
               new FieldRepeat({
                 name: "formula_destinations",
                 showIf: { destination_type: "Formula" },
