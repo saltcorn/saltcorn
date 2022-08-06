@@ -160,16 +160,16 @@ class Table implements AbstractTable {
       return <Table>where;
     if (typeof where === "string") return Table.findOne({ name: where });
     if (typeof where === "number") return Table.findOne({ id: where });
-    if (where.name) {
+    if (where?.name) {
       const { getState } = require("../db/state");
       const extTable = getState().external_tables[where.name];
       if (extTable) return extTable;
     }
     const { getState } = require("../db/state");
     const tbl = getState().tables.find(
-      where.id
+      where?.id
         ? (v: TableCfg) => v.id === +where.id
-        : where.name
+        : where?.name
         ? (v: TableCfg) => v.name === where.name
         : satisfies(where)
     );

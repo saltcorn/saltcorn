@@ -243,4 +243,5 @@ module.exports = {
   getGitRevision,
   getSessionStore,
   setTenant,
+  get_tenant_from_req
 };
