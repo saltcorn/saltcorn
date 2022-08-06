@@ -137,33 +137,33 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  */
 const onMessageFromWorker =
   (masterState, { port, watchReaper, disableScheduler, pid }) =>
-  (msg) => {
-    //console.log("worker msg", typeof msg, msg);
-    if (msg === "Start" && !masterState.started) {
-      masterState.started = true;
-      runScheduler({
-        port,
-        watchReaper,
-        disableScheduler,
-        eachTenant,
-        auto_backup_now,
-        take_snapshot,
-      });
-      require("./systemd")({ port });
-      return true;
-    } else if (msg === "RestartServer") {
-      process.exit(0);
-      return true;
-    } else if (msg.tenant || msg.createTenant) {
-      ///ie from saltcorn
-      //broadcast
-      Object.entries(cluster.workers).forEach(([wpid, w]) => {
-        if (wpid !== pid) w.send(msg);
-      });
-      workerDispatchMsg(msg); //also master
-      return true;
-    }
-  };
+    (msg) => {
+      //console.log("worker msg", typeof msg, msg);
+      if (msg === "Start" && !masterState.started) {
+        masterState.started = true;
+        runScheduler({
+          port,
+          watchReaper,
+          disableScheduler,
+          eachTenant,
+          auto_backup_now,
+          take_snapshot,
+        });
+        require("./systemd")({ port });
+        return true;
+      } else if (msg === "RestartServer") {
+        process.exit(0);
+        return true;
+      } else if (msg.tenant || msg.createTenant) {
+        ///ie from saltcorn
+        //broadcast
+        Object.entries(cluster.workers).forEach(([wpid, w]) => {
+          if (wpid !== pid) w.send(msg);
+        });
+        workerDispatchMsg(msg); //also master
+        return true;
+      }
+    };
 
 module.exports =
   /**
@@ -362,14 +362,19 @@ const setupSocket = (...servers) => {
   });
   io.on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      const view = View.findOne({ name: viewname });
-      if (view.viewtemplateObj.authorize_join) {
-        view.viewtemplateObj
-          .authorize_join(view.configuration, room_id, socket.request.user)
-          .then((authorized) => {
-            if (authorized) socket.join(`${viewname}_${room_id}`);
-          });
-      } else socket.join(`${viewname}_${room_id}`);
+      //console.log({ viewname, room_id });
+      try {
+        const view = View.findOne({ name: viewname });
+        if (view.viewtemplateObj.authorize_join) {
+          view.viewtemplateObj
+            .authorize_join(view.configuration, room_id, socket.request.user)
+            .then((authorized) => {
+              if (authorized) socket.join(`${viewname}_${room_id}`);
+            });
+        } else socket.join(`${viewname}_${room_id}`);
+      } catch (err) {
+        getState().log(1, `Socket join_room error: ${err.stack}`);
+      }
     });
   });
 };
