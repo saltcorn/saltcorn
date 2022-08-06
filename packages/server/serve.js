@@ -357,12 +357,12 @@ const setupSocket = (...servers) => {
   io.use(wrap(passport.initialize()));
   io.use(wrap(passport.authenticate(["jwt", "session"])));
   if (process.send && !cluster.isMaster) io.adapter(createAdapter());
-  getState().setRoomEmitter((viewname, room_id, msg) => {
-    io.to(`${viewname}_${room_id}`).emit("message", msg);
+  getState().setRoomEmitter((tenant, viewname, room_id, msg) => {
+    io.to(`${tenant}_${viewname}_${room_id}`).emit("message", msg);
   });
   io.on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      const ten = get_tenant_from_req(socket.request);
+      const ten = get_tenant_from_req(socket.request) || "public";
       const f = () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -370,9 +370,9 @@ const setupSocket = (...servers) => {
             view.viewtemplateObj
               .authorize_join(view.configuration, room_id, socket.request.user)
               .then((authorized) => {
-                if (authorized) socket.join(`${viewname}_${room_id}`);
+                if (authorized) socket.join(`${ten}_${viewname}_${room_id}`);
               });
-          } else socket.join(`${viewname}_${room_id}`);
+          } else socket.join(`${ten}_${viewname}_${room_id}`);
         } catch (err) {
           getState().log(1, `Socket join_room error: ${err.stack}`);
         }
