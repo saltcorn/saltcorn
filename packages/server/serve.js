@@ -30,7 +30,7 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 const socketio = require("socket.io");
 const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
-const { setTenant, getSessionStore } = require("./routes/utils");
+const { setTenant, getSessionStore, get_tenant_from_req } = require("./routes/utils");
 const passport = require("passport");
 const { authenticate } = require("passport");
 const View = require("@saltcorn/data/models/view");
@@ -352,7 +352,7 @@ const setupSocket = (...servers) => {
     io.attach(server);
   }
 
-  io.use(wrap(setTenant));
+  //io.use(wrap(setTenant));
   io.use(wrap(getSessionStore()));
   io.use(wrap(passport.initialize()));
   io.use(wrap(passport.authenticate(["jwt", "session"])));
@@ -362,19 +362,23 @@ const setupSocket = (...servers) => {
   });
   io.on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      //console.log({ viewname, room_id });
-      try {
-        const view = View.findOne({ name: viewname });
-        if (view.viewtemplateObj.authorize_join) {
-          view.viewtemplateObj
-            .authorize_join(view.configuration, room_id, socket.request.user)
-            .then((authorized) => {
-              if (authorized) socket.join(`${viewname}_${room_id}`);
-            });
-        } else socket.join(`${viewname}_${room_id}`);
-      } catch (err) {
-        getState().log(1, `Socket join_room error: ${err.stack}`);
+      const ten = get_tenant_from_req(socket.request);
+      const f = () => {
+        try {
+          const view = View.findOne({ name: viewname });
+          if (view.viewtemplateObj.authorize_join) {
+            view.viewtemplateObj
+              .authorize_join(view.configuration, room_id, socket.request.user)
+              .then((authorized) => {
+                if (authorized) socket.join(`${viewname}_${room_id}`);
+              });
+          } else socket.join(`${viewname}_${room_id}`);
+        } catch (err) {
+          getState().log(1, `Socket join_room error: ${err.stack}`);
+        }
       }
+      if (ten && ten !== "public") db.runWithTenant(ten, f);
+      else f();
     });
   });
 };
