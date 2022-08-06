@@ -1,7 +1,8 @@
-import { spawnSync, SpawnSyncReturns } from "child_process";
+import { spawnSync } from "child_process";
 import { existsSync, mkdirSync, copySync, rmSync } from "fs-extra";
 import { join } from "path";
-import { userInfo } from "os";
+import { readdirSync } from "fs";
+const { getState } = require("@saltcorn/data/db/state");
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
@@ -24,7 +25,6 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
  * @returns
  */
 export function buildApkInContainer(buildDir: string) {
-  const info = userInfo();
   const result = spawnSync(
     "docker",
     [
@@ -47,10 +47,11 @@ export function buildApkInContainer(buildDir: string) {
 export function buildApp(
   buildDir: string,
   platforms: string[],
-  useDocker?: boolean
+  useDocker?: boolean,
+  buildForEmulator?: boolean
 ) {
   if (!useDocker) {
-    return callBuild(buildDir, platforms);
+    return callBuild(buildDir, platforms, buildForEmulator);
   } else {
     let code = buildApkInContainer(buildDir);
     if (code === 0 && platforms.indexOf("ios") > -1)
@@ -77,9 +78,20 @@ export function addPlatforms(buildDir: string, platforms: string[]) {
  * @param platforms
  * @returns
  */
-export function callBuild(buildDir: string, platforms: string[]) {
+export function callBuild(
+  buildDir: string,
+  platforms: string[],
+  buildForEmulator?: boolean
+) {
   addPlatforms(buildDir, platforms);
-  const result = spawnSync("npm", ["run", "build-app", "--", ...platforms], {
+  let buildParams = [...platforms];
+  if (!buildForEmulator) {
+    buildParams.push(
+      "--device",
+      `--developmentTeam="${getState().getConfig("apple_team_id")}"`
+    );
+  }
+  const result = spawnSync("npm", ["run", "build-app", "--", ...buildParams], {
     cwd: buildDir,
   });
   console.log(result.output.toString());
@@ -87,12 +99,30 @@ export function callBuild(buildDir: string, platforms: string[]) {
 }
 
 /**
- *
+ * find first file with specific ending
+ * @param directory directory to search
+ * @param ending wantet ending
+ */
+function fileWithEnding(directory: string, ending: string): string | null {
+  if (!existsSync(directory)) return null;
+  for (const file of readdirSync(directory)) {
+    if (file.endsWith(ending)) return file;
+  }
+  return null;
+}
+
+function safeEnding(file: string, ending: string): string {
+  if (!file.endsWith(ending)) return `${file}${ending}`;
+  return file;
+}
+
+/**
+ * copy .apk / .ipa files to 'copyDir' if they exist
  * @param buildDir directory where the app was build
  * @param copyDir directory where the resulting app file will be copied to
  * @param appFileName name of the copied app file
  */
-export async function copyApp(
+export async function tryCopyAppFiles(
   buildDir: string,
   copyDir: string,
   appFileName?: string
@@ -100,8 +130,8 @@ export async function copyApp(
   if (!existsSync(copyDir)) {
     mkdirSync(copyDir);
   }
-  const apkName = "app-debug.apk";
-  const apkFile = join(
+  // android .apk file
+  const apkBuildDir = join(
     buildDir,
     "platforms",
     "android",
@@ -109,9 +139,28 @@ export async function copyApp(
     "build",
     "outputs",
     "apk",
-    "debug",
-    apkName
+    "debug"
   );
-  const targetFile = appFileName ? appFileName : apkName;
-  copySync(apkFile, join(copyDir, targetFile));
+  const apkFile = fileWithEnding(apkBuildDir, ".apk");
+  if (apkFile) {
+    copySync(
+      join(apkBuildDir, apkFile),
+      join(
+        copyDir,
+        appFileName ? safeEnding(appFileName, ".apk") : "app-debug.apk"
+      )
+    );
+  }
+  // iOS .ipa file
+  const ipaBuildDir = join(buildDir, "platforms", "ios", "build", "device");
+  const ipaFile = fileWithEnding(ipaBuildDir, ".ipa");
+  if (ipaFile) {
+    copySync(
+      join(ipaBuildDir, ipaFile),
+      join(
+        copyDir,
+        appFileName ? safeEnding(appFileName, ".ipa") : "app-debug.ipa"
+      )
+    );
+  }
 }

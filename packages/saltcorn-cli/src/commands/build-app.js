@@ -48,6 +48,7 @@ class BuildAppCommand extends Command {
       plugins: dynamicPlugins,
       copyTargetDir: flags.copyAppDirectory,
       copyFileName: flags.appFileName,
+      buildForEmulator: flags.buildForEmulator,
     });
     process.exit(await builder.build());
   }
@@ -104,6 +105,10 @@ BuildAppCommand.flags = {
     char: "s",
     description: "URL to a saltcorn server",
   }),
+  buildForEmulator: flags.boolean({
+    name: "build for emulator",
+    description: "build without '--device', generates no .ipa file so that iOS apps can be build without developer accounts"
+  })
 };
 
 module.exports = BuildAppCommand;

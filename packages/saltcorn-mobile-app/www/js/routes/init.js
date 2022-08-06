@@ -1,11 +1,4 @@
-import { deleteRows } from "./delete.js";
-import { getView, postView, postViewRoute } from "./view.js";
-import { postToggleField } from "./edit.js";
-import { postPageAction, getPage } from "./page.js";
-import { getLoginView, getSignupView, logout } from "./auth.js";
-import { getErrorView } from "./error.js";
-
-export const initRoutes = async () => {
+const initRoutes = async () => {
   const routes = [
     {
       path: "post/view/:viewname",
@@ -41,7 +34,7 @@ export const initRoutes = async () => {
     },
     {
       path: "get/auth/logout",
-      action: logout,
+      action: logoutAction,
     },
     {
       path: "get/auth/signup",

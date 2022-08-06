@@ -1,11 +1,9 @@
-import { parseQuery, wrapContents } from "./common.js";
-
 /**
  *
  * @param {*} context
  * @returns
  */
-export const postView = async (context) => {
+const postView = async (context) => {
   let body = {};
   let redirect = undefined;
   for (const [k, v] of new URLSearchParams(context.query).entries()) {
@@ -41,7 +39,7 @@ export const postView = async (context) => {
  *
  * @param {*} context
  */
-export const postViewRoute = async (context) => {
+const postViewRoute = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
@@ -66,7 +64,7 @@ export const postViewRoute = async (context) => {
  * @param {*} context
  * @returns
  */
-export const getView = async (context) => {
+const getView = async (context) => {
   const state = saltcorn.data.state.getState();
   const query = parseQuery(context.query);
   const { viewname } = context.params;

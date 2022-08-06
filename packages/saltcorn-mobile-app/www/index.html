@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
     <script src="cordova.js"></script>
     <script src="js/utils/global_utils.js"></script>
     <script src="js/utils/iframe_view_utils.js"></script>
+    <script src="js/utils/file_helpers.js"></script>
+    <script src="js/utils/table_utils.js"></script>
+
+    <script src="js/mocks/request.js"></script>
+    <script src="js/mocks/response.js"></script>
+    <script src="js/routes/common.js"></script>
+    <script src="js/routes/auth.js"></script>
+    <script src="js/routes/delete.js"></script>
+    <script src="js/routes/edit.js"></script>
+    <script src="js/routes/error.js"></script>
+    <script src="js/routes/page.js"></script>
+    <script src="js/routes/view.js"></script>
+    <script src="js/routes/init.js"></script>
+
     <script src="js/mocks/response.js"></script>
     <script src="js/mocks/request.js"></script>
     <script src="npm_packages/jwt-decode.js"></script>
     <script src="npm_packages/universal-router.min.js"></script>
     <script src="npm_packages/axios.min.js"></script>
-    <script type="module">
-      import { initRoutes } from "./js/routes/init.js";
-      import {
-        updateDb,
-        getTableIds,
-        dbUpdateNeeded,
-        updateScPlugins,
-      } from "./js/utils/table_utils.js";
-      import { readJSON } from "./js/utils/file_helpers.js";
-
+    <script>
       const staticPlugins = ["base", "sbadmin2"];
 
       async function addScript(scriptObj) {
@@ -106,6 +115,14 @@
         }
       }
 
+      const prepareHeader = (header) => {
+        let result = Object.assign({}, header);
+        if (result.script?.startsWith("/")) {
+          result.script = result.script.substring(1);
+        }
+        return result;
+      };
+
       /*
         A plugin exports headers either as array, as key values object, or
         as a function with a configuration parameter that returns an Array.
@@ -118,17 +135,17 @@
           if (pluginHeaders) {
             if (Array.isArray(pluginHeaders))
               for (const header of pluginHeaders) {
-                config.pluginHeaders.push(header);
+                config.pluginHeaders.push(prepareHeader(header));
               }
             else if (typeof pluginHeaders === "function") {
               const headerResult = pluginHeaders(row.configuration);
               if (Array.isArray(headerResult)) {
                 for (const header of headerResult)
-                  config.pluginHeaders.push(header);
+                  config.pluginHeaders.push(prepareHeader(header));
               }
             } else
               for (const [key, value] of Object.entries(pluginHeaders)) {
-                config.pluginHeaders.push(value);
+                config.pluginHeaders.push(prepareHeader(value));
               }
           }
         }

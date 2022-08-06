@@ -1,6 +1,4 @@
-import { getHeaders, layout } from "./common.js"
-
-export const getErrorView = async (context) => {
+const getErrorView = async (context) => {
   const state = saltcorn.data.state.getState();
   const wrappedContent = layout().wrap({
     title: "Error",

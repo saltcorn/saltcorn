@@ -571,6 +571,14 @@ const configTypes: ConfigTypes = {
       },
     },
   },
+  apple_team_id: {
+    type: "String",
+    default: null,
+    label: "Apple Developer Team ID",
+    blurb:
+      "Issued by Apple for enrolled members of the 'Apple Developer Program'." +
+      "The team id must be set to build mobile iOS apps that can run on a device.",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

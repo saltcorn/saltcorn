@@ -1,4 +1,4 @@
-export const getHeaders = () => {
+const getHeaders = () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   const versionTag = config.version_tag;
   const stdHeaders = [
@@ -9,7 +9,7 @@ export const getHeaders = () => {
   return [...stdHeaders, ...config.pluginHeaders];
 };
 
-export const parseQuery = (queryStr) => {
+const parseQuery = (queryStr) => {
   let result = {};
   const parsedQuery =
     typeof queryStr === "string" ? new URLSearchParams(queryStr) : undefined;
@@ -21,16 +21,16 @@ export const parseQuery = (queryStr) => {
   return result;
 };
 
-export const layout = () => {
+const layout = () => {
   const state = saltcorn.data.state.getState();
   return state.getLayout({ role_id: state.mobileConfig.role_id });
 };
 
-export const sbAdmin2Layout = () => {
+const sbAdmin2Layout = () => {
   return saltcorn.data.state.getState().layouts["sbadmin2"];
 };
 
-export const getMenu = () => {
+const getMenu = () => {
   const state = saltcorn.data.state.getState();
   const allowSignup = state.getConfig("allow_signup");
   const mobileCfg = saltcorn.data.state.getState().mobileConfig;
@@ -67,11 +67,11 @@ export const getMenu = () => {
   ];
 };
 
-export const prepareAlerts = (context, req) => {
+const prepareAlerts = (context, req) => {
   return [...(context.alerts || []), ...req.flashMessages()];
 };
 
-export const wrapContents = (contents, title, context, req) => {
+const wrapContents = (contents, title, context, req) => {
   const state = saltcorn.data.state.getState();
   const wrappedContent = context.fullWrap
     ? layout().wrap({
