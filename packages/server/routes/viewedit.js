@@ -270,10 +270,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         ),
       }),
       new Field({
-        label: req.__("Pattern"),
+        label: req.__("View pattern"),
         name: "viewtemplate",
         input_type: "select",
-        sublabel: req.__("Views are based on a view pattern"),
+        sublabel: req.__("The view pattern sets the foundation of how the view relates to the table and the behaviour of the view"),
         options: Object.keys(getState().viewtemplates),
         attributes: {
           explainers: mapObjectValues(

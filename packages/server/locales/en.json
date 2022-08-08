@@ -932,5 +932,6 @@
 	"System logging verbosity": "System logging verbosity",
 	"Destination URL Formula": "Destination URL Formula",
 	"Pattern": "Pattern",
-	"Views are based on a view pattern": "Views are based on a view pattern"
+	"View pattern": "View pattern",
+	"The view pattern sets the foundation of how the view relates to the table and the behaviour of the view": "The view pattern sets the foundation of how the view relates to the table and the behaviour of the view"
 }
