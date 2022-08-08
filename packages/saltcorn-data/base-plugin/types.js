@@ -460,7 +460,15 @@ const string = {
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options && (attrs.options.length > 0 || !required)
-          ? select(
+          ? (attrs.readonly ? input({
+            type: "text",
+            class: ["form-control", "form-select", cls],
+            name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
+            id: `input${text_attr(nm)}`,
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+          }) : select(
             {
               class: ["form-control", "form-select", cls],
               name: text_attr(nm),
@@ -475,7 +483,7 @@ const string = {
                 option({ value: "" }, attrs.neutral_label || ""),
                 ...getStrOptions(v, attrs.options),
               ]
-          )
+          ))
           : attrs.options
             ? i("None available")
             : attrs.calcOptions
