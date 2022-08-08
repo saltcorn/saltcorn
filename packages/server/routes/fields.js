@@ -348,13 +348,12 @@ const fieldFlow = (req) =>
                 // todo sublabel
                 input_type: "custom_html",
                 attributes: {
-                  html: `<button type="button" id="test_formula_btn" onclick="test_formula('${
-                    table.name
-                  }', ${JSON.stringify(
-                    context.stored
-                  )})" class="btn btn-outline-secondary">${req.__(
-                    "Test"
-                  )}</button>
+                  html: `<button type="button" id="test_formula_btn" onclick="test_formula('${table.name
+                    }', ${JSON.stringify(
+                      context.stored
+                    )})" class="btn btn-outline-secondary">${req.__(
+                      "Test"
+                    )}</button>
                   <div id="test_formula_output"></div>`,
                 },
               }),
@@ -633,8 +632,7 @@ router.post(
         result = f(rows[0]);
       }
       res.send(
-        `Result of running on row with id=${
-          rows[0].id
+        `Result of running on row with id=${rows[0].id
         } is: <pre>${JSON.stringify(result)}</pre>`
       );
     } catch (e) {
@@ -788,22 +786,22 @@ router.post(
       field.type === "Key"
         ? getState().keyFieldviews
         : field.type === "File"
-        ? getState().fileviews
-        : field.type.fieldviews;
+          ? getState().fileviews
+          : field.type.fieldviews;
     if (!field.type || !fieldviews) {
       res.send("");
       return;
     }
     const fv = fieldviews[fieldview];
     if (!fv && field.type === "Key" && fieldview === "select")
-      res.send("<select disabled></select>");
+      res.send(`<input readonly class="form-control form-select"></input>`);
     else if (!fv) res.send("");
     else if (fv.isEdit || fv.isFilter)
       res.send(
         fv.run(
           field.name,
           undefined,
-          { disabled: true, ...configuration, ...(field.attributes || {}) },
+          { readonly: true, ...configuration, ...(field.attributes || {}) },
           "",
           false,
           field

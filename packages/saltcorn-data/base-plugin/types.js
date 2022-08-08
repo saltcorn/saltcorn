@@ -56,13 +56,14 @@ const number_slider = (type) => ({
       name: text_attr(nm),
       "data-fieldname": text_attr(field.name),
       disabled: attrs.disabled,
+      readonly: attrs.readonly,
       onChange: attrs.onChange,
       step:
         type === "Integer"
           ? 1
           : attrs.decimal_places
-          ? Math.pow(10, -attrs.decimal_places)
-          : "0.01",
+            ? Math.pow(10, -attrs.decimal_places)
+            : "0.01",
       id: `input${text_attr(nm)}`,
       ...(isdef(attrs.max) && { max: attrs.max }),
       ...(isdef(attrs.min) && { min: attrs.min }),
@@ -89,29 +90,31 @@ const range_interval = (type) => ({
       input({
         ...(isdef(state[`_gte_${nm}`])
           ? {
-              value: text_attr(state[`_gte_${nm}`]),
-            }
+            value: text_attr(state[`_gte_${nm}`]),
+          }
           : isdef(attrs.min)
-          ? { value: text_attr(attrs.min) }
-          : {}),
+            ? { value: text_attr(attrs.min) }
+            : {}),
         ...(isdef(attrs.max) && { max: attrs.max }),
         ...(isdef(attrs.min) && { min: attrs.min }),
         type: "range",
         disabled: attrs.disabled,
+        readonly: attrs.readonly,
         onChange: `set_state_field('_gte_${nm}', this.value)`,
       }),
       input({
         ...(isdef(state[`_lte_${nm}`])
           ? {
-              value: text_attr(state[`_lte_${nm}`]),
-            }
+            value: text_attr(state[`_lte_${nm}`]),
+          }
           : isdef(attrs.max)
-          ? { value: text_attr(attrs.max) }
-          : {}),
+            ? { value: text_attr(attrs.max) }
+            : {}),
         ...(isdef(attrs.max) && { max: attrs.max }),
         ...(isdef(attrs.min) && { min: attrs.min }),
         type: "range",
         disabled: attrs.disabled,
+        readonly: attrs.readonly,
         onChange: `set_state_field('_lte_${nm}', this.value)`,
       })
     );
@@ -161,30 +164,31 @@ const number_limit = (direction) => ({
     const onChange = `set_state_field('_${direction}_${nm}', this.value)`;
     return attrs?.stepper_btns
       ? number_stepper(
-          undefined,
-          isdef(state[`_${direction}_${nm}`])
-            ? text_attr(state[`_${direction}_${nm}`])
-            : undefined,
-          {
-            ...attrs,
-            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val())`,
-          },
-          cls,
-          undefined,
-          `numlim_${nm}_${direction}`
-        )
+        undefined,
+        isdef(state[`_${direction}_${nm}`])
+          ? text_attr(state[`_${direction}_${nm}`])
+          : undefined,
+        {
+          ...attrs,
+          onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val())`,
+        },
+        cls,
+        undefined,
+        `numlim_${nm}_${direction}`
+      )
       : input({
-          type: "number",
-          class: ["form-control", cls],
-          disabled: attrs.disabled,
-          onChange,
-          step: 1,
-          ...(attrs.max && { max: attrs.max }),
-          ...(attrs.min && { min: attrs.min }),
-          ...(isdef(state[`_${direction}_${nm}`]) && {
-            value: text_attr(state[`_${direction}_${nm}`]),
-          }),
-        });
+        type: "number",
+        class: ["form-control", cls],
+        disabled: attrs.disabled,
+        readonly: attrs.readonly,
+        onChange,
+        step: 1,
+        ...(attrs.max && { max: attrs.max }),
+        ...(attrs.min && { min: attrs.min }),
+        ...(isdef(state[`_${direction}_${nm}`]) && {
+          value: text_attr(state[`_${direction}_${nm}`]),
+        }),
+      });
   },
 });
 
@@ -196,8 +200,8 @@ const float_number_limit = (direction) => ({
     input({
       type: "number",
       class: ["form-control", cls],
-
       disabled: attrs.disabled,
+      readonly: attrs.readonly,
       onChange: `set_state_field('_${direction}_${nm}', this.value)`,
       step: attrs.decimal_places ? Math.pow(10, -attrs.decimal_places) : "0.01",
       ...(attrs.max && { max: attrs.max }),
@@ -215,9 +219,8 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
       {
         class: "btn btn-outline-secondary",
         type: "button",
-        onClick: `$('#${id}').val(Math.max(${
-          isdef(attrs.min) ? attrs.min : "-Infinity"
-        },+$('#${id}').val()-1));${attrs.onChange || ""}`,
+        onClick: `$('#${id}').val(Math.max(${isdef(attrs.min) ? attrs.min : "-Infinity"
+          },+$('#${id}').val()-1));${attrs.onChange || ""}`,
       },
       i({ class: "fas fa-minus" })
     ),
@@ -225,6 +228,7 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
       type: "number",
       class: ["form-control", "hideupdownbtns", cls],
       disabled: attrs.disabled,
+      readonly: attrs.readonly,
       "data-fieldname": fieldname,
       name,
       onChange: attrs.onChange,
@@ -238,9 +242,8 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
       {
         class: "btn btn-outline-secondary",
         type: "button",
-        onClick: `$('#${id}').val(Math.min(${
-          isdef(attrs.max) ? attrs.max : "Infinity"
-        },+$('#${id}').val()+1));${attrs.onChange || ""}`,
+        onClick: `$('#${id}').val(Math.min(${isdef(attrs.max) ? attrs.max : "Infinity"
+          },+$('#${id}').val()+1));${attrs.onChange || ""}`,
       },
       i({ class: "fas fa-plus" })
     )
@@ -254,29 +257,29 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
 const getStrOptions = (v, optsStr) =>
   typeof optsStr === "string"
     ? optsStr
-        .split(",")
-        .map((o) => o.trim())
-        .map((o) =>
-          option(
-            { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
-            text_attr(o)
-          )
+      .split(",")
+      .map((o) => o.trim())
+      .map((o) =>
+        option(
+          { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
+          text_attr(o)
         )
+      )
     : optsStr.map((o, ix) =>
-        o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
-          ? option(
-              {
-                value: o.name,
-                ...((eqStr(v, o.name) ||
-                  (ix === 0 && typeof v === "undefined" && o.disabled)) && {
-                  selected: true,
-                }),
-                ...(o.disabled && { disabled: true }),
-              },
-              o.label
-            )
-          : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
-      );
+      o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
+        ? option(
+          {
+            value: o.name,
+            ...((eqStr(v, o.name) ||
+              (ix === 0 && typeof v === "undefined" && o.disabled)) && {
+              selected: true,
+            }),
+            ...(o.disabled && { disabled: true }),
+          },
+          o.label
+        )
+        : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
+    );
 
 const join_fields_in_formula = (fml) => {
   if (!fml) return [];
@@ -346,25 +349,25 @@ const string = {
       },
       ...(table
         ? [
-            {
-              name: "localizes_field",
-              label: "Translation of",
-              sublabel:
-                "This is a translation of a different field in a different language",
-              type: "String",
-              attributes: {
-                options: strFields.map((f) => f.name),
-              },
+          {
+            name: "localizes_field",
+            label: "Translation of",
+            sublabel:
+              "This is a translation of a different field in a different language",
+            type: "String",
+            attributes: {
+              options: strFields.map((f) => f.name),
             },
-            {
-              name: "locale",
-              label: "Locale",
-              sublabel: "Language locale of translation",
-              input_type: "select",
-              options: locales,
-              showIf: { localizes_field: strFields.map((f) => f.name) },
-            },
-          ]
+          },
+          {
+            name: "locale",
+            label: "Locale",
+            sublabel: "Language locale of translation",
+            input_type: "select",
+            options: locales,
+            showIf: { localizes_field: strFields.map((f) => f.name) },
+          },
+        ]
         : []),
     ];
   },
@@ -377,8 +380,8 @@ const string = {
     typeof options === "string"
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
-      ? is.str
-      : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
+        ? is.str
+        : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
   /**
    * @namespace
    * @category saltcorn-data
@@ -426,22 +429,22 @@ const string = {
 
       configFields: (field) => [
         ...(field.attributes.options &&
-        field.attributes.options.length > 0 &&
-        !field.required
+          field.attributes.options.length > 0 &&
+          !field.required
           ? [
-              {
-                name: "neutral_label",
-                label: "Neutral label",
-                type: "String",
-              },
-              {
-                name: "force_required",
-                label: "Required",
-                sublabel:
-                  "User must select a value, even if the table field is not required",
-                type: "Bool",
-              },
-            ]
+            {
+              name: "neutral_label",
+              label: "Neutral label",
+              type: "String",
+            },
+            {
+              name: "force_required",
+              label: "Required",
+              sublabel:
+                "User must select a value, even if the table field is not required",
+              type: "Bool",
+            },
+          ]
           : []),
         {
           name: "placeholder",
@@ -457,51 +460,60 @@ const string = {
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options && (attrs.options.length > 0 || !required)
-          ? select(
-              {
-                class: ["form-control", "form-select", cls],
-                name: text_attr(nm),
-                "data-fieldname": text_attr(field.name),
-                id: `input${text_attr(nm)}`,
-                disabled: attrs.disabled,
-                onChange: attrs.onChange,
-              },
-              required || attrs.force_required
-                ? getStrOptions(v, attrs.options)
-                : [
-                    option({ value: "" }, attrs.neutral_label || ""),
-                    ...getStrOptions(v, attrs.options),
-                  ]
-            )
-          : attrs.options
-          ? i("None available")
-          : attrs.calcOptions
-          ? select(
-              {
-                class: ["form-control", "form-select", cls],
-                name: text_attr(nm),
-                disabled: attrs.disabled,
-                "data-fieldname": text_attr(field.name),
-                id: `input${text_attr(nm)}`,
-                onChange: attrs.onChange,
-                "data-selected": v,
-                "data-calc-options": encodeURIComponent(
-                  JSON.stringify(attrs.calcOptions)
-                ),
-              },
-              option({ value: "" }, "")
-            )
-          : input({
-              type: attrs.input_type || "text",
-              disabled: attrs.disabled,
-              class: ["form-control", cls],
-              placeholder: attrs.placeholder,
-              onChange: attrs.onChange,
-              "data-fieldname": text_attr(field.name),
+          ? (attrs.readonly ? input({
+            type: "text",
+            class: ["form-control", "form-select", cls],
+            name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
+            id: `input${text_attr(nm)}`,
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+          }) : select(
+            {
+              class: ["form-control", "form-select", cls],
               name: text_attr(nm),
+              "data-fieldname": text_attr(field.name),
               id: `input${text_attr(nm)}`,
-              ...(isdef(v) && { value: text_attr(v) }),
-            }),
+              disabled: attrs.disabled,
+              onChange: attrs.onChange,
+            },
+            required || attrs.force_required
+              ? getStrOptions(v, attrs.options)
+              : [
+                option({ value: "" }, attrs.neutral_label || ""),
+                ...getStrOptions(v, attrs.options),
+              ]
+          ))
+          : attrs.options
+            ? i("None available")
+            : attrs.calcOptions
+              ? select(
+                {
+                  class: ["form-control", "form-select", cls],
+                  name: text_attr(nm),
+                  disabled: attrs.disabled,
+                  "data-fieldname": text_attr(field.name),
+                  id: `input${text_attr(nm)}`,
+                  onChange: attrs.onChange,
+                  "data-selected": v,
+                  "data-calc-options": encodeURIComponent(
+                    JSON.stringify(attrs.calcOptions)
+                  ),
+                },
+                option({ value: "" }, "")
+              )
+              : input({
+                type: attrs.input_type || "text",
+                disabled: attrs.disabled,
+                readonly: attrs.readonly,
+                class: ["form-control", cls],
+                placeholder: attrs.placeholder,
+                onChange: attrs.onChange,
+                "data-fieldname": text_attr(field.name),
+                name: text_attr(nm),
+                id: `input${text_attr(nm)}`,
+                ...(isdef(v) && { value: text_attr(v) }),
+              }),
     },
     fill_formula_btn: {
       isEdit: true,
@@ -556,6 +568,7 @@ const string = {
           input({
             type: attrs.input_type || "text",
             disabled: attrs.disabled,
+            readonly: attrs.readonly,
             class: ["form-control", cls],
             placeholder: attrs.placeholder,
             onChange: attrs.onChange,
@@ -578,13 +591,11 @@ const string = {
               onClick:
                 "fill_formula_btn_click(this" +
                 (attrs.make_unique
-                  ? `,()=>make_unique_field('input${text_attr(nm)}', ${
-                      field.table_id
-                    }, '${field.name}',  $('#input${text_attr(
-                      nm
-                    )}'), ${!!attrs.include_space}, ${
-                      attrs.start_from || 0
-                    }, ${!!attrs.always_append}, '${attrs.char_type}')`
+                  ? `,()=>make_unique_field('input${text_attr(nm)}', ${field.table_id
+                  }, '${field.name}',  $('#input${text_attr(
+                    nm
+                  )}'), ${!!attrs.include_space}, ${attrs.start_from || 0
+                  }, ${!!attrs.always_append}, '${attrs.char_type}')`
                   : "") +
                 ")",
             },
@@ -635,6 +646,7 @@ const string = {
         input({
           type: attrs.input_type || "text",
           disabled: attrs.disabled,
+          readonly: attrs.readonly,
           class: ["form-control", cls],
           placeholder: attrs.placeholder,
           onChange: attrs.onChange,
@@ -645,10 +657,8 @@ const string = {
         }) +
         script(
           domReady(
-            `make_unique_field('input${text_attr(nm)}', ${field.table_id}, '${
-              field.name
-            }', $('#input${text_attr(nm)}'), ${attrs.include_space}, ${
-              attrs.start_from
+            `make_unique_field('input${text_attr(nm)}', ${field.table_id}, '${field.name
+            }', $('#input${text_attr(nm)}'), ${attrs.include_space}, ${attrs.start_from
             }, ${attrs.always_append}, ${JSON.stringify(attrs.char_type)})`
           )
         ),
@@ -693,16 +703,16 @@ const string = {
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options
           ? radio_group({
-              class: cls,
-              name: text_attr(nm),
-              disabled: attrs.disabled,
-              inline: attrs.inline,
-              onChange: attrs.onChange,
-              options: Array.isArray(attrs.options)
-                ? attrs.options
-                : attrs.options.split(",").map((o) => o.trim()),
-              value: v,
-            })
+            class: cls,
+            name: text_attr(nm),
+            disabled: attrs.disabled,
+            inline: attrs.inline,
+            onChange: attrs.onChange,
+            options: Array.isArray(attrs.options)
+              ? attrs.options
+              : attrs.options.split(",").map((o) => o.trim()),
+            value: v,
+          })
           : i("None available"),
     },
     checkbox_group: {
@@ -718,15 +728,15 @@ const string = {
       run: (nm, v, attrs, cls, required, field) =>
         attrs && attrs.options
           ? checkbox_group({
-              class: cls,
-              name: text_attr(nm),
-              disabled: attrs.disabled,
-              inline: attrs.inline,
-              options: Array.isArray(attrs.options)
-                ? attrs.options
-                : attrs.options.split(",").map((o) => o.trim()),
-              value: v,
-            })
+            class: cls,
+            name: text_attr(nm),
+            disabled: attrs.disabled,
+            inline: attrs.inline,
+            options: Array.isArray(attrs.options)
+              ? attrs.options
+              : attrs.options.split(",").map((o) => o.trim()),
+            value: v,
+          })
           : i("None available"),
     },
     /**
@@ -742,6 +752,7 @@ const string = {
         input({
           type: "password",
           disabled: attrs.disabled,
+          readonly: attrs.readonly,
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           onChange: attrs.onChange,
@@ -789,18 +800,18 @@ const string = {
    */
   validate:
     ({ min_length, max_length, regexp, re_invalid_error }) =>
-    (x) => {
-      if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
-      if (isdef(min_length) && x.length < min_length)
-        return { error: `Must be at least ${min_length} characters` };
-      if (isdef(max_length) && x.length > max_length)
-        return { error: `Must be at most ${max_length} characters` };
-      if (isdef(regexp) && !new RegExp(regexp).test(x))
-        return {
-          error: re_invalid_error || `Does not match regular expression`,
-        };
-      return true;
-    },
+      (x) => {
+        if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
+        if (isdef(min_length) && x.length < min_length)
+          return { error: `Must be at least ${min_length} characters` };
+        if (isdef(max_length) && x.length > max_length)
+          return { error: `Must be at most ${max_length} characters` };
+        if (isdef(regexp) && !new RegExp(regexp).test(x))
+          return {
+            error: re_invalid_error || `Does not match regular expression`,
+          };
+        return true;
+      },
 
   /**
    * @param {object} param
@@ -872,18 +883,19 @@ const int = {
         return attrs?.stepper_btns
           ? number_stepper(name, v, attrs, cls, text_attr(field.name), id)
           : input({
-              type: "number",
-              class: ["form-control", cls],
-              disabled: attrs.disabled,
-              "data-fieldname": text_attr(field.name),
-              name,
-              onChange: attrs.onChange,
-              id,
-              step: "1",
-              ...(attrs.max && { max: attrs.max }),
-              ...(attrs.min && { min: attrs.min }),
-              ...(isdef(v) && { value: text_attr(v) }),
-            });
+            type: "number",
+            class: ["form-control", cls],
+            disabled: attrs.disabled,
+            readonly: attrs.readonly,
+            "data-fieldname": text_attr(field.name),
+            name,
+            onChange: attrs.onChange,
+            id,
+            step: "1",
+            ...(attrs.max && { max: attrs.max }),
+            ...(attrs.min && { min: attrs.min }),
+            ...(isdef(v) && { value: text_attr(v) }),
+          });
       },
     },
     number_slider: number_slider("Integer"),
@@ -984,11 +996,11 @@ const int = {
    */
   validate:
     ({ min, max }) =>
-    (x) => {
-      if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
-      if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
-      return true;
-    },
+      (x) => {
+        if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+        if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+        return true;
+      },
 };
 
 /**
@@ -1022,9 +1034,9 @@ const color = {
       run: (s) =>
         s
           ? div({
-              class: "color-type-show",
-              style: `background: ${s};`,
-            })
+            class: "color-type-show",
+            style: `background: ${s};`,
+          })
           : "",
     },
     /**
@@ -1041,6 +1053,7 @@ const color = {
           type: "color",
           class: ["form-control", cls],
           disabled: attrs.disabled,
+          readonly: attrs.readonly,
           onChange: attrs.onChange,
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
@@ -1117,6 +1130,7 @@ const float = {
           name: text_attr(nm),
           "data-fieldname": text_attr(field.name),
           disabled: attrs.disabled,
+          readonly: attrs.readonly,
           onChange: attrs.onChange,
           step: attrs.decimal_places
             ? Math.pow(10, -attrs.decimal_places)
@@ -1161,11 +1175,11 @@ const float = {
    */
   validate:
     ({ min, max }) =>
-    (x) => {
-      if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
-      if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
-      return true;
-    },
+      (x) => {
+        if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
+        if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
+        return true;
+      },
 };
 
 /**
@@ -1220,8 +1234,8 @@ const date = {
         typeof d === "string"
           ? localeDateTime(new Date(d))
           : d && d.toISOString
-          ? localeDateTime(d)
-          : "",
+            ? localeDateTime(d)
+            : "",
     },
     /**
      * @namespace
@@ -1234,8 +1248,8 @@ const date = {
         typeof d === "string"
           ? localeDate(new Date(d))
           : d && d.toISOString
-          ? localeDate(d)
-          : "",
+            ? localeDate(d)
+            : "",
     },
     /**
      * @namespace
@@ -1301,6 +1315,7 @@ const date = {
           name: text_attr(nm),
           onChange: attrs.onChange,
           disabled: attrs.disabled,
+          readonly: attrs.readonly,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
@@ -1327,6 +1342,7 @@ const date = {
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
           onChange: attrs.onChange,
+          readonly: attrs.readonly,
           disabled: attrs.disabled,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
@@ -1369,9 +1385,9 @@ const date = {
    * @returns {boolean}
    */
   validate:
-    ({}) =>
-    (v) =>
-      v instanceof Date && !isNaN(v),
+    ({ }) =>
+      (v) =>
+        v instanceof Date && !isNaN(v),
 };
 
 /**
@@ -1406,10 +1422,10 @@ const bool = {
         typeof v === "undefined" || v === null
           ? ""
           : !!v
-          ? i({
+            ? i({
               class: "fas fa-lg fa-check-circle text-success",
             })
-          : i({
+            : i({
               class: "fas fa-lg fa-times-circle text-danger",
             }),
     },
@@ -1424,8 +1440,8 @@ const bool = {
         v === true
           ? input({ disabled: true, type: "checkbox", checked: true })
           : v === false
-          ? input({ type: "checkbox", disabled: true })
-          : "",
+            ? input({ type: "checkbox", disabled: true })
+            : "",
     },
     /**
      * @namespace
@@ -1449,6 +1465,7 @@ const bool = {
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
           onChange: attrs.onChange,
+          readonly: attrs.readonly,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true }),
@@ -1467,23 +1484,23 @@ const bool = {
           ? !(!isdef(v) || v === null)
             ? ""
             : v
-            ? "T"
-            : "F"
+              ? "T"
+              : "F"
           : input({
-              type: "hidden",
-              "data-fieldname": text_attr(field.name),
-              name: text_attr(nm),
-              id: `input${text_attr(nm)}`,
-              value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
-            }) +
-            button(
-              {
-                onClick: `tristateClick('${text_attr(nm)}')`,
-                type: "button",
-                id: `trib${text_attr(nm)}`,
-              },
-              !isdef(v) || v === null ? "?" : v ? "T" : "F"
-            ),
+            type: "hidden",
+            "data-fieldname": text_attr(field.name),
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
+          }) +
+          button(
+            {
+              onClick: `tristateClick('${text_attr(nm)}')`,
+              type: "button",
+              id: `trib${text_attr(nm)}`,
+            },
+            !isdef(v) || v === null ? "?" : v ? "T" : "F"
+          ),
     },
   },
   /** @type {object[]} */
