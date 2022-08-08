@@ -794,7 +794,7 @@ router.post(
     }
     const fv = fieldviews[fieldview];
     if (!fv && field.type === "Key" && fieldview === "select")
-      res.send("<select disabled></select>");
+      res.send(`<input readonly class="form-control form-select"></input>`);
     else if (!fv) res.send("");
     else if (fv.isEdit || fv.isFilter)
       res.send(
