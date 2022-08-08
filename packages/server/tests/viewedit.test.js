@@ -54,7 +54,7 @@ describe("viewedit new List", () => {
     await request(app)
       .get("/viewedit/new")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Pattern"));
+      .expect(toInclude("View pattern"));
   });
   it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
