@@ -30,7 +30,7 @@ describe("Plugin Endpoints", () => {
     await request(app)
       .get("/plugins")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Plugin and pack store"));
+      .expect(toInclude("Module store"));
   });
 
   it("should show new", async () => {
