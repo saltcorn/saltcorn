@@ -54,9 +54,9 @@ const tableCard = (tables, req) => ({
   contents:
     (tables.length <= 1
       ? p(
-          { class: "mt-2 pe-2" },
-          i(req.__("Tables organise data by fields and rows."))
-        )
+        { class: "mt-2 pe-2" },
+        i(req.__("Tables organise data by fields and rows."))
+      )
       : "") + tableTable(tables, req),
   bodyClass: "py-0 pe-0",
   footer: div(
@@ -107,13 +107,13 @@ const viewCard = (views, req) => ({
   contents:
     (views.length <= 1
       ? p(
-          { class: "mt-2 pe-2" },
-          i(
-            req.__(
-              "Views display data from tables. A view is a view template applied to a table, with configuration."
-            )
+        { class: "mt-2 pe-2" },
+        i(
+          req.__(
+            "Views display data from tables. A view is a view pattern applied to a table, with configuration."
           )
         )
+      )
       : "") +
     (views.length > 0 ? viewTable(views, req) : p(req.__("No views"))),
 
@@ -160,13 +160,13 @@ const pageCard = (pages, req) => ({
   contents:
     (pages.length <= 1
       ? p(
-          { class: "mt-2 pe-2" },
-          i(
-            req.__(
-              "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content."
-            )
+        { class: "mt-2 pe-2" },
+        i(
+          req.__(
+            "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content."
           )
         )
+      )
       : "") +
     (pages.length > 0
       ? pageTable(pages, req)
@@ -191,16 +191,16 @@ const filesTab = async (req) => {
     files.length === 0
       ? p(req.__("No files"))
       : mkTable(
-          [
-            {
-              label: req.__("Filename"),
-              key: (r) => link(`/files/serve/${r.id}`, r.filename),
-            },
-            { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-            { label: req.__("Media type"), key: (r) => r.mimetype },
-          ],
-          files
-        ),
+        [
+          {
+            label: req.__("Filename"),
+            key: (r) => link(`/files/serve/${r.id}`, r.filename),
+          },
+          { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+          { label: req.__("Media type"), key: (r) => r.mimetype },
+        ],
+        files
+      ),
     fileUploadForm(req)
   );
 };
@@ -244,30 +244,30 @@ const actionsTab = async (req, triggers) => {
   return div(
     { class: "pb-3" },
     triggers.length <= 1 &&
-      p(
-        { class: "mt-2 pe-2" },
-        i(req.__("Triggers run actions in response to events."))
-      ),
+    p(
+      { class: "mt-2 pe-2" },
+      i(req.__("Triggers run actions in response to events."))
+    ),
     triggers.length === 0
       ? p(req.__("No triggers"))
       : mkTable(
-          [
-            { label: req.__("Name"), key: "name" },
-            { label: req.__("Action"), key: "action" },
-            {
-              label: req.__("Table or Channel"),
-              key: (r) => r.table_name || r.channel,
-            },
-            {
-              label: req.__("When"),
-              key: (a) =>
-                a.when_trigger === "API call"
-                  ? `API: ${base_url}api/action/${a.name}`
-                  : a.when_trigger,
-            },
-          ],
-          triggers
-        ),
+        [
+          { label: req.__("Name"), key: "name" },
+          { label: req.__("Action"), key: "action" },
+          {
+            label: req.__("Table or Channel"),
+            key: (r) => r.table_name || r.channel,
+          },
+          {
+            label: req.__("When"),
+            key: (a) =>
+              a.when_trigger === "API call"
+                ? `API: ${base_url}api/action/${a.name}`
+                : a.when_trigger,
+          },
+        ],
+        triggers
+      ),
     a(
       { href: "/actions/new", class: "btn btn-secondary my-3" },
       req.__("Add trigger")
@@ -385,15 +385,15 @@ const welcome_page = async (req) => {
             tabContents:
               triggers.length > 0
                 ? {
-                    Triggers: await actionsTab(req, triggers),
-                    Files: await filesTab(req),
-                    Packs: packTab(req, packlist),
-                  }
+                  Triggers: await actionsTab(req, triggers),
+                  Files: await filesTab(req),
+                  Packs: packTab(req, packlist),
+                }
                 : {
-                    Packs: packTab(req, packlist),
-                    Triggers: await actionsTab(req, triggers),
-                    Files: await filesTab(req),
-                  },
+                  Packs: packTab(req, packlist),
+                  Triggers: await actionsTab(req, triggers),
+                  Files: await filesTab(req),
+                },
           },
           {
             type: "card",
@@ -403,13 +403,13 @@ const welcome_page = async (req) => {
             tabContents:
               users.length > 4
                 ? {
-                    Users: await usersTab(req, users, roleMap),
-                    Help: helpCard(req),
-                  }
+                  Users: await usersTab(req, users, roleMap),
+                  Help: helpCard(req),
+                }
                 : {
-                    Help: helpCard(req),
-                    Users: await usersTab(req, users, roleMap),
-                  },
+                  Help: helpCard(req),
+                  Users: await usersTab(req, users, roleMap),
+                },
           },
         ],
       },
@@ -440,8 +440,8 @@ const no_views_logged_in = async (req, res) => {
           packagejson.version,
           latest
         ) +
-          " " +
-          a({ href: "/admin/system" }, req.__("Upgrade here"))
+        " " +
+        a({ href: "/admin/system" }, req.__("Upgrade here"))
       );
 
     res.sendWrap(req.__("Hello"), await welcome_page(req));

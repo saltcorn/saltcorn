@@ -930,5 +930,7 @@
 	"Download snapshots": "Download snapshots",
 	"Snapshot successful": "Snapshot successful",
 	"System logging verbosity": "System logging verbosity",
-	"Destination URL Formula": "Destination URL Formula"
+	"Destination URL Formula": "Destination URL Formula",
+	"Pattern": "Pattern",
+	"Views are based on a view pattern": "Views are based on a view pattern"
 }
