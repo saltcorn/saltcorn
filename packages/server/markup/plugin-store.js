@@ -87,7 +87,7 @@ const plugin_functions_info_card = (plugin, req) => ({
  */
 const plugin_viewtemplates_info_card = (plugin, req) => ({
   type: "card",
-  title: req.__("View templates"),
+  title: req.__("View patterns"),
   contents: withCfg(plugin, "viewtemplates", [])
     .map(({ name, description }) => div(h4(name), p(description)))
     .join("<hr>"),
@@ -101,10 +101,10 @@ const showRepository = (repo) =>
   !repo
     ? repo
     : repo.url
-    ? link(repo.url, repo.url)
-    : repo.startsWith && repo.startsWith("github:")
-    ? link(repo.replace("github:", "https://github.com/"), repo)
-    : repo;
+      ? link(repo.url, repo.url)
+      : repo.startsWith && repo.startsWith("github:")
+        ? link(repo.replace("github:", "https://github.com/"), repo)
+        : repo;
 
 module.exports = {
   plugin_types_info_card,

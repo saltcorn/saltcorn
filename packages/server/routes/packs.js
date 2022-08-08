@@ -116,7 +116,7 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Modules"), href: "/plugins" },
             { text: req.__("Create pack") },
           ],
         },
@@ -184,7 +184,7 @@ router.post(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Modules"), href: "/plugins" },
             { text: req.__("Create pack") },
           ],
         },
@@ -242,7 +242,7 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Plugins"), href: "/plugins" },
+            { text: req.__("Modules"), href: "/plugins" },
             { text: req.__("Install pack") },
           ],
         },
@@ -293,7 +293,7 @@ router.post(
             type: "breadcrumbs",
             crumbs: [
               { text: req.__("Settings") },
-              { text: req.__("Plugins"), href: "/plugins" },
+              { text: req.__("Modules"), href: "/plugins" },
               { text: req.__("Install pack") },
             ],
           },

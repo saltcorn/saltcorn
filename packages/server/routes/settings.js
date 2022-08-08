@@ -63,9 +63,9 @@ router.get(
           href: "/admin",
         }),
         settingsCard({
-          title: req.__("Plugins"),
-          icon: "fas fa-plug",
-          blurb: req.__("Plugin and pack installation and control"),
+          title: req.__("Modules"),
+          icon: "fas fa-cubes",
+          blurb: req.__("Module installation and control"),
           href: "/plugins",
         }),
         settingsCard({
