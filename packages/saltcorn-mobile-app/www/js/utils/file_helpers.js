@@ -1,4 +1,4 @@
-export async function fileExists(path) {
+async function fileExists(path) {
   try {
     await getDirEntry(path);
     return true;
@@ -7,7 +7,7 @@ export async function fileExists(path) {
   }
 }
 
-export function getDirEntry(directory) {
+function getDirEntry(directory) {
   return new Promise((resolve, reject) => {
     window.resolveLocalFileSystemURL(
       directory,
@@ -21,7 +21,7 @@ export function getDirEntry(directory) {
   });
 }
 
-export async function readJSON(fileName, dirName) {
+async function readJSON(fileName, dirName) {
   const dirEntry = await getDirEntry(dirName);
   return new Promise((resolve, reject) => {
     dirEntry.getFile(
@@ -45,7 +45,7 @@ export async function readJSON(fileName, dirName) {
   });
 }
 
-export async function write(fileName, dirName, content) {
+async function write(fileName, dirName, content) {
   const dirEntry = await getDirEntry(dirName);
   return new Promise((resolve, reject) => {
     dirEntry.getFile(
@@ -72,6 +72,6 @@ export async function write(fileName, dirName, content) {
   });
 }
 
-export async function writeJSON(fileName, dirName, content) {
+async function writeJSON(fileName, dirName, content) {
   await write(fileName, dirName, JSON.stringify(content));
 }

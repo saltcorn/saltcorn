@@ -17,7 +17,7 @@ import {
 } from "./utils/package-bundle-utils";
 import {
   buildApp,
-  copyApp,
+  tryCopyAppFiles,
   prepareBuildDir,
 } from "./utils/cordova-build-utils";
 
@@ -41,6 +41,7 @@ export class MobileBuilder {
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   copyFileName?: string;
+  buildForEmulator?: boolean;
 
   /**
    *
@@ -59,6 +60,7 @@ export class MobileBuilder {
     plugins: Plugin[];
     copyTargetDir?: string;
     copyFileName?: string;
+    buildForEmulator?: boolean;
   }) {
     this.templateDir = cfg.templateDir;
     this.buildDir = cfg.buildDir;
@@ -76,6 +78,7 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.copyFileName = cfg.copyFileName;
+    this.buildForEmulator = cfg.buildForEmulator;
   }
 
   /**
@@ -98,10 +101,9 @@ export class MobileBuilder {
     await installNpmPackages(this.buildDir, this.pluginManager);
     await buildTablesFile(this.buildDir);
     await createSqliteDb(this.buildDir);
-    const resultCode = buildApp(this.buildDir, this.platforms, this.useDocker);
+    const resultCode = buildApp(this.buildDir, this.platforms, this.useDocker, this.buildForEmulator);
     if (resultCode === 0 && this.copyTargetDir) {
-      // copy file to 'copyTargetDir' (only apk)
-      await copyApp(this.buildDir, this.copyTargetDir, this.copyFileName);
+      await tryCopyAppFiles(this.buildDir, this.copyTargetDir, this.copyFileName);
     }
     return resultCode;
   }

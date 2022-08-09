@@ -1,5 +1,5 @@
 // post/delete/:name/:id
-export const deleteRows = async (context) => {
+const deleteRows = async (context) => {
   const { name, id } = context.params;
   const table = await saltcorn.data.models.Table.findOne({ name });
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;

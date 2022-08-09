@@ -1,5 +1,3 @@
-import { fileExists, readJSON, writeJSON } from "./file_helpers.js";
-
 const historyFile = "update_history";
 
 /**
@@ -28,7 +26,7 @@ async function updateScTables(tablesJSON, skipScPlugins = true) {
   saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
 }
 
-export async function updateScPlugins(tablesJSON) {
+async function updateScPlugins(tablesJSON) {
   const { table, rows } = tablesJSON.sc_tables.find(
     ({ table }) => table === "_sc_plugins"
   );
@@ -66,14 +64,14 @@ async function tablesUptodate(tables, historyFile) {
   return tables.created_at.valueOf() < history.updated_at.valueOf();
 }
 
-export async function dbUpdateNeeded(tablesJSON) {
+async function dbUpdateNeeded(tablesJSON) {
   return (
     !(await fileExists(`${cordova.file.dataDirectory}${historyFile}`)) ||
     !(await tablesUptodate(tablesJSON, historyFile))
   );
 }
 
-export async function updateDb(tablesJSON) {
+async function updateDb(tablesJSON) {
   await updateScTables(tablesJSON);
   await saltcorn.data.state.getState().refresh_tables();
   await updateUserDefinedTables();
@@ -82,7 +80,7 @@ export async function updateDb(tablesJSON) {
   });
 }
 
-export async function getTableIds(tableNames) {
+async function getTableIds(tableNames) {
   return (await saltcorn.data.models.Table.find())
     .filter((table) => tableNames.indexOf(table.name) > -1)
     .map((table) => table.id);

@@ -13,7 +13,7 @@ import { mkdir, unlink } from "fs/promises";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import axios from "axios";
 import FormData from "form-data";
-import { renameSync, statSync } from "fs";
+import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
 
 declare let window: any;
@@ -192,7 +192,7 @@ class File {
 
   /**
    * create a '_sc_files' entry from an existing file.
-   * The old file will be moved to an new location.
+   * The old file will be moved to a new location.
    *
    * @param directory directory of existing file
    * @param name name of existing file
@@ -205,6 +205,7 @@ class File {
     userId: number
   ) {
     const fullPath = join(directory, name);
+    if(!existsSync(fullPath)) return null;
     const file: any = {
       mimetype: lookup(fullPath),
       name: name,

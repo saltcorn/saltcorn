@@ -1,7 +1,5 @@
-import { parseQuery, wrapContents } from "./common.js";
-
 // post/page/:pagename/action/:rndid
-export const postPageAction = async (context) => {
+const postPageAction = async (context) => {
   const state = saltcorn.data.state.getState();
   const { page_name, rndid } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
@@ -24,7 +22,7 @@ export const postPageAction = async (context) => {
 };
 
 // get/page/pagename
-export const getPage = async (context) => {
+const getPage = async (context) => {
   const state = saltcorn.data.state.getState();
   const { page_name } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });

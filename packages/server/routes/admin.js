@@ -154,7 +154,7 @@ const email_form = async (req) => {
   return form;
 };
 
-const app_files_table = (file, req) =>
+const app_files_table = (files, req) =>
   mkTable(
     [
       {
@@ -168,7 +168,7 @@ const app_files_table = (file, req) =>
         key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
       },
     ],
-    [file]
+    files
   );
 
 /**
@@ -1241,32 +1241,49 @@ router.get(
   })
 );
 
-const dialogScript = `<script>
-function swapEntryInputs(activeTab, activeInput, disabledTab, disabledInput) {
-  activeTab.addClass("active");
-  activeInput.removeClass("d-none");
-  activeInput.addClass("d-block");
-  activeInput.attr("name", "entryPoint");
-  disabledTab.removeClass("active");
-  disabledInput.removeClass("d-block");
-  disabledInput.addClass("d-none");
-  disabledInput.removeAttr("name");
-}
-
-function showEntrySelect(type) {
-  const viewNavLin = $("#viewNavLinkID");
-  const pageNavLink = $("#pageNavLinkID");
-  const viewInp = $("#viewInputID");
-  const pageInp = $("#pageInputID");
-  if (type === "page") {
-    swapEntryInputs(pageNavLink, pageInp, viewNavLin, viewInp);
+const buildDialogScript = () => {
+  return `<script>
+  function swapEntryInputs(activeTab, activeInput, disabledTab, disabledInput) {
+    activeTab.addClass("active");
+    activeInput.removeClass("d-none");
+    activeInput.addClass("d-block");
+    activeInput.attr("name", "entryPoint");
+    disabledTab.removeClass("active");
+    disabledInput.removeClass("d-block");
+    disabledInput.addClass("d-none");
+    disabledInput.removeAttr("name");
   }
-  else if (type === "view") {
-    swapEntryInputs(viewNavLin, viewInp, pageNavLink, pageInp);
+  
+  function showEntrySelect(type) {
+    const viewNavLin = $("#viewNavLinkID");
+    const pageNavLink = $("#pageNavLinkID");
+    const viewInp = $("#viewInputID");
+    const pageInp = $("#pageInputID");
+    if (type === "page") {
+      swapEntryInputs(pageNavLink, pageInp, viewNavLin, viewInp);
+    }
+    else if (type === "view") {
+      swapEntryInputs(viewNavLin, viewInp, pageNavLink, pageInp);
+    }
+    $("#entryPointTypeID").attr("value", type);
   }
-  $("#entryPointTypeID").attr("value", type);
-}  
-</script>`;
+  
+  function handleMessages() {
+    notifyAlert("This is still under development and might run longer.")
+    ${
+      getState().getConfig("apple_team_id") &&
+      getState().getConfig("apple_team_id") !== "null"
+        ? ""
+        : `  
+    if ($("#iOSCheckboxId")[0].checked) {
+      notifyAlert(
+        "No 'Apple Team ID' is configured, I will try to build a project for the iOS simulator."
+      );
+    }`
+    }
+  }
+  </script>`;
+};
 
 router.get(
   "/build-mobile-app",
@@ -1274,8 +1291,6 @@ router.get(
   error_catcher(async (req, res) => {
     const views = await View.find();
     const pages = await Page.find();
-    const execBuildMsg =
-      "This is still under development and might run longer.";
 
     send_admin_page({
       res,
@@ -1283,7 +1298,7 @@ router.get(
       active_sub: "Mobile app",
       headers: [
         {
-          headerTag: dialogScript,
+          headerTag: buildDialogScript(),
         },
       ],
       contents: {
@@ -1463,7 +1478,7 @@ router.get(
                 button(
                   {
                     type: "submit",
-                    onClick: `notifyAlert('${execBuildMsg}'); press_store_button(this);`,
+                    onClick: `handleMessages(); press_store_button(this);`,
                     class: "btn btn-warning",
                   },
                   i({ class: "fas fa-hammer pe-2" }),
@@ -1503,7 +1518,6 @@ router.post(
       req.flash("error", req.__("Only the android build supports docker."));
       return res.redirect("/admin/build-mobile-app");
     }
-    if (appFile && !appFile.endsWith(".apk")) appFile = `${appFile}.apk`;
     if (!serverURL || serverURL.length == 0) {
       serverURL = getState().getConfig("base_url") || "";
     }
@@ -1525,7 +1539,13 @@ router.post(
     ];
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
-    if (iOSPlatform) spawnParams.push("-p", "ios");
+    if (iOSPlatform) {
+      spawnParams.push("-p", "ios");
+      const teamId = getState().getConfig("apple_team_id");
+      if (!teamId || teamId === "null") {
+        spawnParams.push("--buildForEmulator");
+      }
+    }
     if (appFile) spawnParams.push("-a", appFile);
     if (serverURL) spawnParams.push("-s", serverURL);
     const child = spawn("saltcorn", spawnParams, {
@@ -1543,10 +1563,13 @@ router.post(
     });
     child.on("exit", async function (exitCode, signal) {
       if (exitCode === 0) {
-        const file = await File.from_existing_file(
-          appOut,
-          appFile ? appFile : "app-debug.apk",
-          req.user.id
+        const files = await Promise.all(
+          fs
+            .readdirSync(appOut)
+            .map(
+              async (outFile) =>
+                await File.from_existing_file(appOut, outFile, req.user.id)
+            )
         );
         res.sendWrap(req.__(`Admin`), {
           above: [
@@ -1555,7 +1578,7 @@ router.post(
               title: req.__("Build Result"),
               contents: div("The build was successfully"),
             },
-            app_files_table(file, req),
+            files.length > 0 ? app_files_table(files, req) : "",
           ],
         });
       } else

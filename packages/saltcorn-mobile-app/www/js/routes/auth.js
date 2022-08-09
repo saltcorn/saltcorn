@@ -1,5 +1,3 @@
-import { sbAdmin2Layout } from "./common.js";
-
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
     class: "login",
@@ -69,7 +67,7 @@ const renderSignupView = (entryPoint, versionTag) => {
   });
 };
 
-export const getLoginView = async () => {
+const getLoginView = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   return {
     content: renderLoginView(config.entry_point, config.version_tag),
@@ -77,7 +75,7 @@ export const getLoginView = async () => {
   };
 };
 
-export const getSignupView = async () => {
+const getSignupView = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   return {
     content: renderSignupView(config.entry_point, config.version_tag),
@@ -85,7 +83,7 @@ export const getSignupView = async () => {
   };
 };
 
-export const logout = async () => {
+const logoutAction = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   const response = await apiCall({ method: "GET", path: "/auth/logout" });
   if (response.data.success) {
