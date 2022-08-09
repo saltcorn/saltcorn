@@ -161,32 +161,32 @@ router.get(
           req.__(
             "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
           ) +
-            " " +
-            req.__(
-              "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-            ) +
-            " " +
-            req.__(
-              "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-            ) +
-            " " +
-            req.__(
-              'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
-            )
+          " " +
+          req.__(
+            "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
+          ) +
+          " " +
+          req.__(
+            "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+          ) +
+          " " +
+          req.__(
+            'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+          )
         )
       );
 
     res.sendWrap(
       req.__("Create application"),
       create_tenant_warning +
-        renderForm(tenant_form(req), req.csrfToken()) +
-        p(
-          { class: "mt-2" },
-          req.__("To login to a previously created application, go to: "),
-          code(`${req.protocol}://`) +
-            i(req.__("Application name")) +
-            code("." + req.hostname)
-        )
+      renderForm(tenant_form(req), req.csrfToken()) +
+      p(
+        { class: "mt-2" },
+        req.__("To login to a previously created application, go to: "),
+        code(`${req.protocol}://`) +
+        i(req.__("Application name")) +
+        code("." + req.hostname)
+      )
     );
   })
 );
@@ -294,13 +294,13 @@ router.post(
                 " " +
                 hasTemplate
                 ? req.__(
-                    'Use this link: <a href="%s">%s</a> to revisit your application at any time.',
-                    newurl,
-                    newurl
-                  )
+                  'Use this link: <a href="%s">%s</a> to revisit your application at any time.',
+                  newurl,
+                  newurl
+                )
                 : req.__(
-                    "Use this link to revisit your application at any time."
-                  )
+                  "Use this link to revisit your application at any time."
+                )
             )
           )
         );
@@ -586,7 +586,7 @@ router.get(
                   td(a({ href: info.base_url + "actions" }, info.nactions))
                 ),
                 tr(
-                  th(req.__("Plugins")),
+                  th(req.__("Modules")),
                   td(a({ href: info.base_url + "plugins" }, info.nplugins))
                 ),
                 tr(

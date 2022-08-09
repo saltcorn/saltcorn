@@ -365,7 +365,7 @@ router.get(
                   post_btn(
                     "/admin/backup",
                     i({ class: "fas fa-download me-2" }) +
-                      req.__("Download a backup"),
+                    req.__("Download a backup"),
                     req.csrfToken(),
                     {
                       btnClass: "btn-outline-primary",
@@ -384,21 +384,21 @@ router.get(
           },
           isRoot
             ? {
-                type: "card",
-                title: req.__("Automated backup"),
-                contents: div(
-                  renderForm(backupForm, req.csrfToken()),
-                  a(
-                    { href: "/admin/auto-backup-list" },
-                    "Restore/download automated backups &raquo;"
-                  ),
-                  script(
-                    domReady(
-                      `$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`
-                    )
-                  )
+              type: "card",
+              title: req.__("Automated backup"),
+              contents: div(
+                renderForm(backupForm, req.csrfToken()),
+                a(
+                  { href: "/admin/auto-backup-list" },
+                  "Restore/download automated backups &raquo;"
                 ),
-              }
+                script(
+                  domReady(
+                    `$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`
+                  )
+                )
+              ),
+            }
             : { type: "blank", contents: "" },
           {
             type: "card",
@@ -831,47 +831,47 @@ router.get(
                     th(req.__("Saltcorn version")),
                     td(
                       packagejson.version +
-                        (isRoot && can_update
-                          ? post_btn(
-                              "/admin/upgrade",
-                              req.__("Upgrade"),
-                              req.csrfToken(),
-                              {
-                                btnClass: "btn-primary btn-sm",
-                                formClass: "d-inline",
-                              }
-                            )
-                          : isRoot && is_latest
+                      (isRoot && can_update
+                        ? post_btn(
+                          "/admin/upgrade",
+                          req.__("Upgrade"),
+                          req.csrfToken(),
+                          {
+                            btnClass: "btn-primary btn-sm",
+                            formClass: "d-inline",
+                          }
+                        )
+                        : isRoot && is_latest
                           ? span(
-                              { class: "badge bg-primary ms-2" },
-                              req.__("Latest")
-                            ) +
-                            post_btn(
-                              "/admin/check-for-upgrade",
-                              req.__("Check for updates"),
-                              req.csrfToken(),
-                              {
-                                btnClass: "btn-primary btn-sm px-1 py-0",
-                                formClass: "d-inline",
-                              }
-                            )
+                            { class: "badge bg-primary ms-2" },
+                            req.__("Latest")
+                          ) +
+                          post_btn(
+                            "/admin/check-for-upgrade",
+                            req.__("Check for updates"),
+                            req.csrfToken(),
+                            {
+                              btnClass: "btn-primary btn-sm px-1 py-0",
+                              formClass: "d-inline",
+                            }
+                          )
                           : "")
                     )
                   ),
                   git_commit &&
-                    tr(
-                      th(req.__("git commit")),
-                      td(
-                        a(
-                          {
-                            href:
-                              "https://github.com/saltcorn/saltcorn/commit/" +
-                              git_commit,
-                          },
-                          git_commit.substring(0, 6)
-                        )
+                  tr(
+                    th(req.__("git commit")),
+                    td(
+                      a(
+                        {
+                          href:
+                            "https://github.com/saltcorn/saltcorn/commit/" +
+                            git_commit,
+                        },
+                        git_commit.substring(0, 6)
                       )
-                    ),
+                    )
+                  ),
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database")),
@@ -981,7 +981,7 @@ router.post(
     res.attachment(fileName);
     const file = fs.createReadStream(fileName);
     file.on("end", function () {
-      fs.unlink(fileName, function () {});
+      fs.unlink(fileName, function () { });
     });
     file.pipe(res);
   })
@@ -1004,7 +1004,7 @@ router.post(
     );
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
-    fs.unlink(newPath, function () {});
+    fs.unlink(newPath, function () { });
     res.redirect(`/admin`);
   })
 );
@@ -1079,7 +1079,7 @@ const clearAllForm = (req) =>
       {
         type: "Bool",
         name: "plugins",
-        label: req.__("Plugins"),
+        label: req.__("Modules"),
         default: true,
       },
     ],
@@ -1149,8 +1149,8 @@ router.post(
           req.__(
             "LetsEncrypt SSL enabled. Restart for changes to take effect."
           ) +
-            " " +
-            a({ href: "/admin/system" }, req.__("Restart here"))
+          " " +
+          a({ href: "/admin/system" }, req.__("Restart here"))
         );
         res.redirect("/useradmin/ssl");
       } catch (e) {
@@ -1221,13 +1221,13 @@ router.get(
           contents: div(
             pass
               ? div(
-                  { class: "alert alert-success", role: "alert" },
-                  i({ class: "fas fa-check-circle fa-lg me-2" }),
-                  h5(
-                    { class: "d-inline" },
-                    req.__("No errors detected during configuration check")
-                  )
+                { class: "alert alert-success", role: "alert" },
+                i({ class: "fas fa-check-circle fa-lg me-2" }),
+                h5(
+                  { class: "d-inline" },
+                  req.__("No errors detected during configuration check")
                 )
+              )
               : errors.map(mkError)
           ),
         },

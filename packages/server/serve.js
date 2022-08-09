@@ -30,7 +30,7 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 const socketio = require("socket.io");
 const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
-const { setTenant, getSessionStore } = require("./routes/utils");
+const { setTenant, getSessionStore, get_tenant_from_req } = require("./routes/utils");
 const passport = require("passport");
 const { authenticate } = require("passport");
 const View = require("@saltcorn/data/models/view");
@@ -137,33 +137,33 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  */
 const onMessageFromWorker =
   (masterState, { port, watchReaper, disableScheduler, pid }) =>
-  (msg) => {
-    //console.log("worker msg", typeof msg, msg);
-    if (msg === "Start" && !masterState.started) {
-      masterState.started = true;
-      runScheduler({
-        port,
-        watchReaper,
-        disableScheduler,
-        eachTenant,
-        auto_backup_now,
-        take_snapshot,
-      });
-      require("./systemd")({ port });
-      return true;
-    } else if (msg === "RestartServer") {
-      process.exit(0);
-      return true;
-    } else if (msg.tenant || msg.createTenant) {
-      ///ie from saltcorn
-      //broadcast
-      Object.entries(cluster.workers).forEach(([wpid, w]) => {
-        if (wpid !== pid) w.send(msg);
-      });
-      workerDispatchMsg(msg); //also master
-      return true;
-    }
-  };
+    (msg) => {
+      //console.log("worker msg", typeof msg, msg);
+      if (msg === "Start" && !masterState.started) {
+        masterState.started = true;
+        runScheduler({
+          port,
+          watchReaper,
+          disableScheduler,
+          eachTenant,
+          auto_backup_now,
+          take_snapshot,
+        });
+        require("./systemd")({ port });
+        return true;
+      } else if (msg === "RestartServer") {
+        process.exit(0);
+        return true;
+      } else if (msg.tenant || msg.createTenant) {
+        ///ie from saltcorn
+        //broadcast
+        Object.entries(cluster.workers).forEach(([wpid, w]) => {
+          if (wpid !== pid) w.send(msg);
+        });
+        workerDispatchMsg(msg); //also master
+        return true;
+      }
+    };
 
 module.exports =
   /**
@@ -352,24 +352,33 @@ const setupSocket = (...servers) => {
     io.attach(server);
   }
 
-  io.use(wrap(setTenant));
+  //io.use(wrap(setTenant));
   io.use(wrap(getSessionStore()));
   io.use(wrap(passport.initialize()));
   io.use(wrap(passport.authenticate(["jwt", "session"])));
   if (process.send && !cluster.isMaster) io.adapter(createAdapter());
-  getState().setRoomEmitter((viewname, room_id, msg) => {
-    io.to(`${viewname}_${room_id}`).emit("message", msg);
+  getState().setRoomEmitter((tenant, viewname, room_id, msg) => {
+    io.to(`${tenant}_${viewname}_${room_id}`).emit("message", msg);
   });
   io.on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      const view = View.findOne({ name: viewname });
-      if (view.viewtemplateObj.authorize_join) {
-        view.viewtemplateObj
-          .authorize_join(view.configuration, room_id, socket.request.user)
-          .then((authorized) => {
-            if (authorized) socket.join(`${viewname}_${room_id}`);
-          });
-      } else socket.join(`${viewname}_${room_id}`);
+      const ten = get_tenant_from_req(socket.request) || "public";
+      const f = () => {
+        try {
+          const view = View.findOne({ name: viewname });
+          if (view.viewtemplateObj.authorize_join) {
+            view.viewtemplateObj
+              .authorize_join(view.configuration, room_id, socket.request.user)
+              .then((authorized) => {
+                if (authorized) socket.join(`${ten}_${viewname}_${room_id}`);
+              });
+          } else socket.join(`${ten}_${viewname}_${room_id}`);
+        } catch (err) {
+          getState().log(1, `Socket join_room error: ${err.stack}`);
+        }
+      }
+      if (ten && ten !== "public") db.runWithTenant(ten, f);
+      else f();
     });
   });
 };

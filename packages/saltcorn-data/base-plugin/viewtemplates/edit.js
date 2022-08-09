@@ -20,6 +20,7 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const {
   get_expression_function,
   expressionChecker,
+  eval_expression
 } = require("../../models/expression");
 const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
 const Library = require("../../models/library");
@@ -248,9 +249,8 @@ const configuration_workflow = (req) =>
         form: async (context) => {
           const own_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
-              viewrow.name !== context.viewname &&
-              (viewrow.table_id === context.table_id ||
-                state_fields.every((sf) => !sf.required))
+            (viewrow.table_id === context.table_id ||
+              state_fields.every((sf) => !sf.required))
           );
           const table = await Table.findOne({ id: context.table_id });
           const parent_views = await get_parent_views(table, context.viewname);
@@ -279,7 +279,7 @@ const configuration_workflow = (req) =>
                 ),
                 //fieldview: "radio_group",
                 attributes: {
-                  options: ["View", "Formula", "Back to referer"],
+                  options: ["View", "Formula", "URL formula", "Back to referer"],
                 },
               },
               {
@@ -292,7 +292,14 @@ const configuration_workflow = (req) =>
                 },
                 showIf: { destination_type: "View" },
               },
-
+              {
+                name: "dest_url_formula",
+                label: req.__("Destination URL Formula"),
+                type: "String",
+                required: true,
+                class: "validate-expression",
+                showIf: { destination_type: "URL formula" },
+              },
               new FieldRepeat({
                 name: "formula_destinations",
                 showIf: { destination_type: "Formula" },
@@ -368,7 +375,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  {},
+  { },
   state,
   { res, req },
   { editQuery }
@@ -511,8 +518,8 @@ const transformForm = async ({
           const childRows = getRowQuery
             ? await getRowQuery(view.table_id, view_select, row.id)
             : await childTable.getRows({
-                [view_select.field_name]: row.id,
-              });
+              [view_select.field_name]: row.id,
+            });
           fr.metadata.rows = childRows;
           if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
             fr.fields.push({
@@ -599,9 +606,8 @@ const render = async ({
     isRemote
   );
   if (auto_save)
-    form.onChange = `saveAndContinue(this, ${
-      !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
+      })`;
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -663,6 +669,7 @@ const runPost = async (
     formula_destinations,
     auto_save,
     destination_type,
+    dest_url_formula
   },
   state,
   body,
@@ -674,9 +681,8 @@ const runPost = async (
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
   if (auto_save)
-    form.onChange = `saveAndContinue(this, ${
-      !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
+      })`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
@@ -741,10 +747,10 @@ const runPost = async (
         }
         const file = isNode()
           ? await File.from_req_files(
-              req.files[field.name],
-              req.user ? req.user.id : null,
-              (field.attributes && +field.attributes.min_role_read) || 1
-            )
+            req.files[field.name],
+            req.user ? req.user.id : null,
+            (field.attributes && +field.attributes.min_role_read) || 1
+          )
           : await File.upload(req.files[field.name]);
         row[field.name] = file.id;
       } else {
@@ -816,6 +822,11 @@ const runPost = async (
     if (destination_type === "Back to referer" && body._referer) {
       res.redirect(body._referer);
       return;
+    } else if (destination_type === "URL formula" && dest_url_formula) {
+      const url = eval_expression(dest_url_formula, row)
+      res.redirect(url);
+      return;
+
     } else if (destination_type !== "View")
       for (const { view, expression } of formula_destinations || []) {
         if (expression) {
@@ -844,7 +855,8 @@ const runPost = async (
       let query = "";
       if (
         (nxview.table_id === table_id || relation) &&
-        state_fields.some((sf) => sf.name === pk.name)
+        state_fields.some((sf) => sf.name === pk.name) &&
+        viewname_when_done !== viewname
       ) {
         const get_query = get_view_link_query(fields);
         query = relation

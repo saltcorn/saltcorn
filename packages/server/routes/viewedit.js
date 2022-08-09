@@ -145,57 +145,57 @@ router.get(
     const viewMarkup =
       views.length > 0
         ? mkTable(
-            [
-              {
-                label: req.__("Name"),
-                key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
-                sortlink: `javascript:set_state_field('_sortby', 'name')`,
-              },
-              // description - currently I dont want to show description in view list
-              // because description can be long
-              /*
-              {
-                  label: req.__("Description"),
-                  key: "description",
-                  // this is sorting by column
-                  sortlink: `javascript:set_state_field('_sortby', 'description')`,
-              },
-              */
-              // template
-              {
-                label: req.__("Template"),
-                key: "viewtemplate",
-                sortlink: `javascript:set_state_field('_sortby', 'viewtemplate')`,
-              },
-              {
-                label: req.__("Table"),
-                key: (r) => link(`/table/${r.table}`, r.table),
-                sortlink: `javascript:set_state_field('_sortby', 'table')`,
-              },
-              {
-                label: req.__("Role to access"),
-                key: (row) => editViewRoleForm(row, roles, req),
-              },
-              {
-                label: "",
-                key: (r) =>
-                  link(
-                    `/viewedit/config/${encodeURIComponent(r.name)}`,
-                    req.__("Configure")
-                  ),
-              },
-              {
-                label: "",
-                key: (r) => view_dropdown(r, req),
-              },
-            ],
-            views,
-            { hover: true }
-          )
+          [
+            {
+              label: req.__("Name"),
+              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+              sortlink: `javascript:set_state_field('_sortby', 'name')`,
+            },
+            // description - currently I dont want to show description in view list
+            // because description can be long
+            /*
+            {
+                label: req.__("Description"),
+                key: "description",
+                // this is sorting by column
+                sortlink: `javascript:set_state_field('_sortby', 'description')`,
+            },
+            */
+            // template
+            {
+              label: req.__("Pattern"),
+              key: "viewtemplate",
+              sortlink: `javascript:set_state_field('_sortby', 'viewtemplate')`,
+            },
+            {
+              label: req.__("Table"),
+              key: (r) => link(`/table/${r.table}`, r.table),
+              sortlink: `javascript:set_state_field('_sortby', 'table')`,
+            },
+            {
+              label: req.__("Role to access"),
+              key: (row) => editViewRoleForm(row, roles, req),
+            },
+            {
+              label: "",
+              key: (r) =>
+                link(
+                  `/viewedit/config/${encodeURIComponent(r.name)}`,
+                  req.__("Configure")
+                ),
+            },
+            {
+              label: "",
+              key: (r) => view_dropdown(r, req),
+            },
+          ],
+          views,
+          { hover: true }
+        )
         : div(
-            h4(req.__("No views defined")),
-            p(req.__("Views define how table rows are displayed to the user"))
-          );
+          h4(req.__("No views defined")),
+          p(req.__("Views define how table rows are displayed to the user"))
+        );
     res.sendWrap(req.__(`Views`), {
       above: [
         {
@@ -210,14 +210,14 @@ router.get(
             viewMarkup,
             tables.length > 0
               ? a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create view")
-                )
+                { href: `/viewedit/new`, class: "btn btn-primary" },
+                req.__("Create view")
+              )
               : p(
-                  req.__(
-                    "You must create at least one table before you can create views."
-                  )
-                ),
+                req.__(
+                  "You must create at least one table before you can create views."
+                )
+              ),
           ],
         },
       ],
@@ -270,10 +270,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         ),
       }),
       new Field({
-        label: req.__("Template"),
+        label: req.__("View pattern"),
         name: "viewtemplate",
         input_type: "select",
-        sublabel: req.__("Views are based on a view template"),
+        sublabel: req.__("The view pattern sets the foundation of how the view relates to the table and the behaviour of the view"),
         options: Object.keys(getState().viewtemplates),
         attributes: {
           explainers: mapObjectValues(
@@ -327,15 +327,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       ...(isEdit
         ? [
-            new Field({
-              name: "viewtemplate",
-              input_type: "hidden",
-            }),
-            new Field({
-              name: "table_name",
-              input_type: "hidden",
-            }),
-          ]
+          new Field({
+            name: "viewtemplate",
+            input_type: "hidden",
+          }),
+          new Field({
+            name: "table_name",
+            input_type: "hidden",
+          }),
+        ]
         : []),
     ],
     values,

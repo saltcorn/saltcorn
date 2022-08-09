@@ -57,7 +57,7 @@ describe("admin page", () => {
     await request(app)
       .get("/settings")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Plugin and pack installation and control"));
+      .expect(toInclude("Module installation and control"));
   });
   it("show admin page", async () => {
     const app = await getApp({ disableCsrf: true });

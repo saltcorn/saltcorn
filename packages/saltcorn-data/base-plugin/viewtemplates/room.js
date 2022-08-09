@@ -287,14 +287,14 @@ const run = async (
   await form.fill_fkey_options(false, optionsQuery);
   return div(
     n_retrieved === limit &&
-      button(
-        {
-          class: "btn btn-outline-secondary mb-1 fetch_older",
-          onclick: `room_older('${viewname}',${state.id},this)`,
-          "data-lt-msg-id": min_read_id,
-        },
-        req.__("Show older messages")
-      ),
+    button(
+      {
+        class: "btn btn-outline-secondary mb-1 fetch_older",
+        onclick: `room_older('${viewname}',${state.id},this)`,
+        "data-lt-msg-id": min_read_id,
+      },
+      req.__("Show older messages")
+    ),
     div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
     renderForm(form, req.csrfToken()),
     script({
@@ -447,8 +447,8 @@ const submit_msg_ajax = async (
     const myhtml = await v.run({ id: msgid.success }, { req, res });
     const newreq = { ...req, user: { ...req.user, id: 0 } };
     const theirhtml = await v.run({ id: msgid.success }, { req: newreq, res });
-
-    getState().emitRoom(viewname, +body.room_id, {
+    const tenant = db.getTenantSchema()
+    getState().emitRoom(tenant, viewname, +body.room_id, {
       append: theirhtml,
       not_for_user_id: req.user.id,
       pls_ack_msg_id: msgid.success,
@@ -508,8 +508,8 @@ const virtual_triggers = (
             res: {},
           }
         );
-
-        getState().emitRoom(viewname, row[msgkey_to_room], {
+        const tenant = db.getTenantSchema()
+        getState().emitRoom(tenant, viewname, row[msgkey_to_room], {
           append: html,
           pls_ack_msg_id: row.id,
         });

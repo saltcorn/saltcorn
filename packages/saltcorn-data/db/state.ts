@@ -123,7 +123,6 @@ class State {
   external_tables: any;
   verifier: any;
   i18n: I18n.I18n;
-  roomEmitter?: Function;
   mobileConfig?: MobileConfig;
   logLevel: number;
 
@@ -638,7 +637,7 @@ class State {
    * @param {function} f
    */
   setRoomEmitter(f: Function) {
-    this.roomEmitter = f;
+    globalRoomEmitter = f;
   }
 
   /**
@@ -646,9 +645,11 @@ class State {
    * @param {...*} args
    */
   emitRoom(...args: any[]) {
-    if (this.roomEmitter) this.roomEmitter(...args);
+    globalRoomEmitter(...args);
   }
 }
+
+let globalRoomEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");

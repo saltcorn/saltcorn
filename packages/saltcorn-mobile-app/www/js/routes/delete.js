@@ -7,10 +7,10 @@ const deleteRows = async (context) => {
   if (mobileConfig.localTableIds.indexOf(table.id) >= 0) {
     if (mobileConfig.role_id <= table.min_role_write) {
       await table.deleteRows({ id });
-    } 
+    }
     // TODO 'table.is_owner' check?
     else {
-      throw new Error($.i18n("Not authorized"))
+      throw new Error(i18next.t("Not authorized"));
     }
   } else {
     await apiCall({ method: "POST", path: `/delete/${name}/${id}` });
