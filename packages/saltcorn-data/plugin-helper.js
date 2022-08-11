@@ -47,9 +47,8 @@ const link_view = (
 ) => {
   let style =
     link_style === "btn btn-custom-color"
-      ? `background-color: ${link_bgcol || "#000000"};border-color: ${
-          link_bordercol || "#000000"
-        }; color: ${link_textcol || "#000000"}`
+      ? `background-color: ${link_bgcol || "#000000"};border-color: ${link_bordercol || "#000000"
+      }; color: ${link_textcol || "#000000"}`
       : null;
   let url = url0;
   if (extraState) {
@@ -57,7 +56,15 @@ const link_view = (
     else url = `${url0}?${extraState}`;
   }
   if (popup) {
-    return button(
+    if (!link_style) return a({
+      href: `javascript:${isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`}`,
+      style,
+      class: [textStyle, link_style, link_size, extraClass],
+    },
+      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
+      label
+    )
+    else return button(
       {
         class: [
           textStyle,
@@ -219,8 +226,8 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
       f.type === "Key"
         ? getState().keyFieldviews
         : f.type === "File"
-        ? getState().fileviews
-        : (f.type && f.type.fieldviews) || {};
+          ? getState().fileviews
+          : (f.type && f.type.fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews)) {
       if (fv.configFields)
         fieldViewConfigForms[f.name][nm] = await applyAsync(fv.configFields, f);
@@ -1227,111 +1234,111 @@ const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
  */
 const initial_config_all_fields =
   (isEdit) =>
-  async ({ table_id, exttable_name }) => {
-    const table = await Table.findOne(
-      table_id ? { id: table_id } : { name: exttable_name }
-    );
+    async ({ table_id, exttable_name }) => {
+      const table = await Table.findOne(
+        table_id ? { id: table_id } : { name: exttable_name }
+      );
 
-    const fields = (await table.getFields()).filter(
-      (f) => !f.primary_key && (!isEdit || !f.calculated)
-    );
-    var cfg = { columns: [] };
-    var aboves = [null];
-    const style = {
-      "margin-bottom": "1.5rem",
-    };
-
-    fields.forEach((f) => {
-      if (!f.type) return;
-      const flabel = {
-        above: [
-          null,
-          {
-            type: "blank",
-            block: false,
-            contents: f.label,
-            textStyle: "",
-            ...(isEdit ? { labelFor: f.name } : {}),
-          },
-        ],
+      const fields = (await table.getFields()).filter(
+        (f) => !f.primary_key && (!isEdit || !f.calculated)
+      );
+      var cfg = { columns: [] };
+      var aboves = [null];
+      const style = {
+        "margin-bottom": "1.5rem",
       };
-      if (
-        f.is_fkey &&
-        f.type !== "File" &&
-        f.reftable_name !== "users" &&
-        !isEdit
-      ) {
-        cfg.columns.push({
-          type: "JoinField",
-          join_field: `${f.name}.${f.attributes.summary_field}`,
-        });
-        aboves.push({
-          widths: [2, 10],
-          style,
-          besides: [
-            flabel,
+
+      fields.forEach((f) => {
+        if (!f.type) return;
+        const flabel = {
+          above: [
+            null,
             {
-              above: [
-                null,
-                {
-                  type: "join_field",
-                  block: false,
-                  textStyle: "",
-                  join_field: `${f.name}.${f.attributes.summary_field}`,
-                },
-              ],
+              type: "blank",
+              block: false,
+              contents: f.label,
+              textStyle: "",
+              ...(isEdit ? { labelFor: f.name } : {}),
             },
           ],
-        });
-      } else if (f.reftable_name !== "users") {
-        const fvNm = f.type.fieldviews
-          ? Object.entries(f.type.fieldviews).find(
+        };
+        if (
+          f.is_fkey &&
+          f.type !== "File" &&
+          f.reftable_name !== "users" &&
+          !isEdit
+        ) {
+          cfg.columns.push({
+            type: "JoinField",
+            join_field: `${f.name}.${f.attributes.summary_field}`,
+          });
+          aboves.push({
+            widths: [2, 10],
+            style,
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "join_field",
+                    block: false,
+                    textStyle: "",
+                    join_field: `${f.name}.${f.attributes.summary_field}`,
+                  },
+                ],
+              },
+            ],
+          });
+        } else if (f.reftable_name !== "users") {
+          const fvNm = f.type.fieldviews
+            ? Object.entries(f.type.fieldviews).find(
               ([nm, fv]) => fv.isEdit === isEdit
             )[0]
-          : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
-        cfg.columns.push({
-          field_name: f.name,
-          type: "Field",
-          fieldview: fvNm,
-          state_field: true,
-        });
-        aboves.push({
-          widths: [2, 10],
-          style,
-          besides: [
-            flabel,
-            {
-              above: [
-                null,
-                {
-                  type: "field",
-                  block: false,
-                  fieldview: fvNm,
-                  textStyle: "",
-                  field_name: f.name,
-                },
-              ],
-            },
-          ],
-        });
-      }
-    });
-    if (isEdit)
-      aboves.push({
-        type: "action",
-        block: false,
-        minRole: 10,
-        action_name: "Save",
+            : f.type === "File" && !isEdit
+              ? Object.keys(getState().fileviews)[0]
+              : f.type === "File" && isEdit
+                ? "upload"
+                : f.type === "Key"
+                  ? "select"
+                  : undefined;
+          cfg.columns.push({
+            field_name: f.name,
+            type: "Field",
+            fieldview: fvNm,
+            state_field: true,
+          });
+          aboves.push({
+            widths: [2, 10],
+            style,
+            besides: [
+              flabel,
+              {
+                above: [
+                  null,
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: fvNm,
+                    textStyle: "",
+                    field_name: f.name,
+                  },
+                ],
+              },
+            ],
+          });
+        }
       });
-    cfg.layout = { above: aboves };
-    return cfg;
-  };
+      if (isEdit)
+        aboves.push({
+          type: "action",
+          block: false,
+          minRole: 10,
+          action_name: "Save",
+        });
+      cfg.layout = { above: aboves };
+      return cfg;
+    };
 
 /**
  *
@@ -1436,13 +1443,13 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     if (selopts.orderBy) {
       const cmp = selopts.orderDesc
         ? new Function(
-            "a,b",
-            `return b.${selopts.orderBy}-a.${selopts.orderBy}`
-          )
+          "a,b",
+          `return b.${selopts.orderBy}-a.${selopts.orderBy}`
+        )
         : new Function(
-            "a,b",
-            `return a.${selopts.orderBy}-b.${selopts.orderBy}`
-          );
+          "a,b",
+          `return a.${selopts.orderBy}-b.${selopts.orderBy}`
+        );
       data_filtered.sort(cmp);
     }
     if (selopts.limit)
