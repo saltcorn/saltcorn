@@ -320,3 +320,7 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
 .editStarRating input:checked + label ~ label {
 	color: #ffc107; 
 }
+
+.CodeMirror {
+  resize: vertical;
+}
