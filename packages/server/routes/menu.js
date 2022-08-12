@@ -22,6 +22,9 @@ const { renderForm } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
+const Trigger = require("@saltcorn/data/models/trigger");
+const { run_action_column } = require("@saltcorn/data/plugin-helper");
+
 
 /**
  * @type {object}
@@ -61,6 +64,18 @@ const menuForm = async (req) => {
         dynSectionFieldOptions[table.name].push(field.name);
     }
   }
+  const stateActions = getState().actions;
+  const actions = [
+    ...Object.entries(stateActions)
+      .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
+      .map(([k, v]) => k),
+  ];
+  const triggers = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    actions.push(tr.name);
+  });
 
   return new Form({
     action: "/menu/",
@@ -92,6 +107,7 @@ const menuForm = async (req) => {
           "Dynamic",
           "Search",
           "Separator",
+          "Action"
         ],
       },
       {
@@ -101,7 +117,7 @@ const menuForm = async (req) => {
         input_type: "text",
         required: true,
         showIf: {
-          type: ["View", "Page", "Link", "Header", "Dynamic", "Search"],
+          type: ["View", "Page", "Link", "Header", "Dynamic", "Search", "Action"],
         },
       },
       {
@@ -111,7 +127,7 @@ const menuForm = async (req) => {
         attributes: {
           html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
-        showIf: { type: ["View", "Page", "Link", "Header"] },
+        showIf: { type: ["View", "Page", "Link", "Header", "Action"] },
       },
       {
         name: "icon",
@@ -148,6 +164,17 @@ const menuForm = async (req) => {
         required: true,
         attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
+      },
+      {
+        name: "action_name",
+        label: req.__("Action"),
+        type: "String",
+        class: "item-menu",
+        required: true,
+        attributes: {
+          options: actions,
+        },
+        showIf: { type: "Action" },
       },
       {
         name: "dyn_table",
@@ -217,7 +244,7 @@ const menuForm = async (req) => {
         class: "item-menu",
         type: "String",
         required: true,
-        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic", "Action"] },
         attributes: {
           options: [
             { name: "", label: "Link" },
@@ -239,7 +266,7 @@ const menuForm = async (req) => {
       {
         name: "location",
         label: req.__("Location"),
-        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic", "Action"] },
         sublabel: req.__("Not all themes support all locations"),
         class: "item-menu",
         type: "String",
@@ -402,5 +429,39 @@ router.post(
     await save_menu_items(menu_items);
 
     res.json({ success: true });
+  })
+);
+
+router.post(
+  "/runaction/:name",
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const role = (req.user || {}).role_id || 10;
+    const state = getState();
+    const menu_items = state.getConfig("menu_items");
+    let menu_item;
+    const search = items =>
+      items
+        .filter((item) => role <= +item.min_role)
+        .forEach(item => {
+          if (item.type === "Action" && item.action_name === name)
+            menu_item = item;
+          else if (item.subitems)
+            search(item.subitems);
+        })
+    search(menu_items);
+    if (menu_item)
+      try {
+        const result = await run_action_column({
+          col: menu_item,
+          referrer: req.get("Referrer"),
+          req,
+        });
+        res.json({ success: "ok", ...(result || {}) });
+      } catch (e) {
+        res.status(400).json({ error: e.message || e });
+      }
+
+    else res.status(404).json({ error: "Action not found" });
   })
 );
