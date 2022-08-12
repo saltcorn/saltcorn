@@ -22,6 +22,8 @@ const { renderForm } = require("@saltcorn/markup");
 const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
+const Trigger = require("@saltcorn/data/models/trigger");
+
 
 /**
  * @type {object}
@@ -61,6 +63,18 @@ const menuForm = async (req) => {
         dynSectionFieldOptions[table.name].push(field.name);
     }
   }
+  const stateActions = getState().actions;
+  const actions = [
+    ...Object.entries(stateActions)
+      .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
+      .map(([k, v]) => k),
+  ];
+  const triggers = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    actions.push(tr.name);
+  });
 
   return new Form({
     action: "/menu/",
@@ -92,6 +106,7 @@ const menuForm = async (req) => {
           "Dynamic",
           "Search",
           "Separator",
+          "Action"
         ],
       },
       {
@@ -101,7 +116,7 @@ const menuForm = async (req) => {
         input_type: "text",
         required: true,
         showIf: {
-          type: ["View", "Page", "Link", "Header", "Dynamic", "Search"],
+          type: ["View", "Page", "Link", "Header", "Dynamic", "Search", "Action"],
         },
       },
       {
@@ -111,7 +126,7 @@ const menuForm = async (req) => {
         attributes: {
           html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
-        showIf: { type: ["View", "Page", "Link", "Header"] },
+        showIf: { type: ["View", "Page", "Link", "Header", "Action"] },
       },
       {
         name: "icon",
@@ -148,6 +163,16 @@ const menuForm = async (req) => {
         required: true,
         attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
+      },
+      {
+        name: "action_name",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: actions,
+        },
+        showIf: { type: "Action" },
       },
       {
         name: "dyn_table",
@@ -217,7 +242,7 @@ const menuForm = async (req) => {
         class: "item-menu",
         type: "String",
         required: true,
-        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic", "Action"] },
         attributes: {
           options: [
             { name: "", label: "Link" },
@@ -239,7 +264,7 @@ const menuForm = async (req) => {
       {
         name: "location",
         label: req.__("Location"),
-        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic"] },
+        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic", "Action"] },
         sublabel: req.__("Not all themes support all locations"),
         class: "item-menu",
         type: "String",
