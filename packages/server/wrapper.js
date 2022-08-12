@@ -44,11 +44,13 @@ const get_extra_menu = (role, state, req) => {
         link:
           item.type === "Link"
             ? item.url
-            : item.type === "View"
-              ? `/view/${encodeURIComponent(item.viewname)}`
-              : item.type === "Page"
-                ? `/page/${encodeURIComponent(item.pagename)}`
-                : undefined,
+            : item.type === "Action"
+              ? `javascript:ajax_post_json('/menu/runaction/${item.action_name}')`
+              : item.type === "View"
+                ? `/view/${encodeURIComponent(item.viewname)}`
+                : item.type === "Page"
+                  ? `/page/${encodeURIComponent(item.pagename)}`
+                  : undefined,
         ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
       }));
   return transform(cfg);
