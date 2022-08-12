@@ -23,6 +23,7 @@ const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
+const { run_action_column } = require("@saltcorn/data/plugin-helper");
 
 
 /**
