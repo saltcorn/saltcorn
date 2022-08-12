@@ -168,6 +168,7 @@ const menuForm = async (req) => {
         name: "action_name",
         label: req.__("Action"),
         type: "String",
+        class: "item-menu",
         required: true,
         attributes: {
           options: actions,
