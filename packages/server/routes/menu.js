@@ -429,3 +429,37 @@ router.post(
     res.json({ success: true });
   })
 );
+
+router.post(
+  "/runaction/:name",
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const role = (req.user || {}).role_id || 10;
+    const state = getState();
+    const menu_items = state.getConfig("menu_items");
+    let menu_item;
+    const search = items =>
+      items
+        .filter((item) => role <= +item.min_role)
+        .forEach(item => {
+          if (item.type === "Action" && item.action_name === name)
+            menu_item = item;
+          else if (item.subitems)
+            search(item.subitems);
+        })
+    search(menu_items);
+    if (menu_item)
+      try {
+        const result = await run_action_column({
+          col: menu_item,
+          referrer: req.get("Referrer"),
+          req,
+        });
+        res.json({ success: "ok", ...(result || {}) });
+      } catch (e) {
+        res.status(400).json({ error: e.message || e });
+      }
+
+    else res.status(404).json({ error: "Action not found" });
+  })
+);
