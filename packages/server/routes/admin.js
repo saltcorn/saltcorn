@@ -1328,13 +1328,13 @@ router.get(
                   { class: "container ps-2" },
                   div(
                     { class: "row pb-2" },
-                    div({ class: "col-sm-4 fw-bold" }, "Entry point"),
-                    div({ class: "col-sm-4 fw-bold" }, "Platform"),
+                    div({ class: "col-sm-4 fw-bold" }, req.__("Entry point")),
+                    div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
                     div(
                       {
                         class: "col-sm-1 fw-bold d-flex justify-content-center",
                       },
-                      "docker"
+                      req.__("docker")
                     )
                   ),
                   div(
@@ -1351,7 +1351,7 @@ router.get(
                           },
                           div(
                             { class: "nav-link active", id: "viewNavLinkID" },
-                            "View"
+                            req.__("View")
                           )
                         ),
                         li(
@@ -1361,7 +1361,7 @@ router.get(
                           },
                           div(
                             { class: "nav-link", id: "pageNavLinkID" },
-                            "Page"
+                            req.__("Page")
                           )
                         )
                       ),
@@ -1398,7 +1398,7 @@ router.get(
                         { class: "container ps-0" },
                         div(
                           { class: "row" },
-                          div({ class: "col-sm-8" }, "android"),
+                          div({ class: "col-sm-8" }, req.__("android")),
                           div(
                             { class: "col-sm" },
                             input({
@@ -1411,7 +1411,7 @@ router.get(
                         ),
                         div(
                           { class: "row" },
-                          div({ class: "col-sm-8" }, "iOS"),
+                          div({ class: "col-sm-8" }, req.__("iOS")),
                           div(
                             { class: "col-sm" },
                             input({
@@ -1443,7 +1443,7 @@ router.get(
                           for: "appNameInputId",
                           class: "form-label fw-bold",
                         },
-                        "App file"
+                        req.__("App file")
                       ),
                       input({
                         type: "text",
@@ -1463,7 +1463,7 @@ router.get(
                           for: "serverURLInputId",
                           class: "form-label fw-bold",
                         },
-                        "Server URL"
+                        req.__("Server URL")
                       ),
                       input({
                         type: "text",
@@ -1483,7 +1483,7 @@ router.get(
                   },
                   i({ class: "fas fa-hammer pe-2" }),
 
-                  "Build mobile app"
+                  req.__("Build mobile app")
                 )
               )
             ),
