@@ -10,11 +10,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
   faChevronRight,
+  faInfoCircle
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
+import Tippy from '@tippyjs/react';
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -151,7 +153,7 @@ export /**
         </div>
         {isFormula[nodekey] && (
           <div style={{ marginTop: "-5px" }}>
-            <small className="text-muted font-monospace">FORMULA</small>
+            <small className="text-muted font-monospace">FORMULA<Tooltip /></small>
             {errorString ? (
               <small className="text-danger font-monospace d-block">
                 {errorString}
@@ -1230,3 +1232,7 @@ export const setAPropGen =
           setProp((prop) => (prop[key] = target_value));
         }
       };
+
+const Tooltip = () => <Tippy content={<span>Tooltip</span>}>
+  <span><FontAwesomeIcon icon={faInfoCircle} /></span>
+</Tippy>
