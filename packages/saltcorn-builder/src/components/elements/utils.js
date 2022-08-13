@@ -153,7 +153,10 @@ export /**
         </div>
         {isFormula[nodekey] && (
           <div style={{ marginTop: "-5px" }}>
-            <small className="text-muted font-monospace">FORMULA<Tooltip /></small>
+            <small className="text-muted font-monospace">
+              FORMULA
+              <Tooltip>Hello <a href="http://yahoo.com">Yahoo</a></Tooltip>
+            </small>
             {errorString ? (
               <small className="text-danger font-monospace d-block">
                 {errorString}
@@ -1233,6 +1236,13 @@ export const setAPropGen =
         }
       };
 
-const Tooltip = () => <Tippy content={<span>Tooltip</span>}>
-  <span><FontAwesomeIcon icon={faInfoCircle} /></span>
-</Tippy>
+const Tooltip = ({ children }) => {
+  const [visible, setVisible] = useState(false);
+  const show = () => setVisible(true);
+  const hide = () => setVisible(false);
+  return <Tippy content={children} visible={visible} onClickOutside={hide} interactive={true}>
+    <span
+      onClick={visible ? hide : show} className="ms-1"
+    ><FontAwesomeIcon icon={faInfoCircle} /></span>
+  </Tippy>
+}
