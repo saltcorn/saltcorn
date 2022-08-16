@@ -19,6 +19,7 @@ import {
   reactifyStyles,
   bstyleopt,
   setAPropGen,
+  FormulaTooltip,
 } from "./utils";
 import {
   BorderOuter,
@@ -757,7 +758,7 @@ const ContainerSettings = () => {
                   onChange={setAProp("showIfFormula")}
                 />
                 <div style={{ marginTop: "-5px" }}>
-                  <small className="text-muted font-monospace">FORMULA</small>
+                  <small className="text-muted font-monospace">FORMULA <FormulaTooltip /></small>
                 </div>
               </td>
             </tr>
