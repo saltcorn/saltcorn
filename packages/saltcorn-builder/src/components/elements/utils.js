@@ -78,6 +78,17 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
     </div>
   );
 
+export const FormulaTooltip = () => {
+  const { fields } = useContext(optionsCtx);
+  console.log(fields);
+  return <Tooltip>
+    <div>Formulae in Saltcorn are JavaScript expressions based on the current database row. Variables in scope:</div>
+    {fields.map((f, ix) => <Fragment><code key={ix}>{f.name}</code>{" "}</Fragment>)}
+
+    <a className="d-block" href="https://wiki.saltcorn.com/view/ShowPage/formulas">Wiki page on formulas</a>
+  </Tooltip>
+}
+
 export /**
  * @param {object} props
  * @param {function} props.setProp
@@ -155,7 +166,7 @@ export /**
           <div style={{ marginTop: "-5px" }}>
             <small className="text-muted font-monospace">
               FORMULA
-              <Tooltip>Hello <a href="http://yahoo.com">Yahoo</a></Tooltip>
+              <FormulaTooltip />
             </small>
             {errorString ? (
               <small className="text-danger font-monospace d-block">
