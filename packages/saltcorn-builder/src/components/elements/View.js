@@ -16,6 +16,7 @@ import {
   fetchViewPreview,
   ConfigForm,
   setAPropGen,
+  FormulaTooltip,
 } from "./utils";
 
 export /**
@@ -158,7 +159,7 @@ const ViewSettings = () => {
       {(state === "shared" || options.mode === "page") && (
         <Fragment>
           {" "}
-          <label>Extra state Formula</label>
+          <label>Extra state Formula <FormulaTooltip /></label>
           <input
             type="text"
             className="viewlink-label form-control"
