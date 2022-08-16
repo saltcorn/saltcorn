@@ -209,6 +209,7 @@ class Page {
         const extra_state = segment.extra_state_fml
           ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
           : {};
+
         const mystate = view.combine_state_and_default_state({
           ...querystate,
           ...extra_state,
@@ -222,7 +223,12 @@ class Page {
         const table = Table.findOne({ id: view.table_id });
         const state = segment.configuration || this.fixed_states[segment.name];
         const filled = await fill_presets(table, extraArgs.req, state);
+
         const mystate = view.combine_state_and_default_state(filled || {});
+        const extra_state = segment.extra_state_fml
+          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
+          : {};
+        Object.assign(mystate, extra_state);
         segment.contents = await view.run(
           mystate,
           extraArgs,
