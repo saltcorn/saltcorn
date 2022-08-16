@@ -705,7 +705,7 @@ module.exports = {
 
       //TODO this will mean that limit is not respected. change filter to jsexprToWhere
       if (table.ownership_formula && role > table.min_role_read && req) {
-        rows = rows.filter((row) => table.is_owner(extraOpts.req.user, row));
+        rows = rows.filter((row) => table.is_owner(req.user, row));
       }
       const rowCount = await table.countRows();
       return { rows, rowCount };
