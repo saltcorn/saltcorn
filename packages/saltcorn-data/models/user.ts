@@ -246,8 +246,31 @@ class User {
     where: Where,
     selectopts?: SelectOptions
   ): Promise<Array<User>> {
-    const us = await db.select("users", where, selectopts);
-    return us.map((u: UserCfg) => new User(u));
+    //get join fields in all ownership formulae
+    const { getState } = require("../db/state");
+    const { freeVariables } = require("./expression");
+    const Field = require("./field");
+    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    let freeVars = new Set();
+    for (const table of getState().tables)
+      if (table.ownership_formula)
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(table.ownership_formula),
+        ]);
+
+    const user_table = Table.findOne({ name: "users" });
+    const fields = await user_table?.getFields();
+    fields?.push(new Field({name: "password", type: "String"}))
+    fields?.push(new Field({name: "role_id", type: "Integer"}))
+    fields?.push(new Field({name: "language", type: "String"}))
+    
+    const joinFields = {};
+    add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    const us = await user_table!.getJoinedRows({ where, joinFields });
+
+    //const us = await db.select("users", where, selectopts);
+    return (us as UserCfg[]).map((u: UserCfg) => new User(u));
   }
 
   /**
