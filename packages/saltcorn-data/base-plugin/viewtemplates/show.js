@@ -45,6 +45,7 @@ const {
   getActionConfigFields,
   run_action_column,
   readState,
+  add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -65,6 +66,7 @@ const { traverseSync } = require("../../models/layout");
 const {
   get_expression_function,
   eval_expression,
+  freeVariables,
 } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
@@ -282,9 +284,8 @@ const run = async (
       })
     );
     for (const row of rows) {
-      row.verification_url = `${base}auth/verify?token=${
-        row.verification_token
-      }&email=${encodeURIComponent(row.email)}`;
+      row.verification_url = `${base}auth/verify?token=${row.verification_token
+        }&email=${encodeURIComponent(row.email)}`;
     }
   }
   await set_join_fieldviews({ table: tbl, layout, fields });
@@ -553,10 +554,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
-              val,
-              row[`${field_name}__filename`],
-              cfg
-            )
+            val,
+            row[`${field_name}__filename`],
+            cfg
+          )
           : "";
       } else if (
         fieldview &&
@@ -787,7 +788,12 @@ module.exports = {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            const row = await table.getRow(uniques);
+            const joinFields = {}
+            if (table.ownership_formula) {
+              const freeVars = freeVariables(table.ownership_formula)
+              add_free_variables_to_joinfields(freeVars, joinFields, fields)
+             }
+            const row = await table.getJoinedRows({ where: uniques, joinFields });
             return table.is_owner(req.user, row);
           }
         }
