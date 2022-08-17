@@ -415,7 +415,7 @@ const renderRows = async (
     const user_id = extra.req.user ? extra.req.user.id : null;
 
     const is_owner =
-      table.ownership_formula && user_id
+      table.ownership_formula && user_id && role > table.min_role_read
         ? await table.is_owner(extra.req.user, row)
         : owner_field && user_id && row[owner_field] === user_id;
 
@@ -711,6 +711,10 @@ module.exports = {
           message: "No row selected",
         };
       const tbl = await Table.findOne(table_id || exttable_name);
+      if (tbl.ownership_formula) {
+        const freeVars = freeVariables(tbl.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+      }
       const rows = await tbl.getJoinedRows({
         where: qstate,
         joinFields,
@@ -743,6 +747,11 @@ module.exports = {
           ];
         else qstate[owner_field.name] = req.user ? req.user.id : -1;
       }
+      if (tbl.ownership_formula && role > tbl.min_role_read) {
+        const freeVars = freeVariables(tbl.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+      }
+      console.log({ joinFields, ownfml: tbl.ownership_formula, tbl });
       let rows = await tbl.getJoinedRows({
         where: qstate,
         joinFields,
@@ -792,7 +801,7 @@ module.exports = {
             if (table.ownership_formula) {
               const freeVars = freeVariables(table.ownership_formula)
               add_free_variables_to_joinfields(freeVars, joinFields, fields)
-             }
+            }
             const row = await table.getJoinedRows({ where: uniques, joinFields });
             return table.is_owner(req.user, row[0]);
           }

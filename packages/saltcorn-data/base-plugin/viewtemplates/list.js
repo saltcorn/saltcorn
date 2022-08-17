@@ -693,7 +693,7 @@ module.exports = {
           [owner_field.name]: req.user ? req.user.id : -1,
         });
       }
-      if (table.ownership_formula && role > table.min_role_read && req) {
+      if (table.ownership_formula && role > table.min_role_read) {
         const freeVars = freeVariables(table.ownership_formula)
         add_free_variables_to_joinfields(freeVars, joinFields, fields)
       }
