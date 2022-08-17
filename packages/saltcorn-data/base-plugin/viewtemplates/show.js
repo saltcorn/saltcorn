@@ -802,7 +802,9 @@ module.exports = {
               add_free_variables_to_joinfields(freeVars, joinFields, fields)
             }
             const row = await table.getJoinedRows({ where: uniques, joinFields });
-            return table.is_owner(req.user, row[0]);
+            if (row.length > 0)
+              return table.is_owner(req.user, row[0]);
+            else return true // TODO ??
           }
         }
       }
