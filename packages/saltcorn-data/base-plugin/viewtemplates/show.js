@@ -751,7 +751,6 @@ module.exports = {
         const freeVars = freeVariables(tbl.ownership_formula)
         add_free_variables_to_joinfields(freeVars, joinFields, fields)
       }
-      console.log({ joinFields, ownfml: tbl.ownership_formula, tbl });
       let rows = await tbl.getJoinedRows({
         where: qstate,
         joinFields,
