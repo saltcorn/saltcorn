@@ -20,7 +20,8 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const {
   get_expression_function,
   expressionChecker,
-  eval_expression
+  eval_expression,
+  freeVariables
 } = require("../../models/expression");
 const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
 const Library = require("../../models/library");
@@ -36,6 +37,7 @@ const {
   stateFieldsToQuery,
   strictParseInt,
   run_action_column,
+  add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -888,7 +890,58 @@ const doAuthPost = async ({ body, table_id, req }) => {
     } else return field_name && `${body[field_name]}` === `${user_id}`;
   }
   if (table.ownership_formula && user_id) {
-    return await table.is_owner(req.user, body);
+
+    let row = { ...body }
+    if (body[table.pk_name]) {
+      const joinFields = {}
+      if (table.ownership_formula) {
+        const fields = await table.getFields();
+        const freeVars = freeVariables(table.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+      }
+      const dbrow = await table.getJoinedRows({
+        where: {
+          [table.pk_name]: body[table.pk_name]
+        }, joinFields
+      });
+      if (dbrow.length > 0)
+        row = { ...body, ...dbrow[0] }
+    } else {
+      // need to check new row conforms to ownership fml
+      const freeVars = freeVariables(table.ownership_formula)
+      const fields = await table.getFields();
+
+      const field_names = new Set(fields.map(f => f.name));
+
+      // loop free vars, substitute in row
+      for (const fv of freeVars) {
+        const kpath = fv.split(".")
+        if (field_names.has(kpath[0]) && kpath.length > 1) {
+          const field = fields.find(f => f.name === kpath[0])
+          if (!field)
+            throw new Error("Invalid formula:" + table.ownership_formula);
+          const reftable = Table.findOne({ name: field.reftable_name })
+          const joinFields = {}
+          const [kpath0, ...kpathrest] = kpath
+          add_free_variables_to_joinfields(
+            new Set([kpathrest.join(".")]),
+            joinFields,
+            fields
+          );
+
+          const rows = await reftable.getJoinedRows({
+            where: {
+              [reftable.pk_name]: body[kpath0]
+            }, joinFields
+          });
+          row[kpath0] = rows[0]
+
+        }
+      }
+    }
+
+    const is_owner = await table.is_owner(req.user, row);
+    return is_owner
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
@@ -1053,16 +1106,28 @@ module.exports = {
     },
     async authorizeGetQuery(query, table_id) {
       let body = query || {};
+      const table = Table.findOne({ id: table_id });
       if (Object.keys(body).length == 1) {
-        const table = await Table.findOne({ id: table_id });
+
         if (table.ownership_field_id || table.ownership_formula) {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            body = await table.getRow(uniques);
-            return table.is_owner(req.user, body);
+            const joinFields = {}
+            if (table.ownership_formula) {
+              const freeVars = freeVariables(table.ownership_formula)
+              add_free_variables_to_joinfields(freeVars, joinFields, fields)
+            }
+            const row = await table.getJoinedRows({ where: uniques, joinFields });
+            if (row.length > 0)
+              return table.is_owner(req.user, row[0]);
+            else return true // TODO ??
+          } else {
+            return true
           }
         }
+      } else {
+        return table.ownership_field_id || table.ownership_formula
       }
       return doAuthPost({ body, table_id, req });
     },
