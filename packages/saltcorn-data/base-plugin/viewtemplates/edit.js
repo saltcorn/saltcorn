@@ -906,6 +906,9 @@ const doAuthPost = async ({ body, table_id, req }) => {
       });
       if (dbrow.length > 0)
         row = { ...body, ...dbrow[0] }
+    } else {
+      // TODO FIXME. need to check new row conforms to ownership fml
+      return true 
     }
     const is_owner = await table.is_owner(req.user, row);
     //console.log({ is_owner, row });
