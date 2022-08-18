@@ -890,9 +890,26 @@ const doAuthPost = async ({ body, table_id, req }) => {
     } else return field_name && `${body[field_name]}` === `${user_id}`;
   }
   if (table.ownership_formula && user_id) {
-    const freeVars = freeVariables(table.ownership_formula)
 
-    return await table.is_owner(req.user, body);
+    let row = body
+    if (body[table.pk_name]) {
+      const joinFields = {}
+      if (table.ownership_formula) {
+        const fields = await table.getFields();
+        const freeVars = freeVariables(table.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+      }
+      const dbrow = await table.getJoinedRows({
+        where: {
+          [table.pk_name]: body[table.pk_name]
+        }, joinFields
+      });
+      if (dbrow.length > 0)
+        row = { ...body, ...dbrow[0] }
+    }
+    const is_owner = await table.is_owner(req.user, row);
+    //console.log({ is_owner, row });
+    return is_owner
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
@@ -1059,7 +1076,7 @@ module.exports = {
       let body = query || {};
       const table = Table.findOne({ id: table_id });
       if (Object.keys(body).length == 1) {
-        
+
         if (table.ownership_field_id || table.ownership_formula) {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
