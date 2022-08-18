@@ -20,7 +20,8 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const {
   get_expression_function,
   expressionChecker,
-  eval_expression
+  eval_expression,
+  freeVariables
 } = require("../../models/expression");
 const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
 const Library = require("../../models/library");
@@ -36,6 +37,7 @@ const {
   stateFieldsToQuery,
   strictParseInt,
   run_action_column,
+  add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -888,6 +890,8 @@ const doAuthPost = async ({ body, table_id, req }) => {
     } else return field_name && `${body[field_name]}` === `${user_id}`;
   }
   if (table.ownership_formula && user_id) {
+    const freeVars = freeVariables(table.ownership_formula)
+
     return await table.is_owner(req.user, body);
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
@@ -1053,14 +1057,22 @@ module.exports = {
     },
     async authorizeGetQuery(query, table_id) {
       let body = query || {};
+
       if (Object.keys(body).length == 1) {
         const table = await Table.findOne({ id: table_id });
         if (table.ownership_field_id || table.ownership_formula) {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            body = await table.getRow(uniques);
-            return table.is_owner(req.user, body);
+            const joinFields = {}
+            if (table.ownership_formula) {
+              const freeVars = freeVariables(table.ownership_formula)
+              add_free_variables_to_joinfields(freeVars, joinFields, fields)
+            }
+            const row = await table.getJoinedRows({ where: uniques, joinFields });
+            if (row.length > 0)
+              return table.is_owner(req.user, row[0]);
+            else return true // TODO ??
           }
         }
       }
