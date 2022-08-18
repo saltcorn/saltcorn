@@ -1057,9 +1057,9 @@ module.exports = {
     },
     async authorizeGetQuery(query, table_id) {
       let body = query || {};
-
+      const table = Table.findOne({ id: table_id });
       if (Object.keys(body).length == 1) {
-        const table = await Table.findOne({ id: table_id });
+        
         if (table.ownership_field_id || table.ownership_formula) {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
@@ -1073,8 +1073,12 @@ module.exports = {
             if (row.length > 0)
               return table.is_owner(req.user, row[0]);
             else return true // TODO ??
+          } else {
+            return true
           }
         }
+      } else {
+        return table.ownership_field_id || table.ownership_formula
       }
       return doAuthPost({ body, table_id, req });
     },
