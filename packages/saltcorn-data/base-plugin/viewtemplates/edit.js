@@ -891,7 +891,7 @@ const doAuthPost = async ({ body, table_id, req }) => {
   }
   if (table.ownership_formula && user_id) {
 
-    let row = body
+    let row = { ...body }
     if (body[table.pk_name]) {
       const joinFields = {}
       if (table.ownership_formula) {
@@ -916,10 +916,8 @@ const doAuthPost = async ({ body, table_id, req }) => {
       // loop free vars, substitute in row
       for (const fv of freeVars) {
         const kpath = fv.split(".")
-        console.log({ fv, kpath });
         if (field_names.has(kpath[0]) && kpath.length > 1) {
           const field = fields.find(f => f.name === kpath[0])
-          console.log(field);
           if (!field)
             throw new Error("Invalid formula:" + table.ownership_formula);
           const reftable = Table.findOne({ name: field.reftable_name })
@@ -928,26 +926,21 @@ const doAuthPost = async ({ body, table_id, req }) => {
           add_free_variables_to_joinfields(
             new Set([kpathrest.join(".")]),
             joinFields,
-            fields)
-            console.log({ joinFields, where:  {
-              [kpath0]: body[kpath0]
-            } });
+            fields
+          );
+
           const rows = await reftable.getJoinedRows({
             where: {
               [reftable.pk_name]: body[kpath0]
             }, joinFields
-          })
-          console.log("rows", rows);
+          });
           row[kpath0] = rows[0]
 
         }
       }
-      //return true
-
     }
 
     const is_owner = await table.is_owner(req.user, row);
-    console.log({ is_owner, row });
     return is_owner
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
