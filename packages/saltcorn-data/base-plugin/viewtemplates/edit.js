@@ -907,11 +907,47 @@ const doAuthPost = async ({ body, table_id, req }) => {
       if (dbrow.length > 0)
         row = { ...body, ...dbrow[0] }
     } else {
-      // TODO FIXME. need to check new row conforms to ownership fml
-      return true 
+      // need to check new row conforms to ownership fml
+      const freeVars = freeVariables(table.ownership_formula)
+      const fields = await table.getFields();
+
+      const field_names = new Set(fields.map(f => f.name));
+
+      // loop free vars, substitute in row
+      for (const fv of freeVars) {
+        const kpath = fv.split(".")
+        console.log({ fv, kpath });
+        if (field_names.has(kpath[0]) && kpath.length > 1) {
+          const field = fields.find(f => f.name === kpath[0])
+          console.log(field);
+          if (!field)
+            throw new Error("Invalid formula:" + table.ownership_formula);
+          const reftable = Table.findOne({ name: field.reftable_name })
+          const joinFields = {}
+          const [kpath0, ...kpathrest] = kpath
+          add_free_variables_to_joinfields(
+            new Set([kpathrest.join(".")]),
+            joinFields,
+            fields)
+            console.log({ joinFields, where:  {
+              [kpath0]: body[kpath0]
+            } });
+          const rows = await reftable.getJoinedRows({
+            where: {
+              [reftable.pk_name]: body[kpath0]
+            }, joinFields
+          })
+          console.log("rows", rows);
+          row[kpath0] = rows[0]
+
+        }
+      }
+      //return true
+
     }
+
     const is_owner = await table.is_owner(req.user, row);
-    //console.log({ is_owner, row });
+    console.log({ is_owner, row });
     return is_owner
   }
   if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
