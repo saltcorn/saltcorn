@@ -72,7 +72,8 @@ class Tag {
     for (const entry of await this.getEntries()) {
       if (entry[memberId]) {
         const modelObj = await model.findOne({ id: entry[memberId] });
-        result.push(modelObj!);
+        if(modelObj)
+          result.push(modelObj);
       }
     }
     return result;

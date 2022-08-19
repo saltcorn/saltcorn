@@ -92,7 +92,7 @@ const mkTable = (
 ): string =>
   div(
     {
-      class: `table-responsive ${opts.tableClass ? opts.tableClass : ""}`,
+      class: ["table-responsive", opts.tableClass],
       id: opts.tableId,
     },
     table(
