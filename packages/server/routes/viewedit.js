@@ -31,6 +31,7 @@ const {
 
 const { getState } = require("@saltcorn/data/db/state");
 const { isAdmin, error_catcher } = require("./utils.js");
+const { setTableRefs, viewsList } = require("./common_lists");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
@@ -38,10 +39,10 @@ const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
+const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
-const { editRoleForm } = require("../markup/forms.js");
 
 /**
  * @type {object}
@@ -54,68 +55,6 @@ const router = new Router();
 module.exports = router;
 
 /**
- * @param {object} view
- * @param {object[]} roles
- * @param {object} req
- * @returns {Form}
- */
-const editViewRoleForm = (view, roles, req) =>
-  editRoleForm({
-    url: `/viewedit/setrole/${view.id}`,
-    current_role: view.min_role,
-    roles,
-    req,
-  });
-
-/**
- * @param {object} view
- * @param {object} req
- * @returns {div}
- */
-const view_dropdown = (view, req) =>
-  settingsDropdown(`dropdownMenuButton${view.id}`, [
-    a(
-      {
-        class: "dropdown-item",
-        href: `/view/${encodeURIComponent(view.name)}`,
-      },
-      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-    ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
-      },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
-    ),
-    post_dropdown_item(
-      `/viewedit/add-to-menu/${view.id}`,
-      '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
-      req
-    ),
-    post_dropdown_item(
-      `/viewedit/clone/${view.id}`,
-      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
-      req
-    ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}')`,
-      },
-      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
-    ),
-    div({ class: "dropdown-divider" }),
-    post_dropdown_item(
-      `/viewedit/delete/${view.id}`,
-      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-      req,
-      true,
-      view.name
-    ),
-  ]);
-
-/**
  * @name get
  * @function
  * @memberof module:routes/viewedit~vieweditRouter
@@ -125,77 +64,18 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    var orderBy = "name";
+    let orderBy = "name";
     if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
+    const views = await View.find({}, { orderBy, nocase: true });
+    await setTableRefs(views);
 
-    var views = await View.find({}, { orderBy, nocase: true });
-    const tables = await Table.find();
-    const getTable = (tid) => tables.find((t) => t.id === tid).name;
-    views.forEach((v) => {
-      if (v.table_id) v.table = getTable(v.table_id);
-      else if (v.exttable_name) v.table = v.exttable_name;
-      else v.table = "";
-    });
     if (req.query._sortby === "table")
       views.sort((a, b) =>
         a.table.toLowerCase() > b.table.toLowerCase() ? 1 : -1
       );
-    const roles = await User.get_roles();
 
-    const viewMarkup =
-      views.length > 0
-        ? mkTable(
-          [
-            {
-              label: req.__("Name"),
-              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
-              sortlink: `javascript:set_state_field('_sortby', 'name')`,
-            },
-            // description - currently I dont want to show description in view list
-            // because description can be long
-            /*
-            {
-                label: req.__("Description"),
-                key: "description",
-                // this is sorting by column
-                sortlink: `javascript:set_state_field('_sortby', 'description')`,
-            },
-            */
-            // template
-            {
-              label: req.__("Pattern"),
-              key: "viewtemplate",
-              sortlink: `javascript:set_state_field('_sortby', 'viewtemplate')`,
-            },
-            {
-              label: req.__("Table"),
-              key: (r) => link(`/table/${r.table}`, r.table),
-              sortlink: `javascript:set_state_field('_sortby', 'table')`,
-            },
-            {
-              label: req.__("Role to access"),
-              key: (row) => editViewRoleForm(row, roles, req),
-            },
-            {
-              label: "",
-              key: (r) =>
-                link(
-                  `/viewedit/config/${encodeURIComponent(r.name)}`,
-                  req.__("Configure")
-                ),
-            },
-            {
-              label: "",
-              key: (r) => view_dropdown(r, req),
-            },
-          ],
-          views,
-          { hover: true }
-        )
-        : div(
-          h4(req.__("No views defined")),
-          p(req.__("Views define how table rows are displayed to the user"))
-        );
+    const viewMarkup = await viewsList(views, req);
+    const tables = await Table.find();
     res.sendWrap(req.__(`Views`), {
       above: [
         {
@@ -210,14 +90,14 @@ router.get(
             viewMarkup,
             tables.length > 0
               ? a(
-                { href: `/viewedit/new`, class: "btn btn-primary" },
-                req.__("Create view")
-              )
-              : p(
-                req.__(
-                  "You must create at least one table before you can create views."
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  req.__("Create view")
                 )
-              ),
+              : p(
+                  req.__(
+                    "You must create at least one table before you can create views."
+                  )
+                ),
           ],
         },
       ],
@@ -273,7 +153,9 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         label: req.__("View pattern"),
         name: "viewtemplate",
         input_type: "select",
-        sublabel: req.__("The view pattern sets the foundation of how the view relates to the table and the behaviour of the view"),
+        sublabel: req.__(
+          "The view pattern sets the foundation of how the view relates to the table and the behaviour of the view"
+        ),
         options: Object.keys(getState().viewtemplates),
         attributes: {
           explainers: mapObjectValues(
@@ -362,7 +244,8 @@ router.get(
     }
     const tables = await Table.find_with_external();
     const currentTable = tables.find(
-      (t) => (t.id && t.id === viewrow.table_id) || t.name === viewrow.exttable_name
+      (t) =>
+        (t.id && t.id === viewrow.table_id) || t.name === viewrow.exttable_name
     );
     viewrow.table_name = currentTable && currentTable.name;
     if (viewrow.slug && currentTable) {
