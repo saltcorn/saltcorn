@@ -258,15 +258,22 @@ class User {
           ...freeVars,
           ...freeVariables(table.ownership_formula),
         ]);
+    const freeUserVars = [...freeVars]
+      .map((fv: any) => {
+        const [kpath0, ...rest] = fv.split(".");
+        if (kpath0 === "user" && rest.length > 0) return rest.join(".");
+        else return null;
+      })
+      .filter((s) => s);
 
     const user_table = Table.findOne({ name: "users" });
     const fields = await user_table?.getFields();
-    fields?.push(new Field({name: "password", type: "String"}))
-    fields?.push(new Field({name: "role_id", type: "Integer"}))
-    fields?.push(new Field({name: "language", type: "String"}))
-    
+    fields?.push(new Field({ name: "password", type: "String" }));
+    fields?.push(new Field({ name: "role_id", type: "Integer" }));
+    fields?.push(new Field({ name: "language", type: "String" }));
+
     const joinFields = {};
-    add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields);
     const us = await user_table!.getJoinedRows({ where, joinFields });
 
     //const us = await db.select("users", where, selectopts);
