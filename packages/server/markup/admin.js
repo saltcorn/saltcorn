@@ -245,6 +245,13 @@ const send_files_page = (args) => {
   });
 };
 
+const send_tags_page = (args) => {
+  return send_settings_page({
+    main_section: "Tags",
+    ...args,
+  });
+};
+
 /**
  * Send Events Page
  * @param {object} args
@@ -281,6 +288,7 @@ const send_admin_page = (args) => {
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
+      ...(isRoot ? [{ text: "Tag", href: "/tag" }] : []),
       ...(isRoot
         ? [{ text: "Mobile app", href: "/admin/build-mobile-app" }]
         : []),
@@ -345,7 +353,12 @@ const flash_restart = (req) => {
  * @param {*} opts.formArgs
  * @returns {Promise<Form>}
  */
-const config_fields_form = async ({ field_names, req, action, ...formArgs }) => {
+const config_fields_form = async ({
+  field_names,
+  req,
+  action,
+  ...formArgs
+}) => {
   const values = {};
   const state = getState();
   const fields = [];
@@ -512,4 +525,5 @@ module.exports = {
   save_config_from_form,
   flash_restart_if_required,
   flash_restart,
+  send_tags_page,
 };

@@ -8,6 +8,7 @@ const Router = require("express-promise-router");
 const { isAdmin, error_catcher, get_base_url } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
+const { getTriggerList } = require("./common_lists");
 
 /**
  * @type {object}
@@ -97,45 +98,7 @@ router.get(
             type: "card",
             title: req.__("Triggers"),
             contents: div(
-              mkTable(
-                [
-                  { label: req.__("Name"), key: "name" },
-                  { label: req.__("Action"), key: "action" },
-                  {
-                    label: req.__("Table or Channel"),
-                    key: (r) => r.table_name || r.channel,
-                  },
-                  {
-                    label: req.__("When"),
-                    key: (a) =>
-                      a.when_trigger === "API call"
-                        ? `API: ${base_url}api/action/${a.name}`
-                        : a.when_trigger,
-                  },
-                  {
-                    label: req.__("Test run"),
-                    key: (r) =>
-                      r.table_id
-                        ? ""
-                        : link(`/actions/testrun/${r.id}`, req.__("Test run")),
-                  },
-                  {
-                    label: req.__("Edit"),
-                    key: (r) => link(`/actions/edit/${r.id}`, req.__("Edit")),
-                  },
-                  {
-                    label: req.__("Configure"),
-                    key: (r) =>
-                      link(`/actions/configure/${r.id}`, req.__("Configure")),
-                  },
-                  {
-                    label: req.__("Delete"),
-                    key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
-                  },
-                ],
-                triggers,
-                { hover: true }
-              ),
+              getTriggerList(triggers, req),
               link("/actions/new", req.__("Add trigger"))
             ),
           },

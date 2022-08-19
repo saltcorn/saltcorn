@@ -70,6 +70,8 @@ const auth = require("../auth/routes");
 const useradmin = require("../auth/admin");
 const roleadmin = require("../auth/roleadmin");
 const scapi = require("./scapi");
+const tags = require("./tags");
+const tagentries = require("./tag_entries");
 
 module.exports =
   /**
@@ -106,4 +108,6 @@ module.exports =
     app.use("/useradmin", useradmin);
     app.use("/roleadmin", roleadmin);
     app.use("/scapi", scapi);
+    app.use("/tag", tags);
+    app.use("/tag-entries", tagentries);
   };

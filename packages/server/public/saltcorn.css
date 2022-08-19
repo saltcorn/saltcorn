@@ -324,3 +324,26 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
 .CodeMirror {
   resize: vertical;
 }
+
+/* copied from bootstrap and adjusted to show the arrow on the left */
+.card .card-header-left-collapse[data-bs-toggle=collapse] {
+  text-decoration: none;
+  position: relative;
+  padding: 0.75rem 3.25rem 0.75rem 1.25rem;
+}
+.card .card-header-left-collapse[data-bs-toggle=collapse]::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  line-height: 51px;
+  font-weight: 900;
+  content: "\f107";
+  font-family: "Font Awesome 5 Free";
+  color: #d1d3e2;
+}
+.card .card-header-left-collapse[data-bs-toggle=collapse].collapsed {
+  border-radius: 0.35rem;
+}
+.card .card-header-left-collapse[data-bs-toggle=collapse].collapsed::before {
+  content: "\f105";
+}
