@@ -227,9 +227,8 @@ class User {
    */
   static async authenticate(uo: any): Promise<User | false> {
     const { password, ...uoSearch } = uo;
-    const urows = await User.find(uoSearch, { limit: 2 });
-    if (urows.length !== 1) return false;
-    const [urow] = urows;
+    const urow = await User.findForSession(uoSearch);
+    if (!urow) return false;
     if (urow.disabled) return false;
     const cmp = urow.checkPassword(password || "");
     if (cmp) return new User(urow);
@@ -242,10 +241,9 @@ class User {
    * @param selectopts - select options
    * @returns {Promise<User[]>}
    */
-  static async find(
-    where: Where,
-    selectopts?: SelectOptions
-  ): Promise<Array<User>> {
+  static async findForSession(
+    where: Where
+  ): Promise<User|false> {
     //get join fields in all ownership formulae
     const { getState } = require("../db/state");
     const { freeVariables } = require("./expression");
@@ -273,13 +271,28 @@ class User {
     add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields);
     const us = await user_table!.getJoinedRows({
       where,
+      limit: 2,
       joinFields,
       starFields: true,
     });
-
-    //const us = await db.select("users", where, selectopts);
-    return (us as UserCfg[]).map((u: UserCfg) => new User(u));
+    if (us.length !== 1) return false;
+    return new User(us[0] as UserCfg)
   }
+
+  /**
+   * Find users list
+   * @param where - where object
+   * @param selectopts - select options
+   * @returns {Promise<User[]>}
+   */
+   static async find(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<Array<User>> {
+    const us = await db.select("users", where, selectopts);
+    return us.map((u: UserCfg) => new User(u));
+  }
+
 
   /**
    * Find one user
@@ -332,11 +345,13 @@ class User {
    */
   async update(row: Row): Promise<void> {
     await db.update("users", row, this.id);
+    Object.assign(this, row)
     await Trigger.runTableTriggers(
       "Update",
       Table.findOne({ name: "users" }) as Table,
       { ...this, ...row }
     );
+
   }
 
   /**
