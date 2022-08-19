@@ -948,5 +948,7 @@
 	"Source of module for install. Few options:npm - download from npm repository,local - get from local file system,github - download from github,git - get from git": "Source of module for install. Few options:npm - download from npm repository,local - get from local file system,github - download from github,git - get from git",
 	"Version of module, latest is default value": "Version of module, latest is default value",
 	"For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to module folder in file system, e.g. C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.": "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, for local - absolute path to module folder in file system, e.g. C:\\gitsrc\\any-bootstrap-theme\\, for github - name of github project.",
-	"Modules up-to-date": "Modules up-to-date"
+	"Modules up-to-date": "Modules up-to-date",
+	"User must have this role or higher to read rows from the table, unless they are the owner": "User must have this role or higher to read rows from the table, unless they are the owner",
+	"User must have this role or higher to edit or create new rows in the table, unless they are the owner": "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
 }

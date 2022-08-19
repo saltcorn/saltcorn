@@ -31,12 +31,14 @@ const {
   getActionConfigFields,
   readState,
   run_action_column,
+  add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
 const { get_viewable_fields } = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
   get_async_expression_function,
   jsexprToWhere,
+  freeVariables,
 } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
@@ -691,6 +693,11 @@ module.exports = {
           [owner_field.name]: req.user ? req.user.id : -1,
         });
       }
+      if (table.ownership_formula && role > table.min_role_read) {
+        const freeVars = freeVariables(table.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+      }
+
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
         let where1 = jsexprToWhere(default_state.include_fml, state);
