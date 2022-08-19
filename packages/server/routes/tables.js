@@ -889,7 +889,6 @@ router.post(
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
-        console.log({ fmlValidRes });
         if (typeof fmlValidRes === "string") {
           req.flash(
             "error",
