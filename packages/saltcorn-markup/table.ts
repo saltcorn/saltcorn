@@ -41,6 +41,8 @@ namespace TableExports {
     noHeader?: boolean;
     hover?: boolean;
     transpose?: boolean;
+    tableClass?: string;
+    tableId?: string;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -89,7 +91,10 @@ const mkTable = (
   opts: OptsParams | any = {}
 ): string =>
   div(
-    { class: "table-responsive" },
+    {
+      class: `table-responsive ${opts.tableClass ? opts.tableClass : ""}`,
+      id: opts.tableId,
+    },
     table(
       {
         class: [

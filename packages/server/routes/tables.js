@@ -56,6 +56,7 @@ const {
 } = require("@saltcorn/data/models/discovery");
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
+const { tablesList } = require("./common_lists");
 
 /**
  * @type {object}
@@ -1011,42 +1012,7 @@ router.get(
     const rows = await Table.find_with_external({}, { orderBy: "name" });
     const roles = await User.get_roles();
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
-    const mainCard =
-      rows.length > 0
-        ? mkTable(
-          [
-            {
-              label: req.__("Name"),
-              key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
-            },
-            {
-              label: "",
-              key: (r) => tableBadges(r, req),
-            },
-            {
-              label: req.__("Access Read/Write"),
-              key: (t) =>
-                t.external
-                  ? `${getRole(t.min_role_read)} (read only)`
-                  : `${getRole(t.min_role_read)}/${getRole(
-                    t.min_role_write
-                  )}`,
-            },
-            {
-              label: req.__("Delete"),
-              key: (r) =>
-                r.name === "users" || r.external
-                  ? ""
-                  : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
-            },
-          ],
-          rows,
-          { hover: true }
-        )
-        : div(
-          h4(req.__("No tables defined")),
-          p(req.__("Tables hold collections of similar data"))
-        );
+    const mainCard = await tablesList(rows, req);
     const createCard = div(
       h5(req.__("Create table")),
       a(

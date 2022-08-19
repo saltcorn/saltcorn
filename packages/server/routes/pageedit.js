@@ -19,6 +19,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
+const { getPageList } = require("./common_lists");
 
 const { isAdmin, error_catcher } = require("./utils.js");
 const {
@@ -32,7 +33,6 @@ const {
   settingsDropdown,
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
-const { editRoleForm, wizardCardTitle } = require("../markup/forms.js");
 const Library = require("@saltcorn/data/models/library");
 
 /**
@@ -44,68 +44,6 @@ const Library = require("@saltcorn/data/models/library");
  */
 const router = new Router();
 module.exports = router;
-
-/**
- * @param {object} page
- * @param {*} roles
- * @param {object} req
- * @returns {Form}
- */
-const editPageRoleForm = (page, roles, req) =>
-  editRoleForm({
-    url: `/pageedit/setrole/${page.id}`,
-    current_role: page.min_role,
-    roles,
-    req,
-  });
-
-/**
- * @param {object} page
- * @param {object} req
- * @returns {string}
- */
-const page_dropdown = (page, req) =>
-  settingsDropdown(`dropdownMenuButton${page.id}`, [
-    a(
-      {
-        class: "dropdown-item",
-        href: `/page/${encodeURIComponent(page.name)}`,
-      },
-      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-    ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/pageedit/edit-properties/${encodeURIComponent(page.name)}`,
-      },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit properties")
-    ),
-    post_dropdown_item(
-      `/pageedit/add-to-menu/${page.id}`,
-      '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
-      req
-    ),
-    post_dropdown_item(
-      `/pageedit/clone/${page.id}`,
-      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
-      req
-    ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `javascript:ajax_modal('/admin/snapshot-restore/page/${page.name}')`,
-      },
-      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
-    ),
-    div({ class: "dropdown-divider" }),
-    post_dropdown_item(
-      `/pageedit/delete/${page.id}`,
-      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-      req,
-      true,
-      page.name
-    ),
-  ]);
 
 /**
  *
@@ -188,7 +126,7 @@ const pageBuilderData = async (req, context) => {
   for (const view of views) {
     fixed_state_fields[view.name] = [];
     const table = Table.findOne(view.table_id || view.exttable_name);
-    
+
     const fs = await view.get_state_fields();
     for (const frec of fs) {
       const f = new Field(frec);
@@ -234,46 +172,6 @@ const pageBuilderData = async (req, context) => {
     next_button_label: "Done",
     fonts: getState().fonts,
   };
-};
-
-/**
- * @param {*} rows
- * @param {*} roles
- * @param {object} req
- * @returns {div}
- */
-const getPageList = (rows, roles, req) => {
-  return div(
-    mkTable(
-      [
-        {
-          label: req.__("Name"),
-          key: (r) => link(`/page/${r.name}`, r.name),
-        },
-        {
-          label: req.__("Role to access"),
-          key: (row) => editPageRoleForm(row, roles, req),
-        },
-        {
-          label: req.__("Edit"),
-          key: (r) => link(`/pageedit/edit/${r.name}`, req.__("Edit")),
-        },
-        {
-          label: "",
-          key: (r) => page_dropdown(r, req),
-        },
-      ],
-      rows,
-      { hover: true }
-    ),
-    a(
-      {
-        href: `/pageedit/new`,
-        class: "btn btn-primary",
-      },
-      req.__("Create page")
-    )
-  );
 };
 
 /**
@@ -335,7 +233,16 @@ router.get(
           type: "card",
           title: req.__("Your pages"),
           class: "mt-0",
-          contents: getPageList(pages, roles, req),
+          contents: div(
+            getPageList(pages, roles, req),
+            a(
+              {
+                href: `/pageedit/new`,
+                class: "btn btn-primary",
+              },
+              req.__("Create page")
+            )
+          ),
         },
         {
           type: "card",
