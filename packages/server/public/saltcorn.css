@@ -321,6 +321,10 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
 	color: #ffc107; 
 }
 
+.CodeMirror {
+  resize: vertical;
+}
+
 /* copied from bootstrap and adjusted to show the arrow on the left */
 .card .card-header-left-collapse[data-bs-toggle=collapse] {
   text-decoration: none;

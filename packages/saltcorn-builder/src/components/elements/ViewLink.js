@@ -15,6 +15,7 @@ import {
   TextStyleSetting,
   ButtonOrLinkSettingsRows,
   setAPropGen,
+  FormulaTooltip,
 } from "./utils";
 
 export /**
@@ -157,7 +158,7 @@ const ViewLinkSettings = () => {
           </tr>
           <tr>
             <td colSpan="2">
-              <label>Extra state Formula</label>
+              <label>Extra state Formula <FormulaTooltip /></label>
               <input
                 type="text"
                 className="viewlink-label form-control"

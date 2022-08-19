@@ -136,6 +136,7 @@ class RunTestsCommand extends Command {
     let jestParams = ["--"];
     if (flags.coverage) {
       jestParams.push("--coverage");
+      jestParams.push("--coverageProvider", "v8");
     }
     if (flags.testFilter) {
       jestParams.push("-t", flags.testFilter);

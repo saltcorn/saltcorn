@@ -45,6 +45,7 @@ const {
   getActionConfigFields,
   run_action_column,
   readState,
+  add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -65,6 +66,7 @@ const { traverseSync } = require("../../models/layout");
 const {
   get_expression_function,
   eval_expression,
+  freeVariables,
 } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
@@ -282,9 +284,8 @@ const run = async (
       })
     );
     for (const row of rows) {
-      row.verification_url = `${base}auth/verify?token=${
-        row.verification_token
-      }&email=${encodeURIComponent(row.email)}`;
+      row.verification_url = `${base}auth/verify?token=${row.verification_token
+        }&email=${encodeURIComponent(row.email)}`;
     }
   }
   await set_join_fieldviews({ table: tbl, layout, fields });
@@ -414,7 +415,7 @@ const renderRows = async (
     const user_id = extra.req.user ? extra.req.user.id : null;
 
     const is_owner =
-      table.ownership_formula && user_id
+      table.ownership_formula && user_id && role > table.min_role_read
         ? await table.is_owner(extra.req.user, row)
         : owner_field && user_id && row[owner_field] === user_id;
 
@@ -553,10 +554,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
-              val,
-              row[`${field_name}__filename`],
-              cfg
-            )
+            val,
+            row[`${field_name}__filename`],
+            cfg
+          )
           : "";
       } else if (
         fieldview &&
@@ -710,6 +711,10 @@ module.exports = {
           message: "No row selected",
         };
       const tbl = await Table.findOne(table_id || exttable_name);
+      if (tbl.ownership_formula) {
+        const freeVars = freeVariables(tbl.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+      }
       const rows = await tbl.getJoinedRows({
         where: qstate,
         joinFields,
@@ -741,6 +746,10 @@ module.exports = {
             req.user ? req.user.id : -1,
           ];
         else qstate[owner_field.name] = req.user ? req.user.id : -1;
+      }
+      if (tbl.ownership_formula && role > tbl.min_role_read) {
+        const freeVars = freeVariables(tbl.ownership_formula)
+        add_free_variables_to_joinfields(freeVars, joinFields, fields)
       }
       let rows = await tbl.getJoinedRows({
         where: qstate,
@@ -787,8 +796,15 @@ module.exports = {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            const row = await table.getRow(uniques);
-            return table.is_owner(req.user, row);
+            const joinFields = {}
+            if (table.ownership_formula) {
+              const freeVars = freeVariables(table.ownership_formula)
+              add_free_variables_to_joinfields(freeVars, joinFields, fields)
+            }
+            const row = await table.getJoinedRows({ where: uniques, joinFields });
+            if (row.length > 0)
+              return table.is_owner(req.user, row[0]);
+            else return true // TODO ??
           }
         }
       }
