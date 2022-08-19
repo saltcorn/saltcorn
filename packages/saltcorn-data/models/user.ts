@@ -268,13 +268,14 @@ class User {
 
     const user_table = Table.findOne({ name: "users" });
     const fields = await user_table?.getFields();
-    fields?.push(new Field({ name: "password", type: "String" }));
-    fields?.push(new Field({ name: "role_id", type: "Integer" }));
-    fields?.push(new Field({ name: "language", type: "String" }));
 
     const joinFields = {};
     add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields);
-    const us = await user_table!.getJoinedRows({ where, joinFields });
+    const us = await user_table!.getJoinedRows({
+      where,
+      joinFields,
+      starFields: true,
+    });
 
     //const us = await db.select("users", where, selectopts);
     return (us as UserCfg[]).map((u: UserCfg) => new User(u));

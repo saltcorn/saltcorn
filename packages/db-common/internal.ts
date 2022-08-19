@@ -434,6 +434,7 @@ export type JoinOptions = {
   joinFields?: JoinField;
   aggregations?: AggregationOptions[];
   where: any;
+  starFields?: boolean 
 } & SelectOptions;
 
 export type AggregationOptions = {
