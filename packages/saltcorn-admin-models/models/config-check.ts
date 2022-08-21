@@ -114,6 +114,17 @@ const test_view_config = async (
       },
       req
     );
+    for (const step of configFlow.steps)
+      await configFlow.run(
+        {
+          table_id: view.table_id,
+          exttable_name: view.exttable_name,
+          viewname: view.name,
+          ...view.configuration,
+          stepName: step.name,
+        },
+        req
+      );
     if (!hasErrors) passes.push(`View ${view.name} config OK`);
   } catch (e: any) {
     errors.push(`View ${view.name} config: ${e.message}`);
