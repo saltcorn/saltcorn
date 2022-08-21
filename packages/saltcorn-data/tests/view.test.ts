@@ -337,12 +337,53 @@ describe("edit dest", () => {
     v.configuration.destination_type = "Back to referer";
     mockReqRes.req.headers = { referer: "/bananas" };
     const res = await v.run({}, mockReqRes);
-    expect(res).toContain('<input type="hidden" class="form-control  " name="_referer" value="/bananas">');
+    expect(res).toContain(
+      '<input type="hidden" class="form-control  " name="_referer" value="/bananas">'
+    );
     await v.runPost(
       {},
       { author: "James Joyce", _referer: "/bananas" },
       mockReqRes
     );
     expect(mockReqRes.getStored().url).toBe("/bananas");
+  });
+  it("url formula", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.destination_type = "URL formula";
+    v.configuration.dest_url_formula = "'/view/foo/'+author";
+
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/foo/James Joyce");
+  });
+  it(" formula", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.destination_type = "Formulas";
+    v.configuration.formula_destinations = [
+      {
+        expression: "author.length>7",
+        view: "authorlist",
+      },
+      {
+        expression: "author.length<=7",
+        view: "authorshow",
+      },
+    ];
+
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/authorlist");
+    await v.runPost({}, { author: "T. Lin" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toContain("/view/authorshow?id=");
+  });
+  it("self", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.view_when_done = "authoredit";
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/authoredit");
   });
 });
