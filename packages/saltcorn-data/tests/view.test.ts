@@ -328,7 +328,7 @@ describe("edit dest", () => {
     assertIsSet(v);
     v.configuration.view_when_done = "authorshow";
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
-    expect(mockReqRes.getStored().url).toBe("/view/authorshow?id=4");
+    expect(mockReqRes.getStored().url).toContain("/view/authorshow?id=");
   });
   it("back to referrer", async () => {
     mockReqRes.reset();
