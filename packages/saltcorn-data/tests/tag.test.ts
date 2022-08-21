@@ -65,7 +65,7 @@ describe("Tag IO", () => {
     expect(entries).toBeDefined();
     expect(entries.length).toBe(0);
     for (const entryId of entryIds) {
-      tc.addEntry(entryId);
+      await tc.addEntry(entryId);
     }
     const tag = await Tag.findOne({ name: tagName });
     const addedEntries = await tag.getEntries();
