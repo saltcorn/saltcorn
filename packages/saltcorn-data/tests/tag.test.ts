@@ -20,10 +20,10 @@ describe("Tag IO", () => {
   let pageA: Page;
 
   beforeAll(async () => {
-    books = await Table.findOne({ name: "books" })!;
+    books = Table.findOne({ name: "books" })!;
     patients = Table.findOne({ name: "books" })!;
-    authorlist = await View.findOne({ name: "authorlist" })!;
-    authorshow = await View.findOne({ name: "authorshow" })!;
+    authorlist = View.findOne({ name: "authorlist" })!;
+    authorshow = View.findOne({ name: "authorshow" })!;
     pageA = await Page.findOne({ name: "a_page" })!;
   });
 
