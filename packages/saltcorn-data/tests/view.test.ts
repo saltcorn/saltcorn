@@ -374,7 +374,7 @@ describe("edit dest", () => {
     ];
     assertIsSet(v.viewtemplateObj);
 
-    await v.viewtemplateObj.configCheck?.(v)
+    await v.viewtemplateObj.configCheck?.(v);
 
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
     expect(mockReqRes.getStored().url).toBe("/view/authorlist");
@@ -388,5 +388,33 @@ describe("edit dest", () => {
     v.configuration.view_when_done = "authoredit";
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
     expect(mockReqRes.getStored().url).toBe("/view/authoredit");
+  });
+});
+describe("view slug", () => {
+  it("should enable and run", async () => {
+    const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
+    const slug = {
+      label: "/:id",
+      steps: [
+        {
+          field: "id",
+          unique: true,
+          transform: null,
+        },
+      ],
+    };
+    v.slug = slug;
+    await View.update({ slug }, v.id as number);
+    const query: any = {};
+    v.rewrite_query_from_slug(query, ["1"]);
+    expect(query.id).toBe("1");
+    //const res = await v.run({}, mockReqRes);
+  });
+  it("set link", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
+    const res = await v.run({}, mockReqRes);
+    expect(res).toContain('<a href="/view/authorshow/1">authorshow</a>');
   });
 });
