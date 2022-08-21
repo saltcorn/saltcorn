@@ -80,19 +80,19 @@ class Tag {
   }
 
   async getTables(): Promise<Table[]> {
-    return this.getTypedEntries<Table>(require("./table"), "table_id");
+    return await this.getTypedEntries<Table>(require("./table"), "table_id");
   }
 
   async getViews(): Promise<View[]> {
-    return this.getTypedEntries<View>(require("./view"), "view_id");
+    return await this.getTypedEntries<View>(require("./view"), "view_id");
   }
 
   async getPages(): Promise<Page[]> {
-    return this.getTypedEntries<Page>(require("./page"), "page_id");
+    return await this.getTypedEntries<Page>(require("./page"), "page_id");
   }
 
   async getTrigger(): Promise<Trigger[]> {
-    return this.getTypedEntries<Trigger>(require("./trigger"), "trigger_id");
+    return await this.getTypedEntries<Trigger>(require("./trigger"), "trigger_id");
   }
 
   static async create(cfg: TagCfg): Promise<Tag> {
@@ -153,8 +153,8 @@ class Tag {
     page_id?: number;
     trigger_id?: number;
   }): Promise<void> {
-    if (!this.id) throw new Error("TODO");
-    TagEntry.create({
+    if (!this.id) throw new Error("To add entries, the id must be set");
+    await TagEntry.create({
       tagId: this.id,
       table_id,
       view_id,
