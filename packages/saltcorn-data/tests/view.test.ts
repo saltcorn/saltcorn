@@ -337,7 +337,7 @@ describe("edit dest", () => {
     v.configuration.destination_type = "Back to referer";
     mockReqRes.req.headers = { referer: "/bananas" };
     const res = await v.run({}, mockReqRes);
-    expect(res).toContain("<input type=\"hidden\" class=\"form-control  \" name=\"_referer\" value=\"/bananas\">");
+    expect(res).toContain('<input type="hidden" class="form-control  " name="_referer" value="/bananas">');
     await v.runPost(
       {},
       { author: "James Joyce", _referer: "/bananas" },
