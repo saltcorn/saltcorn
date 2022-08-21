@@ -6,11 +6,14 @@ const {
   get_parent_views,
   get_child_views,
   stateFieldsToWhere,
+  field_picker_fields,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const { satisfies } = require("../utils");
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import mocks from "./mocks";
+const { mockReqRes } = mocks;
 
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
@@ -150,5 +153,16 @@ describe("satisfies", () => {
     expect(satisfies({ x: 5, y: 7 })({ x: 5, y: 7 })).toBe(true);
     expect(satisfies({ x: 5, y: 8 })({ x: 5, y: 7 })).toBe(false);
     expect(satisfies({ x: 4, y: 8 })({ x: 5, y: 7 })).toBe(false);
+  });
+});
+describe("plugin helper", () => {
+  it("field_picker_fields", async () => {
+    const table = Table.findOne({ name: "patients" });
+    const flds = await field_picker_fields({
+      table,
+      viewname: "myView",
+      req: mockReqRes.req,
+    });
+    expect(flds.length).toBeGreaterThan(1);
   });
 });
