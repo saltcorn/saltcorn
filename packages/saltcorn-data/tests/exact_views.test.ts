@@ -1211,4 +1211,30 @@ describe("Feed view", () => {
         : `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div><form action="javascript:void(0)" onsubmit="javascript:formSubmit(this, '/view/', 'authoredit')"  class="form-namespace " method="post"><input type="hidden" name="_csrf" value="false"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor"></form></div>`,
     });
   });
+  it("should render masonry exactly", async () => {
+    await test_feed({
+      table: "books",
+      "cols_lg": 3,
+      "cols_md": 2,
+      "cols_sm": 1,
+      "cols_xl": 4,
+      "in_card": true,
+      "viewname": "authorfeed",
+      "show_view": "authoredit",
+      "descending": false,
+      "include_fml": "",
+      "order_field": "pages",
+      "exttable_name": null,
+      "rows_per_page": 20,
+      "view_to_create": "authoredit",
+      "hide_pagination": false,
+      "masonry_columns": true,
+      "create_view_label": "New book",
+      "create_view_display": "Link",
+      "create_view_location": "Top left",  
+      response: !remoteQueries
+        ? '<div><a href="/view/authoredit">New book</a><div class="card-columns"><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div></div><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div></div></div>'
+        : '<div><a href="/view/authoredit">New book</a><div class="card-columns"><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div></div><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div></div></div>',
+    });
+  });
 });
