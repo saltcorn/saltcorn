@@ -104,6 +104,11 @@ const test_list = mkTester({
   viewtemplate: "List",
   table: "patients",
 });
+const test_feed = mkTester({
+  name: "testlist",
+  viewtemplate: "Feed",
+  table: "patients",
+});
 const test_filter = mkTester({
   name: "testfilter",
   viewtemplate: "Filter",
@@ -1175,6 +1180,35 @@ describe("Page", () => {
         ],
       },
       fixed_states: { "18a8cc": { id: 1 }, fixed_stateforauthorshowview: null },
+    });
+  });
+});
+describe("Feed view", () => {
+  it("should render exactly", async () => {
+    await test_feed({
+      table: "books",
+      "cols_lg": 3,
+      "cols_md": 2,
+      "cols_sm": 1,
+      "cols_xl": 4,
+      "in_card": false,
+      "viewname": "authorfeed",
+      "show_view": "authoredit",
+      "descending": false,
+      "include_fml": "",
+      "order_field": "pages",
+      "exttable_name": null,
+      "rows_per_page": 20,
+      "view_to_create": "authoredit",
+      "hide_pagination": false,
+      "masonry_columns": false,
+      "create_view_label": null,
+      "create_view_display": "Embedded",
+      "create_view_location": null,
+  
+      response: !remoteQueries
+        ? `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor"></form></div>`
+        : `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor"></form></div>`,
     });
   });
 });
