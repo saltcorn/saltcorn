@@ -157,12 +157,17 @@ describe("satisfies", () => {
 });
 describe("plugin helper", () => {
   it("field_picker_fields", async () => {
-    const table = Table.findOne({ name: "patients" });
     const flds = await field_picker_fields({
-      table,
+      table: Table.findOne({ name: "patients" }),
       viewname: "myView",
       req: mockReqRes.req,
     });
     expect(flds.length).toBeGreaterThan(1);
+    const flds1 = await field_picker_fields({
+      table: Table.findOne({ name: "books" }),
+      viewname: "myView",
+      req: mockReqRes.req,
+    });
+    expect(flds1.length).toBeGreaterThan(1);
   });
 });
