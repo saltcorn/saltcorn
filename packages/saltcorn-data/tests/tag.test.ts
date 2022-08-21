@@ -12,6 +12,7 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+jest.setTimeout(30000);
 
 describe("Tag IO", () => {
   let books: Table, patients: Table;
