@@ -357,7 +357,7 @@ describe("edit dest", () => {
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
     expect(mockReqRes.getStored().url).toBe("/view/foo/James Joyce");
   });
-  it(" formula", async () => {
+  it("formula", async () => {
     mockReqRes.reset();
     const v = await View.findOne({ name: "authoredit" });
     assertIsSet(v);
@@ -372,6 +372,9 @@ describe("edit dest", () => {
         view: "authorshow",
       },
     ];
+    assertIsSet(v.viewtemplateObj);
+
+    await v.viewtemplateObj.configCheck?.(v)
 
     await v.runPost({}, { author: "James Joyce" }, mockReqRes);
     expect(mockReqRes.getStored().url).toBe("/view/authorlist");
