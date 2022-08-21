@@ -61,6 +61,16 @@ const mkTester =
     };
     const v = await View.create(viewCfg);
     if (remoteQueries) await sendViewToServer(viewCfg);
+    const configFlow = await v.get_config_flow(mockReqRes.req);
+    await configFlow.run(
+      {
+        table_id: tbl.id,
+        exttable_name: v.exttable_name,
+        viewname: v.name,
+        ...v.configuration,
+      },
+      mockReqRes.req
+    );
 
     const res = await v.run(
       id ? { id } : set_id ? { id: set_id } : {},
