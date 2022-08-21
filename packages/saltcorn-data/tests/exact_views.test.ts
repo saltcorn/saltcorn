@@ -71,6 +71,17 @@ const mkTester =
       },
       mockReqRes.req
     );
+    for (const step of configFlow.steps)
+      await configFlow.run(
+        {
+          table_id: tbl.id,
+          exttable_name: v.exttable_name,
+          viewname: v.name,
+          ...v.configuration,
+          stepName: step.name,
+        },
+        mockReqRes.req
+      );
 
     const res = await v.run(
       id ? { id } : set_id ? { id: set_id } : {},
