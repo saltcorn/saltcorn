@@ -291,7 +291,7 @@ const run = async (
   await set_join_fieldviews({ table: tbl, layout, fields });
 
   const rendered = (
-    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]])
+    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]], state)
   )[0];
   let page_title_preamble = "";
   if (page_title) {
@@ -340,7 +340,8 @@ const renderRows = async (
   viewname,
   { columns, layout },
   extra,
-  rows
+  rows,
+  state
 ) => {
   //console.log(columns);
   //console.log(layout);
@@ -379,22 +380,23 @@ const renderRows = async (
             view.name,
             view.configuration,
             extra,
-            [row]
+            [row],
+            state
           )
         )[0];
       } else {
-        let state;
+        let state1;
         const pk_name = table.pk_name;
         switch (view.view_select.type) {
           case "Own":
-            state = { [pk_name]: row[pk_name] };
+            state1 = { [pk_name]: row[pk_name] };
             break;
           case "Independent":
-            state = {};
+            state1 = {};
             break;
           case "ChildList":
           case "OneToOneShow":
-            state = {
+            state1 = {
               [view.view_select.through
                 ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
                 : view.view_select.field_name]: row[pk_name],
@@ -402,14 +404,15 @@ const renderRows = async (
             break;
           case "ParentShow":
             //todo set by pk name of parent tablr
-            state = { id: row[view.view_select.field_name] };
+            state1 = { id: row[view.view_select.field_name] };
             break;
         }
         const extra_state = segment.extra_state_fml
           ? eval_expression(segment.extra_state_fml, row, extra.req.user)
           : {};
-        const state1 = { ...state, ...extra_state };
-        segment.contents = await view.run(state1, extra);
+        const { id, ...outerState } = state
+        const state2 = { ...outerState, ...state1, ...extra_state };
+        segment.contents = await view.run(state2, extra);
       }
     });
     const user_id = extra.req.user ? extra.req.user.id : null;
@@ -463,7 +466,8 @@ const runMany = async (
     viewname,
     { columns, layout },
     extra,
-    rows
+    rows,
+    state
   );
 
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));

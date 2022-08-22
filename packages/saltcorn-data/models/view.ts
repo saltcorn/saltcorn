@@ -544,7 +544,8 @@ class View {
           this.name,
           this.configuration,
           extraArgs,
-          rows
+          rows,
+          query
         );
 
         return rendered.map((html: string, ix: number) => ({
