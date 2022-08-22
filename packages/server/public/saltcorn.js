@@ -143,6 +143,8 @@ function view_post(viewname, route, data, onDone) {
   }).done(function (res) {
     if (onDone) onDone(res);
     ajax_done(res);
+  }).fail(function (res) {
+    notifyAlert({ type: "danger", text: res.responseText });
   });
 }
 var logged_errors = [];
@@ -210,9 +212,9 @@ function ajax_modal(url, opts = {}) {
       $("#scmodal .modal-body").html(res);
       new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
-      (opts.onOpen || function () {})(res);
+      (opts.onOpen || function () { })(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
-        (opts.onClose || function () {})(res);
+        (opts.onClose || function () { })(res);
         $("body").css("overflow", "");
       });
     },
@@ -264,7 +266,7 @@ function applyViewConfig(e, url, k) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) {},
+    error: function (request) { },
     success: function (res) {
       k && k(res);
     },
@@ -444,16 +446,16 @@ Copyright (c) 2015 Jeff Green
             stateObject,
             document.title,
             window.location.pathname +
-              window.location.search +
-              $(this).attr("href")
+            window.location.search +
+            $(this).attr("href")
           );
         } else {
           window.history.replaceState(
             stateObject,
             document.title,
             window.location.pathname +
-              window.location.search +
-              $(this).attr("href")
+            window.location.search +
+            $(this).attr("href")
           );
         }
       });
