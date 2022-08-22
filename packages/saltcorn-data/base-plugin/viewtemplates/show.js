@@ -291,7 +291,7 @@ const run = async (
   await set_join_fieldviews({ table: tbl, layout, fields });
 
   const rendered = (
-    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]])
+    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]], state)
   )[0];
   let page_title_preamble = "";
   if (page_title) {
@@ -340,7 +340,8 @@ const renderRows = async (
   viewname,
   { columns, layout },
   extra,
-  rows
+  rows,
+  state
 ) => {
   //console.log(columns);
   //console.log(layout);
@@ -379,7 +380,8 @@ const renderRows = async (
             view.name,
             view.configuration,
             extra,
-            [row]
+            [row],
+            state
           )
         )[0];
       } else {
@@ -463,7 +465,8 @@ const runMany = async (
     viewname,
     { columns, layout },
     extra,
-    rows
+    rows,
+    state
   );
 
   return rendered.map((html, ix) => ({ html, row: rows[ix] }));
