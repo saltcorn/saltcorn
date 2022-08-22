@@ -312,3 +312,109 @@ describe("nested views", () => {
     expect(res).toContain("Melville");
   });
 });
+
+describe("edit dest", () => {
+  it("standard list view", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.view_when_done = "authorlist";
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/authorlist");
+  });
+  it("standard show view", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.view_when_done = "authorshow";
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toContain("/view/authorshow?id=");
+  });
+  it("back to referrer", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.destination_type = "Back to referer";
+    mockReqRes.req.headers = { referer: "/bananas" };
+    const res = await v.run({}, mockReqRes);
+    expect(res).toContain(
+      '<input type="hidden" class="form-control  " name="_referer" value="/bananas">'
+    );
+    await v.runPost(
+      {},
+      { author: "James Joyce", _referer: "/bananas" },
+      mockReqRes
+    );
+    expect(mockReqRes.getStored().url).toBe("/bananas");
+  });
+  it("url formula", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.destination_type = "URL formula";
+    v.configuration.dest_url_formula = "'/view/foo/'+author";
+
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/foo/James Joyce");
+  });
+  it("formula", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.destination_type = "Formulas";
+    v.configuration.formula_destinations = [
+      {
+        expression: "author.length>7",
+        view: "authorlist",
+      },
+      {
+        expression: "author.length<=7",
+        view: "authorshow",
+      },
+    ];
+    assertIsSet(v.viewtemplateObj);
+
+    await v.viewtemplateObj.configCheck?.(v);
+
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/authorlist");
+    await v.runPost({}, { author: "T. Lin" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toContain("/view/authorshow?id=");
+  });
+  it("self", async () => {
+    mockReqRes.reset();
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    v.configuration.view_when_done = "authoredit";
+    await v.runPost({}, { author: "James Joyce" }, mockReqRes);
+    expect(mockReqRes.getStored().url).toBe("/view/authoredit");
+  });
+});
+describe("view slug", () => {
+  it("should enable and run", async () => {
+    const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
+    const slug = {
+      label: "/:id",
+      steps: [
+        {
+          field: "id",
+          unique: true,
+          transform: null,
+        },
+      ],
+    };
+    v.slug = slug;
+    await View.update({ slug }, v.id as number);
+    const query: any = {};
+    v.rewrite_query_from_slug(query, ["1"]);
+    expect(query.id).toBe("1");
+    //const res = await v.run({}, mockReqRes);
+  });
+  it("set link", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
+    const res = await v.run({}, mockReqRes);
+    expect(res).toContain('<a href="/view/authorshow/1">authorshow</a>');
+  });
+});
