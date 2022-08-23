@@ -283,7 +283,8 @@ const view_linker = (
   },
   fields,
   __ = (s) => s,
-  isWeb = true
+  isWeb = true,
+  user
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -292,7 +293,7 @@ const view_linker = (
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
-    const o = eval_expression(extra_state_fml, row);
+    const o = eval_expression(extra_state_fml, row, user);
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
@@ -516,7 +517,7 @@ const get_viewable_fields = (
       } else return action_col;
     } else if (column.type === "ViewLink") {
       if (!column.view) return;
-      const r = view_linker(column, fields, __, isWeb(req));
+      const r = view_linker(column, fields, __, isWeb(req), req.user);
       if (column.header_label) r.label = text(__(column.header_label));
       Object.assign(r, setWidth);
       if (column.in_dropdown) {
