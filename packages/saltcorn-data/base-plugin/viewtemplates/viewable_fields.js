@@ -56,9 +56,8 @@ const action_url = (
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
-    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${
-      r?.id
-    }${columnIndex(colIndex)}});`,
+    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r?.id
+      }${columnIndex(colIndex)}});`,
   };
 };
 
@@ -100,9 +99,8 @@ const action_link = (
   const label = __(action_label) || action_name;
   let style =
     action_style === "btn-custom-color"
-      ? `background-color: ${action_bgcol || "#000000"};border-color: ${
-          action_bordercol || "#000000"
-        }; color: ${action_textcol || "#000000"}`
+      ? `background-color: ${action_bgcol || "#000000"};border-color: ${action_bordercol || "#000000"
+      }; color: ${action_textcol || "#000000"}`
       : null;
   if (url.javascript)
     return a(
@@ -141,21 +139,11 @@ const get_view_link_query = (fields, view) => {
   if (view && view.slug && view.slug.steps && view.slug.steps.length > 0) {
     return (r) => view.slug.steps.map(slug_transform(r)).join("");
   }
-  const fUniqueString = fields.find(
-    (f) => f.is_unique && f.type.name === "String"
-  );
+
   const pk_name = fields.find((f) => f.primary_key).name;
-  if (fUniqueString)
-    return (r) =>
-      r && r[fUniqueString.name]
-        ? `?${fUniqueString.name}=${encodeURIComponent(r[fUniqueString.name])}`
-        : `?${pk_name}=${r[pk_name]}`;
-  const fUnique = fields.find((f) => f.is_unique);
-  if (fUnique)
-    return (r) => `?${fUnique.name}=${encodeURIComponent(r[fUnique.name])}`;
-  else {
-    return (r) => `?${pk_name}=${r[pk_name]}`;
-  }
+
+  return (r) => `?${pk_name}=${r[pk_name]}`;
+
 };
 
 /**
@@ -355,9 +343,8 @@ const view_linker = (
       return {
         label: viewnm,
         key: (r) => {
-          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
-            r.id
-          }`;
+          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id
+            }`;
           return link_view(
             isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             get_label(viewnm, r),
@@ -384,9 +371,8 @@ const view_linker = (
           const reffield = fields.find((f) => f.name === pfld);
           const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
           if (r[pfld]) {
-            const target = `/view/${encodeURIComponent(pviewnm)}?${
-              reffield.refname
-            }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+            const target = `/view/${encodeURIComponent(pviewnm)}?${reffield.refname
+              }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(
@@ -491,9 +477,8 @@ const get_viewable_fields = (
                 class: column.in_dropdown
                   ? "dropdown-item"
                   : column.action_style === "btn-link"
-                  ? ""
-                  : `btn ${column.action_style || "btn-primary"} ${
-                      column.action_size || ""
+                    ? ""
+                    : `btn ${column.action_style || "btn-primary"} ${column.action_size || ""
                     }`,
               },
               label
@@ -575,15 +560,15 @@ const get_viewable_fields = (
         row_key: key,
         key:
           column.join_fieldview &&
-          type &&
-          type.fieldviews &&
-          type.fieldviews[column.join_fieldview]
+            type &&
+            type.fieldviews &&
+            type.fieldviews[column.join_fieldview]
             ? (row) =>
-                type.fieldviews[column.join_fieldview].run(
-                  row[key],
-                  req,
-                  column
-                )
+              type.fieldviews[column.join_fieldview].run(
+                row[key],
+                req,
+                column
+              )
             : (row) => text(row[key]),
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
@@ -644,26 +629,26 @@ const get_viewable_fields = (
           key:
             column.fieldview && f.type === "File"
               ? (row) =>
-                  row[f.name] &&
-                  getState().fileviews[column.fieldview].run(
-                    row[f.name],
-                    row[`${f.name}__filename`],
-                    column
-                  )
+                row[f.name] &&
+                getState().fileviews[column.fieldview].run(
+                  row[f.name],
+                  row[`${f.name}__filename`],
+                  column
+                )
               : column.fieldview &&
                 f.type.fieldviews &&
                 f.type.fieldviews[column.fieldview]
-              ? (row) =>
+                ? (row) =>
                   f.type.fieldviews[column.fieldview].run(
                     row[f_with_val.name],
                     req,
                     { ...f.attributes, ...column.configuration }
                   )
-              : isShow
-              ? f.type.showAs
-                ? (row) => f.type.showAs(row[f_with_val.name])
-                : (row) => text(row[f_with_val.name])
-              : f.listKey,
+                : isShow
+                  ? f.type.showAs
+                    ? (row) => f.type.showAs(row[f_with_val.name])
+                    : (row) => text(row[f_with_val.name])
+                  : f.listKey,
           sortlink:
             !f.calculated || f.stored
               ? sortlinkForName(f.name, req, viewname)
@@ -713,8 +698,8 @@ const sortlinkForName = (fname, req, viewname) => {
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
-      ? "false"
-      : "true";
+        ? "false"
+        : "true";
   return isWeb(req)
     ? `javascript:sortby('${text(fname)}', ${desc})`
     : `javascript:sortby('${text(fname)}', ${desc}, '${viewname}')`;
@@ -736,8 +721,8 @@ const headerLabelForName = (column, f, req, __) => {
     _sortby !== f.name
       ? ""
       : _sortdesc
-      ? i({ class: "fas fa-caret-down" })
-      : i({ class: "fas fa-caret-up" });
+        ? i({ class: "fas fa-caret-down" })
+        : i({ class: "fas fa-caret-up" });
   return label + arrow;
 };
 
@@ -799,8 +784,8 @@ const getForm = async (
               f.fieldviewObj = getState().keyFieldviews[column.fieldview];
             f.input_type =
               !f.fieldview ||
-              !f.fieldviewObj ||
-              (f.fieldview === "select" && !f.fieldviewObj)
+                !f.fieldviewObj ||
+                (f.fieldview === "select" && !f.fieldviewObj)
                 ? "select"
                 : "fromtype";
           }

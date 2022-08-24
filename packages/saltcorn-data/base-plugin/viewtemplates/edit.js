@@ -860,7 +860,7 @@ const runPost = async (
         state_fields.some((sf) => sf.name === pk.name) &&
         viewname_when_done !== viewname
       ) {
-        const get_query = get_view_link_query(fields);
+        const get_query = get_view_link_query(fields, nxview);
         query = relation
           ? `?${pk.name}=${text(row[relation])}`
           : get_query(row);
