@@ -120,8 +120,21 @@ function pjax_to(href) {
 function href_to(href) {
   window.location.href = href;
 }
-function clear_state() {
-  pjax_to(window.location.href.split("?")[0]);
+function clear_state(omit_fields_str) {
+  let newUrl = window.location.href.split("?")[0]
+  if (omit_fields_str) {
+    const omit_fields = omit_fields_str.split(',').map(s => s.trim())
+    let params = new URLSearchParams(location.search);
+    newUrl = newUrl + '?'
+    omit_fields.forEach(f => {
+      if (params.get(f))
+        newUrl = updateQueryStringParameter(newUrl, f, params.get(f));
+    })
+    if (location.hash)
+      newUrl += location.hash;
+
+  }
+  pjax_to(newUrl);
 }
 
 function ajax_done(res) {
