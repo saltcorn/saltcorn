@@ -4,7 +4,10 @@ function showHideCol(nm, e) {
 }
 
 function lookupIntToString(cell, formatterParams, onRendered) {
-  const val = `${cell.getValue()}`;
+  const cellVal = cell.getValue()
+  const val = typeof cellVal === "object" && cellVal !== null
+    ? `${cellVal.id}`
+    : `${cellVal}`;
   const res = formatterParams.values[val];
   return res;
 }
