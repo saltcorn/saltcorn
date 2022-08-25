@@ -288,10 +288,8 @@ const send_admin_page = (args) => {
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
-      ...(isRoot ? [{ text: "Tag", href: "/tag" }] : []),
-      ...(isRoot
-        ? [{ text: "Mobile app", href: "/admin/build-mobile-app" }]
-        : []),
+      { text: "Tag", href: "/tag" },
+      { text: "Mobile app", href: "/admin/build-mobile-app" },
     ],
     ...args,
   });

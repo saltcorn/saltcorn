@@ -965,6 +965,12 @@
 	"Trigger": "Trigger",
 	"Add %s to tag": "Add %s to tag",
 	"Tag %s deleted": "Tag %s deleted",
-	"Tag %s created": "Tag %s created"
-
+	"Tag %s created": "Tag %s created",
+	"Entry point": "Entry point",
+	"Platform": "Platform",
+	"docker": "docker",
+	"android": "android",
+	"iOS": "iOS",
+	"App file": "App file",
+	"Server URL": "Server URL"
 }
