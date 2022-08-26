@@ -130,10 +130,11 @@ function clear_state(omit_fields_str) {
       if (params.get(f))
         newUrl = updateQueryStringParameter(newUrl, f, params.get(f));
     })
-    if (location.hash)
-      newUrl += location.hash;
 
   }
+  if (location.hash)
+    newUrl += location.hash;
+
   pjax_to(newUrl);
 }
 
