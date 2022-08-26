@@ -704,17 +704,18 @@ module.exports = {
         layout
       );
       readState(state, fields);
+      const tbl = await Table.findOne(table_id || exttable_name);
       const qstate = await stateFieldsToWhere({
         fields,
         state,
         approximate: true,
+        table: tbl
       });
       if (Object.keys(qstate).length === 0)
         return {
           rows: null,
           message: "No row selected",
         };
-      const tbl = await Table.findOne(table_id || exttable_name);
       if (tbl.ownership_formula) {
         const freeVars = freeVariables(tbl.ownership_formula)
         add_free_variables_to_joinfields(freeVars, joinFields, fields)
@@ -738,7 +739,7 @@ module.exports = {
         fields,
         layout
       );
-      const qstate = await stateFieldsToWhere({ fields, state });
+      const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
       const q = await stateFieldsToQuery({ state, fields });
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 10;
