@@ -1086,7 +1086,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
   var qstate = {};
   Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts" || (table?.name && k === `_fts_${table.name}`)) {
-      qstate[k] = {
+      qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
         schema: db.getTenantSchema(),
