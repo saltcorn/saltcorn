@@ -972,5 +972,8 @@
 	"android": "android",
 	"iOS": "iOS",
 	"App file": "App file",
-	"Server URL": "Server URL"
+	"Server URL": "Server URL",
+	"Module %s installed, please complete configuration.": "Module %s installed, please complete configuration.",
+	"Module %s removed.": "Module %s removed.",
+	"Module %s installed": "Module %s installed"
 }
