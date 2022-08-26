@@ -551,7 +551,7 @@ router.get(
     const { name } = req.params;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
-      req.flash("warning", "Plugin not found");
+      req.flash("warning", "Module not found");
       res.redirect("/plugins");
       return;
     }
@@ -792,7 +792,7 @@ router.get(
       pkgjson = require(path.join(mod.location, "package.json"));
 
     if (!plugin_db) {
-      req.flash("warning", "Plugin not found");
+      req.flash("warning", "Module not found");
       res.redirect("/plugins");
       return;
     }
@@ -817,7 +817,7 @@ router.get(
         ),
         mod.plugin_module.dependencies
           ? tr(
-            th(req.__("Plugin dependencies")),
+            th(req.__("Module dependencies")),
             td(
               mod.plugin_module.dependencies.map((d) =>
                 span({ class: "badge bg-primary me-1" }, d)
@@ -933,7 +933,7 @@ router.get(
 
     const plugin = await Plugin.findOne({ name });
     await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
-    req.flash("success", req.__(`Plugin up-to-date`));
+    req.flash("success", req.__(`Module up-to-date`));
 
     res.redirect(`/plugins/info/${plugin.name}`);
   })
@@ -954,7 +954,7 @@ router.post(
     if (schema !== db.connectObj.default_schema) {
       req.flash(
         "error",
-        req.__(`Only store plugins can be installed on tenant instances`)
+        req.__(`Only store modules can be installed on tenant instances`)
       );
       res.redirect(`/plugins`);
     } else {
@@ -963,12 +963,12 @@ router.post(
           plugin,
           schema === db.connectObj.default_schema || plugin.source === "github"
         );
-        req.flash("success", req.__(`Plugin %s installed`, plugin.name));
+        req.flash("success", req.__(`Module %s installed`, plugin.name));
         res.redirect(`/plugins`);
       } catch (e) {
         req.flash("error", `${e.message}`);
         const form = pluginForm(req, plugin);
-        res.sendWrap(req.__(`Edit Plugin`), renderForm(form, req.csrfToken()));
+        res.sendWrap(req.__(`Edit Module`), renderForm(form, req.csrfToken()));
       }
     }
   })
@@ -988,7 +988,7 @@ router.post(
 
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
-      req.flash("warning", "Plugin not found");
+      req.flash("warning", "Module not found");
       res.redirect("/plugins");
       return;
     }
@@ -998,11 +998,11 @@ router.post(
       getState().getConfig("development_mode", false)
     ) {
       await plugin.delete();
-      req.flash("success", req.__(`Plugin %s removed.`, plugin.name));
+      req.flash("success", req.__(`Module %s removed.`, plugin.name));
     } else {
       req.flash(
         "error",
-        req.__(`Cannot remove plugin: views %s depend on it`, depviews.join())
+        req.__(`Cannot remove module: views %s depend on it`, depviews.join())
       );
     }
     res.redirect(`/plugins`);
@@ -1025,7 +1025,7 @@ router.post(
     if (!plugin) {
       req.flash(
         "error",
-        req.__(`Plugin %s not found`, text(decodeURIComponent(name)))
+        req.__(`Module %s not found`, text(decodeURIComponent(name)))
       );
       res.redirect(`/plugins`);
       return;
@@ -1034,7 +1034,7 @@ router.post(
     if (!isRoot && plugin.unsafe) {
       req.flash(
         "error",
-        req.__("Cannot install unsafe plugins on subdomain tenants")
+        req.__("Cannot install unsafe modules on subdomain tenants")
       );
       res.redirect(`/plugins`);
       return;
@@ -1047,14 +1047,14 @@ router.post(
       req.flash(
         "success",
         req.__(
-          `Plugin %s installed, please complete configuration.`,
+          `Module %s installed, please complete configuration.`,
           plugin_db.name
         )
       );
       await sleep(1000); // Allow other workers to load this plugin
       res.redirect(`/plugins/configure/${plugin_db.name}`);
     } else {
-      req.flash("success", req.__(`Plugin %s installed`, plugin.name));
+      req.flash("success", req.__(`Module %s installed`, plugin.name));
       res.redirect(`/plugins`);
     }
   })

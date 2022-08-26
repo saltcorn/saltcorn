@@ -289,8 +289,9 @@ const run = async (
     },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
-      return search_bar("_fts", state["_fts"], {
-        stateField: "_fts",
+      const stVar = `_fts_${table.name}`
+      return search_bar(stVar, state[stVar], {
+        stateField: stVar,
         has_dropdown,
         contents: rendered_contents,
         badges: show_badges ? badges : null,

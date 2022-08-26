@@ -52,7 +52,7 @@ describe("Dotcom and db page page", () => {
       'form[action="/plugins/install/any-bootstrap-theme"] button'
     );
     expect(await browser.content()).toContain(
-      "Plugin any-bootstrap-theme installed"
+      "Module any-bootstrap-theme installed"
     );
     await browser.goto("/plugins/new");
     await browser.page.type("#inputname", "saltcorn-dotcom-pages");
@@ -63,7 +63,7 @@ describe("Dotcom and db page page", () => {
     );
     await browser.clickNav("button[type=submit]");
     expect(await browser.content()).toContain(
-      "Plugin saltcorn-dotcom-pages installed"
+      "Module saltcorn-dotcom-pages installed"
     );
   });
 });

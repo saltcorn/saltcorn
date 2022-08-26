@@ -71,8 +71,8 @@ function accessAllowedRead(req, user, table) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 10;
+        ? user.role_id
+        : 10;
 
   return role <= table.min_role_read;
 }
@@ -89,8 +89,8 @@ function accessAllowedWrite(req, user, table) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 10;
+        ? user.role_id
+        : 10;
 
   return role <= table.min_role_write;
 }
@@ -106,8 +106,8 @@ function accessAllowed(req, user, trigger) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 10;
+        ? user.role_id
+        : 10;
 
   return role <= trigger.min_role;
 }
@@ -247,6 +247,7 @@ router.get(
               fields: tbl_fields,
               approximate: !!approximate,
               state: req_query,
+              table
             });
             rows = await table.getRows(qstate);
           } else {

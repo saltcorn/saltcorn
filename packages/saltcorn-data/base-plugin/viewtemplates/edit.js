@@ -1063,7 +1063,7 @@ module.exports = {
         columns,
         fields
       );
-      const qstate = await stateFieldsToWhere({ fields, state });
+      const qstate = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({ state, fields });
       if (where) mergeIntoWhere(qstate, where);
       const rows = await table.getJoinedRows({
