@@ -72,6 +72,7 @@ const roleadmin = require("../auth/roleadmin");
 const scapi = require("./scapi");
 const tags = require("./tags");
 const tagentries = require("./tag_entries");
+const dataDiagram = require("./diagram");
 
 module.exports =
   /**
@@ -110,4 +111,5 @@ module.exports =
     app.use("/scapi", scapi);
     app.use("/tag", tags);
     app.use("/tag-entries", tagentries);
+    app.use("/diagram", dataDiagram);
   };

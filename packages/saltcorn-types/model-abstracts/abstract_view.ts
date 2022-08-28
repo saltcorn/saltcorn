@@ -1,4 +1,12 @@
 import { AbstractTable } from "./abstract_table";
+import type { ConnectedObjects } from "../base_types";
+
+export interface AbstractView {
+  name: string;
+  viewtemplate: string;
+  configuration?: string | any;
+  connected_objects: () => ConnectedObjects;
+}
 
 export type ViewCfg = {
   name: string;

@@ -309,4 +309,10 @@ module.exports = {
       return await table.getRow(uniques);
     },
   }),
+  connectedObjects: (configuration) => {
+    const listView = View.findOne({ name: configuration.list_view });
+    return {
+      embeddedViews: [listView],
+    };
+  },
 };

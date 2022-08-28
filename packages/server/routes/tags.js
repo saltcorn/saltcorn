@@ -6,7 +6,7 @@ const Form = require("@saltcorn/data/models/form");
 const User = require("@saltcorn/data/models/user");
 
 const { isAdmin, error_catcher, csrfField } = require("./utils");
-const { send_admin_page } = require("../markup/admin");
+const { send_infoarch_page } = require("../markup/admin");
 
 const {
   mkTable,
@@ -31,7 +31,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const rows = await Tag.find();
-    send_admin_page({
+    send_infoarch_page({
       res,
       req,
       active_sub: "Tags",

@@ -19,6 +19,7 @@ const {
   removeDefaultColor,
   applyAsync,
   mergeIntoWhere,
+  mergeConnectedObjects,
 } = require("../../utils");
 const {
   field_picker_fields,
@@ -44,6 +45,10 @@ const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
 const { InvalidConfiguration, isWeb } = require("../../utils");
 const { check_view_columns } = require("../../plugin-testing");
+const {
+  extractFromColumns,
+  extractViewToCreate,
+} = require("../../diagram/node_extract_utils");
 
 /**
  * @param {object} context
@@ -694,8 +699,8 @@ module.exports = {
         });
       }
       if (table.ownership_formula && role > table.min_role_read) {
-        const freeVars = freeVariables(table.ownership_formula)
-        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+        const freeVars = freeVariables(table.ownership_formula);
+        add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
 
       //console.log({ i: default_state.include_fml });
@@ -724,5 +729,12 @@ module.exports = {
   }),
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);
+  },
+  connectedObjects: (configuration) => {
+    const fromColumns = extractFromColumns(configuration.columns);
+    const toCreate = extractViewToCreate(configuration);
+    return toCreate
+      ? mergeConnectedObjects(fromColumns, toCreate)
+      : fromColumns;
   },
 };

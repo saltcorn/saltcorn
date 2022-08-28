@@ -17,8 +17,8 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { Type, ReqRes, GenObj } from "./common_types";
 import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
-import type { ViewPack } from "./model-abstracts/abstract_view";
-import type { PagePack } from "./model-abstracts/abstract_page";
+import type { AbstractView, ViewPack } from "./model-abstracts/abstract_view";
+import type { AbstractPage, PagePack } from "./model-abstracts/abstract_page";
 import type { PluginPack } from "./model-abstracts/abstract_plugin";
 
 type FieldLikeBasics = {
@@ -170,6 +170,12 @@ export type RunExtra = {
 } & ReqRes &
   SelectOptions;
 
+export type ConnectedObjects = {
+  linkedViews?: Array<AbstractView>;
+  embeddedViews?: Array<AbstractView>;
+  linkedPages?: Array<AbstractPage>;
+};
+
 export type ViewTemplate = {
   name: string;
   get_state_fields?: (
@@ -253,6 +259,7 @@ export type ViewTemplate = {
     configuration: any
   ) => Promise<Array<AbstractTrigger>>;
   queries?: (configuration?: any, req?: any) => Record<string, any>;
+  connectedObjects?: (configuration?: any) => ConnectedObjects;
 };
 
 export type Action = (

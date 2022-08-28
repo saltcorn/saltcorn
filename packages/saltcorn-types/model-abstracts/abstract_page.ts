@@ -1,5 +1,12 @@
 import { GenObj } from "../common_types";
 import type { Layout } from "../base_types";
+import type { ConnectedObjects } from "../base_types";
+
+export interface AbstractPage {
+  name: string;
+  layout: Layout;
+  connected_objects: () => ConnectedObjects;
+}
 
 export type PageCfg = {
   name: string;

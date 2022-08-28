@@ -10,10 +10,15 @@ import Table from "./table";
 import layout from "./layout";
 const { eachView, traverseSync, getStringsForI18n, translateLayout } = layout;
 import config from "./config";
-import type { Layout, RunExtra } from "@saltcorn/types/base_types";
+import type {
+  Layout,
+  RunExtra,
+  ConnectedObjects,
+} from "@saltcorn/types/base_types";
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import Role from "./role";
 import type {
+  AbstractPage,
   PageCfg,
   PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
@@ -26,13 +31,14 @@ const {
   fill_presets,
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import utils from "../utils";
+import { extractFromLayout } from "../diagram/node_extract_utils";
 const { InvalidConfiguration, satisfies, structuredClone, isNode } = utils;
 
 /**
  * Page Class
  * @category saltcorn-data
  */
-class Page {
+class Page implements AbstractPage {
   name: string;
   title: string;
   description: string;
@@ -81,7 +87,7 @@ class Page {
    * @param where
    * @returns {Promise<Page|*>}
    */
-  static async findOne(where: Where): Promise<Page> {
+  static findOne(where: Where): Page {
     const { getState } = require("../db/state");
     const p = getState().pages.find(
       where.id
@@ -265,6 +271,10 @@ class Page {
 
     translateLayout(this.layout, extraArgs.req.getLocale());
     return this.layout;
+  }
+
+  connected_objects(): ConnectedObjects {
+    return extractFromLayout(this.layout);
   }
 }
 

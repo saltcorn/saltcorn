@@ -28,12 +28,16 @@ import type {
   FieldLike,
   Tablely,
   RunExtra,
+  ConnectedObjects,
 } from "@saltcorn/types/base_types";
 import type Table from "./table";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
-import type { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
+import type {
+  ViewCfg,
+  AbstractView,
+} from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
 
@@ -43,7 +47,7 @@ declare let window: any;
  * View Class
  * @category saltcorn-data
  */
-class View {
+class View implements AbstractView {
   name: string;
   id?: number;
   table_id?: number;
@@ -741,6 +745,11 @@ class View {
         pix += 1;
       }
     }
+  }
+
+  connected_objects(): ConnectedObjects {
+    if (!this.viewtemplateObj?.connectedObjects) return {};
+    else return this.viewtemplateObj.connectedObjects(this.configuration);
   }
 
   /**

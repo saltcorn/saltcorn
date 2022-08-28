@@ -6,6 +6,7 @@ import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
+import type { ConnectedObjects } from "@saltcorn/types/base_types";
 const fs = require("fs");
 
 const removeEmptyStrings = (obj: GenObj) => {
@@ -154,12 +155,42 @@ const isStale = (date: Date | string, hours: number = 24): boolean => {
 
 declare const window: any;
 
-const isNode = () => {
+/**
+ * returns true if it's a node enviroment,
+ * false if it's webpack bundled code
+ */
+const isNode = (): boolean => {
   return typeof window === "undefined";
 };
 
-const isWeb = (req: any) => {
+/**
+ * returns true if it's node and not a 'saltcorn mobile requeset'
+ * a saltcorn mobile request is identified by the smr header
+ * @param req express request
+ */
+const isWeb = (req: any): boolean => {
   return isNode() && !req.smr;
+};
+
+/**
+ * merges the arrays from 'lhs' and 'rhs'
+ * @param lhs
+ * @param rhs
+ * @returns instance with merged arrays
+ */
+const mergeConnectedObjects = (
+  lhs: ConnectedObjects,
+  rhs: ConnectedObjects
+): ConnectedObjects => {
+  const merge = (arrOne: any, arrTwo: any) => [
+    ...(arrOne ? arrOne : []),
+    ...(arrTwo ? arrTwo : []),
+  ];
+  return {
+    linkedViews: merge(lhs.linkedViews, rhs.linkedViews),
+    embeddedViews: merge(lhs.embeddedViews, rhs.embeddedViews),
+    linkedPages: merge(lhs.linkedPages, rhs.linkedPages),
+  };
 };
 
 export = {
@@ -183,4 +214,5 @@ export = {
   isStale,
   isNode,
   isWeb,
+  mergeConnectedObjects,
 };

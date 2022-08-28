@@ -189,6 +189,7 @@ const send_infoarch_page = (args) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
     main_section: "Site structure",
     main_section_href: "/site-structure",
@@ -203,6 +204,8 @@ const send_infoarch_page = (args) => {
             { text: "Multitenancy", href: "/tenant/settings" },
           ]
         : []),
+      ...(isRoot ? [{ text: "Tags", href: "/tag" }] : []),
+      { text: "Diagram", href: "/diagram" },
     ],
     ...args,
   });
@@ -288,7 +291,6 @@ const send_admin_page = (args) => {
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
-      ...(isRoot ? [{ text: "Tag", href: "/tag" }] : []),
       ...(isRoot
         ? [{ text: "Mobile app", href: "/admin/build-mobile-app" }]
         : []),
