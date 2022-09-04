@@ -84,6 +84,16 @@ const configuration_workflow = () =>
             });
           }
           const actions = ["Clear"];
+          const actionConfigForms = {
+            Clear: [
+              {
+                name: "omit_fields",
+                label: ("Omit fields"),
+                sublabel: ("Comma separated list of fields not to clear"),
+                type: "String",
+              },
+            ],
+          }
           const own_link_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
             ({ viewrow }) => viewrow.name !== context.viewname
@@ -132,6 +142,7 @@ const configuration_workflow = () =>
             pages,
             library,
             field_view_options,
+            actionConfigForms,
             fieldViewConfigForms,
             mode: "filter",
           };
@@ -278,8 +289,9 @@ const run = async (
     },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
-      return search_bar("_fts", state["_fts"], {
-        stateField: "_fts",
+      const stVar = `_fts_${table.name}`
+      return search_bar(stVar, state[stVar], {
+        stateField: stVar,
         has_dropdown,
         contents: rendered_contents,
         badges: show_badges ? badges : null,
@@ -316,18 +328,19 @@ const run = async (
       action_size,
       action_icon,
       action_name,
+      configuration
     }) {
       const label = action_label || action_name;
       if (action_style === "btn-link")
         return a(
-          { href: "javascript:clear_state()" },
+          { href: `javascript:clear_state('${configuration?.omit_fields || ''}')` },
           action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           label
         );
       else
         return button(
           {
-            onClick: "clear_state()",
+            onClick: `clear_state('${configuration?.omit_fields || ''}')`,
             class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
           },
           action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
@@ -341,17 +354,17 @@ const run = async (
       const use_value =
         preset_value && field.presets
           ? field.presets[preset_value]({
-              user: extra.req.user,
-              req: extra.req,
-            })
+            user: extra.req.user,
+            req: extra.req,
+          })
           : value;
 
       const active = isBool
         ? {
-            on: state[field_name],
-            off: state[field_name] === false,
-            "?": state[field_name] === null,
-          }[use_value]
+          on: state[field_name],
+          off: state[field_name] === false,
+          "?": state[field_name] === null,
+        }[use_value]
         : eq_string(state[field_name], use_value);
       return button(
         {

@@ -28,6 +28,7 @@ const { readState } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { applyAsync } = require("@saltcorn/data/utils");
+const { text } = require("@saltcorn/markup/tags");
 
 /**
  * @type {object}
@@ -677,14 +678,30 @@ router.post(
           (f) => f.name === kpath[1]
         );
         //console.log({ kpath, fieldview, targetField });
-        let fv = targetField.type.fieldviews[fieldview];
-        if (!fv) {
-          fv =
-            targetField.type.fieldviews.show ||
-            targetField.type.fieldviews.as_text;
-        }
         const q = { [reftable.pk_name]: row[kpath[0]] };
         const refRow = await reftable.getRow(q);
+        let fv;
+        if (targetField.type === "Key") {
+          fv = getState().keyFieldviews[fieldview]
+          if (!fv) {
+            const reftable2 = Table.findOne({ name: targetField.reftable_name })
+            const refRow2 = await reftable2.getRow({ [reftable2.pk_name]: refRow[kpath[1]] })
+            if (refRow2) {
+              res.send(text(`${refRow2[targetField.attributes.summary_field]}`));
+            } else {
+              res.send("");
+            }
+            return;
+          }
+        } else {
+          targetField.type.fieldviews[fieldview];
+          if (!fv)
+            fv =
+              targetField.type.fieldviews.show ||
+              targetField.type.fieldviews.as_text;
+
+        }
+
         const configuration = req.query;
         let configFields = [];
         if (fv.configFields)

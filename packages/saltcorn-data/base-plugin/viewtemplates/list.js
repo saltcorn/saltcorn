@@ -70,9 +70,8 @@ const create_db_view = async (context) => {
   const schema = db.getTenantSchemaPrefix();
   // is there already a table with this name ? if yes add _sqlview
   const extable = await Table.findOne({ name: context.viewname });
-  const sql_view_name = `${schema}"${db.sqlsanitize(context.viewname)}${
-    extable ? "_sqlview" : ""
-  }"`;
+  const sql_view_name = `${schema}"${db.sqlsanitize(context.viewname)}${extable ? "_sqlview" : ""
+    }"`;
   await db.query(`drop view if exists ${sql_view_name};`);
   await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
@@ -141,56 +140,56 @@ const configuration_workflow = (req) =>
               }),
               ...(create_view_opts.length > 0
                 ? [
-                    {
-                      input_type: "section_header",
-                      label: "View to create a new row",
+                  {
+                    input_type: "section_header",
+                    label: "View to create a new row",
+                  },
+                  {
+                    name: "view_to_create",
+                    label: req.__("Use view to create"),
+                    sublabel: req.__(
+                      "If user has write permission. Leave blank to have no link to create a new item"
+                    ),
+                    type: "String",
+                    attributes: {
+                      options: create_view_opts,
                     },
-                    {
-                      name: "view_to_create",
-                      label: req.__("Use view to create"),
-                      sublabel: req.__(
-                        "If user has write permission. Leave blank to have no link to create a new item"
-                      ),
-                      type: "String",
-                      attributes: {
-                        options: create_view_opts,
-                      },
+                  },
+                  {
+                    name: "create_view_display",
+                    label: req.__("Display create view as"),
+                    type: "String",
+                    required: true,
+                    attributes: {
+                      options: "Link,Embedded,Popup",
                     },
-                    {
-                      name: "create_view_display",
-                      label: req.__("Display create view as"),
-                      type: "String",
-                      required: true,
-                      attributes: {
-                        options: "Link,Embedded,Popup",
-                      },
+                  },
+                  {
+                    name: "create_view_label",
+                    label: req.__("Label for create"),
+                    sublabel: req.__(
+                      "Label in link or button to create. Leave blank for a default label"
+                    ),
+                    type: "String",
+                    showIf: { create_view_display: ["Link", "Popup"] },
+                  },
+                  {
+                    name: "create_view_location",
+                    label: req.__("Location"),
+                    sublabel: req.__("Location of link to create new row"),
+                    //required: true,
+                    attributes: {
+                      options: [
+                        "Bottom left",
+                        "Bottom right",
+                        "Top left",
+                        "Top right",
+                      ],
                     },
-                    {
-                      name: "create_view_label",
-                      label: req.__("Label for create"),
-                      sublabel: req.__(
-                        "Label in link or button to create. Leave blank for a default label"
-                      ),
-                      type: "String",
-                      showIf: { create_view_display: ["Link", "Popup"] },
-                    },
-                    {
-                      name: "create_view_location",
-                      label: req.__("Location"),
-                      sublabel: req.__("Location of link to create new row"),
-                      //required: true,
-                      attributes: {
-                        options: [
-                          "Bottom left",
-                          "Bottom right",
-                          "Top left",
-                          "Top right",
-                        ],
-                      },
-                      type: "String",
-                      showIf: { create_view_display: ["Link", "Popup"] },
-                    },
-                  ]
+                    type: "String",
+                    showIf: { create_view_display: ["Link", "Popup"] },
+                  },
+                ]
                 : []),
             ],
           });
@@ -678,7 +677,7 @@ module.exports = {
         columns,
         fields
       );
-      const where = await stateFieldsToWhere({ fields, state });
+      const where = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
       const rows_per_page =
         (default_state && default_state._rows_per_page) || 20;

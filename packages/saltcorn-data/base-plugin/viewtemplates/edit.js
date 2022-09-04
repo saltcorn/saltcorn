@@ -867,7 +867,7 @@ const runPost = async (
         state_fields.some((sf) => sf.name === pk.name) &&
         viewname_when_done !== viewname
       ) {
-        const get_query = get_view_link_query(fields);
+        const get_query = get_view_link_query(fields, nxview);
         query = relation
           ? `?${pk.name}=${text(row[relation])}`
           : get_query(row);
@@ -1069,7 +1069,7 @@ module.exports = {
         columns,
         fields
       );
-      const qstate = await stateFieldsToWhere({ fields, state });
+      const qstate = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({ state, fields });
       if (where) mergeIntoWhere(qstate, where);
       const rows = await table.getJoinedRows({

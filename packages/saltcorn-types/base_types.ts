@@ -211,7 +211,8 @@ export type ViewTemplate = {
     viewname: string,
     { columns, layout }: { columns: Array<Column>; layout: Layout },
     extra: any,
-    rows: Row[]
+    rows: Row[],
+    state: any
   ) => Promise<string[]>;
   on_delete?: (
     table_id: number,

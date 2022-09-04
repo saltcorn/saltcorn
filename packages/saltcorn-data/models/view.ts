@@ -537,18 +537,23 @@ class View implements AbstractView {
       if (this.viewtemplateObj?.renderRows) {
         const Table = (await import("./table")).default;
         const { stateFieldsToWhere } = await import("../plugin-helper");
-        const tbl = await Table.findOne({ id: this.table_id });
+        const tbl = Table.findOne({ id: this.table_id });
         if (!tbl)
           throw new Error(`Unable to find table with id ${this.table_id}`);
         const fields = await tbl.getFields();
-        const qstate = await stateFieldsToWhere({ fields, state: query });
+        const qstate = await stateFieldsToWhere({
+          fields,
+          state: query,
+          table: tbl,
+        });
         const rows = await tbl.getRows(qstate);
         const rendered = await this.viewtemplateObj!.renderRows(
           tbl,
           this.name,
           this.configuration,
           extraArgs,
-          rows
+          rows,
+          query
         );
 
         return rendered.map((html: string, ix: number) => ({

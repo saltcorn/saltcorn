@@ -61,6 +61,27 @@ const mkTester =
     };
     const v = await View.create(viewCfg);
     if (remoteQueries) await sendViewToServer(viewCfg);
+    const configFlow = await v.get_config_flow(mockReqRes.req);
+    await configFlow.run(
+      {
+        table_id: tbl.id,
+        exttable_name: v.exttable_name,
+        viewname: v.name,
+        ...v.configuration,
+      },
+      mockReqRes.req
+    );
+    for (const step of configFlow.steps)
+      await configFlow.run(
+        {
+          table_id: tbl.id,
+          exttable_name: v.exttable_name,
+          viewname: v.name,
+          ...v.configuration,
+          stepName: step.name,
+        },
+        mockReqRes.req
+      );
 
     const res = await v.run(
       id ? { id } : set_id ? { id: set_id } : {},
@@ -102,6 +123,11 @@ const test_edit = mkTester({
 const test_list = mkTester({
   name: "testlist",
   viewtemplate: "List",
+  table: "patients",
+});
+const test_feed = mkTester({
+  name: "testlist",
+  viewtemplate: "Feed",
   table: "patients",
 });
 const test_filter = mkTester({
@@ -1175,6 +1201,61 @@ describe("Page", () => {
         ],
       },
       fixed_states: { "18a8cc": { id: 1 }, fixed_stateforauthorshowview: null },
+    });
+  });
+});
+describe("Feed view", () => {
+  it("should render exactly", async () => {
+    await test_feed({
+      table: "books",
+      cols_lg: 3,
+      cols_md: 2,
+      cols_sm: 1,
+      cols_xl: 4,
+      in_card: false,
+      viewname: "authorfeed",
+      show_view: "authoredit",
+      descending: false,
+      include_fml: "",
+      order_field: "pages",
+      exttable_name: null,
+      rows_per_page: 20,
+      view_to_create: "authoredit",
+      hide_pagination: false,
+      masonry_columns: false,
+      create_view_label: null,
+      create_view_display: "Embedded",
+      create_view_location: null,
+
+      response: !remoteQueries
+        ? `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor"></form></div>`
+        : `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div><form action="javascript:void(0)" onsubmit="javascript:formSubmit(this, '/view/', 'authoredit')"  class="form-namespace " method="post"><input type="hidden" name="_csrf" value="false"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor"></form></div>`,
+    });
+  });
+  it("should render masonry exactly", async () => {
+    await test_feed({
+      table: "books",
+      cols_lg: 3,
+      cols_md: 2,
+      cols_sm: 1,
+      cols_xl: 4,
+      in_card: true,
+      viewname: "authorfeed",
+      show_view: "authoredit",
+      descending: false,
+      include_fml: "",
+      order_field: "pages",
+      exttable_name: null,
+      rows_per_page: 20,
+      view_to_create: "authoredit",
+      hide_pagination: false,
+      masonry_columns: true,
+      create_view_label: "New book",
+      create_view_display: "Link",
+      create_view_location: "Top left",
+      response: !remoteQueries
+        ? '<div><a href="/view/authoredit">New book</a><div class="card-columns"><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div></div><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div></div></div>'
+        : `<div><a href="javascript:execLink('/view/authoredit');">New book</a><div class="card-columns"><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Leo Tolstoy"></form></div></div><div class="card shadow mt-2"><div class="card-body"><form action="/view/authoredit" class="form-namespace " method="post"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" id="inputauthor" value="Herman Melville"></form></div></div></div></div>`,
     });
   });
 });

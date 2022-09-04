@@ -1079,19 +1079,21 @@ const addOrCreateList = (container, key, x) => {
  * @param {Field[]} opts.fields
  * @param {object} opts.state missing in contract
  * @param {boolean} [opts.approximate = true]
+ * @param {Table} opts.table
  * @returns {object}
  */
-const stateFieldsToWhere = ({ fields, state, approximate = true }) => {
+const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
   var qstate = {};
   Object.entries(state || {}).forEach(([k, v]) => {
-    if (k === "_fts") {
-      qstate[k] = {
+    if (k === "_fts" || (table?.name && k === `_fts_${table.name}`)) {
+      qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
         schema: db.getTenantSchema(),
       };
       return;
     }
+
     const field = fields.find((fld) => fld.name == k);
     if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));

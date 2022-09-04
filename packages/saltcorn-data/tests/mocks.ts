@@ -169,6 +169,9 @@ const plugin_with_routes = {
     },
   ],
 };
+
+let mockResReqStored: any = {};
+
 const mockReqRes = {
   req: {
     csrfToken: () => "",
@@ -179,7 +182,18 @@ const mockReqRes = {
     headers: {},
     query: {},
   },
-  res: { redirect() {}, json() {}, send() {}, __: (s: any) => s },
+  res: {
+    redirect(url: string) {
+      mockResReqStored.url = url;
+    },
+    json() {},
+    send() {},
+    __: (s: any) => s,
+  },
+  getStored: () => mockResReqStored,
+  reset: () => {
+    mockResReqStored = {};
+  },
 };
 
 export = {
