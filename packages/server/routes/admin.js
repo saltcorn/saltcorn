@@ -945,7 +945,7 @@ router.post(
       });
       child.on("exit", function (code, signal) {
         res.end(
-          `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+          req.__(`Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`)
         );
         setTimeout(() => {
           if (process.send) process.send("RestartServer");
@@ -1193,7 +1193,7 @@ router.get(
   })
 );
 /**
- * /confiuration-check
+ * /configuration-check
  */
 router.get(
   "/configuration-check",
@@ -1576,7 +1576,7 @@ router.post(
             {
               type: "card",
               title: req.__("Build Result"),
-              contents: div("The build was successfully"),
+              contents: div(req.__("The build was successfully")),
             },
             files.length > 0 ? app_files_table(files, req) : "",
           ],
@@ -1588,7 +1588,7 @@ router.post(
               type: "card",
               title: req.__("Build Result"),
               contents: div(
-                "Unable to build the app:",
+                req.__("Unable to build the app:"),
                 pre(code(childOutputs.join("<br/>")))
               ),
             },
@@ -1604,7 +1604,7 @@ router.post(
             type: "card",
             title: req.__("Build Result"),
             contents: div(
-              p("Unable to build the app:"),
+              p(req.__("Unable to build the app:")),
               pre(code(message)),
               pre(code(stack))
             ),

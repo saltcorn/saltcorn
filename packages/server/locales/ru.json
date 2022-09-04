@@ -801,7 +801,7 @@
 	"Expiration in days": "Срок хранения (в днях)",
 	"Delete old backup files in this directory after the set number of days": "Старые резервные копии в этой папке будут удалять после истечения срока хранения ",
 	"Backup settings updated": "Настройки резервного копирования обновлены",
-	"Periodic snapshots enabled": "Регулярные снимки (снепшоты) активированы",
+	"Periodic snapshots enabled": "Регулярные снимки (снепшоты)",
 	"Snapshot will be made every hour if there are changes": "Снимки (снепшоты) будут выполняться каждый час",
 	"Manual backup": "Ручное резервное копирование",
 	"Automated backup": "Автоматическое резервное копирование",
@@ -872,5 +872,15 @@
 	"View pattern": "Паттерн представления",
 	"The view pattern sets the foundation of how the view relates to the table and the behaviour of the view": "The view pattern sets the foundation of how the view relates to the table and the behaviour of the view",
 	"This will delete <strong>EVERYTHING</strong> in the selected categories": "Внимание! Будут удалены <strong>ВСЕ</strong> данные в выбранных категориях",
-	"Tag not found": "Тэг не найден"
+	"Tag not found": "Тэг не найден",
+	"Build Result": "Результат сборки",
+	"Download automated backup": "Автоматически созданные резервные копии",
+	"Restoring automated backup": "Восстановление из автоматически созданной резервной копии",
+	"Download one of the backups above": "Скачать один из бекапов (файлов с резервной копией) выше",
+	"Clear this application": "Удалить ВСЕ данные в текущем приложении",
+	"(tick all boxes)": "(указав все галочки)",
+	"When prompted to create the first user, click the link to restore a backup": "Вместо создания первого пользователя, выберите Восстановление из резервной копии (restore a backup)",
+	"Select the downloaded backup file": "Выбрать скаченный бекап (файл с резервной копией)",
+	"Snapshot successful": "Снимок (Снепшот) выполнен успешно",
+	"Unable to build the app:": "Ошибка создания приложения:"
 }
