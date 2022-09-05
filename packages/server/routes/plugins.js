@@ -455,7 +455,7 @@ const store_actions_dropdown = (req) =>
         {
           class: "dropdown-item",
           href: `/plugins/upgrade`,
-          onClick: `notifyAlert('Upgrading modules...', true)`,
+          onClick: `notifyAlert(req.__('Upgrading modules...'), true)`,
         },
         '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
         req.__("Upgrade installed modules")
@@ -551,7 +551,7 @@ router.get(
     const { name } = req.params;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
-      req.flash("warning", "Module not found");
+      req.flash("warning", req.__("Module not found"));
       res.redirect("/plugins");
       return;
     }

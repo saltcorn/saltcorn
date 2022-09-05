@@ -390,7 +390,7 @@ router.get(
                 renderForm(backupForm, req.csrfToken()),
                 a(
                   { href: "/admin/auto-backup-list" },
-                  "Restore/download automated backups &raquo;"
+                  req.__("Restore/download automated backups &raquo;")
                 ),
                 script(
                   domReady(
@@ -406,13 +406,13 @@ router.get(
             contents: div(
               p(
                 i(
-                  "Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns)."
+                  req.__("Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns).")
                 )
               ),
               renderForm(aSnapshotForm, req.csrfToken()),
               a(
                 { href: "/admin/snapshot-list" },
-                "List/download snapshots &raquo;"
+                req.__("List/download snapshots &raquo;")
               )
             ),
           },
@@ -472,16 +472,16 @@ router.get(
             title: req.__("Restoring automated backup"),
             contents: div(
               ol(
-                li("Download one of the backups above"),
+                li(req.__("Download one of the backups above")),
                 li(
-                  a({ href: "/admin/clear-all" }, "Clear this application"),
+                  a({ href: "/admin/clear-all" }, req.__("Clear this application")),
                   " ",
-                  "(tick all boxes)"
+                    req.__("(tick all boxes)")
                 ),
                 li(
-                  "When prompted to create the first user, click the link to restore a backup"
+                    req.__("When prompted to create the first user, click the link to restore a backup")
                 ),
-                li("Select the downloaded backup file")
+                li(req.__("Select the downloaded backup file"))
               )
             ),
           },
@@ -551,7 +551,7 @@ router.get(
       mkTable(
         [
           {
-            label: "When",
+            label: req.__("When"),
             key: (r) =>
               `${localeDateTime(r.created)} (${moment(r.created).fromNow()})`,
           },
@@ -618,7 +618,7 @@ const autoBackupForm = (req) =>
     noSubmitButton: true,
     additionalButtons: [
       {
-        label: "Backup now",
+        label: req.__("Backup now"),
         id: "btnBackupNow",
         class: "btn btn-outline-secondary",
         onclick: "ajax_post('/admin/auto-backup-now')",
@@ -671,7 +671,7 @@ const snapshotForm = (req) =>
     noSubmitButton: true,
     additionalButtons: [
       {
-        label: "Snapshot now",
+        label: req.__("Snapshot now"),
         id: "btnSnapNow",
         class: "btn btn-outline-secondary",
         onclick: "ajax_post('/admin/snapshot-now')",
@@ -945,7 +945,7 @@ router.post(
       });
       child.on("exit", function (code, signal) {
         res.end(
-          `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+          req.__(`Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`)
         );
         setTimeout(() => {
           if (process.send) process.send("RestartServer");
@@ -1193,7 +1193,7 @@ router.get(
   })
 );
 /**
- * /confiuration-check
+ * /configuration-check
  */
 router.get(
   "/configuration-check",
@@ -1576,7 +1576,7 @@ router.post(
             {
               type: "card",
               title: req.__("Build Result"),
-              contents: div("The build was successfully"),
+              contents: div(req.__("The build was successfully")),
             },
             files.length > 0 ? app_files_table(files, req) : "",
           ],
@@ -1588,7 +1588,7 @@ router.post(
               type: "card",
               title: req.__("Build Result"),
               contents: div(
-                "Unable to build the app:",
+                req.__("Unable to build the app:"),
                 pre(code(childOutputs.join("<br/>")))
               ),
             },
@@ -1604,7 +1604,7 @@ router.post(
             type: "card",
             title: req.__("Build Result"),
             contents: div(
-              p("Unable to build the app:"),
+              p(req.__("Unable to build the app:")),
               pre(code(message)),
               pre(code(stack))
             ),
