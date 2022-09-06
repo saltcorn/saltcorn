@@ -113,6 +113,9 @@ function pjax_to(href) {
         $("#page-inner-content").html(res);
         initialize_page();
       },
+      error: function (res) {
+        notifyAlert({ type: "danger", text: res.responseText });
+      }
     });
   }
 }
@@ -482,3 +485,7 @@ Copyright (c) 2015 Jeff Green
     });
   };
 })(jQuery);
+
+// Copyright (c) 2011 Marcus Ekwall, http://writeless.se/
+// https://github.com/mekwall/jquery-throttle
+(function (a) { var b = a.jQuery || a.me || (a.me = {}), i = function (e, f, g, h, c, a) { f || (f = 100); var d = !1, j = !1, i = typeof g === "function", l = function (a, b) { d = setTimeout(function () { d = !1; if (h || c) e.apply(a, b), c && (j = +new Date); i && g.apply(a, b) }, f) }, k = function () { if (!d || a) { if (!d && !h && (!c || +new Date - j > f)) e.apply(this, arguments), c && (j = +new Date); (a || !c) && clearTimeout(d); l(this, arguments) } }; if (b.guid) k.guid = e.guid = e.guid || b.guid++; return k }; b.throttle = i; b.debounce = function (a, b, g, h, c) { return i(a, b, g, h, c, !0) } })(this);
