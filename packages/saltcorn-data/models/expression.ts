@@ -372,6 +372,7 @@ const apply_calculated_fields_stored = async (
 const recalculate_for_stored = async (table: Table): Promise<void> => {
   let rows = [];
   let maxid = 0;
+
   do {
     rows = await table.getRows(
       { id: { gt: maxid } },
@@ -379,7 +380,7 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
     );
     for (const row of rows) {
       try {
-        await table.updateRow({}, row.id, undefined, false);
+        await table.updateRow({}, row.id, undefined, true);
       } catch (e: any) {
         console.error(e);
       }
