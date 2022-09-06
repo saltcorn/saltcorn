@@ -113,6 +113,9 @@ function pjax_to(href) {
         $("#page-inner-content").html(res);
         initialize_page();
       },
+      error: function (res) {
+        notifyAlert({ type: "danger", text: res.responseText });
+      }
     });
   }
 }
