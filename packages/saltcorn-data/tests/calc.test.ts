@@ -237,7 +237,7 @@ describe("joinfields in stored calculated fields", () => {
       label: "favpages",
       type: "Integer",
       calculated: true,
-      expression: "favbook.pages",
+      expression: "favbook?.pages",
       stored: true,
     });
   });
@@ -253,8 +253,7 @@ describe("joinfields in stored calculated fields", () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const bookrow = await patients.getRow({ id: 1 });
-    console.log(bookrow);
-    expect(bookrow?.favpages).toBeGreaterThan(1);
+    expect(bookrow?.favpages).toBe(967);
   });
 });
 

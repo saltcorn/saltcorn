@@ -40,6 +40,7 @@ const {
   apply_calculated_fields_stored,
   recalculate_for_stored,
   get_expression_function,
+  freeVariables,
 } = expression;
 
 import csvtojson from "csvtojson";
@@ -493,16 +494,30 @@ class Table implements AbstractTable {
     noTrigger?: boolean
   ): Promise<void> {
     let existing;
-    let v;
+    let v = v_in;
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
-      existing = await db.selectOne(this.name, { [pk_name]: id });
-      v = await apply_calculated_fields_stored(
-        { ...existing, ...v_in },
+      let freeVars: Set<string> = new Set([]);
+      for (const f of fields)
+        if (f.stored && f.expression)
+          freeVars = new Set([...freeVars, ...freeVariables(f.expression)]);
+      const joinFields = {};
+      const { add_free_variables_to_joinfields } = require("../plugin-helper");
+      add_free_variables_to_joinfields(freeVars, joinFields, fields);
+
+      existing = await this.getJoinedRows({
+        where: { [pk_name]: id },
+        joinFields,
+      });
+
+      let calced = await apply_calculated_fields_stored(
+        { ...existing[0], ...v_in },
         // @ts-ignore TODO ch throw ?
         this.fields
       );
+      for (const f of fields)
+        if (f.stored && f.expression) v[f.name] = calced[f.name];
     } else v = v_in;
     if (this.versioned) {
       if (!existing)
