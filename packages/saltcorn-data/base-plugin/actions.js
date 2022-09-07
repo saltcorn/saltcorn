@@ -514,6 +514,12 @@ module.exports = {
           input_type: "select",
           options: tables.map((t) => t.name),
         },
+        {
+          name: "only_triggering_row",
+          label: "Only triggering row",
+          type: "Bool",
+          showIf: { table: table.name }
+        }
       ];
     },
     /**
@@ -521,11 +527,17 @@ module.exports = {
      * @param {object} opts.configuration
      * @returns {Promise<void>}
      */
-    run: async ({ configuration: { table } }) => {
-      const table_for_recalc = await Table.findOne({ name: table });
+    run: async ({ table, row, configuration }) => {
+      const table_for_recalc = await Table.findOne({ name: configuration.table });
 
       //intentionally omit await
-      if (table_for_recalc) recalculate_for_stored(table_for_recalc);
+
+      if (configuration.only_triggering_row
+        && table.name === table_for_recalc?.name
+        && row
+        && row[table.pk_name]) {
+        table.updateRow({}, row[table.pk_name], undefined, true);
+      } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
   },
@@ -615,7 +627,7 @@ module.exports = {
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
-                async function () {}
+                async function () { }
               ).constructor;
               AsyncFunction(s);
               return true;
