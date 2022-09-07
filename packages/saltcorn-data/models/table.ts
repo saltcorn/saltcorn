@@ -500,7 +500,7 @@ class Table implements AbstractTable {
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       let freeVars: Set<string> = new Set([]);
       for (const f of fields)
-        if (f.stored && f.expression)
+        if (f.calculated && f.stored && f.expression)
           freeVars = new Set([...freeVars, ...freeVariables(f.expression)]);
       const joinFields = {};
       const { add_free_variables_to_joinfields } = require("../plugin-helper");
@@ -517,8 +517,8 @@ class Table implements AbstractTable {
         this.fields
       );
       for (const f of fields)
-        if (f.stored && f.expression) v[f.name] = calced[f.name];
-    } else v = v_in;
+        if (f.calculated && f.stored) v[f.name] = calced[f.name];
+    }
     if (this.versioned) {
       if (!existing)
         existing = await db.selectOne(this.name, { [pk_name]: id });
