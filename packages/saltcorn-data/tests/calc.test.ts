@@ -11,6 +11,7 @@ const {
   expressionValidator,
   jsexprToWhere,
   freeVariables,
+  recalculate_for_stored,
 } = expression;
 import { mkWhere } from "@saltcorn/db-common/internal";
 
@@ -227,6 +228,31 @@ describe("calculated", () => {
     expect(rows[0].z).toBe(18);
   });
 });
+describe("joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await Field.create({
+      table: patients,
+      label: "favpages",
+      type: "Integer",
+      calculated: true,
+      expression: "favbook.pages",
+      stored: true,
+    });
+  });
+  it("updates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookRows = await patients.getRows({});
+    for (const row of bookRows) {
+      console.log(row);
+
+      await patients.updateRow({}, row.id);
+    }
+  });
+});
+
 describe("expressionValidator", () => {
   it("validates correct", () => {
     expect(expressionValidator("2+2")).toBe(true);
