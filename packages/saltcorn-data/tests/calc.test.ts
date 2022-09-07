@@ -246,10 +246,15 @@ describe("joinfields in stored calculated fields", () => {
     assertIsSet(patients);
     const bookRows = await patients.getRows({});
     for (const row of bookRows) {
-      console.log(row);
-
       await patients.updateRow({}, row.id);
     }
+  });
+  it("check", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookrow = await patients.getRow({ id: 1 });
+    console.log(bookrow);
+    expect(bookrow?.favpages).toBeGreaterThan(1);
   });
 });
 
