@@ -518,7 +518,7 @@ module.exports = {
           name: "only_triggering_row",
           label: "Only triggering row",
           type: "Bool",
-          showIf: { table: table.name }
+          showIf: table ? { table: table.name } : {}
         }
       ];
     },
