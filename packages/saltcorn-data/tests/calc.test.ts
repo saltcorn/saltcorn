@@ -265,6 +265,15 @@ describe("joinfields in stored calculated fields", () => {
 
     expect(bookrow?.favpages).toBe(728);
   });
+  it("insert", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const hid = await patients.insertRow({ name: "Herman Smith", favbook: 1 });
+    const hrow = await patients.getRow({ id: hid });
+
+    expect(hrow?.favpages).toBe(967);
+    //expect(bookrow?.favpages).toBe(967);
+  });
 });
 
 describe("expressionValidator", () => {

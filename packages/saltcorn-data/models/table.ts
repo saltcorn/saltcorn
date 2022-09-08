@@ -628,10 +628,23 @@ class Table implements AbstractTable {
    * @returns {Promise<*>}
    */
   async insertRow(v_in: Row, _userid?: number): Promise<any> {
-    await this.getFields();
-    // @ts-ignore TODO ch throw?
-    const v = await apply_calculated_fields_stored(v_in, this.fields);
+    const fields = await this.getFields();
     const pk_name = this.pk_name;
+    const joinFields = this.storedExpressionJoinFields();
+    let v;
+    if (Object.keys(joinFields).length > 0) {
+      const id = await db.insert(this.name, v_in, { pk_name });
+      let existing = await this.getJoinedRows({
+        where: { [pk_name]: id },
+        joinFields,
+      });
+
+      let calced = await apply_calculated_fields_stored(existing[0], fields);
+      v = { ...v_in };
+
+      for (const f of fields)
+        if (f.calculated && f.stored) v[f.name] = calced[f.name];
+    } else v = await apply_calculated_fields_stored(v_in, fields);
     const id = await db.insert(this.name, v, { pk_name });
     if (this.versioned)
       await db.insert(this.name + "__history", {
