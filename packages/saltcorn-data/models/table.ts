@@ -40,6 +40,7 @@ const {
   apply_calculated_fields_stored,
   recalculate_for_stored,
   get_expression_function,
+  freeVariables,
 } = expression;
 
 import csvtojson from "csvtojson";
@@ -479,6 +480,17 @@ class Table implements AbstractTable {
     return res.rows.map((r: Row) => r[fieldnm]);
   }
 
+  storedExpressionJoinFields() {
+    let freeVars: Set<string> = new Set([]);
+    for (const f of this.fields!)
+      if (f.calculated && f.stored && f.expression)
+        freeVars = new Set([...freeVars, ...freeVariables(f.expression)]);
+    const joinFields = {};
+    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    add_free_variables_to_joinfields(freeVars, joinFields, this.fields);
+    return joinFields;
+  }
+
   /**
    * Update row
    * @param v_in - colums with values to update
@@ -493,17 +505,39 @@ class Table implements AbstractTable {
     noTrigger?: boolean
   ): Promise<void> {
     let existing;
-    let v;
+    let v = { ...v_in };
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
-      existing = await db.selectOne(this.name, { [pk_name]: id });
-      v = await apply_calculated_fields_stored(
-        { ...existing, ...v_in },
+      const joinFields = this.storedExpressionJoinFields();
+      //if any freevars are join fields, update row in db first
+      const freeVarFKFields = new Set(
+        Object.values(joinFields).map((jf: any) => jf.ref)
+      );
+      let need_to_update = Object.keys(v_in).some((k) =>
+        freeVarFKFields.has(k)
+      );
+
+      if (need_to_update) {
+        await db.update(this.name, v, id, { pk_name });
+      }
+
+      existing = (
+        await this.getJoinedRows({
+          where: { [pk_name]: id },
+          joinFields,
+        })
+      )[0];
+
+      let calced = await apply_calculated_fields_stored(
+        need_to_update ? existing : { ...existing, ...v_in },
         // @ts-ignore TODO ch throw ?
         this.fields
       );
-    } else v = v_in;
+
+      for (const f of fields)
+        if (f.calculated && f.stored) v[f.name] = calced[f.name];
+    }
     if (this.versioned) {
       if (!existing)
         existing = await db.selectOne(this.name, { [pk_name]: id });
@@ -596,10 +630,23 @@ class Table implements AbstractTable {
    * @returns {Promise<*>}
    */
   async insertRow(v_in: Row, _userid?: number): Promise<any> {
-    await this.getFields();
-    // @ts-ignore TODO ch throw?
-    const v = await apply_calculated_fields_stored(v_in, this.fields);
+    const fields = await this.getFields();
     const pk_name = this.pk_name;
+    const joinFields = this.storedExpressionJoinFields();
+    let v;
+    if (Object.keys(joinFields).length > 0) {
+      const id = await db.insert(this.name, v_in, { pk_name });
+      let existing = await this.getJoinedRows({
+        where: { [pk_name]: id },
+        joinFields,
+      });
+
+      let calced = await apply_calculated_fields_stored(existing[0], fields);
+      v = { ...v_in };
+
+      for (const f of fields)
+        if (f.calculated && f.stored) v[f.name] = calced[f.name];
+    } else v = await apply_calculated_fields_stored(v_in, fields);
     const id = await db.insert(this.name, v, { pk_name });
     if (this.versioned)
       await db.insert(this.name + "__history", {
