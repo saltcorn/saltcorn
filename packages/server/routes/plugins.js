@@ -455,7 +455,7 @@ const store_actions_dropdown = (req) =>
         {
           class: "dropdown-item",
           href: `/plugins/upgrade`,
-          onClick: `notifyAlert(req.__('Upgrading modules...'), true)`,
+          onClick: `notifyAlert('${req.__("Upgrading modules...")}', true)`,
         },
         '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
         req.__("Upgrade installed modules")
