@@ -522,13 +522,15 @@ class Table implements AbstractTable {
         await db.update(this.name, v, id, { pk_name });
       }
 
-      existing = await this.getJoinedRows({
-        where: { [pk_name]: id },
-        joinFields,
-      });
+      existing = (
+        await this.getJoinedRows({
+          where: { [pk_name]: id },
+          joinFields,
+        })
+      )[0];
 
       let calced = await apply_calculated_fields_stored(
-        need_to_update ? existing[0] : { ...existing[0], ...v_in },
+        need_to_update ? existing : { ...existing, ...v_in },
         // @ts-ignore TODO ch throw ?
         this.fields
       );
@@ -540,7 +542,7 @@ class Table implements AbstractTable {
       if (!existing)
         existing = await db.selectOne(this.name, { [pk_name]: id });
       await db.insert(this.name + "__history", {
-        ...existing[0],
+        ...existing,
         ...v,
         [pk_name]: id,
         _version: {
@@ -555,7 +557,7 @@ class Table implements AbstractTable {
       const triggers = await Trigger.getTableTriggers("Update", this);
       if (triggers.length > 0)
         existing = await db.selectOne(this.name, { [pk_name]: id });
-    } else existing = existing[0];
+    }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) await Trigger.runTableTriggers("Update", this, newRow);
   }
