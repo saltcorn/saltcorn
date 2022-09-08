@@ -253,7 +253,17 @@ describe("joinfields in stored calculated fields", () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const bookrow = await patients.getRow({ id: 1 });
+
     expect(bookrow?.favpages).toBe(967);
+  });
+  it("changes", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await patients.updateRow({ favbook: 2 }, 1);
+
+    const bookrow = await patients.getRow({ id: 1 });
+
+    expect(bookrow?.favpages).toBe(728);
   });
 });
 

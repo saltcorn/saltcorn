@@ -494,7 +494,7 @@ class Table implements AbstractTable {
     noTrigger?: boolean
   ): Promise<void> {
     let existing;
-    let v = v_in;
+    let v = { ...v_in };
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
@@ -506,16 +506,29 @@ class Table implements AbstractTable {
       const { add_free_variables_to_joinfields } = require("../plugin-helper");
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
 
+      //if any freevars are join fields, update row in db first
+      const freeVarFKFields = new Set(
+        Object.values(joinFields).map((jf: any) => jf.ref)
+      );
+      let need_to_update = Object.keys(v_in).some((k) =>
+        freeVarFKFields.has(k)
+      );
+
+      if (need_to_update) {
+        await db.update(this.name, v, id, { pk_name });
+      }
+
       existing = await this.getJoinedRows({
         where: { [pk_name]: id },
         joinFields,
       });
 
       let calced = await apply_calculated_fields_stored(
-        { ...existing[0], ...v_in },
+        need_to_update ? existing[0] : { ...existing[0], ...v_in },
         // @ts-ignore TODO ch throw ?
         this.fields
       );
+
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
@@ -523,7 +536,7 @@ class Table implements AbstractTable {
       if (!existing)
         existing = await db.selectOne(this.name, { [pk_name]: id });
       await db.insert(this.name + "__history", {
-        ...existing,
+        ...existing[0],
         ...v,
         [pk_name]: id,
         _version: {
@@ -538,7 +551,7 @@ class Table implements AbstractTable {
       const triggers = await Trigger.getTableTriggers("Update", this);
       if (triggers.length > 0)
         existing = await db.selectOne(this.name, { [pk_name]: id });
-    }
+    } else existing = existing[0];
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) await Trigger.runTableTriggers("Update", this, newRow);
   }
