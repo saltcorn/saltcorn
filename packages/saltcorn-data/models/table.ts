@@ -480,6 +480,17 @@ class Table implements AbstractTable {
     return res.rows.map((r: Row) => r[fieldnm]);
   }
 
+  storedExpressionJoinFields() {
+    let freeVars: Set<string> = new Set([]);
+    for (const f of this.fields!)
+      if (f.calculated && f.stored && f.expression)
+        freeVars = new Set([...freeVars, ...freeVariables(f.expression)]);
+    const joinFields = {};
+    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    add_free_variables_to_joinfields(freeVars, joinFields, this.fields);
+    return joinFields;
+  }
+
   /**
    * Update row
    * @param v_in - colums with values to update
@@ -498,14 +509,7 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
-      let freeVars: Set<string> = new Set([]);
-      for (const f of fields)
-        if (f.calculated && f.stored && f.expression)
-          freeVars = new Set([...freeVars, ...freeVariables(f.expression)]);
-      const joinFields = {};
-      const { add_free_variables_to_joinfields } = require("../plugin-helper");
-      add_free_variables_to_joinfields(freeVars, joinFields, fields);
-
+      const joinFields = this.storedExpressionJoinFields();
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
         Object.values(joinFields).map((jf: any) => jf.ref)
