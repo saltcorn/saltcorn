@@ -19,12 +19,13 @@ const {
   expressionValidator,
   get_async_expression_function,
   get_expression_function,
+  freeVariables,
 } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
 const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
-const { readState } = require("@saltcorn/data/plugin-helper");
+const { readState, add_free_variables_to_joinfields } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { applyAsync } = require("@saltcorn/data/utils");
@@ -621,7 +622,11 @@ router.post(
     const { formula, tablename, stored } = req.body;
     const table = await Table.findOne({ name: tablename });
     const fields = await table.getFields();
-    const rows = await table.getRows({}, { orderBy: "RANDOM()", limit: 1 });
+    const freeVars = freeVariables(formula)
+    const joinFields = {}
+    if (stored)
+      add_free_variables_to_joinfields(freeVars, joinFields, fields)
+    const rows = await table.getJoinedRows({ joinFields, orderBy: "RANDOM()", limit: 1 });
     if (rows.length < 1) return "No rows in table";
     let result;
     try {

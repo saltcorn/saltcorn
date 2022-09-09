@@ -1482,6 +1482,8 @@ class Table implements AbstractTable {
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
           ? opts.orderBy
+          : opts.orderBy.toLowerCase() === "random()"
+          ? opts.orderBy
           : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
