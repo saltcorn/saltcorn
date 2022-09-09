@@ -647,6 +647,7 @@ class Table implements AbstractTable {
 
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
+      await db.update(this.name, v, id, { pk_name });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields);
       id = await db.insert(this.name, v, { pk_name });
