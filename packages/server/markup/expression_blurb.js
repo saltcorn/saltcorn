@@ -146,7 +146,7 @@ const boolExamples = (type, fields) => {
  * @returns {p[]}
  */
 const expressionBlurb = (type, stored, allFields, req) => {
-  const fields = allFields.filter((f) => !f.is_fkey && !f.calculated);
+  const fields = allFields.filter((f) => !f.calculated);
   const funs = getState().functions;
   const funNames = Object.entries(funs)
     .filter(([k, v]) => !(!stored && v.isAsync))

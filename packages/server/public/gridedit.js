@@ -153,6 +153,8 @@ function delete_tabulator_row(e, cell) {
   if (def && def.formatterParams && def.formatterParams.confirm) {
     if (!confirm("Are you sure you want to delete this row?")) return;
   }
+  const tableName = def?.formatterParams?.tableName || window.tabulator_table_name
+
   const row = cell.getRow().getData();
   if (!row.id) {
     cell.getRow().delete();
@@ -160,7 +162,7 @@ function delete_tabulator_row(e, cell) {
   }
   $.ajax({
     type: "DELETE",
-    url: `/api/${window.tabulator_table_name}/${row.id}`,
+    url: `/api/${tableName}/${row.id}`,
     data: row, // to process primary keys different from id
     headers: {
       "CSRF-Token": _sc_globalCsrf,

@@ -634,8 +634,9 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
     let v;
+    let id;
     if (Object.keys(joinFields).length > 0) {
-      const id = await db.insert(this.name, v_in, { pk_name });
+      id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
         joinFields,
@@ -646,8 +647,11 @@ class Table implements AbstractTable {
 
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
-    } else v = await apply_calculated_fields_stored(v_in, fields);
-    const id = await db.insert(this.name, v, { pk_name });
+      await db.update(this.name, v, id, { pk_name });
+    } else {
+      v = await apply_calculated_fields_stored(v_in, fields);
+      id = await db.insert(this.name, v, { pk_name });
+    }
     if (this.versioned)
       await db.insert(this.name + "__history", {
         ...v,
@@ -1481,6 +1485,8 @@ class Table implements AbstractTable {
         (orderByIsObject(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          ? opts.orderBy
+          : opts.orderBy.toLowerCase() === "random()"
           ? opts.orderBy
           : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
