@@ -185,9 +185,8 @@ const pageBuilderData = async (req, context) => {
 const getRootPageForm = (pages, roles, req) => {
   const form = new Form({
     action: "/pageedit/set_root_page",
-    submitLabel: req.__("Save"),
-    submitButtonClass: "btn-outline-primary",
-    onChange: "remove_outline(this)",
+    noSubmitButton: true,
+    onChange: "saveAndContinue(this)",
     blurb: req.__(
       "The root page is the page that is served when the user visits the home location (/). This can be set for each user role."
     ),

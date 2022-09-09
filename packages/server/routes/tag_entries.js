@@ -105,7 +105,7 @@ router.get(
         },
         {
           type: "card",
-          title: `Add entries to tag`,
+          title: req.__(`Add entries to tag`),
           contents: buildForm(
             entry_type,
             tag_id,
@@ -143,7 +143,7 @@ router.post(
     const { entry_type, tag_id } = req.params;
     const { ids } = req.body;
     if (!ids) {
-      req.flash("error", req.__("Please select at least on item"));
+      req.flash("error", req.__("Please select at least one item"));
       return res.redirect(`/tag-entries/add/${entry_type}/${tag_id}`);
     }
     const fieldName = idField(entry_type);

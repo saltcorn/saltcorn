@@ -11,6 +11,7 @@ const {
   expressionValidator,
   jsexprToWhere,
   freeVariables,
+  recalculate_for_stored,
 } = expression;
 import { mkWhere } from "@saltcorn/db-common/internal";
 
@@ -227,6 +228,54 @@ describe("calculated", () => {
     expect(rows[0].z).toBe(18);
   });
 });
+describe("joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await Field.create({
+      table: patients,
+      label: "favpages",
+      type: "Integer",
+      calculated: true,
+      expression: "favbook?.pages",
+      stored: true,
+    });
+  });
+  it("updates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookRows = await patients.getRows({});
+    for (const row of bookRows) {
+      await patients.updateRow({}, row.id);
+    }
+  });
+  it("check", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookrow = await patients.getRow({ id: 1 });
+
+    expect(bookrow?.favpages).toBe(967);
+  });
+  it("changes", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await patients.updateRow({ favbook: 2 }, 1);
+
+    const bookrow = await patients.getRow({ id: 1 });
+
+    expect(bookrow?.favpages).toBe(728);
+  });
+  it("insert", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const hid = await patients.insertRow({ name: "Herman Smith", favbook: 1 });
+    const hrow = await patients.getRow({ id: hid });
+
+    expect(hrow?.favpages).toBe(967);
+    //expect(bookrow?.favpages).toBe(967);
+  });
+});
+
 describe("expressionValidator", () => {
   it("validates correct", () => {
     expect(expressionValidator("2+2")).toBe(true);

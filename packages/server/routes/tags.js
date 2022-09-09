@@ -199,7 +199,7 @@ router.get(
                 href: `/tag-entries/add/pages/${tag.id}`,
                 class: "btn btn-primary",
               },
-              req.__("Add tages")
+              req.__("Add pages")
             ),
           ],
         },
@@ -222,7 +222,7 @@ router.get(
                 href: `/tag-entries/add/trigger/${tag.id}`,
                 class: "btn btn-primary",
               },
-              req.__("Add trigger")
+              req.__("Add triggers")
             ),
           ],
         },

@@ -966,7 +966,6 @@
 	"Tag %s deleted": "Tag %s deleted",
 	"Tag %s created": "Tag %s created",
 	"Application diagram": "Application diagram",
-	"Unable to create a diagram, no entry page was found.": "Unable to create a diagram, no entry page was found.",
 	"Diagram": "Diagram",
 	"Entry point": "Entry point",
 	"Platform": "Platform",
@@ -977,5 +976,6 @@
 	"Server URL": "Server URL",
 	"Module %s installed, please complete configuration.": "Module %s installed, please complete configuration.",
 	"Module %s removed.": "Module %s removed.",
-	"Module %s installed": "Module %s installed"
+	"Module %s installed": "Module %s installed",
+	"Upgrading modules...": "Upgrading modules..."
 }

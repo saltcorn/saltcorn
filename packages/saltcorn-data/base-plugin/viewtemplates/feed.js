@@ -104,6 +104,48 @@ const configuration_workflow = (req) =>
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
               {
+                name: "create_link_style",
+                label: req.__("Link Style"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: [
+                    { name: "", label: "Link" },
+                    { name: "btn btn-primary", label: "Primary button" },
+                    { name: "btn btn-secondary", label: "Secondary button" },
+                    { name: "btn btn-success", label: "Success button" },
+                    { name: "btn btn-danger", label: "Danger button" },
+                    {
+                      name: "btn btn-outline-primary",
+                      label: "Primary outline button",
+                    },
+                    {
+                      name: "btn btn-outline-secondary",
+                      label: "Secondary outline button",
+                    },
+                  ],
+                },
+
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_link_size",
+                label: req.__("Link size"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: [
+                    { name: "", label: "Standard" },
+                    { name: "btn-lg", label: "Large" },
+                    { name: "btn-sm", label: "Small" },
+                    { name: "btn-sm btn-xs", label: "X-Small" },
+                    { name: "btn-block", label: "Block" },
+                    { name: "btn-block btn-lg", label: "Large block" },
+                  ],
+                },
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
                 name: "create_view_location",
                 label: req.__("Location"),
                 sublabel: req.__("Location of link to create new row"),
@@ -300,6 +342,8 @@ const run = async (
     hide_pagination,
     create_view_label,
     create_view_location,
+    create_link_style,
+    create_link_size,
     always_create_view,
     include_fml,
     ...cols
@@ -386,8 +430,8 @@ const run = async (
         hrefVal,
         __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
         create_view_display === "Popup",
-        create_view_display === "Popup" && "btn btn-secondary",
-        create_view_display === "Popup" && "btn-sm"
+        create_link_style,
+        create_link_size
       );
     }
   }

@@ -86,8 +86,7 @@ function apply_showif() {
       } else {
         e.append(
           $(
-            `<option ${
-              `${current}` === `${o.value}` ? "selected" : ""
+            `<option ${`${current}` === `${o.value}` ? "selected" : ""
             } value="${o.value}">${o.label}</option>`
           )
         );
@@ -118,15 +117,13 @@ function apply_showif() {
         resp.success.forEach((r) => {
           e.append(
             $(
-              `<option ${
-                `${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
-              } value="${r[dynwhere.refname]}">${
-                dynwhere.label_formula
-                  ? new Function(
-                      `{${Object.keys(r).join(",")}}`,
-                      "return " + dynwhere.label_formula
-                    )(r)
-                  : r[dynwhere.summary_field]
+              `<option ${`${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
+              } value="${r[dynwhere.refname]}">${dynwhere.label_formula
+                ? new Function(
+                  `{${Object.keys(r).join(",")}}`,
+                  "return " + dynwhere.label_formula
+                )(r)
+                : r[dynwhere.summary_field]
               }</option>`
             )
           );
@@ -466,16 +463,14 @@ function notifyAlert(note, spin) {
   }
 
   $("#alerts-area")
-    .append(`<div class="alert alert-${type} alert-dismissible fade show ${
-    spin ? "d-flex align-items-center" : ""
-  }" role="alert">
+    .append(`<div class="alert alert-${type} alert-dismissible fade show ${spin ? "d-flex align-items-center" : ""
+      }" role="alert">
   ${txt}
-  ${
-    spin
-      ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
-      : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+  ${spin
+        ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
+        : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
   </button>`
-  }
+      }
 </div>`);
 }
 
@@ -492,9 +487,8 @@ function common_done(res, isWeb = true) {
     (isWeb ? location : parent.location).reload(); //TODO notify to cookie if reload or goto
   }
   if (res.download) {
-    const dataurl = `data:${
-      res.download.mimetype || "application/octet-stream"
-    };base64,${res.download.blob}`;
+    const dataurl = `data:${res.download.mimetype || "application/octet-stream"
+      };base64,${res.download.blob}`;
     fetch(dataurl)
       .then((res) => res.blob())
       .then((blob) => {
@@ -523,10 +517,11 @@ const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
   const setVal = (k, ix, v) => {
     const $e = form.find(`input[name="${k}_${ix}"]`);
     if ($e.length) $e.val(v);
-    else
-      form.append(
-        `<input type="hidden" data-repeater-ix="${ix}" name="${k}_${ix}" value="${v}"></input>`
-      );
+    else {
+      const $ne = $(`<input type="hidden" data-repeater-ix="${ix}" name="${k}_${ix}"></input>`);
+      $ne.val(v);
+      form.append($ne);
+    }
   };
   vs.forEach((v, ix) => {
     Object.entries(v).forEach(([k, v]) => {
@@ -649,9 +644,9 @@ function room_older(viewname, room_id, btn) {
 function init_room(viewname, room_id) {
   const socket = parent?.config?.server_path
     ? io(parent.config.server_path, {
-        query: `jwt=${localStorage.getItem("auth_jwt")}`,
-        transports: ["websocket"],
-      })
+      query: `jwt=${localStorage.getItem("auth_jwt")}`,
+      transports: ["websocket"],
+    })
     : io({ transports: ["websocket"] });
 
   socket.emit("join_room", [viewname, room_id]);
