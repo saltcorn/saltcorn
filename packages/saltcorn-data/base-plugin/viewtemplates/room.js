@@ -702,7 +702,7 @@ module.exports = {
       return rows;
     },
   }),
-  connectedObjects: (configuration) => {
+  connectedObjects: async (configuration) => {
     return extractFromLayout(configuration.layout);
   },
 };

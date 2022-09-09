@@ -469,7 +469,7 @@ module.exports = {
       return await table.countRows(where);
     },
   }),
-  connectedObjects: (configuration) => {
+  connectedObjects: async (configuration) => {
     const fromLayout = extractFromLayout(configuration.layout);
     const toCreate = extractViewToCreate(configuration);
     return toCreate ? mergeConnectedObjects(fromLayout, toCreate) : fromLayout;

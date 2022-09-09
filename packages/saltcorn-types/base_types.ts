@@ -174,6 +174,7 @@ export type ConnectedObjects = {
   linkedViews?: Array<AbstractView>;
   embeddedViews?: Array<AbstractView>;
   linkedPages?: Array<AbstractPage>;
+  tables?: Array<AbstractTable>;
 };
 
 export type ViewTemplate = {
@@ -260,7 +261,7 @@ export type ViewTemplate = {
     configuration: any
   ) => Promise<Array<AbstractTrigger>>;
   queries?: (configuration?: any, req?: any) => Record<string, any>;
-  connectedObjects?: (configuration?: any) => ConnectedObjects;
+  connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
 };
 
 export type Action = (

@@ -293,7 +293,14 @@ const run = async (
   await set_join_fieldviews({ table: tbl, layout, fields });
 
   const rendered = (
-    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]], state)
+    await renderRows(
+      tbl,
+      viewname,
+      { columns, layout },
+      extra,
+      [rows[0]],
+      state
+    )
   )[0];
   let page_title_preamble = "";
   if (page_title) {
@@ -412,7 +419,7 @@ const renderRows = async (
         const extra_state = segment.extra_state_fml
           ? eval_expression(segment.extra_state_fml, row, extra.req.user)
           : {};
-        const { id, ...outerState } = state
+        const { id, ...outerState } = state;
         const state2 = { ...outerState, ...state1, ...extra_state };
         segment.contents = await view.run(state2, extra);
       }
@@ -711,7 +718,7 @@ module.exports = {
         fields,
         state,
         approximate: true,
-        table: tbl
+        table: tbl,
       });
       if (Object.keys(qstate).length === 0)
         return {
@@ -823,7 +830,7 @@ module.exports = {
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);
   },
-  connectedObjects: (configuration) => {
+  connectedObjects: async (configuration) => {
     return extractFromLayout(configuration.layout);
   },
 };

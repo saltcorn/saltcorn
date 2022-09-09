@@ -729,7 +729,7 @@ module.exports = {
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);
   },
-  connectedObjects: (configuration) => {
+  connectedObjects: async (configuration) => {
     const fromColumns = extractFromColumns(configuration.columns);
     const toCreate = extractViewToCreate(configuration);
     return toCreate

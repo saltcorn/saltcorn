@@ -48,11 +48,12 @@ const cyStyle = [
 
 /**
  * generates code to initalise cytoscape.js and draw the application object tree
- * @param entryNode root of the application object tree
+ * @param entryNodes roots for the graphs, 
+                     if not set roots, will be used how the db delivers them
  * @returns cytoscape.js code as string
  */
-export function generateCyCode(entryNode: Node): string {
-  const raster = new CytoscapeRaster(entryNode);
+export function generateCyCode(entryNodes: Array<Node>): string {
+  const raster = new CytoscapeRaster(entryNodes);
   const cyNodes = raster.buildCyNodes();
   const cyEdges = raster.buildCyEdges();
   return `

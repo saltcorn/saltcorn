@@ -5,7 +5,7 @@ export interface AbstractView {
   name: string;
   viewtemplate: string;
   configuration?: string | any;
-  connected_objects: () => ConnectedObjects;
+  connected_objects: () => Promise<ConnectedObjects>;
 }
 
 export type ViewCfg = {

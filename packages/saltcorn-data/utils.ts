@@ -190,6 +190,7 @@ const mergeConnectedObjects = (
     linkedViews: merge(lhs.linkedViews, rhs.linkedViews),
     embeddedViews: merge(lhs.embeddedViews, rhs.embeddedViews),
     linkedPages: merge(lhs.linkedPages, rhs.linkedPages),
+    tables: merge(lhs.tables, rhs.tables),
   };
 };
 

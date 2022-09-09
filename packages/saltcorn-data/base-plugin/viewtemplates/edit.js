@@ -1200,7 +1200,7 @@ module.exports = {
     errs.push(...(await check_view_columns(view, view.configuration.columns)));
     return errs;
   },
-  connectedObjects: (configuration) => {
+  connectedObjects: async (configuration) => {
     return extractFromLayout(configuration.layout);
   },
 };

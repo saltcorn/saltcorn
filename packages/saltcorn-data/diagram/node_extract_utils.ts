@@ -1,4 +1,5 @@
 import Node from "./node";
+import type { NodeType } from "./node";
 import { AbstractView as View } from "@saltcorn/types/model-abstracts/abstract_view";
 import { AbstractPage as Page } from "@saltcorn/types/model-abstracts/abstract_page";
 import layout from "../models/layout";
@@ -8,20 +9,40 @@ const {
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 
+
 /**
- * builds an object tree with all possible paths from 'entryPage'
- * @param entryPage start of user journey
- * @returns the root node of the object tree
+ * builds object trees for 'views/pages' with branches for all possible paths
+ * @param entryPages if given, those will be the start nodes of the first graphs
+ * @returns root nodes
  */
-export function buildObjectTree(entryPage: Page): Node {
-  const entryNode = new Node("page", entryPage.name);
-  const connected = entryPage.connected_objects();
-  handleConnected(entryNode, connected);
-  return entryNode;
+export async function buildObjectTrees(
+  entryPages: Array<Page> = new Array<Page>()
+): Promise<Array<Node>> {
+  const helper = new ExtractHelper();
+  const entryPageTrees = await buildTree("page", entryPages, helper);
+  const allPages = await (require("../models/page")).find();
+  const pageTrees = await buildTree("page", allPages, helper);  
+  const allViews = await (require("../models/view")).find();
+  const viewTrees = await buildTree("view", allViews, helper);
+  return [...entryPageTrees, ...pageTrees, ...viewTrees];
+}
+
+async function buildTree(type: NodeType, objects: Array<Page | View>, helper: ExtractHelper) {  
+  const result = new Array<Node>();
+  for (const object of objects) {
+    const node = new Node(type, object.name);
+    if(!helper.cyIds.has(node.cyId)) {
+      helper.cyIds.add(node.cyId);
+      const connected = await object.connected_objects();
+      await helper.handleNodeConnections(node, connected);
+      result.push(node);
+    }
+  }
+  return result;
 }
 
 /**
- * extracts all 'views / pages' aligned within the layout
+ * extracts all 'views/pages' aligned in the layout
  * @param layout view or page layout
  * @returns all found objects
  */
@@ -80,7 +101,7 @@ export function extractFromColumns(columns: any[]): ConnectedObjects {
     }
   }
   // currently only used for list
-  // TODO extract embedded views and linked pages for other templates
+  // TODO embedded views and linked pages for other templates
   return { linkedViews };
 }
 
@@ -110,35 +131,50 @@ export function extractViewToCreate(
   return null;
 }
 
-function addLinkedViewNode(oldNode: Node, newView: View) {
-  const newNode = new Node("view", newView.name);
-  oldNode.linked.push(newNode);
-  const yielded = newView.connected_objects();
-  handleConnected(newNode, yielded);
-}
-
-function addEmbeddedView(oldNode: Node, embedded: View) {
-  const newNode = new Node("view", embedded.name);
-  oldNode.embedded.push(newNode);
-  const yielded = embedded.connected_objects();
-  handleConnected(newNode, yielded);
-}
-
-function addLinkedPageNode(oldNode: Node, newPage: Page) {
-  const newNode = new Node("page", newPage.name);
-  oldNode.linked.push(newNode);
-  const yielded = newPage.connected_objects();
-  handleConnected(newNode, yielded);
-}
-
-function handleConnected(oldNode: Node, yielded: ConnectedObjects) {
-  for (const embeddedView of yielded.embeddedViews || []) {
-    addEmbeddedView(oldNode, embeddedView);
+/**
+ * helper to keep track of added nodes ('cyIds')
+ */
+class ExtractHelper {
+  cyIds = new Set<string>();
+  
+  public async handleNodeConnections(oldNode: Node, connected: ConnectedObjects) {
+    for (const embeddedView of connected.embeddedViews || []) {
+      await this.addEmbeddedView(oldNode, embeddedView);
+    }
+    for (const linkedPage of connected.linkedPages || []) {
+      await this.addLinkedPageNode(oldNode, linkedPage);
+    }
+    for (const linkedView of connected.linkedViews || []) {
+      await this.addLinkedViewNode(oldNode, linkedView);
+    }
+    for (const table of connected.tables || []) {
+      const tableNode = new Node("table", table.name);
+      this.cyIds.add(tableNode.cyId);
+      oldNode.tables.push(tableNode);
+    }
   }
-  for (const linkedPage of yielded.linkedPages || []) {
-    addLinkedPageNode(oldNode, linkedPage);
+
+  private async addLinkedViewNode(oldNode: Node, newView: View) {
+    const newNode = new Node("view", newView.name);
+    this.cyIds.add(newNode.cyId);
+    oldNode.linked.push(newNode);
+    const connections = await newView.connected_objects();
+    await this.handleNodeConnections(newNode, connections);
   }
-  for (const linkedView of yielded.linkedViews || []) {
-    addLinkedViewNode(oldNode, linkedView);
+  
+  private async addEmbeddedView(oldNode: Node, embedded: View) {
+    const newNode = new Node("view", embedded.name);
+    this.cyIds.add(newNode.cyId);
+    oldNode.embedded.push(newNode);
+    const connections = await embedded.connected_objects();
+    await this.handleNodeConnections(newNode, connections);
+  }
+  
+  private async addLinkedPageNode(oldNode: Node, newPage: Page) {
+    const newNode = new Node("page", newPage.name);
+    this.cyIds.add(newNode.cyId);
+    oldNode.linked.push(newNode);
+    const connections = await newPage.connected_objects();
+    await this.handleNodeConnections(newNode, connections);
   }
 }

@@ -1,6 +1,6 @@
 const Page = require("@saltcorn/data/models/page");
 const {
-  buildObjectTree,
+  buildObjectTrees,
 } = require("@saltcorn/data/diagram/node_extract_utils");
 const { generateCyCode } = require("@saltcorn/data/diagram/cy_generate_utils");
 const { getState } = require("@saltcorn/data/db/state");
@@ -15,26 +15,20 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const role_id = req.user.role_id ? req.user.role_id : 10;
     const modernCfg = getState().getConfig("home_page_by_role");
-    const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
-      role_id
-    ];
-    let homeCfg = modernCfg && modernCfg[role_id];
-    if (typeof homeCfg !== "string") {
-      homeCfg = getState().getConfig(legacy_role + "_home");
+    let pages = null;
+    if (modernCfg) {
+      pages = Object.values(modernCfg)
+        .filter((val) => val)
+        .map((val) => Page.findOne({ name: val }));
+    } else {
+      pages = new Array();
+      for (const legacyRole of ["public", "user", "staff", "admin"]) {
+        const page = await Page.findOne({ name: `${legacyRole}_home` });
+        if (page) pages.push(page);
+      }
     }
-    const entryPage = Page.findOne({
-      name: homeCfg,
-    });
-    if (!entryPage) {
-      req.flash(
-        "error",
-        req.__("Unable to create a diagram, no entry page was found.")
-      );
-      return res.redirect("/admin/system");
-    }
-    const cyCode = generateCyCode(buildObjectTree(entryPage));
+    const cyCode = generateCyCode(await buildObjectTrees(pages));
     res.sendWrap(
       {
         title: req.__(`Application diagram`),
