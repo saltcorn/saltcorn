@@ -43,6 +43,22 @@ describe("viewedit edit endpoint", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("author"));
   });
+  it("show list editor", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/viewedit/config/authorlist")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("author"));
+  });
+  it("show builder", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/viewedit/config/authorshow")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("<script>builder.renderBuilder"));
+  });
 });
 
 describe("viewedit new List", () => {
