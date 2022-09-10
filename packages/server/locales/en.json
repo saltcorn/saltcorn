@@ -976,5 +976,10 @@
 	"Module %s installed, please complete configuration.": "Module %s installed, please complete configuration.",
 	"Module %s removed.": "Module %s removed.",
 	"Module %s installed": "Module %s installed",
-	"Upgrading modules...": "Upgrading modules..."
+	"Upgrading modules...": "Upgrading modules...",
+	"Backup now": "Backup now",
+	"Snapshot now": "Snapshot now",
+	"Restore/download automated backups &raquo;": "Restore/download automated backups &raquo;",
+	"Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns).": "Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns).",
+	"List/download snapshots &raquo;": "List/download snapshots &raquo;"
 }
