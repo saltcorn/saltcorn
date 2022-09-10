@@ -666,8 +666,12 @@ router.post(
       return;
     }
     const fields = await table.getFields();
-    const row = { ...req.body };
-    readState(row, fields);
+    let row = { ...req.body };
+    if (!row || Object.keys(row).length === 0) {
+      const { id } = req.query
+      if (id) row = await table.getRow({ id })
+    } else
+      readState(row, fields);
 
     if (fieldName.includes(".")) {
       //join field
@@ -748,7 +752,9 @@ router.post(
 
     let result;
     try {
-      if (field.stored) {
+      if (!field.calculated) {
+        result = row[field.name]
+      } else if (field.stored) {
         const f = get_async_expression_function(formula, fields);
         result = await f(row);
       } else {
@@ -756,7 +762,9 @@ router.post(
         result = f(row);
       }
       const fv = field.type.fieldviews[fieldview];
-      res.send(fv.run(result));
+      if (!fv)
+        res.send(text(result));
+      else res.send(fv.run(result));
     } catch (e) {
       return res.status(400).send(`Error: ${e.message}`);
     }
