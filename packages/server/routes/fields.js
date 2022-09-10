@@ -19,12 +19,13 @@ const {
   expressionValidator,
   get_async_expression_function,
   get_expression_function,
+  freeVariables,
 } = require("@saltcorn/data/models/expression");
 const db = require("@saltcorn/data/db");
 
 const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
-const { readState } = require("@saltcorn/data/plugin-helper");
+const { readState, add_free_variables_to_joinfields } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { applyAsync } = require("@saltcorn/data/utils");
@@ -621,7 +622,11 @@ router.post(
     const { formula, tablename, stored } = req.body;
     const table = await Table.findOne({ name: tablename });
     const fields = await table.getFields();
-    const rows = await table.getRows({}, { orderBy: "RANDOM()", limit: 1 });
+    const freeVars = freeVariables(formula)
+    const joinFields = {}
+    if (stored)
+      add_free_variables_to_joinfields(freeVars, joinFields, fields)
+    const rows = await table.getJoinedRows({ joinFields, orderBy: "RANDOM()", limit: 1 });
     if (rows.length < 1) return "No rows in table";
     let result;
     try {
@@ -661,8 +666,12 @@ router.post(
       return;
     }
     const fields = await table.getFields();
-    const row = { ...req.body };
-    readState(row, fields);
+    let row = { ...req.body };
+    if (!row || Object.keys(row).length === 0) {
+      const { id } = req.query
+      if (id) row = await table.getRow({ id })
+    } else
+      readState(row, fields);
 
     if (fieldName.includes(".")) {
       //join field
@@ -743,7 +752,9 @@ router.post(
 
     let result;
     try {
-      if (field.stored) {
+      if (!field.calculated) {
+        result = row[field.name]
+      } else if (field.stored) {
         const f = get_async_expression_function(formula, fields);
         result = await f(row);
       } else {
@@ -751,7 +762,9 @@ router.post(
         result = f(row);
       }
       const fv = field.type.fieldviews[fieldview];
-      res.send(fv.run(result));
+      if (!fv)
+        res.send(text(result));
+      else res.send(fv.run(result));
     } catch (e) {
       return res.status(400).send(`Error: ${e.message}`);
     }

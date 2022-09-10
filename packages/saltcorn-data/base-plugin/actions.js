@@ -394,17 +394,18 @@ module.exports = {
           }
           break;
       }
+      if (!to_addr) {
+        getState().log(2, `send_email action: Not sending as address ${to_email} is missing`);
+        return;
+      }
       const view = await View.findOne({ name: viewname });
       const html = await viewToEmailHtml(view, { id: row.id });
-      console.log(
-        "Sending email from %s to %s with subject %s to_email",
-        getState().getConfig("email_from"),
-        to_addr,
-        subject,
-        to_addr
-      );
+      const from = getState().getConfig("email_from")
+
+      getState().log(3, `Sending email from ${from} to ${to_addr} with subject ${subject}`);
+
       const email = {
-        from: getState().getConfig("email_from"),
+        from,
         to: to_addr,
         subject,
         html,

@@ -146,6 +146,15 @@ describe("pageedit", () => {
       .send("id=1")
       .expect(toRedirect("/pageedit/"));
   });
+  it("show builder", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/pageedit/edit/a_page")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("<script>builder.renderBuilder"));
+
+  });
 
   it("sets root page", async () => {
     const app = await getApp({ disableCsrf: true });
