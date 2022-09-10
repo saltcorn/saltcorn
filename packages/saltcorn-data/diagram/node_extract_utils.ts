@@ -72,12 +72,12 @@ export function extractFromLayout(layout: any): ConnectedObjects {
         const parts = segment.url.split("/");
         const viewName = parts[parts.length - 1];
         const view = _View.findOne({ name: viewName });
-        linkedViews.push(view!);
+        if(view) linkedViews.push(view!);
       } else if (segment.link_src === "Page") {
         const parts = segment.url.split("/");
         const pagename = parts[parts.length - 1];
         const page = _Page.findOne({ name: pagename });
-        linkedPages.push(page!);
+        if(page) linkedPages.push(page!);
       }
     },
   });
@@ -122,14 +122,16 @@ export function extractViewToCreate(
   if (view_to_create) {
     const View = require("../models/view");
     const viewToCreate = View.findOne({ name: view_to_create });
-    if (create_view_display === "Link" || create_view_display === "Popup") {
-      return {
-        linkedViews: [viewToCreate],
-      };
-    } else {
-      return {
-        embeddedViews: [viewToCreate],
-      };
+    if(viewToCreate) {
+      if (create_view_display === "Link" || create_view_display === "Popup") {
+        return {
+          linkedViews: [viewToCreate],
+        };
+      } else {
+        return {
+          embeddedViews: [viewToCreate],
+        };
+      }
     }
   }
   return null;
@@ -146,18 +148,23 @@ class ExtractHelper {
     connected: ConnectedObjects
   ) {
     for (const embeddedView of connected.embeddedViews || []) {
-      await this.addEmbeddedView(oldNode, embeddedView);
+      if(embeddedView)
+        await this.addEmbeddedView(oldNode, embeddedView);
     }
     for (const linkedPage of connected.linkedPages || []) {
-      await this.addLinkedPageNode(oldNode, linkedPage);
+      if(linkedPage)
+        await this.addLinkedPageNode(oldNode, linkedPage);
     }
     for (const linkedView of connected.linkedViews || []) {
-      await this.addLinkedViewNode(oldNode, linkedView);
+      if(linkedView)
+        await this.addLinkedViewNode(oldNode, linkedView);
     }
     for (const table of connected.tables || []) {
-      const tableNode = new Node("table", table.name);
-      this.cyIds.add(tableNode.cyId);
-      oldNode.tables.push(tableNode);
+      if(table) {
+        const tableNode = new Node("table", table.name);
+        this.cyIds.add(tableNode.cyId);
+        oldNode.tables.push(tableNode);
+      }
     }
   }
 

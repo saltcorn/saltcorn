@@ -321,15 +321,15 @@ module.exports = {
             const [vname, reltblnm, relfld] = rel.split(".");
             const relTbl = Table.findOne({ name: reltblnm });
             const view = View.findOne({ name: vname });
-            subTables.push(relTbl);
-            subViews.push(view);
+            if(relTbl) subTables.push(relTbl);
+            if(view) subViews.push(view);
             break;
           case "ParentShow":
             const [pvname, preltblnm, prelfld] = rel.split(".");
             const pTbl = Table.findOne({ name: preltblnm });
             const pView = View.findOne({ name: pvname });
-            subTables.push(pTbl);
-            subViews.push(pView);
+            if(pTbl) subTables.push(pTbl);
+            if(pView) subViews.push(pView);
             break;
           default:
             break;
@@ -337,9 +337,11 @@ module.exports = {
       }
     }
     const listView = View.findOne({ name: list_view });
+    if(listView)
+      subViews.push(listView)
     return {
-      embeddedViews: [listView, ...subViews],
-      tables: [...subTables],
+      embeddedViews: subViews,
+      tables: subTables,
     };
   },
 };
