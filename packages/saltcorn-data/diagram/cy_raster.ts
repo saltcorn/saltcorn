@@ -59,7 +59,7 @@ export default class CytoscapeRaster {
 
   /**
    * builds cytoscape.js nodes with 'data' and 'position'
-   * @returns 
+   * @returns
    */
   public buildCyNodes(): any[] {
     const hSpacing = 150;
@@ -90,7 +90,7 @@ export default class CytoscapeRaster {
 
   /**
    * builds cytoscape.js edges with 'data'
-   * @returns 
+   * @returns
    */
   public buildCyEdges(): any[] {
     return this.links.map((link: Link) => {
@@ -212,7 +212,7 @@ const traverse = (
     }
     if (!ignoreLinks) {
       const currentIsDummy = current.type === "dummy";
-      let shiftEmbedsY = !currentIsDummy;
+      let shiftEmbedsY = !currentIsDummy; // don't shift embeds from the first node
       // align links
       for (const linked of [...current.linked, ...embeddedLinks]) {
         const rasterPos = visitor.linked(
@@ -235,14 +235,13 @@ const traverse = (
           if (maxRow > insertLinkedRow) insertLinkedRow = maxRow;
           else if (++insertLinkedRow > maxRow) maxRow = insertLinkedRow;
         }
-        shiftEmbedsY = false; // only shift, if it's the first link branch
       }
     }
     if (insertLinkedCol > maxCol) maxCol = insertLinkedCol;
     if (insertEmbedCol > maxCol) maxCol = insertEmbedCol;
   };
   go(node, startRow, startCol, false);
-  return { maxRow, maxCol };
+  return { maxRow: maxRow + 1, maxCol };
 };
 
 const maxEmbedDepth = (nodes: Node[], raster: CytoscapeRaster): number => {

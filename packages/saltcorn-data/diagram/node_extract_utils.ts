@@ -20,18 +20,22 @@ export async function buildObjectTrees(
 ): Promise<Array<Node>> {
   const helper = new ExtractHelper();
   const entryPageTrees = await buildTree("page", entryPages, helper);
-  const allPages = await (require("../models/page")).find();
-  const pageTrees = await buildTree("page", allPages, helper);  
-  const allViews = await (require("../models/view")).find();
+  const allPages = await require("../models/page").find();
+  const pageTrees = await buildTree("page", allPages, helper);
+  const allViews = await require("../models/view").find();
   const viewTrees = await buildTree("view", allViews, helper);
   return [...entryPageTrees, ...pageTrees, ...viewTrees];
 }
 
-async function buildTree(type: NodeType, objects: Array<Page | View>, helper: ExtractHelper) {  
+async function buildTree(
+  type: NodeType,
+  objects: Array<Page | View>,
+  helper: ExtractHelper
+) {
   const result = new Array<Node>();
   for (const object of objects) {
     const node = new Node(type, object.name);
-    if(!helper.cyIds.has(node.cyId)) {
+    if (!helper.cyIds.has(node.cyId)) {
       helper.cyIds.add(node.cyId);
       const connected = await object.connected_objects();
       await helper.handleNodeConnections(node, connected);
@@ -136,8 +140,11 @@ export function extractViewToCreate(
  */
 class ExtractHelper {
   cyIds = new Set<string>();
-  
-  public async handleNodeConnections(oldNode: Node, connected: ConnectedObjects) {
+
+  public async handleNodeConnections(
+    oldNode: Node,
+    connected: ConnectedObjects
+  ) {
     for (const embeddedView of connected.embeddedViews || []) {
       await this.addEmbeddedView(oldNode, embeddedView);
     }
@@ -156,25 +163,31 @@ class ExtractHelper {
 
   private async addLinkedViewNode(oldNode: Node, newView: View) {
     const newNode = new Node("view", newView.name);
-    this.cyIds.add(newNode.cyId);
     oldNode.linked.push(newNode);
-    const connections = await newView.connected_objects();
-    await this.handleNodeConnections(newNode, connections);
+    if (!this.cyIds.has(newNode.cyId)) {
+      this.cyIds.add(newNode.cyId);
+      const connections = await newView.connected_objects();
+      await this.handleNodeConnections(newNode, connections);
+    }
   }
-  
+
   private async addEmbeddedView(oldNode: Node, embedded: View) {
     const newNode = new Node("view", embedded.name);
-    this.cyIds.add(newNode.cyId);
     oldNode.embedded.push(newNode);
-    const connections = await embedded.connected_objects();
-    await this.handleNodeConnections(newNode, connections);
+    if (!this.cyIds.has(newNode.cyId)) {
+      this.cyIds.add(newNode.cyId);
+      const connections = await embedded.connected_objects();
+      await this.handleNodeConnections(newNode, connections);
+    }
   }
-  
+
   private async addLinkedPageNode(oldNode: Node, newPage: Page) {
     const newNode = new Node("page", newPage.name);
-    this.cyIds.add(newNode.cyId);
     oldNode.linked.push(newNode);
-    const connections = await newPage.connected_objects();
-    await this.handleNodeConnections(newNode, connections);
+    if (!this.cyIds.has(newNode.cyId)) {
+      this.cyIds.add(newNode.cyId);
+      const connections = await newPage.connected_objects();
+      await this.handleNodeConnections(newNode, connections);
+    }
   }
 }
