@@ -808,7 +808,6 @@ router.get(
                 " ",
                 req.__("Configuration check")
               ),
-
               hr(),
 
               a(

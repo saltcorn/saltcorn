@@ -21,9 +21,18 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
-const { InvalidConfiguration, isNode, isWeb } = require("../../utils");
+const {
+  InvalidConfiguration,
+  isNode,
+  isWeb,
+  mergeConnectedObjects,
+} = require("../../utils");
 const { getState } = require("../../db/state");
 const { jsexprToWhere } = require("../../models/expression");
+const {
+  extractFromLayout,
+  extractViewToCreate,
+} = require("../../diagram/node_extract_utils");
 
 /**
  * @param {object} req
@@ -504,4 +513,9 @@ module.exports = {
       return await table.countRows(where);
     },
   }),
+  connectedObjects: async (configuration) => {
+    const fromLayout = extractFromLayout(configuration.layout);
+    const toCreate = extractViewToCreate(configuration);
+    return toCreate ? mergeConnectedObjects(fromLayout, toCreate) : fromLayout;
+  },
 };

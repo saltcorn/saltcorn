@@ -70,6 +70,7 @@ const {
 } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
+const { extractFromLayout } = require("../../diagram/node_extract_utils");
 
 /**
  * @param {object} req
@@ -284,14 +285,22 @@ const run = async (
       })
     );
     for (const row of rows) {
-      row.verification_url = `${base}auth/verify?token=${row.verification_token
-        }&email=${encodeURIComponent(row.email)}`;
+      row.verification_url = `${base}auth/verify?token=${
+        row.verification_token
+      }&email=${encodeURIComponent(row.email)}`;
     }
   }
   await set_join_fieldviews({ table: tbl, layout, fields });
 
   const rendered = (
-    await renderRows(tbl, viewname, { columns, layout }, extra, [rows[0]], state)
+    await renderRows(
+      tbl,
+      viewname,
+      { columns, layout },
+      extra,
+      [rows[0]],
+      state
+    )
   )[0];
   let page_title_preamble = "";
   if (page_title) {
@@ -410,7 +419,7 @@ const renderRows = async (
         const extra_state = segment.extra_state_fml
           ? eval_expression(segment.extra_state_fml, row, extra.req.user)
           : {};
-        const { id, ...outerState } = state
+        const { id, ...outerState } = state;
         const state2 = { ...outerState, ...state1, ...extra_state };
         segment.contents = await view.run(state2, extra);
       }
@@ -558,10 +567,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
-            val,
-            row[`${field_name}__filename`],
-            cfg
-          )
+              val,
+              row[`${field_name}__filename`],
+              cfg
+            )
           : "";
       } else if (
         fieldview &&
@@ -709,7 +718,7 @@ module.exports = {
         fields,
         state,
         approximate: true,
-        table: tbl
+        table: tbl,
       });
       if (Object.keys(qstate).length === 0)
         return {
@@ -717,8 +726,8 @@ module.exports = {
           message: "No row selected",
         };
       if (tbl.ownership_formula) {
-        const freeVars = freeVariables(tbl.ownership_formula)
-        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+        const freeVars = freeVariables(tbl.ownership_formula);
+        add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
       const rows = await tbl.getJoinedRows({
         where: qstate,
@@ -753,8 +762,8 @@ module.exports = {
         else qstate[owner_field.name] = req.user ? req.user.id : -1;
       }
       if (tbl.ownership_formula && role > tbl.min_role_read) {
-        const freeVars = freeVariables(tbl.ownership_formula)
-        add_free_variables_to_joinfields(freeVars, joinFields, fields)
+        const freeVars = freeVariables(tbl.ownership_formula);
+        add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
       let rows = await tbl.getJoinedRows({
         where: qstate,
@@ -801,15 +810,17 @@ module.exports = {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            const joinFields = {}
+            const joinFields = {};
             if (table.ownership_formula) {
-              const freeVars = freeVariables(table.ownership_formula)
-              add_free_variables_to_joinfields(freeVars, joinFields, fields)
+              const freeVars = freeVariables(table.ownership_formula);
+              add_free_variables_to_joinfields(freeVars, joinFields, fields);
             }
-            const row = await table.getJoinedRows({ where: uniques, joinFields });
-            if (row.length > 0)
-              return table.is_owner(req.user, row[0]);
-            else return true // TODO ??
+            const row = await table.getJoinedRows({
+              where: uniques,
+              joinFields,
+            });
+            if (row.length > 0) return table.is_owner(req.user, row[0]);
+            else return true; // TODO ??
           }
         }
       }
@@ -818,5 +829,8 @@ module.exports = {
   }),
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);
+  },
+  connectedObjects: async (configuration) => {
+    return extractFromLayout(configuration.layout);
   },
 };

@@ -309,4 +309,39 @@ module.exports = {
       return await table.getRow(uniques);
     },
   }),
+  connectedObjects: async ({ list_view, subtables }) => {
+    const subTables = [];
+    const subViews = [];
+    for (const relspec of Object.keys(subtables || {})) {
+      if (subtables[relspec]) {
+        const [reltype, rel] = relspec.split(":");
+        switch (reltype) {
+          case "ChildList":
+          case "OneToOneShow":
+            const [vname, reltblnm, relfld] = rel.split(".");
+            const relTbl = Table.findOne({ name: reltblnm });
+            const view = View.findOne({ name: vname });
+            if(relTbl) subTables.push(relTbl);
+            if(view) subViews.push(view);
+            break;
+          case "ParentShow":
+            const [pvname, preltblnm, prelfld] = rel.split(".");
+            const pTbl = Table.findOne({ name: preltblnm });
+            const pView = View.findOne({ name: pvname });
+            if(pTbl) subTables.push(pTbl);
+            if(pView) subViews.push(pView);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    const listView = View.findOne({ name: list_view });
+    if(listView)
+      subViews.push(listView)
+    return {
+      embeddedViews: subViews,
+      tables: subTables,
+    };
+  },
 };

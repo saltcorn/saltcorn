@@ -203,6 +203,8 @@ const send_infoarch_page = (args) => {
             { text: "Multitenancy", href: "/tenant/settings" },
           ]
         : []),
+      { text: "Tags", href: "/tag" },
+      { text: "Diagram", href: "/diagram" },
     ],
     ...args,
   });
@@ -288,7 +290,6 @@ const send_admin_page = (args) => {
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
-      { text: "Tag", href: "/tag" },
       { text: "Mobile app", href: "/admin/build-mobile-app" },
     ],
     ...args,
