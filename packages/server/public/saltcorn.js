@@ -52,7 +52,10 @@ function removeQueryStringParameter(uri1, key) {
 }
 
 function get_current_state_url() {
-  return window.location.href
+  let $modal = $("#scmodal");
+  if ($modal.length === 0 || !$modal.hasClass("show"))
+    return window.location.href;
+  else return $modal.prop("data-modal-state");
 }
 
 function select_id(id) {
@@ -97,7 +100,11 @@ $(function () {
 });
 
 function pjax_to(href) {
-  if (!$("#page-inner-content").length) window.location.href = href;
+  let $modal = $("#scmodal");
+  const inModal = $modal.length && $modal.hasClass("show")
+  let $dest = inModal ? $("#scmodal .modal-body") : $("#page-inner-content");
+
+  if (!$dest.length) window.location.href = href;
   else {
     loadPage = false;
     $.ajax(href, {
@@ -105,16 +112,16 @@ function pjax_to(href) {
         pjaxpageload: "true",
       },
       success: function (res, textStatus, request) {
-        window.history.pushState({ url: href }, "", href);
+        if (!inModal) window.history.pushState({ url: href }, "", href);
         setTimeout(() => {
           loadPage = true;
         }, 0);
-        if (res.includes("<!--SCPT:")) {
+        if (!inModal && res.includes("<!--SCPT:")) {
           const start = res.indexOf("<!--SCPT:");
           const end = res.indexOf("-->", start);
           document.title = res.substring(start + 9, end);
         }
-        $("#page-inner-content").html(res);
+        $dest.html(res);
         initialize_page();
       },
       error: function (res) {
@@ -233,7 +240,7 @@ function ajax_modal(url, opts = {}) {
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
-      $("#scmodal").prop("data-modal-state", url)
+      $("#scmodal").prop("data-modal-state", url);
       new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
       (opts.onOpen || function () { })(res);
