@@ -87,6 +87,7 @@ export /**
       textStyle: node.data.props.textStyle,
       nofollow: node.data.props.nofollow,
       in_modal: node.data.props.in_modal,
+      view_state_fml: node.data.props.view_state_fml,
       link_src: node.data.props.link_src,
       target_blank: node.data.props.target_blank,
       link_style: node.data.props.link_style,
@@ -109,6 +110,7 @@ export /**
       link_src,
       in_modal,
       transfer_state,
+      view_state_fml
     } = node;
     const options = useContext(optionsCtx);
     const setAProp = setAPropGen(setProp);
@@ -218,6 +220,21 @@ export /**
                 </td>
               </tr>
             )}
+            {link_src === "View" && (
+              <tr>
+                <td>
+                  <label>State Formula</label>
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={view_state_fml}
+                    onChange={setAProp("extra_state_fml")}
+                  />
+                </td>
+              </tr>
+            )}
             <ButtonOrLinkSettingsRows
               setProp={setProp}
               keyPrefix="link_"
@@ -312,6 +329,7 @@ Link.craft = {
       "link_textcol",
       "in_modal",
       "transfer_state",
+      "view_state_fml"
     ],
   },
 };
