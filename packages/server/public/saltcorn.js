@@ -51,12 +51,16 @@ function removeQueryStringParameter(uri1, key) {
   return uri + hash;
 }
 
+function get_current_state_url() {
+  return window.location.href
+}
+
 function select_id(id) {
-  pjax_to(updateQueryStringParameter(window.location.href, "id", id));
+  pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id));
 }
 
 function set_state_field(key, value) {
-  pjax_to(updateQueryStringParameter(window.location.href, key, value));
+  pjax_to(updateQueryStringParameter(get_current_state_url(), key, value));
 }
 
 function check_state_field(that) {
@@ -65,13 +69,13 @@ function check_state_field(that) {
   const value = that.value;
   var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
   let dest;
-  if (checked) dest = window.location.href + `${separator}${name}=${value}`;
-  else dest = window.location.href.replace(`${name}=${value}`, "");
+  if (checked) dest = get_current_state_url() + `${separator}${name}=${value}`;
+  else dest = get_current_state_url().replace(`${name}=${value}`, "");
   pjax_to(dest.replace("&&", "&").replace("?&", "?"));
 }
 
 function set_state_fields(kvs) {
-  var newhref = window.location.href;
+  var newhref = get_current_state_url();
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true)
       newhref = removeQueryStringParameter(newhref, kv[0]);
@@ -80,7 +84,7 @@ function set_state_fields(kvs) {
   pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
 }
 function unset_state_field(key) {
-  pjax_to(removeQueryStringParameter(window.location.href, key));
+  pjax_to(removeQueryStringParameter(get_current_state_url(), key));
 }
 
 let loadPage = true;
@@ -124,10 +128,12 @@ function href_to(href) {
   window.location.href = href;
 }
 function clear_state(omit_fields_str) {
-  let newUrl = window.location.href.split("?")[0]
+  let newUrl = get_current_state_url().split("?")[0]
+  const hash = get_current_state_url().split("#")[1]
   if (omit_fields_str) {
     const omit_fields = omit_fields_str.split(',').map(s => s.trim())
-    let params = new URLSearchParams(location.search);
+    let qs = (get_current_state_url().split("?")[1] || "").split("#")[0]
+    let params = new URLSearchParams(qs);
     newUrl = newUrl + '?'
     omit_fields.forEach(f => {
       if (params.get(f))
@@ -135,8 +141,8 @@ function clear_state(omit_fields_str) {
     })
 
   }
-  if (location.hash)
-    newUrl += location.hash;
+  if (hash)
+    newUrl += '#' + hash;
 
   pjax_to(newUrl);
 }
@@ -227,6 +233,7 @@ function ajax_modal(url, opts = {}) {
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
+      $("#scmodal").prop("data-modal-state", url)
       new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
       (opts.onOpen || function () { })(res);
