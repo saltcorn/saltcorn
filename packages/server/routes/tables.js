@@ -1013,7 +1013,6 @@ router.get(
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req);
     const createCard = div(
-      h5(req.__("Create table")),
       a(
         { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
         i({ class: "fas fa-plus-square me-1" }),
