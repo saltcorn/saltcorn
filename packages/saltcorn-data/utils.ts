@@ -194,7 +194,13 @@ const mergeConnectedObjects = (
   };
 };
 
+const objectToQueryString = (o: Object): String =>
+  Object.entries(o || {})
+    .map(([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join("&");
+
 export = {
+  objectToQueryString,
   removeEmptyStrings,
   removeDefaultColor,
   prefixFieldsInWhere,
