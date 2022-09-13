@@ -32,7 +32,13 @@ const {
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import utils from "../utils";
 import { extractFromLayout } from "../diagram/node_extract_utils";
-const { InvalidConfiguration, satisfies, structuredClone, isNode } = utils;
+const {
+  InvalidConfiguration,
+  satisfies,
+  structuredClone,
+  isNode,
+  objectToQueryString,
+} = utils;
 
 /**
  * Page Class
@@ -257,14 +263,15 @@ class Page implements AbstractPage {
       },
       link: (segment) => {
         if (segment.transfer_state) {
+          segment.url += `?` + objectToQueryString(querystate || {});
+        }
+        if (segment.view_state_fml) {
+          const extra_state = segment.view_state_fml
+            ? eval_expression(segment.view_state_fml, {}, extraArgs.req.user)
+            : {};
           segment.url +=
-            `?` +
-            Object.entries(querystate || {})
-              .map(
-                ([k, v]: any) =>
-                  `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
-              )
-              .join("&");
+            (segment.transfer_state ? "" : `?`) +
+            objectToQueryString(extra_state || {});
         }
       },
     });

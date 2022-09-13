@@ -509,6 +509,9 @@ function common_done(res, isWeb = true) {
     if (res.target === "_blank") window.open(res.goto, "_blank").focus();
     else window.location.href = res.goto;
   }
+  if (res.popup) {
+    ajax_modal(res.popup)
+  }
 }
 
 const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {

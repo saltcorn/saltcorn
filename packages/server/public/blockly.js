@@ -403,11 +403,10 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await fetchJSON(${value_url}, { method: '${dropdown_method}'${
-      value_body
-        ? `, body: ${value_body}, headers: { "Content-Type": "application/json" }`
-        : ""
-    } })`;
+    var code = `await fetchJSON(${value_url}, { method: '${dropdown_method}'${value_body
+      ? `, body: ${value_body}, headers: { "Content-Type": "application/json" }`
+      : ""
+      } })`;
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
@@ -416,6 +415,7 @@ function activate_blockly({ events, actions, tables }) {
     init: function () {
       this.appendDummyInput().appendField("Return");
       this.appendValueInput("GOTO").setCheck("String").appendField("Go to URL");
+      this.appendValueInput("POPUP").setCheck("String").appendField("Popup URL");
       this.appendDummyInput()
         .appendField("Reload page")
         .appendField(new Blockly.FieldCheckbox("FALSE"), "RELOAD");
@@ -434,6 +434,11 @@ function activate_blockly({ events, actions, tables }) {
       "GOTO",
       Blockly.JavaScript.ORDER_ATOMIC
     );
+    var value_popup = Blockly.JavaScript.valueToCode(
+      block,
+      "POPUP",
+      Blockly.JavaScript.ORDER_ATOMIC
+    );
     var checkbox_reload = block.getFieldValue("RELOAD") == "TRUE";
     var value_notify = Blockly.JavaScript.valueToCode(
       block,
@@ -443,6 +448,7 @@ function activate_blockly({ events, actions, tables }) {
     // TODO: Assemble JavaScript into code variable.
     let s = "";
     if (value_goto) s += `goto: ${value_goto},`;
+    if (value_popup) s += `popup: ${value_popup},`;
     if (value_notify) s += `notify: ${value_notify},`;
     if (checkbox_reload) s += `reload_page: true,`;
     var code = `return {${s}};\n`;

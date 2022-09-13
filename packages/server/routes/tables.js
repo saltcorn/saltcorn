@@ -1013,7 +1013,6 @@ router.get(
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req);
     const createCard = div(
-      h5(req.__("Create table")),
       a(
         { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
         i({ class: "fas fa-plus-square me-1" }),
@@ -1029,8 +1028,13 @@ router.get(
       ),
       !db.isSQLite &&
       a(
-        { href: `/table/discover`, class: "btn btn-secondary mt-1" },
+        {
+          href: `/table/discover`,
+          class: "btn btn-secondary mt-1",
+          title: req.__("Discover tables that are already in the Database, but not known to Saltcorn"),
+        },
         i({ class: "fas fa-map-signs me-1" }),
+
         req.__("Discover tables")
       )
     );

@@ -35,7 +35,7 @@ const {
   getStringsForI18n,
   traverse,
 } = require("../../models/layout");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, objectToQueryString } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
 const { getState } = require("../../db/state");
@@ -226,12 +226,15 @@ const run = async (
     link: (segment) => {
       if (segment.transfer_state) {
         segment.url +=
-          `?` +
-          Object.entries(state || {})
-            .map(
-              ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
-            )
-            .join("&");
+          `?` + objectToQueryString(state || {})
+      }
+      if (segment.view_state_fml) {
+        const extra_state = segment.view_state_fml
+          ? eval_expression(segment.view_state_fml, {}, extra.req.user)
+          : {};
+        segment.url +=
+          (segment.transfer_state ? "" : `?`) +
+          objectToQueryString(extra_state || {});
       }
     },
   });
