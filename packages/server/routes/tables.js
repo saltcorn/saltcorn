@@ -1028,8 +1028,13 @@ router.get(
       ),
       !db.isSQLite &&
       a(
-        { href: `/table/discover`, class: "btn btn-secondary mt-1" },
+        {
+          href: `/table/discover`,
+          class: "btn btn-secondary mt-1",
+          title: req.__("Discover tables that are already in the Database, but not known to Saltcorn"),
+        },
         i({ class: "fas fa-map-signs me-1" }),
+
         req.__("Discover tables")
       )
     );
