@@ -230,7 +230,7 @@ export /**
                     type="text"
                     className="form-control"
                     value={view_state_fml}
-                    onChange={setAProp("extra_state_fml")}
+                    onChange={setAProp("view_state_fml")}
                   />
                 </td>
               </tr>
@@ -330,6 +330,7 @@ Link.craft = {
       "in_modal",
       "transfer_state",
       "view_state_fml"
+
     ],
   },
 };
