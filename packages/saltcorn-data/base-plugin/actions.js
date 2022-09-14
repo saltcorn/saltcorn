@@ -9,6 +9,7 @@ const fetch = require("node-fetch");
 const vm = require("vm");
 const Table = require("../models/table");
 const View = require("../models/view");
+const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
@@ -85,6 +86,7 @@ const run_code = async ({
     fetchJSON,
     fetch,
     URL,
+    File,
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
@@ -614,6 +616,7 @@ module.exports = {
         "console",
         "Actions",
         "Table",
+        "File",
         ...(table ? ["table"] : []),
         ...fields,
       ]
