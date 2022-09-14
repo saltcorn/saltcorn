@@ -44,6 +44,12 @@ const cyStyle = [
       "background-color": "green",
     },
   },
+  {
+    selector: "node[type='table']",
+    style: {
+      "background-color": "gray",
+    },
+  },
 ];
 
 /**
