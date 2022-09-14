@@ -20,7 +20,7 @@ import { PluginFunction } from "@saltcorn/types/base_types";
 function expressionValidator(s: string): true | string {
   if (!s || s.length == 0) return "Missing formula";
   try {
-    const f = new Script(`(${s})`); // handle record literals
+    const f = new Script(`(${s})`); // parentheses to handle record literals
     return true;
   } catch (e: any) {
     return e.message;
@@ -38,6 +38,60 @@ type ExtendedNode = {
   right?: ExtendedNode;
   operator?: any;
 } & Node;
+
+/**
+ * @param {string} expression
+ * @throws {Error}
+ * @returns {string}
+ */
+function jsexprToSQL(expression: string, extraCtx: any = {}): String {
+  if (!expression) return "";
+  try {
+    const ast = parseExpressionAt(expression, 0, {
+      ecmaVersion: 2020,
+      locations: false,
+    });
+    //console.log(ast);
+    const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
+      (<StringToFunction>{
+        BinaryExpression() {
+          const cleft = compile(node.left!);
+
+          const cright = compile(node.right!);
+          return `(${cleft})${node.operator}(${cright})`;
+        },
+        UnaryExpression() {
+          return (<StringToFunction>{
+            "!"({ argument }: { argument: ExtendedNode }) {
+              return `not (${compile(argument)})`;
+            },
+          })[node.operator](node);
+        },
+        LogicalExpression() {
+          const cleft = compile(node.left!);
+
+          const cright = compile(node.right!);
+
+          const translate: any = { "&&": "and", "||": "or" };
+          return `(${cleft})${
+            translate[node.operator] || node.operator
+          }(${cright})`;
+        },
+        Identifier({ name }: { name: string }) {
+          return name;
+        },
+        Literal({ value }: { value: ExtendedNode }) {
+          return `${value}`;
+        },
+      })[node.type](node);
+    return compile(ast);
+  } catch (e: any) {
+    console.error(e);
+    throw new Error(
+      `Expression "${expression}" is too complicated, I do not understand`
+    );
+  }
+}
 
 /**
  * @param {string} expression
@@ -399,5 +453,6 @@ export = {
   transform_for_async,
   apply_calculated_fields_stored,
   jsexprToWhere,
+  jsexprToSQL,
   freeVariables,
 };
