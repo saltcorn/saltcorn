@@ -247,6 +247,28 @@ describe("Table get data", () => {
       expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
     }
   });
+  it("should get join-aggregations", async () => {
+    //how many books has my publisher published
+    const books = await Table.findOne({ name: "books" });
+    assertIsSet(books);
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows({
+        orderBy: "id",
+        aggregations: {
+          publisher_books: {
+            table: "books",
+            ref: "publisher",
+            field: "id",
+            through: "publisher",
+            aggregate: "count",
+          },
+        },
+      });
+
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].publisher_books).toBe("1"); // TODO why string
+    }
+  });
   it("should get joined rows with latest aggregations", async () => {
     const patients = await Table.findOne({ name: "patients" });
     assertIsSet(patients);
@@ -541,6 +563,18 @@ describe("relations", () => {
       "patients.favbook",
     ]);
     expect(rels.child_relations.length).toBe(3);
+  });
+  it("get child relations with join", async () => {
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const rels = await table.get_child_relations(true);
+    expect(rels.child_field_list).toEqual([
+      "discusses_books.book",
+      "myreviews.book",
+      "patients.favbook",
+      "publisher->books.publisher",
+    ]);
+    expect(rels.child_relations.length).toBe(4);
   });
   it("get grandparent relations", async () => {
     const table = await Table.findOne({ name: "readings" });

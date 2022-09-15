@@ -172,6 +172,40 @@ describe("View", () => {
 
     expect(res.length > 0).toBe(true);
   });
+  it("list join-aggs", async () => {
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const v = await View.create({
+      table_id: table.id,
+      name: "AggJoinTest",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            fieldview: "as_text",
+            field_name: "author",
+            state_field: "on",
+          },
+          {
+            stat: "Count",
+            type: "Aggregation",
+            aggwhere: "",
+            agg_field: "id",
+            col_width: "",
+            agg_relation: "publisher->books.publisher",
+            header_label: "",
+          },
+        ],
+        default_state: {},
+      },
+      min_role: 10,
+    });
+    const res = await v.run({}, mockReqRes);
+    expect(res).toBe(
+      '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>Count books</th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
+    );
+  });
 });
 describe("View with routes", () => {
   it("should create and delete", async () => {

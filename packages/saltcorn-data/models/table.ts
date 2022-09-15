@@ -1286,7 +1286,9 @@ class Table implements AbstractTable {
    * Get child relations for table
    * @returns {Promise<{child_relations: object[], child_field_list: object[]}>}
    */
-  async get_child_relations(): Promise<ChildRelations> {
+  async get_child_relations(
+    allow_join_aggregations?: boolean
+  ): Promise<ChildRelations> {
     const cfields = await Field.find({ reftable_name: this.name });
     let child_relations = [];
     let child_field_list = [];
@@ -1299,6 +1301,22 @@ class Table implements AbstractTable {
         child_field_list.push(`${table.name}.${f.name}`);
         await table.getFields();
         child_relations.push({ key_field: f, table });
+      }
+    }
+    if (allow_join_aggregations) {
+      const fields = await this.getFields();
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const refTable = await Table.findOne({ name: f.reftable_name });
+          if (!refTable)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+
+          const join_crels = await refTable.get_child_relations(false);
+          join_crels.child_relations.forEach(({ key_field, table }) => {
+            child_field_list.push(`${f.name}->${table.name}.${key_field.name}`);
+            child_relations.push({ key_field, table, through: f });
+          });
+        }
       }
     }
     return { child_relations, child_field_list };
@@ -1415,7 +1433,10 @@ class Table implements AbstractTable {
 
     let placeCounter = values.length;
     Object.entries<AggregationOptions>(aggregations).forEach(
-      ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
+      ([
+        fldnm,
+        { table, ref, field, where, aggregate, subselect, through },
+      ]) => {
         let whereStr = "";
         if (where && !subselect) {
           const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
@@ -1426,6 +1447,7 @@ class Table implements AbstractTable {
         }
         const aggTable = Table.findOne({ name: table });
         const aggField = aggTable?.fields?.find((f) => f.name === field);
+        const ownField = through ? sqlsanitize(through) : this.pk_name;
         if (
           aggField?.is_fkey &&
           aggField.attributes.summary_field &&
@@ -1439,7 +1461,7 @@ class Table implements AbstractTable {
             aggField.reftable_name as string
           )}" aggjoin on aggto."${sqlsanitize(
             field
-          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a.id${
+          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a."${ownField}"${
             whereStr ? ` and ${whereStr}` : ""
           }) ${sqlsanitize(fldnm)}`;
 
@@ -1451,9 +1473,9 @@ class Table implements AbstractTable {
               table
             )}" where ${dateField}=(select max(${dateField}) from ${schema}"${sqlsanitize(
               table
-            )}" where "${sqlsanitize(ref)}"=a.id${
+            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
               whereStr ? ` and ${whereStr}` : ""
-            }) and "${sqlsanitize(ref)}"=a.id) ${sqlsanitize(fldnm)}`
+            }) and "${sqlsanitize(ref)}"=a."${ownField}") ${sqlsanitize(fldnm)}`
           );
         } else if (subselect)
           fldNms.push(
@@ -1463,7 +1485,9 @@ class Table implements AbstractTable {
               ref
             )} in (select "${subselect.field}" from ${schema}"${
               subselect.table.name
-            }" where "${subselect.whereField}"=a.id)) ${sqlsanitize(fldnm)}`
+            }" where "${subselect.whereField}"=a."${ownField}")) ${sqlsanitize(
+              fldnm
+            )}`
           );
         else
           fldNms.push(
@@ -1471,9 +1495,9 @@ class Table implements AbstractTable {
               field ? `"${sqlsanitize(field)}"` : "*"
             }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )}"=a.id${whereStr ? ` and ${whereStr}` : ""}) ${sqlsanitize(
-              fldnm
-            )}`
+            )}"=a."${ownField}"${
+              whereStr ? ` and ${whereStr}` : ""
+            }) ${sqlsanitize(fldnm)}`
           );
       }
     );
