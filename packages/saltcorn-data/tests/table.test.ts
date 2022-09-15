@@ -247,6 +247,30 @@ describe("Table get data", () => {
       expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
     }
   });
+  it("should get join-aggregations", async () => {
+    //how many books has my publisher published
+    const books = await Table.findOne({ name: "books" });
+    assertIsSet(books);
+    if (!db.isSQLite) {
+      db.set_sql_logging(true);
+      const rows = await books.getJoinedRows({
+        orderBy: "id",
+        aggregations: {
+          publisher_books: {
+            table: "books",
+            ref: "publisher",
+            field: "id",
+            through: "publisher",
+            aggregate: "count",
+          },
+        },
+      });
+      console.log(rows);
+
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].publisher_books).toBe(1);
+    }
+  });
   it("should get joined rows with latest aggregations", async () => {
     const patients = await Table.findOne({ name: "patients" });
     assertIsSet(patients);
