@@ -1415,7 +1415,10 @@ class Table implements AbstractTable {
 
     let placeCounter = values.length;
     Object.entries<AggregationOptions>(aggregations).forEach(
-      ([fldnm, { table, ref, field, where, aggregate, subselect }]) => {
+      ([
+        fldnm,
+        { table, ref, field, where, aggregate, subselect, through },
+      ]) => {
         let whereStr = "";
         if (where && !subselect) {
           const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
@@ -1426,6 +1429,7 @@ class Table implements AbstractTable {
         }
         const aggTable = Table.findOne({ name: table });
         const aggField = aggTable?.fields?.find((f) => f.name === field);
+        const ownField = through ? sqlsanitize(through) : this.pk_name;
         if (
           aggField?.is_fkey &&
           aggField.attributes.summary_field &&
@@ -1439,7 +1443,7 @@ class Table implements AbstractTable {
             aggField.reftable_name as string
           )}" aggjoin on aggto."${sqlsanitize(
             field
-          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a.id${
+          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a."${ownField}"${
             whereStr ? ` and ${whereStr}` : ""
           }) ${sqlsanitize(fldnm)}`;
 
@@ -1451,9 +1455,9 @@ class Table implements AbstractTable {
               table
             )}" where ${dateField}=(select max(${dateField}) from ${schema}"${sqlsanitize(
               table
-            )}" where "${sqlsanitize(ref)}"=a.id${
+            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
               whereStr ? ` and ${whereStr}` : ""
-            }) and "${sqlsanitize(ref)}"=a.id) ${sqlsanitize(fldnm)}`
+            }) and "${sqlsanitize(ref)}"=a."${ownField}") ${sqlsanitize(fldnm)}`
           );
         } else if (subselect)
           fldNms.push(
@@ -1463,7 +1467,9 @@ class Table implements AbstractTable {
               ref
             )} in (select "${subselect.field}" from ${schema}"${
               subselect.table.name
-            }" where "${subselect.whereField}"=a.id)) ${sqlsanitize(fldnm)}`
+            }" where "${subselect.whereField}"=a."${ownField}")) ${sqlsanitize(
+              fldnm
+            )}`
           );
         else
           fldNms.push(
@@ -1471,9 +1477,9 @@ class Table implements AbstractTable {
               field ? `"${sqlsanitize(field)}"` : "*"
             }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )}"=a.id${whereStr ? ` and ${whereStr}` : ""}) ${sqlsanitize(
-              fldnm
-            )}`
+            )}"=a."${ownField}"${
+              whereStr ? ` and ${whereStr}` : ""
+            }) ${sqlsanitize(fldnm)}`
           );
       }
     );
