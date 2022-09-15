@@ -420,10 +420,11 @@ const field_picker_fields = async ({ table, viewname, req }) => {
 
   const { parent_field_list } = await table.get_parent_relations(true, true);
   const { child_field_list, child_relations } =
-    await table.get_child_relations();
+    await table.get_child_relations(true);
   const aggStatOptions = {};
-  const agg_field_opts = child_relations.map(({ table, key_field }) => {
-    aggStatOptions[`${table.name}.${key_field.name}`] = [
+  const agg_field_opts = child_relations.map(({ table, key_field, through }) => {
+    const aggKey = (through ? `${through.name}->` : '') + `${table.name}.${key_field.name}`
+    aggStatOptions[aggKey] = [
       "Count",
       "Avg",
       "Sum",
@@ -433,7 +434,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     ];
     table.fields.forEach((f) => {
       if (f.type && f.type.name === "Date") {
-        aggStatOptions[`${table.name}.${key_field.name}`].push(
+        aggStatOptions[aggKey].push(
           `Latest ${f.name}`
         );
       }
@@ -449,7 +450,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
           .map((f) => f.name),
       },
       showIf: {
-        agg_relation: `${table.name}.${key_field.name}`,
+        agg_relation: aggKey,
         type: "Aggregation",
       },
     };
