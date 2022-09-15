@@ -147,10 +147,11 @@ const configuration_workflow = (req) =>
             true
           );
           const { child_field_list, child_relations } =
-            await table.get_child_relations();
+            await table.get_child_relations(true);
           var agg_field_opts = {};
-          child_relations.forEach(({ table, key_field }) => {
-            agg_field_opts[`${table.name}.${key_field.name}`] = table.fields
+          child_relations.forEach(({ table, key_field, through }) => {
+            const aggKey = (through ? `${through.name}->` : '') + `${table.name}.${key_field.name}`
+            agg_field_opts[aggKey] = table.fields
               .filter((f) => !f.calculated || f.stored)
               .map((f) => f.name);
           });
@@ -285,9 +286,8 @@ const run = async (
       })
     );
     for (const row of rows) {
-      row.verification_url = `${base}auth/verify?token=${
-        row.verification_token
-      }&email=${encodeURIComponent(row.email)}`;
+      row.verification_url = `${base}auth/verify?token=${row.verification_token
+        }&email=${encodeURIComponent(row.email)}`;
     }
   }
   await set_join_fieldviews({ table: tbl, layout, fields });
@@ -567,10 +567,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
-              val,
-              row[`${field_name}__filename`],
-              cfg
-            )
+            val,
+            row[`${field_name}__filename`],
+            cfg
+          )
           : "";
       } else if (
         fieldview &&
@@ -604,7 +604,15 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       } else return text(value);
     },
     aggregation({ agg_relation, stat }) {
-      const [table, fld] = agg_relation.split(".");
+      let table, fld, through;
+      if (agg_relation.includes("->")) {
+        let restpath;
+        [through, restpath] = agg_relation.split("->");
+        [table, fld] = restpath.split(".");
+
+      } else {
+        [table, fld] = agg_relation.split(".");
+      }
       const targetNm = (stat + "_" + table + "_" + fld).toLowerCase();
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
