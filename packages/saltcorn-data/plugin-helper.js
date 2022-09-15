@@ -949,9 +949,18 @@ const picked_fields_to_query = (columns, fields, layout) => {
         }
       }
     } else if (column.type === "Aggregation") {
-      //console.log(column)
       if (column.agg_relation && column.agg_relation.split) {
-        const [table, fld] = column.agg_relation.split(".");
+        let table, fld, through;
+        if (column.agg_relation.includes("->")) {
+          let restpath;
+          [through, restpath] = column.agg_relation.split("->");
+          [table, fld] = restpath.split(".");
+
+        } else {
+          [table, fld] = column.agg_relation.split(".");
+        }
+
+
         const field = column.agg_field;
         const targetNm = (
           column.stat.replace(" ", "") +
@@ -968,6 +977,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
           where: column.aggwhere ? jsexprToWhere(column.aggwhere) : undefined,
           field,
           aggregate: column.stat,
+          through
         };
       }
     } else if (column.type === "Link") {
