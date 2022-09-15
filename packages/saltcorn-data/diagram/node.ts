@@ -12,7 +12,7 @@ export default class Node {
   tables = new Array<Node>();
 
   /**
-   * @param type page or view
+   * @param type saltcorn-entity type
    * @param label
    */
   constructor(type: NodeType, label: string) {

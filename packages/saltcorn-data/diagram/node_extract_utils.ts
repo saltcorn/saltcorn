@@ -19,7 +19,8 @@ export type ExtractOpts = {
 
 /**
  * builds object trees for 'views/pages' with branches for all possible paths
- * @param entryPages if given, those will be the start nodes of the first graphs
+ * @param opts filter and entry pages options.
+ * If 'entryPages' is an array, those will be the start nodes of the first graphs
  * @returns root nodes
  */
 export async function buildObjectTrees(
