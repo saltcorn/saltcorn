@@ -1286,7 +1286,9 @@ class Table implements AbstractTable {
    * Get child relations for table
    * @returns {Promise<{child_relations: object[], child_field_list: object[]}>}
    */
-  async get_child_relations(): Promise<ChildRelations> {
+  async get_child_relations(
+    allow_join_aggregations?: boolean
+  ): Promise<ChildRelations> {
     const cfields = await Field.find({ reftable_name: this.name });
     let child_relations = [];
     let child_field_list = [];
@@ -1299,6 +1301,22 @@ class Table implements AbstractTable {
         child_field_list.push(`${table.name}.${f.name}`);
         await table.getFields();
         child_relations.push({ key_field: f, table });
+      }
+    }
+    if (allow_join_aggregations) {
+      const fields = await this.getFields();
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const refTable = await Table.findOne({ name: f.reftable_name });
+          if (!refTable)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+
+          const join_crels = await refTable.get_child_relations(false);
+          join_crels.child_relations.forEach(({ key_field, table }) => {
+            child_field_list.push(`${f.name}->${table.name}.${key_field.name}`);
+            child_relations.push({ key_field, table, through: f });
+          });
+        }
       }
     }
     return { child_relations, child_field_list };
