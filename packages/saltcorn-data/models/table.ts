@@ -502,7 +502,8 @@ class Table implements AbstractTable {
     v_in: any,
     id: number,
     _userid?: number,
-    noTrigger?: boolean
+    noTrigger?: boolean,
+    resultCollector?: object
   ): Promise<void> {
     let existing;
     let v = { ...v_in };
@@ -559,7 +560,9 @@ class Table implements AbstractTable {
         existing = await db.selectOne(this.name, { [pk_name]: id });
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
-    if (!noTrigger) await Trigger.runTableTriggers("Update", this, newRow);
+    if (!noTrigger) {
+      await Trigger.runTableTriggers("Update", this, newRow, resultCollector);
+    }
   }
 
   /**
@@ -572,10 +575,11 @@ class Table implements AbstractTable {
   async tryUpdateRow(
     v: any,
     id: any,
-    _userid?: number
+    _userid?: number,
+    resultCollector?: object
   ): Promise<ResultMessage> {
     try {
-      await this.updateRow(v, id, _userid);
+      await this.updateRow(v, id, _userid, false, resultCollector);
       return { success: true };
     } catch (e: any) {
       return { error: normalise_error_message(e.message) };
@@ -629,7 +633,11 @@ class Table implements AbstractTable {
    * @param _userid
    * @returns {Promise<*>}
    */
-  async insertRow(v_in: Row, _userid?: number): Promise<any> {
+  async insertRow(
+    v_in: Row,
+    _userid?: number,
+    resultCollector?: object
+  ): Promise<any> {
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
@@ -662,7 +670,14 @@ class Table implements AbstractTable {
         _userid,
         _time: new Date(),
       });
-    Trigger.runTableTriggers("Insert", this, { [pk_name]: id, ...v });
+
+    const trigPromise = Trigger.runTableTriggers(
+      "Insert",
+      this,
+      { [pk_name]: id, ...v },
+      resultCollector
+    );
+    if (resultCollector) await trigPromise;
     return id;
   }
 
@@ -674,10 +689,11 @@ class Table implements AbstractTable {
    */
   async tryInsertRow(
     v: Row,
-    _userid?: number
+    _userid?: number,
+    resultCollector?: object
   ): Promise<{ error: string } | { success: any }> {
     try {
-      const id = await this.insertRow(v, _userid);
+      const id = await this.insertRow(v, _userid, resultCollector);
       return { success: id };
     } catch (e: any) {
       return { error: normalise_error_message(e.message) };
