@@ -317,10 +317,11 @@ function ajaxSubmitForm(e) {
     data: new FormData(form[0]),
     processData: false,
     contentType: false,
-    success: function () {
+    success: function (res) {
       var no_reload = $("#scmodal").hasClass("no-submit-reload");
       $("#scmodal").modal("hide");
       if (!no_reload) location.reload();
+      else common_done(res);
     },
     error: function (request) {
       var title = request.getResponseHeader("Page-Title");

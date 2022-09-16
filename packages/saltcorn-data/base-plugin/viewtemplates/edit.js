@@ -822,17 +822,18 @@ const runPost = async (
       }
     }
     console.log(trigger_return);
+    trigger_return = trigger_return || {}
+    if (trigger_return.notify)
+      req.flash("success", trigger_return.notify)
+    if (trigger_return.error)
+      req.flash("danger", trigger_return.error)
+
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
       return;
-    } else {
-      trigger_return = trigger_return || {}
-      if (trigger_return.notify)
-        req.flash("success", trigger_return.notify)
-      if (trigger_return.error)
-        req.flash("danger", trigger_return.error)
-
     }
+
+
     if (redirect) {
       res.redirect(redirect);
       return;
