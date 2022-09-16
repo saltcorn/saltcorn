@@ -821,7 +821,6 @@ const runPost = async (
         }
       }
     }
-    console.log(trigger_return);
     trigger_return = trigger_return || {}
     if (trigger_return.notify)
       req.flash("success", trigger_return.notify)
