@@ -561,7 +561,13 @@ class Table implements AbstractTable {
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) {
-      await Trigger.runTableTriggers("Update", this, newRow, resultCollector);
+      const trigPromise = Trigger.runTableTriggers(
+        "Update",
+        this,
+        newRow,
+        resultCollector
+      );
+      if (resultCollector) await trigPromise;
     }
   }
 
