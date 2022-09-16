@@ -232,7 +232,8 @@ class Trigger implements AbstractTrigger {
   static async runTableTriggers(
     when_trigger: string,
     table: Table,
-    row: Row
+    row: Row,
+    resultCollector?: any
   ): Promise<void> {
     const triggers = await Trigger.getTableTriggers(when_trigger, table);
     const { getState } = require("../db/state");
@@ -244,8 +245,11 @@ class Trigger implements AbstractTrigger {
       );
 
       try {
-        await trigger.run!(row); // getTableTriggers ensures run is set
-      } catch (e) {
+        const res = await trigger.run!(row); // getTableTriggers ensures run is set
+        if (res && resultCollector) Object.assign(resultCollector, res);
+      } catch (e: any) {
+        if (resultCollector)
+          resultCollector.error = (resultCollector.error || "") + e.message;
         Crash.create(e, {
           url: "/",
           headers: { when_trigger, table: table.name, trigger: trigger.name },

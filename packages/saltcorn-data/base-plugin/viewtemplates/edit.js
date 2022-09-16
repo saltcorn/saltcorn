@@ -383,7 +383,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  {},
+  { },
   state,
   { res, req },
   { editQuery }
@@ -526,8 +526,8 @@ const transformForm = async ({
           const childRows = getRowQuery
             ? await getRowQuery(view.table_id, view_select, row.id)
             : await childTable.getRows({
-                [view_select.field_name]: row.id,
-              });
+              [view_select.field_name]: row.id,
+            });
           fr.metadata.rows = childRows;
           if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
             fr.fields.push({
@@ -614,9 +614,8 @@ const render = async ({
     isRemote
   );
   if (auto_save)
-    form.onChange = `saveAndContinue(this, ${
-      !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
+      })`;
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -690,9 +689,8 @@ const runPost = async (
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
   if (auto_save)
-    form.onChange = `saveAndContinue(this, ${
-      !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
+      })`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
@@ -757,10 +755,10 @@ const runPost = async (
         }
         const file = isNode()
           ? await File.from_req_files(
-              req.files[field.name],
-              req.user ? req.user.id : null,
-              (field.attributes && +field.attributes.min_role_read) || 1
-            )
+            req.files[field.name],
+            req.user ? req.user.id : null,
+            (field.attributes && +field.attributes.min_role_read) || 1
+          )
           : await File.upload(req.files[field.name]);
         row[field.name] = file.id;
       } else {
@@ -768,12 +766,14 @@ const runPost = async (
       }
     }
     const originalID = id;
+    let trigger_return;
     if (!cancel) {
       if (typeof id === "undefined") {
         const ins_res = await tryInsertQuery(row);
         if (ins_res.success) {
           id = ins_res.success;
           row[pk.name] = id;
+          trigger_return = ins_res.trigger_return
         } else {
           req.flash("error", text_attr(ins_res.error));
           res.sendWrap(
@@ -789,6 +789,8 @@ const runPost = async (
           res.sendWrap(viewname, renderForm(form, req.csrfToken()));
           return;
         }
+        trigger_return = upd_res.trigger_return
+
       }
 
       for (const field of form.fields.filter((f) => f.isRepeat)) {
@@ -819,10 +821,18 @@ const runPost = async (
         }
       }
     }
+    trigger_return = trigger_return || {}
+    if (trigger_return.notify)
+      req.flash("success", trigger_return.notify)
+    if (trigger_return.error)
+      req.flash("danger", trigger_return.error)
+
     if (req.xhr && !originalID && !req.smr) {
-      res.json({ id, view_when_done });
+      res.json({ id, view_when_done, ...trigger_return });
       return;
     }
+
+
     if (redirect) {
       res.redirect(redirect);
       return;
@@ -1090,20 +1100,26 @@ module.exports = {
     },
     async tryInsertQuery(row) {
       const table = await Table.findOne({ id: table_id });
+      const result = {}
       const ins_res = await table.tryInsertRow(
         row,
-        req.user ? +req.user.id : undefined
+        req.user ? +req.user.id : undefined,
+        result
       );
+      ins_res.trigger_return = result
       return ins_res;
     },
 
     async tryUpdateQuery(row, id) {
       const table = await Table.findOne({ id: table_id });
+      const result = {}
       const upd_res = await table.tryUpdateRow(
         row,
         id,
-        req.user ? +req.user.id : undefined
+        req.user ? +req.user.id : undefined,
+        result
       );
+      upd_res.trigger_return = result
       return upd_res;
     },
 
