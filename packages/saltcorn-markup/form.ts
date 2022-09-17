@@ -777,7 +777,6 @@ const renderForm = (
     csrfToken0 === false || csrfToken0 === ""
       ? csrfToken0
       : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
-
   if (form.isStateForm) {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
@@ -847,6 +846,24 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   </div>
   </div>`
     : "";
+
+  const splitSnippet = form.splitPaste
+    ? script(
+        // cant use currentScript in callback
+        `((myScript)=>{` +
+          domReady(`
+    console.log("attaching paste event!")
+    $(myScript).closest('form').find('input').on('paste',function (e) {
+      e.preventDefault();
+      let clipboardData = e.clipboardData || window.clipboardData || e.originalEvent.clipboardData;
+      console.log( "CD",clipboardData)
+
+      console.log( clipboardData.getData('text'))
+});`) +
+          `})(document.currentScript)`
+      )
+    : "";
+
   return (
     blurbp +
     top +
@@ -854,6 +871,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     hiddens +
     renderFormLayout(form) +
     fullFormError +
+    splitSnippet +
     "</form>"
   );
 };
