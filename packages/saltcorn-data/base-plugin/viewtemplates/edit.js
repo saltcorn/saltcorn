@@ -273,6 +273,12 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "split_paste",
+                label: req.__("Split paste"),
+                sublabel: req.__("Separate paste content into separate inputs"),
+                type: "Bool",
+              },
+              {
                 name: "destination_type",
                 label: "Destination type",
                 type: "String",
@@ -404,7 +410,7 @@ const run = async (
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout, auto_save },
+  { columns, layout, auto_save, split_paste },
   state,
   extra,
   { editManyQuery, getRowQuery, optionsQuery }
@@ -434,6 +440,7 @@ const runMany = async (
       auto_save,
       getRowQuery,
       optionsQuery,
+      split_paste
     });
     return { html, row };
   });
@@ -603,6 +610,7 @@ const render = async ({
   isRemote,
   getRowQuery,
   optionsQuery,
+  split_paste
 }) => {
   const form = await getForm(
     table,
@@ -613,6 +621,8 @@ const render = async ({
     req,
     isRemote
   );
+  if (split_paste)
+    form.splitPaste = true
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
       })`;
@@ -1043,6 +1053,7 @@ module.exports = {
       default_state,
       layout,
       auto_save,
+      split_paste,
       destination_type,
     },
     req,
@@ -1070,6 +1081,7 @@ module.exports = {
         auto_save,
         destination_type,
         isRemote,
+        split_paste
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {

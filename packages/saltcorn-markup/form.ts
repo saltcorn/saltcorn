@@ -762,6 +762,17 @@ const renderFormLayout = (form: Form): string => {
   return renderLayout({ blockDispatch, layout: form.layout, req: form.req });
 };
 
+const splitSnippet = (form: Form) =>
+  form.splitPaste
+    ? script(
+        // cant use currentScript in callback
+        `((myScript)=>{` +
+          domReady(`
+$(myScript).closest('form').find('input').on('paste',split_paste_handler);`) +
+          `})(document.currentScript)`
+      )
+    : "";
+
 /**
  * @param {string|object} form
  * @param {string|false} csrfToken0
@@ -777,7 +788,6 @@ const renderForm = (
     csrfToken0 === false || csrfToken0 === ""
       ? csrfToken0
       : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
-
   if (form.isStateForm) {
     form.class += " px-4 py-3";
     form.formStyle = "vert";
@@ -847,6 +857,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   </div>
   </div>`
     : "";
+
   return (
     blurbp +
     top +
@@ -854,6 +865,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     hiddens +
     renderFormLayout(form) +
     fullFormError +
+    splitSnippet(form) +
     "</form>"
   );
 };
@@ -939,7 +951,16 @@ const mkForm = (
     }
   </div>
 </div>`;
-  return blurbp + top + csrfField + flds + fullFormError + bot + "</form>";
+  return (
+    blurbp +
+    top +
+    csrfField +
+    flds +
+    fullFormError +
+    bot +
+    splitSnippet(form) +
+    "</form>"
+  );
 };
 
 export = renderForm;
