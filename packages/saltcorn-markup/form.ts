@@ -852,14 +852,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
         // cant use currentScript in callback
         `((myScript)=>{` +
           domReady(`
-    console.log("attaching paste event!")
-    $(myScript).closest('form').find('input').on('paste',function (e) {
-      e.preventDefault();
-      let clipboardData = e.clipboardData || window.clipboardData || e.originalEvent.clipboardData;
-      console.log( "CD",clipboardData)
-
-      console.log( clipboardData.getData('text'))
-});`) +
+    $(myScript).closest('form').find('input').on('paste',split_paste_handler);`) +
           `})(document.currentScript)`
       )
     : "";

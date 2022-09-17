@@ -678,3 +678,23 @@ function cancel_form(form) {
   $(form).append(`<input type="hidden" name="_cancel" value="on">`);
   $(form).submit();
 }
+
+function split_paste_handler(e) {
+  e.preventDefault();
+  let clipboardData = e.clipboardData || window.clipboardData || e.originalEvent.clipboardData;
+
+  const lines = clipboardData.getData('text').split(/\r\n/g)
+
+  const form = $(e.target).closest('form')
+
+  let matched = false;
+
+  const inputs = form.find('input').each(function (ix, element) {
+    if (!matched && element === e.target) matched = true;
+    if (matched && lines.length > 0) {
+      $(element).val(lines.shift())
+    }
+  })
+
+
+}
