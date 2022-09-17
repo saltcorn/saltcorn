@@ -50,6 +50,12 @@ const cyStyle = [
       "background-color": "gray",
     },
   },
+  {
+    selector: "node[type='trigger']",
+    style: {
+      "background-color": "yellow",
+    }
+  }
 ];
 
 /**

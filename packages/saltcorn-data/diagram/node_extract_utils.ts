@@ -9,6 +9,8 @@ const {
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 
+import Trigger from "../models/trigger"
+
 export type ExtractOpts = {
   entryPages?: Array<Page>;
   showViews: boolean;
@@ -185,6 +187,16 @@ class ExtractHelper {
         if (table) {
           const tableNode = new Node("table", table.name);
           this.cyIds.add(tableNode.cyId);
+          if(this.opts.showTrigger) {
+            const triggerNodes = new Array<Node>();
+            for(const trigger of await Trigger.getAllTableTriggers(table)) {
+              const newNode = new Node("trigger", trigger.name!);
+              this.cyIds.add(newNode.cyId);
+              triggerNodes.push(newNode);
+            }
+            if(triggerNodes.length > 0)
+              tableNode.trigger = triggerNodes;
+          }
           oldNode.tables.push(tableNode);
         }
       }

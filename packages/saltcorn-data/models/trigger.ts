@@ -7,14 +7,13 @@
 
 import db = require("../db");
 import EventLog from "./eventlog";
-import Table from "./table";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   TriggerCfg,
   AbstractTrigger,
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash = require("./crash");
-
+import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
 const { satisfies } = require("../utils");
 
 /**
@@ -282,19 +281,8 @@ class Trigger implements AbstractTrigger {
     );
   }
 
-  /**
-   * get triggers
-   * @param when_trigger
-   * @param table
-   * @returns {Promise<Trigger[]>}
-   */
-  static async getTableTriggers(
-    when_trigger: string,
-    table: Table
-  ): Promise<Trigger[]> {
+  static setRunFunctions(triggers: Array<Trigger>, table: Table) {
     const { getState } = require("../db/state");
-
-    const triggers = Trigger.find({ when_trigger, table_id: table.id });
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
       trigger.run = (row: Row) =>
@@ -307,9 +295,39 @@ class Trigger implements AbstractTrigger {
           ...row,
         });
     }
+  }
+
+  /**
+   * get triggers
+   * @param when_trigger
+   * @param table
+   * @returns {Promise<Trigger[]>}
+   */
+  static async getTableTriggers(
+    when_trigger: string,
+    table: Table
+  ): Promise<Trigger[]> {
+    const { getState } = require("../db/state");
+    const triggers = Trigger.find({ when_trigger, table_id: table.id });
+    Trigger.setRunFunctions(triggers, table);
     const virtual_triggers = getState().virtual_triggers.filter(
       (tr: Trigger) =>
         when_trigger === tr.when_trigger && tr.table_id == table.id
+    );
+    return [...triggers, ...virtual_triggers];
+  }
+
+  /**
+   * get triggers for a table with all when options
+   * @param table
+   * @returns {Promise<Trigger[]>}
+   */
+  static async getAllTableTriggers(table: Table): Promise<Trigger[]> {
+    const { getState } = require("../db/state");
+    const triggers = Trigger.find({ table_id: table.id });
+    Trigger.setRunFunctions(triggers, table);
+    const virtual_triggers = getState().virtual_triggers.filter(
+      (tr: Trigger) => tr.table_id == table.id
     );
     return [...triggers, ...virtual_triggers];
   }
