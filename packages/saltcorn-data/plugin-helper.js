@@ -998,6 +998,20 @@ const picked_fields_to_query = (columns, fields, layout) => {
             ...freeVariables(v.extra_state_fml),
           ]);
       },
+      view_link(v) {
+        if (v.extra_state_fml)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(v.extra_state_fml),
+          ]);
+      },
+      container(v) {
+        if (v.showIfFormula)
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariables(v.showIfFormula),
+          ]);
+      }
     });
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);

@@ -445,12 +445,17 @@ async function fill_formula_btn_click(btn, k) {
       }
     }
   }
-  const val = new Function(
-    `{${Object.keys(rec).join(",")}}`,
-    "return " + formula
-  )(rec);
-  $(btn).closest(".input-group").find("input").val(val);
-  if (k) k();
+  try {
+    const val = new Function(
+      `{${Object.keys(rec).join(",")}}`,
+      "return " + formula
+    )(rec);
+    $(btn).closest(".input-group").find("input").val(val);
+    if (k) k();
+  } catch (e) {
+    notifyAlert({ type: "danger", text: `Error evaluating fill formula: ${e.message}` })
+    console.error(e)
+  }
 }
 
 /*
