@@ -689,7 +689,7 @@ function split_paste_handler(e) {
 
   let matched = false;
 
-  const inputs = form.find('input').each(function (ix, element) {
+  form.find('input:not(:disabled):not([readonly]):not(:hidden)').each(function (ix, element) {
     if (!matched && element === e.target) matched = true;
     if (matched && lines.length > 0) {
       $(element).val(lines.shift())
