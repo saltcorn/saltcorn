@@ -1,4 +1,4 @@
-export type NodeType = "view" | "page" | "table" | "dummy";
+export type NodeType = "view" | "page" | "table" | "trigger" | "dummy";
 
 /**
  * resembles a page or a view in the application object tree
@@ -10,9 +10,10 @@ export default class Node {
   linked = new Array<Node>();
   embedded = new Array<Node>();
   tables = new Array<Node>();
+  trigger = new Array<Node>();
 
   /**
-   * @param type page or view
+   * @param type saltcorn-entity type
    * @param label
    */
   constructor(type: NodeType, label: string) {

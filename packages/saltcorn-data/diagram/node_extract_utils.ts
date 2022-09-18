@@ -9,22 +9,40 @@ const {
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 
+import Trigger from "../models/trigger"
+
+export type ExtractOpts = {
+  entryPages?: Array<Page>;
+  showViews: boolean;
+  showPages: boolean;
+  showTables: boolean;
+  showTrigger: boolean;
+};
 
 /**
  * builds object trees for 'views/pages' with branches for all possible paths
- * @param entryPages if given, those will be the start nodes of the first graphs
+ * @param opts filter and entry pages options.
+ * If 'entryPages' is an array, those will be the start nodes of the first graphs
  * @returns root nodes
  */
 export async function buildObjectTrees(
-  entryPages: Array<Page> = new Array<Page>()
+  opts: ExtractOpts
 ): Promise<Array<Node>> {
-  const helper = new ExtractHelper();
-  const entryPageTrees = await buildTree("page", entryPages, helper);
-  const allPages = await require("../models/page").find();
-  const pageTrees = await buildTree("page", allPages, helper);
-  const allViews = await require("../models/view").find();
-  const viewTrees = await buildTree("view", allViews, helper);
-  return [...entryPageTrees, ...pageTrees, ...viewTrees];
+  const result = new Array<Node>();
+  const helper = new ExtractHelper(opts);
+  if (opts.showPages) {
+    const entryPages = opts.entryPages ? opts.entryPages : new Array<any>();
+    const entryPageTrees = await buildTree("page", entryPages, helper);
+    const allPages = await require("../models/page").find();
+    const pageTrees = await buildTree("page", allPages, helper);
+    result.push(...entryPageTrees, ...pageTrees);
+  }
+  if (opts.showViews) {
+    const allViews = await require("../models/view").find();
+    const viewTrees = await buildTree("view", allViews, helper);
+    result.push(...viewTrees);
+  }
+  return result;
 }
 
 async function buildTree(
@@ -72,12 +90,12 @@ export function extractFromLayout(layout: any): ConnectedObjects {
         const parts = segment.url.split("/");
         const viewName = parts[parts.length - 1];
         const view = _View.findOne({ name: viewName });
-        if(view) linkedViews.push(view!);
+        if (view) linkedViews.push(view!);
       } else if (segment.link_src === "Page") {
         const parts = segment.url.split("/");
         const pagename = parts[parts.length - 1];
         const page = _Page.findOne({ name: pagename });
-        if(page) linkedPages.push(page!);
+        if (page) linkedPages.push(page!);
       }
     },
   });
@@ -122,7 +140,7 @@ export function extractViewToCreate(
   if (view_to_create) {
     const View = require("../models/view");
     const viewToCreate = View.findOne({ name: view_to_create });
-    if(viewToCreate) {
+    if (viewToCreate) {
       if (create_view_display === "Link" || create_view_display === "Popup") {
         return {
           linkedViews: [viewToCreate],
@@ -142,30 +160,46 @@ export function extractViewToCreate(
  */
 class ExtractHelper {
   cyIds = new Set<string>();
+  opts: ExtractOpts;
+
+  constructor(opts: ExtractOpts) {
+    this.opts = opts;
+  }
 
   public async handleNodeConnections(
     oldNode: Node,
     connected: ConnectedObjects
   ) {
-    for (const embeddedView of connected.embeddedViews || []) {
-      if(embeddedView)
-        await this.addEmbeddedView(oldNode, embeddedView);
-    }
-    for (const linkedPage of connected.linkedPages || []) {
-      if(linkedPage)
-        await this.addLinkedPageNode(oldNode, linkedPage);
-    }
-    for (const linkedView of connected.linkedViews || []) {
-      if(linkedView)
-        await this.addLinkedViewNode(oldNode, linkedView);
-    }
-    for (const table of connected.tables || []) {
-      if(table) {
-        const tableNode = new Node("table", table.name);
-        this.cyIds.add(tableNode.cyId);
-        oldNode.tables.push(tableNode);
+    if (this.opts.showViews)
+      for (const embeddedView of connected.embeddedViews || []) {
+        if (embeddedView) await this.addEmbeddedView(oldNode, embeddedView);
       }
-    }
+    if (this.opts.showPages)
+      for (const linkedPage of connected.linkedPages || []) {
+        if (linkedPage) await this.addLinkedPageNode(oldNode, linkedPage);
+      }
+    if (this.opts.showViews)
+      for (const linkedView of connected.linkedViews || []) {
+        if (linkedView) await this.addLinkedViewNode(oldNode, linkedView);
+      }
+    if (this.opts.showTables)
+      for (const table of connected.tables || []) {
+        if (table) {
+          const tableNode = new Node("table", table.name);
+          this.cyIds.add(tableNode.cyId);
+          if(this.opts.showTrigger) {
+            const triggerNodes = new Array<Node>();
+            for(const trigger of await Trigger.getAllTableTriggers(table)) {
+              const newNode = new Node("trigger", trigger.name!);
+              this.cyIds.add(newNode.cyId);
+              triggerNodes.push(newNode);
+            }
+            if(triggerNodes.length > 0)
+              tableNode.trigger = triggerNodes;
+          }
+          oldNode.tables.push(tableNode);
+        }
+      }
   }
 
   private async addLinkedViewNode(oldNode: Node, newView: View) {

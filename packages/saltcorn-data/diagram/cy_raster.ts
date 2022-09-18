@@ -1,6 +1,5 @@
 import Node from "./node";
 
-
 /**
  * aligns the nodes from the application object tree on a raster
  */
@@ -30,15 +29,19 @@ export default class CytoscapeRaster {
     let startRow = 10;
     let startCol = 2;
     const visitor = buildVisitor(this);
+    let maxRowInLine = 0;
     for (const node of entryNodes) {
       const dummyRoot = new Node("dummy", "");
       dummyRoot.linked.push(node);
       const usedSpace = traverse(dummyRoot, visitor, startRow, startCol);
-      if (usedSpace.maxCol < 5) {
+      if(usedSpace.maxRow > maxRowInLine)
+        maxRowInLine = usedSpace.maxRow; 
+      if (usedSpace.maxCol < 10) {
         startCol = usedSpace.maxCol;
       } else {
-        startRow = usedSpace.maxRow;
+        startRow = maxRowInLine;
         startCol = 2;
+        maxRowInLine = 0;
       }
     }
   }
@@ -137,6 +140,36 @@ export default class CytoscapeRaster {
 }
 
 const buildVisitor = (raster: CytoscapeRaster): any => {
+  const allignTablesAndTrigger = (
+    source: Node,
+    tables: Array<Node>,
+    row: number,
+    col: number
+  ) => {
+    const triggerRow = row;
+    let tableRow = row;
+    let triggerCol = col;
+    let tableCol = col;
+    let anyNewTables = false;
+    for (const table of tables) {
+      if (!raster.hasId(table.cyId)) {
+        anyNewTables = true;
+        for (const trigger of table.trigger) {
+          raster.addNode(trigger, triggerRow, triggerCol--);
+          raster.addLink(table, trigger, "new_target");
+        }
+        if (table.trigger.length > 0) tableRow = row + 1;
+        raster.addNode(table, tableRow, tableCol);
+        raster.addLink(source, table, "new_target");
+        tableCol = triggerCol;
+      }
+      else {
+        raster.addLink(source, table, "existing_target");
+      }
+    }
+    return { row: anyNewTables ? ++tableRow : tableRow, col: tableCol };
+  };
+
   return {
     linked(
       source: Node,
@@ -145,30 +178,43 @@ const buildVisitor = (raster: CytoscapeRaster): any => {
       col: number,
       noLink?: boolean
     ) {
+      let insertRow = row;
+      let insertCol = col;
       if (!raster.hasId(target.cyId)) {
-        const pos = { row: row, col: col };
-        const embedDepth = maxEmbedDepth(target.embedded, raster);
-        if (embedDepth > 0) pos.col += embedDepth + 1;
-        raster.addNode(target, pos.row, pos.col);
+        insertCol += leftDepth(target, raster);
+        const newInsertPos = allignTablesAndTrigger(
+          target,
+          target.tables,
+          insertRow,
+          insertCol
+        );
+        if (newInsertPos) insertRow = newInsertPos.row;
+        raster.addNode(target, insertRow, insertCol);
         if (!noLink) raster.addLink(source, target, "new_target");
-        return pos;
+        return { row: insertRow, col: insertCol };
       } else {
         raster.addLink(source, target, "existing_target");
         return null;
       }
     },
     embedded(source: Node, target: Node, row: number, col: number) {
+      let insertRow = row;
+      let insertCol = col;
       if (!raster.hasId(target.cyId)) {
-        raster.addNode(target, row, col);
+        const newInsertPos = allignTablesAndTrigger(
+          target,
+          target.tables,
+          insertRow,
+          insertCol
+        );
+        if (newInsertPos) insertRow = newInsertPos.row;
+        raster.addNode(target, insertRow, insertCol);
         raster.addLink(source, target, "new_target");
-        return { row, col };
+        return { row: insertRow, col: insertCol };
       } else {
         raster.addLink(source, target, "existing_target");
         return null;
       }
-    },
-    table(node: Node, row: number, col: number) {
-      return true;
     },
   };
 };
@@ -179,8 +225,9 @@ const traverse = (
   startRow: number,
   startCol: number
 ): any => {
-  let maxRow = 0;
-  let maxCol = 0;
+  let maxRow = startRow;
+  let rootEmbedMax = maxRow;
+  let maxCol = startCol;
   const go = (
     current: Node,
     row: number,
@@ -191,7 +238,7 @@ const traverse = (
   ) => {
     let insertEmbedCol = col - 1;
     let insertLinkedCol = col + 1;
-    let insertEmbedRow = row > maxRow ? row : maxRow;
+    let insertEmbedRow = row > maxRow ? row : maxRow + 1;
     let insertLinkedRow = insertEmbedRow;
     // put links from embeds to the parent
     const embeddedLinks = new Array<Node>();
@@ -199,13 +246,23 @@ const traverse = (
     if (shiftEmbedsY) insertEmbedRow++;
     // align embeds
     for (const embedded of current.embedded) {
-      if (visitor.embedded(current, embedded, insertEmbedRow, insertEmbedCol)) {
+      if (maxRow > insertEmbedRow) insertEmbedRow = maxRow;
+      const rasterPos = visitor.embedded(
+        current,
+        embedded,
+        insertEmbedRow,
+        insertEmbedCol
+      );
+      if (rasterPos) {
+        insertEmbedRow = rasterPos.row;
+        insertEmbedCol = rasterPos.col;
         go(embedded, insertEmbedRow, insertEmbedCol, true);
         if (++insertEmbedRow > maxRow) maxRow = insertEmbedRow;
       }
     }
     if (parentIsDummy) {
       // branches left from the root shouldn't affect right branches
+      rootEmbedMax = maxRow;
       maxRow = 0;
       insertEmbedRow = row;
       insertLinkedRow = row;
@@ -224,6 +281,8 @@ const traverse = (
         );
         if (rasterPos) {
           insertLinkedCol = rasterPos.col;
+          insertLinkedRow = rasterPos.row;
+          if (insertLinkedRow > maxRow) maxRow = insertLinkedRow;
           go(
             linked,
             insertLinkedRow,
@@ -241,7 +300,31 @@ const traverse = (
     if (insertEmbedCol > maxCol) maxCol = insertEmbedCol;
   };
   go(node, startRow, startCol, false);
-  return { maxRow: maxRow + 1, maxCol };
+  return {
+    maxRow: (rootEmbedMax > maxRow ? rootEmbedMax : maxRow) + 1,
+    maxCol,
+  };
+};
+
+const leftDepth = (node: Node, raster: CytoscapeRaster) => {
+  const tblDepth = tableDepth(node, raster);
+  const embedDepth = maxEmbedDepth(node.embedded, raster);
+  return tblDepth > embedDepth ? tblDepth : embedDepth;
+};
+
+const tableDepth = (parent: Node, raster: CytoscapeRaster) => {
+  const usedIds = new Set<string>();
+  let depth = 0;
+  for (const tbl of parent.tables || []) {
+    const triggerCount = tbl.trigger.length;
+    if (!raster.hasId(tbl.cyId)) {
+      usedIds.add(tbl.cyId);
+      if (tbl.trigger.length > 1) {
+        depth += triggerCount > 1 ? triggerCount : 1;
+      }
+    }
+  }
+  return depth;
 };
 
 const maxEmbedDepth = (nodes: Node[], raster: CytoscapeRaster): number => {
@@ -254,13 +337,14 @@ const maxEmbedDepth = (nodes: Node[], raster: CytoscapeRaster): number => {
 };
 
 const embedDepth = (parent: Node, raster: CytoscapeRaster) => {
-  if (parent.embedded.length === 0) return 0;
+  if (raster.hasId(parent.cyId)) return 0;
   let maxDepth = 0;
   for (const node of parent.embedded) {
     const branchDepth = embedDepth(node, raster);
     maxDepth = branchDepth > maxDepth ? branchDepth : maxDepth;
   }
-  return maxDepth + (!raster.hasId(parent.cyId) ? 1 : 0);
+  let tblSpace = tableDepth(parent, raster);
+  return maxDepth + (tblSpace > 1 ? tblSpace : 1);
 };
 
 const collectEmbeddedLinks = (parent: Node, result: Array<Node>) => {

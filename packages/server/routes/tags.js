@@ -35,30 +35,34 @@ router.get(
       res,
       req,
       active_sub: "Tags",
-      contents: [
-        mkTable(
-          [
+      contents: {
+        type: "card",
+        title: req.__("Tags"),
+        contents: [
+          mkTable(
+            [
+              {
+                label: req.__("Tagname"),
+                key: (r) =>
+                  link(`/tag/${r.id || r.name}?show_list=tables`, text(r.name)),
+              },
+              {
+                label: req.__("Delete"),
+                key: (r) => post_delete_btn(`/tag/delete/${r.id}`, req, r.name),
+              },
+            ],
+            rows,
+            {}
+          ),
+          a(
             {
-              label: req.__("Tagname"),
-              key: (r) =>
-                link(`/tag/${r.id || r.name}?show_list=tables`, text(r.name)),
+              href: `/tag/new`,
+              class: "btn btn-primary",
             },
-            {
-              label: req.__("Delete"),
-              key: (r) => post_delete_btn(`/tag/delete/${r.id}`, req, r.name),
-            },
-          ],
-          rows,
-          {}
-        ),
-        a(
-          {
-            href: `/tag/new`,
-            class: "btn btn-primary",
-          },
-          req.__("Create tag")
-        ),
-      ],
+            req.__("Create tag")
+          ),
+        ],
+      },
     });
   })
 );

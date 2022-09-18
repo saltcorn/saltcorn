@@ -175,6 +175,7 @@ export type ConnectedObjects = {
   embeddedViews?: Array<AbstractView>;
   linkedPages?: Array<AbstractPage>;
   tables?: Array<AbstractTable>;
+  // trigger are loaded on demand
 };
 
 export type ViewTemplate = {

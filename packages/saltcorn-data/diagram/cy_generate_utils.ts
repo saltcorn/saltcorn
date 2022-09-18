@@ -44,6 +44,18 @@ const cyStyle = [
       "background-color": "green",
     },
   },
+  {
+    selector: "node[type='table']",
+    style: {
+      "background-color": "gray",
+    },
+  },
+  {
+    selector: "node[type='trigger']",
+    style: {
+      "background-color": "yellow",
+    }
+  }
 ];
 
 /**

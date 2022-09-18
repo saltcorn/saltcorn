@@ -204,7 +204,7 @@ const send_infoarch_page = (args) => {
           ]
         : []),
       { text: "Tags", href: "/tag" },
-      { text: "Diagram", href: "/diagram" },
+      { text: "Diagram", href: "/diagram?show_all=true" },
     ],
     ...args,
   });
