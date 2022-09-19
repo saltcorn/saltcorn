@@ -765,11 +765,10 @@ const renderFormLayout = (form: Form): string => {
 const splitSnippet = (form: Form) =>
   form.splitPaste
     ? script(
-        // cant use currentScript in callback
-        `((myScript)=>{` +
-          domReady(`
-$(myScript).closest('form').find('input').on('paste',split_paste_handler);`) +
-          `})(document.currentScript)`
+        { id: "splitPasteActivator" },
+        domReady(
+          `$("script#splitPasteActivator").closest('form').find('input').on('paste',split_paste_handler);`
+        )
       )
     : "";
 
@@ -833,7 +832,7 @@ const renderForm = (
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${buildActionAttribute(form)}"${
+  const top = `<form onload="loadForm" action="${buildActionAttribute(form)}"${
     form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
   }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
