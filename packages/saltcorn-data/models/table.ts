@@ -1497,7 +1497,9 @@ class Table implements AbstractTable {
               table
             )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
               whereStr ? ` and ${whereStr}` : ""
-            }) and "${sqlsanitize(ref)}"=a."${ownField}") ${sqlsanitize(fldnm)}`
+            }) and "${sqlsanitize(ref)}"=a."${ownField}" limit 1) ${sqlsanitize(
+              fldnm
+            )}`
           );
         } else if (subselect)
           fldNms.push(

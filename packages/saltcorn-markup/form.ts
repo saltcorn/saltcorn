@@ -832,7 +832,7 @@ const renderForm = (
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form onload="loadForm" action="${buildActionAttribute(form)}"${
+  const top = `<form action="${buildActionAttribute(form)}"${
     form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
   }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
