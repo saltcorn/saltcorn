@@ -128,6 +128,11 @@ function apply_showif() {
             )
           );
         });
+        element.dispatchEvent(new Event('RefreshSelectOptions'))
+        if (e.hasClass("selectized") && $().selectize) {
+          e.selectize()[0].selectize.destroy();
+          setTimeout(() => e.selectize(), 0)
+        }
       }
     });
   });
