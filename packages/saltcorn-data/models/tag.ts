@@ -27,7 +27,8 @@ class Tag {
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Array<Tag>> {
-    return await db.select("_sc_tags", where, selectopts);
+    const dbTags = await db.select("_sc_tags", where, selectopts);
+    return dbTags.map((dbt: TagCfg) => new Tag(dbt));
   }
 
   static async findOne(where: Where): Promise<Tag> {
@@ -72,8 +73,7 @@ class Tag {
     for (const entry of await this.getEntries()) {
       if (entry[memberId]) {
         const modelObj = await model.findOne({ id: entry[memberId] });
-        if(modelObj)
-          result.push(modelObj);
+        if (modelObj) result.push(modelObj);
       }
     }
     return result;
@@ -92,7 +92,10 @@ class Tag {
   }
 
   async getTrigger(): Promise<Trigger[]> {
-    return await this.getTypedEntries<Trigger>(require("./trigger"), "trigger_id");
+    return await this.getTypedEntries<Trigger>(
+      require("./trigger"),
+      "trigger_id"
+    );
   }
 
   static async create(cfg: TagCfg): Promise<Tag> {

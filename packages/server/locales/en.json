@@ -985,5 +985,8 @@
 	"List/download snapshots &raquo;": "List/download snapshots &raquo;",
 	"Discover tables that are already in the Database, but not known to Saltcorn": "Discover tables that are already in the Database, but not known to Saltcorn",
 	"Split paste": "Split paste",
-	"Separate paste content into separate inputs": "Separate paste content into separate inputs"
+	"Separate paste content into separate inputs": "Separate paste content into separate inputs",
+	"Add entries to tag": "Add entries to tag",
+	"Add pages": "Add pages",
+	"Add triggers": "Add triggers"
 }
