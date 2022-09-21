@@ -110,31 +110,46 @@ function apply_showif() {
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
     });
-    $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
-      if (resp.success) {
-        e.empty();
-        if (!dynwhere.required) e.append($(`<option></option>`));
-        resp.success.forEach((r) => {
-          e.append(
-            $(
-              `<option ${`${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
-              } value="${r[dynwhere.refname]}">${dynwhere.label_formula
-                ? new Function(
-                  `{${Object.keys(r).join(",")}}`,
-                  "return " + dynwhere.label_formula
-                )(r)
-                : r[dynwhere.summary_field]
-              }</option>`
-            )
-          );
-        });
-        element.dispatchEvent(new Event('RefreshSelectOptions'))
-        if (e.hasClass("selectized") && $().selectize) {
-          e.selectize()[0].selectize.destroy();
-          setTimeout(() => e.selectize(), 0)
-        }
+
+    const currentOptionsSet = e.prop('data-fetch-options-current-set')
+    if (currentOptionsSet === qs) return;
+
+    const activate = (success, qs) => {
+      e.empty();
+      e.prop('data-fetch-options-current-set', qs)
+      if (!dynwhere.required) e.append($(`<option></option>`));
+      success.forEach((r) => {
+        e.append(
+          $(
+            `<option ${`${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
+            } value="${r[dynwhere.refname]}">${dynwhere.label_formula
+              ? new Function(
+                `{${Object.keys(r).join(",")}}`,
+                "return " + dynwhere.label_formula
+              )(r)
+              : r[dynwhere.summary_field]
+            }</option>`
+          )
+        );
+      });
+      element.dispatchEvent(new Event('RefreshSelectOptions'))
+      if (e.hasClass("selectized") && $().selectize) {
+        e.selectize()[0].selectize.destroy();
+        setTimeout(() => e.selectize(), 0)
       }
-    });
+    }
+
+    const cache = e.prop('data-fetch-options-cache') || {}
+    if (cache[qs]) {
+      activate(cache[qs], qs)
+    } else
+      $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
+        if (resp.success) {
+          activate(resp.success, qs)
+          const cacheNow = e.prop('data-fetch-options-cache') || {}
+          e.prop('data-fetch-options-cache', { ...cacheNow, [qs]: resp.success })
+        }
+      });
   });
 
   $("[data-source-url]").each(function (ix, element) {
