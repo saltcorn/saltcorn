@@ -54,14 +54,34 @@ const cyStyle = [
     selector: "node[type='trigger']",
     style: {
       "background-color": "yellow",
-    }
-  }
+    },
+  },
 ];
 
 /**
- * generates code to initalise cytoscape.js and draw the application object tree
+ * generates a cfg to re-init cytoscape.js on ajax requests
  * @param entryNodes roots for the graphs, 
-                     if not set roots, will be used how the db delivers them
+                     if not set, roots will be used how the db delivers them
+ * @returns cytoscape.js cfg object
+ */
+export function genereateCyCfg(entryNodes: Array<Node>): any {
+  const raster = new CytoscapeRaster(entryNodes);
+  return {
+    elements: {
+      nodes: raster.buildCyNodes(),
+      edges: raster.buildCyEdges(),
+    },
+    style: cyStyle,
+    layout: {
+      name: "preset",
+    },
+  };
+}
+
+/**
+ * generates code to initalise cytoscape.js when the page loads the first time
+ * @param entryNodes roots for the graphs, 
+                     if not set, roots will be used how the db delivers them
  * @returns cytoscape.js code as string
  */
 export function generateCyCode(entryNodes: Array<Node>): string {

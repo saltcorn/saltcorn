@@ -2,6 +2,7 @@ import { AbstractTable } from "./abstract_table";
 import type { ConnectedObjects } from "../base_types";
 
 export interface AbstractView {
+  id?: number;
   name: string;
   viewtemplate: string;
   configuration?: string | any;

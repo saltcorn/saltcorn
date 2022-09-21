@@ -3,6 +3,7 @@ import type { Layout } from "../base_types";
 import type { ConnectedObjects } from "../base_types";
 
 export interface AbstractPage {
+  id?: number;
   name: string;
   layout: Layout;
   connected_objects: () => ConnectedObjects;

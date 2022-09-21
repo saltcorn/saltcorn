@@ -2,21 +2,25 @@ import Node from "./node";
 import type { NodeType } from "./node";
 import { AbstractView as View } from "@saltcorn/types/model-abstracts/abstract_view";
 import { AbstractPage as Page } from "@saltcorn/types/model-abstracts/abstract_page";
+import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
 import layout from "../models/layout";
 const { traverseSync } = layout;
 const {
   parse_view_select,
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
-
-import Trigger from "../models/trigger"
+import Trigger from "../models/trigger";
 
 export type ExtractOpts = {
   entryPages?: Array<Page>;
   showViews: boolean;
+  viewFilterIds?: Set<number>;
   showPages: boolean;
+  pageFilterIds?: Set<number>;
   showTables: boolean;
+  tableFilterIds?: Set<number>;
   showTrigger: boolean;
+  triggerFilterIds?: Set<number>;
 };
 
 /**
@@ -53,7 +57,11 @@ async function buildTree(
   const result = new Array<Node>();
   for (const object of objects) {
     const node = new Node(type, object.name);
-    if (!helper.cyIds.has(node.cyId)) {
+    const includeObject =
+      type === "page"
+        ? includePage(<Page>object, helper.opts)
+        : includeView(<View>object, helper.opts);
+    if (includeObject && !helper.cyIds.has(node.cyId)) {
       helper.cyIds.add(node.cyId);
       const connected = await object.connected_objects();
       await helper.handleNodeConnections(node, connected);
@@ -172,30 +180,34 @@ class ExtractHelper {
   ) {
     if (this.opts.showViews)
       for (const embeddedView of connected.embeddedViews || []) {
-        if (embeddedView) await this.addEmbeddedView(oldNode, embeddedView);
+        if (embeddedView && includeView(embeddedView, this.opts))
+          await this.addEmbeddedView(oldNode, embeddedView);
       }
     if (this.opts.showPages)
       for (const linkedPage of connected.linkedPages || []) {
-        if (linkedPage) await this.addLinkedPageNode(oldNode, linkedPage);
+        if (linkedPage && includePage(linkedPage, this.opts))
+          await this.addLinkedPageNode(oldNode, linkedPage);
       }
     if (this.opts.showViews)
       for (const linkedView of connected.linkedViews || []) {
-        if (linkedView) await this.addLinkedViewNode(oldNode, linkedView);
+        if (linkedView && includeView(linkedView, this.opts))
+          await this.addLinkedViewNode(oldNode, linkedView);
       }
     if (this.opts.showTables)
       for (const table of connected.tables || []) {
-        if (table) {
+        if (table && includeTable(table, this.opts)) {
           const tableNode = new Node("table", table.name);
           this.cyIds.add(tableNode.cyId);
-          if(this.opts.showTrigger) {
+          if (this.opts.showTrigger) {
             const triggerNodes = new Array<Node>();
-            for(const trigger of await Trigger.getAllTableTriggers(table)) {
-              const newNode = new Node("trigger", trigger.name!);
-              this.cyIds.add(newNode.cyId);
-              triggerNodes.push(newNode);
+            for (const trigger of await Trigger.getAllTableTriggers(table)) {
+              if (trigger && includeTrigger(trigger, this.opts)) {
+                const newNode = new Node("trigger", trigger.name!);
+                this.cyIds.add(newNode.cyId);
+                triggerNodes.push(newNode);
+              }
             }
-            if(triggerNodes.length > 0)
-              tableNode.trigger = triggerNodes;
+            if (triggerNodes.length > 0) tableNode.trigger = triggerNodes;
           }
           oldNode.tables.push(tableNode);
         }
@@ -232,3 +244,33 @@ class ExtractHelper {
     }
   }
 }
+
+const includePage = (page: Page, opts: ExtractOpts) => {
+  if (opts.showPages) return checkFilterIds(page.id, opts.pageFilterIds);
+  else return false;
+};
+
+const includeView = (view: View, opts: ExtractOpts) => {
+  if (opts.showViews) return checkFilterIds(view.id, opts.viewFilterIds);
+  else return false;
+};
+
+const includeTable = (table: Table, opts: ExtractOpts) => {
+  if (opts.showTables) return checkFilterIds(table.id, opts.tableFilterIds);
+  else return false;
+};
+
+const includeTrigger = (trigger: Trigger, opts: ExtractOpts) => {
+  if (opts.showTrigger)
+    return checkFilterIds(trigger.id, opts.triggerFilterIds);
+  else return false;
+};
+
+const checkFilterIds = (
+  id?: number | null,
+  filterIds?: Set<number>
+): boolean => {
+  if (!filterIds) return true;
+  else if (!id) return false;
+  else return filterIds.has(id);
+};
