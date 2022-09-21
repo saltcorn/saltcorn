@@ -599,6 +599,8 @@ const columnSummary = (col) => {
       return `Field ${col.field_name} ${col.fieldview || ""}`;
     case "Link":
       return `Link ${col.link_text}`;
+    case "FormulaValue":
+      return `Formula ${col.formula}`;
     case "JoinField":
       return `Join ${col.join_field}`;
     case "ViewLink":

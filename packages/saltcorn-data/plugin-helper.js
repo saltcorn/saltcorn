@@ -486,6 +486,13 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       },
     },
     {
+      name: "formula",
+      label: __("Formula"),
+      type: "String",
+      class: "validate-expression",
+      showIf: { type: "FormulaValue" },
+    },
+    {
       name: "field_name",
       label: __("Field"),
       type: "String",
@@ -781,13 +788,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
         inline: true,
         options: ["px", "%", "vw", "em", "rem"],
       },
-    },
-    {
-      name: "Formula",
-      label: __("Formula"),
-      type: "String",
-      class: "validate-expression",
-      showIf: { type: "FormulaValue" },
     },
   ];
 };

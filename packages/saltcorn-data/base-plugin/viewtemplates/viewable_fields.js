@@ -448,7 +448,7 @@ const get_viewable_fields = (
     const setWidth = column.col_width
       ? { width: `${column.col_width}${column.col_width_units}` }
       : {};
-    if (column.type === "Action") {
+    if (column.type === "FormulaValue") {
       return {
         ...setWidth,
         label: column.header_label ? text(__(column.header_label)) : "",
