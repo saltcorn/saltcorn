@@ -449,6 +449,12 @@ const get_viewable_fields = (
       ? { width: `${column.col_width}${column.col_width_units}` }
       : {};
     if (column.type === "Action") {
+      return {
+        ...setWidth,
+        label: column.header_label ? text(__(column.header_label)) : "",
+        key: (r) => text(eval_expression(column.formula, r))
+      }
+    } else if (column.type === "Action") {
       const action_col = {
         ...setWidth,
         label: column.header_label ? text(__(column.header_label)) : "",

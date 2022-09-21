@@ -480,6 +480,8 @@ const field_picker_fields = async ({ table, viewname, req }) => {
           ...(child_field_list.length > 0
             ? [{ name: "Aggregation", label: __("Aggregation") }]
             : []),
+          { name: "FormulaValue", label: __("Formula value") },
+
         ],
       },
     },
@@ -780,6 +782,13 @@ const field_picker_fields = async ({ table, viewname, req }) => {
         options: ["px", "%", "vw", "em", "rem"],
       },
     },
+    {
+      name: "Formula",
+      label: __("Formula"),
+      type: "String",
+      class: "validate-expression",
+      showIf: { type: "FormulaValue" },
+    },
   ];
 };
 
@@ -928,6 +937,11 @@ const picked_fields_to_query = (columns, fields, layout) => {
           `Join field is specified as column but no join field is chosen`
         );
       }
+    } else if (column.type === "FormulaValue") {
+      freeVars = new Set([
+        ...freeVars,
+        ...freeVariables(column.formula),
+      ]);
     } else if (column.type === "ViewLink") {
       if (column.view_label_formula)
         freeVars = new Set([...freeVars, ...freeVariables(column.view_label)]);
