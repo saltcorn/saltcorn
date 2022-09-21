@@ -118,24 +118,27 @@ function apply_showif() {
       e.empty();
       e.prop('data-fetch-options-current-set', qs)
       if (!dynwhere.required) e.append($(`<option></option>`));
+      const dataOptions = []
       success.forEach((r) => {
+        const label = dynwhere.label_formula
+          ? new Function(
+            `{${Object.keys(r).join(",")}}`,
+            "return " + dynwhere.label_formula
+          )(r)
+          : r[dynwhere.summary_field]
+        const value = r[dynwhere.refname]
+        const selected = `${current}` === `${r[dynwhere.refname]}`
+        dataOptions.push({ text: label, value })
+        const html = `<option ${selected ? "selected" : ""
+          } value="${value}">${label}</option>`
         e.append(
-          $(
-            `<option ${`${current}` === `${r[dynwhere.refname]}` ? "selected" : ""
-            } value="${r[dynwhere.refname]}">${dynwhere.label_formula
-              ? new Function(
-                `{${Object.keys(r).join(",")}}`,
-                "return " + dynwhere.label_formula
-              )(r)
-              : r[dynwhere.summary_field]
-            }</option>`
-          )
+          $(html)
         );
       });
       element.dispatchEvent(new Event('RefreshSelectOptions'))
       if (e.hasClass("selectized") && $().selectize) {
-        e.selectize()[0].selectize.destroy();
-        setTimeout(() => e.selectize(), 0)
+        e.selectize()[0].selectize.clearOptions();
+        e.selectize()[0].selectize.addOption(dataOptions);
       }
     }
 
