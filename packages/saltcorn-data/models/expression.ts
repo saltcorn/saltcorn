@@ -310,13 +310,13 @@ function get_expression_function(
 function eval_expression(expression: string, row: any, user?: any): any {
   const field_names = Object.keys(row);
   const args = field_names.includes("user")
-    ? `{${field_names.join()}}`
-    : `{${field_names.join()}}, user`;
+    ? `row, {${field_names.join()}}`
+    : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   return runInNewContext(
     `(${args})=>(${expression})`,
     getState().function_context
-  )(row, user);
+  )(row, row, user);
 }
 
 /**
