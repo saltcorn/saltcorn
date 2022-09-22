@@ -437,6 +437,9 @@ const field_picker_fields = async ({ table, viewname, req }) => {
         aggStatOptions[aggKey].push(
           `Latest ${f.name}`
         );
+        aggStatOptions[aggKey].push(
+          `Earliest ${f.name}`
+        );
       }
     });
     return {
