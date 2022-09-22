@@ -989,5 +989,7 @@
 	"Add entries to tag": "Add entries to tag",
 	"Add pages": "Add pages",
 	"Add triggers": "Add triggers",
-	"Formula value": "Formula value"
+	"Formula value": "Formula value",
+	"The build was successfully": "The build was successfully",
+	"Unable to build the app:": "Unable to build the app:"
 }

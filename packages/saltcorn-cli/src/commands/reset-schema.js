@@ -32,7 +32,7 @@ class ResetCommand extends Command {
         if (ans) await reset(false, schema);
       }
     });
-    console.log(`Success: Command execution successfully`);
+    console.log("Successfully ran the 'reset-schema' command");
     this.exit(0);
   }
 }

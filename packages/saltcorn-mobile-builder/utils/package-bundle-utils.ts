@@ -33,6 +33,7 @@ export async function bundlePackagesAndPlugins(
     force: true,
     recursive: true,
   });
+  return result.status;
 }
 
 /**

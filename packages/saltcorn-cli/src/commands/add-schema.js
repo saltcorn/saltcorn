@@ -27,7 +27,7 @@ class AddSchemaCommand extends Command {
       }
     }
     await reset(true);
-    console.log(`Success: Command execution successfully`);
+    console.log(`Successfully ran the 'add-schema' command`);
     this.exit(0);
   }
 }

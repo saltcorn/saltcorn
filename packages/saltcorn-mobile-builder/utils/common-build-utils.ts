@@ -136,4 +136,5 @@ export async function createSqliteDb(buildDir: string) {
     },
   });
   console.log(result.output.toString());
+  return result.status;
 }

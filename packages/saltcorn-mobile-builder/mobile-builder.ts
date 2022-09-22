@@ -96,14 +96,28 @@ export class MobileBuilder {
       serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: this.localUserTables,
     });
-    await bundlePackagesAndPlugins(this.buildDir, this.plugins);
+    let resultCode = await bundlePackagesAndPlugins(
+      this.buildDir,
+      this.plugins
+    );
+    if (resultCode !== 0) return resultCode;
     await copyPublicDirs(this.buildDir, this.pluginManager, this.plugins);
     await installNpmPackages(this.buildDir, this.pluginManager);
     await buildTablesFile(this.buildDir);
-    await createSqliteDb(this.buildDir);
-    const resultCode = buildApp(this.buildDir, this.platforms, this.useDocker, this.buildForEmulator);
+    resultCode = await createSqliteDb(this.buildDir);
+    if (resultCode !== 0) return resultCode;
+    resultCode = buildApp(
+      this.buildDir,
+      this.platforms,
+      this.useDocker,
+      this.buildForEmulator
+    );
     if (resultCode === 0 && this.copyTargetDir) {
-      await tryCopyAppFiles(this.buildDir, this.copyTargetDir, this.copyFileName);
+      await tryCopyAppFiles(
+        this.buildDir,
+        this.copyTargetDir,
+        this.copyFileName
+      );
     }
     return resultCode;
   }
