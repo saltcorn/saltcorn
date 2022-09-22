@@ -1488,12 +1488,18 @@ class Table implements AbstractTable {
           }) ${sqlsanitize(fldnm)}`;
 
           fldNms.push(newFld);
-        } else if (aggregate.startsWith("Latest ")) {
-          const dateField = aggregate.replace("Latest ", "");
+        } else if (
+          aggregate.startsWith("Latest ") ||
+          aggregate.startsWith("Earliest ")
+        ) {
+          const dateField = aggregate.split(" ")[1];
+          const isLatest = aggregate.startsWith("Latest ");
           fldNms.push(
             `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
               table
-            )}" where ${dateField}=(select max(${dateField}) from ${schema}"${sqlsanitize(
+            )}" where ${dateField}=(select ${
+              isLatest ? `max` : `min`
+            }(${dateField}) from ${schema}"${sqlsanitize(
               table
             )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
               whereStr ? ` and ${whereStr}` : ""
