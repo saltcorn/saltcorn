@@ -40,10 +40,25 @@ const addDependOn = (dataEntryPoint, b) => {
 
 const buildPluginEntries = async (plugins) => {
   let result = [];
-  for (plugin of JSON.parse(plugins)) {
+  const nameToModule = new Map();
+  for (plugin of plugins) {
     const requireResult = await requirePlugin(plugin, false, manager);
+    const packageName = require(`${requireResult.location}/package.json`).name;
+    nameToModule.set(plugin.name, { packageName, requireResult });
+  }
+  const nameByPackageName = (pckName) => {
+    for(const [pluginName, value] of nameToModule.entries()) {
+      if(value.packageName === pckName) {
+        return pluginName
+      }
+    }
+    throw new Error(`Unable to find a plugin name for package: '${pckName}'`)
+  };
+
+  for (plugin of plugins) {
+    const { requireResult }  = nameToModule.get(plugin.name);
     const additionalDependencies = requireResult.plugin_module?.dependencies
-      ? requireResult.plugin_module.dependencies
+      ? requireResult.plugin_module.dependencies.map((dep) => nameByPackageName(dep))
       : [];
     const genericEntry = {
       [plugin.name]: {
@@ -59,7 +74,9 @@ const buildPluginEntries = async (plugins) => {
 };
 
 module.exports = async (env) => {
-  const pluginEntries = env.plugins ? await buildPluginEntries(env.plugins) : [];
+  const pluginEntries = env.plugins
+    ? await buildPluginEntries(JSON.parse(env.plugins))
+    : [];
   return mergeWithCustomize({
     customizeArray(a, b, key) {
       if (key === "library") {
