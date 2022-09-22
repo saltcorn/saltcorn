@@ -16,6 +16,8 @@ const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
 const { isNode } = require("../../utils");
+const { bool, date } = require("../types");
+
 
 /**
  * formats the column index of a view cfg
@@ -597,7 +599,14 @@ const get_viewable_fields = (
         fld +
         db.sqlsanitize(column.aggwhere || "")
       ).toLowerCase();
-      let key = targetNm;
+      let key = r => {
+        const value = r[targetNm]
+        if (value === true || value === false)
+          return bool.fieldviews.show.run(value)
+        if (value instanceof Date)
+          return date.fieldviews.show.run(value)
+        return value
+      };
       if (column.stat.toLowerCase() === "array_agg")
         key = (r) =>
           Array.isArray(r[targetNm])
