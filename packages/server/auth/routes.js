@@ -217,6 +217,7 @@ const loginWithJwt = async (email, password, res) => {
         iss: "saltcorn@saltcorn",
         aud: "saltcorn-mobile-app",
         iat: now.valueOf(),
+        tenant: db.getTenantSchema()
       },
       jwt_secret
     );

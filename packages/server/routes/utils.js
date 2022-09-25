@@ -103,6 +103,8 @@ const get_tenant_from_req = (req) => {
   if (req.subdomains && req.subdomains.length > 0)
     return req.subdomains[req.subdomains.length - 1];
 
+  if (req.headers["x-saltcorn-app"])
+    return req.headers["x-saltcorn-app"];
   if (req.subdomains && req.subdomains.length == 0)
     return db.connectObj.default_schema;
   if (!req.subdomains && req.headers.host) {

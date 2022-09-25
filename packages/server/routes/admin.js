@@ -980,7 +980,7 @@ router.post(
     res.attachment(fileName);
     const file = fs.createReadStream(fileName);
     file.on("end", function () {
-      fs.unlink(fileName, function () { });
+      fs.unlink(fileName, function () {});
     });
     file.pipe(res);
   })
@@ -1003,7 +1003,7 @@ router.post(
     );
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
-    fs.unlink(newPath, function () { });
+    fs.unlink(newPath, function () {});
     res.redirect(`/admin`);
   })
 );
@@ -1547,6 +1547,12 @@ router.post(
     }
     if (appFile) spawnParams.push("-a", appFile);
     if (serverURL) spawnParams.push("-s", serverURL);
+    if (
+      db.is_it_multi_tenant() &&
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
+      spawnParams.push("--tenantAppName", db.getTenantSchema());
+    }
     const child = spawn("saltcorn", spawnParams, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",

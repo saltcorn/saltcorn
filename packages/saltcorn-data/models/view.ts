@@ -425,9 +425,8 @@ class View implements AbstractView {
       : {};
     if (remote) {
       const { getState } = require("../db/state");
-
-      const base_url =
-        getState().getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
+      const state = getState();
+      const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
       Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
@@ -436,6 +435,9 @@ class View implements AbstractView {
             "X-Requested-With": "XMLHttpRequest",
             "X-Saltcorn-Client": "mobile-app",
           };
+          if (state.mobileConfig?.tenantAppName) {
+            headers["X-Saltcorn-App"] = state.mobileConfig.tenantAppName;
+          }
           const token = window.localStorage.getItem("auth_jwt");
           if (token) headers.Authorization = `jwt ${token}`;
           try {

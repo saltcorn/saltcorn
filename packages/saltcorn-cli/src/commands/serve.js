@@ -45,6 +45,8 @@ class ServeCommand extends Command {
       const db = require("@saltcorn/data/db");
       db.set_sql_logging();
     }
+    if (flags.subdomain_offset)
+      serveArgs.subdomainOffset = flags.subdomain_offset;
     const serve = require("@saltcorn/server/serve");
     await serve(serveArgs);
   }
@@ -70,6 +72,10 @@ ServeCommand.flags = {
   addschema: flags.boolean({ char: "a", description: "Add schema if missing" }),
   nomigrate: flags.boolean({ char: "n", description: "No migrations" }),
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),
+  subdomain_offset: flags.integer({
+    string: "subdomain_offset",
+    description: "Number of parts to remove to access subdomain in 'multi_tenant' mode",
+  }),
 };
 
 module.exports = ServeCommand;
