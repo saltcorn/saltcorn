@@ -123,6 +123,7 @@ function apply_showif() {
       e.empty();
       e.prop('data-fetch-options-current-set', qs)
       if (!dynwhere.required) e.append($(`<option></option>`));
+      let currentDataOption = undefined;
       const dataOptions = []
       success.forEach((r) => {
         const label = dynwhere.label_formula
@@ -133,7 +134,8 @@ function apply_showif() {
           : r[dynwhere.summary_field]
         const value = r[dynwhere.refname]
         const selected = `${current}` === `${r[dynwhere.refname]}`
-        dataOptions.push({ text: label, value })
+        dataOptions.push({ text: label, value });
+        if (selected) currentDataOption = value;
         const html = `<option ${selected ? "selected" : ""
           } value="${value}">${label}</option>`
         e.append(
@@ -144,6 +146,9 @@ function apply_showif() {
       if (e.hasClass("selectized") && $().selectize) {
         e.selectize()[0].selectize.clearOptions();
         e.selectize()[0].selectize.addOption(dataOptions);
+        if (typeof currentDataOption !== "undefined")
+          e.selectize()[0].selectize.setValue(currentDataOption);
+
       }
     }
 
