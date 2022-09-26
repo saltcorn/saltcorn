@@ -599,18 +599,21 @@ const get_viewable_fields = (
         fld +
         db.sqlsanitize(column.aggwhere || "")
       ).toLowerCase();
-      let key = r => {
-        const value = r[targetNm]
+      let showValue = value => {
         if (value === true || value === false)
           return bool.fieldviews.show.run(value)
         if (value instanceof Date)
           return date.fieldviews.show.run(value)
-        return value
+        return value?.toString ? value.toString() : value
+      }
+      let key = r => {
+        const value = r[targetNm]
+        return showValue(value)
       };
       if (column.stat.toLowerCase() === "array_agg")
         key = (r) =>
           Array.isArray(r[targetNm])
-            ? r[targetNm].map((v) => v.toString()).join(", ")
+            ? r[targetNm].map((v) => showValue(v)).join(", ")
             : "";
       return {
         ...setWidth,

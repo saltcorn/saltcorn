@@ -34,7 +34,12 @@ function add_repeater(nm) {
   });
   newe.appendTo($("div.repeats-" + nm));
 }
-// "e.closest('.form-namespace').find('.coltype').val()==='Field';"
+
+const _apply_showif_plugins = []
+
+const add_apply_showif_plugin = p => {
+  _apply_showif_plugins.push(p)
+}
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
@@ -118,6 +123,7 @@ function apply_showif() {
       e.empty();
       e.prop('data-fetch-options-current-set', qs)
       if (!dynwhere.required) e.append($(`<option></option>`));
+      let currentDataOption = undefined;
       const dataOptions = []
       success.forEach((r) => {
         const label = dynwhere.label_formula
@@ -128,7 +134,8 @@ function apply_showif() {
           : r[dynwhere.summary_field]
         const value = r[dynwhere.refname]
         const selected = `${current}` === `${r[dynwhere.refname]}`
-        dataOptions.push({ text: label, value })
+        dataOptions.push({ text: label, value });
+        if (selected) currentDataOption = value;
         const html = `<option ${selected ? "selected" : ""
           } value="${value}">${label}</option>`
         e.append(
@@ -139,6 +146,9 @@ function apply_showif() {
       if (e.hasClass("selectized") && $().selectize) {
         e.selectize()[0].selectize.clearOptions();
         e.selectize()[0].selectize.addOption(dataOptions);
+        if (typeof currentDataOption !== "undefined")
+          e.selectize()[0].selectize.setValue(currentDataOption);
+
       }
     }
 
@@ -168,6 +178,7 @@ function apply_showif() {
       },
     });
   });
+  _apply_showif_plugins.forEach(p => p())
 }
 function get_form_record(e, select_labels) {
   const rec = {};

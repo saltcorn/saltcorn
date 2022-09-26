@@ -299,7 +299,9 @@ section.range-slider input[type="range"]::-moz-focus-outer {
   padding: 0.1rem 0.4rem !important;
 }
 
-table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
+table.table-inner-grid,
+table.table-inner-grid th,
+table.table-inner-grid td {
   border: 1px solid black;
   border-collapse: collapse;
 }
@@ -307,18 +309,18 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
 /* https://codepen.io/pezmotion/pen/RQERdm */
 
 .editStarRating {
-	direction: rtl;
-	unicode-bidi: bidi-override;
-	color: #ddd;
+  direction: rtl;
+  unicode-bidi: bidi-override;
+  color: #ddd;
 }
 .editStarRating input {
-	display: none;
+  display: none;
 }
 .editStarRating label:hover,
 .editStarRating label:hover ~ label,
 .editStarRating input:checked + label,
 .editStarRating input:checked + label ~ label {
-	color: #ffc107; 
+  color: #ffc107;
 }
 
 .CodeMirror {
@@ -326,12 +328,12 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
 }
 
 /* copied from bootstrap and adjusted to show the arrow on the left */
-.card .card-header-left-collapse[data-bs-toggle=collapse] {
+.card .card-header-left-collapse[data-bs-toggle="collapse"] {
   text-decoration: none;
   position: relative;
   padding: 0.75rem 3.25rem 0.75rem 1.25rem;
 }
-.card .card-header-left-collapse[data-bs-toggle=collapse]::before {
+.card .card-header-left-collapse[data-bs-toggle="collapse"]::before {
   position: absolute;
   left: 0;
   top: 0;
@@ -341,9 +343,13 @@ table.table-inner-grid, table.table-inner-grid th, table.table-inner-grid td {
   font-family: "Font Awesome 5 Free";
   color: #d1d3e2;
 }
-.card .card-header-left-collapse[data-bs-toggle=collapse].collapsed {
+.card .card-header-left-collapse[data-bs-toggle="collapse"].collapsed {
   border-radius: 0.35rem;
 }
-.card .card-header-left-collapse[data-bs-toggle=collapse].collapsed::before {
+.card .card-header-left-collapse[data-bs-toggle="collapse"].collapsed::before {
   content: "\f105";
+}
+
+.d-inline-maybe {
+  display: inline;
 }
