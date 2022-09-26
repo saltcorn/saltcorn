@@ -619,7 +619,7 @@ const columnSummary = (col) => {
     case "Action":
       return `Action ${col.action_label || col.action_name}`;
     case "Aggregation":
-      return `${col.stat} ${col.agg_field} ${col.agg_relation}`;
+      return `${col.stat} ${col.agg_field.split("@")[0]} ${col.agg_relation}`;
     default:
       return "Unknown";
   }

@@ -450,7 +450,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       attributes: {
         options: table.fields
           .filter((f) => !f.calculated || f.stored)
-          .map((f) => f.name),
+          .map((f) => ({ label: f.name, name: `${f.name}@${f.type_name}` })),
       },
       showIf: {
         agg_relation: aggKey,
@@ -978,7 +978,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
         }
 
 
-        const field = column.agg_field;
+        const field = column.agg_field.split("@")[0];
         const targetNm = (
           column.stat.replace(" ", "") +
           "_" +
