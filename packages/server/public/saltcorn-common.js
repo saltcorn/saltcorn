@@ -180,6 +180,15 @@ function apply_showif() {
   });
   _apply_showif_plugins.forEach(p => p())
 }
+
+function splitTargetMatch(elemValue, target, keySpec) {
+  if (!elemValue) return false;
+  const [fld, keySpec1] = keySpec.split("|_")
+  const [sep, pos] = keySpec1.split("_")
+  const elemValueShort = elemValue.split(sep)[pos]
+  return elemValueShort === target;
+}
+
 function get_form_record(e, select_labels) {
   const rec = {};
   e.closest("form")
