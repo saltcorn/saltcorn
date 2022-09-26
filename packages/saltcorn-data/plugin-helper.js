@@ -428,7 +428,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       .filter(([k, v]) => !v.isEdit && !v.isFilter)
       .map(([k, v]) => k)
     agg_fieldviews.push({
-      name: `fieldview`,
+      name: `agg_fieldview`,
       label: __("Field view"),
       type: "String",
       required: true,
