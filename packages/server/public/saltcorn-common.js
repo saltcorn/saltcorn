@@ -34,7 +34,12 @@ function add_repeater(nm) {
   });
   newe.appendTo($("div.repeats-" + nm));
 }
-// "e.closest('.form-namespace').find('.coltype').val()==='Field';"
+
+const _apply_showif_plugins = []
+
+const add_apply_showif_plugin = p => {
+  _apply_showif_plugins.push(p)
+}
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
@@ -168,6 +173,7 @@ function apply_showif() {
       },
     });
   });
+  _apply_showif_plugins.forEach(p => p())
 }
 function get_form_record(e, select_labels) {
   const rec = {};
