@@ -431,7 +431,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: `agg_fieldview`,
       label: __("Field view"),
       type: "String",
-      required: true,
       attributes: {
         options: fvnames
       },
