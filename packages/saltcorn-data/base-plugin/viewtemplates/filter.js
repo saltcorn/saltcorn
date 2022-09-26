@@ -304,7 +304,7 @@ const run = async (
       return select(
         {
           name: `ddfilter${field_name}`,
-          class: "form-control form-select d-inline selectizable",
+          class: "form-control form-select d-inline-maybe selectizable",
           style: full_width ? undefined : "width: unset;",
           onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
             field_name
