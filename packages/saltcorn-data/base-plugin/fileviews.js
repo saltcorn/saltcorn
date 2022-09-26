@@ -119,7 +119,7 @@ module.exports = {
     run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {
-          class: `form-control form-select ${cls} ${field.class || ""}`,
+          class: `form-control form-select selectizable ${cls} ${field.class || ""}`,
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
