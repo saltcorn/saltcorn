@@ -604,7 +604,7 @@ const get_viewable_fields = (
           return bool.fieldviews.show.run(value)
         if (value instanceof Date)
           return date.fieldviews.show.run(value)
-        return value.toString()
+        return value?.toString ? value.toString() : value
       }
       let key = r => {
         const value = r[targetNm]
