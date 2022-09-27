@@ -763,7 +763,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       showIf: { type: "Aggregation" },
     },
     ...agg_field_opts,
-    ...agg_fieldviews,
     {
       name: "stat",
       label: __("Statistic"),
@@ -775,6 +774,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
 
       showIf: { type: "Aggregation" },
     },
+    ...agg_fieldviews,
     {
       name: "aggwhere",
       label: __("Where"),
@@ -996,7 +996,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
           [table, fld] = column.agg_relation.split(".");
         }
 
-
+        console.log(column);
         const field = column.agg_field.split("@")[0];
         const targetNm = (
           column.stat.replace(" ", "") +
