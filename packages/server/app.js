@@ -85,6 +85,8 @@ const getApp = async (opts = {}) => {
   const development_mode = getState().getConfig("development_mode", false);
   // switch on sql logging - but it was initiated before???
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
+  // for multi-tenant with localhost, we need 1 instead of the default of 2
+  if (opts.subdomainOffset) app.set("subdomain offset", opts.subdomainOffset);
 
   // https://www.npmjs.com/package/helmet
   // helmet is secure app by adding HTTP headers
@@ -225,8 +227,9 @@ const getApp = async (opts = {}) => {
     })
   );
   passport.use(
-    new JwtStrategy(jwtOpts, (jwt_payload, done) => {
-      User.findOne({ email: jwt_payload.sub }).then((u) => {
+    new JwtStrategy(jwtOpts, async (jwt_payload, done) => {
+      const userCheck = async () => {
+        const u = await User.findOne({ email: jwt_payload.sub });
         if (
           u &&
           u.last_mobile_login &&
@@ -242,7 +245,16 @@ const getApp = async (opts = {}) => {
         } else {
           return done(null, { role_id: 10 });
         }
-      });
+      };
+      if (
+        db.is_it_multi_tenant() &&
+        jwt_payload.tenant?.length > 0 && 
+        jwt_payload.tenant !== db.connectObj.default_schema
+      ) {
+        return await db.runWithTenant(jwt_payload.tenant, userCheck);
+      } else {
+        return await userCheck();
+      }
     })
   );
   passport.use(
@@ -259,6 +271,12 @@ const getApp = async (opts = {}) => {
   passport.deserializeUser(function (user, done) {
     done(null, user);
   });
+  app.use(function (req, res, next) {
+    if (req.headers["x-saltcorn-client"] === "mobile-app") {
+      req.smr = true; // saltcorn-mobile-request
+    }
+    return next();
+  });
   app.use(setTenant);
 
   // Change into s3storage compatible selector
@@ -267,25 +285,21 @@ const getApp = async (opts = {}) => {
   app.use(s3storage.middlewareTransform);
 
   app.use(wrapper(version_tag));
+
   const csurf = csrf();
   if (!opts.disableCsrf)
     app.use(function (req, res, next) {
       if (
-        req.url.startsWith("/api/") ||
-        req.url === "/auth/login-with/jwt" ||
+        (req.smr &&
+          (req.url.startsWith("/api/") ||
+            req.url === "/auth/login-with/jwt" ||
+            req.url === "/auth/signup")) ||
         jwt_extractor(req)
       )
         return disabledCsurf(req, res, next);
       csurf(req, res, next);
     });
   else app.use(disabledCsurf);
-
-  app.use(function (req, res, next) {
-    if (req.headers["x-saltcorn-client"] === "mobile-app") {
-      req.smr = true; // saltcorn-mobile-request
-    }
-    return next();
-  });
 
   mountRoutes(app);
   // set tenant homepage as / root

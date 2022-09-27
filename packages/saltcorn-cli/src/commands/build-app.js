@@ -2,6 +2,9 @@ const { Command, flags } = require("@oclif/command");
 const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
+const { init_multi_tenant } = require("@saltcorn/data/db/state");
+const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 
 /**
  *
@@ -11,6 +14,7 @@ class BuildAppCommand extends Command {
   staticPlugins = ["base", "sbadmin2"];
 
   validateParameters(flags) {
+    const db = require("@saltcorn/data/db");
     if (!flags.buildDirectory) {
       throw new Error("Please specify a build directory");
     }
@@ -23,6 +27,11 @@ class BuildAppCommand extends Command {
     for (const platform of flags.platforms)
       if (!this.supportedPlatforms.includes(platform))
         throw new Error(`The platform '${platform}' is not supported`);
+    if (!db.is_it_multi_tenant() && flags.tenantAppName) {
+      throw new Error(
+        `To build for tenant '${flags.tenantAppName}' please activate multi-tenancy`
+      );
+    }
   }
 
   async run() {
@@ -32,35 +41,57 @@ class BuildAppCommand extends Command {
       require.resolve("@saltcorn/mobile-app"),
       ".."
     );
-    const dynamicPlugins = (await Plugin.find()).filter(
-      (plugin) => !this.staticPlugins.includes(plugin.name)
-    );
-    const builder = new MobileBuilder({
-      templateDir: mobileAppDir,
-      buildDir: flags.buildDirectory,
-      cliDir: path.join(__dirname, "../.."),
-      useDocker: flags.useDocker,
-      platforms: flags.platforms,
-      localUserTables: flags.localUserTables,
-      entryPoint: flags.entryPoint,
-      entryPointType: flags.entryPointType ? flags.entryPointType : "view",
-      serverURL: flags.serverURL,
-      plugins: dynamicPlugins,
-      copyTargetDir: flags.copyAppDirectory,
-      copyFileName: flags.appFileName,
-      buildForEmulator: flags.buildForEmulator,
-    });
-    process.exit(await builder.build());
+    const db = require("@saltcorn/data/db");
+    if (db.is_it_multi_tenant()) {
+      const tenants = await getAllTenants();
+      await init_multi_tenant(loadAllPlugins, true, tenants);
+    }
+    const doBuild = async () => {
+      const dynamicPlugins = (await Plugin.find()).filter(
+        (plugin) => !this.staticPlugins.includes(plugin.name)
+      );
+      const builder = new MobileBuilder({
+        templateDir: mobileAppDir,
+        buildDir: flags.buildDirectory,
+        cliDir: path.join(__dirname, "../.."),
+        useDocker: flags.useDocker,
+        platforms: flags.platforms,
+        localUserTables: flags.localUserTables,
+        entryPoint: flags.entryPoint,
+        entryPointType: flags.entryPointType ? flags.entryPointType : "view",
+        serverURL: flags.serverURL,
+        plugins: dynamicPlugins,
+        copyTargetDir: flags.copyAppDirectory,
+        copyFileName: flags.appFileName,
+        buildForEmulator: flags.buildForEmulator,
+        tenantAppName: flags.tenantAppName,
+      });
+      process.exit(await builder.build());
+    };
+    if (
+      flags.tenantAppName &&
+      flags.tenantAppName !== db.connectObj.default_schema
+    ) {
+      await db.runWithTenant(flags.tenantAppName, doBuild);
+    } else {
+      await doBuild();
+    }
   }
 }
 
 BuildAppCommand.description = "build mobile app";
 
 BuildAppCommand.flags = {
+  tenantAppName: flags.string({
+    name: "tenant",
+    string: "tenant",
+    description:
+      "Optional name of a tenant application, if set, the app will be build for this tenant",
+  }),
   platforms: flags.string({
     name: "platforms",
     char: "p",
-    description: "Platforms to build for space separated list",
+    description: "Platforms to build for, space separated list",
     multiple: true,
   }),
   entryPoint: flags.string({
@@ -107,8 +138,9 @@ BuildAppCommand.flags = {
   }),
   buildForEmulator: flags.boolean({
     name: "build for emulator",
-    description: "build without '--device', generates no .ipa file so that iOS apps can be build without developer accounts"
-  })
+    description:
+      "build without '--device', generates no .ipa file so that iOS apps can be build without developer accounts",
+  }),
 };
 
 module.exports = BuildAppCommand;
