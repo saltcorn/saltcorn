@@ -476,10 +476,10 @@ router.get(
                 li(
                   a({ href: "/admin/clear-all" }, req.__("Clear this application")),
                   " ",
-                    req.__("(tick all boxes)")
+                  req.__("(tick all boxes)")
                 ),
                 li(
-                    req.__("When prompted to create the first user, click the link to restore a backup")
+                  req.__("When prompted to create the first user, click the link to restore a backup")
                 ),
                 li(req.__("Select the downloaded backup file"))
               )
@@ -1198,10 +1198,15 @@ router.get(
   "/configuration-check",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { passes, errors, pass } = await runConfigurationCheck(req);
+    const { passes, errors, pass, warnings } = await runConfigurationCheck(req);
     const mkError = (err) =>
       div(
         { class: "alert alert-danger", role: "alert" },
+        pre({ class: "mb-0" }, code(err))
+      );
+    const mkWarning = (err) =>
+      div(
+        { class: "alert alert-warning", role: "alert" },
         pre({ class: "mb-0" }, code(err))
       );
     res.sendWrap(req.__(`Admin`), {
@@ -1227,7 +1232,8 @@ router.get(
                   req.__("No errors detected during configuration check")
                 )
               )
-              : errors.map(mkError)
+              : errors.map(mkError),
+            (warnings || []).map(mkWarning)
           ),
         },
         {
@@ -1269,11 +1275,10 @@ const buildDialogScript = () => {
   
   function handleMessages() {
     notifyAlert("This is still under development and might run longer.")
-    ${
-      getState().getConfig("apple_team_id") &&
+    ${getState().getConfig("apple_team_id") &&
       getState().getConfig("apple_team_id") !== "null"
-        ? ""
-        : `  
+      ? ""
+      : `  
     if ($("#iOSCheckboxId")[0].checked) {
       notifyAlert(
         "No 'Apple Team ID' is configured, I will try to build a project for the iOS simulator."
