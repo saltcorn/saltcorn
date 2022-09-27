@@ -716,23 +716,29 @@ class View implements AbstractView {
       throw new InvalidConfiguration(
         `Unable to execute 'get_config_flow' of view '${this.name}', 'this.name' must be set.`
       );
-
+    const onDoneRedirect = req.query?.on_done_redirect;
+    let action = `/viewedit/config/${encodeURIComponent(this.name)}`;
+    if (onDoneRedirect) {
+      action = `${action}?on_done_redirect=${onDoneRedirect}`;
+    }
     const configFlow = this.viewtemplateObj!.configuration_workflow(req);
-    configFlow.action = `/viewedit/config/${encodeURIComponent(this.name)}`;
+    configFlow.action = action;
     const oldOnDone = configFlow.onDone || ((c: any) => c);
     configFlow.onDone = async (ctx: any) => {
       const { table_id, ...configuration } = await oldOnDone(ctx);
 
       await View.update({ configuration }, this.id!);
       return {
-        redirect: `/viewedit`,
+        redirect: onDoneRedirect ? `/${onDoneRedirect}` : `/viewedit`,
         flash: ["success", `View ${this.name || ""} saved`],
       };
     };
     configFlow.saveURL = `/viewedit/saveconfig/${this.name}`;
     configFlow.autoSave = true;
     configFlow.startAtStepURL = (stepNm) =>
-      `/viewedit/config/${this.name}?step=${stepNm}`;
+      `/viewedit/config/${this.name}?step=${stepNm}${
+        onDoneRedirect ? onDoneRedirect : ""
+      }`;
     return configFlow;
   }
 

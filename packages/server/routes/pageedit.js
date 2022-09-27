@@ -21,7 +21,7 @@ const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
 const { getPageList } = require("./common_lists");
 
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -54,7 +54,7 @@ const pagePropertiesForm = async (req) => {
   const roles = await User.get_roles();
 
   const form = new Form({
-    action: "/pageedit/edit-properties",
+    action: addOnDoneRedirect("/pageedit/edit-properties", req),
     fields: [
       new Field({
         label: req.__("Name"),
@@ -357,7 +357,7 @@ router.post(
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
         if (!pageRow.layout) pageRow.layout = {};
         await Page.create(pageRow);
-        res.redirect(`/pageedit/edit/${pageRow.name}`);
+        res.redirect(addOnDoneRedirect(`/pageedit/edit/${pageRow.name}`, req));
       }
     }
   })
@@ -416,20 +416,23 @@ router.post(
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
 
+    let redirectTarget = req.query.on_done_redirect
+      ? `/${req.query.on_done_redirect}`
+      : "/pageedit";
     const page = await Page.findOne({ name: pagename });
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
-      res.redirect(`/pageedit`);
+      res.redirect(redirectTarget);
     } else if (req.body.layout) {
       await Page.update(page.id, {
         layout: decodeURIComponent(req.body.layout),
       });
 
       req.flash("success", req.__(`Page %s saved`, pagename));
-      res.redirect(`/pageedit`);
+      res.redirect(redirectTarget);
     } else {
       req.flash("error", req.__(`Error processing page`));
-      res.redirect(`/pageedit`);
+      res.redirect(redirectTarget);
     }
   })
 );

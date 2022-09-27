@@ -257,6 +257,20 @@ const getSessionStore = () => {
   }
 };
 
+/**
+ * appends 'req.query.on_done_redirect' to 'oldPath' if it exists
+ * @param {string} oldPath path without 'on_done_redirect'
+ * @param {any} req express request
+ * @returns a new string with or without on_done_redirect=...
+ */
+const addOnDoneRedirect = (oldPath, req) => {
+  const separator = oldPath.indexOf("?") > -1 ? "&" : "?";
+  if (req.query.on_done_redirect) {
+    return `${oldPath}${separator}on_done_redirect=${req.query.on_done_redirect}`;
+  }
+  return oldPath;
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -269,4 +283,5 @@ module.exports = {
   getSessionStore,
   setTenant,
   get_tenant_from_req,
+  addOnDoneRedirect,
 };
