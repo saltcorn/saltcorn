@@ -42,6 +42,7 @@ export class MobileBuilder {
   copyTargetDir?: string;
   copyFileName?: string;
   buildForEmulator?: boolean;
+  tenantAppName?: string;
 
   /**
    *
@@ -61,6 +62,7 @@ export class MobileBuilder {
     copyTargetDir?: string;
     copyFileName?: string;
     buildForEmulator?: boolean;
+    tenantAppName?: string;
   }) {
     this.templateDir = cfg.templateDir;
     this.buildDir = cfg.buildDir;
@@ -79,6 +81,7 @@ export class MobileBuilder {
     this.copyTargetDir = cfg.copyTargetDir;
     this.copyFileName = cfg.copyFileName;
     this.buildForEmulator = cfg.buildForEmulator;
+    this.tenantAppName = cfg.tenantAppName;
   }
 
   /**
@@ -95,6 +98,7 @@ export class MobileBuilder {
       entryPointType: this.entryPointType,
       serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: this.localUserTables,
+      tenantAppName: this.tenantAppName,
     });
     let resultCode = await bundlePackagesAndPlugins(
       this.buildDir,

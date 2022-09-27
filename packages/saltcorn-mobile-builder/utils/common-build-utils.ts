@@ -76,14 +76,18 @@ export function writeCfgFile({
   entryPointType,
   serverPath,
   localUserTables,
+  tenantAppName,
 }: any) {
   const wwwDir = join(buildDir, "www");
-  let cfg = {
+  let cfg: any = {
     version_tag: db.connectObj.version_tag,
     entry_point: `get/${entryPointType}/${entryPoint}`,
-    server_path: serverPath,
+    server_path: !serverPath.endsWith("/")
+      ? serverPath
+      : serverPath.substring(serverPath.length - 1),
     localUserTables,
   };
+  if (tenantAppName) cfg.tenantAppName = tenantAppName;
   writeFileSync(join(wwwDir, "config"), JSON.stringify(cfg));
 }
 

@@ -34,7 +34,12 @@ function add_repeater(nm) {
   });
   newe.appendTo($("div.repeats-" + nm));
 }
-// "e.closest('.form-namespace').find('.coltype').val()==='Field';"
+
+const _apply_showif_plugins = []
+
+const add_apply_showif_plugin = p => {
+  _apply_showif_plugins.push(p)
+}
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
@@ -118,6 +123,7 @@ function apply_showif() {
       e.empty();
       e.prop('data-fetch-options-current-set', qs)
       if (!dynwhere.required) e.append($(`<option></option>`));
+      let currentDataOption = undefined;
       const dataOptions = []
       success.forEach((r) => {
         const label = dynwhere.label_formula
@@ -128,7 +134,8 @@ function apply_showif() {
           : r[dynwhere.summary_field]
         const value = r[dynwhere.refname]
         const selected = `${current}` === `${r[dynwhere.refname]}`
-        dataOptions.push({ text: label, value })
+        dataOptions.push({ text: label, value });
+        if (selected) currentDataOption = value;
         const html = `<option ${selected ? "selected" : ""
           } value="${value}">${label}</option>`
         e.append(
@@ -139,6 +146,9 @@ function apply_showif() {
       if (e.hasClass("selectized") && $().selectize) {
         e.selectize()[0].selectize.clearOptions();
         e.selectize()[0].selectize.addOption(dataOptions);
+        if (typeof currentDataOption !== "undefined")
+          e.selectize()[0].selectize.setValue(currentDataOption);
+
       }
     }
 
@@ -168,7 +178,17 @@ function apply_showif() {
       },
     });
   });
+  _apply_showif_plugins.forEach(p => p())
 }
+
+function splitTargetMatch(elemValue, target, keySpec) {
+  if (!elemValue) return false;
+  const [fld, keySpec1] = keySpec.split("|_")
+  const [sep, pos] = keySpec1.split("_")
+  const elemValueShort = elemValue.split(sep)[pos]
+  return elemValueShort === target;
+}
+
 function get_form_record(e, select_labels) {
   const rec = {};
   e.closest("form")
@@ -608,7 +628,7 @@ const columnSummary = (col) => {
     case "Action":
       return `Action ${col.action_label || col.action_name}`;
     case "Aggregation":
-      return `${col.stat} ${col.agg_field} ${col.agg_relation}`;
+      return `${col.stat} ${col.agg_field.split("@")[0]} ${col.agg_relation}`;
     default:
       return "Unknown";
   }

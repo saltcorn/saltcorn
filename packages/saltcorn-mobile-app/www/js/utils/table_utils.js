@@ -7,7 +7,7 @@ const historyFile = "update_history";
 async function dropDeletedTables(incomingTables) {
   const existingTables = await saltcorn.data.models.Table.find();
   for (const table of existingTables) {
-    if (!incomingTables.find((row) => row.id === table.id)) {
+    if (table.name !== "users" && !incomingTables.find((row) => row.id === table.id)) {
       saltcorn.data.db.query(`DROP TABLE ${table.name}`);
     }
   }

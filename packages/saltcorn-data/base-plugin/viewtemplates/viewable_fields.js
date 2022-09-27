@@ -599,18 +599,30 @@ const get_viewable_fields = (
         fld +
         db.sqlsanitize(column.aggwhere || "")
       ).toLowerCase();
-      let key = r => {
-        const value = r[targetNm]
+
+      let showValue = value => {
         if (value === true || value === false)
           return bool.fieldviews.show.run(value)
         if (value instanceof Date)
           return date.fieldviews.show.run(value)
-        return value
+        return value?.toString ? value.toString() : value
+      }
+      if (column.agg_fieldview && column.agg_field?.includes("@")) {
+        const tname = column.agg_field.split("@")[1]
+        const type = getState().types[tname]
+        if (type?.fieldviews[column.agg_fieldview])
+          showValue = (x) =>
+            type.fieldviews[column.agg_fieldview].run(x, req)
+      }
+
+      let key = r => {
+        const value = r[targetNm]
+        return showValue(value)
       };
       if (column.stat.toLowerCase() === "array_agg")
         key = (r) =>
           Array.isArray(r[targetNm])
-            ? r[targetNm].map((v) => v.toString()).join(", ")
+            ? r[targetNm].map((v) => showValue(v)).join(", ")
             : "";
       return {
         ...setWidth,

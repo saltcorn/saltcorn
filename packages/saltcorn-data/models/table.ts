@@ -1497,9 +1497,9 @@ class Table implements AbstractTable {
           fldNms.push(
             `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
               table
-            )}" where ${dateField}=(select ${
+            )}" where "${dateField}"=(select ${
               isLatest ? `max` : `min`
-            }(${dateField}) from ${schema}"${sqlsanitize(
+            }("${dateField}") from ${schema}"${sqlsanitize(
               table
             )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
               whereStr ? ` and ${whereStr}` : ""
@@ -1511,9 +1511,9 @@ class Table implements AbstractTable {
           fldNms.push(
             `(select ${sqlsanitize(aggregate)}(${
               field ? `"${sqlsanitize(field)}"` : "*"
-            }) from ${schema}"${sqlsanitize(table)}" where ${sqlsanitize(
+            }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )} in (select "${subselect.field}" from ${schema}"${
+            )}" in (select "${subselect.field}" from ${schema}"${
               subselect.table.name
             }" where "${subselect.whereField}"=a."${ownField}")) ${sqlsanitize(
               fldnm

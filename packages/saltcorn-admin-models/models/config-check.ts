@@ -93,15 +93,22 @@ const test_view_config = async (
   passes: string[],
   errors: string[],
   req: any,
-  res: any
+  res: any,
+  warnings: string[]
 ) => {
   try {
     let hasErrors = false;
     if (view.viewtemplateObj?.configCheck) {
-      const errs = await view.viewtemplateObj?.configCheck(view);
-      if (errs && Array.isArray(errs) && errs.length > 0) {
+      const errs: any = await view.viewtemplateObj?.configCheck(view);
+      if (Array.isArray(errs) && errs.length > 0) {
         hasErrors = true;
         errors.push(...errs);
+      } else if (!Array.isArray(errs) && errs?.errors && errs?.warnings) {
+        if (errs.errors.length > 0) {
+          hasErrors = true;
+          errors.push(...errs.errors);
+        }
+        warnings.push(...errs.warnings);
       }
     }
     const configFlow = await view.get_config_flow(req);
@@ -161,6 +168,7 @@ const test_trigger = async (
 
 export const runConfigurationCheck = async (req: any) => {
   const errors: string[] = [];
+  const warnings: string[] = [];
   const passes: string[] = [];
   const res = mocks.mockReqRes.res;
 
@@ -181,12 +189,12 @@ export const runConfigurationCheck = async (req: any) => {
   const views = await View.find({});
   for (const view of views) {
     await test_view_render(view, passes, errors, req, res);
-    await test_view_config(view, passes, errors, req, res);
+    await test_view_config(view, passes, errors, req, res, warnings);
   }
   const triggers = Trigger.find({});
   for (const trigger of triggers) {
     await test_trigger(trigger, passes, errors);
   }
 
-  return { errors, passes, pass: errors.length === 0 };
+  return { errors, passes, pass: errors.length === 0, warnings };
 };

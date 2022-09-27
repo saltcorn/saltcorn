@@ -61,6 +61,10 @@ const mkShowIf = (sIf: any): string =>
               .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val())`
+          : target.includes("|_")
+          ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
+              rmInitialDot(target).split("|_")[0]
+            }]:not(:disabled)').val(),'${value}', '${target}')`
           : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val()==='${value}'`
@@ -759,7 +763,14 @@ const renderFormLayout = (form: Form): string => {
       return mkBtn('type="submit"');
     },
   };
-  return renderLayout({ blockDispatch, layout: form.layout, req: form.req });
+  const role = form.req?.user?.role_id || 10;
+
+  return renderLayout({
+    blockDispatch,
+    layout: form.layout,
+    role,
+    req: form.req,
+  });
 };
 
 const splitSnippet = (form: Form) =>

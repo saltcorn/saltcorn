@@ -199,33 +199,41 @@ const getAuthLinks = (current, noMethods) => {
   return links;
 };
 
-const loginWithJwt = async (email, password, res) => {
-  const user = await User.findOne({ email });
-  if (user && user.checkPassword(password)) {
-    const now = new Date();
-    const jwt_secret = db.connectObj.jwt_secret;
-    const token = jwt.sign(
-      {
-        sub: email,
-        user: {
-          id: user.id,
-          email: user.email,
-          role_id: user.role_id,
-          language: user.language ? user.language : "en",
-          disabled: user.disabled,
+const loginWithJwt = async (email, password, saltcornApp, res) => {
+  const loginFn = async () => {
+    const user = await User.findOne({ email });
+    if (user && user.checkPassword(password)) {
+      const now = new Date();
+      const jwt_secret = db.connectObj.jwt_secret;
+      const token = jwt.sign(
+        {
+          sub: email,
+          user: {
+            id: user.id,
+            email: user.email,
+            role_id: user.role_id,
+            language: user.language ? user.language : "en",
+            disabled: user.disabled,
+          },
+          iss: "saltcorn@saltcorn",
+          aud: "saltcorn-mobile-app",
+          iat: now.valueOf(),
+          tenant: db.getTenantSchema(),
         },
-        iss: "saltcorn@saltcorn",
-        aud: "saltcorn-mobile-app",
-        iat: now.valueOf(),
-      },
-      jwt_secret
-    );
-    if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
-    res.json(token);
+        jwt_secret
+      );
+      if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
+      res.json(token);
+    } else {
+      res.json({
+        alerts: [{ type: "danger", msg: "Incorrect user or password" }],
+      });
+    }
+  };
+  if (saltcornApp && saltcornApp !== db.connectObj.default_schema) {
+    await db.runWithTenant(saltcornApp, loginFn);
   } else {
-    res.json({
-      alerts: [{ type: "danger", msg: "Incorrect user or password" }],
-    });
+    await loginFn();
   }
 };
 
@@ -899,7 +907,13 @@ router.post(
       } else {
         const u = await User.create({ email, password });
         await send_verification_email(u, req);
-        if (req.smr) await loginWithJwt(email, password, res);
+        if (req.smr)
+          await loginWithJwt(
+            email,
+            password,
+            req.headers["x-saltcorn-app"],
+            res
+          );
         else signup_login_with_user(u, req, res);
       }
     }
@@ -1008,7 +1022,7 @@ router.get(
     const { method } = req.params;
     if (method === "jwt") {
       const { email, password } = req.query;
-      await loginWithJwt(email, password, res);
+      await loginWithJwt(email, password, req.headers["x-saltcorn-app"], res);
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {

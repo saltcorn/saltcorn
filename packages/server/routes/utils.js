@@ -113,37 +113,62 @@ const get_tenant_from_req = (req) => {
 };
 
 /**
+ * middleware to extract the tenant domain and call runWithtenant()
  * @param {object} req
  * @param {object} res
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
   if (db.is_it_multi_tenant()) {
-    const other_domain = get_other_domain_tenant(req.hostname);
-    if (other_domain) {
-      const state = getTenant(other_domain);
-      if (!state) {
+    // for a saltcorn mobile request use 'req.user.tenant'
+    if (req.smr) {
+      if (
+        req.user?.tenant &&
+        req.user.tenant !== db.connectObj.default_schema
+      ) {
+        const state = getTenant(req.user.tenant);
+        if (!state) {
+          setLanguage(req, res);
+          next();
+        } else {
+          db.runWithTenant(req.user.tenant, () => {
+            setLanguage(req, res, state);
+            state.log(5, `${req.method} ${req.originalUrl}`);
+            next();
+          });
+        }
+      }
+      else {
         setLanguage(req, res);
         next();
-      } else {
-        db.runWithTenant(other_domain, () => {
-          setLanguage(req, res, state);
-          state.log(5, `${req.method} ${req.originalUrl}`);
-          next();
-        });
       }
     } else {
-      const ten = get_tenant_from_req(req);
-      const state = getTenant(ten);
-      if (!state) {
-        setLanguage(req, res);
-        next();
-      } else {
-        db.runWithTenant(ten, () => {
-          setLanguage(req, res, state);
-          state.log(5, `${req.method} ${req.originalUrl}`);
+      const other_domain = get_other_domain_tenant(req.hostname);
+      if (other_domain) {
+        const state = getTenant(other_domain);
+        if (!state) {
+          setLanguage(req, res);
           next();
-        });
+        } else {
+          db.runWithTenant(other_domain, () => {
+            setLanguage(req, res, state);
+            state.log(5, `${req.method} ${req.originalUrl}`);
+            next();
+          });
+        }
+      } else {
+        const ten = get_tenant_from_req(req);
+        const state = getTenant(ten);
+        if (!state) {
+          setLanguage(req, res);
+          next();
+        } else {
+          db.runWithTenant(ten, () => {
+            setLanguage(req, res, state);
+            state.log(5, `${req.method} ${req.originalUrl}`);
+            next();
+          });
+        }
       }
     }
   } else {

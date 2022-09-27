@@ -27,6 +27,7 @@ async function apiCall({ method, path, params, body, responseType }) {
     "X-Requested-With": "XMLHttpRequest",
     "X-Saltcorn-Client": "mobile-app",
   };
+  if (config.tenantAppName) headers["X-Saltcorn-App"] = config.tenantAppName;
   const token = localStorage.getItem("auth_jwt");
   if (token) headers.Authorization = `jwt ${token}`;
   try {

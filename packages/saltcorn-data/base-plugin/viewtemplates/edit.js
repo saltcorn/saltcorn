@@ -623,9 +623,7 @@ const render = async ({
   );
   if (split_paste)
     form.splitPaste = true
-  if (auto_save)
-    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
-      })`;
+
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
@@ -654,6 +652,19 @@ const render = async ({
       }
     }
   });
+  // no autosave if new and save button exists
+  // !row && hasSave
+  let hasSave = false
+  traverseSync(layout, {
+    action({ action_name }) {
+      if (action_name === "Save") {
+        hasSave = true
+      }
+    },
+  });
+  if (auto_save && !(!row && hasSave))
+    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
+      })`;
   await form.fill_fkey_options(false, optionsQuery);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
   return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
@@ -1208,12 +1219,14 @@ module.exports = {
       configuration: { view_when_done, destination_type, formula_destinations },
     } = view;
     const errs = [];
+    const warnings = []
+
     if (destination_type !== "Back to referer") {
       const vwd = await View.findOne({
         name: (view_when_done || "").split(".")[0],
       });
       if (!vwd)
-        errs.push(
+        warnings.push(
           `In View ${name}, view when done ${view_when_done} not found`
         );
       for (const { expression } of formula_destinations || []) {
@@ -1226,7 +1239,7 @@ module.exports = {
       }
     }
     errs.push(...(await check_view_columns(view, view.configuration.columns)));
-    return errs;
+    return { errors: errs, warnings };
   },
   connectedObjects: async (configuration) => {
     return extractFromLayout(configuration.layout);

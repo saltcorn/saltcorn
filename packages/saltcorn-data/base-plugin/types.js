@@ -1268,8 +1268,15 @@ const date = {
       ],
       run: (d, req, options) => {
         if (!d) return "";
-        if (!options || !options.format) return text(moment(d).format());
-        return text(moment(d).format(options.format));
+        const loc = locale(req);
+        if (loc) {
+          if (!options || !options.format)
+            return text(moment(d).locale(loc).format());
+          return text(moment(d).locale(loc).format(options.format));
+        } else {
+          if (!options || !options.format) return text(moment(d).format());
+          return text(moment(d).format(options.format));
+        }
       },
     },
     /**
