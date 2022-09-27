@@ -61,6 +61,10 @@ const mkShowIf = (sIf: any): string =>
               .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val())`
+          : target.includes("|_")
+          ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
+              rmInitialDot(target).split("|_")[0]
+            }]:not(:disabled)').val(),'${value}', '${target}')`
           : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
             )}]').val()==='${value}'`

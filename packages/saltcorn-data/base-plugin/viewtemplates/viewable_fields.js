@@ -599,6 +599,7 @@ const get_viewable_fields = (
         fld +
         db.sqlsanitize(column.aggwhere || "")
       ).toLowerCase();
+
       let showValue = value => {
         if (value === true || value === false)
           return bool.fieldviews.show.run(value)
@@ -606,6 +607,14 @@ const get_viewable_fields = (
           return date.fieldviews.show.run(value)
         return value?.toString ? value.toString() : value
       }
+      if (column.agg_fieldview && column.agg_field?.includes("@")) {
+        const tname = column.agg_field.split("@")[1]
+        const type = getState().types[tname]
+        if (type?.fieldviews[column.agg_fieldview])
+          showValue = (x) =>
+            type.fieldviews[column.agg_fieldview].run(x, req)
+      }
+
       let key = r => {
         const value = r[targetNm]
         return showValue(value)

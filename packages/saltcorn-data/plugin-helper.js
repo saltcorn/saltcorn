@@ -422,6 +422,24 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   const { child_field_list, child_relations } =
     await table.get_child_relations(true);
   const aggStatOptions = {};
+  const agg_fieldviews = []
+  Object.values(getState().types).forEach(t => {
+    const fvnames = Object.entries(t.fieldviews)
+      .filter(([k, v]) => !v.isEdit && !v.isFilter)
+      .map(([k, v]) => k)
+    agg_fieldviews.push({
+      name: `agg_fieldview`,
+      label: __("Field view"),
+      type: "String",
+      attributes: {
+        options: fvnames
+      },
+      showIf: {
+        "agg_field|_@_1": t.name,
+        type: "Aggregation",
+      },
+    })
+  })
   const agg_field_opts = child_relations.map(({ table, key_field, through }) => {
     const aggKey = (through ? `${through.name}->` : '') + `${table.name}.${key_field.name}`
     aggStatOptions[aggKey] = [
@@ -450,7 +468,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       attributes: {
         options: table.fields
           .filter((f) => !f.calculated || f.stored)
-          .map((f) => f.name),
+          .map((f) => ({ label: f.name, name: `${f.name}@${f.type_name}` })),
       },
       showIf: {
         agg_relation: aggKey,
@@ -745,6 +763,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       showIf: { type: "Aggregation" },
     },
     ...agg_field_opts,
+    ...agg_fieldviews,
     {
       name: "stat",
       label: __("Statistic"),
@@ -978,7 +997,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
         }
 
 
-        const field = column.agg_field;
+        const field = column.agg_field.split("@")[0];
         const targetNm = (
           column.stat.replace(" ", "") +
           "_" +
