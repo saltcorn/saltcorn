@@ -8,12 +8,9 @@ const {
 } = require("@saltcorn/data/diagram/cy_generate_utils");
 const { getState } = require("@saltcorn/data/db/state");
 const {
-  form,
-  span,
+  a,
   input,
-  ul,
   label,
-  li,
   button,
   div,
   script,
@@ -195,10 +192,57 @@ router.get(
                   "New",
                   i({ class: "fas fa-plus-square ms-2" })
                 ),
-                ul(
-                  { class: "dropdown-menu" },
 
-                  li(span({ class: "dropdown-item" }, "WIP"))
+                div(
+                  {
+                    class: "dropdown-menu",
+                  },
+                  input({
+                    type: "hidden",
+                    name: "_csrf",
+                    value: req.csrfToken(),
+                  }),
+                  // New View
+                  div(
+                    { class: "m-3" },
+
+                    a(
+                      {
+                        href: "/viewedit/new?on_done_redirect=diagram",
+                      },
+                      req.__("View")
+                    )
+                  ),
+                  // New Page
+                  div(
+                    { class: "m-3" },
+                    a(
+                      {
+                        href: "/pageedit/new?on_done_redirect=diagram",
+                      },
+                      req.__("Page")
+                    )
+                  ),
+                  // New Table
+                  div(
+                    { class: "m-3" },
+                    a(
+                      {
+                        href: "/table/new",
+                      },
+                      req.__("Table")
+                    )
+                  ),
+                  // New Trigger
+                  div(
+                    { class: "m-3" },
+                    a(
+                      {
+                        href: "/actions/new?on_done_redirect=diagram",
+                      },
+                      req.__("Trigger")
+                    )
+                  )
                 ),
                 // Entity type filter dropdown
                 button(
@@ -353,7 +397,17 @@ router.get(
                         autocomplete: "off",
                       })
                     );
-                  })
+                  }),
+                  div(
+                    { class: "m-3" },
+                    a(
+                      {
+                        href: "/tag/new",
+                      },
+                      req.__("Add tag"),
+                      i({ class: "fas fa-plus ms-2" })
+                    )
+                  )
                 )
               ),
               div({ id: "cy" }),

@@ -30,7 +30,7 @@ const {
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
 const { setTableRefs, viewsList } = require("./common_lists");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
@@ -129,7 +129,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
     .map(([k, v]) => k);
   const slugOptions = await Table.allSlugOptions();
   return new Form({
-    action: "/viewedit/save",
+    action: addOnDoneRedirect("/viewedit/save", req),
     submitLabel: req.__("Configure") + " &raquo;",
     blurb: req.__("First, please give some basic information about the view."),
     fields: [
@@ -209,15 +209,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       ...(isEdit
         ? [
-          new Field({
-            name: "viewtemplate",
-            input_type: "hidden",
-          }),
-          new Field({
-            name: "table_name",
-            input_type: "hidden",
-          }),
-        ]
+            new Field({
+              name: "viewtemplate",
+              input_type: "hidden",
+            }),
+            new Field({
+              name: "table_name",
+              input_type: "hidden",
+            }),
+          ]
         : []),
     ],
     values,
@@ -337,7 +337,6 @@ router.post(
     const pages = await Page.find();
     const form = await viewForm(req, tableOptions, roles, pages);
     const result = form.validate(req.body);
-
     const sendForm = (form) => {
       res.sendWrap(req.__(`Edit view`), {
         above: [
@@ -397,7 +396,12 @@ router.post(
           else v.configuration = {};
           await View.create(v);
         }
-        res.redirect(`/viewedit/config/${encodeURIComponent(v.name)}`);
+        res.redirect(
+          addOnDoneRedirect(
+            `/viewedit/config/${encodeURIComponent(v.name)}`,
+            req
+          )
+        );
       }
     } else {
       sendForm(form);

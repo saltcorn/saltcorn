@@ -5,7 +5,12 @@
  * @subcategory routes
  */
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher, get_base_url } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  get_base_url,
+  addOnDoneRedirect,
+} = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getTriggerList } = require("./common_lists");
@@ -149,6 +154,7 @@ const triggerForm = async (req, trigger) => {
     id = trigger.id;
     form_action = `/actions/edit/${id}`;
   } else form_action = "/actions/new";
+  form_action = addOnDoneRedirect(form_action, req);
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
@@ -323,7 +329,7 @@ router.post(
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
-      res.redirect(`/actions/configure/${id}`);
+      res.redirect(addOnDoneRedirect(`/actions/configure/${id}`, req));
     }
   })
 );
@@ -389,7 +395,7 @@ router.get(
     } else if (trigger.action === "blocks") {
       const locale = req.getLocale();
       const form = new Form({
-        action: `/actions/configure/${id}`,
+        action: addOnDoneRedirect(`/actions/configure/${id}`, req),
         fields: action.configFields,
         noSubmitButton: true,
         id: "blocklyForm",
@@ -464,7 +470,7 @@ router.get(
       const cfgFields = await getActionConfigFields(action, table);
       // create form
       const form = new Form({
-        action: `/actions/configure/${id}`,
+        action: addOnDoneRedirect(`/actions/configure/${id}`, req),
         fields: cfgFields,
       });
       // populate form values
@@ -522,7 +528,11 @@ router.post(
     } else {
       await Trigger.update(trigger.id, { configuration: form.values });
       req.flash("success", "Action configuration saved");
-      res.redirect(`/actions/`);
+      res.redirect(
+        req.query.on_done_redirect
+          ? `/${req.query.on_done_redirect}`
+          : "/actions/"
+      );
     }
   })
 );
