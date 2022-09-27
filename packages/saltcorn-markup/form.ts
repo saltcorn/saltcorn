@@ -763,7 +763,14 @@ const renderFormLayout = (form: Form): string => {
       return mkBtn('type="submit"');
     },
   };
-  return renderLayout({ blockDispatch, layout: form.layout, req: form.req });
+  const role = form.req?.user?.role_id || 10;
+
+  return renderLayout({
+    blockDispatch,
+    layout: form.layout,
+    role,
+    req: form.req,
+  });
 };
 
 const splitSnippet = (form: Form) =>
