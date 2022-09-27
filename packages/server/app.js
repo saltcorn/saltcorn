@@ -271,6 +271,12 @@ const getApp = async (opts = {}) => {
   passport.deserializeUser(function (user, done) {
     done(null, user);
   });
+  app.use(function (req, res, next) {
+    if (req.headers["x-saltcorn-client"] === "mobile-app") {
+      req.smr = true; // saltcorn-mobile-request
+    }
+    return next();
+  });
   app.use(setTenant);
 
   // Change into s3storage compatible selector
@@ -279,13 +285,6 @@ const getApp = async (opts = {}) => {
   app.use(s3storage.middlewareTransform);
 
   app.use(wrapper(version_tag));
-
-  app.use(function (req, res, next) {
-    if (req.headers["x-saltcorn-client"] === "mobile-app") {
-      req.smr = true; // saltcorn-mobile-request
-    }
-    return next();
-  });
 
   const csurf = csrf();
   if (!opts.disableCsrf)

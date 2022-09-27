@@ -131,12 +131,16 @@ const setTenant = (req, res, next) => {
           setLanguage(req, res);
           next();
         } else {
-          db.runWithTenant(other_domain, () => {
+          db.runWithTenant(req.user.tenant, () => {
             setLanguage(req, res, state);
             state.log(5, `${req.method} ${req.originalUrl}`);
             next();
           });
         }
+      }
+      else {
+        setLanguage(req, res);
+        next();
       }
     } else {
       const other_domain = get_other_domain_tenant(req.hostname);
