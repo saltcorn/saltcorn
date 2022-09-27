@@ -996,7 +996,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
           [table, fld] = column.agg_relation.split(".");
         }
 
-        console.log(column);
+        //console.log(column);
         const field = column.agg_field.split("@")[0];
         const targetNm = (
           column.stat.replace(" ", "") +
