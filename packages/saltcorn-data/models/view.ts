@@ -435,9 +435,6 @@ class View implements AbstractView {
             "X-Requested-With": "XMLHttpRequest",
             "X-Saltcorn-Client": "mobile-app",
           };
-          if (state.mobileConfig?.tenantAppName) {
-            headers["X-Saltcorn-App"] = state.mobileConfig.tenantAppName;
-          }
           const token = window.localStorage.getItem("auth_jwt");
           if (token) headers.Authorization = `jwt ${token}`;
           try {
