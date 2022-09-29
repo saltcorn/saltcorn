@@ -133,14 +133,7 @@ export type Where = {
     | { gt: Value; equal?: boolean }
     | { lt: Value; equal?: boolean }
     | Value[]
-    | {
-        inSelect: {
-          where: Where;
-          field: string;
-          table: string;
-          schema?: string;
-        };
-      }
+    | { inSelect: { where: Where; field: string; table: string } }
     | null
     | symbol
     | any; // TODO Value
@@ -163,11 +156,9 @@ const subSelectWhere =
         table: string;
         through?: string;
         valField?: string;
-        schema?: string;
       };
     }
   ): string => {
-    const schemaStr = v.inSelect.schema ? `"${v.inSelect.schema}".` : "";
     if (v.inSelect.through && v.inSelect.valField) {
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -177,9 +168,9 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
         v.inSelect.valField
-      }" from ${schemaStr}"${v.inSelect.table}" ss1 join ${schemaStr}"${
+      }" from ${v.inSelect.table} ss1 join ${
         v.inSelect.through
-      }" ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
+      } ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -189,7 +180,7 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select "${
         v.inSelect.field
-      }" from ${schemaStr}"${v.inSelect.table}" ${where})`;
+      }" from ${v.inSelect.table} ${where})`;
     }
   };
 

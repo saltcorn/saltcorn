@@ -1262,7 +1262,6 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
             table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
             field: "id",
             where,
-            schema: db.getTenantSchema()
           },
         },
       ];
@@ -1278,8 +1277,6 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
               table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
               field: db.sqlsanitize(jFieldNm),
               where: { [db.sqlsanitize(lblField)]: v },
-              schema: db.getTenantSchema()
-
             },
           },
         ];
@@ -1293,7 +1290,6 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
               table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
               field: db.sqlsanitize(jFieldNm),
               valField: "id",
-              schema: db.getTenantSchema(),
               through: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(
                 tblName
               )}"`,
