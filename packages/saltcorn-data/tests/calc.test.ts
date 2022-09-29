@@ -350,4 +350,17 @@ describe("jsexprToWhere", () => {
   it("translates lte", () => {
     expect(jsexprToWhere("foo<=4")).toEqual({ foo: { lt: 4, equal: true } });
   });
+  it("translates join field", async () => {
+    const books = Table.findOne({ name: "books" });
+    const fields = await books?.getFields();
+    expect(jsexprToWhere("publisher.name=='AK Press'", {}, fields)).toEqual({
+      publisher: {
+        inSelect: {
+          field: "id",
+          table: '"public"."publisher"',
+          where: { name: "AK Press" },
+        },
+      },
+    });
+  });
 });

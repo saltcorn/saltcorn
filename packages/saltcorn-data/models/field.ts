@@ -10,6 +10,7 @@ const {
   recalculate_for_stored,
   jsexprToWhere,
   eval_expression,
+  freeVariables,
 } = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
 const { InvalidAdminAction } = require("../utils");
@@ -212,6 +213,32 @@ class Field implements AbstractField {
     else return this.name;
   }
 
+  static async select_options_query(
+    table_name: string,
+    where: string,
+    attributes: any
+  ) {
+    const Table = require("./table");
+    const label_formula = attributes?.label_formula;
+    const joinFields = {};
+
+    const table = Table.findOne(table_name);
+    if (!table) {
+      return await db.select(table_name, where);
+    }
+    if (label_formula) {
+      const { add_free_variables_to_joinfields } = require("../plugin-helper");
+      const fields = await table.getFields();
+      add_free_variables_to_joinfields(
+        freeVariables(label_formula),
+        joinFields,
+        fields
+      );
+    }
+
+    return await table.getJoinedRows({ where, joinFields });
+  }
+
   /**
    * Fills 'this.options' with values available via foreign key
    * Could be used for <options /> in a <select/> to select a user
@@ -228,11 +255,22 @@ class Field implements AbstractField {
     optionsQuery?: any,
     formFieldNames?: string[]
   ): Promise<void> {
-    const where =
-      where0 ||
-      (this.attributes.where
+    let where = where0;
+
+    if (
+      !where &&
+      this.attributes.where &&
+      this.is_fkey &&
+      this.type !== "File"
+    ) {
+      const Table = require("./table");
+      const refTable = Table.findOne(this.reftable_name);
+      const relFields = await refTable.getFields();
+      where = jsexprToWhere(this.attributes.where, extraCtx, relFields);
+    } else if (!where)
+      where = this.attributes.where
         ? jsexprToWhere(this.attributes.where, extraCtx)
-        : undefined);
+        : undefined;
     const isDynamic = (formFieldNames || []).some((nm) =>
       (this.attributes.where || "").includes("$" + nm)
     );
@@ -291,10 +329,12 @@ class Field implements AbstractField {
       if (!this.attributes) this.attributes = {};
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
+
       const rows = !optionsQuery
-        ? await db.select(
-            this.reftable_name,
-            this.type === "File" ? this.attributes.select_file_where : where
+        ? await Field.select_options_query(
+            this.reftable_name as string,
+            this.type === "File" ? this.attributes.select_file_where : where,
+            this.attributes
           )
         : await optionsQuery(
             this.reftable_name,
