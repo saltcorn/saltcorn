@@ -612,7 +612,7 @@ const get_viewable_fields = (
         const type = getState().types[tname]
         if (type?.fieldviews[column.agg_fieldview])
           showValue = (x) =>
-            type.fieldviews[column.agg_fieldview].run(x, req)
+            type.fieldviews[column.agg_fieldview].run(x, req, column)
       }
 
       let key = r => {
