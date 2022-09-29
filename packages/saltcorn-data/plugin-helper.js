@@ -417,7 +417,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     }
   }
   const link_view_opts = await get_link_view_opts(table, viewname);
-
   const { parent_field_list } = await table.get_parent_relations(true, true);
   const { child_field_list, child_relations } =
     await table.get_child_relations(true);
@@ -440,6 +439,20 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       },
     })
   })
+  const agg_fieldview_cfg_opts = [
+    {
+      name: "format",
+      label: "Format",
+      type: "String",
+      sublabel: "moment.js format specifier",
+      showIf: {
+        type: "Aggregation",
+        "agg_field|_@_1": "Date",
+        agg_fieldview: "format"
+      }
+    },
+  ]
+
   const agg_field_opts = child_relations.map(({ table, key_field, through }) => {
     const aggKey = (through ? `${through.name}->` : '') + `${table.name}.${key_field.name}`
     aggStatOptions[aggKey] = [
@@ -775,6 +788,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       showIf: { type: "Aggregation" },
     },
     ...agg_fieldviews,
+    ...agg_fieldview_cfg_opts,
     {
       name: "aggwhere",
       label: __("Where"),

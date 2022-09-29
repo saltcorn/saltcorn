@@ -67,7 +67,7 @@ const mkShowIf = (sIf: any): string =>
             }]:not(:disabled)').val(),'${value}', '${target}')`
           : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
-            )}]').val()==='${value}'`
+            )}]:not(:disabled)').val()==='${value}'`
       )
       .join(" && ")
   );
