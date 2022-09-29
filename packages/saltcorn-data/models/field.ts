@@ -236,7 +236,6 @@ class Field implements AbstractField {
         fields
       );
     }
-    //console.log(label_formula, joinFields);
 
     return await table.getJoinedRows({ where, joinFields });
   }
@@ -257,11 +256,22 @@ class Field implements AbstractField {
     optionsQuery?: any,
     formFieldNames?: string[]
   ): Promise<void> {
-    const where =
-      where0 ||
-      (this.attributes.where
+    let where = where0;
+
+    if (
+      !where &&
+      this.attributes.where &&
+      this.is_fkey &&
+      this.type !== "File"
+    ) {
+      const Table = require("./table");
+      const refTable = Table.findOne(this.reftable_name);
+      const relFields = await refTable.getFields();
+      where = jsexprToWhere(this.attributes.where, extraCtx, relFields);
+    } else if (!where)
+      where = this.attributes.where
         ? jsexprToWhere(this.attributes.where, extraCtx)
-        : undefined);
+        : undefined;
     const isDynamic = (formFieldNames || []).some((nm) =>
       (this.attributes.where || "").includes("$" + nm)
     );

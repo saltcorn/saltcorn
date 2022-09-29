@@ -12,7 +12,7 @@ import Table from "./table";
 import { Row, Where } from "@saltcorn/db-common/internal";
 import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
-
+import db from "../db";
 /**
  * @param {string} s
  * @returns {boolean|void}
@@ -37,6 +37,8 @@ type ExtendedNode = {
   left?: ExtendedNode;
   right?: ExtendedNode;
   operator?: any;
+  object?: ExtendedNode;
+  property?: ExtendedNode;
 } & Node;
 
 /**
@@ -98,7 +100,11 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
  * @throws {Error}
  * @returns {object}
  */
-function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
+function jsexprToWhere(
+  expression: string,
+  extraCtx: any = {},
+  fields: Field[] = []
+): Where {
   if (!expression) return {};
   try {
     const ast = parseExpressionAt(expression, 0, {
@@ -114,7 +120,11 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
             typeof cleft === "symbol" ? cleft.description : cleft;
           const cright = compile(node.right!);
           const cmp =
-            typeof cleft === "string" || cleft === null
+            typeof cright === "function"
+              ? cright(cleft)
+              : typeof cleft === "function"
+              ? cleft(cright)
+              : typeof cleft === "string" || cleft === null
               ? { eq: [cleft, cright] }
               : { [cleftName]: cright };
           const operators: StringToFunction = {
@@ -144,6 +154,27 @@ function jsexprToWhere(expression: string, extraCtx: any = {}): Where {
             },
           };
           return operators[node.operator](node);
+        },
+        MemberExpression() {
+          const cleft = compile(node.object!);
+          const cleftName =
+            typeof cleft === "symbol" ? cleft.description : cleft;
+          const cright = compile(node.property!);
+          const crightName =
+            typeof cright === "symbol" ? cright.description : cright;
+          const field = fields.find((f) => f.name === cleftName);
+
+          if (!field) throw new Error(`Field not found: ${cleftName}`);
+          return (val: any) => ({
+            [cleftName]: {
+              inSelect: {
+                table: field.reftable_name,
+                field: "id", //wild guess?
+                where: { [crightName]: val },
+                schema: db.getTenantSchema(),
+              },
+            },
+          });
         },
         UnaryExpression() {
           return (<StringToFunction>{
