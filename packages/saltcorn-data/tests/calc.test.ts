@@ -357,7 +357,7 @@ describe("jsexprToWhere", () => {
       publisher: {
         inSelect: {
           field: "id",
-          table: '"public"."publisher"',
+          table: db.isSQLite ? '"publisher"' : '"public"."publisher"',
           where: { name: "AK Press" },
         },
       },
