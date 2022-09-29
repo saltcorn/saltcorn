@@ -224,6 +224,9 @@ class Field implements AbstractField {
     const joinFields = {};
 
     const table = Table.findOne(table_name);
+    if (!table) {
+      return await db.select(table_name, where);
+    }
     if (label_formula) {
       const { add_free_variables_to_joinfields } = require("../plugin-helper");
       const fields = await table.getFields();
