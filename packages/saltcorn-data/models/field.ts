@@ -219,7 +219,6 @@ class Field implements AbstractField {
     attributes: any
   ) {
     const Table = require("./table");
-    //console.log({ where });
     const label_formula = attributes?.label_formula;
     const joinFields = {};
 
@@ -349,8 +348,6 @@ class Field implements AbstractField {
       const get_label = this.attributes?.label_formula
         ? (r: Row) => {
             try {
-              //console.log(r, this.attributes?.label_formula);
-
               return eval_expression(this.attributes?.label_formula, r);
             } catch (error: any) {
               error.message = `Error in formula ${this.attributes?.label_formula} for select label:\n${error.message}`;
