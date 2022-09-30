@@ -311,6 +311,7 @@ function updateViewPreview() {
   const $preview = $('#viewcfg-preview[data-preview-url]')
   if ($preview.length > 0) {
     const url = $preview.attr("data-preview-url")
+    $preview.css({ opacity: 0.5 })
     $.ajax(url, {
       type: "POST",
       headers: {
@@ -319,6 +320,8 @@ function updateViewPreview() {
 
       error: function (request) { },
       success: function (res) {
+        $preview.css({ opacity: 1.0 })
+
         $preview.html(res)
       },
     })
