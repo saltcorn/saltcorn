@@ -450,7 +450,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         title: wfres.title,
         contents,
       },
-      ...previewCard ? [{
+      ...previewURL ? [{
         type: "card",
         title: req.__("Preview"),
         contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL }),

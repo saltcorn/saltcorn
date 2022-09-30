@@ -300,10 +300,29 @@ function applyViewConfig(e, url, k) {
     error: function (request) { },
     success: function (res) {
       k && k(res);
+      !k && updateViewPreview()
     },
   });
 
   return false;
+}
+
+function updateViewPreview() {
+  const $preview = $('#viewcfg-preview[data-preview-url]')
+  if ($preview.length > 0) {
+    const url = $preview.attr("data-preview-url")
+    $.ajax(url, {
+      type: "POST",
+      headers: {
+        "CSRF-Token": _sc_globalCsrf,
+      },
+
+      error: function (request) { },
+      success: function (res) {
+        $preview.html(res)
+      },
+    })
+  }
 }
 
 function ajaxSubmitForm(e) {
