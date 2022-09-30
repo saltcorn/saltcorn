@@ -550,7 +550,13 @@ function common_done(res, isWeb = true) {
     });
   else if (res.goto) {
     if (res.target === "_blank") window.open(res.goto, "_blank").focus();
-    else window.location.href = res.goto;
+    else {
+      const prev = new URL(window.location.href)
+      const next = new URL(res.goto, prev.origin)
+      window.location.href = res.goto;
+      if (prev.origin === next.origin && prev.pathname === next.pathname && next.hash !== prev.hash)
+        location.reload()
+    }
   }
   if (res.popup) {
     ajax_modal(res.popup)

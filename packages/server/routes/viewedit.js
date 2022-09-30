@@ -27,7 +27,9 @@ const {
   a,
   div,
   //button,
+  script,
   text,
+  domReady,
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
@@ -225,15 +227,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       ...(isEdit
         ? [
-            new Field({
-              name: "viewtemplate",
-              input_type: "hidden",
-            }),
-            new Field({
-              name: "table_name",
-              input_type: "hidden",
-            }),
-          ]
+          new Field({
+            name: "viewtemplate",
+            input_type: "hidden",
+          }),
+          new Field({
+            name: "table_name",
+            input_type: "hidden",
+          }),
+        ]
         : []),
     ],
     values,
@@ -434,7 +436,7 @@ router.post(
  * @returns {void}
  */
 const respondWorkflow = (view, wf, wfres, req, res) => {
-  const wrap = (contents, noCard) => ({
+  const wrap = (contents, noCard, previewURL) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -450,6 +452,12 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         title: wfres.title,
         contents,
       },
+      ...previewURL ? [{
+        type: "card",
+        title: req.__("Preview"),
+        contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL },
+          script(domReady(`updateViewPreview()`))),
+      }] : []
     ],
   });
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
@@ -472,7 +480,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
           },
         ],
       },
-      wrap(renderForm(wfres.renderForm, req.csrfToken()))
+      wrap(renderForm(wfres.renderForm, req.csrfToken()), false, wf.previewURL)
     );
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;

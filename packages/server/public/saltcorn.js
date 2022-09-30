@@ -94,8 +94,9 @@ let loadPage = true;
 $(function () {
   $(window).bind("popstate", function (event) {
     const ensure_no_final_hash = (s) => (s.endsWith("#") ? s.slice(0, -1) : s);
-    if (loadPage)
-      window.location.assign(ensure_no_final_hash(window.location.href));
+    const newUrl = ensure_no_final_hash(window.location.href)
+    if (loadPage && newUrl !== window.location.href)
+      window.location.assign(newUrl);
   });
 });
 
@@ -300,10 +301,32 @@ function applyViewConfig(e, url, k) {
     error: function (request) { },
     success: function (res) {
       k && k(res);
+      !k && updateViewPreview()
     },
   });
 
   return false;
+}
+
+function updateViewPreview() {
+  const $preview = $('#viewcfg-preview[data-preview-url]')
+  if ($preview.length > 0) {
+    const url = $preview.attr("data-preview-url")
+    $preview.css({ opacity: 0.5 })
+    $.ajax(url, {
+      type: "POST",
+      headers: {
+        "CSRF-Token": _sc_globalCsrf,
+      },
+
+      error: function (request) { },
+      success: function (res) {
+        $preview.css({ opacity: 1.0 })
+
+        $preview.html(res)
+      },
+    })
+  }
 }
 
 function ajaxSubmitForm(e) {
@@ -458,53 +481,70 @@ async function fill_formula_btn_click(btn, k) {
   }
 }
 
-/*
-https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
-Copyright (c) 2015 Jeff Green
-*/
 
-+(function ($) {
-  "use strict";
-  $.fn.historyTabs = function () {
-    var that = this;
-    window.addEventListener("popstate", function (event) {
-      if (event.state) {
-        $(that)
-          .filter('[href="' + event.state.url + '"]')
-          .tab("show");
-      }
-    });
-    return this.each(function (index, element) {
-      $(element).on("show.bs.tab", function () {
-        var stateObject = { url: $(this).attr("href") };
+(() => {
+  const e = document.querySelector('[data-sidebar-toggler]');
+  let closed = localStorage.getItem('sidebarClosed') === "true";
+  if (e) {
+    if (closed) {
+      e.dispatchEvent(new Event('click'));
+    }
+    e.addEventListener("click", () => {
+      closed = !closed
+      localStorage.setItem('sidebarClosed', `${closed}`);
+    })
 
-        if (window.location.hash && stateObject.url !== window.location.hash) {
-          window.history.pushState(
-            stateObject,
-            document.title,
-            window.location.pathname +
-            window.location.search +
-            $(this).attr("href")
-          );
-        } else {
-          window.history.replaceState(
-            stateObject,
-            document.title,
-            window.location.pathname +
-            window.location.search +
-            $(this).attr("href")
-          );
+  }
+})()
+
+
+  /*
+  https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
+  Copyright (c) 2015 Jeff Green
+  */
+
+  + (function ($) {
+    "use strict";
+    $.fn.historyTabs = function () {
+      var that = this;
+      window.addEventListener("popstate", function (event) {
+        if (event.state) {
+          $(that)
+            .filter('[href="' + event.state.url + '"]')
+            .tab("show");
         }
       });
-      if (!window.location.hash && $(element).is(".active")) {
-        // Shows the first element if there are no query parameters.
-        $(element).tab("show");
-      } else if ($(this).attr("href") === window.location.hash) {
-        $(element).tab("show");
-      }
-    });
-  };
-})(jQuery);
+      return this.each(function (index, element) {
+        $(element).on("show.bs.tab", function () {
+          var stateObject = { url: $(this).attr("href") };
+
+          if (window.location.hash && stateObject.url !== window.location.hash) {
+            window.history.pushState(
+              stateObject,
+              document.title,
+              window.location.pathname +
+              window.location.search +
+              $(this).attr("href")
+            );
+          } else {
+            window.history.replaceState(
+              stateObject,
+              document.title,
+              window.location.pathname +
+              window.location.search +
+              $(this).attr("href")
+            );
+          }
+        });
+        if (!window.location.hash && $(element).is(".active")) {
+          // Shows the first element if there are no query parameters.
+          $(element).tab("show");
+        } else if ($(this).attr("href") === window.location.hash) {
+          $(element).tab("show");
+        }
+      });
+    };
+  })(jQuery);
 
 // Copyright (c) 2011 Marcus Ekwall, http://writeless.se/
 // https://github.com/mekwall/jquery-throttle

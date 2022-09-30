@@ -992,5 +992,8 @@
 	"Formula value": "Formula value",
 	"The build was successfully": "The build was successfully",
 	"Unable to build the app:": "Unable to build the app:",
-	"Add tag": "Add tag"
+	"Add tag": "Add tag",
+	"Create new row": "Create new row",
+	"Specify how to create a new row": "Specify how to create a new row",
+	"Preview": "Preview"
 }

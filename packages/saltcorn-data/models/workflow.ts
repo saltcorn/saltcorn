@@ -31,6 +31,7 @@ class Workflow implements AbstractWorkflow {
   saveURL?: string;
   startAtStepURL?: (stepName: string) => string;
   autoSave?: boolean;
+  previewURL?: string;
 
   /**
    * Workflow constructor
@@ -40,6 +41,7 @@ class Workflow implements AbstractWorkflow {
     this.steps = o.steps || [];
     this.onDone = o.onDone || ((c) => c);
     this.action = o.action;
+    this.previewURL = o.previewURL;
     this.__ = (s: any) => s;
   }
   async singleStepForm(body?: any, req?: any): Promise<RunResult | undefined> {
@@ -314,6 +316,7 @@ namespace Workflow {
     steps?: any[];
     onDone?: (context: any) => any;
     action?: string;
+    previewURL?: string;
   };
 }
 type WorkflowCfg = Workflow.WorkflowCfg;
