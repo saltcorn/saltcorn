@@ -94,8 +94,9 @@ let loadPage = true;
 $(function () {
   $(window).bind("popstate", function (event) {
     const ensure_no_final_hash = (s) => (s.endsWith("#") ? s.slice(0, -1) : s);
-    if (loadPage)
-      window.location.assign(ensure_no_final_hash(window.location.href));
+    const newUrl = ensure_no_final_hash(window.location.href)
+    if (loadPage && newUrl !== window.location.href)
+      window.location.assign(newUrl);
   });
 });
 
