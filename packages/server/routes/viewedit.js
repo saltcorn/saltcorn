@@ -461,7 +461,6 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
     ],
   });
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
-  console.log("wf previewurl", wf.previewURL);
   if (wfres.renderForm)
     res.sendWrap(
       {
