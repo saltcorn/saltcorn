@@ -27,7 +27,9 @@ const {
   a,
   div,
   //button,
+  script,
   text,
+  domReady,
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
@@ -453,7 +455,8 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
       ...previewURL ? [{
         type: "card",
         title: req.__("Preview"),
-        contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL }),
+        contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL },
+          script(domReady(`updateViewPreview()`))),
       }] : []
     ],
   });
