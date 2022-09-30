@@ -123,13 +123,6 @@ const configuration_workflow = (req) =>
             viewname: context.viewname,
             req,
           });
-          const create_views = await View.find_table_views_where(
-            context.table_id || context.exttable_name,
-            ({ state_fields, viewrow }) =>
-              viewrow.name !== context.viewname &&
-              state_fields.every((sf) => !sf.required)
-          );
-          const create_view_opts = create_views.map((v) => v.select_option);
           return new Form({
             blurb: req.__("Specify the fields in the table to show"),
             fields: [
@@ -138,104 +131,131 @@ const configuration_workflow = (req) =>
                 fancyMenuEditor: true,
                 fields: field_picker_repeat,
               }),
-              ...(create_view_opts.length > 0
-                ? [
-                  {
-                    input_type: "section_header",
-                    label: "View to create a new row",
-                  },
-                  {
-                    name: "view_to_create",
-                    label: req.__("Use view to create"),
-                    sublabel: req.__(
-                      "If user has write permission. Leave blank to have no link to create a new item"
-                    ),
-                    type: "String",
-                    attributes: {
-                      options: create_view_opts,
-                    },
-                  },
-                  {
-                    name: "create_view_display",
-                    label: req.__("Display create view as"),
-                    type: "String",
-                    required: true,
-                    attributes: {
-                      options: "Link,Embedded,Popup",
-                    },
-                  },
-                  {
-                    name: "create_view_label",
-                    label: req.__("Label for create"),
-                    sublabel: req.__(
-                      "Label in link or button to create. Leave blank for a default label"
-                    ),
-                    type: "String",
-                    showIf: { create_view_display: ["Link", "Popup"] },
-                  },
-                  {
-                    name: "create_link_style",
-                    label: req.__("Link Style"),
-                    type: "String",
-                    required: true,
-                    attributes: {
-                      options: [
-                        { name: "", label: "Link" },
-                        { name: "btn btn-primary", label: "Primary button" },
-                        { name: "btn btn-secondary", label: "Secondary button" },
-                        { name: "btn btn-success", label: "Success button" },
-                        { name: "btn btn-danger", label: "Danger button" },
-                        {
-                          name: "btn btn-outline-primary",
-                          label: "Primary outline button",
-                        },
-                        {
-                          name: "btn btn-outline-secondary",
-                          label: "Secondary outline button",
-                        },
-                      ],
-                    },
-
-                    showIf: { create_view_display: ["Link", "Popup"] },
-                  },
-                  {
-                    name: "create_link_size",
-                    label: req.__("Link size"),
-                    type: "String",
-                    required: true,
-                    attributes: {
-                      options: [
-                        { name: "", label: "Standard" },
-                        { name: "btn-lg", label: "Large" },
-                        { name: "btn-sm", label: "Small" },
-                        { name: "btn-sm btn-xs", label: "X-Small" },
-                        { name: "btn-block", label: "Block" },
-                        { name: "btn-block btn-lg", label: "Large block" },
-                      ],
-                    },
-                    showIf: { create_view_display: ["Link", "Popup"] },
-                  },
-                  {
-                    name: "create_view_location",
-                    label: req.__("Location"),
-                    sublabel: req.__("Location of link to create new row"),
-                    //required: true,
-                    attributes: {
-                      options: [
-                        "Bottom left",
-                        "Bottom right",
-                        "Top left",
-                        "Top right",
-                      ],
-                    },
-                    type: "String",
-                    showIf: { create_view_display: ["Link", "Popup"] },
-                  },
-                ]
-                : []),
             ],
           });
         },
+      },
+      {
+        name: req.__("Create new row"),
+        onlyWhen: async (context) => {
+
+          const create_views = await View.find_table_views_where(
+            context.table_id || context.exttable_name,
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.every((sf) => !sf.required)
+          );
+          return create_views.length > 0
+        },
+        form: async (context) => {
+          const table = await Table.findOne(
+            context.table_id
+              ? { id: context.table_id }
+              : { name: context.exttable_name }
+          );
+          //console.log(context);
+
+          const create_views = await View.find_table_views_where(
+            context.table_id || context.exttable_name,
+            ({ state_fields, viewrow }) =>
+              viewrow.name !== context.viewname &&
+              state_fields.every((sf) => !sf.required)
+          );
+          const create_view_opts = create_views.map((v) => v.select_option);
+          return new Form({
+            blurb: req.__("Specify how to create a new row"),
+            fields: [
+              {
+                name: "view_to_create",
+                label: req.__("Use view to create"),
+                sublabel: req.__(
+                  "If user has write permission. Leave blank to have no link to create a new item"
+                ),
+                type: "String",
+                attributes: {
+                  options: create_view_opts,
+                },
+              },
+              {
+                name: "create_view_display",
+                label: req.__("Display create view as"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: "Link,Embedded,Popup",
+                },
+              },
+              {
+                name: "create_view_label",
+                label: req.__("Label for create"),
+                sublabel: req.__(
+                  "Label in link or button to create. Leave blank for a default label"
+                ),
+                type: "String",
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_link_style",
+                label: req.__("Link Style"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: [
+                    { name: "", label: "Link" },
+                    { name: "btn btn-primary", label: "Primary button" },
+                    { name: "btn btn-secondary", label: "Secondary button" },
+                    { name: "btn btn-success", label: "Success button" },
+                    { name: "btn btn-danger", label: "Danger button" },
+                    {
+                      name: "btn btn-outline-primary",
+                      label: "Primary outline button",
+                    },
+                    {
+                      name: "btn btn-outline-secondary",
+                      label: "Secondary outline button",
+                    },
+                  ],
+                },
+
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_link_size",
+                label: req.__("Link size"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: [
+                    { name: "", label: "Standard" },
+                    { name: "btn-lg", label: "Large" },
+                    { name: "btn-sm", label: "Small" },
+                    { name: "btn-sm btn-xs", label: "X-Small" },
+                    { name: "btn-block", label: "Block" },
+                    { name: "btn-block btn-lg", label: "Large block" },
+                  ],
+                },
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of link to create new row"),
+                //required: true,
+                attributes: {
+                  options: [
+                    "Bottom left",
+                    "Bottom right",
+                    "Top left",
+                    "Top right",
+                  ],
+                },
+                type: "String",
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+
+            ]
+          })
+        }
       },
       {
         name: req.__("Default state"),
