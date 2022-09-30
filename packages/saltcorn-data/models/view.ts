@@ -739,6 +739,7 @@ class View implements AbstractView {
       `/viewedit/config/${this.name}?step=${stepNm}${
         onDoneRedirect ? onDoneRedirect : ""
       }`;
+    configFlow.previewURL = `/view/${this.name}/preview`;
     return configFlow;
   }
 
