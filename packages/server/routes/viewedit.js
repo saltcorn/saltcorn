@@ -225,15 +225,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       ...(isEdit
         ? [
-            new Field({
-              name: "viewtemplate",
-              input_type: "hidden",
-            }),
-            new Field({
-              name: "table_name",
-              input_type: "hidden",
-            }),
-          ]
+          new Field({
+            name: "viewtemplate",
+            input_type: "hidden",
+          }),
+          new Field({
+            name: "table_name",
+            input_type: "hidden",
+          }),
+        ]
         : []),
     ],
     values,
@@ -434,7 +434,7 @@ router.post(
  * @returns {void}
  */
 const respondWorkflow = (view, wf, wfres, req, res) => {
-  const wrap = (contents, noCard) => ({
+  const wrap = (contents, noCard, previewURL) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -450,9 +450,15 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         title: wfres.title,
         contents,
       },
+      ...previewCard ? [{
+        type: "card",
+        title: req.__("Preview"),
+        contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL }),
+      }] : []
     ],
   });
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
+  console.log("wf previewurl", wf.previewURL);
   if (wfres.renderForm)
     res.sendWrap(
       {
@@ -472,7 +478,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
           },
         ],
       },
-      wrap(renderForm(wfres.renderForm, req.csrfToken()))
+      wrap(renderForm(wfres.renderForm, req.csrfToken()), false, wf.previewURL)
     );
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
