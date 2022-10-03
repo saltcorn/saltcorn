@@ -444,6 +444,17 @@ function test_formula(tablename, stored) {
   });
 }
 
+function create_new_folder() {
+  const name = window.prompt("Name of the new folder")
+  if (name)
+    ajax_post(`/files/new-folder`, {
+      data: { name },
+      success: (data) => {
+        location.reload()
+      },
+    });
+}
+
 async function fill_formula_btn_click(btn, k) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
   const free_vars = JSON.parse(

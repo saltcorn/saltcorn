@@ -20,7 +20,7 @@ const {
   post_delete_btn,
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, setTenant } = require("./utils.js");
-const { h1, div, text } = require("@saltcorn/markup/tags");
+const { h1, div, text, button, i } = require("@saltcorn/markup/tags");
 // const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -110,6 +110,9 @@ router.get(
             rows,
             { hover: true }
           ),
+          button({ onClick: "create_new_folder()", class: "btn btn-secondary mb-1" },
+            i({ class: "fas fa-plus-square me-1" }),
+            "New Folder"),
           fileUploadForm(req),
         ],
       },
