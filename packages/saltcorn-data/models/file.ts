@@ -132,13 +132,8 @@ class File {
    * @returns {Promise<File|null>}
    */
   static async findOne(where: Where): Promise<File | null> {
-    if (where.id) {
-      const { getState } = require("../db/state");
-      const cf = getState().files[+where.id];
-      if (cf) return new File(cf);
-    }
-    const f = await db.selectMaybeOne("_sc_files", where);
-    return f ? new File(f) : null;
+    const files = await File.find(where);
+    return files.length > 0 ? new File(files[0]) : null;
   }
 
   /**
@@ -211,7 +206,7 @@ class File {
       );
     } else {
       // get path to file
-      const newPath = File.get_new_path();
+      const newPath = File.get_new_path(file.name);
       // set mime type
       const [mime_super, mime_sub] = file.mimetype.split("/");
       // move file in file system to newPath
@@ -268,7 +263,7 @@ class File {
   ): Promise<{ error: string } | void> {
     try {
       // delete file from database
-      await db.deleteWhere("_sc_files", { id: this.id });
+      if (this.id) await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
       if (unlinker) await unlinker(this);
       else await unlink(this.location);
@@ -295,11 +290,11 @@ class File {
    */
   static async create(f: FileCfg): Promise<File> {
     const file = new File(f);
-    const { id, ...rest } = file;
+    //const { id, ...rest } = file;
     // insert file descriptor row to database
-    file.id = await db.insert("_sc_files", rest);
+    //file.id = await db.insert("_sc_files", rest);
     // refresh file list cache
-    await require("../db/state").getState().refresh_files();
+    //await require("../db/state").getState().refresh_files();
 
     return file;
   }
