@@ -101,7 +101,7 @@ router.get(
                     ? div(a({ href: `/files?dir=${encodeURIComponent(r.filename)}` }, r.filename))
                     :
                     div(
-                      { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                      { "data-inline-edit-dest-url": `/files/setname/${r.path_to_serve}` },
                       r.filename
                     ),
               },
@@ -117,12 +117,12 @@ router.get(
               },
               {
                 label: req.__("Download"),
-                key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+                key: (r) => link(`/files/download/${r.path_to_serve}`, req.__("Download")),
               },
               {
                 label: req.__("Delete"),
                 key: (r) =>
-                  post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
+                  post_delete_btn(`/files/delete/${r.path_to_serve}`, req, r.filename),
               },
             ],
             rows,
@@ -145,12 +145,12 @@ router.get(
  * @function
  */
 router.get(
-  "/download/:id",
+  "/download/*",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
-    const { id } = req.params;
-    const file = await File.findOne({ id });
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
     if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
       res.type(file.mimetype);
       if (file.s3_store) s3storage.serveObject(file, res, true);
@@ -369,11 +369,11 @@ router.post(
  * @function
  */
 router.post(
-  "/delete/:id",
+  "/delete/*",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const f = await File.findOne({ id });
+    const serve_path = req.params[0];
+    const f = await File.findOne(serve_path);
     if (!f) {
       req.flash("error", "File not found");
       res.redirect("/files");
