@@ -174,18 +174,9 @@ router.get(
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
     const serve_path = req.params[0];
-    console.log({ serve_path });
     //let file;
     //if (typeof strictParseInt(id) !== "undefined")
-    let file
-    if (serve_path.includes("/"))
-      file = await File.findOne({
-        folder: path.dirname(serve_path),
-        filename: path.basename(serve_path)
-      });
-    else
-      file = await File.findOne(serve_path);
-    // else file = await File.findOne({ filename: id });
+    const file = await File.findOne(serve_path);
 
     if (!file) {
       res
