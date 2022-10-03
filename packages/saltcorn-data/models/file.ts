@@ -15,6 +15,8 @@ import axios from "axios";
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
+const path = require("path");
+const fs = require("fs").promises;
 
 declare let window: any;
 
@@ -31,6 +33,7 @@ declare let window: any;
  */
 class File {
   filename: string;
+  folder?: string;
   location: string;
   mime_super: string;
   mime_sub: string;
@@ -40,6 +43,7 @@ class File {
   user_id?: number;
   min_role_read: number;
   s3_store: boolean;
+  isDirectory: boolean;
 
   /**
    * Constructor
@@ -48,6 +52,7 @@ class File {
   constructor(o: FileCfg) {
     this.filename = o.filename;
     this.location = o.location;
+    this.folder = o.folder || "/";
     this.uploaded_at =
       typeof o.uploaded_at === "string" || typeof o.uploaded_at === "number"
         ? new Date(o.uploaded_at)
@@ -59,6 +64,7 @@ class File {
     this.mime_sub = o.mime_sub;
     this.min_role_read = o.min_role_read;
     this.s3_store = !!o.s3_store;
+    this.isDirectory = !!o.isDirectory;
     // TBD add checksum this.checksum = o.checksum;
   }
 
@@ -72,16 +78,51 @@ class File {
     where?: Where,
     selectopts: SelectOptions = {}
   ): Promise<Array<File>> {
-    if (selectopts.cached) {
-      const { getState } = require("../db/state");
-      // TODO ch migrate State and replace any
-      const files = Object.values(getState().files).sort((a: any, b: any) =>
-        a.filename > b.filename ? 1 : -1
-      );
-      return files.map((t: any) => new File(t));
+    const { getState } = require("../db/state");
+
+    const useS3 = getState().getConfig("storage_s3_enabled");
+    if (useS3 || where?.inDB) {
+      if (selectopts.cached) {
+        const { getState } = require("../db/state");
+        // TODO ch migrate State and replace any
+        const files = Object.values(getState().files).sort((a: any, b: any) =>
+          a.filename > b.filename ? 1 : -1
+        );
+        return files.map((t: any) => new File(t));
+      }
+      const db_flds = await db.select("_sc_files", where, selectopts);
+      return db_flds.map((dbf: FileCfg) => new File(dbf));
+    } else {
+      const relativeSearchFolder = where?.folder || "/";
+      const safeDir = path
+        .normalize(relativeSearchFolder)
+        .replace(/^(\.\.(\/|\\|$))+/, "");
+      const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
+      const fileNms = await fs.readdir(absoluteFolder);
+      const files: File[] = [];
+      for (const name of fileNms) {
+        const stat = await fs.stat(path.join(absoluteFolder, name));
+        const isDirectory = stat.isDirectory();
+        const mimetype = lookup(name);
+        const [mime_super, mime_sub] = mimetype
+          ? mimetype.split("/")
+          : ["", ""];
+
+        files.push(
+          new File({
+            filename: name,
+            location: absoluteFolder,
+            size_kb: stat.size / 1024,
+            uploaded_at: stat.ctime,
+            mime_super,
+            mime_sub,
+            min_role_read: 10,
+          })
+        );
+      }
+
+      return files;
     }
-    const db_flds = await db.select("_sc_files", where, selectopts);
-    return db_flds.map((dbf: FileCfg) => new File(dbf));
   }
 
   /**
@@ -205,7 +246,7 @@ class File {
     userId: number
   ) {
     const fullPath = join(directory, name);
-    if(!existsSync(fullPath)) return null;
+    if (!existsSync(fullPath)) return null;
     const file: any = {
       mimetype: lookup(fullPath),
       name: name,
@@ -291,6 +332,7 @@ namespace File {
   export type FileCfg = {
     filename: string;
     location: string;
+    folder?: string;
     uploaded_at: string | number | Date;
     size_kb: number;
     id?: number;
@@ -299,6 +341,7 @@ namespace File {
     mime_sub: string;
     min_role_read: number;
     s3_store?: boolean;
+    isDirectory?: boolean;
   };
 }
 type FileCfg = File.FileCfg;
