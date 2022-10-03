@@ -94,6 +94,7 @@ class File {
       return db_flds.map((dbf: FileCfg) => new File(dbf));
     } else {
       const relativeSearchFolder = where?.folder || "/";
+
       const safeDir = path
         .normalize(relativeSearchFolder)
         .replace(/^(\.\.(\/|\\|$))+/, "");
@@ -123,6 +124,7 @@ class File {
       uploaded_at: stat.ctime,
       mime_super,
       mime_sub,
+      isDirectory,
       min_role_read: 10,
     });
   }

@@ -20,7 +20,7 @@ const {
   post_delete_btn,
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, setTenant } = require("./utils.js");
-const { h1, div, text, button, i } = require("@saltcorn/markup/tags");
+const { h1, div, text, button, i, a } = require("@saltcorn/markup/tags");
 // const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -68,8 +68,10 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
-    const rows = await File.find({}, { orderBy: "filename" });
+    const { dir } = req.query
+    const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
+    //console.log(rows);
     send_files_page({
       res,
       req,
@@ -82,10 +84,13 @@ router.get(
               {
                 label: req.__("Filename"),
                 key: (r) =>
-                  div(
-                    { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
-                    r.filename
-                  ),
+                  r.isDirectory
+                    ? div(a({ href: `/files?dir=${encodeURIComponent(r.filename)}` }, r.filename))
+                    :
+                    div(
+                      { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
+                      r.filename
+                    ),
               },
               { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
               { label: req.__("Media type"), key: (r) => r.mimetype },
