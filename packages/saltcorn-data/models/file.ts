@@ -97,12 +97,18 @@ class File {
 
       const safeDir = File.normalise(relativeSearchFolder);
       const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
-      const fileNms = await fs.readdir(absoluteFolder);
       const files: File[] = [];
-      for (const name of fileNms) {
-        files.push(await File.from_file_on_disk(name, absoluteFolder));
-      }
+      if (where?.filename) {
+        files.push(
+          await File.from_file_on_disk(where?.filename, absoluteFolder)
+        );
+      } else {
+        const fileNms = await fs.readdir(absoluteFolder);
 
+        for (const name of fileNms) {
+          files.push(await File.from_file_on_disk(name, absoluteFolder));
+        }
+      }
       return files;
     }
   }
