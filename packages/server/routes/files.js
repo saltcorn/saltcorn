@@ -31,6 +31,7 @@ const {
 } = require("../markup/admin");
 // const fsp = require("fs").promises;
 const fs = require("fs");
+const path = require("path");
 
 /**
  * @type {object}
@@ -72,6 +73,17 @@ router.get(
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
     //console.log(rows);
+    if (dir && dir !== "/") {
+      let dirname = path.dirname(dir)
+      if (dirname === ".") dirname = "/"
+      rows.unshift(new File({
+        filename: dirname,
+        location: dirname,
+        isDirectory: true,
+        mime_super: "",
+        mime_sub: "",
+      }))
+    }
     send_files_page({
       res,
       req,
