@@ -112,7 +112,7 @@ class File {
           new File({
             filename: name,
             location: absoluteFolder,
-            size_kb: stat.size / 1024,
+            size_kb: Math.round(stat.size / 1024),
             uploaded_at: stat.ctime,
             mime_super,
             mime_sub,
