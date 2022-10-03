@@ -187,6 +187,18 @@ class File {
     await require("../db/state").getState().refresh_files();
   }
 
+  async rename(filenameIn: string): Promise<void> {
+    const filename = File.normalise(filenameIn);
+    if (this.id) {
+      await File.update(this.id, { filename });
+    } else {
+      const newPath = path.join(path.dirname(this.location), filename);
+
+      await fs.rename(this.location, newPath);
+      this.location = newPath;
+      this.filename = filename;
+    }
+  }
   /**
    * Get absolute path to new file in db.connectObj.file_store.
    *

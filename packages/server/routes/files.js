@@ -285,12 +285,14 @@ router.post(
  * @function
  */
 router.post(
-  "/setname/:id",
+  "/setname/*",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const serve_path = req.params[0];
     const filename = req.body.value;
-    await File.update(+id, { filename });
+
+    const file = await File.findOne(serve_path);
+    await file.rename(filename);
 
     res.redirect("/files");
   })
