@@ -70,11 +70,12 @@ router.get(
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
     const { dir } = req.query
+    const safeDir = File.normalise(dir || "/")
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
     //console.log(rows);
-    if (dir && dir !== "/") {
-      let dirname = path.dirname(dir)
+    if (safeDir && safeDir !== "/") {
+      let dirname = path.dirname(safeDir)
       if (dirname === ".") dirname = "/"
       rows.unshift(new File({
         filename: dirname,
@@ -130,7 +131,7 @@ router.get(
           button({ onClick: "create_new_folder()", class: "btn btn-sm btn-secondary mb-1" },
             i({ class: "fas fa-plus-square me-1" }),
             "New Folder"),
-          fileUploadForm(req),
+          fileUploadForm(req, safeDir),
         ],
       },
     });
@@ -317,6 +318,7 @@ router.post(
   "/upload",
   setTenant, // TODO why is this needed?????
   error_catcher(async (req, res) => {
+    let { folder } = req.body
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 10;
@@ -331,7 +333,8 @@ router.post(
       const f = await File.from_req_files(
         req.files.file,
         req.user.id,
-        +min_role_read
+        +min_role_read,
+        File.normalise(folder)
       );
       const many = Array.isArray(f);
       if (!req.xhr)

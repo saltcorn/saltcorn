@@ -95,9 +95,7 @@ class File {
     } else {
       const relativeSearchFolder = where?.folder || "/";
 
-      const safeDir = path
-        .normalize(relativeSearchFolder)
-        .replace(/^(\.\.(\/|\\|$))+/, "");
+      const safeDir = File.normalise(relativeSearchFolder);
       const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
       const fileNms = await fs.readdir(absoluteFolder);
       const files: File[] = [];
@@ -108,7 +106,9 @@ class File {
       return files;
     }
   }
-
+  static normalise(fpath: string): string {
+    return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
+  }
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string
@@ -231,15 +231,16 @@ class File {
       s3object?: boolean;
     },
     user_id: number,
-    min_role_read: number = 1
+    min_role_read: number = 1,
+    folder: string = "/"
   ): Promise<File> {
     if (Array.isArray(file)) {
       return await asyncMap(file, (f: any) =>
-        File.from_req_files(f, user_id, min_role_read)
+        File.from_req_files(f, user_id, min_role_read, folder)
       );
     } else {
       // get path to file
-      const newPath = File.get_new_path(file.name);
+      const newPath = File.get_new_path(path.join(folder, file.name));
       // set mime type
       const [mime_super, mime_sub] = file.mimetype.split("/");
       // move file in file system to newPath
