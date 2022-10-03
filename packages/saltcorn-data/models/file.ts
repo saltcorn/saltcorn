@@ -101,28 +101,30 @@ class File {
       const fileNms = await fs.readdir(absoluteFolder);
       const files: File[] = [];
       for (const name of fileNms) {
-        const stat = await fs.stat(path.join(absoluteFolder, name));
-        const isDirectory = stat.isDirectory();
-        const mimetype = lookup(name);
-        const [mime_super, mime_sub] = mimetype
-          ? mimetype.split("/")
-          : ["", ""];
-
-        files.push(
-          new File({
-            filename: name,
-            location: absoluteFolder,
-            size_kb: Math.round(stat.size / 1024),
-            uploaded_at: stat.ctime,
-            mime_super,
-            mime_sub,
-            min_role_read: 10,
-          })
-        );
+        files.push(await File.from_file_on_disk(name, absoluteFolder));
       }
 
       return files;
     }
+  }
+
+  static async from_file_on_disk(
+    name: string,
+    absoluteFolder: string
+  ): Promise<File> {
+    const stat = await fs.stat(path.join(absoluteFolder, name));
+    const isDirectory = stat.isDirectory();
+    const mimetype = lookup(name);
+    const [mime_super, mime_sub] = mimetype ? mimetype.split("/") : ["", ""];
+    return new File({
+      filename: name,
+      location: path.join(absoluteFolder, name),
+      size_kb: Math.round(stat.size / 1024),
+      uploaded_at: stat.ctime,
+      mime_super,
+      mime_sub,
+      min_role_read: 10,
+    });
   }
 
   /**
@@ -131,7 +133,22 @@ class File {
    * @param where
    * @returns {Promise<File|null>}
    */
-  static async findOne(where: Where): Promise<File | null> {
+  static async findOne(where: Where | string): Promise<File | null> {
+    if (typeof where === "string") {
+      const { getState } = require("../db/state");
+
+      const useS3 = getState().getConfig("storage_s3_enabled");
+      if (useS3) {
+        const files = await File.find({ id: +where });
+        return files[0];
+      } else {
+        const safeDir = path.normalize(where).replace(/^(\.\.(\/|\\|$))+/, "");
+        const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
+        const name = path.basename(absoluteFolder);
+        const dir = path.dirname(absoluteFolder);
+        return await File.from_file_on_disk(name, dir);
+      }
+    }
     const files = await File.find(where);
     return files.length > 0 ? new File(files[0]) : null;
   }
@@ -142,6 +159,12 @@ class File {
     await mkdir(absoluteFolder, { recursive: true });
 
     return;
+  }
+
+  get path_to_serve() {
+    if (this.s3_store) return this.id;
+    const s = this.location.replace(db.connectObj.file_store, "");
+    return s[0] === "/" ? s.substring(1) : 0;
   }
 
   /**

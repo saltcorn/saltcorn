@@ -95,7 +95,7 @@ router.get(
               },
               {
                 label: req.__("Link"),
-                key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
+                key: (r) => link(`/files/serve/${r.path_to_serve}`, req.__("Link")),
               },
               {
                 label: req.__("Download"),
@@ -110,7 +110,7 @@ router.get(
             rows,
             { hover: true }
           ),
-          button({ onClick: "create_new_folder()", class: "btn btn-secondary mb-1" },
+          button({ onClick: "create_new_folder()", class: "btn btn-sm btn-secondary mb-1" },
             i({ class: "fas fa-plus-square me-1" }),
             "New Folder"),
           fileUploadForm(req),
@@ -156,10 +156,10 @@ router.get(
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
     const { id } = req.params;
-    let file;
-    if (typeof strictParseInt(id) !== "undefined")
-      file = await File.findOne({ id });
-    else file = await File.findOne({ filename: id });
+    //let file;
+    //if (typeof strictParseInt(id) !== "undefined")
+    const file = await File.findOne(id);
+    // else file = await File.findOne({ filename: id });
 
     if (!file) {
       res
