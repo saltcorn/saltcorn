@@ -279,6 +279,17 @@ router.post(
   })
 );
 
+router.post(
+  "/new-folder",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.body
+    await File.new_folder(name);
+
+    res.json({ success: "ok" });
+  })
+);
+
 /**
  * @name post/upload
  * @function

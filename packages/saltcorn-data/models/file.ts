@@ -136,6 +136,14 @@ class File {
     return files.length > 0 ? new File(files[0]) : null;
   }
 
+  static async new_folder(name: string): Promise<undefined> {
+    const safeDir = path.normalize(name).replace(/^(\.\.(\/|\\|$))+/, "");
+    const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
+    await mkdir(absoluteFolder, { recursive: true });
+
+    return;
+  }
+
   /**
    * Update File descriptor
    *
