@@ -108,10 +108,10 @@ export /**
           .then((result) => {
             setUploadedFiles((upFls) => [
               ...upFls,
-              { id: result.success.id, filename: result.success.filename },
+              { id: result.success.location, filename: result.success.filename },
             ]);
             setProp((prop) => {
-              prop.fileid = result.success.id;
+              prop.fileid = result.success.location;
               prop.srctype = "File";
             });
           })

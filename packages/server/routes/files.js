@@ -355,7 +355,7 @@ router.post(
         req.files.file,
         req.user.id,
         +min_role_read,
-        File.normalise(folder)
+        folder ? File.normalise(folder) : undefined
       );
       const many = Array.isArray(f);
       file_for_redirect = many ? f[0] : f
@@ -373,7 +373,7 @@ router.post(
         jsonResp = {
           success: {
             filename: many ? f.map((fl) => fl.filename) : f.filename,
-            id: many ? f.map((fl) => fl.id) : f.id,
+            location: many ? f.map((fl) => fl.path_to_serve) : f.path_to_serve,
             url: many
               ? f.map((fl) => `/files/serve/${fl.id}`)
               : `/files/serve/${f.id}`,
