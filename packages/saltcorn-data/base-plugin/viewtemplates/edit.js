@@ -781,7 +781,7 @@ const runPost = async (
             (field.attributes && +field.attributes.min_role_read) || 1
           )
           : await File.upload(req.files[field.name]);
-        row[field.name] = file.location;
+        row[field.name] = file.path_to_serve;
       } else {
         delete row[field.name];
       }

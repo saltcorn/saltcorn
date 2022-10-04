@@ -34,7 +34,7 @@ module.exports = {
     run: (filePath) =>
       link(
         isNode()
-          ? `/files/download/${File.absPathToServePath(filePath)}`
+          ? `/files/download/${(filePath)}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
         path.basename(filePath) || "Download"
       ),
@@ -52,7 +52,7 @@ module.exports = {
     run: (filePath) =>
       link(
         isNode()
-          ? `/files/serve/${File.absPathToServePath(filePath)}`
+          ? `/files/serve/${(filePath)}`
           : `javascript:openFile(${file_id})`,
         path.basename(filePath) || "Open"
       ),
@@ -71,7 +71,7 @@ module.exports = {
     run: (filePath) =>
       a(
         isNode()
-          ? { href: `/files/serve/${File.absPathToServePath(filePath)}`, target: "_blank" }
+          ? { href: `/files/serve/${(filePath)}`, target: "_blank" }
           : { href: `javascript:openFile(${file_id})` },
         path.basename(filePath) || "Open"
       ),
@@ -88,7 +88,7 @@ module.exports = {
      */
     run: (filePath) => {
       if (isNode())
-        return img({ src: `/files/serve/${File.absPathToServePath(filePath)}`, style: "width: 100%" });
+        return img({ src: `/files/serve/${(filePath)}`, style: "width: 100%" });
       else {
         const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
@@ -145,9 +145,9 @@ module.exports = {
       const { width, height, expand } = cfg || {};
       if (isNode())
         return img({
-          src: `/files/resize/${width}/${height || 0}/${File.absPathToServePath(filePath)}`,
+          src: `/files/resize/${width}/${height || 0}/${filePath}`,
           onclick: expand
-            ? `expand_thumbnail('${File.absPathToServePath(filePath)}', '${path.basename(filePath)}')`
+            ? `expand_thumbnail('${filePath}', '${path.basename(filePath)}')`
             : undefined,
         });
       else {

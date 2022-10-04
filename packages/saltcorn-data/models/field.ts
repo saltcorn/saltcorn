@@ -366,7 +366,7 @@ class Field implements AbstractField {
       const files = await File.find();
       this.options = files.map((f) => ({
         label: f.filename,
-        value: f.location,
+        value: f.path_to_serve,
       }));
     }
   }
