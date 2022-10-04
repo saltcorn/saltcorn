@@ -367,7 +367,9 @@ class File {
    * @type {string}
    */
   get mimetype(): string {
-    return `${this.mime_super}/${this.mime_sub}`;
+    if (this.mime_super && this.mime_sub)
+      return `${this.mime_super}/${this.mime_sub}`;
+    else return "";
   }
 
   /**

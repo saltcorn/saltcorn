@@ -74,7 +74,7 @@ router.get(
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
     //console.log(rows);
-    if (safeDir && safeDir !== "/") {
+    if (safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir)
       if (dirname === ".") dirname = "/"
       rows.unshift(new File({
@@ -110,7 +110,7 @@ router.get(
                       r.filename
                     ),
               },
-              { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
+              { label: req.__("Size (KiB)"), key: r => r.isDirectory ? '' : r.size_kb, align: "right" },
               { label: req.__("Media type"), key: (r) => r.mimetype },
               {
                 label: req.__("Role to access"),
