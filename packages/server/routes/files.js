@@ -118,11 +118,16 @@ router.get(
               },
               {
                 label: req.__("Link"),
-                key: (r) => link(`/files/serve/${r.path_to_serve}`, req.__("Link")),
+                key: (r) => link(r.isDirectory
+                  ? `/files?dir=${encodeURIComponent(
+                    r.filename === ".."
+                      ? path.dirname(safeDir)
+                      : path.join(safeDir, r.filename))}`
+                  : `/files/serve/${r.path_to_serve}`, req.__("Link")),
               },
               {
                 label: req.__("Download"),
-                key: (r) => link(`/files/download/${r.path_to_serve}`, req.__("Download")),
+                key: (r) => r.isDirectory ? '' : link(`/files/download/${r.path_to_serve}`, req.__("Download")),
               },
               {
                 label: req.__("Delete"),
