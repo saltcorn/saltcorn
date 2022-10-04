@@ -17,7 +17,7 @@ import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
 const path = require("path");
 const fs = require("fs").promises;
-
+const xattr = require("fs-xattr");
 declare let window: any;
 
 /**
@@ -193,6 +193,19 @@ class File {
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_files", row, id);
     await require("../db/state").getState().refresh_files();
+  }
+
+  async set_role(min_role_read: number) {
+    // const fsx = await import("fs-xattr");
+    if (this.id) {
+      await File.update(this.id, { min_role_read });
+    } else {
+      await xattr.set(
+        this.location,
+        "user.saltcorn.min_role_read",
+        `${min_role_read}`
+      );
+    }
   }
 
   async rename(filenameIn: string): Promise<void> {

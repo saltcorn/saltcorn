@@ -52,7 +52,7 @@ module.exports = router;
  */
 const editFileRoleForm = (file, roles, req) =>
   editRoleForm({
-    url: `/files/setrole/${file.id}`,
+    url: `/files/setrole/${file.path_to_serve}`,
     current_role: file.min_role_read,
     roles,
     req,
@@ -267,20 +267,22 @@ router.get(
  * @function
  */
 router.post(
-  "/setrole/:id",
+  "/setrole/*",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
     const role = req.body.role;
-    await File.update(+id, { min_role_read: role });
-    const file = await File.findOne({ id });
     const roles = await User.get_roles();
     const roleRow = roles.find((r) => r.id === +role);
-    if (roleRow && file)
+
+    if (roleRow && file) {
+      await file.set_role(role);
       req.flash(
         "success",
         req.__(`Minimum role for %s updated to %s`, file.filename, roleRow.role)
       );
+    }
     else req.flash("success", req.__(`Minimum role updated`));
 
     res.redirect("/files");
