@@ -141,13 +141,13 @@ module.exports = {
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
-    run: (file_id, file_name, cfg) => {
+    run: (filePath, file_name, cfg) => {
       const { width, height, expand } = cfg || {};
       if (isNode())
         return img({
-          src: `/files/resize/${file_id}/${width}${height ? `/${height}` : ""}`,
+          src: `/files/resize/${width}/${height || 0}/${File.absPathToServePath(filePath)}`,
           onclick: expand
-            ? `expand_thumbnail(${file_id}, '${encodeURIComponent(file_name)}')`
+            ? `expand_thumbnail('${File.absPathToServePath(filePath)}', '${path.basename(filePath)}')`
             : undefined,
         });
       else {
