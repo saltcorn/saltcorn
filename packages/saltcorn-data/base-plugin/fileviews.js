@@ -31,12 +31,12 @@ module.exports = {
      * @param {string} file_name
      * @returns {link}
      */
-    run: (file_id, file_name) =>
+    run: (filePath) =>
       link(
         isNode()
-          ? `/files/download/${file_id}`
+          ? `/files/download/${File.absPathToServePath(filePath)}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
-        file_name || "Download"
+        path.basename(filePath) || "Download"
       ),
   },
   /**
@@ -68,12 +68,12 @@ module.exports = {
      * @param {string} file_name
      * @returns {a}
      */
-    run: (file_id, file_name) =>
+    run: (filePath) =>
       a(
         isNode()
-          ? { href: `/files/serve/${file_id}`, target: "_blank" }
+          ? { href: `/files/serve/${File.absPathToServePath(filePath)}`, target: "_blank" }
           : { href: `javascript:openFile(${file_id})` },
-        file_name || "Open"
+        path.basename(filePath) || "Open"
       ),
   },
   /**
@@ -86,14 +86,14 @@ module.exports = {
      * @param {string} file_name
      * @returns {img}
      */
-    run: (file_id, file_name) => {
+    run: (filePath) => {
       if (isNode())
-        return img({ src: `/files/serve/${file_id}`, style: "width: 100%" });
+        return img({ src: `/files/serve/${File.absPathToServePath(filePath)}`, style: "width: 100%" });
       else {
-        const elementId = `_sc_file_id_${file_id}_`;
+        const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
-          img({ style: "width: 100%", id: elementId }),
-          script(domReady(`buildEncodedImage(${file_id}, '${elementId}')`))
+          img({ style: "width: 100%", id: rndid }),
+          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`))
         );
       }
     },

@@ -115,7 +115,8 @@ class File {
   static normalise(fpath: string): string {
     return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
   }
-  static absPathToServePath(absPath: string): string {
+  static absPathToServePath(absPath: string | number): string {
+    if (typeof absPath === "number") return `${absPath}`;
     const s = absPath.replace(db.connectObj.file_store, "");
     return s[0] === "/" ? s.substring(1) : s;
   }
