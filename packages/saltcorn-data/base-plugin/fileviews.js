@@ -17,6 +17,8 @@ const {
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
 const { select_options } = require("@saltcorn/markup/helpers");
+const File = require("../models/file");
+const path = require("path");
 
 module.exports = {
   /**
@@ -47,12 +49,12 @@ module.exports = {
      * @param {string} file_name
      * @returns {link}
      */
-    run: (file_id, file_name) =>
+    run: (filePath) =>
       link(
         isNode()
-          ? `/files/serve/${file_id}`
+          ? `/files/serve/${File.absPathToServePath(filePath)}`
           : `javascript:openFile(${file_id})`,
-        file_name || "Open"
+        path.basename(filePath) || "Open"
       ),
   },
 

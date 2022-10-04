@@ -115,6 +115,11 @@ class File {
   static normalise(fpath: string): string {
     return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
   }
+  static absPathToServePath(absPath: string): string {
+    const s = absPath.replace(db.connectObj.file_store, "");
+    return s[0] === "/" ? s.substring(1) : s;
+  }
+
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string
@@ -187,10 +192,10 @@ class File {
     return;
   }
 
-  get path_to_serve() {
-    if (this.s3_store) return this.id;
+  get path_to_serve(): string | number {
+    if (this.s3_store && this.id) return this.id;
     const s = this.location.replace(db.connectObj.file_store, "");
-    return s[0] === "/" ? s.substring(1) : 0;
+    return s[0] === "/" ? s.substring(1) : s;
   }
 
   get current_folder() {
