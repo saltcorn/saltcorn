@@ -106,10 +106,21 @@ class File {
         const fileNms = await fs.readdir(absoluteFolder);
 
         for (const name of fileNms) {
+          if (name[0] === ".") continue;
           files.push(await File.from_file_on_disk(name, absoluteFolder));
         }
       }
-      return files;
+      let pred = (f: File) => true;
+      const addPred = (p: Function) => {
+        const oldPred = pred;
+        pred = (f: File) => oldPred(f) && p(f);
+      };
+      if (where?.mime_super)
+        addPred((f: File) => f.mime_super === where?.mime_super);
+      if (where?.mime_sub) addPred((f: File) => f.mime_sub === where?.mime_sub);
+      if (where?.isDirectory)
+        addPred((f: File) => !!f.isDirectory === !!where?.isDirectory);
+      return files.filter(pred);
     }
   }
   static normalise(fpath: string): string {
