@@ -120,6 +120,16 @@ class File {
     absoluteFolder: string
   ): Promise<File> {
     const stat = await fs.stat(path.join(absoluteFolder, name));
+    let min_role_read;
+    try {
+      min_role_read = +(await xattr.get(
+        path.join(absoluteFolder, name),
+        "user.saltcorn.min_role_read"
+      ));
+    } catch (e) {
+      min_role_read = 10;
+    }
+
     const isDirectory = stat.isDirectory();
     const mimetype = lookup(name);
     const [mime_super, mime_sub] = mimetype ? mimetype.split("/") : ["", ""];
@@ -131,7 +141,7 @@ class File {
       mime_super,
       mime_sub,
       isDirectory,
-      min_role_read: 10,
+      min_role_read,
     });
   }
 
