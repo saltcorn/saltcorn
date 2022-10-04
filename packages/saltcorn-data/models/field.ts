@@ -29,6 +29,8 @@ import type {
   InputType,
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import { fileSync } from "tmp-promise";
+import File from "./file";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -360,6 +362,12 @@ class Field implements AbstractField {
           ? [{ label: "", value: "" }, ...dbOpts]
           : dbOpts;
       this.options = [...new Set(allOpts)];
+    } else if (this.type === "File") {
+      const files = await File.find();
+      this.options = files.map((f) => ({
+        label: f.filename,
+        value: f.location,
+      }));
     }
   }
 
