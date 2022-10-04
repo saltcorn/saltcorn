@@ -444,11 +444,11 @@ function test_formula(tablename, stored) {
   });
 }
 
-function create_new_folder() {
+function create_new_folder(folder) {
   const name = window.prompt("Name of the new folder")
   if (name)
     ajax_post(`/files/new-folder`, {
-      data: { name },
+      data: { name, folder },
       success: (data) => {
         location.reload()
       },

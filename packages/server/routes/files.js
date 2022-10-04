@@ -98,7 +98,7 @@ router.get(
                 label: req.__("Filename"),
                 key: (r) =>
                   r.isDirectory
-                    ? div(a({ href: `/files?dir=${encodeURIComponent(r.filename)}` }, r.filename))
+                    ? div(a({ href: `/files?dir=${encodeURIComponent(path.join(safeDir, r.filename))}` }, r.filename))
                     :
                     div(
                       { "data-inline-edit-dest-url": `/files/setname/${r.path_to_serve}` },
@@ -128,7 +128,11 @@ router.get(
             rows,
             { hover: true }
           ),
-          button({ onClick: "create_new_folder()", class: "btn btn-sm btn-secondary mb-1" },
+          button(
+            {
+              onClick: `create_new_folder('${safeDir}')`,
+              class: "btn btn-sm btn-secondary mb-1"
+            },
             i({ class: "fas fa-plus-square me-1" }),
             "New Folder"),
           fileUploadForm(req, safeDir),
@@ -302,8 +306,8 @@ router.post(
   "/new-folder",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { name } = req.body
-    await File.new_folder(name);
+    const { name, folder } = req.body
+    await File.new_folder(name, folder);
 
     res.json({ success: "ok" });
   })
