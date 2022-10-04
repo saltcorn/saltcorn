@@ -78,7 +78,7 @@ router.get(
       let dirname = path.dirname(safeDir)
       if (dirname === ".") dirname = "/"
       rows.unshift(new File({
-        filename: dirname,
+        filename: "..",
         location: dirname,
         isDirectory: true,
         mime_super: "",
@@ -98,7 +98,12 @@ router.get(
                 label: req.__("Filename"),
                 key: (r) =>
                   r.isDirectory
-                    ? div(a({ href: `/files?dir=${encodeURIComponent(path.join(safeDir, r.filename))}` }, r.filename))
+                    ? div(a({
+                      href: `/files?dir=${encodeURIComponent(
+                        r.filename === ".."
+                          ? path.dirname(safeDir)
+                          : path.join(safeDir, r.filename))}`
+                    }, r.filename))
                     :
                     div(
                       { "data-inline-edit-dest-url": `/files/setname/${r.path_to_serve}` },
