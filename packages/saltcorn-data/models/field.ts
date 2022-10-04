@@ -368,6 +368,7 @@ class Field implements AbstractField {
         label: f.filename,
         value: f.path_to_serve,
       }));
+      if (!this.required) this.options.unshift({ label: "", value: "" });
     }
   }
 
