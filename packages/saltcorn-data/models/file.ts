@@ -106,7 +106,7 @@ class File {
         const fileNms = await fs.readdir(absoluteFolder);
 
         for (const name of fileNms) {
-          if (name[0] === ".") continue;
+          if (name[0] === "." || name.startsWith("_resized_")) continue;
           files.push(await File.from_file_on_disk(name, absoluteFolder));
         }
       }

@@ -248,7 +248,8 @@ router.get(
           res.sendFile(file.location);
           return;
         }
-        const fnm = `${file.location}_w${width}${height ? `_h${height}` : ""}`;
+        const basenm = path.join(path.dirname(file.location), '_resized_' + path.basename(file.location))
+        const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
         if (!fs.existsSync(fnm)) {
           await resizer({
             fromFileName: file.location,
