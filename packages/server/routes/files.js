@@ -285,7 +285,7 @@ router.post(
     }
     else req.flash("success", req.__(`Minimum role updated`));
 
-    res.redirect("/files");
+    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
   })
 );
 
@@ -305,7 +305,8 @@ router.post(
     const file = await File.findOne(serve_path);
     await file.rename(filename);
 
-    res.redirect("/files");
+    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
+
   })
 );
 
@@ -334,6 +335,7 @@ router.post(
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 10;
+    let file_for_redirect
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
       else jsonResp = { error: "Not authorized" };
@@ -349,6 +351,7 @@ router.post(
         File.normalise(folder)
       );
       const many = Array.isArray(f);
+      file_for_redirect = many ? f[0] : f
       if (!req.xhr)
         req.flash(
           "success",
@@ -370,7 +373,11 @@ router.post(
           },
         };
     }
-    if (!req.xhr) res.redirect("/files");
+    if (!req.xhr)
+      res.redirect(!file_for_redirect
+        ? '/files'
+        : `/files?dir=${encodeURIComponent(file_for_redirect.current_folder)}`);
+
     else res.json(jsonResp);
   })
 );
@@ -400,7 +407,7 @@ router.post(
     } else {
       req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
-    res.redirect(`/files`);
+    res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
   })
 );
 

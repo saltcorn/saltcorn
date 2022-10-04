@@ -193,6 +193,9 @@ class File {
     return s[0] === "/" ? s.substring(1) : 0;
   }
 
+  get current_folder() {
+    return path.dirname(this.path_to_serve);
+  }
   /**
    * Update File descriptor
    *
