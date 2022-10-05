@@ -45,6 +45,9 @@ const js = async () => {
         //db.set_sql_logging(true)
         await db.query(`alter table ${schema}"${table.name}" drop constraint "${table.name}_${field.name}_fkey"`)
         await db.query(`alter table ${schema}"${table.name}" alter column "${field.name}" type text;`)
+        if (table.versioned)
+            await db.query(`alter table ${schema}"${table.name}__history" alter column "${field.name}" type text;`)
+
         const rows = await table.getRows({})
         for (const row of rows) {
             if (row[field.name]) {
