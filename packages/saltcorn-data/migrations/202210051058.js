@@ -30,19 +30,17 @@ const js = async () => {
             const exists = fs.existsSync(newLoc)
             if (!exists) {
                 await fsp.rename(file.location, newLoc)
-                newLocations[file.id] = newLoc
+                newLocations[file.id] = path.basename(newLoc)
                 break
             }
         }
     }
-    //console.log(newLocations);
     // migrate file fields to text fields
     const fileFields = await Field.find({ type: "File" })
     const schema = db.getTenantSchemaPrefix()
     for (const field of fileFields) {
         const table = Table.findOne({ id: field.table_id })
-        //console.log({ table });
-        //db.set_sql_logging(true)
+
         await db.query(`alter table ${schema}"${table.name}" drop constraint "${table.name}_${field.name}_fkey"`)
         await db.query(`alter table ${schema}"${table.name}" alter column "${field.name}" type text;`)
         if (table.versioned)
@@ -53,14 +51,14 @@ const js = async () => {
             if (row[field.name]) {
                 await table.updateRow({ [field.name]: newLocations[row[field.name]] }, row[table.pk_name])
             }
-
-            //   throw new Error(`row value: ${table.name}.${field.name} ${JSON.stringify(row, null, 2)} new ${newLocations[row[field.name]]}`)
         }
 
     }
+    //system cfg
+    await getState().setConfig("site_logo_id", newLocations[getState().getConfig("site_logo_id")])
+    await getState().setConfig("favicon_id", newLocations[getState().getConfig("favicon_id")])
 
     // pages etc, other layout items
-
 
 }
 module.exports = { js };
