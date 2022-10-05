@@ -31,6 +31,9 @@ const js = async () => {
             if (!exists) {
                 await fsp.rename(file.location, newLoc)
                 newLocations[file.id] = path.basename(newLoc)
+                file.id = undefined
+                file.location = newLoc
+                await file.set_role(file.min_role_read)
                 break
             }
         }
