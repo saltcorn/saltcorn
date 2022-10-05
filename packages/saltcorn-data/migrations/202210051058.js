@@ -3,6 +3,9 @@ const js = async () => {
     const Table = require("../models/table");
     const Field = require("../models/field");
     const File = require("../models/file");
+    const Page = require("../models/page");
+    const { traverseSync } = require("../models/layout");
+
     const db = require("../db");
     const tables = await Table.find({});
     const fsp = require("fs").promises
@@ -62,6 +65,19 @@ const js = async () => {
     await getState().setConfig("favicon_id", newLocations[getState().getConfig("favicon_id")])
 
     // pages etc, other layout items
+    const visitors = {
+        image(segment) {
+            if (segment.srctype === "File") {
+                segment.fileid = newLocations[segment.fileid]
+            }
+        }
+    }
+    const pages = await Page.find()
+    for (const page of pages) {
+        const layout = page.layout
+        traverseSync(layout, visitors)
+        await Page.update(page.id, { layout })
+    }
 
 }
 module.exports = { js };
