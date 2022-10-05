@@ -4,6 +4,7 @@ import Table from "@saltcorn/data/models/table";
 import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
 import View from "@saltcorn/data/models/view";
 import File from "@saltcorn/data/models/file";
+import Field from "@saltcorn/data/models/field";
 import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
 import Plugin from "@saltcorn/data/models/plugin";
@@ -237,6 +238,7 @@ const extract = async (fnm: string, dir: string): Promise<void> => {
 const restore_files = async (dirpath: string): Promise<any> => {
   const fnm = join(dirpath, "files.csv");
   const file_users: any = {};
+  const newLocations: any = {};
   if (existsSync(fnm)) {
     const file_rows = await csvtojson().fromFile(fnm);
     for (const file of file_rows) {
@@ -244,12 +246,16 @@ const restore_files = async (dirpath: string): Promise<any> => {
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
     for (const file of file_rows) {
-      const newPath = File.get_new_path(file.location);
+      const newPath = File.get_new_path(
+        file.id ? file.filename : file.location
+      );
       //copy file
       if (!file.isDirectory)
         await copyFile(join(dirpath, "files", file.location), newPath);
       file_users[file.location] = file.user_id;
       //set location
+      if (file.id)
+        newLocations[file.id] = file.id ? file.filename : file.location;
       file.location = newPath;
       //insert in db
 
@@ -258,9 +264,29 @@ const restore_files = async (dirpath: string): Promise<any> => {
     }
     if (db.reset_sequence) await db.reset_sequence("_sc_files");
   }
-  return file_users;
+  return { file_users, newLocations };
 };
+const correct_fileid_references_to_location = async (newLocations: any) => {
+  const fileFields = await Field.find({ type: "File" });
+  for (const field of fileFields) {
+    const table = Table.findOne({ id: field.table_id });
+    console.log(
+      "correct_fileid_references_to_location",
+      table?.name,
+      field.name
+    );
 
+    const rows = await table!.getRows({});
+    for (const row of rows) {
+      if (row[field.name] && newLocations[row[field.name]]) {
+        await table!.updateRow(
+          { [field.name]: newLocations[row[field.name]] },
+          row[table!.pk_name]
+        );
+      }
+    }
+  }
+};
 /**
  * @function
  * @param {object} file_users
@@ -364,11 +390,15 @@ const restore = async (
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  const file_users = await restore_files(tmpDir.path);
+  const { file_users, newLocations } = await restore_files(tmpDir.path);
 
   //table csvs
   const tabres = await restore_tables(tmpDir.path, restore_first_user);
   if (tabres) err = (err || "") + tabres;
+  console.log("newlocs", newLocations);
+
+  if (Object.keys(newLocations).length > 0)
+    await correct_fileid_references_to_location(newLocations);
   //config
   await restore_config(tmpDir.path);
   await restore_file_users(file_users);
