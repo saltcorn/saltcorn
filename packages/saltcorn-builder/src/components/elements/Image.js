@@ -159,6 +159,7 @@ export /**
                     value={fileid}
                     className="form-control form-select"
                     onChange={setAProp("fileid")}
+                    onBlur={setAProp("fileid")}
                   >
                     {options.images.map((f, ix) => (
                       <option key={ix} value={f.id}>
