@@ -33,7 +33,6 @@ declare let window: any;
  */
 class File {
   filename: string;
-  folder?: string;
   location: string;
   mime_super: string;
   mime_sub: string;
@@ -52,7 +51,6 @@ class File {
   constructor(o: FileCfg) {
     this.filename = o.filename;
     this.location = o.location;
-    this.folder = o.folder || "/";
     this.uploaded_at =
       typeof o.uploaded_at === "string" || typeof o.uploaded_at === "number"
         ? new Date(o.uploaded_at)
@@ -489,7 +487,6 @@ namespace File {
   export type FileCfg = {
     filename: string;
     location: string;
-    folder?: string;
     uploaded_at: string | number | Date;
     size_kb: number;
     id?: number;
