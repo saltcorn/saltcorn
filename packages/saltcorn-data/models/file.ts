@@ -94,9 +94,13 @@ class File {
       return db_flds.map((dbf: FileCfg) => new File(dbf));
     } else {
       const relativeSearchFolder = where?.folder || "/";
-
+      const tenant = db.getTenantSchema();
       const safeDir = File.normalise(relativeSearchFolder);
-      const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
+      const absoluteFolder = path.join(
+        db.connectObj.file_store,
+        tenant,
+        safeDir
+      );
       const files: File[] = [];
       if (where?.filename) {
         files.push(
@@ -128,7 +132,8 @@ class File {
   }
   static absPathToServePath(absPath: string | number): string {
     if (typeof absPath === "number") return `${absPath}`;
-    const s = absPath.replace(db.connectObj.file_store, "");
+    const tenant = db.getTenantSchema();
+    const s = absPath.replace(path.join(db.connectObj.file_store, tenant), "");
     return s[0] === "/" ? s.substring(1) : s;
   }
 
@@ -177,8 +182,14 @@ class File {
         const files = await File.find({ id: +where });
         return files[0];
       } else {
+        const tenant = db.getTenantSchema();
+
         const safeDir = path.normalize(where).replace(/^(\.\.(\/|\\|$))+/, "");
-        const absoluteFolder = path.join(db.connectObj.file_store, safeDir);
+        const absoluteFolder = path.join(
+          db.connectObj.file_store,
+          tenant,
+          safeDir
+        );
         const name = path.basename(absoluteFolder);
         const dir = path.dirname(absoluteFolder);
         return await File.from_file_on_disk(name, dir);
@@ -192,10 +203,13 @@ class File {
     name: string,
     inFolder: string = ""
   ): Promise<undefined> {
+    const tenant = db.getTenantSchema();
+
     const safeDir = path.normalize(name).replace(/^(\.\.(\/|\\|$))+/, "");
     const safeInDir = path.normalize(inFolder).replace(/^(\.\.(\/|\\|$))+/, "");
     const absoluteFolder = path.join(
       db.connectObj.file_store,
+      tenant,
       safeInDir,
       safeDir
     );
@@ -206,7 +220,11 @@ class File {
 
   get path_to_serve(): string | number {
     if (this.s3_store && this.id) return this.id;
-    const s = this.location.replace(db.connectObj.file_store, "");
+    const tenant = db.getTenantSchema();
+    const s = this.location.replace(
+      path.join(db.connectObj.file_store, tenant),
+      ""
+    );
     return s[0] === "/" ? s.substring(1) : s;
   }
 
@@ -261,10 +279,12 @@ class File {
 
     // Check if it uses S3, then use a default "saltcorn" folder
     const useS3 = getState().getConfig("storage_s3_enabled");
+    const tenant = db.getTenantSchema();
+
     const file_store = !useS3 ? db.connectObj.file_store : "saltcorn/";
 
     const newFnm = suggest || uuidv4();
-    const newPath = join(file_store, newFnm);
+    const newPath = join(file_store, tenant, newFnm);
     return newPath;
   }
 
