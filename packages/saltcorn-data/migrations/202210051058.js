@@ -4,6 +4,7 @@ const js = async () => {
     const Field = require("../models/field");
     const File = require("../models/file");
     const Page = require("../models/page");
+    const View = require("../models/view");
     const { traverseSync } = require("../models/layout");
 
     const db = require("../db");
@@ -77,6 +78,13 @@ const js = async () => {
         const layout = page.layout
         traverseSync(layout, visitors)
         await Page.update(page.id, { layout })
+    }
+    const views = await View.find()
+    for (const view of views) {
+        const layout = view.configuration.layout
+        if (!layout) continue
+        traverseSync(layout, visitors)
+        await View.update({ configuration: { ...view.configuration, layout } }, view.id)
     }
 
 }
