@@ -275,12 +275,19 @@ class File {
    * @returns {Promise<void>}
    */
   // TBD fs errors handling
-  static async ensure_file_store(): Promise<void> {
-    const { getState } = require("../db/state");
-
+  static async ensure_file_store(tenant_name?: string): Promise<void> {
+    const { getState, getAllTenants } = require("../db/state");
+    const file_store = db.connectObj.file_store;
+    if (tenant_name) {
+      await mkdir(path.join(file_store, tenant_name), { recursive: true });
+      return;
+    }
     if (!getState().getConfig("storage_s3_enabled")) {
-      const file_store = db.connectObj.file_store;
       await mkdir(file_store, { recursive: true });
+      const tenants = getAllTenants();
+      for (const tenant of Object.keys(tenants)) {
+        await mkdir(path.join(file_store, tenant), { recursive: true });
+      }
     }
   }
 

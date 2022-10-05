@@ -689,6 +689,8 @@ const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
   return tenants[ten];
 };
+
+const getAllTenants = () => tenants;
 /**
  * Remove protocol (http:// or https://) from domain url
  * @param {string} url
@@ -783,5 +785,6 @@ export = {
   get_process_init_time,
   features,
   add_tenant,
+  getAllTenants,
   process_send,
 };
