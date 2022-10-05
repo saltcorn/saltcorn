@@ -483,6 +483,8 @@ class Field implements AbstractField {
       ].sql_name;
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
+    } else if (this.type === "File") {
+      return "text";
     }
     throw new Error("Unable to get the sql_type");
   }

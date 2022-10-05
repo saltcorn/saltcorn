@@ -246,7 +246,8 @@ const restore_files = async (dirpath: string): Promise<any> => {
     for (const file of file_rows) {
       const newPath = File.get_new_path(file.location);
       //copy file
-      await copyFile(join(dirpath, "files", file.location), newPath);
+      if (!file.isDirectory)
+        await copyFile(join(dirpath, "files", file.location), newPath);
       file_users[file.location] = file.user_id;
       //set location
       file.location = newPath;
