@@ -137,22 +137,33 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
   const dirpath = join(root_dirpath, "files");
   await mkdir(dirpath);
 
-  const files = await db.select("_sc_files");
-  for (const f of files) {
-    const base = basename(f.location);
-    //exclude auto backups
-    if (
-      base.startsWith(
-        `sc-backup-${getState().getConfig("site_name", "Saltcorn")}`
-      ) &&
-      f.mime_sub === "zip" &&
-      !f.user_id
-    )
-      continue;
-    await copyFile(f.location, join(dirpath, base));
-    f.location = base;
-  }
-  await create_csv_from_rows(files, join(root_dirpath, "files.csv"));
+  const allFiles: File[] = [];
+  const iterFolder = async (folder?: string) => {
+    const files = await File.find(folder ? { folder } : {});
+    for (const f of files) {
+      const base = basename(f.location);
+      if (f.isDirectory) {
+        await mkdir(join(dirpath, f.path_to_serve as string));
+        await iterFolder(f.path_to_serve as string);
+      } else {
+        //exclude auto backups
+        if (
+          base.startsWith(
+            `sc-backup-${getState().getConfig("site_name", "Saltcorn")}`
+          ) &&
+          f.mime_sub === "zip" &&
+          !f.user_id
+        )
+          continue;
+        await copyFile(f.location, join(dirpath, folder || "", base));
+      }
+      f.location = path.join(folder || "", base);
+      allFiles.push(f);
+    }
+  };
+  await iterFolder();
+
+  await create_csv_from_rows(allFiles, join(root_dirpath, "files.csv"));
 };
 
 /**
