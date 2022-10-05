@@ -165,6 +165,7 @@ describe("File", () => {
     //assertIsSet(f.id);
     expect(f.mime_sub).toBe("png");
     expect(f.mimetype).toBe("image/png");
+    expect(f.user_id).toBe(1);
     //await File.update(f.id, { size_kb: 56 });
     await f.delete();
   });

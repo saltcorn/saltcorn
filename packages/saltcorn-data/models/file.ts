@@ -148,7 +148,7 @@ class File {
     } catch (e) {
       throw new Error("File.from_file_on_disk: File not found: " + name);
     }
-    let min_role_read;
+    let min_role_read, user_id;
     try {
       min_role_read = +(await xattr.get(
         path.join(absoluteFolder, name),
@@ -157,6 +157,12 @@ class File {
     } catch (e) {
       min_role_read = 10;
     }
+    try {
+      user_id = +(await xattr.get(
+        path.join(absoluteFolder, name),
+        "user.saltcorn.user_id"
+      ));
+    } catch (e) {}
 
     const isDirectory = stat.isDirectory();
     const mimetype = lookup(name);
@@ -168,6 +174,7 @@ class File {
       uploaded_at: stat.ctime,
       mime_super,
       mime_sub,
+      user_id,
       isDirectory,
       min_role_read,
     });
@@ -264,6 +271,15 @@ class File {
         "user.saltcorn.min_role_read",
         `${min_role_read}`
       );
+    }
+  }
+
+  async set_user(user_id: number) {
+    // const fsx = await import("fs-xattr");
+    if (this.id) {
+      await File.update(this.id, { user_id });
+    } else {
+      await xattr.set(this.location, "user.saltcorn.user_id", `${user_id}`);
     }
   }
 
@@ -440,6 +456,7 @@ class File {
     // refresh file list cache
     //await require("../db/state").getState().refresh_files();
     await file.set_role(file.min_role_read);
+    if (file.user_id) await file.set_user(file.user_id);
     return file;
   }
 

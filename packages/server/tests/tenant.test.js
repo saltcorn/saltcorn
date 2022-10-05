@@ -13,6 +13,8 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 
 afterAll(db.close);
+jest.setTimeout(10000);
+
 
 beforeAll(async () => {
   if (!db.isSQLite) {
