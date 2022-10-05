@@ -240,16 +240,20 @@ const restore_files = async (dirpath: string): Promise<any> => {
   if (existsSync(fnm)) {
     const file_rows = await csvtojson().fromFile(fnm);
     for (const file of file_rows) {
+      if (file.isDirectory)
+        await mkdir(File.get_new_path(file.location), { recursive: true });
+    }
+    for (const file of file_rows) {
       const newPath = File.get_new_path(file.location);
       //copy file
       await copyFile(join(dirpath, "files", file.location), newPath);
+      file_users[file.location] = file.user_id;
       //set location
       file.location = newPath;
       //insert in db
-      const { user_id, ...file_row } = file;
-      file_row.s3_store = !!file_row.s3_store;
-      const id = await db.insert("_sc_files", file_row);
-      file_users[id] = user_id;
+
+      await File.create(file);
+      //const id = await db.insert("_sc_files", file_row);
     }
     if (db.reset_sequence) await db.reset_sequence("_sc_files");
   }
@@ -263,7 +267,11 @@ const restore_files = async (dirpath: string): Promise<any> => {
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
   for (const [id, user_id] of Object.entries(file_users)) {
-    if (user_id) await db.update("_sc_files", { user_id }, id);
+    if (user_id) {
+      const file = await File.findOne(id);
+      if (file) await file.set_user(user_id as number);
+      //await db.update("_sc_files", { user_id }, id);
+    }
   }
 };
 
