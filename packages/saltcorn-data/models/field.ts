@@ -363,7 +363,7 @@ class Field implements AbstractField {
           : dbOpts;
       this.options = [...new Set(allOpts)];
     } else if (this.type === "File") {
-      const files = await File.find();
+      const files = await File.find(this.attributes.select_file_where || {});
       this.options = files.map((f) => ({
         label: f.filename,
         value: f.path_to_serve,
