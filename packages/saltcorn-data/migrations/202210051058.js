@@ -35,7 +35,8 @@ const js = async () => {
     const fileFields = await Field.find({ type: "File" })
     const schema = db.getTenantSchemaPrefix()
     for (const field of fileFields) {
-        const table = Table.findOne(field.table_id)
+        const table = Table.findOne({ id: field.table_id })
+        console.log({ table });
         await db.query(`alter table ${schema}"${table.name}" alter column "${field.name}" type text;`)
 
     }
