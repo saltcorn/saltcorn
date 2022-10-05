@@ -33,7 +33,13 @@ const js = async () => {
     }
     // migrate file fields to text fields
     const fileFields = await Field.find({ type: "File" })
-    console.log(fileFields[0]);
+    const schema = db.getTenantSchemaPrefix()
+    for (const field of fileFields) {
+        const table = Table.findOne(field.table_id)
+        await db.query(`alter table ${schama}"${table.name}" alter column "${field.name}" type text;`)
+
+    }
+    //console.log(fileFields[0]);
 
 
 }
