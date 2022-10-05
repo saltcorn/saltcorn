@@ -79,11 +79,11 @@ class File {
     selectopts: SelectOptions = {}
   ): Promise<Array<File>> {
     const { getState } = require("../db/state");
+    const state = getState();
 
-    const useS3 = getState().getConfig("storage_s3_enabled");
+    const useS3 = state?.getConfig("storage_s3_enabled");
     if (useS3 || where?.inDB) {
       if (selectopts.cached) {
-        const { getState } = require("../db/state");
         // TODO ch migrate State and replace any
         const files = Object.values(getState().files).sort((a: any, b: any) =>
           a.filename > b.filename ? 1 : -1
@@ -189,8 +189,8 @@ class File {
   static async findOne(where: Where | string): Promise<File | null> {
     if (typeof where === "string") {
       const { getState } = require("../db/state");
-
-      const useS3 = getState().getConfig("storage_s3_enabled");
+      const state = getState();
+      const useS3 = state?.getConfig("storage_s3_enabled");
       if (useS3) {
         const files = await File.find({ id: +where });
         return files[0];
@@ -208,7 +208,7 @@ class File {
         try {
           return await File.from_file_on_disk(name, dir);
         } catch (e: any) {
-          getState().log(2, e?.toString ? e.toString() : e);
+          state?.log(2, e?.toString ? e.toString() : e);
           return null;
         }
       }
@@ -303,9 +303,10 @@ class File {
    */
   static get_new_path(suggest?: string): string {
     const { getState } = require("../db/state");
+    const state = getState();
 
     // Check if it uses S3, then use a default "saltcorn" folder
-    const useS3 = getState().getConfig("storage_s3_enabled");
+    const useS3 = state?.getConfig("storage_s3_enabled");
     const tenant = db.getTenantSchema();
 
     const file_store = !useS3 ? db.connectObj.file_store : "saltcorn/";
@@ -329,7 +330,7 @@ class File {
       await mkdir(path.join(file_store, tenant_name), { recursive: true });
       return;
     }
-    if (!getState().getConfig("storage_s3_enabled")) {
+    if (!getState()?.getConfig("storage_s3_enabled")) {
       await mkdir(file_store, { recursive: true });
       const tenants = getAllTenants();
       for (const tenant of Object.keys(tenants)) {

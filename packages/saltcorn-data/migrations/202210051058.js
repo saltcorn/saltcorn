@@ -16,7 +16,9 @@ const js = async () => {
 
     await File.ensure_file_store(db.getTenantSchema())
 
-    await getState().refresh(false)
+    const state = getState()
+
+    await state?.refresh(false)
     //TODO bail out if S3
 
     // rename all files, move to tenant dir with new name
@@ -62,9 +64,10 @@ const js = async () => {
 
     }
     //system cfg
-    await getState().setConfig("site_logo_id", newLocations[getState().getConfig("site_logo_id")])
-    await getState().setConfig("favicon_id", newLocations[getState().getConfig("favicon_id")])
-
+    if (state) {
+        await state.setConfig("site_logo_id", newLocations[state.getConfig("site_logo_id")])
+        await state.setConfig("favicon_id", newLocations[state.getConfig("favicon_id")])
+    }
     // pages etc, other layout items
     const visitors = {
         image(segment) {
