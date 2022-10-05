@@ -439,7 +439,7 @@ class File {
     //file.id = await db.insert("_sc_files", rest);
     // refresh file list cache
     //await require("../db/state").getState().refresh_files();
-
+    await file.set_role(file.min_role_read);
     return file;
   }
 

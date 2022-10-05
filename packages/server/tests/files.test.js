@@ -68,11 +68,11 @@ describe("files admin", () => {
   });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/files/serve/rick.png").expect(toRedirect("/"));
+    await request(app).get("/files/serve/rick.png").expect(404);
   });
   it("not download file to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/files/download/rick.png").expect(toRedirect("/"));
+    await request(app).get("/files/download/rick.png").expect(404);
   });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });

@@ -165,13 +165,15 @@ router.get(
     const user_id = req.user && req.user.id;
     const serve_path = req.params[0];
     const file = await File.findOne(serve_path);
-    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+
+    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
       res.type(file.mimetype);
       if (file.s3_store) s3storage.serveObject(file, res, true);
       else res.download(file.location, file.filename);
     } else {
-      req.flash("warning", req.__("Not authorized"));
-      res.redirect("/");
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
   })
 );
@@ -192,21 +194,16 @@ router.get(
     //if (typeof strictParseInt(id) !== "undefined")
     const file = await File.findOne(serve_path);
 
-    if (!file) {
-      res
-        .status(404)
-        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
-      return;
-    }
-    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
     } else {
-      req.flash("warning", req.__("Not authorized"));
-      res.redirect("/");
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
   })
 );
@@ -228,13 +225,7 @@ router.get(
 
     const file = await File.findOne(serve_path);
 
-    if (!file) {
-      res
-        .status(404)
-        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
-      return;
-    }
-    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
@@ -261,8 +252,9 @@ router.get(
         res.sendFile(fnm);
       }
     } else {
-      req.flash("warning", req.__("Not authorized"));
-      res.redirect("/");
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
   })
 );
