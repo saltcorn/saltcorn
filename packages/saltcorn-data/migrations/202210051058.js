@@ -32,7 +32,7 @@ const js = async () => {
         }
     }
     // migrate file fields to text fields
-    const fileFields = await Fields.find({ type: "File" })
+    const fileFields = await Field.find({ type: "File" })
     console.log(fileFields[0]);
 
 
