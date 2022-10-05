@@ -4,6 +4,7 @@ const js = async () => {
     const db = require("../db");
     const tables = await Table.find({});
     const fsp = require("fs").promises
+    const fs = require("fs")
     const path = require("path")
     await File.ensure_file_store(db.getTenantSchema())
 
@@ -22,7 +23,7 @@ const js = async () => {
                 newbase = `${filenoext}_${i}${ext}`
             }
             const newLoc = File.get_new_path(newbase)
-            const exists = await fsp.exists(newLoc)
+            const exists = fs.existsSync(newLoc)
             if (!exists) {
                 await fsp.rename(file.location, newLoc)
                 newLocations[file.id] = newLoc
