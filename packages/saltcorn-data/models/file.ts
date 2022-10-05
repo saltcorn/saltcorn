@@ -141,7 +141,12 @@ class File {
     name: string,
     absoluteFolder: string
   ): Promise<File> {
-    const stat = await fs.stat(path.join(absoluteFolder, name));
+    let stat;
+    try {
+      stat = await fs.stat(path.join(absoluteFolder, name));
+    } catch (e) {
+      throw new Error("File.from_file_on_disk: File not found: " + name);
+    }
     let min_role_read;
     try {
       min_role_read = +(await xattr.get(
@@ -192,7 +197,12 @@ class File {
         );
         const name = path.basename(absoluteFolder);
         const dir = path.dirname(absoluteFolder);
-        return await File.from_file_on_disk(name, dir);
+        try {
+          return await File.from_file_on_disk(name, dir);
+        } catch (e: any) {
+          getState().log(2, e?.toString ? e.toString() : e);
+          return null;
+        }
       }
     }
     const files = await File.find(where);
