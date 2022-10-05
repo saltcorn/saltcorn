@@ -12,7 +12,6 @@ const js = async () => {
 
     // rename all files, move to tenant dir
     const db_files = await File.find({ inDB: true })
-    console.log(db_files[0]);
     const newLocations = {}
     for (const file of db_files) {
         for (let i = 0; i < 5000; i++) {
