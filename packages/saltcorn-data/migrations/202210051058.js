@@ -22,9 +22,9 @@ const js = async () => {
                 newbase = `${filenoext}_${i}${ext}`
             }
             const newLoc = File.get_new_path(newbase)
-            const exists = await fs.exists(newLoc)
+            const exists = await fps.exists(newLoc)
             if (!exists) {
-                await fs.rename(file.location, newLoc)
+                await fsp.rename(file.location, newLoc)
                 newLocations[file.id] = newLoc
                 break
             }
