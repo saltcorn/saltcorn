@@ -292,7 +292,7 @@ router.post(
     }
     else req.flash("success", req.__(`Minimum role updated`));
 
-    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
+    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
   })
 );
 
