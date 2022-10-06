@@ -270,11 +270,6 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
   for (const field of fileFields) {
     const table = Table.findOne({ id: field.table_id });
-    console.log(
-      "correct_fileid_references_to_location",
-      table?.name,
-      field.name
-    );
 
     const rows = await table!.getRows({});
     for (const row of rows) {
@@ -395,7 +390,6 @@ const restore = async (
   //table csvs
   const tabres = await restore_tables(tmpDir.path, restore_first_user);
   if (tabres) err = (err || "") + tabres;
-  console.log("newlocs", newLocations);
 
   if (Object.keys(newLocations).length > 0)
     await correct_fileid_references_to_location(newLocations);
