@@ -700,6 +700,7 @@ export /**
               className="form-control form-select"
               value={value || ""}
               onChange={(e) => e.target && myOnChange(e.target.value)}
+              onBlur={(e) => e.target && myOnChange(e.target.value)}
             >
               {options.map((o, ix) => (
                 <option
@@ -726,6 +727,7 @@ export /**
           className="form-control form-select"
           value={value || ""}
           onChange={(e) => e.target && myOnChange(e.target.value)}
+          onBlur={(e) => e.target && myOnChange(e.target.value)}
         >
           <option value={""}></option>
           {Object.entries(options.fonts || {}).map(([nm, ff], ix) => (
@@ -790,6 +792,7 @@ export /**
           className="form-control form-select"
           value={value || ""}
           onChange={(e) => e.target && myOnChange(e.target.value)}
+          onBlur={(e) => e.target && myOnChange(e.target.value)}
         >
           {field.options.map((o, ix) => (
             <option key={ix}>{o}</option>

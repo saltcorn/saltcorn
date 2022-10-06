@@ -29,6 +29,8 @@ import type {
   InputType,
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import { fileSync } from "tmp-promise";
+import File from "./file";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -125,17 +127,13 @@ class Field implements AbstractField {
 
     this.is_fkey =
       o.type === "Key" ||
-      o.type === "File" ||
       (typeof o.type === "string" && o.type.startsWith("Key to"));
 
-    if (!this.is_fkey) {
-      this.input_type = o.input_type || "fromtype";
-    } else if (o.type === "File") {
+    if (o.type === "File") {
       this.type = "File";
       this.input_type = this.fieldview ? "fromtype" : "file";
-      this.reftable_name = "_sc_files";
-      this.reftype = "Integer";
-      this.refname = "id";
+    } else if (!this.is_fkey) {
+      this.input_type = o.input_type || "fromtype";
     } else {
       this.reftable_name = o.reftable_name || (o.reftable && o.reftable.name);
       if (o.type && typeof o.type === "string" && o.type.startsWith("Key to "))
@@ -364,6 +362,19 @@ class Field implements AbstractField {
           ? [{ label: "", value: "" }, ...dbOpts]
           : dbOpts;
       this.options = [...new Set(allOpts)];
+    } else if (this.type === "File") {
+      const files = await File.find(
+        this.attributes.folder
+          ? { folder: this.attributes.folder }
+          : this.attributes.select_file_where || {}
+      );
+      this.options = files
+        .filter((f) => !f.isDirectory)
+        .map((f) => ({
+          label: f.filename,
+          value: f.path_to_serve,
+        }));
+      if (!this.required) this.options.unshift({ label: "", value: "" });
     }
   }
 
@@ -445,6 +456,8 @@ class Field implements AbstractField {
       )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
       }")${this.attributes?.on_delete_cascade ? " on delete cascade" : ""}`;
+    } else if (this.type === "File") {
+      return "text";
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
@@ -476,6 +489,8 @@ class Field implements AbstractField {
       ].sql_name;
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
+    } else if (this.type === "File") {
+      return "text";
     }
     throw new Error("Unable to get the sql_type");
   }
@@ -913,7 +928,7 @@ class Field implements AbstractField {
           table_id: f.table_id,
           name: f.name,
           label: f.label,
-          type: f.is_fkey ? f.type : (<Type>f.type)?.name,
+          type: f.is_fkey || f.type === "File" ? f.type : (<Type>f.type)?.name,
           reftable_name: f.is_fkey ? f.reftable_name : undefined,
           reftype: f.is_fkey ? f.reftype : undefined,
           refname: f.is_fkey ? f.refname : undefined,

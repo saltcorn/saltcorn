@@ -325,13 +325,15 @@ const render = ({
                 .split(",")
                 .map(
                   (w: string) =>
-                    `/files/resize/${segment.fileid}/${w.trim()} ${w.trim()}w`
+                    `/files/resize/${w.trim()}/0/${encodeURIComponent(
+                      segment.fileid
+                    )} ${w.trim()}w`
                 )
                 .join(",")
             : undefined,
         src: isWeb
           ? srctype === "File"
-            ? `/files/serve/${segment.fileid}`
+            ? `/files/serve/${encodeURIComponent(segment.fileid)}`
             : segment.url
           : undefined,
         id: elementId,

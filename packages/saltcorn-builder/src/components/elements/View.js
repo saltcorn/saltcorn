@@ -119,6 +119,7 @@ export /**
             value={view}
             className="form-control form-select"
             onChange={setAProp("view")}
+            onBlur={setAProp("view")}
           >
             {views.map((f, ix) => (
               <option key={ix} value={f.name}>
@@ -135,6 +136,7 @@ export /**
                 value={state}
                 className="form-control form-select"
                 onChange={setAProp("state")}
+                onBlur={setAProp("state")}
               >
                 <option value="shared">Shared</option>
                 <option value="fixed">Fixed</option>

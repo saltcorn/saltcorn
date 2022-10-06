@@ -531,7 +531,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const field = fields.find((f) => f.name === segment.field);
         if (!field) return;
         if (field.type.name === "String") segment.url = row[segment.field];
-        if (field.reftable_name === "_sc_files")
+        if (field.type === "File")
           segment.url = `/files/serve/${row[segment.field]}`;
       }
     },

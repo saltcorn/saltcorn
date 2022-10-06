@@ -17,6 +17,8 @@ const {
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
 const { select_options } = require("@saltcorn/markup/helpers");
+const File = require("../models/file");
+const path = require("path");
 
 module.exports = {
   /**
@@ -29,12 +31,12 @@ module.exports = {
      * @param {string} file_name
      * @returns {link}
      */
-    run: (file_id, file_name) =>
+    run: (filePath) =>
       link(
         isNode()
-          ? `/files/download/${file_id}`
+          ? `/files/download/${(filePath)}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
-        file_name || "Download"
+        path.basename(filePath) || "Download"
       ),
   },
   /**
@@ -47,12 +49,12 @@ module.exports = {
      * @param {string} file_name
      * @returns {link}
      */
-    run: (file_id, file_name) =>
+    run: (filePath) =>
       link(
         isNode()
-          ? `/files/serve/${file_id}`
+          ? `/files/serve/${(filePath)}`
           : `javascript:openFile(${file_id})`,
-        file_name || "Open"
+        path.basename(filePath) || "Open"
       ),
   },
 
@@ -66,12 +68,12 @@ module.exports = {
      * @param {string} file_name
      * @returns {a}
      */
-    run: (file_id, file_name) =>
+    run: (filePath) =>
       a(
         isNode()
-          ? { href: `/files/serve/${file_id}`, target: "_blank" }
+          ? { href: `/files/serve/${(filePath)}`, target: "_blank" }
           : { href: `javascript:openFile(${file_id})` },
-        file_name || "Open"
+        path.basename(filePath) || "Open"
       ),
   },
   /**
@@ -84,14 +86,14 @@ module.exports = {
      * @param {string} file_name
      * @returns {img}
      */
-    run: (file_id, file_name) => {
+    run: (filePath) => {
       if (isNode())
-        return img({ src: `/files/serve/${file_id}`, style: "width: 100%" });
+        return img({ src: `/files/serve/${(filePath)}`, style: "width: 100%" });
       else {
-        const elementId = `_sc_file_id_${file_id}_`;
+        const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
-          img({ style: "width: 100%", id: elementId }),
-          script(domReady(`buildEncodedImage(${file_id}, '${elementId}')`))
+          img({ style: "width: 100%", id: rndid }),
+          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`))
         );
       }
     },
@@ -100,6 +102,17 @@ module.exports = {
     isEdit: true,
     multipartFormData: true,
     valueIsFilename: true,
+    configFields: async () => {
+      const dirs = await File.allDirectories()
+      return [
+        {
+          name: "folder",
+          label: "Folder",
+          type: "String",
+          attributes: { options: dirs.map(d => d.path_to_serve) }
+        }
+      ]
+    },
     run: (nm, file_name, attrs, cls, reqd, field) => {
       return (
         text(file_name || "") +
@@ -116,6 +129,27 @@ module.exports = {
   select: {
     isEdit: true,
     setsFileId: true,
+    configFields: async () => {
+      const dirs = await File.allDirectories()
+      return [
+        {
+          name: "folder",
+          label: "Folder",
+          type: "String",
+          attributes: { options: dirs.map(d => d.path_to_serve) }
+        },
+        /*{
+          name: "name_regex",
+          label: "Name regex",
+          type: "String"
+        },
+        {
+          name: "mime_regex",
+          label: "MIME regex",
+          type: "String"
+        }*/
+      ]
+    },
     run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {
@@ -139,13 +173,13 @@ module.exports = {
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
-    run: (file_id, file_name, cfg) => {
+    run: (filePath, file_name, cfg) => {
       const { width, height, expand } = cfg || {};
       if (isNode())
         return img({
-          src: `/files/resize/${file_id}/${width}${height ? `/${height}` : ""}`,
+          src: `/files/resize/${width}/${height || 0}/${filePath}`,
           onclick: expand
-            ? `expand_thumbnail(${file_id}, '${encodeURIComponent(file_name)}')`
+            ? `expand_thumbnail('${filePath}', '${path.basename(filePath)}')`
             : undefined,
         });
       else {

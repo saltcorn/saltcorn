@@ -734,6 +734,7 @@ router.post(
       await auto_backup_now();
       req.flash("success", req.__("Backup successful"));
     } catch (e) {
+      getState().log(1, e)
       req.flash("error", e.message);
     }
     res.json({ reload_page: true });
@@ -980,7 +981,7 @@ router.post(
     res.attachment(fileName);
     const file = fs.createReadStream(fileName);
     file.on("end", function () {
-      fs.unlink(fileName, function () {});
+      fs.unlink(fileName, function () { });
     });
     file.pipe(res);
   })
@@ -1003,7 +1004,7 @@ router.post(
     );
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
-    fs.unlink(newPath, function () {});
+    fs.unlink(newPath, function () { });
     res.redirect(`/admin`);
   })
 );

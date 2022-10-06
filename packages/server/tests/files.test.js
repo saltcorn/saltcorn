@@ -45,16 +45,7 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
     await request(app)
-      .get("/files/download/2")
-      .set("Cookie", loginCookie)
-      .expect(toSucceed());
-  });
-
-  it("serve file", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getStaffLoginCookie();
-    await request(app)
-      .get("/files/serve/2")
+      .get("/files/download/rick.png")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
@@ -71,38 +62,38 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getStaffLoginCookie();
     await request(app)
-      .get("/files/serve/22")
+      .get("/files/serve/missingfile.foo")
       .set("Cookie", loginCookie)
       .expect(404);
   });
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/files/serve/2").expect(toRedirect("/"));
+    await request(app).get("/files/serve/rick.png").expect(404);
   });
   it("not download file to public", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/files/download/2").expect(toRedirect("/"));
+    await request(app).get("/files/download/rick.png").expect(404);
   });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/files/setrole/2")
+      .post("/files/setrole/rick.png")
       .set("Cookie", loginCookie)
       .send("role=10")
-      .expect(toRedirect("/files"));
+      .expect(toRedirect("/files?dir=."));
   });
   it("serve file to public after role change", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/files/serve/2").expect(toSucceed());
+    await request(app).get("/files/serve/rick.png").expect(toSucceed());
   });
   it("delete file", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/files/delete/2")
+      .post("/files/delete/rick.png")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/files"));
+      .expect(toRedirect("/files?dir=."));
   });
   it("upload file", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -112,7 +103,7 @@ describe("files admin", () => {
       .set("Cookie", loginCookie)
       .attach("file", Buffer.from("helloiamasmallfile", "utf-8"))
 
-      .expect(toRedirect("/files"));
+      .expect(toRedirect("/files?dir=."));
   });
 });
 describe("files edit", () => {

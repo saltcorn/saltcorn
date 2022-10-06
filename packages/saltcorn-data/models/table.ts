@@ -1361,15 +1361,6 @@ class Table implements AbstractTable {
     let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
 
-    fields
-      .filter((f) => f.type === "File")
-      .forEach((f) => {
-        joinFields[`${f.name}__filename`] = {
-          ref: f.name,
-          reftable: "_sc_files",
-          target: `filename`,
-        };
-      });
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
     )) {

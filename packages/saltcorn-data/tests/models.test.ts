@@ -162,10 +162,11 @@ describe("File", () => {
     expect(cs[0].mime_super).toBe("image");
     const f = await File.findOne({ filename: "rick.png" });
     assertIsSet(f);
-    assertIsSet(f.id);
+    //assertIsSet(f.id);
     expect(f.mime_sub).toBe("png");
     expect(f.mimetype).toBe("image/png");
-    await File.update(f.id, { size_kb: 56 });
+    expect(f.user_id).toBe(1);
+    //await File.update(f.id, { size_kb: 56 });
     await f.delete();
   });
 });
@@ -215,10 +216,7 @@ describe("Library", () => {
       name: "Bars",
       icon: "fa-cog",
       layout: {
-        above: [
-          { type: "dropdown_filter" },
-          { type: "toggle_filter" },
-        ],
+        above: [{ type: "dropdown_filter" }, { type: "toggle_filter" }],
       },
     });
     const lib = await Library.findOne({ name: "Bars" });

@@ -1447,7 +1447,9 @@ const readState = (state, fields, req) => {
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);
-      } else if (f.type === "Key" || f.type === "File")
+      } else if (f.type === "File")
+        state[f.name] = current
+      else if (f.type === "Key")
         state[f.name] =
           current === "null" || current === "" || current === null
             ? null

@@ -630,7 +630,7 @@ const render = async ({
     for (const field of file_fields) {
       if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
         const file = await File.findOne({ id: row[field.name] });
-        form.values[field.name] = file.filename;
+        if (file.id) form.values[field.name] = file.filename;
       }
     }
     form.hidden(table.pk_name);
@@ -778,10 +778,11 @@ const runPost = async (
           ? await File.from_req_files(
             req.files[field.name],
             req.user ? req.user.id : null,
-            (field.attributes && +field.attributes.min_role_read) || 1
+            (field.attributes && +field.attributes.min_role_read) || 1,
+            field?.attributes?.folder
           )
           : await File.upload(req.files[field.name]);
-        row[field.name] = file.id;
+        row[field.name] = file.path_to_serve;
       } else {
         delete row[field.name];
       }
