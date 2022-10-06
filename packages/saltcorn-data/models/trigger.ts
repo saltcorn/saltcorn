@@ -15,6 +15,8 @@ import type {
 import Crash = require("./crash");
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
 const { satisfies } = require("../utils");
+import type Tag from "./tag";
+import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 /**
  * Trigger class
@@ -360,6 +362,11 @@ class Trigger implements AbstractTrigger {
       "UserVerified",
       ...Object.keys(getState().eventTypes),
     ];
+  }
+
+  async getTags(): Promise<Array<AbstractTag>> {
+    const Tag = (await import("./tag")).default;
+    return await Tag.findWithEntries({ trigger_id: this.id });
   }
 }
 // todo clone trigger

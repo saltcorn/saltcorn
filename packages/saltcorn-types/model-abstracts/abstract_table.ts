@@ -1,11 +1,14 @@
-import { FieldCfg } from "./abstract_field";
+import { AbstractField, FieldCfg } from "./abstract_field";
 import { TriggerCfg } from "./abstract_trigger";
+import type { AbstractTag } from "./abstract_tag";
 
 export interface AbstractTable {
   name: string;
   id?: number;
   // is actually a getter
   sql_name: string;
+  fields?: AbstractField[] | null;
+  getTags(): Promise<Array<AbstractTag>>;
 }
 
 export type TableCfg = {

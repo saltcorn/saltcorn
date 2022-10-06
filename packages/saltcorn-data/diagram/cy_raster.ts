@@ -1,4 +1,5 @@
-import Node from "./node";
+import { DummyNode } from "./nodes/dummy_node";
+import Node from "./nodes/node";
 
 /**
  * aligns the nodes from the application object tree on a raster
@@ -31,11 +32,10 @@ export default class CytoscapeRaster {
     const visitor = buildVisitor(this);
     let maxRowInLine = 0;
     for (const node of entryNodes) {
-      const dummyRoot = new Node("dummy", "");
+      const dummyRoot = new DummyNode();
       dummyRoot.linked.push(node);
       const usedSpace = traverse(dummyRoot, visitor, startRow, startCol);
-      if(usedSpace.maxRow > maxRowInLine)
-        maxRowInLine = usedSpace.maxRow; 
+      if (usedSpace.maxRow > maxRowInLine) maxRowInLine = usedSpace.maxRow;
       if (usedSpace.maxCol < 10) {
         startCol = usedSpace.maxCol;
       } else {
@@ -75,11 +75,7 @@ export default class CytoscapeRaster {
         const node = this.raster[row][col];
         if (node) {
           cyNodes.push({
-            data: {
-              id: node.cyId,
-              type: node.type,
-              label: node.label,
-            },
+            data: node.cyDataObject(),
             position: {
               x: col * hSpacing,
               y: row * vSpacing,
@@ -162,8 +158,7 @@ const buildVisitor = (raster: CytoscapeRaster): any => {
         raster.addNode(table, tableRow, tableCol);
         raster.addLink(source, table, "new_target");
         tableCol = triggerCol;
-      }
-      else {
+      } else {
         raster.addLink(source, table, "existing_target");
       }
     }

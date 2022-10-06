@@ -1,4 +1,5 @@
 import type { AbstractTable } from "./abstract_table";
+import type { AbstractTag } from "./abstract_tag";
 
 export interface AbstractTrigger {
   name?: string;
@@ -15,6 +16,7 @@ export interface AbstractTrigger {
   toJson(): any;
   delete(): Promise<void>;
   runWithoutRow(runargs: any): Promise<boolean>;
+  getTags(): Promise<Array<AbstractTag>>;
 }
 
 export type TriggerCfg = {

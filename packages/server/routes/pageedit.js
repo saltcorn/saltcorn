@@ -569,13 +569,13 @@ router.post(
     const page = await Page.findOne({ id });
     const roles = await User.get_roles();
     const roleRow = roles.find((r) => r.id === +role);
-    if (roleRow && page)
-      req.flash(
-        "success",
-        req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
-      );
-    else req.flash("success", req.__(`Minimum role updated`));
-
-    res.redirect("/pageedit");
+    const message =
+      roleRow && page
+        ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
+        : req.__(`Minimum role updated`);
+    if (!req.xhr) {
+      req.flash("success", message);
+      res.redirect("/pageedit");
+    } else res.json({ okay: true, responseText: message });
   })
 );

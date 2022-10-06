@@ -1,7 +1,13 @@
-import Node from "./node";
-import type { NodeType } from "./node";
-import { AbstractView as View } from "@saltcorn/types/model-abstracts/abstract_view";
-import { AbstractPage as Page } from "@saltcorn/types/model-abstracts/abstract_page";
+import Node from "./nodes/node";
+import type { NodeType } from "./nodes/node";
+import {
+  AbstractView as View,
+  instanceOfView,
+} from "@saltcorn/types/model-abstracts/abstract_view";
+import {
+  AbstractPage as Page,
+  instanceOfPage,
+} from "@saltcorn/types/model-abstracts/abstract_page";
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
 import layout from "../models/layout";
 const { traverseSync } = layout;
@@ -10,6 +16,23 @@ const {
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import Trigger from "../models/trigger";
+import { TableNode } from "./nodes/table_node";
+import { TriggerNode } from "./nodes/trigger_node";
+import { ViewNode } from "./nodes/view_node";
+import { PageNode } from "./nodes/page_node";
+
+// TODO this is a copy from 'common_list.js'
+const setTableRefs = async (views: any) => {
+  const tables = await require("../models/table").find();
+  const getTable = (tid: any) => tables.find((t: any) => t.id === tid).name;
+
+  views.forEach((v: any) => {
+    if (v.table_id) v.table = getTable(v.table_id);
+    else if (v.exttable_name) v.table = v.exttable_name;
+    else v.table = "";
+  });
+  return views;
+};
 
 export type ExtractOpts = {
   entryPages?: Array<Page>;
@@ -43,6 +66,7 @@ export async function buildObjectTrees(
   }
   if (opts.showViews) {
     const allViews = await require("../models/view").find();
+    setTableRefs(allViews);
     const viewTrees = await buildTree("view", allViews, helper);
     result.push(...viewTrees);
   }
@@ -56,11 +80,15 @@ async function buildTree(
 ) {
   const result = new Array<Node>();
   for (const object of objects) {
-    const node = new Node(type, object.name);
-    const includeObject =
-      type === "page"
-        ? includePage(<Page>object, helper.opts)
-        : includeView(<View>object, helper.opts);
+    let node;
+    let includeObject;
+    if (instanceOfView(object)) {
+      node = new ViewNode(object, await object.getTags());
+      includeObject = includeView(object, helper.opts);
+    } else {
+      node = new PageNode(object, await object.getTags());
+      includeObject = includePage(object, helper.opts);
+    }
     if (includeObject && !helper.cyIds.has(node.cyId)) {
       helper.cyIds.add(node.cyId);
       const connected = await object.connected_objects();
@@ -196,13 +224,17 @@ class ExtractHelper {
     if (this.opts.showTables)
       for (const table of connected.tables || []) {
         if (table && includeTable(table, this.opts)) {
-          const tableNode = new Node("table", table.name);
+          const tableNode = new TableNode(table, await table.getTags());
+
           this.cyIds.add(tableNode.cyId);
           if (this.opts.showTrigger) {
             const triggerNodes = new Array<Node>();
             for (const trigger of await Trigger.getAllTableTriggers(table)) {
               if (trigger && includeTrigger(trigger, this.opts)) {
-                const newNode = new Node("trigger", trigger.name!);
+                const newNode = new TriggerNode(
+                  trigger,
+                  await trigger.getTags()
+                );
                 this.cyIds.add(newNode.cyId);
                 triggerNodes.push(newNode);
               }
@@ -215,7 +247,8 @@ class ExtractHelper {
   }
 
   private async addLinkedViewNode(oldNode: Node, newView: View) {
-    const newNode = new Node("view", newView.name);
+    await newView.getTags();
+    const newNode = new ViewNode(newView, await newView.getTags());
     oldNode.linked.push(newNode);
     if (!this.cyIds.has(newNode.cyId)) {
       this.cyIds.add(newNode.cyId);
@@ -225,7 +258,8 @@ class ExtractHelper {
   }
 
   private async addEmbeddedView(oldNode: Node, embedded: View) {
-    const newNode = new Node("view", embedded.name);
+    await embedded.getTags();
+    const newNode = new ViewNode(embedded, await embedded.getTags());
     oldNode.embedded.push(newNode);
     if (!this.cyIds.has(newNode.cyId)) {
       this.cyIds.add(newNode.cyId);
@@ -235,7 +269,8 @@ class ExtractHelper {
   }
 
   private async addLinkedPageNode(oldNode: Node, newPage: Page) {
-    const newNode = new Node("page", newPage.name);
+    await newPage.getTags();
+    const newNode = new PageNode(newPage, await newPage.getTags());
     oldNode.linked.push(newNode);
     if (!this.cyIds.has(newNode.cyId)) {
       this.cyIds.add(newNode.cyId);
