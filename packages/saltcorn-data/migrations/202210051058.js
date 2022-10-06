@@ -21,6 +21,22 @@ const js = async () => {
     await state?.refresh(false)
     //TODO bail out if S3
 
+    const useS3 = state?.getConfig("storage_s3_enabled");
+    if (useS3) {
+        const fileFields = await Field.find({ type: "File" })
+        const schema = db.getTenantSchemaPrefix()
+        for (const field of fileFields) {
+            const table = Table.findOne({ id: field.table_id })
+
+            await db.query(`alter table ${schema}"${table.name}" drop constraint "${table.name}_${field.name}_fkey"`)
+            await db.query(`alter table ${schema}"${table.name}" alter column "${field.name}" type text;`)
+            if (table.versioned)
+                await db.query(`alter table ${schema}"${table.name}__history" alter column "${field.name}" type text;`)
+        }
+        return;
+    }
+
+
     // rename all files, move to tenant dir with new name
     const db_files = await File.find({ inDB: true })
     const newLocations = {}
