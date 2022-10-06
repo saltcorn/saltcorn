@@ -129,6 +129,27 @@ module.exports = {
   select: {
     isEdit: true,
     setsFileId: true,
+    configFields: async () => {
+      const dirs = await File.allDirectories()
+      return [
+        {
+          name: "folder",
+          label: "Folder",
+          type: "String",
+          attributes: { options: dirs.map(d => d.path_to_serve) }
+        },
+        /*{
+          name: "name_regex",
+          label: "Name regex",
+          type: "String"
+        },
+        {
+          name: "mime_regex",
+          label: "MIME regex",
+          type: "String"
+        }*/
+      ]
+    },
     run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {
