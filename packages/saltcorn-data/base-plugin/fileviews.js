@@ -102,6 +102,17 @@ module.exports = {
     isEdit: true,
     multipartFormData: true,
     valueIsFilename: true,
+    configFields: async () => {
+      const dirs = await File.allDirectories()
+      return [
+        {
+          name: "folder",
+          label: "Folder",
+          type: "String",
+          attributes: { options: dirs.map(d => d.path_to_serve) }
+        }
+      ]
+    },
     run: (nm, file_name, attrs, cls, reqd, field) => {
       return (
         text(file_name || "") +

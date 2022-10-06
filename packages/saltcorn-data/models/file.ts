@@ -129,13 +129,36 @@ class File {
   static normalise(fpath: string): string {
     return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
   }
+
+  static async rootFolder(): Promise<File> {
+    const tenant = db.getTenantSchema();
+
+    return await File.from_file_on_disk(
+      "/",
+      path.join(db.connectObj.file_store, tenant)
+    );
+  }
   static absPathToServePath(absPath: string | number): string {
     if (typeof absPath === "number") return `${absPath}`;
     const tenant = db.getTenantSchema();
     const s = absPath.replace(path.join(db.connectObj.file_store, tenant), "");
     return s[0] === "/" ? s.substring(1) : s;
   }
+  static async allDirectories(): Promise<Array<File>> {
+    const allDirs: File[] = [await File.rootFolder()];
+    const iterFolder = async (folder?: string) => {
+      const files = await File.find(folder ? { folder } : {});
+      for (const f of files) {
+        if (f.isDirectory) {
+          allDirs.push(f);
+          await iterFolder(f.path_to_serve as string);
+        }
+      }
+    };
+    await iterFolder();
 
+    return allDirs;
+  }
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string

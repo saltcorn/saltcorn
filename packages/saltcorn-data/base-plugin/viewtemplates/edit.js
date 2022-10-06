@@ -778,7 +778,8 @@ const runPost = async (
           ? await File.from_req_files(
             req.files[field.name],
             req.user ? req.user.id : null,
-            (field.attributes && +field.attributes.min_role_read) || 1
+            (field.attributes && +field.attributes.min_role_read) || 1,
+            field?.attributes?.folder
           )
           : await File.upload(req.files[field.name]);
         row[field.name] = file.path_to_serve;
