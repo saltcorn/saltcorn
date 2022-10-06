@@ -3,7 +3,6 @@ const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
-const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 
 /**
@@ -42,9 +41,8 @@ class BuildAppCommand extends Command {
       ".."
     );
     const db = require("@saltcorn/data/db");
-    if (db.is_it_multi_tenant()) {
-      const tenants = await getAllTenants();
-      await init_multi_tenant(loadAllPlugins, true, tenants);
+    if (db.is_it_multi_tenant() && flags.tenantAppName) {
+      await init_multi_tenant(loadAllPlugins, true, [flags.tenantAppName]);
     }
     const doBuild = async () => {
       const dynamicPlugins = (await Plugin.find()).filter(

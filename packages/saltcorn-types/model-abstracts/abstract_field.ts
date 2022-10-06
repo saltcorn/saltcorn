@@ -10,8 +10,9 @@ export interface AbstractField {
   attributes: any;
   required?: boolean;
   primary_key?: boolean;
-  // 'form_name' is actually a getter
-  form_name: string;
+  // actually getters:
+  form_name?: string;
+  type_name?: string | undefined;
 }
 
 export type FieldCfg = {
