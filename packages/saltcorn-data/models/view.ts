@@ -40,6 +40,8 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
+import type Tag from "./tag";
+import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 declare let window: any;
 
@@ -786,6 +788,11 @@ class View implements AbstractView {
       getState().mobileConfig &&
       getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0
     );
+  }
+
+  async getTags(): Promise<Array<AbstractTag>> {
+    const Tag = (await import("./tag")).default;
+    return await Tag.findWithEntries({ view_id: this.id });
   }
 }
 

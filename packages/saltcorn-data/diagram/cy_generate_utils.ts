@@ -1,4 +1,4 @@
-import Node from "./node";
+import Node from "./nodes/node";
 import CytoscapeRaster from "./cy_raster";
 
 const cyStyle = [
@@ -99,5 +99,7 @@ export function generateCyCode(entryNodes: Array<Node>): string {
     layout: {
       name: "preset"
     },
-  });`;
+  });
+  initMouseOver();
+  `;
 }

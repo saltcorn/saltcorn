@@ -3,7 +3,7 @@ import db from "../db";
 
 class TagEntry {
   id?: number;
-  tagId?: number;
+  tag_id?: number;
   table_id?: number;
   view_id?: number;
   page_id?: number;
@@ -11,7 +11,7 @@ class TagEntry {
 
   constructor(o: TagEntryCfg | TagEntry) {
     this.id = o.id;
-    this.tagId = o.tagId;
+    this.tag_id = o.tag_id;
     this.table_id = o.table_id;
     this.view_id = o.view_id;
     this.page_id = o.page_id;
@@ -39,7 +39,7 @@ class TagEntry {
   static async create(cfg: TagEntryCfg): Promise<TagEntry> {
     const entry = new TagEntry(cfg);
     const eid = await db.insert("_sc_tag_entries", {
-      tag_id: cfg.tagId,
+      tag_id: cfg.tag_id,
       table_id: cfg.table_id,
       view_id: cfg.view_id,
       page_id: cfg.page_id,
@@ -65,7 +65,7 @@ class TagEntry {
 namespace TagEntry {
   export type TagEntryCfg = {
     id?: number;
-    tagId?: number;
+    tag_id?: number;
     table_id?: number;
     view_id?: number;
     page_id?: number;

@@ -21,96 +21,16 @@ const { send_infoarch_page } = require("../markup/admin");
 const { isAdmin, error_catcher } = require("./utils.js");
 const Tag = require("@saltcorn/data/models/tag");
 const Router = require("express-promise-router");
+const User = require("@saltcorn/data/models/user");
 
 const router = new Router();
 module.exports = router;
 
-function reloadCy() {
-  $.ajax("/diagram/data", {
-    dataType: "json",
-    type: "GET",
-    headers: { "CSRF-Token": _sc_globalCsrf },
-    data: !tagFilterEnabled ? entityFilter : { ...entityFilter, tagFilterIds },
-  }).done((res) => {
-    const cfg = {
-      container: document.getElementById("cy"),
-      ...res,
-    };
-    window.cy = cytoscape(cfg);
-  });
-}
-
-function toggleEntityFilter(type) {
-  switch (type) {
-    case "views": {
-      entityFilter.showViews = !entityFilter.showViews;
-      break;
-    }
-    case "pages": {
-      entityFilter.showPages = !entityFilter.showPages;
-      break;
-    }
-    case "tables": {
-      entityFilter.showTables = !entityFilter.showTables;
-      break;
-    }
-    case "trigger": {
-      entityFilter.showTrigger = !entityFilter.showTrigger;
-      break;
-    }
-  }
-}
-
-function toggleTagFilter(id) {
-  if (!tagFilterEnabled) enableTagFilter();
-  const index = tagFilterIds.indexOf(id);
-  if (index > -1) {
-    tagFilterIds.splice(index, 1);
-  } else {
-    tagFilterIds.push(id);
-  }
-}
-
-function enableTagFilter() {
-  tagFilterEnabled = true;
-  for (const node of document.querySelectorAll('[id^="tagFilter_box_"]')) {
-    node.style = "";
-  }
-  for (const node of document.querySelectorAll('[id^="tagFilter_label_"]')) {
-    node.style = "";
-  }
-  const box = document.getElementById("noTagsId");
-  box.checked = false;
-}
-
-function toggleTagFilterMode() {
-  if (tagFilterEnabled) {
-    tagFilterEnabled = false;
-    for (const node of document.querySelectorAll('[id^="tagFilter_box_"]')) {
-      node.style = "opacity: 0.5;";
-    }
-    for (const node of document.querySelectorAll('[id^="tagFilter_label_"]')) {
-      node.style = "opacity: 0.5;";
-    }
-  } else {
-    enableTagFilter();
-  }
-}
-
-const buildScript = () => {
-  return `const entityFilter = {
-    showViews: true,
-    showPages: true,
-    showTables: true,
-    showTrigger: true,
-  };  
-  const tagFilterIds = [];
-  let tagFilterEnabled = false;
-  ${reloadCy.toString()}
-  ${toggleTagFilterMode.toString()}
-  ${enableTagFilter.toString()}
-  ${toggleEntityFilter.toString()}
-  ${toggleTagFilter.toString()}`;
+const buildGlobalVars = (tags, roles) => {
+  return `
+    const allTags = ${JSON.stringify(tags)};
+    const roles = ${JSON.stringify(roles)};
+  `;
 };
 
 const findEntryPages = async () => {
@@ -169,6 +89,7 @@ router.get(
     };
     const initialCyCode = generateCyCode(await buildObjectTrees(extractOpts));
     const tags = await Tag.find();
+    const roles = await User.get_roles();
     send_infoarch_page({
       res,
       req,
@@ -197,11 +118,6 @@ router.get(
                   {
                     class: "dropdown-menu",
                   },
-                  input({
-                    type: "hidden",
-                    name: "_csrf",
-                    value: req.csrfToken(),
-                  }),
                   // New View
                   div(
                     { class: "m-3" },
@@ -258,11 +174,6 @@ router.get(
                   {
                     class: "dropdown-menu",
                   },
-                  input({
-                    type: "hidden",
-                    name: "_csrf",
-                    value: req.csrfToken(),
-                  }),
                   // Views checkbox
                   div(
                     { class: "m-3 form-check" },
@@ -350,11 +261,6 @@ router.get(
                   {
                     class: "dropdown-menu",
                   },
-                  input({
-                    type: "hidden",
-                    name: "_csrf",
-                    value: req.csrfToken(),
-                  }),
                   // no tags checkbox
                   div(
                     { class: "m-3 form-check" },
@@ -411,22 +317,33 @@ router.get(
                 )
               ),
               div({ id: "cy" }),
+              script(buildGlobalVars(tags, roles)),
+              script({ src: "/diagram_utils.js" }),
               script(domReady(initialCyCode)),
-              script(buildScript()),
             ],
           },
         ],
       },
       headers: [
         {
+          style: `
+            #cy {
+              width: 100%;
+              height: 900px;
+              display: block;
+            }`,
+        },
+        {
+          script:
+            "https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js",
+        },
+        {
           script:
             "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.22.1/cytoscape.min.js",
-          style: `
-                #cy {
-                  width: 100%;
-                  height: 900px;
-                  display: block;
-              }`,
+        },
+        {
+          script:
+            "https://cdnjs.cloudflare.com/ajax/libs/cytoscape-popper/2.0.0/cytoscape-popper.min.js",
         },
       ],
     });

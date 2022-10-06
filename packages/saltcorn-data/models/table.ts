@@ -59,6 +59,9 @@ const {
   getLines,
 } = require("../utils");
 
+import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import type Tag from "../models/tag";
+
 /**
  * Transponce Objects
  * TODO more detailed explanation
@@ -1668,6 +1671,11 @@ class Table implements AbstractTable {
       options[table.name] = await table.slug_options();
     }
     return options;
+  }
+
+  async getTags(): Promise<Array<AbstractTag>> {
+    const Tag = (await import("./tag")).default;
+    return await Tag.findWithEntries({ table_id: this.id });
   }
 }
 
