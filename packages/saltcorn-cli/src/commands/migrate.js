@@ -24,7 +24,7 @@ class MigrateCommand extends Command {
     await eachTenant(async () => {
 
       const domain = db.getTenantSchema();
-      await init_multi_tenant(loadAllPlugins, undefined, [tenant]);
+      await init_multi_tenant(loadAllPlugins, undefined, [domain]);
       console.log("Tenant %s check for migrations...", domain);
       try {
         await migrate(domain, true);
