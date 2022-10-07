@@ -21,7 +21,11 @@ class MigrateCommand extends Command {
     await eachTenant(async () => {
       const domain = db.getTenantSchema();
       console.log("Tenant %s check for migrations...", domain);
-      await migrate(domain, true);
+      try {
+        await migrate(domain, true);
+      } catch (e) {
+        console.error(e);
+      }
     });
     this.exit(0);
   }
