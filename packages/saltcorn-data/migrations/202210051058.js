@@ -5,6 +5,7 @@ const js = async () => {
     const File = require("../models/file");
     const Page = require("../models/page");
     const View = require("../models/view");
+    const Plugin = require("../models/plugin");
     const { traverseSync } = require("../models/layout");
 
     const db = require("../db");
@@ -95,6 +96,11 @@ const js = async () => {
             if (segment.srctype === "File") {
                 segment.fileid = newLocations[segment.fileid]
             }
+        },
+        container(segment) {
+            if (segment.bgFileId) {
+                segment.bgFileId = newLocations[bgFileId]
+            }
         }
     }
     const pages = await Page.find()
@@ -109,6 +115,15 @@ const js = async () => {
         if (!layout) continue
         traverseSync(layout, visitors)
         await View.update({ configuration: { ...view.configuration, layout } }, view.id)
+    }
+
+    //any-bootstrap-theme settings
+    const anybsPlugin = await Plugin.findOne({ name: "any-bootstrap-theme" })
+    if (anybsPlugin) {
+        if (anybsPlugin.configuration.theme === "File") {
+            anybsPlugin.configuration.css_file = newLocations[anybsPlugin.configuration.css_file]
+            await anybsPlugin.upsert()
+        }
     }
 
 }

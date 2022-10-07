@@ -598,7 +598,7 @@ const render = ({
                 .split(",")
                 .map(
                   (w: string) =>
-                    `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
+                    `/files/resize/${w.trim()}/0/${bgFileId} ${w.trim()}w`
                 )
                 .join(",")
             : undefined,
