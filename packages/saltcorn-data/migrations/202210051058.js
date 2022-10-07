@@ -99,7 +99,7 @@ const js = async () => {
         },
         container(segment) {
             if (segment.bgFileId) {
-                segment.bgFileId = newLocations[bgFileId]
+                segment.bgFileId = newLocations[segment.bgFileId]
             }
         }
     }

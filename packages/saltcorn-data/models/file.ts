@@ -107,7 +107,12 @@ class File {
           await File.from_file_on_disk(where?.filename, absoluteFolder)
         );
       } else {
-        const fileNms = await fsp.readdir(absoluteFolder);
+        let fileNms;
+        try {
+          fileNms = await fsp.readdir(absoluteFolder);
+        } catch (e) {
+          fileNms = [];
+        }
 
         for (const name of fileNms) {
           if (name[0] === "." || name.startsWith("_resized_")) continue;
