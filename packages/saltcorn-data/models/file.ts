@@ -89,8 +89,8 @@ class File {
         );
         return files.map((t: any) => new File(t));
       }
-      const { inDB, ...whereNoInDb } = where as Where;
-      const db_flds = await db.select("_sc_files", whereNoInDb, selectopts);
+      if (where?.inDB) delete where.inDB;
+      const db_flds = await db.select("_sc_files", where, selectopts);
       return db_flds.map((dbf: FileCfg) => new File(dbf));
     } else {
       const relativeSearchFolder = where?.folder || "/";
