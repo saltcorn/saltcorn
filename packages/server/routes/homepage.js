@@ -194,7 +194,7 @@ const filesTab = async (req) => {
         [
           {
             label: req.__("Filename"),
-            key: (r) => link(`/files/serve/${r.id}`, r.filename),
+            key: (r) => r.isDirectory ? r.filename : link(`/files/serve/${r.path_to_serve}`, r.filename),
           },
           { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
           { label: req.__("Media type"), key: (r) => r.mimetype },
