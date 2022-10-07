@@ -99,10 +99,15 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     db.runWithTenant(tenant, () => workerDispatchMsg(msg));
     return;
   }
+
   if (msg.refresh_plugin_cfg) {
     Plugin.findOne({ name: msg.refresh_plugin_cfg }).then((plugin) => {
       if (plugin) loadPlugin(plugin);
     });
+  }
+  if (!getState()) {
+    console.error("no State for tenant", tenant)
+    return
   }
   if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
   if (msg.createTenant) {
