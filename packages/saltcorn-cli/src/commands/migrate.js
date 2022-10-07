@@ -32,6 +32,7 @@ class MigrateCommand extends Command {
         console.error(e);
       }
     });
+    console.log("Done migrations");
     this.exit(0);
   }
 }
