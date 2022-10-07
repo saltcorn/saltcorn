@@ -28,26 +28,30 @@ class PluginsCommand extends Command {
 
     for (const domain of tenantList) {
       await db.runWithTenant(domain, async () => {
-        const myplugins = await Plugin.find(
-          flags.name ? { name: flags.name } : {}
-        );
-        myplugins.forEach((plugin) => {
-          if (
-            plugin.source === "npm" &&
-            !plugins.map((p) => p.location).includes(plugin.location)
-          ) {
-            plugins.push(plugin);
-            if (flags.verbose)
-              console.log(
-                "%s\t%s\t%s\t%s",
-                plugin.location,
-                plugin.name,
-                plugin.version,
-                plugin.source
-              );
-            else console.log(plugin.location);
-          }
-        });
+        try {
+          const myplugins = await Plugin.find(
+            flags.name ? { name: flags.name } : {}
+          );
+          myplugins.forEach((plugin) => {
+            if (
+              plugin.source === "npm" &&
+              !plugins.map((p) => p.location).includes(plugin.location)
+            ) {
+              plugins.push(plugin);
+              if (flags.verbose)
+                console.log(
+                  "%s\t%s\t%s\t%s",
+                  plugin.location,
+                  plugin.name,
+                  plugin.version,
+                  plugin.source
+                );
+              else console.log(plugin.location);
+            }
+          });
+        } catch (e) {
+          console.error("error: ", domain, e)
+        }
       });
     }
     if (flags.upgrade || flags.dryRun) {
@@ -71,10 +75,8 @@ class PluginsCommand extends Command {
               ) {
               } else if (flags.dryRun) {
                 console.log(
-                  `Would upgrade ${domain}'s plugin ${
-                    plugin.location
-                  } version from ${plugin.version} to ${
-                    new_versions[plugin.location]
+                  `Would upgrade ${domain}'s plugin ${plugin.location
+                  } version from ${plugin.version} to ${new_versions[plugin.location]
                   }`
                 );
               } else {
