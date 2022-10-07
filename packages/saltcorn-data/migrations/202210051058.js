@@ -51,11 +51,16 @@ const js = async () => {
             const newLoc = File.get_new_path(newbase)
             const exists = fs.existsSync(newLoc)
             if (!exists) {
-                await fsp.rename(file.location, newLoc)
+                try {
+                    await fsp.rename(file.location, newLoc)
+                } catch (e) { }
                 newLocations[file.id] = path.basename(newLoc)
                 file.id = undefined
                 file.location = newLoc
-                await file.set_role(file.min_role_read)
+                try {
+                    await file.set_role(file.min_role_read)
+                } catch (e) { }
+
                 break
             }
         }
