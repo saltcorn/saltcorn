@@ -1,6 +1,6 @@
 {
-  "name": "svelte-app",
-  "version": "1.0.0",
+  "name": "@saltcorn/filemanager",
+  "version": "0.7.4",
   "private": true,
   "scripts": {
     "build": "rollup -c",
