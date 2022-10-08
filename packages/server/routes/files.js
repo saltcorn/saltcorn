@@ -87,7 +87,7 @@ router.get(
       }))
     }
     if (req.xhr) {
-      res.json(rows)
+      res.json({ files: rows, roles })
       return
     }
     send_files_page({
