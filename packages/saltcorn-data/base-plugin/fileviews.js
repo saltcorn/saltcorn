@@ -53,7 +53,7 @@ module.exports = {
       link(
         isNode()
           ? `/files/serve/${(filePath)}`
-          : `javascript:openFile(${file_id})`,
+          : `javascript:openFile('${filePath}')`,
         path.basename(filePath) || "Open"
       ),
   },
@@ -72,7 +72,7 @@ module.exports = {
       a(
         isNode()
           ? { href: `/files/serve/${(filePath)}`, target: "_blank" }
-          : { href: `javascript:openFile(${file_id})` },
+          : { href: `javascript:openFile('${filePath}')`},
         path.basename(filePath) || "Open"
       ),
   },
@@ -93,7 +93,7 @@ module.exports = {
         const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
           img({ style: "width: 100%", id: rndid }),
-          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`))
+          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`)) // here
         );
       }
     },
@@ -183,10 +183,10 @@ module.exports = {
             : undefined,
         });
       else {
-        const elementId = `_sc_file_id_${file_id}_`;
+        const elementId = `_sc_file_id_${filePath}_`;
         return div(
           img({ width, heigth, id: elementId }),
-          script(domReady(`buildEncodedImage(${file_id}, '${elementId}')`))
+          script(domReady(`buildEncodedImage('${filePath}', '${elementId}')`))
         );
       }
     },

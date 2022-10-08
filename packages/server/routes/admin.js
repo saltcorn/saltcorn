@@ -165,7 +165,7 @@ const app_files_table = (files, req) =>
       { label: req.__("Media type"), key: (r) => r.mimetype },
       {
         label: req.__("Download"),
-        key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+        key: (r) => link(`/files/download/${r.filename}`, req.__("Download")),
       },
     ],
     files

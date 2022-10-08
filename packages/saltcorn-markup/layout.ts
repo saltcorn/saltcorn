@@ -347,7 +347,7 @@ const render = ({
           : div(
               image,
               script(
-                domReady(`buildEncodedImage(${segment.fileid}, '${elementId}')`)
+                domReady(`buildEncodedImage('${segment.fileid}', '${elementId}')`)
               )
             )
       );
@@ -611,7 +611,7 @@ const render = ({
           ? imgTag
           : div(
               imgTag,
-              script(domReady(`buildEncodedImage(${bgFileId}, '${elementId}')`))
+              script(domReady(`buildEncodedImage('${bgFileId}', '${elementId}')`))
             );
       }
       const bgImageScriptId = // in really rare cases not unique, but shouldn't cause problems
