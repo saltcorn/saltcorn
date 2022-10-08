@@ -21,7 +21,15 @@
     if (!e.shiftKey) selectedFiles = {};
     selectedFiles[file.filename] = !prev;
     if (!prev) lastSelected = file;
-
+    else {
+      const firstSelected = Object.entries(selectedFiles).findLast(
+        ([k, v]) => v
+      );
+      if (firstSelected)
+        lastSelected = files.find((f) => f.filename === firstSelected[0]);
+      else lastSelected = null;
+    }
+    document.getSelection().removeAllRanges();
     console.log(lastSelected);
   }
   $: selectedList = Object.entries(selectedFiles)
@@ -39,8 +47,6 @@
             <th style="text-align: right">Size (KiB)</th>
             <th>Media type</th>
             <th>Role to access</th>
-            <th>Link</th>
-            <th>Download</th>
             <th>Delete</th>
           </tr>
         </thead>
@@ -67,6 +73,11 @@
     {#if selectedList.length > 0}
       <div class="col-4">
         <h5>{lastSelected.filename}</h5>
+        <div>
+          <a href={`/files/serve/${lastSelected.location}`}>Link</a>
+          &nbsp;|&nbsp;
+          <a href={`/files/download/${lastSelected.location}`}>Download</a>
+        </div>
         {#if lastSelected.mime_super === "image"}
           <img
             class="file-preview my-2"
@@ -90,6 +101,11 @@
             </tr>
           </tbody>
         </table>
+        {#if selectedList.length > 1}
+          and {selectedList.length - 1} more file{selectedList.length > 2
+            ? "s"
+            : ""}
+        {/if}
       </div>
     {/if}
   </div>
