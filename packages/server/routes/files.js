@@ -90,7 +90,11 @@ router.get(
       for (const file of rows) {
         file.location = file.path_to_serve
       }
-      res.json({ files: rows, roles })
+      const directories = await File.allDirectories()
+      for (const file of directories) {
+        file.location = file.path_to_serve
+      }
+      res.json({ files: rows, roles, directories })
       return
     }
     send_files_page({

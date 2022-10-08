@@ -3,6 +3,7 @@
   import Fa from "svelte-fa";
   import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
   export let files = [];
+  export let directories = [];
   export let roles = {};
   let selectedList = [];
   let selectedFiles = {};
@@ -16,6 +17,7 @@
     });
     const data = await response.json();
     files = data.files;
+    directories = data.directories;
     rolesList = data.roles;
     for (const role of data.roles) {
       roles[role.id] = role.role;
@@ -79,6 +81,7 @@
     }
     await fetchAndReset(true);
   }
+  async function moveDirectory(e) {}
 </script>
 
 <main>
@@ -165,6 +168,13 @@
             <option value="" disabled selected>Set access</option>
             {#each rolesList as role}
               <option value={role.id}>{role.role}</option>
+            {/each}
+          </select>
+
+          <select class="form-select" on:change={moveDirectory}>
+            <option value="" disabled selected>Move to...</option>
+            {#each directories as dir}
+              <option>{dir.location}</option>
             {/each}
           </select>
         </div>
