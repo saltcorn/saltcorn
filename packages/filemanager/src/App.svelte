@@ -21,6 +21,8 @@
     if (!e.shiftKey) selectedFiles = {};
     selectedFiles[file.filename] = !prev;
     if (!prev) lastSelected = file;
+
+    console.log(lastSelected);
   }
   $: selectedList = Object.entries(selectedFiles)
     .filter(([k, v]) => v)
@@ -64,7 +66,30 @@
     </div>
     {#if selectedList.length > 0}
       <div class="col-4">
-        {lastSelected.filename}
+        <h5>{lastSelected.filename}</h5>
+        {#if lastSelected.mime_super === "image"}
+          <img
+            class="file-preview my-2"
+            src={`/files/serve/${lastSelected.location}`}
+            alt={lastSelected.filename}
+          />
+        {/if}
+        <table>
+          <tbody>
+            <tr>
+              <th>Size</th>
+              <td>{lastSelected.size_kb} KB</td>
+            </tr>
+            <tr>
+              <th>MIME type</th>
+              <td>{lastSelected.mime_super}/{lastSelected.mime_sub}</td>
+            </tr>
+            <tr>
+              <th>Created</th>
+              <td>{new Date(lastSelected.uploaded_at).toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     {/if}
   </div>
@@ -73,5 +98,8 @@
 <style>
   tr.selected {
     background-color: rgb(143, 180, 255);
+  }
+  img.file-preview {
+    max-height: 200px;
   }
 </style>

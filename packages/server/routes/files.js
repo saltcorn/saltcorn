@@ -87,6 +87,9 @@ router.get(
       }))
     }
     if (req.xhr) {
+      for (const file of rows) {
+        file.location = file.path_to_serve
+      }
       res.json({ files: rows, roles })
       return
     }
