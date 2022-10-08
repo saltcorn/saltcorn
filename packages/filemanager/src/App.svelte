@@ -1,7 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  export let name;
-  let files;
+  export let files = [];
   onMount(async function () {
     const response = await fetch(`/files`, {
       headers: {
@@ -15,31 +14,29 @@
 </script>
 
 <main>
-  <h1>Hellu {name}!</h1>
-  <p>
-    Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn
-    how to build Svelte apps.
-  </p>
+  <table class="table table-sm table-hover">
+    <thead>
+      <tr>
+        <th>Filename</th>
+        <th style="text-align: right">Size (KiB)</th>
+        <th>Media type</th>
+        <th>Role to access</th>
+        <th>Link</th>
+        <th>Download</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each files as file}
+        <tr>
+          <td>
+            {file.filename}
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
 </main>
 
 <style>
-  main {
-    text-align: center;
-    padding: 1em;
-    max-width: 240px;
-    margin: 0 auto;
-  }
-
-  h1 {
-    color: #ff3e00;
-    text-transform: uppercase;
-    font-size: 4em;
-    font-weight: 100;
-  }
-
-  @media (min-width: 640px) {
-    main {
-      max-width: none;
-    }
-  }
 </style>
