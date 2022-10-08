@@ -9,15 +9,13 @@
       },
     });
     const data = await response.json();
-    console.log(data);
     files = data;
   });
-  function rowClick(file) {
+  function rowClick(file, e) {
     file.selected = true;
-    selectedFiles[file.filename] = true;
-    console.log("rowClick", file, selectedFiles);
+    if (!e.shiftKey) selectedFiles = {};
+    selectedFiles[file.filename] = !selectedFiles[file.filename];
   }
-  $: console.log("top loop", selectedFiles);
 </script>
 
 <main>
@@ -36,7 +34,7 @@
     <tbody>
       {#each files as file}
         <tr
-          on:click={() => rowClick(file)}
+          on:click={(e) => rowClick(file, e)}
           class:selected={selectedFiles[file.filename]}
         >
           <td>
