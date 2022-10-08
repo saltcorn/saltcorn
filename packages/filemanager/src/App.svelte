@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   export let files = [];
-  export let roles = [];
+  export let roles = {};
   let selectedList = [];
   let selectedFiles = {};
   let lastSelected;
@@ -13,7 +13,9 @@
     });
     const data = await response.json();
     files = data.files;
-    roles = data.roles;
+    for (const role of data.roles) {
+      roles[role.id] = role.role;
+    }
   });
   function rowClick(file, e) {
     file.selected = true;
@@ -45,9 +47,8 @@
           <tr>
             <th>Filename</th>
             <th style="text-align: right">Size (KiB)</th>
-            <th>Media type</th>
             <th>Role to access</th>
-            <th>Delete</th>
+            <th>Created</th>
           </tr>
         </thead>
         <tbody>
@@ -63,7 +64,10 @@
                 {file.size_kb}
               </td>
               <td>
-                {file.mime_super}/{file.mime_sub}
+                {roles[file.min_role_read]}
+              </td>
+              <td>
+                {new Date(file.uploaded_at).toLocaleString()}
               </td>
             </tr>
           {/each}
@@ -98,6 +102,10 @@
             <tr>
               <th>Created</th>
               <td>{new Date(lastSelected.uploaded_at).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <th>Role to access</th>
+              <td>{roles[lastSelected.min_role_read]}</td>
             </tr>
           </tbody>
         </table>
