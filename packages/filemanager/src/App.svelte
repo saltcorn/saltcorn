@@ -13,8 +13,9 @@
   });
   function rowClick(file, e) {
     file.selected = true;
+    const prev = selectedFiles[file.filename];
     if (!e.shiftKey) selectedFiles = {};
-    selectedFiles[file.filename] = !selectedFiles[file.filename];
+    selectedFiles[file.filename] = !prev;
   }
 </script>
 
