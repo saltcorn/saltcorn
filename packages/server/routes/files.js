@@ -86,6 +86,10 @@ router.get(
         mime_sub: "",
       }))
     }
+    if (req.xhr) {
+      res.json(rows)
+      return
+    }
     send_files_page({
       res,
       req,
