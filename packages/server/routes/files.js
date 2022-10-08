@@ -11,6 +11,7 @@ const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
 const resizer = require("resize-with-sharp-or-jimp");
+const db = require("@saltcorn/data/db");
 
 const {
   mkTable,
@@ -88,6 +89,10 @@ router.get(
     send_files_page({
       res,
       req,
+      headers: [{
+        script: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
+        defer: true
+      }],
       active_sub: "Files",
       contents: {
         type: "card",
@@ -146,6 +151,7 @@ router.get(
             i({ class: "fas fa-plus-square me-1" }),
             "New Folder"),
           fileUploadForm(req, safeDir),
+          div({ id: "saltcorn-file-manager" })
         ],
       },
     });
