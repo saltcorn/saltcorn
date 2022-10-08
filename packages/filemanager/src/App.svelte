@@ -77,11 +77,7 @@
     {#if selectedList.length > 0}
       <div class="col-4">
         <h5>{lastSelected.filename}</h5>
-        <div>
-          <a href={`/files/serve/${lastSelected.location}`}>Link</a>
-          &nbsp;|&nbsp;
-          <a href={`/files/download/${lastSelected.location}`}>Download</a>
-        </div>
+
         {#if lastSelected.mime_super === "image"}
           <img
             class="file-preview my-2"
@@ -109,6 +105,11 @@
             </tr>
           </tbody>
         </table>
+        <div>
+          <a href={`/files/serve/${lastSelected.location}`}>Link</a>
+          &nbsp;|&nbsp;
+          <a href={`/files/download/${lastSelected.location}`}>Download</a>
+        </div>
         {#if selectedList.length > 1}
           and {selectedList.length - 1} more file{selectedList.length > 2
             ? "s"
@@ -125,5 +126,6 @@
   }
   img.file-preview {
     max-height: 200px;
+    max-width: 100%;
   }
 </style>
