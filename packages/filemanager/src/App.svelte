@@ -6,8 +6,9 @@
   export let roles = {};
   let selectedList = [];
   let selectedFiles = {};
+  let rolesList;
   let lastSelected;
-  const fetchAndReset = async function () {
+  const fetchAndReset = async function (keepSelection) {
     const response = await fetch(`/files`, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
@@ -15,12 +16,17 @@
     });
     const data = await response.json();
     files = data.files;
+    rolesList = data.roles;
     for (const role of data.roles) {
       roles[role.id] = role.role;
     }
-    selectedList = [];
-    selectedFiles = {};
-    lastSelected = null;
+    if (!keepSelection) {
+      selectedList = [];
+      selectedFiles = {};
+      lastSelected = null;
+    } else if (lastSelected) {
+      lastSelected = files.find((f) => f.filename === lastSelected.filename);
+    }
   };
   onMount(fetchAndReset);
   function rowClick(file, e) {
@@ -56,6 +62,22 @@
       });
     }
     await fetchAndReset();
+  }
+  async function changeAccessRole(e) {
+    const role = e.target.value;
+    for (const fileNm of selectedList) {
+      const file = files.find((f) => f.filename === fileNm);
+      await fetch(`/files/setrole/${file.location}`, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "CSRF-Token": window._sc_globalCsrf,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ role }),
+        method: "POST",
+      });
+    }
+    await fetchAndReset(true);
   }
 </script>
 
@@ -135,10 +157,16 @@
             ? "s"
             : ""}:
         {/if}
-        <div>
+        <div class="file-actions">
           <button class="btn btn-danger" on:click={deleteButton}>
             <Fa icon={faTrashAlt} />
           </button>
+          <select class="form-select" on:change={changeAccessRole}>
+            <option value="" disabled selected>Set access</option>
+            {#each rolesList as role}
+              <option value={role.id}>{role.role}</option>
+            {/each}
+          </select>
         </div>
       </div>
     {/if}
@@ -152,5 +180,9 @@
   img.file-preview {
     max-height: 200px;
     max-width: 100%;
+  }
+  div.file-actions select {
+    width: unset;
+    display: inline;
   }
 </style>
