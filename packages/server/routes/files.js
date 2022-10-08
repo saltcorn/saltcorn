@@ -93,10 +93,15 @@ router.get(
     send_files_page({
       res,
       req,
-      headers: [{
-        script: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
-        defer: true
-      }],
+      headers: [
+        {
+          script: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
+          defer: true
+        },
+        {
+          css: `/static_assets/${db.connectObj.version_tag}/bundle.css`,
+        },
+      ],
       active_sub: "Files",
       contents: {
         type: "card",

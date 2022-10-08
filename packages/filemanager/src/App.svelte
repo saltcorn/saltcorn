@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   export let files = [];
+  let selectedFiles = {};
   onMount(async function () {
     const response = await fetch(`/files`, {
       headers: {
@@ -11,10 +12,16 @@
     console.log(data);
     files = data;
   });
+  function rowClick(file) {
+    file.selected = true;
+    selectedFiles[file.filename] = true;
+    console.log("rowClick", file, selectedFiles);
+  }
+  $: console.log("top loop", selectedFiles);
 </script>
 
 <main>
-  <table class="table table-sm table-hover">
+  <table class="table table-sm">
     <thead>
       <tr>
         <th>Filename</th>
@@ -28,9 +35,18 @@
     </thead>
     <tbody>
       {#each files as file}
-        <tr>
+        <tr
+          on:click={() => rowClick(file)}
+          class:selected={selectedFiles[file.filename]}
+        >
           <td>
             {file.filename}
+          </td>
+          <td style="text-align: right">
+            {file.size_kb}
+          </td>
+          <td>
+            {file.mime_super}/{file.mime_sub}
           </td>
         </tr>
       {/each}
@@ -39,4 +55,7 @@
 </main>
 
 <style>
+  tr.selected {
+    background-color: rgb(143, 180, 255);
+  }
 </style>
