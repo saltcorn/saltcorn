@@ -1,11 +1,13 @@
 <script>
   import { onMount } from "svelte";
+  import Fa from "svelte-fa";
+  import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
   export let files = [];
   export let roles = {};
   let selectedList = [];
   let selectedFiles = {};
   let lastSelected;
-  onMount(async function () {
+  const fetchAndReset = async function () {
     const response = await fetch(`/files`, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
@@ -16,7 +18,11 @@
     for (const role of data.roles) {
       roles[role.id] = role.role;
     }
-  });
+    selectedList = [];
+    selectedFiles = {};
+    lastSelected = null;
+  };
+  onMount(fetchAndReset);
   function rowClick(file, e) {
     file.selected = true;
     const prev = selectedFiles[file.filename];
@@ -37,6 +43,20 @@
   $: selectedList = Object.entries(selectedFiles)
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
+  async function deleteButton() {
+    if (!confirm(`Delete files: ${selectedList.join()}`)) return;
+    for (const fileNm of selectedList) {
+      const file = files.find((f) => f.filename === fileNm);
+      await fetch(`/files/delete/${file.location}`, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "CSRF-Token": window._sc_globalCsrf,
+        },
+        method: "POST",
+      });
+    }
+    await fetchAndReset();
+  }
 </script>
 
 <main>
@@ -113,8 +133,13 @@
         {#if selectedList.length > 1}
           and {selectedList.length - 1} more file{selectedList.length > 2
             ? "s"
-            : ""}
+            : ""}:
         {/if}
+        <div>
+          <button class="btn btn-danger" on:click={deleteButton}>
+            <Fa icon={faTrashAlt} />
+          </button>
+        </div>
       </div>
     {/if}
   </div>
