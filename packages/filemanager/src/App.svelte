@@ -66,19 +66,41 @@
   $: selectedList = Object.entries(selectedFiles)
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
-  async function deleteButton() {
-    if (!confirm(`Delete files: ${selectedList.join()}`)) return;
-    for (const fileNm of selectedList) {
-      const file = files.find((f) => f.filename === fileNm);
-      await fetch(`/files/delete/${file.location}`, {
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          "CSRF-Token": window._sc_globalCsrf,
-        },
-        method: "POST",
-      });
+
+  async function goAction(e) {
+    const action = e?.target.value;
+    if (!action) return;
+    switch (action) {
+      case "Delete":
+        if (!confirm(`Delete files: ${selectedList.join()}`)) return;
+        for (const fileNm of selectedList) {
+          const file = files.find((f) => f.filename === fileNm);
+          await fetch(`/files/delete/${file.location}`, {
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+              "CSRF-Token": window._sc_globalCsrf,
+            },
+            method: "POST",
+          });
+        }
+        await fetchAndReset();
+        break;
+      case "Rename":
+        const newName = window.prompt(`Rename ${lastSelected.filename} to:`);
+        if (!newName) return;
+        await fetch(`/files/setname/${lastSelected.location}`, {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "CSRF-Token": window._sc_globalCsrf,
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify({ value: newName }),
+        });
+
+        await fetchAndReset();
+        break;
     }
-    await fetchAndReset();
   }
   async function changeAccessRole(e) {
     const role = e.target.value;
@@ -280,10 +302,7 @@
               : ""}:
           </strong>
         {/if}
-        <div class="file-actions">
-          <button class="btn btn-danger" on:click={deleteButton}>
-            <Fa icon={faTrashAlt} />
-          </button>
+        <div class="file-actions d-flex">
           <select class="form-select" on:change={changeAccessRole}>
             <option value="" disabled selected>Set access</option>
             {#each rolesList as role}
@@ -296,6 +315,13 @@
             {#each directories as dir}
               <option>{dir.location || "/"}</option>
             {/each}
+          </select>
+          <select class="form-select" on:change={goAction}>
+            <option value="" disabled selected>Action...</option>
+            <option>Delete</option>
+            {#if selectedList.length === 1}
+              <option>Rename</option>
+            {/if}
           </select>
         </div>
       {/if}
@@ -314,5 +340,6 @@
   div.file-actions select {
     width: unset;
     display: inline;
+    max-width: 33%;
   }
 </style>
