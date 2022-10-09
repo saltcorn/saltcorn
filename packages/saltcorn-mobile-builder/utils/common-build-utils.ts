@@ -84,7 +84,7 @@ export function writeCfgFile({
     entry_point: `get/${entryPointType}/${entryPoint}`,
     server_path: !serverPath.endsWith("/")
       ? serverPath
-      : serverPath.substring(serverPath.length - 1),
+      : serverPath.substring(0, serverPath.length - 1),
     localUserTables,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;

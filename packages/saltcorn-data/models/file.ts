@@ -7,7 +7,7 @@
 
 import db from "../db";
 import { v4 as uuidv4 } from "uuid";
-import { join } from "path";
+import { join, parse } from "path";
 const { asyncMap } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -450,7 +450,11 @@ class File {
       },
       size: statSync(fullPath).size,
     };
-    return await File.from_req_files(file, userId);
+    const created = await File.from_req_files(file, userId);
+    if(!created.location.endsWith(name)) {
+      created.filename = parse(created.location).base;
+    }
+    return created;
   }
 
   /**

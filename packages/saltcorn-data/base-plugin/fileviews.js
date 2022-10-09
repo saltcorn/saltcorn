@@ -93,7 +93,7 @@ module.exports = {
         const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
           img({ style: "width: 100%", id: rndid }),
-          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`)) // here
+          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`))
         );
       }
     },
