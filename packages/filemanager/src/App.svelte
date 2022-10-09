@@ -109,7 +109,7 @@
         method: "POST",
       });
     }
-    await fetchAndReset(true);
+    await fetchAndReset();
   }
 
   function gotoFolder(folder) {
@@ -249,7 +249,7 @@
           <select class="form-select" on:change={moveDirectory}>
             <option value="" disabled selected>Move to...</option>
             {#each directories as dir}
-              <option>{dir.location}</option>
+              <option>{dir.location || "/"}</option>
             {/each}
           </select>
         </div>
