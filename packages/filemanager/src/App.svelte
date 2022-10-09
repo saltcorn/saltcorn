@@ -15,6 +15,8 @@
     faFileVideo,
     faFolderPlus,
     faHome,
+    faCaretUp,
+    faCaretDown,
   } from "@fortawesome/free-solid-svg-icons";
   export let files = [];
   export let directories = [];
@@ -157,6 +159,27 @@
     if (fname.endsWith(".txt")) return faFileAlt;
     return faFile;
   }
+
+  let sortBy;
+  let sortDesc = false;
+  function clickHeader(varNm) {
+    if (sortBy === varNm) sortDesc = !sortDesc;
+    else sortBy = varNm;
+    let getter = (x) => x[sortBy];
+    if (sortBy === "uploaded_at") getter = (x) => new Date(x[sortBy]);
+    if (sortBy === "filename") getter = (x) => (x[sortBy] || "").toLowerCase();
+    const cmp = (a, b) => {
+      if (getter(a) < getter(b)) return sortDesc ? 1 : -1;
+      if (getter(a) > getter(b)) return sortDesc ? -1 : 1;
+      return 0;
+    };
+    files = files.sort(cmp);
+  }
+  function getSorterIcon(varNm) {
+    console.log({ varNm, sortBy });
+    if (varNm !== sortBy) return null;
+    return sortDesc ? faCaretDown : faCaretUp;
+  }
 </script>
 
 <main>
@@ -184,10 +207,25 @@
         <thead>
           <tr>
             <th />
-            <th>Filename</th>
-            <th style="text-align: right">Size (KiB)</th>
-            <th>Role to access</th>
-            <th>Created</th>
+            <th on:click={() => clickHeader("filename")}>
+              Filename
+              <Fa icon={getSorterIcon("filename", sortBy, sortDesc)} />
+            </th>
+            <th
+              on:click={() => clickHeader("size_kb")}
+              style="text-align: right"
+            >
+              <Fa icon={getSorterIcon("size_kb", sortBy, sortDesc)} />
+              Size (KiB)
+            </th>
+            <th on:click={() => clickHeader("min_role_read")}>
+              Role to access
+              <Fa icon={getSorterIcon("min_role_read", sortBy, sortDesc)} />
+            </th>
+            <th on:click={() => clickHeader("uploaded_at")}>
+              Created
+              <Fa icon={getSorterIcon("uploaded_at", sortBy, sortDesc)} />
+            </th>
           </tr>
         </thead>
         <tbody>
