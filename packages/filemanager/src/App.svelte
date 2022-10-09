@@ -1,7 +1,19 @@
 <script>
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
-  import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+  import {
+    faTrashAlt,
+    faFileImage,
+    faFile,
+    faFolder,
+    faFileCsv,
+    faFileExcel,
+    faFileWord,
+    faFilePdf,
+    faFileAlt,
+    faFileAudio,
+    faFileVideo,
+  } from "@fortawesome/free-solid-svg-icons";
   export let files = [];
   export let directories = [];
   export let roles = {};
@@ -88,17 +100,35 @@
     currentFolder = folder;
     fetchAndReset();
   }
+
+  function getIcon(file) {
+    if (file.mime_super === "image") return faFileImage;
+    if (file.mime_super === "audio") return faFileAudio;
+    if (file.mime_super === "video") return faFileVideo;
+    if (file.mime_sub === "pdf") return faFilePdf;
+
+    if (file.isDirectory) return faFolder;
+    const fname = file.filename.toLowerCase();
+    if (fname.endsWith(".csv")) return faFileCsv;
+    if (fname.endsWith(".xls")) return faFileExcel;
+    if (fname.endsWith(".xlsx")) return faFileExcel;
+    if (fname.endsWith(".doc")) return faFileWord;
+    if (fname.endsWith(".docx")) return faFileWord;
+    if (fname.endsWith(".txt")) return faFileAlt;
+    return faFile;
+  }
 </script>
 
 <main>
   <div class="row">
-    <div class={selectedList.length > 0 ? "col-8" : "col-12"}>
+    <div class="col-8">
       <div>
         {currentFolder || "/"}
       </div>
       <table class="table table-sm">
         <thead>
           <tr>
+            <th />
             <th>Filename</th>
             <th style="text-align: right">Size (KiB)</th>
             <th>Role to access</th>
@@ -114,6 +144,9 @@
               }}
               class:selected={selectedFiles[file.filename]}
             >
+              <td>
+                <Fa size="lg" icon={getIcon(file)} />
+              </td>
               <td>
                 {#if file.isDirectory}
                   {file.filename}/
@@ -135,8 +168,9 @@
         </tbody>
       </table>
     </div>
-    {#if selectedList.length > 0}
-      <div class="col-4">
+
+    <div class="col-4">
+      {#if selectedList.length > 0}
         <h5>{lastSelected.filename}</h5>
 
         {#if lastSelected.mime_super === "image"}
@@ -203,8 +237,8 @@
             {/each}
           </select>
         </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
 </main>
 
