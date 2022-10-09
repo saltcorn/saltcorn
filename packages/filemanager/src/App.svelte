@@ -86,7 +86,10 @@
         await fetchAndReset();
         break;
       case "Rename":
-        const newName = window.prompt(`Rename ${lastSelected.filename} to:`);
+        const newName = window.prompt(
+          `Rename ${lastSelected.filename} to:`,
+          lastSelected.filename
+        );
         if (!newName) return;
         await fetch(`/files/setname/${lastSelected.location}`, {
           headers: {
