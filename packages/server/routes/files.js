@@ -246,12 +246,9 @@ router.post(
 
     if (roleRow && file) {
       await file.set_role(role);
-      req.flash(
-        "success",
-        req.__(`Minimum role for %s updated to %s`, file.filename, roleRow.role)
-      );
+
     }
-    else req.flash("success", req.__(`Minimum role updated`));
+
 
     res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
   })
@@ -392,8 +389,6 @@ router.post(
     );
     if (result && result.error) {
       req.flash("error", result.error);
-    } else {
-      req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
   })
