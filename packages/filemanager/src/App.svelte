@@ -5,12 +5,13 @@
   export let files = [];
   export let directories = [];
   export let roles = {};
+  export let currentFolder = "/";
   let selectedList = [];
   let selectedFiles = {};
   let rolesList;
   let lastSelected;
   const fetchAndReset = async function (keepSelection) {
-    const response = await fetch(`/files`, {
+    const response = await fetch(`/files?dir=${currentFolder}`, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
       },
@@ -82,6 +83,11 @@
     await fetchAndReset(true);
   }
   async function moveDirectory(e) {}
+
+  function gotoFolder(folder) {
+    currentFolder = folder;
+    fetchAndReset();
+  }
 </script>
 
 <main>
@@ -100,10 +106,17 @@
           {#each files as file}
             <tr
               on:click={(e) => rowClick(file, e)}
+              on:dblclick={() => {
+                if (file.isDirectory) gotoFolder(file.filename);
+              }}
               class:selected={selectedFiles[file.filename]}
             >
               <td>
-                {file.filename}
+                {#if file.isDirectory}
+                  {file.filename}/
+                {:else}
+                  {file.filename}
+                {/if}
               </td>
               <td style="text-align: right">
                 {file.size_kb}
@@ -132,13 +145,22 @@
         {/if}
         <table>
           <tbody>
-            <tr>
-              <th>Size</th>
-              <td>{lastSelected.size_kb} KB</td>
-            </tr>
+            {#if !lastSelected.isDirectory}
+              <tr>
+                <th>Size</th>
+                <td>{lastSelected.size_kb} KB</td>
+              </tr>
+            {/if}
+
             <tr>
               <th>MIME type</th>
-              <td>{lastSelected.mime_super}/{lastSelected.mime_sub}</td>
+              <td>
+                {#if lastSelected.isDirectory}
+                  Directory
+                {:else}
+                  {lastSelected.mime_super}/{lastSelected.mime_sub}
+                {/if}
+              </td>
             </tr>
             <tr>
               <th>Created</th>
