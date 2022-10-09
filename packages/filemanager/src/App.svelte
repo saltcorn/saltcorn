@@ -93,6 +93,9 @@
 <main>
   <div class="row">
     <div class={selectedList.length > 0 ? "col-8" : "col-12"}>
+      <div>
+        {currentFolder || "/"}
+      </div>
       <table class="table table-sm">
         <thead>
           <tr>
@@ -107,7 +110,7 @@
             <tr
               on:click={(e) => rowClick(file, e)}
               on:dblclick={() => {
-                if (file.isDirectory) gotoFolder(file.filename);
+                if (file.isDirectory) gotoFolder(file.location);
               }}
               class:selected={selectedFiles[file.filename]}
             >
