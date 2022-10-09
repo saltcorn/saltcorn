@@ -13,6 +13,7 @@
     faFileAlt,
     faFileAudio,
     faFileVideo,
+    faFolderPlus,
   } from "@fortawesome/free-solid-svg-icons";
   export let files = [];
   export let directories = [];
@@ -182,6 +183,15 @@
               </td>
             </tr>
           {/each}
+          <tr on:click={() => window.create_new_folder(currentFolder)}>
+            <td>
+              <Fa size="lg" icon={faFolderPlus} />
+            </td>
+            <td>Create new folder...</td>
+            <td />
+            <td />
+            <td />
+          </tr>
         </tbody>
       </table>
     </div>
@@ -232,9 +242,11 @@
           <a href={`/files/download/${lastSelected.location}`}>Download</a>
         </div>
         {#if selectedList.length > 1}
-          and {selectedList.length - 1} more file{selectedList.length > 2
-            ? "s"
-            : ""}:
+          <strong
+            >and {selectedList.length - 1} other file{selectedList.length > 2
+              ? "s"
+              : ""}:
+          </strong>
         {/if}
         <div class="file-actions">
           <button class="btn btn-danger" on:click={deleteButton}>
