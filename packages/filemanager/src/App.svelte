@@ -14,6 +14,7 @@
     faFileAudio,
     faFileVideo,
     faFolderPlus,
+    faHome,
   } from "@fortawesome/free-solid-svg-icons";
   export let files = [];
   export let directories = [];
@@ -118,6 +119,22 @@
     fetchAndReset();
   }
 
+  let pathSegments = [];
+  $: {
+    if (currentFolder === "/" || currentFolder === "")
+      pathSegments = [{ icon: faHome, location: "/" }];
+    else {
+      pathSegments = currentFolder.split("/").map((name, i) => ({
+        name,
+        location: currentFolder
+          .split("/")
+          .slice(0, i + 1)
+          .join("/"),
+      }));
+      pathSegments.unshift({ icon: faHome, location: "/" });
+    }
+  }
+
   function getIcon(file) {
     if (file.mime_super === "image") return faFileImage;
     if (file.mime_super === "audio") return faFileAudio;
@@ -140,7 +157,22 @@
   <div class="row">
     <div class="col-8">
       <div>
-        {currentFolder || "/"}
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            {#each pathSegments as segment}
+              <li
+                class="breadcrumb-item"
+                on:click={gotoFolder(segment.location)}
+              >
+                {#if segment.icon}
+                  <Fa icon={segment.icon} />
+                {:else}
+                  {segment.name}
+                {/if}
+              </li>
+            {/each}
+          </ol>
+        </nav>
       </div>
       <table class="table table-sm">
         <thead>

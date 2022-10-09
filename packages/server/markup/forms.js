@@ -61,7 +61,7 @@ const fileUploadForm = (req, folder) =>
     label(req.__("Upload file ")),
     input({
       name: "file",
-      class: "form-control-file",
+      class: "form-control ms-1 w-unset d-inline",
       type: "file",
       onchange: "form.submit()",
       multiple: true,

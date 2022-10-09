@@ -113,61 +113,8 @@ router.get(
       contents: {
         type: "card",
         contents: [
-          mkTable(
-            [
-              {
-                label: req.__("Filename"),
-                key: (r) =>
-                  r.isDirectory
-                    ? div(a({
-                      href: `/files?dir=${encodeURIComponent(
-                        r.filename === ".."
-                          ? path.dirname(safeDir)
-                          : path.join(safeDir, r.filename))}`
-                    }, r.filename))
-                    :
-                    div(
-                      { "data-inline-edit-dest-url": `/files/setname/${r.path_to_serve}` },
-                      r.filename
-                    ),
-              },
-              { label: req.__("Size (KiB)"), key: r => r.isDirectory ? '' : r.size_kb, align: "right" },
-              { label: req.__("Media type"), key: (r) => r.mimetype },
-              {
-                label: req.__("Role to access"),
-                key: (r) => editFileRoleForm(r, roles, req),
-              },
-              {
-                label: req.__("Link"),
-                key: (r) => link(r.isDirectory
-                  ? `/files?dir=${encodeURIComponent(
-                    r.filename === ".."
-                      ? path.dirname(safeDir)
-                      : path.join(safeDir, r.filename))}`
-                  : `/files/serve/${r.path_to_serve}`, req.__("Link")),
-              },
-              {
-                label: req.__("Download"),
-                key: (r) => r.isDirectory ? '' : link(`/files/download/${r.path_to_serve}`, req.__("Download")),
-              },
-              {
-                label: req.__("Delete"),
-                key: (r) =>
-                  post_delete_btn(`/files/delete/${r.path_to_serve}`, req, r.filename),
-              },
-            ],
-            rows,
-            { hover: true }
-          ),
-          button(
-            {
-              onClick: `create_new_folder('${safeDir}')`,
-              class: "btn btn-sm btn-secondary mb-1"
-            },
-            i({ class: "fas fa-plus-square me-1" }),
-            "New Folder"),
+          div({ id: "saltcorn-file-manager" }),
           fileUploadForm(req, safeDir),
-          div({ id: "saltcorn-file-manager" })
         ],
       },
     });
