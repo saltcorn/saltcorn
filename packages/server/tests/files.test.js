@@ -39,7 +39,7 @@ describe("files admin", () => {
     await request(app)
       .get("/files")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Size (KiB)"));
+      .expect(toInclude("Upload file"));
   });
   it("download file", async () => {
     const app = await getApp({ disableCsrf: true });

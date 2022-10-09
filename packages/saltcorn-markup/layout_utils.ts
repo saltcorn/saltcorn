@@ -445,7 +445,7 @@ const headersInBody = (headers: any[]): string =>
     .filter((h) => h.script)
     .map(
       (h) =>
-        `<script src="${h.script}" ${
+        `<script ${h.defer ? "defer " : ""}src="${h.script}" ${
           h.integrity
             ? `integrity="${h.integrity}" crossorigin="anonymous"`
             : ""

@@ -318,9 +318,47 @@ class File {
       const newPath = path.join(path.dirname(this.location), filename);
 
       await fsp.rename(this.location, newPath);
+      await File.update_table_references(
+        this.path_to_serve as string,
+        path.join(path.dirname(this.path_to_serve), filename)
+      );
       this.location = newPath;
       this.filename = filename;
     }
+  }
+
+  static async update_table_references(from: string, to: string) {
+    const Field = require("./field");
+    const Table = require("./table");
+    const fileFields = await Field.find({ type: "File" });
+    const schema = db.getTenantSchemaPrefix();
+    for (const field of fileFields) {
+      const table = Table.findOne({ id: field.table_id });
+      await db.query(
+        `update ${schema}"${table.name}" set "${field.name}" = $1 where "${field.name}" = $2`,
+        [to, from]
+      );
+    }
+  }
+
+  async move_to_dir(newFolder: string): Promise<void> {
+    const newFolderNormd = File.normalise(newFolder);
+    const tenant = db.getTenantSchema();
+
+    const file_store = db.connectObj.file_store;
+    const newPath = path.join(
+      file_store,
+      tenant,
+      newFolderNormd,
+      this.filename
+    );
+
+    await fsp.rename(this.location, newPath);
+    await File.update_table_references(
+      this.path_to_serve as string,
+      path.join(newFolderNormd, this.filename)
+    );
+    this.location = newPath;
   }
   /**
    * Get absolute path to new file in db.connectObj.file_store.

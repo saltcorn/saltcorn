@@ -10,6 +10,7 @@
     "@saltcorn/builder": "0.7.4",
     "@saltcorn/data": "0.7.4",
     "@saltcorn/admin-models": "0.7.4",
+    "@saltcorn/filemanager": "0.7.4",
     "@saltcorn/markup": "0.7.4",
     "@saltcorn/sbadmin2": "0.7.4",
     "@socket.io/cluster-adapter": "^0.1.0",

@@ -11,6 +11,7 @@ const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
 const resizer = require("resize-with-sharp-or-jimp");
+const db = require("@saltcorn/data/db");
 
 const {
   mkTable,
@@ -85,66 +86,34 @@ router.get(
         mime_sub: "",
       }))
     }
+    if (req.xhr) {
+      for (const file of rows) {
+        file.location = file.path_to_serve
+      }
+      const directories = await File.allDirectories()
+      for (const file of directories) {
+        file.location = file.path_to_serve
+      }
+      res.json({ files: rows, roles, directories })
+      return
+    }
     send_files_page({
       res,
       req,
+      headers: [
+        {
+          script: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
+          defer: true
+        },
+        {
+          css: `/static_assets/${db.connectObj.version_tag}/bundle.css`,
+        },
+      ],
       active_sub: "Files",
       contents: {
         type: "card",
         contents: [
-          mkTable(
-            [
-              {
-                label: req.__("Filename"),
-                key: (r) =>
-                  r.isDirectory
-                    ? div(a({
-                      href: `/files?dir=${encodeURIComponent(
-                        r.filename === ".."
-                          ? path.dirname(safeDir)
-                          : path.join(safeDir, r.filename))}`
-                    }, r.filename))
-                    :
-                    div(
-                      { "data-inline-edit-dest-url": `/files/setname/${r.path_to_serve}` },
-                      r.filename
-                    ),
-              },
-              { label: req.__("Size (KiB)"), key: r => r.isDirectory ? '' : r.size_kb, align: "right" },
-              { label: req.__("Media type"), key: (r) => r.mimetype },
-              {
-                label: req.__("Role to access"),
-                key: (r) => editFileRoleForm(r, roles, req),
-              },
-              {
-                label: req.__("Link"),
-                key: (r) => link(r.isDirectory
-                  ? `/files?dir=${encodeURIComponent(
-                    r.filename === ".."
-                      ? path.dirname(safeDir)
-                      : path.join(safeDir, r.filename))}`
-                  : `/files/serve/${r.path_to_serve}`, req.__("Link")),
-              },
-              {
-                label: req.__("Download"),
-                key: (r) => r.isDirectory ? '' : link(`/files/download/${r.path_to_serve}`, req.__("Download")),
-              },
-              {
-                label: req.__("Delete"),
-                key: (r) =>
-                  post_delete_btn(`/files/delete/${r.path_to_serve}`, req, r.filename),
-              },
-            ],
-            rows,
-            { hover: true }
-          ),
-          button(
-            {
-              onClick: `create_new_folder('${safeDir}')`,
-              class: "btn btn-sm btn-secondary mb-1"
-            },
-            i({ class: "fas fa-plus-square me-1" }),
-            "New Folder"),
+          div({ id: "saltcorn-file-manager" }),
           fileUploadForm(req, safeDir),
         ],
       },
@@ -277,13 +246,30 @@ router.post(
 
     if (roleRow && file) {
       await file.set_role(role);
-      req.flash(
-        "success",
-        req.__(`Minimum role for %s updated to %s`, file.filename, roleRow.role)
-      );
-    }
-    else req.flash("success", req.__(`Minimum role updated`));
 
+    }
+
+
+    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
+  })
+);
+
+
+router.post(
+  "/move/*",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
+    const new_path = req.body.new_path;
+
+    if (file) {
+      await file.move_to_dir(new_path);
+    }
+    if (req.xhr) {
+      res.json({ success: "ok" })
+      return
+    }
     res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
   })
 );
@@ -403,8 +389,6 @@ router.post(
     );
     if (result && result.error) {
       req.flash("error", result.error);
-    } else {
-      req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
     res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
   })

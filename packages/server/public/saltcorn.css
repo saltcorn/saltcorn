@@ -353,3 +353,7 @@ table.table-inner-grid td {
 .d-inline-maybe {
   display: inline;
 }
+
+.w-unset {
+  width: unset;
+}
