@@ -325,8 +325,15 @@ class File {
 
   async move_to_dir(newFolder: string): Promise<void> {
     const newFolderNormd = File.normalise(newFolder);
+    const tenant = db.getTenantSchema();
 
-    const newPath = path.join(newFolderNormd, this.filename);
+    const file_store = db.connectObj.file_store;
+    const newPath = path.join(
+      file_store,
+      tenant,
+      newFolderNormd,
+      this.filename
+    );
 
     await fsp.rename(this.location, newPath);
     this.location = newPath;

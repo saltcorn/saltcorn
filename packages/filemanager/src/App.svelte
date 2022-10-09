@@ -94,7 +94,23 @@
     }
     await fetchAndReset(true);
   }
-  async function moveDirectory(e) {}
+  async function moveDirectory(e) {
+    for (const fileNm of selectedList) {
+      const new_path = e.target.value;
+      if (!new_path) return;
+      const file = files.find((f) => f.filename === fileNm);
+      await fetch(`/files/move/${file.location}`, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "CSRF-Token": window._sc_globalCsrf,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ new_path }),
+        method: "POST",
+      });
+    }
+    await fetchAndReset(true);
+  }
 
   function gotoFolder(folder) {
     currentFolder = folder;
