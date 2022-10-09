@@ -157,6 +157,7 @@
               on:click={(e) => rowClick(file, e)}
               on:dblclick={() => {
                 if (file.isDirectory) gotoFolder(file.location);
+                else window.open(`/files/serve/${file.location}`);
               }}
               class:selected={selectedFiles[file.filename]}
             >
@@ -171,7 +172,7 @@
                 {/if}
               </td>
               <td style="text-align: right">
-                {file.size_kb}
+                {file.isDirectory ? "" : file.size_kb}
               </td>
               <td>
                 {roles[file.min_role_read]}

@@ -319,7 +319,6 @@ router.post(
     const file = await File.findOne(serve_path);
     const new_path = req.body.new_path;
 
-    console.log({ file, new_path });
     if (file) {
       await file.move_to_dir(new_path);
     }
