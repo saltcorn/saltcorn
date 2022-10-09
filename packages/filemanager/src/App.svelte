@@ -26,9 +26,7 @@
   let lastSelected;
   const fetchAndReset = async function (keepSelection) {
     const response = await fetch(`/files?dir=${currentFolder}`, {
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-      },
+      headers: { "X-Requested-With": "XMLHttpRequest" },
     });
     const data = await response.json();
     files = data.files;
@@ -67,6 +65,18 @@
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
 
+  async function POST(url, body) {
+    return await fetch(url, {
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "CSRF-Token": window._sc_globalCsrf,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(body || {}),
+    });
+  }
+
   async function goAction(e) {
     const action = e?.target.value;
     if (!action) return;
@@ -75,13 +85,7 @@
         if (!confirm(`Delete files: ${selectedList.join()}`)) return;
         for (const fileNm of selectedList) {
           const file = files.find((f) => f.filename === fileNm);
-          await fetch(`/files/delete/${file.location}`, {
-            headers: {
-              "X-Requested-With": "XMLHttpRequest",
-              "CSRF-Token": window._sc_globalCsrf,
-            },
-            method: "POST",
-          });
+          await POST(`/files/delete/${file.location}`);
         }
         await fetchAndReset();
         break;
@@ -91,16 +95,9 @@
           lastSelected.filename
         );
         if (!newName) return;
-        await fetch(`/files/setname/${lastSelected.location}`, {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest",
-            "CSRF-Token": window._sc_globalCsrf,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({ value: newName }),
+        await POST(`/files/setname/${lastSelected.location}`, {
+          value: newName,
         });
-
         await fetchAndReset();
         break;
     }
@@ -109,15 +106,7 @@
     const role = e.target.value;
     for (const fileNm of selectedList) {
       const file = files.find((f) => f.filename === fileNm);
-      await fetch(`/files/setrole/${file.location}`, {
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          "CSRF-Token": window._sc_globalCsrf,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ role }),
-        method: "POST",
-      });
+      await POST(`/files/setrole/${file.location}`, { role });
     }
     await fetchAndReset(true);
   }
@@ -126,15 +115,7 @@
       const new_path = e.target.value;
       if (!new_path) return;
       const file = files.find((f) => f.filename === fileNm);
-      await fetch(`/files/move/${file.location}`, {
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          "CSRF-Token": window._sc_globalCsrf,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ new_path }),
-        method: "POST",
-      });
+      await POST(`/files/move/${file.location}`, { new_path });
     }
     await fetchAndReset();
   }
