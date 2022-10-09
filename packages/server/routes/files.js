@@ -310,6 +310,27 @@ router.post(
   })
 );
 
+
+router.post(
+  "/move/*",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
+    const new_path = req.body.new_path;
+
+
+    if (file) {
+      await file.move_to_dir(new_path);
+    }
+    if (req.xhr) {
+      res.json({ success: "ok" })
+      return
+    }
+    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
+  })
+);
+
 /**
  * @name post/setname/:id
  * @function

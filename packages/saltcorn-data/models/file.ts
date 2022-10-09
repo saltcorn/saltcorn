@@ -322,6 +322,15 @@ class File {
       this.filename = filename;
     }
   }
+
+  async move_to_dir(newFolder: string): Promise<void> {
+    const newFolderNormd = File.normalise(newFolder);
+
+    const newPath = path.join(newFolderNormd, this.filename);
+
+    await fsp.rename(this.location, newPath);
+    this.location = newPath;
+  }
   /**
    * Get absolute path to new file in db.connectObj.file_store.
    *
