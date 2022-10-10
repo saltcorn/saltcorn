@@ -198,7 +198,7 @@ class File {
       filename: name,
       location: path.join(absoluteFolder, name),
       size_kb: Math.round(stat.size / 1024),
-      uploaded_at: stat.ctime,
+      uploaded_at: stat.birthtime,
       mime_super,
       mime_sub,
       user_id,
