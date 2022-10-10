@@ -2,6 +2,7 @@ const sudo = require("sudo");
 const { is } = require("contractis");
 const { execSync } = require("child_process");
 const os = require("os");
+const crypto = require("crypto");
 
 /**
  * Execute os  sudo command with args
@@ -63,4 +64,12 @@ const gen_password = () => {
   else return gen_password();
 };
 
-module.exports = { asyncSudo, asyncSudoPostgres, asyncSudoUser, gen_password };
+/**
+ * Generate jwt secret
+ * @returns {string}
+ */
+ const genJwtSecret = () => {
+  return crypto.randomBytes(64).toString("hex");
+};
+
+module.exports = { asyncSudo, asyncSudoPostgres, asyncSudoUser, gen_password, genJwtSecret };

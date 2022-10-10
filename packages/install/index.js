@@ -23,6 +23,7 @@ const {
   asyncSudoUser,
   asyncSudoPostgres,
   gen_password,
+  genJwtSecret,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
@@ -407,15 +408,17 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
 
   const session_secret = gen_password();
 
+  const jwt_secret = genJwtSecret();
+
   // if sqlite, save cfg & exit
   if (db === "sqlite") {
-    const dbdir = envPaths("saltcorn", { suffix: "" });
+    const dbdir = envPaths("saltcorn", { suffix: "" }).data;
     const dbPath = path.join(dbdir, "scdb.sqlite");
     await fs.promises.mkdir(dbdir, {
       recursive: true,
     });
     await write_connection_config(
-      { sqlite_path: dbPath, session_secret },
+      { sqlite_path: dbPath, session_secret, jwt_secret },
       user,
       dryRun
     );
@@ -436,6 +439,7 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
       user,
       password: pg_pass,
       session_secret,
+      jwt_secret,
       multi_tenant: false,
     },
     user,
