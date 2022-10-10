@@ -83,7 +83,7 @@ class RunBenchmarkCommand extends Command {
 
     const benches = {
       static_file: "/saltcorn.css",
-      stored_file: `/files/serve/${file.id}`,
+      stored_file: `/files/serve/${file.path_to_serve}`,
       form_view: "/view/NewThread",
       simple_page: "/page/simplepage",
       complex_page: "/page/homepage",

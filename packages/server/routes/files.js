@@ -353,8 +353,8 @@ router.post(
             filename: many ? f.map((fl) => fl.filename) : f.filename,
             location: many ? f.map((fl) => fl.path_to_serve) : f.path_to_serve,
             url: many
-              ? f.map((fl) => `/files/serve/${fl.id}`)
-              : `/files/serve/${f.id}`,
+              ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
+              : `/files/serve/${f.path_to_serve}`,
           },
         };
     }
