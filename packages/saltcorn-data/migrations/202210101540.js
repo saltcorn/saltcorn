@@ -37,13 +37,13 @@ const js = async () => {
         for (const field of htmlFields) {
             const table = Table.findOne({ id: field.table_id })
             for (const [fid, newLoc] of Object.entries(newLocations)) {
-                const sql = `update ${schema}"${table.name}" 
+                const sql = `UPDATE ${schema}"${table.name}" 
                  set "${field.name}" = REPLACE(
                     "${field.name}",
                     ' src="/files/serve/${fid}"',
                     ' src="/files/serve/${encodeURIComponent(newLoc)}"')`
-                console.log(sql);
-                await db.query()
+                //console.log(sql);
+                if (!newLoc.includes("'")) await db.query(sql)
             }
 
         }
