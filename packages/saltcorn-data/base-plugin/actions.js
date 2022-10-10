@@ -74,6 +74,7 @@ const run_code = async ({
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
+  const sysState = getState()
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
@@ -87,6 +88,8 @@ const run_code = async ({
     fetch,
     URL,
     File,
+    setConfig: (k, v) => sysState.setConfig(k, v),
+    getConfig: (k) => sysState.getConfig(k),
     channel: table ? table.name : channel,
     ...(row || {}),
     ...getState().function_context,
