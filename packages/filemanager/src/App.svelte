@@ -203,73 +203,75 @@
           </ol>
         </nav>
       </div>
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th />
-            <th on:click={() => clickHeader("filename")}>
-              Filename
-              <Fa icon={getSorterIcon("filename", sortBy, sortDesc)} />
-            </th>
-            <th
-              on:click={() => clickHeader("size_kb")}
-              style="text-align: right"
-            >
-              <Fa icon={getSorterIcon("size_kb", sortBy, sortDesc)} />
-              Size (KiB)
-            </th>
-            <th on:click={() => clickHeader("min_role_read")}>
-              Role to access
-              <Fa icon={getSorterIcon("min_role_read", sortBy, sortDesc)} />
-            </th>
-            <th on:click={() => clickHeader("uploaded_at")}>
-              Created
-              <Fa icon={getSorterIcon("uploaded_at", sortBy, sortDesc)} />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each files as file}
-            <tr
-              on:click={(e) => rowClick(file, e)}
-              on:dblclick={() => {
-                if (file.isDirectory) gotoFolder(file.location);
-                else window.open(`/files/serve/${file.location}`);
-              }}
-              class:selected={selectedFiles[file.filename]}
-            >
-              <td>
-                <Fa size="lg" icon={getIcon(file)} />
-              </td>
-              <td>
-                {#if file.isDirectory}
-                  {file.filename}/
-                {:else}
-                  {file.filename}
-                {/if}
-              </td>
-              <td style="text-align: right">
-                {file.isDirectory ? "" : file.size_kb}
-              </td>
-              <td>
-                {roles[file.min_role_read]}
-              </td>
-              <td>
-                {new Date(file.uploaded_at).toLocaleString()}
-              </td>
+      <div class="filelist">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th />
+              <th on:click={() => clickHeader("filename")}>
+                Filename
+                <Fa icon={getSorterIcon("filename", sortBy, sortDesc)} />
+              </th>
+              <th
+                on:click={() => clickHeader("size_kb")}
+                style="text-align: right"
+              >
+                <Fa icon={getSorterIcon("size_kb", sortBy, sortDesc)} />
+                Size (KiB)
+              </th>
+              <th on:click={() => clickHeader("min_role_read")}>
+                Role to access
+                <Fa icon={getSorterIcon("min_role_read", sortBy, sortDesc)} />
+              </th>
+              <th on:click={() => clickHeader("uploaded_at")}>
+                Created
+                <Fa icon={getSorterIcon("uploaded_at", sortBy, sortDesc)} />
+              </th>
             </tr>
-          {/each}
-          <tr on:click={() => window.create_new_folder(currentFolder)}>
-            <td>
-              <Fa size="lg" icon={faFolderPlus} />
-            </td>
-            <td>Create new folder...</td>
-            <td />
-            <td />
-            <td />
-          </tr>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {#each files as file}
+              <tr
+                on:click={(e) => rowClick(file, e)}
+                on:dblclick={() => {
+                  if (file.isDirectory) gotoFolder(file.location);
+                  else window.open(`/files/serve/${file.location}`);
+                }}
+                class:selected={selectedFiles[file.filename]}
+              >
+                <td>
+                  <Fa size="lg" icon={getIcon(file)} />
+                </td>
+                <td>
+                  {#if file.isDirectory}
+                    {file.filename}/
+                  {:else}
+                    {file.filename}
+                  {/if}
+                </td>
+                <td style="text-align: right">
+                  {file.isDirectory ? "" : file.size_kb}
+                </td>
+                <td>
+                  {roles[file.min_role_read]}
+                </td>
+                <td>
+                  {new Date(file.uploaded_at).toLocaleString()}
+                </td>
+              </tr>
+            {/each}
+            <tr on:click={() => window.create_new_folder(currentFolder)}>
+              <td>
+                <Fa size="lg" icon={faFolderPlus} />
+              </td>
+              <td>Create new folder...</td>
+              <td />
+              <td />
+              <td />
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div class="col-4">
@@ -307,7 +309,7 @@
               <td>{new Date(lastSelected.uploaded_at).toLocaleString()}</td>
             </tr>
             <tr>
-              <th>Role to access</th>
+              <th class="pe-1">Role to access</th>
               <td>{roles[lastSelected.min_role_read]}</td>
             </tr>
           </tbody>
@@ -353,7 +355,7 @@
 
 <style>
   tr.selected {
-    background-color: rgb(143, 180, 255);
+    background-color: rgb(213, 237, 255);
   }
   img.file-preview {
     max-height: 200px;
@@ -363,5 +365,9 @@
     width: unset;
     display: inline;
     max-width: 33%;
+  }
+  div.filelist {
+    max-height: 90vh;
+    overflow-y: scroll;
   }
 </style>
