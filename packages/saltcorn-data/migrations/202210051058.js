@@ -87,6 +87,7 @@ const js = async () => {
     }
     //system cfg
     if (state) {
+        await state.setConfig("legacy_file_id_locations", newLocations)
         await state.setConfig("site_logo_id", newLocations[state.getConfig("site_logo_id")])
         await state.setConfig("favicon_id", newLocations[state.getConfig("favicon_id")])
     }
