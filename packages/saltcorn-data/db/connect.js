@@ -103,6 +103,8 @@ const getConnectObject = (connSpec = {}) => {
   });
 
   if (!connObj.session_secret) connObj.session_secret = is.str.generate();
+  if (!connObj.jwt_secret) // for the unit tests
+    connObj.jwt_secret = crypto.randomBytes(64).toString("hex");
   connObj.version_tag = crypto
     .createHash("sha256")
     .update(`${connObj.session_secret}${git_commit || sc_version}`)
