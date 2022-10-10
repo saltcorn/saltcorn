@@ -388,7 +388,7 @@ async function make_unique_field(
 
 async function buildEncodedImage(fileId, elementId) {
   const base64Encoded = await parent.loadEncodedFile(fileId);
-  $(`#${elementId}`)[0].src = base64Encoded;
+  document.getElementById(elementId).src = base64Encoded;
 }
 
 async function buildEncodedBgImage(fileId, elementId) {

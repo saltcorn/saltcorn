@@ -774,15 +774,19 @@ const runPost = async (
           );
           return;
         }
-        const file = isNode()
-          ? await File.from_req_files(
+        if(isNode()) {
+          const file = await File.from_req_files(
             req.files[field.name],
             req.user ? req.user.id : null,
             (field.attributes && +field.attributes.min_role_read) || 1,
             field?.attributes?.folder
-          )
-          : await File.upload(req.files[field.name]);
-        row[field.name] = file.path_to_serve;
+          );
+          row[field.name] = file.path_to_serve;
+        }
+        else {
+          const serverResp = await File.upload(req.files[field.name]);
+          row[field.name] = serverResp.location;
+        }
       } else {
         delete row[field.name];
       }

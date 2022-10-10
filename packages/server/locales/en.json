@@ -997,5 +997,7 @@
 	"Specify how to create a new row": "Specify how to create a new row",
 	"Preview": "Preview",
 	"Minimum role updated": "Minimum role updated",
-	"Module not found": "Module not found"
+	"Module not found": "Module not found",
+	"View %s not found": "View %s not found",
+	"Query %s not found": "Query %s not found"
 }
