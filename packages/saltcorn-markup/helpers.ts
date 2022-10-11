@@ -37,7 +37,10 @@ const select_options = (
   }));
   if (sort)
     options.sort((a: any, b: any) =>
-      a.label?.toLowerCase() > b.label?.toLowerCase() ? 1 : -1
+      (a.label?.toLowerCase?.() || a.label) >
+      (b.label?.toLowerCase?.() || b.label)
+        ? 1
+        : -1
     );
   options = options.map((o: any) =>
     o.value === "" ? { ...o, label: neutral_label } : o
