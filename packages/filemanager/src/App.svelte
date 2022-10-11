@@ -44,6 +44,7 @@
     } else if (lastSelected) {
       lastSelected = files.find((f) => f.filename === lastSelected.filename);
     }
+    clickHeader("filename");
   };
   onMount(fetchAndReset);
   function rowClick(file, e) {
