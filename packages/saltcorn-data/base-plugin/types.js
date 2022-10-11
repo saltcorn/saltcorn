@@ -26,6 +26,8 @@ const {
   script,
   domReady,
   section,
+  pre,
+  code
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
@@ -394,6 +396,8 @@ const string = {
      * @subcategory types / string
      */
     as_text: { isEdit: false, run: (s) => text_attr(s || "") },
+    preFormatted: { isEdit: false, run: (s) => span({ style: "white-space:pre" }, text_attr(s || "")) },
+    code: { isEdit: false, run: (s) => pre(code(text_attr(s || ""))) },
     /**
      * @namespace
      * @category saltcorn-data

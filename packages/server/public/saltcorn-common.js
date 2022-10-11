@@ -726,6 +726,8 @@ function init_room(viewname, room_id) {
 
 function cancel_form(form) {
   if (!form) return;
+  $(form).trigger("reset");
+  $(form).trigger("change");
   $(form).append(`<input type="hidden" name="_cancel" value="on">`);
   $(form).submit();
 }
