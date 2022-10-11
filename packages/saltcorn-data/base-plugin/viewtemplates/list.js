@@ -414,7 +414,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   var state_fields = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column) => {
-    if (column.type === "Field" && column.state_field) {
+    if (column.type === "Field") {
       const tbl_fld = table_fields.find((f) => f.name == column.field_name);
       if (tbl_fld) {
         const f = new Field(tbl_fld);
