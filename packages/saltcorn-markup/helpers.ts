@@ -31,16 +31,17 @@ const select_options = (
   const options1 = force_required
     ? options0.filter((o: any) => (typeof o === "string" ? o : o.value))
     : options0;
-  let options = options1
-    .map((o: any) => (o.value === "" ? { ...o, label: neutral_label } : o))
-    .map((o: any) => ({
-      label: typeof o === "string" ? o : o.label,
-      value: typeof o === "string" ? o : o.value,
-    }));
+  let options = options1.map((o: any) => ({
+    label: typeof o === "string" ? o : o.label,
+    value: typeof o === "string" ? o : o.value,
+  }));
   if (sort)
     options.sort((a: any, b: any) =>
       a.label?.toLowerCase() > b.label?.toLowerCase() ? 1 : -1
     );
+  options = options.map((o: any) =>
+    o.value === "" ? { ...o, label: neutral_label } : o
+  );
   const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
   const isSelected = (value: any) =>
     !selected
