@@ -32,6 +32,12 @@
     });
     const data = await response.json();
     files = data.files;
+    for (const file of files) {
+      file.mimetype =
+        file.mime_sub && file.mime_super
+          ? `${file.mime_super}/${file.mime_sub}`
+          : "";
+    }
     directories = data.directories;
     rolesList = data.roles;
     for (const role of data.roles) {
@@ -213,6 +219,10 @@
                 Filename
                 <Fa icon={getSorterIcon("filename", sortBy, sortDesc)} />
               </th>
+              <th on:click={() => clickHeader("mimetype")}>
+                Media type
+                <Fa icon={getSorterIcon("mimetype", sortBy, sortDesc)} />
+              </th>
               <th
                 on:click={() => clickHeader("size_kb")}
                 style="text-align: right"
@@ -249,6 +259,9 @@
                   {:else}
                     {file.filename}
                   {/if}
+                </td>
+                <td>
+                  {file.mimetype}
                 </td>
                 <td style="text-align: right">
                   {file.isDirectory ? "" : file.size_kb}
