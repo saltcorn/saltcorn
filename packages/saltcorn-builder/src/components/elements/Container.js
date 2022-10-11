@@ -138,7 +138,7 @@ export /**
           //padding: padding.map((p) => p + "px").join(" "),
           //margin: margin.map((p) => p + "px").join(" "),
           minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
-          ...(bgType === "Image" && bgFileId && +bgFileId
+          ...(bgType === "Image" && bgFileId
             ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
               backgroundSize:
