@@ -24,15 +24,23 @@ const select_options = (
   v: string | any,
   hdr: any,
   force_required?: boolean,
-  neutral_label: string = ""
+  neutral_label: string = "",
+  sort: boolean = true
 ): string => {
   const options0 = hdr.options || [];
   const options1 = force_required
     ? options0.filter((o: any) => (typeof o === "string" ? o : o.value))
     : options0;
-  const options = options1.map((o: any) =>
-    o.value === "" ? { ...o, label: neutral_label } : o
-  );
+  let options = options1
+    .map((o: any) => (o.value === "" ? { ...o, label: neutral_label } : o))
+    .map((o: any) => ({
+      label: typeof o === "string" ? o : o.label,
+      value: typeof o === "string" ? o : o.value,
+    }));
+  if (sort)
+    options.sort((a: any, b: any) =>
+      a.label?.toLowerCase() > b.label?.toLowerCase() ? 1 : -1
+    );
   const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
   const isSelected = (value: any) =>
     !selected
@@ -43,8 +51,8 @@ const select_options = (
 
   return options
     .map((o: any) => {
-      const label = typeof o === "string" ? o : o.label;
-      const value = typeof o === "string" ? o : o.value;
+      const label = o.label;
+      const value = o.value;
       return `<option value="${text_attr(value)}"${
         isSelected(value) ? " selected" : ""
       }>${text(label)}</option>`;
