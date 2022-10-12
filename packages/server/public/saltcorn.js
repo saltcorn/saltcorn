@@ -94,7 +94,7 @@ let loadPage = true;
 $(function () {
   $(window).bind("popstate", function (event) {
     const ensure_no_final_hash = (s) => (s.endsWith("#") ? s.slice(0, -1) : s);
-    const newUrl = ensure_no_final_hash(window.location.href)
+    const newUrl = ensure_no_final_hash(window.location.href);
     if (loadPage && newUrl !== window.location.href)
       window.location.assign(newUrl);
   });
@@ -102,7 +102,7 @@ $(function () {
 
 function pjax_to(href) {
   let $modal = $("#scmodal");
-  const inModal = $modal.length && $modal.hasClass("show")
+  const inModal = $modal.length && $modal.hasClass("show");
   let $dest = inModal ? $("#scmodal .modal-body") : $("#page-inner-content");
 
   if (!$dest.length) window.location.href = href;
@@ -127,7 +127,7 @@ function pjax_to(href) {
       },
       error: function (res) {
         notifyAlert({ type: "danger", text: res.responseText });
-      }
+      },
     });
   }
 }
@@ -136,21 +136,19 @@ function href_to(href) {
   window.location.href = href;
 }
 function clear_state(omit_fields_str) {
-  let newUrl = get_current_state_url().split("?")[0]
-  const hash = get_current_state_url().split("#")[1]
+  let newUrl = get_current_state_url().split("?")[0];
+  const hash = get_current_state_url().split("#")[1];
   if (omit_fields_str) {
-    const omit_fields = omit_fields_str.split(',').map(s => s.trim())
-    let qs = (get_current_state_url().split("?")[1] || "").split("#")[0]
+    const omit_fields = omit_fields_str.split(",").map((s) => s.trim());
+    let qs = (get_current_state_url().split("?")[1] || "").split("#")[0];
     let params = new URLSearchParams(qs);
-    newUrl = newUrl + '?'
-    omit_fields.forEach(f => {
+    newUrl = newUrl + "?";
+    omit_fields.forEach((f) => {
       if (params.get(f))
         newUrl = updateQueryStringParameter(newUrl, f, params.get(f));
-    })
-
+    });
   }
-  if (hash)
-    newUrl += '#' + hash;
+  if (hash) newUrl += "#" + hash;
 
   pjax_to(newUrl);
 }
@@ -171,12 +169,14 @@ function view_post(viewname, route, data, onDone) {
         ? "application/x-www-form-urlencoded"
         : "application/json",
     data: typeof data === "string" ? data : JSON.stringify(data),
-  }).done(function (res) {
-    if (onDone) onDone(res);
-    ajax_done(res);
-  }).fail(function (res) {
-    notifyAlert({ type: "danger", text: res.responseText });
-  });
+  })
+    .done(function (res) {
+      if (onDone) onDone(res);
+      ajax_done(res);
+    })
+    .fail(function (res) {
+      notifyAlert({ type: "danger", text: res.responseText });
+    });
 }
 var logged_errors = [];
 function globalErrorCatcher(message, source, lineno, colno, error) {
@@ -244,9 +244,9 @@ function ajax_modal(url, opts = {}) {
       $("#scmodal").prop("data-modal-state", url);
       new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
-      (opts.onOpen || function () { })(res);
+      (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
-        (opts.onClose || function () { })(res);
+        (opts.onClose || function () {})(res);
         $("body").css("overflow", "");
       });
     },
@@ -298,10 +298,10 @@ function applyViewConfig(e, url, k) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) { },
+    error: function (request) {},
     success: function (res) {
       k && k(res);
-      !k && updateViewPreview()
+      !k && updateViewPreview();
     },
   });
 
@@ -309,23 +309,23 @@ function applyViewConfig(e, url, k) {
 }
 
 function updateViewPreview() {
-  const $preview = $('#viewcfg-preview[data-preview-url]')
+  const $preview = $("#viewcfg-preview[data-preview-url]");
   if ($preview.length > 0) {
-    const url = $preview.attr("data-preview-url")
-    $preview.css({ opacity: 0.5 })
+    const url = $preview.attr("data-preview-url");
+    $preview.css({ opacity: 0.5 });
     $.ajax(url, {
       type: "POST",
       headers: {
         "CSRF-Token": _sc_globalCsrf,
       },
 
-      error: function (request) { },
+      error: function (request) {},
       success: function (res) {
-        $preview.css({ opacity: 1.0 })
+        $preview.css({ opacity: 1.0 });
 
-        $preview.html(res)
+        $preview.html(res);
       },
-    })
+    });
   }
 }
 
@@ -445,12 +445,12 @@ function test_formula(tablename, stored) {
 }
 
 function create_new_folder(folder) {
-  const name = window.prompt("Name of the new folder")
+  const name = window.prompt("Name of the new folder");
   if (name)
     ajax_post(`/files/new-folder`, {
       data: { name, folder },
       success: (data) => {
-        location.reload()
+        location.reload();
       },
     });
 }
@@ -487,24 +487,76 @@ async function fill_formula_btn_click(btn, k) {
     $(btn).closest(".input-group").find("input").val(val);
     if (k) k();
   } catch (e) {
-    notifyAlert({ type: "danger", text: `Error evaluating fill formula: ${e.message}` })
-    console.error(e)
+    notifyAlert({
+      type: "danger",
+      text: `Error evaluating fill formula: ${e.message}`,
+    });
+    console.error(e);
   }
 }
 
+function removeSpinner(elementId, orginalHtml) {
+  $(`#${elementId}`).html(orginalHtml);
+}
+
+function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
+  $.ajax("/admin/build-mobile-app/finished", {
+    type: "GET",
+    data: { build_dir: outDirName },
+    success: function (res) {
+      if (!res.finished) {
+        if (pollCount >= 40) {
+          removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
+          notifyAlert({
+            type: "danger",
+            text: "unable to get the build results",
+          });
+        } else {
+          setTimeout(() => {
+            poll_mobile_build_finished(outDirName, ++pollCount, orginalBtnHtml);
+          }, 5000);
+        }
+      } else {
+        href_to(
+          `build-mobile-app/result?build_dir_name=${encodeURIComponent(
+            outDirName
+          )}`
+        );
+      }
+    },
+  });
+}
+
+function build_mobile_app(button) {
+  const form = $(button).closest("form");
+  const params = {};
+  form.serializeArray().forEach((item) => {
+    params[item.name] = item.value;
+  });
+  ajax_post("/admin/build-mobile-app", {
+    data: params,
+    success: (data) => {
+      if (data.build_dir_name) {
+        handleMessages();
+        const orginalBtnHtml = $("#buildMobileAppBtnId").html();
+        press_store_button(button);
+        poll_mobile_build_finished(data.build_dir_name, 0, orginalBtnHtml);
+      }
+    },
+  });
+}
 
 (() => {
-  const e = document.querySelector('[data-sidebar-toggler]');
-  let closed = localStorage.getItem('sidebarClosed') === "true";
+  const e = document.querySelector("[data-sidebar-toggler]");
+  let closed = localStorage.getItem("sidebarClosed") === "true";
   if (e) {
     if (closed) {
-      e.dispatchEvent(new Event('click'));
+      e.dispatchEvent(new Event("click"));
     }
     e.addEventListener("click", () => {
-      closed = !closed
-      localStorage.setItem('sidebarClosed', `${closed}`);
-    })
-
+      closed = !closed;
+      localStorage.setItem("sidebarClosed", `${closed}`);
+    });
   }
 })()
 
