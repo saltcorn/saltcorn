@@ -297,7 +297,7 @@ module.exports = {
    * @returns {boolean}
    */
   display_state_form: ({ list_view, _omit_state_form }) =>
-    !!list_view && !_omit_state_form,
+    false,
   queries: ({
     table_id,
     viewname,

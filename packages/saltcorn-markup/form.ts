@@ -798,40 +798,7 @@ const renderForm = (
     csrfToken0 === false || csrfToken0 === ""
       ? csrfToken0
       : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
-  if (form.isStateForm) {
-    form.class += " px-4 py-3";
-    form.formStyle = "vert";
-    var collapsedSummary = "";
-    Object.entries(form.values).forEach(([k, v]) => {
-      if (typeof v === "undefined") return;
-      if (k[0] !== "_")
-        collapsedSummary += ` ${text(k)}:${text_attr(v as string)} `;
-      if (k === "_fts") collapsedSummary += ` ${text_attr(v as string)} `;
-    });
-    return div(
-      { class: "dropdown" },
-      button(
-        {
-          class: "btn btn-secondary dropdown-toggle",
-          type: "button",
-          id: "dropdownMenuButton",
-          "data-bs-toggle": "dropdown",
-          "aria-haspopup": "true",
-          "aria-expanded": "false",
-        },
-        collapsedSummary ||
-          (form.__ ? form.__("Search filter") : "Search filter")
-      ),
-
-      div(
-        {
-          class: "dropdown-menu search-form",
-          "aria-labelledby": "dropdownMenuButton",
-        },
-        mkForm(form, csrfToken, form.errors)
-      )
-    );
-  } else if (form.layout) return mkFormWithLayout(form, csrfToken);
+  if (form.layout) return mkFormWithLayout(form, csrfToken);
   else return mkForm(form, csrfToken, form.errors);
 };
 
@@ -916,11 +883,9 @@ const mkForm = (
     form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""
   } ${
     form.onChange ? ` onchange="${form.onChange}"` : ""
-  }class="form-namespace ${form.isStateForm ? "stateForm" : ""} ${
-    form.class || ""
-  }" method="${form.methodGET ? "get" : "post"}"${
-    hasFile ? ' encType="multipart/form-data"' : ""
-  }>`;
+  }class="form-namespace ${form.class || ""}" method="${
+    form.methodGET ? "get" : "post"
+  }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
   //console.log(form.fields);
   const flds = form.fields
     .map(

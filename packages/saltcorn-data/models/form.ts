@@ -37,7 +37,6 @@ class Form implements AbstractForm {
   id?: string;
   labelCols?: number;
   collapsedSummary?: string;
-  isStateForm: boolean;
   formStyle: string;
   class?: string;
   methodGET: boolean;
@@ -70,7 +69,6 @@ class Form implements AbstractForm {
     this.id = o.id;
     this.labelCols = o.labelCols;
     this.collapsedSummary = o.collapsedSummary;
-    this.isStateForm = !!o.isStateForm;
     this.formStyle = o.formStyle || "horiz";
     this.class = o.class;
     this.methodGET = !!o.methodGET;
@@ -232,7 +230,6 @@ namespace Form {
     id?: string;
     labelCols?: number;
     collapsedSummary?: string;
-    isStateForm?: boolean;
     formStyle?: string;
     class?: string;
     methodGET?: boolean;
