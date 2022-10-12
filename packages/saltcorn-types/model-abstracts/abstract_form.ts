@@ -16,7 +16,6 @@ export interface AbstractForm {
   layout?: Layout;
   id?: string;
   labelCols?: number;
-  isStateForm: boolean;
   formStyle: string;
   class?: string;
   methodGET: boolean;

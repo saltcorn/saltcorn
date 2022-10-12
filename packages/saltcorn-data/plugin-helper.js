@@ -799,12 +799,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       showIf: { type: "Aggregation" },
     },
     {
-      name: "state_field",
-      label: __("In search form"),
-      type: "Bool",
-      showIf: { type: "Field" },
-    },
-    {
       name: "header_label",
       label: __("Header label"),
       type: "String",
@@ -1383,7 +1377,6 @@ const initial_config_all_fields =
             field_name: f.name,
             type: "Field",
             fieldview: fvNm,
-            state_field: true,
           });
           aboves.push({
             widths: [2, 10],

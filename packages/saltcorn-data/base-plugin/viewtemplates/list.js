@@ -353,13 +353,6 @@ const configuration_workflow = (req) =>
             showIf: { transpose: true },
           });
           formfields.push({
-            name: "_omit_state_form",
-            label: req.__("Omit search form"),
-            sublabel: req.__("Do not display the search filter form"),
-            type: "Bool",
-            default: true,
-          });
-          formfields.push({
             name: "_omit_header",
             label: req.__("Omit header"),
             sublabel: req.__("Do not display the header"),
@@ -692,7 +685,7 @@ module.exports = {
    * @returns {boolean}
    */
   display_state_form: (opts) =>
-    !(opts && opts.default_state && opts.default_state._omit_state_form),
+    false,
   /**
    * @param {object} opts
    * @returns {boolean}

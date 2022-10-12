@@ -55,14 +55,6 @@ describe("View", () => {
     const res = await v.run({ pages: "967" }, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
-  it("should render list state form", async () => {
-    const v = await View.findOne({ name: "authorlist" });
-    assertIsSet(v);
-    const res = await v.get_state_form({}, mockReqRes.req);
-    assertIsSet(res);
-    expect(res.constructor.name).toBe("Form");
-    expect(res.fields.length > 0).toBe(true);
-  });
   it("should get config flow", async () => {
     const v = await View.findOne({ name: "authorlist" });
     assertIsSet(v);
@@ -235,9 +227,6 @@ describe("View with routes", () => {
     await v.runRoute("the_null_route", {}, spy, mockReqRes);
     expect(json).toEqual({ success: "ok" });
     expect(html).toEqual("<div>Hello</div>");
-
-    const sf = await v.get_state_form({}, mockReqRes.req);
-    expect(sf).toBe(null);
   });
 });
 describe("nested views", () => {
