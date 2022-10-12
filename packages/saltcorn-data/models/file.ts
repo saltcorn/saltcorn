@@ -465,37 +465,6 @@ class File {
   }
 
   /**
-   * create a '_sc_files' entry from an existing file.
-   * The old file will be moved to a new location.
-   *
-   * @param directory directory of existing file
-   * @param name name of existing file
-   * @param userId id of creating user
-   * @returns the new File object
-   */
-  static async from_existing_file(
-    directory: string,
-    name: string,
-    userId: number
-  ) {
-    const fullPath = join(directory, name);
-    if (!existsSync(fullPath)) return null;
-    const file: any = {
-      mimetype: lookup(fullPath),
-      name: name,
-      mv: (newPath: string) => {
-        renameSync(fullPath, newPath);
-      },
-      size: statSync(fullPath).size,
-    };
-    const created = await File.from_req_files(file, userId);
-    if(!created.location.endsWith(name)) {
-      created.filename = parse(created.location).base;
-    }
-    return created;
-  }
-
-  /**
    * Delete file
    * @returns {Promise<{error}>}
    */

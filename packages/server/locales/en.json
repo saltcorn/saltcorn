@@ -991,7 +991,7 @@
 	"Add triggers": "Add triggers",
 	"Formula value": "Formula value",
 	"The build was successfully": "The build was successfully",
-	"Unable to build the app:": "Unable to build the app:",
+	"Unable to build the app": "Unable to build the app",
 	"Add tag": "Add tag",
 	"Create new row": "Create new row",
 	"Specify how to create a new row": "Specify how to create a new row",
@@ -999,5 +999,8 @@
 	"Minimum role updated": "Minimum role updated",
 	"Module not found": "Module not found",
 	"View %s not found": "View %s not found",
-	"Query %s not found": "Query %s not found"
+	"Query %s not found": "Query %s not found",
+	"Open": "Open",
+	"Only the android build supports docker.": "Only the android build supports docker.",
+	"Please enter a valid server URL.": "Please enter a valid server URL."
 }

@@ -882,5 +882,5 @@
 	"When prompted to create the first user, click the link to restore a backup": "Вместо создания первого пользователя, выберите Восстановление из резервной копии (restore a backup)",
 	"Select the downloaded backup file": "Выбрать скаченный бекап (файл с резервной копией)",
 	"Snapshot successful": "Снимок (Снепшот) выполнен успешно",
-	"Unable to build the app:": "Ошибка создания приложения:"
+	"Unable to build the app": "Ошибка создания приложения"
 }
