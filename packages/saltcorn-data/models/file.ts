@@ -198,7 +198,7 @@ class File {
       filename: name,
       location: path.join(absoluteFolder, name),
       size_kb: Math.round(stat.size / 1024),
-      uploaded_at: stat.ctime,
+      uploaded_at: stat.birthtime,
       mime_super,
       mime_sub,
       user_id,
@@ -218,6 +218,21 @@ class File {
       const { getState } = require("../db/state");
       const state = getState();
       const useS3 = state?.getConfig("storage_s3_enabled");
+      //legacy serving ids
+      if (/^\d+$/.test(where)) {
+        const legacy_file_id_locations = state?.getConfig(
+          "legacy_file_id_locations"
+        );
+        //console.log("lfil", legacy_file_id_locations);
+
+        if (legacy_file_id_locations?.[where]) {
+          const legacy_file = await File.findOne(
+            legacy_file_id_locations?.[where]
+          );
+          return legacy_file;
+        }
+      }
+
       if (useS3) {
         const files = await File.find({ id: +where });
         return files[0];

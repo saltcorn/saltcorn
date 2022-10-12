@@ -431,6 +431,12 @@ const configTypes: ConfigTypes = {
     label: "Localizer strings",
     default: {},
   },
+  /** @type {object} */
+  legacy_file_id_locations: {
+    type: "hidden",
+    label: "Legacy file_id locations",
+    default: {},
+  },
   cookie_duration: {
     type: "Integer",
     label: "Cookie duration (hours)",

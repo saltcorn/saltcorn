@@ -80,13 +80,6 @@ const configuration_workflow = (req) =>
                   max: 12,
                 },
               },
-              {
-                name: "_omit_state_form",
-                label: req.__("Omit search form"),
-                sublabel: req.__("Do not display the search filter form"),
-                type: "Bool",
-                default: true,
-              },
             ],
           });
         },
@@ -297,7 +290,7 @@ module.exports = {
    * @returns {boolean}
    */
   display_state_form: ({ list_view, _omit_state_form }) =>
-    !!list_view && !_omit_state_form,
+    false,
   queries: ({
     table_id,
     viewname,

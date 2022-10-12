@@ -213,7 +213,6 @@ const is_viewtemplate = is.obj({
   get_state_fields: is.maybe(
     is.fun([is.posint, is.str, is.any], is.promise(fieldlike))
   ),
-  display_state_form: is.maybe(is.or(is.bool, is.fun(is.any, is.bool))),
   configuration_workflow: is.fun(
     is.obj({ __: is.fun(is.str, is.str) }),
     is.class("Workflow")

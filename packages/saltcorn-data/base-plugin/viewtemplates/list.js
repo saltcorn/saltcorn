@@ -353,13 +353,6 @@ const configuration_workflow = (req) =>
             showIf: { transpose: true },
           });
           formfields.push({
-            name: "_omit_state_form",
-            label: req.__("Omit search form"),
-            sublabel: req.__("Do not display the search filter form"),
-            type: "Bool",
-            default: true,
-          });
-          formfields.push({
             name: "_omit_header",
             label: req.__("Omit header"),
             sublabel: req.__("Do not display the header"),
@@ -414,7 +407,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   var state_fields = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column) => {
-    if (column.type === "Field" && column.state_field) {
+    if (column.type === "Field") {
       const tbl_fld = table_fields.find((f) => f.name == column.field_name);
       if (tbl_fld) {
         const f = new Field(tbl_fld);
@@ -692,7 +685,7 @@ module.exports = {
    * @returns {boolean}
    */
   display_state_form: (opts) =>
-    !(opts && opts.default_state && opts.default_state._omit_state_form),
+    false,
   /**
    * @param {object} opts
    * @returns {boolean}

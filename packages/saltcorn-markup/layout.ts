@@ -347,7 +347,9 @@ const render = ({
           : div(
               image,
               script(
-                domReady(`buildEncodedImage('${segment.fileid}', '${elementId}')`)
+                domReady(
+                  `buildEncodedImage('${segment.fileid}', '${elementId}')`
+                )
               )
             )
       );
@@ -585,7 +587,7 @@ const render = ({
         if (s === "right") return "end";
         return s;
       };
-      const hasImgBg = renderBg && bgType === "Image" && bgFileId && +bgFileId;
+      const hasImgBg = renderBg && bgType === "Image" && bgFileId;
       const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
       let image = undefined;
       const isWeb = typeof window === "undefined" && !req?.smr;
@@ -605,13 +607,15 @@ const render = ({
           style: { "object-fit": imageSize || "contain" },
           alt: "",
           src: isWeb ? `/files/serve/${bgFileId}` : undefined,
-          id: elementId,
+          //id: elementId,
         });
         image = isWeb
           ? imgTag
           : div(
               imgTag,
-              script(domReady(`buildEncodedImage('${bgFileId}', '${elementId}')`))
+              script(
+                domReady(`buildEncodedImage('${bgFileId}', '${elementId}')`)
+              )
             );
       }
       const bgImageScriptId = // in really rare cases not unique, but shouldn't cause problems

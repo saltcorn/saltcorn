@@ -158,8 +158,9 @@ describe("File", () => {
   it("should create", async () => {
     await rick_file();
     const cs = await File.find();
+    const f_rick = cs.find((f) => f.filename === "rick.png");
 
-    expect(cs[0].mime_super).toBe("image");
+    expect(f_rick?.mime_super).toBe("image");
     const f = await File.findOne({ filename: "rick.png" });
     assertIsSet(f);
     //assertIsSet(f.id);

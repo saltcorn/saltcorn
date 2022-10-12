@@ -100,6 +100,7 @@ const pageBuilderData = async (req, context) => {
   const views = await View.find();
   const pages = await Page.find();
   const images = await File.find({ mime_super: "image" });
+  images.forEach(im => im.location = im.path_to_serve)
   const roles = await User.get_roles();
   const stateActions = getState().actions;
   const actions = [
@@ -130,6 +131,9 @@ const pageBuilderData = async (req, context) => {
     const fs = await view.get_state_fields();
     for (const frec of fs) {
       const f = new Field(frec);
+      if (f.input_type === "hidden") continue;
+      if (f.name === "_fts") continue;
+
       f.required = false;
       if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
 
@@ -156,6 +160,7 @@ const pageBuilderData = async (req, context) => {
       }
     }
   }
+  //console.log(fixed_state_fields.ListTasks);
   return {
     views,
     images,
