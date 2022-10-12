@@ -55,6 +55,7 @@ jobs:
           CI: true
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
           SALTCORN_NWORKERS: 1
           PUPPETEER_CHROMIUM_BIN: "/usr/bin/google-chrome"
           PGHOST: localhost
@@ -68,6 +69,7 @@ jobs:
           CI: true
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
           PGHOST: localhost
           PGUSER: postgres
           PGDATABASE: saltcorn_test
@@ -80,12 +82,14 @@ jobs:
           CI: true
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
       - run: packages/saltcorn-cli/bin/saltcorn run-tests server
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite
           CI: true
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
       - run: packages/saltcorn-cli/bin/saltcorn run-tests view-queries
         env:
           REMOTE_QUERIES: true
