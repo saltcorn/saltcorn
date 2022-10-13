@@ -169,7 +169,7 @@ module.exports = {
   },
   Thumbnail: {
     configFields: () => [
-      { name: "width", type: "Integer", label: "Width (px)" },
+      { name: "width", type: "Integer", required: true, label: "Width (px)" },
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
