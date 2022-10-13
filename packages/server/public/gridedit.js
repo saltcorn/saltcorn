@@ -19,12 +19,15 @@ function deleteIcon() {
 function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
   var input = $("<input type='text'/>");
   const dayOnly = editorParams && editorParams.dayOnly;
+  let defaultDate = cell.getValue()
+
+  if (!defaultDate) defaultDate = new Date()
   input.flatpickr({
     enableTime: !dayOnly,
     dateFormat: dayOnly ? "Y-m-d" : "Z",
     time_24hr: true,
     locale: "en", // global variable with locale 'en', 'fr', ...
-    defaultDate: cell.getValue(),
+    defaultDate,
     onClose: function (selectedDates, dateStr, instance) {
       evt = window.event;
       var isEscape = false;
