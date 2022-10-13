@@ -12,6 +12,10 @@ echo "adding android platform"
 npm run add-platform android
 echo "calling cordova clean";
 cordova clean
+echo "adding plugins"
+npm run add-plugin /init_project/project/plugins/cordova-plugin-inappbrowser
+npm run add-plugin /init_project/project/plugins/cordova-plugin-file
+npm run add-plugin /init_project/project/plugins/cordova-sqlite-ext
 echo "calling cordova build";
 cordova build android
 

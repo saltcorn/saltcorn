@@ -51,6 +51,7 @@ export function buildApp(
   buildForEmulator?: boolean
 ) {
   if (!useDocker) {
+    addPlugins(buildDir);
     return callBuild(buildDir, platforms, buildForEmulator);
   } else {
     let code = buildApkInContainer(buildDir);
@@ -58,6 +59,38 @@ export function buildApp(
       code = callBuild(buildDir, ["ios"]);
     return code;
   }
+}
+
+/**
+ * call cordova plugin add ...
+ * it loads the dependencies from npm, docker usese cached folders
+ * @param buildDir
+ */
+function addPlugins(buildDir: string) {
+  let result = spawnSync(
+    "npm",
+    ["run", "add-plugin", "--", "cordova-sqlite-ext"],
+    {
+      cwd: buildDir,
+    }
+  );
+  console.log(result.output.toString());
+  result = spawnSync(
+    "npm",
+    ["run", "add-plugin", "--", "cordova-plugin-file"],
+    {
+      cwd: buildDir,
+    }
+  );
+  console.log(result.output.toString());
+  result = spawnSync(
+    "npm",
+    ["run", "add-plugin", "--", "cordova-plugin-inappbrowser"],
+    {
+      cwd: buildDir,
+    }
+  );
+  console.log(result.output.toString());
 }
 
 /**
