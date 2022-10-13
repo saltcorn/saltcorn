@@ -72,7 +72,7 @@ module.exports = {
       a(
         isNode()
           ? { href: `/files/serve/${(filePath)}`, target: "_blank" }
-          : { href: `javascript:openFile('${filePath}')`},
+          : { href: `javascript:openFile('${filePath}')` },
         path.basename(filePath) || "Open"
       ),
   },
@@ -169,7 +169,7 @@ module.exports = {
   },
   Thumbnail: {
     configFields: () => [
-      { name: "width", type: "Integer", label: "Width (px)" },
+      { name: "width", type: "Integer", required: true, label: "Width (px)" },
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
@@ -177,7 +177,7 @@ module.exports = {
       const { width, height, expand } = cfg || {};
       if (isNode())
         return img({
-          src: `/files/resize/${width}/${height || 0}/${filePath}`,
+          src: `/files/resize/${width || 50}/${height || 0}/${filePath}`,
           onclick: expand
             ? `expand_thumbnail('${filePath}', '${path.basename(filePath)}')`
             : undefined,
