@@ -241,9 +241,7 @@ class User {
    * @param selectopts - select options
    * @returns {Promise<User[]>}
    */
-  static async findForSession(
-    where: Where
-  ): Promise<User|false> {
+  static async findForSession(where: Where): Promise<User | false> {
     //get join fields in all ownership formulae
     const { getState } = require("../db/state");
     const { freeVariables } = require("./expression");
@@ -269,6 +267,7 @@ class User {
 
     const joinFields = {};
     add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields);
+
     const us = await user_table!.getJoinedRows({
       where,
       limit: 2,
@@ -276,7 +275,23 @@ class User {
       starFields: true,
     });
     if (us.length !== 1) return false;
-    return new User(us[0] as UserCfg)
+    const newUser = new User(us[0] as UserCfg);
+    //user.select_user_groups_by_user.map(g=>g.group).includes(group)
+    //user.usergroups_by_user.map(g=>g.group).includes(group)
+    //child fields
+    const cfields = await Field.find({ reftable_name: "users" });
+
+    for (const cfield of cfields) {
+      const table = Table.findOne(cfield.table_id) as Table;
+      const fv = freeUserVars.find((fuv) =>
+        fuv.startsWith(`user.${table!.name}_by_${cfield.name}`)
+      );
+      if (fv) {
+        const cRows = await table.getRows({ [cfield.name]: newUser.id });
+        newUser[`${table!.name}_by_${cfield.name}`] = cRows;
+      }
+    }
+    return newUser;
   }
 
   /**
@@ -285,14 +300,13 @@ class User {
    * @param selectopts - select options
    * @returns {Promise<User[]>}
    */
-   static async find(
+  static async find(
     where: Where,
     selectopts?: SelectOptions
   ): Promise<Array<User>> {
     const us = await db.select("users", where, selectopts);
     return us.map((u: UserCfg) => new User(u));
   }
-
 
   /**
    * Find one user
@@ -345,13 +359,12 @@ class User {
    */
   async update(row: Row): Promise<void> {
     await db.update("users", row, this.id);
-    Object.assign(this, row)
+    Object.assign(this, row);
     await Trigger.runTableTriggers(
       "Update",
       Table.findOne({ name: "users" }) as Table,
       { ...this, ...row }
     );
-
   }
 
   /**
