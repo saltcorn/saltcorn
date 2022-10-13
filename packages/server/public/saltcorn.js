@@ -505,7 +505,7 @@ function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
     data: { build_dir: outDirName },
     success: function (res) {
       if (!res.finished) {
-        if (pollCount >= 40) {
+        if (pollCount >= 50) {
           removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
           notifyAlert({
             type: "danger",
