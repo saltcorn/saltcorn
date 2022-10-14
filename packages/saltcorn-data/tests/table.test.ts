@@ -1589,11 +1589,11 @@ describe("grandparent join", () => {
     });
 
     expect(rows.length).toBe(1);
-    expect(rows[0]).toBe({
+    expect(rows[0]).toStrictEqual({
       favbook: null,
-      id: 5,
+      id: 6,
       name: "Toddler",
-      parent: { id: 4, parent: { name: "Granny" } },
+      parent: { id: 5, parent: { name: "Granny" } },
       parent_parent_name: "Granny",
     });
   });
