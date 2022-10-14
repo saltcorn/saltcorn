@@ -15,6 +15,9 @@ import {
   assertIsType,
 } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { add_free_variables_to_joinfields } from "../plugin-helper";
+import expressionModule from "../models/expression";
+const { freeVariables } = expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -1549,5 +1552,49 @@ describe("field_options", () => {
     const table = await Table.findOne({ name: "patients" });
     const opts = await table?.field_options(1, (f) => f.type_name === "String");
     expect(opts).toStrictEqual(["name", "favbook.author", "parent.name"]);
+  });
+});
+
+describe("grandparent join", () => {
+  it("should define rows", async () => {
+    const table = await Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = await table.getFields();
+
+    const greatgranny = await table.insertRow({ name: "Greatgranny" });
+    const granny = await table.insertRow({
+      name: "Granny",
+      parent: greatgranny,
+    });
+    const mummy = await table.insertRow({ name: "Mummy", parent: granny });
+    const toddler = await table.insertRow({
+      name: "Toddler",
+      parent: mummy,
+    });
+
+    const joinFields = {};
+    const freeVars = freeVariables("parent.parent.name");
+    add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    expect(joinFields).toStrictEqual({
+      parent_parent_name: {
+        ref: "parent",
+        rename_object: ["parent", "parent", "name"],
+        target: "name",
+        through: "parent",
+      },
+    });
+    const rows = await table.getJoinedRows({
+      where: { id: toddler },
+      joinFields,
+    });
+
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toBe({
+      favbook: null,
+      id: 5,
+      name: "Toddler",
+      parent: { id: 4, parent: { name: "Granny" } },
+      parent_parent_name: "Granny",
+    });
   });
 });
