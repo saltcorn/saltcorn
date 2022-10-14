@@ -1596,7 +1596,6 @@ describe("grandparent join", () => {
         through: ["parent", "parent"],
       },
     });
-    db.set_sql_logging(true);
     const rows = await table.getJoinedRows({
       where: { id: toddler },
       joinFields,
