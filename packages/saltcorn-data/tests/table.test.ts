@@ -1573,7 +1573,14 @@ describe("grandparent join", () => {
     });
 
     const joinFields = {};
-    const freeVars = freeVariables("parent.parent.name");
+    const freeVars = new Set([
+      ...freeVariables("parent.parent.name"),
+      ...freeVariables("parent.parent.parent.name"),
+    ]);
+    expect([...freeVars]).toStrictEqual([
+      "parent.parent.name",
+      "parent.parent.parent.name",
+    ]);
     add_free_variables_to_joinfields(freeVars, joinFields, fields);
     expect(joinFields).toStrictEqual({
       parent_parent_name: {
@@ -1582,7 +1589,14 @@ describe("grandparent join", () => {
         target: "name",
         through: "parent",
       },
+      parent_parent_parent_name: {
+        ref: "parent",
+        rename_object: ["parent", "parent", "parent", "name"],
+        target: "name",
+        through: ["parent", "parent"],
+      },
     });
+    db.set_sql_logging(true);
     const rows = await table.getJoinedRows({
       where: { id: toddler },
       joinFields,
@@ -1593,8 +1607,9 @@ describe("grandparent join", () => {
       favbook: null,
       id: 6,
       name: "Toddler",
-      parent: { id: 5, parent: { name: "Granny" } },
+      parent: { id: 5, parent: { name: "Granny", parent: { name: "Granny" } } },
       parent_parent_name: "Granny",
+      parent_parent_parent_name: "Granny",
     });
   });
 });
