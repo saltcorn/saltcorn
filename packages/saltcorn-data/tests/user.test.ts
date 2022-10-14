@@ -224,3 +224,62 @@ describe("User fields", () => {
     expect(ut.height).toBe(183);
   });
 });
+describe("User join fields and aggregations in ownership", () => {
+  it("should use join fields in ownership", async () => {
+    // user to patient join field
+    const users = Table.findOne({ name: "users" });
+    assertIsSet(users);
+    await Field.create({
+      table: users,
+      label: "cares_for",
+      type: "Key to patients",
+    });
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await patients.update({ ownership_formula: "user.cares_for.id===id" });
+
+    const patientRows = await patients.getRows({});
+
+    await User.create({
+      email: "foo7@bar.com",
+      password: "YEgg4t6FGew",
+      cares_for: patientRows[0].id,
+    });
+    const u = await User.authenticate({
+      email: "foo7@bar.com",
+      password: "YEgg4t6FGew",
+    });
+    expect((u as User).cares_for?.id).toBe(patientRows[0].id);
+    expect(patients.is_owner(u, patientRows[0])).toBe(true);
+    expect(patients.is_owner(u, patientRows[1])).toBe(false);
+  });
+  it("should use aggregation in ownership", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await Field.create({
+      table: books,
+      label: "editor",
+      type: "Key to users",
+    });
+    const users = Table.findOne({ name: "users" });
+    assertIsSet(users);
+    const u0 = (await User.create({
+      email: "foo8@bar.com",
+      password: "YEgklFGew",
+    })) as User;
+    const bookRows = await books.getRows({});
+    await books.updateRow({ editor: u0.id }, bookRows[0].id);
+    await books.update({
+      min_role_read: 1,
+      min_role_write: 1,
+      ownership_formula: "user.books_by_editor.map(b=>b.id).includes(id)",
+    });
+
+    const u = await User.authenticate({
+      email: "foo8@bar.com",
+      password: "YEgklFGew",
+    });
+    expect(books.is_owner(u, bookRows[0])).toBe(true);
+    expect(books.is_owner(u, bookRows[1])).toBe(false);
+  });
+});

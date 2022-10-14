@@ -1002,5 +1002,6 @@
 	"Query %s not found": "Query %s not found",
 	"Open": "Open",
 	"Only the android build supports docker.": "Only the android build supports docker.",
-	"Please enter a valid server URL.": "Please enter a valid server URL."
+	"Please enter a valid server URL.": "Please enter a valid server URL.",
+	"Table access": "Table access"
 }
