@@ -1399,7 +1399,9 @@ class Table implements AbstractTable {
         let last_reffield = reffield;
         let jtNm1;
         let lastJtNm = jtNm;
-        for (const through1 of throughs) {
+        for (let i = 0; i < throughs.length; i++) {
+          const through1 = throughs[i];
+          const throughPath = throughs.slice(0, i + 1);
           const throughTable = await Table.findOne({
             name: last_reffield.reftable_name,
           });
@@ -1418,7 +1420,7 @@ class Table implements AbstractTable {
           const finalTable = throughRefField.reftable_name;
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
-          )}_jt_${sqlsanitize(through1)}_jt_${sqlsanitize(ref)}`;
+          )}_jt_${sqlsanitize(throughPath.join("_"))}_jt_${sqlsanitize(ref)}`;
 
           if (!joinTables.includes(jtNm1)) {
             if (!finalTable)
@@ -1558,8 +1560,8 @@ class Table implements AbstractTable {
     const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
-    //console.log(sql);
-    //console.log(res.rows);
+    console.log(sql);
+    console.log(res.rows);
 
     const calcRow = apply_calculated_fields(res.rows, fields);
 
