@@ -9,6 +9,7 @@ import {
   assertIsErrorMsg,
 } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { table } from "console";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -222,5 +223,35 @@ describe("User fields", () => {
     assertIsSet(ut);
     expect(ut.email).toBe("foo1@bar.com");
     expect(ut.height).toBe(183);
+  });
+});
+describe("User join fields and aggregations in ownership", () => {
+  it("should add join fields", async () => {
+    // user to patient join field
+    const users = Table.findOne({ name: "users" });
+    assertIsSet(users);
+    await Field.create({
+      table: users,
+      label: "cares_for",
+      type: "Key to patients",
+    });
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await patients.update({ ownership_formula: "user.cares_for.id===id" });
+
+    const patientRows = await patients.getRows({});
+
+    await User.create({
+      email: "foo7@bar.com",
+      password: "YEgg4t6FGew",
+      cares_for: patientRows[0].id,
+    });
+    const u = await User.authenticate({
+      email: "foo7@bar.com",
+      password: "YEgg4t6FGew",
+    });
+    expect((u as User).cares_for?.id).toBe(patientRows[0].id);
+    expect(patients.is_owner(u, patientRows[0])).toBe(true);
+    expect(patients.is_owner(u, patientRows[1])).toBe(false);
   });
 });

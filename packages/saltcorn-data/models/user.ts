@@ -276,9 +276,10 @@ class User {
     });
     if (us.length !== 1) return false;
     const newUser = new User(us[0] as UserCfg);
-    //user.select_user_groups_by_user.map(g=>g.group).includes(group)
-    //user.usergroups_by_user.map(g=>g.group).includes(group)
+
     //child fields
+
+    //user.usergroups_by_user.map(g=>g.group).includes(group)
     const cfields = await Field.find({ reftable_name: "users" });
 
     for (const cfield of cfields) {
