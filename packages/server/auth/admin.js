@@ -596,6 +596,74 @@ router.get(
       value: r.id,
       label: r.role,
     }));
+
+    const contents = []
+    for (const table of tables) {
+      if (table.external) continue
+      const fields = await table.getFields();
+      const userFields = fields
+        .filter((f) => f.reftable_name === "users")
+        .map((f) => ({ value: f.id, label: f.name }));
+      const form = new Form({
+        action: "/table",
+        noSubmitButton: true,
+        onChange: "saveAndContinue(this)",
+        fields: [
+          {
+            label: req.__("Ownership field"),
+            name: "ownership_field_id",
+            sublabel: req.__(
+              "The user referred to in this field will be the owner of the row"
+            ),
+            input_type: "select",
+            options: [
+              { value: "", label: req.__("None") },
+              ...userFields,
+              { value: "_formula", label: req.__("Formula") },
+            ],
+          },
+          {
+            name: "ownership_formula",
+            label: req.__("Ownership formula"),
+            validator: expressionValidator,
+            type: "String",
+            class: "validate-expression",
+            sublabel:
+              req.__("User is treated as owner if true. In scope: ") +
+              ["user", ...fields.map((f) => f.name)]
+                .map((fn) => code(fn))
+                .join(", "),
+            showIf: { ownership_field_id: "_formula" },
+          },
+          {
+            label: req.__("Minimum role to read"),
+            sublabel: req.__(
+              "User must have this role or higher to read rows from the table, unless they are the owner"
+            ),
+            name: "min_role_read",
+            input_type: "select",
+            options: roleOptions,
+          },
+          {
+            label: req.__("Minimum role to write"),
+            name: "min_role_write",
+            input_type: "select",
+            sublabel: req.__(
+              "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
+            ),
+            options: roleOptions,
+          },
+        ]
+      })
+      form.hidden("id", "name");
+      form.values = table
+      if (table.ownership_formula && !table.ownership_field_id)
+        form.values.ownership_field_id = "_formula";
+      contents.push(div(
+        h5(a({ href: `/table/${table.id}` }, table.name)),
+        renderForm(form, req.csrfToken())
+      ))
+    }
     send_users_page({
       res,
       req,
@@ -603,70 +671,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Table access"),
-        contents: tables.map(table => {
-          if (table.external) return ""
-          const fields = table.fields || [];
-          const userFields = fields
-            .filter((f) => f.reftable_name === "users")
-            .map((f) => ({ value: f.id, label: f.name }));
-          const form = new Form({
-            action: "/table",
-            noSubmitButton: true,
-            onChange: "saveAndContinue(this)",
-            fields: [
-              {
-                label: req.__("Ownership field"),
-                name: "ownership_field_id",
-                sublabel: req.__(
-                  "The user referred to in this field will be the owner of the row"
-                ),
-                input_type: "select",
-                options: [
-                  { value: "", label: req.__("None") },
-                  ...userFields,
-                  { value: "_formula", label: req.__("Formula") },
-                ],
-              },
-              {
-                name: "ownership_formula",
-                label: req.__("Ownership formula"),
-                validator: expressionValidator,
-                type: "String",
-                class: "validate-expression",
-                sublabel:
-                  req.__("User is treated as owner if true. In scope: ") +
-                  ["user", ...fields.map((f) => f.name)]
-                    .map((fn) => code(fn))
-                    .join(", "),
-                showIf: { ownership_field_id: "_formula" },
-              },
-              {
-                label: req.__("Minimum role to read"),
-                sublabel: req.__(
-                  "User must have this role or higher to read rows from the table, unless they are the owner"
-                ),
-                name: "min_role_read",
-                input_type: "select",
-                options: roleOptions,
-              },
-              {
-                label: req.__("Minimum role to write"),
-                name: "min_role_write",
-                input_type: "select",
-                sublabel: req.__(
-                  "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
-                ),
-                options: roleOptions,
-              },
-            ]
-          })
-          form.hidden("id", "name");
-          form.values = { id: table.id, name: table.name }
-          return div(
-            h5(a({ href: `/table/${table.id}` }, table.name)),
-            renderForm(form, req.csrfToken())
-          )
-        }),
+        contents
       },
     });
   })
