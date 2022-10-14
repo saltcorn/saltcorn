@@ -259,7 +259,7 @@ class Table implements AbstractTable {
 
     if (this.ownership_formula && this.fields) {
       const f = get_expression_function(this.ownership_formula, this.fields);
-      return f(row, user);
+      return !!f(row, user);
     }
     const field_name = this.owner_fieldname();
     if (!field_name && this.name === "users")
