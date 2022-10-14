@@ -273,7 +273,7 @@ describe("User join fields and aggregations in ownership", () => {
     await books.update({
       min_role_read: 1,
       min_role_write: 1,
-      ownership_formula: "user.books_by_editor.find(b=>b.editor===user.id)",
+      ownership_formula: "user.books_by_editor.map(b=>b.id).includes(id)",
     });
 
     const u = await User.authenticate({
