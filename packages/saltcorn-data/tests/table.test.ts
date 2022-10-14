@@ -1605,9 +1605,12 @@ describe("grandparent join", () => {
     expect(rows.length).toBe(1);
     expect(rows[0]).toStrictEqual({
       favbook: null,
-      id: 6,
+      id: toddler,
       name: "Toddler",
-      parent: { id: 5, parent: { name: "Granny", parent: { name: "Granny" } } },
+      parent: {
+        id: mummy,
+        parent: { name: "Granny", parent: { name: "Granny" } },
+      },
       parent_parent_name: "Granny",
       parent_parent_parent_name: "Granny",
     });
