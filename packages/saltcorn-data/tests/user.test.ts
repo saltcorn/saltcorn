@@ -9,7 +9,6 @@ import {
   assertIsErrorMsg,
 } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import { table } from "console";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
