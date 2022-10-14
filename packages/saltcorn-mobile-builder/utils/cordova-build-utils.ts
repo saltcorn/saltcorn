@@ -29,6 +29,8 @@ export function buildApkInContainer(buildDir: string) {
     "docker",
     [
       "run",
+      "--network",
+      "none",
       "-v",
       `${buildDir}:/saltcorn-mobile-app`,
       "saltcorn/cordova-builder",
