@@ -1574,15 +1574,22 @@ describe("grandparent join", () => {
 
     const joinFields = {};
     const freeVars = new Set([
+      ...freeVariables("parent.name"),
       ...freeVariables("parent.parent.name"),
       ...freeVariables("parent.parent.parent.name"),
     ]);
     expect([...freeVars]).toStrictEqual([
+      "parent.name",
       "parent.parent.name",
       "parent.parent.parent.name",
     ]);
     add_free_variables_to_joinfields(freeVars, joinFields, fields);
     expect(joinFields).toStrictEqual({
+      parent_name: {
+        ref: "parent",
+        rename_object: ["parent", "name"],
+        target: "name",
+      },
       parent_parent_name: {
         ref: "parent",
         rename_object: ["parent", "parent", "name"],
@@ -1608,8 +1615,10 @@ describe("grandparent join", () => {
       name: "Toddler",
       parent: {
         id: mummy,
+        name: "Mummy",
         parent: { name: "Granny", parent: { name: "Greatgranny" } },
       },
+      parent_name: "Mummy",
       parent_parent_name: "Granny",
       parent_parent_parent_name: "Greatgranny",
     });
