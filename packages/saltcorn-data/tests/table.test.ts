@@ -1609,10 +1609,10 @@ describe("grandparent join", () => {
       name: "Toddler",
       parent: {
         id: mummy,
-        parent: { name: "Granny", parent: { name: "Granny" } },
+        parent: { name: "Granny", parent: { name: "Greatgranny" } },
       },
       parent_parent_name: "Granny",
-      parent_parent_parent_name: "Granny",
+      parent_parent_parent_name: "Greatgranny",
     });
   });
 });

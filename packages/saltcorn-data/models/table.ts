@@ -1560,8 +1560,8 @@ class Table implements AbstractTable {
     const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
-    console.log(sql);
-    console.log(res.rows);
+    //console.log(sql);
+    //console.log(res.rows);
 
     const calcRow = apply_calculated_fields(res.rows, fields);
 
