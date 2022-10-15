@@ -30,7 +30,7 @@ export function buildApkInContainer(buildDir: string) {
     [
       "run",
       "--network",
-      "none",
+      "host",
       "-v",
       `${buildDir}:/saltcorn-mobile-app`,
       "saltcorn/cordova-builder",
