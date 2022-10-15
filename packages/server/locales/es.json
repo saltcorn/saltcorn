@@ -4,11 +4,11 @@
   "Incorrect user or password": "Usuario o contraseña incorrectos",
   "Internal Error": "Error Interno",
   "A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.": "Se ha registrado un informe y se ha enviado un equipo de ardillas que eliminan errores para que se ocupen de la situación.",
-  "User": "Usuario
+  "User": "Usuario",
   "User Settings": "Ajustes de usuario",
   "Logout": "Cerrar sesión",
-  "Tables": "Tablas
-  "Views": "Vistas
+  "Tables": "Tablas",
+  "Views": "Vistas",
   "Pages": "Páginas",
   "Files": "Archivos",
   "Settings": "Configuraciones",
@@ -25,7 +25,7 @@
   "An error occurred": "Ocurrió un error",
   "ID": "ID",
   "Email": "Email",
-  "Role": "Rol
+  "Role": "Rol",
   "View": "Ver",
   "Delete": "Eliminar",
   "Add user": "Agregar usuario",
