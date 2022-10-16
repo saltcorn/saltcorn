@@ -1609,7 +1609,7 @@ describe("grandparent join", () => {
     });
 
     expect(rows.length).toBe(1);
-    expect(rows[0]).toStrictEqual({
+    expect(rows[0]).toMatchObject({
       favbook: null,
       id: toddler,
       name: "Toddler",
