@@ -182,13 +182,12 @@ const insert = async (tbl, obj, opts = {}) => {
   const sql =
     valPosList.length > 0
       ? `insert into "${schema}"."${sqlsanitize(
-          tbl
-        )}"(${fnameList}) values(${valPosList.join()}) returning ${
-          opts.noid ? "*" : opts.pk_name || "id"
-        }`
+        tbl
+      )}"(${fnameList}) values(${valPosList.join()}) returning ${opts.noid ? "*" : opts.pk_name || "id"
+      }`
       : `insert into "${schema}"."${sqlsanitize(
-          tbl
-        )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
+        tbl
+      )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
   sql_log(sql, valList);
   const { rows } = await (opts.client || pool).query(sql, valList);
   if (opts.noid) return;
@@ -245,11 +244,12 @@ const updateWhere = async (tbl, obj, whereObj) => {
  * Select one record
  * @param {srting} tbl - table name
  * @param {object} where - where object
+ * @param {object} [selectopts = {}] - select options
  * @returns {Promise<object>} return first record from sql result
  * @throws {Error}
  */
-const selectOne = async (tbl, where) => {
-  const rows = await select(tbl, where);
+const selectOne = async (tbl, where, selectopts = {}) => {
+  const rows = await select(tbl, where, selectopts);
   if (rows.length === 0) {
     const w = mkWhere(where);
     throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
@@ -260,10 +260,11 @@ const selectOne = async (tbl, where) => {
  * Select one record or null if no records
  * @param {string} tbl - table name
  * @param {object} where - where object
+ * @param {object} [selectopts = {}] - select options
  * @returns {Promise<null|object>} - null if no record or first record data
  */
-const selectMaybeOne = async (tbl, where) => {
-  const rows = await select(tbl, where);
+const selectMaybeOne = async (tbl, where, selectopts = {}) => {
+  const rows = await select(tbl, where, selectopts);
   if (rows.length === 0) return null;
   else return rows[0];
 };
@@ -304,8 +305,8 @@ const add_unique_constraint = async (table_name, field_names) => {
   )}" add CONSTRAINT "${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique" UNIQUE (${field_names
-    .map((f) => `"${sqlsanitize(f)}"`)
-    .join(",")});`;
+      .map((f) => `"${sqlsanitize(f)}"`)
+      .join(",")});`;
   sql_log(sql);
   await pool.query(sql);
 };

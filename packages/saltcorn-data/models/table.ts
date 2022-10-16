@@ -438,9 +438,12 @@ class Table implements AbstractTable {
    * @param where
    * @returns {Promise<null|*>}
    */
-  async getRow(where: Where = {}): Promise<Row | null> {
+  async getRow(
+    where: Where = {},
+    selopts: SelectOptions = {}
+  ): Promise<Row | null> {
     await this.getFields();
-    const row = await db.selectMaybeOne(this.name, where);
+    const row = await db.selectMaybeOne(this.name, where, selopts);
     if (!row || !this.fields) return null;
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
@@ -451,7 +454,10 @@ class Table implements AbstractTable {
    * @param selopts
    * @returns {Promise<void>}
    */
-  async getRows(where: Where = {}, selopts?: SelectOptions): Promise<Row[]> {
+  async getRows(
+    where: Where = {},
+    selopts: SelectOptions = {}
+  ): Promise<Row[]> {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
     if (!this.fields) return [];
