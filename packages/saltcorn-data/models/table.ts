@@ -438,9 +438,12 @@ class Table implements AbstractTable {
    * @param where
    * @returns {Promise<null|*>}
    */
-  async getRow(where: Where = {}): Promise<Row | null> {
+  async getRow(
+    where: Where = {},
+    selopts: SelectOptions = {}
+  ): Promise<Row | null> {
     await this.getFields();
-    const row = await db.selectMaybeOne(this.name, where);
+    const row = await db.selectMaybeOne(this.name, where, selopts);
     if (!row || !this.fields) return null;
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
@@ -451,7 +454,10 @@ class Table implements AbstractTable {
    * @param selopts
    * @returns {Promise<void>}
    */
-  async getRows(where: Where = {}, selopts?: SelectOptions): Promise<Row[]> {
+  async getRows(
+    where: Where = {},
+    selopts: SelectOptions = {}
+  ): Promise<Row[]> {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
     if (!this.fields) return [];
@@ -1399,7 +1405,9 @@ class Table implements AbstractTable {
         let last_reffield = reffield;
         let jtNm1;
         let lastJtNm = jtNm;
-        for (const through1 of throughs) {
+        for (let i = 0; i < throughs.length; i++) {
+          const through1 = throughs[i];
+          const throughPath = throughs.slice(0, i + 1);
           const throughTable = await Table.findOne({
             name: last_reffield.reftable_name,
           });
@@ -1418,7 +1426,7 @@ class Table implements AbstractTable {
           const finalTable = throughRefField.reftable_name;
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
-          )}_jt_${sqlsanitize(through1)}_jt_${sqlsanitize(ref)}`;
+          )}_jt_${sqlsanitize(throughPath.join("_"))}_jt_${sqlsanitize(ref)}`;
 
           if (!joinTables.includes(jtNm1)) {
             if (!finalTable)
