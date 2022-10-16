@@ -58,8 +58,8 @@ const action_url = (
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
-    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:${r?.id
-      }${columnIndex(colIndex)}});`,
+    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:'${r?.id
+      }${columnIndex(colIndex)}'});`,
   };
 };
 
