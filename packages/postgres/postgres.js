@@ -249,7 +249,7 @@ const updateWhere = async (tbl, obj, whereObj) => {
  * @throws {Error}
  */
 const selectOne = async (tbl, where, selectopts = {}) => {
-  const rows = await select(tbl, where, selectopts);
+  const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) {
     const w = mkWhere(where);
     throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
@@ -264,7 +264,7 @@ const selectOne = async (tbl, where, selectopts = {}) => {
  * @returns {Promise<null|object>} - null if no record or first record data
  */
 const selectMaybeOne = async (tbl, where, selectopts = {}) => {
-  const rows = await select(tbl, where, selectopts);
+  const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) return null;
   else return rows[0];
 };

@@ -276,7 +276,7 @@ export const selectOne = async (
   where: Where,
   selectopts: SelectOptions = {}
 ): Promise<Row> => {
-  const rows = await select(tbl, where, selectopts);
+  const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) {
     const w = mkWhere(where, true);
     throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
@@ -296,7 +296,7 @@ export const selectMaybeOne = async (
   where: Where,
   selectopts: SelectOptions = {}
 ): Promise<Row | null> => {
-  const rows = await select(tbl, where, selectopts);
+  const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) return null;
   else return rows[0];
 };
