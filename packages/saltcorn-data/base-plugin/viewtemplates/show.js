@@ -723,7 +723,6 @@ module.exports = {
         fields,
         layout
       );
-      console.log(aggregations);
       readState(state, fields);
       const tbl = await Table.findOne(table_id || exttable_name);
       const qstate = await stateFieldsToWhere({
