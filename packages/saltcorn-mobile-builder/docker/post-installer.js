@@ -9,6 +9,8 @@ if (process.env.SKIP_DOCKER_IMAGE_INSTALL === "true") {
     [
       "build",
       __dirname,
+      "--network",
+      "host",
       "-f",
       join(__dirname, "Dockerfile"),
       "-t",
