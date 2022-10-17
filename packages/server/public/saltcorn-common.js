@@ -194,11 +194,12 @@ function get_form_record(e, select_labels) {
   e.closest("form")
     .find("input[name],select[name]")
     .each(function () {
+      const name = $(this).attr("data-fieldname") || $(this).attr("name")
       if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
-        rec[$(this).attr("name")] = $(this).find("option:selected").text();
+        rec[name] = $(this).find("option:selected").text();
       else if ($(this).prop("type") === "checkbox")
-        rec[$(this).attr("name")] = $(this).prop("checked");
-      else rec[$(this).attr("name")] = $(this).val();
+        rec[name] = $(this).prop("checked");
+      else rec[name] = $(this).val();
     });
   return rec;
 }
