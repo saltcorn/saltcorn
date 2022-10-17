@@ -627,7 +627,11 @@ router.post(
     if (stored)
       add_free_variables_to_joinfields(freeVars, joinFields, fields)
     const rows = await table.getJoinedRows({ joinFields, orderBy: "RANDOM()", limit: 1 });
-    if (rows.length < 1) return "No rows in table";
+    console.log(rows);
+    if (rows.length < 1) {
+      res.send("No rows in table");
+      return
+    }
     let result;
     try {
       if (stored) {
