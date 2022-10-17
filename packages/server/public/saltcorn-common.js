@@ -191,7 +191,7 @@ function splitTargetMatch(elemValue, target, keySpec) {
 
 function get_form_record(e, select_labels) {
   const rec = {};
-  e.closest("form")
+  e.closest(".form-namespace")
     .find("input[name],select[name]")
     .each(function () {
       const name = $(this).attr("data-fieldname") || $(this).attr("name")
