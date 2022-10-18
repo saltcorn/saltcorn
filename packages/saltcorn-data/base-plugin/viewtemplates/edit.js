@@ -665,7 +665,7 @@ const render = async ({
   if (auto_save && !(!row && hasSave))
     form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
       })`;
-  await form.fill_fkey_options(false, optionsQuery);
+  await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
   return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
 };
@@ -735,7 +735,7 @@ const runPost = async (
   form.validate(body);
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
-    await form.fill_fkey_options();
+    await form.fill_fkey_options(false, undefined, req.user);
     res.sendWrap(
       viewname,
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
@@ -774,7 +774,7 @@ const runPost = async (
           );
           return;
         }
-        if(isNode()) {
+        if (isNode()) {
           const file = await File.from_req_files(
             req.files[field.name],
             req.user ? req.user.id : null,

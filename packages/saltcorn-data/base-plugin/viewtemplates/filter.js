@@ -208,7 +208,7 @@ const run = async (
       if (!field) return;
       field.fieldview = fieldview;
       Object.assign(field.attributes, configuration);
-      await field.fill_fkey_options();
+      await field.fill_fkey_options(false, undefined, extra.req.user ? { user_id: extra.req.user } : {});
       segment.field = field;
     },
     view: async (segment) => {
