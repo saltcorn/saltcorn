@@ -503,6 +503,8 @@ const transformForm = async ({
         throw new InvalidConfiguration(
           `Cannot find embedded view: ${view_select.viewname}`
         );
+
+      // Edit-in-edit
       if (view.viewtemplate === "Edit" && view_select.type === "ChildList") {
         const childTable = Table.findOne({ id: view.table_id });
         const childForm = await getForm(
@@ -526,6 +528,7 @@ const transformForm = async ({
           layout: childForm.layout,
           metadata: {
             table_id: childTable.id,
+            view: segment.view,
             relation: view_select.field_name,
           },
         });
@@ -665,7 +668,7 @@ const render = async ({
   if (auto_save && !(!row && hasSave))
     form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
       })`;
-  await form.fill_fkey_options(false, optionsQuery);
+  await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
   return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
 };
@@ -735,7 +738,7 @@ const runPost = async (
   form.validate(body);
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
-    await form.fill_fkey_options();
+    await form.fill_fkey_options(false, undefined, req.user);
     res.sendWrap(
       viewname,
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
@@ -774,7 +777,7 @@ const runPost = async (
           );
           return;
         }
-        if(isNode()) {
+        if (isNode()) {
           const file = await File.from_req_files(
             req.files[field.name],
             req.user ? req.user.id : null,
@@ -818,7 +821,7 @@ const runPost = async (
         trigger_return = upd_res.trigger_return
 
       }
-
+      //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
         const childTable = Table.findOne({ id: field.metadata?.table_id });
         for (const childRow of form.values[field.name]) {
@@ -845,6 +848,24 @@ const runPost = async (
             }
           }
         }
+
+        //need to delete any rows that are missing
+        if (originalID && field.metadata) {
+          const view_select = parse_view_select(field.metadata.view);
+          const submitted_row_ids =
+            new Set((form.values[field.name] || [])
+              .map(srow => `${srow[childTable.pk_name]}`))
+          const childRows = getRowQuery
+            ? await getRowQuery(field.metadata.table_id, view_select, originalID)
+            : await childTable.getRows({
+              [view_select.field_name]: originalID,
+            });
+          for (const db_child_row of childRows) {
+            if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`))
+              await childTable.deleteRows({ [childTable.pk_name]: db_child_row[childTable.pk_name] })
+          }
+        }
+
       }
     }
     trigger_return = trigger_return || {}

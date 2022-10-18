@@ -436,6 +436,7 @@ const auto_backup_now = async () => {
       break;
     case "Local directory":
       const directory = getState().getConfig("auto_backup_directory");
+      console.log("auto_backup_directory", directory, fileName);
       await copyFile(fileName, join(directory, fileName));
       await unlink(fileName);
       await delete_old_backups();

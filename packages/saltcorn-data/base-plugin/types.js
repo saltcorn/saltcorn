@@ -396,8 +396,12 @@ const string = {
      * @subcategory types / string
      */
     as_text: { isEdit: false, run: (s) => text_attr(s || "") },
-    preFormatted: { isEdit: false, run: (s) => span({ style: "white-space:pre" }, text_attr(s || "")) },
-    code: { isEdit: false, run: (s) => pre(code(text_attr(s || ""))) },
+    preFormatted: {
+      isEdit: false, run: (s) =>
+        s ? span({ style: "white-space:pre" },
+          text_attr(s || "")) : s
+    },
+    code: { isEdit: false, run: (s) => s ? pre(code(text_attr(s || ""))) : s },
     /**
      * @namespace
      * @category saltcorn-data

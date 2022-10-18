@@ -15,6 +15,7 @@ import {
 } from "@saltcorn/types/common_types";
 import type { FieldLike } from "@saltcorn/types/base_types";
 import Field from "./field";
+import User from "./user";
 import FieldRepeat from "./fieldrepeat";
 import type { Layout } from "@saltcorn/types/base_types";
 
@@ -108,19 +109,22 @@ class Form implements AbstractForm {
    */
   async fill_fkey_options(
     force_allow_none: boolean = false,
-    optionsQuery?: any
+    optionsQuery?: any,
+    user?: User
   ): Promise<void> {
     //console.log(this.fields);
     const formFieldNames = this.fields
       // @ts-ignore
       .filter((f) => f?.input_type !== "hidden")
       .map((f) => f.name);
+    const extraCtx = { ...this.values };
+    if (user && !extraCtx.user_id) extraCtx.user_id = user.id;
     for (const f of this.fields) {
       if (hasFieldMembers(f))
         await f.fill_fkey_options(
           force_allow_none,
           undefined,
-          this.values,
+          extraCtx,
           optionsQuery,
           formFieldNames
         );
