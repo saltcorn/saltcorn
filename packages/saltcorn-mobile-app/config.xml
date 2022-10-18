@@ -11,4 +11,6 @@
   </platform>
   <content src="index.html"/>
   <access origin="*"/>
+  <allow-navigation href="*" />
+  <allow-navigation href="http://localhost/__cdvfile_files__/*" />
 </widget>

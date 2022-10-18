@@ -94,18 +94,11 @@ function splitPathQuery(url) {
   return { path, query };
 }
 
-function replaceIframe(content) {
+async function replaceIframe(content) {
+  await write("content.html", `${cordova.file.dataDirectory}`, content);
+  const url = await getDirEntry(`${cordova.file.dataDirectory}content.html`);
   const iframe = document.getElementById("content-iframe");
-  iframe.remove();
-  const newIframe = document.createElement("iframe");
-  document.body.appendChild(newIframe);
-  const config = saltcorn.data.state.getState().mobileConfig;
-  newIframe.contentWindow._sc_version_tag = config.version_tag;
-  newIframe.setAttribute("style", iframeStyle);
-  newIframe.id = "content-iframe";
-  newIframe.contentWindow.document.open();
-  newIframe.contentWindow.document.write(content);
-  newIframe.contentWindow.document.close();
+  iframe.src = url.toURL();
 }
 
 function addScriptToIframeHead(iframeDoc, script) {

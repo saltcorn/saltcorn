@@ -339,6 +339,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   `<!doctype html>
   <html lang="en">
   <head>
+    ${!isNode() ?  `<base href="http://localhost">` : ""}
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
