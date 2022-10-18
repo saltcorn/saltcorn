@@ -1003,5 +1003,10 @@
 	"Open": "Open",
 	"Only the android build supports docker.": "Only the android build supports docker.",
 	"Please enter a valid server URL.": "Please enter a valid server URL.",
-	"Table access": "Table access"
+	"Table access": "Table access",
+	"Download one of the backups above": "Download one of the backups above",
+	"Clear this application": "Clear this application",
+	"(tick all boxes)": "(tick all boxes)",
+	"When prompted to create the first user, click the link to restore a backup": "When prompted to create the first user, click the link to restore a backup",
+	"Select the downloaded backup file": "Select the downloaded backup file"
 }
