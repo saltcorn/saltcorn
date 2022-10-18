@@ -110,7 +110,7 @@ async function login(e, entryPoint, isSignup) {
         },
       ],
     });
-    parent.replaceIframe(page.content);
+    await parent.replaceIframe(page.content);
   } else if (loginResult?.alerts) {
     parent.showAlerts(loginResult?.alerts);
   } else {
@@ -136,7 +136,7 @@ async function publicLogin(entryPoint) {
         },
       ],
     });
-    parent.replaceIframe(page.content);
+    await parent.replaceIframe(page.content);
   } catch (error) {
     parent.showAlerts([
       {
@@ -155,7 +155,7 @@ async function logout() {
       entryView: config.entry_point,
       versionTag: config.version_tag,
     });
-    parent.replaceIframe(page.content);
+    await parent.replaceIframe(page.content);
   } catch (error) {
     parent.showAlerts([
       {

@@ -226,7 +226,7 @@
               pathname: entryPoint,
               fullWrap: true,
             });
-            replaceIframe(page.content);
+            await replaceIframe(page.content);
           } else {
             const page = await router.resolve({
               pathname: "get/auth/login",
@@ -243,7 +243,7 @@
               },
             ],
           });
-          replaceIframe(page.content);
+          await replaceIframe(page.content);
           console.error(error);
         }
       };
