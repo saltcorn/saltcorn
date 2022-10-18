@@ -59,6 +59,11 @@ const select = {
         "User must select a value, even if the table field is not required",
       type: "Bool",
     },
+    {
+      name: "disable",
+      label: "Disable",
+      type: "Bool",
+    },
   ],
 
   /**
@@ -71,8 +76,9 @@ const select = {
    * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) => {
-    //console.log(attrs);
-    if (attrs.disabled)
+
+    if (attrs.disabled || attrs.disable) {
+      const value = (field.options || []).find(lv => lv?.value === v)?.label || v
       return (
         input({
           class: `${cls} ${field.class || ""}`,
@@ -80,9 +86,10 @@ const select = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           readonly: true,
-          placeholder: v || field.label,
+          placeholder: value || field.label,
         }) + span({ class: "ml-m1" }, "v")
       );
+    }
     return tags.select(
       {
         class: `form-control form-select ${cls} ${field.class || ""}`,
