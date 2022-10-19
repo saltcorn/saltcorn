@@ -520,7 +520,13 @@ const transformForm = async ({
             segment.field_name = `${view_select.field_name}.${segment.field_name}`;
           },
         });
-
+        for (const field of childForm.fields) {
+          if (field.name === childTable.pk_name) {
+            field.class = field.class
+              ? `${field.class} omit-repeater-clone`
+              : "omit-repeater-clone"
+          }
+        }
         const fr = new FieldRepeat({
           name: view_select.field_name,
           label: view_select.field_name,
@@ -824,6 +830,9 @@ const runPost = async (
       //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
         const childTable = Table.findOne({ id: field.metadata?.table_id });
+        const submitted_row_ids =
+          new Set((form.values[field.name] || [])
+            .map(srow => `${srow[childTable.pk_name]}`))
         for (const childRow of form.values[field.name]) {
           childRow[field.metadata?.relation] = id;
           if (childRow[childTable.pk_name]) {
@@ -845,6 +854,8 @@ const runPost = async (
               req.flash("error", text_attr(ins_res.error));
               res.sendWrap(viewname, renderForm(form, req.csrfToken()));
               return;
+            } else if (ins_res.success) {
+              submitted_row_ids.add(`${ins_res.success}`)
             }
           }
         }
@@ -852,17 +863,15 @@ const runPost = async (
         //need to delete any rows that are missing
         if (originalID && field.metadata) {
           const view_select = parse_view_select(field.metadata.view);
-          const submitted_row_ids =
-            new Set((form.values[field.name] || [])
-              .map(srow => `${srow[childTable.pk_name]}`))
           const childRows = getRowQuery
             ? await getRowQuery(field.metadata.table_id, view_select, originalID)
             : await childTable.getRows({
               [view_select.field_name]: originalID,
             });
           for (const db_child_row of childRows) {
-            if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`))
+            if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
               await childTable.deleteRows({ [childTable.pk_name]: db_child_row[childTable.pk_name] })
+            }
           }
         }
 
