@@ -2,7 +2,7 @@ import Node from "./node";
 
 export class DummyNode extends Node {
   constructor() {
-    super("dummy", "dummy", [], -1);
+    super("dummy", "dummy", "dummy", [], -1);
   }
 
   cyDataObject() {

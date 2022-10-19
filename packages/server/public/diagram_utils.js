@@ -44,6 +44,7 @@ function buildCard(node) {
       <div class="card-body">
         ${buildTagBadges(node)}
         ${buildCardBody(node)}
+        ${type === "page" || type === "view" ? buildPreview(node) : ""}
         ${type === "page" || type === "view" ? buildMinRoleSelect(node) : ""}
       </div>
     </div>
@@ -53,6 +54,52 @@ function buildCard(node) {
   document.body.appendChild(div);
   div.innerHTML = html;
   return div;
+}
+
+function buildPreview(node) {
+  const { name, type } = node.data();
+  $.ajax(`/${type}/${name}/preview`, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    success: (res) => {
+      $("#preview_body_id").html(`
+        <div 
+          id="preview_wrapper"
+          style="min-height: 70px;"
+        > 
+          ${res}
+        </div></div></div>`
+      );
+      const previewDiv = $("#preview_body_id");
+      const pos = previewDiv.position();
+      const cssBase = `
+        position: absolute; top: ${pos.top}px; left: ${pos.left}px;
+        width: ${previewDiv.width()}px; height: ${previewDiv.height()+12}px;`;
+      $("#preview_body_id").after(`
+        <div 
+          style="${cssBase}
+            background-color: black; opacity: 0.1;
+            z-index: 10;"
+        >
+        </div>
+        <div style="${cssBase} opacity: 0.5;">
+          <h2 class="preview-text fw-bold text-danger">
+            Preview
+          </h2>
+        </div>`
+
+      );
+    },
+    error: (res) => {
+      console.log("error");
+      console.log(res);
+    }
+  });
+  return `
+    <div class="my-2" id="preview_body_id">
+    </div>`;
 }
 
 function buildMinRoleSelect(node) {

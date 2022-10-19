@@ -4,10 +4,7 @@ import {
   AbstractView as View,
   instanceOfView,
 } from "@saltcorn/types/model-abstracts/abstract_view";
-import {
-  AbstractPage as Page,
-  instanceOfPage,
-} from "@saltcorn/types/model-abstracts/abstract_page";
+import { AbstractPage as Page } from "@saltcorn/types/model-abstracts/abstract_page";
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
 import layout from "../models/layout";
 const { traverseSync } = layout;
@@ -32,6 +29,11 @@ const setTableRefs = async (views: any) => {
     else v.table = "";
   });
   return views;
+};
+
+const setRefs = async (connected: ConnectedObjects) => {
+  if (connected.linkedViews) await setTableRefs(connected.linkedViews);
+  if (connected.embeddedViews) await setTableRefs(connected.embeddedViews);
 };
 
 export type ExtractOpts = {
@@ -66,7 +68,7 @@ export async function buildObjectTrees(
   }
   if (opts.showViews) {
     const allViews = await require("../models/view").find();
-    setTableRefs(allViews);
+    await setTableRefs(allViews);
     const viewTrees = await buildTree("view", allViews, helper);
     result.push(...viewTrees);
   }
@@ -92,6 +94,7 @@ async function buildTree(
     if (includeObject && !helper.cyIds.has(node.cyId)) {
       helper.cyIds.add(node.cyId);
       const connected = await object.connected_objects();
+      await setRefs(connected);
       await helper.handleNodeConnections(node, connected);
       result.push(node);
     }
@@ -253,6 +256,7 @@ class ExtractHelper {
     if (!this.cyIds.has(newNode.cyId)) {
       this.cyIds.add(newNode.cyId);
       const connections = await newView.connected_objects();
+      await setRefs(connections);
       await this.handleNodeConnections(newNode, connections);
     }
   }
@@ -264,6 +268,7 @@ class ExtractHelper {
     if (!this.cyIds.has(newNode.cyId)) {
       this.cyIds.add(newNode.cyId);
       const connections = await embedded.connected_objects();
+      await setRefs(connections);
       await this.handleNodeConnections(newNode, connections);
     }
   }
@@ -275,6 +280,7 @@ class ExtractHelper {
     if (!this.cyIds.has(newNode.cyId)) {
       this.cyIds.add(newNode.cyId);
       const connections = await newPage.connected_objects();
+      await setRefs(connections);
       await this.handleNodeConnections(newNode, connections);
     }
   }

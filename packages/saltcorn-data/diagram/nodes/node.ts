@@ -7,6 +7,7 @@ export type NodeType = "view" | "page" | "table" | "trigger" | "dummy";
  */
 export default abstract class Node {
   type: NodeType;
+  name: string;
   label: string;
   cyId: string;
   objectId: number;
@@ -22,15 +23,17 @@ export default abstract class Node {
    */
   constructor(
     type: NodeType,
+    name: string,
     label: string,
     tags: Array<AbstractTag>,
-    objectId: number
+    objectId: number,
   ) {
     this.type = type;
     this.label = label;
     this.cyId = `${type}_${label}`;
     this.tags = tags;
     this.objectId = objectId;
+    this.name = name;
   }
 
   /**
@@ -41,6 +44,7 @@ export default abstract class Node {
     return {
       id: this.cyId,
       type: this.type,
+      name: this.name,
       label: this.label,
       tags: this.tags,
       objectId: this.objectId,
