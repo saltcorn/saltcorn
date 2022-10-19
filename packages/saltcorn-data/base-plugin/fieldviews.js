@@ -96,7 +96,6 @@ const select = {
       (attrs || {}).force_required,
       (attrs || {}).neutral_label,
     )
-    console.log({ attrs });
     if (attrs.disable) {
       return tags.select(
         {
