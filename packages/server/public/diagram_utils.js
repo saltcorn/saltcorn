@@ -444,6 +444,7 @@ function reloadCy() {
   }).done((res) => {
     const cfg = {
       container: document.getElementById("cy"),
+      maxZoom: 2,
       ...res,
     };
     window.cy = cytoscape(cfg);

@@ -90,6 +90,7 @@ export function generateCyCode(entryNodes: Array<Node>): string {
   const cyEdges = raster.buildCyEdges();
   return `
   var cy = window.cy = cytoscape({
+    maxZoom: 2,
     container: document.getElementById('cy'),
     elements: {
       nodes: ${JSON.stringify(cyNodes)},
