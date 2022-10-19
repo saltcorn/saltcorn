@@ -77,7 +77,7 @@ const select = {
    */
   run: (nm, v, attrs, cls, reqd, field) => {
 
-    if (attrs.disabled || attrs.disable) {
+    if (attrs.disabled) {
       const value = (field.options || []).find(lv => lv?.value === v)?.label || v
       return (
         input({
@@ -89,6 +89,27 @@ const select = {
           placeholder: value || field.label,
         }) + span({ class: "ml-m1" }, "v")
       );
+    }
+    const selOptions = select_options(
+      v,
+      field,
+      (attrs || {}).force_required,
+      (attrs || {}).neutral_label,
+    )
+    if (attrs.disable) {
+      return tags.select(
+        {
+          class: `form-control form-select ${cls} ${field.class || ""}`,
+          disabled: true,
+        },
+        selOptions
+      ) + input({
+        type: "hidden",
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        value: v
+      });
     }
     return tags.select(
       {
@@ -105,14 +126,7 @@ const select = {
           }
           : {}),
       },
-      select_options(
-        v,
-        field,
-        (attrs || {}).force_required,
-        (attrs || {}).neutral_label,
-
-
-      )
+      selOptions
     );
   },
 };

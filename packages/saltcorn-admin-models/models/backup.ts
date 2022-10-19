@@ -417,7 +417,11 @@ const delete_old_backups = async () => {
 
 const auto_backup_now = async () => {
   const fileName = await create_backup();
+  console.log("auto_backup_filename", fileName);
+
   const destination = getState().getConfig("auto_backup_destination");
+  console.log("auto_backup_destination", destination);
+
   switch (destination) {
     case "Saltcorn files":
       const newPath = File.get_new_path(fileName);

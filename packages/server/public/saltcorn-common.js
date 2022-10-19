@@ -28,6 +28,7 @@ function add_repeater(nm) {
   var newix = es.length;
   var newe = $(e).clone();
   newe.find("[name]").each(function (ix, element) {
+    if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
     var newnm = (element.name || "").replace("_0", "_" + newix);
     var newid = (element.id || "").replace("_0", "_" + newix);
     $(element).attr("name", newnm).attr("id", newid);
