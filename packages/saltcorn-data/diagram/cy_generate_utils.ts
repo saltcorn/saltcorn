@@ -91,6 +91,7 @@ export function generateCyCode(entryNodes: Array<Node>): string {
   return `
   var cy = window.cy = cytoscape({
     maxZoom: 2,
+    wheelSensitivity: 0.3,
     container: document.getElementById('cy'),
     elements: {
       nodes: ${JSON.stringify(cyNodes)},

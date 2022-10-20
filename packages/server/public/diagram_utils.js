@@ -14,7 +14,13 @@ function initMouseOver() {
     const node = event.target;
     const cardPopper = node.popper({
       content: () => {
-        return buildCard(node);
+        const popperDiv = document.getElementById(`${node.id()}_popper`);
+        if(popperDiv) {
+          popperDiv.setAttribute("style", ""); 
+          return popperDiv;
+        }
+        else
+          return buildCard(node);
       },
     });
     activePopper = cardPopper;
@@ -29,7 +35,7 @@ function initMouseOver() {
     const node = event.target;
     activePopper.destroy();
     const popperDiv = document.getElementById(`${node.id()}_popper`);
-    popperDiv.remove();
+    popperDiv.setAttribute("style", "display: none;"); 
   });
 }
 
@@ -58,13 +64,14 @@ function buildCard(node) {
 
 function buildPreview(node) {
   const { name, type } = node.data();
+  const previewId = `preview_${node.id()}`;
   $.ajax(`/${type}/${name}/preview`, {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
     },
     success: (res) => {
-      $("#preview_body_id").html(`
+      $(`#${previewId}`).html(`
         <div 
           id="preview_wrapper"
           style="min-height: 70px;"
@@ -72,12 +79,12 @@ function buildPreview(node) {
           ${res}
         </div></div></div>`
       );
-      const previewDiv = $("#preview_body_id");
+      const previewDiv = $(`#${previewId}`);
       const pos = previewDiv.position();
       const cssBase = `
         position: absolute; top: ${pos.top}px; left: ${pos.left}px;
         width: ${previewDiv.width()}px; height: ${previewDiv.height()+12}px;`;
-      $("#preview_body_id").after(`
+      $(`#${previewId}`).after(`
         <div 
           style="${cssBase}
             background-color: black; opacity: 0.1;
@@ -98,7 +105,7 @@ function buildPreview(node) {
     }
   });
   return `
-    <div class="my-2" id="preview_body_id">
+    <div class="my-2" id="${previewId}">
     </div>`;
 }
 
@@ -445,6 +452,7 @@ function reloadCy() {
     const cfg = {
       container: document.getElementById("cy"),
       maxZoom: 2,
+      wheelSensitivity: 0.3,
       ...res,
     };
     window.cy = cytoscape(cfg);
