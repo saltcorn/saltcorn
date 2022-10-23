@@ -27,6 +27,7 @@ function initMouseOver() {
     };
     node.on("position", update);
     cy.on("pan zoom resize", update);
+    buildPreview(node);
   });
 
   cy.on("mouseout", "node", (event) => {
@@ -48,7 +49,7 @@ function buildCard(node) {
       <div class="card-body">
         ${buildTagBadges(node)}
         ${buildCardBody(node)}
-        ${type === "page" || type === "view" ? buildPreview(node) : ""}
+        ${type === "page" || type === "view" ? buildPreviewDiv(node) : ""}
         ${type === "page" || type === "view" ? buildMinRoleSelect(node) : ""}
       </div>
     </div>
@@ -99,6 +100,10 @@ function buildPreview(node) {
       console.log(res);
     },
   });
+}
+
+function buildPreviewDiv(node) {
+  const previewId = `preview_${node.id()}`;  
   return `
     <div class="my-2" id="${previewId}" style="min-height: 70px;">
       <div style="opacity: 0.5;">
