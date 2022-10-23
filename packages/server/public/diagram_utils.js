@@ -14,7 +14,11 @@ function initMouseOver() {
     const node = event.target;
     const cardPopper = node.popper({
       content: () => {
-        return buildCard(node);
+        const popperDiv = document.getElementById(`${node.id()}_popper`);
+        if (popperDiv) {
+          popperDiv.setAttribute("style", "");
+          return popperDiv;
+        } else return buildCard(node);
       },
     });
     activePopper = cardPopper;
@@ -23,13 +27,14 @@ function initMouseOver() {
     };
     node.on("position", update);
     cy.on("pan zoom resize", update);
+    buildPreview(node);
   });
 
   cy.on("mouseout", "node", (event) => {
     const node = event.target;
     activePopper.destroy();
     const popperDiv = document.getElementById(`${node.id()}_popper`);
-    popperDiv.remove();
+    popperDiv.setAttribute("style", "display: none;");
   });
 }
 
@@ -44,6 +49,7 @@ function buildCard(node) {
       <div class="card-body">
         ${buildTagBadges(node)}
         ${buildCardBody(node)}
+        ${type === "page" || type === "view" ? buildPreviewDiv(node) : ""}
         ${type === "page" || type === "view" ? buildMinRoleSelect(node) : ""}
       </div>
     </div>
@@ -53,6 +59,60 @@ function buildCard(node) {
   document.body.appendChild(div);
   div.innerHTML = html;
   return div;
+}
+
+function buildPreview(node) {
+  const { name, type } = node.data();
+  const previewId = `preview_${node.id()}`;
+  $.ajax(`/${type}/${name}/preview`, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    success: (res) => {
+      $(`#${previewId}`).html(`
+        <div 
+          id="preview_wrapper"
+          style="min-height: 70px;"
+        > 
+          ${res}
+        </div></div></div>`);
+      const previewDiv = $(`#${previewId}`);
+      const pos = previewDiv.position();
+      const cssBase = `
+        position: absolute; top: ${pos.top}px; left: ${pos.left}px;
+        width: ${previewDiv.width()}px; height: ${previewDiv.height() + 12}px;`;
+      $(`#${previewId}`).after(`
+        <div 
+          style="${cssBase}
+            background-color: black; opacity: 0.1;
+            z-index: 10;"
+        >
+        </div>
+        <div style="${cssBase} opacity: 0.5;">
+          <h2 class="preview-text fw-bold text-danger">
+            Preview
+          </h2>
+        </div>`);
+    },
+    error: (res) => {
+      console.log("error");
+      console.log(res);
+    },
+  });
+}
+
+function buildPreviewDiv(node) {
+  const previewId = `preview_${node.id()}`;  
+  return `
+    <div class="my-2" id="${previewId}" style="min-height: 70px;">
+      <div style="opacity: 0.5;">
+        <h2>
+          <span class="fw-bold text-danger">Preview</span>
+          <i class="fas fa-spinner fa-spin"></i>
+        </h2>
+      </div>
+    </div>`;
 }
 
 function buildMinRoleSelect(node) {
@@ -397,6 +457,8 @@ function reloadCy() {
   }).done((res) => {
     const cfg = {
       container: document.getElementById("cy"),
+      maxZoom: 2,
+      wheelSensitivity: 0.3,
       ...res,
     };
     window.cy = cytoscape(cfg);

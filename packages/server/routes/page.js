@@ -7,10 +7,8 @@
 const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
-const { div, a, i } = require("@saltcorn/markup/tags");
-const { renderForm } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
-const { error_catcher, scan_for_page_title } = require("../routes/utils.js");
+const { error_catcher, scan_for_page_title, isAdmin } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
@@ -64,6 +62,21 @@ router.get(
         .status(404)
         .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
     }
+  })
+);
+
+router.post(
+  "/:pagename/preview",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { pagename } = req.params;
+    const page = await Page.findOne({ name: pagename });
+    if (!page) {
+      res.send("");
+      return;
+    }
+    const contents = await page.run(req.query, { res, req });
+    res.sendWrap({}, contents);
   })
 );
 

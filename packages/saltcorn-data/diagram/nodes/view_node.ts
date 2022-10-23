@@ -6,7 +6,7 @@ export class ViewNode extends Node {
   view: AbstractView;
 
   constructor(view: AbstractView, tags: Array<AbstractTag>) {
-    super("view", view.name, tags, view.id!);
+    super("view", view.name, view.name, tags, view.id!);
     this.view = view;
   }
 

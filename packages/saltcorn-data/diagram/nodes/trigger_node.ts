@@ -6,7 +6,7 @@ export class TriggerNode extends Node {
   trigg: AbstractTrigger; // TODO name
 
   constructor(trigger: AbstractTrigger, tags: Array<AbstractTag>) {
-    super("trigger", trigger.name!, tags, trigger.id!);
+    super("trigger", trigger.name!, trigger.name!, tags, trigger.id!);
     this.trigg = trigger;
   }
 

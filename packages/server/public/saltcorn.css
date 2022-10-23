@@ -357,3 +357,10 @@ table.table-inner-grid td {
 .w-unset {
   width: unset;
 }
+
+.preview-text {
+  transform: rotate(-30deg);
+  z-index: 11;
+  margin-left: 30px;
+  margin-top: -5px;
+}

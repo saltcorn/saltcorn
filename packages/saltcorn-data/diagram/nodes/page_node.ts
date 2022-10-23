@@ -6,7 +6,7 @@ export class PageNode extends Node {
   page: AbstractPage;
 
   constructor(page: AbstractPage, tags: Array<AbstractTag>) {
-    super("page", page.name, tags, page.id!);
+    super("page", page.name, page.name, tags, page.id!);
     this.page = page;
   }
 
