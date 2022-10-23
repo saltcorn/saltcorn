@@ -15,12 +15,10 @@ function initMouseOver() {
     const cardPopper = node.popper({
       content: () => {
         const popperDiv = document.getElementById(`${node.id()}_popper`);
-        if(popperDiv) {
-          popperDiv.setAttribute("style", ""); 
+        if (popperDiv) {
+          popperDiv.setAttribute("style", "");
           return popperDiv;
-        }
-        else
-          return buildCard(node);
+        } else return buildCard(node);
       },
     });
     activePopper = cardPopper;
@@ -35,7 +33,7 @@ function initMouseOver() {
     const node = event.target;
     activePopper.destroy();
     const popperDiv = document.getElementById(`${node.id()}_popper`);
-    popperDiv.setAttribute("style", "display: none;"); 
+    popperDiv.setAttribute("style", "display: none;");
   });
 }
 
@@ -77,13 +75,12 @@ function buildPreview(node) {
           style="min-height: 70px;"
         > 
           ${res}
-        </div></div></div>`
-      );
+        </div></div></div>`);
       const previewDiv = $(`#${previewId}`);
       const pos = previewDiv.position();
       const cssBase = `
         position: absolute; top: ${pos.top}px; left: ${pos.left}px;
-        width: ${previewDiv.width()}px; height: ${previewDiv.height()+12}px;`;
+        width: ${previewDiv.width()}px; height: ${previewDiv.height() + 12}px;`;
       $(`#${previewId}`).after(`
         <div 
           style="${cssBase}
@@ -95,17 +92,21 @@ function buildPreview(node) {
           <h2 class="preview-text fw-bold text-danger">
             Preview
           </h2>
-        </div>`
-
-      );
+        </div>`);
     },
     error: (res) => {
       console.log("error");
       console.log(res);
-    }
+    },
   });
   return `
-    <div class="my-2" id="${previewId}">
+    <div class="my-2" id="${previewId}" style="min-height: 70px;">
+      <div style="opacity: 0.5;">
+        <h2>
+          <span class="fw-bold text-danger">Preview</span>
+          <i class="fas fa-spinner fa-spin"></i>
+        </h2>
+      </div>
     </div>`;
 }
 
