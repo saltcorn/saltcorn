@@ -518,6 +518,72 @@ const mkFormRowForField =
   };
 
 /**
+ * @param {object[]} v
+ * @param {object[]} errors
+ * @param {string} formStyle
+ * @param {number} labelCols
+ * @param {string} [nameAdd = ""]
+ * @returns {function}
+ */
+const mkFormRowAside = (
+  v: any,
+  errors: any[],
+  formStyle: string,
+  labelCols: number,
+  nameAdd: string = "",
+  hdr1: any,
+  hdr2: any
+): string => {
+  const name: any = hdr1.form_name + nameAdd;
+
+  const inner1 = innerField(v, errors, nameAdd, "")(hdr1);
+  const inner2 = innerField(v, errors, nameAdd, "")(hdr2);
+  const inputCols = (12 - labelCols * 2) / 2;
+
+  return div(
+    {
+      class: ["form-group row"],
+    },
+    div(
+      { class: `col-sm-${labelCols}` },
+      label(
+        {
+          for: `input${text_attr(hdr1.form_name)}`,
+        },
+        text(hdr1.label)
+      )
+    ),
+    div(
+      { class: `col-sm-${inputCols}` },
+      inner1,
+      hdr1.sublabel && i(text(hdr1.sublabel))
+    ),
+    div(
+      { class: `col-sm-${labelCols}` },
+      label(
+        {
+          for: `input${text_attr(hdr2.form_name)}`,
+        },
+        text(hdr2.label)
+      )
+    ),
+    div(
+      { class: `col-sm-${inputCols}` },
+      inner2,
+      hdr2.sublabel && i(text(hdr2.sublabel))
+    )
+  );
+
+  /*formRowWrap(
+    hdr,
+
+    errorFeedback,
+    formStyle,
+    labelCols
+  );*/
+};
+
+/**
  * @param {object} form
  * @returns {string}
  */
@@ -887,16 +953,37 @@ const mkForm = (
     form.methodGET ? "get" : "post"
   }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
   //console.log(form.fields);
-  const flds = form.fields
-    .map(
-      mkFormRow(
-        form.values,
-        errors,
-        form.formStyle,
-        typeof form.labelCols === "undefined" ? 2 : form.labelCols
-      )
-    )
-    .join("");
+  const fldHtmls: String[] = [];
+  let skipNext = false;
+  for (let i = 0; i < form.fields.length; i++) {
+    const field = form.fields[i];
+    if (skipNext) {
+      skipNext = false;
+    } else if ((field as any)?.attributes.asideNext) {
+      fldHtmls.push(
+        mkFormRowAside(
+          form.values,
+          errors,
+          form.formStyle,
+          typeof form.labelCols === "undefined" ? 2 : form.labelCols,
+          "",
+          field,
+          form.fields[i + 1]
+        )
+      );
+      skipNext = true;
+    } else {
+      fldHtmls.push(
+        mkFormRow(
+          form.values,
+          errors,
+          form.formStyle,
+          typeof form.labelCols === "undefined" ? 2 : form.labelCols
+        )(field)
+      );
+    }
+  }
+  const flds = fldHtmls.join("");
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
