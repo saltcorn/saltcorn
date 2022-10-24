@@ -34,7 +34,10 @@ const {
   run_action_column,
   add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
-const { get_viewable_fields } = require("./viewable_fields");
+const {
+  get_viewable_fields,
+  parse_view_select,
+} = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
   get_async_expression_function,
@@ -117,7 +120,13 @@ const configuration_workflow = (req) =>
               ? { id: context.table_id }
               : { name: context.exttable_name }
           );
-          //console.log(context);
+          // fix legacy values missing view_name
+          (context?.columns || []).forEach(column => {
+            if (column.type === 'ViewLink' && column.view && !column.view_name) {
+              const view_select = parse_view_select(column.view);
+              column.view_name = view_select.viewname
+            }
+          })
           const field_picker_repeat = await field_picker_fields({
             table,
             viewname: context.viewname,
@@ -153,8 +162,6 @@ const configuration_workflow = (req) =>
               ? { id: context.table_id }
               : { name: context.exttable_name }
           );
-          //console.log(context);
-
           const create_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
             ({ state_fields, viewrow }) =>
