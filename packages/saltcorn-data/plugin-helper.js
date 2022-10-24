@@ -256,7 +256,7 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
  * @param {Table|object} table
  * @param {string} viewname
  * @param {boolean}
- * @returns {Promise<object[]>}
+ * @returns {Promise<{link_view_opts: object[]}>}
  */
 const get_link_view_opts = async (table, viewname) => {
   const own_link_views = await View.find_possible_links_to_table(table);
@@ -320,7 +320,7 @@ const get_link_view_opts = async (table, viewname) => {
       name: `Independent:${view.name}`,
     });
   });
-  return link_view_opts;
+  return { link_view_opts };
 };
 
 /**
@@ -416,7 +416,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       }
     }
   }
-  const link_view_opts = await get_link_view_opts(table, viewname);
+  const { link_view_opts } = await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
   const { child_field_list, child_relations } =
     await table.get_child_relations(true);

@@ -137,7 +137,7 @@ const configuration_workflow = (req) =>
             );
             field_view_options.verification_url = ["as_text", "as_link"];
           }
-          const link_view_opts = await get_link_view_opts(
+          const { link_view_opts } = await get_link_view_opts(
             table,
             context.viewname
           );
