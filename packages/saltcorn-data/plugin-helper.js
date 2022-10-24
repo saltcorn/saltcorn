@@ -807,6 +807,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "col_width",
       label: __("Column width"),
       type: "Integer",
+      attributes: { asideNext: true }
     },
     {
       name: "col_width_units",

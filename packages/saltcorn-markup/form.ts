@@ -284,6 +284,29 @@ const mkFormRowForRepeatFancy = (
 ): string => {
   // console.log(v);
 
+  const fldHtmls: String[] = [];
+  hdr.fields.forEach((f: any) => {
+    f.class = `${f.class || ""} item-menu`;
+  });
+  for (let i = 0; i < hdr.fields.length; i++) {
+    const field = hdr.fields[i];
+    if ((field as any)?.attributes?.asideNext) {
+      fldHtmls.push(
+        mkFormRowAside(
+          {},
+          errors,
+          "vert",
+          labelCols,
+          "",
+          field,
+          hdr.fields[i + 1]
+        )
+      );
+      i++;
+    } else {
+      fldHtmls.push(mkFormRow({}, errors, "vert", labelCols)(field));
+    }
+  }
   return div(
     { class: "row w-100" },
     div(
@@ -294,8 +317,7 @@ const mkFormRowForRepeatFancy = (
     div(
       { class: "col-6 mb-3", id: "menuForm" },
       h5("Column configuration"),
-      hdr.fields.forEach((f: any) => (f.class = `${f.class || ""} item-menu`)),
-      hdr.fields.map(mkFormRow({}, errors, "vert", labelCols)),
+      fldHtmls.join(""),
       button(
         { type: "button", id: "btnUpdate", class: "btn btn-primary me-2" },
         "Update"
@@ -539,40 +561,47 @@ const mkFormRowAside = (
   const inner1 = innerField(v, errors, nameAdd, "")(hdr1);
   const inner2 = innerField(v, errors, nameAdd, "")(hdr2);
   const inputCols = (12 - labelCols * 2) / 2;
-
-  return div(
-    {
-      class: ["form-group row"],
-    },
-    div(
-      { class: `col-sm-${labelCols}` },
-      label(
-        {
-          for: `input${text_attr(hdr1.form_name)}`,
-        },
-        text(hdr1.label)
+  const mkLabel = (hdr: any) =>
+    label(
+      {
+        for: `input${text_attr(hdr.form_name)}`,
+      },
+      text(hdr.label)
+    );
+  if (formStyle === "vert")
+    return div(
+      {
+        class: ["form-group row"],
+      },
+      div(
+        { class: `col-sm-6` },
+        div(mkLabel(hdr1)),
+        div(inner1, hdr1.sublabel && i(text(hdr1.sublabel)))
+      ),
+      div(
+        { class: `col-sm-6` },
+        div(mkLabel(hdr2)),
+        div(inner2, hdr2.sublabel && i(text(hdr2.sublabel)))
       )
-    ),
-    div(
-      { class: `col-sm-${inputCols}` },
-      inner1,
-      hdr1.sublabel && i(text(hdr1.sublabel))
-    ),
-    div(
-      { class: `col-sm-${labelCols}` },
-      label(
-        {
-          for: `input${text_attr(hdr2.form_name)}`,
-        },
-        text(hdr2.label)
+    );
+  else
+    return div(
+      {
+        class: ["form-group row"],
+      },
+      div({ class: `col-sm-${labelCols}` }, mkLabel(hdr1)),
+      div(
+        { class: `col-sm-${inputCols}` },
+        inner1,
+        hdr1.sublabel && i(text(hdr1.sublabel))
+      ),
+      div({ class: `col-sm-${labelCols}` }, mkLabel(hdr2)),
+      div(
+        { class: `col-sm-${inputCols}` },
+        inner2,
+        hdr2.sublabel && i(text(hdr2.sublabel))
       )
-    ),
-    div(
-      { class: `col-sm-${inputCols}` },
-      inner2,
-      hdr2.sublabel && i(text(hdr2.sublabel))
-    )
-  );
+    );
 
   /*formRowWrap(
     hdr,
