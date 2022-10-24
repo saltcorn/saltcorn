@@ -959,7 +959,7 @@ const mkForm = (
     const field = form.fields[i];
     if (skipNext) {
       skipNext = false;
-    } else if ((field as any)?.attributes.asideNext) {
+    } else if ((field as any)?.attributes?.asideNext) {
       fldHtmls.push(
         mkFormRowAside(
           form.values,
