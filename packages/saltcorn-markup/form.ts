@@ -954,12 +954,10 @@ const mkForm = (
   }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
   //console.log(form.fields);
   const fldHtmls: String[] = [];
-  let skipNext = false;
   for (let i = 0; i < form.fields.length; i++) {
     const field = form.fields[i];
-    if (skipNext) {
-      skipNext = false;
-    } else if ((field as any)?.attributes?.asideNext) {
+    if ((field as any)?.attributes?.asideNext) {
+      // console.log("AsideNext", field);
       fldHtmls.push(
         mkFormRowAside(
           form.values,
@@ -971,7 +969,7 @@ const mkForm = (
           form.fields[i + 1]
         )
       );
-      skipNext = true;
+      i++;
     } else {
       fldHtmls.push(
         mkFormRow(
