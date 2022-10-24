@@ -597,6 +597,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: true,
       attributes: {
+        asideNext: true,
         options: [
           { name: "btn-primary", label: "Primary button" },
           { name: "btn-secondary", label: "Secondary button" },
@@ -670,6 +671,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: true,
       attributes: {
+        asideNext: true,
         options: [
           { name: "", label: "Link" },
           { name: "btn btn-primary", label: "Primary button" },

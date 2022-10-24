@@ -568,11 +568,17 @@ const mkFormRowAside = (
       },
       text(hdr.label)
     );
+  const outerAttributes = {
+    class: ["form-group row"],
+    "data-disabled": hdr1.disabled ? "true" : false,
+    ...(hdr1.showIf && {
+      style: "display: none;",
+      "data-show-if": mkShowIf(hdr1.showIf),
+    }),
+  };
   if (formStyle === "vert")
     return div(
-      {
-        class: ["form-group row"],
-      },
+      outerAttributes,
       div(
         { class: `col-sm-6` },
         div(mkLabel(hdr1)),
@@ -586,9 +592,7 @@ const mkFormRowAside = (
     );
   else
     return div(
-      {
-        class: ["form-group row"],
-      },
+      outerAttributes,
       div({ class: `col-sm-${labelCols}` }, mkLabel(hdr1)),
       div(
         { class: `col-sm-${inputCols}` },
