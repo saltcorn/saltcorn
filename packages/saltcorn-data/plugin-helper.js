@@ -261,8 +261,11 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
 const get_link_view_opts = async (table, viewname) => {
   const own_link_views = await View.find_possible_links_to_table(table);
   const all_views = await View.find({})
+  const all_tables = await Table.find({})
+  const table_id_to_name = {}
+  all_tables.forEach(t => { table_id_to_name[t.id] = t.name })
   const view_name_opts = all_views.map(v => ({
-    label: `${v.name} [${v.viewtemplate}]`,
+    label: `${v.name} [${v.viewtemplate} ${table_id_to_name[v.table_id] || ""}]`,
     name: v.name
   }))
   const view_relation_opts = {}
