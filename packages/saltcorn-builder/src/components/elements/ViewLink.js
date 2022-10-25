@@ -267,6 +267,7 @@ ViewLink.craft = {
       { name: "inModal", segment_name: "in_modal", column_name: "in_modal" },
       "minRole",
       "link_style",
+      "view_name",
       "link_icon",
       "link_size",
       "link_target_blank",
