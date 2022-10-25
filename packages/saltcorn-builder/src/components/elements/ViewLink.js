@@ -40,6 +40,7 @@ export /**
   const ViewLink = ({
     name,
     block,
+    view_name,
     minRole,
     link_style,
     link_size,
@@ -56,7 +57,8 @@ export /**
       connectors: { connect, drag },
     } = useNode((node) => ({ selected: node.events.selected }));
     const names = name.split(":");
-    const displabel = label || (names.length > 1 ? names[1] : names[0]);
+
+    const displabel = label || view_name || (names.length > 1 ? names[1] : names[0]);
     return (
       <span
         className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${selected ? "selected-node" : "is-builder-link"
@@ -128,6 +130,15 @@ export /**
     //legacy values
     const use_view_name
       = view_name || (name && (names => names.length > 1 ? names[1] : names[0])(name.split(":")))
+    const set_view_name = (e) => {
+      if (e.target) {
+        const target_value = e.target.value;
+        setProp((prop) => (prop.view_name = target_value));
+        if (target_value !== use_view_name) {
+          setProp((prop) => (prop.name = options.view_relation_opts[target_value][0].value));
+        }
+      }
+    };
     return (
       <div>
         <table className="w-100">
@@ -138,7 +149,8 @@ export /**
                 <select
                   value={use_view_name}
                   className="form-control form-select"
-                  onChange={setAProp("view_name")}
+                  onChange={set_view_name}
+                  onBlur={set_view_name}
                 >
                   {options.view_name_opts.map((f, ix) => (
                     <option key={ix} value={f.name}>
@@ -155,9 +167,10 @@ export /**
                   value={name}
                   className="form-control form-select"
                   onChange={setAProp("name")}
+                  onBlur={setAProp("name")}
                 >
                   {(options.view_relation_opts[use_view_name] || []).map((f, ix) => (
-                    <option key={ix} value={f.name}>
+                    <option key={ix} value={f.value}>
                       {f.label}
                     </option>
                   ))}

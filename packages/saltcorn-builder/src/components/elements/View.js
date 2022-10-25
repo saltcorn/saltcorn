@@ -77,6 +77,7 @@ export /**
  */
   const ViewSettings = () => {
     const node = useNode((node) => ({
+      view_name: node.data.props.view_name,
       name: node.data.props.name,
       view: node.data.props.view,
       state: node.data.props.state,
@@ -93,6 +94,7 @@ export /**
       node_id,
       configuration,
       extra_state_fml,
+      view_name,
     } = node;
     const options = useContext(optionsCtx);
     const views = options.views;
@@ -107,27 +109,71 @@ export /**
     } catch (error) {
       errorString = error.message;
     }
-    let viewname = view;
+    let viewname = view_name || view;
     if (viewname && viewname.includes(":")) viewname = viewname.split(":")[1];
     if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
+    const set_view_name = (e) => {
+      if (e.target) {
+        const target_value = e.target.value;
+        setProp((prop) => (prop.view_name = target_value));
+        console.log("set_view_name", target_value, viewname);
+        if (target_value !== viewname) {
+          setProp((prop) => (prop.view = options.view_relation_opts[target_value][0].value));
 
+        }
+      }
+    };
+    console.log({ view_name, viewname, name });
     return (
       <div>
-        <div>
-          <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-          <select
-            value={view}
-            className="form-control form-select"
-            onChange={setAProp("view")}
-            onBlur={setAProp("view")}
-          >
-            {views.map((f, ix) => (
-              <option key={ix} value={f.name}>
-                {f.label || f.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {options.view_name_opts
+          ? <Fragment>
+            <div>
+              <label>View to {options.mode === "show" ? "embed" : "show"}</label>
+              <select
+                value={viewname}
+                className="form-control form-select"
+                onChange={set_view_name}
+                onBlur={set_view_name}
+              >
+                {options.view_name_opts.map((f, ix) => (
+                  <option key={ix} value={f.name}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label>Relation</label>
+              <select
+                value={view}
+                className="form-control form-select"
+                onChange={setAProp("view")}
+                onBlur={setAProp("view")}
+              >
+                {(options.view_relation_opts[viewname] || []).map((f, ix) => (
+                  <option key={ix} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </Fragment>
+          : <div>
+            <label>View to {options.mode === "show" ? "embed" : "show"}</label>
+            <select
+              value={view}
+              className="form-control form-select"
+              onChange={setAProp("view")}
+              onBlur={setAProp("view")}
+            >
+              {views.map((f, ix) => (
+                <option key={ix} value={f.name}>
+                  {f.label || f.name}
+                </option>
+              ))}
+            </select>
+          </div>}
         {options.mode === "page" && (
           <Fragment>
             <div>
