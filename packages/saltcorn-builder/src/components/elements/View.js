@@ -116,14 +116,12 @@ export /**
       if (e.target) {
         const target_value = e.target.value;
         setProp((prop) => (prop.view_name = target_value));
-        console.log("set_view_name", target_value, viewname);
         if (target_value !== viewname) {
           setProp((prop) => (prop.view = options.view_relation_opts[target_value][0].value));
 
         }
       }
     };
-    console.log({ view_name, viewname, name });
     return (
       <div>
         {options.view_name_opts
