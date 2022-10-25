@@ -125,7 +125,9 @@ export /**
       errorString = error.message;
     }
     const setAProp = setAPropGen(setProp);
-
+    //legacy values
+    const use_view_name
+      = view_name || (name && (names => names.length > 1 ? names[1] : names[0])(name.split(":")))
     return (
       <div>
         <table className="w-100">
@@ -134,7 +136,7 @@ export /**
               <td colSpan="2">
                 <label>View to link to</label>
                 <select
-                  value={view_name}
+                  value={use_view_name}
                   className="form-control form-select"
                   onChange={setAProp("view_name")}
                 >
@@ -154,7 +156,7 @@ export /**
                   className="form-control form-select"
                   onChange={setAProp("name")}
                 >
-                  {(options.view_relation_opts[view_name] || []).map((f, ix) => (
+                  {(options.view_relation_opts[use_view_name] || []).map((f, ix) => (
                     <option key={ix} value={f.name}>
                       {f.label}
                     </option>
