@@ -198,6 +198,25 @@ const configuration_workflow = (req) =>
                 sublabel: req.__(
                   "Label in link or button to create. Leave blank for a default label"
                 ),
+                attributes: {
+                  asideNext: true,
+                },
+                type: "String",
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of link to create new row"),
+                //required: true,
+                attributes: {
+                  options: [
+                    "Bottom left",
+                    "Bottom right",
+                    "Top left",
+                    "Top right",
+                  ],
+                },
                 type: "String",
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
@@ -207,6 +226,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
+                  asideNext: true,
                   options: [
                     { name: "", label: "Link" },
                     { name: "btn btn-primary", label: "Primary button" },
@@ -243,22 +263,7 @@ const configuration_workflow = (req) =>
                 },
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
-              {
-                name: "create_view_location",
-                label: req.__("Location"),
-                sublabel: req.__("Location of link to create new row"),
-                //required: true,
-                attributes: {
-                  options: [
-                    "Bottom left",
-                    "Bottom right",
-                    "Top left",
-                    "Top right",
-                  ],
-                },
-                type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
-              },
+
 
             ]
           })
@@ -320,6 +325,7 @@ const configuration_workflow = (req) =>
             label: req.__("Default order by"),
             type: "String",
             attributes: {
+              asideNext: true,
               options: table_fields.map((f) => f.name),
             },
           });
