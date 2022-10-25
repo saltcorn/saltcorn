@@ -331,7 +331,7 @@ const configuration_workflow = (req) =>
           });
           formfields.push({
             name: "_descending",
-            label: req.__("Default descending?"),
+            label: req.__("Descending?"),
             type: "Bool",
             required: true,
           });

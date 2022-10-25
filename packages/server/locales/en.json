@@ -1009,5 +1009,6 @@
 	"(tick all boxes)": "(tick all boxes)",
 	"When prompted to create the first user, click the link to restore a backup": "When prompted to create the first user, click the link to restore a backup",
 	"Select the downloaded backup file": "Select the downloaded backup file",
-	"Units": "Units"
+	"Units": "Units",
+	"Descending?": "Descending?"
 }
