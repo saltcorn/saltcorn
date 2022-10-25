@@ -133,7 +133,8 @@ const configuration_workflow = (req) =>
               },
             ],
           };
-          const { link_view_opts } = await get_link_view_opts(table, context.viewname);
+          const { link_view_opts, view_name_opts, view_relation_opts }
+            = await get_link_view_opts(table, context.viewname);
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -185,6 +186,8 @@ const configuration_workflow = (req) =>
             library,
             views: link_view_opts,
             mode: "edit",
+            view_name_opts,
+            view_relation_opts
           };
         },
       },

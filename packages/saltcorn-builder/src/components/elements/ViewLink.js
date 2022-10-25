@@ -102,6 +102,7 @@ export /**
       link_bordercol: node.data.props.link_bordercol,
       link_textcol: node.data.props.link_textcol,
       extra_state_fml: node.data.props.extra_state_fml,
+      view_name: node.data.props.view_name,
     }));
     const {
       actions: { setProp },
@@ -113,6 +114,7 @@ export /**
       inModal,
       textStyle,
       extra_state_fml,
+      view_name,
       link_target_blank
     } = node;
     const options = useContext(optionsCtx);
@@ -132,11 +134,27 @@ export /**
               <td colSpan="2">
                 <label>View to link to</label>
                 <select
+                  value={view_name}
+                  className="form-control form-select"
+                  onChange={setAProp("view_name")}
+                >
+                  {options.view_name_opts.map((f, ix) => (
+                    <option key={ix} value={f.name}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan="2">
+                <label>Relation</label>
+                <select
                   value={name}
                   className="form-control form-select"
                   onChange={setAProp("name")}
                 >
-                  {options.link_view_opts.map((f, ix) => (
+                  {(options.view_relation_opts[view_name] || []).map((f, ix) => (
                     <option key={ix} value={f.name}>
                       {f.label}
                     </option>
