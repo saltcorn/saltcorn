@@ -1010,5 +1010,9 @@
 	"When prompted to create the first user, click the link to restore a backup": "When prompted to create the first user, click the link to restore a backup",
 	"Select the downloaded backup file": "Select the downloaded backup file",
 	"Units": "Units",
-	"Descending?": "Descending?"
+	"Descending?": "Descending?",
+	"Small": "Small",
+	"Medium": "Medium",
+	"Large": "Large",
+	"Extra-large": "Extra-large"
 }

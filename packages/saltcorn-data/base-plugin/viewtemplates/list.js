@@ -198,9 +198,7 @@ const configuration_workflow = (req) =>
                 sublabel: req.__(
                   "Label in link or button to create. Leave blank for a default label"
                 ),
-                attributes: {
-                  asideNext: true,
-                },
+                attributes: { asideNext: true },
                 type: "String",
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
