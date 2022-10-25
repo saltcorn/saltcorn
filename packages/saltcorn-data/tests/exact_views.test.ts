@@ -200,7 +200,7 @@ describe("Show view", () => {
           configuration: { code: 'console.log("1")' },
         },
       ],
-      response: `<div class="row w-100"><div class="col-6">1</div><div class="col-6"><a href="javascript:view_post('testshow', 'run_action', {rndid:'1a8ac3', id:1});" class="btn btn-success btn-sm">you're my number</a></div></div>`,
+      response: `<div class="row w-100"><div class="col-6">1</div><div class="col-6"><a href="javascript:view_post('testshow', 'run_action', {rndid:'1a8ac3', id:'1'});" class="btn btn-success btn-sm">you're my number</a></div></div>`,
     });
     await test_show({
       layout: {
