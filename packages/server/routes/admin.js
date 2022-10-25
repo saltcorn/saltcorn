@@ -154,7 +154,7 @@ const email_form = async (req) => {
   return form;
 };
 
-const app_files_table = (files, req) =>
+const app_files_table = (files, buildDirName, req) =>
   mkTable(
     [
       {
@@ -164,8 +164,20 @@ const app_files_table = (files, req) =>
       { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
       { label: req.__("Media type"), key: (r) => r.mimetype },
       {
+        label: req.__("Open"),
+        key: (r) =>
+          link(
+            `/files/serve/mobile_app/${buildDirName}/${r.filename}`,
+            req.__("Open")
+          ),
+      },
+      {
         label: req.__("Download"),
-        key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
+        key: (r) =>
+          link(
+            `/files/download/mobile_app/${buildDirName}/${r.filename}`,
+            req.__("Download")
+          ),
       },
     ],
     files
@@ -734,6 +746,7 @@ router.post(
       await auto_backup_now();
       req.flash("success", req.__("Backup successful"));
     } catch (e) {
+      getState().log(1, e);
       req.flash("error", e.message);
     }
     res.json({ reload_page: true });
@@ -1275,10 +1288,11 @@ const buildDialogScript = () => {
   
   function handleMessages() {
     notifyAlert("This is still under development and might run longer.")
-    ${getState().getConfig("apple_team_id") &&
+    ${
+      getState().getConfig("apple_team_id") &&
       getState().getConfig("apple_team_id") !== "null"
-      ? ""
-      : `  
+        ? ""
+        : `  
     if ($("#iOSCheckboxId")[0].checked) {
       notifyAlert(
         "No 'Apple Team ID' is configured, I will try to build a project for the iOS simulator."
@@ -1481,8 +1495,9 @@ router.get(
                 ),
                 button(
                   {
-                    type: "submit",
-                    onClick: `handleMessages(); press_store_button(this);`,
+                    id: "buildMobileAppBtnId",
+                    type: "button",
+                    onClick: `build_mobile_app(this);`,
                     class: "btn btn-warning",
                   },
                   i({ class: "fas fa-hammer pe-2" }),
@@ -1494,6 +1509,57 @@ router.get(
           },
         ],
       },
+    });
+  })
+);
+
+const checkFiles = async (outDir, fileNames) => {
+  const rootFolder = await File.rootFolder();
+  const mobile_app_dir = path.join(rootFolder.location, "mobile_app", outDir);
+  const entries = fs.readdirSync(mobile_app_dir);
+  return fileNames.some((fileName) => entries.indexOf(fileName) >= 0);
+};
+
+// check if a build has finished (poll service)
+router.get(
+  "/build-mobile-app/finished",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { build_dir } = req.query;
+    res.json({
+      finished: await checkFiles(build_dir, ["logs.txt", "error_logs.txt"]),
+    });
+  })
+);
+
+router.get(
+  "/build-mobile-app/result",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { build_dir_name } = req.query;
+    const rootFolder = await File.rootFolder();
+    const buildDir = path.join(
+      rootFolder.location,
+      "mobile_app",
+      build_dir_name
+    );
+    const files = await Promise.all(
+      fs
+        .readdirSync(buildDir)
+        .map(async (outFile) => await File.from_file_on_disk(outFile, buildDir))
+    );
+    const resultMsg = files.find((file) => file.filename === "logs.txt")
+      ? req.__("The build was successfully")
+      : req.__("Unable to build the app");
+    res.sendWrap(req.__(`Admin`), {
+      above: [
+        {
+          type: "card",
+          title: req.__("Build Result"),
+          contents: div(resultMsg),
+        },
+        files.length > 0 ? app_files_table(files, build_dir_name, req) : "",
+      ],
     });
   })
 );
@@ -1512,24 +1578,27 @@ router.post(
       serverURL,
     } = req.body;
     if (!androidPlatform && !iOSPlatform) {
-      req.flash(
-        "error",
-        req.__("Please select at least one platform (android or iOS).")
-      );
-      return res.redirect("/admin/build-mobile-app");
+      return res.json({
+        error: req.__("Please select at least one platform (android or iOS)."),
+      });
     }
     if (!androidPlatform && useDocker) {
-      req.flash("error", req.__("Only the android build supports docker."));
-      return res.redirect("/admin/build-mobile-app");
+      return res.json({
+        error: req.__("Only the android build supports docker."),
+      });
     }
     if (!serverURL || serverURL.length == 0) {
       serverURL = getState().getConfig("base_url") || "";
     }
     if (!serverURL.startsWith("http")) {
-      req.flash("error", req.__("Please enter a valid server URL."));
-      return res.redirect("/admin/build-mobile-app");
+      return res.json({
+        error: req.__("Please enter a valid server URL."),
+      });
     }
-    const appOut = path.join(__dirname, "..", "mobile-app-out");
+    const outDirName = `build_${new Date().valueOf()}`;
+    const rootFolder = await File.rootFolder();
+    const buildDir = path.join(rootFolder.location, "mobile_app", outDirName);
+    await File.new_folder(outDirName, "/mobile_app");
     const spawnParams = [
       "build-app",
       "-e",
@@ -1537,7 +1606,7 @@ router.post(
       "-t",
       entryPointType,
       "-c",
-      appOut,
+      buildDir,
       "-b",
       `${os.userInfo().homedir}/mobile_app_build`,
     ];
@@ -1558,6 +1627,9 @@ router.post(
     ) {
       spawnParams.push("--tenantAppName", db.getTenantSchema());
     }
+    // end http call, return the out directory name
+    // the gui polls for results
+    res.json({ build_dir_name: outDirName });
     const child = spawn("saltcorn", spawnParams, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
@@ -1572,55 +1644,31 @@ router.post(
       childOutputs.push(data.toString());
     });
     child.on("exit", async function (exitCode, signal) {
-      if (exitCode === 0) {
-        const files = await Promise.all(
-          fs
-            .readdirSync(appOut)
-            .map(
-              async (outFile) =>
-                await File.from_existing_file(appOut, outFile, req.user.id)
-            )
-        );
-        res.sendWrap(req.__(`Admin`), {
-          above: [
-            {
-              type: "card",
-              title: req.__("Build Result"),
-              contents: div(req.__("The build was successfully")),
-            },
-            files.length > 0 ? app_files_table(files, req) : "",
-          ],
-        });
-      } else
-        res.sendWrap(req.__(`Admin`), {
-          above: [
-            {
-              type: "card",
-              title: req.__("Build Result"),
-              contents: div(
-                req.__("Unable to build the app:"),
-                pre(code(childOutputs.join("<br/>")))
-              ),
-            },
-          ],
-        });
+      const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
+      fs.writeFile(
+        path.join(buildDir, logFile),
+        childOutputs.join("\n"),
+        (error) => {
+          if (error) {
+            console.log(`unable to write '${logFile}' to '${buildDir}'`);
+            console.log(error);
+          }
+        }
+      );
     });
     child.on("error", function (msg) {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
-      res.sendWrap(req.__(`Admin`), {
-        above: [
-          {
-            type: "card",
-            title: req.__("Build Result"),
-            contents: div(
-              p(req.__("Unable to build the app:")),
-              pre(code(message)),
-              pre(code(stack))
-            ),
-          },
-        ],
-      });
+      fs.writeFile(
+        path.join(buildDir, "error_logs.txt"),
+        [message, stack].join("\n"),
+        (error) => {
+          if (error) {
+            console.log(`unable to write '${logFile}' to '${buildDir}'`);
+            console.log(error);
+          }
+        }
+      );
     });
   })
 );

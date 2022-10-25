@@ -7,7 +7,7 @@
 
 import db from "../db";
 import { v4 as uuidv4 } from "uuid";
-import { join } from "path";
+import { join, parse } from "path";
 const { asyncMap } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -15,7 +15,10 @@ import axios from "axios";
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
-
+const path = require("path");
+const fsp = require("fs").promises;
+const fs = require("fs");
+const xattr = require("fs-xattr");
 declare let window: any;
 
 /**
@@ -40,6 +43,7 @@ class File {
   user_id?: number;
   min_role_read: number;
   s3_store: boolean;
+  isDirectory: boolean;
 
   /**
    * Constructor
@@ -59,6 +63,7 @@ class File {
     this.mime_sub = o.mime_sub;
     this.min_role_read = o.min_role_read;
     this.s3_store = !!o.s3_store;
+    this.isDirectory = !!o.isDirectory;
     // TBD add checksum this.checksum = o.checksum;
   }
 
@@ -72,16 +77,134 @@ class File {
     where?: Where,
     selectopts: SelectOptions = {}
   ): Promise<Array<File>> {
-    if (selectopts.cached) {
-      const { getState } = require("../db/state");
-      // TODO ch migrate State and replace any
-      const files = Object.values(getState().files).sort((a: any, b: any) =>
-        a.filename > b.filename ? 1 : -1
+    const { getState } = require("../db/state");
+    const state = getState();
+
+    const useS3 = state?.getConfig("storage_s3_enabled");
+    if (useS3 || where?.inDB) {
+      if (selectopts.cached) {
+        // TODO ch migrate State and replace any
+        const files = Object.values(getState().files).sort((a: any, b: any) =>
+          a.filename > b.filename ? 1 : -1
+        );
+        return files.map((t: any) => new File(t));
+      }
+      if (where?.inDB) delete where.inDB;
+      const db_flds = await db.select("_sc_files", where, selectopts);
+      return db_flds.map((dbf: FileCfg) => new File(dbf));
+    } else {
+      const relativeSearchFolder = where?.folder || "/";
+      const tenant = db.getTenantSchema();
+      const safeDir = File.normalise(relativeSearchFolder);
+      const absoluteFolder = path.join(
+        db.connectObj.file_store,
+        tenant,
+        safeDir
       );
-      return files.map((t: any) => new File(t));
+      const files: File[] = [];
+      if (where?.filename) {
+        files.push(
+          await File.from_file_on_disk(where?.filename, absoluteFolder)
+        );
+      } else {
+        let fileNms;
+        try {
+          fileNms = await fsp.readdir(absoluteFolder);
+        } catch (e) {
+          fileNms = [];
+        }
+
+        for (const name of fileNms) {
+          if (name[0] === "." || name.startsWith("_resized_")) continue;
+          files.push(await File.from_file_on_disk(name, absoluteFolder));
+        }
+      }
+      let pred = (f: File) => true;
+      const addPred = (p: Function) => {
+        const oldPred = pred;
+        pred = (f: File) => oldPred(f) && p(f);
+      };
+      if (where?.mime_super)
+        addPred((f: File) => f.mime_super === where?.mime_super);
+      if (where?.mime_sub) addPred((f: File) => f.mime_sub === where?.mime_sub);
+      if (where?.isDirectory)
+        addPred((f: File) => !!f.isDirectory === !!where?.isDirectory);
+      return files.filter(pred);
     }
-    const db_flds = await db.select("_sc_files", where, selectopts);
-    return db_flds.map((dbf: FileCfg) => new File(dbf));
+  }
+  static normalise(fpath: string): string {
+    return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
+  }
+
+  static async rootFolder(): Promise<File> {
+    const tenant = db.getTenantSchema();
+
+    return await File.from_file_on_disk(
+      "/",
+      path.join(db.connectObj.file_store, tenant)
+    );
+  }
+  static absPathToServePath(absPath: string | number): string {
+    if (typeof absPath === "number") return `${absPath}`;
+    const tenant = db.getTenantSchema();
+    const s = absPath.replace(path.join(db.connectObj.file_store, tenant), "");
+    return s[0] === "/" ? s.substring(1) : s;
+  }
+  static async allDirectories(): Promise<Array<File>> {
+    const allDirs: File[] = [await File.rootFolder()];
+    const iterFolder = async (folder?: string) => {
+      const files = await File.find(folder ? { folder } : {});
+      for (const f of files) {
+        if (f.isDirectory) {
+          allDirs.push(f);
+          await iterFolder(f.path_to_serve as string);
+        }
+      }
+    };
+    await iterFolder();
+
+    return allDirs;
+  }
+  static async from_file_on_disk(
+    name: string,
+    absoluteFolder: string
+  ): Promise<File> {
+    let stat;
+    try {
+      stat = await fsp.stat(path.join(absoluteFolder, name));
+    } catch (e) {
+      throw new Error("File.from_file_on_disk: File not found: " + name);
+    }
+    let min_role_read, user_id;
+    try {
+      min_role_read = +(await xattr.get(
+        path.join(absoluteFolder, name),
+        "user.saltcorn.min_role_read"
+      ));
+    } catch (e) {
+      min_role_read = 10;
+    }
+    try {
+      user_id = +(await xattr.get(
+        path.join(absoluteFolder, name),
+        "user.saltcorn.user_id"
+      ));
+    } catch (e) {}
+
+    const isDirectory = stat.isDirectory();
+    const mimetype = lookup(name);
+    const [mime_super, mime_sub] = mimetype ? mimetype.split("/") : ["", ""];
+    return new File({
+      filename: name,
+      location: path.join(absoluteFolder, name),
+      size_kb: Math.round(stat.size / 1024),
+      uploaded_at: stat.birthtime,
+      mime_super,
+      mime_sub,
+      user_id,
+      isDirectory,
+      min_role_read,
+    });
   }
 
   /**
@@ -90,16 +213,84 @@ class File {
    * @param where
    * @returns {Promise<File|null>}
    */
-  static async findOne(where: Where): Promise<File | null> {
-    if (where.id) {
+  static async findOne(where: Where | string): Promise<File | null> {
+    if (typeof where === "string") {
       const { getState } = require("../db/state");
-      const cf = getState().files[+where.id];
-      if (cf) return new File(cf);
+      const state = getState();
+      const useS3 = state?.getConfig("storage_s3_enabled");
+      //legacy serving ids
+      if (/^\d+$/.test(where)) {
+        const legacy_file_id_locations = state?.getConfig(
+          "legacy_file_id_locations"
+        );
+        //console.log("lfil", legacy_file_id_locations);
+
+        if (legacy_file_id_locations?.[where]) {
+          const legacy_file = await File.findOne(
+            legacy_file_id_locations?.[where]
+          );
+          return legacy_file;
+        }
+      }
+
+      if (useS3) {
+        const files = await File.find({ id: +where });
+        return files[0];
+      } else {
+        const tenant = db.getTenantSchema();
+
+        const safeDir = path.normalize(where).replace(/^(\.\.(\/|\\|$))+/, "");
+        const absoluteFolder = path.join(
+          db.connectObj.file_store,
+          tenant,
+          safeDir
+        );
+        const name = path.basename(absoluteFolder);
+        const dir = path.dirname(absoluteFolder);
+        try {
+          return await File.from_file_on_disk(name, dir);
+        } catch (e: any) {
+          state?.log(2, e?.toString ? e.toString() : e);
+          return null;
+        }
+      }
     }
-    const f = await db.selectMaybeOne("_sc_files", where);
-    return f ? new File(f) : null;
+    const files = await File.find(where);
+    return files.length > 0 ? new File(files[0]) : null;
   }
 
+  static async new_folder(
+    name: string,
+    inFolder: string = ""
+  ): Promise<undefined> {
+    const tenant = db.getTenantSchema();
+
+    const safeDir = path.normalize(name).replace(/^(\.\.(\/|\\|$))+/, "");
+    const safeInDir = path.normalize(inFolder).replace(/^(\.\.(\/|\\|$))+/, "");
+    const absoluteFolder = path.join(
+      db.connectObj.file_store,
+      tenant,
+      safeInDir,
+      safeDir
+    );
+    await mkdir(absoluteFolder, { recursive: true });
+
+    return;
+  }
+
+  get path_to_serve(): string | number {
+    if (this.s3_store && this.id) return this.id;
+    const tenant = db.getTenantSchema();
+    const s = this.location.replace(
+      path.join(db.connectObj.file_store, tenant),
+      ""
+    );
+    return s[0] === "/" ? s.substring(1) : s;
+  }
+
+  get current_folder() {
+    return path.dirname(this.path_to_serve);
+  }
   /**
    * Update File descriptor
    *
@@ -112,21 +303,111 @@ class File {
     await require("../db/state").getState().refresh_files();
   }
 
+  async set_role(min_role_read: number) {
+    // const fsx = await import("fs-xattr");
+    if (this.id) {
+      await File.update(this.id, { min_role_read });
+    } else {
+      await xattr.set(
+        this.location,
+        "user.saltcorn.min_role_read",
+        `${min_role_read}`
+      );
+    }
+  }
+
+  async set_user(user_id: number) {
+    // const fsx = await import("fs-xattr");
+    if (this.id) {
+      await File.update(this.id, { user_id });
+    } else {
+      await xattr.set(this.location, "user.saltcorn.user_id", `${user_id}`);
+    }
+  }
+
+  async rename(filenameIn: string): Promise<void> {
+    const filename = File.normalise(filenameIn);
+    if (this.id) {
+      await File.update(this.id, { filename });
+    } else {
+      const newPath = path.join(path.dirname(this.location), filename);
+
+      await fsp.rename(this.location, newPath);
+      await File.update_table_references(
+        this.path_to_serve as string,
+        path.join(path.dirname(this.path_to_serve), filename)
+      );
+      this.location = newPath;
+      this.filename = filename;
+    }
+  }
+
+  static async update_table_references(from: string, to: string) {
+    const Field = require("./field");
+    const Table = require("./table");
+    const fileFields = await Field.find({ type: "File" });
+    const schema = db.getTenantSchemaPrefix();
+    for (const field of fileFields) {
+      const table = Table.findOne({ id: field.table_id });
+      await db.query(
+        `update ${schema}"${table.name}" set "${field.name}" = $1 where "${field.name}" = $2`,
+        [to, from]
+      );
+    }
+  }
+
+  async move_to_dir(newFolder: string): Promise<void> {
+    const newFolderNormd = File.normalise(newFolder);
+    const tenant = db.getTenantSchema();
+
+    const file_store = db.connectObj.file_store;
+    const newPath = path.join(
+      file_store,
+      tenant,
+      newFolderNormd,
+      this.filename
+    );
+
+    await fsp.rename(this.location, newPath);
+    await File.update_table_references(
+      this.path_to_serve as string,
+      path.join(newFolderNormd, this.filename)
+    );
+    this.location = newPath;
+  }
   /**
    * Get absolute path to new file in db.connectObj.file_store.
    *
    * @param suggest - path to file inside file store. If undefined that autogenerated uudv4 is used.
    * @returns {string} - path to file
    */
-  static get_new_path(suggest?: string): string {
+  static get_new_path(suggest?: string, renameIfExisting?: boolean): string {
     const { getState } = require("../db/state");
+    const state = getState();
 
     // Check if it uses S3, then use a default "saltcorn" folder
-    const useS3 = getState().getConfig("storage_s3_enabled");
+    const useS3 = state?.getConfig("storage_s3_enabled");
+    const tenant = db.getTenantSchema();
+
     const file_store = !useS3 ? db.connectObj.file_store : "saltcorn/";
 
     const newFnm = suggest || uuidv4();
-    const newPath = join(file_store, newFnm);
+    let newPath = join(file_store, tenant, newFnm);
+    if (renameIfExisting) {
+      for (let i = 0; i < 5000; i++) {
+        let newbase = newFnm;
+        if (i) {
+          const ext = path.extname(newFnm);
+          const filenoext = path.basename(newFnm, ext);
+          newbase = path.join(path.dirname(newFnm), `${filenoext}_${i}${ext}`);
+        }
+        newPath = File.get_new_path(newbase, false);
+        if (!fs.existsSync(newPath)) {
+          break;
+        }
+      }
+    }
+
     return newPath;
   }
 
@@ -137,12 +418,19 @@ class File {
    * @returns {Promise<void>}
    */
   // TBD fs errors handling
-  static async ensure_file_store(): Promise<void> {
-    const { getState } = require("../db/state");
-
-    if (!getState().getConfig("storage_s3_enabled")) {
-      const file_store = db.connectObj.file_store;
+  static async ensure_file_store(tenant_name?: string): Promise<void> {
+    const { getState, getAllTenants } = require("../db/state");
+    const file_store = db.connectObj.file_store;
+    if (tenant_name) {
+      await mkdir(path.join(file_store, tenant_name), { recursive: true });
+      return;
+    }
+    if (!getState()?.getConfig("storage_s3_enabled")) {
       await mkdir(file_store, { recursive: true });
+      const tenants = getAllTenants();
+      for (const tenant of Object.keys(tenants)) {
+        await mkdir(path.join(file_store, tenant), { recursive: true });
+      }
     }
   }
 
@@ -162,15 +450,16 @@ class File {
       s3object?: boolean;
     },
     user_id: number,
-    min_role_read: number = 1
+    min_role_read: number = 1,
+    folder: string = "/"
   ): Promise<File> {
     if (Array.isArray(file)) {
       return await asyncMap(file, (f: any) =>
-        File.from_req_files(f, user_id, min_role_read)
+        File.from_req_files(f, user_id, min_role_read, folder)
       );
     } else {
       // get path to file
-      const newPath = File.get_new_path();
+      const newPath = File.get_new_path(path.join(folder, file.name), true);
       // set mime type
       const [mime_super, mime_sub] = file.mimetype.split("/");
       // move file in file system to newPath
@@ -191,33 +480,6 @@ class File {
   }
 
   /**
-   * create a '_sc_files' entry from an existing file.
-   * The old file will be moved to a new location.
-   *
-   * @param directory directory of existing file
-   * @param name name of existing file
-   * @param userId id of creating user
-   * @returns the new File object
-   */
-  static async from_existing_file(
-    directory: string,
-    name: string,
-    userId: number
-  ) {
-    const fullPath = join(directory, name);
-    if(!existsSync(fullPath)) return null;
-    const file: any = {
-      mimetype: lookup(fullPath),
-      name: name,
-      mv: (newPath: string) => {
-        renameSync(fullPath, newPath);
-      },
-      size: statSync(fullPath).size,
-    };
-    return await File.from_req_files(file, userId);
-  }
-
-  /**
    * Delete file
    * @returns {Promise<{error}>}
    */
@@ -227,9 +489,10 @@ class File {
   ): Promise<{ error: string } | void> {
     try {
       // delete file from database
-      await db.deleteWhere("_sc_files", { id: this.id });
+      if (this.id) await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
       if (unlinker) await unlinker(this);
+      else if (this.isDirectory) await fsp.rmdir(this.location);
       else await unlink(this.location);
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache
@@ -244,7 +507,9 @@ class File {
    * @type {string}
    */
   get mimetype(): string {
-    return `${this.mime_super}/${this.mime_sub}`;
+    if (this.mime_super && this.mime_sub)
+      return `${this.mime_super}/${this.mime_sub}`;
+    else return "";
   }
 
   /**
@@ -254,12 +519,13 @@ class File {
    */
   static async create(f: FileCfg): Promise<File> {
     const file = new File(f);
-    const { id, ...rest } = file;
+    //const { id, ...rest } = file;
     // insert file descriptor row to database
-    file.id = await db.insert("_sc_files", rest);
+    //file.id = await db.insert("_sc_files", rest);
     // refresh file list cache
-    await require("../db/state").getState().refresh_files();
-
+    //await require("../db/state").getState().refresh_files();
+    await file.set_role(file.min_role_read);
+    if (file.user_id) await file.set_user(file.user_id);
     return file;
   }
 
@@ -299,6 +565,7 @@ namespace File {
     mime_sub: string;
     min_role_read: number;
     s3_store?: boolean;
+    isDirectory?: boolean;
   };
 }
 type FileCfg = File.FileCfg;

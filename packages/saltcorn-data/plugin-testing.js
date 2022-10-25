@@ -130,8 +130,8 @@ const check_view_columns = async (view, columns) => {
     view.table_id
       ? { id: view.table_id }
       : view.exttable_name
-      ? { name: view.exttable_name }
-      : { id: -1 }
+        ? { name: view.exttable_name }
+        : { id: -1 }
   );
   let fields;
   if (table) fields = await table.getFields();
@@ -165,7 +165,7 @@ const check_view_columns = async (view, columns) => {
         }
         if (
           column.fieldview &&
-          !f.is_fkey &&
+          !(f.is_fkey || f.type === "File") &&
           !f.type.fieldviews[column.fieldview]
         )
           errs.push(

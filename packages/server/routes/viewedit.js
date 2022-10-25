@@ -16,7 +16,7 @@ const {
   post_dropdown_item,
   renderBuilder,
   settingsDropdown,
-  alert
+  alert,
 } = require("@saltcorn/markup");
 const {
   //span,
@@ -27,7 +27,9 @@ const {
   a,
   div,
   //button,
+  script,
   text,
+  domReady,
 } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
@@ -40,7 +42,6 @@ const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
-const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
@@ -77,20 +78,26 @@ router.get(
 
     const viewMarkup = await viewsList(views, req);
     const tables = await Table.find();
-    const viewAccessWarning = view => {
-      const table = tables.find(t => t.name === view.table)
-      if (!table) return false
-      if (table.ownership_field_id || table.ownership_formula) return false
+    const viewAccessWarning = (view) => {
+      const table = tables.find((t) => t.name === view.table);
+      if (!table) return false;
+      if (table.ownership_field_id || table.ownership_formula) return false;
 
-      return table.min_role_read < view.min_role
-    }
-    const hasAccessWarning = views.filter(viewAccessWarning)
-    const accessWarning = hasAccessWarning.length > 0
-      ? alert("danger", `<p>You have views with a role to access lower than the table role to read, 
+      return table.min_role_read < view.min_role;
+    };
+    const hasAccessWarning = views.filter(viewAccessWarning);
+    const accessWarning =
+      hasAccessWarning.length > 0
+        ? alert(
+            "danger",
+            `<p>You have views with a role to access lower than the table role to read, 
       with no table ownership. In the next version of Saltcorn, this may cause a
       denial of access. Users will need to have table read access to any data displayed.</p> 
-      Views potentially affected: ${hasAccessWarning.map(v => v.name).join(", ")}`)
-      : ''
+      Views potentially affected: ${hasAccessWarning
+        .map((v) => v.name)
+        .join(", ")}`
+          )
+        : "";
     res.sendWrap(req.__(`Views`), {
       above: [
         {
@@ -106,14 +113,14 @@ router.get(
             viewMarkup,
             tables.length > 0
               ? a(
-                { href: `/viewedit/new`, class: "btn btn-primary" },
-                req.__("Create view")
-              )
-              : p(
-                req.__(
-                  "You must create at least one table before you can create views."
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  req.__("Create view")
                 )
-              ),
+              : p(
+                  req.__(
+                    "You must create at least one table before you can create views."
+                  )
+                ),
           ],
         },
       ],
@@ -225,15 +232,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       ...(isEdit
         ? [
-            new Field({
-              name: "viewtemplate",
-              input_type: "hidden",
-            }),
-            new Field({
-              name: "table_name",
-              input_type: "hidden",
-            }),
-          ]
+          new Field({
+            name: "viewtemplate",
+            input_type: "hidden",
+          }),
+          new Field({
+            name: "table_name",
+            input_type: "hidden",
+          }),
+        ]
         : []),
     ],
     values,
@@ -434,7 +441,7 @@ router.post(
  * @returns {void}
  */
 const respondWorkflow = (view, wf, wfres, req, res) => {
-  const wrap = (contents, noCard) => ({
+  const wrap = (contents, noCard, previewURL) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -450,6 +457,12 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         title: wfres.title,
         contents,
       },
+      ...previewURL ? [{
+        type: "card",
+        title: req.__("Preview"),
+        contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL },
+          script(domReady(`updateViewPreview()`))),
+      }] : []
     ],
   });
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
@@ -472,7 +485,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
           },
         ],
       },
-      wrap(renderForm(wfres.renderForm, req.csrfToken()))
+      wrap(renderForm(wfres.renderForm, req.csrfToken()), false, wf.previewURL)
     );
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
@@ -686,14 +699,14 @@ router.post(
     const view = await View.findOne({ id });
     const roles = await User.get_roles();
     const roleRow = roles.find((r) => r.id === +role);
-    if (roleRow && view)
-      req.flash(
-        "success",
-        req.__(`Minimum role for %s updated to %s`, view.name, roleRow.role)
-      );
-    else req.flash("success", req.__(`Minimum role updated`));
-
-    res.redirect("/viewedit");
+    const message =
+      roleRow && view
+        ? req.__(`Minimum role for %s updated to %s`, view.name, roleRow.role)
+        : req.__(`Minimum role updated`);
+    if (!req.xhr) {
+      req.flash("success", message);
+      res.redirect("/viewedit");
+    } else res.json({ okay: true, responseText: message });
   })
 );
 

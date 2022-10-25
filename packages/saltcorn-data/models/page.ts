@@ -39,6 +39,8 @@ const {
   isNode,
   objectToQueryString,
 } = utils;
+import type Tag from "./tag";
+import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 /**
  * Page Class
@@ -282,6 +284,11 @@ class Page implements AbstractPage {
 
   connected_objects(): ConnectedObjects {
     return extractFromLayout(this.layout);
+  }
+
+  async getTags(): Promise<Array<AbstractTag>> {
+    const Tag = (await import("./tag")).default;
+    return await Tag.findWithEntries({ page_id: this.id });
   }
 }
 

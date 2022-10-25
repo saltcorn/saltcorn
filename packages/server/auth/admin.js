@@ -38,7 +38,9 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
-
+const {
+  expressionValidator,
+} = require("@saltcorn/data/models/expression");
 /**
  * @type {object}
  * @const
@@ -177,33 +179,33 @@ const user_dropdown = (user, req, can_reset) =>
       req
     ),
     can_reset &&
-      post_dropdown_item(
-        `/useradmin/reset-password/${user.id}`,
-        '<i class="fas fa-envelope"></i>&nbsp;' +
-          req.__("Send password reset email"),
-        req
-      ),
+    post_dropdown_item(
+      `/useradmin/reset-password/${user.id}`,
+      '<i class="fas fa-envelope"></i>&nbsp;' +
+      req.__("Send password reset email"),
+      req
+    ),
     can_reset &&
-      !user.verified_on &&
-      getState().getConfig("verification_view", "") &&
-      post_dropdown_item(
-        `/useradmin/send-verification/${user.id}`,
-        '<i class="fas fa-envelope"></i>&nbsp;' +
-          req.__("Send verification email"),
-        req
-      ),
+    !user.verified_on &&
+    getState().getConfig("verification_view", "") &&
+    post_dropdown_item(
+      `/useradmin/send-verification/${user.id}`,
+      '<i class="fas fa-envelope"></i>&nbsp;' +
+      req.__("Send verification email"),
+      req
+    ),
     user.disabled &&
-      post_dropdown_item(
-        `/useradmin/enable/${user.id}`,
-        '<i class="fas fa-play"></i>&nbsp;' + req.__("Enable"),
-        req
-      ),
+    post_dropdown_item(
+      `/useradmin/enable/${user.id}`,
+      '<i class="fas fa-play"></i>&nbsp;' + req.__("Enable"),
+      req
+    ),
     !user.disabled &&
-      post_dropdown_item(
-        `/useradmin/disable/${user.id}`,
-        '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
-        req
-      ),
+    post_dropdown_item(
+      `/useradmin/disable/${user.id}`,
+      '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
+      req
+    ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
       `/useradmin/delete/${user.id}`,
@@ -257,8 +259,8 @@ router.get(
                 key: (r) =>
                   !!r.verified_on
                     ? i({
-                        class: "fas fa-check-circle text-success",
-                      })
+                      class: "fas fa-check-circle text-success",
+                    })
                     : "",
               },
               { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
@@ -421,15 +423,15 @@ router.get(
         above: [
           ...(letsencrypt && has_custom
             ? [
-                {
-                  type: "card",
-                  contents: p(
-                    req.__(
-                      "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
-                    )
-                  ),
-                },
-              ]
+              {
+                type: "card",
+                contents: p(
+                  req.__(
+                    "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+                  )
+                ),
+              },
+            ]
             : []),
           {
             type: "card",
@@ -450,33 +452,33 @@ router.get(
               ),
               letsencrypt
                 ? post_btn(
-                    "/config/delete/letsencrypt",
-                    req.__("Disable LetsEncrypt HTTPS"),
-                    req.csrfToken(),
-                    { btnClass: "btn-danger", req }
-                  )
+                  "/config/delete/letsencrypt",
+                  req.__("Disable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { btnClass: "btn-danger", req }
+                )
                 : post_btn(
-                    "/admin/enable-letsencrypt",
-                    req.__("Enable LetsEncrypt HTTPS"),
-                    req.csrfToken(),
-                    { confirm: true, req }
-                  ),
+                  "/admin/enable-letsencrypt",
+                  req.__("Enable LetsEncrypt HTTPS"),
+                  req.csrfToken(),
+                  { confirm: true, req }
+                ),
               !letsencrypt &&
-                show_warning &&
-                !has_custom &&
-                div(
-                  { class: "mt-3 alert alert-danger" },
-                  p(
-                    req.__(
-                      "The address you are using to reach Saltcorn does not match the Base URL."
-                    )
-                  ),
-                  p(
-                    req.__(
-                      "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
-                    )
+              show_warning &&
+              !has_custom &&
+              div(
+                { class: "mt-3 alert alert-danger" },
+                p(
+                  req.__(
+                    "The address you are using to reach Saltcorn does not match the Base URL."
                   )
                 ),
+                p(
+                  req.__(
+                    "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                  )
+                )
+              ),
             ],
           },
           {
@@ -570,8 +572,8 @@ router.post(
       req.flash(
         "success",
         req.__("Custom SSL enabled. Restart for changes to take effect.") +
-          " " +
-          a({ href: "/admin/system" }, req.__("Restart here"))
+        " " +
+        a({ href: "/admin/system" }, req.__("Restart here"))
       );
       if (!req.xhr) {
         res.redirect("/useradmin/ssl");
@@ -579,6 +581,103 @@ router.post(
     }
   })
 );
+
+/**
+ * @name get/ssl/custom
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.get(
+  "/table-access",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const tables = await Table.find()
+    const roleOptions = (await User.get_roles()).map((r) => ({
+      value: r.id,
+      label: r.role,
+    }));
+
+    const contents = []
+    for (const table of tables) {
+      if (table.external) continue
+      const fields = await table.getFields();
+      const userFields = fields
+        .filter((f) => f.reftable_name === "users")
+        .map((f) => ({ value: f.id, label: f.name }));
+      const form = new Form({
+        action: "/table",
+        noSubmitButton: true,
+        onChange: "saveAndContinue(this)",
+        fields: [
+          {
+            label: req.__("Ownership field"),
+            name: "ownership_field_id",
+            sublabel: req.__(
+              "The user referred to in this field will be the owner of the row"
+            ),
+            input_type: "select",
+            options: [
+              { value: "", label: req.__("None") },
+              ...userFields,
+              { value: "_formula", label: req.__("Formula") },
+            ],
+          },
+          {
+            name: "ownership_formula",
+            label: req.__("Ownership formula"),
+            validator: expressionValidator,
+            type: "String",
+            class: "validate-expression",
+            sublabel:
+              req.__("User is treated as owner if true. In scope: ") +
+              ["user", ...fields.map((f) => f.name)]
+                .map((fn) => code(fn))
+                .join(", "),
+            showIf: { ownership_field_id: "_formula" },
+          },
+          {
+            label: req.__("Minimum role to read"),
+            sublabel: req.__(
+              "User must have this role or higher to read rows from the table, unless they are the owner"
+            ),
+            name: "min_role_read",
+            input_type: "select",
+            options: roleOptions,
+            attributes: { asideNext: true }
+          },
+          {
+            label: req.__("Minimum role to write"),
+            name: "min_role_write",
+            input_type: "select",
+            sublabel: req.__(
+              "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
+            ),
+            options: roleOptions,
+          },
+        ]
+      })
+      form.hidden("id", "name");
+      form.values = table
+      if (table.ownership_formula && !table.ownership_field_id)
+        form.values.ownership_field_id = "_formula";
+      contents.push(div(
+        h5(a({ href: `/table/${table.id}` }, table.name)),
+        renderForm(form, req.csrfToken())
+      ))
+    }
+    send_users_page({
+      res,
+      req,
+      active_sub: "Table access",
+      contents: {
+        type: "card",
+        title: req.__("Table access"),
+        contents
+      },
+    });
+  })
+);
+
 
 /**
  * @name get/:id
@@ -613,9 +712,9 @@ router.get(
               div(
                 user.api_token
                   ? span(
-                      { class: "me-1" },
-                      req.__("API token for this user: ")
-                    ) + code(user.api_token)
+                    { class: "me-1" },
+                    req.__("API token for this user: ")
+                  ) + code(user.api_token)
                   : req.__("No API token issued")
               ),
               // button for reset or generate api token
@@ -629,16 +728,16 @@ router.get(
               ),
               // button for remove api token
               user.api_token &&
-                div(
-                  { class: "mt-4 ms-2 d-inline-block" },
-                  post_btn(
-                    `/useradmin/remove-api-token/${user.id}`,
-                    // TBD localization
-                    user.api_token ? req.__("Remove") : req.__("Generate"),
-                    req.csrfToken(),
-                    { req: req, confirm: true }
-                  )
-                ),
+              div(
+                { class: "mt-4 ms-2 d-inline-block" },
+                post_btn(
+                  `/useradmin/remove-api-token/${user.id}`,
+                  // TBD localization
+                  user.api_token ? req.__("Remove") : req.__("Generate"),
+                  req.csrfToken(),
+                  { req: req, confirm: true }
+                )
+              ),
             ],
           },
         ],

@@ -9,6 +9,7 @@ const os = require("os");
 const { getConnectObject } = require("@saltcorn/data/db/connect");
 const day = dateFormat(new Date(), "yyyymmdd");
 const connobj = getConnectObject();
+const { init_some_tenants } = require("../common");
 
 const pgdb = connobj.database;
 
@@ -29,13 +30,9 @@ class BackupCommand extends Command {
     if (flags.tenant) {
       const { create_backup } = require("@saltcorn/admin-models/models/backup");
 
+      await init_some_tenants(flags.tenant);
       const db = require("@saltcorn/data/db");
-      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-      const { init_multi_tenant } = require("@saltcorn/data/db/state");
-      const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-      await loadAllPlugins();
-      const tenants = await getAllTenants();
-      await init_multi_tenant(loadAllPlugins, undefined, tenants);
+
       await db.runWithTenant(flags.tenant, async () => {
         const fnm = await create_backup(flags.output);
         console.log(fnm);

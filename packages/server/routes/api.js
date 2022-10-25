@@ -124,8 +124,17 @@ router.post(
   error_catcher(async (req, res, next) => {
     let { viewName, queryName } = req.params;
     const view = await View.findOne({ name: viewName });
+    const db = require("@saltcorn/data/db");
     if (!view) {
-      res.status(404).json({ error: req.__("Not found") });
+      res.status(404).json({ 
+        error: req.__("View %s not found", viewName),
+        view: viewName,
+        queryName: queryName,
+        smr: req.smr,
+        smrHeader: req.headers["x-saltcorn-client"],
+        schema: db.getTenantSchema(),
+        userTenant: req.user?.tenant,
+      });
       return;
     }
     await passport.authenticate(
@@ -143,7 +152,15 @@ router.post(
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
           } else {
-            res.status(404).json({ error: req.__("Not found") });
+            res.status(404).json({ 
+              error: req.__("Query %s not found", queryName),
+              view: viewName,
+              queryName: queryName,
+              smr: req.smr,
+              smrHeader: req.headers["x-saltcorn-client"],
+              schema: db.getTenantSchema(),
+              userTenant: req.user?.tenant,
+            });
           }
         } else {
           res.status(401).json({ error: req.__("Not authorized") });

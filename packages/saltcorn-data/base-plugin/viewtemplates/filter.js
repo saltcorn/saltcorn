@@ -208,7 +208,7 @@ const run = async (
       if (!field) return;
       field.fieldview = fieldview;
       Object.assign(field.attributes, configuration);
-      await field.fill_fkey_options();
+      await field.fill_fkey_options(false, undefined, extra.req.user ? { user_id: extra.req.user } : {});
       segment.field = field;
     },
     view: async (segment) => {
@@ -301,6 +301,13 @@ const run = async (
       });
     },
     dropdown_filter({ field_name, neutral_label, full_width }) {
+      const dvs = distinct_values[field_name] || []
+      dvs.sort((a, b) =>
+        (a.label?.toLowerCase?.() || a.label) >
+          (b.label?.toLowerCase?.() || b.label)
+          ? 1
+          : -1
+      );
       return select(
         {
           name: `ddfilter${field_name}`,
@@ -312,7 +319,7 @@ const run = async (
             field_name
           )}', this.value)`,
         },
-        (distinct_values[field_name] || []).map(({ label, value, jsvalue }) =>
+        dvs.map(({ label, value, jsvalue }) =>
           option(
             {
               value,

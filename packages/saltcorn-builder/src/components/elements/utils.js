@@ -80,11 +80,10 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
 
 export const FormulaTooltip = () => {
   const { fields } = useContext(optionsCtx);
-  console.log(fields);
   return <Tooltip>
     <div>Formulae in Saltcorn are JavaScript expressions based on the current database row.</div>
     {fields ? <Fragment> Variables in scope: &nbsp;
-      {fields.map((f, ix) => <Fragment><code key={ix}>{f.name}</code>{" "}</Fragment>)}</Fragment> : null}
+      {fields.map((f, ix) => <Fragment key={ix}><code>{f.name}</code>{" "}</Fragment>)}</Fragment> : null}
 
     <a className="d-block" href="https://wiki.saltcorn.com/view/ShowPage/formulas">Wiki page on formulas</a>
   </Tooltip>
@@ -700,6 +699,7 @@ export /**
               className="form-control form-select"
               value={value || ""}
               onChange={(e) => e.target && myOnChange(e.target.value)}
+              onBlur={(e) => e.target && myOnChange(e.target.value)}
             >
               {options.map((o, ix) => (
                 <option
@@ -726,6 +726,7 @@ export /**
           className="form-control form-select"
           value={value || ""}
           onChange={(e) => e.target && myOnChange(e.target.value)}
+          onBlur={(e) => e.target && myOnChange(e.target.value)}
         >
           <option value={""}></option>
           {Object.entries(options.fonts || {}).map(([nm, ff], ix) => (
@@ -790,6 +791,7 @@ export /**
           className="form-control form-select"
           value={value || ""}
           onChange={(e) => e.target && myOnChange(e.target.value)}
+          onBlur={(e) => e.target && myOnChange(e.target.value)}
         >
           {field.options.map((o, ix) => (
             <option key={ix}>{o}</option>

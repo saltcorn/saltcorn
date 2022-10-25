@@ -133,7 +133,8 @@ const configuration_workflow = (req) =>
               },
             ],
           };
-          const views = await get_link_view_opts(table, context.viewname);
+          const { link_view_opts, view_name_opts, view_relation_opts }
+            = await get_link_view_opts(table, context.viewname);
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -183,8 +184,10 @@ const configuration_workflow = (req) =>
             images,
             min_role: (myviewrow || {}).min_role,
             library,
-            views,
+            views: link_view_opts,
             mode: "edit",
+            view_name_opts,
+            view_relation_opts
           };
         },
       },
@@ -503,6 +506,8 @@ const transformForm = async ({
         throw new InvalidConfiguration(
           `Cannot find embedded view: ${view_select.viewname}`
         );
+
+      // Edit-in-edit
       if (view.viewtemplate === "Edit" && view_select.type === "ChildList") {
         const childTable = Table.findOne({ id: view.table_id });
         const childForm = await getForm(
@@ -518,7 +523,13 @@ const transformForm = async ({
             segment.field_name = `${view_select.field_name}.${segment.field_name}`;
           },
         });
-
+        for (const field of childForm.fields) {
+          if (field.name === childTable.pk_name) {
+            field.class = field.class
+              ? `${field.class} omit-repeater-clone`
+              : "omit-repeater-clone"
+          }
+        }
         const fr = new FieldRepeat({
           name: view_select.field_name,
           label: view_select.field_name,
@@ -526,6 +537,7 @@ const transformForm = async ({
           layout: childForm.layout,
           metadata: {
             table_id: childTable.id,
+            view: segment.view,
             relation: view_select.field_name,
           },
         });
@@ -630,7 +642,7 @@ const render = async ({
     for (const field of file_fields) {
       if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
         const file = await File.findOne({ id: row[field.name] });
-        form.values[field.name] = file.filename;
+        if (file.id) form.values[field.name] = file.filename;
       }
     }
     form.hidden(table.pk_name);
@@ -665,7 +677,7 @@ const render = async ({
   if (auto_save && !(!row && hasSave))
     form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
       })`;
-  await form.fill_fkey_options(false, optionsQuery);
+  await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
   return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
 };
@@ -735,7 +747,7 @@ const runPost = async (
   form.validate(body);
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
-    await form.fill_fkey_options();
+    await form.fill_fkey_options(false, undefined, req.user);
     res.sendWrap(
       viewname,
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
@@ -774,14 +786,19 @@ const runPost = async (
           );
           return;
         }
-        const file = isNode()
-          ? await File.from_req_files(
+        if (isNode()) {
+          const file = await File.from_req_files(
             req.files[field.name],
             req.user ? req.user.id : null,
-            (field.attributes && +field.attributes.min_role_read) || 1
-          )
-          : await File.upload(req.files[field.name]);
-        row[field.name] = file.id;
+            (field.attributes && +field.attributes.min_role_read) || 1,
+            field?.attributes?.folder
+          );
+          row[field.name] = file.path_to_serve;
+        }
+        else {
+          const serverResp = await File.upload(req.files[field.name]);
+          row[field.name] = serverResp.location;
+        }
       } else {
         delete row[field.name];
       }
@@ -813,9 +830,12 @@ const runPost = async (
         trigger_return = upd_res.trigger_return
 
       }
-
+      //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
         const childTable = Table.findOne({ id: field.metadata?.table_id });
+        const submitted_row_ids =
+          new Set((form.values[field.name] || [])
+            .map(srow => `${srow[childTable.pk_name]}`))
         for (const childRow of form.values[field.name]) {
           childRow[field.metadata?.relation] = id;
           if (childRow[childTable.pk_name]) {
@@ -837,9 +857,27 @@ const runPost = async (
               req.flash("error", text_attr(ins_res.error));
               res.sendWrap(viewname, renderForm(form, req.csrfToken()));
               return;
+            } else if (ins_res.success) {
+              submitted_row_ids.add(`${ins_res.success}`)
             }
           }
         }
+
+        //need to delete any rows that are missing
+        if (originalID && field.metadata) {
+          const view_select = parse_view_select(field.metadata.view);
+          const childRows = getRowQuery
+            ? await getRowQuery(field.metadata.table_id, view_select, originalID)
+            : await childTable.getRows({
+              [view_select.field_name]: originalID,
+            });
+          for (const db_child_row of childRows) {
+            if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
+              await childTable.deleteRows({ [childTable.pk_name]: db_child_row[childTable.pk_name] })
+            }
+          }
+        }
+
       }
     }
     trigger_return = trigger_return || {}

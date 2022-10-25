@@ -6,8 +6,9 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import db from "../db";
 import TagEntry from "./tag_entry";
 import type { TagEntryCfg } from "./tag_entry";
+import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
-class Tag {
+class Tag implements AbstractTag {
   name: string;
   id?: number;
   entries?: Array<TagEntry>;
@@ -34,6 +35,15 @@ class Tag {
   static async findOne(where: Where): Promise<Tag> {
     const tag: TagCfg = await db.selectMaybeOne("_sc_tags", where);
     return tag ? new Tag(tag) : tag;
+  }
+
+  static async findWithEntries(entriesWhere: any): Promise<Array<Tag>> {
+    // TODO transaction
+    const ids = new Set(
+      (await TagEntry.find(entriesWhere)).map((entry: TagEntry) => entry.tag_id)
+    );
+    const tags = await Tag.find();
+    return tags.filter((tag: Tag) => ids.has(tag.id));
   }
 
   async getEntries(): Promise<TagEntry[]> {
@@ -111,7 +121,7 @@ class Tag {
           entryCfg.page_id ||
           entryCfg.trigger_id
         ) {
-          entryCfg.tagId = tid;
+          entryCfg.tag_id = tid;
           tag.entries.push(await TagEntry.create(entryCfg));
         }
       }
@@ -158,7 +168,7 @@ class Tag {
   }): Promise<void> {
     if (!this.id) throw new Error("To add entries, the id must be set");
     await TagEntry.create({
-      tagId: this.id,
+      tag_id: this.id,
       table_id,
       view_id,
       page_id,

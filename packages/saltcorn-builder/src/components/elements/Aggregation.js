@@ -119,6 +119,7 @@ export /**
                 value={stat}
                 className="form-control form-select"
                 onChange={setAProp("stat")}
+                onBlur={setAProp("stat")}
               >
                 <option value={"Count"}>Count</option>
                 <option value={"Avg"}>Avg</option>

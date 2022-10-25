@@ -28,26 +28,30 @@ class PluginsCommand extends Command {
 
     for (const domain of tenantList) {
       await db.runWithTenant(domain, async () => {
-        const myplugins = await Plugin.find(
-          flags.name ? { name: flags.name } : {}
-        );
-        myplugins.forEach((plugin) => {
-          if (
-            plugin.source === "npm" &&
-            !plugins.map((p) => p.location).includes(plugin.location)
-          ) {
-            plugins.push(plugin);
-            if (flags.verbose)
-              console.log(
-                "%s\t%s\t%s\t%s",
-                plugin.location,
-                plugin.name,
-                plugin.version,
-                plugin.source
-              );
-            else console.log(plugin.location);
-          }
-        });
+        try {
+          const myplugins = await Plugin.find(
+            flags.name ? { name: flags.name } : {}
+          );
+          myplugins.forEach((plugin) => {
+            if (
+              plugin.source === "npm" &&
+              !plugins.map((p) => p.location).includes(plugin.location)
+            ) {
+              plugins.push(plugin);
+              if (flags.verbose)
+                console.log(
+                  "%s\t%s\t%s\t%s",
+                  plugin.location,
+                  plugin.name,
+                  plugin.version,
+                  plugin.source
+                );
+              else console.log(plugin.location);
+            }
+          });
+        } catch (e) {
+          console.error("error: ", domain, e)
+        }
       });
     }
     if (flags.upgrade || flags.dryRun) {
@@ -61,31 +65,34 @@ class PluginsCommand extends Command {
       console.log(new_versions);
       for (const domain of tenantList) {
         await db.runWithTenant(domain, async () => {
-          const myplugins = await Plugin.find({});
-          for (let plugin of myplugins) {
-            if (plugin.source === "npm" && new_versions[plugin.location]) {
-              // the plugin can be up to date
-              if (
-                !flags.force &&
-                plugin.version === new_versions[plugin.location]
-              ) {
-              } else if (flags.dryRun) {
-                console.log(
-                  `Would upgrade ${domain}'s plugin ${
-                    plugin.location
-                  } version from ${plugin.version} to ${
-                    new_versions[plugin.location]
-                  }`
-                );
-              } else {
-                plugin.version = new_versions[plugin.location];
+          try {
 
-                const sql_logging = db.get_sql_logging();
-                if (flags.verbose) db.set_sql_logging(true);
-                await plugin.upsert();
-                if (flags.verbose) db.set_sql_logging(sql_logging);
+            const myplugins = await Plugin.find({});
+            for (let plugin of myplugins) {
+              if (plugin.source === "npm" && new_versions[plugin.location]) {
+                // the plugin can be up to date
+                if (
+                  !flags.force &&
+                  plugin.version === new_versions[plugin.location]
+                ) {
+                } else if (flags.dryRun) {
+                  console.log(
+                    `Would upgrade ${domain}'s plugin ${plugin.location
+                    } version from ${plugin.version} to ${new_versions[plugin.location]
+                    }`
+                  );
+                } else {
+                  plugin.version = new_versions[plugin.location];
+
+                  const sql_logging = db.get_sql_logging();
+                  if (flags.verbose) db.set_sql_logging(true);
+                  await plugin.upsert();
+                  if (flags.verbose) db.set_sql_logging(sql_logging);
+                }
               }
             }
+          } catch (e) {
+            console.error("error: ", domain, e)
           }
         });
       }

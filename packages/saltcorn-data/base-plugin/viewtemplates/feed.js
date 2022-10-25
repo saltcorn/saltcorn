@@ -75,6 +75,10 @@ const configuration_workflow = (req) =>
                 },
               },
               {
+                input_type: "section_header",
+                label: "Creating a new view",
+              },
+              {
                 name: "view_to_create",
                 label: req.__("Use view to create"),
                 sublabel: req.__(
@@ -101,6 +105,23 @@ const configuration_workflow = (req) =>
                   "Label in link or button to create. Leave blank for a default label"
                 ),
                 type: "String",
+                attributes: { asideNext: true },
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of link to create new row"),
+                //required: true,
+                attributes: {
+                  options: [
+                    "Bottom left",
+                    "Bottom right",
+                    "Top left",
+                    "Top right",
+                  ],
+                },
+                type: "String",
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
               {
@@ -109,6 +130,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
+                  asideNext: true,
                   options: [
                     { name: "", label: "Link" },
                     { name: "btn btn-primary", label: "Primary button" },
@@ -145,22 +167,7 @@ const configuration_workflow = (req) =>
                 },
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
-              {
-                name: "create_view_location",
-                label: req.__("Location"),
-                sublabel: req.__("Location of link to create new row"),
-                //required: true,
-                attributes: {
-                  options: [
-                    "Bottom left",
-                    "Bottom right",
-                    "Top left",
-                    "Top right",
-                  ],
-                },
-                type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
-              },
+
               ...(table.ownership_field_id
                 ? [
                   {
@@ -190,6 +197,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
+                  asideNext: true,
                   options: fields.map((f) => f.name),
                 },
               },
@@ -208,50 +216,7 @@ const configuration_workflow = (req) =>
                 ),
                 type: "String",
               },
-              {
-                name: "cols_sm",
-                label: req.__("Columns small screen"),
-                type: "Integer",
-                attributes: {
-                  min: 1,
-                  max: 4,
-                },
-                required: true,
-                default: 1,
-              },
-              {
-                name: "cols_md",
-                label: req.__("Columns medium screen"),
-                type: "Integer",
-                attributes: {
-                  min: 1,
-                  max: 4,
-                },
-                required: true,
-                default: 1,
-              },
-              {
-                name: "cols_lg",
-                label: req.__("Columns large screen"),
-                type: "Integer",
-                attributes: {
-                  min: 1,
-                  max: 4,
-                },
-                required: true,
-                default: 1,
-              },
-              {
-                name: "cols_xl",
-                label: req.__("Columns extra-large screen"),
-                type: "Integer",
-                attributes: {
-                  min: 1,
-                  max: 4,
-                },
-                required: true,
-                default: 1,
-              },
+
               {
                 name: "rows_per_page",
                 label: req.__("Items per page"),
@@ -280,6 +245,56 @@ const configuration_workflow = (req) =>
                 label: req.__("Hide pagination"),
                 type: "Bool",
                 required: true,
+              },
+              {
+                input_type: "section_header",
+                label: "Number of columns (1-4) by screen width",
+              },
+              {
+                name: "cols_sm",
+                label: req.__("Small"),
+                type: "Integer",
+                attributes: {
+                  asideNext: true,
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+              {
+                name: "cols_md",
+                label: req.__("Medium"),
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+              {
+                name: "cols_lg",
+                label: req.__("Large"),
+                type: "Integer",
+                attributes: {
+                  asideNext: true,
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+              {
+                name: "cols_xl",
+                label: req.__("Extra-large"),
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
               },
             ],
           });

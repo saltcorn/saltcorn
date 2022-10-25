@@ -59,6 +59,11 @@ const select = {
         "User must select a value, even if the table field is not required",
       type: "Bool",
     },
+    {
+      name: "disable",
+      label: "Disable",
+      type: "Bool",
+    },
   ],
 
   /**
@@ -71,8 +76,9 @@ const select = {
    * @returns {object}
    */
   run: (nm, v, attrs, cls, reqd, field) => {
-    //console.log(attrs);
-    if (attrs.disabled)
+
+    if (attrs.disabled) {
+      const value = (field.options || []).find(lv => lv?.value === v)?.label || v
       return (
         input({
           class: `${cls} ${field.class || ""}`,
@@ -80,9 +86,31 @@ const select = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           readonly: true,
-          placeholder: v || field.label,
+          placeholder: value || field.label,
         }) + span({ class: "ml-m1" }, "v")
       );
+    }
+    const selOptions = select_options(
+      v,
+      field,
+      (attrs || {}).force_required,
+      (attrs || {}).neutral_label,
+    )
+    if (attrs.disable) {
+      return tags.select(
+        {
+          class: `form-control form-select ${cls} ${field.class || ""}`,
+          disabled: true,
+        },
+        selOptions
+      ) + input({
+        type: "hidden",
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        value: v
+      });
+    }
     return tags.select(
       {
         class: `form-control form-select ${cls} ${field.class || ""}`,
@@ -91,19 +119,14 @@ const select = {
         id: `input${text_attr(nm)}`,
         ...(attrs?.dynamic_where
           ? {
-              "data-selected": v,
-              "data-fetch-options": encodeURIComponent(
-                JSON.stringify(attrs?.dynamic_where)
-              ),
-            }
+            "data-selected": v,
+            "data-fetch-options": encodeURIComponent(
+              JSON.stringify(attrs?.dynamic_where)
+            ),
+          }
           : {}),
       },
-      select_options(
-        v,
-        field,
-        (attrs || {}).force_required,
-        (attrs || {}).neutral_label
-      )
+      selOptions
     );
   },
 };
@@ -170,9 +193,8 @@ const two_level_select = {
     return (
       tags.select(
         {
-          class: `form-control form-select w-50 ${cls} ${
-            field.class || ""
-          } d-inline`,
+          class: `form-control form-select w-50 ${cls} ${field.class || ""
+            } d-inline`,
           "data-fieldname": `_${field.name}_toplevel`,
           onChange: attrs.isFilter ? "apply_showif()" : undefined,
         },
@@ -180,9 +202,8 @@ const two_level_select = {
       ) +
       tags.select(
         {
-          class: `form-control form-select w-50 ${cls} ${
-            field.class || ""
-          }  d-inline`,
+          class: `form-control form-select w-50 ${cls} ${field.class || ""
+            }  d-inline`,
           "data-fieldname": field.form_name,
           "data-selected": v,
           name: text_attr(nm),
@@ -295,11 +316,9 @@ const search_or_create = {
       ) +
       a(
         {
-          href: `javascript:${
-            isNode() ? "ajax_modal" : "mobile_modal"
-          }('/view/${
-            attrs.viewname
-          }',{submitReload: false,onClose: soc_process_${nm}})`,
+          href: `javascript:${isNode() ? "ajax_modal" : "mobile_modal"
+            }('/view/${attrs.viewname
+            }',{submitReload: false,onClose: soc_process_${nm}})`,
         },
         attrs.label || "Or create new"
       ) +
@@ -307,15 +326,13 @@ const search_or_create = {
       function soc_process_${nm}(){
         $.ajax('/api/${field.reftable_name}', {
           success: function (res, textStatus, request) {
-            var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
-              attrs.summary_field
-            }+'</option>').join("")
+            var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${attrs.summary_field
+        }+'</option>').join("")
             ${reqd ? "" : `opts = '<option></option>'+opts`}
             $('#input${text_attr(
-              nm
-            )}').html(opts).prop('selectedIndex', res.success.length${
-        reqd ? "-1" : ""
-      }); 
+          nm
+        )}').html(opts).prop('selectedIndex', res.success.length${reqd ? "-1" : ""
+        }); 
           }
         })
       }`)

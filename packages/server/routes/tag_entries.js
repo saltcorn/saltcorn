@@ -120,13 +120,16 @@ router.get(
 
 const idField = (entryType) => {
   switch (entryType) {
-    case "tables": {
+    case "tables":
+    case "table": {
       return "table_id";
     }
-    case "views": {
+    case "views":
+    case "view": {
       return "view_id";
     }
-    case "pages": {
+    case "pages":
+    case "page": {
       return "page_id";
     }
     case "trigger": {
@@ -136,6 +139,7 @@ const idField = (entryType) => {
   return null;
 };
 
+// add multiple objects to one tag
 router.post(
   "/add/:entry_type/:tag_id",
   isAdmin,
@@ -155,6 +159,24 @@ router.post(
   })
 );
 
+// add one object to multiple tags
+router.post(
+  "/add/multiple_tags/:entry_type/:object_id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    let { entry_type, object_id } = req.params;
+    let { tag_ids } = req.body;
+    object_id = parseInt(object_id);
+    tag_ids = tag_ids.map((id) => parseInt(id));
+    const tags = (await Tag.find()).filter((tag) => tag_ids.includes(tag.id));
+    const fieldName = idField(entry_type);
+    for (const tag of tags) {
+      await tag.addEntry({ [fieldName]: object_id });
+    }
+    res.json({ tags });
+  })
+);
+
 router.post(
   "/remove/:entry_type/:entry_id/:tag_id",
   isAdmin,
@@ -168,6 +190,7 @@ router.post(
     } else {
       await TagEntry.update(entry.id, { [fieldName]: null });
     }
-    res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);
+    if (!req.xhr) res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);
+    else res.json({ okay: true });
   })
 );

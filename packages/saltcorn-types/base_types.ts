@@ -185,7 +185,6 @@ export type ViewTemplate = {
     arg1: string,
     arg2: any
   ) => Promise<Array<FieldLike>>;
-  display_state_form?: boolean | ((arg0: any) => boolean);
   configuration_workflow: (arg0: {
     __: (arg0: string) => string;
   }) => AbstractWorkflow;

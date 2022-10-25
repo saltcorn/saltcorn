@@ -122,35 +122,35 @@ const send_settings_page = ({
   const pillCard = no_nav_pills
     ? []
     : [
-        {
-          type: "card",
-          class: "mt-0",
-          contents: div(
-            { class: "d-flex" },
-            ul(
-              { class: "nav nav-pills plugin-section" },
-              sub_sections.map(({ text, href }) =>
-                li(
-                  { class: "nav-item" },
-                  a(
-                    {
-                      href,
-                      class: ["nav-link", active_sub === text && "active"],
-                    },
-                    req.__(text)
-                  )
+      {
+        type: "card",
+        class: "mt-0",
+        contents: div(
+          { class: "d-flex" },
+          ul(
+            { class: "nav nav-pills plugin-section" },
+            sub_sections.map(({ text, href }) =>
+              li(
+                { class: "nav-item" },
+                a(
+                  {
+                    href,
+                    class: ["nav-link", active_sub === text && "active"],
+                  },
+                  req.__(text)
                 )
               )
             )
-          ),
-        },
-      ];
+          )
+        ),
+      },
+    ];
   // headers
   const title = headers
     ? {
-        title: req.__(active_sub),
-        headers,
-      }
+      title: req.__(active_sub),
+      headers,
+    }
     : req.__(active_sub);
   res.sendWrap(title, {
     above: [
@@ -167,10 +167,10 @@ const send_settings_page = ({
           },
           ...(sub2_page
             ? [
-                {
-                  text: sub2_page,
-                },
-              ]
+              {
+                text: sub2_page,
+              },
+            ]
             : []),
         ],
       },
@@ -199,9 +199,9 @@ const send_infoarch_page = (args) => {
       { text: "Languages", href: "/site-structure/localizer" },
       ...(tenant_list
         ? [
-            { text: "Tenants", href: "/tenant/list" },
-            { text: "Multitenancy", href: "/tenant/settings" },
-          ]
+          { text: "Tenants", href: "/tenant/list" },
+          { text: "Multitenancy", href: "/tenant/settings" },
+        ]
         : []),
       { text: "Tags", href: "/tag" },
       { text: "Diagram", href: "/diagram" },
@@ -224,6 +224,7 @@ const send_users_page = (args) => {
       { text: "Users", href: "/useradmin" },
       { text: "Roles", href: "/roleadmin" },
       { text: "Settings", href: "/useradmin/settings" },
+      { text: "Table access", href: "/useradmin/table-access" },
       ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
     ],
     ...args,
@@ -339,8 +340,8 @@ const flash_restart = (req) => {
   req.flash(
     "warning",
     req.__(`Restart required for changes to take effect.`) +
-      " " +
-      a({ href: "/admin/system" }, req.__("Restart here"))
+    " " +
+    a({ href: "/admin/system" }, req.__("Restart here"))
   );
 };
 
@@ -393,16 +394,16 @@ const config_fields_form = async ({
         isView || isRole || isTenant
           ? "String"
           : configTypes[name].input_type
-          ? undefined
-          : configTypes[name].type,
+            ? undefined
+            : configTypes[name].type,
       input_type: configTypes[name].input_type,
       attributes: isView
         ? await viewAttributes(name)
         : isRole
-        ? roleAttribs
-        : isTenant
-        ? await getTenants()
-        : configTypes[name].attributes,
+          ? roleAttribs
+          : isTenant
+            ? await getTenants()
+            : configTypes[name].attributes,
     });
   }
   const form = new Form({

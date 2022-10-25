@@ -199,12 +199,16 @@ const runScheduler = async ({
       }
     });
     //auto backup
-    const auto_backup_freq = getState().getConfig("auto_backup_frequency");
-    if (
-      (auto_backup_freq === "Daily" && isDaily) ||
-      (auto_backup_freq === "Weekly" && isWeekly)
-    ) {
-      await auto_backup_now();
+    try {
+      const auto_backup_freq = getState().getConfig("auto_backup_frequency");
+      if (
+        (auto_backup_freq === "Daily" && isDaily) ||
+        (auto_backup_freq === "Weekly" && isWeekly)
+      ) {
+        await auto_backup_now();
+      }
+    } catch (e) {
+      console.error(`scheduler error backup: `, e);
     }
   };
 

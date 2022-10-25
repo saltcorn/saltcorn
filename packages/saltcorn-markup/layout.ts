@@ -325,13 +325,15 @@ const render = ({
                 .split(",")
                 .map(
                   (w: string) =>
-                    `/files/resize/${segment.fileid}/${w.trim()} ${w.trim()}w`
+                    `/files/resize/${w.trim()}/0/${encodeURIComponent(
+                      segment.fileid
+                    )} ${w.trim()}w`
                 )
                 .join(",")
             : undefined,
         src: isWeb
           ? srctype === "File"
-            ? `/files/serve/${segment.fileid}`
+            ? `/files/serve/${encodeURIComponent(segment.fileid)}`
             : segment.url
           : undefined,
         id: elementId,
@@ -345,7 +347,9 @@ const render = ({
           : div(
               image,
               script(
-                domReady(`buildEncodedImage(${segment.fileid}, '${elementId}')`)
+                domReady(
+                  `buildEncodedImage('${segment.fileid}', '${elementId}')`
+                )
               )
             )
       );
@@ -583,7 +587,7 @@ const render = ({
         if (s === "right") return "end";
         return s;
       };
-      const hasImgBg = renderBg && bgType === "Image" && bgFileId && +bgFileId;
+      const hasImgBg = renderBg && bgType === "Image" && bgFileId;
       const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
       let image = undefined;
       const isWeb = typeof window === "undefined" && !req?.smr;
@@ -596,20 +600,22 @@ const render = ({
                 .split(",")
                 .map(
                   (w: string) =>
-                    `/files/resize/${bgFileId}/${w.trim()} ${w.trim()}w`
+                    `/files/resize/${w.trim()}/0/${bgFileId} ${w.trim()}w`
                 )
                 .join(",")
             : undefined,
           style: { "object-fit": imageSize || "contain" },
           alt: "",
           src: isWeb ? `/files/serve/${bgFileId}` : undefined,
-          id: elementId,
+          //id: elementId,
         });
         image = isWeb
           ? imgTag
           : div(
               imgTag,
-              script(domReady(`buildEncodedImage(${bgFileId}, '${elementId}')`))
+              script(
+                domReady(`buildEncodedImage('${bgFileId}', '${elementId}')`)
+              )
             );
       }
       const bgImageScriptId = // in really rare cases not unique, but shouldn't cause problems

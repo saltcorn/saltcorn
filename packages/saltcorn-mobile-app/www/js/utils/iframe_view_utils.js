@@ -110,7 +110,7 @@ async function login(e, entryPoint, isSignup) {
         },
       ],
     });
-    parent.replaceIframe(page.content);
+    await parent.replaceIframe(page.content);
   } else if (loginResult?.alerts) {
     parent.showAlerts(loginResult?.alerts);
   } else {
@@ -136,7 +136,7 @@ async function publicLogin(entryPoint) {
         },
       ],
     });
-    parent.replaceIframe(page.content);
+    await parent.replaceIframe(page.content);
   } catch (error) {
     parent.showAlerts([
       {
@@ -155,7 +155,7 @@ async function logout() {
       entryView: config.entry_point,
       versionTag: config.version_tag,
     });
-    parent.replaceIframe(page.content);
+    await parent.replaceIframe(page.content);
   } catch (error) {
     parent.showAlerts([
       {
@@ -388,7 +388,7 @@ async function make_unique_field(
 
 async function buildEncodedImage(fileId, elementId) {
   const base64Encoded = await parent.loadEncodedFile(fileId);
-  $(`#${elementId}`)[0].src = base64Encoded;
+  document.getElementById(elementId).src = base64Encoded;
 }
 
 async function buildEncodedBgImage(fileId, elementId) {

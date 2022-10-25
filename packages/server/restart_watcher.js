@@ -23,6 +23,7 @@ const relevantPackages = [
   "saltcorn-sbadmin2",
   "server",
   "sqlite",
+  "filemanager"
 ];
 
 /**

@@ -170,6 +170,15 @@ const getApp = async (opts = {}) => {
       }
     )
   );
+  app.use(
+    `/static_assets/${version_tag}`,
+    express.static(
+      path.dirname(require.resolve("@saltcorn/filemanager/package.json")) + "/public/build",
+      {
+        maxAge: development_mode ? 0 : "100d",
+      }
+    )
+  );
 
   passport.use(
     "local",
@@ -248,7 +257,7 @@ const getApp = async (opts = {}) => {
       };
       if (
         db.is_it_multi_tenant() &&
-        jwt_payload.tenant?.length > 0 && 
+        jwt_payload.tenant?.length > 0 &&
         jwt_payload.tenant !== db.connectObj.default_schema
       ) {
         return await db.runWithTenant(jwt_payload.tenant, userCheck);
@@ -341,13 +350,13 @@ Sitemap: ${base}sitemap.xml
     <urlset
           xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     ${urls
-      .map(
-        (url) => `<url>
+          .map(
+            (url) => `<url>
       <loc>${url}</loc>
       <lastmod>${now}</lastmod>      
     </url>`
-      )
-      .join("")}
+          )
+          .join("")}
     
     </urlset>`);
     })

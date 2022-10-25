@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "add-platform": "cordova platform add",
+    "add-plugin": "cordova plugin add",
     "build-app": "cordova build "
   },
   "author": "Christian Hugo",
@@ -13,12 +14,7 @@
   "cordova": {
     "platforms": [
       "android"
-    ],
-    "plugins": {
-      "cordova-sqlite-ext": {},
-      "cordova-plugin-file": {},
-      "cordova-plugin-inappbrowser": {}
-    }
+    ]
   },
   "overrides": {
     "ansi-regex": "4.1.1"
@@ -28,8 +24,6 @@
     "cordova-sqlite-ext": "^6.0.0"
   },
   "devDependencies": {
-    "cordova-android": "^10.1.2",
-    "cordova-plugin-file": "^6.0.2",
-    "cordova-plugin-inappbrowser": "^5.0.0"
+    "cordova-android": "^10.1.2"
   }
 }

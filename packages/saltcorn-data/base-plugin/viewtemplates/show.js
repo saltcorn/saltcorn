@@ -137,10 +137,11 @@ const configuration_workflow = (req) =>
             );
             field_view_options.verification_url = ["as_text", "as_link"];
           }
-          const link_view_opts = await get_link_view_opts(
-            table,
-            context.viewname
-          );
+          const { link_view_opts, view_name_opts, view_relation_opts }
+            = await get_link_view_opts(
+              table,
+              context.viewname
+            );
           const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations(
             true,
@@ -180,6 +181,8 @@ const configuration_workflow = (req) =>
             library,
             pages,
             handlesTextStyle,
+            view_name_opts,
+            view_relation_opts,
             mode: "show",
             ownership: !!table.ownership_field_id || table.name === "users",
           };
@@ -531,7 +534,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const field = fields.find((f) => f.name === segment.field);
         if (!field) return;
         if (field.type.name === "String") segment.url = row[segment.field];
-        if (field.reftable_name === "_sc_files")
+        if (field.type === "File")
           segment.url = `/files/serve/${row[segment.field]}`;
       }
     },
@@ -603,7 +606,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         } else return text(value);
       } else return text(value);
     },
-    aggregation({ agg_relation, stat }) {
+    aggregation({ agg_relation, stat, aggwhere }) {
       let table, fld, through;
       if (agg_relation.includes("->")) {
         let restpath;
@@ -613,7 +616,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       } else {
         [table, fld] = agg_relation.split(".");
       }
-      const targetNm = (stat + "_" + table + "_" + fld).toLowerCase();
+      const targetNm = (stat + "_" + table + "_" + fld
+        +
+        db.sqlsanitize(aggwhere || "")
+      ).toLowerCase();
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");

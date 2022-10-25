@@ -1,4 +1,4 @@
-import Node from "./node";
+import Node from "./nodes/node";
 import CytoscapeRaster from "./cy_raster";
 
 const cyStyle = [
@@ -90,6 +90,8 @@ export function generateCyCode(entryNodes: Array<Node>): string {
   const cyEdges = raster.buildCyEdges();
   return `
   var cy = window.cy = cytoscape({
+    maxZoom: 2,
+    wheelSensitivity: 0.3,
     container: document.getElementById('cy'),
     elements: {
       nodes: ${JSON.stringify(cyNodes)},
@@ -99,5 +101,7 @@ export function generateCyCode(entryNodes: Array<Node>): string {
     layout: {
       name: "preset"
     },
-  });`;
+  });
+  initMouseOver();
+  `;
 }

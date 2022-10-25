@@ -28,6 +28,7 @@ function add_repeater(nm) {
   var newix = es.length;
   var newe = $(e).clone();
   newe.find("[name]").each(function (ix, element) {
+    if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
     var newnm = (element.name || "").replace("_0", "_" + newix);
     var newid = (element.id || "").replace("_0", "_" + newix);
     $(element).attr("name", newnm).attr("id", newid);
@@ -191,14 +192,15 @@ function splitTargetMatch(elemValue, target, keySpec) {
 
 function get_form_record(e, select_labels) {
   const rec = {};
-  e.closest("form")
+  e.closest(".form-namespace")
     .find("input[name],select[name]")
     .each(function () {
+      const name = $(this).attr("data-fieldname") || $(this).attr("name")
       if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
-        rec[$(this).attr("name")] = $(this).find("option:selected").text();
+        rec[name] = $(this).find("option:selected").text();
       else if ($(this).prop("type") === "checkbox")
-        rec[$(this).attr("name")] = $(this).prop("checked");
-      else rec[$(this).attr("name")] = $(this).val();
+        rec[name] = $(this).prop("checked");
+      else rec[name] = $(this).val();
     });
   return rec;
 }
@@ -550,7 +552,13 @@ function common_done(res, isWeb = true) {
     });
   else if (res.goto) {
     if (res.target === "_blank") window.open(res.goto, "_blank").focus();
-    else window.location.href = res.goto;
+    else {
+      const prev = new URL(window.location.href)
+      const next = new URL(res.goto, prev.origin)
+      window.location.href = res.goto;
+      if (prev.origin === next.origin && prev.pathname === next.pathname && next.hash !== prev.hash)
+        location.reload()
+    }
   }
   if (res.popup) {
     ajax_modal(res.popup)
@@ -720,6 +728,8 @@ function init_room(viewname, room_id) {
 
 function cancel_form(form) {
   if (!form) return;
+  $(form).trigger("reset");
+  $(form).trigger("change");
   $(form).append(`<input type="hidden" name="_cancel" value="on">`);
   $(form).submit();
 }

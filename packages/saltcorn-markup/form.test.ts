@@ -24,13 +24,12 @@ describe("form render", () => {
       ],
       errors: {},
       values: {},
-      isStateForm: false,
       formStyle: "",
       methodGET: false,
       xhrSubmit: false,
       req: {},
     };
-    const want = `<form action="/" class="form-namespace  " method="post">
+    const want = `<form action="/" class="form-namespace " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <div><label for="inputname">Name</label></div>
 <div><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname">
@@ -57,7 +56,6 @@ describe("form render", () => {
       ],
       values: {},
       errors: {},
-      isStateForm: false,
       formStyle: "",
       methodGET: false,
       xhrSubmit: false,
@@ -97,13 +95,12 @@ describe("form render", () => {
           attributes: {},
         },
       ],
-      isStateForm: false,
       formStyle: "",
       methodGET: false,
       xhrSubmit: false,
       req: {},
     };
-    const want = `<form action="/" class="form-namespace  " method="post">
+    const want = `<form action="/" class="form-namespace " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <div><label for="inputname">Name</label></div>
 <div><input type="text" class="form-control is-invalid  " data-fieldname="name" name="name" id="inputname" value="Bar"><div>Not a foo</div>

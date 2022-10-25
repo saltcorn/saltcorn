@@ -689,6 +689,8 @@ const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
   return tenants[ten];
 };
+
+const getAllTenants = () => tenants;
 /**
  * Remove protocol (http:// or https://) from domain url
  * @param {string} url
@@ -730,7 +732,7 @@ const init_multi_tenant = async (
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain, true));
       await db.runWithTenant(domain, plugin_loader);
-      set_tenant_base_url(domain, tenants[domain].configs.base_url.value);
+      set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
     } catch (err: any) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
@@ -783,5 +785,6 @@ export = {
   get_process_init_time,
   features,
   add_tenant,
+  getAllTenants,
   process_send,
 };

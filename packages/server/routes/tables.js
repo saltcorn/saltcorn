@@ -135,6 +135,7 @@ const tableForm = async (table, req) => {
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
+        attributes: { asideNext: !table.external }
       },
       ...(table.external
         ? []
@@ -885,15 +886,13 @@ router.post(
       const table = await Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
       let hasError = false;
+      let notify = ""
       if (!rest.versioned) rest.versioned = false;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
         if (typeof fmlValidRes === "string") {
-          req.flash(
-            "error",
-            req.__(`Invalid ownership formula: %s`, fmlValidRes)
-          );
+          notify = req.__(`Invalid ownership formula: %s`, fmlValidRes)
           hasError = true;
         }
       } else rest.ownership_formula = null;
@@ -911,7 +910,7 @@ router.post(
       else if (!hasError) req.flash("success", req.__("Table saved"));
 
       if (!req.xhr) res.redirect(`/table/${id}`);
-      else res.json({ success: "ok" });
+      else res.json({ success: "ok", notify });
     }
   })
 );

@@ -11,6 +11,7 @@ const User = require("@saltcorn/data/models/user");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
 const resizer = require("resize-with-sharp-or-jimp");
+const db = require("@saltcorn/data/db");
 
 const {
   mkTable,
@@ -20,7 +21,7 @@ const {
   post_delete_btn,
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, setTenant } = require("./utils.js");
-const { h1, div, text } = require("@saltcorn/markup/tags");
+const { h1, div, text, button, i, a } = require("@saltcorn/markup/tags");
 // const { csrfField } = require("./utils");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -31,6 +32,7 @@ const {
 } = require("../markup/admin");
 // const fsp = require("fs").promises;
 const fs = require("fs");
+const path = require("path");
 
 /**
  * @type {object}
@@ -51,7 +53,7 @@ module.exports = router;
  */
 const editFileRoleForm = (file, roles, req) =>
   editRoleForm({
-    url: `/files/setrole/${file.id}`,
+    url: `/files/setrole/${file.path_to_serve}`,
     current_role: file.min_role_read,
     roles,
     req,
@@ -68,49 +70,51 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
-    const rows = await File.find({}, { orderBy: "filename" });
+    const { dir } = req.query
+    const safeDir = File.normalise(dir || "/")
+    const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
+    //console.log(rows);
+    if (safeDir && safeDir !== "/" && safeDir !== ".") {
+      let dirname = path.dirname(safeDir)
+      if (dirname === ".") dirname = "/"
+      rows.unshift(new File({
+        filename: "..",
+        location: dirname,
+        isDirectory: true,
+        mime_super: "",
+        mime_sub: "",
+      }))
+    }
+    if (req.xhr) {
+      for (const file of rows) {
+        file.location = file.path_to_serve
+      }
+      const directories = await File.allDirectories()
+      for (const file of directories) {
+        file.location = file.path_to_serve
+      }
+      res.json({ files: rows, roles, directories })
+      return
+    }
     send_files_page({
       res,
       req,
+      headers: [
+        {
+          script: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
+          defer: true
+        },
+        {
+          css: `/static_assets/${db.connectObj.version_tag}/bundle.css`,
+        },
+      ],
       active_sub: "Files",
       contents: {
         type: "card",
         contents: [
-          mkTable(
-            [
-              {
-                label: req.__("Filename"),
-                key: (r) =>
-                  div(
-                    { "data-inline-edit-dest-url": `/files/setname/${r.id}` },
-                    r.filename
-                  ),
-              },
-              { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-              { label: req.__("Media type"), key: (r) => r.mimetype },
-              {
-                label: req.__("Role to access"),
-                key: (r) => editFileRoleForm(r, roles, req),
-              },
-              {
-                label: req.__("Link"),
-                key: (r) => link(`/files/serve/${r.id}`, req.__("Link")),
-              },
-              {
-                label: req.__("Download"),
-                key: (r) => link(`/files/download/${r.id}`, req.__("Download")),
-              },
-              {
-                label: req.__("Delete"),
-                key: (r) =>
-                  post_delete_btn(`/files/delete/${r.id}`, req, r.filename),
-              },
-            ],
-            rows,
-            { hover: true }
-          ),
-          fileUploadForm(req),
+          div({ id: "saltcorn-file-manager" }),
+          fileUploadForm(req, safeDir),
         ],
       },
     });
@@ -124,19 +128,21 @@ router.get(
  * @function
  */
 router.get(
-  "/download/:id",
+  "/download/*",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
-    const { id } = req.params;
-    const file = await File.findOne({ id });
-    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
+
+    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
       res.type(file.mimetype);
       if (file.s3_store) s3storage.serveObject(file, res, true);
       else res.download(file.location, file.filename);
     } else {
-      req.flash("warning", req.__("Not authorized"));
-      res.redirect("/");
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
   })
 );
@@ -148,31 +154,25 @@ router.get(
  * @function
  */
 router.get(
-  "/serve/:id",
+  "/serve/*",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
-    const { id } = req.params;
-    let file;
-    if (typeof strictParseInt(id) !== "undefined")
-      file = await File.findOne({ id });
-    else file = await File.findOne({ filename: id });
+    const serve_path = req.params[0];
+    //let file;
+    //if (typeof strictParseInt(id) !== "undefined")
+    const file = await File.findOne(serve_path);
 
-    if (!file) {
-      res
-        .status(404)
-        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
-      return;
-    }
-    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
     } else {
-      req.flash("warning", req.__("Not authorized"));
-      res.redirect("/");
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
   })
 );
@@ -184,23 +184,17 @@ router.get(
  * @function
  */
 router.get(
-  "/resize/:id/:width_str/:height_str?",
+  "/resize/:width_str/:height_str/*",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
-    const { id, width_str, height_str } = req.params;
-    let file;
-    if (typeof strictParseInt(id) !== "undefined")
-      file = await File.findOne({ id });
-    else file = await File.findOne({ filename: id });
+    const { width_str, height_str } = req.params;
+    const serve_path = req.params[0];
 
-    if (!file) {
-      res
-        .status(404)
-        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
-      return;
-    }
-    if (role <= file.min_role_read || (user_id && user_id === file.user_id)) {
+
+    const file = await File.findOne(serve_path);
+
+    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
@@ -208,12 +202,14 @@ router.get(
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else {
         const width = strictParseInt(width_str);
-        const height = height_str ? strictParseInt(height_str) : null;
+        const height = height_str && height_str !== "0"
+          ? strictParseInt(height_str) : null;
         if (!width) {
           res.sendFile(file.location);
           return;
         }
-        const fnm = `${file.location}_w${width}${height ? `_h${height}` : ""}`;
+        const basenm = path.join(path.dirname(file.location), '_resized_' + path.basename(file.location))
+        const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
         if (!fs.existsSync(fnm)) {
           await resizer({
             fromFileName: file.location,
@@ -225,8 +221,9 @@ router.get(
         res.sendFile(fnm);
       }
     } else {
-      req.flash("warning", req.__("Not authorized"));
-      res.redirect("/");
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
   })
 );
@@ -238,23 +235,42 @@ router.get(
  * @function
  */
 router.post(
-  "/setrole/:id",
+  "/setrole/*",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
     const role = req.body.role;
-    await File.update(+id, { min_role_read: role });
-    const file = await File.findOne({ id });
     const roles = await User.get_roles();
     const roleRow = roles.find((r) => r.id === +role);
-    if (roleRow && file)
-      req.flash(
-        "success",
-        req.__(`Minimum role for %s updated to %s`, file.filename, roleRow.role)
-      );
-    else req.flash("success", req.__(`Minimum role updated`));
 
-    res.redirect("/files");
+    if (roleRow && file) {
+      await file.set_role(role);
+
+    }
+
+
+    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
+  })
+);
+
+
+router.post(
+  "/move/*",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const serve_path = req.params[0];
+    const file = await File.findOne(serve_path);
+    const new_path = req.body.new_path;
+
+    if (file) {
+      await file.move_to_dir(new_path);
+    }
+    if (req.xhr) {
+      res.json({ success: "ok" })
+      return
+    }
+    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
   })
 );
 
@@ -265,14 +281,28 @@ router.post(
  * @function
  */
 router.post(
-  "/setname/:id",
+  "/setname/*",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const serve_path = req.params[0];
     const filename = req.body.value;
-    await File.update(+id, { filename });
 
-    res.redirect("/files");
+    const file = await File.findOne(serve_path);
+    await file.rename(filename);
+
+    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
+
+  })
+);
+
+router.post(
+  "/new-folder",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name, folder } = req.body
+    await File.new_folder(name, folder);
+
+    res.json({ success: "ok" });
   })
 );
 
@@ -286,9 +316,11 @@ router.post(
   "/upload",
   setTenant, // TODO why is this needed?????
   error_catcher(async (req, res) => {
+    let { folder } = req.body
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 10;
+    let file_for_redirect
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
       else jsonResp = { error: "Not authorized" };
@@ -300,9 +332,11 @@ router.post(
       const f = await File.from_req_files(
         req.files.file,
         req.user.id,
-        +min_role_read
+        +min_role_read,
+        folder ? File.normalise(folder) : undefined
       );
       const many = Array.isArray(f);
+      file_for_redirect = many ? f[0] : f
       if (!req.xhr)
         req.flash(
           "success",
@@ -317,14 +351,18 @@ router.post(
         jsonResp = {
           success: {
             filename: many ? f.map((fl) => fl.filename) : f.filename,
-            id: many ? f.map((fl) => fl.id) : f.id,
+            location: many ? f.map((fl) => fl.path_to_serve) : f.path_to_serve,
             url: many
-              ? f.map((fl) => `/files/serve/${fl.id}`)
-              : `/files/serve/${f.id}`,
+              ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
+              : `/files/serve/${f.path_to_serve}`,
           },
         };
     }
-    if (!req.xhr) res.redirect("/files");
+    if (!req.xhr)
+      res.redirect(!file_for_redirect
+        ? '/files'
+        : `/files?dir=${encodeURIComponent(file_for_redirect.current_folder)}`);
+
     else res.json(jsonResp);
   })
 );
@@ -336,11 +374,11 @@ router.post(
  * @function
  */
 router.post(
-  "/delete/:id",
+  "/delete/*",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const f = await File.findOne({ id });
+    const serve_path = req.params[0];
+    const f = await File.findOne(serve_path);
     if (!f) {
       req.flash("error", "File not found");
       res.redirect("/files");
@@ -351,10 +389,8 @@ router.post(
     );
     if (result && result.error) {
       req.flash("error", result.error);
-    } else {
-      req.flash("success", req.__(`File %s deleted`, text(f.filename)));
     }
-    res.redirect(`/files`);
+    res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
   })
 );
 

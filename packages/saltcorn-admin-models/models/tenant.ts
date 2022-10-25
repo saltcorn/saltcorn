@@ -10,6 +10,7 @@ import config from "@saltcorn/data/models/config";
 const { setConfig } = config;
 import { unlink } from "fs/promises";
 import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
 import type { Row } from "@saltcorn/db-common/internal";
 import backup from "./backup";
 const { create_backup, restore } = backup;
@@ -65,6 +66,7 @@ const insertTenant =
     );
     //create schema
     if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
+    await File.ensure_file_store(saneDomain);
     return saneDomain;
   };
 /**

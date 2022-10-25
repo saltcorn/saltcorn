@@ -59,6 +59,9 @@ const {
   getLines,
 } = require("../utils");
 
+import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import type Tag from "../models/tag";
+
 /**
  * Transponce Objects
  * TODO more detailed explanation
@@ -256,7 +259,7 @@ class Table implements AbstractTable {
 
     if (this.ownership_formula && this.fields) {
       const f = get_expression_function(this.ownership_formula, this.fields);
-      return f(row, user);
+      return !!f(row, user);
     }
     const field_name = this.owner_fieldname();
     if (!field_name && this.name === "users")
@@ -435,9 +438,12 @@ class Table implements AbstractTable {
    * @param where
    * @returns {Promise<null|*>}
    */
-  async getRow(where: Where = {}): Promise<Row | null> {
+  async getRow(
+    where: Where = {},
+    selopts: SelectOptions = {}
+  ): Promise<Row | null> {
     await this.getFields();
-    const row = await db.selectMaybeOne(this.name, where);
+    const row = await db.selectMaybeOne(this.name, where, selopts);
     if (!row || !this.fields) return null;
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
@@ -448,7 +454,10 @@ class Table implements AbstractTable {
    * @param selopts
    * @returns {Promise<void>}
    */
-  async getRows(where: Where = {}, selopts?: SelectOptions): Promise<Row[]> {
+  async getRows(
+    where: Where = {},
+    selopts: SelectOptions = {}
+  ): Promise<Row[]> {
     await this.getFields();
     const rows = await db.select(this.name, where, selopts);
     if (!this.fields) return [];
@@ -1358,15 +1367,6 @@ class Table implements AbstractTable {
     let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
 
-    fields
-      .filter((f) => f.type === "File")
-      .forEach((f) => {
-        joinFields[`${f.name}__filename`] = {
-          ref: f.name,
-          reftable: "_sc_files",
-          target: `filename`,
-        };
-      });
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
     )) {
@@ -1405,7 +1405,9 @@ class Table implements AbstractTable {
         let last_reffield = reffield;
         let jtNm1;
         let lastJtNm = jtNm;
-        for (const through1 of throughs) {
+        for (let i = 0; i < throughs.length; i++) {
+          const through1 = throughs[i];
+          const throughPath = throughs.slice(0, i + 1);
           const throughTable = await Table.findOne({
             name: last_reffield.reftable_name,
           });
@@ -1424,7 +1426,7 @@ class Table implements AbstractTable {
           const finalTable = throughRefField.reftable_name;
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
-          )}_jt_${sqlsanitize(through1)}_jt_${sqlsanitize(ref)}`;
+          )}_jt_${sqlsanitize(throughPath.join("_"))}_jt_${sqlsanitize(ref)}`;
 
           if (!joinTables.includes(jtNm1)) {
             if (!finalTable)
@@ -1668,6 +1670,11 @@ class Table implements AbstractTable {
       options[table.name] = await table.slug_options();
     }
     return options;
+  }
+
+  async getTags(): Promise<Array<AbstractTag>> {
+    const Tag = (await import("./tag")).default;
+    return await Tag.findWithEntries({ table_id: this.id });
   }
 }
 

@@ -50,7 +50,7 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
  * @param {object} req 
  * @returns {Form}
  */
-const fileUploadForm = (req) =>
+const fileUploadForm = (req, folder) =>
   form(
     {
       action: "/files/upload",
@@ -61,11 +61,12 @@ const fileUploadForm = (req) =>
     label(req.__("Upload file ")),
     input({
       name: "file",
-      class: "form-control-file",
+      class: "form-control ms-1 w-unset d-inline",
       type: "file",
       onchange: "form.submit()",
       multiple: true,
-    })
+    }),
+    folder && input({ type: "hidden", name: "folder", value: folder })
   );
 
 /**

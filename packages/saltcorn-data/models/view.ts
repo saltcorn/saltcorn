@@ -40,6 +40,7 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
+import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 declare let window: any;
 
@@ -499,9 +500,9 @@ class View implements AbstractView {
     }
     const state = view.combine_state_and_default_state(query);
     const resp = await view.run(state, { res, req }, remote);
-    const state_form = await view.get_state_form(state, req);
+
     // return contents
-    return div(state_form ? renderForm(state_form, req.csrfToken()) : "", resp);
+    return div(resp);
   }
 
   /**
@@ -660,53 +661,6 @@ class View implements AbstractView {
   }
 
   /**
-   * @param {object} query
-   * @param {object} req
-   * @returns {Promise<Form|null>}
-   */
-  async get_state_form(query: any, req: any): Promise<Form | null> {
-    this.check_viewtemplate();
-    const vt_display_state_form = this.viewtemplateObj!.display_state_form;
-    const display_state_form =
-      typeof vt_display_state_form === "function"
-        ? vt_display_state_form(this.configuration)
-        : vt_display_state_form;
-    if (display_state_form) {
-      const fields = await this.get_state_fields();
-
-      fields.forEach((f: FieldLike) => {
-        f.required = false;
-        if (f.label === "Anywhere" && f.name === "_fts")
-          f.label = req.__(f.label);
-        if (instanceOfType(f.type) && f.type.name === "Bool")
-          f.fieldview = "tristate";
-        if (
-          instanceOfType(f.type) &&
-          f.type.read &&
-          typeof query[f.name] !== "undefined"
-        ) {
-          query[f.name] = f.type.read(query[f.name]);
-        }
-      });
-      const form = new Form({
-        methodGET: true,
-        action: `/view/${encodeURIComponent(this.name)}`,
-        fields,
-        submitLabel: req.__("Apply"),
-        isStateForm: true,
-        __: req.__,
-        values: removeEmptyStrings(query),
-      });
-      if (!isWeb(req))
-        form.onSubmit = `javascript:stateFormSubmit(this, 'get/view/${encodeURIComponent(
-          this.name
-        )}')`;
-      await form.fill_fkey_options(true);
-      return form;
-    } else return null;
-  }
-
-  /**
    * @param {object} req
    * @returns {Promise<object>}
    */
@@ -739,6 +693,7 @@ class View implements AbstractView {
       `/viewedit/config/${this.name}?step=${stepNm}${
         onDoneRedirect ? onDoneRedirect : ""
       }`;
+    configFlow.previewURL = `/view/${this.name}/preview`;
     return configFlow;
   }
 
@@ -786,6 +741,11 @@ class View implements AbstractView {
       getState().mobileConfig &&
       getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0
     );
+  }
+
+  async getTags(): Promise<Array<AbstractTag>> {
+    const Tag = (await import("./tag")).default;
+    return await Tag.findWithEntries({ view_id: this.id });
   }
 }
 

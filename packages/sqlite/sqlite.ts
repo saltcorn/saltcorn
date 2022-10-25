@@ -266,12 +266,17 @@ export const insert = async (
  * Select one record
  * @param {string} tbl - table name
  * @param {any} where - where object
+ * @param {any} [selectopts = {}] - select options
  * @throws {Error}
  * @returns {Promise<any>} return first record from sql result
  * @function
  */
-export const selectOne = async (tbl: string, where: Where): Promise<Row> => {
-  const rows = await select(tbl, where);
+export const selectOne = async (
+  tbl: string,
+  where: Where,
+  selectopts: SelectOptions = {}
+): Promise<Row> => {
+  const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) {
     const w = mkWhere(where, true);
     throw new Error(`no ${tbl} ${w.where} are ${w.values}`);
@@ -282,14 +287,16 @@ export const selectOne = async (tbl: string, where: Where): Promise<Row> => {
  * Select one record or null if no records
  * @param {string} tbl - table name
  * @param {any} where - where object
+ * @param {any} [selectopts = {}] - select options
  * @returns {Promise<any>} - null if no record or first record data
  * @function
  */
 export const selectMaybeOne = async (
   tbl: string,
-  where: Where
+  where: Where,
+  selectopts: SelectOptions = {}
 ): Promise<Row | null> => {
-  const rows = await select(tbl, where);
+  const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) return null;
   else return rows[0];
 };

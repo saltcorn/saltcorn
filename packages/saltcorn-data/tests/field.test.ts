@@ -62,7 +62,7 @@ describe("Field", () => {
       type: "File",
       required: false,
     });
-    expect(fc.reftable_name).toBe("_sc_files");
+    expect(fc.sql_type).toBe("text");
   });
   it("fills fkey options", async () => {
     const f = await Field.findOne({ name: "favbook" });

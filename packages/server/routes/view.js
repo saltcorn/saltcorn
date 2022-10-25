@@ -8,7 +8,6 @@ const Router = require("express-promise-router");
 
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
-const Page = require("@saltcorn/data/models/page");
 
 const { div, text, i, a } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");

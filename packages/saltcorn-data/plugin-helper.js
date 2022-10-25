@@ -256,19 +256,38 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
  * @param {Table|object} table
  * @param {string} viewname
  * @param {boolean}
- * @returns {Promise<object[]>}
+ * @returns {Promise<{link_view_opts: object[]}>}
  */
 const get_link_view_opts = async (table, viewname) => {
   const own_link_views = await View.find_possible_links_to_table(table);
-  const link_view_opts = own_link_views
+  const all_views = await View.find({})
+  const all_tables = await Table.find({})
+  const table_id_to_name = {}
+  all_tables.forEach(t => { table_id_to_name[t.id] = t.name })
+  const view_name_opts = all_views.map(v => ({
+    label: `${v.name} [${v.viewtemplate} ${table_id_to_name[v.table_id] || ""}]`,
+    name: v.name
+  }))
+  const view_relation_opts = {}
+  const link_view_opts = []
+  const push_view_option = ({ name, label, view, relation }) => {
+    link_view_opts.push({ name, label })
+    if (!view_relation_opts[view]) view_relation_opts[view] = []
+    view_relation_opts[view].push({ value: name, label: relation })
+  }
+  own_link_views
     .filter((v) => v.name !== viewname)
-    .map((v) => ({
-      label: `${v.name} [${v.viewtemplate} ${table.name}]`,
-      name: `Own:${v.name}`,
-    }));
+    .forEach((v) => {
+      push_view_option({
+        view: v.name,
+        label: `${v.name} [${v.viewtemplate} ${table.name}]`,
+        name: `Own:${v.name}`,
+        relation: table.name
+      })
+    });
   const link_view_opts_push = (o) => {
     if (!link_view_opts.map((v) => v.name).includes(o.name))
-      link_view_opts.push(o);
+      push_view_option(o);
   };
   const child_views = await get_child_views(table, viewname);
   for (const {
@@ -281,13 +300,17 @@ const get_link_view_opts = async (table, viewname) => {
     for (const view of views) {
       if (through && throughTable) {
         link_view_opts_push({
+          view: view.name,
           name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
+          relation: `${related_table.name}.${relation.name}.${through.name}`
         });
       } else {
         link_view_opts_push({
+          view: view.name,
           name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
+          relation: `${related_table.name}.${relation.name}`
         });
       }
     }
@@ -297,8 +320,10 @@ const get_link_view_opts = async (table, viewname) => {
   for (const { relation, related_table, views } of parent_views) {
     for (const view of views) {
       link_view_opts_push({
+        view: view.name,
         name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${relation.name}.${related_table.name}]`,
+        relation: `${relation.name}.${related_table.name}`
       });
     }
   }
@@ -306,8 +331,10 @@ const get_link_view_opts = async (table, viewname) => {
   for (const { relation, related_table, views } of onetoone_views) {
     for (const view of views) {
       link_view_opts_push({
+        view: view.name,
         name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
+        relation: `${related_table.name}.${relation.label}`
       });
     }
   }
@@ -316,11 +343,13 @@ const get_link_view_opts = async (table, viewname) => {
   );
   independent_views.forEach((view) => {
     link_view_opts_push({
+      view: view.name,
       label: `${view.name} [${view.viewtemplate}]`,
       name: `Independent:${view.name}`,
+      relation: "None"
     });
   });
-  return link_view_opts;
+  return { link_view_opts, view_name_opts, view_relation_opts };
 };
 
 /**
@@ -416,7 +445,8 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       }
     }
   }
-  const link_view_opts = await get_link_view_opts(table, viewname);
+  const { link_view_opts, view_name_opts, view_relation_opts }
+    = await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
   const { child_field_list, child_relations } =
     await table.get_child_relations(true);
@@ -597,6 +627,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: true,
       attributes: {
+        asideNext: true,
         options: [
           { name: "btn-primary", label: "Primary button" },
           { name: "btn-secondary", label: "Secondary button" },
@@ -638,12 +669,24 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     },
     ...actionConfigFields,
     {
-      name: "view",
+      name: "view_name",
       label: __("View"),
       type: "String",
       required: true,
       attributes: {
-        options: link_view_opts,
+        options: view_name_opts,
+        asideNext: true
+      },
+      showIf: { type: "ViewLink" },
+    },
+    {
+      name: "view",
+      label: __("Relation"),
+      type: "String",
+      required: true,
+      attributes: {
+        //options: link_view_opts,        
+        calcOptions: ["view_name", view_relation_opts]
       },
       showIf: { type: "ViewLink" },
     },
@@ -670,6 +713,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: true,
       attributes: {
+        asideNext: true,
         options: [
           { name: "", label: "Link" },
           { name: "btn btn-primary", label: "Primary button" },
@@ -799,12 +843,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       showIf: { type: "Aggregation" },
     },
     {
-      name: "state_field",
-      label: __("In search form"),
-      type: "Bool",
-      showIf: { type: "Field" },
-    },
-    {
       name: "header_label",
       label: __("Header label"),
       type: "String",
@@ -813,10 +851,11 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "col_width",
       label: __("Column width"),
       type: "Integer",
+      attributes: { asideNext: true }
     },
     {
       name: "col_width_units",
-      label: __("Column width units"),
+      label: __("Units"),
       type: "String",
       required: true,
       fieldview: "radio_group",
@@ -1383,7 +1422,6 @@ const initial_config_all_fields =
             field_name: f.name,
             type: "Field",
             fieldview: fvNm,
-            state_field: true,
           });
           aboves.push({
             widths: [2, 10],
@@ -1447,7 +1485,9 @@ const readState = (state, fields, req) => {
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);
-      } else if (f.type === "Key" || f.type === "File")
+      } else if (f.type === "File")
+        state[f.name] = current
+      else if (f.type === "Key")
         state[f.name] =
           current === "null" || current === "" || current === null
             ? null
