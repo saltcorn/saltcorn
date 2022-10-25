@@ -80,7 +80,6 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
 
 export const FormulaTooltip = () => {
   const { fields } = useContext(optionsCtx);
-  console.log(fields);
   return <Tooltip>
     <div>Formulae in Saltcorn are JavaScript expressions based on the current database row.</div>
     {fields ? <Fragment> Variables in scope: &nbsp;
