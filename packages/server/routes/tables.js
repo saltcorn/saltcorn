@@ -135,6 +135,7 @@ const tableForm = async (table, req) => {
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
+        attributes: { asideNext: !table.external }
       },
       ...(table.external
         ? []

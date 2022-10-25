@@ -40,6 +40,7 @@ export /**
   const ViewLink = ({
     name,
     block,
+    view_name,
     minRole,
     link_style,
     link_size,
@@ -56,7 +57,8 @@ export /**
       connectors: { connect, drag },
     } = useNode((node) => ({ selected: node.events.selected }));
     const names = name.split(":");
-    const displabel = label || (names.length > 1 ? names[1] : names[0]);
+
+    const displabel = label || view_name || (names.length > 1 ? names[1] : names[0]);
     return (
       <span
         className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${selected ? "selected-node" : "is-builder-link"
@@ -102,6 +104,7 @@ export /**
       link_bordercol: node.data.props.link_bordercol,
       link_textcol: node.data.props.link_textcol,
       extra_state_fml: node.data.props.extra_state_fml,
+      view_name: node.data.props.view_name,
     }));
     const {
       actions: { setProp },
@@ -113,6 +116,7 @@ export /**
       inModal,
       textStyle,
       extra_state_fml,
+      view_name,
       link_target_blank
     } = node;
     const options = useContext(optionsCtx);
@@ -123,7 +127,18 @@ export /**
       errorString = error.message;
     }
     const setAProp = setAPropGen(setProp);
-
+    //legacy values
+    const use_view_name
+      = view_name || (name && (names => names.length > 1 ? names[1] : names[0])(name.split(":")))
+    const set_view_name = (e) => {
+      if (e.target) {
+        const target_value = e.target.value;
+        setProp((prop) => (prop.view_name = target_value));
+        if (target_value !== use_view_name) {
+          setProp((prop) => (prop.name = options.view_relation_opts[target_value][0].value));
+        }
+      }
+    };
     return (
       <div>
         <table className="w-100">
@@ -132,12 +147,30 @@ export /**
               <td colSpan="2">
                 <label>View to link to</label>
                 <select
+                  value={use_view_name}
+                  className="form-control form-select"
+                  onChange={set_view_name}
+                  onBlur={set_view_name}
+                >
+                  {options.view_name_opts.map((f, ix) => (
+                    <option key={ix} value={f.name}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan="2">
+                <label>Relation</label>
+                <select
                   value={name}
                   className="form-control form-select"
                   onChange={setAProp("name")}
+                  onBlur={setAProp("name")}
                 >
-                  {options.link_view_opts.map((f, ix) => (
-                    <option key={ix} value={f.name}>
+                  {(options.view_relation_opts[use_view_name] || []).map((f, ix) => (
+                    <option key={ix} value={f.value}>
                       {f.label}
                     </option>
                   ))}
@@ -234,6 +267,7 @@ ViewLink.craft = {
       { name: "inModal", segment_name: "in_modal", column_name: "in_modal" },
       "minRole",
       "link_style",
+      "view_name",
       "link_icon",
       "link_size",
       "link_target_blank",

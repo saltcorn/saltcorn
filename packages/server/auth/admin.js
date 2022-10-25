@@ -643,6 +643,7 @@ router.get(
             name: "min_role_read",
             input_type: "select",
             options: roleOptions,
+            attributes: { asideNext: true }
           },
           {
             label: req.__("Minimum role to write"),

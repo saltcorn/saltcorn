@@ -284,6 +284,29 @@ const mkFormRowForRepeatFancy = (
 ): string => {
   // console.log(v);
 
+  const fldHtmls: String[] = [];
+  hdr.fields.forEach((f: any) => {
+    f.class = `${f.class || ""} item-menu`;
+  });
+  for (let i = 0; i < hdr.fields.length; i++) {
+    const field = hdr.fields[i];
+    if ((field as any)?.attributes?.asideNext) {
+      fldHtmls.push(
+        mkFormRowAside(
+          {},
+          errors,
+          "vert",
+          labelCols,
+          "",
+          field,
+          hdr.fields[i + 1]
+        )
+      );
+      i++;
+    } else {
+      fldHtmls.push(mkFormRow({}, errors, "vert", labelCols)(field));
+    }
+  }
   return div(
     { class: "row w-100" },
     div(
@@ -294,8 +317,7 @@ const mkFormRowForRepeatFancy = (
     div(
       { class: "col-6 mb-3", id: "menuForm" },
       h5("Column configuration"),
-      hdr.fields.forEach((f: any) => (f.class = `${f.class || ""} item-menu`)),
-      hdr.fields.map(mkFormRow({}, errors, "vert", labelCols)),
+      fldHtmls.join(""),
       button(
         { type: "button", id: "btnUpdate", class: "btn btn-primary me-2" },
         "Update"
@@ -516,6 +538,83 @@ const mkFormRowForField =
         labelCols
       );
   };
+
+/**
+ * @param {object[]} v
+ * @param {object[]} errors
+ * @param {string} formStyle
+ * @param {number} labelCols
+ * @param {string} [nameAdd = ""]
+ * @returns {function}
+ */
+const mkFormRowAside = (
+  v: any,
+  errors: any[],
+  formStyle: string,
+  labelCols: number,
+  nameAdd: string = "",
+  hdr1: any,
+  hdr2: any
+): string => {
+  const name: any = hdr1.form_name + nameAdd;
+
+  const inner1 = innerField(v, errors, nameAdd, "")(hdr1);
+  const inner2 = innerField(v, errors, nameAdd, "")(hdr2);
+  const inputCols = (12 - labelCols * 2) / 2;
+  const mkLabel = (hdr: any) =>
+    label(
+      {
+        for: `input${text_attr(hdr.form_name)}`,
+      },
+      text(hdr.label)
+    );
+  const outerAttributes = {
+    class: ["form-group row"],
+    "data-disabled": hdr1.disabled ? "true" : false,
+    ...(hdr1.showIf && {
+      style: "display: none;",
+      "data-show-if": mkShowIf(hdr1.showIf),
+    }),
+  };
+  if (formStyle === "vert")
+    return div(
+      outerAttributes,
+      div(
+        { class: `col-sm-6` },
+        div(mkLabel(hdr1)),
+        div(inner1, hdr1.sublabel && i(text(hdr1.sublabel)))
+      ),
+      div(
+        { class: `col-sm-6` },
+        div(mkLabel(hdr2)),
+        div(inner2, hdr2.sublabel && i(text(hdr2.sublabel)))
+      )
+    );
+  else
+    return div(
+      outerAttributes,
+      div({ class: `col-sm-${labelCols}` }, mkLabel(hdr1)),
+      div(
+        { class: `col-sm-${inputCols}` },
+        inner1,
+        hdr1.sublabel && i(text(hdr1.sublabel))
+      ),
+      div({ class: `col-sm-${labelCols}` }, mkLabel(hdr2)),
+      div(
+        { class: `col-sm-${inputCols}` },
+        inner2,
+        hdr2.sublabel && i(text(hdr2.sublabel))
+      )
+    );
+
+  /*formRowWrap(
+    hdr,
+
+    errorFeedback,
+    formStyle,
+    labelCols
+  );*/
+};
 
 /**
  * @param {object} form
@@ -887,16 +986,35 @@ const mkForm = (
     form.methodGET ? "get" : "post"
   }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
   //console.log(form.fields);
-  const flds = form.fields
-    .map(
-      mkFormRow(
-        form.values,
-        errors,
-        form.formStyle,
-        typeof form.labelCols === "undefined" ? 2 : form.labelCols
-      )
-    )
-    .join("");
+  const fldHtmls: String[] = [];
+  for (let i = 0; i < form.fields.length; i++) {
+    const field = form.fields[i];
+    if ((field as any)?.attributes?.asideNext) {
+      // console.log("AsideNext", field);
+      fldHtmls.push(
+        mkFormRowAside(
+          form.values,
+          errors,
+          form.formStyle,
+          typeof form.labelCols === "undefined" ? 2 : form.labelCols,
+          "",
+          field,
+          form.fields[i + 1]
+        )
+      );
+      i++;
+    } else {
+      fldHtmls.push(
+        mkFormRow(
+          form.values,
+          errors,
+          form.formStyle,
+          typeof form.labelCols === "undefined" ? 2 : form.labelCols
+        )(field)
+      );
+    }
+  }
+  const flds = fldHtmls.join("");
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
