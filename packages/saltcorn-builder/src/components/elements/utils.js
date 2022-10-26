@@ -80,11 +80,10 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
 
 export const FormulaTooltip = () => {
   const { fields } = useContext(optionsCtx);
-  console.log(fields);
   return <Tooltip>
     <div>Formulae in Saltcorn are JavaScript expressions based on the current database row.</div>
     {fields ? <Fragment> Variables in scope: &nbsp;
-      {fields.map((f, ix) => <Fragment><code key={ix}>{f.name}</code>{" "}</Fragment>)}</Fragment> : null}
+      {fields.map((f, ix) => <Fragment key={ix}><code>{f.name}</code>{" "}</Fragment>)}</Fragment> : null}
 
     <a className="d-block" href="https://wiki.saltcorn.com/view/ShowPage/formulas">Wiki page on formulas</a>
   </Tooltip>
