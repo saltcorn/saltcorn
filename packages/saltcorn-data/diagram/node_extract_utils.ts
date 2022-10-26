@@ -1,5 +1,4 @@
 import Node from "./nodes/node";
-import type { NodeType } from "./nodes/node";
 import {
   AbstractView as View,
   instanceOfView,
@@ -48,6 +47,13 @@ export type ExtractOpts = {
   triggerFilterIds?: Set<number>;
 };
 
+export type ExtractResult = {
+  nodes: Array<Node>;
+  // directly referenced by a view
+  // further tables are from foreign keys
+  viewTblIds: Set<string>;
+};
+
 /**
  * builds object trees for 'views/pages' with branches for all possible paths
  * @param opts filter and entry pages options.
@@ -56,30 +62,26 @@ export type ExtractOpts = {
  */
 export async function buildObjectTrees(
   opts: ExtractOpts
-): Promise<Array<Node>> {
+): Promise<ExtractResult> {
   const result = new Array<Node>();
   const helper = new ExtractHelper(opts);
   if (opts.showPages) {
     const entryPages = opts.entryPages ? opts.entryPages : new Array<any>();
-    const entryPageTrees = await buildTree("page", entryPages, helper);
+    const entryPageTrees = await buildTree(entryPages, helper);
     const allPages = await require("../models/page").find();
-    const pageTrees = await buildTree("page", allPages, helper);
+    const pageTrees = await buildTree(allPages, helper);
     result.push(...entryPageTrees, ...pageTrees);
   }
   if (opts.showViews) {
     const allViews = await require("../models/view").find();
     await setTableRefs(allViews);
-    const viewTrees = await buildTree("view", allViews, helper);
+    const viewTrees = await buildTree(allViews, helper);
     result.push(...viewTrees);
   }
-  return result;
+  return { nodes: result, viewTblIds: helper.viewTblIds };
 }
 
-async function buildTree(
-  type: NodeType,
-  objects: Array<Page | View>,
-  helper: ExtractHelper
-) {
+async function buildTree(objects: Array<Page | View>, helper: ExtractHelper) {
   const result = new Array<Node>();
   for (const object of objects) {
     let node;
@@ -200,6 +202,8 @@ export function extractViewToCreate(
 class ExtractHelper {
   cyIds = new Set<string>();
   opts: ExtractOpts;
+  viewTblIds = new Set<string>();
+  assignedTblIds: Set<number> | null = null;
 
   constructor(opts: ExtractOpts) {
     this.opts = opts;
@@ -209,42 +213,25 @@ class ExtractHelper {
     oldNode: Node,
     connected: ConnectedObjects
   ) {
-    if (this.opts.showViews)
-      for (const embeddedView of connected.embeddedViews || []) {
+    if (this.opts.showViews && connected.embeddedViews)
+      for (const embeddedView of connected.embeddedViews) {
         if (embeddedView && includeView(embeddedView, this.opts))
           await this.addEmbeddedView(oldNode, embeddedView);
       }
-    if (this.opts.showPages)
-      for (const linkedPage of connected.linkedPages || []) {
+    if (this.opts.showPages && connected.linkedPages)
+      for (const linkedPage of connected.linkedPages) {
         if (linkedPage && includePage(linkedPage, this.opts))
           await this.addLinkedPageNode(oldNode, linkedPage);
       }
-    if (this.opts.showViews)
-      for (const linkedView of connected.linkedViews || []) {
+    if (this.opts.showViews && connected.linkedViews)
+      for (const linkedView of connected.linkedViews) {
         if (linkedView && includeView(linkedView, this.opts))
           await this.addLinkedViewNode(oldNode, linkedView);
       }
-    if (this.opts.showTables)
-      for (const table of connected.tables || []) {
+    if (this.opts.showTables && connected.tables)
+      for (const table of connected.tables) {
         if (table && includeTable(table, this.opts)) {
-          const tableNode = new TableNode(table, await table.getTags());
-
-          this.cyIds.add(tableNode.cyId);
-          if (this.opts.showTrigger) {
-            const triggerNodes = new Array<Node>();
-            for (const trigger of await Trigger.getAllTableTriggers(table)) {
-              if (trigger && includeTrigger(trigger, this.opts)) {
-                const newNode = new TriggerNode(
-                  trigger,
-                  await trigger.getTags()
-                );
-                this.cyIds.add(newNode.cyId);
-                triggerNodes.push(newNode);
-              }
-            }
-            if (triggerNodes.length > 0) tableNode.trigger = triggerNodes;
-          }
-          oldNode.tables.push(tableNode);
+          await this.addTableNode(oldNode, table);
         }
       }
   }
@@ -283,6 +270,50 @@ class ExtractHelper {
       await setRefs(connections);
       await this.handleNodeConnections(newNode, connections);
     }
+  }
+
+  private async addTableNode(oldNode: Node, table: Table) {
+    const tableNode = new TableNode(table, await table.getTags());
+    this.assignedTblIds = new Set<number>();
+    this.assignedTblIds.add(table.id!);
+    this.cyIds.add(tableNode.cyId);
+    this.viewTblIds.add(tableNode.cyId);
+    if (this.opts.showTrigger) await this.handleTableTrigger(table, tableNode);
+    await this.handleTableForeigns(table, tableNode);
+    oldNode.tables.push(tableNode);
+    this.assignedTblIds = null;
+  }
+
+  private async handleTableForeigns(table: Table, node: Node) {
+    const foreigns = await table.getForeignTables();
+    for (const foreign of foreigns) {
+      if (
+        includeTable(foreign, this.opts) &&
+        !this.assignedTblIds!.has(foreign.id!)
+      ) {
+        const newNode = new TableNode(foreign, await foreign.getTags());
+        this.assignedTblIds!.add(foreign.id!);
+        if (!this.cyIds.has(newNode.cyId)) this.cyIds.add(newNode.cyId);
+        if (this.opts.showTrigger)
+          await this.handleTableTrigger(foreign, newNode);
+        await this.handleTableForeigns(foreign, newNode);
+        node.tables.push(newNode);
+      }
+    }
+  }
+
+  private async handleTableTrigger(table: Table, tableNode: Node) {
+    const triggerNodes = new Array<Node>();
+    const triggers = await Trigger.getAllTableTriggers(table);
+    for (const trigger of triggers) {
+      if (trigger && includeTrigger(trigger, this.opts)) {
+        const tags = await trigger.getTags();
+        const newNode = new TriggerNode(trigger, tags);
+        this.cyIds.add(newNode.cyId);
+        triggerNodes.push(newNode);
+      }
+    }
+    if (triggerNodes.length > 0) tableNode.trigger = triggerNodes;
   }
 }
 

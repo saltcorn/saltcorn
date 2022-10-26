@@ -13,6 +13,9 @@ export interface AbstractField {
   // actually getters:
   form_name?: string;
   type_name?: string | undefined;
+  is_fkey: boolean;
+  reftable_name?: string;
+  pretty_type?: string;
 }
 
 export type FieldCfg = {

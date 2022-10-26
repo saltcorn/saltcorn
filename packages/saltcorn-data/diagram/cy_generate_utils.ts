@@ -1,5 +1,6 @@
 import Node from "./nodes/node";
 import CytoscapeRaster from "./cy_raster";
+import type { ExtractResult } from "./node_extract_utils";
 
 const cyStyle = [
   {
@@ -64,8 +65,8 @@ const cyStyle = [
                      if not set, roots will be used how the db delivers them
  * @returns cytoscape.js cfg object
  */
-export function genereateCyCfg(entryNodes: Array<Node>): any {
-  const raster = new CytoscapeRaster(entryNodes);
+export function genereateCyCfg(extracted: ExtractResult): any {
+  const raster = new CytoscapeRaster(extracted);
   return {
     elements: {
       nodes: raster.buildCyNodes(),
@@ -84,8 +85,8 @@ export function genereateCyCfg(entryNodes: Array<Node>): any {
                      if not set, roots will be used how the db delivers them
  * @returns cytoscape.js code as string
  */
-export function generateCyCode(entryNodes: Array<Node>): string {
-  const raster = new CytoscapeRaster(entryNodes);
+export function generateCyCode(extracted: ExtractResult): string {
+  const raster = new CytoscapeRaster(extracted);
   const cyNodes = raster.buildCyNodes();
   const cyEdges = raster.buildCyEdges();
   return `

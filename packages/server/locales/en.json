@@ -1008,5 +1008,6 @@
 	"Clear this application": "Clear this application",
 	"(tick all boxes)": "(tick all boxes)",
 	"When prompted to create the first user, click the link to restore a backup": "When prompted to create the first user, click the link to restore a backup",
-	"Select the downloaded backup file": "Select the downloaded backup file"
+	"Select the downloaded backup file": "Select the downloaded backup file",
+	"Please select at least one item": "Please select at least one item"
 }

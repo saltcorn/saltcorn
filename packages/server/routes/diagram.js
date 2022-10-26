@@ -314,6 +314,15 @@ router.get(
                       i({ class: "fas fa-plus ms-2" })
                     )
                   )
+                ),
+                // refresh button
+                button(
+                  {
+                    type: "button",
+                    class: "btn btn-primary m-2 rounded",
+                    onclick: "reloadCy(true);",
+                  },
+                  i({ class: "fas fa-sync-alt" })
                 )
               ),
               div({ id: "cy" }),

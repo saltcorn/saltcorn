@@ -103,7 +103,7 @@ function buildPreview(node) {
 }
 
 function buildPreviewDiv(node) {
-  const previewId = `preview_${node.id()}`;  
+  const previewId = `preview_${node.id()}`;
   return `
     <div class="my-2" id="${previewId}" style="min-height: 70px;">
       <div style="opacity: 0.5;">
@@ -448,7 +448,9 @@ function existingTagBadges(node) {
     .join("");
 }
 
-function reloadCy() {
+function reloadCy(keepViewPos) {
+  const currentZoom = keepViewPos ? cy.zoom() : undefined;
+  const currentPan = keepViewPos ? cy.pan() : undefined;
   $.ajax("/diagram/data", {
     dataType: "json",
     type: "GET",
@@ -462,6 +464,10 @@ function reloadCy() {
       ...res,
     };
     window.cy = cytoscape(cfg);
+    if (keepViewPos) {
+      cy.pan(currentPan);
+      cy.zoom(currentZoom);
+    }
     initMouseOver();
   });
 }
