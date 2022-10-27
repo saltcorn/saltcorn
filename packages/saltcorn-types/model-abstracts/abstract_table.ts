@@ -9,6 +9,7 @@ export interface AbstractTable {
   sql_name: string;
   fields?: AbstractField[] | null;
   getTags(): Promise<Array<AbstractTag>>;
+  getForeignTables(): Promise<Array<AbstractTable>>;
 }
 
 export type TableCfg = {

@@ -16,6 +16,8 @@ export default abstract class Node {
   tables = new Array<Node>();
   trigger = new Array<Node>();
   tags = new Array<AbstractTag>();
+  // 
+  assignedTblIds = new Set<number>();
 
   /**
    * @param type saltcorn-entity type

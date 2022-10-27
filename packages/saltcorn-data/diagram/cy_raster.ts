@@ -1,5 +1,6 @@
 import { DummyNode } from "./nodes/dummy_node";
 import Node from "./nodes/node";
+import type { ExtractResult } from "./node_extract_utils";
 
 /**
  * aligns the nodes from the application object tree on a raster
@@ -8,10 +9,12 @@ export default class CytoscapeRaster {
   private raster = new Array<Array<Node | null>>();
   private cyIds = new Set<string>();
   private links = new Array<Link>();
+  viewTblIds: Set<string>;
 
-  constructor(entryNodes: Array<Node>) {
+  constructor(extracted: ExtractResult) {
+    this.viewTblIds = extracted.viewTblIds;
     this.initRaster();
-    this.alignNodes(entryNodes);
+    this.alignNodes(extracted.nodes);
   }
 
   private initRaster(): void {
@@ -136,6 +139,36 @@ export default class CytoscapeRaster {
 }
 
 const buildVisitor = (raster: CytoscapeRaster): any => {
+  const handleForeignKeys = (table: any, row: number, col: number) => {
+    if (!table.tables || table.tables.length === 0) return null;
+    let currentRow = row;
+    let currentCol = col;
+    for (const referenced of table.tables) {
+      if (!raster.viewTblIds.has(referenced.cyId)) {
+        let triggerCol = currentCol;
+        if (referenced.trigger?.length > 0) {
+          for (const trigger of referenced.trigger) {
+            raster.addNode(trigger, currentRow, triggerCol--);
+            raster.addLink(referenced, trigger, "new_target");
+          }
+          currentRow++;
+        }
+        raster.addNode(referenced, currentRow, currentCol);
+        raster.addLink(table, referenced, "new_target");
+        const res = handleForeignKeys(referenced, currentRow, currentCol - 1);
+        if (res && res.row > currentRow) {
+          currentRow = res.row;
+        } else {
+          currentRow++;
+        }
+      } else {
+        raster.addLink(table, referenced, "existing_target");
+      }
+    }
+
+    return { row: currentRow, col: currentCol };
+  };
+
   const allignTablesAndTrigger = (
     source: Node,
     tables: Array<Node>,
@@ -150,14 +183,23 @@ const buildVisitor = (raster: CytoscapeRaster): any => {
     for (const table of tables) {
       if (!raster.hasId(table.cyId)) {
         anyNewTables = true;
+        const hasTriggers = table.trigger.length > 0;
         for (const trigger of table.trigger) {
           raster.addNode(trigger, triggerRow, triggerCol--);
           raster.addLink(table, trigger, "new_target");
         }
-        if (table.trigger.length > 0) tableRow = row + 1;
+        if (hasTriggers) tableRow = row + 1;
         raster.addNode(table, tableRow, tableCol);
         raster.addLink(source, table, "new_target");
-        tableCol = triggerCol;
+        const pos = handleForeignKeys(
+          table,
+          tableRow,
+          hasTriggers ? triggerCol : tableCol - 1
+        );
+        if (pos) {
+          tableRow = pos.row;
+          tableCol = pos.col;
+        }
       } else {
         raster.addLink(source, table, "existing_target");
       }
@@ -185,6 +227,7 @@ const buildVisitor = (raster: CytoscapeRaster): any => {
         );
         if (newInsertPos) insertRow = newInsertPos.row;
         raster.addNode(target, insertRow, insertCol);
+        if (newInsertPos) insertCol = newInsertPos.col;
         if (!noLink) raster.addLink(source, target, "new_target");
         return { row: insertRow, col: insertCol };
       } else {
@@ -297,7 +340,7 @@ const traverse = (
   go(node, startRow, startCol, false);
   return {
     maxRow: (rootEmbedMax > maxRow ? rootEmbedMax : maxRow) + 1,
-    maxCol,
+    maxCol: maxCol + 1,
   };
 };
 
@@ -307,16 +350,32 @@ const leftDepth = (node: Node, raster: CytoscapeRaster) => {
   return tblDepth > embedDepth ? tblDepth : embedDepth;
 };
 
+const foreignKeysDepth = (tableNode: Node) => {
+  let maxDepth = 0;
+  const iterate = (current: Node, level: number) => {
+    for (const next of current.tables) {
+      let depth = level;
+      if (next.trigger.length > 1) depth += next.trigger.length - 1;
+      maxDepth = depth > maxDepth ? depth : maxDepth;
+      iterate(next, level + 1);
+    }
+  };
+  iterate(tableNode, 1);
+  return maxDepth;
+};
+
 const tableDepth = (parent: Node, raster: CytoscapeRaster) => {
   const usedIds = new Set<string>();
   let depth = 0;
   for (const tbl of parent.tables || []) {
     const triggerCount = tbl.trigger.length;
+    const fKeysDepth = foreignKeysDepth(tbl);
     if (!raster.hasId(tbl.cyId)) {
       usedIds.add(tbl.cyId);
       if (tbl.trigger.length > 1) {
         depth += triggerCount > 1 ? triggerCount : 1;
       }
+      depth += fKeysDepth;
     }
   }
   return depth;

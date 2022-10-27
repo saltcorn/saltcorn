@@ -1676,6 +1676,19 @@ class Table implements AbstractTable {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ table_id: this.id });
   }
+
+  async getForeignTables(): Promise<Array<AbstractTable>> {
+    const result = new Array<AbstractTable>();
+    if (this.fields) {
+      for (const field of this.fields) {
+        if (field.is_fkey) {
+          const refTable = await Table.findOne({ name: field.reftable_name! });
+          if (refTable) result.push(refTable);
+        }
+      }
+    }
+    return result;
+  }
 }
 
 // declaration merging
