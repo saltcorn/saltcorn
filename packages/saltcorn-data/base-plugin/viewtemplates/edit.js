@@ -14,7 +14,7 @@ const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
 const { getState } = require("../../db/state");
-const { text, text_attr } = require("@saltcorn/markup/tags");
+const { text, text_attr, script, domReady } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const {
@@ -647,7 +647,6 @@ const render = async ({
       }
     }
     form.hidden(table.pk_name);
-    const role = req.user ? req.user.role_id : 10;
     const user_id = req.user ? req.user.id : null;
     const owner_field = await table.owner_fieldname();
 
@@ -687,12 +686,19 @@ const render = async ({
       }
     },
   });
-  if (auto_save && !(!row && hasSave))
+  const actually_auto_save = auto_save && !(!row && hasSave)
+  if (actually_auto_save)
     form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
       })`;
+  let reloadAfterCloseInModalScript = actually_auto_save && req.xhr
+    ? script(domReady(`
+    $("#scmodal").on("hidden.bs.modal", function (e) {
+      setTimeout(()=>location.reload(),0);
+    });`))
+    : ''
   await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
-  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
+  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) + reloadAfterCloseInModalScript;
 };
 
 /**
