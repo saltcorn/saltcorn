@@ -187,7 +187,8 @@ const configuration_workflow = (req) =>
             views: link_view_opts,
             mode: "edit",
             view_name_opts,
-            view_relation_opts
+            view_relation_opts,
+            ownership: !!table.ownership_field_id || !!table.ownership_formula || table.name === "users",
           };
         },
       },
@@ -646,7 +647,19 @@ const render = async ({
       }
     }
     form.hidden(table.pk_name);
+    const role = req.user ? req.user.role_id : 10;
+    const user_id = req.user ? req.user.id : null;
+    const owner_field = await table.owner_fieldname();
+
+    form.isOwner =
+      table.ownership_formula && user_id
+        ? await table.is_owner(req.user, row)
+        : owner_field && user_id && row[owner_field] === user_id;
+  } else {
+    form.isOwner = true
   }
+
+
 
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
