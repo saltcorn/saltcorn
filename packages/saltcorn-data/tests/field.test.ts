@@ -415,3 +415,32 @@ describe("Field.distinct_values", () => {
     ]);
   });
 });
+
+describe("adds new fields to history #1202", () => {
+  it("field first", async () => {
+    const table = await Table.create("histcalc1");
+    await Field.create({
+      table,
+      label: "Date",
+      name: "date",
+      type: "Date",
+    });
+    await table.update({ versioned: true });
+    await table.insertRow({ date: new Date() });
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+  });
+  it("history first", async () => {
+    const table = await Table.create("histcalc2");
+    await table.update({ versioned: true });
+    await Field.create({
+      table,
+      label: "Date",
+      name: "date",
+      type: "Date",
+    });
+    await table.insertRow({ date: new Date() });
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+  });
+});
