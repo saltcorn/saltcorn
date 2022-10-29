@@ -8,6 +8,7 @@ import email from "../models/email";
 import { describe, it, expect, jest } from "@jest/globals";
 import View from "../models/view";
 import Table from "../models/table";
+import { createTransport } from "nodemailer";
 
 function removeBreaks(str: string): string {
   return str.replace(/(\r\n|\r|\n)/gm, "").toLowerCase();
@@ -24,7 +25,32 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
+jest.mock("nodemailer");
+
 jest.setTimeout(60 * 1000);
+
+describe("getMailTransport", () => {
+  it("returns Transporter", async () => {
+    let sentEmail;
+    // @ts-ignore
+    createTransport.mockReturnValue({
+      sendMail: (email: any) => {
+        sentEmail = email;
+        return;
+      },
+    });
+    const mailTransport = email.getMailTransport();
+    mailTransport.sendMail({
+      from: "me",
+      to: "you",
+      subject: "us",
+      html: "<div>Hello World</div>",
+    });
+    expect(createTransport).toHaveBeenCalledTimes(1);
+    // @ts-ignore
+    expect(sentEmail?.from).toBe("me");
+  });
+});
 
 describe("MJML Mail Transformations", () => {
   it("transform simple to mjml", async () => {
