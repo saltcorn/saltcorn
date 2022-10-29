@@ -32,9 +32,16 @@ const discoverable_tables = async (schema0?: string): Promise<Row[]> => {
   );
   const myTables = await Table.find({});
   const myTableNames = myTables.map((t) => t.name);
+  const myTableHistoryNames = myTables
+    .filter((t) => t.versioned)
+    .map((t) => `${t.name}__history`);
   const discoverable = rows.filter(
     (t: Row) =>
-      !(myTableNames.includes(t.table_name) || t.table_name.startsWith("_sc_"))
+      !(
+        myTableNames.includes(t.table_name) ||
+        myTableHistoryNames.includes(t.table_name) ||
+        t.table_name.startsWith("_sc_")
+      )
   );
   return discoverable;
 };

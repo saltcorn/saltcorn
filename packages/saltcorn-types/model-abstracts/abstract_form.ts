@@ -27,6 +27,7 @@ export interface AbstractForm {
   onChange?: string;
   xhrSubmit: boolean;
   splitPaste?: boolean;
+  isOwner?: boolean;
   onSubmit?: string;
   req: any;
   __?: any;

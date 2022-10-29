@@ -92,7 +92,6 @@ router.get(
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
-    const base_url = get_base_url(req);
     send_events_page({
       res,
       req,

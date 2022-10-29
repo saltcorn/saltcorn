@@ -14,7 +14,7 @@ const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
 const { getState } = require("../../db/state");
-const { text, text_attr } = require("@saltcorn/markup/tags");
+const { text, text_attr, script, domReady } = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const {
@@ -187,7 +187,8 @@ const configuration_workflow = (req) =>
             views: link_view_opts,
             mode: "edit",
             view_name_opts,
-            view_relation_opts
+            view_relation_opts,
+            ownership: !!table.ownership_field_id || !!table.ownership_formula || table.name === "users",
           };
         },
       },
@@ -646,7 +647,18 @@ const render = async ({
       }
     }
     form.hidden(table.pk_name);
+    const user_id = req.user ? req.user.id : null;
+    const owner_field = await table.owner_fieldname();
+
+    form.isOwner =
+      table.ownership_formula && user_id
+        ? await table.is_owner(req.user, row)
+        : owner_field && user_id && row[owner_field] === user_id;
+  } else {
+    form.isOwner = true
   }
+
+
 
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
@@ -674,12 +686,19 @@ const render = async ({
       }
     },
   });
-  if (auto_save && !(!row && hasSave))
+  const actually_auto_save = auto_save && !(!row && hasSave)
+  if (actually_auto_save)
     form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
       })`;
+  let reloadAfterCloseInModalScript = actually_auto_save && req.xhr
+    ? script(domReady(`
+    $("#scmodal").on("hidden.bs.modal", function (e) {
+      setTimeout(()=>location.reload(),0);
+    });`))
+    : ''
   await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
-  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false);
+  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) + reloadAfterCloseInModalScript;
 };
 
 /**
