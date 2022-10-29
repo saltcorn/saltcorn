@@ -5,6 +5,8 @@ const { getState } = require("../db/state");
 
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import mocks from "./mocks";
+const { sleep } = mocks;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -442,5 +444,29 @@ describe("adds new fields to history #1202", () => {
     await table.insertRow({ date: new Date() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
+  });
+  it("recalc stored first", async () => {
+    const table = await Table.create("histcalc3");
+    await Field.create({
+      table,
+      label: "Name",
+      name: "name",
+      type: "String",
+    });
+    await table.update({ versioned: true });
+    await table.insertRow({ name: "Jim" });
+    await Field.create({
+      table,
+      label: "idp1",
+      type: "Integer",
+      calculated: true,
+      expression: "id+1",
+      stored: true,
+    });
+    await sleep(100);
+
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+    expect(rows[0].idp1).toBe(2);
   });
 });
