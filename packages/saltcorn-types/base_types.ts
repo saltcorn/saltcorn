@@ -338,4 +338,5 @@ export type MobileConfig = {
   user_name?: string;
   language?: string;
   isPublicUser?: boolean;
+  jwt?: string;
 };

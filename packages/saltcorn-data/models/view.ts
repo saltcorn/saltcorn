@@ -42,7 +42,7 @@ import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_tab
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
-declare let window: any;
+declare let parent: any;
 
 /**
  * View Class
@@ -436,7 +436,7 @@ class View implements AbstractView {
             "X-Requested-With": "XMLHttpRequest",
             "X-Saltcorn-Client": "mobile-app",
           };
-          const token = window.localStorage.getItem("auth_jwt");
+          const token = state.mobileConfig?.jwt;
           if (token) headers.Authorization = `jwt ${token}`;
           try {
             let response = await axios.post(

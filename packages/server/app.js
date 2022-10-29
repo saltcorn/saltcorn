@@ -122,12 +122,10 @@ const getApp = async (opts = {}) => {
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
   app.use((req, res, next) => {
-    if (jwt_extractor(req) && req.cookies && req.cookies["connect.sid"])
-      throw new Error(
-        "Don't set a session cookie and JSON Web Token at the same time."
-      );
-    next();
-  });
+    // no jwt and session id at the same time
+    if (!(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]))
+      next();
+    });
   app.use(flash());
 
   //static serving

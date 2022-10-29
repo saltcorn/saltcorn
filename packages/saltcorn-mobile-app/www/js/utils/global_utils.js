@@ -1,8 +1,3 @@
-const iframeStyle =
-  "position: fixed; top: 0; left: 0; bottom: 0; right: 0; " +
-  "width: 100%; height: 100%; border: none; margin: 0; padding: 0; " +
-  "overflow: hidden; z-index: 999999; ";
-
 const routingHistory = [];
 
 function currentLocation() {
@@ -28,7 +23,7 @@ async function apiCall({ method, path, params, body, responseType }) {
     "X-Saltcorn-Client": "mobile-app",
   };
   if (config.tenantAppName) headers["X-Saltcorn-App"] = config.tenantAppName;
-  const token = localStorage.getItem("auth_jwt");
+  const token = config.jwt;
   if (token) headers.Authorization = `jwt ${token}`;
   try {
     const result = await axios({

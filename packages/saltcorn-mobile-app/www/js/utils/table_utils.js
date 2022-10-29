@@ -1,4 +1,5 @@
 const historyFile = "update_history";
+const jwtTableName = "jwt_table";
 
 /**
  * drop tables that are no longer in the 'tables.json' file
@@ -7,14 +8,17 @@ const historyFile = "update_history";
 async function dropDeletedTables(incomingTables) {
   const existingTables = await saltcorn.data.models.Table.find();
   for (const table of existingTables) {
-    if (table.name !== "users" && !incomingTables.find((row) => row.id === table.id)) {
-      saltcorn.data.db.query(`DROP TABLE ${table.name}`);
+    if (
+      table.name !== "users" &&
+      !incomingTables.find((row) => row.id === table.id)
+    ) {
+      await saltcorn.data.db.query(`DROP TABLE ${table.name}`);
     }
   }
 }
 
 async function updateScTables(tablesJSON, skipScPlugins = true) {
-  saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
+  await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
   for (const { table, rows } of tablesJSON.sc_tables) {
     if (skipScPlugins && table === "_sc_plugins") continue;
     if (table === "_sc_tables") await dropDeletedTables(rows);
@@ -23,7 +27,7 @@ async function updateScTables(tablesJSON, skipScPlugins = true) {
       await saltcorn.data.db.insert(table, row);
     }
   }
-  saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+  await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
 }
 
 async function updateScPlugins(tablesJSON) {
@@ -84,4 +88,24 @@ async function getTableIds(tableNames) {
   return (await saltcorn.data.models.Table.find())
     .filter((table) => tableNames.indexOf(table.name) > -1)
     .map((table) => table.id);
+}
+
+async function createJwtTable() {
+  await saltcorn.data.db.query(`CREATE TABLE IF NOT EXISTS ${jwtTableName} (
+    jwt VARCHAR(500)
+  )`);
+}
+
+async function getJwt() {
+  const rows = await saltcorn.data.db.select(jwtTableName);
+  return rows?.length > 0 ? rows[0].jwt : null;
+}
+
+async function removeJwt() {
+  await saltcorn.data.db.deleteWhere(jwtTableName);
+}
+
+async function setJwt(jwt) {
+  await removeJwt();
+  await saltcorn.data.db.insert(jwtTableName, { jwt: jwt });
 }

@@ -61,7 +61,7 @@ export const init = (): Promise<void> => {
  */
 export const query = (statement: string, params?: any): Promise<any> => {
   if (params?.length) {
-    /// https://github.com/storesafe/cordova-sqlite-storage/issues/545
+    // https://github.com/storesafe/cordova-sqlite-storage/issues/545
     params = params.map((param: any) =>
       param === false ? 0 : param === true ? 1 : param
     );
@@ -260,4 +260,14 @@ export const listUserDefinedTables = async () => {
  */
 export const listScTables = async () => {
   return await doListScTables(query);
+};
+
+/**
+ *
+ * @param name table name
+ * @returns
+ */
+export const tableExists = async (name: string) => {
+  const tables = await listTables();
+  return tables.find((table: Row) => table.name === name);
 };
