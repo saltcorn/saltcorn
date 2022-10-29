@@ -13,6 +13,7 @@ import { createTransport } from "nodemailer";
 import mocks from "./mocks";
 const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
+const db = require("../db");
 
 function removeBreaks(str: string): string {
   return str.replace(/(\r\n|\r|\n)/gm, "").toLowerCase();
@@ -128,7 +129,11 @@ describe("send_verification_email", () => {
     });
     await getState().setConfig("verification_view", "verifyview");
     const user = await User.findOne({ id: 1 });
-    await email.send_verification_email(user as User, mockReqRes.req);
+    await email.send_verification_email(
+      user as User,
+      mockReqRes.req,
+      "newsecrettoken"
+    );
     // @ts-ignore
     expect(trimLines(sentEmail?.html)).toBe(
       trimLines(`<!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title></title><!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]--><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style type="text/css">#outlook a { padding:0; }
@@ -148,7 +153,7 @@ describe("send_verification_email", () => {
   <style type="text/css">
     .mj-outlook-group-fix { width:100% !important; }
   </style>
-  <![endif]--><!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css"><style type="text/css">@import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);</style><!--<![endif]--><style type="text/css"></style><style type="text/css"></style></head><body style="word-spacing:normal;"><div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;"><mj-section style="margin-bottom:1.5rem"><mj-column width="17%"><mj-text>Email</mj-text></mj-column><mj-column width="83%"><mj-text>admin@foo.com</mj-text></mj-column></mj-section></div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;"><mj-section style="margin-bottom:1.5rem"><mj-column width="17%"><mj-text>Click to verify</mj-text></mj-column><mj-column width="83%"><mj-text>/auth/verify?token=undefined&amp;email=admin%40foo.com</mj-text></mj-column></mj-section></div></div></body></html>`)
+  <![endif]--><!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css"><style type="text/css">@import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);</style><!--<![endif]--><style type="text/css"></style><style type="text/css"></style></head><body style="word-spacing:normal;"><div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;"><mj-section style="margin-bottom:1.5rem"><mj-column width="17%"><mj-text>Email</mj-text></mj-column><mj-column width="83%"><mj-text>admin@foo.com</mj-text></mj-column></mj-section></div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;"><mj-section style="margin-bottom:1.5rem"><mj-column width="17%"><mj-text>Click to verify</mj-text></mj-column><mj-column width="83%"><mj-text>/auth/verify?token=newsecrettoken&amp;email=admin%40foo.com</mj-text></mj-column></mj-section></div></div></body></html>`)
     );
   });
 });
