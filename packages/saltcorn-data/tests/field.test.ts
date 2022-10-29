@@ -463,7 +463,7 @@ describe("adds new fields to history #1202", () => {
       expression: "id+1",
       stored: true,
     });
-    await sleep(100);
+    await sleep(500);
 
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
