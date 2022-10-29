@@ -748,6 +748,7 @@ module.exports = {
         joinFields,
         aggregations,
         limit: 5,
+        starFields: tbl.name === "users"
       });
       return {
         rows,
