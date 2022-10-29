@@ -80,33 +80,14 @@ describe("send_verification_email", () => {
               widths: [2, 10],
               besides: [
                 {
-                  above: [
-                    null,
-                    {
-                      font: "",
-                      type: "blank",
-                      block: false,
-                      style: {},
-                      inline: false,
-                      contents: "Email",
-                      labelFor: "",
-                      isFormula: {},
-                      textStyle: "",
-                    },
-                  ],
+                  type: "blank",
+                  contents: "Email",
+                  isFormula: {},
                 },
                 {
-                  above: [
-                    null,
-                    {
-                      type: "field",
-                      block: false,
-                      fieldview: "as_text",
-                      textStyle: "",
-                      field_name: "email",
-                      configuration: {},
-                    },
-                  ],
+                  type: "field",
+                  fieldview: "as_text",
+                  field_name: "email",
                 },
               ],
             },
@@ -117,34 +98,14 @@ describe("send_verification_email", () => {
               widths: [2, 10],
               besides: [
                 {
-                  above: [
-                    null,
-                    {
-                      font: "",
-                      icon: "",
-                      type: "blank",
-                      block: false,
-                      style: {},
-                      inline: false,
-                      contents: "Click to verify",
-                      labelFor: "",
-                      isFormula: {},
-                      textStyle: "",
-                    },
-                  ],
+                  type: "blank",
+                  contents: "Click to verify",
+                  isFormula: {},
                 },
                 {
-                  above: [
-                    null,
-                    {
-                      type: "field",
-                      block: false,
-                      fieldview: "as_text",
-                      textStyle: "",
-                      field_name: "verification_url",
-                      configuration: {},
-                    },
-                  ],
+                  type: "field",
+                  fieldview: "as_text",
+                  field_name: "verification_url",
                 },
               ],
             },
@@ -153,19 +114,13 @@ describe("send_verification_email", () => {
         columns: [
           {
             type: "Field",
-            block: false,
             fieldview: "as_text",
-            textStyle: "",
             field_name: "email",
-            configuration: {},
           },
           {
             type: "Field",
-            block: false,
             fieldview: "as_text",
-            textStyle: "",
             field_name: "verification_url",
-            configuration: {},
           },
         ],
       },
