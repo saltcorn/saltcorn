@@ -129,11 +129,9 @@ describe("send_verification_email", () => {
     });
     await getState().setConfig("verification_view", "verifyview");
     const user = await User.findOne({ id: 1 });
-    await email.send_verification_email(
-      user as User,
-      mockReqRes.req,
-      "newsecrettoken"
-    );
+    await email.send_verification_email(user as User, mockReqRes.req, {
+      new_verification_token: "newsecrettoken",
+    });
     // @ts-ignore
     expect(trimLines(sentEmail?.html)).toBe(
       trimLines(`<!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title></title><!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]--><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style type="text/css">#outlook a { padding:0; }
