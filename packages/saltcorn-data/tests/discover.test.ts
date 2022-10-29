@@ -2,6 +2,7 @@ import discovery from "../models/discovery";
 const { discoverable_tables, discover_tables, implement_discovery } = discovery;
 const { getState } = require("../db/state");
 import db from "../db";
+import Table from "../models/table";
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { Row } from "@saltcorn/db-common/internal";
@@ -24,6 +25,8 @@ describe("Table Discovery", () => {
       await db.query(
         `create table discdog(id serial primary key, name text, owner int references discperson(id));`
       );
+      const table = await Table.create("table_with_history");
+      await table.update({ versioned: true });
     });
     it("should list tables", async () => {
       const tbls = await discoverable_tables();
