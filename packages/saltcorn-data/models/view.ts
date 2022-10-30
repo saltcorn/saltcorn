@@ -42,8 +42,6 @@ import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_tab
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
-declare let parent: any;
-
 /**
  * View Class
  * @category saltcorn-data
