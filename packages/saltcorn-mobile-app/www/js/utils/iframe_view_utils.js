@@ -88,13 +88,14 @@ async function login(e, entryPoint, isSignup) {
   );
   if (typeof loginResult === "string") {
     // use it as a token
-    parent.localStorage.setItem("auth_jwt", loginResult);
     const decodedJwt = parent.jwt_decode(loginResult);
     const config = parent.saltcorn.data.state.getState().mobileConfig;
     config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 10;
     config.user_name = decodedJwt.user.email;
     config.language = decodedJwt.user.language;
     config.isPublicUser = false;
+    await parent.setJwt(loginResult);
+    config.jwt = loginResult;
     await parent.i18next.changeLanguage(config.language);
     parent.addRoute({ route: entryPoint, query: undefined });
     const page = await parent.router.resolve({
@@ -400,11 +401,13 @@ async function buildEncodedBgImage(fileId, elementId) {
 }
 
 function openFile(fileId) {
+  // TODO fileIds with whitespaces do not work
   const config = parent.saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
-  const token = localStorage.getItem("auth_jwt");
+  const token = config.jwt;
+  const url = `${serverPath}/files/serve/${fileId}?jwt=${token}`;
   parent.cordova.InAppBrowser.open(
-    `${serverPath}/files/serve/${fileId}?jwt=${token}`,
+    url,
     "_self",
     "clearcache=yes,clearsessioncache=yes,location=no"
   );

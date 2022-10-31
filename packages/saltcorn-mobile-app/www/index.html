@@ -143,14 +143,30 @@
         iframe.contentWindow._sc_version_tag = config.version_tag;
       };
 
+      const initJwt = async () => {
+        if (!(await saltcorn.data.db.tableExists("jwt_table"))) {
+          await createJwtTable();
+        }
+        else {
+          const jwt = await getJwt();
+          if(jwt) {
+            const state = saltcorn.data.state.getState();
+            state.mobileConfig.jwt = jwt;
+          }
+        }
+      };
+
       const checkJWT = async () => {
-        const jwt = localStorage.getItem("auth_jwt");
-        if (!jwt || jwt === "undefined") return false;
-        const response = await apiCall({
-          method: "GET",
-          path: "/auth/authenticated",
-        });
-        return response.data.authenticated;
+        const state = saltcorn.data.state.getState();
+        const jwt = state.mobileConfig.jwt;
+        if(jwt && jwt !== "undefined") {
+          const response = await apiCall({
+            method: "GET",
+            path: "/auth/authenticated",
+          });
+          return response.data.authenticated;
+        }
+        else return false;
       };
 
       const initI18Next = async () => {
@@ -199,6 +215,7 @@
         if (updateNeeded) {
           await updateDb(tablesJSON);
         }
+        await initJwt();
         await state.refresh_tables();
         await state.refresh_views();
         await state.refresh_pages();
@@ -212,8 +229,8 @@
         await initI18Next();
         try {
           if (await checkJWT()) {
-            const decodedJwt = jwt_decode(localStorage.getItem("auth_jwt"));
             const mobileConfig = state.mobileConfig;
+            const decodedJwt = jwt_decode(mobileConfig.jwt);
             mobileConfig.role_id = decodedJwt.user.role_id
               ? decodedJwt.user.role_id
               : 10;
