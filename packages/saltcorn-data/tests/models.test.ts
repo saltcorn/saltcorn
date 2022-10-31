@@ -39,12 +39,17 @@ describe("Table create", () => {
 
 describe("Crash", () => {
   it("should create", async () => {
+    const oldConsoleError = console.error;
+    console.error = jest.fn();
+
     await Crash.create(new Error("my error"), { url: "/", headers: {} });
     const cs = await Crash.find();
 
     expect(cs[0].reltime.length > 0).toBe(true);
     const cs0 = await Crash.findOne({ id: cs[0].id });
     expect(cs0.msg_short).toBe("my error");
+    expect(console.error).toHaveBeenCalled();
+    console.error = oldConsoleError;
   });
 });
 
