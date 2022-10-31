@@ -8,7 +8,7 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr, button } = require("@saltcorn/markup/tags");
+const { text, div, h4, hr, button, code } = require("@saltcorn/markup/tags");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
@@ -211,9 +211,8 @@ const configuration_workflow = (req) =>
                 name: "include_fml",
                 label: req.__("Row inclusion formula"),
                 class: "validate-expression",
-                sublabel: req.__(
-                  "Only include rows where this formula is true"
-                ),
+                sublabel: req.__("Only include rows where this formula is true. ")
+                  + req.__("Use %s to access current user ID", code("$user_id")),
                 type: "String",
               },
 
@@ -388,9 +387,11 @@ const run = async (
   }
   qextra.limit = q.limit || rows_per_page;
   const current_page = parseInt(state._page) || 1;
-  if (include_fml) {
-    qextra.where = jsexprToWhere(include_fml, state);
-  }
+  const user_id =
+    extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
+  if (include_fml)
+    qextra.where = jsexprToWhere(include_fml, { ...state, user_id });
+
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     ...qextra,
@@ -415,8 +416,7 @@ const run = async (
       ? extraArgs.req.user.role_id
       : 10;
   var create_link = "";
-  const user_id =
-    extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
+
   const about_user = fields.some(
     (f) =>
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id

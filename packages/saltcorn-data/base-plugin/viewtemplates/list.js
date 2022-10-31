@@ -12,7 +12,7 @@ const Workflow = require("../../models/workflow");
 const Crash = require("../../models/crash");
 
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
-const { text, script, button, div } = require("@saltcorn/markup/tags");
+const { text, script, button, div, code } = require("@saltcorn/markup/tags");
 const pluralize = require("pluralize");
 const {
   removeEmptyStrings,
@@ -337,7 +337,8 @@ const configuration_workflow = (req) =>
             name: "include_fml",
             label: req.__("Row inclusion formula"),
             class: "validate-expression",
-            sublabel: req.__("Only include rows where this formula is true"),
+            sublabel: req.__("Only include rows where this formula is true. ")
+              + req.__("Use %s to access current user ID", code("$user_id")),
             type: "String",
           });
           formfields.push({
@@ -772,7 +773,8 @@ module.exports = {
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
-        let where1 = jsexprToWhere(default_state.include_fml, state);
+        const ctx = { ...state, user_id: req.user?.id || null }
+        let where1 = jsexprToWhere(default_state.include_fml, ctx);
         mergeIntoWhere(where, where1);
       }
       let rows = await table.getJoinedRows({
