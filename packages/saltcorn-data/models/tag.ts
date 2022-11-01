@@ -101,7 +101,7 @@ class Tag implements AbstractTag {
     return await this.getTypedEntries<Page>(require("./page"), "page_id");
   }
 
-  async getTrigger(): Promise<Trigger[]> {
+  async getTriggers(): Promise<Trigger[]> {
     return await this.getTypedEntries<Trigger>(
       require("./trigger"),
       "trigger_id"

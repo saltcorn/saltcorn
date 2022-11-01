@@ -1,9 +1,6 @@
 const {
-  a,
   div,
-  text,
   button,
-  i,
   form,
   select,
   option,
@@ -81,10 +78,10 @@ const formOptions = async (type, tag_id) => {
         ),
       };
     }
-    case "trigger": {
+    case "triggers": {
       const ids = await tag.getTriggerIds();
       return {
-        trigger: (await Trigger.find()).filter(
+        triggers: (Trigger.find()).filter(
           (value) => ids.indexOf(value.id) === -1
         ),
       };
@@ -101,7 +98,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: `Tag entry` }],
+          crumbs: [{ text: req.__(`Tag entry`) }],
         },
         {
           type: "card",
@@ -132,6 +129,7 @@ const idField = (entryType) => {
     case "page": {
       return "page_id";
     }
+    case "triggers":
     case "trigger": {
       return "trigger_id";
     }
