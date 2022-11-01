@@ -312,9 +312,17 @@ const navbar = (
 const alert = (type: string, s: string): string => {
   //console.log("alert", type, s,s.length)
   const realtype = type === "error" ? "danger" : type;
+  const icon =
+    realtype === "success"
+      ? "fa-check-circle"
+      : realtype === "danger"
+      ? "fa-times-circle"
+      : realtype === "warning"
+      ? "fa-exclamation-triangle"
+      : "";
   return s && s.length > 0
     ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
-        ${text(s)}
+        <i class="fas ${icon} me-1"></i>${text(s)}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
         </button>
       </div>`
