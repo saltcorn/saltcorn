@@ -486,7 +486,7 @@ function toggleEntityFilter(type) {
       entityFilter.showTables = !entityFilter.showTables;
       break;
     }
-    case "trigger": {
+    case "triggers": {
       entityFilter.showTrigger = !entityFilter.showTrigger;
       break;
     }

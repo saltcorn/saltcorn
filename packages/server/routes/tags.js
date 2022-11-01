@@ -128,18 +128,18 @@ router.get(
     const views = await tag.getViews();
     await setTableRefs(views);
     const pages = await tag.getPages();
-    const trigger = await tag.getTrigger();
+    const triggers = await tag.getTriggers();
     const roles = await User.get_roles();
 
     const tablesDomId = "tablesListId";
     const viewsDomId = "viewsListId";
     const pagesDomId = "pagesDomId";
-    const triggerDomId = "triggerDomId";
+    const triggersDomId = "triggerDomId";
     res.sendWrap(req.__("%s Tag", tag.name), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: `Tag: ${tag.name}` }],
+          crumbs: [{ text: req.__(`Tag: %s`, tag.name) }],
         },
         {
           type: "card",
@@ -211,19 +211,19 @@ router.get(
           type: "card",
           bodyId: "collapseTriggerCard",
           title: headerWithCollapser(
-            req.__("Trigger"),
-            triggerDomId,
-            isShowList(show_list, "trigger")
+            req.__("Triggers"),
+            triggersDomId,
+            isShowList(show_list, "triggers")
           ),
           contents: [
-            getTriggerList(trigger, req, {
+            getTriggerList(triggers, req, {
               tagId: tag.id,
-              domId: triggerDomId,
-              showList: isShowList(show_list, "trigger"),
+              domId: triggersDomId,
+              showList: isShowList(show_list, "triggers"),
             }),
             a(
               {
-                href: `/tag-entries/add/trigger/${tag.id}`,
+                href: `/tag-entries/add/triggers/${tag.id}`,
                 class: "btn btn-primary",
               },
               req.__("Add triggers")

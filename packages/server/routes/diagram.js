@@ -35,13 +35,13 @@ const buildGlobalVars = (tags, roles) => {
 
 const findEntryPages = async () => {
   const modernCfg = getState().getConfig("home_page_by_role");
-  let pages = null;
+  let pages;
   if (modernCfg) {
     pages = Object.values(modernCfg)
       .filter((val) => val)
       .map((val) => Page.findOne({ name: val }));
   } else {
-    pages = new Array();
+    pages = [];
     for (const legacyRole of ["public", "user", "staff", "admin"]) {
       const page = await Page.findOne({ name: `${legacyRole}_home` });
       if (page) pages.push(page);
@@ -168,7 +168,7 @@ router.get(
                     "data-bs-toggle": "dropdown",
                     "aria-expanded": false,
                   },
-                  "All entities"
+                  req.__("All entities")
                 ),
                 div(
                   {
@@ -179,7 +179,7 @@ router.get(
                     { class: "m-3 form-check" },
                     label(
                       { class: "form-check-label", for: "showViewsId" },
-                      "Views"
+                      req.__("Views")
                     ),
                     input({
                       type: "checkbox",
@@ -197,7 +197,7 @@ router.get(
                     { class: "m-3 form-check" },
                     label(
                       { class: "form-check-label", for: "showPagesId" },
-                      "Pages"
+                      req.__("Pages")
                     ),
                     input({
                       type: "checkbox",
@@ -215,7 +215,7 @@ router.get(
                     { class: "m-3 form-check" },
                     label(
                       { class: "form-check-label", for: "showTablesId" },
-                      "Tables"
+                      req.__("Tables")
                     ),
                     input({
                       type: "checkbox",
@@ -233,7 +233,7 @@ router.get(
                     { class: "m-3 form-check" },
                     label(
                       { class: "form-check-label", for: "showTriggerId" },
-                      "Trigger"
+                      req.__("Triggers")
                     ),
                     input({
                       type: "checkbox",
@@ -255,7 +255,7 @@ router.get(
                     "data-bs-toggle": "dropdown",
                     "aria-expanded": false,
                   },
-                  "Tags"
+                  req.__("Tags")
                 ),
                 div(
                   {
@@ -266,7 +266,7 @@ router.get(
                     { class: "m-3 form-check" },
                     label(
                       { class: "form-check-label", for: "noTagsId" },
-                      "no tags"
+                      req.__("no tags")
                     ),
                     input({
                       type: "checkbox",
