@@ -1336,6 +1336,7 @@ const date = {
           onChange: attrs.onChange,
           disabled: attrs.disabled,
           readonly: attrs.readonly,
+          required: !!required,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
@@ -1364,6 +1365,7 @@ const date = {
           onChange: attrs.onChange,
           readonly: attrs.readonly,
           disabled: attrs.disabled,
+          required: !!required,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
