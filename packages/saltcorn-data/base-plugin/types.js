@@ -718,6 +718,7 @@ const string = {
             disabled: attrs.disabled,
             inline: attrs.inline,
             onChange: attrs.onChange,
+            required: !!required,
             options: Array.isArray(attrs.options)
               ? attrs.options
               : attrs.options.split(",").map((o) => o.trim()),
