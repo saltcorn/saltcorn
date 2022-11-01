@@ -255,6 +255,8 @@ function ajax_modal(url, opts = {}) {
 
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
+  const valres = form[0].reportValidity()
+  if (!valres) return;
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
