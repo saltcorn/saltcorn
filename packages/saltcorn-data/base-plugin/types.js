@@ -519,6 +519,7 @@ const string = {
                 onChange: attrs.onChange,
                 "data-fieldname": text_attr(field.name),
                 name: text_attr(nm),
+                required: !!(required || attrs.force_required),
                 id: `input${text_attr(nm)}`,
                 ...(isdef(v) && { value: text_attr(v) }),
               }),
@@ -688,6 +689,7 @@ const string = {
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
             onChange: attrs.onChange,
+            required: !!required,
             id: `input${text_attr(nm)}`,
             rows: 5,
           },
@@ -900,6 +902,7 @@ const int = {
             onChange: attrs.onChange,
             id,
             step: "1",
+            required: !!required,
             ...(attrs.max && { max: attrs.max }),
             ...(attrs.min && { min: attrs.min }),
             ...(isdef(v) && { value: text_attr(v) }),
@@ -1140,6 +1143,7 @@ const float = {
           disabled: attrs.disabled,
           readonly: attrs.readonly,
           onChange: attrs.onChange,
+          required: !!required,
           step: attrs.decimal_places
             ? Math.pow(10, -attrs.decimal_places)
             : "0.01",
