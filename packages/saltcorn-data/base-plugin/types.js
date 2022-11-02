@@ -523,7 +523,7 @@ const string = {
                 required: !!(required || attrs.force_required),
                 maxlength: isdef(attrs.max_length) && attrs.max_length,
                 minlength: isdef(attrs.min_length) && attrs.min_length,
-                pattern: isdef(attrs.regexp) && attrs.regexp,
+                pattern: !!attrs.regexp && attrs.regexp,
                 title: isdef(attrs.re_invalid_error) && isdef(attrs.regexp) && attrs.re_invalid_error,
                 id: `input${text_attr(nm)}`,
                 ...(isdef(v) && { value: text_attr(v) }),
