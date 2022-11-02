@@ -96,6 +96,7 @@ const radio_group = ({
   inline,
   form_name,
   onChange,
+  required,
   ...rest
 }: RadioGroupOpts): string =>
   div(
@@ -111,6 +112,7 @@ const radio_group = ({
             type: "radio",
             name,
             onChange,
+            required: !!required,
             "data-fieldname": form_name,
             id,
             value: text_attr(myvalue),
