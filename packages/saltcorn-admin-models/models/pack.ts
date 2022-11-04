@@ -286,8 +286,13 @@ const install_pack = async (
   for (const plugin of pack.plugins) {
     const existingPlugins = await Plugin.find({});
     if (!existingPlugins.some((ep) => ep.name === plugin.name)) {
-      const p = new Plugin(plugin);
-      await loadAndSaveNewPlugin(p);
+      // local plugins can crash
+      try {
+        const p = new Plugin(plugin);
+        await loadAndSaveNewPlugin(p);
+      } catch (e) {
+        console.error("install pack plugin error:", e);
+      }
     }
   }
   for (const role of pack.roles || []) {

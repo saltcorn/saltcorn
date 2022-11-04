@@ -857,7 +857,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "col_width_units",
       label: __("Units"),
       type: "String",
-      required: true,
       fieldview: "radio_group",
       attributes: {
         inline: true,

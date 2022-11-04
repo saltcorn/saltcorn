@@ -308,6 +308,16 @@ const run = async (
           ? 1
           : -1
       );
+      const options = dvs.map(({ label, value, jsvalue }) =>
+        option(
+          {
+            value,
+            selected: state[field_name] === or_if_undef(jsvalue, value) || (!value && !state[field_name]),
+            class: !value && !label ? "text-muted" : undefined,
+          },
+          !value && !label ? neutral_label : label
+        )
+      )
       return select(
         {
           name: `ddfilter${field_name}`,
@@ -319,16 +329,7 @@ const run = async (
             field_name
           )}', this.value)`,
         },
-        dvs.map(({ label, value, jsvalue }) =>
-          option(
-            {
-              value,
-              selected: state[field_name] === or_if_undef(jsvalue, value),
-              class: !value && !label ? "text-muted" : undefined,
-            },
-            !value && !label ? neutral_label : label
-          )
-        )
+        options
       );
     },
     action({
