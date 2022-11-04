@@ -184,7 +184,7 @@ const configuration_workflow = (req) =>
             view_name_opts,
             view_relation_opts,
             mode: "show",
-            ownership: !!table.ownership_field_id || table.name === "users",
+            ownership: !!table.ownership_field_id || !!table.ownership_formula || table.name === "users",
           };
         },
       },
@@ -756,6 +756,7 @@ module.exports = {
         joinFields,
         aggregations,
         limit: 5,
+        starFields: tbl.name === "users"
       });
       return {
         rows,

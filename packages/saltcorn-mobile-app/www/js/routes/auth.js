@@ -87,7 +87,8 @@ const logoutAction = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   const response = await apiCall({ method: "GET", path: "/auth/logout" });
   if (response.data.success) {
-    localStorage.removeItem("auth_jwt");
+    await removeJwt();
+    config.jwt = undefined;
     return {
       content: renderLoginView(config.entry_point, config.version_tag),
     };

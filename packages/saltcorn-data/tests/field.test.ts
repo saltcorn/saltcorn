@@ -5,6 +5,8 @@ const { getState } = require("../db/state");
 
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import mocks from "./mocks";
+const { sleep } = mocks;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -413,5 +415,71 @@ describe("Field.distinct_values", () => {
       { label: "Herman Melville", value: "Herman Melville" },
       { label: "Leo Tolstoy", value: "Leo Tolstoy" },
     ]);
+  });
+});
+
+describe("adds new fields to history #1202", () => {
+  it("field first", async () => {
+    const table = await Table.create("histcalc1");
+    await Field.create({
+      table,
+      label: "Date",
+      name: "date",
+      type: "Date",
+    });
+    await table.update({ versioned: true });
+    await table.insertRow({ date: new Date() });
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+  });
+  it("history first", async () => {
+    const table = await Table.create("histcalc2");
+    await table.update({ versioned: true });
+    await Field.create({
+      table,
+      label: "Date",
+      name: "date",
+      type: "Date",
+    });
+    await table.insertRow({ date: new Date() });
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+  });
+  it("recalc stored first", async () => {
+    const table = await Table.create("histcalc3");
+    await Field.create({
+      table,
+      label: "Name",
+      name: "name",
+      type: "String",
+    });
+    await table.update({ versioned: true });
+    await table.insertRow({ name: "Jim" });
+    await Field.create({
+      table,
+      label: "idp1",
+      type: "Integer",
+      calculated: true,
+      expression: "id+1",
+      stored: true,
+    });
+    await sleep(500);
+
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+    expect(rows[0].idp1).toBe(2);
+  });
+  it("delete stored calc field #1203", async () => {
+    const table = await Table.create("histcalc4");
+    await table.update({ versioned: true });
+    const f = await Field.create({
+      table,
+      label: "Name",
+      name: "name",
+      type: "String",
+    });
+    await f.delete();
+    const fields = await table.getFields();
+    expect(fields.length).toBe(1); // id
   });
 });

@@ -882,5 +882,17 @@
 	"When prompted to create the first user, click the link to restore a backup": "Вместо создания первого пользователя, выберите Восстановление из резервной копии (restore a backup)",
 	"Select the downloaded backup file": "Выбрать скаченный бекап (файл с резервной копией)",
 	"Snapshot successful": "Снимок (Снепшот) выполнен успешно",
-	"Unable to build the app": "Ошибка создания приложения"
+	"Unable to build the app": "Ошибка создания приложения",
+	"Diagram": "Диаграмма",
+	"Upgrading modules...": "Обновление модулей...",
+	"Table access": "Доступы к таблицам",
+	"Application diagram": "Диаграмма приложения",
+	"Add tag": "Добавить тег",
+	"Not a valid e-mail address": "Некорректный адресс электронной почты (e-mail address)",
+	"User must have this role or higher to read rows from the table, unless they are the owner": "Для просмотра данных в таблице уровень роли должен быть соответствовать указанному или быть выше, если только пользователь не является владельцем",
+	"User must have this role or higher to edit or create new rows in the table, unless they are the owner": "Для редактирования к таблице уровень роли должен быть соответствовать указанному или быть выше, если только пользователь не является владельцем",
+	"All entities": "Все сущности",
+	"no tags": "теги не указаны",
+	"Tag entry": "Тег",
+	"Tag: %s": "Тег: %s"
 }

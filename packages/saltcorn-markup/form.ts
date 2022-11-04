@@ -869,6 +869,7 @@ const renderFormLayout = (form: Form): string => {
     layout: form.layout,
     role,
     req: form.req,
+    is_owner: form.isOwner,
   });
 };
 

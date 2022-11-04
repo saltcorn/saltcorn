@@ -941,7 +941,7 @@ class Field implements AbstractField {
         });
     await require("../db/state").getState().refresh_tables();
 
-    if (table.versioned && !f.calculated) {
+    if (table.versioned && !(f.calculated && !f.stored)) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name

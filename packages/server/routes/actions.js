@@ -92,7 +92,6 @@ router.get(
   error_catcher(async (req, res) => {
     const triggers = await Trigger.findAllWithTableName();
     const actions = await getActions();
-    const base_url = get_base_url(req);
     send_events_page({
       res,
       req,
@@ -388,6 +387,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    if (!trigger) {
+      req.flash("warning", req.__("Action not found"));
+      res.redirect(`/actions/`);
+      return
+    }
     const action = getState().actions[trigger.action];
     if (!action) {
       req.flash("warning", req.__("Action not found"));

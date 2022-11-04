@@ -51,6 +51,7 @@ class Form implements AbstractForm {
   hasErrors: boolean;
   xhrSubmit: boolean;
   splitPaste: boolean;
+  isOwner: boolean;
   onSubmit?: string;
   req: any;
   __?: any;
@@ -84,6 +85,7 @@ class Form implements AbstractForm {
     this.xhrSubmit = !!o.xhrSubmit;
     this.splitPaste = !!o.splitPaste;
     this.onSubmit = o.onSubmit;
+    this.isOwner = !!o.isOwner;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
     if (o.validate) this.validate(o.validate);
@@ -246,6 +248,7 @@ namespace Form {
     validator?: (arg0: any) => any;
     xhrSubmit?: boolean;
     splitPaste?: boolean;
+    isOwner?: boolean;
     onSubmit?: string;
     req?: any;
     validate?: any;

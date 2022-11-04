@@ -87,7 +87,7 @@ class Trigger implements AbstractTrigger {
    * @param where - condition
    * @returns {Trigger[]}
    */
-  static find(where: Where): Trigger[] {
+  static find(where?: Where): Trigger[] {
     const { getState } = require("../db/state");
     return getState().triggers.filter(satisfies(where));
   }

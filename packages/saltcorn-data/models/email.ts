@@ -79,7 +79,8 @@ const viewToEmailHtml = async (view: any, state: any) => {
  */
 const send_verification_email = async (
   user: User,
-  req: any
+  req: any,
+  opts?: { new_verification_token?: string }
 ): Promise<boolean | any> => {
   const verification_view_name = getState().getConfig("verification_view");
   if (verification_view_name) {
@@ -87,7 +88,7 @@ const send_verification_email = async (
       name: verification_view_name,
     });
     if (verification_view) {
-      const verification_token = uuidv4();
+      const verification_token = opts?.new_verification_token || uuidv4();
       try {
         await user.update({ verification_token });
         user.verification_token = verification_token;

@@ -244,9 +244,9 @@ function ajax_modal(url, opts = {}) {
       $("#scmodal").prop("data-modal-state", url);
       new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
-      (opts.onOpen || function () {})(res);
+      (opts.onOpen || function () { })(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
-        (opts.onClose || function () {})(res);
+        (opts.onClose || function () { })(res);
         $("body").css("overflow", "");
       });
     },
@@ -255,6 +255,8 @@ function ajax_modal(url, opts = {}) {
 
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
+  const valres = form[0].reportValidity()
+  if (!valres) return;
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
@@ -298,7 +300,7 @@ function applyViewConfig(e, url, k) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) {},
+    error: function (request) { },
     success: function (res) {
       k && k(res);
       !k && updateViewPreview();
@@ -319,11 +321,24 @@ function updateViewPreview() {
         "CSRF-Token": _sc_globalCsrf,
       },
 
-      error: function (request) {},
+      error: function (request) { },
       success: function (res) {
         $preview.css({ opacity: 1.0 });
 
+        //disable elements in preview
         $preview.html(res);
+        $preview.find("a").attr("href", "#");
+        $preview
+          .find("[onclick], button, a, input, select")
+          .attr("onclick", "return false");
+
+        $preview.find("textarea").attr("disabled", true);
+        $preview.find("input").attr("readonly", true);
+
+        //disable functions preview migght try to call
+        set_state_field = () => { }
+        set_state_fields = () => { }
+
       },
     });
   }

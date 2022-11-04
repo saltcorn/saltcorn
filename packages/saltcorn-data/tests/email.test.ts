@@ -8,6 +8,12 @@ import email from "../models/email";
 import { describe, it, expect, jest } from "@jest/globals";
 import View from "../models/view";
 import Table from "../models/table";
+import User from "../models/user";
+import { createTransport } from "nodemailer";
+import mocks from "./mocks";
+const { mockReqRes } = mocks;
+const { getState } = require("../db/state");
+const db = require("../db");
 
 function removeBreaks(str: string): string {
   return str.replace(/(\r\n|\r|\n)/gm, "").toLowerCase();
@@ -24,7 +30,131 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
+jest.mock("nodemailer");
+
 jest.setTimeout(60 * 1000);
+
+describe("getMailTransport", () => {
+  it("returns Transporter", async () => {
+    let sentEmail;
+    // @ts-ignore
+    createTransport.mockReturnValue({
+      sendMail: (email: any) => {
+        sentEmail = email;
+        return;
+      },
+    });
+    const mailTransport = email.getMailTransport();
+    mailTransport.sendMail({
+      from: "me",
+      to: "you",
+      subject: "us",
+      html: "<div>Hello World</div>",
+    });
+    expect(createTransport).toHaveBeenCalledTimes(1);
+    // @ts-ignore
+    expect(sentEmail?.from).toBe("me");
+  });
+});
+
+describe("send_verification_email", () => {
+  it("returns Transporter", async () => {
+    let sentEmail;
+    // @ts-ignore
+    createTransport.mockReturnValue({
+      sendMail: (email: any) => {
+        sentEmail = email;
+        return;
+      },
+    });
+    await View.create({
+      name: "verifyview",
+      viewtemplate: "Show",
+      table_id: 1,
+      configuration: {
+        layout: {
+          above: [
+            {
+              style: {
+                "margin-bottom": "1.5rem",
+              },
+              widths: [2, 10],
+              besides: [
+                {
+                  type: "blank",
+                  contents: "Email",
+                  isFormula: {},
+                },
+                {
+                  type: "field",
+                  fieldview: "as_text",
+                  field_name: "email",
+                },
+              ],
+            },
+            {
+              style: {
+                "margin-bottom": "1.5rem",
+              },
+              widths: [2, 10],
+              besides: [
+                {
+                  type: "blank",
+                  contents: "Click to verify",
+                  isFormula: {},
+                },
+                {
+                  type: "field",
+                  fieldview: "as_text",
+                  field_name: "verification_url",
+                },
+              ],
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            fieldview: "as_text",
+            field_name: "email",
+          },
+          {
+            type: "Field",
+            fieldview: "as_text",
+            field_name: "verification_url",
+          },
+        ],
+      },
+      min_role: 10,
+    });
+    await getState().setConfig("verification_view", "verifyview");
+    const user = await User.findOne({ id: 1 });
+    await email.send_verification_email(user as User, mockReqRes.req, {
+      new_verification_token: "newsecrettoken",
+    });
+    // @ts-ignore
+    expect(trimLines(sentEmail?.html)).toBe(
+      trimLines(`<!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title></title><!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]--><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style type="text/css">#outlook a { padding:0; }
+    body { margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%; }
+    table, td { border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt; }
+    img { border:0;height:auto;line-height:100%; outline:none;text-decoration:none;-ms-interpolation-mode:bicubic; }
+    p { display:block;margin:13px 0; }</style><!--[if mso]>
+  <noscript>
+  <xml>
+  <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings>
+  </xml>
+  </noscript>
+  <![endif]--><!--[if lte mso 11]>
+  <style type="text/css">
+    .mj-outlook-group-fix { width:100% !important; }
+  </style>
+  <![endif]--><!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css"><style type="text/css">@import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);</style><!--<![endif]--><style type="text/css"></style><style type="text/css"></style></head><body style="word-spacing:normal;"><div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;"><mj-section style="margin-bottom:1.5rem"><mj-column width="17%"><mj-text>Email</mj-text></mj-column><mj-column width="83%"><mj-text>admin@foo.com</mj-text></mj-column></mj-section></div><div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#000000;"><mj-section style="margin-bottom:1.5rem"><mj-column width="17%"><mj-text>Click to verify</mj-text></mj-column><mj-column width="83%"><mj-text>/auth/verify?token=newsecrettoken&amp;email=admin%40foo.com</mj-text></mj-column></mj-section></div></div></body></html>`)
+    );
+  });
+});
 
 describe("MJML Mail Transformations", () => {
   it("transform simple to mjml", async () => {

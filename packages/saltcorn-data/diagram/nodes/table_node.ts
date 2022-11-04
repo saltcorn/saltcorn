@@ -15,7 +15,7 @@ export class TableNode extends Node {
     const result = this.commonCyData();
     if (this.table.fields) {
       result.fields = this.table.fields.map((field: AbstractField) => {
-        return { name: field.name, typeName: field.type_name };
+        return { name: field.name, typeName: field.pretty_type };
       });
     }
     return result;

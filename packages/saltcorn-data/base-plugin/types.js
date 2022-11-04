@@ -331,17 +331,18 @@ const string = {
         sublabel: "Error message when regular expression does not match",
       },
       {
-        name: "max_length",
-        type: "Integer",
-        required: false,
-        sublabel: "The maximum number of characters in the string",
-      },
-      {
         name: "min_length",
         type: "Integer",
         required: false,
         sublabel: "The minimum number of characters in the string",
       },
+      {
+        name: "max_length",
+        type: "Integer",
+        required: false,
+        sublabel: "The maximum number of characters in the string",
+      },
+
       {
         name: "options",
         type: "String",
@@ -519,6 +520,11 @@ const string = {
                 onChange: attrs.onChange,
                 "data-fieldname": text_attr(field.name),
                 name: text_attr(nm),
+                required: !!(required || attrs.force_required),
+                maxlength: isdef(attrs.max_length) && attrs.max_length,
+                minlength: isdef(attrs.min_length) && attrs.min_length,
+                pattern: !!attrs.regexp && attrs.regexp,
+                title: !!attrs.re_invalid_error && !!attrs.regexp && attrs.re_invalid_error,
                 id: `input${text_attr(nm)}`,
                 ...(isdef(v) && { value: text_attr(v) }),
               }),
@@ -688,6 +694,9 @@ const string = {
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
             onChange: attrs.onChange,
+            required: !!required,
+            maxlength: isdef(attrs.max_length) && attrs.max_length,
+            minlength: isdef(attrs.min_length) && attrs.min_length,
             id: `input${text_attr(nm)}`,
             rows: 5,
           },
@@ -716,6 +725,7 @@ const string = {
             disabled: attrs.disabled,
             inline: attrs.inline,
             onChange: attrs.onChange,
+            required: !!required,
             options: Array.isArray(attrs.options)
               ? attrs.options
               : attrs.options.split(",").map((o) => o.trim()),
@@ -900,6 +910,7 @@ const int = {
             onChange: attrs.onChange,
             id,
             step: "1",
+            required: !!required,
             ...(attrs.max && { max: attrs.max }),
             ...(attrs.min && { min: attrs.min }),
             ...(isdef(v) && { value: text_attr(v) }),
@@ -1140,6 +1151,7 @@ const float = {
           disabled: attrs.disabled,
           readonly: attrs.readonly,
           onChange: attrs.onChange,
+          required: !!required,
           step: attrs.decimal_places
             ? Math.pow(10, -attrs.decimal_places)
             : "0.01",
@@ -1331,6 +1343,7 @@ const date = {
           onChange: attrs.onChange,
           disabled: attrs.disabled,
           readonly: attrs.readonly,
+          required: !!required,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
@@ -1359,6 +1372,7 @@ const date = {
           onChange: attrs.onChange,
           readonly: attrs.readonly,
           disabled: attrs.disabled,
+          required: !!required,
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
