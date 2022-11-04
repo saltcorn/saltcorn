@@ -217,7 +217,8 @@ jsGrid.fields.versions = VersionsField;
 const arrangeIdFirst = (flds) => {
   const noId = flds.filter((f) => f.name !== "id");
   const id = flds.find((f) => f.name === "id");
-  return [id, ...noId];
+  if (id) return [id, ...noId];
+  else return flds
 };
 
 /**
@@ -369,9 +370,8 @@ router.get(
                 })
               })   
               window.tabulator_table = new Tabulator("#jsGrid", {
-                  ajaxURL:"/api/${table.name}${
-                  table.versioned ? "?versioncount=on" : ""
-                }",                   
+                  ajaxURL:"/api/${table.name}${table.versioned ? "?versioncount=on" : ""
+                  }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
