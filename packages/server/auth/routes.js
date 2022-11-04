@@ -1158,7 +1158,7 @@ const setLanguageForm = (req, user) =>
         option(
           {
             value: locale,
-            ...(user && user.language === locale && { selected: true }),
+            ...(((user && user.language === locale) || (user && !user.language && req.getLocale() === locale)) && { selected: true }),
           },
           language
         )
