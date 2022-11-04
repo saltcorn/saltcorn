@@ -45,18 +45,22 @@ describe("layout", () => {
 describe("MJML layout", () => {
   const blockDispatch = {};
   it("renders empty layout", () => {
-    expect(renderMJML({ blockDispatch, layout: {} })).toBe("");
+    const result = renderMJML({ blockDispatch, layout: {} });
+    expect(result.markup).toBe("");
+    expect(result.styles.length).toBe(0);
   });
   it("renders text layout", () => {
     const layout = { type: "blank", contents: "Hello world" };
-    expect(renderMJML({ blockDispatch, layout })).toBe(
-      "<mj-text>Hello world</mj-text>"
-    );
+    const result = renderMJML({ blockDispatch, layout });
+    expect(result.markup).toBe("<mj-text>Hello world</mj-text>");
+    expect(result.styles.length).toBe(0);
   });
   it("renders text header", () => {
     const layout = { type: "blank", contents: "Hello world", textStyle: "h1" };
-    expect(renderMJML({ blockDispatch, layout })).toBe(
-      "<mj-text><h1>Hello world</h1></mj-text>"
+    const result = renderMJML({ blockDispatch, layout });
+    expect(result.markup).toBe(
+      '<mj-section padding="0px"><mj-column><mj-text padding="0px"><h1>Hello world</h1></mj-text></mj-column></mj-section>'
     );
+    expect(result.styles.length).toBe(0);
   });
 });
