@@ -5,48 +5,53 @@
 
 import tags = require("./tags");
 import mjml = require("./mjml-tags");
-const {
-  div,
-  a,
-  span,
-  text,
-  img,
-  p,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  label,
-  ul,
-  button,
-  li,
-  i,
-  genericElement,
-} = tags;
+const { div, a, text, img, p, h1, h2, h3, h4, h5, h6, label, ul, li, i } = tags;
+import crypto from "crypto";
 
-import helpers = require("./helpers");
+/**
+ * build a unique className for a style string
+ * @param style style string
+ * @param prefix prefix of the className
+ * @returns className
+ */
+const createClassName = (style: string, prefix: string) => {
+  const hash = crypto.createHash("sha1").update(style).digest("hex");
+  return `${prefix}_${hash}`;
+};
 
 /**
  *
- * @param {any} segment
- * @param {string} inner
- * @returns {div|span|string}
+ * @param segment
+ * @param inner
+ * @returns
  */
 const applyTextStyle = (
   segment: any,
   inner: string,
-  isText?: boolean
+  isText?: boolean,
+  isTop?: boolean
 ): string => {
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
   const hasStyle = Object.keys(style).length > 0;
   const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
+  const labelFor = (s: string) => segment.labelFor
+    ? label({ for: `input${text(segment.labelFor)}` }, s)
+    : s;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
-  const wrapText = isText ? (s: string) => mjml.text(s) : (s: string) => s;
+  const wrapText = (s: string) =>
+    isTop
+      ? mjml.section(
+          { padding: "0px" },
+          mjml.column(
+            mjml.text(
+              { padding: "0px" }, labelFor(s)
+            )
+          )
+        )
+      : mjml.text({ padding: "0px" }, labelFor(s));
   switch (segment.textStyle) {
     case "h1":
       return wrapText(h1({ style }, inner));
@@ -61,34 +66,14 @@ const applyTextStyle = (
     case "h6":
       return wrapText(h6({ style }, inner));
     default:
-      return segment.block
-        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
-        : segment.textStyle || hasStyle
-        ? mjml.text({ class: to_bs5(segment.textStyle || ""), style }, inner)
-        : wrapText(inner);
+      mjml.text(div({ style, class: to_bs5(segment.textStyle || "") }, inner));
+      return segment.block || segment.textStyle || hasStyle
+        ? mjml.text(
+            div({ style, class: to_bs5(segment.textStyle || "") }, inner)
+          )
+        : mjml.text(inner);
   }
 };
-
-// declaration merging
-namespace LayoutExports {
-  export type RenderTabsOpts = {
-    contents: any[];
-    titles: string[];
-    tabsStyle: string;
-    ntabs?: any;
-    independent: boolean;
-  };
-}
-type RenderTabsOpts = LayoutExports.RenderTabsOpts;
-
-function validID(s: string) {
-  return s
-    ? s
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/^[^a-z]+|[^\w:.-]+/gi, "")
-    : s;
-}
 
 // declaration merging
 namespace LayoutExports {
@@ -104,13 +89,13 @@ namespace LayoutExports {
 type RenderOpts = LayoutExports.RenderOpts;
 
 /**
- * @param {object} opts
- * @param {object} opts.blockDispatch
- * @param {object|string} opts.layout
- * @param {object} [opts.role]
- * @param {object[]} [opts.alerts]
- * @param {boolean} opts.is_owner
- * @returns {string}
+ * @param opts
+ * @param opts.blockDispatch
+ * @param opts.layout
+ * @param opts.role
+ * @param opts.alerts
+ * @param opts.is_owner
+ * @returns
  */
 const render = ({
   blockDispatch,
@@ -119,7 +104,7 @@ const render = ({
   alerts,
   is_owner,
   req,
-}: RenderOpts): string => {
+}: RenderOpts): any => {
   //console.log(JSON.stringify(layout, null, 2));
   function wrap(
     segment: any,
@@ -129,13 +114,9 @@ const render = ({
     isText?: boolean
   ) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    return segment.labelFor
-      ? label(
-          { for: `input${text(segment.labelFor)}` },
-          applyTextStyle(segment, iconTag + inner, isText)
-        )
-      : applyTextStyle(segment, iconTag + inner, isText);
+    return applyTextStyle(segment, iconTag + inner, isText, isTop);
   }
+  const styles = new Array<any>();
   function go(segment: any, isTop: boolean = false, ix: number = 0): string {
     if (!segment) return "";
     if (
@@ -157,9 +138,17 @@ const render = ({
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
       const rendered = blockDispatch[segment.type](segment, go);
-      if (rendered && rendered[0] === "<")
-        return wrap(segment, isTop, ix, rendered);
-      else return wrap(segment, isTop, ix, rendered, true);
+      if (rendered && rendered[0] === "<") {
+        const content = wrap(segment, isTop, ix, rendered);
+        return isTop
+          ? mjml.section({ padding: "0px" }, mjml.column(content))
+          : content;
+      } else {
+        const content = wrap(segment, isTop, ix, rendered, true);
+        return isTop
+          ? mjml.section({ padding: "0px" }, mjml.column(content))
+          : content;
+      }
     }
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "", true);
@@ -177,22 +166,27 @@ const render = ({
       );
     }
     if (segment.type === "image") {
+      const { style, alt, fileid, url } = segment;
       const srctype = segment.srctype || "File";
-      const base_url = req.get_base_url();
-      return wrap(
-        segment,
-        isTop,
-        ix,
-        mjml.image({
-          //class: segment.style && segment.style.width ? null : "w-100",
-          alt: segment.alt,
-          style: segment.style,
-          src:
-            srctype === "File"
-              ? `${base_url}/files/serve/${segment.fileid}`
-              : segment.url,
-        })
-      );
+      const urlFromReq = req.get_base_url();
+      const base_url = urlFromReq.endsWith("/")
+        ? urlFromReq.substring(0, urlFromReq.length - 1)
+        : urlFromReq;
+      let styleString = "";
+      Object.keys(style || {}).forEach((k) => {
+        styleString += `${k}:${style[k]};`;
+      });
+      const className = createClassName(styleString, "image");
+      styles.push({ className, style: styleString });
+      const mjImage = mjml.image({
+        //class: segment.style && segment.style.width ? null : "w-100",
+        alt: alt,
+        "css-class": className,
+        src: srctype === "File" ? `${base_url}/files/serve/${fileid}` : url,
+      });
+      return isTop
+        ? mjml.section({ padding: "0px" }, mjml.column(mjImage))
+        : mjImage;
     }
     if (segment.type === "link") {
       let style =
@@ -203,7 +197,7 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
-      return wrap(
+      const content = wrap(
         segment,
         isTop,
         ix,
@@ -221,6 +215,7 @@ const render = ({
           )
         )
       );
+      return isTop ? mjml.section(mjml.column(content)) : content;
     }
     if (segment.type === "card")
       return wrap(
@@ -374,123 +369,123 @@ const render = ({
       Object.keys(style || {}).forEach((k) => {
         flexStyles += `${k}:${style[k]};`;
       });
-      return wrap(
-        segment,
-        isTop,
-        ix,
-        mjml.section(
-          {
-            /*class: [
-              customClass || false,
-              hAlign && `text-${hAlign}`,
-              vAlign === "middle" && "d-flex align-items-center",
-              vAlign === "bottom" && "d-flex align-items-end",
-              vAlign === "middle" &&
-                hAlign === "center" &&
-                "justify-content-center",
-              displayClass,
-              url && "with-link",
-              hoverColor && `hover-${hoverColor}`,
-              fullPageWidth && "full-page-width",
-            ],*/
-            onclick: segment.url ? `location.href='${segment.url}'` : false,
-
-            style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
-              "minHeight",
-              "min-height"
-            )}${sizeProp("height", "height")}${sizeProp(
-              "width",
-              "width"
-            )}${sizeProp("widthPct", "width", "%")}border${
-              borderDirection ? `-${borderDirection}` : ""
-            }: ${borderWidth || 0}px ${borderStyle} ${
-              borderColor || "black"
-            };${sizeProp("borderRadius", "border-radius")}${ppBox(
-              "padding"
-            )}${ppBox("margin")}${
-              overflow && overflow !== "visible"
-                ? ` overflow: ${overflow};`
-                : ""
-            } ${
-              renderBg && bgType === "Image" && bgFileId && +bgFileId
-                ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
-                    imageSize === "repeat" ? "auto" : imageSize || "contain"
-                  }; background-repeat: ${
-                    imageSize === "repeat" ? "repeat" : "no-repeat"
-                  };`
-                : ""
-            } ${
-              renderBg && bgType === "Color"
-                ? `background-color: ${bgColor};`
-                : ""
-            } ${
-              renderBg && bgType === "Gradient"
-                ? `background-image: linear-gradient(${
-                    gradDirection || 0
-                  }deg, ${gradStartColor}, ${gradEndColor});`
-                : ""
-            } ${setTextColor ? `color: ${textColor};` : ""}${
-              rotate ? `transform: rotate(${rotate}deg);` : ""
-            }`,
-            ...(showIfFormulaInputs
-              ? {
-                  "data-show-if": encodeURIComponent(
-                    `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
-                  ),
-                }
-              : {}),
-          },
-          renderBg &&
-            bgType === "Image" &&
-            bgFileId &&
-            +bgFileId &&
-            div(
-              { style: "display:none" },
-              img({
-                height: "1",
-                width: "1",
-                alt: "",
-                src: `/files/serve/${bgFileId}`,
-              })
-            ),
-          go(segment.contents)
-        )
-      );
+      const styleString = `${flexStyles}${ppCustomCSS(
+        customCSS || ""
+      )}${sizeProp("minHeight", "min-height")}${sizeProp(
+        "height",
+        "height"
+      )}${sizeProp("width", "width")}${sizeProp(
+        "widthPct",
+        "width",
+        "%"
+      )}border${borderDirection ? `-${borderDirection}` : ""}: ${
+        borderWidth || 0
+      }px ${borderStyle} ${borderColor || "black"};${sizeProp(
+        "borderRadius",
+        "border-radius"
+      )}${ppBox("padding")}${ppBox("margin")}${
+        overflow && overflow !== "visible" ? ` overflow: ${overflow};` : ""
+      } ${
+        renderBg && bgType === "Image" && bgFileId && +bgFileId
+          ? `background-image: url('/files/serve/${bgFileId}'); background-size: ${
+              imageSize === "repeat" ? "auto" : imageSize || "contain"
+            }; background-repeat: ${
+              imageSize === "repeat" ? "repeat" : "no-repeat"
+            };`
+          : ""
+      } ${
+        renderBg && bgType === "Color" ? `background-color: ${bgColor};` : ""
+      } ${
+        renderBg && bgType === "Gradient"
+          ? `background-image: linear-gradient(${
+              gradDirection || 0
+            }deg, ${gradStartColor}, ${gradEndColor});`
+          : ""
+      } ${setTextColor ? `color: ${textColor};` : ""}${
+        rotate ? `transform: rotate(${rotate}deg);` : ""
+      }`;
+      const className = createClassName(styleString, "container");
+      styles.push({ className, style: styleString });
+      const tagCfg: any = {
+        /*class: [
+          customClass || false,
+          hAlign && `text-${hAlign}`,
+          vAlign === "middle" && "d-flex align-items-center",
+          vAlign === "bottom" && "d-flex align-items-end",
+          vAlign === "middle" &&
+            hAlign === "center" &&
+            "justify-content-center",
+          displayClass,
+          url && "with-link",
+          hoverColor && `hover-${hoverColor}`,
+          fullPageWidth && "full-page-width",
+        ],*/
+        onclick: segment.url ? `location.href='${segment.url}'` : false,
+        "css-class": className,
+        // ...(showIfFormulaInputs
+        //   ? {
+        //       "data-show-if": encodeURIComponent(
+        //         `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
+        //       ),
+        //     }
+        //   : {}),
+      };
+      const bg =
+        renderBg &&
+        bgType === "Image" &&
+        bgFileId &&
+        +bgFileId &&
+        div(
+          { style: "display:none" },
+          img({
+            height: "1",
+            width: "1",
+            alt: "",
+            src: `/files/serve/${bgFileId}`,
+          })
+        );
+      const content = go(segment.contents);
+      if (isTop) {
+        tagCfg.padding = "0px";
+        return mjml.section(tagCfg, bg, mjml.column(content));
+      } else {
+        return mjml.text(tagCfg, bg, content);
+      }
     }
-
     if (segment.type === "line_break") {
       return mjml.raw("<br />");
     }
-
     if (segment.above) {
       return segment.above
         .map((s: any, ix: number) => go(s, isTop, ix))
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-
-      let markup;
-
-      markup = mjml.section(
-        {
-          /*class: ["row", segment.style && segment.style.width ? null : "w-100"],*/
-          style: segment.style,
-        },
-        segment.besides.map((t: any, ixb: number) =>
-          mjml.column(
-            {
-              width: `${Math.round(
-                (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
-              )}%`,
-            },
-            go(t, false, ixb)
-          )
+      let styleString = "";
+      Object.keys(segment.style || {}).forEach((k) => {
+        styleString += `${k}:${segment.style[k]};`;
+      });
+      const className = createClassName(styleString, "group");
+      styles.push({ className, style: styleString });
+      const inner = segment.besides.map((t: any, ixb: number) =>
+        mjml.column(
+          {
+            width: `${Math.round(
+              (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
+            )}%`,
+          },
+          go(t, false, ixb)
         )
       );
-      return isTop ? wrap(segment, isTop, ix, markup) : markup;
+      const tagCfg = {
+        /*class: ["row", segment.style && segment.style.width ? null : "w-100"],*/
+        "css-class": className,
+      };
+      // TODO mj-group is not allowed in mj-column but it seems to work
+      return isTop ? mjml.section(tagCfg, inner) : mjml.group(tagCfg, inner);
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  return go(layout, true, 0);
+  return { markup: go(layout, true, 0), styles };
 };
 
 // declaration merging

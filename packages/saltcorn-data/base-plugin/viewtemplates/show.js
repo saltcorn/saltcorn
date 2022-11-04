@@ -314,7 +314,15 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
-  return page_title_preamble + rendered;
+  if(!extra.req.generate_email)
+    return page_title_preamble + rendered;
+  else {
+    return {
+      markup: rendered.markup,
+      styles: rendered.styles,
+    }
+  }
+
 };
 
 /**
