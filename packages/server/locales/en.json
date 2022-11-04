@@ -1015,5 +1015,22 @@
 	"Medium": "Medium",
 	"Large": "Large",
 	"Extra-large": "Extra-large",
-	"Please select at least one item": "Please select at least one item"
+	"Please select at least one item": "Please select at least one item",
+	"Development settings": "Development settings",
+	"All entities": "All entities",
+	"no tags": "no tags",
+	"Development mode settings updated": "Development mode settings updated",
+	"Locale identifier short code, e.g. en, zh, fr, ar etc. ": "Locale identifier short code, e.g. en, zh, fr, ar etc. ",
+	"Is this the default language in which the application is built?": "Is this the default language in which the application is built?",
+	"Database type": "Database type",
+	"Database schema name": "Database schema name",
+	"Database user": "Database user",
+	"Database host": "Database host",
+	"Database port": "Database port",
+	"Creator email": "Creator email",
+	"Create tenant warning text": "Create tenant warning text",
+	"Provide your own create warning text if need": "Provide your own create warning text if need",
+	"Specify some description for tenant if need": "Specify some description for tenant if need",
+	"Created": "Created",
+	"First user E-mail": "First user E-mail"
 }

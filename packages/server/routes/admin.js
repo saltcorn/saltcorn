@@ -97,13 +97,6 @@ const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
 
-/**
- * @type {object}
- * @const
- * @namespace routes/adminRouter
- * @category server
- * @subcategory routes
- */
 const router = new Router();
 module.exports = router;
 
@@ -123,9 +116,6 @@ const site_id_form = (req) =>
       "base_url",
       "page_custom_css",
       "page_custom_html",
-      "development_mode",
-      "log_sql",
-      "log_level",
       "plugins_store_endpoint",
       "packs_store_endpoint",
       ...(getConfigFile() ? ["multitenancy_enabled"] : []),
@@ -139,7 +129,7 @@ const site_id_form = (req) =>
  * @returns {Promise<Form>} form
  */
 const email_form = async (req) => {
-  const form = await config_fields_form({
+  return await config_fields_form({
     req,
     field_names: [
       "smtp_host",
@@ -151,7 +141,6 @@ const email_form = async (req) => {
     ],
     action: "/admin/email",
   });
-  return form;
 };
 
 const app_files_table = (files, buildDirName, req) =>
@@ -886,8 +875,24 @@ router.get(
                   ),
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
-                    th(req.__("Database")),
+                    th(req.__("Database type")),
                     td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
+                  ),
+                  tr(
+                    th(req.__("Database host")),
+                    td(db.connectObj.host)
+                  ),
+                  tr(
+                    th(req.__("Database port")),
+                    td(db.connectObj.port)
+                  ),
+                  tr(
+                    th(req.__("Database schema name")),
+                    td(db.connectObj.database)
+                  ),
+                  tr(
+                     th(req.__("Database user")),
+                     td(db.connectObj.user)
                   ),
                   tr(
                     th(req.__("Process uptime")),
@@ -1302,7 +1307,9 @@ const buildDialogScript = () => {
   }
   </script>`;
 };
-
+/**
+ * Build mobile app
+ */
 router.get(
   "/build-mobile-app",
   isAdmin,
@@ -1674,6 +1681,7 @@ router.post(
 );
 
 /**
+ * Clear all
  * @name post/clear-all
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -1791,4 +1799,86 @@ router.post(
       res.redirect(`/admin`);
     }
   })
+);
+
+/**
+ * Developer settings form
+ * @param {object} req request
+ * @returns {Promise<Form>} form
+ */
+const dev_form = async (req) => {
+    return await config_fields_form({
+        req,
+        field_names: [
+            "development_mode",
+            "log_sql",
+            "log_level",
+        ],
+        action: "/admin/dev",
+    });
+};
+/**
+ * Developer Mode page
+ * @name get/dev
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+    "/dev",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await dev_form(req);
+        send_admin_page({
+            res,
+            req,
+            active_sub: "Development",
+            contents: {
+                type: "card",
+                title: req.__("Development settings"),
+                contents: [
+                    renderForm(form, req.csrfToken())/*,
+                    a(
+                        {
+                            id: "testemail",
+                            href: "/admin/send-test-email",
+                            class: "btn btn-primary",
+                        },
+                        req.__("Send test email")
+                    ),*/
+                ],
+            },
+        });
+    })
+);
+
+/**
+ * Development mode
+ * @name post/email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+    "/dev",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await dev_form(req);
+        form.validate(req.body);
+        if (form.hasErrors) {
+            send_admin_page({
+                res,
+                req,
+                active_sub: "Development",
+                contents: {
+                    type: "card",
+                    title: req.__("Development settings"),
+                    contents: [renderForm(form, req.csrfToken())],
+                },
+            });
+        } else {
+            await save_config_from_form(form);
+            req.flash("success", req.__("Development mode settings updated"));
+            if (!req.xhr) res.redirect("/admin/dev");
+            else res.json({ success: "ok" });
+        }
+    })
 );

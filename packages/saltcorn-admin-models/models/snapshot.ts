@@ -1,7 +1,6 @@
-const { getState } = require("@saltcorn/data/db/state");
 import db from "@saltcorn/data/db/index";
 import pack from "./pack";
-import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 
 const {
   table_pack,
@@ -114,10 +113,8 @@ class Snapshot {
       switch (type) {
         case "view":
           return pack.views.find((v: any) => v.name === name);
-          break;
         case "page":
           return pack.pages.find((p: any) => p.name === name);
-          break;
       }
     };
     let last = get_entity(snaps[0].pack);

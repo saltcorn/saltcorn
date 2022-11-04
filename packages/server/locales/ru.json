@@ -894,5 +894,7 @@
 	"All entities": "Все сущности",
 	"no tags": "теги не указаны",
 	"Tag entry": "Тег",
-	"Tag: %s": "Тег: %s"
+	"Tag: %s": "Тег: %s",
+	"Discover tables that are already in the Database, but not known to Saltcorn": "Discover tables that are already in the Database, but not known to Saltcorn",
+	"Users already present": "Users already present"
 }
