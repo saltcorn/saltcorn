@@ -1,10 +1,7 @@
 const { getState } = require("@saltcorn/data/db/state");
-import db from "@saltcorn/data/db/index";
 import Table from "@saltcorn/data/models/table";
-import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
 import View from "@saltcorn/data/models/view";
 import File from "@saltcorn/data/models/file";
-import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
 import mocks from "@saltcorn/data/tests/mocks";
@@ -46,7 +43,6 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
           mkError(
             `Field ${field.name} in table ${table.name} summary field ${field.attributes.summary_field} on does not exist on table ${reftable.name}`
           );
-          continue;
         }
       }
     }

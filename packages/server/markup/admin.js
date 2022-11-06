@@ -292,6 +292,7 @@ const send_admin_page = (args) => {
       { text: "Email", href: "/admin/email" },
       { text: "System", href: "/admin/system" },
       { text: "Mobile app", href: "/admin/build-mobile-app" },
+      { text: "Development", href: "/admin/dev" },
     ],
     ...args,
   });

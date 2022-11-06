@@ -263,6 +263,15 @@ const configTypes: ConfigTypes = {
       "Show a warning to users creating a tenant disclaiming warranty of availability or security",
   },
   /** @type {object} */
+  create_tenant_warning_text: {
+    type: "String",
+    fieldview: "textarea",
+    label: "Create tenant warning text",
+    default: "",
+    blurb:
+        "Provide your own create warning text if need",
+  },
+  /** @type {object} */
   tenant_template: {
     type: "Tenant",
     label: "New tenant template",

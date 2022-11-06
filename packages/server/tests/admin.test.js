@@ -68,9 +68,11 @@ describe("admin page", () => {
       .expect(toInclude("Site identity settings"));
   });
   adminPageContains([
+    ["/admin", "Site Identity"],
     ["/admin/backup", "Download a backup"],
     ["/admin/email", "Email settings"],
     ["/admin/system", "Restart server"],
+    ["/admin/dev", "Development"],
   ]);
   adminPageContains([
     ["/useradmin", "Create user"],
