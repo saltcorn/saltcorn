@@ -4,7 +4,7 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant, parseJSONorString } = require("../common");
+const { maybe_as_tenant, init_some_tenants, parseJSONorString } = require("../common");
 const fs = require("fs");
 /**
  * SetCfgCommand Class
@@ -29,7 +29,8 @@ class SetCfgCommand extends Command {
       : flags.file
       ? fs.readFileSync(flags.file, "utf-8")
       : args.value;
-
+    if(flags.tenant)
+      await init_some_tenants(flags.tenant);
     await maybe_as_tenant(flags.tenant, async () => {
       if (flags.plugin) {
         const Plugin = require("@saltcorn/data/models/plugin");

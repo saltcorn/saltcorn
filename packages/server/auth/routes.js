@@ -201,32 +201,57 @@ const getAuthLinks = (current, noMethods) => {
 
 const loginWithJwt = async (email, password, saltcornApp, res) => {
   const loginFn = async () => {
-    const user = await User.findOne({ email });
-    if (user && user.checkPassword(password)) {
-      const now = new Date();
-      const jwt_secret = db.connectObj.jwt_secret;
+    const publicUserLink = getState().getConfig("public_user_link");
+    const jwt_secret = db.connectObj.jwt_secret;
+    if (email && password) {
+      // with credentials
+      const user = await User.findOne({ email });
+      if (user && user.checkPassword(password)) {
+        const now = new Date();
+        const token = jwt.sign(
+          {
+            sub: email,
+            user: {
+              id: user.id,
+              email: user.email,
+              role_id: user.role_id,
+              language: user.language ? user.language : "en",
+              disabled: user.disabled,
+            },
+            iss: "saltcorn@saltcorn",
+            aud: "saltcorn-mobile-app",
+            iat: now.valueOf(),
+            tenant: db.getTenantSchema(),
+          },
+          jwt_secret
+        );
+        if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
+        res.json(token);
+      } else {
+        res.json({
+          alerts: [{ type: "danger", msg: "Incorrect user or password" }],
+        });
+      }
+    } else if (publicUserLink) {
+      // public login
       const token = jwt.sign(
         {
-          sub: email,
+          sub: "public",
           user: {
-            id: user.id,
-            email: user.email,
-            role_id: user.role_id,
-            language: user.language ? user.language : "en",
-            disabled: user.disabled,
+            role_id: 10,
+            language: "en",
           },
           iss: "saltcorn@saltcorn",
           aud: "saltcorn-mobile-app",
-          iat: now.valueOf(),
+          iat: new Date().valueOf(),
           tenant: db.getTenantSchema(),
         },
         jwt_secret
       );
-      if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
       res.json(token);
     } else {
       res.json({
-        alerts: [{ type: "danger", msg: "Incorrect user or password" }],
+        alerts: [{ type: "danger", msg: "The public login is deactivated" }],
       });
     }
   };
