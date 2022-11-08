@@ -257,6 +257,7 @@ export type ViewTemplate = {
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
   routes?: Record<string, Action>;
+  disableViewConfigPreview?: boolean;
   virtual_triggers?: (
     table_id: number | undefined, // TODO ch
     name: string,
