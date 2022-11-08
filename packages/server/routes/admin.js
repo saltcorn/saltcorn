@@ -878,25 +878,37 @@ router.get(
                     th(req.__("Database type")),
                     td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
                   ),
+                  (isRoot?
+                    tr(
+                        th(req.__("Database host")),
+                        td(db.connectObj.host)
+                    )
+                  : ""),
+                  (isRoot?
+                    tr(
+                        th(req.__("Database port")),
+                        td(db.connectObj.port)
+                    )
+                  : ""),
+                  (isRoot?
+                    tr(
+                        th(req.__("Database name")),
+                        td(db.connectObj.database)
+                    )
+                  : ""),
+                  (isRoot?
+                     tr(
+                        th(req.__("Database user")),
+                        td(db.connectObj.user)
+                     )
+                  : ""),
                   tr(
-                    th(req.__("Database host")),
-                    td(db.connectObj.host)
+                      th(req.__("Database schema")),
+                      td(db.getTenantSchema())
                   ),
                   tr(
-                    th(req.__("Database port")),
-                    td(db.connectObj.port)
-                  ),
-                  tr(
-                    th(req.__("Database schema name")),
-                    td(db.connectObj.database)
-                  ),
-                  tr(
-                     th(req.__("Database user")),
-                     td(db.connectObj.user)
-                  ),
-                  tr(
-                    th(req.__("Process uptime")),
-                    td(moment(get_process_init_time()).fromNow(true))
+                     th(req.__("Process uptime")),
+                     td(moment(get_process_init_time()).fromNow(true))
                   )
                 )
               ),

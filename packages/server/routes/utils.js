@@ -20,6 +20,8 @@ const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
 
 /**
+ * Checks that user logged or not.
+ * If not shows than shows flash and redirects to login
  * @param {object} req
  * @param {object} res
  * @param {function} next
@@ -35,6 +37,8 @@ function loggedIn(req, res, next) {
 }
 
 /**
+ * Checks that user has admin role or not.
+ * If user hasn't admin role shows flash and redirects user to login or totp
  * @param {object} req
  * @param {object} res
  * @param {function} next
@@ -60,6 +64,7 @@ function isAdmin(req, res, next) {
 }
 
 /**
+ * Sets language for HTTP Request / HTTP Responce
  * @param {object} req
  * @param {object} res
  * @param {string} state
@@ -73,6 +78,7 @@ const setLanguage = (req, res, state) => {
 };
 
 /**
+ * Sets Custom HTTP headers using data from "custom_http_headers" config variable
  * @param {object} res
  * @param {string} state
  * @returns {void}
@@ -96,6 +102,7 @@ const set_custom_http_headers = (res, state) => {
 };
 
 /**
+ * Tries to recognize tenant from HTTP Request
  * @param {object} req
  * @returns {string}
  */
@@ -179,6 +186,7 @@ const setTenant = (req, res, next) => {
 };
 
 /**
+ * Injects hidden input "_csrf" for CSRF token
  * @param {object} req
  * @returns {input}
  */
@@ -190,6 +198,7 @@ const csrfField = (req) =>
   });
 
 /**
+ * Errors catcher
  * @param {function} fn
  * @returns {function}
  */
@@ -198,6 +207,7 @@ const error_catcher = (fn) => (request, response, next) => {
 };
 
 /**
+ * Scans for page title from contents
  * @param {string|object} contents
  * @param {string} viewname
  * @returns {string}
@@ -218,11 +228,13 @@ const scan_for_page_title = (contents, viewname) => {
 };
 
 /**
+ * Gets gir revision
  * @returns {string}
  */
 const getGitRevision = () => db.connectObj.git_commit;
 
 /**
+ * Gets session store
  * @returns {session|cookieSession}
  */
 const getSessionStore = () => {
