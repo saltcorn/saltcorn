@@ -9,6 +9,7 @@ export type RunResult = {
   title: string;
   renderBuilder?: GenObj;
   contextField?: string;
+  previewURL?: string;
 };
 
 export interface AbstractWorkflow {
