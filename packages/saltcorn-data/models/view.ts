@@ -691,8 +691,7 @@ class View implements AbstractView {
       `/viewedit/config/${this.name}?step=${stepNm}${
         onDoneRedirect ? onDoneRedirect : ""
       }`;
-    if (!this.viewtemplateObj?.disableViewConfigPreview)
-      configFlow.previewURL = `/view/${this.name}/preview`;
+    configFlow.previewURL = `/view/${this.name}/preview`;
     return configFlow;
   }
 

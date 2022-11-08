@@ -89,14 +89,14 @@ router.get(
     const accessWarning =
       hasAccessWarning.length > 0
         ? alert(
-            "danger",
-            `<p>You have views with a role to access lower than the table role to read, 
+          "danger",
+          `<p>You have views with a role to access lower than the table role to read, 
       with no table ownership. In the next version of Saltcorn, this may cause a
       denial of access. Users will need to have table read access to any data displayed.</p> 
       Views potentially affected: ${hasAccessWarning
-        .map((v) => v.name)
-        .join(", ")}`
-          )
+            .map((v) => v.name)
+            .join(", ")}`
+        )
         : "";
     res.sendWrap(req.__(`Views`), {
       above: [
@@ -113,14 +113,14 @@ router.get(
             viewMarkup,
             tables.length > 0
               ? a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create view")
-                )
+                { href: `/viewedit/new`, class: "btn btn-primary" },
+                req.__("Create view")
+              )
               : p(
-                  req.__(
-                    "You must create at least one table before you can create views."
-                  )
-                ),
+                req.__(
+                  "You must create at least one table before you can create views."
+                )
+              ),
           ],
         },
       ],
@@ -485,7 +485,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
           },
         ],
       },
-      wrap(renderForm(wfres.renderForm, req.csrfToken()), false, wf.previewURL)
+      wrap(renderForm(wfres.renderForm, req.csrfToken()), false, wfres.previewURL)
     );
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
