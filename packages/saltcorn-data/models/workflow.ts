@@ -83,9 +83,7 @@ class Workflow implements AbstractWorkflow {
         maxSteps: this.steps.length,
         title: this.title(step, stepIx),
         contextField: step.contextField,
-        ...(step.disableViewConfigPreview
-          ? {}
-          : { previewURL: this.previewURL }),
+        ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
       };
     }
   }
@@ -140,9 +138,7 @@ class Workflow implements AbstractWorkflow {
           currentStep: stepIx + 1,
           maxSteps: this.steps.length,
           title: this.title(step, stepIx),
-          ...(step.disableViewConfigPreview
-            ? {}
-            : { previewURL: this.previewURL }),
+          ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
         };
       }
       const toCtx = step.contextField
@@ -232,9 +228,7 @@ class Workflow implements AbstractWorkflow {
         currentStep: stepIx + 1,
         maxSteps: this.steps.length,
         title: this.title(step, stepIx),
-        ...(step.disableViewConfigPreview
-          ? {}
-          : { previewURL: this.previewURL }),
+        ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
       };
     } else if (step.builder) {
       const options = {
