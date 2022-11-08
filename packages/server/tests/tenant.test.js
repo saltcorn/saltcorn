@@ -5,10 +5,10 @@ const getApp = require("../app");
 const {
   toRedirect,
   getAdminLoginCookie,
-  getStaffLoginCookie,
+  //getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  toNotInclude,
+  //toNotInclude,
 } = require("../auth/testhelp");
 const { getState } = require("@saltcorn/data/db/state");
 

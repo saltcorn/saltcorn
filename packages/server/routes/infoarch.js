@@ -60,7 +60,7 @@ const languageForm = (req) =>
       {
         name: "locale",
         label: req.__("Locale"),
-        sublabel: "Locale identifier short code, e.g. en, zh, fr, ar etc. ",
+        sublabel: req.__("Locale identifier short code, e.g. en, zh, fr, ar etc. "),
         type: "String",
         required: true,
       },
@@ -68,7 +68,7 @@ const languageForm = (req) =>
         name: "is_default",
         label: req.__("Default language"),
         sublabel:
-          "Is this the default language in which the application is built?",
+          req.__("Is this the default language in which the application is built?"),
         type: "Bool",
       },
     ],

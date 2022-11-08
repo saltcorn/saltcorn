@@ -8,13 +8,14 @@
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const { getState, add_tenant } = require("@saltcorn/data/db/state");
-const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 const {
+  create_tenant,
   getAllTenants,
   domain_sanitize,
   deleteTenant,
   switchToTenant,
   insertTenant,
+  Tenant,
 } = require("@saltcorn/admin-models/models/tenant");
 const {
   renderForm,
@@ -24,7 +25,6 @@ const {
 } = require("@saltcorn/markup");
 const {
   div,
-  nbsp,
   p,
   a,
   h4,
@@ -87,6 +87,11 @@ const tenant_form = (req) =>
         input_type: "text",
         postText: text(req.hostname),
       },
+      {
+        name: "description",
+        label: req.__("Description"),
+        input_type: "text",
+      },
     ],
   });
 
@@ -148,37 +153,49 @@ router.get(
           "You are trying to create a tenant while connecting via an IP address rather than a domain. This will probably not work."
         )
       );
-    let create_tenant_warning = "";
-    // todo add custom create tenant  warning message
-    if (getState().getConfig("create_tenant_warning"))
-      create_tenant_warning = div(
-        {
-          class: "alert alert-warning alert-dismissible fade show mt-5",
-          role: "alert",
-        },
-        h4(req.__("Warning")),
-        p(
-          req.__(
-            "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
-          ) +
-          " " +
-          req.__(
-            "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-          ) +
-          " " +
-          req.__(
-            "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-          ) +
-          " " +
-          req.__(
-            'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
-          )
-        )
-      );
+    let create_tenant_warning_text = "";
+    if (getState().getConfig("create_tenant_warning")) {
+        create_tenant_warning_text = getState().getConfig("create_tenant_warning_text");
+        if (create_tenant_warning_text && create_tenant_warning_text.length > 0)
+            create_tenant_warning_text = div(
+                {
+                    class: "alert alert-warning alert-dismissible fade show mt-5",
+                    role: "alert",
+                },
+                h4(req.__("Warning")),
+                p( create_tenant_warning_text
+                )
+            );
+        else
+            create_tenant_warning_text = div(
+                {
+                    class: "alert alert-warning alert-dismissible fade show mt-5",
+                    role: "alert",
+                },
+                h4(req.__("Warning")),
+                p(
+                    req.__(
+                        "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+                    ) +
+                    " " +
+                    req.__(
+                        "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
+                    ) +
+                    " " +
+                    req.__(
+                        "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+                    ) +
+                    " " +
+                    req.__(
+                        'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+                    )
+                )
+            );
+    }
 
     res.sendWrap(
       req.__("Create application"),
-      create_tenant_warning +
+      create_tenant_warning_text +
       renderForm(tenant_form(req), req.csrfToken()) +
       p(
         { class: "mt-2" },
@@ -246,6 +263,8 @@ router.post(
     else {
       // normalize domain name
       const subdomain = domain_sanitize(valres.success.subdomain);
+      // get description
+      const description = valres.success.description;
       // get list of tenants
       const allTens = await getAllTenants();
       if (allTens.includes(subdomain) || !subdomain) {
@@ -258,9 +277,15 @@ router.post(
           renderForm(form, req.csrfToken())
         );
       } else {
+        // tenant url
         const newurl = getNewURL(req, subdomain);
+        // tenant template
         const tenant_template = getState().getConfig("tenant_template");
-        await switchToTenant(await insertTenant(subdomain), newurl);
+        // tenant creator
+        const user_email = req.user && req.user.email;
+        // switch to tenant
+        await switchToTenant(await insertTenant(subdomain, user_email, description, tenant_template), newurl);
+        // add tenant to global state
         add_tenant(subdomain);
         await create_tenant({
           t: subdomain,
@@ -348,6 +373,15 @@ router.get(
               {
                 label: req.__("Description"),
                 key: (r) => text(r.description),
+                //blurb: req.__("Specify some description for tenant if need"),
+              },
+              {
+                label: req.__("Creator email"),
+                key: (r) => text(r.email),
+              },
+              {
+                label: req.__("Created"),
+                key: (r) => text(r.created),
               },
               {
                 label: req.__("Information"),
@@ -387,6 +421,7 @@ const tenant_settings_form = (req) =>
     field_names: [
       "role_to_create_tenant",
       "create_tenant_warning",
+      "create_tenant_warning_text",
       "tenant_template",
     ],
     action: "/tenant/settings",
@@ -468,8 +503,19 @@ router.post(
 const get_tenant_info = async (subdomain) => {
   const saneDomain = domain_sanitize(subdomain);
 
+  let info = {};
+
+  // get tenant row
+  const ten = await Tenant.findOne({ subdomain: saneDomain });
+  if (ten) {
+      info.description = ten.description;
+      info.created = ten.created;
+  }
+
+
+  // get data from tenant schema
   return await db.runWithTenant(saneDomain, async () => {
-    let info = {};
+
     // TBD fix the first user issue because not always firt user by id is creator of tenant
     const firstUser = await User.find({}, { orderBy: "id", limit: 1 });
     if (firstUser && firstUser.length > 0) {
@@ -497,7 +543,11 @@ const get_tenant_info = async (subdomain) => {
     info.nconfigs = await db.count("_sc_config");
     // plugins count
     info.nplugins = await db.count("_sc_plugins");
-    // TBD decide Do we need count tenants, table constraints, migrations
+    // migration count
+    info.nmigrations = await db.count("_sc_migrations");
+    // library count
+    info.nlibrary = await db.count("_sc_library");
+    // TBD decide Do we need count tenants, table constraints
     // base url
     info.base_url = await getConfig("base_url");
     return info;
@@ -525,6 +575,7 @@ router.get(
       return;
     }
     const { subdomain } = req.params;
+    // get tenant info
     const info = await get_tenant_info(subdomain);
     // get list of files
     let files;
@@ -545,7 +596,7 @@ router.get(
             contents: [
               table(
                 tr(
-                  th(req.__("E-mail")),
+                  th(req.__("First user E-mail")),
                   td(
                     a(
                       { href: "mailto:" + info.first_user_email },
@@ -616,8 +667,13 @@ router.get(
                       label: req.__("Base URL"),
                       type: "String",
                     },
+                    {
+                      name: "description",
+                      label: req.__("Description"),
+                      type: "String",
+                    },
                   ],
-                  values: { base_url: info.base_url },
+                  values: { base_url: info.base_url, description: info.description },
                 }),
                 req.csrfToken()
               ),
@@ -673,6 +729,12 @@ router.post(
     const { base_url } = req.body;
     const saneDomain = domain_sanitize(subdomain);
 
+    // save description
+    const { description } = req.body;
+    await Tenant.update( saneDomain, {description: description});
+
+
+
     await db.runWithTenant(saneDomain, async () => {
       await getState().setConfig("base_url", base_url);
     });
@@ -701,7 +763,7 @@ router.post(
       return;
     }
     const { sub } = req.params;
-
+    // todo warning before deletion
     await deleteTenant(sub);
     res.redirect(`/tenant/list`);
   })
