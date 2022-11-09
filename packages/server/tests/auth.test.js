@@ -18,6 +18,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const { get_reset_link, generate_email } = require("../auth/resetpw");
 const i18n = require("i18n");
 const path = require("path");
+const fs = require("fs")
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -602,3 +603,27 @@ describe("signup with custom login form", () => {
     expect(userrow.height).toBe(15);
   });
 });
+
+describe("Locale files", () => {
+  it("should be valid JSON", async () => {
+    const isValidJSON = async fnm => {
+
+    }
+
+    const localeFiles =
+      await fs.promises.readdir(path.join(__dirname, "..", "/locales"));
+    expect(localeFiles.length).toBeGreaterThan(3)
+    expect(localeFiles).toContain("en.json")
+    for (const fnm of localeFiles) {
+      const conts = await fs.promises.readFile(
+        path.join(__dirname, "..", "/locales", fnm)
+      )
+      expect(conts.length).toBeGreaterThan(1)
+
+      const j = JSON.parse(conts)
+      expect(Object.keys(j).length).toBeGreaterThan(1)
+
+    }
+
+  })
+})
