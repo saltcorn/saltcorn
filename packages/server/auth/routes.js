@@ -1407,7 +1407,7 @@ router.get(
       return;
     }
     res.sendWrap(
-      req.__("User settings"),
+      req.__("User settings") || "User settings",
       await userSettings({ req, res, pwform: changPwForm(req), user })
     );
   })

@@ -121,7 +121,7 @@ const formRowWrap = (
         ) + (hdr.sublabel ? i(text(hdr.sublabel)) : "")
       : [
           div(
-            { class: isHoriz(fStyle) && `col-sm-${labelCols}` },
+            { class: [isHoriz(fStyle) && `col-sm-${labelCols} text-end`] },
             label(
               {
                 for: `input${text_attr(hdr.form_name)}`,
@@ -593,13 +593,13 @@ const mkFormRowAside = (
   else
     return div(
       outerAttributes,
-      div({ class: `col-sm-${labelCols}` }, mkLabel(hdr1)),
+      div({ class: `col-sm-${labelCols} text-end` }, mkLabel(hdr1)),
       div(
         { class: `col-sm-${inputCols}` },
         inner1,
         hdr1.sublabel && i(text(hdr1.sublabel))
       ),
-      div({ class: `col-sm-${labelCols}` }, mkLabel(hdr2)),
+      div({ class: `col-sm-${labelCols} text-end` }, mkLabel(hdr2)),
       div(
         { class: `col-sm-${inputCols}` },
         inner2,

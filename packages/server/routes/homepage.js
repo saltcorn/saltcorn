@@ -352,7 +352,7 @@ const helpCard = (req) =>
 const welcome_page = async (req) => {
   const packs_available = await fetch_available_packs();
   const packlist = [
-    ...packs_available.slice(0, 5),
+    ...(packs_available || []).slice(0, 5),
     { name: req.__("More..."), description: "" },
   ];
   const tables = await Table.find({}, { cached: true });
