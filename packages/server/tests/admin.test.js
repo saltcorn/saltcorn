@@ -79,6 +79,8 @@ describe("admin page", () => {
     ["/roleadmin", "Theme"],
     ["/useradmin/settings", "Authentication settings"],
     ["/useradmin/ssl", "HTTPS encryption"],
+    ["/useradmin/http", "HTTP settings"],
+    ["/useradmin/rights", "Rights settings"],
   ]);
   adminPageContains([
     ["/menu", "jquery-menu-editor"],

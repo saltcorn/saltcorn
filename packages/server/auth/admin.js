@@ -305,11 +305,11 @@ router.get(
 );
 
 /**
- *
+ * Authentication Setting Form
  * @param {object} req
  * @returns {Form}
  */
-const user_settings_form = (req) =>
+const auth_settings_form = (req) =>
   config_fields_form({
     req,
     field_names: [
@@ -321,21 +321,52 @@ const user_settings_form = (req) =>
       "user_settings_form",
       "verification_view",
       "elevate_verified",
-      "min_role_upload",
-      "min_role_apikeygen",
-      "timeout",
       "email_mask",
       "allow_forgot",
-      "cookie_duration",
-      "cookie_duration_remember",
-      "cookie_sessions",
-      "custom_http_headers",
     ],
     action: "/useradmin/settings",
     submitLabel: req.__("Save"),
   });
 
 /**
+ * HTTP Settings Form
+ * @param {object} req
+ * @returns {Form}
+ */
+const http_settings_form = (req) =>
+    config_fields_form({
+        req,
+        field_names: [
+            "timeout",
+            "cookie_duration",
+            "cookie_duration_remember",
+            "cookie_sessions",
+            "custom_http_headers",
+        ],
+        action: "/useradmin/http",
+        submitLabel: req.__("Save"),
+    });
+
+
+/**
+ * Rights Setting Form
+ * @param {object} req
+ * @returns {Form}
+ */
+const rights_settings_form = (req) =>
+    config_fields_form({
+        req,
+        field_names: [
+            "elevate_verified",
+            "min_role_upload",
+            "min_role_apikeygen",
+        ],
+        action: "/useradmin/rigths",
+        submitLabel: req.__("Save"),
+    });
+
+/**
+ * HTTP GET for /useradmin/settings
  * @name get/settings
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -344,7 +375,7 @@ router.get(
   "/settings",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await user_settings_form(req);
+    const form = await auth_settings_form(req);
     send_users_page({
       res,
       req,
@@ -359,6 +390,7 @@ router.get(
 );
 
 /**
+ * HTTP POST for /useradmin/settings
  * @name post/settings
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -367,7 +399,7 @@ router.post(
   "/settings",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await user_settings_form(req);
+    const form = await auth_settings_form(req);
     form.validate(req.body);
     if (form.hasErrors) {
       send_users_page({
@@ -382,7 +414,7 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("User settings updated"));
+      req.flash("success", req.__("Authentication settings updated"));
       if (!req.xhr) res.redirect("/useradmin/settings");
       else res.json({ success: "ok" });
     }
@@ -390,6 +422,119 @@ router.post(
 );
 
 /**
+ * HTTP GET for /useradmin/http
+ * @name get/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.get(
+    "/http",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await http_settings_form(req);
+        send_users_page({
+            res,
+            req,
+            active_sub: "HTTP",
+            contents: {
+                type: "card",
+                title: req.__("HTTP settings"),
+                contents: [renderForm(form, req.csrfToken())],
+            },
+        });
+    })
+);
+
+/**
+ * HTTP POST for /useradmin/http
+ * @name post/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+    "/http",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await http_settings_form(req);
+        form.validate(req.body);
+        if (form.hasErrors) {
+            send_users_page({
+                res,
+                req,
+                active_sub: "HTTP",
+                contents: {
+                    type: "card",
+                    title: req.__("HTTP settings"),
+                    contents: [renderForm(form, req.csrfToken())],
+                },
+            });
+        } else {
+            await save_config_from_form(form);
+            req.flash("success", req.__("HTTP settings updated"));
+            if (!req.xhr) res.redirect("/useradmin/http");
+            else res.json({ success: "ok" });
+        }
+    })
+);
+
+/**
+ * HTTP GET for /useradmin/rights
+ * @name get/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.get(
+    "/rights",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await rights_settings_form(req);
+        send_users_page({
+            res,
+            req,
+            active_sub: "Rights",
+            contents: {
+                type: "card",
+                title: req.__("Rights settings"),
+                contents: [renderForm(form, req.csrfToken())],
+            },
+        });
+    })
+);
+
+/**
+ * HTTP POST for /useradmin/rights
+ * @name post/settings
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+    "/rights",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await rights_settings_form(req);
+        form.validate(req.body);
+        if (form.hasErrors) {
+            send_users_page({
+                res,
+                req,
+                active_sub: "Rights",
+                contents: {
+                    type: "card",
+                    title: req.__("Rights settings"),
+                    contents: [renderForm(form, req.csrfToken())],
+                },
+            });
+        } else {
+            await save_config_from_form(form);
+            req.flash("success", req.__("Rights settings updated"));
+            if (!req.xhr) res.redirect("/useradmin/rights");
+            else res.json({ success: "ok" });
+        }
+    })
+);
+
+/**
+ * HTTP GET for /useradmin/ssl
  * @name get/ssl
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -510,6 +655,7 @@ router.get(
 );
 
 /**
+ * SSL Setting form
  * @param {object} req
  * @returns {Form}
  */
@@ -521,6 +667,7 @@ const ssl_form = (req) =>
   });
 
 /**
+ * HTTP GET for /useradmin/ssl/custom
  * @name get/ssl/custom
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -545,6 +692,7 @@ router.get(
 );
 
 /**
+ * HTTP POST for /useradmin/ssl/custom
  * @name post/ssl/custom
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -583,6 +731,7 @@ router.post(
 );
 
 /**
+ * HTTP GET for /useradmin/table-access
  * @name get/ssl/custom
  * @function
  * @memberof module:auth/admin~auth/adminRouter

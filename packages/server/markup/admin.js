@@ -223,9 +223,11 @@ const send_users_page = (args) => {
     sub_sections: [
       { text: "Users", href: "/useradmin" },
       { text: "Roles", href: "/roleadmin" },
-      { text: "Settings", href: "/useradmin/settings" },
+      { text: "Login and Sighup", href: "/useradmin/settings" },
       { text: "Table access", href: "/useradmin/table-access" },
       ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
+      { text: "HTTP", href: "/useradmin/http" },
+      { text: "Rights", href: "/useradmin/rights" },
     ],
     ...args,
   });
