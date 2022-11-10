@@ -5,7 +5,11 @@
  */
 import db from "@saltcorn/data/db/index";
 const reset = require("@saltcorn/data/db/reset_schema");
-import {SelectOptions, sqlsanitize, Where} from "@saltcorn/db-common/internal";
+import {
+  SelectOptions,
+  sqlsanitize,
+  Where,
+} from "@saltcorn/db-common/internal";
 import config from "@saltcorn/data/models/config";
 const { setConfig } = config;
 import { unlink } from "fs/promises";
@@ -48,36 +52,38 @@ const getAllTenantRows = async (): Promise<Row[]> => {
  * @param {string} [description] description of tenant
  * @returns {Promise<void>}
  */
-const insertTenant =
-  async (
-    subdomain: string,
-    email?: string,
-    description?: string,
-    template?: string
-  ): Promise<string> => {
-    // normalize domain name
-    const saneDomain = domain_sanitize(subdomain);
-    // add email
-    const saneEmail = typeof email !== "undefined" ? email : "";
-    // add description
-    const saneDescription = description !== "undefined" ? description : "";
-    // add template
-    const saneTemplate = template !== "undefined" ? template : null;
-    // add info about tenant into main site
-    await db.insert(
-      "_sc_tenants",
-      {
-        subdomain: saneDomain, email: saneEmail, description: saneDescription,
-        template: saneTemplate, created: new Date()
-      },
-      { noid: true }
-    );
-    // create tenant schema
-    if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
-    // ensure file store
-    await File.ensure_file_store(saneDomain);
-    return saneDomain;
-  };
+const insertTenant = async (
+  subdomain: string,
+  email?: string,
+  description?: string,
+  template?: string
+): Promise<string> => {
+  // normalize domain name
+  const saneDomain = domain_sanitize(subdomain);
+  // add email
+  const saneEmail = typeof email !== "undefined" ? email : "";
+  // add description
+  const saneDescription = description !== "undefined" ? description : "";
+  // add template
+  const saneTemplate = template !== "undefined" ? template : null;
+  // add info about tenant into main site
+  await db.insert(
+    "_sc_tenants",
+    {
+      subdomain: saneDomain,
+      email: saneEmail,
+      description: saneDescription,
+      template: saneTemplate,
+      created: new Date(),
+    },
+    { noid: true }
+  );
+  // create tenant schema
+  if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
+  // ensure file store
+  await File.ensure_file_store(saneDomain);
+  return saneDomain;
+};
 /**
  * Switch to Tenant:
  * - change current base_url
@@ -162,7 +168,7 @@ const deleteTenant = async (sub: string): Promise<void> => {
  * @returns {string}
  */
 const domain_sanitize = (s: string): string =>
-  sqlsanitize(s.replace(".", "").toLowerCase());
+  sqlsanitize(s.replace(".", "").toLowerCase().substring(0, 128));
 
 /**
  * Call function f for each Tenant
@@ -244,15 +250,15 @@ class Tenant {
   }
 
   static async find(
-      where: Where,
-      selectopts?: SelectOptions
+    where: Where,
+    selectopts?: SelectOptions
   ): Promise<Tenant[]> {
     const us = await db.select("_sc_tenants", where, selectopts);
     return us.map((u: any) => new Tenant(u));
   }
 
   static async findOne(where: Where): Promise<Tenant | null> {
-    const us = await db.select("_sc_tenants", where, {limit: 1});
+    const us = await db.select("_sc_tenants", where, { limit: 1 });
     if (us.length === 0) return null;
     else return new Tenant(us[0]);
   }
@@ -265,7 +271,9 @@ class Tenant {
   //static async update(subdomain: string, row: Row): Promise<void> {
   static async update(subdomain: string, row: Row): Promise<void> {
     //await db.update("_sc_tenants", row, subdomain);
-    await db.query(`update _sc_tenants set description = '${row.description}' where subdomain = '${subdomain}'`);
+    await db.query(
+      `update _sc_tenants set description = '${row.description}' where subdomain = '${subdomain}'`
+    );
     //Object.assign(this, row);
     // todo trigger if need
   }
