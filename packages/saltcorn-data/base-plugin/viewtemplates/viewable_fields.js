@@ -436,6 +436,7 @@ const flapMaipish = (xs, f) => {
  */
 const get_viewable_fields = (
   viewname,
+  statehash,
   table,
   fields,
   columns,
@@ -687,7 +688,7 @@ const get_viewable_fields = (
                   : f.listKey,
           sortlink:
             !f.calculated || f.stored
-              ? sortlinkForName(f.name, req, viewname)
+              ? sortlinkForName(f.name, req, viewname, statehash)
               : undefined,
         }
       );
@@ -728,17 +729,16 @@ const get_viewable_fields = (
  * @param {object} req
  * @returns {string}
  */
-const sortlinkForName = (fname, req, viewname) => {
-  const { _sortby, _sortdesc } = req.query || {};
+const sortlinkForName = (fname, req, viewname, statehash) => {  
+  const _sortby = req.query ? req.query[`_${statehash}_sortby`] : undefined;
+  const _sortdesc = req.query ? req.query[`_${statehash}_sortdesc`] : undefined;  
   const desc =
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
         ? "false"
         : "true";
-  return isWeb(req)
-    ? `javascript:sortby('${text(fname)}', ${desc})`
-    : `javascript:sortby('${text(fname)}', ${desc}, '${viewname}')`;
+  return `javascript:sortby('${text(fname)}', ${desc}, '${statehash}')`;
 };
 
 /**

@@ -188,7 +188,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
         pages: current_page + (vresps.length === 20 ? 1 : 0),
         trailing_ellipsis: vresps.length === 20,
         get_page_link: (n) =>
-          `javascript:gopage(${n}, 20, {table:'${tableName}'})`,
+          `javascript:gopage(${n}, 20, undefined, {table:'${tableName}'})`,
       });
     }
 

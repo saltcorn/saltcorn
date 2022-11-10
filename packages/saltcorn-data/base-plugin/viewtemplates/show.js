@@ -61,6 +61,7 @@ const {
   InvalidConfiguration,
   mergeIntoWhere,
   isWeb,
+  hashState,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -716,7 +717,7 @@ module.exports = {
   queries: ({
     table_id,
     exttable_name,
-    viewname,
+    name, // viewname
     configuration: { columns, layout },
     req,
   }) => ({
@@ -763,8 +764,9 @@ module.exports = {
         fields,
         layout
       );
+      const stateHash = hashState(state, name);
       const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
-      const q = await stateFieldsToQuery({ state, fields });
+      const q = await stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 10;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {

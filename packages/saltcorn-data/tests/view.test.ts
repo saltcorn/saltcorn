@@ -195,7 +195,7 @@ describe("View", () => {
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toBe(
-      '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false)">Author</a></th><th>Count books</th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
+      '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><a href="javascript:sortby(\'author\', false, \'249ab\')">Author</a></th><th>Count books</th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
     );
   });
 });

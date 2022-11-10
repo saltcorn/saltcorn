@@ -13,7 +13,7 @@ const postView = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const req = new MobileRequest(context.xhr, context.files);
+  const req = new MobileRequest({ xhr: context.xhr, files: context.files });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   if (
@@ -43,7 +43,7 @@ const postViewRoute = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const req = new MobileRequest(context.xhr);
+  const req = new MobileRequest({ xhr: context.xhr });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   if (state.mobileConfig.role_id > view.min_role) {
@@ -69,7 +69,7 @@ const getView = async (context) => {
   const query = parseQuery(context.query);
   const { viewname } = context.params;
   const view = saltcorn.data.models.View.findOne({ name: viewname });
-  const req = new MobileRequest(context.xhr);
+  const req = new MobileRequest({ xhr: context.xhr, query });
   if (
     state.mobileConfig.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))

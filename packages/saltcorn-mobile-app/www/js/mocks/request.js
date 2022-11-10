@@ -1,4 +1,4 @@
-function MobileRequest(xhr = false, files = undefined) {
+function MobileRequest({ xhr = false, files = undefined, query = undefined }) {
   const roleId = saltcorn.data.state.getState().mobileConfig.role_id
     ? saltcorn.data.state.getState().mobileConfig.role_id
     : 10;
@@ -26,5 +26,6 @@ function MobileRequest(xhr = false, files = undefined) {
     csrfToken: () => "",
     xhr,
     files,
+    query,
   };
 }
