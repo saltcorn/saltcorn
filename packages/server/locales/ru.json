@@ -913,6 +913,7 @@
 	"HTTP settings": "Настройки HTTP",
 	"HTTP": "HTTP",
 	"Rights settings": "Настройки прав",
-	"Login and Sighup": "Авторизация и Регистрация",
-	"Rights": "Права"
+	"Login and Signup": "Авторизация и Регистрация",
+	"Rights": "Права",
+	"<p>You have views with a role to access lower than the table role to read, \n      with no table ownership. In the next version of Saltcorn, this may cause a\n      denial of access. Users will need to have table read access to any data displayed.</p> \n      Views potentially affected: %s": "<p>Найдены представления с ролью доступа ниже уровня роли для чтения из соответствующей таблицы, без указания владельца таблицы. В следующих версиях Saltcorn это может привести к запрету на доступ. Пользователи должны будут иметь права на чтение, чтобы данные были отображены. </p> \n     Потенциально затронутые представления: %s</p>"
 }

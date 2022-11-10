@@ -1038,6 +1038,10 @@
 	"First user E-mail": "First user E-mail",
 	"HTTP settings": "HTTP settings",
 	"HTTP": "HTTP",
-	"Login and Sighup": "Login and Sighup",
-	"Rights": "Rights"
+	"Login and Signup": "Login and Signup",
+	"Rights": "Rights",
+	"Rights settings": "Rights settings",
+	"Database name": "Database name",
+	"Database schema": "Database schema",
+	"<p>You have views with a role to access lower than the table role to read, \n      with no table ownership. In the next version of Saltcorn, this may cause a\n      denial of access. Users will need to have table read access to any data displayed.</p> \n      Views potentially affected: %s": "<p>You have views with a role to access lower than the table role to read, \n      with no table ownership. In the next version of Saltcorn, this may cause a\n      denial of access. Users will need to have table read access to any data displayed.</p> \n      Views potentially affected: %s"
 }

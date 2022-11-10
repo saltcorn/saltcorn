@@ -5,9 +5,6 @@
  * @subcategory auth
  */
 // todo refactor to few modules + rename to be in sync with router url
-/**
- * @type {module:express-promise-router}
- */
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
 
@@ -24,10 +21,10 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const { isAdmin, setTenant, error_catcher } = require("../routes/utils");
+const { isAdmin, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, text, span, code, h5, i, p } = require("@saltcorn/markup/tags");
+const { a, div, span, code, h5, i, p } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const {
   send_users_page,
@@ -217,6 +214,7 @@ const user_dropdown = (user, req, can_reset) =>
   ]);
 
 /**
+ * Users List (HTTP Get)
  * @name get
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -227,8 +225,8 @@ router.get(
   error_catcher(async (req, res) => {
     const users = await User.find({}, { orderBy: "id" });
     const roles = await User.get_roles();
-    var roleMap = {};
-    roles.forEach((r) => {
+    let roleMap = {};
+    roles.forEach(r => {
       roleMap[r.id] = r.role;
     });
     const can_reset = getState().getConfig("smtp_host", "") !== "";
@@ -309,32 +307,32 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const auth_settings_form = (req) =>
-  config_fields_form({
-    req,
-    field_names: [
-      "allow_signup",
-      "login_menu",
-      "new_user_form",
-      "login_form",
-      "signup_form",
-      "user_settings_form",
-      "verification_view",
-      "elevate_verified",
-      "email_mask",
-      "allow_forgot",
-    ],
-    action: "/useradmin/settings",
-    submitLabel: req.__("Save"),
-  });
+const auth_settings_form = async (req) =>
+    await config_fields_form({
+        req,
+        field_names: [
+            "allow_signup",
+            "login_menu",
+            "allow_forgot",
+            "new_user_form",
+            "login_form",
+            "signup_form",
+            "user_settings_form",
+            "verification_view",
+            "elevate_verified",
+            "email_mask",
+        ],
+        action: "/useradmin/settings",
+        submitLabel: req.__("Save"),
+    });
 
 /**
  * HTTP Settings Form
  * @param {object} req
  * @returns {Form}
  */
-const http_settings_form = (req) =>
-    config_fields_form({
+const http_settings_form = async (req) =>
+    await config_fields_form({
         req,
         field_names: [
             "timeout",
@@ -353,15 +351,15 @@ const http_settings_form = (req) =>
  * @param {object} req
  * @returns {Form}
  */
-const rights_settings_form = (req) =>
-    config_fields_form({
+const rights_settings_form = async (req) =>
+    await config_fields_form({
         req,
         field_names: [
             "elevate_verified",
             "min_role_upload",
             "min_role_apikeygen",
         ],
-        action: "/useradmin/rigths",
+        action: "/useradmin/rights",
         submitLabel: req.__("Save"),
     });
 
@@ -659,12 +657,12 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const ssl_form = (req) =>
-  config_fields_form({
-    req,
-    field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
-    action: "/useradmin/ssl/custom",
-  });
+const ssl_form = async (req) =>
+    await config_fields_form({
+        req,
+        field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
+        action: "/useradmin/ssl/custom",
+    });
 
 /**
  * HTTP GET for /useradmin/ssl/custom
@@ -955,7 +953,7 @@ router.post(
         role_id: +role_id,
         ...rest,
       });
-      // refactored to catch user errors errors and stop processing if any errors
+      // refactored to catch user errors and stop processing if any errors
       if (u.error) {
         req.flash("error", u.error); // todo change to prompt near field like done for views
         // todo return to create user form
@@ -975,7 +973,7 @@ router.post(
 );
 
 /**
- * Reset password for yser
+ * Reset password for user
  * @name post/reset-password/:id
  * @function
  * @memberof module:auth/admin~auth/adminRouter
@@ -1005,8 +1003,13 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    const result = await send_verification_email(u);
-    if (result.error) req.flash("danger", result.error);
+    // todo add test case
+    const result = await send_verification_email(u, req);
+    if (result.error)
+        req.flash(
+            "danger",
+            req.__(`Verification email sender error:`, result.error)
+        );
     else
       req.flash(
         "success",

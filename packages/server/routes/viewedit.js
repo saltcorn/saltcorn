@@ -9,24 +9,13 @@ const Router = require("express-promise-router");
 
 const {
   renderForm,
-  mkTable,
-  link,
-  //post_btn,
-  //post_delete_btn,
-  post_dropdown_item,
   renderBuilder,
-  settingsDropdown,
   alert,
 } = require("@saltcorn/markup");
 const {
-  //span,
-  //h5,
-  h4,
-  //nbsp,
   p,
   a,
   div,
-  //button,
   script,
   text,
   domReady,
@@ -90,12 +79,13 @@ router.get(
       hasAccessWarning.length > 0
         ? alert(
           "danger",
-          `<p>You have views with a role to access lower than the table role to read, 
+          req.__(
+              `<p>You have views with a role to access lower than the table role to read, 
       with no table ownership. In the next version of Saltcorn, this may cause a
       denial of access. Users will need to have table read access to any data displayed.</p> 
-      Views potentially affected: ${hasAccessWarning
-            .map((v) => v.name)
-            .join(", ")}`
+      Views potentially affected: %s`,
+              hasAccessWarning.map((v) => v.name).join(", ")
+          )
         )
         : "";
     res.sendWrap(req.__(`Views`), {
@@ -259,7 +249,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
-    var viewrow = await View.findOne({ name: viewname });
+    const viewrow = await View.findOne({ name: viewname });
     if (!viewrow) {
       req.flash("error", `View not found: ${text(viewname)}`);
       res.redirect("/viewedit");
@@ -388,7 +378,7 @@ router.post(
       } else {
         const existing_view = await View.findOne({ name: result.success.name });
         if (typeof existing_view !== "undefined")
-          if (req.body.id != existing_view.id) {
+          if (req.body.id !== existing_view.id) {
             // may be need !== but doesnt work
             form.errors.name = req.__("A view with this name already exists");
             form.hasErrors = true;
@@ -409,7 +399,7 @@ router.post(
           const slug = slugOptions.find((so) => so.label === v.slug);
           v.slug = slug || null;
         }
-        const table = await Table.findOne({ name: v.table_name });
+        //const table = await Table.findOne({ name: v.table_name });
         delete v.table_name;
         if (req.body.id) {
           await View.update(v, +req.body.id);

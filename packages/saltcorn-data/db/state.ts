@@ -348,7 +348,7 @@ class State {
    * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
-  async refresh_tables(noSignal: boolean) {
+  async refresh_tables(noSignal?: boolean) {
     const allTables = await db.select(
       "_sc_tables",
       {},

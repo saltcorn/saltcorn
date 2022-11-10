@@ -223,7 +223,7 @@ const send_users_page = (args) => {
     sub_sections: [
       { text: "Users", href: "/useradmin" },
       { text: "Roles", href: "/roleadmin" },
-      { text: "Login and Sighup", href: "/useradmin/settings" },
+      { text: "Login and Signup", href: "/useradmin/settings" },
       { text: "Table access", href: "/useradmin/table-access" },
       ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
       { text: "HTTP", href: "/useradmin/http" },
@@ -284,7 +284,7 @@ const send_events_page = (args) => {
  * @returns {void}
  */
 const send_admin_page = (args) => {
-  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  //const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
     main_section: "About application",
     main_section_href: "/admin",
@@ -438,7 +438,7 @@ const save_config_from_form = async (form) => {
 
 /**
  * Get Base Domain
- * @returns {string} base domain
+ * @returns {string|null} base domain
  */
 const getBaseDomain = () => {
   const base_url = getState().getConfig("base_url");
@@ -459,7 +459,7 @@ const hostname_matches_baseurl = (req, domain) => domain === req.hostname;
 
 /**
  * @param {string} domain
- * @returns {string[]}
+ * @returns {string[]|boolean}
  */
 const is_hsts_tld = (domain) => {
   if (!domain) return false;
