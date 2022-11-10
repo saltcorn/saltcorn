@@ -185,7 +185,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user)) {
-          const triggers = await Trigger.find({});
+          const triggers = Trigger.find({});
 
           res.json({ success: triggers });
         } else {

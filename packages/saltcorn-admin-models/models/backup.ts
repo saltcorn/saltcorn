@@ -19,7 +19,7 @@ import {
   readdir,
   stat,
 } from "fs/promises";
-import { existsSync, fstat, readdirSync, statSync } from "fs";
+import { existsSync, readdirSync, statSync } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
 import stringify from "csv-stringify/lib/sync";
@@ -37,12 +37,10 @@ const {
 const { asyncMap } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
-import User from "@saltcorn/data/models/user";
 import path from "path";
 
 /**
  * @function
- * @param {string} dirpath
  * @returns {Promise<void>}
  */
 const create_pack_json = async (): Promise<object> => {
@@ -62,11 +60,10 @@ const create_pack_json = async (): Promise<object> => {
     await Page.find({}),
     async (v: any) => await page_pack(v.name)
   );
-  const triggers = (await Trigger.find({})).map((tr: Trigger) => tr.toJson);
+  const triggers = (Trigger.find({})).map((tr: Trigger) => tr.toJson);
   const roles = await Role.find({});
   const library = (await Library.find({})).map((l: Library) => l.toJson);
-  const pack = { tables, views, plugins, pages, triggers, roles, library };
-  return pack;
+  return { tables, views, plugins, pages, triggers, roles, library };
 };
 
 /**
@@ -198,7 +195,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
   await backup_files(tmpDir.path);
   await backup_config(tmpDir.path);
 
-  var day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
+  const day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 
   const ten = db.getTenantSchema();
   const tens =
@@ -207,7 +204,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
       : ten;
   const zipFileName = fnm || `sc-backup-${tens}-${day}.zip`;
 
-  var zip = new Zip();
+  const zip = new Zip();
   zip.addLocalFolder(tmpDir.path);
   zip.writeZip(zipFileName);
   await tmpDir.cleanup();
@@ -222,7 +219,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
  */
 const extract = async (fnm: string, dir: string): Promise<void> => {
   return new Promise(function (resolve, reject) {
-    var zip = new Zip(fnm);
+    const zip = new Zip(fnm);
     zip.extractAllToAsync(dir, true, function (err) {
       if (err) reject(new Error("Error opening zip file: " + err));
       else resolve();
@@ -299,7 +296,7 @@ const restore_file_users = async (file_users: any): Promise<void> => {
 
 /**
  * @function
- * @param {string} file_users
+ * @param {string} dirpath
  * @param {boolean} [restore_first_user]
  * @returns {Promise<string|undefined>}
  */
@@ -307,7 +304,7 @@ const restore_tables = async (
   dirpath: string,
   restore_first_user?: boolean
 ): Promise<string | void> => {
-  var err;
+  let err;
   const tables = await Table.find();
   for (const table of tables) {
     const fnm_csv =
@@ -368,10 +365,10 @@ const restore = async (
   const tmpDir = await dir({ unsafeCleanup: true });
   //unzip
   await extract(fnm, tmpDir.path);
-  var err;
+  let err;
   //install pack
   const pack = JSON.parse(
-    await (await readFile(join(tmpDir.path, "pack.json"))).toString()
+    (await readFile(join(tmpDir.path, "pack.json"))).toString()
   );
 
   const can_restore = await can_install_pack(pack);
@@ -448,7 +445,6 @@ const auto_backup_now = async () => {
 
     default:
       throw new Error("Unknown destination: " + destination);
-      break;
   }
 };
 

@@ -43,8 +43,22 @@ const getMailTransport = (): Transporter => {
 };
 
 const viewToMjml = async (view: any, state: any) => {
-  const htmlBs = await view.run(state, emailMockReqRes);
-  return mjml.mjml(mjml.body(htmlBs));
+  const result = await view.run(state, emailMockReqRes);
+  const allStyles = result.styles.map((style: any) =>
+    mjml.style(`
+      .${style.className} div {
+        ${style.style}
+      }
+    `)
+  );
+  const bsCss = `
+    <link 
+      href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.0/flatly/bootstrap.min.css" 
+      rel="stylesheet"
+    />`;
+  return mjml.mjml(
+    mjml.head(mjml.raw(bsCss) + allStyles.join(" ")) + mjml.body(result.markup)
+  );
 };
 
 const viewToEmailHtml = async (view: any, state: any) => {
@@ -55,7 +69,6 @@ const viewToEmailHtml = async (view: any, state: any) => {
       //console.error("MJML error: ", e);
     });
   }
-
   return html.html;
 };
 

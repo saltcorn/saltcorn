@@ -1,4 +1,4 @@
-const routingHistory = [];
+let routingHistory = [];
 
 function currentLocation() {
   if (routingHistory.length == 0) return undefined;
@@ -178,6 +178,10 @@ async function goBack(steps = 1, exitOnFirstPage = false) {
     await handleRoute("/");
   } else {
     routingHistory = routingHistory.slice(0, routingHistory.length - steps);
+    // don't repeat a post
+    if (routingHistory[routingHistory.length - 1].route.startsWith("post/")) {
+      routingHistory.pop();
+    }
     const newCurrent = routingHistory.pop();
     await handleRoute(newCurrent.route, newCurrent.query);
   }

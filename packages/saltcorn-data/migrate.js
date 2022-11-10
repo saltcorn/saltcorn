@@ -61,7 +61,7 @@ const doMigrationStep = async (name, contents, client) => {
 // todo resolve database specific
 const migrate = async (schema0, verbose) => {
   const schema = schema0 || db.connectObj.default_schema;
-  //console.log("migrating", schema);
+  //console.log("migrating database schema %s", schema);
   const dbmigrationRows = await db.select("_sc_migrations");
   const dbmigrations = dbmigrationRows.map((r) => r.migration);
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder

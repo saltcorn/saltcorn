@@ -735,11 +735,13 @@ function cancel_form(form) {
 }
 
 function split_paste_handler(e) {
-  e.preventDefault();
   let clipboardData = e.clipboardData || window.clipboardData || e.originalEvent.clipboardData;
 
   const lines = clipboardData.getData('text').split(/\r\n/g)
 
+  // do normal thing if not multiline - do not interfere with ordinary copy paste
+  if (lines.length < 2) return;
+  e.preventDefault();
   const form = $(e.target).closest('form')
 
   let matched = false;
@@ -747,7 +749,14 @@ function split_paste_handler(e) {
   form.find('input:not(:disabled):not([readonly]):not(:hidden)').each(function (ix, element) {
     if (!matched && element === e.target) matched = true;
     if (matched && lines.length > 0) {
-      $(element).val(lines.shift())
+      const $elem = $(element)
+      if (ix === 0 && $elem.attr("type") !== "number") {
+        //const existing = $elem.val()
+        //const pasted = 
+        $elem.val(lines.shift())
+
+      } else
+        $elem.val(lines.shift())
     }
   })
 

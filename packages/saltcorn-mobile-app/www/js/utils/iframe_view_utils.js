@@ -57,8 +57,13 @@ async function saveAndContinue(e, action, k) {
   // TODO ch error (request.responseText?)
 }
 
-async function loginRequest(email, password, isSignup) {
-  const opts = isSignup
+async function loginRequest({ email, password, isSignup, isPublic }) {
+  const opts = isPublic
+    ? {
+        method: "GET",
+        path: "/auth/login-with/jwt",
+      }
+    : isSignup
     ? {
         method: "POST",
         path: "/auth/signup",
@@ -81,11 +86,11 @@ async function loginRequest(email, password, isSignup) {
 
 async function login(e, entryPoint, isSignup) {
   const formData = new FormData(e);
-  const loginResult = await loginRequest(
-    formData.get("email"),
-    formData.get("password"),
-    isSignup
-  );
+  const loginResult = await loginRequest({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    isSignup,
+  });
   if (typeof loginResult === "string") {
     // use it as a token
     const decodedJwt = parent.jwt_decode(loginResult);
@@ -121,23 +126,32 @@ async function login(e, entryPoint, isSignup) {
 
 async function publicLogin(entryPoint) {
   try {
-    const config = parent.saltcorn.data.state.getState().mobileConfig;
-    config.role_id = 10;
-    config.user_name = "public";
-    config.language = "en";
-    config.isPublicUser = true;
-    parent.i18next.changeLanguage(config.language);
-    const page = await parent.router.resolve({
-      pathname: entryPoint,
-      fullWrap: true,
-      alerts: [
-        {
-          type: "success",
-          msg: parent.i18next.t("Welcome to Saltcorn!"),
-        },
-      ],
-    });
-    await parent.replaceIframe(page.content);
+    const loginResult = await loginRequest({ isPublic: true });
+    if (typeof loginResult === "string") {
+      const config = parent.saltcorn.data.state.getState().mobileConfig;
+      config.role_id = 10;
+      config.user_name = "public";
+      config.language = "en";
+      config.isPublicUser = true;
+      await parent.setJwt(loginResult);
+      config.jwt = loginResult;
+      parent.i18next.changeLanguage(config.language);
+      const page = await parent.router.resolve({
+        pathname: entryPoint,
+        fullWrap: true,
+        alerts: [
+          {
+            type: "success",
+            msg: parent.i18next.t("Welcome to Saltcorn!"),
+          },
+        ],
+      });
+      await parent.replaceIframe(page.content);
+    } else if (loginResult?.alerts) {
+      parent.showAlerts(loginResult?.alerts);
+    } else {
+      throw new Error("The login failed.");
+    }
   } catch (error) {
     parent.showAlerts([
       {

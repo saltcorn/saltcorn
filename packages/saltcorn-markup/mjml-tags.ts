@@ -5,6 +5,8 @@
 
 import mkTag = require("./mktag");
 const tags: string[] = [
+  "head",
+  "style",
   "body",
   "section",
   "column",
@@ -13,6 +15,7 @@ const tags: string[] = [
   "divider",
   "raw",
   "button",
+  "group",
 ];
 const allTags: { [k: string]: (...args: any[]) => string } = Object.fromEntries(
   tags.map((tag) => [tag, mkTag(`mj-${tag}`)])
