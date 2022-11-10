@@ -606,9 +606,6 @@ describe("signup with custom login form", () => {
 
 describe("Locale files", () => {
   it("should be valid JSON", async () => {
-    const isValidJSON = async fnm => {
-
-    }
 
     const localeFiles =
       await fs.promises.readdir(path.join(__dirname, "..", "/locales"));
@@ -622,8 +619,6 @@ describe("Locale files", () => {
 
       const j = JSON.parse(conts)
       expect(Object.keys(j).length).toBeGreaterThan(1)
-
     }
-
   })
 })
