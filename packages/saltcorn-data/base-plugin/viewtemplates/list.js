@@ -417,7 +417,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   const table = Table.findOne(table_id);
   const table_fields = await table.getFields();
   //console.log(table_fields);
-  var state_fields = [];
+  let state_fields = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column) => {
     if (column.type === "Field") {
@@ -430,8 +430,6 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
       }
     }
   });
-  state_fields.push({ name: "_sortby", input_type: "hidden" });
-  state_fields.push({ name: "_page", input_type: "hidden" });
   return state_fields;
 };
 
