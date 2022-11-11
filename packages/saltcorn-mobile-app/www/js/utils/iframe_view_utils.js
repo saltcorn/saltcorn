@@ -248,9 +248,22 @@ function updateQueryStringParameter(queryStr, key, value) {
   return params.join("&");
 }
 
+function invalidate_pagings(currentQuery) {
+  let newQuery = currentQuery;
+  const queryObj = Object.fromEntries(new URLSearchParams(newQuery).entries());
+  const toRemove = Object.keys(queryObj).filter((val) => is_paging_param(val));
+  for (const k of toRemove) {
+    newQuery = removeQueryStringParameter(newQuery, k);
+  }
+  return newQuery;
+}
+
 async function set_state_fields(kvs, href) {
   let queryParams = [];
   let currentQuery = parent.currentQuery();
+  if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
+    currentQuery = invalidate_pagings(currentQuery);
+  }
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true) {
       currentQuery = removeQueryStringParameter(currentQuery, kv[0]);
@@ -275,16 +288,23 @@ async function unset_state_field(key) {
   await parent.handleRoute(href, query);
 }
 
-async function sortby(k, desc, viewname) {
+async function sortby(k, desc, viewIdentifier) {
   await set_state_fields(
-    { _sortby: k, _sortdesc: desc ? "on" : { unset: true } },
-    `get/view/${viewname}`
+    {
+      [`_${viewIdentifier}_sortby`]: k,
+      [`_${viewIdentifier}_sortdesc`]: desc ? "on" : { unset: true },
+    },
+    parent.currentLocation()
   );
 }
 
-async function gopage(n, pagesize, extra) {
+async function gopage(n, pagesize, viewIdentifier, extra) {
   await set_state_fields(
-    { ...extra, _page: n, _pagesize: pagesize },
+    {
+      ...extra,
+      [`_${viewIdentifier}_page`]: n,
+      [`_${viewIdentifier}_pagesize`]: pagesize,
+    },
     parent.currentLocation()
   );
 }

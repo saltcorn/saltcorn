@@ -1149,18 +1149,29 @@ const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
  * @param {string} - missing in contract
  * @returns {object}
  */
-const stateFieldsToQuery = ({ state, fields, prefix = "" }) => {
+const stateFieldsToQuery = ({ state, stateHash, fields, prefix = "" }) => {
   let q = {};
   const stateKeys = Object.keys(state);
-  if (state._sortby) {
-    const field = fields.find((f) => f.name === state._sortby);
+  const sortbyName = `_${stateHash}_sortby`;
+  const sortDescName = `_${stateHash}_sortdesc`;
+  if (state[sortbyName]) {
+    const field = fields.find((f) => f.name === state[sortbyName]);
     //this is ok because it has to match fieldname
-    if (field) q.orderBy = state._sortby;
-    if (state._sortdesc) q.orderDesc = true;
+    if (field) q.orderBy = state[sortbyName];
+    if (state[sortDescName]) q.orderDesc = true;
   }
-  if (state._pagesize) q.limit = parseInt(state._pagesize);
-  if (state._pagesize && state._page)
-    q.offset = (parseInt(state._page) - 1) * parseInt(state._pagesize);
+  const pagesize = stateHash && state[`_${stateHash}_pagesize`]
+    ? parseInt(state[`_${stateHash}_pagesize`])
+    : undefined;
+  if (pagesize) {
+    q.limit = parseInt(pagesize);
+    const page = stateHash && state[`_${stateHash}_page`]
+      ? parseInt(state[`_${stateHash}_page`])
+      : undefined;
+    if (page) {
+      q.offset = (page - 1) * pagesize;
+    }
+  }
   const latNear = stateKeys.find((k) => k.startsWith("_near_lat_"));
   const longNear = stateKeys.find((k) => k.startsWith("_near_long_"));
   if (latNear && longNear) {

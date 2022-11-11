@@ -762,3 +762,7 @@ function split_paste_handler(e) {
 
 
 }
+
+function is_paging_param(key) {
+  return key.endsWith("_page") || key.endsWith("_pagesize");
+}

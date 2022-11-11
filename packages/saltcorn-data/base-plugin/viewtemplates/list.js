@@ -20,6 +20,7 @@ const {
   applyAsync,
   mergeIntoWhere,
   mergeConnectedObjects,
+  hashState,
 } = require("../../utils");
 const {
   field_picker_fields,
@@ -416,7 +417,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   const table = Table.findOne(table_id);
   const table_fields = await table.getFields();
   //console.log(table_fields);
-  var state_fields = [];
+  let state_fields = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column) => {
     if (column.type === "Field") {
@@ -429,8 +430,6 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
       }
     }
   });
-  state_fields.push({ name: "_sortby", input_type: "hidden" });
-  state_fields.push({ name: "_page", input_type: "hidden" });
   return state_fields;
 };
 
@@ -519,8 +518,13 @@ const run = async (
       : 10;
   await set_join_fieldviews({ table, columns, fields });
 
+  readState(stateWithId, fields, extraOpts.req);
+  const { id, ...state } = stateWithId || {};
+  const statehash = hashState(state, viewname);
+
   const tfields = get_viewable_fields(
     viewname,
+    statehash,
     table,
     fields,
     columns,
@@ -528,12 +532,10 @@ const run = async (
     extraOpts.req,
     __
   );
-  readState(stateWithId, fields, extraOpts.req);
-  const { id, ...state } = stateWithId || {};
 
-  const { rows, rowCount } = await listQuery(state);
+  const { rows, rowCount } = await listQuery(state, statehash);
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
-  const current_page = parseInt(state._page) || 1;
+  const current_page = parseInt(state[`_${statehash}_page`]) || 1;
   var page_opts =
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
@@ -546,7 +548,7 @@ const run = async (
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
         get_page_link: (n) =>
-          `javascript:gopage(${n}, ${rows_per_page}, { _paged_view:'${viewname}' })`,
+          `javascript:gopage(${n}, ${rows_per_page}, '${statehash}')`,
       };
     }
   }
@@ -731,11 +733,11 @@ module.exports = {
   queries: ({
     table_id,
     exttable_name,
-    viewname,
+    name, // viewname
     configuration: { columns, default_state },
     req,
   }) => ({
-    async listQuery(state) {
+    async listQuery(state, stateHash) {
       const table = await Table.findOne(
         typeof exttable_name === "string"
           ? { name: exttable_name }
@@ -747,7 +749,7 @@ module.exports = {
         fields
       );
       const where = await stateFieldsToWhere({ fields, state, table });
-      const q = await stateFieldsToQuery({ state, fields, prefix: "a." });
+      const q = await stateFieldsToQuery({ state, fields, prefix: "a.", stateHash });
       const rows_per_page =
         (default_state && default_state._rows_per_page) || 20;
       if (!q.limit) q.limit = rows_per_page;
@@ -788,7 +790,7 @@ module.exports = {
       if (table.ownership_formula && role > table.min_role_read && req) {
         rows = rows.filter((row) => table.is_owner(req.user, row));
       }
-      const rowCount = await table.countRows();
+      const rowCount = await table.countRows(where);
       return { rows, rowCount };
     },
     async getRowQuery(id) {
