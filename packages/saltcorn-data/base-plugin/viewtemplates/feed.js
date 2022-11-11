@@ -26,6 +26,7 @@ const {
   isNode,
   isWeb,
   mergeConnectedObjects,
+  hashState,
 } = require("../../utils");
 const { getState } = require("../../db/state");
 const { jsexprToWhere } = require("../../models/expression");
@@ -369,6 +370,7 @@ const run = async (
   const table = await Table.findOne({ id: table_id });
   const fields = await table.getFields();
   readState(state, fields);
+  const stateHash = hashState(state, show_view);
   const appState = getState();
   const locale = extraArgs.req.getLocale();
   const __ = isNode()
@@ -386,7 +388,7 @@ const run = async (
     if (descending) qextra.orderDesc = true;
   }
   qextra.limit = q.limit || rows_per_page;
-  const current_page = parseInt(state._page) || 1;
+  const current_page = parseInt(state[`_${stateHash}_page`]) || 1;
   const user_id =
     extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
   if (include_fml)
@@ -404,7 +406,7 @@ const run = async (
         current_page,
         pages: Math.ceil(nrows / qextra.limit),
         get_page_link: (n) =>
-          `javascript:gopage(${n}, ${qextra.limit}, { _paged_view:'${viewname}' })`,
+          `javascript:gopage(${n}, ${qextra.limit}, '${stateHash}')`,
       });
     }
   }

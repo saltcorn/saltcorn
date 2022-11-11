@@ -7,6 +7,7 @@ import { createReadStream } from "fs";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
+import crypto from "crypto";
 const fs = require("fs");
 
 const removeEmptyStrings = (obj: GenObj) => {
@@ -194,10 +195,32 @@ const mergeConnectedObjects = (
   };
 };
 
-const objectToQueryString = (o: Object): String =>
+const objectToQueryString = (o: Object): string =>
   Object.entries(o || {})
     .map(([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
+
+const hashState = (state: any, viewname: string): string => {
+  const excluded = ["_page", "_pagesize", "_sortby", "_sortdesc"];
+  const include = (k: string) => !excluded.some((val) => k.endsWith(val));
+  const filteredState: any = {};
+  for (const [k, v] of Object.entries(state)) {
+    if (include(k)) filteredState[k] = v;
+  }
+  const stringToHash = `${viewname}:${objectToQueryString(filteredState)}`;
+  const hash = crypto.createHash("sha1").update(stringToHash).digest("hex");
+  return hash.substring(0, 5);
+};
+
+const extractPagings = (state: any): any => {
+  const result: any = {};
+  for (const [k, v] of Object.entries(state)) {
+    if (k.endsWith("_page") || k.endsWith("_pagesize")) {
+      result[k] = v;
+    }
+  }
+  return result;
+};
 
 export = {
   objectToQueryString,
@@ -222,4 +245,6 @@ export = {
   isNode,
   isWeb,
   mergeConnectedObjects,
+  hashState,
+  extractPagings,
 };

@@ -15,7 +15,7 @@ const {
   readState,
 } = require("../../plugin-helper");
 const { splitUniques } = require("./viewable_fields");
-const { InvalidConfiguration } = require("../../utils");
+const { InvalidConfiguration, extractPagings } = require("../../utils");
 
 /**
  * @param {object} req
@@ -214,19 +214,15 @@ const run = async (
           case "OneToOneShow":
             const [vname, reltblnm, relfld] = rel.split(".");
             const tab_name = reltblnm;
-            let subviewPaging = {};
-            if (state._paged_view && state._paged_view === vname) {
-              subviewPaging._page = state._page;
-              subviewPaging._pagesize = state._pagesize;
-            }
             const subview = await View.findOne({ name: vname });
             if (!subview)
               throw new InvalidConfiguration(
                 `View ${viewname} incorrectly configured: cannot find view ${vname}`
               );
             else {
+              const allPagings = extractPagings(state);
               const subresp = await subview.run(
-                { [relfld]: id, ...subviewPaging },
+                { [relfld]: id, ...allPagings },
                 extraArgs
               );
               reltbls[tab_name] = subresp;

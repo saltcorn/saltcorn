@@ -1,8 +1,18 @@
-function sortby(k, desc) {
-  set_state_fields({ _sortby: k, _sortdesc: desc ? "on" : { unset: true } });
+function sortby(k, desc, viewIdentifier) {
+  set_state_fields({
+    [viewIdentifier ? `_${viewIdentifier}_sortby` : "_sortby"]: k,
+    [viewIdentifier ? `_${viewIdentifier}_sortdesc` : "_sortdesc"]: desc
+      ? "on"
+      : { unset: true },
+  });
 }
-function gopage(n, pagesize, extra = {}) {
-  set_state_fields({ ...extra, _page: n, _pagesize: pagesize });
+function gopage(n, pagesize, viewIdentifier, extra = {}) {
+  const cfg = {
+    ...extra,
+    [viewIdentifier ? `_${viewIdentifier}_page` : "_page"]: n,
+    [viewIdentifier ? `_${viewIdentifier}_pagesize` : "_pagesize"]: pagesize,
+  };
+  set_state_fields(cfg);
 }
 
 if (localStorage.getItem("reload_on_init")) {
@@ -77,8 +87,21 @@ function check_state_field(that) {
   pjax_to(dest.replace("&&", "&").replace("?&", "?"));
 }
 
+function invalidate_pagings(href) {
+  let newhref = href;
+  const queryObj = Object.fromEntries(new URL(newhref).searchParams.entries());
+  const toRemove = Object.keys(queryObj).filter((val) => is_paging_param(val));
+  for (const k of toRemove) {
+    newhref = removeQueryStringParameter(newhref, k);
+  }
+  return newhref;
+}
+
 function set_state_fields(kvs) {
-  var newhref = get_current_state_url();
+  let newhref = get_current_state_url();
+  if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
+    newhref = invalidate_pagings(newhref);
+  }
   Object.entries(kvs).forEach((kv) => {
     if (kv[1].unset && kv[1].unset === true)
       newhref = removeQueryStringParameter(newhref, kv[0]);
