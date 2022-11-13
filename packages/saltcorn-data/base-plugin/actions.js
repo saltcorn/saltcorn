@@ -74,7 +74,7 @@ const run_code = async ({
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
-  const sysState = getState()
+  const sysState = getState();
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
@@ -302,7 +302,7 @@ module.exports = {
       if (!table) return [];
       const views = await View.find_table_views_where(
         table,
-        ({ viewtemplate }) => viewtemplate.runMany || viewtemplate.renderRows
+        ({ viewtemplate }) => viewtemplate?.runMany || viewtemplate?.renderRows
       );
 
       const view_opts = views.map((v) => v.name);
@@ -400,14 +400,20 @@ module.exports = {
           break;
       }
       if (!to_addr) {
-        getState().log(2, `send_email action: Not sending as address ${to_email} is missing`);
+        getState().log(
+          2,
+          `send_email action: Not sending as address ${to_email} is missing`
+        );
         return;
       }
       const view = await View.findOne({ name: viewname });
       const html = await viewToEmailHtml(view, { id: row.id });
-      const from = getState().getConfig("email_from")
+      const from = getState().getConfig("email_from");
 
-      getState().log(3, `Sending email from ${from} to ${to_addr} with subject ${subject}`);
+      getState().log(
+        3,
+        `Sending email from ${from} to ${to_addr} with subject ${subject}`
+      );
 
       const email = {
         from,
@@ -524,8 +530,8 @@ module.exports = {
           name: "only_triggering_row",
           label: "Only triggering row",
           type: "Bool",
-          showIf: table ? { table: table.name } : {}
-        }
+          showIf: table ? { table: table.name } : {},
+        },
       ];
     },
     /**
@@ -534,14 +540,18 @@ module.exports = {
      * @returns {Promise<void>}
      */
     run: async ({ table, row, configuration }) => {
-      const table_for_recalc = await Table.findOne({ name: configuration.table });
+      const table_for_recalc = await Table.findOne({
+        name: configuration.table,
+      });
 
       //intentionally omit await
 
-      if (configuration.only_triggering_row
-        && table.name === table_for_recalc?.name
-        && row
-        && row[table.pk_name]) {
+      if (
+        configuration.only_triggering_row &&
+        table.name === table_for_recalc?.name &&
+        row &&
+        row[table.pk_name]
+      ) {
         table.updateRow({}, row[table.pk_name], undefined, true);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
@@ -634,7 +644,7 @@ module.exports = {
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
-                async function () { }
+                async function () {}
               ).constructor;
               AsyncFunction(s);
               return true;
