@@ -6,6 +6,11 @@
 
 //https://stackoverflow.com/a/21247009
 /**
+ * Reset db schema
+ * - Recreate all sc system tables and users.
+ * - Populate sc system tables data.
+ * - Do db migrtion
+ *  - Refresh SC State
  * @param {boolean} dontDrop
  * @param {string} schema0
  * @returns {Promise<void>}
@@ -164,7 +169,9 @@ const reset = async (dontDrop = false, schema0) => {
     CREATE INDEX ${ifNotExists} "_sc_IDX_session_expire" ON "${db.connectObj.default_schema}"."_sc_session" ("expire");
   `);
 
+  // do db migration
   await migrate(schema);
+  // refresh SC State
   const st = require("./state").getState();
   if (st) await st.refresh();
 };

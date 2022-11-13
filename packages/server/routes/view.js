@@ -9,8 +9,7 @@ const Router = require("express-promise-router");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 
-const { div, text, i, a } = require("@saltcorn/markup/tags");
-const { renderForm, link } = require("@saltcorn/markup");
+const { text } = require("@saltcorn/markup/tags");
 const {
   isAdmin,
   error_catcher,
@@ -104,7 +103,8 @@ router.post(
       if (sf.required && !query[sf.name]) {
         if (!row) {
           if (!table)
-            table = await Table.findOne(view.table_id || view.exttable_name);
+            // todo check after where change
+            table = await Table.findOne({ id : view.table_id } || { name: view.exttable_name });
           row = await table.getRow({});
         }
         if (row) query[sf.name] = row[sf.name];

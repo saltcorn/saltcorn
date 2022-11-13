@@ -48,8 +48,8 @@ import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
 import utils from "../utils";
-import { num_between } from "@saltcorn/types/generators";
-import { devNull } from "os";
+//import { num_between } from "@saltcorn/types/generators";
+//import { devNull } from "os";
 const { prefixFieldsInWhere } = utils;
 const {
   InvalidConfiguration,
@@ -60,7 +60,7 @@ const {
 } = require("../utils");
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import type Tag from "../models/tag";
+//import type Tag from "../models/tag";
 
 /**
  * Transponce Objects
@@ -152,16 +152,18 @@ class Table implements AbstractTable {
   /**
    *
    * Find one Table
+   *
    * @param where - where condition
    * @returns {*|Table|null} table or null
    */
-  static findOne(where: Where | Table): Table | null {
+  static findOne(where: Where | Table ): Table | null {
     if (
       where &&
       ((where.constructor && where.constructor.name === "Table") ||
         where.getRows)
     )
       return <Table>where;
+    // todo remove this logic. But needs find all usages! Also this is recursion that usually adds call function overhead
     if (typeof where === "string") return Table.findOne({ name: where });
     if (typeof where === "number") return Table.findOne({ id: where });
     // todo i think here bug. External tables will be found only in one case (bottom if)
@@ -172,7 +174,7 @@ class Table implements AbstractTable {
     }
     const { getState } = require("../db/state");
 
-    // todo simplify  - I dont understand why this is too complex
+    // todo simplify  - I dont understand why this is too complex. And here potential bug because tables can be not cached!!!
     const tbl = getState().tables.find(
       where?.id
         ? (v: TableCfg) => v.id === +where.id
@@ -265,6 +267,7 @@ class Table implements AbstractTable {
       return !!f(row, user);
     }
     const field_name = this.owner_fieldname();
+    // todo seems like hacking logic. needs redesign
     if (!field_name && this.name === "users")
       return user && user.id && row && `${row.id}` === `${user.id}`;
 
@@ -301,9 +304,9 @@ class Table implements AbstractTable {
       description: options.description || "",
     };
     if (!id) {
-      // insert table defintion into _sc_tables
+      // insert table definition into _sc_tables
       id = await db.insert("_sc_tables", tblrow);
-      // add primary key columnt ID
+      // add primary key column ID
       await db.query(
         `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
             values($1,'id','ID','Integer', '{}', true, true, true)`,
@@ -402,7 +405,7 @@ class Table implements AbstractTable {
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
-          await trigger.run!(row);
+          trigger.run!(row);
         }
       }
       for (const deleteFile of deleteFileFields) {
@@ -439,6 +442,7 @@ class Table implements AbstractTable {
   /**
    * Get one row from table in db
    * @param where
+   * @param selopts
    * @returns {Promise<null|*>}
    */
   async getRow(
@@ -508,6 +512,8 @@ class Table implements AbstractTable {
    * @param v_in - colums with values to update
    * @param id - id value
    * @param _userid - user id
+   * @param noTrigger
+   * @param resultCollector
    * @returns {Promise<void>}
    */
   async updateRow(
@@ -588,6 +594,7 @@ class Table implements AbstractTable {
    * @param v
    * @param id
    * @param _userid
+   * @param resultCollector
    * @returns {Promise<{error}|{success: boolean}>}
    */
   async tryUpdateRow(
@@ -628,7 +635,7 @@ class Table implements AbstractTable {
       const row = await this.getRow({ id });
       if (!row) throw new Error(`Unable to find row with id: ${id}`);
       for (const trigger of triggers) {
-        await trigger.run!(row);
+        trigger.run!(row);
       }
     }
   }
@@ -649,6 +656,7 @@ class Table implements AbstractTable {
    * Insert row
    * @param v_in
    * @param _userid
+   * @param resultCollector
    * @returns {Promise<*>}
    */
   async insertRow(
@@ -703,6 +711,7 @@ class Table implements AbstractTable {
    * Try to Insert row
    * @param v
    * @param _userid
+   * @param resultCollector
    * @returns {Promise<{error}|{success: *}>}
    */
   async tryInsertRow(
@@ -1170,7 +1179,7 @@ class Table implements AbstractTable {
     skip_first_data_row?: boolean
   ): Promise<any> {
     // todo argument type buffer is not assignable for type String...
-    const file_rows = JSON.parse(await (await readFile(filePath)).toString());
+    const file_rows = JSON.parse((await readFile(filePath)).toString());
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -1211,6 +1220,7 @@ class Table implements AbstractTable {
   /**
    * Get parent relations for table
    * @param allow_double
+   * @param allow_triple
    * @returns {Promise<{parent_relations: object[], parent_field_list: object[]}>}
    */
   async get_parent_relations(
@@ -1445,6 +1455,7 @@ class Table implements AbstractTable {
           last_reffield = throughRefField;
           lastJtNm = jtNm1;
         }
+        // todo warning variable might not have been initialized
         fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
       } else {
         fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
@@ -1467,6 +1478,7 @@ class Table implements AbstractTable {
         let whereStr = "";
         if (where && !subselect) {
           const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
+          // todo warning deprecated symbol substr is used
           whereStr = whereAndValues.where.substr(6); // remove "where "
 
           values.push(...whereAndValues.values);

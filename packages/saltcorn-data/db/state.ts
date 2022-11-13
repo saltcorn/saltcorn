@@ -197,6 +197,12 @@ class State {
     else return "Optional";
   }
 
+  /**
+   * Logging to console
+   *
+   * @param min_level
+   * @param msg
+   */
   log(min_level: number, msg: string) {
     if (min_level <= this.logLevel) {
       const ten = db.getTenantSchema();
@@ -345,7 +351,7 @@ class State {
   }
 
   /**
-   * Refresh tables & fields
+   * Refresh tables list and table definitions (including fields) in State
    * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
@@ -650,6 +656,9 @@ class State {
   }
 }
 
+/**
+ * Global
+ */
 let globalRoomEmitter: Function = () => {};
 
 // the root tenant's state is singleton
@@ -682,7 +691,7 @@ const otherdomaintenants: Record<string, string> = {};
 const get_other_domain_tenant = (hostname: string) =>
   otherdomaintenants[hostname];
 /**
- * Get tenant
+ * Get tenant from State
  * @param {string} ten
  * @returns {object}
  */
@@ -690,7 +699,9 @@ const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
   return tenants[ten];
 };
-
+/**
+ * Returns all Tenants (from State)
+ */
 const getAllTenants = () => tenants;
 /**
  * Remove protocol (http:// or https://) from domain url
@@ -727,12 +738,17 @@ const init_multi_tenant = async (
   disableMigrate: boolean,
   tenantList: string[]
 ) => {
+  // for each domain
   for (const domain of tenantList) {
     try {
+      // create new state for each domain
       tenants[domain] = new State(domain);
+      // make migration
       if (!disableMigrate)
         await db.runWithTenant(domain, () => migrate(domain, true));
+      // load plugins
       await db.runWithTenant(domain, plugin_loader);
+      // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
     } catch (err: any) {
       console.error(
@@ -751,7 +767,7 @@ const add_tenant = (t: string) => {
 };
 
 /**
- * Restart tenant
+ * Restart tenant (means reload of plugins)
  * @param {object} plugin_loader
  * @returns {Promise<void>}
  */

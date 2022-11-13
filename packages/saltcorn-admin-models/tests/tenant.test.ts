@@ -35,16 +35,18 @@ describe("Tenant", () => {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
       await getState().setConfig("base_url", "http://example.com/");
+
+      add_tenant("test10");
+
       await switchToTenant(
           await insertTenant("test10", "foo@foo.com", "tenant test10 will be template for test11"),
           "http://test10.example.com/"
       );
-      add_tenant("test10");
+
       await create_tenant({
         t: "test10",
-        loadAndSaveNewPlugin(plugin: Plugin): void {
-        }, plugin_loader() {
-        },
+        loadAndSaveNewPlugin(plugin: Plugin): void {},
+        plugin_loader() {},
       });
       db.runWithTenant("test10", async () => {
         const ten = db.getTenantSchema();
@@ -73,11 +75,13 @@ describe("Tenant", () => {
       await getState().setConfig("tenant_template", "test10");
 
       const tenant_template = getState().getConfig("tenant_template");
+
+      add_tenant("test11");
+
       await switchToTenant(
           await insertTenant("test11", undefined, undefined, tenant_template),
           "http://test11.example.com/"
       );
-      add_tenant("test11");
 
       await create_tenant({
         t: "test11",

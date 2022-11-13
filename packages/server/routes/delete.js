@@ -6,7 +6,7 @@
 
 const Router = require("express-promise-router");
 
-const { loggedIn, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 /**
@@ -28,17 +28,18 @@ module.exports = router;
  * @function
  */
 router.post(
-  "/:name/:id",
+  "/:tableName/:id",
   error_catcher(async (req, res) => {
-    const { name, id } = req.params;
+    const { tableName, id } = req.params;
     const { redirect } = req.query;
-    const table = await Table.findOne({ name });
+    // todo check that works after where change
+    const table = await Table.findOne({ name : tableName });
     const role = req.user && req.user.id ? req.user.role_id : 10;
     try {
       if (role <= table.min_role_write) await table.deleteRows({ id });
       else if (table.ownership_field_id && req.user) {
         const row = await table.getRow({ id });
-        if (row && (await table.is_owner(req.user, row)))
+        if (row && (table.is_owner(req.user, row)))
           await table.deleteRows({ id });
         else req.flash("error", req.__("Not authorized"));
       } else

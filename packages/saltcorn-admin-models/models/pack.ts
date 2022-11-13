@@ -302,6 +302,7 @@ const install_pack = async (
   for (const lib of pack.library || []) {
     await Library.create(lib);
   }
+  // create tables (users skipped because created by other ways)
   for (const tableSpec of pack.tables) {
     if (tableSpec.name !== "users") {
       const table = await Table.create(tableSpec.name, tableSpec);
