@@ -34,8 +34,9 @@ const { isStale } = require("@saltcorn/data/utils");
  * @param {string} name
  * @returns {Promise<object>}
  */
-const table_pack = async (name: string): Promise<TablePack> => {
-  const table = await Table.findOne({ name });
+const table_pack = async (name: string | Table ): Promise<TablePack> => {
+  // todo check this change
+  const table = typeof name === "string"? await Table.findOne({ name }) : name;
   if (!table) throw new Error(`Unable to find table '${name}'`);
 
   const fields = await table.getFields();

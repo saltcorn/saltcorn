@@ -479,5 +479,9 @@
 	"Two-factor authentication": "Two-factor authentication",
 	"Two-factor authentication is disabled": "Two-factor authentication is disabled",
 	"Enable TWA": "Enable TWA",
-	"Modules": "Modules"
+	"Modules": "Modules",
+	"Login and Signup": "Login and Signup",
+	"Table access": "Table access",
+	"HTTP": "HTTP",
+	"Rights": "Rights"
 }

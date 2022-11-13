@@ -1,3 +1,4 @@
+// File: tenant.test.js
 const db = require("@saltcorn/data/db");
 const request = require("supertest");
 
@@ -40,6 +41,7 @@ describe("tenant routes", () => {
         .send("subdomain=test2")
         .expect(toInclude("Success"));
     });
+
     it("creates tenant with capital letter", async () => {
       db.enable_multi_tenant();
       await getState().setConfig("role_to_create_tenant", "10");
@@ -51,6 +53,7 @@ describe("tenant routes", () => {
         .expect(toInclude("Success"));
       db.set_sql_logging(false);
     });
+
     it("rejects existing tenant", async () => {
       db.enable_multi_tenant();
       await getState().setConfig("role_to_create_tenant", "10");
@@ -71,6 +74,7 @@ describe("tenant routes", () => {
         .set("Cookie", loginCookie)
         .expect(toInclude("peashoot"));
     });
+
     it("show tenant info", async () => {
       const loginCookie = await getAdminLoginCookie();
 
@@ -80,6 +84,7 @@ describe("tenant routes", () => {
         .set("Cookie", loginCookie)
         .expect(toInclude("E-mail"));
     });
+
     it("delete tenant", async () => {
       const loginCookie = await getAdminLoginCookie();
 
@@ -89,9 +94,12 @@ describe("tenant routes", () => {
         .set("Cookie", loginCookie)
         .expect(toRedirect("/tenant/list"));
     });
+
   } else {
+
     it("does not support tenants on SQLite", async () => {
       expect(db.isSQLite).toBe(true);
     });
+
   }
 });

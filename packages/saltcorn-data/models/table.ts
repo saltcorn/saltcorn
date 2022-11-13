@@ -164,12 +164,15 @@ class Table implements AbstractTable {
       return <Table>where;
     if (typeof where === "string") return Table.findOne({ name: where });
     if (typeof where === "number") return Table.findOne({ id: where });
+    // todo i think here bug. External tables will be found only in one case (bottom if)
     if (where?.name) {
       const { getState } = require("../db/state");
       const extTable = getState().external_tables[where.name];
       if (extTable) return extTable;
     }
     const { getState } = require("../db/state");
+
+    // todo simplify  - I dont understand why this is too complex
     const tbl = getState().tables.find(
       where?.id
         ? (v: TableCfg) => v.id === +where.id

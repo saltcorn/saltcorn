@@ -44,25 +44,33 @@ import path from "path";
  * @returns {Promise<void>}
  */
 const create_pack_json = async (): Promise<object> => {
+  // tables
   const tables = await asyncMap(
     await Table.find({}),
-    async (t: any) => await table_pack(t.name)
+    async (t: any) => await table_pack(t) // find already done before
   );
+  // views
   const views = await asyncMap(
     await View.find({}),
     async (v: any) => await view_pack(v.name)
   );
+  // plugins
   const plugins = await asyncMap(
     await Plugin.find({}),
     async (v: any) => await plugin_pack(v.name)
   );
+  // pages
   const pages = await asyncMap(
     await Page.find({}),
     async (v: any) => await page_pack(v.name)
   );
+  // triggers
   const triggers = (Trigger.find({})).map((tr: Trigger) => tr.toJson);
+  // roles
   const roles = await Role.find({});
+  // library
   const library = (await Library.find({})).map((l: Library) => l.toJson);
+
   return { tables, views, plugins, pages, triggers, roles, library };
 };
 

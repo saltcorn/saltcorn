@@ -38,6 +38,11 @@ describe("pack create", () => {
     expect(tpack.fields.length > 1).toBe(true);
     expect(tpack.name).toBe("patients");
   });
+  it("creates table pack for users", async () => {
+    const tpack = await table_pack("users");
+    expect(tpack.fields.length > 1).toBe(true);
+    expect(tpack.name).toBe("users");
+  });
   it("creates view pack", async () => {
     const vpack = await view_pack("authorlist");
     expect(vpack).toEqual({

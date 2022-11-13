@@ -241,6 +241,7 @@ class State {
   }
 
   /**
+   * Refresh i18n Internationalization
    * @returns {Promise<void>}
    */
   async refresh_i18n() {
@@ -741,7 +742,10 @@ const init_multi_tenant = async (
     }
   }
 };
-
+/**
+ * Add tenant to State
+ * @param t
+ */
 const add_tenant = (t: string) => {
   tenants[t] = new State(t);
 };
@@ -756,14 +760,18 @@ const restart_tenant = async (plugin_loader: Function) => {
   tenants[ten] = new State(ten);
   await plugin_loader();
 };
-
+/**
+ * Process init time constant
+ */
 const process_init_time = new Date();
 /**
  * Get Process Init Time - moment when Saltcorn process was initiated
  * @returns {Date}
  */
 const get_process_init_time = () => process_init_time;
-
+/**
+ * State Features
+ */
 const features = {
   serve_static_dependencies: true,
   deep_public_plugin_serve: true,
