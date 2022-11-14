@@ -314,7 +314,7 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
-  if(!extra.req.generate_email)
+  if (!extra.req.generate_email)
     return page_title_preamble + rendered;
   else {
     return {
@@ -385,6 +385,11 @@ const renderRows = async (
   await set_join_fieldviews({ table, layout, fields });
 
   const owner_field = await table.owner_fieldname();
+  const subviewExtra = { ...extra };
+  if (extra.req?.generate_email) {
+    // no mjml markup for for nested subviews, only for the top view
+    subviewExtra.req = { ...extra.req, generate_email: false };
+  }
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
       const view = await getView(segment.view);
@@ -399,7 +404,7 @@ const renderRows = async (
             view.table,
             view.name,
             view.configuration,
-            extra,
+            subviewExtra,
             [row],
             state
           )
@@ -432,7 +437,7 @@ const renderRows = async (
           : {};
         const { id, ...outerState } = state;
         const state2 = { ...outerState, ...state1, ...extra_state };
-        segment.contents = await view.run(state2, extra);
+        segment.contents = await view.run(state2, subviewExtra);
       }
     });
     const user_id = extra.req.user ? extra.req.user.id : null;
