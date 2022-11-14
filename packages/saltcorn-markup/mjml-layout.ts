@@ -5,7 +5,8 @@
 
 import tags = require("./tags");
 import mjml = require("./mjml-tags");
-const { div, a, text, img, p, h1, h2, h3, h4, h5, h6, label, ul, li, i } = tags;
+const { div, a, text, img, p, h1, h2, h3, h4, h5, h6, label, ul, li, i, span } =
+  tags;
 import crypto from "crypto";
 
 /**
@@ -25,33 +26,17 @@ const createClassName = (style: string, prefix: string) => {
  * @param inner
  * @returns
  */
-const applyTextStyle = (
-  segment: any,
-  inner: string,
-  isText?: boolean,
-  isTop?: boolean
-): string => {
+const applyTextStyle = (segment: any, inner: string): string => {
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
   const hasStyle = Object.keys(style).length > 0;
   const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
-  const labelFor = (s: string) => segment.labelFor
-    ? label({ for: `input${text(segment.labelFor)}` }, s)
-    : s;
+  const labelFor = (s: string) =>
+    segment.labelFor ? label({ for: `input${text(segment.labelFor)}` }, s) : s;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
-  const wrapText = (s: string) =>
-    isTop
-      ? mjml.section(
-          { padding: "0px" },
-          mjml.column(
-            mjml.text(
-              { padding: "0px" }, labelFor(s)
-            )
-          )
-        )
-      : mjml.text({ padding: "0px" }, labelFor(s));
+  const wrapText = (s: string) => mjml.text({ padding: "0px" }, labelFor(s));
   switch (segment.textStyle) {
     case "h1":
       return wrapText(h1({ style }, inner));
@@ -66,12 +51,13 @@ const applyTextStyle = (
     case "h6":
       return wrapText(h6({ style }, inner));
     default:
-      mjml.text(div({ style, class: to_bs5(segment.textStyle || "") }, inner));
       return segment.block || segment.textStyle || hasStyle
         ? mjml.text(
             div({ style, class: to_bs5(segment.textStyle || "") }, inner)
           )
-        : mjml.text(inner);
+        : mjml.text(
+            span({ style, class: to_bs5(segment.textStyle || "") }, inner)
+          );
   }
 };
 
@@ -106,15 +92,12 @@ const render = ({
   req,
 }: RenderOpts): any => {
   //console.log(JSON.stringify(layout, null, 2));
-  function wrap(
-    segment: any,
-    isTop: boolean,
-    ix: number,
-    inner: string,
-    isText?: boolean
-  ) {
+  function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    return applyTextStyle(segment, iconTag + inner, isText, isTop);
+    const content = applyTextStyle(segment, iconTag + inner);
+    return isTop
+      ? mjml.section({ padding: "0px" }, mjml.column(content))
+      : content;
   }
   const styles = new Array<any>();
   function go(segment: any, isTop: boolean = false, ix: number = 0): string {
@@ -125,9 +108,7 @@ const render = ({
       segment.constructor === Object
     )
       return "";
-    if (typeof segment === "string")
-      if (segment[0] === "<") return wrap(segment, isTop, ix, segment);
-      else return wrap(segment, isTop, ix, segment, true);
+    if (typeof segment === "string") return wrap(segment, isTop, ix, segment);
     if (Array.isArray(segment))
       return wrap(
         segment,
@@ -138,22 +119,11 @@ const render = ({
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
       const rendered = blockDispatch[segment.type](segment, go);
-      if (rendered && rendered[0] === "<") {
-        const content = wrap(segment, isTop, ix, rendered);
-        return isTop
-          ? mjml.section({ padding: "0px" }, mjml.column(content))
-          : content;
-      } else {
-        const content = wrap(segment, isTop, ix, rendered, true);
-        return isTop
-          ? mjml.section({ padding: "0px" }, mjml.column(content))
-          : content;
-      }
+      return rendered ? wrap(segment, isTop, ix, rendered) : "";
     }
     if (segment.type === "blank") {
-      return wrap(segment, isTop, ix, segment.contents || "", true);
+      return wrap(segment, isTop, ix, segment.contents || "");
     }
-
     if (segment.type === "view") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
@@ -215,9 +185,11 @@ const render = ({
           )
         )
       );
-      return isTop ? mjml.section(mjml.column(content)) : content;
+      return isTop
+        ? mjml.section({ padding: "0px" }, mjml.column(content))
+        : content;
     }
-    if (segment.type === "card")
+    if (segment.type === "card") {
       return wrap(
         segment,
         isTop,
@@ -297,6 +269,7 @@ const render = ({
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
+    }
 
     if (segment.type === "container") {
       const {
@@ -482,7 +455,9 @@ const render = ({
         "css-class": className,
       };
       // TODO mj-group is not allowed in mj-column but it seems to work
-      return isTop ? mjml.section(tagCfg, inner) : mjml.group(tagCfg, inner);
+      return isTop
+        ? mjml.section({ padding: "0px" }, tagCfg, inner)
+        : mjml.group(tagCfg, inner);
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   return { markup: go(layout, true, 0), styles };
