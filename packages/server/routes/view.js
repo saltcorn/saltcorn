@@ -104,7 +104,7 @@ router.post(
         if (!row) {
           if (!table)
             // todo check after where change
-            table = await Table.findOne({ id : view.table_id } || { name: view.exttable_name });
+            table = await Table.findOne(view.table_id ? { id : view.table_id } : {name: view.exttable_name});
           row = await table.getRow({});
         }
         if (row) query[sf.name] = row[sf.name];

@@ -540,7 +540,7 @@ class Field implements AbstractField {
 
   validate(whole_rec: any): ResultMessage {
     const type = this.is_fkey ? { name: "Key" } : this.type;
-    let readval;
+    let readval = null;
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
@@ -959,7 +959,7 @@ class Field implements AbstractField {
         const table1 = await Table.findOne({ id: f.table_id });
 
         //intentionally omit await
-        await recalculate_for_stored(table1); //not waiting as there could be a lot of data
+        recalculate_for_stored(table1); //not waiting as there could be a lot of data
       }
     }
     return f;

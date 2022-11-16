@@ -227,7 +227,7 @@ const send_users_page = (args) => {
       { text: "Table access", href: "/useradmin/table-access" },
       ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
       { text: "HTTP", href: "/useradmin/http" },
-      { text: "Rights", href: "/useradmin/rights" },
+      { text: "Permissions", href: "/useradmin/permissions" },
     ],
     ...args,
   });

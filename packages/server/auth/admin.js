@@ -347,19 +347,18 @@ const http_settings_form = async (req) =>
 
 
 /**
- * Rights Setting Form
+ * Permissions Setting Form
  * @param {object} req
  * @returns {Form}
  */
-const rights_settings_form = async (req) =>
+const permissions_settings_form = async (req) =>
     await config_fields_form({
         req,
         field_names: [
-            "elevate_verified",
             "min_role_upload",
             "min_role_apikeygen",
         ],
-        action: "/useradmin/rights",
+        action: "/useradmin/permissions",
         submitLabel: req.__("Save"),
     });
 
@@ -476,23 +475,23 @@ router.post(
 );
 
 /**
- * HTTP GET for /useradmin/rights
+ * HTTP GET for /useradmin/permissions
  * @name get/settings
  * @function
  * @memberof module:auth/admin~auth/adminRouter
  */
 router.get(
-    "/rights",
+    "/permissions",
     isAdmin,
     error_catcher(async (req, res) => {
-        const form = await rights_settings_form(req);
+        const form = await permissions_settings_form(req);
         send_users_page({
             res,
             req,
-            active_sub: "Rights",
+            active_sub: "Permissions",
             contents: {
                 type: "card",
-                title: req.__("Rights settings"),
+                title: req.__("Permissions settings"),
                 contents: [renderForm(form, req.csrfToken())],
             },
         });
@@ -500,32 +499,32 @@ router.get(
 );
 
 /**
- * HTTP POST for /useradmin/rights
+ * HTTP POST for /useradmin/permissions
  * @name post/settings
  * @function
  * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
-    "/rights",
+    "/permissions",
     isAdmin,
     error_catcher(async (req, res) => {
-        const form = await rights_settings_form(req);
+        const form = await permissions_settings_form(req);
         form.validate(req.body);
         if (form.hasErrors) {
             send_users_page({
                 res,
                 req,
-                active_sub: "Rights",
+                active_sub: "Permissions",
                 contents: {
                     type: "card",
-                    title: req.__("Rights settings"),
+                    title: req.__("Permissions settings"),
                     contents: [renderForm(form, req.csrfToken())],
                 },
             });
         } else {
             await save_config_from_form(form);
-            req.flash("success", req.__("Rights settings updated"));
-            if (!req.xhr) res.redirect("/useradmin/rights");
+            req.flash("success", req.__("Permissions settings updated"));
+            if (!req.xhr) res.redirect("/useradmin/permissions");
             else res.json({ success: "ok" });
         }
     })
