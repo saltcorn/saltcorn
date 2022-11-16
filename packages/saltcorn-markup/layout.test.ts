@@ -52,7 +52,7 @@ describe("MJML layout", () => {
   it("renders text layout", () => {
     const layout = { type: "blank", contents: "Hello world" };
     const result = renderMJML({ blockDispatch, layout });
-    expect(result.markup).toBe("<mj-text>Hello world</mj-text>");
+    expect(result.markup).toBe("<mj-section padding=\"0px\"><mj-column><mj-text><span>Hello world</span></mj-text></mj-column></mj-section>");
     expect(result.styles.length).toBe(0);
   });
   it("renders text header", () => {
