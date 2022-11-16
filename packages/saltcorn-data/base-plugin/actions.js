@@ -17,6 +17,7 @@ const { getMailTransport, viewToEmailHtml } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
+  eval_expression,
 } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
@@ -708,6 +709,116 @@ module.exports = {
         .filter((s) => s)
         .join("&");
       return { goto: `/view/${viewname}?${qs}` };
+    },
+  },
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  sync_table_from_external: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    configFields: async ({ table }) => {
+      const tables = await Table.find();
+      const pk_options = {};
+      for (const table of tables) {
+        const fields = await table.getFields();
+        pk_options[table.name] = fields.map((f) => f.name);
+      }
+      return [
+        {
+          name: "table_src",
+          label: "Source table",
+          sublabel: "External table to sync from",
+          input_type: "select",
+          options: tables.filter((t) => t.external).map((t) => t.name),
+        },
+        {
+          name: "table_dest",
+          label: "Destination table",
+          sublabel: "Table to sync to",
+          input_type: "select",
+          options: tables.filter((t) => !t.external).map((t) => t.name),
+        },
+        {
+          name: "pk_field",
+          label: "Primary key field",
+          sublabel:
+            "Field on destination table to match primary key in source table",
+          type: "String",
+          required: true,
+          attributes: {
+            calcOptions: ["table_dest", pk_options],
+          },
+        },
+        {
+          name: "row_expr",
+          label: "Row expression",
+          sublabel: "Expression for JavaScript object",
+          type: "String",
+          fieldview: "textarea",
+        },
+      ];
+    },
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @param {...*} opts.rest
+     * @returns {Promise<object|boolean>}
+     */
+    run: async ({
+      configuration: { row_expr, table_src, table_dest, pk_field },
+      user,
+      ...rest
+    }) => {
+      // set difference: a - b
+      // https://stackoverflow.com/a/36504668/19839414
+      const set_diff = (a, b) => new Set([...a].filter((x) => !b.has(x)));
+      let set_intersect = (a, b) => new Set([...a].filter((x) => b.has(x)));
+      const f = get_async_expression_function(row_expr, [], {
+        row: row || {},
+        user,
+        console,
+      });
+      const source_table = await Table.findOne({ name: table_src });
+      const source_rows = await source_table.getRows({});
+      const table_for_insert = await Table.findOne({ name: table_dest });
+      const dest_rows = await table_for_insert.getRows({});
+      const srcPKfield = source_table.fields.find((f) => f.primary_key).name;
+      const src_pks = new Set(source_rows.map((r) => r[srcPKfield]));
+      const dest_pks = new Set(dest_rows.map((r) => r[pk_field]));
+
+      // new rows
+      for (const newPK of set_diff(src_pks, dest_pks)) {
+        const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
+        const newRow = eval_expression(row_expr, srcRow);
+        const res = await table_for_insert.tryInsertRow(
+          newRow,
+          user && user.id
+        );
+      }
+      // delete rows
+      await table_for_insert.deleteRows({
+        [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
+      });
+
+      //update existing
+      for (const existPK of set_intersect(src_pks, dest_pks)) {
+        const srcRow = source_rows.find((r) => r[srcPKfield] === existPK);
+        const newRow = eval_expression(row_expr, srcRow);
+        const existingRow = dest_rows.find((r) => r[pk_field] === existPK);
+
+        const is_different_for_key = (k) => newRow[k] !== existingRow[k];
+
+        if (Object.keys(newRow).some(is_different_for_key))
+          await table_for_insert.tryUpdateRow(newRow, existPK, user && user.id);
+      }
     },
   },
 };
