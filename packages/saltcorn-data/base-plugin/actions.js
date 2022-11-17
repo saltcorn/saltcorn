@@ -723,7 +723,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     configFields: async ({ table }) => {
-      const tables = await Table.find();
+      const tables = await Table.find_with_external();
       const pk_options = {};
       for (const table of tables) {
         const fields = await table.getFields();
@@ -781,11 +781,7 @@ module.exports = {
       // https://stackoverflow.com/a/36504668/19839414
       const set_diff = (a, b) => new Set([...a].filter((x) => !b.has(x)));
       let set_intersect = (a, b) => new Set([...a].filter((x) => b.has(x)));
-      const f = get_async_expression_function(row_expr, [], {
-        row: row || {},
-        user,
-        console,
-      });
+
       const source_table = await Table.findOne({ name: table_src });
       const source_rows = await source_table.getRows({});
       const table_for_insert = await Table.findOne({ name: table_dest });
