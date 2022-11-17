@@ -1035,5 +1035,9 @@
 	"Provide your own create warning text if need": "Provide your own create warning text if need",
 	"Specify some description for tenant if need": "Specify some description for tenant if need",
 	"Created": "Created",
-	"First user E-mail": "First user E-mail"
+	"First user E-mail": "First user E-mail",
+	"If the parent row is deleted, do this to the child rows.": "If the parent row is deleted, do this to the child rows.",
+	"On delete": "On delete",
+	"Database name": "Database name",
+	"Database schema": "Database schema"
 }

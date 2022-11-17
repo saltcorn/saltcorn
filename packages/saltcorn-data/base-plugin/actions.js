@@ -17,6 +17,7 @@ const { getMailTransport, viewToEmailHtml } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
+  eval_expression,
 } = require("../models/expression");
 const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
@@ -74,7 +75,7 @@ const run_code = async ({
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
-  const sysState = getState()
+  const sysState = getState();
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
@@ -302,7 +303,7 @@ module.exports = {
       if (!table) return [];
       const views = await View.find_table_views_where(
         table,
-        ({ viewtemplate }) => viewtemplate.runMany || viewtemplate.renderRows
+        ({ viewtemplate }) => viewtemplate?.runMany || viewtemplate?.renderRows
       );
 
       const view_opts = views.map((v) => v.name);
@@ -400,14 +401,20 @@ module.exports = {
           break;
       }
       if (!to_addr) {
-        getState().log(2, `send_email action: Not sending as address ${to_email} is missing`);
+        getState().log(
+          2,
+          `send_email action: Not sending as address ${to_email} is missing`
+        );
         return;
       }
       const view = await View.findOne({ name: viewname });
       const html = await viewToEmailHtml(view, { id: row.id });
-      const from = getState().getConfig("email_from")
+      const from = getState().getConfig("email_from");
 
-      getState().log(3, `Sending email from ${from} to ${to_addr} with subject ${subject}`);
+      getState().log(
+        3,
+        `Sending email from ${from} to ${to_addr} with subject ${subject}`
+      );
 
       const email = {
         from,
@@ -524,8 +531,8 @@ module.exports = {
           name: "only_triggering_row",
           label: "Only triggering row",
           type: "Bool",
-          showIf: table ? { table: table.name } : {}
-        }
+          showIf: table ? { table: table.name } : {},
+        },
       ];
     },
     /**
@@ -534,14 +541,18 @@ module.exports = {
      * @returns {Promise<void>}
      */
     run: async ({ table, row, configuration }) => {
-      const table_for_recalc = await Table.findOne({ name: configuration.table });
+      const table_for_recalc = await Table.findOne({
+        name: configuration.table,
+      });
 
       //intentionally omit await
 
-      if (configuration.only_triggering_row
-        && table.name === table_for_recalc?.name
-        && row
-        && row[table.pk_name]) {
+      if (
+        configuration.only_triggering_row &&
+        table.name === table_for_recalc?.name &&
+        row &&
+        row[table.pk_name]
+      ) {
         table.updateRow({}, row[table.pk_name], undefined, true);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
@@ -634,7 +645,7 @@ module.exports = {
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
-                async function () { }
+                async function () {}
               ).constructor;
               AsyncFunction(s);
               return true;
@@ -698,6 +709,128 @@ module.exports = {
         .filter((s) => s)
         .join("&");
       return { goto: `/view/${viewname}?${qs}` };
+    },
+  },
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  sync_table_from_external: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    configFields: async ({ table }) => {
+      const tables = await Table.find_with_external();
+      const pk_options = {};
+      for (const table of tables) {
+        const fields = await table.getFields();
+        pk_options[table.name] = fields.map((f) => f.name);
+      }
+      return [
+        {
+          name: "table_src",
+          label: "Source table",
+          sublabel: "External table to sync from",
+          input_type: "select",
+          options: tables.filter((t) => t.external).map((t) => t.name),
+        },
+        {
+          name: "table_dest",
+          label: "Destination table",
+          sublabel: "Table to sync to",
+          input_type: "select",
+          options: tables.filter((t) => !t.external).map((t) => t.name),
+        },
+        {
+          name: "pk_field",
+          label: "Primary key field",
+          sublabel:
+            "Field on destination table to match primary key in source table",
+          type: "String",
+          required: true,
+          attributes: {
+            calcOptions: ["table_dest", pk_options],
+          },
+        },
+        {
+          name: "row_expr",
+          label: "Row expression",
+          sublabel: "Expression for JavaScript object",
+          type: "String",
+          fieldview: "textarea",
+        },
+        {
+          name: "delete_rows",
+          label: "Delete removed rows",
+          sublabel:
+            "Delete rows that are in the destination table but not in the source table",
+          type: "Bool",
+          default: true,
+        },
+      ];
+    },
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @param {...*} opts.rest
+     * @returns {Promise<object|boolean>}
+     */
+    run: async ({
+      configuration: { row_expr, table_src, table_dest, pk_field, delete_rows },
+      user,
+      ...rest
+    }) => {
+      // set difference: a - b
+      // https://stackoverflow.com/a/36504668/19839414
+      const set_diff = (a, b) => new Set([...a].filter((x) => !b.has(x)));
+      let set_intersect = (a, b) => new Set([...a].filter((x) => b.has(x)));
+
+      const source_table = await Table.findOne({ name: table_src });
+      const source_rows = await source_table.getRows({});
+      const table_for_insert = await Table.findOne({ name: table_dest });
+      const dest_rows = await table_for_insert.getRows({});
+      const srcPKfield = source_table.fields.find((f) => f.primary_key).name;
+      const src_pks = new Set(source_rows.map((r) => r[srcPKfield]));
+      const dest_pks = new Set(dest_rows.map((r) => r[pk_field]));
+
+      // new rows
+      for (const newPK of set_diff(src_pks, dest_pks)) {
+        const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
+        const newRow = {
+          [pk_field]: newPK,
+          ...eval_expression(row_expr, srcRow),
+        };
+        const res = await table_for_insert.tryInsertRow(
+          newRow,
+          user && user.id
+        );
+      }
+      // delete rows
+      if (delete_rows)
+        await table_for_insert.deleteRows({
+          [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
+        });
+
+      //update existing
+      for (const existPK of set_intersect(src_pks, dest_pks)) {
+        const srcRow = source_rows.find((r) => r[srcPKfield] === existPK);
+        const newRow = {
+          [pk_field]: existPK,
+          ...eval_expression(row_expr, srcRow),
+        };
+
+        const existingRow = dest_rows.find((r) => r[pk_field] === existPK);
+
+        const is_different_for_key = (k) => newRow[k] !== existingRow[k];
+
+        if (Object.keys(newRow).some(is_different_for_key))
+          await table_for_insert.tryUpdateRow(newRow, existPK, user && user.id);
+      }
     },
   },
 };

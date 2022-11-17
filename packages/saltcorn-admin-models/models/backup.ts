@@ -60,7 +60,7 @@ const create_pack_json = async (): Promise<object> => {
     await Page.find({}),
     async (v: any) => await page_pack(v.name)
   );
-  const triggers = (Trigger.find({})).map((tr: Trigger) => tr.toJson);
+  const triggers = Trigger.find({}).map((tr: Trigger) => tr.toJson);
   const roles = await Role.find({});
   const library = (await Library.find({})).map((l: Library) => l.toJson);
   return { tables, views, plugins, pages, triggers, roles, library };
@@ -414,10 +414,8 @@ const delete_old_backups = async () => {
 
 const auto_backup_now = async () => {
   const fileName = await create_backup();
-  console.log("auto_backup_filename", fileName);
 
   const destination = getState().getConfig("auto_backup_destination");
-  console.log("auto_backup_destination", destination);
 
   switch (destination) {
     case "Saltcorn files":
@@ -437,7 +435,6 @@ const auto_backup_now = async () => {
       break;
     case "Local directory":
       const directory = getState().getConfig("auto_backup_directory");
-      console.log("auto_backup_directory", directory, fileName);
       await copyFile(fileName, join(directory, fileName));
       await unlink(fileName);
       await delete_old_backups();
