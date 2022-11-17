@@ -31,12 +31,13 @@ const { isStale } = require("@saltcorn/data/utils");
 /**
  * Table Pack
  * @function
- * @param {string} name
+ * @param {string} nameOrTable
  * @returns {Promise<object>}
  */
-const table_pack = async (name: string): Promise<TablePack> => {
-  const table = await Table.findOne({ name });
-  if (!table) throw new Error(`Unable to find table '${name}'`);
+const table_pack = async (nameOrTable: string | Table ): Promise<TablePack> => {
+  // todo check this change
+  const table = typeof nameOrTable === "string"? await Table.findOne({ name : nameOrTable }) : nameOrTable;
+  if (!table) throw new Error(`Unable to find table '${nameOrTable}'`);
 
   const fields = await table.getFields();
   const strip_ids = (o: any) => {
@@ -301,6 +302,7 @@ const install_pack = async (
   for (const lib of pack.library || []) {
     await Library.create(lib);
   }
+  // create tables (users skipped because created by other ways)
   for (const tableSpec of pack.tables) {
     if (tableSpec.name !== "users") {
       const table = await Table.create(tableSpec.name, tableSpec);

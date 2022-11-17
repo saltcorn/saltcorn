@@ -140,7 +140,7 @@ const post_dropdown_item = (
   href: string,
   s: string,
   req: any,
-  confirm: boolean,
+  confirm?: boolean,
   what?: string
 ): string => {
   const id = href.split("/").join("");
@@ -189,9 +189,7 @@ const settingsDropdown = (id: string, elems: any): string =>
 
 /**
  * @param date
- * @param opts
- * @param opts.hour
- * @param opts.minute
+ * @param options
  * @returns
  */
 const localeTime = (

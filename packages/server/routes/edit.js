@@ -6,14 +6,8 @@
 
 const Router = require("express-promise-router");
 
-const Field = require("@saltcorn/data/models/field");
-const File = require("@saltcorn/data/models/file");
-const Form = require("@saltcorn/data/models/form");
-const { loggedIn, error_catcher } = require("./utils.js");
+const { error_catcher } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
-const pluralize = require("pluralize");
-
-const { renderForm } = require("@saltcorn/markup");
 
 /**
  * @type {object}
@@ -32,11 +26,12 @@ module.exports = router;
  * @function
  */
 router.post(
-  "/toggle/:name/:id/:field_name",
+  "/toggle/:tableName/:id/:field_name",
   error_catcher(async (req, res) => {
-    const { name, id, field_name } = req.params;
+    const { tableName, id, field_name } = req.params;
     const { redirect } = req.query;
-    const table = await Table.findOne({ name });
+    // todo check that works after where change
+    const table = await Table.findOne({ name : tableName });
     const role = req.user && req.user.id ? req.user.role_id : 10;
     if (role <= table.min_role_write) await table.toggleBool(+id, field_name);
     else

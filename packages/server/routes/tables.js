@@ -8,7 +8,6 @@ const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
 const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
@@ -16,7 +15,6 @@ const {
   mkTable,
   renderForm,
   link,
-  post_btn,
   settingsDropdown,
   post_delete_btn,
   post_dropdown_item,
@@ -29,10 +27,7 @@ const { isAdmin, error_catcher, setTenant } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
   span,
-  h5,
   h4,
-  h3,
-  nbsp,
   p,
   a,
   div,
@@ -41,7 +36,6 @@ const {
   label,
   input,
   text,
-  tr,
   script,
   domReady,
   code,
@@ -552,14 +546,13 @@ router.get(
       res.redirect(`/table`);
       return;
     }
-    id = table.id;
     const nrows = await table.countRows();
     const fields = await table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
       ...new Set(child_relations.map(({ table }) => table.name)),
     ];
-    var fieldCard;
+    let fieldCard;
     if (fields.length === 0) {
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
@@ -866,8 +859,10 @@ router.post(
         res.redirect(`/table/${table.id}`);
       }
     } else if (v.external) {
+      // todo check that works after where change
+      // todo findOne can be have parameter for external table here
       //we can only save min role
-      const table = await Table.findOne(v.name);
+      const table = await Table.findOne( { name : v.name });
       if (table) {
         const exttables_min_role_read = getState().getConfigCopy(
           "exttables_min_role_read",
@@ -1148,6 +1143,7 @@ router.get(
 /**
  * Constraint Fields Edition Form
  * Choosing fields for adding to contrain
+ * @param req
  * @param {string} table_id
  * @param {object[]} fields
  * @returns {Form}

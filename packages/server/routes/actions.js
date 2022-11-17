@@ -8,7 +8,6 @@ const Router = require("express-promise-router");
 const {
   isAdmin,
   error_catcher,
-  get_base_url,
   addOnDoneRedirect,
 } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
@@ -25,17 +24,9 @@ const { getTriggerList } = require("./common_lists");
 const router = new Router();
 module.exports = router;
 const {
-  mkTable,
   renderForm,
   link,
-  //  post_btn,
-  //  settingsDropdown,
-  //  post_dropdown_item,
-  post_delete_btn,
-  localeDateTime,
-  //  localeDateTime,
 } = require("@saltcorn/markup");
-const actions = require("@saltcorn/data/base-plugin/actions");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
@@ -52,14 +43,11 @@ const {
   h6,
   pre,
   text,
-  hr,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const { send_events_page } = require("../markup/admin.js");
-const EventLog = require("@saltcorn/data/models/eventlog");
 const User = require("@saltcorn/data/models/user");
-const form = require("@saltcorn/markup/form");
 const {
   blocklyImportScripts,
   blocklyToolbox,
@@ -587,7 +575,7 @@ router.get(
     };
     let table, row;
     if (trigger.table_id) {
-      table = await Table.findOne(trigger.table_id);
+      table = await Table.findOne( { id: trigger.table_id } );
       row = await table.getRow({});
     }
     try {

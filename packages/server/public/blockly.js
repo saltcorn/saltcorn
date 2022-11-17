@@ -1,3 +1,4 @@
+// todo replace var with let / const
 function activate_blockly({ events, actions, tables }) {
   // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#arpfmx
 
@@ -21,8 +22,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `console.log(${value_string});\n`;
-    return code;
+    return `console.log(${value_string});\n`;
   };
 
   Blockly.Blocks["emit_event"] = {
@@ -58,9 +58,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `emitEvent("${dropdown_event}", ${value_channel}, ${value_payload});\n`;
-
-    return code;
+    return `emitEvent("${dropdown_event}", ${value_channel}, ${value_payload});\n`;
   };
 
   Blockly.Blocks["row"] = {
@@ -75,7 +73,7 @@ function activate_blockly({ events, actions, tables }) {
 
   Blockly.JavaScript["row"] = function (block) {
     // TODO: Assemble JavaScript into code variable.
-    var code = "row";
+    const code = "row";
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
@@ -91,7 +89,7 @@ function activate_blockly({ events, actions, tables }) {
   };
   Blockly.JavaScript["current_channel"] = function (block) {
     // TODO: Assemble JavaScript into code variable.
-    var code = "channel";
+    const code = "channel";
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
@@ -106,7 +104,7 @@ function activate_blockly({ events, actions, tables }) {
   };
   Blockly.JavaScript["empty"] = function (block) {
     // TODO: Assemble JavaScript into code variable.
-    var code = "{}";
+    const code = "{}";
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, Blockly.JavaScript.ORDER_NONE];
   };
@@ -170,8 +168,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `${value_row}.${text_key}=${value_value};\n`;
-    return code;
+    return `${value_row}.${text_key}=${value_value};\n`;
   };
   Blockly.Blocks["insert_table"] = {
     init: function () {
@@ -196,8 +193,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .tryInsertRow(${value_row});\n`;
-    return code;
+    return `await Table.findOne({name: '${dropdown_table}'})\n           .tryInsertRow(${value_row});\n`;
   };
   Blockly.Blocks["query_table"] = {
     init: function () {
@@ -281,8 +277,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows({id: ${value_id}});\n`;
-    return code;
+    return `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows({id: ${value_id}});\n`;
   };
 
   Blockly.Blocks["delete_table_where"] = {
@@ -309,9 +304,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows(${value_where});\n`;
-
-    return code;
+    return `await Table.findOne({name: '${dropdown_table}'})\n           .deleteRows(${value_where});\n`;
   };
   Blockly.Blocks["update_table"] = {
     init: function () {
@@ -342,8 +335,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `await Table.findOne({name: '${dropdown_table}'})\n           .tryUpdateRow(${value_row}, ${value_id});\n`;
-    return code;
+    return `await Table.findOne({name: '${dropdown_table}'})\n           .tryUpdateRow(${value_row}, ${value_id});\n`;
   };
 
   Blockly.Blocks["sleep"] = {
@@ -363,10 +355,9 @@ function activate_blockly({ events, actions, tables }) {
     },
   };
   Blockly.JavaScript["sleep"] = function (block) {
-    var number_sleep_ms = block.getFieldValue("SLEEP_MS");
+    const number_sleep_ms = block.getFieldValue("SLEEP_MS");
     // TODO: Assemble JavaScript into code variable.
-    var code = `await sleep(${number_sleep_ms});\n`;
-    return code;
+    return `await sleep(${number_sleep_ms});\n`;
   };
 
   Blockly.Blocks["http_request"] = {
@@ -439,7 +430,7 @@ function activate_blockly({ events, actions, tables }) {
       "POPUP",
       Blockly.JavaScript.ORDER_ATOMIC
     );
-    var checkbox_reload = block.getFieldValue("RELOAD") == "TRUE";
+    var checkbox_reload = block.getFieldValue("RELOAD") === "TRUE";
     var value_notify = Blockly.JavaScript.valueToCode(
       block,
       "NOTIFY",
@@ -451,8 +442,7 @@ function activate_blockly({ events, actions, tables }) {
     if (value_popup) s += `popup: ${value_popup},`;
     if (value_notify) s += `notify: ${value_notify},`;
     if (checkbox_reload) s += `reload_page: true,`;
-    var code = `return {${s}};\n`;
-    return code;
+    return `return {${s}};\n`;
   };
   Blockly.Blocks["push_to_list"] = {
     init: function () {
@@ -480,8 +470,7 @@ function activate_blockly({ events, actions, tables }) {
       Blockly.JavaScript.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `${value_list}.push(${value_name});\n`;
-    return code;
+    return `${value_list}.push(${value_name});\n`;
   };
   if (actions.length > 0) {
     Blockly.Blocks["action"] = {
@@ -501,12 +490,11 @@ function activate_blockly({ events, actions, tables }) {
     };
 
     Blockly.JavaScript["action"] = function (block) {
-      var dropdown_name = block.getFieldValue("NAME");
+      const dropdown_name = block.getFieldValue("NAME");
       // TODO: Assemble JavaScript into code variable.
-      var code = dropdown_name.includes(" ")
+      return dropdown_name.includes(" ")
         ? `Actions['${dropdown_name}']();\n`
         : `Actions.${dropdown_name}();\n`;
-      return code;
     };
   }
   Blockly.Blocks["unit_row"] = {
@@ -577,7 +565,7 @@ function activate_blockly({ events, actions, tables }) {
     $("#blocklyForm").submit();
   });
   function myUpdateFunction(event) {
-    var code = Blockly.JavaScript.workspaceToCode(workspace);
+    const code = Blockly.JavaScript.workspaceToCode(workspace);
     $("#blockly_js_output").html(code);
   }
   workspace.addChangeListener(myUpdateFunction);

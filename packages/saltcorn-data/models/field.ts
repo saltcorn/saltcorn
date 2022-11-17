@@ -29,7 +29,7 @@ import type {
   InputType,
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
-import { fileSync } from "tmp-promise";
+//import { fileSync } from "tmp-promise";
 import File from "./file";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
@@ -115,8 +115,8 @@ class Field implements AbstractField {
     if (!this.type)
       this.typename = typeof o.type === "string" ? o.type : o.type?.name;
     this.options = o.options;
-    this.required = o.required ? true : false;
-    this.is_unique = o.is_unique ? true : false;
+    this.required = !!o.required;
+    this.is_unique = !!o.is_unique;
     this.hidden = o.hidden || false;
     this.disabled = !!o.disabled;
     this.calculated = !!o.calculated;
@@ -241,9 +241,10 @@ class Field implements AbstractField {
    * Fills 'this.options' with values available via foreign key
    * Could be used for <options /> in a <select/> to select a user
    * @param [force_allow_none = false]
-   * @param where
+   * @param where0
    * @param extraCtx
    * @param optionsQuery remote/local query to load rows from 'reftable_name'
+   * @param formFieldNames
    * @returns
    */
   async fill_fkey_options(
@@ -381,6 +382,7 @@ class Field implements AbstractField {
   /**
    * Distinct Values
    * @param {object} [req]
+   * @param where
    * @returns {Promise<void>}
    */
   async distinct_values(
@@ -902,7 +904,7 @@ class Field implements AbstractField {
         }`;
         await db.query(q);
       } else if (is_sqlite) {
-        //warning: not safe but sqlite so we don't care
+        //warning: not safe but for sqlite we don't care
         const q = `alter table ${schema}"${sqlsanitize(
           table.name
         )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${

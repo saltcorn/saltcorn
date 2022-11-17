@@ -1,4 +1,6 @@
+// File: run-tests.js
 /**
+ * run-tests
  * @category saltcorn-cli
  * @module commands/run-tests
  */
@@ -32,6 +34,12 @@ class RunTestsCommand extends Command {
     return res;
   }
 
+  /**
+   * Prepare and start Test Instance of Saltcorn server
+   * @param env - environment variables
+   * @param port - ip port to start server
+   * @returns {Promise<ChildProcess>}
+   */
   async prepareTestServer(env, port) {
     let serverEnv = JSON.parse(JSON.stringify(env));
     serverEnv.SQLITE_FILEPATH = "/tmp/sctestdb_server";
@@ -53,7 +61,7 @@ class RunTestsCommand extends Command {
   }
 
   /**
-   *
+   * RUN End To End Text (E2E) using npm
    * @param {*} env
    * @returns {Promise<void>}
    */
@@ -72,8 +80,9 @@ class RunTestsCommand extends Command {
   }
 
   /**
-   *
+   * Remote Query tests run
    * @param {*} env
+   * @param jestParams
    */
   async remoteQueryTest(env, jestParams) {
     const port = 3000;
@@ -89,7 +98,7 @@ class RunTestsCommand extends Command {
     if (res.status !== 0) this.exit(res.status);
   }
   /**
-   *
+   * Validate CLI Call
    * @param {object} args
    * @param {object} flags
    * @throws {Error}
@@ -109,12 +118,13 @@ class RunTestsCommand extends Command {
   }
 
   /**
+   * Run
    * @returns {Promise<void>}
    */
   async run() {
     const { args, flags } = this.parse(RunTestsCommand);
     this.validateCall(args, flags);
-    var env;
+    let env;
 
     const db = require("@saltcorn/data/db");
     if (db.isSQLite) {
@@ -134,9 +144,16 @@ class RunTestsCommand extends Command {
     await fixtures();
     await db.close();
     let jestParams = ["--"];
+    // toddo add --logHeapUsage
     if (flags.coverage) {
       jestParams.push("--coverage");
       jestParams.push("--coverageProvider", "v8");
+    }
+    if (flags.listTests) {
+      jestParams.push("--listTests");
+    }
+    if (flags.verbose) {
+      jestParams.push("--verbose");
     }
     if (flags.testFilter) {
       jestParams.push("-t", flags.testFilter);
@@ -187,6 +204,8 @@ RunTestsCommand.description = `Run test suites`;
  */
 RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
+  listTests: flags.boolean({ char: "l", description: "List tests" }),
+  verbose: flags.boolean({ char: "v", description: "Verbose" }),
   testFilter: flags.string({
     char: "t",
     description: "Filter tests by suite or test name",
