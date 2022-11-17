@@ -87,11 +87,6 @@ const tenant_form = (req) =>
         input_type: "text",
         postText: text(req.hostname),
       },
-      {
-        name: "description",
-        label: req.__("Description"),
-        input_type: "text",
-      },
     ],
   });
 
@@ -155,55 +150,56 @@ router.get(
       );
     let create_tenant_warning_text = "";
     if (getState().getConfig("create_tenant_warning")) {
-        create_tenant_warning_text = getState().getConfig("create_tenant_warning_text");
-        if (create_tenant_warning_text && create_tenant_warning_text.length > 0)
-            create_tenant_warning_text = div(
-                {
-                    class: "alert alert-warning alert-dismissible fade show mt-5",
-                    role: "alert",
-                },
-                h4(req.__("Warning")),
-                p( create_tenant_warning_text
-                )
-            );
-        else
-            create_tenant_warning_text = div(
-                {
-                    class: "alert alert-warning alert-dismissible fade show mt-5",
-                    role: "alert",
-                },
-                h4(req.__("Warning")),
-                p(
-                    req.__(
-                        "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
-                    ) +
-                    " " +
-                    req.__(
-                        "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
-                    ) +
-                    " " +
-                    req.__(
-                        "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
-                    ) +
-                    " " +
-                    req.__(
-                        'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
-                    )
-                )
-            );
+      create_tenant_warning_text = getState().getConfig(
+        "create_tenant_warning_text"
+      );
+      if (create_tenant_warning_text && create_tenant_warning_text.length > 0)
+        create_tenant_warning_text = div(
+          {
+            class: "alert alert-warning alert-dismissible fade show mt-5",
+            role: "alert",
+          },
+          h4(req.__("Warning")),
+          p(create_tenant_warning_text)
+        );
+      else
+        create_tenant_warning_text = div(
+          {
+            class: "alert alert-warning alert-dismissible fade show mt-5",
+            role: "alert",
+          },
+          h4(req.__("Warning")),
+          p(
+            req.__(
+              "Hosting on this site is provided for free and with no guarantee of availability or security of your application. "
+            ) +
+              " " +
+              req.__(
+                "This facility is intended solely for you to evaluate the suitability of Saltcorn. "
+              ) +
+              " " +
+              req.__(
+                "If you would like to store private information that needs to be secure, please use self-hosted Saltcorn. "
+              ) +
+              " " +
+              req.__(
+                'See <a href="https://github.com/saltcorn/saltcorn">GitHub repository</a> for instructions<p>'
+              )
+          )
+        );
     }
 
     res.sendWrap(
       req.__("Create application"),
       create_tenant_warning_text +
-      renderForm(tenant_form(req), req.csrfToken()) +
-      p(
-        { class: "mt-2" },
-        req.__("To login to a previously created application, go to: "),
-        code(`${req.protocol}://`) +
-        i(req.__("Application name")) +
-        code("." + req.hostname)
-      )
+        renderForm(tenant_form(req), req.csrfToken()) +
+        p(
+          { class: "mt-2" },
+          req.__("To login to a previously created application, go to: "),
+          code(`${req.protocol}://`) +
+            i(req.__("Application name")) +
+            code("." + req.hostname)
+        )
     );
   })
 );
@@ -284,7 +280,15 @@ router.post(
         // tenant creator
         const user_email = req.user && req.user.email;
         // switch to tenant
-        await switchToTenant(await insertTenant(subdomain, user_email, description, tenant_template), newurl);
+        await switchToTenant(
+          await insertTenant(
+            subdomain,
+            user_email,
+            description,
+            tenant_template
+          ),
+          newurl
+        );
         // add tenant to global state
         add_tenant(subdomain);
         await create_tenant({
@@ -319,13 +323,13 @@ router.post(
                 " " +
                 hasTemplate
                 ? req.__(
-                  'Use this link: <a href="%s">%s</a> to revisit your application at any time.',
-                  newurl,
-                  newurl
-                )
+                    'Use this link: <a href="%s">%s</a> to revisit your application at any time.',
+                    newurl,
+                    newurl
+                  )
                 : req.__(
-                  "Use this link to revisit your application at any time."
-                )
+                    "Use this link to revisit your application at any time."
+                  )
             )
           )
         );
@@ -508,14 +512,12 @@ const get_tenant_info = async (subdomain) => {
   // get tenant row
   const ten = await Tenant.findOne({ subdomain: saneDomain });
   if (ten) {
-      info.description = ten.description;
-      info.created = ten.created;
+    info.description = ten.description;
+    info.created = ten.created;
   }
-
 
   // get data from tenant schema
   return await db.runWithTenant(saneDomain, async () => {
-
     // TBD fix the first user issue because not always firt user by id is creator of tenant
     const firstUser = await User.find({}, { orderBy: "id", limit: 1 });
     if (firstUser && firstUser.length > 0) {
@@ -673,7 +675,10 @@ router.get(
                       type: "String",
                     },
                   ],
-                  values: { base_url: info.base_url, description: info.description },
+                  values: {
+                    base_url: info.base_url,
+                    description: info.description,
+                  },
                 }),
                 req.csrfToken()
               ),
@@ -731,9 +736,7 @@ router.post(
 
     // save description
     const { description } = req.body;
-    await Tenant.update( saneDomain, {description: description});
-
-
+    await Tenant.update(saneDomain, { description: description });
 
     await db.runWithTenant(saneDomain, async () => {
       await getState().setConfig("base_url", base_url);
