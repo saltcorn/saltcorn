@@ -119,6 +119,18 @@ describe("Field", () => {
       ...fldRow,
       attributes: { ...f.attributes, on_delete_cascade: false },
     });
+    await f.update({
+      ...fldRow,
+      attributes: { ...f.attributes, on_delete: "Set null" },
+    });
+    await f.update({
+      ...fldRow,
+      attributes: { ...f.attributes, on_delete: "Cascade" },
+    });
+    await f.update({
+      ...fldRow,
+      attributes: { ...f.attributes, on_delete: "Fail" },
+    });
   });
 
   it("generates fkeys", async () => {
@@ -293,6 +305,9 @@ describe("Field update", () => {
     if (!db.isSQLite) {
       await fc.update({ attributes: { on_delete_cascade: true } });
       await fc.update({ attributes: { on_delete_cascade: false } });
+      await fc.update({ attributes: { on_delete: "Set null" } });
+      await fc.update({ attributes: { on_delete: "Cascade" } });
+      await fc.update({ attributes: { on_delete: "Fail" } });
     }
   });
   it("changes to required", async () => {
