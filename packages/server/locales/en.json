@@ -1037,5 +1037,7 @@
 	"Created": "Created",
 	"First user E-mail": "First user E-mail",
 	"If the parent row is deleted, do this to the child rows.": "If the parent row is deleted, do this to the child rows.",
-	"On delete": "On delete"
+	"On delete": "On delete",
+	"Database name": "Database name",
+	"Database schema": "Database schema"
 }

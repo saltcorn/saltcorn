@@ -141,6 +141,7 @@ describe("Field Endpoints", () => {
       .send("stepName=Summary")
       .send("contextEnc=" + ctx)
       .send("summary_field=pages")
+      .send("on_delete=Fail")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/2"));
   });
