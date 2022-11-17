@@ -434,7 +434,18 @@ class Field implements AbstractField {
     }));
     return [{ label: "", value: "" }, ...dbOpts];
   }
-
+  /**
+   * @type {string}
+   */
+  get on_delete_sql(): string {
+    return this.attributes?.on_delete === "Cascade"
+      ? " on delete cascade"
+      : this.attributes?.on_delete === "Set null"
+      ? " on delete set null"
+      : this.attributes?.on_delete_cascade //legacy
+      ? " on delete cascade"
+      : "";
+  }
   /**
    * @type {string}
    */
@@ -449,6 +460,8 @@ class Field implements AbstractField {
       }
       const schema = db.getTenantSchemaPrefix();
       const { getState } = require("../db/state");
+      const on_delete = this.on_delete_sql;
+
       return `${
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
@@ -457,7 +470,7 @@ class Field implements AbstractField {
         this.name
       )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
-      }")${this.attributes?.on_delete_cascade ? " on delete cascade" : ""}`;
+      }")${on_delete}`;
     } else if (this.type === "File") {
       return "text";
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
@@ -673,10 +686,7 @@ class Field implements AbstractField {
       new_field.is_fkey &&
       this.reftable_name &&
       new_field.reftable_name &&
-      ((new_field.attributes?.on_delete_cascade &&
-        !this.attributes?.on_delete_cascade) ||
-        (!new_field.attributes?.on_delete_cascade &&
-          this.attributes?.on_delete_cascade) ||
+      (new_field.on_delete_sql !== this.on_delete_sql ||
         new_field.reftable_name !== this.reftable_name)
     ) {
       //add or remove on delete cascade - https://stackoverflow.com/a/10356720
@@ -692,9 +702,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(
           new_field!.reftable_name
-        )}"(id)${
-          new_field.attributes?.on_delete_cascade ? " on delete cascade" : ""
-        }`
+        )}"(id)${new_field.on_delete_sql}`
       );
     } else
       await db.query(

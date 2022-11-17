@@ -25,7 +25,10 @@ const db = require("@saltcorn/data/db");
 
 const { isAdmin, error_catcher } = require("./utils.js");
 const expressionBlurb = require("../markup/expression_blurb");
-const { readState, add_free_variables_to_joinfields } = require("@saltcorn/data/plugin-helper");
+const {
+  readState,
+  add_free_variables_to_joinfields,
+} = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { applyAsync } = require("@saltcorn/data/utils");
@@ -185,6 +188,7 @@ const fieldFlow = (req) =>
       attributes.summary_field = context.summary_field;
       attributes.include_fts = context.include_fts;
       attributes.on_delete_cascade = context.on_delete_cascade;
+      attributes.on_delete = context.on_delete;
       const {
         table_id,
         name,
@@ -350,12 +354,13 @@ const fieldFlow = (req) =>
                 // todo sublabel
                 input_type: "custom_html",
                 attributes: {
-                  html: `<button type="button" id="test_formula_btn" onclick="test_formula('${table.name
-                    }', ${JSON.stringify(
-                      context.stored
-                    )})" class="btn btn-outline-secondary">${req.__(
-                      "Test"
-                    )}</button>
+                  html: `<button type="button" id="test_formula_btn" onclick="test_formula('${
+                    table.name
+                  }', ${JSON.stringify(
+                    context.stored
+                  )})" class="btn btn-outline-secondary">${req.__(
+                    "Test"
+                  )}</button>
                   <div id="test_formula_output"></div>`,
                 },
               }),
@@ -400,12 +405,31 @@ const fieldFlow = (req) =>
                 type: "Bool",
                 showIf: { summary_field: textfields },
               }),
-              new Field({
+              /*new Field({
                 name: "on_delete_cascade",
                 label: req.__("On delete cascade"),
                 type: "Bool",
                 sublabel: req.__(
                   "If the parent row is deleted, automatically delete the child rows."
+                ),
+              }),*/
+              new Field({
+                name: "on_delete",
+                label: req.__("On delete"),
+                input_type: "select",
+                options: ["Fail", "Cascade", "Set null"],
+                required: true,
+                attributes: {
+                  explainers: {
+                    Fail: "Prevent any deletion of parent rows",
+                    Cascade:
+                      "If the parent row is deleted, automatically delete the child rows.",
+                    "Set null":
+                      "If the parent row is deleted, set key fields on child rows to null",
+                  },
+                },
+                sublabel: req.__(
+                  "If the parent row is deleted, do this to the child rows."
                 ),
               }),
             ],
@@ -622,14 +646,17 @@ router.post(
     const { formula, tablename, stored } = req.body;
     const table = await Table.findOne({ name: tablename });
     const fields = await table.getFields();
-    const freeVars = freeVariables(formula)
-    const joinFields = {}
-    if (stored)
-      add_free_variables_to_joinfields(freeVars, joinFields, fields)
-    const rows = await table.getJoinedRows({ joinFields, orderBy: "RANDOM()", limit: 1 });
+    const freeVars = freeVariables(formula);
+    const joinFields = {};
+    if (stored) add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    const rows = await table.getJoinedRows({
+      joinFields,
+      orderBy: "RANDOM()",
+      limit: 1,
+    });
     if (rows.length < 1) {
       res.send("No rows in table");
-      return
+      return;
     }
     let result;
     try {
@@ -641,7 +668,8 @@ router.post(
         result = f(rows[0]);
       }
       res.send(
-        `Result of running on row with id=${rows[0].id
+        `Result of running on row with id=${
+          rows[0].id
         } is: <pre>${JSON.stringify(result)}</pre>`
       );
     } catch (e) {
@@ -671,10 +699,9 @@ router.post(
     const fields = await table.getFields();
     let row = { ...req.body };
     if (!row || Object.keys(row).length === 0) {
-      const { id } = req.query
-      if (id) row = await table.getRow({ id })
-    } else
-      readState(row, fields);
+      const { id } = req.query;
+      if (id) row = await table.getRow({ id });
+    } else readState(row, fields);
 
     if (fieldName.includes(".")) {
       //join field
@@ -694,12 +721,18 @@ router.post(
         const refRow = await reftable.getRow(q);
         let fv;
         if (targetField.type === "Key") {
-          fv = getState().keyFieldviews[fieldview]
+          fv = getState().keyFieldviews[fieldview];
           if (!fv) {
-            const reftable2 = Table.findOne({ name: targetField.reftable_name })
-            const refRow2 = await reftable2.getRow({ [reftable2.pk_name]: refRow[kpath[1]] })
+            const reftable2 = Table.findOne({
+              name: targetField.reftable_name,
+            });
+            const refRow2 = await reftable2.getRow({
+              [reftable2.pk_name]: refRow[kpath[1]],
+            });
             if (refRow2) {
-              res.send(text(`${refRow2[targetField.attributes.summary_field]}`));
+              res.send(
+                text(`${refRow2[targetField.attributes.summary_field]}`)
+              );
             } else {
               res.send("");
             }
@@ -711,7 +744,6 @@ router.post(
             fv =
               targetField.type.fieldviews.show ||
               targetField.type.fieldviews.as_text;
-
         }
 
         const configuration = req.query;
@@ -756,7 +788,7 @@ router.post(
     let result;
     try {
       if (!field.calculated) {
-        result = row[field.name]
+        result = row[field.name];
       } else if (field.stored) {
         const f = get_async_expression_function(formula, fields);
         result = await f(row);
@@ -765,8 +797,7 @@ router.post(
         result = f(row);
       }
       const fv = field.type.fieldviews[fieldview];
-      if (!fv)
-        res.send(text(result));
+      if (!fv) res.send(text(result));
       else res.send(fv.run(result));
     } catch (e) {
       return res.status(400).send(`Error: ${e.message}`);
@@ -819,8 +850,8 @@ router.post(
       field.type === "Key"
         ? getState().keyFieldviews
         : field.type === "File"
-          ? getState().fileviews
-          : field.type.fieldviews;
+        ? getState().fileviews
+        : field.type.fieldviews;
     if (!field.type || !fieldviews) {
       res.send("");
       return;
