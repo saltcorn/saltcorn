@@ -268,8 +268,7 @@ const configTypes: ConfigTypes = {
     fieldview: "textarea",
     label: "Create tenant warning text",
     default: "",
-    blurb:
-        "Provide your own create warning text if need",
+    blurb: "Provide your own create warning text if need",
   },
   /** @type {object} */
   tenant_template: {
@@ -901,6 +900,7 @@ const check_email_mask = (email: string): boolean => {
 const set_multitenancy_cfg = (val: boolean): void => {
   const cfg = getConfigFile();
   cfg.multi_tenant = val;
+  console.log("writing config.multi_tenant to", val);
   writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
 };
 
