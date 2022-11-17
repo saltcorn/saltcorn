@@ -762,6 +762,14 @@ module.exports = {
           type: "String",
           fieldview: "textarea",
         },
+        {
+          name: "delete_rows",
+          label: "Delete removed rows",
+          sublabel:
+            "Delete rows that are in the destination table but not in the source table",
+          type: "Bool",
+          default: true,
+        },
       ];
     },
     /**
@@ -773,7 +781,7 @@ module.exports = {
      * @returns {Promise<object|boolean>}
      */
     run: async ({
-      configuration: { row_expr, table_src, table_dest, pk_field },
+      configuration: { row_expr, table_src, table_dest, pk_field, delete_rows },
       user,
       ...rest
     }) => {
@@ -793,21 +801,29 @@ module.exports = {
       // new rows
       for (const newPK of set_diff(src_pks, dest_pks)) {
         const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
-        const newRow = eval_expression(row_expr, srcRow);
+        const newRow = {
+          [pk_field]: newPK,
+          ...eval_expression(row_expr, srcRow),
+        };
         const res = await table_for_insert.tryInsertRow(
           newRow,
           user && user.id
         );
       }
       // delete rows
-      await table_for_insert.deleteRows({
-        [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
-      });
+      if (delete_rows)
+        await table_for_insert.deleteRows({
+          [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
+        });
 
       //update existing
       for (const existPK of set_intersect(src_pks, dest_pks)) {
         const srcRow = source_rows.find((r) => r[srcPKfield] === existPK);
-        const newRow = eval_expression(row_expr, srcRow);
+        const newRow = {
+          [pk_field]: existPK,
+          ...eval_expression(row_expr, srcRow),
+        };
+
         const existingRow = dest_rows.find((r) => r[pk_field] === existPK);
 
         const is_different_for_key = (k) => newRow[k] !== existingRow[k];
