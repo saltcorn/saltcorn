@@ -5,7 +5,14 @@ import File from "@saltcorn/data/models/file";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
 import mocks from "@saltcorn/data/tests/mocks";
-
+// todo tests for files
+// todo tests for tenants
+/**
+ * Test table
+ * @param table
+ * @param passes
+ * @param errors
+ */
 const test_table = async (table: Table, passes: string[], errors: string[]) => {
   let hasErrors = false;
   const mkError = (s: string) => {
@@ -51,7 +58,14 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
     errors.push(`Table ${table.name} config: ${e.message}`);
   }
 };
-
+/**
+ * Test view render
+ * @param view
+ * @param passes
+ * @param errors
+ * @param req
+ * @param res
+ */
 const test_view_render = async (
   view: View,
   passes: string[],
@@ -83,7 +97,15 @@ const test_view_render = async (
     errors.push(`View ${view.name} render: ${e.message}`);
   }
 };
-
+/**
+ * Test view configuration
+ * @param view
+ * @param passes
+ * @param errors
+ * @param req
+ * @param res
+ * @param warnings
+ */
 const test_view_config = async (
   view: View,
   passes: string[],
@@ -133,6 +155,12 @@ const test_view_config = async (
     errors.push(`View ${view.name} config: ${e.message}`);
   }
 };
+/**
+ * Test trigger
+ * @param trigger
+ * @param passes
+ * @param errors
+ */
 const test_trigger = async (
   trigger: Trigger,
   passes: string[],
@@ -161,7 +189,10 @@ const test_trigger = async (
     errors.push(`Trigger ${trigger.name} config: ${e.message}`);
   }
 };
-
+/**
+ * Run Configuration check
+ * @param req
+ */
 export const runConfigurationCheck = async (req: any) => {
   const errors: string[] = [];
   const warnings: string[] = [];

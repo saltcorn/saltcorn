@@ -5,6 +5,9 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  library_pack,
+  trigger_pack,
+  role_pack,
   fetch_available_packs,
   fetch_pack_by_name,
   install_pack,
@@ -16,6 +19,7 @@ const { getState } = require("@saltcorn/data/db/state");
 import Table from "@saltcorn/data/models/table";
 import { Pack } from "@saltcorn/types/base_types";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+//import Trigger from "@saltcorn/data/models/trigger";
 
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
 
@@ -34,6 +38,7 @@ jest.setTimeout(30000);
 
 describe("pack create", () => {
 
+  // table packs
   it("creates table pack", async () => {
     const tpack = await table_pack("patients");
     expect(tpack.fields.length > 1).toBe(true);
@@ -62,8 +67,7 @@ describe("pack create", () => {
     }
   });
 
-
-
+  // view packs
   it("creates view pack", async () => {
     const vpack = await view_pack("authorlist");
     expect(vpack).toEqual({
@@ -97,7 +101,7 @@ describe("pack create", () => {
     }
   });
 
-
+  // plugin packs
   it("creates plugin pack", async () => {
     const ppack = await plugin_pack("base");
     expect(ppack).toStrictEqual({
@@ -109,7 +113,7 @@ describe("pack create", () => {
     });
   });
 
-  it("creates pluging pack for non existing plugin", async () => {
+  it("creates plugin pack for non existing plugin", async () => {
     try {
       await plugin_pack("nonexist_plugin");
     } catch (error:any) {
@@ -117,6 +121,7 @@ describe("pack create", () => {
     }
   });
 
+  // page packs
   it("creates page pack", async () => {
     const ppack = await page_pack("a_page");
     expect(ppack).toEqual({
@@ -193,8 +198,26 @@ describe("pack create", () => {
       expect (error.message).toMatch("Cannot read properties of undefined (reading 'is_root_page_for_roles')");
     }
   });
+
+  // todo library packs - needs to add library to fixture
+  // trigger packs
+  it("creates trigger pack", async () => {
+
+    const trpack = await trigger_pack("NeverActionTrigger");
+    //expect(trpack.name ).toBe(true);
+    expect(trpack.when_trigger).toBe("Never");
+  });
+
+  // role packs
+  it("creates roles pack", async () => {
+    const rpack = await role_pack("admin");
+    expect(rpack.id === 1 ).toBe(true);
+    expect(rpack.role).toBe("admin");
+  });
+
 });
 
+// pack store
 describe("pack store", () => {
   let packs = new Array<{ name: string }>();
   it("reset the pack store cache", async () => {
@@ -401,6 +424,7 @@ describe("pack install", () => {
     });
   });
   it("uninstalls pack", async () => {
+    // todo make pack with trigger to cover all logic!
     await uninstall_pack(todoPack, "Todo list");
     const tbl = await Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(false);

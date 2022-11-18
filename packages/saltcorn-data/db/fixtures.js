@@ -12,6 +12,7 @@ const File = require("../models/file");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
+const Trigger = require("../models/trigger");
 const fs = require("fs").promises;
 
 module.exports =
@@ -334,4 +335,17 @@ module.exports =
       },
       fixed_states: {},
     });
+    // triggers
+    await Trigger.create({
+      name: "NeverActionTrigger",
+      action: "webhook",
+      description: "This is test trigger1",
+      //table_id: null
+      when_trigger:"Never",
+      configuration: {
+        // from https://requestbin.com/
+        // to inspect https://pipedream.com/sources/dc_jku44wk
+        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+      },
+    })
   };
