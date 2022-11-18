@@ -10,15 +10,14 @@ const Trigger = require("./models/trigger");
 
 const { getState } = require("./db/state");
 const db = require("./db");
-const { link } = require("@saltcorn/markup");
-const { button, a, label, text, i } = require("@saltcorn/markup/tags");
+const { button, a, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToWhere, freeVariables } = require("./models/expression");
 const { traverse } = require("./models/layout");
 const { isNode } = require("./utils");
 /**
  *
- * @param {string} url
+ * @param {string} url0
  * @param {string} label
  * @param {boolean} [popup]
  * @param {string} [link_style = ""]
@@ -28,6 +27,9 @@ const { isNode } = require("./utils");
  * @param {string} [link_bgcol]
  * @param {string} [link_bordercol]
  * @param {string} [link_textcol]
+ * @param extraClass
+ * @param extraState
+ * @param link_target_blank
  * @returns {button|a}
  */
 const link_view = (
@@ -115,7 +117,7 @@ const stateToQueryString = (state) => {
 /**
  * @function
  * @param {Field[]} fields
- * @param {boolean}
+ * @param mode
  * @returns {object}
  */
 const calcfldViewOptions = (fields, mode) => {
@@ -151,7 +153,7 @@ const calcfldViewOptions = (fields, mode) => {
         for (const jf of f.reftable.fields) {
           fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
           if (jf.is_fkey) {
-            const jtable = Table.findOne(jf.reftable_name);
+            const jtable = Table.findOne({ name : jf.reftable_name } );
             if (jtable && jtable.fields) {
               const jfieldOpts = calcfldViewOptions(
                 jtable.fields,
@@ -161,7 +163,7 @@ const calcfldViewOptions = (fields, mode) => {
                 fvs[`${f.name}.${jf.name}.${jf2.name}`] =
                   jfieldOpts.field_view_options[jf2.name];
                 if (jf2.is_fkey) {
-                  const jtable2 = Table.findOne(jf2.reftable_name);
+                  const jtable2 = Table.findOne( { name: jf2.reftable_name });
                   if (jtable2 && jtable2.fields) {
                     const jfield2Opts = calcfldViewOptions(
                       jtable2.fields,
@@ -214,7 +216,8 @@ const calcfldViewOptions = (fields, mode) => {
 /**
  * @function
  * @param {Field[]} fields
- * @param {boolean}
+ * @param isEdit
+ * @param nrecurse
  * @returns {Promise<object>}
  */
 const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
@@ -255,7 +258,6 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
  * @function
  * @param {Table|object} table
  * @param {string} viewname
- * @param {boolean}
  * @returns {Promise<{link_view_opts: object[]}>}
  */
 const get_link_view_opts = async (table, viewname) => {
@@ -871,6 +873,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
  * @function
  * @param {Table|object} table
  * @param {string} viewname
+ * @param nrecurse
  * @returns {Promise<object[]>}
  */
 const get_child_views = async (table, viewname, nrecurse = 2) => {
@@ -963,6 +966,7 @@ const get_onetoone_views = async (table, viewname) => {
  * @function
  * @param {object[]} columns
  * @param {Field[]} fields
+ * @param layout
  * @throws {InvalidConfiguration}
  * @returns {object}
  */
@@ -1145,8 +1149,6 @@ const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
 /**
  * @function
  * @param {object}
- * @param {object}
- * @param {string} - missing in contract
  * @returns {object}
  */
 const stateFieldsToQuery = ({ state, stateHash, fields, prefix = "" }) => {
@@ -1218,24 +1220,24 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       return;
     }
 
-    const field = fields.find((fld) => fld.name == k);
+    const field = fields.find((fld) => fld.name === k);
     if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
-      const dfield = fields.find((fld) => fld.name == datefield);
+      const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, { gt: new Date(v), equal: true });
     } else if (k.startsWith("_todate_")) {
       const datefield = db.sqlsanitize(k.replace("_todate_", ""));
-      const dfield = fields.find((fld) => fld.name == datefield);
+      const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, { lt: new Date(v), equal: true });
     } else if (k.startsWith("_gte_")) {
       const datefield = db.sqlsanitize(k.replace("_gte_", ""));
-      const dfield = fields.find((fld) => fld.name == datefield);
+      const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield) addOrCreateList(qstate, datefield, { gt: v, equal: true });
     } else if (k.startsWith("_lte_")) {
       const datefield = db.sqlsanitize(k.replace("_lte_", ""));
-      const dfield = fields.find((fld) => fld.name == datefield);
+      const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
@@ -1355,8 +1357,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
 /**
  * initial_config_all_fields Contract
  * @function
- * @param {boolean}
  * @returns {function}
+ * @param isEdit
  */
 const initial_config_all_fields =
   (isEdit) =>
@@ -1479,6 +1481,7 @@ const strictParseInt = (x) => {
  *
  * @param {object} state
  * @param {object[]} fields
+ * @param req
  * @returns {object}
  */
 const readState = (state, fields, req) => {

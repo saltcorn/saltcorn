@@ -238,7 +238,6 @@ class User {
   /**
    * Find users list
    * @param where - where object
-   * @param selectopts - select options
    * @returns {Promise<User[]>}
    */
   static async findForSession(where: Where): Promise<User | false> {
@@ -288,8 +287,8 @@ class User {
         fuv.startsWith(`${table!.name}_by_${cfield.name}`)
       );
       if (fv) {
-        const cRows = await table.getRows({ [cfield.name]: newUser.id });
-        newUser[`${table!.name}_by_${cfield.name}`] = cRows;
+        newUser[`${table!.name}_by_${cfield.name}`] =
+            await table.getRows({ [cfield.name]: newUser.id });
       }
     }
     return newUser;
@@ -518,7 +517,7 @@ class User {
    * Get available roles
    * @returns {Promise<*>}
    */
-  static async get_roles(): Promise<string[]> {
+  static async get_roles(): Promise<Object[] | undefined> {
     return await db.select("_sc_roles", {}, { orderBy: "id" });
   }
 

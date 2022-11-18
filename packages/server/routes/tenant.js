@@ -44,7 +44,6 @@ const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
   send_infoarch_page,
-  //send_admin_page,
   config_fields_form,
   save_config_from_form,
 } = require("../markup/admin.js");

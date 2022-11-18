@@ -4,45 +4,27 @@
  * @subcategory auth
  */
 const Router = require("express-promise-router");
-const { contract, is } = require("contractis");
 
-const db = require("@saltcorn/data/db");
+//const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Role = require("@saltcorn/data/models/role");
-const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
 const {
   mkTable,
   renderForm,
   link,
-  post_btn,
-  settingsDropdown,
-  post_dropdown_item,
   post_delete_btn,
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
-const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
-  a,
-  div,
-  button,
   text,
-  span,
-  code,
   form,
   option,
   select,
-  br,
-  h4,
-  h5,
-  p,
 } = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
 const {
   send_users_page,
-  config_fields_form,
-  save_config_from_form,
 } = require("../markup/admin");
 
 /**
@@ -77,7 +59,7 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
             value: layout,
             ...((layout_by_role[role.id]
               ? layout_by_role[role.id] === layout
-              : ix == layouts.length - 1) && { selected: true }),
+              : ix === layouts.length - 1) && { selected: true }),
           },
           text(layout)
         )
@@ -86,9 +68,9 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
   );
 
 /**
+ *
  * @param {Role} role
- * @param {Layout[]} layouts
- * @param {*} layout_by_role
+ * @param twofa_policy_by_role
  * @param {object} req
  * @returns {Form}
  */
@@ -139,7 +121,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const roles = await User.get_roles();
-    var roleMap = {};
+    let roleMap = {};
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });

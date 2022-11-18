@@ -11,9 +11,8 @@
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
-const { mkTable, h, link, post_btn } = require("@saltcorn/markup");
+const { mkTable, link, post_btn } = require("@saltcorn/markup");
 const {
-  a,
   script,
   domReady,
   div,
@@ -27,7 +26,6 @@ const {
 const Table = require("@saltcorn/data/models/table");
 const { isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
-const { readState } = require("@saltcorn/data/plugin-helper");
 
 /**
  * @type {object}
@@ -49,11 +47,11 @@ module.exports = router;
  * @function
  */
 router.get(
-  "/_versions/:name/:id",
+  "/_versions/:tableName/:id",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { name, id } = req.params;
-    const table = await Table.findOne({ name });
+    const { tableName, id } = req.params;
+    const table = await Table.findOne({ name : tableName });
 
     const fields = await table.getFields();
     var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
@@ -97,11 +95,11 @@ router.get(
  * @function
  */
 router.post(
-  "/_restore/:name/:id/:_version",
+  "/_restore/:tableName/:id/:_version",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { name, id, _version } = req.params;
-    const table = await Table.findOne({ name });
+    const { tableName, id, _version } = req.params;
+    const table = await Table.findOne({ name : tableName });
 
     const fields = await table.getFields();
     const row = await db.selectOne(`${db.sqlsanitize(table.name)}__history`, {
@@ -246,6 +244,7 @@ router.get(
     }
 
     //console.log(fields);
+    // todo remove keyfields - unused
     const keyfields = fields
       .filter((f) => f.type === "Key" || f.type === "File")
       .map((f) => ({ name: f.name, type: f.reftype }));

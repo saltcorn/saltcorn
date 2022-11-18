@@ -33,11 +33,37 @@ afterAll(async () => {
 jest.setTimeout(30000);
 
 describe("pack create", () => {
+
   it("creates table pack", async () => {
     const tpack = await table_pack("patients");
     expect(tpack.fields.length > 1).toBe(true);
     expect(tpack.name).toBe("patients");
   });
+
+  it("creates table pack for patients 2", async () => {
+    const table = await Table.findOne( { name : "patients"})
+    expect( table !== null).toBe( true );
+    const tpack = await table_pack ( table !== null ? table : "patients");
+    expect(tpack.fields.length > 1).toBe(true);
+    expect(tpack.name).toBe("patients");
+  });
+
+  it("creates table pack for users", async () => {
+    const tpack = await table_pack("users");
+    expect(tpack.fields.length > 1).toBe(true);
+    expect(tpack.name).toBe("users");
+  });
+
+  it("creates table pack for non existing table", async () => {
+    try {
+      await table_pack("nonexist_table");
+    } catch (error:any) {
+      expect (error.message).toMatch("Unable to find table 'nonexist_table'");
+    }
+  });
+
+
+
   it("creates view pack", async () => {
     const vpack = await view_pack("authorlist");
     expect(vpack).toEqual({
@@ -62,6 +88,16 @@ describe("pack create", () => {
       default_render_page: null,
     });
   });
+
+  it("creates view pack for non existing view", async () => {
+    try {
+      await view_pack("nonexist_view");
+    } catch (error:any) {
+      expect (error.message).toMatch("Unable to find view 'nonexist_view'");
+    }
+  });
+
+
   it("creates plugin pack", async () => {
     const ppack = await plugin_pack("base");
     expect(ppack).toStrictEqual({
@@ -72,6 +108,15 @@ describe("pack create", () => {
       source: "npm",
     });
   });
+
+  it("creates pluging pack for non existing plugin", async () => {
+    try {
+      await plugin_pack("nonexist_plugin");
+    } catch (error:any) {
+      expect (error.message).toMatch("Unable to find plugin 'nonexist_plugin'");
+    }
+  });
+
   it("creates page pack", async () => {
     const ppack = await page_pack("a_page");
     expect(ppack).toEqual({
@@ -140,13 +185,21 @@ describe("pack create", () => {
       root_page_for_roles: [],
     });
   });
+
+  it("creates page pack for non existing page", async () => {
+    try {
+      await page_pack("nonexist_page");
+    } catch (error:any) {
+      expect (error.message).toMatch("Cannot read properties of undefined (reading 'is_root_page_for_roles')");
+    }
+  });
 });
 
 describe("pack store", () => {
   let packs = new Array<{ name: string }>();
   it("reset the pack store cache", async () => {
-    getState().deleteConfig("available_packs");
-    getState().deleteConfig("available_packs_fetched_at");
+    await getState().deleteConfig("available_packs");
+    await getState().deleteConfig("available_packs_fetched_at");
   });
   it("fetches the pack store", async () => {
     packs = await fetch_available_packs();
@@ -156,6 +209,8 @@ describe("pack store", () => {
   });
   it("fetches packs from the pack store", async () => {
     const pack = await fetch_pack_by_name(packs[0].name);
+    // todo expect
+    // todo more cases
   });
   it("tries to fetch dummy pack from the pack store", async () => {
     const nopack = await fetch_pack_by_name("nosuchpack");
@@ -169,8 +224,8 @@ describe("pack store", () => {
     expect(packs1).toEqual([]);
   });
   it("reset the pack store cache", async () => {
-    getState().deleteConfig("available_packs");
-    getState().deleteConfig("available_packs_fetched_at");
+    await getState().deleteConfig("available_packs");
+    await getState().deleteConfig("available_packs_fetched_at");
   });
 });
 

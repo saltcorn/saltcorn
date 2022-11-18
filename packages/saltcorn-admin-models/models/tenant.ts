@@ -17,11 +17,8 @@ import Plugin from "@saltcorn/data/models/plugin";
 import File from "@saltcorn/data/models/file";
 import type { Row } from "@saltcorn/db-common/internal";
 import backup from "./backup";
-//import Trigger from "@saltcorn/data/dist/models/trigger";
-//import Table from "@saltcorn/data/dist/models/table";
-//import {Pack} from "@saltcorn/types/dist/base_types";
 const { create_backup, restore } = backup;
-const { tenants, process_send } = require("@saltcorn/data/db/state");
+const { process_send } = require("@saltcorn/data/db/state");
 
 /**
  * List all Tenants
@@ -50,6 +47,7 @@ const getAllTenantRows = async (): Promise<Row[]> => {
  * @param {string} subdomain tenant name (subdomain)
  * @param {string} [email] email of creator
  * @param {string} [description] description of tenant
+ * @param template
  * @returns {Promise<void>}
  */
 const insertTenant = async (
@@ -63,9 +61,9 @@ const insertTenant = async (
   // add email
   const saneEmail = typeof email !== "undefined" ? email : "";
   // add description
-  const saneDescription = description !== "undefined" ? description : "";
+  const saneDescription = typeof description !== "undefined" ? description : "";
   // add template
-  const saneTemplate = template !== "undefined" ? template : null;
+  const saneTemplate = typeof template !== "undefined" ? template : null;
   // add info about tenant into main site
   await db.insert(
     "_sc_tenants",
@@ -103,7 +101,7 @@ const switchToTenant = async (
   });
 };
 /**
- * Copy template data into tenant (targer)
+ * Copy template data into tenant (target)
  * - create backup from template tenant
  * - restore backup to target tenant
  * - clean up user_id in files
@@ -117,12 +115,10 @@ const switchToTenant = async (
 const copy_tenant_template = async ({
   tenant_template,
   target,
-  ///state, //unused
   loadAndSaveNewPlugin,
 }: {
   tenant_template: string;
   target: string;
-  /// state: any; // unsed
   loadAndSaveNewPlugin: (plugin: Plugin) => void;
 }) => {
   // TODO use a hygienic name for backup file
@@ -184,12 +180,14 @@ const eachTenant = async (f: () => Promise<any>): Promise<void> => {
 };
 
 /**
- * Create tenant
- * - use template if it set up
+ * Create tenant? Not sure that is correct name
+ * - load plugins
+ * - use tenant template (copy structures from...)
  * @param {string} t
  * @param {object} plugin_loader
  * @param {string} newurl
  * @param {boolean} noSignalOrDB
+ * @param {string} tenant_template
  * @returns {Promise<void>}
  */
 const create_tenant = async ({
@@ -202,17 +200,18 @@ const create_tenant = async ({
   t: string;
   plugin_loader: Function;
   noSignalOrDB?: boolean;
-  loadAndSaveNewPlugin?: (plugin: Plugin) => void;
+  loadAndSaveNewPlugin: (plugin: Plugin) => void;
   tenant_template?: string;
 }) => {
   await db.runWithTenant(t, plugin_loader);
   if (!noSignalOrDB) {
-    if (tenant_template && loadAndSaveNewPlugin) {
+    // todo - to check that is correct change
+    //if (tenant_template && loadAndSaveNewPlugin) {
+    if (tenant_template) {
       //create backup
       await copy_tenant_template({
         tenant_template,
         target: t,
-        //state: tenants[t], // unused
         loadAndSaveNewPlugin,
       });
     }
@@ -223,6 +222,9 @@ const create_tenant = async ({
   }
 };
 
+/**
+ * Class Tenant
+ */
 class Tenant {
   // id?: number;
   subdomain: string;
@@ -249,6 +251,11 @@ class Tenant {
     //this.hash = o.hash;
   }
 
+  /**
+   * Find Tenants
+   * @param where
+   * @param selectopts
+   */
   static async find(
     where: Where,
     selectopts?: SelectOptions
@@ -257,6 +264,10 @@ class Tenant {
     return us.map((u: any) => new Tenant(u));
   }
 
+  /**
+   * Find one tenant
+   * @param where
+   */
   static async findOne(where: Where): Promise<Tenant | null> {
     const us = await db.select("_sc_tenants", where, { limit: 1 });
     if (us.length === 0) return null;
@@ -265,10 +276,10 @@ class Tenant {
 
   /**
    * Update tenant
+   * @param subdomain
    * @param row
    * @returns {Promise<void>}
    */
-  //static async update(subdomain: string, row: Row): Promise<void> {
   static async update(subdomain: string, row: Row): Promise<void> {
     //await db.update("_sc_tenants", row, subdomain);
     await db.query(
