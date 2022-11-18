@@ -43,6 +43,20 @@ describe("viewedit edit endpoint", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("author"));
   });
+  it("direct edit to config", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const v = await View.findOne({ name: "authorlist" });
+    await request(app)
+      .post("/viewedit/save")
+      .send("viewtemplate=List")
+      .send("table_name=books")
+      .send("id=" + v.id)
+      .send("name=authorlist")
+      .send("min_role=10")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit/config/authorlist"));
+  });
   it("show list editor", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -478,6 +492,6 @@ describe("Library", () => {
       .get("/library/list")
       .set("Cookie", loginCookie)
       .expect(toInclude("Library"))
-      .expect(toNotInclude("ShinyCard"))
+      .expect(toNotInclude("ShinyCard"));
   });
 });
