@@ -7,19 +7,8 @@
 
 const Router = require("express-promise-router");
 
-const {
-  renderForm,
-  renderBuilder,
-  alert,
-} = require("@saltcorn/markup");
-const {
-  p,
-  a,
-  div,
-  script,
-  text,
-  domReady,
-} = require("@saltcorn/markup/tags");
+const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
+const { p, a, div, script, text, domReady } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
 const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
@@ -78,15 +67,15 @@ router.get(
     const accessWarning =
       hasAccessWarning.length > 0
         ? alert(
-          "danger",
-          req.__(
+            "danger",
+            req.__(
               `<p>You have views with a role to access lower than the table role to read, 
       with no table ownership. In the next version of Saltcorn, this may cause a
       denial of access. Users will need to have table read access to any data displayed.</p> 
       Views potentially affected: %s`,
               hasAccessWarning.map((v) => v.name).join(", ")
+            )
           )
-        )
         : "";
     res.sendWrap(req.__(`Views`), {
       above: [
@@ -103,14 +92,14 @@ router.get(
             viewMarkup,
             tables.length > 0
               ? a(
-                { href: `/viewedit/new`, class: "btn btn-primary" },
-                req.__("Create view")
-              )
-              : p(
-                req.__(
-                  "You must create at least one table before you can create views."
+                  { href: `/viewedit/new`, class: "btn btn-primary" },
+                  req.__("Create view")
                 )
-              ),
+              : p(
+                  req.__(
+                    "You must create at least one table before you can create views."
+                  )
+                ),
           ],
         },
       ],
@@ -222,15 +211,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       ...(isEdit
         ? [
-          new Field({
-            name: "viewtemplate",
-            input_type: "hidden",
-          }),
-          new Field({
-            name: "table_name",
-            input_type: "hidden",
-          }),
-        ]
+            new Field({
+              name: "viewtemplate",
+              input_type: "hidden",
+            }),
+            new Field({
+              name: "table_name",
+              input_type: "hidden",
+            }),
+          ]
         : []),
     ],
     values,
@@ -377,8 +366,8 @@ router.post(
         sendForm(form);
       } else {
         const existing_view = await View.findOne({ name: result.success.name });
-        if (typeof existing_view !== "undefined")
-          if (req.body.id !== existing_view.id) {
+        if (existing_view)
+          if (+req.body.id !== existing_view.id) {
             // may be need !== but doesnt work
             form.errors.name = req.__("A view with this name already exists");
             form.hasErrors = true;
@@ -447,12 +436,18 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         title: wfres.title,
         contents,
       },
-      ...previewURL ? [{
-        type: "card",
-        title: req.__("Preview"),
-        contents: div({ id: "viewcfg-preview", "data-preview-url": previewURL },
-          script(domReady(`updateViewPreview()`))),
-      }] : []
+      ...(previewURL
+        ? [
+            {
+              type: "card",
+              title: req.__("Preview"),
+              contents: div(
+                { id: "viewcfg-preview", "data-preview-url": previewURL },
+                script(domReady(`updateViewPreview()`))
+              ),
+            },
+          ]
+        : []),
     ],
   });
   if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
@@ -475,7 +470,11 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
           },
         ],
       },
-      wrap(renderForm(wfres.renderForm, req.csrfToken()), false, wfres.previewURL)
+      wrap(
+        renderForm(wfres.renderForm, req.csrfToken()),
+        false,
+        wfres.previewURL
+      )
     );
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
