@@ -11,9 +11,6 @@ const {
   text,
   label,
   input,
-  div,
-  i,
-  h5,
 } = require("@saltcorn/markup/tags");
 const { csrfField } = require("../routes/utils");
 
@@ -47,27 +44,40 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
   );
 
 /**
- * @param {object} req 
+ * File upload form
+ * @param {object} req
+ * @param folder
+ * @param accept_attr
  * @returns {Form}
  */
-const fileUploadForm = (req, folder) =>
-  form(
-    {
-      action: "/files/upload",
-      method: "post",
-      encType: "multipart/form-data",
-    },
-    csrfField(req),
-    label(req.__("Upload file ")),
-    input({
-      name: "file",
-      class: "form-control ms-1 w-unset d-inline",
-      type: "file",
-      onchange: "form.submit()",
-      multiple: true,
-    }),
-    folder && input({ type: "hidden", name: "folder", value: folder })
-  );
+const fileUploadForm = (req, folder, accept_attr) => {
+    return form(
+        {
+            action: "/files/upload",
+            method: "post",
+            encType: "multipart/form-data",
+        },
+        csrfField(req),
+        label(req.__("Upload file(s)")),
+        typeof accept_attr !== "undefined"?
+            input({
+                name: "file",
+                class: "form-control ms-1 w-unset d-inline",
+                type: "file",
+                onchange: "form.submit()",
+                multiple: true,
+                accept : accept_attr,
+            }) :
+            input({
+                name: "file",
+                class: "form-control ms-1 w-unset d-inline",
+                type: "file",
+                onchange: "form.submit()",
+                multiple: true,
+            }),
+        folder && input({type: "hidden", name: "folder", value: folder})
+    );
+};
 
 /**
  * @param {string} wizardTitle 

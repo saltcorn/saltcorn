@@ -19,6 +19,7 @@ const { getState } = require("@saltcorn/data/db/state");
 import Table from "@saltcorn/data/models/table";
 import { Pack } from "@saltcorn/types/base_types";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import Trigger from "@saltcorn/data/models/trigger";
 //import Trigger from "@saltcorn/data/models/trigger";
 
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
@@ -202,6 +203,20 @@ describe("pack create", () => {
   // todo library packs - needs to add library to fixture
   // trigger packs
   it("creates trigger pack", async () => {
+
+    // triggers
+    await Trigger.create({
+      name: "NeverActionTrigger",
+      action: "webhook",
+      description: "This is test trigger1",
+      //table_id: null
+      when_trigger:"Never",
+      configuration: {
+        // from https://requestbin.com/
+        // to inspect https://pipedream.com/sources/dc_jku44wk
+        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+      },
+    })
 
     const trpack = await trigger_pack("NeverActionTrigger");
     //expect(trpack.name ).toBe(true);

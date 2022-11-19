@@ -593,6 +593,13 @@ const configTypes: ConfigTypes = {
       "Issued by Apple for enrolled members of the 'Apple Developer Program'." +
       "The team id must be set to build mobile iOS apps that can run on a device.",
   },
+  /** @type {object} */
+  files_accept_filter: {
+    type: "String",
+    label: "Files accept filter ",
+    default: null,
+    blurb: "Specifies a filter for what file types the user can pick from the file input dialog box. Example is `text/csv,audio/*,video/*,image/*`",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
