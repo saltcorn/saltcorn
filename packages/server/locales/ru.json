@@ -919,5 +919,20 @@
 	"File not found": "Файл не найден",
 	"Permissions settings": "Настройки разрешений",
 	"Permissions": "Разрешения",
-	"Permissions settings updated": "Настройки разрешений обновлены"
+	"Permissions settings updated": "Настройки разрешений обновлены",
+	"Upload file(s)": "Upload file(s)",
+	"Split paste": "Split paste",
+	"Separate paste content into separate inputs": "Separate paste content into separate inputs",
+	"Preview": "Preview",
+	"Create new row": "Create new row",
+	"Descending?": "Descending?",
+	"Only include rows where this formula is true. ": "Only include rows where this formula is true. ",
+	"Use %s to access current user ID": "Use %s to access current user ID",
+	"Formula value": "Formula value",
+	"Units": "Units",
+	"%s view - %s on %s": "%s view - %s on %s",
+	"Password Repeat": "Password Repeat",
+	"Remember me": "Remember me",
+	"Files accept filter ": "Files accept filter ",
+	"Specifies a filter for what file types the user can pick from the file input dialog box. Example is `text/csv,audio/*,video/*,image/*`": "Specifies a filter for what file types the user can pick from the file input dialog box. Example is `text/csv,audio/*,video/*,image/*`"
 }
