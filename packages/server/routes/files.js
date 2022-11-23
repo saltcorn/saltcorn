@@ -74,7 +74,7 @@ router.get(
     const safeDir = File.normalise(dir || "/")
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
-    const accept_attr = await getState().getConfig("files_accept_filter");
+    // const accept_attr = await getState().getConfig("files_accept_filter");
     //console.log(rows);
     if (safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir)
@@ -115,7 +115,7 @@ router.get(
         type: "card",
         contents: [
           div({ id: "saltcorn-file-manager" }),
-          fileUploadForm(req, safeDir, accept_attr),
+          fileUploadForm(req, safeDir),
         ],
       },
     });

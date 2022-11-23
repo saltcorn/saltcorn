@@ -405,7 +405,7 @@ class Table implements AbstractTable {
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
-          await trigger.run!(row);
+          trigger.run!(row);
         }
       }
       for (const deleteFile of deleteFileFields) {
@@ -910,18 +910,27 @@ class Table implements AbstractTable {
     filePath: string
   ): Promise<ResultMessage> {
     let rows;
+    const state = await require("../db/state").getState();
     try {
-      const s = await getLines(filePath, 500);
-      rows = await csvtojson().fromString(s); // todo agrument type unknown
+      let lines_limit = state.getConfig("csv_lines_limit");
+      if (!lines_limit || lines_limit < 0)
+        lines_limit = 500; // default
+
+      const s = await getLines(filePath, lines_limit);
+      rows = await csvtojson().fromString(s); // t
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
+    //
+    const isBools = state.getConfig("csv_bool_values","true false yes no on off y n t f").split(" ");
+
     for (const [k, vs] of Object.entries(rowsTr)) {
+
       const required = (<any[]>vs).every((v: any) => v !== "");
       const nonEmpties = (<any[]>vs).filter((v: any) => v !== "");
-      const isBools = "true false yes no on off y n t f".split(" ");
+
       let type;
       if (
         nonEmpties.every((v: any) =>
@@ -939,7 +948,7 @@ class Table implements AbstractTable {
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
-      //can fail here if: non integer i d, duplicate headers, invalid name
+      //can fail here if: non integer id, duplicate headers, invalid name
 
       const fld = new Field({
         name: Field.labelToName(k),
@@ -999,14 +1008,16 @@ class Table implements AbstractTable {
   ): Promise<ResultMessage> {
     let headers;
     const { readStateStrict } = require("../plugin-helper");
+    let headerStr;
     try {
-      const s = await getLines(filePath, 1);
+      const headerStr = await getLines(filePath, 1);
       [headers] = await csvtojson({
         output: "csv",
         noheader: true,
-      }).fromString(s); // todo agrument type unknown
+      }).fromString(headerStr); // todo agrument type unknown
     } catch (e) {
-      return { error: `Error processing CSV file` };
+      //return { error: `Error processing CSV file` };
+      return { error: `Error processing CSV file header: ${headerStr}` };
     }
     const fields = (await this.getFields()).filter((f) => !f.calculated);
     const okHeaders: any = {};
@@ -1035,6 +1046,7 @@ class Table implements AbstractTable {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
     // also id
+    // todo support uuid
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
 
     const renamesInv: any = {};
@@ -1054,11 +1066,13 @@ class Table implements AbstractTable {
     const stats = await stat(filePath);
     const fileSizeInMegabytes = stats.size / (1024 * 1024);
 
+    // start sql transaction
     await client.query("BEGIN");
 
     const readStream = createReadStream(filePath);
 
     try {
+      // for files more 1MB
       if (db.copyFrom && fileSizeInMegabytes > 1) {
         let theError;
 
@@ -1149,10 +1163,13 @@ class Table implements AbstractTable {
       };
     }
 
+    // stop sql transaction
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
+    // reset id sequence
     await this.resetSequence();
+    // recalculate fields
     if (
       recalc_stored &&
       this.fields &&

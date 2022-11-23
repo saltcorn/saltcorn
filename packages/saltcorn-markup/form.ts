@@ -916,7 +916,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     form.onChange ? ` onchange="${form.onChange}"` : ""
   } class="form-namespace ${form.class || ""}" method="${
     form.methodGET ? "get" : "post"
-  }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
+  }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}>`;
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
@@ -985,7 +985,7 @@ const mkForm = (
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.class || ""}" method="${
     form.methodGET ? "get" : "post"
-  }"${hasFile ? ' encType="multipart/form-data"' : ""}>`;
+  }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}>`;
   //console.log(form.fields);
   const fldHtmls: String[] = [];
   for (let i = 0; i < form.fields.length; i++) {

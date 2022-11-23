@@ -594,12 +594,27 @@ const configTypes: ConfigTypes = {
       "The team id must be set to build mobile iOS apps that can run on a device.",
   },
   /** @type {object} */
-  files_accept_filter: {
+  default_files_accept_filter: {
     type: "String",
-    label: "Files accept filter ",
+    label: "Default Files accept filter",
     default: null,
-    blurb: "Specifies a filter for what file types the user can pick from the file input dialog box. Example is `text/csv,audio/*,video/*,image/*`",
+    blurb: "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
   },
+  /** @type {object} */
+  csv_lines_limit: {
+    type: "Integer",
+    label: "CSV lines limit",
+    default: 500,
+    blurb: "Limit for CSV",
+  },
+  /** @type {object} */
+  csv_bool_values: {
+    type: "String",
+    label: "CSV bool values",
+    default: "true false yes no on off y n t f",
+    blurb: "Allows to redefine list of values that recognized as bool values in cvs file",
+  },
+
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
