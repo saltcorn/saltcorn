@@ -88,12 +88,12 @@ const configuration_workflow = () =>
             Clear: [
               {
                 name: "omit_fields",
-                label: ("Omit fields"),
-                sublabel: ("Comma separated list of fields not to clear"),
+                label: "Omit fields",
+                sublabel: "Comma separated list of fields not to clear",
                 type: "String",
               },
             ],
-          }
+          };
           const own_link_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
             ({ viewrow }) => viewrow.name !== context.viewname
@@ -208,7 +208,11 @@ const run = async (
       if (!field) return;
       field.fieldview = fieldview;
       Object.assign(field.attributes, configuration);
-      await field.fill_fkey_options(false, undefined, extra.req.user ? { user_id: extra.req.user } : {});
+      await field.fill_fkey_options(
+        false,
+        undefined,
+        extra.req.user ? { user_id: extra.req.user } : {}
+      );
       segment.field = field;
     },
     view: async (segment) => {
@@ -225,8 +229,7 @@ const run = async (
     },
     link: (segment) => {
       if (segment.transfer_state) {
-        segment.url +=
-          `?` + objectToQueryString(state || {})
+        segment.url += `?` + objectToQueryString(state || {});
       }
       if (segment.view_state_fml) {
         const extra_state = segment.view_state_fml
@@ -292,7 +295,7 @@ const run = async (
     },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
-      const stVar = `_fts_${table.name}`
+      const stVar = `_fts_${table.name}`;
       return search_bar(stVar, state[stVar], {
         stateField: stVar,
         has_dropdown,
@@ -301,10 +304,10 @@ const run = async (
       });
     },
     dropdown_filter({ field_name, neutral_label, full_width }) {
-      const dvs = distinct_values[field_name] || []
+      const dvs = distinct_values[field_name] || [];
       dvs.sort((a, b) =>
         (a.label?.toLowerCase?.() || a.label) >
-          (b.label?.toLowerCase?.() || b.label)
+        (b.label?.toLowerCase?.() || b.label)
           ? 1
           : -1
       );
@@ -312,12 +315,14 @@ const run = async (
         option(
           {
             value,
-            selected: state[field_name] === or_if_undef(jsvalue, value) || (!value && !state[field_name]),
+            selected:
+              state[field_name] === or_if_undef(jsvalue, value) ||
+              (!value && !state[field_name]),
             class: !value && !label ? "text-muted" : undefined,
           },
           !value && !label ? neutral_label : label
         )
-      )
+      );
       return select(
         {
           name: `ddfilter${field_name}`,
@@ -339,19 +344,23 @@ const run = async (
       action_size,
       action_icon,
       action_name,
-      configuration
+      configuration,
     }) {
       const label = action_label || action_name;
       if (action_style === "btn-link")
         return a(
-          { href: `javascript:clear_state('${configuration?.omit_fields || ''}')` },
+          {
+            href: `javascript:clear_state('${
+              configuration?.omit_fields || ""
+            }')`,
+          },
           action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
           label
         );
       else
         return button(
           {
-            onClick: `clear_state('${configuration?.omit_fields || ''}')`,
+            onClick: `clear_state('${configuration?.omit_fields || ""}')`,
             class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
           },
           action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
@@ -365,17 +374,17 @@ const run = async (
       const use_value =
         preset_value && field.presets
           ? field.presets[preset_value]({
-            user: extra.req.user,
-            req: extra.req,
-          })
+              user: extra.req.user,
+              req: extra.req,
+            })
           : value;
 
       const active = isBool
         ? {
-          on: state[field_name],
-          off: state[field_name] === false,
-          "?": state[field_name] === null,
-        }[use_value]
+            on: state[field_name],
+            off: state[field_name] === false,
+            "?": state[field_name] === null,
+          }[use_value]
         : eq_string(state[field_name], use_value);
       return button(
         {
@@ -439,7 +448,7 @@ module.exports = {
     viewname,
     configuration: { columns, default_state },
     req,
-    exttable_name
+    exttable_name,
   }) => ({
     async distinctValuesQuery() {
       const table = await Table.findOne(table_id || exttable_name);
