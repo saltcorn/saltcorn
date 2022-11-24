@@ -46,7 +46,6 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
       method: "post",
       action,
       encType: "multipart/form-data",
-      acceptCharset: "UTF-8",
     },
     input({ type: "hidden", name: "_csrf", value: csrf }),
     label(

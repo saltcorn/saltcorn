@@ -315,7 +315,7 @@ router.post(
  */
 router.post(
   "/upload",
-  setTenant, // TODO why is this needed?????
+  setTenant,
   error_catcher(async (req, res) => {
     let { folder } = req.body
     let jsonResp = {};

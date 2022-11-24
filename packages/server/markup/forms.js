@@ -52,12 +52,11 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
  */
 const fileUploadForm = (req, folder //, accept_attr
     ) => {
-    return form(
+    const frm = form(
         {
             action: "/files/upload",
             method: "post",
-            encType: "multipart/form-data",
-            acceptCharset: "utf-8",
+            enctype: "multipart/form-data",
         },
         csrfField(req),
         label(req.__("Upload file(s)")),
@@ -70,6 +69,7 @@ const fileUploadForm = (req, folder //, accept_attr
         }),
         folder && input({type: "hidden", name: "folder", value: folder})
     );
+    return frm;
 };
 
 /**

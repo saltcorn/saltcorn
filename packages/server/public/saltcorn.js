@@ -201,12 +201,12 @@ function view_post(viewname, route, data, onDone) {
       notifyAlert({ type: "danger", text: res.responseText });
     });
 }
-var logged_errors = [];
+let logged_errors = [];
 function globalErrorCatcher(message, source, lineno, colno, error) {
   if (error && error.preventDefault) error.preventDefault();
   if (logged_errors.includes(message)) return;
   logged_errors.push(message);
-  var data = { message, stack: (error && error.stack) || "" };
+  const data = { message, stack: (error && error.stack) || "" };
   $.ajax("/crashlog/", {
     dataType: "json",
     type: "POST",

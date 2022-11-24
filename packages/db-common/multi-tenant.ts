@@ -11,7 +11,7 @@ let connObj: any = null;
 export const tenantNamespace = new AsyncLocalStorage();
 
 /**
- * set the connection object of the the multi-tenant
+ * set the connection object of the multi-tenant
  * @param connObjPara
  */
 export const init = (connObjPara: any): void => {
