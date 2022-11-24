@@ -290,6 +290,8 @@ class View implements AbstractView {
     };
     delete createObj.viewtemplateObj;
     delete createObj.id;
+    // very confusing for user if a view with default_render_page is copied
+    delete createObj.default_render_page;
     return await View.create(createObj);
   }
 
