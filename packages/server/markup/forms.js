@@ -50,7 +50,7 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
  * @param folder
  * @returns {Form}
  */
-const fileUploadForm = (req, folder //, accept_attr
+const fileUploadForm = (req, folder
     ) => {
     const frm = form(
         {
