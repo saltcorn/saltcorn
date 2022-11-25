@@ -601,11 +601,11 @@ const configTypes: ConfigTypes = {
     blurb: "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
   },
   /** @type {object} */
-  csv_lines_limit: {
+  csv_types_detection_rows: {
     type: "Integer",
-    label: "CSV lines limit",
+    label: "CSV types detection rows",
     default: 500,
-    blurb: "Limit for CSV",
+    blurb: "Specifies how many rows from start of CSV file will be using to determine types in created tables. Default is 500",
   },
   /** @type {object} */
   csv_bool_values: {

@@ -405,7 +405,7 @@ class Table implements AbstractTable {
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
-          trigger.run!(row);
+          await trigger.run!(row);
         }
       }
       for (const deleteFile of deleteFileFields) {
@@ -912,7 +912,7 @@ class Table implements AbstractTable {
     let rows;
     const state = await require("../db/state").getState();
     try {
-      let lines_limit = state.getConfig("csv_lines_limit");
+      let lines_limit = state.getConfig("csv_types_detection_rows", 500);
       if (!lines_limit || lines_limit < 0)
         lines_limit = 500; // default
 
@@ -1010,13 +1010,12 @@ class Table implements AbstractTable {
     const { readStateStrict } = require("../plugin-helper");
     let headerStr;
     try {
-      const headerStr = await getLines(filePath, 1);
+      headerStr = await getLines(filePath, 1);
       [headers] = await csvtojson({
         output: "csv",
         noheader: true,
-      }).fromString(headerStr); // todo agrument type unknown
+      }).fromString(headerStr); // todo argument type unknown
     } catch (e) {
-      //return { error: `Error processing CSV file` };
       return { error: `Error processing CSV file header: ${headerStr}` };
     }
     const fields = (await this.getFields()).filter((f) => !f.calculated);
