@@ -9,6 +9,7 @@ const Table = require("../../models/table");
 const User = require("../../models/user");
 const Crash = require("../../models/crash");
 const Form = require("../../models/form");
+const Page = require("../../models/page");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
@@ -133,8 +134,8 @@ const configuration_workflow = (req) =>
               },
             ],
           };
-          const { link_view_opts, view_name_opts, view_relation_opts }
-            = await get_link_view_opts(table, context.viewname);
+          const { link_view_opts, view_name_opts, view_relation_opts } =
+            await get_link_view_opts(table, context.viewname);
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -188,7 +189,10 @@ const configuration_workflow = (req) =>
             mode: "edit",
             view_name_opts,
             view_relation_opts,
-            ownership: !!table.ownership_field_id || !!table.ownership_formula || table.name === "users",
+            ownership:
+              !!table.ownership_field_id ||
+              !!table.ownership_formula ||
+              table.name === "users",
           };
         },
       },
@@ -244,15 +248,6 @@ const configuration_workflow = (req) =>
       },
       {
         name: req.__("Edit options"),
-        onlyWhen: async (context) => {
-          const done_views = await View.find_all_views_where(
-            ({ state_fields, viewrow }) =>
-              viewrow.name !== context.viewname &&
-              (viewrow.table_id === context.table_id ||
-                state_fields.every((sf) => !sf.required))
-          );
-          return done_views.length > 0;
-        },
         form: async (context) => {
           const own_views = await View.find_all_views_where(
             ({ state_fields, viewrow }) =>
@@ -268,6 +263,7 @@ const configuration_workflow = (req) =>
               done_view_opts.push(`${v.name}.${relation.name}`);
             })
           );
+          const pages = await Page.find();
           return new Form({
             fields: [
               {
@@ -294,6 +290,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: [
                     "View",
+                    "Page",
                     "Formula",
                     "URL formula",
                     "Back to referer",
@@ -309,6 +306,16 @@ const configuration_workflow = (req) =>
                   options: done_view_opts,
                 },
                 showIf: { destination_type: "View" },
+              },
+              {
+                name: "page_when_done",
+                label: req.__("Destination page"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: pages.map((p) => p.name),
+                },
+                showIf: { destination_type: "Page" },
               },
               {
                 name: "dest_url_formula",
@@ -393,7 +400,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  { },
+  {},
   state,
   { res, req },
   { editQuery }
@@ -444,7 +451,7 @@ const runMany = async (
       auto_save,
       getRowQuery,
       optionsQuery,
-      split_paste
+      split_paste,
     });
     return { html, row };
   });
@@ -528,7 +535,7 @@ const transformForm = async ({
           if (field.name === childTable.pk_name) {
             field.class = field.class
               ? `${field.class} omit-repeater-clone`
-              : "omit-repeater-clone"
+              : "omit-repeater-clone";
           }
         }
         const fr = new FieldRepeat({
@@ -546,8 +553,8 @@ const transformForm = async ({
           const childRows = getRowQuery
             ? await getRowQuery(view.table_id, view_select, row.id)
             : await childTable.getRows({
-              [view_select.field_name]: row.id,
-            });
+                [view_select.field_name]: row.id,
+              });
           fr.metadata.rows = childRows;
           if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
             fr.fields.push({
@@ -623,7 +630,7 @@ const render = async ({
   isRemote,
   getRowQuery,
   optionsQuery,
-  split_paste
+  split_paste,
 }) => {
   const form = await getForm(
     table,
@@ -634,8 +641,7 @@ const render = async ({
     req,
     isRemote
   );
-  if (split_paste)
-    form.splitPaste = true
+  if (split_paste) form.splitPaste = true;
 
   if (row) {
     form.values = row;
@@ -655,10 +661,8 @@ const render = async ({
         ? await table.is_owner(req.user, row)
         : owner_field && user_id && row[owner_field] === user_id;
   } else {
-    form.isOwner = true
+    form.isOwner = true;
   }
-
-
 
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
@@ -678,27 +682,34 @@ const render = async ({
   });
   // no autosave if new and save button exists
   // !row && hasSave
-  let hasSave = false
+  let hasSave = false;
   traverseSync(layout, {
     action({ action_name }) {
       if (action_name === "Save") {
-        hasSave = true
+        hasSave = true;
       }
     },
   });
-  const actually_auto_save = auto_save && !(!row && hasSave)
+  const actually_auto_save = auto_save && !(!row && hasSave);
   if (actually_auto_save)
-    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
-      })`;
-  let reloadAfterCloseInModalScript = actually_auto_save && req.xhr
-    ? script(domReady(`
+    form.onChange = `saveAndContinue(this, ${
+      !isWeb(req) ? `'${form.action}'` : undefined
+    })`;
+  let reloadAfterCloseInModalScript =
+    actually_auto_save && req.xhr
+      ? script(
+          domReady(`
     $("#scmodal").on("hidden.bs.modal", function (e) {
       setTimeout(()=>location.reload(),0);
-    });`))
-    : ''
+    });`)
+        )
+      : "";
   await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({ form, table, req, row, res, getRowQuery, viewname });
-  return renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) + reloadAfterCloseInModalScript;
+  return (
+    renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
+    reloadAfterCloseInModalScript
+  );
 };
 
 /**
@@ -730,6 +741,7 @@ const runPost = async (
     auto_save,
     destination_type,
     dest_url_formula,
+    page_when_done,
   },
   state,
   body,
@@ -741,8 +753,9 @@ const runPost = async (
   const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
   if (auto_save)
-    form.onChange = `saveAndContinue(this, ${!isWeb(req) ? `'${form.action}'` : undefined
-      })`;
+    form.onChange = `saveAndContinue(this, ${
+      !isWeb(req) ? `'${form.action}'` : undefined
+    })`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
@@ -813,8 +826,7 @@ const runPost = async (
             field?.attributes?.folder
           );
           row[field.name] = file.path_to_serve;
-        }
-        else {
+        } else {
           const serverResp = await File.upload(req.files[field.name]);
           row[field.name] = serverResp.location;
         }
@@ -830,7 +842,7 @@ const runPost = async (
         if (ins_res.success) {
           id = ins_res.success;
           row[pk.name] = id;
-          trigger_return = ins_res.trigger_return
+          trigger_return = ins_res.trigger_return;
         } else {
           req.flash("error", text_attr(ins_res.error));
           res.sendWrap(
@@ -846,15 +858,16 @@ const runPost = async (
           res.sendWrap(viewname, renderForm(form, req.csrfToken()));
           return;
         }
-        trigger_return = upd_res.trigger_return
-
+        trigger_return = upd_res.trigger_return;
       }
       //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
         const childTable = Table.findOne({ id: field.metadata?.table_id });
-        const submitted_row_ids =
-          new Set((form.values[field.name] || [])
-            .map(srow => `${srow[childTable.pk_name]}`))
+        const submitted_row_ids = new Set(
+          (form.values[field.name] || []).map(
+            (srow) => `${srow[childTable.pk_name]}`
+          )
+        );
         for (const childRow of form.values[field.name]) {
           childRow[field.metadata?.relation] = id;
           if (childRow[childTable.pk_name]) {
@@ -877,7 +890,7 @@ const runPost = async (
               res.sendWrap(viewname, renderForm(form, req.csrfToken()));
               return;
             } else if (ins_res.success) {
-              submitted_row_ids.add(`${ins_res.success}`)
+              submitted_row_ids.add(`${ins_res.success}`);
             }
           }
         }
@@ -886,30 +899,32 @@ const runPost = async (
         if (originalID && field.metadata) {
           const view_select = parse_view_select(field.metadata.view);
           const childRows = getRowQuery
-            ? await getRowQuery(field.metadata.table_id, view_select, originalID)
+            ? await getRowQuery(
+                field.metadata.table_id,
+                view_select,
+                originalID
+              )
             : await childTable.getRows({
-              [view_select.field_name]: originalID,
-            });
+                [view_select.field_name]: originalID,
+              });
           for (const db_child_row of childRows) {
             if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
-              await childTable.deleteRows({ [childTable.pk_name]: db_child_row[childTable.pk_name] })
+              await childTable.deleteRows({
+                [childTable.pk_name]: db_child_row[childTable.pk_name],
+              });
             }
           }
         }
-
       }
     }
-    trigger_return = trigger_return || {}
-    if (trigger_return.notify)
-      req.flash("success", trigger_return.notify)
-    if (trigger_return.error)
-      req.flash("danger", trigger_return.error)
+    trigger_return = trigger_return || {};
+    if (trigger_return.notify) req.flash("success", trigger_return.notify);
+    if (trigger_return.error) req.flash("danger", trigger_return.error);
 
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
       return;
     }
-
 
     if (redirect) {
       res.redirect(redirect);
@@ -919,6 +934,9 @@ const runPost = async (
     let use_view_when_done = view_when_done;
     if (destination_type === "Back to referer" && body._referer) {
       res.redirect(body._referer);
+      return;
+    } else if (destination_type === "Page" && page_when_done) {
+      res.redirect(`/page/${page_when_done}`);
       return;
     } else if (destination_type === "URL formula" && dest_url_formula) {
       const url = eval_expression(dest_url_formula, row);
@@ -1149,7 +1167,7 @@ module.exports = {
         auto_save,
         destination_type,
         isRemote,
-        split_paste
+        split_paste,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
@@ -1180,26 +1198,26 @@ module.exports = {
     },
     async tryInsertQuery(row) {
       const table = await Table.findOne({ id: table_id });
-      const result = {}
+      const result = {};
       const ins_res = await table.tryInsertRow(
         row,
         req.user ? +req.user.id : undefined,
         result
       );
-      ins_res.trigger_return = result
+      ins_res.trigger_return = result;
       return ins_res;
     },
 
     async tryUpdateQuery(row, id) {
       const table = await Table.findOne({ id: table_id });
-      const result = {}
+      const result = {};
       const upd_res = await table.tryUpdateRow(
         row,
         id,
         req.user ? +req.user.id : undefined,
         result
       );
-      upd_res.trigger_return = result
+      upd_res.trigger_return = result;
       return upd_res;
     },
 
@@ -1276,7 +1294,7 @@ module.exports = {
       configuration: { view_when_done, destination_type, formula_destinations },
     } = view;
     const errs = [];
-    const warnings = []
+    const warnings = [];
 
     if (destination_type !== "Back to referer") {
       const vwd = await View.findOne({
