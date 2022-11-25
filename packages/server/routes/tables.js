@@ -328,6 +328,7 @@ router.get(
                     name: "name",
                     input_type: "text",
                   },
+                    // todo implement file mask filter like , accept: "text/csv"
                   { label: req.__("File"), name: "file", input_type: "file" },
                 ],
               }),
@@ -353,7 +354,7 @@ router.get(
  */
 router.post(
   "/create-from-csv",
-  setTenant, // TODO why is this needed?????
+  setTenant,
   isAdmin,
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
@@ -727,6 +728,7 @@ router.get(
             method: "post",
             action: `/table/upload_to_table/${table.name}`,
             encType: "multipart/form-data",
+            acceptCharset: "UTF-8",
           },
           input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
           label(

@@ -19,7 +19,9 @@ afterAll(async () => {
   await db.close();
 });
 jest.setTimeout(30000);
-
+// todo tests for broken view
+// todo tests for broken trigger / action
+// todo tests for broken page
 describe("config check", () => {
   it("runs", async () => {
     const { errors, passes, pass } = await runConfigurationCheck(

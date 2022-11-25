@@ -393,8 +393,8 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     ...boolfields.map((f) => `Toggle ${f.name}`),
     ...stateActionKeys,
   ];
-  const triggers = await Trigger.find({
-    when_trigger: { or: ["API call", "Never"] },
+  const triggers = Trigger.find({
+    when_trigger: {or: ["API call", "Never"]},
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -869,7 +869,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
 };
 
 /**
- * get_child_views Contract
+ * Get Child Views
  * @function
  * @param {Table|object} table
  * @param {string} viewname
@@ -879,7 +879,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
 const get_child_views = async (table, viewname, nrecurse = 2) => {
   const rels = await Field.find({ reftable_name: table.name });
   const possibleThroughTables = new Set();
-  var child_views = [];
+  let child_views = [];
   for (const relation of rels) {
     const related_table = Table.findOne({ id: relation.table_id });
     const views = await View.find_table_views_where(
@@ -910,14 +910,14 @@ const get_child_views = async (table, viewname, nrecurse = 2) => {
 };
 
 /**
- * get_parent_views Contract
+ * Get parent views
  * @function
  * @param {Table|object} table
  * @param {string} viewname
  * @returns {Promise<object[]>}
  */
 const get_parent_views = async (table, viewname) => {
-  var parent_views = [];
+  let parent_views = [];
   const parentrels = (await table.getFields()).filter(
     (f) => f.is_fkey && f.type !== "File"
   );
@@ -937,7 +937,7 @@ const get_parent_views = async (table, viewname) => {
 };
 
 /**
- * get_onetoone_views Contract
+ * Get One-to-one views
  * @function
  * @param {Table} table
  * @param {string} viewname
@@ -948,7 +948,7 @@ const get_onetoone_views = async (table, viewname) => {
     reftable_name: table.name,
     is_unique: true,
   });
-  var child_views = [];
+  let child_views = [];
   for (const relation of rels) {
     const related_table = await Table.findOne({ id: relation.table_id });
     const views = await View.find_table_views_where(
@@ -962,7 +962,7 @@ const get_onetoone_views = async (table, viewname) => {
 };
 
 /**
- * picked_fields_to_query Contract
+ * Picked fields to query
  * @function
  * @param {object[]} columns
  * @param {Field[]} fields
@@ -971,8 +971,8 @@ const get_onetoone_views = async (table, viewname) => {
  * @returns {object}
  */
 const picked_fields_to_query = (columns, fields, layout) => {
-  var joinFields = {};
-  var aggregations = {};
+  let joinFields = {};
+  let aggregations = {};
   let freeVars = new Set(); // for join fields
 
   (columns || []).forEach((column) => {
@@ -1109,7 +1109,12 @@ const picked_fields_to_query = (columns, fields, layout) => {
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
   return { joinFields, aggregations };
 };
-
+/**
+ * Add free variables to join fields
+ * @param freeVars
+ * @param joinFields
+ * @param fields
+ */
 const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
   const joinFieldNames = new Set(
     fields.filter((f) => f.is_fkey).map((f) => f.name)
@@ -1147,6 +1152,7 @@ const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
 };
 
 /**
+ * State fields to Query
  * @function
  * @param {object}
  * @returns {object}
@@ -1188,12 +1194,13 @@ const stateFieldsToQuery = ({ state, stateHash, fields, prefix = "" }) => {
 };
 
 /**
- *
+ * Add to List or Create List (container)
  * @param {object} container
  * @param {string} key
  * @param {object} x
  * @returns {void}
  */
+// todo potentially move to utils
 const addOrCreateList = (container, key, x) => {
   if (container[key]) container[key].push(x);
   else container[key] = [x];
@@ -1209,7 +1216,7 @@ const addOrCreateList = (container, key, x) => {
  * @returns {object}
  */
 const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
-  var qstate = {};
+  let qstate = {};
   Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts" || (table?.name && k === `_fts_${table.name}`)) {
       qstate["_fts"] = {
@@ -1370,8 +1377,8 @@ const initial_config_all_fields =
       const fields = (await table.getFields()).filter(
         (f) => !f.primary_key && (!isEdit || !f.calculated)
       );
-      var cfg = { columns: [] };
-      var aboves = [null];
+      let cfg = { columns: [] };
+      let aboves = [null];
       const style = {
         "margin-bottom": "1.5rem",
       };
@@ -1468,17 +1475,18 @@ const initial_config_all_fields =
     };
 
 /**
- *
+ * Strict Parse Int
  * @param {string} x
  * @returns {number|undefined}
  */
+// todo potentially move to utils
 const strictParseInt = (x) => {
   const y = +x;
   return !isNaN(y) && y ? y : undefined;
 };
 
 /**
- *
+ * Read State
  * @param {object} state
  * @param {object[]} fields
  * @param req
@@ -1511,7 +1519,7 @@ const readState = (state, fields, req) => {
 };
 
 /**
- *
+ * Read State Strict
  * @param {object} state
  * @param {object[]} fields
  * @returns {boolean|*}
@@ -1544,7 +1552,8 @@ const readStateStrict = (state, fields) => {
   return hasErrors ? false : state;
 };
 /**
- *
+ * JSON List to external table
+ * Hiiden "exttables_min_role_read" can be used to manage min role for external tables
  * @param {function} get_json_list
  * @param {object[]} fields0
  * @returns {object}
@@ -1627,7 +1636,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
 };
 
 /**
- *
+ * Run Action Column
  * @param {object} col
  * @param {object} req
  * @param {...*} rest

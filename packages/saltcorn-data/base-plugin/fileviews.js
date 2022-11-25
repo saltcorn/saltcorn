@@ -20,17 +20,10 @@ const { select_options } = require("@saltcorn/markup/helpers");
 const File = require("../models/file");
 const path = require("path");
 
+
 module.exports = {
-  /**
-   * @namespace
-   * @category saltcorn-data
-   */
+  // download link
   "Download link": {
-    /**
-     * @param {string} file_id
-     * @param {string} file_name
-     * @returns {link}
-     */
     run: (filePath) =>
       link(
         isNode()
@@ -39,16 +32,8 @@ module.exports = {
         path.basename(filePath) || "Download"
       ),
   },
-  /**
-   * @namespace
-   * @category saltcorn-data
-   */
+  // Link
   Link: {
-    /**
-     * @param {string} file_id
-     * @param {string} file_name
-     * @returns {link}
-     */
     run: (filePath) =>
       link(
         isNode()
@@ -58,16 +43,8 @@ module.exports = {
       ),
   },
 
-  /**
-   * @namespace
-   * @category saltcorn-data
-   */
+  // Link (new tab)
   "Link (new tab)": {
-    /**
-     * @param {string} file_id
-     * @param {string} file_name
-     * @returns {a}
-     */
     run: (filePath) =>
       a(
         isNode()
@@ -76,16 +53,8 @@ module.exports = {
         path.basename(filePath) || "Open"
       ),
   },
-  /**
-   * @namespace
-   * @category saltcorn-data
-   */
+  // Show Image
   "Show Image": {
-    /**
-     * @param {string} file_id
-     * @param {string} file_name
-     * @returns {img}
-     */
     run: (filePath) => {
       if (isNode())
         return img({ src: `/files/serve/${(filePath)}`, style: "width: 100%" });
@@ -98,10 +67,9 @@ module.exports = {
       }
     },
   },
-  upload: {
-    isEdit: true,
-    multipartFormData: true,
-    valueIsFilename: true,
+  // upload
+  upload: { isEdit: true, multipartFormData: true, valueIsFilename: true,
+
     configFields: async () => {
       const dirs = await File.allDirectories()
       return [
@@ -109,23 +77,34 @@ module.exports = {
           name: "folder",
           label: "Folder",
           type: "String",
-          attributes: { options: dirs.map(d => d.path_to_serve) }
+          attributes: { options: dirs.map(d => d.path_to_serve) },
         }
       ]
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
+    //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
       return (
-        text(file_name || "") +
-        input({
-          class: `${cls} ${field.class || ""}`,
-          "data-fieldname": field.form_name,
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-          type: "file",
-        })
+          text(file_name || "") +
+          typeof attrs.files_accept_filter !== "undefined" || attrs.files_accept_filter !== null?
+              input({
+                class: `${cls} ${field.class || ""}`,
+                "data-fieldname": field.form_name,
+                name: text_attr(nm),
+                id: `input${text_attr(nm)}`,
+                type: "file",
+                accept : attrs.files_accept_filter,
+              })
+             :
+              input({
+                class: `${cls} ${field.class || ""}`,
+                "data-fieldname": field.form_name,
+                name: text_attr(nm),
+                id: `input${text_attr(nm)}`,
+                type: "file",
+              })
       );
-    },
-  },
+    },},
+  // select
   select: {
     isEdit: true,
     setsFileId: true,
@@ -150,6 +129,7 @@ module.exports = {
         }*/
       ]
     },
+    // run
     run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {
@@ -161,12 +141,13 @@ module.exports = {
         select_options(
           file_id,
           field,
-          (attrs || {}).force_required,
+          (attrs || {}).force_required, // todo force_required is unresolved!
           (attrs || {}).neutral_label
         )
       );
     },
   },
+  // Thumbnail
   Thumbnail: {
     configFields: () => [
       { name: "width", type: "Integer", required: true, label: "Width (px)" },
@@ -185,7 +166,7 @@ module.exports = {
       else {
         const elementId = `_sc_file_id_${filePath}_`;
         return div(
-          img({ width, heigth, id: elementId }),
+          img({ width, height, id: elementId }),
           script(domReady(`buildEncodedImage('${filePath}', '${elementId}')`))
         );
       }

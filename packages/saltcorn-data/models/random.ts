@@ -28,6 +28,7 @@ import {
 const random_table = async (opts: GenObj = {}): Promise<Table> => {
   const name = generateString(3);
   const table = await Table.create(name);
+  // test UUID type
   if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });
@@ -55,6 +56,7 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
 };
 
 /**
+ * Fill table row by random data
  * @param {Table} table
  * @returns {Promise<*>}
  */
@@ -70,6 +72,7 @@ const fill_table_row = async (table: Table): Promise<void> => {
 };
 
 /**
+ * returns Random Expression
  * @param {string} type
  * @param {string[]} existing_fields
  * @throws {Error}
@@ -98,6 +101,7 @@ const random_expression = (
 };
 
 /**
+ * Random Field
  * @param {string[]} existing_field_names
  * @param {Table} table
  * @returns {Promise<Field>}
@@ -173,6 +177,7 @@ const random_field = async (
 };
 
 /**
+ * Create View
  * @param {Table} table
  * @param {string} viewtemplate
  * @returns {Promise<View>}
@@ -197,6 +202,7 @@ const initial_view = async (
 };
 
 /**
+ * Create all views
  * @param {Table} table
  * @returns {Promise<object[]>}
  */

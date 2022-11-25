@@ -74,6 +74,7 @@ router.get(
     const safeDir = File.normalise(dir || "/")
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
+    // const accept_attr = await getState().getConfig("files_accept_filter");
     //console.log(rows);
     if (safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir)
@@ -314,7 +315,7 @@ router.post(
  */
 router.post(
   "/upload",
-  setTenant, // TODO why is this needed?????
+  setTenant,
   error_catcher(async (req, res) => {
     let { folder } = req.body
     let jsonResp = {};
