@@ -756,19 +756,27 @@ module.exports = {
           },
         },
         {
-          name: "row_expr",
-          label: "Row expression",
-          sublabel: "Expression for JavaScript object",
-          type: "String",
-          fieldview: "textarea",
-        },
-        {
           name: "delete_rows",
           label: "Delete removed rows",
           sublabel:
             "Delete rows that are in the destination table but not in the source table",
           type: "Bool",
           default: true,
+        },
+        {
+          name: "match_field_names",
+          label: "Match fields",
+          sublabel: "Match field names automatically by name or label",
+          type: "Bool",
+          default: true,
+        },
+        {
+          name: "row_expr",
+          label: "Row expression",
+          sublabel: "Expression for JavaScript object",
+          type: "String",
+          fieldview: "textarea",
+          showIf: { match_field_names: false },
         },
       ];
     },
@@ -781,7 +789,14 @@ module.exports = {
      * @returns {Promise<object|boolean>}
      */
     run: async ({
-      configuration: { row_expr, table_src, table_dest, pk_field, delete_rows },
+      configuration: {
+        row_expr,
+        table_src,
+        table_dest,
+        pk_field,
+        delete_rows,
+        match_field_names,
+      },
       user,
       ...rest
     }) => {
@@ -797,13 +812,32 @@ module.exports = {
       const srcPKfield = source_table.fields.find((f) => f.primary_key).name;
       const src_pks = new Set(source_rows.map((r) => r[srcPKfield]));
       const dest_pks = new Set(dest_rows.map((r) => r[pk_field]));
-
+      let match_expr;
+      if (match_field_names) {
+        const matched_fields = [];
+        const dest_fields = await table_for_insert.getFields();
+        const src_fields = await source_table.getFields();
+        dest_fields.forEach((df) => {
+          const s = src_fields.find(
+            (sf) =>
+              sf.name === df.name ||
+              sf.label === df.label ||
+              sf.name === df.label ||
+              sf.label === df.name
+          );
+          if (s) matched_fields.push([df.name, s.name]);
+        });
+        match_expr = `({${matched_fields
+          .map(([d, s]) => `${d}: ${s}`)
+          .join(",")}})`;
+      }
+      console.log({ match_expr });
       // new rows
       for (const newPK of set_diff(src_pks, dest_pks)) {
         const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
         const newRow = {
           [pk_field]: newPK,
-          ...eval_expression(row_expr, srcRow),
+          ...eval_expression(match_expr || ow_expr, srcRow),
         };
         const res = await table_for_insert.tryInsertRow(
           newRow,
@@ -821,7 +855,7 @@ module.exports = {
         const srcRow = source_rows.find((r) => r[srcPKfield] === existPK);
         const newRow = {
           [pk_field]: existPK,
-          ...eval_expression(row_expr, srcRow),
+          ...eval_expression(match_expr || row_expr, srcRow),
         };
 
         const existingRow = dest_rows.find((r) => r[pk_field] === existPK);
