@@ -5,9 +5,7 @@
  * @subcategory models
  */
 
-import { Row } from "@saltcorn/db-common/internal";
-import { PluginType } from "@saltcorn/types/base_types";
-import { Type } from "@saltcorn/types/common_types";
+import { Row, sqlsanitize } from "@saltcorn/db-common/internal";
 import { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
 import db from "../db";
@@ -31,10 +29,10 @@ const discoverable_tables = async (schema0?: string): Promise<Row[]> => {
     [schema]
   );
   const myTables = await Table.find({});
-  const myTableNames = myTables.map((t) => t.name);
+  const myTableNames = myTables.map((t) => sqlsanitize(t.name));
   const myTableHistoryNames = myTables
     .filter((t) => t.versioned)
-    .map((t) => `${t.name}__history`);
+    .map((t) => `${sqlsanitize(t.name)}__history`);
   const discoverable = rows.filter(
     (t: Row) =>
       !(
@@ -59,26 +57,24 @@ const get_existing_views = async (schema0?: string): Promise<Row[]> => {
   return rows;
 };
 /**
- * Mapping SQL Type to Saltcorn type
+ * Mapping SQL Type to Saltcorn type (For Discovery)
  * @param {string} sql_name - SQL type name
  * @returns {string|void} return Saltcorn type
  */
 const findType = (sql_name: string): any => {
   const fixed: string | undefined = {
+    // todo more types
+    // todo attributes: length, pres
     integer: "Integer",
     smallint: "Integer",
     bigint: "Integer",
     numeric: "Float", // required pres
     character: "String", // char - if length is not defined is 1 else length needs to be defined
     "character varying": "String", // varchar  - this type can have length
-    //varchar: "String",
+    // todo "varchar": "String",
     date: "Date",
-    // TBD Implement time type in Saltcorn
-    // "time without time zone": "Date",
-    // TBD Implement timestamp type in Saltcorn
-    // "timestamp without time zone": "Date",
-    // TBD Implement time interval in Saltcorn
-    // interval: "Date"
+    // todo discovery "time without time zone": "Date"?
+    // todo discovery "time interval" : "Date"?
   }[sql_name];
   if (fixed) return fixed;
   const state = getState();
@@ -182,21 +178,47 @@ const discover_tables = async (
     t.fields &&
       t.fields.forEach((f: FieldCfg) => {
         if (f.type === "Key") {
-          const reftable = packTables.find(
-            (reft) => reft.name === f.reftable_name
-          );
-          if (!reftable)
-            throw new Error(`Unable to find table '${f.reftable_name}'`);
-          if (!reftable.fields)
-            throw new Error(`The table '${f.reftable_name}' has no fields`);
-          const refpk = reftable.fields.find(
-            (rtf: FieldCfg) => rtf.primary_key
-          );
-          if (!refpk)
-            throw new Error(
-              `The table '${f.reftable_name}' has no primary key`
+          // check saltcorn tables for ref table
+          const reftablesc = Table.findOne({ name: f.reftable_name });
+          if (reftablesc) {
+
+            if (!reftablesc.fields)
+              throw new Error(`The table '${f.reftable_name}' has no fields`);
+
+            // get ref pk type
+            const refpksc = reftablesc.fields.find(
+                (rtf: FieldCfg) => rtf.primary_key === true
             );
-          f.reftype = refpk.type;
+            console.log(refpksc);
+            if(!refpksc || !refpksc.type)
+              throw new Error(`The '${f.reftable_name}' has no primary key`);
+
+            f.reftype = refpksc.type =  typeof refpksc.type !== 'string'?
+                f.reftype = refpksc.type.name
+                :
+                f.reftype = refpksc.type
+            ;
+          }
+          else{
+            // check importing tables
+            const reftable = packTables.find(
+                (reft) => reft.name === f.reftable_name
+            );
+            if (!reftable)
+              throw new Error(`Unable to find table '${f.reftable_name}'`);
+            if (!reftable.fields)
+              throw new Error(`The table '${f.reftable_name}' has no fields`);
+            const refpk = reftable.fields.find(
+                (rtf: FieldCfg) => rtf.primary_key
+            );
+            if (!refpk)
+              throw new Error(
+                  `The table '${f.reftable_name}' has no primary key`
+              );
+            f.reftype = refpk.type;
+
+          }
+
         }
       });
   });
@@ -212,8 +234,7 @@ const implement_discovery = async (pack: {
 }): Promise<void> => {
   for (const table of pack.tables) {
     const { fields, ...tblRow } = table;
-    const id = await db.insert("_sc_tables", tblRow);
-    table.id = id;
+    table.id = await db.insert("_sc_tables", tblRow);
   }
   for (const table of pack.tables) {
     if (table.fields) {
