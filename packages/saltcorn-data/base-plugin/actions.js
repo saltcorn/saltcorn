@@ -831,7 +831,6 @@ module.exports = {
           .map(([d, s]) => `${d}: ${s}`)
           .join(",")}})`;
       }
-      console.log({ match_expr });
       // new rows
       for (const newPK of set_diff(src_pks, dest_pks)) {
         const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
