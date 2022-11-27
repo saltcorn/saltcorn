@@ -1,12 +1,10 @@
-var aws = require("aws-sdk");
-var express = require("express");
-var multer = require("multer");
-var multerS3 = require("multer-s3");
+const aws = require("aws-sdk");
+const multer = require("multer");
+const multerS3 = require("multer-s3");
 const { getState } = require("@saltcorn/data/db/state");
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
-const { create } = require("@saltcorn/data/models/file");
-var contentDisposition = require("content-disposition");
+const contentDisposition = require("content-disposition");
 
 function createS3Client() {
   return new aws.S3({
@@ -47,11 +45,26 @@ module.exports = {
 
       s3upload(req, res, next);
     } else {
-      // Use regular file upload
+      // Use regular file upload https://www.npmjs.com/package/express-fileupload
+      const fileSizeLimit = getState().getConfig("file_upload_limit", 0);
       fileUpload({
         useTempFiles: true,
         createParentPath: true,
         tempFileDir: "/tmp/",
+        // set to true - if you want to have debug
+        debug: getState().getConfig("file_upload_debug",false),
+        //uriDecodeFileNames: true,
+        //safeFileNames: true,
+        defCharset: 'utf8',
+        defParamCharset: 'utf8',
+        // 0 - means no upload limit check
+        limits: {
+          fileSize: fileSizeLimit,
+        },
+        abortOnLimit: fileSizeLimit !== 0,
+        // 0 - means no upload limit check
+        uploadTimeout: getState().getConfig("file_upload_timeout",0),
+
       })(req, res, next);
     }
   },
@@ -73,7 +86,7 @@ module.exports = {
     }
 
     // Create S3 object
-    var s3 = createS3Client();
+    const s3 = createS3Client();
     const bucket = getState().getConfig("storage_s3_bucket");
 
     let newFileObject = {};
@@ -122,10 +135,10 @@ module.exports = {
    */
   serveObject: function (file, res, download) {
     if (file.s3_store) {
-      var s3 = createS3Client();
+      const s3 = createS3Client();
       const bucket = getState().getConfig("storage_s3_bucket");
 
-      var params = {
+      const params = {
         Bucket: bucket,
         Key: file.location,
       };
@@ -147,7 +160,7 @@ module.exports = {
 
   unlinkObject: function (file) {
     if (file.s3_store) {
-      var s3 = createS3Client();
+      const s3 = createS3Client();
       return new Promise((resolve, reject) => {
         s3.deleteObject(
           {

@@ -7,7 +7,6 @@
 
 const {
   div,
-  //hr,
   form,
   input,
   label,
@@ -18,16 +17,8 @@ const {
   li,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
-const {
-  //getConfig,
-  //setConfig,
-  //getAllConfigOrDefaults,
-  //deleteConfig,
-  configTypes,
-  isFixedConfig,
-} = require("@saltcorn/data/models/config");
+const { configTypes, isFixedConfig } = require("@saltcorn/data/models/config");
 const { getState } = require("@saltcorn/data/db/state");
-
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -245,6 +236,7 @@ const send_files_page = (args) => {
     sub_sections: [
       { text: "Files", href: "/files" },
       { text: "Storage", href: "/files/storage" },
+      { text: "Settings", href: "/files/settings" },
     ],
     ...args,
   });
@@ -369,7 +361,7 @@ const config_fields_form = async ({
 
   for (const name of field_names) {
     values[name] = state.getConfig(name);
-    //console.log(`config field name: %s`,name);
+    // console.log(`config field name: %s`,name);
     if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
       continue;
     const isView = (configTypes[name].type || "").startsWith("View ");

@@ -594,18 +594,20 @@ const configTypes: ConfigTypes = {
       "The team id must be set to build mobile iOS apps that can run on a device.",
   },
   /** @type {object} */
-  default_files_accept_filter: {
+  file_accept_filter_default: {
     type: "String",
-    label: "Default Files accept filter",
+    label: "Default File accept filter",
     default: null,
-    blurb: "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
+    blurb: "Specifies a default filter for what file types the user can pick from the file input dialog box. "+
+        "Example is `.doc, text/csv,audio/*,video/*,image/*`",
   },
   /** @type {object} */
   csv_types_detection_rows: {
     type: "Integer",
     label: "CSV types detection rows",
     default: 500,
-    blurb: "Specifies how many rows from start of CSV file will be using to determine types in created tables. Default is 500",
+    blurb: "Specifies how many rows from start of CSV file will be using to determine types in created tables. "+
+        "Default is 500",
   },
   /** @type {object} */
   csv_bool_values: {
@@ -614,7 +616,27 @@ const configTypes: ConfigTypes = {
     default: "true false yes no on off y n t f",
     blurb: "Allows to redefine list of values that recognized as bool values in cvs file",
   },
-
+  /** @type {object} */
+  file_upload_debug: {
+    type: "Bool",
+    label: "File upload debug",
+    default: false,
+    blurb: "Turn on to debug file upload in express-fileupload."
+  },/** @type {object} */
+  file_upload_timeout: {
+    type: "Integer",
+    label: "File upload timeout",
+    default: 0,
+    blurb: "Defines how long to wait for data before aborting for express-fileupload. " +
+        "Set to 0 if you want to turn off timeout checks. ",
+  },
+  /** @type {object} */
+  file_upload_limit: {
+    type: "Integer",
+    label: "File upload size limit in bytes",
+    default: 1024 * 1024 * 10,
+    blurb: "Defines in bytes limit for upload files in express-fileupload.",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
