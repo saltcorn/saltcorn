@@ -432,9 +432,12 @@ const no_views_logged_in = async (req, res) => {
     res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
   else {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
+    const latest =
+      isRoot && (await get_latest_npm_version("@saltcorn/cli", 500));
     const can_update =
-      packagejson.version !== latest && !process.env.SALTCORN_DISABLE_UPGRADE;
+      packagejson.version !== latest &&
+      latest &&
+      !process.env.SALTCORN_DISABLE_UPGRADE;
     if (latest && can_update && isRoot)
       req.flash(
         "warning",
