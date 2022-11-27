@@ -34,9 +34,12 @@ const { isStale } = require("@saltcorn/data/utils");
  * @param {string} nameOrTable
  * @returns {Promise<object>}
  */
-const table_pack = async (nameOrTable: string | Table ): Promise<TablePack> => {
+const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
   // todo check this change
-  const table = typeof nameOrTable === "string"? await Table.findOne({ name : nameOrTable }) : nameOrTable;
+  const table =
+    typeof nameOrTable === "string"
+      ? await Table.findOne({ name: nameOrTable })
+      : nameOrTable;
   if (!table) throw new Error(`Unable to find table '${nameOrTable}'`);
 
   const fields = await table.getFields();
@@ -410,6 +413,15 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
 };
 
 /**
+ * @function
+ * @returns {object[]}
+ */
+const get_cached_packs = async (): Promise<Array<{ name: string }>> => {
+  const stored = getState().getConfigCopy("available_packs", false);
+  return stored || [];
+};
+
+/**
  * Fetch available packs from store
  * @function
  * @returns {Promise<object[]>}
@@ -469,6 +481,7 @@ export = {
   trigger_pack,
   install_pack,
   fetch_available_packs,
+  get_cached_packs,
   fetch_pack_by_name,
   can_install_pack,
   uninstall_pack,
