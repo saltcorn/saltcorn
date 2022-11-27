@@ -89,10 +89,10 @@ const pluginForm = (req, plugin) => {
         attributes: { options: "npm,local,github,git" },
         sublabel: req.__(
           "Source of module for install. Few options:" +
-          "npm - download from npm repository," +
-          "local - get from local file system," +
-          "github - download from github," +
-          "git - get from git"
+            "npm - download from npm repository," +
+            "local - get from local file system," +
+            "github - download from github," +
+            "git - get from git"
         ),
       }),
       new Field({
@@ -101,19 +101,19 @@ const pluginForm = (req, plugin) => {
         input_type: "text",
         sublabel: req.__(
           "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, " +
-          "for local - absolute path to module folder in file system, e.g. C:\\gitsrc\\any-bootstrap-theme\\, " +
-          "for github - name of github project."
+            "for local - absolute path to module folder in file system, e.g. C:\\gitsrc\\any-bootstrap-theme\\, " +
+            "for github - name of github project."
         ),
       }),
       ...(schema === db.connectObj.default_schema
         ? [
-          new Field({
-            label: req.__("Version"),
-            name: "version",
-            input_type: "text",
-            sublabel: req.__("Version of module, latest is default value"),
-          }),
-        ]
+            new Field({
+              label: req.__("Version"),
+              name: "version",
+              input_type: "text",
+              sublabel: req.__("Version of module, latest is default value"),
+            }),
+          ]
         : []),
       new Field({
         label: req.__("Private SSH key"),
@@ -269,72 +269,72 @@ const store_item_html = (req) => (item) => ({
     div(item.description || ""),
     item.documentation_link
       ? div(
-        a(
-          { href: item.documentation_link, target: "_blank" },
-          req.__("Documentation")
+          a(
+            { href: item.documentation_link, target: "_blank" },
+            req.__("Documentation")
+          )
         )
-      )
       : ""
   ),
   footer: div(
     div(
       !item.installed &&
-      item.plugin &&
-      post_btn(
-        `/plugins/install/${encodeURIComponent(item.name)}`,
-        req.__("Install"),
-        req.csrfToken(),
-        {
-          klass: "store-install",
-          small: true,
-          onClick: "press_store_button(this)",
-        }
-      ),
+        item.plugin &&
+        post_btn(
+          `/plugins/install/${encodeURIComponent(item.name)}`,
+          req.__("Install"),
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            onClick: "press_store_button(this)",
+          }
+        ),
       !item.installed &&
-      item.pack &&
-      post_btn(
-        `/packs/install-named/${encodeURIComponent(item.name)}`,
-        req.__("Install"),
-        req.csrfToken(),
-        {
-          klass: "store-install",
-          small: true,
-          onClick: "press_store_button(this)",
-        }
-      ),
+        item.pack &&
+        post_btn(
+          `/packs/install-named/${encodeURIComponent(item.name)}`,
+          req.__("Install"),
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            onClick: "press_store_button(this)",
+          }
+        ),
 
       item.installed && item.plugin && cfg_link(req, item),
       item.installed && item.plugin && info_link(req, item),
 
       item.installed &&
-      item.pack &&
-      post_btn(
-        `/packs/uninstall/${encodeURIComponent(item.name)}`,
-        req.__("Uninstall"),
-        req.csrfToken(),
-        {
-          klass: "store-install",
-          small: true,
-          btnClass: "btn-danger",
-          formClass: "d-inline",
-          onClick: "press_store_button(this)",
-        }
-      ),
+        item.pack &&
+        post_btn(
+          `/packs/uninstall/${encodeURIComponent(item.name)}`,
+          req.__("Uninstall"),
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            btnClass: "btn-danger",
+            formClass: "d-inline",
+            onClick: "press_store_button(this)",
+          }
+        ),
       item.installed &&
-      item.plugin &&
-      item.name !== "base" &&
-      post_btn(
-        `/plugins/delete/${encodeURIComponent(item.name)}`,
-        req.__("Remove"),
-        req.csrfToken(),
-        {
-          klass: "store-install",
-          small: true,
-          btnClass: "btn-danger",
-          formClass: "d-inline",
-          onClick: "press_store_button(this)",
-        }
-      )
+        item.plugin &&
+        item.name !== "base" &&
+        post_btn(
+          `/plugins/delete/${encodeURIComponent(item.name)}`,
+          req.__("Remove"),
+          req.csrfToken(),
+          {
+            klass: "store-install",
+            small: true,
+            btnClass: "btn-danger",
+            formClass: "d-inline",
+            onClick: "press_store_button(this)",
+          }
+        )
     )
   ),
 });
@@ -354,7 +354,7 @@ const storeNavPills = (req) => {
             "nav-link",
             (req.query.set === txt.toLowerCase() ||
               (txt === "All" && !req.query.set)) &&
-            "active",
+              "active",
           ],
         },
         req.__(txt)
@@ -451,23 +451,23 @@ const store_actions_dropdown = (req) =>
         '<i class="fas fa-sync"></i>&nbsp;' + req.__("Refresh")
       ),
       db.getTenantSchema() === db.connectObj.default_schema &&
-      a(
-        {
-          class: "dropdown-item",
-          href: `/plugins/upgrade`,
-          onClick: `notifyAlert('${req.__("Upgrading modules...")}', true)`,
-        },
-        '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
-        req.__("Upgrade installed modules")
-      ),
+        a(
+          {
+            class: "dropdown-item",
+            href: `/plugins/upgrade`,
+            onClick: `notifyAlert('${req.__("Upgrading modules...")}', true)`,
+          },
+          '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
+            req.__("Upgrade installed modules")
+        ),
       db.getTenantSchema() === db.connectObj.default_schema &&
-      a(
-        {
-          class: "dropdown-item",
-          href: `/plugins/new`,
-        },
-        '<i class="fas fa-plus"></i>&nbsp;' + req.__("Add another module")
-      ),
+        a(
+          {
+            class: "dropdown-item",
+            href: `/plugins/new`,
+          },
+          '<i class="fas fa-plus"></i>&nbsp;' + req.__("Add another module")
+        ),
 
       a(
         {
@@ -534,7 +534,10 @@ router.get(
   error_catcher(async (req, res) => {
     const items = await get_store_items();
     const relevant_items = filter_items(items, req.query);
-    res.sendWrap(req.__("Module store"), plugin_store_html(relevant_items, req));
+    res.sendWrap(
+      req.__("Module store"),
+      plugin_store_html(relevant_items, req)
+    );
   })
 );
 
@@ -574,8 +577,9 @@ router.get(
           onclick: "location.reload()",
         },
       ];
-      wfres.renderForm.onChange = `${wfres.renderForm.onChange || ""
-        };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
+      wfres.renderForm.onChange = `${
+        wfres.renderForm.onChange || ""
+      };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
     }
 
     res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
@@ -619,8 +623,9 @@ router.post(
             onclick: "location.reload()",
           },
         ];
-        wfres.renderForm.onChange = `${wfres.renderForm.onChange || ""
-          };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
+        wfres.renderForm.onChange = `${
+          wfres.renderForm.onChange || ""
+        };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
       }
       res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
         type: "card",
@@ -785,7 +790,8 @@ router.get(
       db.getTenantSchema() === db.connectObj.default_schema &&
       plugin_db.source === "npm";
     const latest =
-      update_permitted && (await get_latest_npm_version(plugin_db.location));
+      update_permitted &&
+      (await get_latest_npm_version(plugin_db.location, 1000));
     const can_update = update_permitted && latest && mod.version !== latest;
     let pkgjson;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
@@ -806,35 +812,35 @@ router.get(
             latest || "",
             can_update
               ? a(
-                {
-                  href: `/plugins/upgrade-plugin/${plugin_db.name}`,
-                  class: "btn btn-primary btn-sm ms-2",
-                },
-                req.__("Upgrade")
-              )
+                  {
+                    href: `/plugins/upgrade-plugin/${plugin_db.name}`,
+                    class: "btn btn-primary btn-sm ms-2",
+                  },
+                  req.__("Upgrade")
+                )
               : ""
           )
         ),
         mod.plugin_module.dependencies
           ? tr(
-            th(req.__("Module dependencies")),
-            td(
-              mod.plugin_module.dependencies.map((d) =>
-                span({ class: "badge bg-primary me-1" }, d)
+              th(req.__("Module dependencies")),
+              td(
+                mod.plugin_module.dependencies.map((d) =>
+                  span({ class: "badge bg-primary me-1" }, d)
+                )
               )
             )
-          )
           : null,
         store_item && store_item.documentation_link
           ? tr(
-            th(req.__("Documentation")),
-            td(
-              link(
-                store_item.documentation_link,
-                store_item.documentation_link
+              th(req.__("Documentation")),
+              td(
+                link(
+                  store_item.documentation_link,
+                  store_item.documentation_link
+                )
               )
             )
-          )
           : null,
         pkgjson && pkgjson.repository
           ? tr(th(req.__("Repository")), td(showRepository(pkgjson.repository)))
