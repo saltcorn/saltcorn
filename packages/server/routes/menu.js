@@ -25,7 +25,6 @@ const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 
-
 /**
  * @type {object}
  * @const
@@ -107,7 +106,7 @@ const menuForm = async (req) => {
           "Dynamic",
           "Search",
           "Separator",
-          "Action"
+          "Action",
         ],
       },
       {
@@ -117,7 +116,15 @@ const menuForm = async (req) => {
         input_type: "text",
         required: true,
         showIf: {
-          type: ["View", "Page", "Link", "Header", "Dynamic", "Search", "Action"],
+          type: [
+            "View",
+            "Page",
+            "Link",
+            "Header",
+            "Dynamic",
+            "Search",
+            "Action",
+          ],
         },
       },
       {
@@ -244,7 +251,9 @@ const menuForm = async (req) => {
         class: "item-menu",
         type: "String",
         required: true,
-        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic", "Action"] },
+        showIf: {
+          type: ["View", "Page", "Link", "Header", "Dynamic", "Action"],
+        },
         attributes: {
           options: [
             { name: "", label: "Link" },
@@ -266,7 +275,9 @@ const menuForm = async (req) => {
       {
         name: "location",
         label: req.__("Location"),
-        showIf: { type: ["View", "Page", "Link", "Header", "Dynamic", "Action"] },
+        showIf: {
+          type: ["View", "Page", "Link", "Header", "Dynamic", "Action"],
+        },
         sublabel: req.__("Not all themes support all locations"),
         class: "item-menu",
         type: "String",
@@ -440,15 +451,14 @@ router.post(
     const state = getState();
     const menu_items = state.getConfig("menu_items");
     let menu_item;
-    const search = items =>
+    const search = (items) =>
       items
         .filter((item) => role <= +item.min_role)
-        .forEach(item => {
+        .forEach((item) => {
           if (item.type === "Action" && item.action_name === name)
             menu_item = item;
-          else if (item.subitems)
-            search(item.subitems);
-        })
+          else if (item.subitems) search(item.subitems);
+        });
     search(menu_items);
     if (menu_item)
       try {
@@ -456,12 +466,12 @@ router.post(
           col: menu_item,
           referrer: req.get("Referrer"),
           req,
+          res,
         });
         res.json({ success: "ok", ...(result || {}) });
       } catch (e) {
         res.status(400).json({ error: e.message || e });
       }
-
     else res.status(404).json({ error: "Action not found" });
   })
 );

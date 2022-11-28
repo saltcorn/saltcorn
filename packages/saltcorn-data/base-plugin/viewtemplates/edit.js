@@ -1271,6 +1271,7 @@ module.exports = {
           req,
           table,
           row,
+          res,
           referrer: req.get("Referrer"),
         });
         return { json: { success: "ok", ...(result || {}) } };

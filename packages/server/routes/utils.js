@@ -73,6 +73,8 @@ function isAdmin(req, res, next) {
 const setLanguage = (req, res, state) => {
   if (req.user && req.user.language) {
     req.setLocale(req.user.language);
+  } else if (req.cookies?.lang) {
+    req.setLocale(req.cookies?.lang);
   }
   set_custom_http_headers(res, state);
 };
@@ -144,8 +146,7 @@ const setTenant = (req, res, next) => {
             next();
           });
         }
-      }
-      else {
+      } else {
         setLanguage(req, res);
         next();
       }

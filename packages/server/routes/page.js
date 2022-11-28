@@ -8,7 +8,11 @@ const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
 const { getState } = require("@saltcorn/data/db/state");
-const { error_catcher, scan_for_page_title, isAdmin } = require("../routes/utils.js");
+const {
+  error_catcher,
+  scan_for_page_title,
+  isAdmin,
+} = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
@@ -105,6 +109,7 @@ router.post(
             col,
             referrer: req.get("Referrer"),
             req,
+            res,
           });
           res.json({ success: "ok", ...(result || {}) });
         } catch (e) {

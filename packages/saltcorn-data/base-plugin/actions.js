@@ -733,7 +733,7 @@ module.exports = {
         },
       },
     ],
-    run: async ({ configuration: { language }, user, req }) => {
+    run: async ({ configuration: { language }, user, req, res }) => {
       if (user?.id) {
         const u = await User.findForSession({ id: user.id });
         await u.set_language(language);
@@ -745,6 +745,8 @@ module.exports = {
             req.flash("danger", err);
           }
         });
+      } else {
+        res?.cookie?.("lang", language);
       }
       return { reload_page: true };
     },
