@@ -23,6 +23,7 @@ const { div, code } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
+const { available_languages } = require("../models/config");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
@@ -709,6 +710,45 @@ module.exports = {
         .filter((s) => s)
         .join("&");
       return { goto: `/view/${viewname}?${qs}` };
+    },
+  },
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  set_user_language: {
+    configFields: async ({ table }) => [
+      {
+        name: "language",
+        type: "String",
+        required: true,
+        attributes: {
+          options: Object.entries(available_languages).map(
+            ([locale, language]) => ({
+              label: language,
+              name: locale,
+            })
+          ),
+        },
+      },
+    ],
+    run: async ({ configuration: { language }, user, req, res }) => {
+      if (user?.id) {
+        const u = await User.findForSession({ id: user.id });
+        await u.set_language(language);
+        req.login(u.session_object, function (err) {
+          if (!err) {
+            req.flash("success", req.__("Language changed to %s", language));
+            return { reload_page: true };
+          } else {
+            req.flash("danger", err);
+          }
+        });
+      } else {
+        res?.cookie?.("lang", language);
+      }
+      return { reload_page: true };
     },
   },
   /**

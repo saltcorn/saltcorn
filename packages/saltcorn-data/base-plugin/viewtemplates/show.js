@@ -138,11 +138,8 @@ const configuration_workflow = (req) =>
             );
             field_view_options.verification_url = ["as_text", "as_link"];
           }
-          const { link_view_opts, view_name_opts, view_relation_opts }
-            = await get_link_view_opts(
-              table,
-              context.viewname
-            );
+          const { link_view_opts, view_name_opts, view_relation_opts } =
+            await get_link_view_opts(table, context.viewname);
           const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations(
             true,
@@ -152,7 +149,9 @@ const configuration_workflow = (req) =>
             await table.get_child_relations(true);
           var agg_field_opts = {};
           child_relations.forEach(({ table, key_field, through }) => {
-            const aggKey = (through ? `${through.name}->` : '') + `${table.name}.${key_field.name}`
+            const aggKey =
+              (through ? `${through.name}->` : "") +
+              `${table.name}.${key_field.name}`;
             agg_field_opts[aggKey] = table.fields
               .filter((f) => !f.calculated || f.stored)
               .map((f) => f.name);
@@ -185,7 +184,10 @@ const configuration_workflow = (req) =>
             view_name_opts,
             view_relation_opts,
             mode: "show",
-            ownership: !!table.ownership_field_id || !!table.ownership_formula || table.name === "users",
+            ownership:
+              !!table.ownership_field_id ||
+              !!table.ownership_formula ||
+              table.name === "users",
           };
         },
       },
@@ -290,8 +292,9 @@ const run = async (
       })
     );
     for (const row of rows) {
-      row.verification_url = `${base}auth/verify?token=${row.verification_token
-        }&email=${encodeURIComponent(row.email)}`;
+      row.verification_url = `${base}auth/verify?token=${
+        row.verification_token
+      }&email=${encodeURIComponent(row.email)}`;
     }
   }
   await set_join_fieldviews({ table: tbl, layout, fields });
@@ -315,15 +318,13 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
-  if (!extra.req.generate_email)
-    return page_title_preamble + rendered;
+  if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
     return {
       markup: rendered.markup,
       styles: rendered.styles,
-    }
+    };
   }
-
 };
 
 /**
@@ -584,10 +585,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (fieldview && field.type === "File") {
         return val
           ? getState().fileviews[fieldview].run(
-            val,
-            row[`${field_name}__filename`],
-            cfg
-          )
+              val,
+              row[`${field_name}__filename`],
+              cfg
+            )
           : "";
       } else if (
         fieldview &&
@@ -626,12 +627,15 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         let restpath;
         [through, restpath] = agg_relation.split("->");
         [table, fld] = restpath.split(".");
-
       } else {
         [table, fld] = agg_relation.split(".");
       }
-      const targetNm = (stat + "_" + table + "_" + fld
-        +
+      const targetNm = (
+        stat +
+        "_" +
+        table +
+        "_" +
+        fld +
         db.sqlsanitize(aggwhere || "")
       ).toLowerCase();
       const val = row[targetNm];
@@ -762,7 +766,7 @@ module.exports = {
         joinFields,
         aggregations,
         limit: 5,
-        starFields: tbl.name === "users"
+        starFields: tbl.name === "users",
       });
       return {
         rows,
@@ -823,6 +827,7 @@ module.exports = {
           req,
           table,
           row,
+          res,
           referrer: req.get("Referrer"),
         });
         return { json: { success: "ok", ...(result || {}) } };

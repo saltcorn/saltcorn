@@ -599,16 +599,18 @@ const configTypes: ConfigTypes = {
     label: "Default File accept filter",
     default: null,
 
-    blurb: "Specifies a default filter for what file types the user can pick from the file input dialog box. "+
-        "Example is `.doc, text/csv,audio/*,video/*,image/*`",
+    blurb:
+      "Specifies a default filter for what file types the user can pick from the file input dialog box. " +
+      "Example is `.doc, text/csv,audio/*,video/*,image/*`",
   },
   /** @type {object} */
   csv_types_detection_rows: {
     type: "Integer",
     label: "CSV types detection rows",
     default: 500,
-    blurb: "Specifies how many rows from start of CSV file will be using to determine types in created tables. "+
-        "Default is 500",
+    blurb:
+      "Specifies how many rows from start of CSV file will be using to determine types in created tables. " +
+      "Default is 500",
   },
   /** @type {object} */
   csv_bool_values: {
@@ -623,14 +625,16 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "File upload debug",
     default: false,
-    blurb: "Turn on to debug file upload in express-fileupload."
-  },/** @type {object} */
+    blurb: "Turn on to debug file upload in express-fileupload.",
+  },
+  /** @type {object} */
   file_upload_timeout: {
     type: "Integer",
     label: "File upload timeout",
     default: 0,
-    blurb: "Defines how long to wait for data before aborting for express-fileupload. " +
-        "Set to 0 if you want to turn off timeout checks. ",
+    blurb:
+      "Defines how long to wait for data before aborting for express-fileupload. " +
+      "Set to 0 if you want to turn off timeout checks. ",
   },
   /** @type {object} */
   file_upload_limit: {
@@ -959,6 +963,8 @@ const check_email_mask = (email: string): boolean => {
  * @returns {void}
  */
 const set_multitenancy_cfg = (val: boolean): void => {
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  if (!isRoot) return;
   const cfg = getConfigFile();
   cfg.multi_tenant = val;
   console.log("writing config.multi_tenant to", val);

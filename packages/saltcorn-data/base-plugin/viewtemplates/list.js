@@ -35,10 +35,7 @@ const {
   run_action_column,
   add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
-const {
-  get_viewable_fields,
-  parse_view_select,
-} = require("./viewable_fields");
+const { get_viewable_fields, parse_view_select } = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
   get_async_expression_function,
@@ -74,8 +71,9 @@ const create_db_view = async (context) => {
   const schema = db.getTenantSchemaPrefix();
   // is there already a table with this name ? if yes add _sqlview
   const extable = await Table.findOne({ name: context.viewname });
-  const sql_view_name = `${schema}"${db.sqlsanitize(context.viewname)}${extable ? "_sqlview" : ""
-    }"`;
+  const sql_view_name = `${schema}"${db.sqlsanitize(context.viewname)}${
+    extable ? "_sqlview" : ""
+  }"`;
   await db.query(`drop view if exists ${sql_view_name};`);
   await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
@@ -122,12 +120,16 @@ const configuration_workflow = (req) =>
               : { name: context.exttable_name }
           );
           // fix legacy values missing view_name
-          (context?.columns || []).forEach(column => {
-            if (column.type === 'ViewLink' && column.view && !column.view_name) {
+          (context?.columns || []).forEach((column) => {
+            if (
+              column.type === "ViewLink" &&
+              column.view &&
+              !column.view_name
+            ) {
               const view_select = parse_view_select(column.view);
-              column.view_name = view_select.viewname
+              column.view_name = view_select.viewname;
             }
-          })
+          });
           const field_picker_repeat = await field_picker_fields({
             table,
             viewname: context.viewname,
@@ -148,14 +150,13 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Create new row"),
         onlyWhen: async (context) => {
-
           const create_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
             ({ state_fields, viewrow }) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf) => !sf.required)
           );
-          return create_views.length > 0
+          return create_views.length > 0;
         },
         form: async (context) => {
           const table = await Table.findOne(
@@ -262,11 +263,9 @@ const configuration_workflow = (req) =>
                 },
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
-
-
-            ]
-          })
-        }
+            ],
+          });
+        },
       },
       {
         name: req.__("Default state"),
@@ -338,8 +337,9 @@ const configuration_workflow = (req) =>
             name: "include_fml",
             label: req.__("Row inclusion formula"),
             class: "validate-expression",
-            sublabel: req.__("Only include rows where this formula is true. ")
-              + req.__("Use %s to access current user ID", code("$user_id")),
+            sublabel:
+              req.__("Only include rows where this formula is true. ") +
+              req.__("Use %s to access current user ID", code("$user_id")),
             type: "String",
           });
           formfields.push({
@@ -478,7 +478,7 @@ const run = async (
     default_state,
     create_view_location,
     create_link_style,
-    create_link_size
+    create_link_size,
   },
   stateWithId,
   extraOpts,
@@ -671,6 +671,7 @@ const run_action = async (
       req,
       table,
       row,
+      res,
       referrer: req.get("Referrer"),
     });
     return { json: { success: "ok", ...(result || {}) } };
@@ -698,8 +699,7 @@ module.exports = {
    * @param {object} opts
    * @returns {boolean}
    */
-  display_state_form: (opts) =>
-    false,
+  display_state_form: (opts) => false,
   /**
    * @param {object} opts
    * @returns {boolean}
@@ -749,7 +749,12 @@ module.exports = {
         fields
       );
       const where = await stateFieldsToWhere({ fields, state, table });
-      const q = await stateFieldsToQuery({ state, fields, prefix: "a.", stateHash });
+      const q = await stateFieldsToQuery({
+        state,
+        fields,
+        prefix: "a.",
+        stateHash,
+      });
       const rows_per_page =
         (default_state && default_state._rows_per_page) || 20;
       if (!q.limit) q.limit = rows_per_page;
@@ -775,7 +780,7 @@ module.exports = {
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
-        const ctx = { ...state, user_id: req.user?.id || null }
+        const ctx = { ...state, user_id: req.user?.id || null };
         let where1 = jsexprToWhere(default_state.include_fml, ctx);
         mergeIntoWhere(where, where1);
       }
