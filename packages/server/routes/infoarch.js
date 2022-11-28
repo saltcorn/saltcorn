@@ -45,11 +45,11 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const languageForm = (req) =>
+const languageForm = (req, hasSaveButton) =>
   new Form({
     action: "/site-structure/localizer/save-lang",
-    onChange: "saveAndContinue(this)",
-    noSubmitButton: true,
+    onChange: hasSaveButton ? undefined : "saveAndContinue(this)",
+    noSubmitButton: !hasSaveButton,
     fields: [
       {
         name: "name",
@@ -60,15 +60,18 @@ const languageForm = (req) =>
       {
         name: "locale",
         label: req.__("Locale"),
-        sublabel: req.__("Locale identifier short code, e.g. en, zh, fr, ar etc. "),
+        sublabel: req.__(
+          "Locale identifier short code, e.g. en, zh, fr, ar etc. "
+        ),
         type: "String",
         required: true,
       },
       {
         name: "is_default",
         label: req.__("Default language"),
-        sublabel:
-          req.__("Is this the default language in which the application is built?"),
+        sublabel: req.__(
+          "Is this the default language in which the application is built?"
+        ),
         type: "Bool",
       },
     ],
@@ -150,7 +153,7 @@ router.get(
       sub2_page: "New",
       contents: {
         type: "card",
-        contents: [renderForm(languageForm(req), req.csrfToken())],
+        contents: [renderForm(languageForm(req, true), req.csrfToken())],
       },
     });
   })
