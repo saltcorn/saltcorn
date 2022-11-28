@@ -11,7 +11,7 @@ const { getConfigFile, configFilePath } = require("../db/connect");
 import { writeFileSync } from "fs";
 import { tz } from "moment-timezone";
 import utils from "../utils";
-const { isNode } = utils;
+const { isNode, sleep } = utils;
 const allTimezones = tz.names();
 const defaultTimezone = tz.guess();
 
@@ -598,23 +598,25 @@ const configTypes: ConfigTypes = {
     type: "String",
     label: "Default Files accept filter",
     default: null,
-    blurb: "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
+    blurb:
+      "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
   },
   /** @type {object} */
   csv_types_detection_rows: {
     type: "Integer",
     label: "CSV types detection rows",
     default: 500,
-    blurb: "Specifies how many rows from start of CSV file will be using to determine types in created tables. Default is 500",
+    blurb:
+      "Specifies how many rows from start of CSV file will be using to determine types in created tables. Default is 500",
   },
   /** @type {object} */
   csv_bool_values: {
     type: "String",
     label: "CSV bool values",
     default: "true false yes no on off y n t f",
-    blurb: "Allows to redefine list of values that recognized as bool values in cvs file",
+    blurb:
+      "Allows to redefine list of values that recognized as bool values in cvs file",
   },
-
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
@@ -848,7 +850,10 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
  * @param {string} pkg
  * @returns {Promise<string>}
  */
-const get_latest_npm_version = async (pkg: string): Promise<string> => {
+const get_latest_npm_version = async (
+  pkg: string,
+  timeout_ms?: number
+): Promise<string> => {
   const { getState } = require("../db/state");
   const { isStale } = require("../utils");
   const stored = getState().getConfig("latest_npm_version", {});
@@ -857,13 +862,25 @@ const get_latest_npm_version = async (pkg: string): Promise<string> => {
     return stored[pkg].version;
   }
   try {
-    const latest = await latestVersion(pkg);
-    const stored1 = getState().getConfigCopy("latest_npm_version", {});
-    await getState().setConfig("latest_npm_version", {
-      ...stored1,
-      [pkg]: { time: new Date(), version: latest },
-    });
-    return latest;
+    const fetch_it = async () => {
+      const latest = await latestVersion(pkg);
+      const stored1 = getState().getConfigCopy("latest_npm_version", {});
+      await getState().setConfig("latest_npm_version", {
+        ...stored1,
+        [pkg]: { time: new Date(), version: latest },
+      });
+      return latest;
+    };
+
+    if (timeout_ms) {
+      const canceller = async () => {
+        await sleep(timeout_ms);
+        return "";
+      };
+      return Promise.race([fetch_it().catch((e) => ""), canceller()]).catch(
+        (e) => ""
+      );
+    } else return await fetch_it();
   } catch (e) {
     if (stored[pkg]) return stored[pkg].version;
     else return "";

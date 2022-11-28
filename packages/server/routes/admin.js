@@ -366,7 +366,7 @@ router.get(
                   post_btn(
                     "/admin/backup",
                     i({ class: "fas fa-download me-2" }) +
-                    req.__("Download a backup"),
+                      req.__("Download a backup"),
                     req.csrfToken(),
                     {
                       btnClass: "btn-outline-primary",
@@ -385,21 +385,21 @@ router.get(
           },
           isRoot
             ? {
-              type: "card",
-              title: req.__("Automated backup"),
-              contents: div(
-                renderForm(backupForm, req.csrfToken()),
-                a(
-                  { href: "/admin/auto-backup-list" },
-                  req.__("Restore/download automated backups &raquo;")
-                ),
-                script(
-                  domReady(
-                    `$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`
+                type: "card",
+                title: req.__("Automated backup"),
+                contents: div(
+                  renderForm(backupForm, req.csrfToken()),
+                  a(
+                    { href: "/admin/auto-backup-list" },
+                    req.__("Restore/download automated backups &raquo;")
+                  ),
+                  script(
+                    domReady(
+                      `$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`
+                    )
                   )
-                )
-              ),
-            }
+                ),
+              }
             : { type: "blank", contents: "" },
           {
             type: "card",
@@ -407,7 +407,9 @@ router.get(
             contents: div(
               p(
                 i(
-                  req.__("Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns).")
+                  req.__(
+                    "Snapshots store your application structure and definition, without the table data. Individual views and pages can be restored from snapshots from the <a href='/viewedit'>view</a> or <a href='/pageedit'>pages</a> overviews (\"Restore\" from individual page or view dropdowns)."
+                  )
                 )
               ),
               renderForm(aSnapshotForm, req.csrfToken()),
@@ -475,12 +477,17 @@ router.get(
               ol(
                 li(req.__("Download one of the backups above")),
                 li(
-                  a({ href: "/admin/clear-all" }, req.__("Clear this application")),
+                  a(
+                    { href: "/admin/clear-all" },
+                    req.__("Clear this application")
+                  ),
                   " ",
                   req.__("(tick all boxes)")
                 ),
                 li(
-                  req.__("When prompted to create the first user, click the link to restore a backup")
+                  req.__(
+                    "When prompted to create the first user, click the link to restore a backup"
+                  )
                 ),
                 li(req.__("Select the downloaded backup file"))
               )
@@ -768,7 +775,8 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    const latest = isRoot && (await get_latest_npm_version("@saltcorn/cli"));
+    const latest =
+      isRoot && (await get_latest_npm_version("@saltcorn/cli", 1000));
     const is_latest = packagejson.version === latest;
     const git_commit = getGitRevision();
     const can_update =
@@ -832,83 +840,71 @@ router.get(
                     th(req.__("Saltcorn version")),
                     td(
                       packagejson.version +
-                      (isRoot && can_update
-                        ? post_btn(
-                          "/admin/upgrade",
-                          req.__("Upgrade"),
-                          req.csrfToken(),
-                          {
-                            btnClass: "btn-primary btn-sm",
-                            formClass: "d-inline",
-                          }
-                        )
-                        : isRoot && is_latest
+                        (isRoot && can_update
+                          ? post_btn(
+                              "/admin/upgrade",
+                              req.__("Upgrade"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : isRoot && is_latest
                           ? span(
-                            { class: "badge bg-primary ms-2" },
-                            req.__("Latest")
-                          ) +
-                          post_btn(
-                            "/admin/check-for-upgrade",
-                            req.__("Check for updates"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm px-1 py-0",
-                              formClass: "d-inline",
-                            }
-                          )
+                              { class: "badge bg-primary ms-2" },
+                              req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check for updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
+                            )
                           : "")
                     )
                   ),
                   git_commit &&
-                  tr(
-                    th(req.__("git commit")),
-                    td(
-                      a(
-                        {
-                          href:
-                            "https://github.com/saltcorn/saltcorn/commit/" +
-                            git_commit,
-                        },
-                        git_commit.substring(0, 6)
+                    tr(
+                      th(req.__("git commit")),
+                      td(
+                        a(
+                          {
+                            href:
+                              "https://github.com/saltcorn/saltcorn/commit/" +
+                              git_commit,
+                          },
+                          git_commit.substring(0, 6)
+                        )
                       )
-                    )
-                  ),
+                    ),
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database type")),
                     td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
                   ),
-                  (isRoot?
-                    tr(
-                        th(req.__("Database host")),
-                        td(db.connectObj.host)
-                    )
-                  : ""),
-                  (isRoot?
-                    tr(
-                        th(req.__("Database port")),
-                        td(db.connectObj.port)
-                    )
-                  : ""),
-                  (isRoot?
-                    tr(
+                  isRoot
+                    ? tr(th(req.__("Database host")), td(db.connectObj.host))
+                    : "",
+                  isRoot
+                    ? tr(th(req.__("Database port")), td(db.connectObj.port))
+                    : "",
+                  isRoot
+                    ? tr(
                         th(req.__("Database name")),
                         td(db.connectObj.database)
-                    )
-                  : ""),
-                  (isRoot?
-                     tr(
-                        th(req.__("Database user")),
-                        td(db.connectObj.user)
-                     )
-                  : ""),
+                      )
+                    : "",
+                  isRoot
+                    ? tr(th(req.__("Database user")), td(db.connectObj.user))
+                    : "",
+                  tr(th(req.__("Database schema")), td(db.getTenantSchema())),
                   tr(
-                      th(req.__("Database schema")),
-                      td(db.getTenantSchema())
-                  ),
-                  tr(
-                     th(req.__("Process uptime")),
-                     td(moment(get_process_init_time()).fromNow(true))
+                    th(req.__("Process uptime")),
+                    td(moment(get_process_init_time()).fromNow(true))
                   )
                 )
               ),
@@ -974,7 +970,9 @@ router.post(
       });
       child.on("exit", function (code, signal) {
         res.end(
-          req.__(`Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`)
+          req.__(
+            `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+          )
         );
         setTimeout(() => {
           if (process.send) process.send("RestartServer");
@@ -1178,8 +1176,8 @@ router.post(
           req.__(
             "LetsEncrypt SSL enabled. Restart for changes to take effect."
           ) +
-          " " +
-          a({ href: "/admin/system" }, req.__("Restart here"))
+            " " +
+            a({ href: "/admin/system" }, req.__("Restart here"))
         );
         res.redirect("/useradmin/ssl");
       } catch (e) {
@@ -1255,13 +1253,13 @@ router.get(
           contents: div(
             pass
               ? div(
-                { class: "alert alert-success", role: "alert" },
-                i({ class: "fas fa-check-circle fa-lg me-2" }),
-                h5(
-                  { class: "d-inline" },
-                  req.__("No errors detected during configuration check")
+                  { class: "alert alert-success", role: "alert" },
+                  i({ class: "fas fa-check-circle fa-lg me-2" }),
+                  h5(
+                    { class: "d-inline" },
+                    req.__("No errors detected during configuration check")
+                  )
                 )
-              )
               : errors.map(mkError),
             (warnings || []).map(mkWarning)
           ),
@@ -1819,15 +1817,11 @@ router.post(
  * @returns {Promise<Form>} form
  */
 const dev_form = async (req) => {
-    return await config_fields_form({
-        req,
-        field_names: [
-            "development_mode",
-            "log_sql",
-            "log_level",
-        ],
-        action: "/admin/dev",
-    });
+  return await config_fields_form({
+    req,
+    field_names: ["development_mode", "log_sql", "log_level"],
+    action: "/admin/dev",
+  });
 };
 /**
  * Developer Mode page
@@ -1836,19 +1830,19 @@ const dev_form = async (req) => {
  * @memberof module:routes/admin~routes/adminRouter
  */
 router.get(
-    "/dev",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await dev_form(req);
-        send_admin_page({
-            res,
-            req,
-            active_sub: "Development",
-            contents: {
-                type: "card",
-                title: req.__("Development settings"),
-                contents: [
-                    renderForm(form, req.csrfToken())/*,
+  "/dev",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await dev_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Development",
+      contents: {
+        type: "card",
+        title: req.__("Development settings"),
+        contents: [
+          renderForm(form, req.csrfToken()) /*,
                     a(
                         {
                             id: "testemail",
@@ -1856,11 +1850,11 @@ router.get(
                             class: "btn btn-primary",
                         },
                         req.__("Send test email")
-                    ),*/
-                ],
-            },
-        });
-    })
+                    ),*/,
+        ],
+      },
+    });
+  })
 );
 
 /**
@@ -1870,27 +1864,27 @@ router.get(
  * @memberof module:routes/admin~routes/adminRouter
  */
 router.post(
-    "/dev",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await dev_form(req);
-        form.validate(req.body);
-        if (form.hasErrors) {
-            send_admin_page({
-                res,
-                req,
-                active_sub: "Development",
-                contents: {
-                    type: "card",
-                    title: req.__("Development settings"),
-                    contents: [renderForm(form, req.csrfToken())],
-                },
-            });
-        } else {
-            await save_config_from_form(form);
-            req.flash("success", req.__("Development mode settings updated"));
-            if (!req.xhr) res.redirect("/admin/dev");
-            else res.json({ success: "ok" });
-        }
-    })
+  "/dev",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await dev_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Development",
+        contents: {
+          type: "card",
+          title: req.__("Development settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Development mode settings updated"));
+      if (!req.xhr) res.redirect("/admin/dev");
+      else res.json({ success: "ok" });
+    }
+  })
 );

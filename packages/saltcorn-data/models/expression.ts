@@ -168,7 +168,9 @@ function jsexprToWhere(
           return (val: any) => ({
             [cleftName]: {
               inSelect: {
-                table: `${db.getTenantSchemaPrefix()}"${field.reftable_name}"`,
+                table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(
+                  field.reftable_name
+                )}"`,
                 field: "id", //wild guess?
                 where: { [crightName]: val },
               },

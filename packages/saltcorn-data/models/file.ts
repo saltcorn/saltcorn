@@ -350,7 +350,9 @@ class File {
     for (const field of fileFields) {
       const table = Table.findOne({ id: field.table_id });
       await db.query(
-        `update ${schema}"${table.name}" set "${field.name}" = $1 where "${field.name}" = $2`,
+        `update ${schema}"${db.sqlsanitize(table.name)}" set "${
+          field.name
+        }" = $1 where "${field.name}" = $2`,
         [to, from]
       );
     }
