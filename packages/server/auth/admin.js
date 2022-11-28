@@ -7,20 +7,12 @@
 // todo refactor to few modules + rename to be in sync with router url
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
-
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const {
-  mkTable,
-  renderForm,
-  link,
-  post_btn,
-  settingsDropdown,
-  post_dropdown_item,
-} = require("@saltcorn/markup");
+const { mkTable, renderForm, link, post_btn, settingsDropdown, post_dropdown_item } = require("@saltcorn/markup");
 const { isAdmin, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
@@ -35,16 +27,7 @@ const {
   is_hsts_tld,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
-const {
-  expressionValidator,
-} = require("@saltcorn/data/models/expression");
-/**
- * @type {object}
- * @const
- * @namespace auth/adminRouter
- * @category server
- * @subcategory auth
- */
+const { expressionValidator } = require("@saltcorn/data/models/expression");
 const router = new Router();
 module.exports = router;
 
@@ -358,7 +341,6 @@ const permissions_settings_form = async (req) =>
             "min_role_upload",
             "min_role_apikeygen",
 //hidden            "exttables_min_role_read",
-            "default_files_accept_filter"
         ],
         action: "/useradmin/permissions",
         submitLabel: req.__("Save"),

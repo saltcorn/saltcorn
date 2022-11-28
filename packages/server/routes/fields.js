@@ -66,7 +66,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
   return new Form({
     action: "/field",
     validator: (vs) => {
-      if (vs.calculated && vs.type == "File")
+      if (vs.calculated && vs.type === "File")
         return req.__("Calculated fields cannot have File type");
       if (vs.calculated && vs.type.startsWith("Key to"))
         return req.__("Calculated fields cannot have Key type");
@@ -182,8 +182,8 @@ const fieldFlow = (req) =>
   new Workflow({
     action: "/field",
     onDone: async (context) => {
-      const thetype = getState().types[context.type];
-      var attributes = context.attributes || {};
+      //const thetype = getState().types[context.type];
+      const attributes = context.attributes || {};
       attributes.default = context.default;
       attributes.summary_field = context.summary_field;
       attributes.include_fts = context.include_fts;
@@ -291,7 +291,7 @@ const fieldFlow = (req) =>
         form: async (context) => {
           if (context.type === "File") {
             const roles = await User.get_roles();
-            const default_file_accept_filter = await getState().getConfig("default_files_accept_filter");
+            const default_file_accept_filter = await getState().getConfig("files_accept_filter_default");
             //console.log("default_file_accept_filter",default_file_accept_filter);
             return new Form({
               fields: [
@@ -645,7 +645,7 @@ router.post(
 );
 
 /**
- * @name post/test-formula
+ * Test formula
  * @function
  * @memberof module:routes/fields~fieldsRouter
  * @function

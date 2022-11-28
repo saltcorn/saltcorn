@@ -13,24 +13,12 @@ const s3storage = require("../s3storage");
 const resizer = require("resize-with-sharp-or-jimp");
 const db = require("@saltcorn/data/db");
 
-const {
-  mkTable,
-  renderForm,
-  link,
-  //post_btn,
-  post_delete_btn,
-} = require("@saltcorn/markup");
+const { renderForm } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, setTenant } = require("./utils.js");
-const { h1, div, text, button, i, a } = require("@saltcorn/markup/tags");
-// const { csrfField } = require("./utils");
+const { h1, div, text } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
-const {
-  send_files_page,
-  config_fields_form,
-  save_config_from_form,
-} = require("../markup/admin");
-// const fsp = require("fs").promises;
+const { send_files_page, config_fields_form, save_config_from_form } = require("../markup/admin");
 const fs = require("fs");
 const path = require("path");
 
@@ -74,8 +62,6 @@ router.get(
     const safeDir = File.normalise(dir || "/")
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
-    // const accept_attr = await getState().getConfig("files_accept_filter");
-    //console.log(rows);
     if (safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir)
       if (dirname === ".") dirname = "/"
@@ -396,12 +382,12 @@ router.post(
 );
 
 /**
- * Storage settings form definition
+ * S3 Storage settings form definition
  * @param {object} req request
  * @returns {Promise<Form>} form
  */
 const storage_form = async (req) => {
-  const form = await config_fields_form({
+  return await config_fields_form({
     req,
     field_names: [
       "storage_s3_enabled",
@@ -415,11 +401,10 @@ const storage_form = async (req) => {
     ],
     action: "/files/storage",
   });
-  return form;
 };
 
 /**
- * @name get/storage
+ * Show S3 Settings
  * @function
  * @memberof module:routes/admin~routes/adminRouter
  */
@@ -442,7 +427,7 @@ router.get(
 );
 
 /**
- * @name post/email
+ * Update S3 Settings
  * @function
  * @memberof module:routes/admin~routes/adminRouter
  */
@@ -472,4 +457,79 @@ router.post(
       } else res.json({ success: "ok" });
     }
   })
+);
+
+/**
+ * Files settings form definition
+ * @param {object} req request
+ * @returns {Promise<Form>} form
+ */
+const files_settings_form = async (req) => {
+    return await config_fields_form({
+        req,
+        field_names: [
+            "min_role_upload",
+            "file_accept_filter_default",
+            "file_upload_debug",
+            "file_upload_limit",
+            "file_upload_timeout",
+        ],
+        action: "/files/settings",
+    });
+};
+
+/**
+ * Show Files Settings
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+    "/settings",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await files_settings_form(req);
+        send_files_page({
+            res,
+            req,
+            active_sub: "Settings",
+            contents: {
+                type: "card",
+                title: req.__("Files settings"),
+                contents: [renderForm(form, req.csrfToken())],
+            },
+        });
+    })
+);
+
+/**
+ * Update Files Settings
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+    "/settings",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await files_settings_form(req);
+        form.validate(req.body);
+        if (form.hasErrors) {
+            send_admin_page({
+                res,
+                req,
+                active_sub: "Settings",
+                contents: {
+                    type: "card",
+                    title: req.__("Files settings"),
+                    contents: [renderForm(form, req.csrfToken())],
+                },
+            });
+        } else {
+            await save_config_from_form(form);
+
+            if (!req.xhr) {
+                req.flash("success", req.__("Files settings updated"));
+                res.redirect("/files/settings");
+            } else res.json({ success: "ok" });
+        }
+    })
 );
