@@ -12,6 +12,7 @@ import {
   instanceOfErrorMsg,
   instanceOfType,
   instanceOfSuccessMsg,
+  Type,
 } from "@saltcorn/types/common_types";
 import type { FieldLike } from "@saltcorn/types/base_types";
 import Field from "./field";
@@ -159,6 +160,25 @@ class Form implements AbstractForm {
       strs.push(`${k}: ${v}`);
     });
     return strs.join("; ");
+  }
+
+  async asyncValidate(v: any): Promise<{ success: any } | { errors: any }> {
+    const vres = this.validate(v);
+    if (instanceOfErrorMsg(vres)) return vres;
+    for (const f of this.fields) {
+      let typeObj = f.type as Type;
+      if (typeObj?.postProcess) {
+        const ppres = await typeObj?.postProcess(this.values[f.name]);
+        if (ppres?.error) {
+          this.hasErrors = true;
+          this.errors[f.name] = ppres.error;
+        } else if (typeof ppres?.success !== "undefined") {
+          this.values[f.name] = ppres.success;
+        }
+      }
+    }
+    if (this.hasErrors) return { errors: this.errors };
+    else return { success: this.values };
   }
 
   /**
