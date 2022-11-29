@@ -83,33 +83,33 @@ const tableForm = async (table, req) => {
     fields: [
       ...(!table.external
         ? [
-          {
-            label: req.__("Ownership field"),
-            name: "ownership_field_id",
-            sublabel: req.__(
-              "The user referred to in this field will be the owner of the row"
-            ),
-            input_type: "select",
-            options: [
-              { value: "", label: req.__("None") },
-              ...userFields,
-              { value: "_formula", label: req.__("Formula") },
-            ],
-          },
-          {
-            name: "ownership_formula",
-            label: req.__("Ownership formula"),
-            validator: expressionValidator,
-            type: "String",
-            class: "validate-expression",
-            sublabel:
-              req.__("User is treated as owner if true. In scope: ") +
-              ["user", ...fields.map((f) => f.name)]
-                .map((fn) => code(fn))
-                .join(", "),
-            showIf: { ownership_field_id: "_formula" },
-          },
-        ]
+            {
+              label: req.__("Ownership field"),
+              name: "ownership_field_id",
+              sublabel: req.__(
+                "The user referred to in this field will be the owner of the row"
+              ),
+              input_type: "select",
+              options: [
+                { value: "", label: req.__("None") },
+                ...userFields,
+                { value: "_formula", label: req.__("Formula") },
+              ],
+            },
+            {
+              name: "ownership_formula",
+              label: req.__("Ownership formula"),
+              validator: expressionValidator,
+              type: "String",
+              class: "validate-expression",
+              sublabel:
+                req.__("User is treated as owner if true. In scope: ") +
+                ["user", ...fields.map((f) => f.name)]
+                  .map((fn) => code(fn))
+                  .join(", "),
+              showIf: { ownership_field_id: "_formula" },
+            },
+          ]
         : []),
       // description of table
       {
@@ -129,29 +129,29 @@ const tableForm = async (table, req) => {
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
-        attributes: { asideNext: !table.external }
+        attributes: { asideNext: !table.external },
       },
       ...(table.external
         ? []
         : [
-          {
-            label: req.__("Minimum role to write"),
-            name: "min_role_write",
-            input_type: "select",
-            sublabel: req.__(
-              "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
-            ),
-            options: roleOptions,
-          },
-          {
-            label: req.__("Version history"),
-            sublabel: req.__(
-              "Version history allows to track table data changes"
-            ),
-            name: "versioned",
-            type: "Bool",
-          },
-        ]),
+            {
+              label: req.__("Minimum role to write"),
+              name: "min_role_write",
+              input_type: "select",
+              sublabel: req.__(
+                "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
+              ),
+              options: roleOptions,
+            },
+            {
+              label: req.__("Version history"),
+              sublabel: req.__(
+                "Version history allows to track table data changes"
+              ),
+              name: "versioned",
+              type: "Bool",
+            },
+          ]),
     ],
   });
   if (table) {
@@ -218,11 +218,11 @@ const discoverForm = (tables, req) => {
     blurb:
       tables.length > 0
         ? req.__(
-          "The following tables in your database can be imported into Saltcorn:"
-        )
+            "The following tables in your database can be imported into Saltcorn:"
+          )
         : req.__(
-          "There are no tables in the database that can be imported into Saltcorn."
-        ),
+            "There are no tables in the database that can be imported into Saltcorn."
+          ),
     submitLabel: req.__("Import"),
     fields: tables.map((t) => ({
       name: t.table_name,
@@ -328,7 +328,7 @@ router.get(
                     name: "name",
                     input_type: "text",
                   },
-                    // todo implement file mask filter like , accept: "text/csv"
+                  // todo implement file mask filter like , accept: "text/csv"
                   { label: req.__("File"), name: "file", input_type: "file" },
                 ],
               }),
@@ -516,7 +516,12 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
-      if (["summary_field", "default"].includes(k)) return;
+      if (
+        ["summary_field", "default", "on_delete_cascade", "on_delete"].includes(
+          k
+        )
+      )
+        return;
       if (v || v === 0) s += badge("secondary", k);
     });
   }
@@ -575,11 +580,11 @@ router.get(
             key: (r) =>
               r.type === "Key"
                 ? `Key to ` +
-                a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
+                  a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
                 : (r.type && r.type.name) ||
-                r.type ||
-                r.typename +
-                span({ class: "badge bg-danger ms-1" }, "Unknown type"),
+                  r.type ||
+                  r.typename +
+                    span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
           {
             label: "",
@@ -593,23 +598,23 @@ router.get(
           ...(table.external
             ? []
             : [
-              {
-                label: req.__("Edit"),
-                key: (r) => link(`/field/${r.id}`, req.__("Edit")),
-              },
-            ]),
+                {
+                  label: req.__("Edit"),
+                  key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+                },
+              ]),
           ...(table.external || db.isSQLite
             ? []
             : [
-              {
-                label: req.__("Delete"),
-                key: (r) =>
-                  (table.name === "users" && r.name === "email") ||
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    (table.name === "users" && r.name === "email") ||
                     r.primary_key
-                    ? ""
-                    : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
-              },
-            ]),
+                      ? ""
+                      : post_delete_btn(`/field/delete/${r.id}`, req, r.name),
+                },
+              ]),
         ],
         fields,
         { hover: true }
@@ -618,17 +623,17 @@ router.get(
         tableHtml,
         inbound_refs.length > 0
           ? req.__("Inbound keys: ") +
-          inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
-          "<br>"
+            inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
+            "<br>"
           : "",
         !table.external &&
-        a(
-          {
-            href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field mt-2",
-          },
-          req.__("Add field")
-        ),
+          a(
+            {
+              href: `/field/new/${table.id}`,
+              class: "btn btn-primary add-field mt-2",
+            },
+            req.__("Add field")
+          ),
       ];
     }
     var viewCard;
@@ -700,8 +705,8 @@ router.get(
               table.name === "users"
                 ? `/useradmin/`
                 : fields.length === 1
-                  ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                  : `/list/${table.name}`,
+                ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
+                : `/list/${table.name}`,
           },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
@@ -721,75 +726,75 @@ router.get(
         )
       ),
       !table.external &&
-      div(
-        { class: "mx-auto" },
-        form(
-          {
-            method: "post",
-            action: `/table/upload_to_table/${table.name}`,
-            encType: "multipart/form-data",
-            acceptCharset: "UTF-8",
-          },
-          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-          label(
-            { class: "btn-link", for: "upload_to_table" },
-            i({ class: "fas fa-2x fa-upload" }),
-            "<br/>",
-            req.__("Upload CSV")
-          ),
-          input({
-            id: "upload_to_table",
-            name: "file",
-            type: "file",
-            accept: "text/csv,.csv",
-            onchange: "this.form.submit();",
-          })
-        )
-      ),
+        div(
+          { class: "mx-auto" },
+          form(
+            {
+              method: "post",
+              action: `/table/upload_to_table/${table.name}`,
+              encType: "multipart/form-data",
+              acceptCharset: "UTF-8",
+            },
+            input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+            label(
+              { class: "btn-link", for: "upload_to_table" },
+              i({ class: "fas fa-2x fa-upload" }),
+              "<br/>",
+              req.__("Upload CSV")
+            ),
+            input({
+              id: "upload_to_table",
+              name: "file",
+              type: "file",
+              accept: "text/csv,.csv",
+              onchange: "this.form.submit();",
+            })
+          )
+        ),
       // only if table is not external
       !table.external &&
-      div(
-        { class: "mx-auto" },
-        settingsDropdown(`dataMenuButton`, [
-          a(
-            {
-              class: "dropdown-item",
-              href: `/table/constraints/${table.id}`,
-            },
-            '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
-          ),
-          // rename table doesnt supported for sqlite
-          !db.isSQLite &&
-          table.name !== "users" &&
-          a(
-            {
-              class: "dropdown-item",
-              href: `/table/rename/${table.id}`,
-            },
-            '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
-          ),
-          post_dropdown_item(
-            `/table/recalc-stored/${table.name}`,
-            '<i class="fas fa-sync"></i>&nbsp;' +
-            req.__("Recalculate stored fields"),
-            req
-          ),
-          post_dropdown_item(
-            `/table/delete-all-rows/${table.name}`,
-            '<i class="far fa-trash-alt"></i>&nbsp;' +
-            req.__("Delete all rows"),
-            req,
-            true
-          ),
-          table.name !== "users" &&
-          post_dropdown_item(
-            `/table/forget-table/${table.id}`,
-            '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
-            req,
-            true
-          ),
-        ])
-      )
+        div(
+          { class: "mx-auto" },
+          settingsDropdown(`dataMenuButton`, [
+            a(
+              {
+                class: "dropdown-item",
+                href: `/table/constraints/${table.id}`,
+              },
+              '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
+            ),
+            // rename table doesnt supported for sqlite
+            !db.isSQLite &&
+              table.name !== "users" &&
+              a(
+                {
+                  class: "dropdown-item",
+                  href: `/table/rename/${table.id}`,
+                },
+                '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
+              ),
+            post_dropdown_item(
+              `/table/recalc-stored/${table.name}`,
+              '<i class="fas fa-sync"></i>&nbsp;' +
+                req.__("Recalculate stored fields"),
+              req
+            ),
+            post_dropdown_item(
+              `/table/delete-all-rows/${table.name}`,
+              '<i class="far fa-trash-alt"></i>&nbsp;' +
+                req.__("Delete all rows"),
+              req,
+              true
+            ),
+            table.name !== "users" &&
+              post_dropdown_item(
+                `/table/forget-table/${table.id}`,
+                '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
+                req,
+                true
+              ),
+          ])
+        )
     );
     // add table form
     if (table.ownership_formula && !table.ownership_field_id)
@@ -812,12 +817,12 @@ router.get(
         },
         ...(fields.length > 0
           ? [
-            {
-              type: "card",
-              title: req.__("Table data"),
-              contents: dataCard,
-            },
-          ]
+              {
+                type: "card",
+                title: req.__("Table data"),
+                contents: dataCard,
+              },
+            ]
           : []),
         ...(viewCard ? [viewCard] : []),
         {
@@ -864,7 +869,7 @@ router.post(
       // todo check that works after where change
       // todo findOne can be have parameter for external table here
       //we can only save min role
-      const table = await Table.findOne( { name : v.name });
+      const table = await Table.findOne({ name: v.name });
       if (table) {
         const exttables_min_role_read = getState().getConfigCopy(
           "exttables_min_role_read",
@@ -883,13 +888,13 @@ router.post(
       const table = await Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
       let hasError = false;
-      let notify = ""
+      let notify = "";
       if (!rest.versioned) rest.versioned = false;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
         if (typeof fmlValidRes === "string") {
-          notify = req.__(`Invalid ownership formula: %s`, fmlValidRes)
+          notify = req.__(`Invalid ownership formula: %s`, fmlValidRes);
           hasError = true;
         }
       } else rest.ownership_formula = null;
@@ -1023,16 +1028,18 @@ router.get(
         req.__("Create from CSV upload")
       ),
       !db.isSQLite &&
-      a(
-        {
-          href: `/table/discover`,
-          class: "btn btn-secondary mt-1",
-          title: req.__("Discover tables that are already in the Database, but not known to Saltcorn"),
-        },
-        i({ class: "fas fa-map-signs me-1" }),
+        a(
+          {
+            href: `/table/discover`,
+            class: "btn btn-secondary mt-1",
+            title: req.__(
+              "Discover tables that are already in the Database, but not known to Saltcorn"
+            ),
+          },
+          i({ class: "fas fa-map-signs me-1" }),
 
-        req.__("Discover tables")
-      )
+          req.__("Discover tables")
+        )
     );
     res.sendWrap(req.__("Tables"), {
       above: [

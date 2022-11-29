@@ -359,6 +359,13 @@ module.exports = {
           type: "String",
           required: true,
         },
+        {
+          name: "only_if",
+          label: "Only if",
+          sublabel:
+            "Only send email if this formula evaluates to true. Leave blank to always send email",
+          type: "String",
+        },
       ];
     },
     requireRow: true,
@@ -379,10 +386,16 @@ module.exports = {
         to_email,
         to_email_field,
         to_email_fixed,
+        only_if,
       },
       user,
     }) => {
       let to_addr;
+
+      if (only_if) {
+        const bres = eval_expression(only_if, row);
+        if (!bres) return;
+      }
       switch (to_email) {
         case "Fixed":
           to_addr = to_email_fixed;
