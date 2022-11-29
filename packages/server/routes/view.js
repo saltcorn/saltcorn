@@ -71,8 +71,11 @@ router.get(
         title: view.name,
         what: req.__("View"),
         url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+        cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}`,
         contents,
         req,
+        viewtemplate: view.viewtemplate,
+        table: view.table_id || view.exttable_name,
       })
     );
   })

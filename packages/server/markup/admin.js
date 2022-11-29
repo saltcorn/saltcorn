@@ -68,14 +68,40 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
  * @param {*} opts.req
  * @returns {object}
  */
-const add_edit_bar = ({ role, title, contents, what, url, req }) => {
+const add_edit_bar = ({
+  role,
+  title,
+  contents,
+  what,
+  url,
+  req,
+  viewtemplate,
+  table,
+  cfgUrl,
+}) => {
   if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
   if (role > 1) return contents;
+  let viewSpec = "";
+  if (viewtemplate) viewSpec = viewtemplate;
+  if (table) {
+    const tbl = Table.findOne(table);
+    if (tbl)
+      viewSpec = `${viewSpec} on <a href="/table/${table}">${tbl.name}</a>`;
+  }
+
   const bar = div(
     { class: "alert alert-light d-print-none admin-edit-bar" },
     title,
-    what && span({ class: "ms-1 badge bg-primary" }, what),
-    a({ class: "ms-4", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" }))
+    what && span({ class: "ms-1 me-2 badge bg-primary" }, what),
+    viewSpec,
+    a({ class: "ms-2", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" })),
+    cfgUrl
+      ? a(
+          { class: "ms-1", href: cfgUrl },
+          "Configure&nbsp;",
+          i({ class: "fas fa-cog" })
+        )
+      : ""
   );
 
   if (contents.above) {
@@ -113,35 +139,35 @@ const send_settings_page = ({
   const pillCard = no_nav_pills
     ? []
     : [
-      {
-        type: "card",
-        class: "mt-0",
-        contents: div(
-          { class: "d-flex" },
-          ul(
-            { class: "nav nav-pills plugin-section" },
-            sub_sections.map(({ text, href }) =>
-              li(
-                { class: "nav-item" },
-                a(
-                  {
-                    href,
-                    class: ["nav-link", active_sub === text && "active"],
-                  },
-                  req.__(text)
+        {
+          type: "card",
+          class: "mt-0",
+          contents: div(
+            { class: "d-flex" },
+            ul(
+              { class: "nav nav-pills plugin-section" },
+              sub_sections.map(({ text, href }) =>
+                li(
+                  { class: "nav-item" },
+                  a(
+                    {
+                      href,
+                      class: ["nav-link", active_sub === text && "active"],
+                    },
+                    req.__(text)
+                  )
                 )
               )
             )
-          )
-        ),
-      },
-    ];
+          ),
+        },
+      ];
   // headers
   const title = headers
     ? {
-      title: req.__(active_sub),
-      headers,
-    }
+        title: req.__(active_sub),
+        headers,
+      }
     : req.__(active_sub);
   res.sendWrap(title, {
     above: [
@@ -158,10 +184,10 @@ const send_settings_page = ({
           },
           ...(sub2_page
             ? [
-              {
-                text: sub2_page,
-              },
-            ]
+                {
+                  text: sub2_page,
+                },
+              ]
             : []),
         ],
       },
@@ -190,9 +216,9 @@ const send_infoarch_page = (args) => {
       { text: "Languages", href: "/site-structure/localizer" },
       ...(tenant_list
         ? [
-          { text: "Tenants", href: "/tenant/list" },
-          { text: "Multitenancy", href: "/tenant/settings" },
-        ]
+            { text: "Tenants", href: "/tenant/list" },
+            { text: "Multitenancy", href: "/tenant/settings" },
+          ]
         : []),
       { text: "Tags", href: "/tag" },
       { text: "Diagram", href: "/diagram" },
@@ -335,8 +361,8 @@ const flash_restart = (req) => {
   req.flash(
     "warning",
     req.__(`Restart required for changes to take effect.`) +
-    " " +
-    a({ href: "/admin/system" }, req.__("Restart here"))
+      " " +
+      a({ href: "/admin/system" }, req.__("Restart here"))
   );
 };
 
@@ -389,16 +415,16 @@ const config_fields_form = async ({
         isView || isRole || isTenant
           ? "String"
           : configTypes[name].input_type
-            ? undefined
-            : configTypes[name].type,
+          ? undefined
+          : configTypes[name].type,
       input_type: configTypes[name].input_type,
       attributes: isView
         ? await viewAttributes(name)
         : isRole
-          ? roleAttribs
-          : isTenant
-            ? await getTenants()
-            : configTypes[name].attributes,
+        ? roleAttribs
+        : isTenant
+        ? await getTenants()
+        : configTypes[name].attributes,
     });
   }
   const form = new Form({
