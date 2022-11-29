@@ -559,11 +559,11 @@ class Field implements AbstractField {
     } else {
       let typeObj = this.type as Type;
       readval =
-        !type || !typeObj.read
+        !type || (!typeObj.read && !typeObj.readFromFormRecord)
           ? whole_rec[this.form_name]
           : typeObj.readFromFormRecord
           ? typeObj.readFromFormRecord(whole_rec, this.form_name)
-          : typeObj.read(whole_rec[this.form_name], this.attributes);
+          : (typeObj as any).read(whole_rec[this.form_name], this.attributes);
     }
     if (typeof readval === "undefined" || readval === null)
       if (this.required && this.type !== "File") {
