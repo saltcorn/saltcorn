@@ -737,6 +737,7 @@ module.exports = {
     name, // viewname
     configuration: { columns, layout },
     req,
+    res,
   }) => ({
     async showQuery(state, fields) {
       const { joinFields, aggregations } = picked_fields_to_query(
