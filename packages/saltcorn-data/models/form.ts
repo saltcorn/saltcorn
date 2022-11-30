@@ -55,7 +55,7 @@ class Form implements AbstractForm {
   isOwner: boolean;
   onSubmit?: string;
   req: any;
-  tabs?: any;
+  tabs?: string;
   __?: any;
 
   /**
@@ -273,7 +273,7 @@ namespace Form {
     isOwner?: boolean;
     onSubmit?: string;
     req?: any;
-    tabs?: any;
+    tabs?: string;
     validate?: any;
     __?: any;
   };

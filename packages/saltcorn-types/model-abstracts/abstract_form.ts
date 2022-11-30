@@ -29,6 +29,7 @@ export interface AbstractForm {
   splitPaste?: boolean;
   isOwner?: boolean;
   onSubmit?: string;
+  tabs?: string;
   req: any;
   __?: any;
 }

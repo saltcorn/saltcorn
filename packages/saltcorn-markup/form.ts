@@ -29,6 +29,8 @@ import {
   instanceOfField,
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { FieldLike } from "@saltcorn/types/base_types";
+import layout_utils from "./layout_utils";
+const { renderTabs } = layout_utils;
 
 declare const window: any;
 const isNode = typeof window === "undefined";
@@ -1020,7 +1022,18 @@ const mkForm = (
     } else fldHtmls.push(fldHtml);
   }
   const flds = fldHtmls.join("");
-  const tabsHtml = "";
+  const tabsHtml =
+    Object.keys(tabHtmls).length > 0
+      ? renderTabs(
+          {
+            contents: Object.values(tabHtmls),
+            titles: Object.keys(tabHtmls),
+            tabsStyle: form.tabs || "Tabs",
+            independent: false,
+          },
+          (s) => s
+        )
+      : "";
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
