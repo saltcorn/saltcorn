@@ -1055,5 +1055,6 @@
 	"Specifies a filter for what file types the user can pick from the file input dialog box. Example is `text/csv,audio/*,video/*,image/*`": "Specifies a filter for what file types the user can pick from the file input dialog box. Example is `text/csv,audio/*,video/*,image/*`",
 	"Default Files accept filter": "Default Files accept filter",
 	"Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`": "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
-	"Destination page": "Destination page"
+	"Destination page": "Destination page",
+	"Module Store endpoint": "Module Store endpoint"
 }

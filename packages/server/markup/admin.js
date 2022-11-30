@@ -384,8 +384,24 @@ const config_fields_form = async ({
   const state = getState();
   const fields = [];
   const tenant = db.getTenantSchema();
-
+  const roleAttribs = {
+    options: (await User.get_roles()).map((r) => ({
+      label: r.role,
+      name: `${r.id}`,
+    })),
+  };
+  const getTenants = async () => {
+    const tens = await db.select("_sc_tenants");
+    return { options: tens.map((t) => t.subdomain) };
+  };
   for (const name of field_names) {
+    if (typeof name === "object" && name.section_header) {
+      fields.push({
+        input_type: "section_header",
+        label: name.section_header,
+      });
+      continue;
+    }
     values[name] = state.getConfig(name);
     // console.log(`config field name: %s`,name);
     if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
@@ -395,16 +411,7 @@ const config_fields_form = async ({
     const isTenant = configTypes[name].type === "Tenant";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
-    const roleAttribs = {
-      options: (await User.get_roles()).map((r) => ({
-        label: r.role,
-        name: `${r.id}`,
-      })),
-    };
-    const getTenants = async () => {
-      const tens = await db.select("_sc_tenants");
-      return { options: tens.map((t) => t.subdomain) };
-    };
+
     fields.push({
       name,
       ...configTypes[name],

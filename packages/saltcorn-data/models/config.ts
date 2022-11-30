@@ -522,7 +522,7 @@ const configTypes: ConfigTypes = {
   plugins_store_endpoint: {
     type: "String",
     input_type: "String",
-    label: "Plugins (Extensions) Store endpoint",
+    label: "Module Store endpoint",
     default: "https://store.saltcorn.com/api/extensions",
     //root_only: true,
     blurb: "The endpoint of plugins store.",
