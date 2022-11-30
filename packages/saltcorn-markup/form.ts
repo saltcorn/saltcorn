@@ -1028,9 +1028,9 @@ const mkForm = (
           {
             contents: Object.values(tabHtmls),
             titles: Object.keys(tabHtmls),
-            tabsStyle: form.tabs || "Tabs",
+            tabsStyle: form.tabs?.tabsStyle || "Tabs",
             independent: false,
-            bodyClass: "mt-3",
+            bodyClass: "mt-2",
             outerClass: "mb-3",
             startClosed: true,
           },

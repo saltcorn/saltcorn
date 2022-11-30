@@ -273,7 +273,7 @@ namespace Form {
     isOwner?: boolean;
     onSubmit?: string;
     req?: any;
-    tabs?: string;
+    tabs?: any;
     validate?: any;
     __?: any;
   };
