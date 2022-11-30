@@ -343,16 +343,25 @@ const configuration_workflow = (req) =>
             type: "String",
           });
           formfields.push({
+            name: "_rows_per_page",
+            label: req.__("Rows per page"),
+            type: "Integer",
+            default: 20,
+            attributes: { min: 0 },
+          });
+          formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
             sublabel: req.__("Display one column per line"),
             type: "Bool",
+            tab: "Layout options",
           });
           formfields.push({
             name: "transpose_width",
             label: req.__("Vertical column width"),
             type: "Integer",
             showIf: { transpose: true },
+            tab: "Layout options",
           });
           formfields.push({
             name: "transpose_width_units",
@@ -363,6 +372,7 @@ const configuration_workflow = (req) =>
               inline: true,
               options: ["px", "%", "vw", "em", "rem"],
             },
+            tab: "Layout options",
             showIf: { transpose: true },
           });
           formfields.push({
@@ -370,6 +380,7 @@ const configuration_workflow = (req) =>
             label: req.__("Omit header"),
             sublabel: req.__("Do not display the header"),
             type: "Bool",
+            tab: "Layout options",
           });
           formfields.push({
             name: "hide_null_columns",
@@ -378,6 +389,7 @@ const configuration_workflow = (req) =>
               "Do not display a column if it contains entirely missing values"
             ),
             type: "Bool",
+            tab: "Layout options",
           });
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -387,17 +399,12 @@ const configuration_workflow = (req) =>
                 "Create an SQL view in the database with the fields in this list"
               ),
               type: "Bool",
+              tab: "Database options",
             });
-          formfields.push({
-            name: "_rows_per_page",
-            label: req.__("Rows per page"),
-            type: "Integer",
-            default: 20,
-            attributes: { min: 0 },
-          });
+
           const form = new Form({
             fields: formfields,
-            blurb: req.__("List options"),
+            tabs: { tabsStyle: "Accordion" },
           });
           await form.fill_fkey_options(true);
           return form;
