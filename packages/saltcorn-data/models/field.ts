@@ -78,6 +78,7 @@ class Field implements AbstractField {
   is_fkey: boolean;
   input_type: InputType;
   reftable_name?: string;
+  tab?: string;
   reftype?: string | Type;
   refname: string = "";
   reftable?: AbstractTable;
@@ -124,6 +125,7 @@ class Field implements AbstractField {
     this.stored = !!o.stored;
     this.expression = o.expression;
     this.sourceURL = o.sourceURL;
+    this.tab = o.tab;
 
     this.is_fkey =
       o.type === "Key" ||

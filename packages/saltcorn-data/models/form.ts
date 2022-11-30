@@ -55,6 +55,7 @@ class Form implements AbstractForm {
   isOwner: boolean;
   onSubmit?: string;
   req: any;
+  tabs?: any;
   __?: any;
 
   /**
@@ -86,6 +87,7 @@ class Form implements AbstractForm {
     this.xhrSubmit = !!o.xhrSubmit;
     this.splitPaste = !!o.splitPaste;
     this.onSubmit = o.onSubmit;
+    this.tabs = o.tabs;
     this.isOwner = !!o.isOwner;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
@@ -271,6 +273,7 @@ namespace Form {
     isOwner?: boolean;
     onSubmit?: string;
     req?: any;
+    tabs?: any;
     validate?: any;
     __?: any;
   };
