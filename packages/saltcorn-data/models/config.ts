@@ -901,7 +901,7 @@ const get_latest_npm_version = async (
     if (timeout_ms) {
       const canceller = async () => {
         await sleep(timeout_ms);
-        return "";
+        return stored[pkg]?.version || "";
       };
       return Promise.race([fetch_it().catch((e) => ""), canceller()]).catch(
         (e) => ""
