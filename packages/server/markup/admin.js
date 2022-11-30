@@ -344,7 +344,7 @@ const viewAttributes = async (key) => {
 const flash_restart_if_required = (cfgForm, req) => {
   let restart = false;
   cfgForm.fields.forEach((f) => {
-    if (configTypes[f.name].restart_required) {
+    if (configTypes[f.name]?.restart_required) {
       const current = getState().getConfig(f.name);
       if (current !== cfgForm.values[f.name]) restart = true;
     }
