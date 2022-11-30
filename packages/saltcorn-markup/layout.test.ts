@@ -52,14 +52,16 @@ describe("MJML layout", () => {
   it("renders text layout", () => {
     const layout = { type: "blank", contents: "Hello world" };
     const result = renderMJML({ blockDispatch, layout });
-    expect(result.markup).toBe("<mj-section padding=\"0px\"><mj-column><mj-text><span>Hello world</span></mj-text></mj-column></mj-section>");
+    expect(result.markup).toBe(
+      "<mj-section><mj-column><mj-text>Hello world</mj-text></mj-column></mj-section>"
+    );
     expect(result.styles.length).toBe(0);
   });
   it("renders text header", () => {
     const layout = { type: "blank", contents: "Hello world", textStyle: "h1" };
     const result = renderMJML({ blockDispatch, layout });
     expect(result.markup).toBe(
-      '<mj-section padding="0px"><mj-column><mj-text padding="0px"><h1>Hello world</h1></mj-text></mj-column></mj-section>'
+      "<mj-section><mj-column><mj-text><h1>Hello world</h1></mj-text></mj-column></mj-section>"
     );
     expect(result.styles.length).toBe(0);
   });
