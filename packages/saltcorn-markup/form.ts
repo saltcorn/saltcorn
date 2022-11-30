@@ -1030,6 +1030,9 @@ const mkForm = (
             titles: Object.keys(tabHtmls),
             tabsStyle: form.tabs || "Tabs",
             independent: false,
+            bodyClass: "mt-3",
+            outerClass: "mb-3",
+            startClosed: true,
           },
           (s) => s
         )

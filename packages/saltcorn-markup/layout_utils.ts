@@ -498,7 +498,10 @@ namespace LayoutExports {
     tabsStyle: string;
     ntabs?: any;
     deeplink?: boolean;
+    bodyClass?: string;
+    outerClass?: string;
     independent: boolean;
+    startClosed?: boolean;
   };
 }
 type RenderTabsOpts = LayoutExports.RenderTabsOpts;
@@ -523,41 +526,60 @@ function validID(s: string) {
  * @returns {ul_div}
  */
 const renderTabs = (
-  { contents, titles, tabsStyle, ntabs, independent, deeplink }: RenderTabsOpts,
+  {
+    contents,
+    titles,
+    tabsStyle,
+    ntabs,
+    independent,
+    bodyClass,
+    outerClass,
+    deeplink,
+    startClosed,
+  }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
     return div(
-      { class: "accordion", id: `${rndid}top` },
+      { class: ["accordion", outerClass], id: `${rndid}top` },
       contents.map((t, ix) =>
         div(
-          { class: "card" },
-          div(
-            { class: "card-header", id: `${rndid}head${ix}` },
-            h2(
-              { class: "mb-0" },
-              button(
-                {
-                  class: "btn btn-link btn-block text-left",
-                  type: "button",
-                  "data-bs-toggle": "collapse",
-                  "data-bs-target": `#${rndid}tab${ix}`,
-                  "aria-expanded": ix === 0 ? "true" : "false",
-                  "aria-controls": `${rndid}tab${ix}`,
-                },
-                titles[ix]
-              )
+          { class: "accordion-item" },
+
+          h2(
+            { class: "accordion-header", id: `${rndid}head${ix}` },
+            button(
+              {
+                class: [
+                  "accordion-button",
+                  (ix > 0 || startClosed) && "collapsed",
+                ],
+                type: "button",
+                "data-bs-toggle": "collapse",
+                "data-bs-target": `#${rndid}tab${ix}`,
+                "aria-expanded": ix === 0 ? "true" : "false",
+                "aria-controls": `${rndid}tab${ix}`,
+              },
+              titles[ix]
             )
           ),
+
           div(
             {
-              class: ["collapse", ix === 0 && "show"],
+              class: [
+                "accordion-collapse",
+                "collapse",
+                !startClosed && ix === 0 && "show",
+              ],
               id: `${rndid}tab${ix}`,
               "aria-labelledby": `${rndid}head${ix}`,
               "data-parent": independent ? undefined : `#${rndid}top`,
             },
-            div({ class: "card-body" }, go(t, false, ix))
+            div(
+              { class: ["accordion-body", bodyClass || ""] },
+              go(t, false, ix)
+            )
           )
         )
       )
@@ -597,7 +619,11 @@ const renderTabs = (
         contents.map((t, ix) =>
           div(
             {
-              class: ["tab-pane fade", ix === 0 && "show active"],
+              class: [
+                "tab-pane fade",
+                bodyClass || "",
+                ix === 0 && "show active",
+              ],
               role: "tabpanel",
               id: `${validID(titles[ix])}`,
               "aria-labelledby": `${rndid}link${ix}`,
