@@ -106,8 +106,14 @@ const getStringsForI18n = (layout: Layout): string[] => {
       if (typeof s === "string") strings.push(s);
       else if (s.contents) strings.push(s.contents);
     },
+    action({ action_label }: { action_label: string }) {
+      strings.push(action_label);
+    },
     link({ text }: { text: string }) {
       strings.push(text);
+    },
+    view_link({ label }: { label: string }) {
+      strings.push(label);
     },
     card({ title }: { title: string }) {
       strings.push(title);
@@ -136,8 +142,14 @@ const translateLayout = (layout: Layout, locale: string): void => {
     blank(s: any) {
       s.contents = __(s.contents);
     },
+    action(s: { action_label: string }) {
+      s.action_label = __(s.action_label);
+    },
     link(s: { text: string }) {
       s.text = __(s.text);
+    },
+    view_link(s: { label: string }) {
+      s.label = __(s.label);
     },
     card(s: { title: string }) {
       s.title = __(s.title);
