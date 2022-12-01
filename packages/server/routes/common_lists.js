@@ -8,9 +8,7 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const {
-  get_base_url,
-} = require("./utils.js");
+const { get_base_url } = require("./utils.js");
 const { h4, p, div, a, input, text } = require("@saltcorn/markup/tags");
 
 /**
@@ -48,52 +46,52 @@ const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
   const getRole = (rid) => roles.find((r) => r.id === rid).role;
   return tables.length > 0
     ? mkTable(
-      [
-        {
-          label: req.__("Name"),
-          key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
-        },
-        {
-          label: "",
-          key: (r) => tableBadges(r, req),
-        },
-        {
-          label: req.__("Access Read/Write"),
-          key: (t) =>
-            t.external
-              ? `${getRole(t.min_role_read)} (read only)`
-              : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
-        },
-        !tagId
-          ? {
-            label: req.__("Delete"),
-            key: (r) =>
-              r.name === "users" || r.external
-                ? ""
-                : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
-          }
-          : {
-            label: req.__("Remove From Tag"),
-            key: (r) =>
-              post_delete_btn(
-                `/tag-entries/remove/tables/${r.id}/${tagId}`,
-                req,
-                `${r.name} from this tag`
-              ),
+        [
+          {
+            label: req.__("Name"),
+            key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
           },
-      ],
-      tables,
-      {
-        hover: true,
-        tableClass: listClass(tagId, showList),
-        tableId: domId,
-      }
-    )
+          {
+            label: "",
+            key: (r) => tableBadges(r, req),
+          },
+          {
+            label: req.__("Access Read/Write"),
+            key: (t) =>
+              t.external
+                ? `${getRole(t.min_role_read)} (read only)`
+                : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
+          },
+          !tagId
+            ? {
+                label: req.__("Delete"),
+                key: (r) =>
+                  r.name === "users" || r.external
+                    ? ""
+                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+              }
+            : {
+                label: req.__("Remove From Tag"),
+                key: (r) =>
+                  post_delete_btn(
+                    `/tag-entries/remove/tables/${r.id}/${tagId}`,
+                    req,
+                    `${r.name} from this tag`
+                  ),
+              },
+        ],
+        tables,
+        {
+          hover: true,
+          tableClass: listClass(tagId, showList),
+          tableId: domId,
+        }
+      )
     : div(
-      { class: listClass(tagId, showList), id: domId },
-      h4(req.__("No tables defined")),
-      p(req.__("Tables hold collections of similar data"))
-    );
+        { class: listClass(tagId, showList), id: domId },
+        h4(req.__("No tables defined")),
+        p(req.__("Tables hold collections of similar data"))
+      );
 };
 
 /**
@@ -175,17 +173,17 @@ const viewsList = async (views, req, { tagId, domId, showList } = {}) => {
 
   return views.length > 0
     ? mkTable(
-      [
-        {
-          label: req.__("Name"),
-          key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
-          sortlink: !tagId
-            ? `javascript:set_state_field('_sortby', 'name')`
-            : undefined,
-        },
-        // description - currently I dont want to show description in view list
-        // because description can be long
-        /*
+        [
+          {
+            label: req.__("Name"),
+            key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+            sortlink: !tagId
+              ? `javascript:set_state_field('_sortby', 'name')`
+              : undefined,
+          },
+          // description - currently I dont want to show description in view list
+          // because description can be long
+          /*
        {
            label: req.__("Description"),
            key: "description",
@@ -193,60 +191,60 @@ const viewsList = async (views, req, { tagId, domId, showList } = {}) => {
            sortlink: `javascript:set_state_field('_sortby', 'description')`,
        },
        */
-        // template
-        {
-          label: req.__("Pattern"),
-          key: "viewtemplate",
-          sortlink: !tagId
-            ? `javascript:set_state_field('_sortby', 'viewtemplate')`
-            : undefined,
-        },
-        {
-          label: req.__("Table"),
-          key: (r) => link(`/table/${r.table}`, r.table),
-          sortlink: !tagId
-            ? `javascript:set_state_field('_sortby', 'table')`
-            : undefined,
-        },
-        {
-          label: req.__("Role to access"),
-          key: (row) => editViewRoleForm(row, roles, req),
-        },
-        {
-          label: "",
-          key: (r) =>
-            link(
-              `/viewedit/config/${encodeURIComponent(r.name)}`,
-              req.__("Configure")
-            ),
-        },
-        !tagId
-          ? {
+          // template
+          {
+            label: req.__("Pattern"),
+            key: "viewtemplate",
+            sortlink: !tagId
+              ? `javascript:set_state_field('_sortby', 'viewtemplate')`
+              : undefined,
+          },
+          {
+            label: req.__("Table"),
+            key: (r) => link(`/table/${r.table}`, r.table),
+            sortlink: !tagId
+              ? `javascript:set_state_field('_sortby', 'table')`
+              : undefined,
+          },
+          {
+            label: req.__("Role to access"),
+            key: (row) => editViewRoleForm(row, roles, req),
+          },
+          {
             label: "",
-            key: (r) => view_dropdown(r, req),
-          }
-          : {
-            label: req.__("Remove From Tag"),
             key: (r) =>
-              post_delete_btn(
-                `/tag-entries/remove/views/${r.id}/${tagId}`,
-                req,
-                `${r.name} from this tag`
+              link(
+                `/viewedit/config/${encodeURIComponent(r.name)}`,
+                req.__("Configure")
               ),
           },
-      ],
-      views,
-      {
-        hover: true,
-        tableClass: listClass(tagId, showList),
-        tableId: domId,
-      }
-    )
+          !tagId
+            ? {
+                label: "",
+                key: (r) => view_dropdown(r, req),
+              }
+            : {
+                label: req.__("Remove From Tag"),
+                key: (r) =>
+                  post_delete_btn(
+                    `/tag-entries/remove/views/${r.id}/${tagId}`,
+                    req,
+                    `${r.name} from this tag`
+                  ),
+              },
+        ],
+        views,
+        {
+          hover: true,
+          tableClass: listClass(tagId, showList),
+          tableId: domId,
+        }
+      )
     : div(
-      { class: listClass(tagId, showList), id: domId },
-      h4(req.__("No views defined")),
-      p(req.__("Views define how table rows are displayed to the user"))
-    );
+        { class: listClass(tagId, showList), id: domId },
+        h4(req.__("No views defined")),
+        p(req.__("Views define how table rows are displayed to the user"))
+      );
 };
 
 /**
@@ -334,19 +332,18 @@ const getPageList = (rows, roles, req, { tagId, domId, showList } = {}) => {
       },
       !tagId
         ? {
-          label: "",
-          key: (r) => page_dropdown(r, req),
-        }
+            label: "",
+            key: (r) => page_dropdown(r, req),
+          }
         : {
-          label: req.__("Remove From Tag"),
-          key: (r) =>
-            post_delete_btn(
-              `/tag-entries/remove/pages/${r.id}/${tagId}`,
-              req,
-              `${r.name} from this tag`
-            ),
-        },
-      ,
+            label: req.__("Remove From Tag"),
+            key: (r) =>
+              post_delete_btn(
+                `/tag-entries/remove/pages/${r.id}/${tagId}`,
+                req,
+                `${r.name} from this tag`
+              ),
+          },
     ],
     rows,
     {
@@ -391,18 +388,18 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
       },
       !tagId
         ? {
-          label: req.__("Delete"),
-          key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
-        }
+            label: req.__("Delete"),
+            key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
+          }
         : {
-          label: req.__("Remove From Tag"),
-          key: (r) =>
-            post_delete_btn(
-              `/tag-entries/remove/trigger/${r.id}/${tagId}`,
-              req,
-              `${r.name} from this tag`
-            ),
-        },
+            label: req.__("Remove From Tag"),
+            key: (r) =>
+              post_delete_btn(
+                `/tag-entries/remove/trigger/${r.id}/${tagId}`,
+                req,
+                `${r.name} from this tag`
+              ),
+          },
     ],
     triggers,
     {

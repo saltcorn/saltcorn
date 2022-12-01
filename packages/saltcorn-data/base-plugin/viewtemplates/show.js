@@ -367,7 +367,7 @@ const renderRows = async (
 ) => {
   //console.log(columns);
   //console.log(layout);
-  if (!columns || !layout) return req.__("View not yet built");
+  if (!columns || !layout) return "View not yet built";
 
   const fields = await table.getFields();
 

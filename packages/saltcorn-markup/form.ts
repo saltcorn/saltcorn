@@ -29,6 +29,8 @@ import {
   instanceOfField,
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { FieldLike } from "@saltcorn/types/base_types";
+import layout_utils from "./layout_utils";
+const { renderTabs } = layout_utils;
 
 declare const window: any;
 const isNode = typeof window === "undefined";
@@ -987,35 +989,54 @@ const mkForm = (
     form.methodGET ? "get" : "post"
   }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}>`;
   //console.log(form.fields);
+  const tabHtmls: any = {};
+
   const fldHtmls: String[] = [];
   for (let i = 0; i < form.fields.length; i++) {
-    const field = form.fields[i];
+    const field: any = form.fields[i];
+    let fldHtml;
     if ((field as any)?.attributes?.asideNext) {
       // console.log("AsideNext", field);
-      fldHtmls.push(
-        mkFormRowAside(
-          form.values,
-          errors,
-          form.formStyle,
-          typeof form.labelCols === "undefined" ? 2 : form.labelCols,
-          "",
-          field,
-          form.fields[i + 1]
-        )
+
+      fldHtml = mkFormRowAside(
+        form.values,
+        errors,
+        form.formStyle,
+        typeof form.labelCols === "undefined" ? 2 : form.labelCols,
+        "",
+        field,
+        form.fields[i + 1]
       );
       i++;
     } else {
-      fldHtmls.push(
-        mkFormRow(
-          form.values,
-          errors,
-          form.formStyle,
-          typeof form.labelCols === "undefined" ? 2 : form.labelCols
-        )(field)
-      );
+      fldHtml = mkFormRow(
+        form.values,
+        errors,
+        form.formStyle,
+        typeof form.labelCols === "undefined" ? 2 : form.labelCols
+      )(field);
     }
+    if (field.tab) {
+      if (!tabHtmls[field.tab]) tabHtmls[field.tab] = [];
+      tabHtmls[field.tab].push(fldHtml);
+    } else fldHtmls.push(fldHtml);
   }
   const flds = fldHtmls.join("");
+  const tabsHtml =
+    Object.keys(tabHtmls).length > 0
+      ? renderTabs(
+          {
+            contents: Object.values(tabHtmls),
+            titles: Object.keys(tabHtmls),
+            tabsStyle: form.tabs?.tabsStyle || "Tabs",
+            independent: false,
+            bodyClass: "mt-2",
+            outerClass: "mb-3",
+            startClosed: true,
+          },
+          (s) => s
+        )
+      : "";
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
@@ -1050,6 +1071,7 @@ const mkForm = (
     top +
     csrfField +
     flds +
+    tabsHtml +
     fullFormError +
     bot +
     splitSnippet(form) +

@@ -522,7 +522,7 @@ const configTypes: ConfigTypes = {
   plugins_store_endpoint: {
     type: "String",
     input_type: "String",
-    label: "Plugins (Extensions) Store endpoint",
+    label: "Module Store endpoint",
     default: "https://store.saltcorn.com/api/extensions",
     //root_only: true,
     blurb: "The endpoint of plugins store.",
@@ -887,6 +887,8 @@ const get_latest_npm_version = async (
   if (stored[pkg] && !isStale(stored[pkg].time, 6)) {
     return stored[pkg].version;
   }
+
+  const guess = stored[pkg]?.version || ""; //default return
   try {
     const fetch_it = async () => {
       const latest = await latestVersion(pkg);
@@ -901,15 +903,14 @@ const get_latest_npm_version = async (
     if (timeout_ms) {
       const canceller = async () => {
         await sleep(timeout_ms);
-        return "";
+        return guess;
       };
-      return Promise.race([fetch_it().catch((e) => ""), canceller()]).catch(
-        (e) => ""
+      return Promise.race([fetch_it().catch((e) => guess), canceller()]).catch(
+        (e) => guess
       );
     } else return await fetch_it();
   } catch (e) {
-    if (stored[pkg]) return stored[pkg].version;
-    else return "";
+    return guess;
   }
 };
 

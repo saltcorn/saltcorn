@@ -400,7 +400,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  {},
+  cfg,
   state,
   { res, req },
   { editQuery }
@@ -776,7 +776,7 @@ const runPost = async (
     viewname,
   });
   const cancel = body._cancel;
-  form.validate(body);
+  await form.asyncValidate(body);
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options(false, undefined, req.user);

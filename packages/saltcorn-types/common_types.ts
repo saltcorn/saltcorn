@@ -33,6 +33,7 @@ export type Type = {
   readFromDB?: (arg0: any) => any;
   read?: (arg0: any, arg1?: any) => any;
   readFromFormRecord?: Function;
+  postProcess?: Function;
   validate?: Function;
   listAs?: Function;
   showAs?: Function;

@@ -23,6 +23,7 @@ const {
   small,
   br,
   form,
+  h2,
   input,
 } = tags;
 
@@ -489,6 +490,151 @@ const cardHeaderTabs = (tabList: any): string =>
     )
   );
 
+// declaration merging
+namespace LayoutExports {
+  export type RenderTabsOpts = {
+    contents: any[];
+    titles: string[];
+    tabsStyle: string;
+    ntabs?: any;
+    deeplink?: boolean;
+    bodyClass?: string;
+    outerClass?: string;
+    independent: boolean;
+    startClosed?: boolean;
+  };
+}
+type RenderTabsOpts = LayoutExports.RenderTabsOpts;
+
+function validID(s: string) {
+  return s
+    ? s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/^[^a-z]+|[^\w:.-]+/gi, "")
+    : s;
+}
+
+/**
+ * @param {object} opts
+ * @param {object[]} opts.contents
+ * @param {string[]} opts.titles
+ * @param {string} opts.tabsStyle
+ * @param {*} opts.ntabs
+ * @param {independent} boolean
+ * @param {function} go
+ * @returns {ul_div}
+ */
+const renderTabs = (
+  {
+    contents,
+    titles,
+    tabsStyle,
+    ntabs,
+    independent,
+    bodyClass,
+    outerClass,
+    deeplink,
+    startClosed,
+  }: RenderTabsOpts,
+  go: (segment: any, isTop: boolean, ix: number) => any
+) => {
+  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  if (tabsStyle === "Accordion")
+    return div(
+      { class: ["accordion", outerClass], id: `${rndid}top` },
+      contents.map((t, ix) =>
+        div(
+          { class: "accordion-item" },
+
+          h2(
+            { class: "accordion-header", id: `${rndid}head${ix}` },
+            button(
+              {
+                class: [
+                  "accordion-button",
+                  (ix > 0 || startClosed) && "collapsed",
+                ],
+                type: "button",
+                "data-bs-toggle": "collapse",
+                "data-bs-target": `#${rndid}tab${ix}`,
+                "aria-expanded": ix === 0 ? "true" : "false",
+                "aria-controls": `${rndid}tab${ix}`,
+              },
+              titles[ix]
+            )
+          ),
+
+          div(
+            {
+              class: [
+                "accordion-collapse",
+                "collapse",
+                !startClosed && ix === 0 && "show",
+              ],
+              id: `${rndid}tab${ix}`,
+              "aria-labelledby": `${rndid}head${ix}`,
+              "data-parent": independent ? undefined : `#${rndid}top`,
+            },
+            div(
+              { class: ["accordion-body", bodyClass || ""] },
+              go(t, false, ix)
+            )
+          )
+        )
+      )
+    );
+  else
+    return (
+      ul(
+        {
+          role: "tablist",
+          id: `${rndid}`,
+          class: `nav ${tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"}`,
+        },
+        contents.map((t, ix) =>
+          li(
+            { class: "nav-item", role: "presentation" },
+            a(
+              {
+                class: [
+                  "nav-link",
+                  ix === 0 && "active",
+                  deeplink && "deeplink",
+                ],
+                id: `${rndid}link${ix}`,
+                "data-bs-toggle": "tab",
+                href: `#${validID(titles[ix])}`,
+                role: "tab",
+                "aria-controls": `${rndid}tab${ix}`,
+                "aria-selected": ix === 0 ? "true" : "false",
+              },
+              titles[ix]
+            )
+          )
+        )
+      ) +
+      div(
+        { class: "tab-content", id: `${rndid}content` },
+        contents.map((t, ix) =>
+          div(
+            {
+              class: [
+                "tab-pane fade",
+                bodyClass || "",
+                ix === 0 && "show active",
+              ],
+              role: "tabpanel",
+              id: `${validID(titles[ix])}`,
+              "aria-labelledby": `${rndid}link${ix}`,
+            },
+            go(t, false, ix)
+          )
+        )
+      )
+    );
+};
+
 export = {
   navbar,
   alert,
@@ -499,4 +645,5 @@ export = {
   headersInBody,
   cardHeaderTabs,
   mobileBottomNavBar,
+  renderTabs,
 };

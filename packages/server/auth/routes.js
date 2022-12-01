@@ -517,11 +517,11 @@ router.get(
         form,
         {},
         restore +
-        script(
-          domReady(
-            `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
+          script(
+            domReady(
+              `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
+            )
           )
-        )
       );
     } else {
       req.flash("danger", req.__("Users already present"));
@@ -550,7 +550,7 @@ router.post(
       );
       if (err) req.flash("error", err);
       else req.flash("success", req.__("Successfully restored backup"));
-      fs.unlink(newPath, function () { });
+      fs.unlink(newPath, function () {});
       res.redirect(`/auth/login`);
     } else {
       req.flash("danger", req.__("Users already present"));
@@ -582,18 +582,15 @@ router.post(
       } else {
         const { email, password } = form.values;
         const u = await User.create({ email, password, role_id: 1 });
-        req.login(
-          u.session_object,
-          function (err) {
-            if (!err) {
-              Trigger.emitEvent("Login", null, u);
-              res.redirect("/");
-            } else {
-              req.flash("danger", err);
-              res.redirect("/auth/signup");
-            }
+        req.login(u.session_object, function (err) {
+          if (!err) {
+            Trigger.emitEvent("Login", null, u);
+            res.redirect("/");
+          } else {
+            req.flash("danger", err);
+            res.redirect("/auth/signup");
           }
-        );
+        });
       }
     } else {
       req.flash("danger", req.__("Users already present"));
@@ -687,21 +684,18 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
  * @returns {void}
  */
 const signup_login_with_user = (u, req, res) =>
-  req.login(
-    u.session_object,
-    function (err) {
-      if (!err) {
-        Trigger.emitEvent("Login", null, u);
-        if (getState().verifier) res.redirect("/auth/verification-flow");
-        else if (getState().get2FApolicy(u) === "Mandatory")
-          res.redirect("/auth/twofa/setup/totp");
-        else res.redirect("/");
-      } else {
-        req.flash("danger", err);
-        res.redirect("/auth/signup");
-      }
+  req.login(u.session_object, function (err) {
+    if (!err) {
+      Trigger.emitEvent("Login", null, u);
+      if (getState().verifier) res.redirect("/auth/verification-flow");
+      else if (getState().get2FApolicy(u) === "Mandatory")
+        res.redirect("/auth/twofa/setup/totp");
+      else res.redirect("/");
+    } else {
+      req.flash("danger", err);
+      res.redirect("/auth/signup");
     }
-  );
+  });
 
 /**
  * @name get/signup_final_ext
@@ -741,7 +735,7 @@ router.post(
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
     form.action = "/auth/signup_final_ext";
 
-    form.validate(req.body);
+    await form.asyncValidate(req.body);
     if (form.hasErrors) {
       res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       return;
@@ -801,7 +795,7 @@ router.post(
           });
         }
       }
-      form.validate(req.body);
+      await form.asyncValidate(req.body);
       if (form.hasErrors) {
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else if (form.values.email && !check_email_mask(form.values.email)) {
@@ -929,7 +923,7 @@ router.post(
     }
 
     const form = loginForm(req, true);
-    form.validate(req.body);
+    await form.asyncValidate(req.body);
 
     if (form.hasErrors) {
       form.action = "/auth/signup";
@@ -973,7 +967,7 @@ function handler(req, res) {
   req.flash(
     "error",
     "You've made too many failed attempts in a short period of time, please try again " +
-    moment(req.rateLimit.resetTime).fromNow()
+      moment(req.rateLimit.resetTime).fromNow()
   );
   res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
 }
@@ -1198,7 +1192,10 @@ const setLanguageForm = (req, user) =>
         option(
           {
             value: locale,
-            ...(((user && user.language === locale) || (user && !user.language && req.getLocale() === locale)) && { selected: true }),
+            ...(((user && user.language === locale) ||
+              (user && !user.language && req.getLocale() === locale)) && {
+              selected: true,
+            }),
           },
           language
         )
@@ -1238,7 +1235,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         div(
           user.api_token
             ? span({ class: "me-1" }, req.__("API token for this user: ")) +
-            code(user.api_token)
+                code(user.api_token)
             : req.__("No API token issued")
         ),
         // button for reset or generate api token
@@ -1252,16 +1249,16 @@ const userSettings = async ({ req, res, pwform, user }) => {
         ),
         // button for remove api token
         user.api_token &&
-        div(
-          { class: "mt-4 ms-2 d-inline-block" },
-          post_btn(
-            `/auth/remove-api-token`,
-            // TBD localization
-            user.api_token ? req.__("Remove") : req.__("Generate"),
-            req.csrfToken(),
-            { req: req, confirm: true }
-          )
-        ),
+          div(
+            { class: "mt-4 ms-2 d-inline-block" },
+            post_btn(
+              `/auth/remove-api-token`,
+              // TBD localization
+              user.api_token ? req.__("Remove") : req.__("Generate"),
+              req.csrfToken(),
+              { req: req, confirm: true }
+            )
+          ),
       ],
     };
   return {
@@ -1272,13 +1269,13 @@ const userSettings = async ({ req, res, pwform, user }) => {
       },
       ...(usersets
         ? [
-          {
-            type: "card",
-            class: "mt-0",
-            title: userSetsName,
-            contents: usersets,
-          },
-        ]
+            {
+              type: "card",
+              class: "mt-0",
+              title: userSetsName,
+              contents: usersets,
+            },
+          ]
         : []),
       {
         type: "card",
@@ -1301,35 +1298,35 @@ const userSettings = async ({ req, res, pwform, user }) => {
       },
       ...(show2FAPolicy
         ? [
-          {
-            type: "card",
-            title: req.__("Two-factor authentication"),
-            contents: [
-              div(
-                user._attributes.totp_enabled
-                  ? req.__("Two-factor authentication is enabled")
-                  : req.__("Two-factor authentication is disabled")
-              ),
-              div(
-                user._attributes.totp_enabled
-                  ? a(
-                    {
-                      href: "/auth/twofa/disable/totp",
-                      class: "btn btn-danger mt-2",
-                    },
-                    req.__("Disable TWA")
-                  )
-                  : a(
-                    {
-                      href: "/auth/twofa/setup/totp",
-                      class: "btn btn-primary mt-2",
-                    },
-                    req.__("Enable TWA")
-                  )
-              ),
-            ],
-          },
-        ]
+            {
+              type: "card",
+              title: req.__("Two-factor authentication"),
+              contents: [
+                div(
+                  user._attributes.totp_enabled
+                    ? req.__("Two-factor authentication is enabled")
+                    : req.__("Two-factor authentication is disabled")
+                ),
+                div(
+                  user._attributes.totp_enabled
+                    ? a(
+                        {
+                          href: "/auth/twofa/disable/totp",
+                          class: "btn btn-danger mt-2",
+                        },
+                        req.__("Disable TWA")
+                      )
+                    : a(
+                        {
+                          href: "/auth/twofa/setup/totp",
+                          class: "btn btn-primary mt-2",
+                        },
+                        req.__("Enable TWA")
+                      )
+                ),
+              ],
+            },
+          ]
         : []),
       ...(apikeycard ? [apikeycard] : []),
     ],
@@ -1386,18 +1383,15 @@ router.post(
     const newlang = available_languages[req.body.locale];
     if (newlang && u) {
       await u.set_language(req.body.locale);
-      req.login(
-        u.session_object,
-        function (err) {
-          if (!err) {
-            req.flash("success", req.__("Language changed to %s", newlang));
-            res.redirect("/auth/settings");
-          } else {
-            req.flash("danger", err);
-            res.redirect("/auth/settings");
-          }
+      req.login(u.session_object, function (err) {
+        if (!err) {
+          req.flash("success", req.__("Language changed to %s", newlang));
+          res.redirect("/auth/settings");
+        } else {
+          req.flash("danger", err);
+          res.redirect("/auth/settings");
         }
-      );
+      });
     } else {
       req.flash("danger", req.__("Language not found"));
       res.redirect("/auth/settings");
@@ -1494,19 +1488,16 @@ router.post(
     const u = await User.findForSession({ id: req.user.id });
     await u.update({ email: form.values.email });
     u.email = form.values.email;
-    req.login(
-      u.session_object,
-      function (err) {
-        if (!err) {
-          Trigger.emitEvent("Login", null, u);
-          req.flash("success", req.__("Welcome, %s!", u.email));
-          res.redirect("/");
-        } else {
-          req.flash("danger", err);
-          res.redirect("/");
-        }
+    req.login(u.session_object, function (err) {
+      if (!err) {
+        Trigger.emitEvent("Login", null, u);
+        req.flash("success", req.__("Welcome, %s!", u.email));
+        res.redirect("/");
+      } else {
+        req.flash("danger", err);
+        res.redirect("/");
       }
-    );
+    });
   })
 );
 
@@ -1623,8 +1614,9 @@ router.get(
     // generate QR code for scanning into Google Authenticator
     // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
     const site_name = getState().getConfig("site_name");
-    const otpUrl = `otpauth://totp/${user.email
-      }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
+    const otpUrl = `otpauth://totp/${
+      user.email
+    }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
     const image = await qrcode.toDataURL(otpUrl);
     res.sendWrap(req.__("Setup two-factor authentication"), {
       type: "card",

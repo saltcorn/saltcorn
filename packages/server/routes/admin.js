@@ -111,14 +111,17 @@ const site_id_form = (req) =>
     field_names: [
       "site_name",
       "timezone",
+      "base_url",
+      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
+      { section_header: "Logo image" },
       "site_logo_id",
       "favicon_id",
-      "base_url",
+      { section_header: "Custom code" },
       "page_custom_css",
       "page_custom_html",
+      { section_header: "Extension store" },
       "plugins_store_endpoint",
       "packs_store_endpoint",
-      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     ],
     action: "/admin",
     submitLabel: req.__("Save"),
@@ -1681,7 +1684,7 @@ router.post(
         [message, stack].join("\n"),
         (error) => {
           if (error) {
-            console.log(`unable to write '${logFile}' to '${buildDir}'`);
+            console.log(`unable to write logFile to '${buildDir}'`);
             console.log(error);
           }
         }
