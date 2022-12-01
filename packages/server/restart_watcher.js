@@ -23,7 +23,7 @@ const relevantPackages = [
   "saltcorn-sbadmin2",
   "server",
   "sqlite",
-  "filemanager"
+  "filemanager",
 ];
 
 /**
@@ -34,7 +34,7 @@ const excludePatterns = [
   /\.git/,
   /\.docs/,
   /\.docs/,
-  /\migrations/,
+  /migrations/,
   /.*test.js/,
 ];
 

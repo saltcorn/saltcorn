@@ -37,9 +37,16 @@
     ]
   },
   "eslintConfig": {
+    "ignorePatterns": [
+      "**/plugin_packages/**",
+      "packages/server/public/**",
+      "**/dist/**",
+      "*.test.js",
+      "packages/filemanager/public/build/bundle.js"
+    ],
     "extends": "eslint:recommended",
     "parserOptions": {
-      "ecmaVersion": 2020
+      "ecmaVersion": 2021
     },
     "env": {
       "node": true,

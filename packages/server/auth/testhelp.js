@@ -3,6 +3,7 @@
  * @module auth/testhelp
  * @subcategory auth
  */
+/*global it, expect*/
 const request = require("supertest");
 const app = require("../app");
 const getApp = require("../app");
@@ -10,8 +11,8 @@ const fixtures = require("@saltcorn/data/db/fixtures");
 const reset = require("@saltcorn/data/db/reset_schema");
 
 /**
- * 
- * @param {string} loc 
+ *
+ * @param {string} loc
  * @returns {void}
  * @throws {Error}
  */
@@ -27,62 +28,68 @@ const toRedirect = (loc) => (res) => {
 };
 
 /**
- * 
- * @param {number} txt 
- * @param {number} expCode 
+ *
+ * @param {number} txt
+ * @param {number} expCode
  * @returns {void}
  * @throws {Error}
  */
-const toInclude = (txt, expCode = 200) => (res) => {
-  if (res.statusCode !== expCode) {
-    console.log(res.text);
-    throw new Error(
-      `Expected status ${expCode} when lookinng for "${txt}", received ${res.statusCode}`
-    );
-  }
+const toInclude =
+  (txt, expCode = 200) =>
+  (res) => {
+    if (res.statusCode !== expCode) {
+      console.log(res.text);
+      throw new Error(
+        `Expected status ${expCode} when lookinng for "${txt}", received ${res.statusCode}`
+      );
+    }
 
-  if (!res.text.includes(txt)) {
-    console.log(res.text);
-    throw new Error(`Expected text ${txt} not found`);
-  }
-};
+    if (!res.text.includes(txt)) {
+      console.log(res.text);
+      throw new Error(`Expected text ${txt} not found`);
+    }
+  };
 
 /**
- * 
- * @param {number} expCode 
+ *
+ * @param {number} expCode
  * @returns {void}
  * @throws {Error}
  */
-const toSucceed = (expCode = 200) => (res) => {
-  if (res.statusCode !== expCode) {
-    console.log(res.text);
-    throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
-  }
-};
+const toSucceed =
+  (expCode = 200) =>
+  (res) => {
+    if (res.statusCode !== expCode) {
+      console.log(res.text);
+      throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+    }
+  };
 
 /**
- * 
- * @param {number} txt 
- * @param {number} expCode 
+ *
+ * @param {number} txt
+ * @param {number} expCode
  * @returns {void}
  * @throws {Error}
-*/
-const toNotInclude = (txt, expCode = 200) => (res) => {
-  if (res.statusCode !== expCode) {
-    console.log(res.text);
-    throw new Error(
-      `Expected status ${expCode} when not lookinng for "${txt}", received ${res.statusCode}`
-    );
-  }
+ */
+const toNotInclude =
+  (txt, expCode = 200) =>
+  (res) => {
+    if (res.statusCode !== expCode) {
+      console.log(res.text);
+      throw new Error(
+        `Expected status ${expCode} when not lookinng for "${txt}", received ${res.statusCode}`
+      );
+    }
 
-  if (res.text.includes(txt)) {
-    console.log(res.text);
-    throw new Error(`Expected text ${txt} to be absent, but was present`);
-  }
-};
+    if (res.text.includes(txt)) {
+      console.log(res.text);
+      throw new Error(`Expected text ${txt} to be absent, but was present`);
+    }
+  };
 
 /**
- * 
+ *
  * @returns {Promise<void>}
  */
 const getStaffLoginCookie = async () => {
@@ -96,7 +103,7 @@ const getStaffLoginCookie = async () => {
 };
 
 /**
- * 
+ *
  * @returns {Promise<void>}
  */
 const getAdminLoginCookie = async () => {
@@ -111,9 +118,9 @@ const getAdminLoginCookie = async () => {
 };
 
 /**
- * 
- * @param {string} path 
- * @param {string} dest 
+ *
+ * @param {string} path
+ * @param {string} dest
  * @returns {void}
  */
 const itShouldRedirectUnauthToLogin = (path, dest) => {
@@ -137,8 +144,8 @@ const resetToFixtures = async () => {
 };
 
 /**
- * 
- * @param {*} pred 
+ *
+ * @param {*} pred
  * @returns {void}
  * @throws {Error}
  */
@@ -155,9 +162,9 @@ const succeedJsonWith = (pred) => (res) => {
 };
 
 /**
- * 
- * @param {number} code 
- * @param {number} pred 
+ *
+ * @param {number} code
+ * @param {number} pred
  * @returns {void}
  * @throws {Error}
  */
@@ -174,8 +181,8 @@ const respondJsonWith = (code, pred) => (res) => {
 };
 
 /**
- * 
- * @param {object} res 
+ *
+ * @param {object} res
  * @returns {void}
  * @throws {Error}
  */
