@@ -75,6 +75,7 @@ const router = new Router();
 module.exports = router;
 
 /**
+ * Login Form
  * @param {object} req
  * @param {boolean} isCreating
  * @returns {Form}
@@ -100,7 +101,8 @@ const loginForm = (req, isCreating) => {
           input_type: "email",
         },
         sublabel: user_sublabel || undefined,
-        validator: (s) => s.length < 128,
+        // fixed correct size of email is 254 https://stackoverflow.com/questions/386294/what-is-the-maximum-length-of-a-valid-email-address
+        validator: (s) => s.length < 255,
       }),
       new Field({
         label: req.__("Password"),
@@ -117,6 +119,7 @@ const loginForm = (req, isCreating) => {
 };
 
 /**
+ * Forgot Form
  * @param {object} req
  * @returns {Form}
  */
@@ -133,7 +136,8 @@ const forgotForm = (req) =>
         attributes: {
           input_type: "email",
         },
-        validator: (s) => s.length < 128,
+        // fixed correct size of email is 254 https://stackoverflow.com/questions/386294/what-is-the-maximum-length-of-a-valid-email-address
+        validator: (s) => s.length < 255,
       }),
     ],
     action: "/auth/forgot",
@@ -141,6 +145,7 @@ const forgotForm = (req) =>
   });
 
 /**
+ * Reset Form
  * @param {object} body
  * @param {object} req
  * @returns {Form}
@@ -172,6 +177,7 @@ const resetForm = (body, req) => {
 };
 
 /**
+ * get Auth Links
  * @param {string} current
  * @param {boolean} noMethods
  * @returns {object}
@@ -198,7 +204,13 @@ const getAuthLinks = (current, noMethods) => {
     });
   return links;
 };
-
+/**
+ * Login with jwt
+ * @param {*} email 
+ * @param {*} password 
+ * @param {*} saltcornApp 
+ * @param {*} res 
+ */
 const loginWithJwt = async (email, password, saltcornApp, res) => {
   const loginFn = async () => {
     const publicUserLink = getState().getConfig("public_user_link");
@@ -263,6 +275,7 @@ const loginWithJwt = async (email, password, saltcornApp, res) => {
 };
 
 /**
+ * GET /auth/login
  * @name get/login
  * @function
  * @memberof module:auth/routes~routesRouter
@@ -290,6 +303,7 @@ router.get(
 );
 
 /**
+ * GET /auth/logout
  * @name get/logout
  * @function
  * @memberof module:auth/routes~routesRouter
@@ -992,6 +1006,7 @@ const userLimiter = rateLimit({
 });
 
 /**
+ * POST /auth/login
  * @name post/login
  * @function
  * @memberof module:auth/routes~routesRouter
@@ -1677,7 +1692,9 @@ router.post(
     res.redirect("/auth/settings");
   })
 );
-
+/**
+ * GET /twofa/disable/totp
+ */
 router.get(
   "/twofa/disable/totp",
   loggedIn,
@@ -1692,7 +1709,10 @@ router.get(
     });
   })
 );
-
+/**
+ * POST /twofa/disable/totp
+ * Disable TWA
+ */
 router.post(
   "/twofa/disable/totp",
   loggedIn,
@@ -1726,6 +1746,12 @@ router.post(
     res.redirect("/auth/settings");
   })
 );
+/**
+ * totpForm (TWA)
+ * @param {*} req 
+ * @param {*} action 
+ * @returns 
+ */
 const totpForm = (req, action) =>
   new Form({
     action: action || "/auth/twofa/setup/totp",
@@ -1738,8 +1764,12 @@ const totpForm = (req, action) =>
       },
     ],
   });
-
-const randomKey = function (len) {
+/**
+ * Random key generation for totp (TWA)
+ * @param {*} len 
+ * @returns 
+ */
+  const randomKey = function (len) {
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -1753,7 +1783,9 @@ const randomKey = function (len) {
 
   return buf.join("");
 };
-
+/**
+ * GET /twofa/login/totp
+ */
 router.get(
   "/twofa/login/totp",
   error_catcher(async (req, res) => {
@@ -1772,7 +1804,9 @@ router.get(
     res.sendAuthWrap(req.__(`Two-factor authentication`), form, {});
   })
 );
-
+/**
+ * POST /twofa/login/totp
+ */
 router.post(
   "/twofa/login/totp",
   passport.authenticate("totp", {

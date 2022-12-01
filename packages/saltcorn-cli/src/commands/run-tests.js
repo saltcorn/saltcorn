@@ -155,6 +155,9 @@ class RunTestsCommand extends Command {
     if (flags.verbose) {
       jestParams.push("--verbose");
     }
+    if (flags.detectOpenHandles){
+      jestParams.push("--detectOpenHandles");
+    }
     if (flags.testFilter) {
       jestParams.push("-t", flags.testFilter);
     }
@@ -206,6 +209,7 @@ RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
   listTests: flags.boolean({ char: "l", description: "List tests" }),
   verbose: flags.boolean({ char: "v", description: "Verbose" }),
+  detectOpenHandles: flags.boolean({ char: "d", description: "Detect Open Handles"}),
   testFilter: flags.string({
     char: "t",
     description: "Filter tests by suite or test name",

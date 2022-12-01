@@ -269,6 +269,7 @@ const blockDispatch = {
 };
 
 /**
+ * Render body
  * @param {string} title
  * @param {string|object} body
  * @param {*} role
@@ -287,7 +288,7 @@ const renderBody = (title, body, role) =>
  * @returns {hr|a}
  */
 const renderAuthLinks = (authLinks) => {
-  var links = [];
+  let links = [];
   if (authLinks.login)
     links.push(link(authLinks.login, "Already have an account? Login!"));
   if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
