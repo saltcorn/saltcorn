@@ -481,7 +481,7 @@ const get_config_response = async (role_id, res, req) => {
           title: db_page.title,
           description: db_page.description,
           bodyClass: "page_" + db.sqlsanitize(homeCfg),
-        } || `${pagename} page`,
+        },
         contents
       );
     } else res.redirect(homeCfg);

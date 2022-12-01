@@ -5,7 +5,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
 const contentDisposition = require("content-disposition");
-
+const fs = require("fs");
 function createS3Client() {
   return new aws.S3({
     secretAccessKey: getState().getConfig("storage_s3_access_secret"),
@@ -52,19 +52,18 @@ module.exports = {
         createParentPath: true,
         tempFileDir: "/tmp/",
         // set to true - if you want to have debug
-        debug: getState().getConfig("file_upload_debug",false),
+        debug: getState().getConfig("file_upload_debug", false),
         //uriDecodeFileNames: true,
         //safeFileNames: true,
-        defCharset: 'utf8',
-        defParamCharset: 'utf8',
+        defCharset: "utf8",
+        defParamCharset: "utf8",
         // 0 - means no upload limit check
         limits: {
           fileSize: fileSizeLimit,
         },
         abortOnLimit: fileSizeLimit !== 0,
         // 0 - means no upload limit check
-        uploadTimeout: getState().getConfig("file_upload_timeout",0),
-
+        uploadTimeout: getState().getConfig("file_upload_timeout", 0),
       })(req, res, next);
     }
   },
