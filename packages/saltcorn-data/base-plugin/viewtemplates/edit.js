@@ -400,7 +400,7 @@ const initial_config = initial_config_all_fields(true);
 const run = async (
   table_id,
   viewname,
-  {},
+  cfg,
   state,
   { res, req },
   { editQuery }

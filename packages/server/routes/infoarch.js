@@ -113,7 +113,7 @@ router.get(
               {
                 label: req.__("Default"),
                 key: (r) =>
-                  !!r.is_default
+                  r.is_default
                     ? i({
                         class: "fas fa-check-circle text-success",
                       })

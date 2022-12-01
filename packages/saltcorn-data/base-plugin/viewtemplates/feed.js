@@ -12,7 +12,6 @@ const { text, div, h4, hr, button, code } = require("@saltcorn/markup/tags");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
-const { } = require("./viewable_fields");
 const pluralize = require("pluralize");
 const {
   link_view,
@@ -171,15 +170,15 @@ const configuration_workflow = (req) =>
 
               ...(table.ownership_field_id
                 ? [
-                  {
-                    name: "always_create_view",
-                    label: req.__("Always show create view"),
-                    sublabel: req.__(
-                      "If off, only show create view if the query state is about the current user"
-                    ),
-                    type: "Bool",
-                  },
-                ]
+                    {
+                      name: "always_create_view",
+                      label: req.__("Always show create view"),
+                      sublabel: req.__(
+                        "If off, only show create view if the query state is about the current user"
+                      ),
+                      type: "Bool",
+                    },
+                  ]
                 : []),
             ],
           });
@@ -212,8 +211,9 @@ const configuration_workflow = (req) =>
                 name: "include_fml",
                 label: req.__("Row inclusion formula"),
                 class: "validate-expression",
-                sublabel: req.__("Only include rows where this formula is true. ")
-                  + req.__("Use %s to access current user ID", code("$user_id")),
+                sublabel:
+                  req.__("Only include rows where this formula is true. ") +
+                  req.__("Use %s to access current user ID", code("$user_id")),
                 type: "String",
               },
 
@@ -461,9 +461,9 @@ const run = async (
   const showRowInner = (r) =>
     in_card
       ? div(
-        { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
-        div({ class: "card-body" }, r.html)
-      )
+          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
+          div({ class: "card-body" }, r.html)
+        )
       : r.html;
 
   const showRow = (r) =>
@@ -480,19 +480,19 @@ const run = async (
   const inner =
     in_card && masonry_columns
       ? div(
-        correct_order([
-          div({ class: "card-columns" }, sresp.map(showRowInner)),
-          paginate,
-          create_link_div,
-        ])
-      )
+          correct_order([
+            div({ class: "card-columns" }, sresp.map(showRowInner)),
+            paginate,
+            create_link_div,
+          ])
+        )
       : div(
-        correct_order([
-          div({ class: "row" }, sresp.map(showRow)),
-          paginate,
-          create_link_div,
-        ])
-      );
+          correct_order([
+            div({ class: "row" }, sresp.map(showRow)),
+            paginate,
+            create_link_div,
+          ])
+        );
 
   return inner;
 };

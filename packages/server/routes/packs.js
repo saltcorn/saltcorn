@@ -335,8 +335,7 @@ router.post(
     const can_install = await can_install_pack(pack.pack);
 
     if (can_install.error) {
-      error = can_install.error;
-      req.flash("error", error);
+      req.flash("error", can_install.error);
       res.redirect(`/plugins`);
       return;
     } else if (can_install.warning) {

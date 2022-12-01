@@ -1684,7 +1684,7 @@ router.post(
         [message, stack].join("\n"),
         (error) => {
           if (error) {
-            console.log(`unable to write '${logFile}' to '${buildDir}'`);
+            console.log(`unable to write logFile to '${buildDir}'`);
             console.log(error);
           }
         }

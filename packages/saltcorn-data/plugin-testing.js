@@ -130,8 +130,8 @@ const check_view_columns = async (view, columns) => {
     view.table_id
       ? { id: view.table_id }
       : view.exttable_name
-        ? { name: view.exttable_name }
-        : { id: -1 }
+      ? { name: view.exttable_name }
+      : { id: -1 }
   );
   let fields;
   if (table) fields = await table.getFields();
@@ -201,6 +201,7 @@ const check_view_columns = async (view, columns) => {
           errs.push(
             `In view ${view.name}, action ${column.action_name} does not exist`
           );
+        break;
       case "ViewLink":
         if (column.view_label_formula)
           check_formula(column.view_label, `Label for view link`);

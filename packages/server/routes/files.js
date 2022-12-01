@@ -18,7 +18,11 @@ const { isAdmin, error_catcher, setTenant } = require("./utils.js");
 const { h1, div, text } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
-const { send_files_page, config_fields_form, save_config_from_form } = require("../markup/admin");
+const {
+  send_files_page,
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin");
 const fs = require("fs");
 const path = require("path");
 
@@ -58,31 +62,33 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
-    const { dir } = req.query
-    const safeDir = File.normalise(dir || "/")
+    const { dir } = req.query;
+    const safeDir = File.normalise(dir || "/");
     const rows = await File.find({ folder: dir }, { orderBy: "filename" });
     const roles = await User.get_roles();
     if (safeDir && safeDir !== "/" && safeDir !== ".") {
-      let dirname = path.dirname(safeDir)
-      if (dirname === ".") dirname = "/"
-      rows.unshift(new File({
-        filename: "..",
-        location: dirname,
-        isDirectory: true,
-        mime_super: "",
-        mime_sub: "",
-      }))
+      let dirname = path.dirname(safeDir);
+      if (dirname === ".") dirname = "/";
+      rows.unshift(
+        new File({
+          filename: "..",
+          location: dirname,
+          isDirectory: true,
+          mime_super: "",
+          mime_sub: "",
+        })
+      );
     }
     if (req.xhr) {
       for (const file of rows) {
-        file.location = file.path_to_serve
+        file.location = file.path_to_serve;
       }
-      const directories = await File.allDirectories()
+      const directories = await File.allDirectories();
       for (const file of directories) {
-        file.location = file.path_to_serve
+        file.location = file.path_to_serve;
       }
-      res.json({ files: rows, roles, directories })
-      return
+      res.json({ files: rows, roles, directories });
+      return;
     }
     send_files_page({
       res,
@@ -90,7 +96,7 @@ router.get(
       headers: [
         {
           script: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
-          defer: true
+          defer: true,
         },
         {
           css: `/static_assets/${db.connectObj.version_tag}/bundle.css`,
@@ -122,7 +128,10 @@ router.get(
     const serve_path = req.params[0];
     const file = await File.findOne(serve_path);
 
-    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
       res.type(file.mimetype);
       if (file.s3_store) s3storage.serveObject(file, res, true);
       else res.download(file.location, file.filename);
@@ -150,7 +159,10 @@ router.get(
     //if (typeof strictParseInt(id) !== "undefined")
     const file = await File.findOne(serve_path);
 
-    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
@@ -178,10 +190,12 @@ router.get(
     const { width_str, height_str } = req.params;
     const serve_path = req.params[0];
 
-
     const file = await File.findOne(serve_path);
 
-    if (file && (role <= file.min_role_read || (user_id && user_id === file.user_id))) {
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 10 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
@@ -189,13 +203,16 @@ router.get(
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else {
         const width = strictParseInt(width_str);
-        const height = height_str && height_str !== "0"
-          ? strictParseInt(height_str) : null;
+        const height =
+          height_str && height_str !== "0" ? strictParseInt(height_str) : null;
         if (!width) {
           res.sendFile(file.location);
           return;
         }
-        const basenm = path.join(path.dirname(file.location), '_resized_' + path.basename(file.location))
+        const basenm = path.join(
+          path.dirname(file.location),
+          "_resized_" + path.basename(file.location)
+        );
         const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
         if (!fs.existsSync(fnm)) {
           await resizer({
@@ -233,14 +250,13 @@ router.post(
 
     if (roleRow && file) {
       await file.set_role(role);
-
     }
 
-
-    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
+    res.redirect(
+      file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files"
+    );
   })
 );
-
 
 router.post(
   "/move/*",
@@ -254,10 +270,12 @@ router.post(
       await file.move_to_dir(new_path);
     }
     if (req.xhr) {
-      res.json({ success: "ok" })
-      return
+      res.json({ success: "ok" });
+      return;
     }
-    res.redirect(file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files");
+    res.redirect(
+      file ? `/files?dir=${encodeURIComponent(file.current_folder)}` : "/files"
+    );
   })
 );
 
@@ -278,7 +296,6 @@ router.post(
     await file.rename(filename);
 
     res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
-
   })
 );
 
@@ -286,7 +303,7 @@ router.post(
   "/new-folder",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { name, folder } = req.body
+    const { name, folder } = req.body;
     await File.new_folder(name, folder);
 
     res.json({ success: "ok" });
@@ -303,11 +320,11 @@ router.post(
   "/upload",
   setTenant,
   error_catcher(async (req, res) => {
-    let { folder } = req.body
+    let { folder } = req.body;
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 10;
-    let file_for_redirect
+    let file_for_redirect;
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
       else jsonResp = { error: "Not authorized" };
@@ -323,7 +340,7 @@ router.post(
         folder ? File.normalise(folder) : undefined
       );
       const many = Array.isArray(f);
-      file_for_redirect = many ? f[0] : f
+      file_for_redirect = many ? f[0] : f;
       if (!req.xhr)
         req.flash(
           "success",
@@ -346,10 +363,11 @@ router.post(
         };
     }
     if (!req.xhr)
-      res.redirect(!file_for_redirect
-        ? '/files'
-        : `/files?dir=${encodeURIComponent(file_for_redirect.current_folder)}`);
-
+      res.redirect(
+        !file_for_redirect
+          ? "/files"
+          : `/files?dir=${encodeURIComponent(file_for_redirect.current_folder)}`
+      );
     else res.json(jsonResp);
   })
 );
@@ -438,7 +456,7 @@ router.post(
     const form = await storage_form(req);
     form.validate(req.body);
     if (form.hasErrors) {
-      send_admin_page({
+      send_files_page({
         res,
         req,
         active_sub: "Storage",
@@ -465,17 +483,17 @@ router.post(
  * @returns {Promise<Form>} form
  */
 const files_settings_form = async (req) => {
-    return await config_fields_form({
-        req,
-        field_names: [
-            "min_role_upload",
-            "file_accept_filter_default",
-            "file_upload_debug",
-            "file_upload_limit",
-            "file_upload_timeout",
-        ],
-        action: "/files/settings",
-    });
+  return await config_fields_form({
+    req,
+    field_names: [
+      "min_role_upload",
+      "file_accept_filter_default",
+      "file_upload_debug",
+      "file_upload_limit",
+      "file_upload_timeout",
+    ],
+    action: "/files/settings",
+  });
 };
 
 /**
@@ -484,21 +502,21 @@ const files_settings_form = async (req) => {
  * @memberof module:routes/admin~routes/adminRouter
  */
 router.get(
-    "/settings",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await files_settings_form(req);
-        send_files_page({
-            res,
-            req,
-            active_sub: "Settings",
-            contents: {
-                type: "card",
-                title: req.__("Files settings"),
-                contents: [renderForm(form, req.csrfToken())],
-            },
-        });
-    })
+  "/settings",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await files_settings_form(req);
+    send_files_page({
+      res,
+      req,
+      active_sub: "Settings",
+      contents: {
+        type: "card",
+        title: req.__("Files settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
 );
 
 /**
@@ -507,29 +525,29 @@ router.get(
  * @memberof module:routes/admin~routes/adminRouter
  */
 router.post(
-    "/settings",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await files_settings_form(req);
-        form.validate(req.body);
-        if (form.hasErrors) {
-            send_admin_page({
-                res,
-                req,
-                active_sub: "Settings",
-                contents: {
-                    type: "card",
-                    title: req.__("Files settings"),
-                    contents: [renderForm(form, req.csrfToken())],
-                },
-            });
-        } else {
-            await save_config_from_form(form);
+  "/settings",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await files_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_files_page({
+        res,
+        req,
+        active_sub: "Settings",
+        contents: {
+          type: "card",
+          title: req.__("Files settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
 
-            if (!req.xhr) {
-                req.flash("success", req.__("Files settings updated"));
-                res.redirect("/files/settings");
-            } else res.json({ success: "ok" });
-        }
-    })
+      if (!req.xhr) {
+        req.flash("success", req.__("Files settings updated"));
+        res.redirect("/files/settings");
+      } else res.json({ success: "ok" });
+    }
+  })
 );
