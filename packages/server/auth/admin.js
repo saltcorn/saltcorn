@@ -12,7 +12,14 @@ const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { mkTable, renderForm, link, post_btn, settingsDropdown, post_dropdown_item } = require("@saltcorn/markup");
+const {
+  mkTable,
+  renderForm,
+  link,
+  post_btn,
+  settingsDropdown,
+  post_dropdown_item,
+} = require("@saltcorn/markup");
 const { isAdmin, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
@@ -159,33 +166,33 @@ const user_dropdown = (user, req, can_reset) =>
       req
     ),
     can_reset &&
-    post_dropdown_item(
-      `/useradmin/reset-password/${user.id}`,
-      '<i class="fas fa-envelope"></i>&nbsp;' +
-      req.__("Send password reset email"),
-      req
-    ),
+      post_dropdown_item(
+        `/useradmin/reset-password/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req.__("Send password reset email"),
+        req
+      ),
     can_reset &&
-    !user.verified_on &&
-    getState().getConfig("verification_view", "") &&
-    post_dropdown_item(
-      `/useradmin/send-verification/${user.id}`,
-      '<i class="fas fa-envelope"></i>&nbsp;' +
-      req.__("Send verification email"),
-      req
-    ),
+      !user.verified_on &&
+      getState().getConfig("verification_view", "") &&
+      post_dropdown_item(
+        `/useradmin/send-verification/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req.__("Send verification email"),
+        req
+      ),
     user.disabled &&
-    post_dropdown_item(
-      `/useradmin/enable/${user.id}`,
-      '<i class="fas fa-play"></i>&nbsp;' + req.__("Enable"),
-      req
-    ),
+      post_dropdown_item(
+        `/useradmin/enable/${user.id}`,
+        '<i class="fas fa-play"></i>&nbsp;' + req.__("Enable"),
+        req
+      ),
     !user.disabled &&
-    post_dropdown_item(
-      `/useradmin/disable/${user.id}`,
-      '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
-      req
-    ),
+      post_dropdown_item(
+        `/useradmin/disable/${user.id}`,
+        '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
+        req
+      ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
       `/useradmin/delete/${user.id}`,
@@ -209,7 +216,7 @@ router.get(
     const users = await User.find({}, { orderBy: "id" });
     const roles = await User.get_roles();
     let roleMap = {};
-    roles.forEach(r => {
+    roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
     const can_reset = getState().getConfig("smtp_host", "") !== "";
@@ -238,10 +245,10 @@ router.get(
               {
                 label: req.__("Verified"),
                 key: (r) =>
-                  !!r.verified_on
+                  r.verified_on
                     ? i({
-                      class: "fas fa-check-circle text-success",
-                    })
+                        class: "fas fa-check-circle text-success",
+                      })
                     : "",
               },
               { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
@@ -291,23 +298,23 @@ router.get(
  * @returns {Form}
  */
 const auth_settings_form = async (req) =>
-    await config_fields_form({
-        req,
-        field_names: [
-            "allow_signup",
-            "login_menu",
-            "allow_forgot",
-            "new_user_form",
-            "login_form",
-            "signup_form",
-            "user_settings_form",
-            "verification_view",
-            "elevate_verified",
-            "email_mask",
-        ],
-        action: "/useradmin/settings",
-        submitLabel: req.__("Save"),
-    });
+  await config_fields_form({
+    req,
+    field_names: [
+      "allow_signup",
+      "login_menu",
+      "allow_forgot",
+      "new_user_form",
+      "login_form",
+      "signup_form",
+      "user_settings_form",
+      "verification_view",
+      "elevate_verified",
+      "email_mask",
+    ],
+    action: "/useradmin/settings",
+    submitLabel: req.__("Save"),
+  });
 
 /**
  * HTTP Settings Form
@@ -315,19 +322,18 @@ const auth_settings_form = async (req) =>
  * @returns {Form}
  */
 const http_settings_form = async (req) =>
-    await config_fields_form({
-        req,
-        field_names: [
-            "timeout",
-            "cookie_duration",
-            "cookie_duration_remember",
-            "cookie_sessions",
-            "custom_http_headers",
-        ],
-        action: "/useradmin/http",
-        submitLabel: req.__("Save"),
-    });
-
+  await config_fields_form({
+    req,
+    field_names: [
+      "timeout",
+      "cookie_duration",
+      "cookie_duration_remember",
+      "cookie_sessions",
+      "custom_http_headers",
+    ],
+    action: "/useradmin/http",
+    submitLabel: req.__("Save"),
+  });
 
 /**
  * Permissions Setting Form
@@ -335,16 +341,16 @@ const http_settings_form = async (req) =>
  * @returns {Form}
  */
 const permissions_settings_form = async (req) =>
-    await config_fields_form({
-        req,
-        field_names: [
-            "min_role_upload",
-            "min_role_apikeygen",
-//hidden            "exttables_min_role_read",
-        ],
-        action: "/useradmin/permissions",
-        submitLabel: req.__("Save"),
-    });
+  await config_fields_form({
+    req,
+    field_names: [
+      "min_role_upload",
+      "min_role_apikeygen",
+      //hidden            "exttables_min_role_read",
+    ],
+    action: "/useradmin/permissions",
+    submitLabel: req.__("Save"),
+  });
 
 /**
  * HTTP GET for /useradmin/settings
@@ -409,21 +415,21 @@ router.post(
  * @memberof module:auth/admin~auth/adminRouter
  */
 router.get(
-    "/http",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await http_settings_form(req);
-        send_users_page({
-            res,
-            req,
-            active_sub: "HTTP",
-            contents: {
-                type: "card",
-                title: req.__("HTTP settings"),
-                contents: [renderForm(form, req.csrfToken())],
-            },
-        });
-    })
+  "/http",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await http_settings_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "HTTP",
+      contents: {
+        type: "card",
+        title: req.__("HTTP settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
 );
 
 /**
@@ -433,29 +439,29 @@ router.get(
  * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
-    "/http",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await http_settings_form(req);
-        form.validate(req.body);
-        if (form.hasErrors) {
-            send_users_page({
-                res,
-                req,
-                active_sub: "HTTP",
-                contents: {
-                    type: "card",
-                    title: req.__("HTTP settings"),
-                    contents: [renderForm(form, req.csrfToken())],
-                },
-            });
-        } else {
-            await save_config_from_form(form);
-            req.flash("success", req.__("HTTP settings updated"));
-            if (!req.xhr) res.redirect("/useradmin/http");
-            else res.json({ success: "ok" });
-        }
-    })
+  "/http",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await http_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "HTTP",
+        contents: {
+          type: "card",
+          title: req.__("HTTP settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("HTTP settings updated"));
+      if (!req.xhr) res.redirect("/useradmin/http");
+      else res.json({ success: "ok" });
+    }
+  })
 );
 
 /**
@@ -465,21 +471,21 @@ router.post(
  * @memberof module:auth/admin~auth/adminRouter
  */
 router.get(
-    "/permissions",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await permissions_settings_form(req);
-        send_users_page({
-            res,
-            req,
-            active_sub: "Permissions",
-            contents: {
-                type: "card",
-                title: req.__("Permissions settings"),
-                contents: [renderForm(form, req.csrfToken())],
-            },
-        });
-    })
+  "/permissions",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await permissions_settings_form(req);
+    send_users_page({
+      res,
+      req,
+      active_sub: "Permissions",
+      contents: {
+        type: "card",
+        title: req.__("Permissions settings"),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
 );
 
 /**
@@ -489,29 +495,29 @@ router.get(
  * @memberof module:auth/admin~auth/adminRouter
  */
 router.post(
-    "/permissions",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await permissions_settings_form(req);
-        form.validate(req.body);
-        if (form.hasErrors) {
-            send_users_page({
-                res,
-                req,
-                active_sub: "Permissions",
-                contents: {
-                    type: "card",
-                    title: req.__("Permissions settings"),
-                    contents: [renderForm(form, req.csrfToken())],
-                },
-            });
-        } else {
-            await save_config_from_form(form);
-            req.flash("success", req.__("Permissions settings updated"));
-            if (!req.xhr) res.redirect("/useradmin/permissions");
-            else res.json({ success: "ok" });
-        }
-    })
+  "/permissions",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await permissions_settings_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_users_page({
+        res,
+        req,
+        active_sub: "Permissions",
+        contents: {
+          type: "card",
+          title: req.__("Permissions settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      req.flash("success", req.__("Permissions settings updated"));
+      if (!req.xhr) res.redirect("/useradmin/permissions");
+      else res.json({ success: "ok" });
+    }
+  })
 );
 
 /**
@@ -549,15 +555,15 @@ router.get(
         above: [
           ...(letsencrypt && has_custom
             ? [
-              {
-                type: "card",
-                contents: p(
-                  req.__(
-                    "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
-                  )
-                ),
-              },
-            ]
+                {
+                  type: "card",
+                  contents: p(
+                    req.__(
+                      "You have enabled both Let's Encrypt certificates and custom SSL certificates. Let's Encrypt takes priority and the custom certificates will be ignored."
+                    )
+                  ),
+                },
+              ]
             : []),
           {
             type: "card",
@@ -578,33 +584,33 @@ router.get(
               ),
               letsencrypt
                 ? post_btn(
-                  "/config/delete/letsencrypt",
-                  req.__("Disable LetsEncrypt HTTPS"),
-                  req.csrfToken(),
-                  { btnClass: "btn-danger", req }
-                )
+                    "/config/delete/letsencrypt",
+                    req.__("Disable LetsEncrypt HTTPS"),
+                    req.csrfToken(),
+                    { btnClass: "btn-danger", req }
+                  )
                 : post_btn(
-                  "/admin/enable-letsencrypt",
-                  req.__("Enable LetsEncrypt HTTPS"),
-                  req.csrfToken(),
-                  { confirm: true, req }
-                ),
+                    "/admin/enable-letsencrypt",
+                    req.__("Enable LetsEncrypt HTTPS"),
+                    req.csrfToken(),
+                    { confirm: true, req }
+                  ),
               !letsencrypt &&
-              show_warning &&
-              !has_custom &&
-              div(
-                { class: "mt-3 alert alert-danger" },
-                p(
-                  req.__(
-                    "The address you are using to reach Saltcorn does not match the Base URL."
+                show_warning &&
+                !has_custom &&
+                div(
+                  { class: "mt-3 alert alert-danger" },
+                  p(
+                    req.__(
+                      "The address you are using to reach Saltcorn does not match the Base URL."
+                    )
+                  ),
+                  p(
+                    req.__(
+                      "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
+                    )
                   )
                 ),
-                p(
-                  req.__(
-                    "The DNS A records (for * and @, or a subdomain) should point to this server's IP address before enabling LetsEncrypt"
-                  )
-                )
-              ),
             ],
           },
           {
@@ -641,11 +647,11 @@ router.get(
  * @returns {Form}
  */
 const ssl_form = async (req) =>
-    await config_fields_form({
-        req,
-        field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
-        action: "/useradmin/ssl/custom",
-    });
+  await config_fields_form({
+    req,
+    field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
+    action: "/useradmin/ssl/custom",
+  });
 
 /**
  * HTTP GET for /useradmin/ssl/custom
@@ -701,8 +707,8 @@ router.post(
       req.flash(
         "success",
         req.__("Custom SSL enabled. Restart for changes to take effect.") +
-        " " +
-        a({ href: "/admin/system" }, req.__("Restart here"))
+          " " +
+          a({ href: "/admin/system" }, req.__("Restart here"))
       );
       if (!req.xhr) {
         res.redirect("/useradmin/ssl");
@@ -721,15 +727,15 @@ router.get(
   "/table-access",
   isAdmin,
   error_catcher(async (req, res) => {
-    const tables = await Table.find()
+    const tables = await Table.find();
     const roleOptions = (await User.get_roles()).map((r) => ({
       value: r.id,
       label: r.role,
     }));
 
-    const contents = []
+    const contents = [];
     for (const table of tables) {
-      if (table.external) continue
+      if (table.external) continue;
       const fields = await table.getFields();
       const userFields = fields
         .filter((f) => f.reftable_name === "users")
@@ -773,7 +779,7 @@ router.get(
             name: "min_role_read",
             input_type: "select",
             options: roleOptions,
-            attributes: { asideNext: true }
+            attributes: { asideNext: true },
           },
           {
             label: req.__("Minimum role to write"),
@@ -784,16 +790,18 @@ router.get(
             ),
             options: roleOptions,
           },
-        ]
-      })
+        ],
+      });
       form.hidden("id", "name");
-      form.values = table
+      form.values = table;
       if (table.ownership_formula && !table.ownership_field_id)
         form.values.ownership_field_id = "_formula";
-      contents.push(div(
-        h5(a({ href: `/table/${table.id}` }, table.name)),
-        renderForm(form, req.csrfToken())
-      ))
+      contents.push(
+        div(
+          h5(a({ href: `/table/${table.id}` }, table.name)),
+          renderForm(form, req.csrfToken())
+        )
+      );
     }
     send_users_page({
       res,
@@ -802,12 +810,11 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Table access"),
-        contents
+        contents,
       },
     });
   })
 );
-
 
 /**
  * @name get/:id
@@ -842,9 +849,9 @@ router.get(
               div(
                 user.api_token
                   ? span(
-                    { class: "me-1" },
-                    req.__("API token for this user: ")
-                  ) + code(user.api_token)
+                      { class: "me-1" },
+                      req.__("API token for this user: ")
+                    ) + code(user.api_token)
                   : req.__("No API token issued")
               ),
               // button for reset or generate api token
@@ -858,16 +865,16 @@ router.get(
               ),
               // button for remove api token
               user.api_token &&
-              div(
-                { class: "mt-4 ms-2 d-inline-block" },
-                post_btn(
-                  `/useradmin/remove-api-token/${user.id}`,
-                  // TBD localization
-                  user.api_token ? req.__("Remove") : req.__("Generate"),
-                  req.csrfToken(),
-                  { req: req, confirm: true }
-                )
-              ),
+                div(
+                  { class: "mt-4 ms-2 d-inline-block" },
+                  post_btn(
+                    `/useradmin/remove-api-token/${user.id}`,
+                    // TBD localization
+                    user.api_token ? req.__("Remove") : req.__("Generate"),
+                    req.csrfToken(),
+                    { req: req, confirm: true }
+                  )
+                ),
             ],
           },
         ],
@@ -989,10 +996,10 @@ router.post(
     // todo add test case
     const result = await send_verification_email(u, req);
     if (result.error)
-        req.flash(
-            "danger",
-            req.__(`Verification email sender error:`, result.error)
-        );
+      req.flash(
+        "danger",
+        req.__(`Verification email sender error:`, result.error)
+      );
     else
       req.flash(
         "success",
