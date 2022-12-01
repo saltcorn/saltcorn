@@ -181,44 +181,38 @@ const discover_tables = async (
           // check saltcorn tables for ref table
           const reftablesc = Table.findOne({ name: f.reftable_name });
           if (reftablesc) {
-
             if (!reftablesc.fields)
               throw new Error(`The table '${f.reftable_name}' has no fields`);
 
             // get ref pk type
             const refpksc = reftablesc.fields.find(
-                (rtf: FieldCfg) => rtf.primary_key === true
+              (rtf: FieldCfg) => rtf.primary_key === true
             );
-            console.log(refpksc);
-            if(!refpksc || !refpksc.type)
+            if (!refpksc || !refpksc.type)
               throw new Error(`The '${f.reftable_name}' has no primary key`);
 
-            f.reftype = refpksc.type =  typeof refpksc.type !== 'string'?
-                f.reftype = refpksc.type.name
-                :
-                f.reftype = refpksc.type
-            ;
-          }
-          else{
+            f.reftype = refpksc.type =
+              typeof refpksc.type !== "string"
+                ? (f.reftype = refpksc.type.name)
+                : (f.reftype = refpksc.type);
+          } else {
             // check importing tables
             const reftable = packTables.find(
-                (reft) => reft.name === f.reftable_name
+              (reft) => reft.name === f.reftable_name
             );
             if (!reftable)
               throw new Error(`Unable to find table '${f.reftable_name}'`);
             if (!reftable.fields)
               throw new Error(`The table '${f.reftable_name}' has no fields`);
             const refpk = reftable.fields.find(
-                (rtf: FieldCfg) => rtf.primary_key
+              (rtf: FieldCfg) => rtf.primary_key
             );
             if (!refpk)
               throw new Error(
-                  `The table '${f.reftable_name}' has no primary key`
+                `The table '${f.reftable_name}' has no primary key`
               );
             f.reftype = refpk.type;
-
           }
-
         }
       });
   });

@@ -93,15 +93,15 @@ const add_edit_bar = ({
     { class: "alert alert-light d-print-none admin-edit-bar" },
     title,
     what && span({ class: "ms-1 me-2 badge bg-primary" }, what),
-    viewSpec,
     a({ class: "ms-2", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" })),
     cfgUrl
       ? a(
-          { class: "ms-1", href: cfgUrl },
+          { class: "ms-1 me-3", href: cfgUrl },
           "Configure&nbsp;",
           i({ class: "fas fa-cog" })
         )
-      : ""
+      : "",
+    viewSpec
   );
 
   if (contents.above) {
@@ -344,7 +344,7 @@ const viewAttributes = async (key) => {
 const flash_restart_if_required = (cfgForm, req) => {
   let restart = false;
   cfgForm.fields.forEach((f) => {
-    if (configTypes[f.name].restart_required) {
+    if (configTypes[f.name]?.restart_required) {
       const current = getState().getConfig(f.name);
       if (current !== cfgForm.values[f.name]) restart = true;
     }
@@ -384,8 +384,24 @@ const config_fields_form = async ({
   const state = getState();
   const fields = [];
   const tenant = db.getTenantSchema();
-
+  const roleAttribs = {
+    options: (await User.get_roles()).map((r) => ({
+      label: r.role,
+      name: `${r.id}`,
+    })),
+  };
+  const getTenants = async () => {
+    const tens = await db.select("_sc_tenants");
+    return { options: tens.map((t) => t.subdomain) };
+  };
   for (const name of field_names) {
+    if (typeof name === "object" && name.section_header) {
+      fields.push({
+        input_type: "section_header",
+        label: name.section_header,
+      });
+      continue;
+    }
     values[name] = state.getConfig(name);
     // console.log(`config field name: %s`,name);
     if (configTypes[name].root_only && tenant !== db.connectObj.default_schema)
@@ -395,16 +411,7 @@ const config_fields_form = async ({
     const isTenant = configTypes[name].type === "Tenant";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
-    const roleAttribs = {
-      options: (await User.get_roles()).map((r) => ({
-        label: r.role,
-        name: `${r.id}`,
-      })),
-    };
-    const getTenants = async () => {
-      const tens = await db.select("_sc_tenants");
-      return { options: tens.map((t) => t.subdomain) };
-    };
+
     fields.push({
       name,
       ...configTypes[name],

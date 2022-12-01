@@ -12,6 +12,7 @@ import {
   instanceOfErrorMsg,
   instanceOfType,
   instanceOfSuccessMsg,
+  Type,
 } from "@saltcorn/types/common_types";
 import type { FieldLike } from "@saltcorn/types/base_types";
 import Field from "./field";
@@ -54,6 +55,7 @@ class Form implements AbstractForm {
   isOwner: boolean;
   onSubmit?: string;
   req: any;
+  tabs?: string;
   __?: any;
 
   /**
@@ -85,6 +87,7 @@ class Form implements AbstractForm {
     this.xhrSubmit = !!o.xhrSubmit;
     this.splitPaste = !!o.splitPaste;
     this.onSubmit = o.onSubmit;
+    this.tabs = o.tabs;
     this.isOwner = !!o.isOwner;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
@@ -159,6 +162,25 @@ class Form implements AbstractForm {
       strs.push(`${k}: ${v}`);
     });
     return strs.join("; ");
+  }
+
+  async asyncValidate(v: any): Promise<{ success: any } | { errors: any }> {
+    const vres = this.validate(v);
+    if (instanceOfErrorMsg(vres)) return vres;
+    for (const f of this.fields) {
+      let typeObj = f.type as Type;
+      if (typeObj?.postProcess) {
+        const ppres = await typeObj?.postProcess(this.values[f.name]);
+        if (ppres?.error) {
+          this.hasErrors = true;
+          this.errors[f.name] = ppres.error;
+        } else if (typeof ppres?.success !== "undefined") {
+          this.values[f.name] = ppres.success;
+        }
+      }
+    }
+    if (this.hasErrors) return { errors: this.errors };
+    else return { success: this.values };
   }
 
   /**
@@ -251,6 +273,7 @@ namespace Form {
     isOwner?: boolean;
     onSubmit?: string;
     req?: any;
+    tabs?: any;
     validate?: any;
     __?: any;
   };

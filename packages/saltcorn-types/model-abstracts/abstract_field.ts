@@ -49,6 +49,7 @@ export type FieldCfg = {
   table_id?: number;
   reftype?: string | Type;
   refname?: string;
+  tab?: string;
   table?: AbstractTable | null;
 };
 
