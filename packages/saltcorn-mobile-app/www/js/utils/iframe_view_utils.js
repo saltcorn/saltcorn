@@ -1,3 +1,4 @@
+/*eslint-env browser*/
 function combineFormAndQuery(form, query) {
   let paramsList = [];
   const formData = new FormData(form[0]);
