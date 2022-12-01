@@ -93,15 +93,15 @@ const add_edit_bar = ({
     { class: "alert alert-light d-print-none admin-edit-bar" },
     title,
     what && span({ class: "ms-1 me-2 badge bg-primary" }, what),
-    viewSpec,
     a({ class: "ms-2", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" })),
     cfgUrl
       ? a(
-          { class: "ms-1", href: cfgUrl },
+          { class: "ms-1 me-3", href: cfgUrl },
           "Configure&nbsp;",
           i({ class: "fas fa-cog" })
         )
-      : ""
+      : "",
+    viewSpec
   );
 
   if (contents.above) {
