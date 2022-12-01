@@ -20,6 +20,7 @@ const {
   button,
   text_attr,
   script,
+  a,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
