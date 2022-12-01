@@ -5,8 +5,25 @@
 
 import tags = require("./tags");
 import mjml = require("./mjml-tags");
-const { div, a, text, img, p, h1, h2, h3, h4, h5, h6, label, ul, li, i, span } =
-  tags;
+const {
+  div,
+  a,
+  img,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  label,
+  ul,
+  li,
+  i,
+  span,
+  text,
+  genericElement,
+} = tags;
 import crypto from "crypto";
 
 /**
@@ -36,28 +53,26 @@ const applyTextStyle = (segment: any, inner: string): string => {
     segment.labelFor ? label({ for: `input${text(segment.labelFor)}` }, s) : s;
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
-  const wrapText = (s: string) => mjml.text({ padding: "0px" }, labelFor(s));
+  const wrapText = (s: string) => mjml.text(labelFor(s));
   switch (segment.textStyle) {
     case "h1":
-      return wrapText(h1({ style }, inner));
+      return h1({ style }, inner);
     case "h2":
-      return wrapText(h2({ style }, inner));
+      return h2({ style }, inner);
     case "h3":
-      return wrapText(h3({ style }, inner));
+      return h3({ style }, inner);
     case "h4":
-      return wrapText(h4({ style }, inner));
+      return h4({ style }, inner);
     case "h5":
-      return wrapText(h5({ style }, inner));
+      return h5({ style }, inner);
     case "h6":
-      return wrapText(h6({ style }, inner));
+      return h6({ style }, inner);
     default:
-      return segment.block || segment.textStyle || hasStyle
-        ? mjml.text(
-            div({ style, class: to_bs5(segment.textStyle || "") }, inner)
-          )
-        : mjml.text(
-            span({ style, class: to_bs5(segment.textStyle || "") }, inner)
-          );
+      return segment.block
+        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        : segment.textStyle || hasStyle
+        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        : inner;
   }
 };
 
@@ -81,6 +96,7 @@ type RenderOpts = LayoutExports.RenderOpts;
  * @param opts.role
  * @param opts.alerts
  * @param opts.is_owner
+ * @prams req
  * @returns
  */
 const render = ({
@@ -92,15 +108,31 @@ const render = ({
   req,
 }: RenderOpts): any => {
   //console.log(JSON.stringify(layout, null, 2));
-  function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
+  function wrap(
+    segment: any,
+    isTop: boolean,
+    ix: number,
+    inner: string,
+    inEndingTag: boolean
+  ) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     const content = applyTextStyle(segment, iconTag + inner);
-    return isTop
-      ? mjml.section({ padding: "0px" }, mjml.column(content))
+    const isInline =
+      segment &&
+      (segment.display === "inline" ||
+        segment.block === false ||
+        segment.inline === true);
+    return !inEndingTag && isTop && !isInline
+      ? mjml.section(mjml.column(mjml.text(content)))
       : content;
   }
   const styles = new Array<any>();
-  function go(segment: any, isTop: boolean = false, ix: number = 0): string {
+  function go(
+    segment: any,
+    isTop: boolean = false,
+    ix: number = 0,
+    inEndingTag: boolean = false
+  ): string {
     if (!segment) return "";
     if (
       typeof segment === "object" &&
@@ -108,31 +140,34 @@ const render = ({
       segment.constructor === Object
     )
       return "";
-    if (typeof segment === "string") return wrap(segment, isTop, ix, segment);
+    if (typeof segment === "string")
+      return wrap(segment, isTop, ix, segment, inEndingTag);
     if (Array.isArray(segment))
       return wrap(
         segment,
         isTop,
         ix,
-        segment.map((s, jx) => go(s, isTop, jx + ix)).join("")
+        segment.map((s, jx) => go(s, isTop, jx + ix)).join(""),
+        inEndingTag
       );
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
       const rendered = blockDispatch[segment.type](segment, go);
-      return rendered ? wrap(segment, isTop, ix, rendered) : "";
+      return rendered ? wrap(segment, isTop, ix, rendered, inEndingTag) : "";
     }
     if (segment.type === "blank") {
-      return wrap(segment, isTop, ix, segment.contents || "");
+      return wrap(segment, isTop, ix, segment.contents || "", inEndingTag);
     }
     if (segment.type === "view") {
-      return wrap(segment, isTop, ix, segment.contents || "");
+      return wrap(segment, isTop, ix, segment.contents || "", inEndingTag);
     }
     if (segment.type === "pageHeader") {
       return wrap(
         segment,
         isTop,
         ix,
-        h1(segment.title) + p(segment.blurb || "")
+        h1(segment.title) + p(segment.blurb || ""),
+        inEndingTag
       );
     }
     if (segment.type === "image") {
@@ -142,21 +177,12 @@ const render = ({
       const base_url = urlFromReq.endsWith("/")
         ? urlFromReq.substring(0, urlFromReq.length - 1)
         : urlFromReq;
-      let styleString = "";
-      Object.keys(style || {}).forEach((k) => {
-        styleString += `${k}:${style[k]};`;
-      });
-      const className = createClassName(styleString, "image");
-      styles.push({ className, style: styleString });
-      const mjImage = mjml.image({
-        //class: segment.style && segment.style.width ? null : "w-100",
+      return img({
+        class: segment.style && segment.style.width ? null : "w-100",
+        style: style,
         alt: alt,
-        "css-class": className,
         src: srctype === "File" ? `${base_url}/files/serve/${fileid}` : url,
       });
-      return isTop
-        ? mjml.section({ padding: "0px" }, mjml.column(mjImage))
-        : mjImage;
     }
     if (segment.type === "link") {
       let style =
@@ -167,7 +193,7 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
-      const content = wrap(
+      return wrap(
         segment,
         isTop,
         ix,
@@ -183,11 +209,9 @@ const render = ({
             segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
             segment.text
           )
-        )
+        ),
+        inEndingTag
       );
-      return isTop
-        ? mjml.section({ padding: "0px" }, mjml.column(content))
-        : content;
     }
     if (segment.type === "card") {
       return wrap(
@@ -267,7 +291,8 @@ const render = ({
               go(segment.contents)
             ),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
-        )
+        ),
+        inEndingTag
       );
     }
 
@@ -340,23 +365,19 @@ const render = ({
           : `${what}: ${segment[what].map((p: string) => p + "px").join(" ")};`;
       let flexStyles = "";
       Object.keys(style || {}).forEach((k) => {
-        flexStyles += `${k}:${style[k]};`;
+        flexStyles += `${k}:${style[k]} ${
+          k.startsWith("margin") ? "!important" : ""
+        };`;
       });
-      const styleString = `${flexStyles}${ppCustomCSS(
-        customCSS || ""
-      )}${sizeProp("minHeight", "min-height")}${sizeProp(
-        "height",
-        "height"
-      )}${sizeProp("width", "width")}${sizeProp(
+      let styleString = `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
+        "minHeight",
+        "min-height"
+      )}${sizeProp("height", "height")}${sizeProp("width", "width")}${sizeProp(
         "widthPct",
         "width",
         "%"
-      )}border${borderDirection ? `-${borderDirection}` : ""}: ${
-        borderWidth || 0
-      }px ${borderStyle} ${borderColor || "black"};${sizeProp(
-        "borderRadius",
-        "border-radius"
-      )}${ppBox("padding")}${ppBox("margin")}${
+      )}
+      ${ppBox("padding")}${ppBox("margin")}${
         overflow && overflow !== "visible" ? ` overflow: ${overflow};` : ""
       } ${
         renderBg && bgType === "Image" && bgFileId && +bgFileId
@@ -377,8 +398,13 @@ const render = ({
       } ${setTextColor ? `color: ${textColor};` : ""}${
         rotate ? `transform: rotate(${rotate}deg);` : ""
       }`;
-      const className = createClassName(styleString, "container");
-      styles.push({ className, style: styleString });
+      if (!style || !(style["border-width"] && style["border-style"])) {
+        styleString += `border${
+          borderDirection ? `-${borderDirection}` : ""
+        }: ${borderWidth || 0}px ${borderStyle ? borderStyle : "none"} ${
+          borderColor || "black"
+        };${sizeProp("borderRadius", "border-radius")}`;
+      }
       const tagCfg: any = {
         /*class: [
           customClass || false,
@@ -394,7 +420,6 @@ const render = ({
           fullPageWidth && "full-page-width",
         ],*/
         onclick: segment.url ? `location.href='${segment.url}'` : false,
-        "css-class": className,
         // ...(showIfFormulaInputs
         //   ? {
         //       "data-show-if": encodeURIComponent(
@@ -403,6 +428,15 @@ const render = ({
         //     }
         //   : {}),
       };
+      let content = go(segment.contents, isTop, ix, true);
+      const inner = genericElement(
+        htmlElement || "div",
+        {
+          style: styleString,
+          class: displayClass,
+        },
+        content
+      );
       const bg =
         renderBg &&
         bgType === "Image" &&
@@ -417,47 +451,103 @@ const render = ({
             src: `/files/serve/${bgFileId}`,
           })
         );
-      const content = go(segment.contents);
-      if (isTop) {
-        tagCfg.padding = "0px";
-        return mjml.section(tagCfg, bg, mjml.column(content));
-      } else {
-        return mjml.text(tagCfg, bg, content);
-      }
+      if (inEndingTag) return inner;
+      else if (isTop && segment.display === "block")
+        return mjml.section(tagCfg, bg, mjml.column(mjml.text(inner)));
+      else return mjml.text(inner);
     }
     if (segment.type === "line_break") {
       return mjml.raw("<br />");
     }
     if (segment.above) {
-      return segment.above
-        .map((s: any, ix: number) => go(s, isTop, ix))
-        .join("");
+      let index = 0;
+      let wasInline = false;
+      const arr: Array<string> = [];
+      for (const current of segment.above) {
+        const currentResult = go(current, isTop, index, inEndingTag);
+        const isInline =
+          current &&
+          (current.display === "inline" ||
+            current.block === false ||
+            current.inline === true);
+        if (isInline) {
+          // combine inline elements into the last array index
+          if (arr.length === 0 || !wasInline) arr.push(currentResult);
+          else arr[arr.length - 1] += currentResult;
+          wasInline = true;
+        } else if (wasInline && !isInline) {
+          // inline ended => add a mjml.section
+          wasInline = false;
+          const content = arr[arr.length - 1];
+          arr[arr.length - 1] = inEndingTag
+            ? content
+            : mjml.section(mjml.column(mjml.text(content)));
+          arr.push(currentResult);
+        } else {
+          arr.push(currentResult);
+        }
+        index++;
+      }
+      if (wasInline) {
+        const content = arr[arr.length - 1];
+        arr[arr.length - 1] = inEndingTag
+          ? content
+          : mjml.section(mjml.column(mjml.text(content)));
+      }
+      return arr.join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      let styleString = "";
-      Object.keys(segment.style || {}).forEach((k) => {
-        styleString += `${k}:${segment.style[k]};`;
-      });
-      const className = createClassName(styleString, "group");
-      styles.push({ className, style: styleString });
-      const inner = segment.besides.map((t: any, ixb: number) =>
-        mjml.column(
+      if (isTop && !inEndingTag) {
+        let styleString = "";
+        Object.keys(segment.style || {}).forEach((k) => {
+          styleString += `${k}:${segment.style[k]} ${
+            k.startsWith("margin") ? "!important" : ""
+          };`;
+        });
+        const className = createClassName(styleString, "group");
+        styles.push({ className, style: styleString });
+        const inner = segment.besides.map((t: any, ixb: number) =>
+          mjml.column(
+            {
+              width: `${Math.round(
+                (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
+              )}%`,
+            },
+            mjml.text(go(t, false, ixb, true))
+          )
+        );
+        return mjml.section({ "css-class": className }, inner);
+      } else {
+        const inner = div(
           {
-            width: `${Math.round(
-              (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
-            )}%`,
+            class: [
+              "row",
+              segment.style && segment.style.width ? null : "w-100",
+            ],
+            style: segment.style,
           },
-          go(t, false, ixb)
-        )
-      );
-      const tagCfg = {
-        /*class: ["row", segment.style && segment.style.width ? null : "w-100"],*/
-        "css-class": className,
-      };
-      // TODO mj-group is not allowed in mj-column but it seems to work
-      return isTop
-        ? mjml.section({ padding: "0px" }, tagCfg, inner)
-        : mjml.group(tagCfg, inner);
+          segment.besides.map((t: any, ixb: number) =>
+            div(
+              {
+                class:
+                  segment.widths === false
+                    ? ""
+                    : `col-${
+                        segment.breakpoint
+                          ? segment.breakpoint + "-"
+                          : segment.breakpoints && segment.breakpoints[ixb]
+                          ? segment.breakpoints[ixb] + "-"
+                          : ""
+                      }${segment.widths ? segment.widths[ixb] : defwidth}${
+                        segment.aligns ? " text-" + segment.aligns[ixb] : ""
+                      }`,
+              },
+              go(t, false, ixb)
+            )
+          )
+        );
+        return inEndingTag ? inner : mjml.text(inner);
+      }
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   return { markup: go(layout, true, 0), styles };

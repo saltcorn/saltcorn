@@ -16,6 +16,7 @@ const tags: string[] = [
   "raw",
   "button",
   "group",
+  "attributes",
 ];
 const allTags: { [k: string]: (...args: any[]) => string } = Object.fromEntries(
   tags.map((tag) => [tag, mkTag(`mj-${tag}`)])

@@ -5,12 +5,11 @@
  */
 import { createTransport, Transporter } from "nodemailer";
 const { getState } = require("../db/state");
-//import tags from "@saltcorn/markup/tags";
+import tags from "@saltcorn/markup/tags";
 import mjml from "@saltcorn/markup/mjml-tags";
-//const { div } = tags;
+const { link } = tags;
 import View from "./view";
 import { v4 as uuidv4 } from "uuid";
-import db from "../db/index";
 import User from "./user";
 import mocks from "../tests/mocks";
 import mjml2html from "mjml";
@@ -26,7 +25,7 @@ const emailMockReqRes = {
 };
 
 /**
- * @returns {Transporter}
+ * @returns
  */
 const getMailTransport = (): Transporter => {
   const port = getState().getConfig("smtp_port");
@@ -42,26 +41,40 @@ const getMailTransport = (): Transporter => {
   });
 };
 
-const viewToMjml = async (view: any, state: any) => {
+const viewToMjml = async (view: View, state: any) => {
   const result = await view.run(state, emailMockReqRes);
   const allStyles = result.styles.map((style: any) =>
     mjml.style(`
-      .${style.className} div {
+      .${style.className} {
         ${style.style}
       }
     `)
   );
-  const bsCss = `
-    <link 
-      href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.0/flatly/bootstrap.min.css" 
-      rel="stylesheet"
-    />`;
+  const bsCss = link({
+    href: "https://stackpath.bootstrapcdn.com/bootswatch/4.5.0/flatly/bootstrap.min.css",
+    rel: "stylesheet",
+  });
+  const faCss = link({
+    href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css",
+    rel: "stylesheet",
+  });
+  const mjAttributes = mjml.attributes(
+    mjml.section({ "padding-top": "0px", "padding-bottom": "0px" }),
+    mjml.text({ "padding-top": "0px", "padding-bottom": "0px" })
+  );
   return mjml.mjml(
-    mjml.head(mjml.raw(bsCss) + allStyles.join(" ")) + mjml.body(result.markup)
+    mjml.head(mjAttributes + mjml.raw(bsCss + faCss) + allStyles.join(" ")) +
+      mjml.body(result.markup)
   );
 };
 
-const viewToEmailHtml = async (view: any, state: any) => {
+/**
+ * run the view and create email formatted html
+ * @param view view to run
+ * @param state state params for the view
+ * @returns email formatted html
+ */
+const viewToEmailHtml = async (view: View, state: any) => {
   const mjmlMarkup = await viewToMjml(view, state);
   const html = mjml2html(mjmlMarkup, { minify: true });
   if (html.errors && html.errors.length > 0) {
@@ -73,9 +86,10 @@ const viewToEmailHtml = async (view: any, state: any) => {
 };
 
 /**
- * @param {object} user
- * @param {object} [req]
- * @returns {Promise<object>}
+ * @param user
+ * @param req
+ * @param opts
+ * @returns true, or an object with an error message
  */
 const send_verification_email = async (
   user: User,
