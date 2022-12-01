@@ -48,7 +48,8 @@
     "rules": {
       "no-unused-vars": "off",
       "no-case-declarations": "off",
-      "no-empty": "warn"
+      "no-empty": "warn",
+      "no-fallthrough": "warn"
     }
   }
 }

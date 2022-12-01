@@ -145,7 +145,7 @@ module.exports = {
       // Forward the object
       s3.getObject(params)
         .on("httpHeaders", function (statusCode, headers) {
-          if (!!download)
+          if (!download)
             res.set("Content-Disposition", contentDisposition(file.filename));
           res.set("Content-Length", headers["content-length"]);
           this.response.httpResponse.createUnbufferedStream().pipe(res);

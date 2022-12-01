@@ -257,7 +257,7 @@ module.exports = {
       const parttable = Table.findOne({ name: part_table_name });
 
       //find a room that has both participants
-      // select id from rooms r where uid1 in (select id from participants where...) and
+      //select id from rooms r where uid1 in (select id from participants where...) and
 
       const { rows } = await db.query(
         `with my_rooms as (select "${part_key_to_room}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
@@ -889,7 +889,7 @@ module.exports = {
         const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
         const newRow = {
           [pk_field]: newPK,
-          ...eval_expression(match_expr || ow_expr, srcRow),
+          ...eval_expression(match_expr || row_expr, srcRow),
         };
         const res = await table_for_insert.tryInsertRow(
           newRow,
