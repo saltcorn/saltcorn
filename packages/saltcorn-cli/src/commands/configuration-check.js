@@ -32,12 +32,14 @@ class ConfigurationCheckCommand extends Command {
       if (!pass) {
         errors.forEach((s) => console.log(s + "\n"));
         warnings.forEach((s) => console.log("Warning: " + s + "\n"));
-        console.log(`FAIL - ${errors.length} checks failed`);
+        console.log(
+          `FAIL - ${errors.length} checks failed (${warnings.length} warnings)`
+        );
         that.exit(1);
       } else {
         warnings.forEach((s) => console.log("Warning: " + s + "\n"));
         passes.forEach((s) => console.log(s));
-        console.log("Success - all checks pass");
+        console.log(`Success - all checks pass (${warnings.length} warnings)`);
       }
     });
     this.exit(0);
