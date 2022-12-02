@@ -25,15 +25,17 @@ class ConfigurationCheckCommand extends Command {
 
     const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
-      const { passes, errors, pass } = await runConfigurationCheck(
+      const { passes, errors, pass, warnings } = await runConfigurationCheck(
         mockReqRes.req
       );
 
       if (!pass) {
         errors.forEach((s) => console.log(s + "\n"));
+        warnings.forEach((s) => console.log("Warning: " + s + "\n"));
         console.log(`FAIL - ${errors.length} checks failed`);
         that.exit(1);
       } else {
+        warnings.forEach((s) => console.log("Warning: " + s + "\n"));
         passes.forEach((s) => console.log(s));
         console.log("Success - all checks pass");
       }

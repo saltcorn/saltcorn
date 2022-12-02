@@ -126,6 +126,7 @@ const auto_test_plugin = async (plugin) => {
 
 const check_view_columns = async (view, columns) => {
   const errs = [];
+  const warnings = [];
   const table = Table.findOne(
     view.table_id
       ? { id: view.table_id }
@@ -158,7 +159,7 @@ const check_view_columns = async (view, columns) => {
           break;
         const f = fields.find((fld) => fld.name === column.field_name);
         if (!f) {
-          errs.push(
+          warnings.push(
             `In view ${view.name}, field ${column.field_name} does not exist in table ${table?.name}`
           );
           break;
@@ -227,7 +228,7 @@ const check_view_columns = async (view, columns) => {
         break;
     }
   }
-  return errs;
+  return { errors: errs, warnings };
 };
 
 module.exports = { auto_test_plugin, generate_attributes, check_view_columns };

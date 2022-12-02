@@ -1314,7 +1314,9 @@ module.exports = {
           );
       }
     }
-    errs.push(...(await check_view_columns(view, view.configuration.columns)));
+    const colcheck = await check_view_columns(view, view.configuration.columns);
+    errs.push(...colcheck.errors);
+    warnings.push(...colcheck.warnings);
     return { errors: errs, warnings };
   },
   connectedObjects: async (configuration) => {
