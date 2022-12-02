@@ -169,7 +169,7 @@ const check_view_columns = async (view, columns) => {
           !(f.is_fkey || f.type === "File") &&
           !f.type.fieldviews[column.fieldview]
         )
-          errs.push(
+          warnings.push(
             `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table?.name} does not have fieldview ${column.fieldview}`
           );
 
