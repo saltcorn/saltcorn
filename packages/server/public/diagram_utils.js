@@ -9,6 +9,8 @@ let tagFilterEnabled = false;
 
 let activePopper = null;
 
+const maxPreviewHeight = "350px";
+
 function initMouseOver() {
   cy.on("mouseover", "node", (event) => {
     const node = event.target;
@@ -41,7 +43,7 @@ function initMouseOver() {
 function buildCard(node) {
   const { type, label } = node.data();
   const html = `
-    <div class="card" style="width: 18rem;">
+    <div class="card" style="width: 20rem;">
       <div class="card-header">
         <h5 class="card-title">${type}</h5>
         <h6 class="card-subtitle text-muted">${label}</h6>
@@ -49,7 +51,9 @@ function buildCard(node) {
       <div class="card-body">
         ${buildTagBadges(node)}
         ${buildCardBody(node)}
-        ${type === "page" || type === "view" ? buildPreviewDiv(node) : ""}
+        <div>
+          ${type === "page" || type === "view" ? buildPreviewDiv(node) : ""}
+        </div>
         ${type === "page" || type === "view" ? buildMinRoleSelect(node) : ""}
       </div>
     </div>
@@ -70,26 +74,35 @@ function buildPreview(node) {
       "CSRF-Token": _sc_globalCsrf,
     },
     success: (res) => {
-      $(`#${previewId}`).html(`
+      $(`[id='${previewId}']`).html(`
         <div 
           id="preview_wrapper"
-          style="min-height: 70px;"
+          style="min-height: 70px; pointer-events: none;"
         > 
           ${res}
         </div></div></div>`);
-      const previewDiv = $(`#${previewId}`);
+      const previewDiv = $(`[id='${previewId}']`);
       const pos = previewDiv.position();
       const cssBase = `
+        max-height: ${maxPreviewHeight};
+        pointer-events: none;
         position: absolute; top: ${pos.top}px; left: ${pos.left}px;
         width: ${previewDiv.width()}px; height: ${previewDiv.height() + 12}px;`;
-      $(`#${previewId}`).after(`
-        <div 
+      const previewLabelId = `${previewId}_label`;
+      const previewOverlayId = `${previewId}_overlay`;
+      $(`[id='${previewLabelId}']`).remove();
+      $(`[id='${previewOverlayId}']`).remove();
+      $(`[id='${previewId}']`).after(`
+        <div
+          id="${previewOverlayId}" 
           style="${cssBase}
             background-color: black; opacity: 0.1;
             z-index: 10;"
         >
         </div>
-        <div style="${cssBase} opacity: 0.5;">
+        <div
+          id="${previewLabelId}" 
+          style="${cssBase} opacity: 0.5;">
           <h2 class="preview-text fw-bold text-danger">
             Preview
           </h2>
@@ -105,7 +118,7 @@ function buildPreview(node) {
 function buildPreviewDiv(node) {
   const previewId = `preview_${node.id()}`;
   return `
-    <div class="my-2" id="${previewId}" style="min-height: 70px;">
+    <div class="my-2" id="${previewId}" style="min-height: 70px; max-height: ${maxPreviewHeight}; overflow: scroll;">
       <div style="opacity: 0.5;">
         <h2>
           <span class="fw-bold text-danger">Preview</span>
