@@ -1,3 +1,5 @@
+/*global saltcorn*/
+
 const getHeaders = () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   const versionTag = config.version_tag;

@@ -1,3 +1,5 @@
+/*global window, FileReader*/
+
 async function fileExists(path) {
   try {
     await getDirEntry(path);

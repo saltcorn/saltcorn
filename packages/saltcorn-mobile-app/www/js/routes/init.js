@@ -1,3 +1,5 @@
+/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window*/
+
 const initRoutes = async () => {
   const routes = [
     {
@@ -43,7 +45,7 @@ const initRoutes = async () => {
     {
       path: "get/error_page",
       action: getErrorView,
-    }
+    },
   ];
   window.router = new window.UniversalRouter(routes);
 };

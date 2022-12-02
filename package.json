@@ -42,7 +42,8 @@
       "packages/server/public/**",
       "**/dist/**",
       "*.test.js",
-      "packages/filemanager/public/build/bundle.js"
+      "packages/filemanager/public/build/bundle.js",
+      "docs/**"
     ],
     "extends": "eslint:recommended",
     "parserOptions": {
