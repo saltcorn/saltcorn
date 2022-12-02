@@ -1,3 +1,5 @@
+/*global i18next, saltcorn*/
+
 function MobileRequest({ xhr = false, files = undefined, query = undefined }) {
   const roleId = saltcorn.data.state.getState().mobileConfig.role_id
     ? saltcorn.data.state.getState().mobileConfig.role_id

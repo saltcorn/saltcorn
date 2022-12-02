@@ -1,3 +1,5 @@
+/*global i18next, apiCall, saltcorn*/
+
 // post/delete/:name/:id
 const deleteRows = async (context) => {
   const { name, id } = context.params;

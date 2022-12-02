@@ -1,4 +1,6 @@
 /*eslint-env browser*/
+/*global $, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows*/
+
 function combineFormAndQuery(form, query) {
   let paramsList = [];
   const formData = new FormData(form[0]);

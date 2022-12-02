@@ -4,6 +4,8 @@
  * @module migrate
  */
 
+/*global window*/
+
 /** @type {module:fs} */
 const fs = require("fs");
 const path = require("path");

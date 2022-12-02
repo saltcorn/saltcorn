@@ -1,3 +1,5 @@
+/*global MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn*/
+
 // post/page/:pagename/action/:rndid
 const postPageAction = async (context) => {
   const state = saltcorn.data.state.getState();

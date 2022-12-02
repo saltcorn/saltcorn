@@ -1,3 +1,5 @@
+/*global MobileRequest, MobileResponse, parseQuery, wrapContents, saltcorn*/
+
 /**
  *
  * @param {*} context
