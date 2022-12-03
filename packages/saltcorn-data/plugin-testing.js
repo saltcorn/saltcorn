@@ -11,6 +11,10 @@ const Field = require("./models/field");
 const Table = require("./models/table");
 const Trigger = require("./models/trigger");
 const { expressionValidator } = require("./models/expression");
+const {
+  parse_view_select,
+} = require("./base-plugin/viewtemplates/viewable_fields");
+const View = require("./models/view");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -204,16 +208,21 @@ const check_view_columns = async (view, columns) => {
           );
         break;
       case "ViewLink":
-        if (column.view_label_formula)
-          check_formula(column.view_label, `Label for view link`);
-        if (column.extra_state_fml)
-          check_formula(
-            column.extra_state_fml,
-            `View link extra state formula`
-          );
-        break;
-
-      case "View":
+        {
+          if (column.view_label_formula)
+            check_formula(column.view_label, `Label for view link`);
+          if (column.extra_state_fml)
+            check_formula(
+              column.extra_state_fml,
+              `View link extra state formula`
+            );
+          const { viewname } = parse_view_select(column.view);
+          const linkedview = View.findOne({ name: viewname });
+          if (!linkedview)
+            errs.push(
+              `In view ${view.name}, linked view ${viewname} does not exist`
+            );
+        }
         break;
       case "JoinField":
         break;
