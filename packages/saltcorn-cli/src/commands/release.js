@@ -125,7 +125,7 @@ class ReleaseCommand extends Command {
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
       `Dockerfile.release`,
-      dockerfile.replace(/cli\@.* --unsafe/, `cli@${version} --unsafe`)
+      dockerfile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
     );
     //git commit tag and push
     spawnSync("git", ["commit", "-am", "v" + version], {
