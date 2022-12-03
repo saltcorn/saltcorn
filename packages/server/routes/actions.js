@@ -5,11 +5,7 @@
  * @subcategory routes
  */
 const Router = require("express-promise-router");
-const {
-  isAdmin,
-  error_catcher,
-  addOnDoneRedirect,
-} = require("./utils.js");
+const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getTriggerList } = require("./common_lists");
@@ -23,10 +19,7 @@ const { getTriggerList } = require("./common_lists");
  */
 const router = new Router();
 module.exports = router;
-const {
-  renderForm,
-  link,
-} = require("@saltcorn/markup");
+const { renderForm, link } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
@@ -378,7 +371,7 @@ router.get(
     if (!trigger) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
-      return
+      return;
     }
     const action = getState().actions[trigger.action];
     if (!action) {
@@ -575,7 +568,7 @@ router.get(
     };
     let table, row;
     if (trigger.table_id) {
-      table = await Table.findOne( { id: trigger.table_id } );
+      table = await Table.findOne({ id: trigger.table_id });
       row = await table.getRow({});
     }
     try {

@@ -14,7 +14,7 @@ const nodeMocks = {
 
 const npmMocks = {
   "env-paths": join(mocksDir, "npm", "env-paths"),
-  "fs-xattr": join(mocksDir, "npm", "fs-xattr"), 
+  "fs-xattr": join(mocksDir, "npm", "fs-xattr"),
 };
 
 const saltcornMocks = {

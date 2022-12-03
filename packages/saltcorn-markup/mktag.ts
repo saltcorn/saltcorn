@@ -77,31 +77,33 @@ const ppAttrib = ([k, v]: [string, any]): string =>
  * @param {boolean} voidTag
  * @returns {function}
  */
-const mkTag = (tnm: string, voidTag?: boolean) => (
-  ...args: string | any
-): string => {
-  var body = "";
-  var attribs = " ";
+const mkTag =
+  (tnm: string, voidTag?: boolean) =>
+  (...args: string | any): string => {
+    var body = "";
+    var attribs = " ";
 
-  const argIter = (arg: string | any) => {
-    if (typeof arg === "undefined" || arg === null || arg === false) {
-      //do nothing
-    } else if (typeof arg === "string") {
-      body += arg;
-    } else if (typeof arg === "object") {
-      if (Array.isArray(arg)) {
-        arg.forEach(argIter);
-      } else {
-        attribs += Object.entries(arg)
-          .map(ppAttrib)
-          .filter((s) => s)
-          .join(" ");
-      }
-    } else body += arg;
+    const argIter = (arg: string | any) => {
+      if (typeof arg === "undefined" || arg === null || arg === false) {
+        //do nothing
+      } else if (typeof arg === "string") {
+        body += arg;
+      } else if (typeof arg === "object") {
+        if (Array.isArray(arg)) {
+          arg.forEach(argIter);
+        } else {
+          attribs += Object.entries(arg)
+            .map(ppAttrib)
+            .filter((s) => s)
+            .join(" ");
+        }
+      } else body += arg;
+    };
+    args.forEach(argIter);
+    if (attribs === " ") attribs = "";
+    return voidTag
+      ? `<${tnm}${attribs}>`
+      : `<${tnm}${attribs}>${body}</${tnm}>`;
   };
-  args.forEach(argIter);
-  if (attribs === " ") attribs = "";
-  return voidTag ? `<${tnm}${attribs}>` : `<${tnm}${attribs}>${body}</${tnm}>`;
-};
 
 export = mkTag;

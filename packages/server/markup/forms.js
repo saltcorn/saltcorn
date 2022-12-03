@@ -50,33 +50,32 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
  * @param folder
  * @returns {Form}
  */
-const fileUploadForm = (req, folder
-    ) => {
-    const frm = form(
-        {
-            action: "/files/upload",
-            method: "post",
-            enctype: "multipart/form-data",
-        },
-        csrfField(req),
-        label(req.__("Upload file(s)")),
-        input({
-            name: "file",
-            class: "form-control ms-1 w-unset d-inline",
-            type: "file",
-            onchange: "form.submit()",
-            multiple: true,
-        }),
-        folder && input({type: "hidden", name: "folder", value: folder})
-    );
-    return frm;
+const fileUploadForm = (req, folder) => {
+  const frm = form(
+    {
+      action: "/files/upload",
+      method: "post",
+      enctype: "multipart/form-data",
+    },
+    csrfField(req),
+    label(req.__("Upload file(s)")),
+    input({
+      name: "file",
+      class: "form-control ms-1 w-unset d-inline",
+      type: "file",
+      onchange: "form.submit()",
+      multiple: true,
+    }),
+    folder && input({ type: "hidden", name: "folder", value: folder })
+  );
+  return frm;
 };
 
 /**
  * Get Wizard Card Title
  * @param {string} wizardTitle
- * @param {*} wf 
- * @param {object} wfres 
+ * @param {*} wf
+ * @param {object} wfres
  * @returns {string}
  */
 const wizardCardTitle = (wizardTitle, wf, wfres) =>

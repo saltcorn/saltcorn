@@ -30,7 +30,11 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 const socketio = require("socket.io");
 const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
-const { setTenant, getSessionStore, get_tenant_from_req } = require("./routes/utils");
+const {
+  setTenant,
+  getSessionStore,
+  get_tenant_from_req,
+} = require("./routes/utils");
 const passport = require("passport");
 const { authenticate } = require("passport");
 const View = require("@saltcorn/data/models/view");
@@ -106,8 +110,8 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     });
   }
   if (!getState()) {
-    console.error("no State for tenant", tenant)
-    return
+    console.error("no State for tenant", tenant);
+    return;
   }
   if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
   if (msg.createTenant) {
@@ -142,33 +146,33 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  */
 const onMessageFromWorker =
   (masterState, { port, watchReaper, disableScheduler, pid }) =>
-    (msg) => {
-      //console.log("worker msg", typeof msg, msg);
-      if (msg === "Start" && !masterState.started) {
-        masterState.started = true;
-        runScheduler({
-          port,
-          watchReaper,
-          disableScheduler,
-          eachTenant,
-          auto_backup_now,
-          take_snapshot,
-        });
-        require("./systemd")({ port });
-        return true;
-      } else if (msg === "RestartServer") {
-        process.exit(0);
-        return true;
-      } else if (msg.tenant || msg.createTenant) {
-        ///ie from saltcorn
-        //broadcast
-        Object.entries(cluster.workers).forEach(([wpid, w]) => {
-          if (wpid !== pid) w.send(msg);
-        });
-        workerDispatchMsg(msg); //also master
-        return true;
-      }
-    };
+  (msg) => {
+    //console.log("worker msg", typeof msg, msg);
+    if (msg === "Start" && !masterState.started) {
+      masterState.started = true;
+      runScheduler({
+        port,
+        watchReaper,
+        disableScheduler,
+        eachTenant,
+        auto_backup_now,
+        take_snapshot,
+      });
+      require("./systemd")({ port });
+      return true;
+    } else if (msg === "RestartServer") {
+      process.exit(0);
+      return true;
+    } else if (msg.tenant || msg.createTenant) {
+      ///ie from saltcorn
+      //broadcast
+      Object.entries(cluster.workers).forEach(([wpid, w]) => {
+        if (wpid !== pid) w.send(msg);
+      });
+      workerDispatchMsg(msg); //also master
+      return true;
+    }
+  };
 
 module.exports =
   /**
@@ -381,7 +385,7 @@ const setupSocket = (...servers) => {
         } catch (err) {
           getState().log(1, `Socket join_room error: ${err.stack}`);
         }
-      }
+      };
       if (ten && ten !== "public") db.runWithTenant(ten, f);
       else f();
     });

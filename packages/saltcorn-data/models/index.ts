@@ -67,11 +67,8 @@ export namespace discovery {
 
 import emailImport from "./email";
 export namespace email {
-  export const {
-    getMailTransport,
-    viewToEmailHtml,
-    send_verification_email,
-  } = emailImport;
+  export const { getMailTransport, viewToEmailHtml, send_verification_email } =
+    emailImport;
 }
 
 import expressionImport from "./expression";
@@ -103,12 +100,8 @@ export namespace layout {
 
 import randomImport from "./random";
 export namespace random {
-  export const {
-    random_table,
-    fill_table_row,
-    initial_view,
-    all_views,
-  } = randomImport;
+  export const { random_table, fill_table_row, initial_view, all_views } =
+    randomImport;
 }
 
 import schedulerImport from "./scheduler";

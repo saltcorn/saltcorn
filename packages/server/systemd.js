@@ -5,9 +5,9 @@
 const fetch = require("node-fetch");
 
 /**
- * @param {number} interval 
- * @param {object} notify 
- * @param {object} opts 
+ * @param {number} interval
+ * @param {object} notify
+ * @param {object} opts
  * @param {string} opts.port
  * @returns {void}
  */
@@ -48,22 +48,22 @@ const watchDog = (interval, notify, { port }) => {
   }
 };
 
-module.exports = 
-/**
- * @function
- * @name "module.exports function"
- * @param {object} opts 
- */
-(opts) => {
-  try {
-    const notify = require("sd-notify");
-    notify.ready();
-    const watchdogInterval = notify.watchdogInterval();
-    if (watchdogInterval && watchdogInterval > 0) {
-      const interval = Math.floor(watchdogInterval / 2);
-      setInterval(() => {
-        watchDog(interval, notify, opts);
-      }, interval);
-    }
-  } catch {}
-};
+module.exports =
+  /**
+   * @function
+   * @name "module.exports function"
+   * @param {object} opts
+   */
+  (opts) => {
+    try {
+      const notify = require("sd-notify");
+      notify.ready();
+      const watchdogInterval = notify.watchdogInterval();
+      if (watchdogInterval && watchdogInterval > 0) {
+        const interval = Math.floor(watchdogInterval / 2);
+        setInterval(() => {
+          watchDog(interval, notify, opts);
+        }, interval);
+      }
+    } catch {}
+  };

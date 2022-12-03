@@ -20,14 +20,13 @@ const { select_options } = require("@saltcorn/markup/helpers");
 const File = require("../models/file");
 const path = require("path");
 
-
 module.exports = {
   // download link
   "Download link": {
     run: (filePath) =>
       link(
         isNode()
-          ? `/files/download/${(filePath)}`
+          ? `/files/download/${filePath}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
         path.basename(filePath) || "Download"
       ),
@@ -37,7 +36,7 @@ module.exports = {
     run: (filePath) =>
       link(
         isNode()
-          ? `/files/serve/${(filePath)}`
+          ? `/files/serve/${filePath}`
           : `javascript:openFile('${filePath}')`,
         path.basename(filePath) || "Open"
       ),
@@ -48,7 +47,7 @@ module.exports = {
     run: (filePath) =>
       a(
         isNode()
-          ? { href: `/files/serve/${(filePath)}`, target: "_blank" }
+          ? { href: `/files/serve/${filePath}`, target: "_blank" }
           : { href: `javascript:openFile('${filePath}')` },
         path.basename(filePath) || "Open"
       ),
@@ -57,7 +56,7 @@ module.exports = {
   "Show Image": {
     run: (filePath) => {
       if (isNode())
-        return img({ src: `/files/serve/${(filePath)}`, style: "width: 100%" });
+        return img({ src: `/files/serve/${filePath}`, style: "width: 100%" });
       else {
         const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
@@ -68,54 +67,55 @@ module.exports = {
     },
   },
   // upload
-  upload: { isEdit: true, multipartFormData: true, valueIsFilename: true,
+  upload: {
+    isEdit: true,
+    multipartFormData: true,
+    valueIsFilename: true,
 
     configFields: async () => {
-      const dirs = await File.allDirectories()
+      const dirs = await File.allDirectories();
       return [
         {
           name: "folder",
           label: "Folder",
           type: "String",
-          attributes: { options: dirs.map(d => d.path_to_serve) },
-        }
-      ]
+          attributes: { options: dirs.map((d) => d.path_to_serve) },
+        },
+      ];
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
-    //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
-      return (
-          text(file_name || "") +
-          typeof attrs.files_accept_filter !== "undefined" || attrs.files_accept_filter !== null?
-              input({
-                class: `${cls} ${field.class || ""}`,
-                "data-fieldname": field.form_name,
-                name: text_attr(nm),
-                id: `input${text_attr(nm)}`,
-                type: "file",
-                accept : attrs.files_accept_filter,
-              })
-             :
-              input({
-                class: `${cls} ${field.class || ""}`,
-                "data-fieldname": field.form_name,
-                name: text_attr(nm),
-                id: `input${text_attr(nm)}`,
-                type: "file",
-              })
-      );
-    },},
+      //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
+      return text(file_name || "") + typeof attrs.files_accept_filter !==
+        "undefined" || attrs.files_accept_filter !== null
+        ? input({
+            class: `${cls} ${field.class || ""}`,
+            "data-fieldname": field.form_name,
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            type: "file",
+            accept: attrs.files_accept_filter,
+          })
+        : input({
+            class: `${cls} ${field.class || ""}`,
+            "data-fieldname": field.form_name,
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            type: "file",
+          });
+    },
+  },
   // select
   select: {
     isEdit: true,
     setsFileId: true,
     configFields: async () => {
-      const dirs = await File.allDirectories()
+      const dirs = await File.allDirectories();
       return [
         {
           name: "folder",
           label: "Folder",
           type: "String",
-          attributes: { options: dirs.map(d => d.path_to_serve) }
+          attributes: { options: dirs.map((d) => d.path_to_serve) },
         },
         /*{
           name: "name_regex",
@@ -127,13 +127,15 @@ module.exports = {
           label: "MIME regex",
           type: "String"
         }*/
-      ]
+      ];
     },
     // run
     run: (nm, file_id, attrs, cls, reqd, field) => {
       return select(
         {
-          class: `form-control form-select selectizable ${cls} ${field.class || ""}`,
+          class: `form-control form-select selectizable ${cls} ${
+            field.class || ""
+          }`,
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,

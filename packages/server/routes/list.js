@@ -51,7 +51,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, id } = req.params;
-    const table = await Table.findOne({ name : tableName });
+    const table = await Table.findOne({ name: tableName });
 
     const fields = await table.getFields();
     var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
@@ -99,7 +99,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, id, _version } = req.params;
-    const table = await Table.findOne({ name : tableName });
+    const table = await Table.findOne({ name: tableName });
 
     const fields = await table.getFields();
     const row = await db.selectOne(`${db.sqlsanitize(table.name)}__history`, {
@@ -216,7 +216,7 @@ const arrangeIdFirst = (flds) => {
   const noId = flds.filter((f) => f.name !== "id");
   const id = flds.find((f) => f.name === "id");
   if (id) return [id, ...noId];
-  else return flds
+  else return flds;
 };
 
 /**
@@ -369,8 +369,9 @@ router.get(
                 })
               })   
               window.tabulator_table = new Tabulator("#jsGrid", {
-                  ajaxURL:"/api/${table.name}${table.versioned ? "?versioncount=on" : ""
-                  }",                   
+                  ajaxURL:"/api/${table.name}${
+                  table.versioned ? "?versioncount=on" : ""
+                }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",

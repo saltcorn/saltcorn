@@ -81,7 +81,7 @@ const formOptions = async (type, tag_id) => {
     case "triggers": {
       const ids = await tag.getTriggerIds();
       return {
-        triggers: (Trigger.find()).filter(
+        triggers: Trigger.find().filter(
           (value) => ids.indexOf(value.id) === -1
         ),
       };

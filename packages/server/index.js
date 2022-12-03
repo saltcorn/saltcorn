@@ -11,7 +11,7 @@
  * @property {module:auth/index~auth_overview} auth
  * @property {module:markup/index~markup_overview} markup
  * @property {module:routes/index~routes_overview} routes
- * 
+ *
  * @property {module:app} app
  * @property {module:errors} errors
  * @property {module:load_plugins} load_plugins

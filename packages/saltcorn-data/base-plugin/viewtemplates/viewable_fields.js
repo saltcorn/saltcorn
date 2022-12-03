@@ -18,7 +18,6 @@ const Table = require("../../models/table");
 const { isNode } = require("../../utils");
 const { bool, date } = require("../types");
 
-
 /**
  * formats the column index of a view cfg
  * @param {number|undefined} colIndex
@@ -58,8 +57,9 @@ const action_url = (
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
-    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:'${r?.id
-      }'${columnIndex(colIndex)}});`,
+    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}', id:'${
+      r?.id
+    }'${columnIndex(colIndex)}});`,
   };
 };
 
@@ -101,8 +101,9 @@ const action_link = (
   const label = __(action_label) || action_name;
   let style =
     action_style === "btn-custom-color"
-      ? `background-color: ${action_bgcol || "#000000"};border-color: ${action_bordercol || "#000000"
-      }; color: ${action_textcol || "#000000"}`
+      ? `background-color: ${action_bgcol || "#000000"};border-color: ${
+          action_bordercol || "#000000"
+        }; color: ${action_textcol || "#000000"}`
       : null;
   if (url.javascript)
     return a(
@@ -145,7 +146,6 @@ const get_view_link_query = (fields, view) => {
   const pk_name = fields.find((f) => f.primary_key).name;
 
   return (r) => `?${pk_name}=${r[pk_name]}`;
-
 };
 
 /**
@@ -345,8 +345,9 @@ const view_linker = (
       return {
         label: viewnm,
         key: (r) => {
-          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${r.id
-            }`;
+          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+            r.id
+          }`;
           return link_view(
             isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             get_label(viewnm, r),
@@ -373,8 +374,9 @@ const view_linker = (
           const reffield = fields.find((f) => f.name === pfld);
           const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
           if (r[pfld]) {
-            const target = `/view/${encodeURIComponent(pviewnm)}?${reffield.refname
-              }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+            const target = `/view/${encodeURIComponent(pviewnm)}?${
+              reffield.refname
+            }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(
@@ -455,8 +457,8 @@ const get_viewable_fields = (
       return {
         ...setWidth,
         label: column.header_label ? text(__(column.header_label)) : "",
-        key: (r) => text(eval_expression(column.formula, r))
-      }
+        key: (r) => text(eval_expression(column.formula, r)),
+      };
     } else if (column.type === "Action") {
       const action_col = {
         ...setWidth,
@@ -486,8 +488,9 @@ const get_viewable_fields = (
                 class: column.in_dropdown
                   ? "dropdown-item"
                   : column.action_style === "btn-link"
-                    ? ""
-                    : `btn ${column.action_style || "btn-primary"} ${column.action_size || ""
+                  ? ""
+                  : `btn ${column.action_style || "btn-primary"} ${
+                      column.action_size || ""
                     }`,
               },
               label
@@ -569,26 +572,24 @@ const get_viewable_fields = (
         row_key: key,
         key:
           column.join_fieldview &&
-            type &&
-            type.fieldviews &&
-            type.fieldviews[column.join_fieldview]
+          type &&
+          type.fieldviews &&
+          type.fieldviews[column.join_fieldview]
             ? (row) =>
-              type.fieldviews[column.join_fieldview].run(
-                row[key],
-                req,
-                column
-              )
+                type.fieldviews[column.join_fieldview].run(
+                  row[key],
+                  req,
+                  column
+                )
             : (row) => text(row[key]),
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
     } else if (column.type === "Aggregation") {
-
       let table, fld, through;
       if (column.agg_relation.includes("->")) {
         let restpath;
         [through, restpath] = column.agg_relation.split("->");
         [table, fld] = restpath.split(".");
-
       } else {
         [table, fld] = column.agg_relation.split(".");
       }
@@ -601,24 +602,23 @@ const get_viewable_fields = (
         db.sqlsanitize(column.aggwhere || "")
       ).toLowerCase();
 
-      let showValue = value => {
+      let showValue = (value) => {
         if (value === true || value === false)
-          return bool.fieldviews.show.run(value)
-        if (value instanceof Date)
-          return date.fieldviews.show.run(value)
-        return value?.toString ? value.toString() : value
-      }
+          return bool.fieldviews.show.run(value);
+        if (value instanceof Date) return date.fieldviews.show.run(value);
+        return value?.toString ? value.toString() : value;
+      };
       if (column.agg_fieldview && column.agg_field?.includes("@")) {
-        const tname = column.agg_field.split("@")[1]
-        const type = getState().types[tname]
+        const tname = column.agg_field.split("@")[1];
+        const type = getState().types[tname];
         if (type?.fieldviews[column.agg_fieldview])
           showValue = (x) =>
-            type.fieldviews[column.agg_fieldview].run(x, req, column)
+            type.fieldviews[column.agg_fieldview].run(x, req, column);
       }
 
-      let key = r => {
-        const value = r[targetNm]
-        return showValue(value)
+      let key = (r) => {
+        const value = r[targetNm];
+        return showValue(value);
       };
       if (column.stat.toLowerCase() === "array_agg")
         key = (r) =>
@@ -666,26 +666,26 @@ const get_viewable_fields = (
           key:
             column.fieldview && f.type === "File"
               ? (row) =>
-                row[f.name] &&
-                getState().fileviews[column.fieldview].run(
-                  row[f.name],
-                  row[`${f.name}__filename`],
-                  column
-                )
+                  row[f.name] &&
+                  getState().fileviews[column.fieldview].run(
+                    row[f.name],
+                    row[`${f.name}__filename`],
+                    column
+                  )
               : column.fieldview &&
                 f.type.fieldviews &&
                 f.type.fieldviews[column.fieldview]
-                ? (row) =>
+              ? (row) =>
                   f.type.fieldviews[column.fieldview].run(
                     row[f_with_val.name],
                     req,
                     { ...f.attributes, ...column.configuration }
                   )
-                : isShow
-                  ? f.type.showAs
-                    ? (row) => f.type.showAs(row[f_with_val.name])
-                    : (row) => text(row[f_with_val.name])
-                  : f.listKey,
+              : isShow
+              ? f.type.showAs
+                ? (row) => f.type.showAs(row[f_with_val.name])
+                : (row) => text(row[f_with_val.name])
+              : f.listKey,
           sortlink:
             !f.calculated || f.stored
               ? sortlinkForName(f.name, req, viewname, statehash)
@@ -729,15 +729,15 @@ const get_viewable_fields = (
  * @param {object} req
  * @returns {string}
  */
-const sortlinkForName = (fname, req, viewname, statehash) => {  
+const sortlinkForName = (fname, req, viewname, statehash) => {
   const _sortby = req.query ? req.query[`_${statehash}_sortby`] : undefined;
-  const _sortdesc = req.query ? req.query[`_${statehash}_sortdesc`] : undefined;  
+  const _sortdesc = req.query ? req.query[`_${statehash}_sortdesc`] : undefined;
   const desc =
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
-        ? "false"
-        : "true";
+      ? "false"
+      : "true";
   return `javascript:sortby('${text(fname)}', ${desc}, '${statehash}')`;
 };
 
@@ -757,8 +757,8 @@ const headerLabelForName = (column, f, req, __) => {
     _sortby !== f.name
       ? ""
       : _sortdesc
-        ? i({ class: "fas fa-caret-down" })
-        : i({ class: "fas fa-caret-up" });
+      ? i({ class: "fas fa-caret-down" })
+      : i({ class: "fas fa-caret-up" });
   return label + arrow;
 };
 
@@ -820,8 +820,8 @@ const getForm = async (
               f.fieldviewObj = getState().keyFieldviews[column.fieldview];
             f.input_type =
               !f.fieldview ||
-                !f.fieldviewObj ||
-                (f.fieldview === "select" && !f.fieldviewObj)
+              !f.fieldviewObj ||
+              (f.fieldview === "select" && !f.fieldviewObj)
                 ? "select"
                 : "fromtype";
           }

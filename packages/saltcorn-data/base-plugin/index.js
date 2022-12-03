@@ -1,4 +1,4 @@
-/** 
+/**
  * @category saltcorn-data
  * @module base-plugin/index
  * @subcategory base-plugin
@@ -11,7 +11,7 @@
  * @property {module:base-plugin/fieldviews} fieldviews
  * @property {module:base-plugin/fileview} fileview
  * @property {module:base-plugin/types} types
- * 
+ *
  * @property {module:base-plugin/viewtemplates/edit} edit
  * @property {module:base-plugin/viewtemplates/feed} feed
  * @property {module:base-plugin/viewtemplates/filter} filter
@@ -20,8 +20,8 @@
  * @property {module:base-plugin/viewtemplates/room} room
  * @property {module:base-plugin/viewtemplates/show} show
  * @property {module:base-plugin/viewtemplates/viewable_fields} viewable_fields
- * 
- * 
+ *
+ *
  * @category saltcorn-data
  * @subcategory base-plugin
  */
@@ -58,4 +58,3 @@ module.exports = {
     blockly: require.resolve("blockly/package.json"),
   },
 };
-

@@ -287,8 +287,9 @@ class User {
         fuv.startsWith(`${table!.name}_by_${cfield.name}`)
       );
       if (fv) {
-        newUser[`${table!.name}_by_${cfield.name}`] =
-            await table.getRows({ [cfield.name]: newUser.id });
+        newUser[`${table!.name}_by_${cfield.name}`] = await table.getRows({
+          [cfield.name]: newUser.id,
+        });
       }
     }
     return newUser;

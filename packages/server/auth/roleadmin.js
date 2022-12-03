@@ -17,15 +17,8 @@ const {
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
 const { getState } = require("@saltcorn/data/db/state");
-const {
-  text,
-  form,
-  option,
-  select,
-} = require("@saltcorn/markup/tags");
-const {
-  send_users_page,
-} = require("../markup/admin");
+const { text, form, option, select } = require("@saltcorn/markup/tags");
+const { send_users_page } = require("../markup/admin");
 
 /**
  * @type {object}
