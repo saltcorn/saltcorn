@@ -36,6 +36,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "16.x"
+      - run: npm install -g eslint
+      - run: eslint .
       - run: psql -d saltcorn_test --command='create extension "uuid-ossp";'
         env:
           PGHOST: localhost

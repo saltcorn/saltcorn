@@ -1,3 +1,5 @@
+/* globals expect */
+
 const puppeteer = require("puppeteer");
 const { deleteTenant } = require("@saltcorn/admin-models/models/tenant");
 const db = require("@saltcorn/data/db");
