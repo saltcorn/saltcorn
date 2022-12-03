@@ -1,3 +1,5 @@
+/*global i18next, apiCall, saltcorn*/
+
 // /toggle/:name/:id/:field_name
 const postToggleField = async (context) => {
   const { name, id, field_name } = context.params;

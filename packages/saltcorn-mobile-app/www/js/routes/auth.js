@@ -1,3 +1,5 @@
+/*global sbAdmin2Layout, apiCall, removeJwt, saltcorn*/
+
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
     class: "login",

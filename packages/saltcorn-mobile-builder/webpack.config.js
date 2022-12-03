@@ -41,7 +41,7 @@ const addDependOn = (dataEntryPoint, b) => {
 const buildPluginEntries = async (plugins) => {
   let result = [];
   const nameToModule = new Map();
-  for (plugin of plugins) {
+  for (const plugin of plugins) {
     const requireResult = await requirePlugin(plugin, false, manager);
     const packageName = require(`${requireResult.location}/package.json`).name;
     nameToModule.set(plugin.name, { packageName, requireResult });
@@ -55,7 +55,7 @@ const buildPluginEntries = async (plugins) => {
     throw new Error(`Unable to find a plugin name for package: '${pckName}'`)
   };
 
-  for (plugin of plugins) {
+  for (const plugin of plugins) {
     const { requireResult }  = nameToModule.get(plugin.name);
     const additionalDependencies = requireResult.plugin_module?.dependencies
       ? requireResult.plugin_module.dependencies.map((dep) => nameByPackageName(dep))
@@ -79,9 +79,7 @@ module.exports = async (env) => {
     : [];
   return mergeWithCustomize({
     customizeArray(a, b, key) {
-      if (key === "library") {
-        return _.uniq([...a, ...b]);
-      }
+      // Fall back to default merging
       return undefined;
     },
     customizeObject(a, b, key) {

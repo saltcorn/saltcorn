@@ -1,3 +1,5 @@
+/*global axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
+
 let routingHistory = [];
 
 function currentLocation() {

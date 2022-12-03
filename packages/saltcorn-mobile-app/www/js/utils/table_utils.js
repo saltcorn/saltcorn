@@ -1,3 +1,5 @@
+/*global readJSON, cordova, fileExists, writeJSON, saltcorn*/
+
 const historyFile = "update_history";
 const jwtTableName = "jwt_table";
 

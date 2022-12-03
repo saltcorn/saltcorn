@@ -1,3 +1,5 @@
+/*global layout, getHeaders, saltcorn*/
+
 const getErrorView = async (context) => {
   const state = saltcorn.data.state.getState();
   const wrappedContent = layout().wrap({
