@@ -8,7 +8,6 @@ const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant } = require("../common");
 
-
 /**
  * DeleteUserCommand Class
  * @extends oclif.Command
@@ -19,49 +18,46 @@ class DeleteUserCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-
     const User = require("@saltcorn/data/models/user");
 
     const { args } = this.parse(DeleteUserCommand);
     const { flags } = this.parse(DeleteUserCommand);
 
-
     // run function as specified tenant
     await maybe_as_tenant(flags.tenant, async () => {
-        // try to find user
-        const u = await User.findOne({email: args.user_email});
-        if (u === null) {
-          console.error(`Error: User ${args.user_email} is not found`);
-          this.exit(1);
-        }
-        if (!u instanceof User) {
-          console.error(`Error: ${u.error}`);
-          this.exit(1);
-        }
-
-        // make changes
-        // todo handle errors
-        if (!flags.force) {
-          const ans = await cli.confirm(
-            `This will delete user ${args.user_email} ${
-              typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
-            }.\nContinue (y/n)?`);
-          if (!ans) {
-            console.log(`Success: Command execution canceled`);
-            this.exit(1);
-          }
-
-        }
-
-        // delete user
-        await u.delete();
-        console.log(`Success: User ${args.user_email} deleted  ${
-          typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
-          }`);
-
+      // try to find user
+      const u = await User.findOne({ email: args.user_email });
+      if (u === null) {
+        console.error(`Error: User ${args.user_email} is not found`);
+        this.exit(1);
+      }
+      if (!(u instanceof User)) {
+        console.error(`Error: ${u.error}`);
+        this.exit(1);
       }
 
-    );
+      // make changes
+      // todo handle errors
+      if (!flags.force) {
+        const ans = await cli.confirm(
+          `This will delete user ${args.user_email} ${
+            typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
+          }.\nContinue (y/n)?`
+        );
+        if (!ans) {
+          console.log(`Success: Command execution canceled`);
+          this.exit(1);
+        }
+      }
+
+      // delete user
+      await u.delete();
+      console.log(
+        `Success: User ${args.user_email} deleted  ${
+          typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
+        }`
+      );
+    });
     this.exit(0);
   }
 }

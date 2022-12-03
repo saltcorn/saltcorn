@@ -10,8 +10,8 @@ import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 
 export /**
- * 
- * @param {object} props 
+ *
+ * @param {object} props
  * @param {string} props.children
  * @param {*} props.align
  * @returns {div}
@@ -44,12 +44,12 @@ export /**
  * @namespace
  */
 const ColumnSettings = () => {
-  const {} = useNode((node) => ({}));
+  useNode((node) => ({}));
   return <div></div>;
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Column.craft = {
   displayName: "Column",

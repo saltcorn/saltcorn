@@ -14,7 +14,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Empty = ({}) => {
+const Empty = () => {
   const {
     selected,
     connectors: { connect, drag },
@@ -22,8 +22,8 @@ const Empty = ({}) => {
   return null;
 };
 
-/** 
- * @type {object} 
+/**
+ * @type {object}
  */
 Empty.craft = {
   displayName: "Empty",

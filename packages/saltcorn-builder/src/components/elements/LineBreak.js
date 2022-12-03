@@ -15,7 +15,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
- const LineBreak = ({}) => {
+const LineBreak = () => {
   const {
     selected,
     connectors: { connect, drag },
