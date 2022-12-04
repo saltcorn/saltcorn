@@ -225,6 +225,11 @@ const check_view_columns = async (view, columns) => {
         }
         break;
       case "JoinField":
+        const jf = await table.getField(column.join_field);
+        if (!jf)
+          errs.push(
+            `In view ${view.name}, join field ${column.join_field} does not exist`
+          );
         break;
       case "Link":
         if (column.link_text_formula)
