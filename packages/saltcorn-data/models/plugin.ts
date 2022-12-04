@@ -188,7 +188,10 @@ class Plugin {
   static async store_plugins_available_from_store(): Promise<Array<Plugin>> {
     //console.log("fetch plugins");
     const { getState } = require("../db/state");
-    const plugins_store_endpoint = getState().getConfig("plugins_store_endpoint", false);
+    const plugins_store_endpoint = getState().getConfig(
+      "plugins_store_endpoint",
+      false
+    );
     // console.log(`[store_plugins_available_from_store] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
     const response = await fetch(plugins_store_endpoint);
@@ -202,15 +205,15 @@ class Plugin {
    * @returns {Promise<null|Plugin>}
    */
   static async store_by_name(name: string): Promise<Plugin | null> {
-
     const { getState } = require("../db/state");
-    const plugins_store_endpoint = getState().getConfig("plugins_store_endpoint", false);
+    const plugins_store_endpoint = getState().getConfig(
+      "plugins_store_endpoint",
+      false
+    );
     // console.log(`[store_by_name] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
-
     const response = await fetch(
-        plugins_store_endpoint + "?name=" +
-        encodeURIComponent(name)
+      plugins_store_endpoint + "?name=" + encodeURIComponent(name)
     );
     const json = await response.json();
     if (json.success.length == 1)

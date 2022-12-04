@@ -291,7 +291,9 @@ const fieldFlow = (req) =>
         form: async (context) => {
           if (context.type === "File") {
             const roles = await User.get_roles();
-            const default_file_accept_filter = await getState().getConfig("files_accept_filter_default");
+            const default_file_accept_filter = await getState().getConfig(
+              "files_accept_filter_default"
+            );
             //console.log("default_file_accept_filter",default_file_accept_filter);
             return new Form({
               fields: [
@@ -317,7 +319,7 @@ const fieldFlow = (req) =>
                   type: "String",
                   label: req.__("Files accept filter"),
                   sublabel: req.__(
-                      "Specifies a filter for what file types the user can pick from the file input dialog box. Example is `.doc,audio/*,video/*,image/*`"
+                    "Specifies a filter for what file types the user can pick from the file input dialog box. Example is `.doc,audio/*,video/*,image/*`"
                   ),
                   default: default_file_accept_filter,
                 },

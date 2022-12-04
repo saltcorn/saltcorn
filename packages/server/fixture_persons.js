@@ -13,7 +13,7 @@ const basePlugin = require("@saltcorn/base-plugin");
 getState().registerPlugin("base", basePlugin);
 
 /**
- * @param {object[]} vs 
+ * @param {object[]} vs
  * @returns {object}
  */
 const rndElem = (vs) => vs[Math.floor(Math.random() * vs.length)];

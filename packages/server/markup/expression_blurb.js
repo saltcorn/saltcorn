@@ -9,7 +9,7 @@ const { contract, is } = require("contractis");
 const { getState } = require("@saltcorn/data/db/state");
 
 /**
- * @param {*} type 
+ * @param {*} type
  * @returns {*}
  */
 const toJsType = (type) =>
@@ -23,8 +23,8 @@ const toJsType = (type) =>
   }[type] || type);
 
 /**
- * @param {*} type 
- * @param {object[]} fields 
+ * @param {*} type
+ * @param {object[]} fields
  * @returns {string[]}
  */
 const intExamples = (type, fields) => {
@@ -43,8 +43,8 @@ const intExamples = (type, fields) => {
 };
 
 /**
- * @param {*} type 
- * @param {object[]} fields 
+ * @param {*} type
+ * @param {object[]} fields
  * @returns {string[]}
  */
 const colorExamples = (type, fields) => {
@@ -58,8 +58,8 @@ const colorExamples = (type, fields) => {
 };
 
 /**
- * @param {*} type 
- * @param {object[]} fields 
+ * @param {*} type
+ * @param {object[]} fields
  * @returns {string[]}
  */
 const stringExamples = (type, fields) => {
@@ -78,8 +78,8 @@ const stringExamples = (type, fields) => {
 };
 
 /**
- * @param {*} type 
- * @param {object[]} fields 
+ * @param {*} type
+ * @param {object[]} fields
  * @returns {string[]}
  */
 const floatExamples = (type, fields) => {
@@ -107,8 +107,8 @@ const floatExamples = (type, fields) => {
 };
 
 /**
- * @param {*} type 
- * @param {object[]} fields 
+ * @param {*} type
+ * @param {object[]} fields
  * @returns {string[]}
  */
 const boolExamples = (type, fields) => {
@@ -139,10 +139,10 @@ const boolExamples = (type, fields) => {
 };
 
 /**
- * @param {string} type 
- * @param {*} stored 
- * @param {object[]} allFields 
- * @param {object} req 
+ * @param {string} type
+ * @param {*} stored
+ * @param {object[]} allFields
+ * @param {object} req
  * @returns {p[]}
  */
 const expressionBlurb = (type, stored, allFields, req) => {

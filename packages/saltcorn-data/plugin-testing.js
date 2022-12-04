@@ -11,6 +11,10 @@ const Field = require("./models/field");
 const Table = require("./models/table");
 const Trigger = require("./models/trigger");
 const { expressionValidator } = require("./models/expression");
+const {
+  parse_view_select,
+} = require("./base-plugin/viewtemplates/viewable_fields");
+const View = require("./models/view");
 
 const auto_test_wrap = (wrap) => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
@@ -126,6 +130,7 @@ const auto_test_plugin = async (plugin) => {
 
 const check_view_columns = async (view, columns) => {
   const errs = [];
+  const warnings = [];
   const table = Table.findOne(
     view.table_id
       ? { id: view.table_id }
@@ -158,7 +163,7 @@ const check_view_columns = async (view, columns) => {
           break;
         const f = fields.find((fld) => fld.name === column.field_name);
         if (!f) {
-          errs.push(
+          warnings.push(
             `In view ${view.name}, field ${column.field_name} does not exist in table ${table?.name}`
           );
           break;
@@ -168,7 +173,7 @@ const check_view_columns = async (view, columns) => {
           !(f.is_fkey || f.type === "File") &&
           !f.type.fieldviews[column.fieldview]
         )
-          errs.push(
+          warnings.push(
             `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table?.name} does not have fieldview ${column.fieldview}`
           );
 
@@ -203,18 +208,28 @@ const check_view_columns = async (view, columns) => {
           );
         break;
       case "ViewLink":
-        if (column.view_label_formula)
-          check_formula(column.view_label, `Label for view link`);
-        if (column.extra_state_fml)
-          check_formula(
-            column.extra_state_fml,
-            `View link extra state formula`
-          );
-        break;
-
-      case "View":
+        {
+          if (column.view_label_formula)
+            check_formula(column.view_label, `Label for view link`);
+          if (column.extra_state_fml)
+            check_formula(
+              column.extra_state_fml,
+              `View link extra state formula`
+            );
+          const { viewname } = parse_view_select(column.view);
+          const linkedview = View.findOne({ name: viewname });
+          if (!linkedview)
+            errs.push(
+              `In view ${view.name}, linked view ${viewname} does not exist`
+            );
+        }
         break;
       case "JoinField":
+        const jf = await table.getField(column.join_field);
+        if (!jf)
+          errs.push(
+            `In view ${view.name}, join field ${column.join_field} does not exist`
+          );
         break;
       case "Link":
         if (column.link_text_formula)
@@ -227,7 +242,7 @@ const check_view_columns = async (view, columns) => {
         break;
     }
   }
-  return errs;
+  return { errors: errs, warnings };
 };
 
 module.exports = { auto_test_plugin, generate_attributes, check_view_columns };

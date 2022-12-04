@@ -71,8 +71,8 @@ function accessAllowedRead(req, user, table) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-        ? user.role_id
-        : 10;
+      ? user.role_id
+      : 10;
 
   return role <= table.min_role_read;
 }
@@ -89,8 +89,8 @@ function accessAllowedWrite(req, user, table) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-        ? user.role_id
-        : 10;
+      ? user.role_id
+      : 10;
 
   return role <= table.min_role_write;
 }
@@ -106,8 +106,8 @@ function accessAllowed(req, user, trigger) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-        ? user.role_id
-        : 10;
+      ? user.role_id
+      : 10;
 
   return role <= trigger.min_role;
 }
@@ -126,7 +126,7 @@ router.post(
     const view = await View.findOne({ name: viewName });
     const db = require("@saltcorn/data/db");
     if (!view) {
-      res.status(404).json({ 
+      res.status(404).json({
         error: req.__("View %s not found", viewName),
         view: viewName,
         queryName: queryName,
@@ -152,7 +152,7 @@ router.post(
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
           } else {
-            res.status(404).json({ 
+            res.status(404).json({
               error: req.__("Query %s not found", queryName),
               view: viewName,
               queryName: queryName,
@@ -264,7 +264,7 @@ router.get(
               fields: tbl_fields,
               approximate: !!approximate,
               state: req_query,
-              table
+              table,
             });
             rows = await table.getRows(qstate);
           } else {

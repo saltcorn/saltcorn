@@ -206,10 +206,10 @@ const getAuthLinks = (current, noMethods) => {
 };
 /**
  * Login with jwt
- * @param {*} email 
- * @param {*} password 
- * @param {*} saltcornApp 
- * @param {*} res 
+ * @param {*} email
+ * @param {*} password
+ * @param {*} saltcornApp
+ * @param {*} res
  */
 const loginWithJwt = async (email, password, saltcornApp, res) => {
   const loginFn = async () => {
@@ -1740,9 +1740,9 @@ router.post(
 );
 /**
  * totpForm (TWA)
- * @param {*} req 
- * @param {*} action 
- * @returns 
+ * @param {*} req
+ * @param {*} action
+ * @returns
  */
 const totpForm = (req, action) =>
   new Form({
@@ -1758,10 +1758,10 @@ const totpForm = (req, action) =>
   });
 /**
  * Random key generation for totp (TWA)
- * @param {*} len 
- * @returns 
+ * @param {*} len
+ * @returns
  */
-  const randomKey = function (len) {
+const randomKey = function (len) {
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }

@@ -156,7 +156,7 @@ class Table implements AbstractTable {
    * @param where - where condition
    * @returns {*|Table|null} table or null
    */
-  static findOne(where: Where | Table ): Table | null {
+  static findOne(where: Where | Table): Table | null {
     if (
       where &&
       ((where.constructor && where.constructor.name === "Table") ||
@@ -913,8 +913,7 @@ class Table implements AbstractTable {
     const state = await require("../db/state").getState();
     try {
       let lines_limit = state.getConfig("csv_types_detection_rows", 500);
-      if (!lines_limit || lines_limit < 0)
-        lines_limit = 500; // default
+      if (!lines_limit || lines_limit < 0) lines_limit = 500; // default
 
       const s = await getLines(filePath, lines_limit);
       rows = await csvtojson().fromString(s); // t
@@ -924,10 +923,11 @@ class Table implements AbstractTable {
     const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
     //
-    const isBools = state.getConfig("csv_bool_values","true false yes no on off y n t f").split(" ");
+    const isBools = state
+      .getConfig("csv_bool_values", "true false yes no on off y n t f")
+      .split(" ");
 
     for (const [k, vs] of Object.entries(rowsTr)) {
-
       const required = (<any[]>vs).every((v: any) => v !== "");
       const nonEmpties = (<any[]>vs).filter((v: any) => v !== "");
 

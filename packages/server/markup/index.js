@@ -14,7 +14,7 @@
  * @property {module:markup/expression_blurb} expression_blurb
  * @property {module:markup/forms} forms
  * @property {module:markup/plugin-store} plugin-store
- * 
+ *
  * @category server
  * @subcategory markup
  */

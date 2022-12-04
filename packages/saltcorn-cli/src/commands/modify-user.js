@@ -8,7 +8,6 @@ const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
-
 /**
  * ModifyUserCommand Class
  * @extends oclif.Command
@@ -19,7 +18,6 @@ class ModifyUserCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-
     const User = require("@saltcorn/data/models/user");
 
     const { args } = this.parse(ModifyUserCommand);
@@ -50,10 +48,13 @@ class ModifyUserCommand extends Command {
       // email
       let email;
       if (flags.email) email = flags.email;
-      else if (flags.imode) email = await cli.prompt("New Email address", { default : args.user_email });
-      if(email === args.user_email) email = undefined; // little trick - we won't update email if it already same
+      else if (flags.imode)
+        email = await cli.prompt("New Email address", {
+          default: args.user_email,
+        });
+      if (email === args.user_email) email = undefined; // little trick - we won't update email if it already same
       if (email)
-        if (!User.valid_email(email)){
+        if (!User.valid_email(email)) {
           console.error(`Error: Email is invalid`);
           this.exit(1);
         }
@@ -62,44 +63,48 @@ class ModifyUserCommand extends Command {
       // todo check for repeated passwords
       let password;
       if (flags.password) password = flags.password;
-      else if (flags.imode) password = await cli.prompt("New Password", { type: "hide" });
+      else if (flags.imode)
+        password = await cli.prompt("New Password", { type: "hide" });
       if (password)
-        if (User.unacceptable_password_reason(password)){
-          console.error(`Error: ${User.unacceptable_password_reason(password)}`);
+        if (User.unacceptable_password_reason(password)) {
+          console.error(
+            `Error: ${User.unacceptable_password_reason(password)}`
+          );
           this.exit(1);
         }
       // check that user with new email does not exists
       const u_new_email = await User.findOne({ email });
-      if(u_new_email !== null&&args.user_email!==email){
-        console.error(`Error: Cannot change email from ${args.user_email} to ${email}. User with email ${email} exists`);
+      if (u_new_email !== null && args.user_email !== email) {
+        console.error(
+          `Error: Cannot change email from ${args.user_email} to ${email}. User with email ${email} exists`
+        );
         this.exit(1);
       }
       // try to find user
       const u = await User.findOne({ email: args.user_email });
-      if(u === null){
+      if (u === null) {
         console.error(`Error: User ${args.user_email} is not found`);
         this.exit(1);
       }
-      if(!u instanceof User){
+      if (!(u instanceof User)) {
         console.error(`Error: ${u.error}`);
         this.exit(1);
       }
 
       // make changes
-      if (email && role_id)
-        await u.update({ email, role_id });
-      else if(email)
-        await u.update({ email });
-      else if(role_id)
-        await u.update({ role_id });
+      if (email && role_id) await u.update({ email, role_id });
+      else if (email) await u.update({ email });
+      else if (role_id) await u.update({ role_id });
 
-      if (password)
-        await u.changePasswordTo(password, false);
+      if (password) await u.changePasswordTo(password, false);
 
-      console.log(`Success: User ${email?email:args.user_email} updated successfully ${
+      console.log(
+        `Success: User ${
+          email ? email : args.user_email
+        } updated successfully ${
           typeof flags.tenant !== "undefined" ? "in tenant " + flags.tenant : ""
-        }`);
-
+        }`
+      );
     });
     this.exit(0);
   }

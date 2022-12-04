@@ -50,7 +50,7 @@ class PluginsCommand extends Command {
             }
           });
         } catch (e) {
-          console.error("error: ", domain, e)
+          console.error("error: ", domain, e);
         }
       });
     }
@@ -66,7 +66,6 @@ class PluginsCommand extends Command {
       for (const domain of tenantList) {
         await db.runWithTenant(domain, async () => {
           try {
-
             const myplugins = await Plugin.find({});
             for (let plugin of myplugins) {
               if (plugin.source === "npm" && new_versions[plugin.location]) {
@@ -75,10 +74,13 @@ class PluginsCommand extends Command {
                   !flags.force &&
                   plugin.version === new_versions[plugin.location]
                 ) {
+                  //do nothing
                 } else if (flags.dryRun) {
                   console.log(
-                    `Would upgrade ${domain}'s plugin ${plugin.location
-                    } version from ${plugin.version} to ${new_versions[plugin.location]
+                    `Would upgrade ${domain}'s plugin ${
+                      plugin.location
+                    } version from ${plugin.version} to ${
+                      new_versions[plugin.location]
                     }`
                   );
                 } else {
@@ -92,7 +94,7 @@ class PluginsCommand extends Command {
               }
             }
           } catch (e) {
-            console.error("error: ", domain, e)
+            console.error("error: ", domain, e);
           }
         });
       }

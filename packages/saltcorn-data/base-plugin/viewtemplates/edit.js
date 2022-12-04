@@ -1292,12 +1292,18 @@ module.exports = {
   configCheck: async (view) => {
     const {
       name,
-      configuration: { view_when_done, destination_type, formula_destinations },
+      configuration: {
+        view_when_done,
+        destination_type,
+        dest_url_formula,
+        formula_destinations,
+        page_when_done,
+      },
     } = view;
     const errs = [];
     const warnings = [];
 
-    if (destination_type !== "Back to referer") {
+    if (!destination_type || destination_type === "View") {
       const vwd = await View.findOne({
         name: (view_when_done || "").split(".")[0],
       });
@@ -1305,6 +1311,15 @@ module.exports = {
         warnings.push(
           `In View ${name}, view when done ${view_when_done} not found`
         );
+    }
+    if (destination_type === "Page") {
+      const page = Page.findOne({ name: page_when_done });
+      if (!page)
+        errs.push(
+          `In View ${name}, page when done ${page_when_done} not found`
+        );
+    }
+    if (destination_type === "Formula") {
       for (const { expression } of formula_destinations || []) {
         if (expression)
           expressionChecker(
@@ -1314,7 +1329,16 @@ module.exports = {
           );
       }
     }
-    errs.push(...(await check_view_columns(view, view.configuration.columns)));
+    if (destination_type === "URL Formula") {
+      expressionChecker(
+        dest_url_formula,
+        `In View ${name}, URL formula ${dest_url_formula} error: `,
+        errs
+      );
+    }
+    const colcheck = await check_view_columns(view, view.configuration.columns);
+    errs.push(...colcheck.errors);
+    warnings.push(...colcheck.warnings);
     return { errors: errs, warnings };
   },
   connectedObjects: async (configuration) => {

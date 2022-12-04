@@ -45,12 +45,12 @@ const get_extra_menu = (role, state, req) => {
           item.type === "Link"
             ? item.url
             : item.type === "Action"
-              ? `javascript:ajax_post_json('/menu/runaction/${item.action_name}')`
-              : item.type === "View"
-                ? `/view/${encodeURIComponent(item.viewname)}`
-                : item.type === "Page"
-                  ? `/page/${encodeURIComponent(item.pagename)}`
-                  : undefined,
+            ? `javascript:ajax_post_json('/menu/runaction/${item.action_name}')`
+            : item.type === "View"
+            ? `/view/${encodeURIComponent(item.viewname)}`
+            : item.type === "Page"
+            ? `/page/${encodeURIComponent(item.pagename)}`
+            : undefined,
         ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
       }));
   return transform(cfg);
@@ -70,34 +70,34 @@ const get_menu = (req) => {
   const extra_menu = get_extra_menu(role, state, req);
   const authItems = isAuth
     ? [
-      {
-        label: req.__("User"),
-        icon: "far fa-user",
-        isUser: true,
-        subitems: [
-          { label: small((req.user.email || "").split("@")[0]) },
-          {
-            label: req.__("User Settings"),
-            icon: "fas fa-user-cog",
+        {
+          label: req.__("User"),
+          icon: "far fa-user",
+          isUser: true,
+          subitems: [
+            { label: small((req.user.email || "").split("@")[0]) },
+            {
+              label: req.__("User Settings"),
+              icon: "fas fa-user-cog",
 
-            link: "/auth/settings",
-          },
-          {
-            link: "/auth/logout",
-            icon: "fas fa-sign-out-alt",
-            label: req.__("Logout"),
-          },
-        ],
-      },
-    ]
+              link: "/auth/settings",
+            },
+            {
+              link: "/auth/logout",
+              icon: "fas fa-sign-out-alt",
+              label: req.__("Logout"),
+            },
+          ],
+        },
+      ]
     : [
-      ...(allow_signup
-        ? [{ link: "/auth/signup", label: req.__("Sign up") }]
-        : []),
-      ...(login_menu
-        ? [{ link: "/auth/login", label: req.__("Login") }]
-        : []),
-    ];
+        ...(allow_signup
+          ? [{ link: "/auth/signup", label: req.__("Sign up") }]
+          : []),
+        ...(login_menu
+          ? [{ link: "/auth/login", label: req.__("Login") }]
+          : []),
+      ];
   // const schema = db.getTenantSchema();
   // Admin role id (todo move to common constants)
   const isAdmin = role === 1;
@@ -163,7 +163,6 @@ const get_menu = (req) => {
       items: authItems,
     },
   ].filter((s) => s);
-
 };
 /**
  * Get Headers
@@ -179,17 +178,17 @@ const get_headers = (req, version_tag, description, extras = []) => {
 
   const iconHeader = favicon
     ? [
-      {
-        headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon}">`,
-      },
-    ]
+        {
+          headerTag: `<link rel="icon" type="image/png" href="/files/serve/${favicon}">`,
+        },
+      ]
     : [];
   const meta_description = description
     ? [
-      {
-        headerTag: `<meta name="description" content="${description}">`,
-      },
-    ]
+        {
+          headerTag: `<meta name="description" content="${description}">`,
+        },
+      ]
     : [];
   const stdHeaders = [
     {
@@ -351,7 +350,7 @@ const defaultRenderToHtml = (s, role) =>
   typeof s === "string"
     ? s
     : renderLayout({
-      blockDispatch: {},
-      role,
-      layout: s,
-    });
+        blockDispatch: {},
+        role,
+        layout: s,
+      });

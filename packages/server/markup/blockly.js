@@ -38,7 +38,7 @@ const blocklyImportScripts = ({ locale }) =>
   });
 
 /**
- * @param {boolean} hasActions 
+ * @param {boolean} hasActions
  * @returns {string}
  */
 const blocklyToolbox = (hasActions) => `

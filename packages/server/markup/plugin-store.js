@@ -101,10 +101,10 @@ const showRepository = (repo) =>
   !repo
     ? repo
     : repo.url
-      ? link(repo.url, repo.url)
-      : repo.startsWith && repo.startsWith("github:")
-        ? link(repo.replace("github:", "https://github.com/"), repo)
-        : repo;
+    ? link(repo.url, repo.url)
+    : repo.startsWith && repo.startsWith("github:")
+    ? link(repo.replace("github:", "https://github.com/"), repo)
+    : repo;
 
 module.exports = {
   plugin_types_info_card,

@@ -31,7 +31,7 @@ describe("Table Discovery", () => {
     it("should create tables", async () => {
       // this is simple ref table
       await db.query(
-          `create table "disc breed"(id serial primary key, name text, rating smallint, population bigint );`
+        `create table "disc breed"(id serial primary key, name text, rating smallint, population bigint );`
       );
       // this table has FK to users!
       await db.query(
@@ -86,7 +86,7 @@ breed int references "disc breed"(id));`
                 reftable_name: "users",
                 reftype: "Integer",
                 required: false,
-                type: "Key"
+                type: "Key",
               },
             ],
             name: "discperson",
@@ -97,7 +97,11 @@ breed int references "disc breed"(id));`
       });
     });
     it("should make and implement pack with fkey", async () => {
-      const pack = await discover_tables(["disc breed","discperson", "discdog"]);
+      const pack = await discover_tables([
+        "disc breed",
+        "discperson",
+        "discdog",
+      ]);
       expect(pack).toStrictEqual({
         tables: [
           // disc breed
@@ -112,8 +116,18 @@ breed int references "disc breed"(id));`
                 is_unique: true,
               },
               { label: "name", name: "name", required: false, type: "String" },
-              { label: "rating", name: "rating", required: false, type: "Integer" },
-              { label: "population", name: "population", required: false, type: "Integer" },
+              {
+                label: "rating",
+                name: "rating",
+                required: false,
+                type: "Integer",
+              },
+              {
+                label: "population",
+                name: "population",
+                required: false,
+                type: "Integer",
+              },
             ],
             name: "disc breed",
             min_role_read: 1,
@@ -139,7 +153,7 @@ breed int references "disc breed"(id));`
                 reftable_name: "users",
                 reftype: "Integer",
                 required: false,
-                type: "Key"
+                type: "Key",
               },
             ],
             name: "discperson",
@@ -158,7 +172,12 @@ breed int references "disc breed"(id));`
                 is_unique: true,
               },
               { label: "name", name: "name", required: false, type: "String" },
-              { label: "birth date", name: "birth date", required: false, type: "Date" },
+              {
+                label: "birth date",
+                name: "birth date",
+                required: false,
+                type: "Date",
+              },
               {
                 label: "owner",
                 name: "owner",

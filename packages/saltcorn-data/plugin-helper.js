@@ -49,8 +49,9 @@ const link_view = (
 ) => {
   let style =
     link_style === "btn btn-custom-color"
-      ? `background-color: ${link_bgcol || "#000000"};border-color: ${link_bordercol || "#000000"
-      }; color: ${link_textcol || "#000000"}`
+      ? `background-color: ${link_bgcol || "#000000"};border-color: ${
+          link_bordercol || "#000000"
+        }; color: ${link_textcol || "#000000"}`
       : null;
   let url = url0;
   if (extraState) {
@@ -58,30 +59,35 @@ const link_view = (
     else url = `${url0}?${extraState}`;
   }
   if (popup) {
-    if (!link_style) return a({
-      href: `javascript:${isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`}`,
-      style,
-      class: [textStyle, link_style, link_size, extraClass],
-    },
-      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-      label
-    )
-    else return button(
-      {
-        class: [
-          textStyle,
-          link_style,
-          link_size,
-          !link_style && "btn btn-link",
-          extraClass,
-        ],
-        type: "button",
-        onClick: isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`,
-        style,
-      },
-      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-      label
-    );
+    if (!link_style)
+      return a(
+        {
+          href: `javascript:${
+            isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`
+          }`,
+          style,
+          class: [textStyle, link_style, link_size, extraClass],
+        },
+        link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
+        label
+      );
+    else
+      return button(
+        {
+          class: [
+            textStyle,
+            link_style,
+            link_size,
+            !link_style && "btn btn-link",
+            extraClass,
+          ],
+          type: "button",
+          onClick: isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`,
+          style,
+        },
+        link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
+        label
+      );
   } else
     return a(
       {
@@ -153,7 +159,7 @@ const calcfldViewOptions = (fields, mode) => {
         for (const jf of f.reftable.fields) {
           fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
           if (jf.is_fkey) {
-            const jtable = Table.findOne({ name : jf.reftable_name } );
+            const jtable = Table.findOne({ name: jf.reftable_name });
             if (jtable && jtable.fields) {
               const jfieldOpts = calcfldViewOptions(
                 jtable.fields,
@@ -163,7 +169,7 @@ const calcfldViewOptions = (fields, mode) => {
                 fvs[`${f.name}.${jf.name}.${jf2.name}`] =
                   jfieldOpts.field_view_options[jf2.name];
                 if (jf2.is_fkey) {
-                  const jtable2 = Table.findOne( { name: jf2.reftable_name });
+                  const jtable2 = Table.findOne({ name: jf2.reftable_name });
                   if (jtable2 && jtable2.fields) {
                     const jfield2Opts = calcfldViewOptions(
                       jtable2.fields,
@@ -229,8 +235,8 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
       f.type === "Key"
         ? getState().keyFieldviews
         : f.type === "File"
-          ? getState().fileviews
-          : (f.type && f.type.fieldviews) || {};
+        ? getState().fileviews
+        : (f.type && f.type.fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews)) {
       if (fv.configFields)
         fieldViewConfigForms[f.name][nm] = await applyAsync(fv.configFields, f);
@@ -262,21 +268,25 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
  */
 const get_link_view_opts = async (table, viewname) => {
   const own_link_views = await View.find_possible_links_to_table(table);
-  const all_views = await View.find({})
-  const all_tables = await Table.find({})
-  const table_id_to_name = {}
-  all_tables.forEach(t => { table_id_to_name[t.id] = t.name })
-  const view_name_opts = all_views.map(v => ({
-    label: `${v.name} [${v.viewtemplate} ${table_id_to_name[v.table_id] || ""}]`,
-    name: v.name
-  }))
-  const view_relation_opts = {}
-  const link_view_opts = []
+  const all_views = await View.find({});
+  const all_tables = await Table.find({});
+  const table_id_to_name = {};
+  all_tables.forEach((t) => {
+    table_id_to_name[t.id] = t.name;
+  });
+  const view_name_opts = all_views.map((v) => ({
+    label: `${v.name} [${v.viewtemplate} ${
+      table_id_to_name[v.table_id] || ""
+    }]`,
+    name: v.name,
+  }));
+  const view_relation_opts = {};
+  const link_view_opts = [];
   const push_view_option = ({ name, label, view, relation }) => {
-    link_view_opts.push({ name, label })
-    if (!view_relation_opts[view]) view_relation_opts[view] = []
-    view_relation_opts[view].push({ value: name, label: relation })
-  }
+    link_view_opts.push({ name, label });
+    if (!view_relation_opts[view]) view_relation_opts[view] = [];
+    view_relation_opts[view].push({ value: name, label: relation });
+  };
   own_link_views
     .filter((v) => v.name !== viewname)
     .forEach((v) => {
@@ -284,8 +294,8 @@ const get_link_view_opts = async (table, viewname) => {
         view: v.name,
         label: `${v.name} [${v.viewtemplate} ${table.name}]`,
         name: `Own:${v.name}`,
-        relation: table.name
-      })
+        relation: table.name,
+      });
     });
   const link_view_opts_push = (o) => {
     if (!link_view_opts.map((v) => v.name).includes(o.name))
@@ -305,14 +315,14 @@ const get_link_view_opts = async (table, viewname) => {
           view: view.name,
           name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
-          relation: `${related_table.name}.${relation.name}.${through.name}`
+          relation: `${related_table.name}.${relation.name}.${through.name}`,
         });
       } else {
         link_view_opts_push({
           view: view.name,
           name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
-          relation: `${related_table.name}.${relation.name}`
+          relation: `${related_table.name}.${relation.name}`,
         });
       }
     }
@@ -325,7 +335,7 @@ const get_link_view_opts = async (table, viewname) => {
         view: view.name,
         name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${relation.name}.${related_table.name}]`,
-        relation: `${relation.name}.${related_table.name}`
+        relation: `${relation.name}.${related_table.name}`,
       });
     }
   }
@@ -336,7 +346,7 @@ const get_link_view_opts = async (table, viewname) => {
         view: view.name,
         name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
-        relation: `${related_table.name}.${relation.label}`
+        relation: `${related_table.name}.${relation.label}`,
       });
     }
   }
@@ -348,7 +358,7 @@ const get_link_view_opts = async (table, viewname) => {
       view: view.name,
       label: `${view.name} [${view.viewtemplate}]`,
       name: `Independent:${view.name}`,
-      relation: "None"
+      relation: "None",
     });
   });
   return { link_view_opts, view_name_opts, view_relation_opts };
@@ -394,7 +404,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
     ...stateActionKeys,
   ];
   const triggers = Trigger.find({
-    when_trigger: {or: ["API call", "Never"]},
+    when_trigger: { or: ["API call", "Never"] },
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -447,30 +457,31 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       }
     }
   }
-  const { link_view_opts, view_name_opts, view_relation_opts }
-    = await get_link_view_opts(table, viewname);
+  const { link_view_opts, view_name_opts, view_relation_opts } =
+    await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
-  const { child_field_list, child_relations } =
-    await table.get_child_relations(true);
+  const { child_field_list, child_relations } = await table.get_child_relations(
+    true
+  );
   const aggStatOptions = {};
-  const agg_fieldviews = []
-  Object.values(getState().types).forEach(t => {
+  const agg_fieldviews = [];
+  Object.values(getState().types).forEach((t) => {
     const fvnames = Object.entries(t.fieldviews)
       .filter(([k, v]) => !v.isEdit && !v.isFilter)
-      .map(([k, v]) => k)
+      .map(([k, v]) => k);
     agg_fieldviews.push({
       name: `agg_fieldview`,
       label: __("Field view"),
       type: "String",
       attributes: {
-        options: fvnames
+        options: fvnames,
       },
       showIf: {
         "agg_field|_@_1": t.name,
         type: "Aggregation",
       },
-    })
-  })
+    });
+  });
   const agg_fieldview_cfg_opts = [
     {
       name: "format",
@@ -480,47 +491,47 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       showIf: {
         type: "Aggregation",
         "agg_field|_@_1": "Date",
-        agg_fieldview: "format"
-      }
+        agg_fieldview: "format",
+      },
     },
-  ]
+  ];
 
-  const agg_field_opts = child_relations.map(({ table, key_field, through }) => {
-    const aggKey = (through ? `${through.name}->` : '') + `${table.name}.${key_field.name}`
-    aggStatOptions[aggKey] = [
-      "Count",
-      "Avg",
-      "Sum",
-      "Max",
-      "Min",
-      "Array_Agg",
-    ];
-    table.fields.forEach((f) => {
-      if (f.type && f.type.name === "Date") {
-        aggStatOptions[aggKey].push(
-          `Latest ${f.name}`
-        );
-        aggStatOptions[aggKey].push(
-          `Earliest ${f.name}`
-        );
-      }
-    });
-    return {
-      name: `agg_field`,
-      label: __("On Field"),
-      type: "String",
-      required: true,
-      attributes: {
-        options: table.fields
-          .filter((f) => !f.calculated || f.stored)
-          .map((f) => ({ label: f.name, name: `${f.name}@${f.type_name}` })),
-      },
-      showIf: {
-        agg_relation: aggKey,
-        type: "Aggregation",
-      },
-    };
-  });
+  const agg_field_opts = child_relations.map(
+    ({ table, key_field, through }) => {
+      const aggKey =
+        (through ? `${through.name}->` : "") +
+        `${table.name}.${key_field.name}`;
+      aggStatOptions[aggKey] = [
+        "Count",
+        "Avg",
+        "Sum",
+        "Max",
+        "Min",
+        "Array_Agg",
+      ];
+      table.fields.forEach((f) => {
+        if (f.type && f.type.name === "Date") {
+          aggStatOptions[aggKey].push(`Latest ${f.name}`);
+          aggStatOptions[aggKey].push(`Earliest ${f.name}`);
+        }
+      });
+      return {
+        name: `agg_field`,
+        label: __("On Field"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({ label: f.name, name: `${f.name}@${f.type_name}` })),
+        },
+        showIf: {
+          agg_relation: aggKey,
+          type: "Aggregation",
+        },
+      };
+    }
+  );
   return [
     {
       name: "type",
@@ -547,7 +558,6 @@ const field_picker_fields = async ({ table, viewname, req }) => {
             ? [{ name: "Aggregation", label: __("Aggregation") }]
             : []),
           { name: "FormulaValue", label: __("Formula value") },
-
         ],
       },
     },
@@ -677,7 +687,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       required: true,
       attributes: {
         options: view_name_opts,
-        asideNext: true
+        asideNext: true,
       },
       showIf: { type: "ViewLink" },
     },
@@ -687,8 +697,8 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: true,
       attributes: {
-        //options: link_view_opts,        
-        calcOptions: ["view_name", view_relation_opts]
+        //options: link_view_opts,
+        calcOptions: ["view_name", view_relation_opts],
       },
       showIf: { type: "ViewLink" },
     },
@@ -853,7 +863,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "col_width",
       label: __("Column width"),
       type: "Integer",
-      attributes: { asideNext: true }
+      attributes: { asideNext: true },
     },
     {
       name: "col_width_units",
@@ -1016,10 +1026,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
         );
       }
     } else if (column.type === "FormulaValue") {
-      freeVars = new Set([
-        ...freeVars,
-        ...freeVariables(column.formula),
-      ]);
+      freeVars = new Set([...freeVars, ...freeVariables(column.formula)]);
     } else if (column.type === "ViewLink") {
       if (column.view_label_formula)
         freeVars = new Set([...freeVars, ...freeVariables(column.view_label)]);
@@ -1047,7 +1054,6 @@ const picked_fields_to_query = (columns, fields, layout) => {
           let restpath;
           [through, restpath] = column.agg_relation.split("->");
           [table, fld] = restpath.split(".");
-
         } else {
           [table, fld] = column.agg_relation.split(".");
         }
@@ -1069,7 +1075,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
           where: column.aggwhere ? jsexprToWhere(column.aggwhere) : undefined,
           field,
           aggregate: column.stat,
-          through
+          through,
         };
       }
     } else if (column.type === "Link") {
@@ -1099,11 +1105,8 @@ const picked_fields_to_query = (columns, fields, layout) => {
       },
       container(v) {
         if (v.showIfFormula)
-          freeVars = new Set([
-            ...freeVars,
-            ...freeVariables(v.showIfFormula),
-          ]);
-      }
+          freeVars = new Set([...freeVars, ...freeVariables(v.showIfFormula)]);
+      },
     });
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
@@ -1168,14 +1171,16 @@ const stateFieldsToQuery = ({ state, stateHash, fields, prefix = "" }) => {
     if (field) q.orderBy = state[sortbyName];
     if (state[sortDescName]) q.orderDesc = true;
   }
-  const pagesize = stateHash && state[`_${stateHash}_pagesize`]
-    ? parseInt(state[`_${stateHash}_pagesize`])
-    : undefined;
+  const pagesize =
+    stateHash && state[`_${stateHash}_pagesize`]
+      ? parseInt(state[`_${stateHash}_pagesize`])
+      : undefined;
   if (pagesize) {
     q.limit = parseInt(pagesize);
-    const page = stateHash && state[`_${stateHash}_page`]
-      ? parseInt(state[`_${stateHash}_page`])
-      : undefined;
+    const page =
+      stateHash && state[`_${stateHash}_page`]
+        ? parseInt(state[`_${stateHash}_page`])
+        : undefined;
     if (page) {
       q.offset = (page - 1) * pagesize;
     }
@@ -1369,110 +1374,110 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
  */
 const initial_config_all_fields =
   (isEdit) =>
-    async ({ table_id, exttable_name }) => {
-      const table = await Table.findOne(
-        table_id ? { id: table_id } : { name: exttable_name }
-      );
+  async ({ table_id, exttable_name }) => {
+    const table = await Table.findOne(
+      table_id ? { id: table_id } : { name: exttable_name }
+    );
 
-      const fields = (await table.getFields()).filter(
-        (f) => !f.primary_key && (!isEdit || !f.calculated)
-      );
-      let cfg = { columns: [] };
-      let aboves = [null];
-      const style = {
-        "margin-bottom": "1.5rem",
+    const fields = (await table.getFields()).filter(
+      (f) => !f.primary_key && (!isEdit || !f.calculated)
+    );
+    let cfg = { columns: [] };
+    let aboves = [null];
+    const style = {
+      "margin-bottom": "1.5rem",
+    };
+
+    fields.forEach((f) => {
+      if (!f.type) return;
+      const flabel = {
+        above: [
+          null,
+          {
+            type: "blank",
+            block: false,
+            contents: f.label,
+            textStyle: "",
+            ...(isEdit ? { labelFor: f.name } : {}),
+          },
+        ],
       };
-
-      fields.forEach((f) => {
-        if (!f.type) return;
-        const flabel = {
-          above: [
-            null,
+      if (
+        f.is_fkey &&
+        f.type !== "File" &&
+        f.reftable_name !== "users" &&
+        !isEdit
+      ) {
+        cfg.columns.push({
+          type: "JoinField",
+          join_field: `${f.name}.${f.attributes.summary_field}`,
+        });
+        aboves.push({
+          widths: [2, 10],
+          style,
+          besides: [
+            flabel,
             {
-              type: "blank",
-              block: false,
-              contents: f.label,
-              textStyle: "",
-              ...(isEdit ? { labelFor: f.name } : {}),
+              above: [
+                null,
+                {
+                  type: "join_field",
+                  block: false,
+                  textStyle: "",
+                  join_field: `${f.name}.${f.attributes.summary_field}`,
+                },
+              ],
             },
           ],
-        };
-        if (
-          f.is_fkey &&
-          f.type !== "File" &&
-          f.reftable_name !== "users" &&
-          !isEdit
-        ) {
-          cfg.columns.push({
-            type: "JoinField",
-            join_field: `${f.name}.${f.attributes.summary_field}`,
-          });
-          aboves.push({
-            widths: [2, 10],
-            style,
-            besides: [
-              flabel,
-              {
-                above: [
-                  null,
-                  {
-                    type: "join_field",
-                    block: false,
-                    textStyle: "",
-                    join_field: `${f.name}.${f.attributes.summary_field}`,
-                  },
-                ],
-              },
-            ],
-          });
-        } else if (f.reftable_name !== "users") {
-          const fvNm = f.type.fieldviews
-            ? Object.entries(f.type.fieldviews).find(
+        });
+      } else if (f.reftable_name !== "users") {
+        const fvNm = f.type.fieldviews
+          ? Object.entries(f.type.fieldviews).find(
               ([nm, fv]) => fv.isEdit === isEdit
             )[0]
-            : f.type === "File" && !isEdit
-              ? Object.keys(getState().fileviews)[0]
-              : f.type === "File" && isEdit
-                ? "upload"
-                : f.type === "Key"
-                  ? "select"
-                  : undefined;
-          cfg.columns.push({
-            field_name: f.name,
-            type: "Field",
-            fieldview: fvNm,
-          });
-          aboves.push({
-            widths: [2, 10],
-            style,
-            besides: [
-              flabel,
-              {
-                above: [
-                  null,
-                  {
-                    type: "field",
-                    block: false,
-                    fieldview: fvNm,
-                    textStyle: "",
-                    field_name: f.name,
-                  },
-                ],
-              },
-            ],
-          });
-        }
-      });
-      if (isEdit)
-        aboves.push({
-          type: "action",
-          block: false,
-          minRole: 10,
-          action_name: "Save",
+          : f.type === "File" && !isEdit
+          ? Object.keys(getState().fileviews)[0]
+          : f.type === "File" && isEdit
+          ? "upload"
+          : f.type === "Key"
+          ? "select"
+          : undefined;
+        cfg.columns.push({
+          field_name: f.name,
+          type: "Field",
+          fieldview: fvNm,
         });
-      cfg.layout = { above: aboves };
-      return cfg;
-    };
+        aboves.push({
+          widths: [2, 10],
+          style,
+          besides: [
+            flabel,
+            {
+              above: [
+                null,
+                {
+                  type: "field",
+                  block: false,
+                  fieldview: fvNm,
+                  textStyle: "",
+                  field_name: f.name,
+                },
+              ],
+            },
+          ],
+        });
+      }
+    });
+    if (isEdit)
+      aboves.push({
+        type: "action",
+        block: false,
+        minRole: 10,
+        action_name: "Save",
+      });
+    cfg.layout = { above: aboves };
+    return cfg;
+  };
 
 /**
  * Strict Parse Int
@@ -1506,8 +1511,7 @@ const readState = (state, fields, req) => {
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);
-      } else if (f.type === "File")
-        state[f.name] = current
+      } else if (f.type === "File") state[f.name] = current;
       else if (f.type === "Key")
         state[f.name] =
           current === "null" || current === "" || current === null
@@ -1565,16 +1569,15 @@ const json_list_to_external_table = (get_json_list, fields0) => {
   const getRows = async (where = {}, selopts = {}) => {
     let data_in = await get_json_list({ where, ...selopts });
     const restricts = Object.entries(where);
-    const sat = x => ([k, v]) => {
-      if (Array.isArray(v))
-        return v.every(v1 => sat(x)([k, v1]))
-      else if (v?.lt) return x[k] < +(v.lt)
-      else if (v?.gt) return x[k] > +(v.gt)
-      else if (v?.ilike)
-        return (x[k] || "").includes(v.ilike)
-
-      else return x[k] === v
-    }
+    const sat =
+      (x) =>
+      ([k, v]) => {
+        if (Array.isArray(v)) return v.every((v1) => sat(x)([k, v1]));
+        else if (v?.lt) return x[k] < +v.lt;
+        else if (v?.gt) return x[k] > +v.gt;
+        else if (v?.ilike) return (x[k] || "").includes(v.ilike);
+        else return x[k] === v;
+      };
     const data_filtered =
       restricts.length === 0
         ? data_in
@@ -1582,13 +1585,13 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     if (selopts.orderBy) {
       const cmp = selopts.orderDesc
         ? new Function(
-          "a,b",
-          `return b.${selopts.orderBy}-a.${selopts.orderBy}`
-        )
+            "a,b",
+            `return b.${selopts.orderBy}-a.${selopts.orderBy}`
+          )
         : new Function(
-          "a,b",
-          `return a.${selopts.orderBy}-b.${selopts.orderBy}`
-        );
+            "a,b",
+            `return a.${selopts.orderBy}-b.${selopts.orderBy}`
+          );
       data_filtered.sort(cmp);
     }
     if (selopts.limit)

@@ -125,7 +125,7 @@ const getApp = async (opts = {}) => {
     // no jwt and session id at the same time
     if (!(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]))
       next();
-    });
+  });
   app.use(flash());
 
   //static serving
@@ -171,7 +171,8 @@ const getApp = async (opts = {}) => {
   app.use(
     `/static_assets/${version_tag}`,
     express.static(
-      path.dirname(require.resolve("@saltcorn/filemanager/package.json")) + "/public/build",
+      path.dirname(require.resolve("@saltcorn/filemanager/package.json")) +
+        "/public/build",
       {
         maxAge: development_mode ? 0 : "100d",
       }
@@ -348,13 +349,13 @@ Sitemap: ${base}sitemap.xml
     <urlset
           xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     ${urls
-          .map(
-            (url) => `<url>
+      .map(
+        (url) => `<url>
       <loc>${url}</loc>
       <lastmod>${now}</lastmod>      
     </url>`
-          )
-          .join("")}
+      )
+      .join("")}
     
     </urlset>`);
     })
