@@ -921,8 +921,11 @@ router.post(
           );
           return;
         }
-        //console.log(signup_form);
-
+        //ensure pw repeat is set if used.
+        signup_form.fields.forEach((f) => {
+          if (f.name === "passwordRepeat")
+            signup_form.values[f.name] = signup_form.values[f.name] || "";
+        });
         const userObject = signup_form.values;
         const { email, password, passwordRepeat } = userObject;
         if (await unsuitableEmailPassword(email, password, passwordRepeat))
