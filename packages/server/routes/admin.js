@@ -1657,11 +1657,11 @@ router.post(
     const childOutputs = [];
     child.stdout.on("data", (data) => {
       // console.log(data.toString());
-      childOutputs.push(data.toString());
+      if (data) childOutputs.push(data.toString());
     });
     child.stderr.on("data", (data) => {
       // console.log(data.toString());
-      childOutputs.push(data.toString());
+      childOutputs.push(data ? data.toString() : req.__("An error occurred"));
     });
     child.on("exit", async function (exitCode, signal) {
       const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";

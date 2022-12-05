@@ -74,6 +74,10 @@ function addPlugins(buildDir: string) {
     ["run", "add-plugin", "--", "cordova-sqlite-ext"],
     {
       cwd: buildDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
     }
   );
   console.log(result.output.toString());
@@ -82,6 +86,10 @@ function addPlugins(buildDir: string) {
     ["run", "add-plugin", "--", "cordova-plugin-file"],
     {
       cwd: buildDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
     }
   );
   console.log(result.output.toString());
@@ -90,6 +98,10 @@ function addPlugins(buildDir: string) {
     ["run", "add-plugin", "--", "cordova-plugin-inappbrowser"],
     {
       cwd: buildDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
     }
   );
   console.log(result.output.toString());
@@ -103,6 +115,10 @@ function addPlugins(buildDir: string) {
 export function addPlatforms(buildDir: string, platforms: string[]) {
   const result = spawnSync("npm", ["run", "add-platform", "--", ...platforms], {
     cwd: buildDir,
+    env: {
+      ...process.env,
+      NODE_ENV: "development",
+    },
   });
   console.log(result.output.toString());
 }
