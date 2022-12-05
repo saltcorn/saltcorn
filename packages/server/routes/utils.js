@@ -218,7 +218,9 @@ const scan_for_page_title = (contents, viewname) => {
   try {
     scanstr =
       typeof contents === "string" ? contents : JSON.stringify(contents);
-  } catch {}
+  } catch {
+    //ignore
+  }
   if (scanstr.includes("<!--SCPT:")) {
     const start = scanstr.indexOf("<!--SCPT:");
     const end = scanstr.indexOf("-->", start);

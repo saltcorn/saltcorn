@@ -64,13 +64,17 @@ const js = async () => {
       if (!exists) {
         try {
           await fsp.rename(file.location, newLoc);
-        } catch (e) {}
+        } catch (e) {
+          console.error(e);
+        }
         newLocations[file.id] = path.basename(newLoc);
         file.id = undefined;
         file.location = newLoc;
         try {
           await file.set_role(file.min_role_read);
-        } catch (e) {}
+        } catch (e) {
+          console.error(e);
+        }
 
         break;
       }

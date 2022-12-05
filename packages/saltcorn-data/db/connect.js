@@ -35,15 +35,15 @@ const stringToJSON = (x) => (typeof x === "string" ? JSON.parse(x) : x);
  * @returns {string} - Return current Git commit
  */
 const getGitRevision = () => {
-  let revision = null;
   let options = { stdio: "pipe", cwd: __dirname };
   try {
-    revision = require("child_process")
+    return require("child_process")
       .execSync("git rev-parse HEAD", options)
       .toString()
       .trim();
-  } catch (error) {}
-  return revision;
+  } catch (error) {
+    return null;
+  }
 };
 /**
  * Prepare Saltcorn connection object that controls main Saltcorn instance settings like:
