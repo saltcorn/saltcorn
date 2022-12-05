@@ -366,7 +366,7 @@ router.get(
     send_users_page({
       res,
       req,
-      active_sub: "Settings",
+      active_sub: "Login and Signup",
       contents: {
         type: "card",
         title: req.__("Authentication settings"),
