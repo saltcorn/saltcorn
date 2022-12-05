@@ -52,6 +52,9 @@ const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
+const {
+  getForm,
+} = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");
@@ -892,16 +895,30 @@ router.post(
 
     const signup_form_name = getState().getConfig("signup_form", "");
     if (signup_form_name) {
-      const signup_form = await View.findOne({ name: signup_form_name });
-      if (signup_form) {
-        const userObject = {};
-        signup_form.configuration.columns.forEach((col) => {
-          if (col.type === "Field") {
-            if (col.field_name === "passwordRepeat")
-              userObject[col.field_name] = req.body[col.field_name] || "";
-            else userObject[col.field_name] = req.body[col.field_name];
-          }
-        });
+      const signup_view = await View.findOne({ name: signup_form_name });
+      if (signup_view) {
+        const signup_form = await getForm(
+          Table.findOne({ name: "users" }),
+          signup_form_name,
+          signup_view.configuration.columns,
+          signup_view.configuration.layout,
+          undefined,
+          req,
+          false
+        );
+        await signup_form.asyncValidate(req.body);
+        if (signup_form.hasErrors) {
+          signup_form.action = "/auth/signup";
+          res.sendAuthWrap(
+            req.__(`Sign up`),
+            signup_form,
+            getAuthLinks("signup")
+          );
+          return;
+        }
+        //console.log(signup_form);
+
+        const userObject = signup_form.values;
         const { email, password, passwordRepeat } = userObject;
         if (await unsuitableEmailPassword(email, password, passwordRepeat))
           return;
