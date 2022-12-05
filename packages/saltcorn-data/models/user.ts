@@ -409,8 +409,8 @@ class User {
    * @returns {string}
    */
   static unacceptable_password_reason(pw: string): string | undefined {
-    if (pw.length < 8) return "Too short";
-    if (check(pw)) return "Too common";
+    if (pw.length < 8) return "Password too short";
+    if (check(pw)) return "Password too common";
   }
 
   /**
