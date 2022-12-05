@@ -83,7 +83,7 @@ const unloadModule = (mod) => {
  */
 const setupDevMode = async () => {
   const dbPath = path.join(defaultDataPath, "scdb.sqlite");
-  fs.promises.mkdir(defaultDataPath, { recursive: true });
+  await fs.promises.mkdir(defaultDataPath, { recursive: true });
   const session_secret = gen_password();
   const jwt_secret = genJwtSecret();
   await write_connection_config({
@@ -286,7 +286,7 @@ const setup_connection_config = async () => {
  * @returns {Promise<void>}
  */
 const write_connection_config = async (connobj) => {
-  fs.promises.mkdir(configFileDir, { recursive: true });
+  await fs.promises.mkdir(configFileDir, { recursive: true });
   fs.writeFileSync(configFilePath, JSON.stringify(connobj), { mode: 0o600 });
 };
 
