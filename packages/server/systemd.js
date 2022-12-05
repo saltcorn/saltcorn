@@ -65,5 +65,7 @@ module.exports =
           watchDog(interval, notify, opts);
         }, interval);
       }
-    } catch {}
+    } catch {
+      //ignore, systemd lib not installed
+    }
   };

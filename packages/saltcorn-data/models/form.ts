@@ -170,7 +170,7 @@ class Form implements AbstractForm {
     for (const f of this.fields) {
       let typeObj = f.type as Type;
       if (typeObj?.postProcess) {
-        const ppres = await typeObj?.postProcess(this.values[f.name]);
+        const ppres = await typeObj?.postProcess(this.values[f.name], f);
         if (ppres?.error) {
           this.hasErrors = true;
           this.errors[f.name] = ppres.error;

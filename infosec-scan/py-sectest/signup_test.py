@@ -69,7 +69,7 @@ class Test:
             'password': 'pass', 
             '_csrf': self.sess.csrf()
             })
-        assert "Too short" in self.sess.content
+        assert "Password too short" in self.sess.content
         assert self.sess.redirect_url == None
 
     def test_needs_strong_password(self):
@@ -80,7 +80,7 @@ class Test:
             'password': 'password1', 
             '_csrf': self.sess.csrf()
             })
-        assert "Too common" in self.sess.content
+        assert "Password too common" in self.sess.content
         assert self.sess.redirect_url == None
 
 

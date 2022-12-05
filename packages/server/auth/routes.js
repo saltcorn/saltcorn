@@ -52,6 +52,9 @@ const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
+const {
+  getForm,
+} = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");
@@ -447,6 +450,23 @@ router.post(
   })
 );
 
+const default_signup_form = async (req) => {
+  const form = loginForm(req, true);
+  const new_user_form = getState().getConfig("new_user_form", "");
+  if (!new_user_form) {
+    const userTable = await Table.findOne({ name: "users" });
+    const userFields = await userTable.getFields();
+
+    for (const f of userFields) {
+      if (f.required && !f.calculated && !["id", "email"].includes(f.name))
+        form.fields.push(f);
+    }
+  }
+  form.action = "/auth/signup";
+  form.submitLabel = req.__("Sign up");
+  return form;
+};
+
 /**
  * @name get/signup
  * @function
@@ -461,19 +481,7 @@ router.get(
       return;
     }
     const defaultSignup = async () => {
-      const form = loginForm(req, true);
-      const new_user_form = getState().getConfig("new_user_form", "");
-      if (!new_user_form) {
-        const userTable = await Table.findOne({ name: "users" });
-        const userFields = await userTable.getFields();
-
-        for (const f of userFields) {
-          if (f.required && !f.calculated && !["id", "email"].includes(f.name))
-            form.fields.push(f);
-        }
-      }
-      form.action = "/auth/signup";
-      form.submitLabel = req.__("Sign up");
+      const form = await default_signup_form(req);
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
     };
     const signup_form_name = getState().getConfig("signup_form", "");
@@ -892,16 +900,33 @@ router.post(
 
     const signup_form_name = getState().getConfig("signup_form", "");
     if (signup_form_name) {
-      const signup_form = await View.findOne({ name: signup_form_name });
-      if (signup_form) {
-        const userObject = {};
-        signup_form.configuration.columns.forEach((col) => {
-          if (col.type === "Field") {
-            if (col.field_name === "passwordRepeat")
-              userObject[col.field_name] = req.body[col.field_name] || "";
-            else userObject[col.field_name] = req.body[col.field_name];
-          }
+      const signup_view = await View.findOne({ name: signup_form_name });
+      if (signup_view) {
+        const signup_form = await getForm(
+          Table.findOne({ name: "users" }),
+          signup_form_name,
+          signup_view.configuration.columns,
+          signup_view.configuration.layout,
+          undefined,
+          req,
+          false
+        );
+        await signup_form.asyncValidate(req.body);
+        if (signup_form.hasErrors) {
+          signup_form.action = "/auth/signup";
+          res.sendAuthWrap(
+            req.__(`Sign up`),
+            signup_form,
+            getAuthLinks("signup")
+          );
+          return;
+        }
+        //ensure pw repeat is set if used.
+        signup_form.fields.forEach((f) => {
+          if (f.name === "passwordRepeat")
+            signup_form.values[f.name] = signup_form.values[f.name] || "";
         });
+        const userObject = signup_form.values;
         const { email, password, passwordRepeat } = userObject;
         if (await unsuitableEmailPassword(email, password, passwordRepeat))
           return;
@@ -922,7 +947,7 @@ router.post(
       }
     }
 
-    const form = loginForm(req, true);
+    const form = await default_signup_form(req);
     await form.asyncValidate(req.body);
 
     if (form.hasErrors) {
@@ -938,7 +963,7 @@ router.post(
         form.values.password = password;
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
-        const u = await User.create({ email, password });
+        const u = await User.create(form.values);
         await send_verification_email(u, req);
         if (req.smr)
           await loginWithJwt(
