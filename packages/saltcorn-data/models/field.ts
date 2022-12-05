@@ -556,16 +556,23 @@ class Field implements AbstractField {
   validate(whole_rec: any): ResultMessage {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
+    let typeObj = this.type as Type;
+    let fvObj = this.fieldview && typeObj?.fieldviews?.[this.fieldview];
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
-      let typeObj = this.type as Type;
-      readval =
-        !type || (!typeObj.read && !typeObj.readFromFormRecord)
-          ? whole_rec[this.form_name]
-          : typeObj.readFromFormRecord
-          ? typeObj.readFromFormRecord(whole_rec, this.form_name)
-          : (typeObj as any).read(whole_rec[this.form_name], this.attributes);
+      if (fvObj?.readFromFormRecord) {
+        readval = fvObj.readFromFormRecord(whole_rec, this.form_name);
+      } else if (fvObj?.read) {
+        readval = fvObj.read(whole_rec[this.form_name], this.attributes);
+      } else {
+        readval =
+          !type || (!typeObj.read && !typeObj.readFromFormRecord)
+            ? whole_rec[this.form_name]
+            : typeObj.readFromFormRecord
+            ? typeObj.readFromFormRecord(whole_rec, this.form_name)
+            : (typeObj as any).read(whole_rec[this.form_name], this.attributes);
+      }
     }
     if (typeof readval === "undefined" || readval === null)
       if (this.required && this.type !== "File") {
