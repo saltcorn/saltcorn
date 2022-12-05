@@ -57,8 +57,10 @@ const getUserFields = async (req) => {
         (signup_form.configuration.columns || []).forEach((f) => {
           const uf = userFields.find((uff) => uff.name === f.field_name);
           if (uf) {
-            uf.fieldview = f.fieldview;
-            uf.attributes = { ...f.configuration, ...uf.attributes };
+            if (!f?.fieldview?.unsuitableAsAdminDefault) {
+              uf.fieldview = f.fieldview;
+              uf.attributes = { ...f.configuration, ...uf.attributes };
+            }
           }
         });
       }
