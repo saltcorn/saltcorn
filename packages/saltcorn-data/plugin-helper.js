@@ -287,16 +287,14 @@ const get_link_view_opts = async (table, viewname) => {
     if (!view_relation_opts[view]) view_relation_opts[view] = [];
     view_relation_opts[view].push({ value: name, label: relation });
   };
-  own_link_views
-    .filter((v) => v.name !== viewname)
-    .forEach((v) => {
-      push_view_option({
-        view: v.name,
-        label: `${v.name} [${v.viewtemplate} ${table.name}]`,
-        name: `Own:${v.name}`,
-        relation: table.name,
-      });
+  own_link_views.forEach((v) => {
+    push_view_option({
+      view: v.name,
+      label: `${v.name} [${v.viewtemplate} ${table.name}]`,
+      name: `Own:${v.name}`,
+      relation: table.name,
     });
+  });
   const link_view_opts_push = (o) => {
     if (!link_view_opts.map((v) => v.name).includes(o.name))
       push_view_option(o);
