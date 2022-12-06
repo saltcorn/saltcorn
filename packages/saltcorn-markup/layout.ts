@@ -97,7 +97,7 @@ const applyTextStyle = (segment: any, inner: string): string => {
     case "h6":
       return h6({ style }, inner);
     default:
-      return segment.block
+      return segment.block || (segment.display === "block" && hasStyle)
         ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
         : segment.textStyle || hasStyle
         ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
