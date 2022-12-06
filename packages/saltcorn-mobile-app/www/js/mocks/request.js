@@ -12,7 +12,14 @@ function MobileRequest({ xhr = false, files = undefined, query = undefined }) {
         postProcess: "sprintf",
         sprintf: params,
       }),
-    getLocale: () => "en",
+    isAuthenticated: () => {
+      const mobileCfg = saltcorn.data.state.getState().mobileConfig;
+      return mobileCfg && mobileCfg.jwt && !mobileCfg.isPublicUser;
+    },
+    getLocale: () => {
+      const mobileCfg = saltcorn.data.state.getState().mobileConfig;
+      return mobileCfg?.language ? mobileCfg.language : "en";
+    },
     user: {
       role_id: roleId,
     },

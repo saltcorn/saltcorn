@@ -713,17 +713,20 @@ class View implements AbstractView {
   }
 
   async connected_objects(): Promise<ConnectedObjects> {
-    if (!this.viewtemplateObj?.connectedObjects) return {};
+    const Table = (await import("./table")).default;
+    const viewTbl = this.table_id
+      ? Table.findOne({ id: this.table_id })
+      : undefined;
+    if (!this.viewtemplateObj?.connectedObjects)
+      return viewTbl ? { tables: [viewTbl] } : {};
     else {
       const result = await this.viewtemplateObj.connectedObjects(
         this.configuration
       );
-      if (this.table_id) {
-        const Table = (await import("./table")).default;
-        const table = Table.findOne({ id: this.table_id });
-        if (table)
-          if (result.tables) result.tables.push(table);
-          else result.tables = [table];
+      if (viewTbl) {
+        if (!result) return { tables: [viewTbl] };
+        else if (result.tables) result.tables.push(viewTbl);
+        else result.tables = [viewTbl];
       }
       return result;
     }
