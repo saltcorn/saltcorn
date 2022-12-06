@@ -733,6 +733,7 @@ router.get(
  */
 router.post(
   "/signup_final_ext",
+  setTenant,
   error_catcher(async (req, res) => {
     const new_user_form = getState().getConfig("new_user_form");
     if (!req.user || req.user.id || !new_user_form) {
@@ -785,6 +786,7 @@ router.post(
  */
 router.post(
   "/signup_final",
+  setTenant,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_signup")) {
       const new_user_form = getState().getConfig("new_user_form");
@@ -846,6 +848,7 @@ router.post(
  */
 router.post(
   "/signup",
+  setTenant,
   error_catcher(async (req, res) => {
     if (!getState().getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
