@@ -640,7 +640,7 @@ const configTypes: ConfigTypes = {
   file_upload_limit: {
     type: "Integer",
     label: "File upload size limit in bytes",
-    default: 1024 * 1024 * 10,
+    default: 1024 * 1024 * 512,
     blurb: "Defines in bytes limit for upload files in express-fileupload.",
   },
 };
