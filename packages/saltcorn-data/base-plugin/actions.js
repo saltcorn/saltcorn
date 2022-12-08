@@ -478,6 +478,10 @@ module.exports = {
     run: async ({ row, table, configuration: { joined_table }, user }) => {
       const [join_table_name, join_field] = joined_table.split(".");
       const joinTable = await Table.findOne({ name: join_table_name });
+      if (!joinTable)
+        throw new Error(
+          `Table ${join_table_name} not found in insert_joined_row action`
+        );
       const fields = await joinTable.getFields();
       const newRow = { [join_field]: row.id };
       for (const field of fields) {
