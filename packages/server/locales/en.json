@@ -1057,5 +1057,7 @@
 	"Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`": "Specifies a default filter for what file types the user can pick from the file input dialog box. Example is `.doc, text/csv,audio/*,video/*,image/*`",
 	"Destination page": "Destination page",
 	"Module Store endpoint": "Module Store endpoint",
-	"Authentication settings updated": "Authentication settings updated"
+	"Authentication settings updated": "Authentication settings updated",
+	"Log client errors": "Log client errors",
+	"Record all client errors in the crash log": "Record all client errors in the crash log"
 }

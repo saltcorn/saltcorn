@@ -216,7 +216,6 @@ function enable_error_catcher() {
 }
 
 function globalErrorCatcher(message, source, lineno, colno, error) {
-  console.log("global error catcher!");
   if (error && error.preventDefault) error.preventDefault();
   if (logged_errors.includes(message)) return;
   logged_errors.push(message);
