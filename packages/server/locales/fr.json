@@ -274,5 +274,17 @@
 	"Field %s deleted": "Champ %s supprimé",
 	"Language: ": "Langage: ",
 	"Local": "Local",
-	"Language changed to %s": "Langage changé vers %s"
+	"Language changed to %s": "Langage changé vers %s",
+	"CSV upload": "CSV upload",
+	"Create page": "Create page",
+	"Action": "Action",
+	"Table or Channel": "Table or Channel",
+	"Add trigger": "Add trigger",
+	"Upload file(s)": "Upload file(s)",
+	"About application": "About application",
+	"Modules": "Modules",
+	"Users and security": "Users and security",
+	"Site structure": "Site structure",
+	"Events": "Events",
+	"Are you sure?": "Are you sure?"
 }

@@ -108,9 +108,8 @@ export = /**
       "${encode(layout || {})}",
       ${JSON.stringify(mode)}
     );
-    document.addEventListener('DOMContentLoaded',
-      function(){window.onerror=globalErrorCatcher},false);
-    ;`),
+    enable_error_catcher();
+    `),
     script(
       domReady(`window.set_state_fields = ()=>{};
       window.set_state_field = ()=>{};

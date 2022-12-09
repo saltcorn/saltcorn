@@ -202,7 +202,21 @@ function view_post(viewname, route, data, onDone) {
     });
 }
 let logged_errors = [];
+let error_catcher_enabled = false;
+function enable_error_catcher() {
+  if (error_catcher_enabled) return;
+  document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+      window.onerror = globalErrorCatcher;
+    },
+    false
+  );
+  error_catcher_enabled = true;
+}
+
 function globalErrorCatcher(message, source, lineno, colno, error) {
+  console.log("global error catcher!");
   if (error && error.preventDefault) error.preventDefault();
   if (logged_errors.includes(message)) return;
   logged_errors.push(message);
@@ -267,9 +281,9 @@ function ajax_modal(url, opts = {}) {
       $("#scmodal").prop("data-modal-state", url);
       new bootstrap.Modal($("#scmodal")).show();
       initialize_page();
-      (opts.onOpen || function () { })(res);
+      (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
-        (opts.onClose || function () { })(res);
+        (opts.onClose || function () {})(res);
         $("body").css("overflow", "");
       });
     },
@@ -278,7 +292,7 @@ function ajax_modal(url, opts = {}) {
 
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
-  const valres = form[0].reportValidity()
+  const valres = form[0].reportValidity();
   if (!valres) return;
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
@@ -323,7 +337,7 @@ function applyViewConfig(e, url, k) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) { },
+    error: function (request) {},
     success: function (res) {
       k && k(res);
       !k && updateViewPreview();
@@ -344,7 +358,7 @@ function updateViewPreview() {
         "CSRF-Token": _sc_globalCsrf,
       },
 
-      error: function (request) { },
+      error: function (request) {},
       success: function (res) {
         $preview.css({ opacity: 1.0 });
 
@@ -359,9 +373,8 @@ function updateViewPreview() {
         $preview.find("input").attr("readonly", true);
 
         //disable functions preview migght try to call
-        set_state_field = () => { }
-        set_state_fields = () => { }
-
+        set_state_field = () => {};
+        set_state_fields = () => {};
       },
     });
   }
@@ -596,15 +609,13 @@ function build_mobile_app(button) {
       localStorage.setItem("sidebarClosed", `${closed}`);
     });
   }
-})()
-
-
+})() +
   /*
   https://github.com/jeffdavidgreen/bootstrap-html5-history-tabs/blob/master/bootstrap-history-tabs.js
   Copyright (c) 2015 Jeff Green
   */
 
-  + (function ($) {
+  (function ($) {
     "use strict";
     $.fn.historyTabs = function () {
       var that = this;
@@ -619,21 +630,24 @@ function build_mobile_app(button) {
         $(element).on("show.bs.tab", function () {
           var stateObject = { url: $(this).attr("href") };
 
-          if (window.location.hash && stateObject.url !== window.location.hash) {
+          if (
+            window.location.hash &&
+            stateObject.url !== window.location.hash
+          ) {
             window.history.pushState(
               stateObject,
               document.title,
               window.location.pathname +
-              window.location.search +
-              $(this).attr("href")
+                window.location.search +
+                $(this).attr("href")
             );
           } else {
             window.history.replaceState(
               stateObject,
               document.title,
               window.location.pathname +
-              window.location.search +
-              $(this).attr("href")
+                window.location.search +
+                $(this).attr("href")
             );
           }
         });
@@ -649,4 +663,33 @@ function build_mobile_app(button) {
 
 // Copyright (c) 2011 Marcus Ekwall, http://writeless.se/
 // https://github.com/mekwall/jquery-throttle
-(function (a) { var b = a.jQuery || a.me || (a.me = {}), i = function (e, f, g, h, c, a) { f || (f = 100); var d = !1, j = !1, i = typeof g === "function", l = function (a, b) { d = setTimeout(function () { d = !1; if (h || c) e.apply(a, b), c && (j = +new Date); i && g.apply(a, b) }, f) }, k = function () { if (!d || a) { if (!d && !h && (!c || +new Date - j > f)) e.apply(this, arguments), c && (j = +new Date); (a || !c) && clearTimeout(d); l(this, arguments) } }; if (b.guid) k.guid = e.guid = e.guid || b.guid++; return k }; b.throttle = i; b.debounce = function (a, b, g, h, c) { return i(a, b, g, h, c, !0) } })(this);
+(function (a) {
+  var b = a.jQuery || a.me || (a.me = {}),
+    i = function (e, f, g, h, c, a) {
+      f || (f = 100);
+      var d = !1,
+        j = !1,
+        i = typeof g === "function",
+        l = function (a, b) {
+          d = setTimeout(function () {
+            d = !1;
+            if (h || c) e.apply(a, b), c && (j = +new Date());
+            i && g.apply(a, b);
+          }, f);
+        },
+        k = function () {
+          if (!d || a) {
+            if (!d && !h && (!c || +new Date() - j > f))
+              e.apply(this, arguments), c && (j = +new Date());
+            (a || !c) && clearTimeout(d);
+            l(this, arguments);
+          }
+        };
+      if (b.guid) k.guid = e.guid = e.guid || b.guid++;
+      return k;
+    };
+  b.throttle = i;
+  b.debounce = function (a, b, g, h, c) {
+    return i(a, b, g, h, c, !0);
+  };
+})(this);
