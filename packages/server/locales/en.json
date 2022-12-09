@@ -1059,5 +1059,13 @@
 	"Module Store endpoint": "Module Store endpoint",
 	"Authentication settings updated": "Authentication settings updated",
 	"Log client errors": "Log client errors",
-	"Record all client errors in the crash log": "Record all client errors in the crash log"
+	"Record all client errors in the crash log": "Record all client errors in the crash log",
+	"Default File accept filter": "Default File accept filter",
+	"File upload debug": "File upload debug",
+	"Turn on to debug file upload in express-fileupload.": "Turn on to debug file upload in express-fileupload.",
+	"Upload size limit (Kb)": "Upload size limit (Kb)",
+	"Maximum upload file size in kilobytes": "Maximum upload file size in kilobytes",
+	"File upload timeout": "File upload timeout",
+	"Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ": "Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ",
+	"Files settings": "Files settings"
 }

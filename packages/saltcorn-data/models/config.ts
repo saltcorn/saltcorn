@@ -647,9 +647,8 @@ const configTypes: ConfigTypes = {
   /** @type {object} */
   file_upload_limit: {
     type: "Integer",
-    label: "Upload size limit (Mb)",
-    default: 512,
-    blurb: "Maximum upload file size in Megabytes",
+    label: "Upload size limit (Kb)",
+    blurb: "Maximum upload file size in kilobytes",
   },
 };
 // TODO move list of languages from code to configuration
