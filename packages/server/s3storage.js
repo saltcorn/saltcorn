@@ -46,7 +46,8 @@ module.exports = {
       s3upload(req, res, next);
     } else {
       // Use regular file upload https://www.npmjs.com/package/express-fileupload
-      const fileSizeLimit = getState().getConfig("file_upload_limit", 0);
+      const fileSizeLimit =
+        1024 * 1024 * +getState().getConfig("file_upload_limit", 0);
       fileUpload({
         useTempFiles: true,
         createParentPath: true,
