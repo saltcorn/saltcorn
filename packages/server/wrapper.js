@@ -203,6 +203,8 @@ const get_headers = (req, version_tag, description, extras = []) => {
     from_cfg.push({ style: state.getConfig("page_custom_css", "") });
   if (state.getConfig("page_custom_html", ""))
     from_cfg.push({ headerTag: state.getConfig("page_custom_html", "") });
+  if (state.getConfig("log_client_errors", false))
+    from_cfg.push({ scriptBody: `enable_error_catcher()` });
   const state_headers = [];
   for (const hs of Object.values(state.headers)) {
     state_headers.push(...hs);

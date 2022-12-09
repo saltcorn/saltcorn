@@ -21,6 +21,7 @@ const {
   renderForm,
   link,
   post_delete_btn,
+  localeDateTime,
   mkTable,
 } = require("@saltcorn/markup");
 const {
@@ -384,7 +385,7 @@ router.get(
               },
               {
                 label: req.__("Created"),
-                key: (r) => text(r.created),
+                key: (r) => localeDateTime(r.created),
               },
               {
                 label: req.__("Information"),

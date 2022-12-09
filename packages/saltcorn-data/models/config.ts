@@ -237,6 +237,14 @@ const configTypes: ConfigTypes = {
     blurb: "Print all SQL statements to the standard output",
   },
   /** @type {object} */
+  log_client_errors: {
+    type: "Bool",
+    label: "Log client errors",
+    default: false,
+    root_only: true,
+    blurb: "Record all client errors in the crash log",
+  },
+  /** @type {object} */
   multitenancy_enabled: {
     type: "Bool",
     root_only: true,
@@ -633,15 +641,14 @@ const configTypes: ConfigTypes = {
     label: "File upload timeout",
     default: 0,
     blurb:
-      "Defines how long to wait for data before aborting for express-fileupload. " +
+      "Defines how long to wait for data before aborting file upload. " +
       "Set to 0 if you want to turn off timeout checks. ",
   },
   /** @type {object} */
   file_upload_limit: {
     type: "Integer",
-    label: "File upload size limit in bytes",
-    default: 1024 * 1024 * 10,
-    blurb: "Defines in bytes limit for upload files in express-fileupload.",
+    label: "Upload size limit (Kb)",
+    blurb: "Maximum upload file size in kilobytes",
   },
 };
 // TODO move list of languages from code to configuration

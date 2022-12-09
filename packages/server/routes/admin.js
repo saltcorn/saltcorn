@@ -1822,7 +1822,12 @@ router.post(
 const dev_form = async (req) => {
   return await config_fields_form({
     req,
-    field_names: ["development_mode", "log_sql", "log_level"],
+    field_names: [
+      "development_mode",
+      "log_sql",
+      "log_client_errors",
+      "log_level",
+    ],
     action: "/admin/dev",
   });
 };
