@@ -237,6 +237,14 @@ const configTypes: ConfigTypes = {
     blurb: "Print all SQL statements to the standard output",
   },
   /** @type {object} */
+  log_client_errors: {
+    type: "Bool",
+    label: "Log client errors",
+    default: false,
+    root_only: true,
+    blurb: "Record all client errors in the crash log",
+  },
+  /** @type {object} */
   multitenancy_enabled: {
     type: "Bool",
     root_only: true,
