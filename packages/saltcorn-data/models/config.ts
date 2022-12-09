@@ -633,7 +633,7 @@ const configTypes: ConfigTypes = {
     label: "File upload timeout",
     default: 0,
     blurb:
-      "Defines how long to wait for data before aborting for express-fileupload. " +
+      "Defines how long to wait for data before aborting file upload. " +
       "Set to 0 if you want to turn off timeout checks. ",
   },
   /** @type {object} */
