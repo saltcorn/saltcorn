@@ -1112,6 +1112,8 @@ const picked_fields_to_query = (columns, fields, layout) => {
           freeVars = new Set([...freeVars, ...freeVariables(v.bgColor)]);
         if (v.isFormula?.url)
           freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
+        if (v.isFormula?.customClass)
+          freeVars = new Set([...freeVars, ...freeVariables(v.customClass)]);
       },
     });
   }
