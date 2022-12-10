@@ -13,7 +13,7 @@ const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToWhere, freeVariables } = require("./models/expression");
-const { traverse } = require("./models/layout");
+const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
 /**
  *
@@ -1086,7 +1086,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
     }
   });
   if (layout) {
-    traverse(layout, {
+    traverseSync(layout, {
       view(v) {
         if (v.extra_state_fml)
           freeVars = new Set([
@@ -1100,6 +1100,10 @@ const picked_fields_to_query = (columns, fields, layout) => {
             ...freeVars,
             ...freeVariables(v.extra_state_fml),
           ]);
+      },
+      blank(v) {
+        if (v?.isFormula?.text && typeof v.contents === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
       },
       container(v) {
         if (v.showIfFormula)
