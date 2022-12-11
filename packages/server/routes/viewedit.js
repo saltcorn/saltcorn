@@ -134,6 +134,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
     action: addOnDoneRedirect("/viewedit/save", req),
     submitLabel: req.__("Configure") + " &raquo;",
     blurb: req.__("First, please give some basic information about the view."),
+    tabs: { tabsStyle: "Accordion" },
     fields: [
       new Field({
         label: req.__("View name"),
@@ -191,6 +192,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
           "Requests to render this view directly will instead show the chosen page, if any. The chosen page should embed this view. Use this to decorate the view with additional elements."
         ),
         input_type: "select",
+        tab: "View settings",
         options: [
           { value: "", label: "" },
           ...pages.map((p) => ({ value: p.name, label: p.name })),
@@ -201,6 +203,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         label: req.__("Slug"),
         sublabel: req.__("Field that can be used for a prettier URL structure"),
         type: "String",
+        tab: "View settings",
         attributes: {
           calcOptions: [
             "table_name",
@@ -209,6 +212,30 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         },
         showIf: { viewtemplate: hasTable },
       }),
+      new Field({
+        name: "view_popup_title",
+        label: req.__("Title"),
+        type: "String",
+        tab: "Popup settings",
+      }),
+      {
+        name: "view_popup_width",
+        label: req.__("Column width"),
+        type: "Integer",
+        tab: "Popup settings",
+        attributes: { asideNext: true },
+      },
+      {
+        name: "view_popup_width_units",
+        label: req.__("Units"),
+        type: "String",
+        tab: "Popup settings",
+        fieldview: "radio_group",
+        attributes: {
+          inline: true,
+          options: ["px", "%", "vw", "em", "rem"],
+        },
+      },
       ...(isEdit
         ? [
             new Field({
