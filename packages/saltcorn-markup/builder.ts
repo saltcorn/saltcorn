@@ -107,11 +107,10 @@ export = /**
       "${encode(addCsrf(options, csrfToken))}", 
       "${encode(layout || {})}",
       ${JSON.stringify(mode)}
-    );
-    enable_error_catcher();
-    `),
+    );`),
     script(
-      domReady(`window.set_state_fields = ()=>{};
+      domReady(`enable_error_catcher();
+      window.set_state_fields = ()=>{};
       window.set_state_field = ()=>{};
       window.pjax_to = ()=>{};`)
     )
