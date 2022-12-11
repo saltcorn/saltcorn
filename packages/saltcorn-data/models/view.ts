@@ -502,6 +502,11 @@ class View implements AbstractView {
     }
     const state = view.combine_state_and_default_state(query);
     const resp = await view.run(state, { res, req }, remote);
+    //console.log(req.headers);
+
+    const isModal = req.headers?.saltcornmodalrequest;
+    if (isModal) {
+    }
 
     // return contents
     return div(resp);

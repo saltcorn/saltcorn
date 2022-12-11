@@ -273,6 +273,9 @@ function ajax_modal(url, opts = {}) {
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   else $("#scmodal").removeClass("no-submit-reload");
   $.ajax(url, {
+    headers: {
+      SaltcornModalRequest: "true",
+    },
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
