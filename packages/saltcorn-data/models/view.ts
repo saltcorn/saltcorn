@@ -58,6 +58,7 @@ class View implements AbstractView {
   description?: string;
   table_name?: string;
   configuration?: any;
+  attributes?: any;
   table?: AbstractTable;
   slug?: any;
 
@@ -93,6 +94,7 @@ class View implements AbstractView {
     this.default_render_page = o.default_render_page;
     this.table = o.table;
     this.slug = stringToJSON(o.slug);
+    this.attributes = stringToJSON(o.attributes);
   }
 
   /**

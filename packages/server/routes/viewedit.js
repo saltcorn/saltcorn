@@ -213,24 +213,27 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         showIf: { viewtemplate: hasTable },
       }),
       new Field({
-        name: "view_popup_title",
+        name: "popup_title",
         label: req.__("Title"),
         type: "String",
+        parent_field: "attributes",
         tab: "Popup settings",
       }),
       {
-        name: "view_popup_width",
+        name: "popup_width",
         label: req.__("Column width"),
         type: "Integer",
         tab: "Popup settings",
+        parent_field: "attributes",
         attributes: { asideNext: true },
       },
       {
-        name: "view_popup_width_units",
+        name: "popup_width_units",
         label: req.__("Units"),
         type: "String",
         tab: "Popup settings",
         fieldview: "radio_group",
+        parent_field: "attributes",
         attributes: {
           inline: true,
           options: ["px", "%", "vw", "em", "rem"],
@@ -423,6 +426,7 @@ router.post(
           const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
+          //console.log(v);
           await View.create(v);
         }
         res.redirect(
