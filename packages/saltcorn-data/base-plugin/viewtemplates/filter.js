@@ -317,7 +317,7 @@ const run = async (
           {
             value,
             selected:
-              state[field_name] === or_if_undef(jsvalue, value) ||
+              `${state[field_name]}` === `${or_if_undef(jsvalue, value)}` ||
               (!value && !state[field_name]),
             class: !value && !label ? "text-muted" : undefined,
           },

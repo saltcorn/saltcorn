@@ -13,7 +13,7 @@ const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
 const { jsexprToWhere, freeVariables } = require("./models/expression");
-const { traverse } = require("./models/layout");
+const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
 /**
  *
@@ -1086,7 +1086,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
     }
   });
   if (layout) {
-    traverse(layout, {
+    traverseSync(layout, {
       view(v) {
         if (v.extra_state_fml)
           freeVars = new Set([
@@ -1101,9 +1101,19 @@ const picked_fields_to_query = (columns, fields, layout) => {
             ...freeVariables(v.extra_state_fml),
           ]);
       },
+      blank(v) {
+        if (v?.isFormula?.text && typeof v.contents === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
+      },
       container(v) {
         if (v.showIfFormula)
           freeVars = new Set([...freeVars, ...freeVariables(v.showIfFormula)]);
+        if (v.isFormula?.bgColor)
+          freeVars = new Set([...freeVars, ...freeVariables(v.bgColor)]);
+        if (v.isFormula?.url)
+          freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
+        if (v.isFormula?.customClass)
+          freeVars = new Set([...freeVars, ...freeVariables(v.customClass)]);
       },
     });
   }
