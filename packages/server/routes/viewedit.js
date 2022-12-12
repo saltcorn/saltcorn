@@ -675,6 +675,7 @@ router.post(
 
     if (viewname && req.body) {
       const view = await View.findOne({ name: viewname });
+      req.staticFieldViewConfig = true;
       const configFlow = await view.get_config_flow(req);
       const step = await configFlow.singleStepForm(req.body, req);
       if (step?.renderForm) {
