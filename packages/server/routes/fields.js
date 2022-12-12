@@ -929,6 +929,9 @@ router.post(
       res.send("");
       return;
     }
+    formFields.forEach((ff) => {
+      ff.class = ff.class ? `${ff.class} item-menu` : "item-menu";
+    });
 
     const form = new Form({
       formStyle: "vert",
