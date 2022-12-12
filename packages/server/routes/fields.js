@@ -28,7 +28,6 @@ const expressionBlurb = require("../markup/expression_blurb");
 const {
   readState,
   add_free_variables_to_joinfields,
-  calcfldViewOptions,
   calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
@@ -914,7 +913,6 @@ router.get(
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
     const field = await table.getField(fieldName);
-    const { field_view_options } = calcfldViewOptions([field], "list");
     const fieldViewConfigForms = await calcfldViewConfig([field], false);
     //console.log(fieldViewConfigForms[field.name]);
     const formFields = fieldViewConfigForms[field.name][fieldview];
