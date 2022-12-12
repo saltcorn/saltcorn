@@ -376,11 +376,12 @@ describe("Fieldview config", () => {
     const app = await getApp({ disableCsrf: true });
 
     await request(app)
-      .post("/field/fieldviewcfgform/books/pages/progress_bar")
+      .post("/field/fieldviewcfgform/books")
       .set("Cookie", loginCookie)
       .send({
-        mode: "list",
-        fieldview_name: "fieldview",
+        type: "Field",
+        field_name: "pages",
+        fieldview: "progress_bar",
       })
       .expect(
         toInclude(

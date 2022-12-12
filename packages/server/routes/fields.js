@@ -907,26 +907,35 @@ router.post(
 );
 
 router.post(
-  "/fieldviewcfgform/:tableName/:fieldName/:fieldview",
+  "/fieldviewcfgform/:tableName",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { tableName, fieldName, fieldview } = req.params;
+    const { tableName } = req.params;
+    const { field_name, fieldview, type, join_field, join_fieldview } =
+      req.body;
     const table = await Table.findOne({ name: tableName });
+    const fieldName = type == "Field" ? field_name : join_field;
+    const fv_name = type == "Field" ? fieldview : join_fieldview;
     const field = await table.getField(fieldName);
-    const fieldViewConfigForms = await calcfldViewConfig([field], false);
-    //console.log(fieldViewConfigForms[field.name]);
-    const formFields = fieldViewConfigForms[field.name][fieldview];
+
+    const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
+    const formFields = fieldViewConfigForms[field.name][fv_name];
+    if (!formFields) {
+      res.send("");
+      return;
+    }
+    //console.log({ fv_name, fieldName, formFields });
     formFields.forEach((ff) => {
       if (fieldName.includes("."))
         ff.showIf = {
           type: "JoinField",
-          join_field: fieldName,
-          join_fieldview: fieldview,
+          join_field,
+          join_fieldview,
         };
       else
         ff.showIf = {
           type: "Field",
-          field_name: fieldName,
+          field_name,
           fieldview,
         };
     });
