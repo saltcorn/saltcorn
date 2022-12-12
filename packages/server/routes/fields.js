@@ -916,6 +916,11 @@ router.post(
     const table = await Table.findOne({ name: tableName });
     const fieldName = type == "Field" ? field_name : join_field;
     const fv_name = type == "Field" ? fieldview : join_fieldview;
+    if (!fieldName) {
+      res.send("");
+      return;
+    }
+
     const field = await table.getField(fieldName);
 
     const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
@@ -924,22 +929,9 @@ router.post(
       res.send("");
       return;
     }
-    //console.log({ fv_name, fieldName, formFields });
-    formFields.forEach((ff) => {
-      if (fieldName.includes("."))
-        ff.showIf = {
-          type: "JoinField",
-          join_field,
-          join_fieldview,
-        };
-      else
-        ff.showIf = {
-          type: "Field",
-          field_name,
-          fieldview,
-        };
-    });
+
     const form = new Form({
+      formStyle: "vert",
       fields: formFields,
     });
     res.send(mkFormContentNoLayout(form));
