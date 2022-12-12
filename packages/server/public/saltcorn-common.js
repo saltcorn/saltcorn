@@ -171,12 +171,28 @@ function apply_showif() {
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
     const rec = get_form_record(e);
+    const recS = JSON.stringify(rec);
+    const cache = e.prop("data-source-url-cache") || {};
+    if (typeof cache[recS] !== "undefined") {
+      e.html(cache[recS]);
+      return;
+    }
     ajax_post_json(e.attr("data-source-url"), rec, {
       success: (data) => {
         e.html(data);
+        const cacheNow = e.prop("data-source-url-cache") || {};
+        e.prop("data-source-url-cache", {
+          ...cacheNow,
+          [recS]: data,
+        });
       },
       error: (err) => {
         console.error(err);
+        const cacheNow = e.prop("data-source-url-cache") || {};
+        e.prop("data-source-url-cache", {
+          ...cacheNow,
+          [recS]: "",
+        });
         e.html("");
       },
     });
