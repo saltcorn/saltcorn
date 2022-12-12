@@ -229,7 +229,12 @@ const innerField =
       case "section_header":
         return "";
       case "dynamic_fields":
-        return div({ "data-source-url": hdr.attributes.getFields });
+        return div({
+          "data-source-url": hdr.attributes.getFields,
+          "data-relevant-fields": (hdr.attributes.relevantFields || []).join(
+            ","
+          ),
+        });
       case "custom_html":
         return hdr.attributes.html;
       default:

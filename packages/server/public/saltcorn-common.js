@@ -170,9 +170,23 @@ function apply_showif() {
 
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
-    const rec = get_form_record(e);
+    const rec0 = get_form_record(e);
+
+    const relevantFieldsStr = e.attr("data-relevant-fields");
+    let rec;
+    if (relevantFieldsStr) {
+      rec = {};
+      relevantFieldsStr.split(",").forEach((k) => {
+        rec[k] = rec0[k];
+      });
+    } else rec = rec0;
     const recS = JSON.stringify(rec);
+
+    const shown = e.prop("data-source-url-current");
+    if (shown === recS) return;
+
     const cache = e.prop("data-source-url-cache") || {};
+
     if (typeof cache[recS] !== "undefined") {
       e.html(cache[recS]);
       return;
@@ -185,6 +199,7 @@ function apply_showif() {
           ...cacheNow,
           [recS]: data,
         });
+        e.prop("data-source-url-current", recS);
       },
       error: (err) => {
         console.error(err);

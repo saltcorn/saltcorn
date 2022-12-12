@@ -612,6 +612,13 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       attributes: {
         //getFields: `({type, field, join_field, fieldview, join_fieldview})=>'/field/fieldviewcfgform/${table.name}/'+(type==='Field'?field:join_field)+'/'+(type==='Field'?fieldview:join_fieldview)`,
         getFields: `/field/fieldviewcfgform/${table.name}`,
+        relevantFields: [
+          "field_name",
+          "fieldview",
+          "type",
+          "join_field",
+          "join_fieldview",
+        ],
       },
       //showIf: { type: ["Field", "JoinField"] },
     },
