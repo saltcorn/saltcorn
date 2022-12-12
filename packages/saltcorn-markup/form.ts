@@ -163,7 +163,11 @@ const innerField =
         return displayEdit(
           hdr,
           name,
-          v && isdef(v[hdr.form_name]) ? v[hdr.form_name] : hdr.default,
+          hdr.parent_field && v && isdef(v[hdr.parent_field]?.[hdr.name])
+            ? v[hdr.parent_field]?.[hdr.name]
+            : v && isdef(v[hdr.form_name])
+            ? v[hdr.form_name]
+            : hdr.default,
           validClass
         );
       case "hidden":

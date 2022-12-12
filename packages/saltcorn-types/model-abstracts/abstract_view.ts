@@ -9,6 +9,7 @@ export interface AbstractView {
   configuration?: string | any;
   table_name?: string;
   min_role: number;
+  attributes?: any;
   connected_objects: () => Promise<ConnectedObjects>;
   getTags(): Promise<Array<AbstractTag>>;
 }
@@ -27,6 +28,7 @@ export type ViewCfg = {
   is_public?: boolean;
   default_render_page?: string;
   slug?: any;
+  attributes?: any;
 };
 
 export type ViewPack = {
