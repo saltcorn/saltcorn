@@ -906,7 +906,7 @@ router.post(
   })
 );
 
-router.get(
+router.post(
   "/fieldviewcfgform/:tableName/:fieldName/:fieldview",
   isAdmin,
   error_catcher(async (req, res) => {
