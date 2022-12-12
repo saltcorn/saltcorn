@@ -28,6 +28,7 @@ const expressionBlurb = require("../markup/expression_blurb");
 const {
   readState,
   add_free_variables_to_joinfields,
+  calcfldViewOptions,
 } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
@@ -901,5 +902,19 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     res.send("");
+  })
+);
+
+router.post(
+  "/fieldviewcfgform/:tableName/:fieldName",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { tableName, fieldName, fieldview } = req.params;
+    const { mode } = req.body;
+    const table = await Table.findOne({ name: tableName });
+    const field = await table.getField(fieldName);
+    const { field_view_options } = calcfldViewOptions([field], mode);
+    console.log(field_view_options[field.name]);
+    res.send("my cool field opts");
   })
 );

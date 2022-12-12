@@ -367,3 +367,20 @@ describe("Field Endpoints", () => {
       .expect((r) => +r.body > 1);
   });
 });
+
+describe("Fieldview config", () => {
+  //itShouldRedirectUnauthToLogin("/field/2");
+  it("should return fieldview options", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/fieldviewcfgform/books/pages")
+      .set("Cookie", loginCookie)
+      .send({
+        mode: "list",
+      })
+      .expect(toInclude(" is: <pre>2</pre>"));
+  });
+});
