@@ -278,6 +278,9 @@ function ajax_modal(url, opts = {}) {
     },
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
+      var width = request.getResponseHeader("SaltcornModalWidth");
+      if (width) $(".modal-dialog").css("max-width", width);
+      else $(".modal-dialog").css("max-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
       $("#scmodal").prop("data-modal-state", url);

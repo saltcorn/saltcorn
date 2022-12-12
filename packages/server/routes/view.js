@@ -9,7 +9,7 @@ const Router = require("express-promise-router");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 
-const { text } = require("@saltcorn/markup/tags");
+const { text, style } = require("@saltcorn/markup/tags");
 const {
   isAdmin,
   error_catcher,
@@ -62,8 +62,20 @@ router.get(
       res.redirect("/");
       return;
     }
+    const isModal = req.headers?.saltcornmodalrequest;
+
     const contents = await view.run_possibly_on_page(query, req, res);
-    const title = scan_for_page_title(contents, view.name);
+    const title =
+      isModal && view.attributes?.popup_title
+        ? view.attributes?.popup_title
+        : scan_for_page_title(contents, view.name);
+    if (isModal && view.attributes?.popup_width)
+      res.set(
+        "SaltcornModalWidth",
+        `${view.attributes?.popup_width}${
+          view.attributes?.popup_width_units || "px"
+        }`
+      );
     res.sendWrap(
       title,
       add_edit_bar({
