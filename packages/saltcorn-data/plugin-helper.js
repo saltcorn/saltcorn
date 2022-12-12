@@ -606,7 +606,16 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       },
       showIf: { type: "JoinField" },
     },
-    ...fvConfigFields,
+    {
+      name: "fvcfg",
+      input_type: "dynamic_fields",
+      attributes: {
+        //getFields: `({type, field, join_field, fieldview, join_fieldview})=>'/field/fieldviewcfgform/${table.name}/'+(type==='Field'?field:join_field)+'/'+(type==='Field'?fieldview:join_fieldview)`,
+        getFields: `/field/fieldviewcfgform/${table.name}`,
+      },
+      //showIf: { type: ["Field", "JoinField"] },
+    },
+    //...fvConfigFields,
     {
       name: "action_name",
       label: __("Action"),

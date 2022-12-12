@@ -97,7 +97,10 @@ const formRowWrap = (
 ): string =>
   div(
     {
-      class: ["form-group", isHoriz(fStyle) && "row"],
+      class: [
+        "form-group",
+        isHoriz(fStyle) && hdr.input_type !== "dynamic_fields" && "row",
+      ],
       "data-disabled": hdr.disabled ? "true" : false,
       ...(hdr.showIf && {
         style: "display: none;",
@@ -110,6 +113,8 @@ const formRowWrap = (
           h5(text(hdr.label)),
           hdr.sublabel && p(i(hdr.sublabel))
         )
+      : hdr.input_type === "dynamic_fields"
+      ? inner
       : hdr.type?.name === "Bool" && fStyle === "vert"
       ? div(
           { class: "form-check" },
@@ -223,6 +228,8 @@ const innerField =
         return search_bar(name, v && v[hdr.form_name]);
       case "section_header":
         return "";
+      case "dynamic_fields":
+        return div({ "data-source-url": hdr.attributes.getFields });
       case "custom_html":
         return hdr.attributes.html;
       default:
