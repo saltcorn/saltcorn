@@ -621,10 +621,12 @@ const field_picker_fields = async ({ table, viewname, req }) => {
                 "type",
                 "join_field",
                 "join_fieldview",
+                "_columndef",
               ],
             },
             //showIf: { type: ["Field", "JoinField"] },
           },
+          { name: "_columndef", input_type: "hidden" },
         ]),
 
     {

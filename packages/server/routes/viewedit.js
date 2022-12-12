@@ -534,6 +534,9 @@ router.get(
       res.redirect("/viewedit");
       return;
     }
+    (view.configuration?.columns || []).forEach((c) => {
+      c._columndef = JSON.stringify(c);
+    });
     const configFlow = await view.get_config_flow(req);
     const hasConfig =
       view.configuration && Object.keys(view.configuration).length > 0;

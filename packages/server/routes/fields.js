@@ -911,8 +911,14 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName } = req.params;
-    const { field_name, fieldview, type, join_field, join_fieldview } =
-      req.body;
+    const {
+      field_name,
+      fieldview,
+      type,
+      join_field,
+      join_fieldview,
+      _columndef,
+    } = req.body;
     const table = await Table.findOne({ name: tableName });
     const fieldName = type == "Field" ? field_name : join_field;
     const fv_name = type == "Field" ? fieldview : join_fieldview;
@@ -937,6 +943,7 @@ router.post(
       formStyle: "vert",
       fields: formFields,
     });
+    if (_columndef) form.values = JSON.parse(_columndef);
     res.send(mkFormContentNoLayout(form));
   })
 );
