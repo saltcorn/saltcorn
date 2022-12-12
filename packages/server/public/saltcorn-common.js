@@ -187,8 +187,26 @@ function apply_showif() {
 
     const cache = e.prop("data-source-url-cache") || {};
 
+    const activate_onchange_coldef = () => {
+      e.closest(".form-namespace")
+        .find("input,select, textarea")
+        .on("change", (ec) => {
+          const $ec = $(ec.target);
+          const k = $ec.attr("name");
+          if (!k || k === "_columndef") return;
+          const v = ec.target.value;
+          const $def = e
+            .closest(".form-namespace")
+            .find("input[name=_columndef]");
+          const def = JSON.parse($def.val());
+          def[k] = v;
+          $def.val(JSON.stringify(def));
+        });
+    };
+
     if (typeof cache[recS] !== "undefined") {
       e.html(cache[recS]);
+      activate_onchange_coldef();
       return;
     }
     ajax_post_json(e.attr("data-source-url"), rec, {
@@ -200,6 +218,7 @@ function apply_showif() {
           [recS]: data,
         });
         e.prop("data-source-url-current", recS);
+        activate_onchange_coldef();
       },
       error: (err) => {
         console.error(err);
