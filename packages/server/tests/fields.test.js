@@ -380,6 +380,7 @@ describe("Fieldview config", () => {
       .set("Cookie", loginCookie)
       .send({
         mode: "list",
+        fieldview_name: "fieldview",
       })
       .expect(toInclude(" is: <pre>2</pre>"));
   });

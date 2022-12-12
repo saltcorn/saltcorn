@@ -34,6 +34,7 @@ const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { applyAsync } = require("@saltcorn/data/utils");
 const { text } = require("@saltcorn/markup/tags");
+const { mkFormContentNoLayout } = require("@saltcorn/markup/form");
 
 /**
  * @type {object}
@@ -910,11 +911,23 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
-    const { mode } = req.body;
+    const { mode, fieldview_name } = req.body;
     const table = await Table.findOne({ name: tableName });
     const field = await table.getField(fieldName);
     const { field_view_options } = calcfldViewOptions([field], mode);
-    console.log(field_view_options[field.name]);
-    res.send("my cool field opts");
+    const form = new Form({
+      fields: [
+        {
+          name: fieldview_name,
+          label: req.__("Field view"),
+          type: "String",
+          required: true,
+          attributes: {
+            options: field_view_options[field.name],
+          },
+        },
+      ],
+    });
+    res.send(mkFormContentNoLayout(form));
   })
 );

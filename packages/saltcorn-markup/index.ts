@@ -2,7 +2,8 @@
  * This is the saltcorn-markup package
  * @module
  */
-import renderForm = require("./form");
+import renderFormModule = require("./form");
+const { renderForm } = renderFormModule;
 import renderBuilder = require("./builder");
 import mkTable = require("./table");
 import tabs = require("./tabs");
