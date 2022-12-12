@@ -29,6 +29,7 @@ const {
   readState,
   add_free_variables_to_joinfields,
   calcfldViewOptions,
+  calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
@@ -906,27 +907,33 @@ router.post(
   })
 );
 
-router.post(
-  "/fieldviewcfgform/:tableName/:fieldName",
+router.get(
+  "/fieldviewcfgform/:tableName/:fieldName/:fieldview",
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
-    const { mode, fieldview_name } = req.body;
     const table = await Table.findOne({ name: tableName });
     const field = await table.getField(fieldName);
-    const { field_view_options } = calcfldViewOptions([field], mode);
+    const { field_view_options } = calcfldViewOptions([field], "list");
+    const fieldViewConfigForms = await calcfldViewConfig([field], false);
+    //console.log(fieldViewConfigForms[field.name]);
+    const formFields = fieldViewConfigForms[field.name][fieldview];
+    formFields.forEach((ff) => {
+      if (fieldName.includes("."))
+        ff.showIf = {
+          type: "JoinField",
+          join_field: fieldName,
+          join_fieldview: fieldview,
+        };
+      else
+        ff.showIf = {
+          type: "Field",
+          field_name: fieldName,
+          fieldview,
+        };
+    });
     const form = new Form({
-      fields: [
-        {
-          name: fieldview_name,
-          label: req.__("Field view"),
-          type: "String",
-          required: true,
-          attributes: {
-            options: field_view_options[field.name],
-          },
-        },
-      ],
+      fields: formFields,
     });
     res.send(mkFormContentNoLayout(form));
   })
