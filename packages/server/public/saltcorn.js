@@ -367,6 +367,10 @@ function updateViewPreview() {
       success: function (res) {
         $preview.css({ opacity: 1.0 });
 
+        //disable functions preview migght try to call
+        set_state_field = () => {};
+        set_state_fields = () => {};
+
         //disable elements in preview
         $preview.html(res);
         $preview.find("a").attr("href", "#");
@@ -376,10 +380,6 @@ function updateViewPreview() {
 
         $preview.find("textarea").attr("disabled", true);
         $preview.find("input").attr("readonly", true);
-
-        //disable functions preview migght try to call
-        set_state_field = () => {};
-        set_state_fields = () => {};
       },
     });
   }
