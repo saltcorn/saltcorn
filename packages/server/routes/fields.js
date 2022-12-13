@@ -28,11 +28,13 @@ const expressionBlurb = require("../markup/expression_blurb");
 const {
   readState,
   add_free_variables_to_joinfields,
+  calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { applyAsync } = require("@saltcorn/data/utils");
 const { text } = require("@saltcorn/markup/tags");
+const { mkFormContentNoLayout } = require("@saltcorn/markup/form");
 
 /**
  * @type {object}
@@ -901,5 +903,47 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     res.send("");
+  })
+);
+
+router.post(
+  "/fieldviewcfgform/:tableName",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { tableName } = req.params;
+    const {
+      field_name,
+      fieldview,
+      type,
+      join_field,
+      join_fieldview,
+      _columndef,
+    } = req.body;
+    const table = await Table.findOne({ name: tableName });
+    const fieldName = type == "Field" ? field_name : join_field;
+    const fv_name = type == "Field" ? fieldview : join_fieldview;
+    if (!fieldName) {
+      res.send("");
+      return;
+    }
+
+    const field = await table.getField(fieldName);
+
+    const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
+    const formFields = fieldViewConfigForms[field.name][fv_name];
+    if (!formFields) {
+      res.send("");
+      return;
+    }
+    formFields.forEach((ff) => {
+      ff.class = ff.class ? `${ff.class} item-menu` : "item-menu";
+    });
+
+    const form = new Form({
+      formStyle: "vert",
+      fields: formFields,
+    });
+    if (_columndef) form.values = JSON.parse(_columndef);
+    res.send(mkFormContentNoLayout(form));
   })
 );

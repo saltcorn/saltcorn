@@ -606,7 +606,29 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       },
       showIf: { type: "JoinField" },
     },
-    ...fvConfigFields,
+    ...(req.staticFieldViewConfig
+      ? fvConfigFields
+      : [
+          {
+            name: "fvcfg",
+            input_type: "dynamic_fields",
+            attributes: {
+              //getFields: `({type, field, join_field, fieldview, join_fieldview})=>'/field/fieldviewcfgform/${table.name}/'+(type==='Field'?field:join_field)+'/'+(type==='Field'?fieldview:join_fieldview)`,
+              getFields: `/field/fieldviewcfgform/${table.name}`,
+              relevantFields: [
+                "field_name",
+                "fieldview",
+                "type",
+                "join_field",
+                "join_fieldview",
+                "_columndef",
+              ],
+            },
+            //showIf: { type: ["Field", "JoinField"] },
+          },
+          { name: "_columndef", input_type: "hidden" },
+        ]),
+
     {
       name: "action_name",
       label: __("Action"),

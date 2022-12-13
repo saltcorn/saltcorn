@@ -534,6 +534,9 @@ router.get(
       res.redirect("/viewedit");
       return;
     }
+    (view.configuration?.columns || []).forEach((c) => {
+      c._columndef = JSON.stringify(c);
+    });
     const configFlow = await view.get_config_flow(req);
     const hasConfig =
       view.configuration && Object.keys(view.configuration).length > 0;
@@ -675,6 +678,7 @@ router.post(
 
     if (viewname && req.body) {
       const view = await View.findOne({ name: viewname });
+      req.staticFieldViewConfig = true;
       const configFlow = await view.get_config_flow(req);
       const step = await configFlow.singleStepForm(req.body, req);
       if (step?.renderForm) {

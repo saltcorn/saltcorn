@@ -367,3 +367,26 @@ describe("Field Endpoints", () => {
       .expect((r) => +r.body > 1);
   });
 });
+
+describe("Fieldview config", () => {
+  //itShouldRedirectUnauthToLogin("/field/2");
+  it("should return fieldview options", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/fieldviewcfgform/books")
+      .set("Cookie", loginCookie)
+      .send({
+        type: "Field",
+        field_name: "pages",
+        fieldview: "progress_bar",
+      })
+      .expect(
+        toInclude(
+          `<div class="form-group"><div><label for="inputmax">max</label></div><div><input type="number" class="form-control  item-menu" data-fieldname="max" name="max" id="inputmax" step="1" required></div></div><div class="form-group"><div><label for="inputbar_color">Bar color</label></div><div><input type="color" class="form-control  item-menu" data-fieldname="bar_color" name="bar_color" id="inputbar_color"></div></div><div class="form-group"><div><label for="inputbg_color">Background color</label></div><div><input type="color" class="form-control  item-menu" data-fieldname="bg_color" name="bg_color" id="inputbg_color"></div></div><div class="form-group"><div><label for="inputpx_height">Height in px</label></div><div><input type="number" class="form-control  item-menu" data-fieldname="px_height" name="px_height" id="inputpx_height" step="1"></div></div>`
+        )
+      );
+  });
+});

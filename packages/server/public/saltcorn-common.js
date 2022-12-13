@@ -36,11 +36,11 @@ function add_repeater(nm) {
   newe.appendTo($("div.repeats-" + nm));
 }
 
-const _apply_showif_plugins = []
+const _apply_showif_plugins = [];
 
-const add_apply_showif_plugin = p => {
-  _apply_showif_plugins.push(p)
-}
+const add_apply_showif_plugin = (p) => {
+  _apply_showif_plugins.push(p);
+};
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
@@ -92,7 +92,8 @@ function apply_showif() {
       } else {
         e.append(
           $(
-            `<option ${`${current}` === `${o.value}` ? "selected" : ""
+            `<option ${
+              `${current}` === `${o.value}` ? "selected" : ""
             } value="${o.value}">${o.label}</option>`
           )
         );
@@ -117,76 +118,127 @@ function apply_showif() {
       e.attr("data-selected", ec.target.value);
     });
 
-    const currentOptionsSet = e.prop('data-fetch-options-current-set')
+    const currentOptionsSet = e.prop("data-fetch-options-current-set");
     if (currentOptionsSet === qs) return;
 
     const activate = (success, qs) => {
       e.empty();
-      e.prop('data-fetch-options-current-set', qs)
+      e.prop("data-fetch-options-current-set", qs);
       if (!dynwhere.required) e.append($(`<option></option>`));
       let currentDataOption = undefined;
-      const dataOptions = []
+      const dataOptions = [];
       success.forEach((r) => {
         const label = dynwhere.label_formula
           ? new Function(
-            `{${Object.keys(r).join(",")}}`,
-            "return " + dynwhere.label_formula
-          )(r)
-          : r[dynwhere.summary_field]
-        const value = r[dynwhere.refname]
-        const selected = `${current}` === `${r[dynwhere.refname]}`
+              `{${Object.keys(r).join(",")}}`,
+              "return " + dynwhere.label_formula
+            )(r)
+          : r[dynwhere.summary_field];
+        const value = r[dynwhere.refname];
+        const selected = `${current}` === `${r[dynwhere.refname]}`;
         dataOptions.push({ text: label, value });
         if (selected) currentDataOption = value;
-        const html = `<option ${selected ? "selected" : ""
-          } value="${value}">${label}</option>`
-        e.append(
-          $(html)
-        );
+        const html = `<option ${
+          selected ? "selected" : ""
+        } value="${value}">${label}</option>`;
+        e.append($(html));
       });
-      element.dispatchEvent(new Event('RefreshSelectOptions'))
+      element.dispatchEvent(new Event("RefreshSelectOptions"));
       if (e.hasClass("selectized") && $().selectize) {
         e.selectize()[0].selectize.clearOptions();
         e.selectize()[0].selectize.addOption(dataOptions);
         if (typeof currentDataOption !== "undefined")
           e.selectize()[0].selectize.setValue(currentDataOption);
-
       }
-    }
+    };
 
-    const cache = e.prop('data-fetch-options-cache') || {}
+    const cache = e.prop("data-fetch-options-cache") || {};
     if (cache[qs]) {
-      activate(cache[qs], qs)
+      activate(cache[qs], qs);
     } else
       $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
         if (resp.success) {
-          activate(resp.success, qs)
-          const cacheNow = e.prop('data-fetch-options-cache') || {}
-          e.prop('data-fetch-options-cache', { ...cacheNow, [qs]: resp.success })
+          activate(resp.success, qs);
+          const cacheNow = e.prop("data-fetch-options-cache") || {};
+          e.prop("data-fetch-options-cache", {
+            ...cacheNow,
+            [qs]: resp.success,
+          });
         }
       });
   });
 
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
-    const rec = get_form_record(e);
+    const rec0 = get_form_record(e);
+
+    const relevantFieldsStr = e.attr("data-relevant-fields");
+    let rec;
+    if (relevantFieldsStr) {
+      rec = {};
+      relevantFieldsStr.split(",").forEach((k) => {
+        rec[k] = rec0[k];
+      });
+    } else rec = rec0;
+    const recS = JSON.stringify(rec);
+
+    const shown = e.prop("data-source-url-current");
+    if (shown === recS) return;
+
+    const cache = e.prop("data-source-url-cache") || {};
+
+    const activate_onchange_coldef = () => {
+      e.closest(".form-namespace")
+        .find("input,select, textarea")
+        .on("change", (ec) => {
+          const $ec = $(ec.target);
+          const k = $ec.attr("name");
+          if (!k || k === "_columndef") return;
+          const v = ec.target.value;
+          const $def = e
+            .closest(".form-namespace")
+            .find("input[name=_columndef]");
+          const def = JSON.parse($def.val());
+          def[k] = v;
+          $def.val(JSON.stringify(def));
+        });
+    };
+
+    if (typeof cache[recS] !== "undefined") {
+      e.html(cache[recS]);
+      activate_onchange_coldef();
+      return;
+    }
     ajax_post_json(e.attr("data-source-url"), rec, {
       success: (data) => {
         e.html(data);
+        const cacheNow = e.prop("data-source-url-cache") || {};
+        e.prop("data-source-url-cache", {
+          ...cacheNow,
+          [recS]: data,
+        });
+        e.prop("data-source-url-current", recS);
+        activate_onchange_coldef();
       },
       error: (err) => {
         console.error(err);
+        const cacheNow = e.prop("data-source-url-cache") || {};
+        e.prop("data-source-url-cache", {
+          ...cacheNow,
+          [recS]: "",
+        });
         e.html("");
       },
     });
   });
-  _apply_showif_plugins.forEach(p => p())
+  _apply_showif_plugins.forEach((p) => p());
 }
 
 function splitTargetMatch(elemValue, target, keySpec) {
   if (!elemValue) return false;
-  const [fld, keySpec1] = keySpec.split("|_")
-  const [sep, pos] = keySpec1.split("_")
-  const elemValueShort = elemValue.split(sep)[pos]
+  const [fld, keySpec1] = keySpec.split("|_");
+  const [sep, pos] = keySpec1.split("_");
+  const elemValueShort = elemValue.split(sep)[pos];
   return elemValueShort === target;
 }
 
@@ -195,7 +247,7 @@ function get_form_record(e, select_labels) {
   e.closest(".form-namespace")
     .find("input[name],select[name]")
     .each(function () {
-      const name = $(this).attr("data-fieldname") || $(this).attr("name")
+      const name = $(this).attr("data-fieldname") || $(this).attr("name");
       if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
         rec[name] = $(this).find("option:selected").text();
       else if ($(this).prop("type") === "checkbox")
@@ -508,14 +560,16 @@ function notifyAlert(note, spin) {
   }
 
   $("#alerts-area")
-    .append(`<div class="alert alert-${type} alert-dismissible fade show ${spin ? "d-flex align-items-center" : ""
-      }" role="alert">
+    .append(`<div class="alert alert-${type} alert-dismissible fade show ${
+    spin ? "d-flex align-items-center" : ""
+  }" role="alert">
   ${txt}
-  ${spin
-        ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
-        : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+  ${
+    spin
+      ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
+      : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
   </button>`
-      }
+  }
 </div>`);
 }
 
@@ -532,8 +586,9 @@ function common_done(res, isWeb = true) {
     (isWeb ? location : parent.location).reload(); //TODO notify to cookie if reload or goto
   }
   if (res.download) {
-    const dataurl = `data:${res.download.mimetype || "application/octet-stream"
-      };base64,${res.download.blob}`;
+    const dataurl = `data:${
+      res.download.mimetype || "application/octet-stream"
+    };base64,${res.download.blob}`;
     fetch(dataurl)
       .then((res) => res.blob())
       .then((blob) => {
@@ -553,15 +608,19 @@ function common_done(res, isWeb = true) {
   else if (res.goto) {
     if (res.target === "_blank") window.open(res.goto, "_blank").focus();
     else {
-      const prev = new URL(window.location.href)
-      const next = new URL(res.goto, prev.origin)
+      const prev = new URL(window.location.href);
+      const next = new URL(res.goto, prev.origin);
       window.location.href = res.goto;
-      if (prev.origin === next.origin && prev.pathname === next.pathname && next.hash !== prev.hash)
-        location.reload()
+      if (
+        prev.origin === next.origin &&
+        prev.pathname === next.pathname &&
+        next.hash !== prev.hash
+      )
+        location.reload();
     }
   }
   if (res.popup) {
-    ajax_modal(res.popup)
+    ajax_modal(res.popup);
   }
 }
 
@@ -572,7 +631,9 @@ const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
     const $e = form.find(`input[name="${k}_${ix}"]`);
     if ($e.length) $e.val(v);
     else {
-      const $ne = $(`<input type="hidden" data-repeater-ix="${ix}" name="${k}_${ix}"></input>`);
+      const $ne = $(
+        `<input type="hidden" data-repeater-ix="${ix}" name="${k}_${ix}"></input>`
+      );
       $ne.val(v);
       form.append($ne);
     }
@@ -700,9 +761,9 @@ function room_older(viewname, room_id, btn) {
 function init_room(viewname, room_id) {
   const socket = parent?.config?.server_path
     ? io(parent.config.server_path, {
-      query: `jwt=${localStorage.getItem("auth_jwt")}`,
-      transports: ["websocket"],
-    })
+        query: `jwt=${localStorage.getItem("auth_jwt")}`,
+        transports: ["websocket"],
+      })
     : io({ transports: ["websocket"] });
 
   socket.emit("join_room", [viewname, room_id]);
@@ -735,32 +796,31 @@ function cancel_form(form) {
 }
 
 function split_paste_handler(e) {
-  let clipboardData = e.clipboardData || window.clipboardData || e.originalEvent.clipboardData;
+  let clipboardData =
+    e.clipboardData || window.clipboardData || e.originalEvent.clipboardData;
 
-  const lines = clipboardData.getData('text').split(/\r\n/g)
+  const lines = clipboardData.getData("text").split(/\r\n/g);
 
   // do normal thing if not multiline - do not interfere with ordinary copy paste
   if (lines.length < 2) return;
   e.preventDefault();
-  const form = $(e.target).closest('form')
+  const form = $(e.target).closest("form");
 
   let matched = false;
 
-  form.find('input:not(:disabled):not([readonly]):not(:hidden)').each(function (ix, element) {
-    if (!matched && element === e.target) matched = true;
-    if (matched && lines.length > 0) {
-      const $elem = $(element)
-      if (ix === 0 && $elem.attr("type") !== "number") {
-        //const existing = $elem.val()
-        //const pasted = 
-        $elem.val(lines.shift())
-
-      } else
-        $elem.val(lines.shift())
-    }
-  })
-
-
+  form
+    .find("input:not(:disabled):not([readonly]):not(:hidden)")
+    .each(function (ix, element) {
+      if (!matched && element === e.target) matched = true;
+      if (matched && lines.length > 0) {
+        const $elem = $(element);
+        if (ix === 0 && $elem.attr("type") !== "number") {
+          //const existing = $elem.val()
+          //const pasted =
+          $elem.val(lines.shift());
+        } else $elem.val(lines.shift());
+      }
+    });
 }
 
 function is_paging_param(key) {

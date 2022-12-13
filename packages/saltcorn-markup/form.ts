@@ -97,7 +97,10 @@ const formRowWrap = (
 ): string =>
   div(
     {
-      class: ["form-group", isHoriz(fStyle) && "row"],
+      class: [
+        "form-group",
+        isHoriz(fStyle) && hdr.input_type !== "dynamic_fields" && "row",
+      ],
       "data-disabled": hdr.disabled ? "true" : false,
       ...(hdr.showIf && {
         style: "display: none;",
@@ -110,6 +113,8 @@ const formRowWrap = (
           h5(text(hdr.label)),
           hdr.sublabel && p(i(hdr.sublabel))
         )
+      : hdr.input_type === "dynamic_fields"
+      ? inner
       : hdr.type?.name === "Bool" && fStyle === "vert"
       ? div(
           { class: "form-check" },
@@ -223,6 +228,13 @@ const innerField =
         return search_bar(name, v && v[hdr.form_name]);
       case "section_header":
         return "";
+      case "dynamic_fields":
+        return div({
+          "data-source-url": hdr.attributes.getFields,
+          "data-relevant-fields": (hdr.attributes.relevantFields || []).join(
+            ","
+          ),
+        });
       case "custom_html":
         return hdr.attributes.html;
       default:
@@ -967,32 +979,7 @@ const displayAdditionalButtons = (additionalButtons: any[]): string =>
     )
     .join("");
 
-/**
- * @param {object} form
- * @param {string} csrfToken
- * @param {object} [errors = {}]
- * @returns {string}
- */
-const mkForm = (
-  form: Form,
-  csrfToken: string | boolean,
-  errors: any = {}
-): string => {
-  const hasFile = form.fields.some((f: any) => f.multipartFormData);
-  const csrfField =
-    csrfToken === false
-      ? ""
-      : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form ${
-    form.id ? `id="${form.id}" ` : ""
-  }action="${buildActionAttribute(form)}"${
-    form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""
-  } ${
-    form.onChange ? ` onchange="${form.onChange}"` : ""
-  }class="form-namespace ${form.class || ""}" method="${
-    form.methodGET ? "get" : "post"
-  }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}>`;
-  //console.log(form.fields);
+const mkFormContentNoLayout = (form: Form, errors: any = {}) => {
   const tabHtmls: any = {};
 
   const fldHtmls: String[] = [];
@@ -1041,6 +1028,36 @@ const mkForm = (
           (s) => s
         )
       : "";
+  return flds + tabsHtml;
+};
+
+/**
+ * @param {object} form
+ * @param {string} csrfToken
+ * @param {object} [errors = {}]
+ * @returns {string}
+ */
+const mkForm = (
+  form: Form,
+  csrfToken: string | boolean,
+  errors: any = {}
+): string => {
+  const hasFile = form.fields.some((f: any) => f.multipartFormData);
+  const csrfField =
+    csrfToken === false
+      ? ""
+      : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const top = `<form ${
+    form.id ? `id="${form.id}" ` : ""
+  }action="${buildActionAttribute(form)}"${
+    form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""
+  } ${
+    form.onChange ? ` onchange="${form.onChange}"` : ""
+  }class="form-namespace ${form.class || ""}" method="${
+    form.methodGET ? "get" : "post"
+  }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}>`;
+  //console.log(form.fields);
+  const content = mkFormContentNoLayout(form, errors);
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
@@ -1074,8 +1091,7 @@ const mkForm = (
     blurbp +
     top +
     csrfField +
-    flds +
-    tabsHtml +
+    content +
     fullFormError +
     bot +
     splitSnippet(form) +
@@ -1083,4 +1099,4 @@ const mkForm = (
   );
 };
 
-export = renderForm;
+export = { renderForm, mkFormContentNoLayout };
