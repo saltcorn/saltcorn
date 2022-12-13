@@ -1635,6 +1635,9 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     getFields() {
       return fields;
     },
+    getField(fnm) {
+      return fields.find((f) => f.name === fnm);
+    },
     fields,
     getRows,
     get min_role_read() {
