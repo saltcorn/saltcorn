@@ -120,6 +120,9 @@ const select = {
         "data-fieldname": field.form_name,
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
+        disabled: attrs.disabled,
+        readonly: attrs.readonly,
+        onChange: attrs.onChange,
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,

@@ -185,7 +185,9 @@ const run = async (
   const table = await Table.findOne(table_id);
   const fields = await table.getFields();
   readState(state, fields);
-
+  const formFieldNames = (columns || [])
+    .map((c) => c.field_name)
+    .filter((n) => n);
   const { distinct_values, role } = await distinctValuesQuery();
   const badges = [];
   Object.entries(state).forEach(([k, v]) => {
@@ -212,7 +214,9 @@ const run = async (
       await field.fill_fkey_options(
         false,
         undefined,
-        extra.req.user ? { user_id: extra.req.user } : {}
+        extra.req.user ? { user_id: extra.req.user } : {},
+        undefined,
+        formFieldNames
       );
       segment.field = field;
     },
