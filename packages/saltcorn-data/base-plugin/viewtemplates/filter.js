@@ -188,7 +188,7 @@ const run = async (
   const formFieldNames = (columns || [])
     .map((c) => c.field_name)
     .filter((n) => n);
-  const { distinct_values, role } = await distinctValuesQuery();
+  const { distinct_values, role } = await distinctValuesQuery(state);
   const badges = [];
   Object.entries(state).forEach(([k, v]) => {
     if (typeof v === "undefined") return;
@@ -214,9 +214,8 @@ const run = async (
       await field.fill_fkey_options(
         false,
         undefined,
-        extra.req.user ? { user_id: extra.req.user } : {},
-        undefined,
-        formFieldNames
+        extra.req.user ? { ...state, user_id: extra.req.user } : state,
+        undefined
       );
       segment.field = field;
     },
@@ -455,7 +454,7 @@ module.exports = {
     req,
     exttable_name,
   }) => ({
-    async distinctValuesQuery() {
+    async distinctValuesQuery(state) {
       const table = await Table.findOne(table_id || exttable_name);
       const fields = await table.getFields();
       let distinct_values = {};
@@ -467,12 +466,12 @@ module.exports = {
             distinct_values[col.field_name] = (
               await table.distinctValues(col.field_name)
             ).map((x) => ({ label: x, value: x }));
-          } else if (field)
+          } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(
               req,
-              jsexprToWhere(col.where)
+              jsexprToWhere(col.where, state || {}, fields)
             );
-          else if (col.field_name.includes("->")) {
+          } else if (col.field_name.includes("->")) {
             const [jFieldNm, krest] = col.field_name.split(".");
             const [jtNm, lblField] = krest.split("->");
             const jtable = await Table.findOne({ name: jtNm });
