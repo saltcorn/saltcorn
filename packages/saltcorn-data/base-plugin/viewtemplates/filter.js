@@ -215,8 +215,7 @@ const run = async (
         false,
         undefined,
         extra.req.user ? { user_id: extra.req.user } : {},
-        undefined,
-        formFieldNames
+        undefined
       );
       segment.field = field;
     },
