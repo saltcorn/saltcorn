@@ -214,7 +214,7 @@ const run = async (
       await field.fill_fkey_options(
         false,
         undefined,
-        extra.req.user ? { user_id: extra.req.user } : {},
+        extra.req.user ? { ...state, user_id: extra.req.user } : state,
         undefined
       );
       segment.field = field;
