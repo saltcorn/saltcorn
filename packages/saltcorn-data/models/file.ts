@@ -482,6 +482,42 @@ class File {
       });
     }
   }
+  /**
+   * Create new file
+   * @param file
+   * @param user_id
+   * @param min_role_read
+   * @param folder
+   * @returns
+   */
+  static async from_contents(
+    name: string,
+    mimetype: string,
+    contents: string | Buffer,
+    user_id: number,
+    min_role_read: number = 1,
+    folder: string = "/"
+  ): Promise<File> {
+    // get path to file
+    const newPath = File.get_new_path(path.join(folder, name), true);
+    // set mime type
+    const [mime_super, mime_sub] = mimetype.split("/");
+    // move file in file system to newPath
+    await fsp.writeFile(newPath, contents);
+    // create file
+    const file = await File.create({
+      filename: name,
+      location: newPath,
+      uploaded_at: new Date(),
+      size_kb: contents.length,
+      user_id,
+      mime_super,
+      mime_sub,
+      min_role_read,
+    });
+    file.location = File.absPathToServePath(file.location);
+    return file;
+  }
 
   /**
    * Delete file

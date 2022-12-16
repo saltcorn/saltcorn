@@ -636,7 +636,7 @@ module.exports = {
           [msgkey_to_room]: body.room_id,
           [msgsender_field]: req.user.id,
         };
-        const msgid = await msgtable.tryInsertRow(row, req.user.id);
+        const msgid = await msgtable.tryInsertRow(row, req.user);
         if (participant_maxread_field) {
           const [part_table_name1, part_key_to_room1, part_maxread_field] =
             participant_maxread_field.split(".");
