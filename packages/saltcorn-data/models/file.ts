@@ -505,7 +505,7 @@ class File {
     // move file in file system to newPath
     await fsp.writeFile(newPath, contents);
     // create file
-    return await File.create({
+    const file = await File.create({
       filename: name,
       location: newPath,
       uploaded_at: new Date(),
@@ -515,6 +515,8 @@ class File {
       mime_sub,
       min_role_read,
     });
+    file.location = File.absPathToServePath(file.location);
+    return file;
   }
 
   /**
