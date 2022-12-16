@@ -163,6 +163,11 @@ const user_dropdown = (user, req, can_reset) =>
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
     post_dropdown_item(
+      `/useradmin/become-user/${user.id}`,
+      '<i class="fas fa-ghost"></i>&nbsp;' + req.__("Become user"),
+      req
+    ),
+    post_dropdown_item(
       `/useradmin/set-random-password/${user.id}`,
       '<i class="fas fa-random"></i>&nbsp;' + req.__("Set random password"),
       req
@@ -1071,6 +1076,35 @@ router.post(
     );
 
     res.redirect(`/useradmin`);
+  })
+);
+
+/**
+ * Become user
+ * @name post/become-user/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/become-user/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    if (u) {
+      u.relogin(req);
+      req.flash(
+        "success",
+        req.__(
+          `Your are now logged in as %s. Logout and login again to assume your usual identity`,
+          u.email
+        )
+      );
+      res.redirect(`/`);
+    } else {
+      req.flash("error", req.__(`User not found`));
+      res.redirect(`/useradmin`);
+    }
   })
 );
 
