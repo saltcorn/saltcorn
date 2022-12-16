@@ -583,7 +583,8 @@ class Table implements AbstractTable {
         "Update",
         this,
         newRow,
-        resultCollector
+        resultCollector,
+        user
       );
       if (resultCollector) await trigPromise;
     }
@@ -701,7 +702,8 @@ class Table implements AbstractTable {
       "Insert",
       this,
       { [pk_name]: id, ...v },
-      resultCollector
+      resultCollector,
+      user
     );
     if (resultCollector) await trigPromise;
     return id;

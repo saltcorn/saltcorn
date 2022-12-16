@@ -234,9 +234,10 @@ class Trigger implements AbstractTrigger {
     when_trigger: string,
     table: Table,
     row: Row,
-    resultCollector?: any
+    resultCollector?: any,
+    user?: Row
   ): Promise<void> {
-    const triggers = await Trigger.getTableTriggers(when_trigger, table);
+    const triggers = await Trigger.getTableTriggers(when_trigger, table, user);
     const { getState } = require("../db/state");
     const state = getState();
     for (const trigger of triggers) {
@@ -261,7 +262,7 @@ class Trigger implements AbstractTrigger {
     EventLog.create({
       event_type: when_trigger,
       channel: table.name,
-      user_id: null,
+      user_id: user?.id,
       payload: row,
       occur_at: new Date(),
     });
@@ -287,7 +288,7 @@ class Trigger implements AbstractTrigger {
     );
   }
 
-  static setRunFunctions(triggers: Array<Trigger>, table: Table) {
+  static setRunFunctions(triggers: Array<Trigger>, table: Table, user?: Row) {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
@@ -296,6 +297,7 @@ class Trigger implements AbstractTrigger {
         action.run &&
         action.run({
           table,
+          user,
           configuration: trigger.configuration,
           row,
           ...row,
@@ -311,11 +313,12 @@ class Trigger implements AbstractTrigger {
    */
   static async getTableTriggers(
     when_trigger: string,
-    table: Table
+    table: Table,
+    user?: Row
   ): Promise<Trigger[]> {
     const { getState } = require("../db/state");
     const triggers = Trigger.find({ when_trigger, table_id: table.id });
-    Trigger.setRunFunctions(triggers, table);
+    Trigger.setRunFunctions(triggers, table, user);
     const virtual_triggers = getState().virtual_triggers.filter(
       (tr: Trigger) =>
         when_trigger === tr.when_trigger && tr.table_id == table.id
