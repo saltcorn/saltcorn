@@ -519,7 +519,7 @@ class Table implements AbstractTable {
   async updateRow(
     v_in: any,
     id: number,
-    _userid?: number,
+    user?: Row,
     noTrigger?: boolean,
     resultCollector?: object
   ): Promise<void> {
@@ -568,7 +568,7 @@ class Table implements AbstractTable {
           next_version_by_id: +id,
         },
         _time: new Date(),
-        _userid,
+        _userid: user?.id,
       });
     }
     await db.update(this.name, v, id, { pk_name });
@@ -600,11 +600,11 @@ class Table implements AbstractTable {
   async tryUpdateRow(
     v: any,
     id: any,
-    _userid?: number,
+    user?: Row,
     resultCollector?: object
   ): Promise<ResultMessage> {
     try {
-      await this.updateRow(v, id, _userid, false, resultCollector);
+      await this.updateRow(v, id, user, false, resultCollector);
       return { success: true };
     } catch (e: any) {
       return { error: normalise_error_message(e.message) };

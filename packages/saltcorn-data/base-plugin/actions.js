@@ -916,7 +916,7 @@ module.exports = {
         const is_different_for_key = (k) => newRow[k] !== existingRow[k];
 
         if (Object.keys(newRow).some(is_different_for_key))
-          await table_for_insert.tryUpdateRow(newRow, existPK, user && user.id);
+          await table_for_insert.tryUpdateRow(newRow, existPK, user);
       }
     },
   },

@@ -1204,12 +1204,7 @@ module.exports = {
     async tryUpdateQuery(row, id) {
       const table = await Table.findOne({ id: table_id });
       const result = {};
-      const upd_res = await table.tryUpdateRow(
-        row,
-        id,
-        req.user ? +req.user.id : undefined,
-        result
-      );
+      const upd_res = await table.tryUpdateRow(row, id, req.user, result);
       upd_res.trigger_return = result;
       return upd_res;
     },
