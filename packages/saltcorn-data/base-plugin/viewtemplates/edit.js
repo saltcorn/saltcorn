@@ -881,10 +881,7 @@ const runPost = async (
               return;
             }
           } else {
-            const ins_res = await childTable.tryInsertRow(
-              childRow,
-              req.user ? +req.user.id : undefined
-            );
+            const ins_res = await childTable.tryInsertRow(childRow, req.user);
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
               res.sendWrap(viewname, renderForm(form, req.csrfToken()));
@@ -1199,11 +1196,7 @@ module.exports = {
     async tryInsertQuery(row) {
       const table = await Table.findOne({ id: table_id });
       const result = {};
-      const ins_res = await table.tryInsertRow(
-        row,
-        req.user ? +req.user.id : undefined,
-        result
-      );
+      const ins_res = await table.tryInsertRow(row, req.user, result);
       ins_res.trigger_return = result;
       return ins_res;
     },

@@ -623,7 +623,7 @@ module.exports = {
       });
       const calcrow = await f({});
       const table_for_insert = await Table.findOne({ name: table });
-      const res = await table_for_insert.tryInsertRow(calcrow, user && user.id);
+      const res = await table_for_insert.tryInsertRow(calcrow, user);
       if (res.error) return res;
       else return true;
     },
@@ -895,10 +895,7 @@ module.exports = {
           [pk_field]: newPK,
           ...eval_expression(match_expr || row_expr, srcRow),
         };
-        const res = await table_for_insert.tryInsertRow(
-          newRow,
-          user && user.id
-        );
+        const res = await table_for_insert.tryInsertRow(newRow, user);
       }
       // delete rows
       if (delete_rows)
