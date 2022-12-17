@@ -245,6 +245,14 @@ const configTypes: ConfigTypes = {
     blurb: "Record all client errors in the crash log",
   },
   /** @type {object} */
+  npm_available_js_code: {
+    type: "String",
+    label: "NPM packages in code",
+    default: "",
+    blurb:
+      "Comma-separated list of packages which will be available in JavaScript actions",
+  },
+  /** @type {object} */
   multitenancy_enabled: {
     type: "Bool",
     root_only: true,

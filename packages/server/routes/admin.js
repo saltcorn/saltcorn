@@ -59,6 +59,7 @@ const {
   getState,
   restart_tenant,
   getTenant,
+  getRootState,
   //get_other_domain_tenant,
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
@@ -1820,6 +1821,11 @@ router.post(
  * @returns {Promise<Form>} form
  */
 const dev_form = async (req) => {
+  const role_to_create_tenant = +getRootState().getConfig(
+    "role_to_create_tenant"
+  );
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
   return await config_fields_form({
     req,
     field_names: [
@@ -1827,6 +1833,9 @@ const dev_form = async (req) => {
       "log_sql",
       "log_client_errors",
       "log_level",
+      ...(isRoot || role_to_create_tenant < 10
+        ? ["npm_available_js_code"]
+        : []),
     ],
     action: "/admin/dev",
   });

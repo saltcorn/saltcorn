@@ -699,6 +699,8 @@ const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
   return tenants[ten];
 };
+
+const getRootState = () => singleton;
 /**
  * Returns all Tenants (from State)
  */
@@ -812,4 +814,5 @@ export = {
   add_tenant,
   getAllTenants,
   process_send,
+  getRootState,
 };
