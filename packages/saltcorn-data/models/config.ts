@@ -249,8 +249,13 @@ const configTypes: ConfigTypes = {
     type: "String",
     label: "NPM packages in code",
     default: "",
+    restart_required: true,
     blurb:
       "Comma-separated list of packages which will be available in JavaScript actions",
+    /*async onChange(val: string) {
+      const { getState } = require("../db/state");
+      await getState.loadNPMpkgsForJsCode(val);
+    },*/
   },
   /** @type {object} */
   multitenancy_enabled: {
@@ -776,7 +781,7 @@ const setConfig = async (key: string, value: any): Promise<void> => {
       [key, { v: value }]
     );
   if (configTypes[key] && configTypes[key].onChange)
-    configTypes[key].onChange(value);
+    await configTypes[key].onChange(value);
 };
 
 /**

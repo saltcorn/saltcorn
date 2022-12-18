@@ -21,6 +21,7 @@ import {
 import { Type } from "@saltcorn/types/common_types";
 import { ConfigTypes, SingleConfig } from "models/config";
 import User from "../models/user";
+const { PluginManager } = require("live-plugin-manager");
 
 import moment from "moment";
 
@@ -125,6 +126,8 @@ class State {
   i18n: I18n.I18n;
   mobileConfig?: MobileConfig;
   logLevel: number;
+  pluginManager?: any;
+  codeNPMmodules: Record<string, any>;
 
   /**
    * State constructor
@@ -165,6 +168,7 @@ class State {
       directory: join(__dirname, "..", "app-locales"),
     });
     this.logLevel = 1;
+    this.codeNPMmodules = {};
   }
 
   /**
@@ -654,6 +658,16 @@ class State {
   emitRoom(...args: any[]) {
     globalRoomEmitter(...args);
   }
+  async loadNPMpkgsForJsCode(moduleStr: string) {
+    if (!moduleStr) return;
+    const moduleNames = moduleStr.split(",").map((s) => s.trim());
+    if (moduleNames.length === 0) return;
+    if (!this.pluginManager) this.pluginManager = new PluginManager();
+    for (const moduleName of moduleNames) {
+      await this.pluginManager.install(moduleName);
+      this.codeNPMmodules[moduleName] = this.pluginManager.require(moduleName);
+    }
+  }
 }
 
 /**
@@ -752,6 +766,9 @@ const init_multi_tenant = async (
       await db.runWithTenant(domain, plugin_loader);
       // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
+      await tenants[domain].loadNPMpkgsForJsCode(
+        tenants[domain].configs.npm_available_js_code?.value
+      );
     } catch (err: any) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
