@@ -401,7 +401,7 @@ router.get(
         sub2_page: "Configure",
         contents: {
           type: "card",
-          title: req.__("Configure trigger"),
+          title: req.__("Configure trigger %s", trigger.name),
           contents: {
             widths: [8, 4],
             besides: [
@@ -470,7 +470,7 @@ router.get(
         sub2_page: "Configure",
         contents: {
           type: "card",
-          title: req.__("Configure trigger"),
+          title: req.__("Configure trigger %s", trigger.name),
           contents: renderForm(form, req.csrfToken()),
         },
       });
