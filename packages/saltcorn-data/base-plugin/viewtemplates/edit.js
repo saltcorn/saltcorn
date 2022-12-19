@@ -101,10 +101,18 @@ const configuration_workflow = (req) =>
           const images = await File.find({ mime_super: "image" });
 
           const actions = [...builtInActions];
-          const triggers = await Trigger.find({
-            when_trigger: { or: ["API call", "Never"] },
+          (
+            await Trigger.find({
+              when_trigger: { or: ["API call", "Never"] },
+            })
+          ).forEach((tr) => {
+            actions.push(tr.name);
           });
-          triggers.forEach((tr) => {
+          (
+            await Trigger.find({
+              table_id: context.table_id,
+            })
+          ).forEach((tr) => {
             actions.push(tr.name);
           });
           const actionConfigForms = {
