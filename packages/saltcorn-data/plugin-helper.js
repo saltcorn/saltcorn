@@ -141,9 +141,7 @@ const calcfldViewOptions = (fields, mode) => {
           .filter(([k, v]) => !v.isEdit)
           .map(([k, v]) => k);
       else
-        fvs[f.name] = Object.entries(getState().fileviews)
-          .filter(([k, v]) => v.isEdit)
-          .map(([k, v]) => k);
+        fvs[f.name] = Object.entries(getState().fileviews).map(([k, v]) => k);
     } else if (f.type === "Key") {
       if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
       else if (isFilter) {
