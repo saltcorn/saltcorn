@@ -1070,5 +1070,6 @@
 	"Files settings": "Files settings",
 	"NPM packages in code": "NPM packages in code",
 	"Comma-separated list of packages which will be available in JavaScript actions": "Comma-separated list of packages which will be available in JavaScript actions",
-	"Become user": "Become user"
+	"Become user": "Become user",
+	"Your are now logged in as %s. Logout and login again to assume your usual identity": "Your are now logged in as %s. Logout and login again to assume your usual identity"
 }
