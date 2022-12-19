@@ -97,7 +97,7 @@ function invalidate_pagings(href) {
   return newhref;
 }
 
-function set_state_fields(kvs) {
+function set_state_fields(kvs, disable_pjax) {
   let newhref = get_current_state_url();
   if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
     newhref = invalidate_pagings(newhref);
@@ -107,7 +107,8 @@ function set_state_fields(kvs) {
       newhref = removeQueryStringParameter(newhref, kv[0]);
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
-  pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
+  if (disable_pjax) href_to(newhref.replace("&&", "&").replace("?&", "?"));
+  else pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
 }
 function unset_state_field(key) {
   pjax_to(removeQueryStringParameter(get_current_state_url(), key));
