@@ -444,10 +444,19 @@ function initialize_page() {
       setTimeout(() => {
         codes.forEach((el) => {
           //console.log($(el).attr("mode"), el);
-          CodeMirror.fromTextArea(el, {
+          const cm = CodeMirror.fromTextArea(el, {
             lineNumbers: true,
             mode: $(el).attr("mode"),
           });
+          cm.on(
+            "change",
+            $.debounce(() => {
+              $(el).closest("form").trigger("change");
+            }),
+            500,
+            null,
+            true
+          );
         });
       }, 100);
     });

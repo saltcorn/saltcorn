@@ -77,6 +77,7 @@ const run_code = async ({
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
   const sysState = getState();
+  const require = (nm) => sysState.codeNPMmodules[nm];
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
@@ -90,6 +91,7 @@ const run_code = async ({
     fetch,
     URL,
     File,
+    require,
     setConfig: (k, v) => sysState.setConfig(k, v),
     getConfig: (k) => sysState.getConfig(k),
     channel: table ? table.name : channel,

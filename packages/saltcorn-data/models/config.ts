@@ -245,6 +245,19 @@ const configTypes: ConfigTypes = {
     blurb: "Record all client errors in the crash log",
   },
   /** @type {object} */
+  npm_available_js_code: {
+    type: "String",
+    label: "NPM packages in code",
+    default: "",
+    restart_required: true,
+    blurb:
+      "Comma-separated list of packages which will be available in JavaScript actions",
+    /*async onChange(val: string) {
+      const { getState } = require("../db/state");
+      await getState.loadNPMpkgsForJsCode(val);
+    },*/
+  },
+  /** @type {object} */
   multitenancy_enabled: {
     type: "Bool",
     root_only: true,
@@ -768,7 +781,7 @@ const setConfig = async (key: string, value: any): Promise<void> => {
       [key, { v: value }]
     );
   if (configTypes[key] && configTypes[key].onChange)
-    configTypes[key].onChange(value);
+    await configTypes[key].onChange(value);
 };
 
 /**

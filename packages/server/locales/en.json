@@ -1067,5 +1067,11 @@
 	"Maximum upload file size in kilobytes": "Maximum upload file size in kilobytes",
 	"File upload timeout": "File upload timeout",
 	"Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ": "Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ",
-	"Files settings": "Files settings"
+	"Files settings": "Files settings",
+	"NPM packages in code": "NPM packages in code",
+	"Comma-separated list of packages which will be available in JavaScript actions": "Comma-separated list of packages which will be available in JavaScript actions",
+	"Become user": "Become user",
+	"Your are now logged in as %s. Logout and login again to assume your usual identity": "Your are now logged in as %s. Logout and login again to assume your usual identity",
+	"Done": "Done",
+	"Configure trigger %s": "Configure trigger %s"
 }

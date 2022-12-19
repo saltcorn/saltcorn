@@ -401,7 +401,7 @@ router.get(
         sub2_page: "Configure",
         contents: {
           type: "card",
-          title: req.__("Configure trigger"),
+          title: req.__("Configure trigger %s", trigger.name),
           contents: {
             widths: [8, 4],
             besides: [
@@ -456,6 +456,8 @@ router.get(
       // create form
       const form = new Form({
         action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+        onChange: "saveAndContinue(this)",
+        submitLabel: req.__("Done"),
         fields: cfgFields,
       });
       // populate form values
@@ -468,7 +470,7 @@ router.get(
         sub2_page: "Configure",
         contents: {
           type: "card",
-          title: req.__("Configure trigger"),
+          title: req.__("Configure trigger %s", trigger.name),
           contents: renderForm(form, req.csrfToken()),
         },
       });
@@ -512,6 +514,10 @@ router.post(
       });
     } else {
       await Trigger.update(trigger.id, { configuration: form.values });
+      if (req.xhr) {
+        res.json({ success: "ok" });
+        return;
+      }
       req.flash("success", "Action configuration saved");
       res.redirect(
         req.query.on_done_redirect
