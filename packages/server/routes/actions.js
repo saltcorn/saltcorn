@@ -456,6 +456,8 @@ router.get(
       // create form
       const form = new Form({
         action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+        onChange: "saveAndContinue(this)",
+        submitLabel: req.__("Done"),
         fields: cfgFields,
       });
       // populate form values
@@ -512,6 +514,10 @@ router.post(
       });
     } else {
       await Trigger.update(trigger.id, { configuration: form.values });
+      if (req.xhr) {
+        res.json({ success: "ok" });
+        return;
+      }
       req.flash("success", "Action configuration saved");
       res.redirect(
         req.query.on_done_redirect
