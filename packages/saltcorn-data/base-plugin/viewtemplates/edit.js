@@ -688,6 +688,17 @@ const render = async ({
       }
     }
   });
+
+  // add row values not in columns as hidden
+  if (row) {
+    const colFields = new Set(
+      columns.filter((c) => c.type === "Field").map((c) => c.field_name)
+    );
+    fields.forEach((f) => {
+      if (!colFields.has(f.name) && typeof row[f.name] !== "undefined")
+        form.fields.push(new Field({ name: f.name, input_type: "hidden" }));
+    });
+  }
   // no autosave if new and save button exists
   // !row && hasSave
   let hasSave = false;
