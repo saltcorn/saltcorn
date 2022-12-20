@@ -100,10 +100,18 @@ const configuration_workflow = (req) =>
             ...boolfields.map((f) => `Toggle ${f.name}`),
             ...stateActions.map(([k, v]) => k),
           ];
-          const triggers = await Trigger.find({
-            when_trigger: { or: ["API call", "Never"] },
+          (
+            await Trigger.find({
+              when_trigger: { or: ["API call", "Never"] },
+            })
+          ).forEach((tr) => {
+            actions.push(tr.name);
           });
-          triggers.forEach((tr) => {
+          (
+            await Trigger.find({
+              table_id: context.table_id,
+            })
+          ).forEach((tr) => {
             actions.push(tr.name);
           });
           for (const field of fields) {
