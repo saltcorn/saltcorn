@@ -694,8 +694,13 @@ const render = async ({
     const colFields = new Set(
       columns.filter((c) => c.type === "Field").map((c) => c.field_name)
     );
+    const formFields = new Set(form.fields.map((f) => f.name));
     fields.forEach((f) => {
-      if (!colFields.has(f.name) && typeof row[f.name] !== "undefined")
+      if (
+        !colFields.has(f.name) &&
+        !formFields.has(f.name) &&
+        typeof row[f.name] !== "undefined"
+      )
         form.fields.push(new Field({ name: f.name, input_type: "hidden" }));
     });
   }
