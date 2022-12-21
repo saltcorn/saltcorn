@@ -473,7 +473,11 @@ module.exports = {
           } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(
               req,
-              jsexprToWhere(col.where, state || {}, fields)
+              jsexprToWhere(
+                col.where,
+                { ...state, user_id: req.user ? req.user.id : undefined },
+                fields
+              )
             );
           } else if (col.field_name.includes("->")) {
             const [jFieldNm, krest] = col.field_name.split(".");
