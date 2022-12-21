@@ -689,8 +689,13 @@ const render = async ({
     }
   });
 
-  // add row values not in columns as hidden
+  // add row values not in columns as hidden if needed for join fields
   if (row) {
+    const need_join_fields = new Set(
+      columns
+        .filter((c) => c.type === "JoinField")
+        .map((c) => c.join_field.split(".")[0])
+    );
     const colFields = new Set(
       columns.filter((c) => c.type === "Field").map((c) => c.field_name)
     );
@@ -699,7 +704,8 @@ const render = async ({
       if (
         !colFields.has(f.name) &&
         !formFields.has(f.name) &&
-        typeof row[f.name] !== "undefined"
+        typeof row[f.name] !== "undefined" &&
+        need_join_fields.has(f.name)
       )
         form.fields.push(new Field({ name: f.name, input_type: "hidden" }));
     });
