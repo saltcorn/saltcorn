@@ -206,10 +206,11 @@ describe("Events", () => {
     await getState().refresh_config();
   });
   it("should emit custom event", async () => {
-    await Trigger.emitEvent("FooHappened");
     const evs = await EventLog.find({ event_type: "FooHappened" });
     expect(evs.length).toBe(0);
-    await sleep(100);
+    await Trigger.emitEvent("FooHappened");
+
+    await sleep(200);
     const evs1 = await EventLog.find({ event_type: "FooHappened" });
     expect(evs1.length).toBe(1);
   });

@@ -484,5 +484,6 @@
 	"Table access": "Table access",
 	"HTTP": "HTTP",
 	"Rights": "Rights",
-	"Permissions": "Permissions"
+	"Permissions": "Permissions",
+	"Become user": "Become user"
 }
