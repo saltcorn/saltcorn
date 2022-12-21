@@ -707,17 +707,27 @@ router.post(
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 10;
-    if (role > table.min_role_read) {
+
+    const fields = await table.getFields();
+    let row = { ...req.body };
+    if (row && Object.keys(row).length > 0) readState(row, fields);
+    const id = req.query.id || row.id;
+    if (id) {
+      let dbrow = await table.getRow({ id });
+      row = { ...dbrow, ...row };
+      //prevent overwriting ownership field
+      if (table.ownership_field_id) {
+        const ofield = fields.find((f) => f.id === table.ownership_field_id);
+        row[ofield.name] = dbrow[ofield.name];
+      }
+    }
+    if (
+      role > table.min_role_read &&
+      !(req.user && table.is_owner(req.user, row))
+    ) {
       res.status(401).send("");
       return;
     }
-    const fields = await table.getFields();
-    let row = { ...req.body };
-    if (!row || Object.keys(row).length === 0) {
-      const { id } = req.query;
-      if (id) row = await table.getRow({ id });
-    } else readState(row, fields);
-
     if (fieldName.includes(".")) {
       //join field
       const kpath = fieldName.split(".");
