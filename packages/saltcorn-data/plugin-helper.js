@@ -1535,7 +1535,9 @@ const readState = (state, fields, req) => {
         state[f.name] = f.type.read
           ? { slugify: f.type.read(current.slugify) }
           : current;
-      else if (f.type.read) state[f.name] = f.type.read(current);
+      else if (typeof current === "object") {
+        //ignore
+      } else if (f.type.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);
