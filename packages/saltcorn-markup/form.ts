@@ -642,7 +642,10 @@ const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
     join_field(segment: any) {
       if (segment.sourceURL)
-        return div({ "data-source-url": segment.sourceURL });
+        return div({
+          class: segment.block ? "d-block" : "d-inline",
+          "data-source-url": segment.sourceURL,
+        });
       return "";
     },
     tabs(segment: any, go: any) {

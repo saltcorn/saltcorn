@@ -141,9 +141,7 @@ const calcfldViewOptions = (fields, mode) => {
           .filter(([k, v]) => !v.isEdit)
           .map(([k, v]) => k);
       else
-        fvs[f.name] = Object.entries(getState().fileviews)
-          .filter(([k, v]) => v.isEdit)
-          .map(([k, v]) => k);
+        fvs[f.name] = Object.entries(getState().fileviews).map(([k, v]) => k);
     } else if (f.type === "Key") {
       if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
       else if (isFilter) {
@@ -1327,6 +1325,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           json,
         },
       ];
+    } else if (typeof v === "object") {
+      qstate[k] = v;
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
         ? { or: v.map(field.type.read) }
@@ -1537,7 +1537,9 @@ const readState = (state, fields, req) => {
         state[f.name] = f.type.read
           ? { slugify: f.type.read(current.slugify) }
           : current;
-      else if (f.type.read) state[f.name] = f.type.read(current);
+      else if (typeof current === "object") {
+        //ignore
+      } else if (f.type.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const preset = f.presets[current.replace("Preset:", "")];
         state[f.name] = preset(req);

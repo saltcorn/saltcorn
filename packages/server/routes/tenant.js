@@ -385,7 +385,7 @@ router.get(
               },
               {
                 label: req.__("Created"),
-                key: (r) => localeDateTime(r.created),
+                key: (r) => (r.created ? localeDateTime(r.created) : ""),
               },
               {
                 label: req.__("Information"),

@@ -101,10 +101,18 @@ const configuration_workflow = (req) =>
           const images = await File.find({ mime_super: "image" });
 
           const actions = [...builtInActions];
-          const triggers = await Trigger.find({
-            when_trigger: { or: ["API call", "Never"] },
+          (
+            await Trigger.find({
+              when_trigger: { or: ["API call", "Never"] },
+            })
+          ).forEach((tr) => {
+            actions.push(tr.name);
           });
-          triggers.forEach((tr) => {
+          (
+            await Trigger.find({
+              table_id: context.table_id,
+            })
+          ).forEach((tr) => {
             actions.push(tr.name);
           });
           const actionConfigForms = {
@@ -680,6 +688,28 @@ const render = async ({
       }
     }
   });
+
+  // add row values not in columns as hidden if needed for join fields
+  if (row) {
+    const need_join_fields = new Set(
+      columns
+        .filter((c) => c.type === "JoinField")
+        .map((c) => c.join_field.split(".")[0])
+    );
+    const colFields = new Set(
+      columns.filter((c) => c.type === "Field").map((c) => c.field_name)
+    );
+    const formFields = new Set(form.fields.map((f) => f.name));
+    fields.forEach((f) => {
+      if (
+        !colFields.has(f.name) &&
+        !formFields.has(f.name) &&
+        typeof row[f.name] !== "undefined" &&
+        need_join_fields.has(f.name)
+      )
+        form.fields.push(new Field({ name: f.name, input_type: "hidden" }));
+    });
+  }
   // no autosave if new and save button exists
   // !row && hasSave
   let hasSave = false;

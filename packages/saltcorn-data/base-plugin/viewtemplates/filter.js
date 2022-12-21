@@ -307,7 +307,9 @@ const run = async (
         badges: show_badges ? badges : null,
       });
     },
-    dropdown_filter({ field_name, neutral_label, full_width }) {
+    dropdown_filter(segment) {
+      const { field_name, neutral_label, full_width } = segment;
+
       const dvs = distinct_values[field_name] || [];
       dvs.sort((a, b) =>
         (a.label?.toLowerCase?.() || a.label) >
@@ -321,7 +323,9 @@ const run = async (
             value,
             selected:
               `${state[field_name]}` === `${or_if_undef(jsvalue, value)}` ||
-              (!value && !state[field_name]),
+              (!value && !state[field_name]) ||
+              (jsvalue === true && state[field_name] === "on") ||
+              (jsvalue === false && state[field_name] === "off"),
             class: !value && !label ? "text-muted" : undefined,
           },
           !value && !label ? neutral_label : label
