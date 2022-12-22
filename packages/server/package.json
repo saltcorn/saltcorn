@@ -33,7 +33,7 @@
     "greenlock-express": "^4.0.3",
     "helmet": "^3.23.3",
     "i18n": "^0.14.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "live-plugin-manager": "^0.16.0",
     "moment": "^2.27.0",
     "multer": "^1.4.3",
