@@ -79,6 +79,22 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({ astr: "foo" });
   });
+  it("foreign field ", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { bstr: "foo" },
+      approximate: false,
+    });
+    expect(w).toStrictEqual({});
+  });
+  it("foreign field ", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { bstr: { slugify: "foo" } },
+      approximate: false,
+    });
+    expect(w).toStrictEqual({});
+  });
   it("json field", async () => {
     const w = stateFieldsToWhere({
       fields,

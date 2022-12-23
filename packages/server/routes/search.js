@@ -15,6 +15,7 @@ const View = require("@saltcorn/data/models/view");
 const { renderForm } = require("@saltcorn/markup");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { send_infoarch_page } = require("../markup/admin.js");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -176,7 +177,10 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     tablesConfigured += 1;
     if (table && tableName !== table) continue;
     const view = await View.findOne({ name: viewName });
-
+    if (!view)
+      throw new InvalidConfiguration(
+        `View ${viewName} selected as search results for ${tableName}: view not found`
+      );
     const vresps = await view.runMany(
       { _fts: q },
       { res, req, limit: 20, offset }

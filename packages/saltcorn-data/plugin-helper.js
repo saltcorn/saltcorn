@@ -1325,7 +1325,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           json,
         },
       ];
-    } else if (typeof v === "object") {
+    } else if (typeof v === "object" && field) {
       qstate[k] = v;
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
