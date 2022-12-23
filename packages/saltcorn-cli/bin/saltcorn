@@ -1,8 +1,16 @@
 #!/usr/bin/env node
 
-require("source-map-support").install({
-  handleUncaughtExceptions: false,
-});
+try {
+  require("source-map-support").install({
+    handleUncaughtExceptions: false,
+  });
+} catch (error) {
+  console.log(
+    "Warning: Unable to init the 'source-map-support' module. " +
+      "I will run without it."
+  );
+  console.log("Stack traces of source-mapped files won't be formatted.");
+}
 
 require("@oclif/command")
   .run()
