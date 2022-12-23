@@ -785,6 +785,7 @@ module.exports = {
     async runManyQuery(state, { where, limit, offset, orderBy, orderDesc }) {
       const tbl = await Table.findOne({ id: table_id });
       const fields = await tbl.getFields();
+      readState(state, fields);
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
