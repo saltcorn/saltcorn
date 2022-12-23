@@ -897,7 +897,7 @@ module.exports = {
           [pk_field]: newPK,
           ...eval_expression(match_expr || row_expr, srcRow),
         };
-        const res = await table_for_insert.tryInsertRow(newRow, user);
+        await table_for_insert.insertRow(newRow, user);
       }
       // delete rows
       if (delete_rows)
@@ -918,7 +918,7 @@ module.exports = {
         const is_different_for_key = (k) => newRow[k] !== existingRow[k];
 
         if (Object.keys(newRow).some(is_different_for_key))
-          await table_for_insert.tryUpdateRow(newRow, existPK, user);
+          await table_for_insert.updateRow(newRow, existPK, user);
       }
     },
   },
