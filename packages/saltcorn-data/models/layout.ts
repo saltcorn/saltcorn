@@ -13,9 +13,9 @@ const { is_node } = db;
 type Visitors = { [key: string]: (segment: any) => void };
 
 /**
- * @param {object} layout
- * @param {object[]} visitors
- * @returns {void}
+ * @param layout
+ * @param visitors
+ * @returns
  */
 const traverseSync = (layout: Layout, visitors: Visitors): void => {
   const go = (segment: any) => {
@@ -44,9 +44,9 @@ const traverseSync = (layout: Layout, visitors: Visitors): void => {
 };
 
 /**
- * @param {object} layout
- * @param {object[]} visitors
- * @returns {Promise<void>}
+ * @param layout
+ * @param visitors
+ * @returns
  */
 const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
   const go = async (segment: any) => {
@@ -76,16 +76,26 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
 };
 
 /**
- * @param {object} layout
- * @param {*} f
- * @returns {void}
+ * execute a function on each view in the layout
+ * @param layout
+ * @param f
+ * @returns
  */
 const eachView = (layout: Layout, f: any): Promise<void> =>
   traverse(layout, { view: f });
 
 /**
- * @param {object} layout
- * @returns {Promise<object[]>}
+ * execute a function on each page in the layout
+ * @param layout 
+ * @param f 
+ * @returns 
+ */
+const eachPage = (layout: Layout, f: any): Promise<void> =>
+  traverse(layout, { page: f});
+
+/**
+ * @param layout
+ * @returns
  */
 const getViews = async (layout: Layout): Promise<any[]> => {
   const views: any[] = [];
@@ -96,8 +106,8 @@ const getViews = async (layout: Layout): Promise<any[]> => {
 };
 
 /**
- * @param {object} layout
- * @returns {string[]}
+ * @param layout
+ * @returns
  */
 const getStringsForI18n = (layout: Layout): string[] => {
   const strings: string[] = [];
@@ -120,8 +130,8 @@ const getStringsForI18n = (layout: Layout): string[] => {
 };
 
 /**
- * @param {object} layout
- * @param {object} locale
+ * @param layout
+ * @param locale
  */
 const translateLayout = (layout: Layout, locale: string): void => {
   const appState = getState();
@@ -150,6 +160,7 @@ const translateLayout = (layout: Layout, locale: string): void => {
 
 export = {
   eachView,
+  eachPage,
   getViews,
   traverse,
   traverseSync,

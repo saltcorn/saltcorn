@@ -184,6 +184,9 @@ const render = ({
     if (segment.type === "view") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
+    if (segment.type === "page") {
+      return wrap(segment, isTop, ix, segment.contents || "");
+    }
     if (segment.type === "pageHeader") {
       return wrap(
         segment,

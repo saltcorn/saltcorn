@@ -405,6 +405,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
     headers: {
       "Content-Type": "application/json",
       "CSRF-Token": options.csrfToken,
+      "X-Requested-With": "XMLHttpRequest",
     },
     body: JSON.stringify(body),
   })
@@ -484,6 +485,23 @@ export const fetchViewPreview =
       url: `/view/${viewname}/preview`,
       body,
       isView: true,
+    });
+  };
+
+export const fetchPagePreview =
+  (args = {}) =>
+  (changes = {}) => {
+    const { node_id, options, page, setPreviews } = {
+      ...args,
+      ...changes,
+    };
+    fetchPreview({
+      options,
+      node_id,
+      setPreviews,
+      url: `/page/${page}/preview`,
+      body: {},
+      isView: true, // disables inputs
     });
   };
 

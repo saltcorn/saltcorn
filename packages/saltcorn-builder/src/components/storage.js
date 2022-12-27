@@ -21,6 +21,7 @@ import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
+import { Page } from "./elements/Page";
 import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
@@ -147,7 +148,17 @@ export /**
             configuration={segment.configuration || {}}
           />
         );
-      } else if (segment.type === "action") {
+      } else if (segment.type === "page") {
+        return (
+          <Page
+            key={ix}
+            page={segment.page}
+            page_name={segment.page_name}
+            name={segment.name}
+          />
+        );
+      }
+      else if (segment.type === "action") {
         return (
           <Action
             key={ix}
@@ -459,6 +470,14 @@ export /**
           state: node.props.state,
           configuration: node.props.configuration,
           extra_state_fml: node.props.extra_state_fml,
+        };
+      }
+      if (node.displayName === Page.craft.displayName) {
+        return {
+          type: "page",
+          page: node.props.page,
+          name:
+            node.props.name === "not_assigned" ? rand_ident() : node.props.name,
         };
       }
 
