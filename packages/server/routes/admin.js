@@ -252,6 +252,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Email settings"),
+        titleAjaxIndicator: true,
         contents: [
           renderForm(form, req.csrfToken()),
           a(
@@ -322,9 +323,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Email settings updated"));
-      if (!req.xhr) res.redirect("/admin/email");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Email settings updated"));
+        res.redirect("/admin/email");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -1864,6 +1866,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Development settings"),
+        titleAjaxIndicator: true,
         contents: [
           renderForm(form, req.csrfToken()) /*,
                     a(
@@ -1905,9 +1908,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Development mode settings updated"));
-      if (!req.xhr) res.redirect("/admin/dev");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Development mode settings updated"));
+        res.redirect("/admin/dev");
+      } else res.json({ success: "ok" });
     }
   })
 );
