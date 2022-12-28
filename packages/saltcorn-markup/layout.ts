@@ -341,7 +341,7 @@ const render = ({
                     class: "float-end sc-ajax-indicator",
                     style: { display: "none" },
                   },
-                  i({ class: "fas fa-cloud-upload-alt" })
+                  i({ class: "fas fa-save" })
                 )
             ),
           segment.tabContents &&

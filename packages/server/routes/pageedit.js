@@ -251,6 +251,7 @@ router.get(
         {
           type: "card",
           title: req.__("Root pages"),
+          titleAjaxIndicator: true,
           contents: renderForm(
             getRootPageForm(pages, roles, req),
             req.csrfToken()
