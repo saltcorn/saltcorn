@@ -308,6 +308,13 @@ router.get(
             ],
             right: div(
               { class: "d-flex" },
+              div(
+                {
+                  class: "sc-ajax-indicator me-2",
+                  style: { display: "none" },
+                },
+                i({ class: "fas fa-save" })
+              ),
               button(
                 {
                   class: "btn btn-sm btn-primary me-2",
@@ -391,6 +398,7 @@ router.get(
               });
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
+                ajax_indicator(true);
                 $.ajax({
                   type: "POST",
                   url: "/api/${table.name}/" + (row.id||""),
@@ -400,6 +408,7 @@ router.get(
                   },
                   error: tabulator_error_handler,
                 }).done(function (resp) {
+                  ajax_indicator(false);
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
                   if(resp.success &&typeof resp.success ==="number" && !row.id) {
