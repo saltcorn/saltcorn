@@ -309,8 +309,14 @@ const menuEditorScript = (menu_items) => `
     const s = editor.getString()    
     if(s===lastState && !skip_check) return;
     lastState=s;
-    ajax_post('/menu', {data: s, 
-      success: ()=>{}, dataType : 'json', contentType: 'application/json;charset=UTF-8'})
+    ajax_indicator(true);
+    ajax_post('/menu', {
+      data: s, 
+      success: ()=>{}, 
+      dataType : 'json', 
+      contentType: 'application/json;charset=UTF-8',
+      complete: () => { ajax_indicator(false) }
+    })
   }
   var sortableListOptions = {
       placeholderCss: {'background-color': "#cccccc"},
@@ -395,6 +401,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__(`Menu editor`),
+        titleAjaxIndicator: true,
         contents: {
           above: [
             {
