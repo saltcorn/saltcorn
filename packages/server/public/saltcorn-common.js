@@ -523,6 +523,11 @@ function initialize_page() {
 
 $(initialize_page);
 
+function ajax_indicator(show) {
+  if (show) $(".sc-ajax-indicator").show();
+  else $(".sc-ajax-indicator").fadeOut();
+}
+
 function enable_codemirror(f) {
   $("<link/>", {
     rel: "stylesheet",
