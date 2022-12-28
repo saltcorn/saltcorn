@@ -711,9 +711,11 @@ router.post(
     form.validate(req.body);
 
     await save_config_from_form(form);
-    req.flash("success", req.__("Snapshot settings updated"));
-    if (!req.xhr) res.redirect("/admin/backup");
-    else res.json({ success: "ok" });
+
+    if (!req.xhr) {
+      req.flash("success", req.__("Snapshot settings updated"));
+      res.redirect("/admin/backup");
+    } else res.json({ success: "ok" });
   })
 );
 router.post(
@@ -735,9 +737,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Backup settings updated"));
-      if (!req.xhr) res.redirect("/admin/backup");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Backup settings updated"));
+        res.redirect("/admin/backup");
+      } else res.json({ success: "ok" });
     }
   })
 );
