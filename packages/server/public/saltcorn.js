@@ -337,6 +337,7 @@ function applyViewConfig(e, url, k) {
   form_data.forEach((item) => {
     cfg[item.name] = item.value;
   });
+  ajax_indicator(true, e);
   $.ajax(url, {
     type: "POST",
     dataType: "json",
@@ -349,6 +350,9 @@ function applyViewConfig(e, url, k) {
     success: function (res) {
       k && k(res);
       !k && updateViewPreview();
+    },
+    complete: () => {
+      ajax_indicator(false);
     },
   });
 
