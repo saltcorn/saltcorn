@@ -32,21 +32,31 @@ const sbAdmin2Layout = () => {
   return saltcorn.data.state.getState().layouts["sbadmin2"];
 };
 
-const getMenu = () => {
+const getMenu = (req) => {
   const state = saltcorn.data.state.getState();
-  const allowSignup = state.getConfig("allow_signup");
   const mobileCfg = saltcorn.data.state.getState().mobileConfig;
+  const role = mobileCfg.role_id || 10;
+  const extraMenu = saltcorn.data.web_mobile_commons.get_extra_menu(
+    role,
+    req.__
+  );
+  const allowSignup = state.getConfig("allow_signup");
   const userName = mobileCfg.user_name;
   const authItems = mobileCfg.isPublicUser
     ? [
-        { link: "javascript:execLink('/auth/login')", label: "Login" },
+        { link: "javascript:execLink('/auth/login')", label: req.__("Login") },
         ...(allowSignup
-          ? [{ link: "javascript:execLink('/auth/signup')", label: "Sign up" }]
+          ? [
+              {
+                link: "javascript:execLink('/auth/signup')",
+                label: req.__("Sign up"),
+              },
+            ]
           : []),
       ]
     : [
         {
-          label: "User",
+          label: req.__("User"),
           icon: "far fa-user",
           isUser: true,
           subitems: [
@@ -61,8 +71,12 @@ const getMenu = () => {
       ];
 
   return [
+    extraMenu.length > 0 && {
+      section: req.__("Menu"),
+      items: extraMenu,
+    },
     {
-      section: "User",
+      section: req.__("User"),
       isUser: true,
       items: authItems,
     },
@@ -81,7 +95,7 @@ const wrapContents = (contents, title, context, req) => {
         body: { above: [contents] },
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.role_id,
-        menu: getMenu(),
+        menu: getMenu(req),
         headers: getHeaders(),
         brand: { name: "Saltcorn" },
         bodyClass: "",

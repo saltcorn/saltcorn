@@ -15,6 +15,9 @@ export namespace plugin_helper {
   export const { run_action_column } = pluginHelper;
 }
 
+import web_mobile_commons from "./web-mobile-commons";
+export { web_mobile_commons };
+
 export let migrations: any = {};
 function requireAll(context: any) {
   for (let key of context.keys()) {

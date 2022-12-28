@@ -1306,7 +1306,7 @@ const buildDialogScript = () => {
   }
   
   function handleMessages() {
-    notifyAlert("This is still under development and might run longer.")
+    notifyAlert("Building the app, please wait.")
     ${
       getState().getConfig("apple_team_id") &&
       getState().getConfig("apple_team_id") !== "null"

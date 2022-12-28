@@ -3,6 +3,7 @@
  * @module wrapper
  */
 const { getState } = require("@saltcorn/data/db/state");
+const { get_extra_menu } = require("@saltcorn/data/web-mobile-commons");
 //const db = require("@saltcorn/data/db");
 const { h3, div, small } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
@@ -19,43 +20,6 @@ const getFlashes = (req) =>
     })
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 /**
- * Get extra menu
- * @param role
- * @param state
- * @param req
- * @returns {*}
- */
-const get_extra_menu = (role, state, req) => {
-  let cfg = getState().getConfig("unrolled_menu_items", []);
-  if (!cfg || cfg.length === 0) {
-    cfg = getState().getConfig("menu_items", []);
-  }
-  const locale = req.getLocale();
-  const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
-  const transform = (items) =>
-    items
-      .filter((item) => role <= +item.min_role)
-      .map((item) => ({
-        label: __(item.label),
-        icon: item.icon,
-        location: item.location,
-        style: item.style || "",
-        type: item.type,
-        link:
-          item.type === "Link"
-            ? item.url
-            : item.type === "Action"
-            ? `javascript:ajax_post_json('/menu/runaction/${item.action_name}')`
-            : item.type === "View"
-            ? `/view/${encodeURIComponent(item.viewname)}`
-            : item.type === "Page"
-            ? `/page/${encodeURIComponent(item.pagename)}`
-            : undefined,
-        ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
-      }));
-  return transform(cfg);
-};
-/**
  * Get menu
  * @param req
  * @returns {(false|{section: *, items}|{section: *, items: [{link: string, icon: string, label: *},{link: string, icon: string, label: *},{link: string, icon: string, label: *},{icon: string, subitems: [{link: string, icon: string, label: *},{link: string, icon: string, label: *},{link: string, icon: string, altlinks: string[], label: *},{link: string, altlinks: string[], icon: string, label: *},{link: string, icon: string, label: *},null], label: *}]}|{section: *, isUser: boolean, items: ([{icon: string, subitems: [{label: *},{icon: string, link: string, label: *},{link: string, icon: string, label: *}], label: *, isUser: boolean}]|*[])})[]}
@@ -67,7 +31,9 @@ const get_menu = (req) => {
 
   const allow_signup = state.getConfig("allow_signup");
   const login_menu = state.getConfig("login_menu");
-  const extra_menu = get_extra_menu(role, state, req);
+  const locale = req.getLocale();
+  const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
+  const extra_menu = get_extra_menu(role, __);
   const authItems = isAuth
     ? [
         {
