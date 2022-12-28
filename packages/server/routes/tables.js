@@ -828,6 +828,7 @@ router.get(
         {
           type: "card",
           title: req.__("Edit table properties"),
+          titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
       ],
@@ -899,20 +900,21 @@ router.post(
         }
       } else rest.ownership_formula = null;
       await table.update(rest);
-      if (!old_versioned && rest.versioned)
-        req.flash(
-          "success",
-          req.__("Table saved with version history enabled")
-        );
-      else if (old_versioned && !rest.versioned)
-        req.flash(
-          "success",
-          req.__("Table saved with version history disabled")
-        );
-      else if (!hasError) req.flash("success", req.__("Table saved"));
 
-      if (!req.xhr) res.redirect(`/table/${id}`);
-      else res.json({ success: "ok", notify });
+      if (!req.xhr) {
+        if (!old_versioned && rest.versioned)
+          req.flash(
+            "success",
+            req.__("Table saved with version history enabled")
+          );
+        else if (old_versioned && !rest.versioned)
+          req.flash(
+            "success",
+            req.__("Table saved with version history disabled")
+          );
+        else if (!hasError) req.flash("success", req.__("Table saved"));
+        res.redirect(`/table/${id}`);
+      } else res.json({ success: "ok", notify });
     }
   })
 );

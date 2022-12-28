@@ -465,6 +465,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         type: noCard ? "container" : "card",
         class: !noCard && "mt-0",
         title: wfres.title,
+        titleAjaxIndicator: true,
         contents,
       },
       ...(previewURL

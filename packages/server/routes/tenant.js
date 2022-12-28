@@ -459,6 +459,7 @@ router.get(
       active_sub: "Multitenancy",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("Multitenancy settings"),
         contents: [renderForm(form, req.csrfToken())],
       },

@@ -194,6 +194,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Site identity settings"),
+        titleAjaxIndicator: true,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -251,6 +252,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Email settings"),
+        titleAjaxIndicator: true,
         contents: [
           renderForm(form, req.csrfToken()),
           a(
@@ -321,9 +323,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Email settings updated"));
-      if (!req.xhr) res.redirect("/admin/email");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Email settings updated"));
+        res.redirect("/admin/email");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -391,6 +394,7 @@ router.get(
             ? {
                 type: "card",
                 title: req.__("Automated backup"),
+                titleAjaxIndicator: true,
                 contents: div(
                   renderForm(backupForm, req.csrfToken()),
                   a(
@@ -408,6 +412,7 @@ router.get(
           {
             type: "card",
             title: req.__("Snapshots"),
+            titleAjaxIndicator: true,
             contents: div(
               p(
                 i(
@@ -708,9 +713,11 @@ router.post(
     form.validate(req.body);
 
     await save_config_from_form(form);
-    req.flash("success", req.__("Snapshot settings updated"));
-    if (!req.xhr) res.redirect("/admin/backup");
-    else res.json({ success: "ok" });
+
+    if (!req.xhr) {
+      req.flash("success", req.__("Snapshot settings updated"));
+      res.redirect("/admin/backup");
+    } else res.json({ success: "ok" });
   })
 );
 router.post(
@@ -732,9 +739,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Backup settings updated"));
-      if (!req.xhr) res.redirect("/admin/backup");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Backup settings updated"));
+        res.redirect("/admin/backup");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -1858,6 +1866,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Development settings"),
+        titleAjaxIndicator: true,
         contents: [
           renderForm(form, req.csrfToken()) /*,
                     a(
@@ -1899,9 +1908,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Development mode settings updated"));
-      if (!req.xhr) res.redirect("/admin/dev");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Development mode settings updated"));
+        res.redirect("/admin/dev");
+      } else res.json({ success: "ok" });
     }
   })
 );

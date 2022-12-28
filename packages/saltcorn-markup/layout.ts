@@ -327,11 +327,22 @@ const render = ({
             style: segment.style,
           },
           segment.title &&
-            div(
+            span(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h5({ class: "m-0 fw-bold text-primary" }, segment.title)
-                : segment.title
+                ? h5(
+                    { class: "m-0 fw-bold text-primary d-inline" },
+                    segment.title
+                  )
+                : segment.title,
+              segment.titleAjaxIndicator &&
+                span(
+                  {
+                    class: "float-end sc-ajax-indicator",
+                    style: { display: "none" },
+                  },
+                  i({ class: "fas fa-save" })
+                )
             ),
           segment.tabContents &&
             div(
