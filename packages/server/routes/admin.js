@@ -194,6 +194,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Site identity settings"),
+        titleAjaxIndicator: true,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -391,6 +392,7 @@ router.get(
             ? {
                 type: "card",
                 title: req.__("Automated backup"),
+                titleAjaxIndicator: true,
                 contents: div(
                   renderForm(backupForm, req.csrfToken()),
                   a(
@@ -408,6 +410,7 @@ router.get(
           {
             type: "card",
             title: req.__("Snapshots"),
+            titleAjaxIndicator: true,
             contents: div(
               p(
                 i(

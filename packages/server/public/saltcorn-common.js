@@ -523,9 +523,12 @@ function initialize_page() {
 
 $(initialize_page);
 
-function ajax_indicator(show) {
-  if (show) $(".sc-ajax-indicator").show();
-  else $(".sc-ajax-indicator").fadeOut();
+function ajax_indicator(show, e) {
+  const $ind = e
+    ? $(e).closest(".card").find(".sc-ajax-indicator")
+    : $(".sc-ajax-indicator");
+  if (show) $ind.show();
+  else $ind.fadeOut();
 }
 
 function enable_codemirror(f) {

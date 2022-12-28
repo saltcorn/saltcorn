@@ -303,7 +303,7 @@ function saveAndContinue(e, k) {
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
-  ajax_indicator(true);
+  ajax_indicator(true, e);
   $.ajax(url, {
     type: "POST",
     headers: {
