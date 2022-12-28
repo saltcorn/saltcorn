@@ -415,6 +415,8 @@ router.get(
                     window.tabulator_table.updateRow(cell.getRow(), {id: resp.success});
                   }
 
+                }).fail(function (resp) {
+                  ajax_indicate_error(undefined, resp);
                 });
               });
               window.tabulator_table_name="${table.name}";`)

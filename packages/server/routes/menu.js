@@ -312,10 +312,10 @@ const menuEditorScript = (menu_items) => `
     ajax_indicator(true);
     ajax_post('/menu', {
       data: s, 
-      success: ()=>{}, 
+      success: ()=>{ ajax_indicator(false)}, 
       dataType : 'json', 
       contentType: 'application/json;charset=UTF-8',
-      complete: () => { ajax_indicator(false) }
+      error: (r) => {ajax_indicate_error(undefined, r); }
     })
   }
   var sortableListOptions = {

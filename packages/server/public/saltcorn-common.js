@@ -527,8 +527,27 @@ function ajax_indicator(show, e) {
   const $ind = e
     ? $(e).closest(".card").find(".sc-ajax-indicator")
     : $(".sc-ajax-indicator");
+  $ind.find("svg").attr("data-icon", "save");
+  $ind.find("i").removeClass("fa-exclamation-triangle").addClass("fa-save");
+  $ind.css("color", "");
+  $ind.removeAttr("title");
   if (show) $ind.show();
   else $ind.fadeOut();
+}
+
+function ajax_indicate_error(e, resp) {
+  //console.error("ind error", resp);
+  const $ind = e
+    ? $(e).closest(".card").find(".sc-ajax-indicator")
+    : $(".sc-ajax-indicator");
+  $ind.css("color", "#e74a3b");
+  $ind.find("svg").attr("data-icon", "exclamation-triangle");
+  $ind.find("i").removeClass("fa-save").addClass("fa-exclamation-triangle");
+  $ind.attr(
+    "title",
+    "Save error: " + (resp ? resp.responseText || resp.statusText : "unknown")
+  );
+  $ind.show();
 }
 
 function enable_codemirror(f) {

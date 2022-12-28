@@ -311,6 +311,7 @@ function saveAndContinue(e, k) {
     },
     data: form_data,
     success: function (res) {
+      ajax_indicator(false);
       if (res.id && form.find("input[name=id")) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
@@ -319,10 +320,10 @@ function saveAndContinue(e, k) {
     },
     error: function (request) {
       $("#page-inner-content").html(request.responseText);
+      ajax_indicate_error(e, request);
       initialize_page();
     },
     complete: function () {
-      ajax_indicator(false);
       if (k) k();
     },
   });
@@ -346,14 +347,15 @@ function applyViewConfig(e, url, k) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) {},
+    error: function (request) {
+      ajax_indicate_error(e, request);
+    },
     success: function (res) {
+      ajax_indicator(false);
       k && k(res);
       !k && updateViewPreview();
     },
-    complete: () => {
-      ajax_indicator(false);
-    },
+    complete: () => {},
   });
 
   return false;
