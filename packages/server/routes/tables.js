@@ -828,6 +828,7 @@ router.get(
         {
           type: "card",
           title: req.__("Edit table properties"),
+          titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
       ],
