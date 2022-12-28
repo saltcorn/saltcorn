@@ -525,7 +525,7 @@ $(initialize_page);
 
 function ajax_indicator(show, e) {
   const $ind = e
-    ? $(e).closest(".card").find(".sc-ajax-indicator")
+    ? $(e).closest(".card,.modal").find(".sc-ajax-indicator")
     : $(".sc-ajax-indicator");
   $ind.find("svg").attr("data-icon", "save");
   $ind.find("i").removeClass("fa-exclamation-triangle").addClass("fa-save");
@@ -538,7 +538,7 @@ function ajax_indicator(show, e) {
 function ajax_indicate_error(e, resp) {
   //console.error("ind error", resp);
   const $ind = e
-    ? $(e).closest(".card").find(".sc-ajax-indicator")
+    ? $(e).closest(".card,.modal").find(".sc-ajax-indicator")
     : $(".sc-ajax-indicator");
   $ind.css("color", "#e74a3b");
   $ind.find("svg").attr("data-icon", "exclamation-triangle");
