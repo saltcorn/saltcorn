@@ -583,11 +583,23 @@ router.get(
     }
 
     res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
-      type: "card",
-      class: "mt-0",
-      title: req.__(`Configure %s Plugin`, plugin.name),
-      titleAjaxIndicator: true,
-      contents: renderForm(wfres.renderForm, req.csrfToken()),
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Settings"), href: "/settings" },
+            { text: req.__("Module store"), href: "/plugins" },
+            { text: plugin.name },
+          ],
+        },
+        {
+          type: "card",
+          class: "mt-0",
+          title: req.__(`Configure %s Plugin`, plugin.name),
+          titleAjaxIndicator: true,
+          contents: renderForm(wfres.renderForm, req.csrfToken()),
+        },
+      ],
     });
   })
 );
