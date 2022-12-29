@@ -399,6 +399,7 @@ router.get(
         req,
         active_sub: "Triggers",
         sub2_page: "Configure",
+        page_title: trigger.name,
         contents: {
           type: "card",
           titleAjaxIndicator: true,
@@ -469,6 +470,7 @@ router.get(
         req,
         active_sub: "Triggers",
         sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
         contents: {
           type: "card",
           titleAjaxIndicator: true,

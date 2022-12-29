@@ -1075,5 +1075,6 @@
 	"Done": "Done",
 	"Configure trigger %s": "Configure trigger %s",
 	"Saved 2FA policy for role": "Saved 2FA policy for role",
-	"HTTP settings updated": "HTTP settings updated"
+	"HTTP settings updated": "HTTP settings updated",
+	"%s configuration": "%s configuration"
 }

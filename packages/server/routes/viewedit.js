@@ -486,7 +486,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
   if (wfres.renderForm)
     res.sendWrap(
       {
-        title: req.__(`View configuration`),
+        title: req.__(`%s configuration`, view.name),
         headers: [
           {
             script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
@@ -511,7 +511,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
-      req.__(`View configuration`),
+      req.__(`%s configuration`, view.name),
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
   } else res.redirect(wfres.redirect);
