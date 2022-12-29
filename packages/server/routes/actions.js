@@ -399,8 +399,10 @@ router.get(
         req,
         active_sub: "Triggers",
         sub2_page: "Configure",
+        page_title: trigger.name,
         contents: {
           type: "card",
+          titleAjaxIndicator: true,
           title: req.__("Configure trigger %s", trigger.name),
           contents: {
             widths: [8, 4],
@@ -468,8 +470,10 @@ router.get(
         req,
         active_sub: "Triggers",
         sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
         contents: {
           type: "card",
+          titleAjaxIndicator: true,
           title: req.__("Configure trigger %s", trigger.name),
           contents: renderForm(form, req.csrfToken()),
         },

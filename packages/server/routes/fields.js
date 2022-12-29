@@ -711,20 +711,54 @@ router.post(
     const fields = await table.getFields();
     let row = { ...req.body };
     if (row && Object.keys(row).length > 0) readState(row, fields);
+
+    //need to get join fields from ownership into row
+    const joinFields = {};
+    if (table.ownership_formula && role > table.min_role_read) {
+      const freeVars = freeVariables(table.ownership_formula);
+      add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    }
+    //console.log(joinFields, row);
     const id = req.query.id || row.id;
     if (id) {
-      let dbrow = await table.getRow({ id });
+      let [dbrow] = await table.getJoinedRows({ where: { id }, joinFields });
       row = { ...dbrow, ...row };
       //prevent overwriting ownership field
       if (table.ownership_field_id) {
         const ofield = fields.find((f) => f.id === table.ownership_field_id);
         row[ofield.name] = dbrow[ofield.name];
       }
+    } else {
+      //may need to add joinfields
+      for (const { ref } of Object.values(joinFields)) {
+        if (row[ref]) {
+          const field = fields.find((f) => f.name === ref);
+          const reftable = await Table.findOne({ name: field.reftable_name });
+          const refFields = await reftable.getFields();
+
+          const joinFields = {};
+          if (reftable.ownership_formula && role > reftable.min_role_read) {
+            const freeVars = freeVariables(reftable.ownership_formula);
+            add_free_variables_to_joinfields(freeVars, joinFields, refFields);
+          }
+          const [refRow] = await reftable.getJoinedRows({
+            where: { id: row[ref] },
+            joinFields,
+          });
+          if (
+            role <= reftable.min_role_read ||
+            (req.user && reftable.is_owner(req.user, refRow))
+          ) {
+            row[ref] = refRow;
+          }
+        }
+      }
     }
     if (
       role > table.min_role_read &&
       !(req.user && table.is_owner(req.user, row))
     ) {
+      //console.log("not owner", row, table.is_owner(req.user, row));
       res.status(401).send("");
       return;
     }
@@ -734,16 +768,25 @@ router.post(
       if (kpath.length === 2 && row[kpath[0]]) {
         const field = fields.find((f) => f.name === kpath[0]);
         const reftable = await Table.findOne({ name: field.reftable_name });
-        if (role > reftable.min_role_read) {
+        const refFields = await reftable.getFields();
+        const targetField = refFields.find((f) => f.name === kpath[1]);
+        //console.log({ kpath, fieldview, targetField });
+        const q = { [reftable.pk_name]: row[kpath[0]] };
+        const joinFields = {};
+        if (reftable.ownership_formula && role > reftable.min_role_read) {
+          const freeVars = freeVariables(reftable.ownership_formula);
+          add_free_variables_to_joinfields(freeVars, joinFields, refFields);
+        }
+        const [refRow] = await reftable.getJoinedRows({ where: q, joinFields });
+        if (
+          role > reftable.min_role_read &&
+          !(req.user && reftable.is_owner(req.user, refRow))
+        ) {
+          //console.log("not jointable owner", refRow);
+
           res.status(401).send("");
           return;
         }
-        const targetField = (await reftable.getFields()).find(
-          (f) => f.name === kpath[1]
-        );
-        //console.log({ kpath, fieldview, targetField });
-        const q = { [reftable.pk_name]: row[kpath[0]] };
-        const refRow = await reftable.getRow(q);
         let fv;
         if (targetField.type === "Key") {
           fv = getState().keyFieldviews[fieldview];

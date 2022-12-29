@@ -38,7 +38,6 @@ afterAll(async () => {
 jest.setTimeout(30000);
 
 describe("pack create", () => {
-
   // table packs
   it("creates table pack", async () => {
     const tpack = await table_pack("patients");
@@ -47,9 +46,9 @@ describe("pack create", () => {
   });
 
   it("creates table pack for patients 2", async () => {
-    const table = await Table.findOne( { name : "patients"})
-    expect( table !== null).toBe( true );
-    const tpack = await table_pack ( table !== null ? table : "patients");
+    const table = await Table.findOne({ name: "patients" });
+    expect(table !== null).toBe(true);
+    const tpack = await table_pack(table !== null ? table : "patients");
     expect(tpack.fields.length > 1).toBe(true);
     expect(tpack.name).toBe("patients");
   });
@@ -63,8 +62,8 @@ describe("pack create", () => {
   it("creates table pack for non existing table", async () => {
     try {
       await table_pack("nonexist_table");
-    } catch (error:any) {
-      expect (error.message).toMatch("Unable to find table 'nonexist_table'");
+    } catch (error: any) {
+      expect(error.message).toMatch("Unable to find table 'nonexist_table'");
     }
   });
 
@@ -72,6 +71,7 @@ describe("pack create", () => {
   it("creates view pack", async () => {
     const vpack = await view_pack("authorlist");
     expect(vpack).toEqual({
+      attributes: null,
       configuration: {
         columns: [
           { field_name: "author", state_field: "on", type: "Field" },
@@ -85,9 +85,11 @@ describe("pack create", () => {
           },
         ],
       },
+      exttable_name: null,
       min_role: 10,
       name: "authorlist",
       menu_label: undefined,
+      slug: null,
       table: "books",
       viewtemplate: "List",
       default_render_page: null,
@@ -97,8 +99,8 @@ describe("pack create", () => {
   it("creates view pack for non existing view", async () => {
     try {
       await view_pack("nonexist_view");
-    } catch (error:any) {
-      expect (error.message).toMatch("Unable to find view 'nonexist_view'");
+    } catch (error: any) {
+      expect(error.message).toMatch("Unable to find view 'nonexist_view'");
     }
   });
 
@@ -117,8 +119,8 @@ describe("pack create", () => {
   it("creates plugin pack for non existing plugin", async () => {
     try {
       await plugin_pack("nonexist_plugin");
-    } catch (error:any) {
-      expect (error.message).toMatch("Unable to find plugin 'nonexist_plugin'");
+    } catch (error: any) {
+      expect(error.message).toMatch("Unable to find plugin 'nonexist_plugin'");
     }
   });
 
@@ -195,28 +197,29 @@ describe("pack create", () => {
   it("creates page pack for non existing page", async () => {
     try {
       await page_pack("nonexist_page");
-    } catch (error:any) {
-      expect (error.message).toMatch("Cannot read properties of undefined (reading 'is_root_page_for_roles')");
+    } catch (error: any) {
+      expect(error.message).toMatch(
+        "Cannot read properties of undefined (reading 'is_root_page_for_roles')"
+      );
     }
   });
 
   // todo library packs - needs to add library to fixture
   // trigger packs
   it("creates trigger pack", async () => {
-
     // triggers
     await Trigger.create({
       name: "NeverActionTrigger",
       action: "webhook",
       description: "This is test trigger1",
       //table_id: null
-      when_trigger:"Never",
+      when_trigger: "Never",
       configuration: {
         // from https://requestbin.com/
         // to inspect https://pipedream.com/sources/dc_jku44wk
         url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
       },
-    })
+    });
 
     const trpack = await trigger_pack("NeverActionTrigger");
     //expect(trpack.name ).toBe(true);
@@ -226,10 +229,9 @@ describe("pack create", () => {
   // role packs
   it("creates roles pack", async () => {
     const rpack = await role_pack("admin");
-    expect(rpack.id === 1 ).toBe(true);
+    expect(rpack.id === 1).toBe(true);
     expect(rpack.role).toBe("admin");
   });
-
 });
 
 // pack store

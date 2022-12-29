@@ -135,6 +135,7 @@ const send_settings_page = ({
   headers,
   no_nav_pills,
   sub2_page,
+  page_title,
 }) => {
   const pillCard = no_nav_pills
     ? []
@@ -163,12 +164,13 @@ const send_settings_page = ({
         },
       ];
   // headers
+  const pg_title = page_title || req.__(active_sub);
   const title = headers
     ? {
-        title: req.__(active_sub),
+        title: pg_title,
         headers,
       }
-    : req.__(active_sub);
+    : pg_title;
   res.sendWrap(title, {
     above: [
       {

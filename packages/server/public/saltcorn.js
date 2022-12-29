@@ -246,7 +246,9 @@ function ensure_modal_exists_and_closed() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
-          <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
+          <span class="sc-ajax-indicator-wrapper">
+            <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
+          </span>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
         </div>
@@ -281,6 +283,11 @@ function ajax_modal(url, opts = {}) {
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
       var width = request.getResponseHeader("SaltcornModalWidth");
+      var saveIndicate = !!request.getResponseHeader(
+        "SaltcornModalSaveIndicator"
+      );
+      if (saveIndicate) $(".sc-ajax-indicator-wrapper").show();
+      else $(".sc-ajax-indicator-wrapper").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
