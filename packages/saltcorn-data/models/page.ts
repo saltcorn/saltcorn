@@ -8,7 +8,8 @@ import db from "../db";
 import View from "./view";
 import Table from "./table";
 import layout from "./layout";
-const { eachView, traverseSync, getStringsForI18n, translateLayout } = layout;
+const { eachView, eachPage, traverseSync, getStringsForI18n, translateLayout } =
+  layout;
 import config from "./config";
 import type {
   Layout,
@@ -39,7 +40,6 @@ const {
   isNode,
   objectToQueryString,
 } = utils;
-import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 /**
@@ -248,6 +248,24 @@ class Page implements AbstractPage {
           extraArgs,
           view.isRemoteTable()
         );
+      }
+    });
+    await eachPage(this.layout, async (segment: any) => {
+      const page = await Page.findOne({ name: segment.page });
+      if (!page) {
+        throw new InvalidConfiguration(
+          `Page ${this.name} configuration error in embedded page: ` +
+            (segment.page
+              ? `page "${segment.page}" not found`
+              : "no page specified")
+        );
+      } else {
+        const role = (extraArgs.req.user || {}).role_id || 10;
+        const pageContent = await page.run(querystate, extraArgs);
+        const { getState } = require("../db/state");
+        segment.contents = getState()
+          .getLayout(extraArgs.req.user)
+          .renderBody({ title: "", body: pageContent, role, alerts: [] });
       }
     });
     const pagename = this.name;

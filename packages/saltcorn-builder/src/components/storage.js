@@ -21,6 +21,7 @@ import { Card } from "./elements/Card";
 import { Image } from "./elements/Image";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
+import { Page } from "./elements/Page";
 import { SearchBar } from "./elements/SearchBar";
 import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
@@ -71,6 +72,7 @@ const allElements = [
   Tabs,
   ToggleFilter,
   DropMenu,
+  Page,
 ];
 
 export /**
@@ -147,7 +149,8 @@ export /**
             configuration={segment.configuration || {}}
           />
         );
-      } else if (segment.type === "action") {
+      }
+      else if (segment.type === "action") {
         return (
           <Action
             key={ix}
@@ -461,7 +464,6 @@ export /**
           extra_state_fml: node.props.extra_state_fml,
         };
       }
-
       if (node.displayName === Action.craft.displayName) {
         const newid = rand_ident();
         columns.push({
