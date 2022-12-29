@@ -82,7 +82,10 @@ const view_pack = async (name: string): Promise<ViewPack> => {
     min_role: view.min_role,
     table: table ? table.name : null,
     menu_label: view.menu_label,
+    slug: view.slug,
+    attributes: view.attributes,
     default_render_page: view.default_render_page,
+    exttable_name: view.exttable_name,
   };
 };
 
