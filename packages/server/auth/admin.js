@@ -376,6 +376,7 @@ router.get(
       active_sub: "Login and Signup",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("Authentication settings"),
         contents: [renderForm(form, req.csrfToken())],
       },
@@ -408,9 +409,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Authentication settings updated"));
-      if (!req.xhr) res.redirect("/useradmin/settings");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Authentication settings updated"));
+        res.redirect("/useradmin/settings");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -432,6 +434,7 @@ router.get(
       active_sub: "HTTP",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("HTTP settings"),
         contents: [renderForm(form, req.csrfToken())],
       },
@@ -464,9 +467,11 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("HTTP settings updated"));
-      if (!req.xhr) res.redirect("/useradmin/http");
-      else res.json({ success: "ok" });
+
+      if (!req.xhr) {
+        req.flash("success", req.__("HTTP settings updated"));
+        res.redirect("/useradmin/http");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -488,6 +493,7 @@ router.get(
       active_sub: "Permissions",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("Permissions settings"),
         contents: [renderForm(form, req.csrfToken())],
       },
@@ -514,15 +520,17 @@ router.post(
         active_sub: "Permissions",
         contents: {
           type: "card",
+          titleAjaxIndicator: true,
           title: req.__("Permissions settings"),
           contents: [renderForm(form, req.csrfToken())],
         },
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Permissions settings updated"));
-      if (!req.xhr) res.redirect("/useradmin/permissions");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Permissions settings updated"));
+        res.redirect("/useradmin/permissions");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -677,8 +685,9 @@ router.get(
       active_sub: "SSL",
       contents: {
         type: "card",
-        title: req.__("Authentication settings"),
+        title: req.__("Custom SSL certificates"),
         sub2_page: req.__("Custom SSL certificates"),
+        titleAjaxIndicator: true,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -817,6 +826,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Table access"),
+        titleAjaxIndicator: true,
         contents,
       },
     });

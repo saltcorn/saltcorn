@@ -108,6 +108,7 @@ router.get(
       //sub2_page: "Events to log",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("Events to log"),
         contents: renderForm(form, req.csrfToken()),
       },

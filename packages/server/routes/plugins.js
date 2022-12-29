@@ -586,6 +586,7 @@ router.get(
       type: "card",
       class: "mt-0",
       title: req.__(`Configure %s Plugin`, plugin.name),
+      titleAjaxIndicator: true,
       contents: renderForm(wfres.renderForm, req.csrfToken()),
     });
   })

@@ -438,6 +438,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Storage settings"),
+        titleAjaxIndicator: true,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -512,6 +513,7 @@ router.get(
       active_sub: "Settings",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("Files settings"),
         contents: [renderForm(form, req.csrfToken())],
       },

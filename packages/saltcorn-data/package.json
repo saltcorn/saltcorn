@@ -67,6 +67,7 @@
     "moment-timezone": "^0.5.33",
     "node-fetch": "2.6.2",
     "pluralize": "^8.0.0",
+    "process": "0.11.10",
     "tmp-promise": "^3.0.2",
     "uuid": "^8.2.0",
     "vm-browserify": "^1.1.2",
