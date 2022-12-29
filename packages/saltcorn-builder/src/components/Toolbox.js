@@ -366,10 +366,9 @@ const PageElem = ({connectors, pages}) => (
     icon="fa-fw far fa-file"
     title="Embed a page"
     label="Page"
-    disable={pages.length === 0}
+    disable={pages.length <= 1}
   >
     <Page 
-      name={"not_assigned"}
       page={pages.length > 0 ? pages[0].name : "page"}
     />
   </WrapElem>

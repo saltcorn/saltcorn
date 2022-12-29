@@ -72,6 +72,7 @@ const allElements = [
   Tabs,
   ToggleFilter,
   DropMenu,
+  Page,
 ];
 
 export /**
@@ -146,15 +147,6 @@ export /**
             state={segment.state}
             extra_state_fml={segment.extra_state_fml}
             configuration={segment.configuration || {}}
-          />
-        );
-      } else if (segment.type === "page") {
-        return (
-          <Page
-            key={ix}
-            page={segment.page}
-            page_name={segment.page_name}
-            name={segment.name}
           />
         );
       }
@@ -472,15 +464,6 @@ export /**
           extra_state_fml: node.props.extra_state_fml,
         };
       }
-      if (node.displayName === Page.craft.displayName) {
-        return {
-          type: "page",
-          page: node.props.page,
-          name:
-            node.props.name === "not_assigned" ? rand_ident() : node.props.name,
-        };
-      }
-
       if (node.displayName === Action.craft.displayName) {
         const newid = rand_ident();
         columns.push({

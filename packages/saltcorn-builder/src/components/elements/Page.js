@@ -44,12 +44,10 @@ export const Page = ({ page }) => {
 export const PageSettings = () => {
   const node = useNode((node) => ({
     page: node.data.props.page,
-    name: node.data.props.name,
     node_id: node.id,
   }));
   const {
     actions: { setProp },
-    name,
     page,
     node_id,
   } = node;
@@ -96,5 +94,9 @@ Page.craft = {
   displayName: "Page",
   related: {
     settings: PageSettings,
+    segment_type: "page",
+    fields: [
+      "page",
+    ],
   },
 };
