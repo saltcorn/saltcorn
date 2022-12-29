@@ -239,6 +239,13 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
           options: ["px", "%", "vw", "em", "rem"],
         },
       },
+      {
+        name: "popup_save_indicator",
+        label: req.__("Save indicator"),
+        type: "Bool",
+        parent_field: "attributes",
+        tab: "Popup settings",
+      },
       ...(isEdit
         ? [
             new Field({
