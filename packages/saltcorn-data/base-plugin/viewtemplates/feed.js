@@ -376,6 +376,10 @@ const run = async (
   const __ = isNode()
     ? (s) => appState.i18n.__({ phrase: s, locale }) || s
     : (s) => s;
+  if (!show_view)
+    throw new InvalidConfiguration(
+      `View ${viewname} incorrectly configured: Single item view not specified`
+    );
   const sview = await View.findOne({ name: show_view });
   if (!sview)
     throw new InvalidConfiguration(
