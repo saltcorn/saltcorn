@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.8.1-beta.6",
+  "version": "0.8.1-rc.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,14 +37,14 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "0.8.1-beta.6",
-    "@saltcorn/sqlite": "0.8.1-beta.6"
+    "@saltcorn/postgres": "0.8.1-rc.1",
+    "@saltcorn/sqlite": "0.8.1-rc.1"
   },
   "dependencies": {
-    "@saltcorn/types": "0.8.1-beta.6",
-    "@saltcorn/markup": "0.8.1-beta.6",
-    "@saltcorn/db-common": "0.8.1-beta.6",
-    "@saltcorn/sqlite-mobile": "0.8.1-beta.6",
+    "@saltcorn/types": "0.8.1-rc.1",
+    "@saltcorn/markup": "0.8.1-rc.1",
+    "@saltcorn/db-common": "0.8.1-rc.1",
+    "@saltcorn/sqlite-mobile": "0.8.1-rc.1",
     "acorn": "^8.0.3",
     "astring": "^1.4.3",
     "axios": "^0.26.1",
