@@ -26,7 +26,7 @@
     "@fortawesome/free-regular-svg-icons": "5.15.2",
     "@fortawesome/free-solid-svg-icons": "5.15.2",
     "@fortawesome/react-fontawesome": "0.1.14",
-    "babel-loader": "8.1.0",
+    "babel-loader": "8.3.0",
     "ckeditor4-react": "1.4.2",
     "classnames": "2.2.6",
     "prop-types": "15.7.2",
@@ -36,8 +36,8 @@
     "react-dom": "16.13.1",
     "react-transition-group": "4.4.1",
     "@tippyjs/react": "4.2.6",
-    "webpack": "4.43.0",
-    "webpack-cli": "3.3.11",
+    "webpack": "5.75.0",
+    "webpack-cli": "5.0.1",
     "lodash": "4.17.11"
   },
   "publishConfig": {
