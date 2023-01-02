@@ -1061,6 +1061,7 @@ router.post(
         else req.session.cookie.expires = false;
       }
     Trigger.emitEvent("Login", null, req.user);
+    res?.cookie?.("loggedin", "true");
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.smr) {
       const dbUser = await User.findOne({ id: req.user.id });
