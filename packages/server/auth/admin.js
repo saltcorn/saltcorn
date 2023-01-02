@@ -336,6 +336,7 @@ const http_settings_form = async (req) =>
       "cookie_duration",
       "cookie_duration_remember",
       "cookie_sessions",
+      "public_cache_maxage",
       "custom_http_headers",
     ],
     action: "/useradmin/http",

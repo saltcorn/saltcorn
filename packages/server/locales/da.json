@@ -555,5 +555,8 @@
 	"Create database view": "Create database view",
 	"Create an SQL view in the database with the fields in this list": "Create an SQL view in the database with the fields in this list",
 	"Rows per page": "Rows per page",
-	"List options": "List options"
+	"List options": "List options",
+	"Modules": "Modules",
+	"File not found": "File not found",
+	"Welcome, %s!": "Welcome, %s!"
 }

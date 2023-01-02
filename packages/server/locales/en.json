@@ -1077,5 +1077,7 @@
 	"Saved 2FA policy for role": "Saved 2FA policy for role",
 	"HTTP settings updated": "HTTP settings updated",
 	"%s configuration": "%s configuration",
-	"Save indicator": "Save indicator"
+	"Save indicator": "Save indicator",
+	"Public cache TTL (minutes)": "Public cache TTL (minutes)",
+	"Cache-control max-age for public views and pages. 0 to disable": "Cache-control max-age for public views and pages. 0 to disable"
 }
