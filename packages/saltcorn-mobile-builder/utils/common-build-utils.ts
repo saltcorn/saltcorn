@@ -1,4 +1,6 @@
 import db from "@saltcorn/data/db/index";
+import utils = require("@saltcorn/data/utils");
+const { getSafeSaltcornCmd } = utils;
 import { join } from "path";
 import { existsSync, mkdirSync, copySync, writeFileSync } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
@@ -132,13 +134,22 @@ export function copyTranslationFiles(buildDir: string) {
  * @param buildDir directory where the app will be build
  */
 export async function createSqliteDb(buildDir: string) {
-  const result = spawnSync("saltcorn", ["reset-schema", "-f"], {
+  const result = spawnSync(getSafeSaltcornCmd(), ["reset-schema", "-f"], {
     env: {
       ...process.env,
       FORCE_SQLITE: "true",
       SQLITE_FILEPATH: join(buildDir, "www", "scdb.sqlite"),
     },
   });
-  console.log(result.output.toString());
-  return result.status;
+  if (result.error) {
+    console.log(result.error);
+    return -1;
+  } else {
+    console.log(
+      result.output
+        ? result.output.toString()
+        : "'reset-schema' finished without output"
+    );
+    return result.status;
+  }
 }

@@ -97,6 +97,7 @@ const View = require("@saltcorn/data/models/view");
 const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
+const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 
 const router = new Router();
 module.exports = router;
@@ -1659,7 +1660,7 @@ router.post(
     // end http call, return the out directory name
     // the gui polls for results
     res.json({ build_dir_name: outDirName });
-    const child = spawn("saltcorn", spawnParams, {
+    const child = spawn(getSafeSaltcornCmd(), spawnParams, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
