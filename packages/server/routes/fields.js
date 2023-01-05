@@ -996,7 +996,8 @@ router.post(
       formStyle: "vert",
       fields: formFields,
     });
-    if (_columndef) form.values = JSON.parse(_columndef);
+    if (_columndef && _columndef !== "undefined")
+      form.values = JSON.parse(_columndef);
     res.send(mkFormContentNoLayout(form));
   })
 );
