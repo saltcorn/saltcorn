@@ -94,7 +94,11 @@
         if (!confirm(`Delete files: ${selectedList.join()}`)) return;
         for (const fileNm of selectedList) {
           const file = files.find((f) => f.filename === fileNm);
-          await POST(`/files/delete/${file.location}`);
+          const delres=await POST(`/files/delete/${file.location}`);
+          const deljson = await delres.json()
+          if(deljson.error) {
+            window.notifyAlert({ type: "danger", text: deljson.error })
+          }
         }
         await fetchAndReset();
         break;
@@ -182,8 +186,7 @@
     };
     files = files.sort(cmp);
   }
-  function getSorterIcon(varNm) {
-    console.log({ varNm, sortBy });
+  function getSorterIcon(varNm) {   
     if (varNm !== sortBy) return null;
     return sortDesc ? faCaretDown : faCaretUp;
   }
