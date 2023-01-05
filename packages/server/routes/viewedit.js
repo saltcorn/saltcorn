@@ -464,7 +464,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         type: "breadcrumbs",
         crumbs: [
           { text: req.__("Views"), href: "/viewedit" },
-          { href: `/viewedit/edit/${view.name}`, text: view.name },
+          { href: `/view/${view.name}`, text: view.name },
           { workflow: wf, step: wfres },
         ],
       },
