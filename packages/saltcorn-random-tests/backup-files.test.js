@@ -38,13 +38,14 @@ describe("backup files", () => {
       const restore_res = await restore(path.join(dir, file), savePlugin, true);
       expect(restore_res).toBe(undefined);
       const app = await getApp({ disableCsrf: true });
-      const { errors, pass } = await runConfigurationCheck(
+      const { errors, pass, passes } = await runConfigurationCheck(
         mockReqRes.req,
         true,
         app
       );
       expect(errors).toStrictEqual([]);
       expect(pass).toBe(true);
+      console.log("cfg check for", file, "passes", passes);
     }
   });
 });
