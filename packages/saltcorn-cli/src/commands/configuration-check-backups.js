@@ -65,7 +65,8 @@ class ConfigurationCheckBackupsCommand extends Command {
           } else {
             const { passes, errors, pass } = await runConfigurationCheck(
               mockReqRes.req,
-              flags.destructive
+              flags.destructive,
+              flags.destructive ? require("@saltcorn/server/app") : undefined
             );
 
             if (!pass) {
