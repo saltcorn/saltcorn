@@ -101,7 +101,7 @@
     "@types/node-fetch": "2.5.12",
     "@types/nodemailer": "^6.4.4",
     "@types/uuid": "^8.3.3",
-    "chaos-guinea-pig": "^0.1.0",
+    "chaos-guinea-pig": "^0.1.1",
     "jest": "^27.1.0",
     "jsonwebtoken": "^8.5.1",
     "ts-jest": "^27.1.0",

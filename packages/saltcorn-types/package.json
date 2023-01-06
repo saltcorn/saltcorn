@@ -32,7 +32,7 @@
     "@types/adm-zip": "^0.4.34",
     "@types/csvtojson": "^2.0.0",
     "@types/node": "^16.11.7",
-    "chaos-guinea-pig": "^0.1.0",
+    "chaos-guinea-pig": "^0.1.1",
     "jest": "26.6.3"
   }
 }
