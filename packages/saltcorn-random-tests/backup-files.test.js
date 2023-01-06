@@ -45,7 +45,7 @@ describe("backup files", () => {
       );
       expect(errors).toStrictEqual([]);
       expect(pass).toBe(true);
-      console.log("cfg check for", file, "passes", passes);
+      //console.log("cfg check for", file, "passes", passes);
     }
   });
 });

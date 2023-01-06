@@ -234,7 +234,9 @@ export const runConfigurationCheck = async (
     if (!app) throw new Error("Destructive but app not supplied");
     const seed = set_seed();
     try {
-      await chaos_guinea_pig(app);
+      const gcpres = await chaos_guinea_pig(app);
+      console.log("GCP Log", gcpres.log);
+      passes.push(`Chaos Guinea Pig pass with seed ${seed}`);
     } catch (e: any) {
       errors.push(`Chaos Guinea Pig with seed ${seed}: ${e.message}`);
     }
