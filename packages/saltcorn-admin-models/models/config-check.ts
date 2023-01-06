@@ -193,7 +193,10 @@ const test_trigger = async (
  * Run Configuration check
  * @param req
  */
-export const runConfigurationCheck = async (req: any) => {
+export const runConfigurationCheck = async (
+  req: any,
+  destructive?: boolean
+) => {
   const errors: string[] = [];
   const warnings: string[] = [];
   const passes: string[] = [];
