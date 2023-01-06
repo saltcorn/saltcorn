@@ -1079,5 +1079,6 @@
 	"%s configuration": "%s configuration",
 	"Save indicator": "Save indicator",
 	"Public cache TTL (minutes)": "Public cache TTL (minutes)",
-	"Cache-control max-age for public views and pages. 0 to disable": "Cache-control max-age for public views and pages. 0 to disable"
+	"Cache-control max-age for public views and pages. 0 to disable": "Cache-control max-age for public views and pages. 0 to disable",
+	"Files accept filter": "Files accept filter"
 }

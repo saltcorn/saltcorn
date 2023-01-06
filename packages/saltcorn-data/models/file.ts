@@ -532,8 +532,18 @@ class File {
       if (this.id) await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
       if (unlinker) await unlinker(this);
-      else if (this.isDirectory) await fsp.rmdir(this.location);
-      else await unlink(this.location);
+      else if (this.isDirectory) {
+        //delete all resized before attempting to delete dir
+
+        const fileNms = await fsp.readdir(this.location);
+
+        for (const name of fileNms) {
+          if (name.startsWith("_resized_"))
+            await unlink(path.join(this.location, name));
+        }
+
+        await fsp.rmdir(this.location);
+      } else await unlink(this.location);
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache
       await require("../db/state").getState().refresh_files();

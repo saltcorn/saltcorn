@@ -377,7 +377,7 @@ const setupSocket = (...servers) => {
           const view = View.findOne({ name: viewname });
           if (view.viewtemplateObj.authorize_join) {
             view.viewtemplateObj
-              .authorize_join(view.configuration, room_id, socket.request.user)
+              .authorize_join(view, room_id, socket.request.user)
               .then((authorized) => {
                 if (authorized) socket.join(`${ten}_${viewname}_${room_id}`);
               });
