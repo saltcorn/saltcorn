@@ -5,6 +5,9 @@ import File from "@saltcorn/data/models/file";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
 import mocks from "@saltcorn/data/tests/mocks";
+
+const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
+
 // todo tests for files
 // todo tests for tenants
 /**
@@ -195,7 +198,8 @@ const test_trigger = async (
  */
 export const runConfigurationCheck = async (
   req: any,
-  destructive?: boolean
+  destructive?: boolean,
+  app?: any
 ) => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -224,6 +228,16 @@ export const runConfigurationCheck = async (
   const triggers = Trigger.find({});
   for (const trigger of triggers) {
     await test_trigger(trigger, passes, errors);
+  }
+
+  if (destructive) {
+    if (!app) throw new Error("Destructive but app not supplied");
+    const seed = set_seed();
+    try {
+      await chaos_guinea_pig(app);
+    } catch (e: any) {
+      errors.push(`Chaos Guinea Pig with seed ${seed}: ${e.message}`);
+    }
   }
 
   return { errors, passes, pass: errors.length === 0, warnings };
