@@ -57,6 +57,7 @@ module.exports = {
   },
   resolve: {
     fallback: {
+      assert: require.resolve("assert/"),
       path: require.resolve("path-browserify"),
       crypto: require.resolve("crypto-browserify"),
       buffer: require.resolve("buffer/"),
