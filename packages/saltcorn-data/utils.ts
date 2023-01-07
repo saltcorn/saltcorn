@@ -8,7 +8,7 @@ import { GenObj } from "@saltcorn/types/common_types";
 import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import crypto from "crypto";
-const fs = require("fs");
+import { join, dirname } from "path";
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -222,6 +222,16 @@ const extractPagings = (state: any): any => {
   return result;
 };
 
+/**
+ * check if 'saltcorn' is in the PATH env or build a full path
+ * @returns string ready to use for spawn
+ */
+const getSafeSaltcornCmd = () => {
+  return process.env.PATH!.indexOf("saltcorn-cli/bin") > 0
+    ? "saltcorn"
+    : join(dirname(require!.main!.filename), "saltcorn");
+};
+
 export = {
   objectToQueryString,
   removeEmptyStrings,
@@ -247,4 +257,5 @@ export = {
   mergeConnectedObjects,
   hashState,
   extractPagings,
+  getSafeSaltcornCmd,
 };

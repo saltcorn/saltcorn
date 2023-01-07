@@ -46,6 +46,7 @@
     "@saltcorn/db-common": "0.8.1-rc.2",
     "@saltcorn/sqlite-mobile": "0.8.1-rc.2",
     "acorn": "^8.0.3",
+    "assert": "^2.0.0",
     "astring": "^1.4.3",
     "axios": "^0.26.1",
     "bcryptjs": "^2.4.3",
