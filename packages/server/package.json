@@ -21,7 +21,7 @@
     "content-disposition": "^0.5.3",
     "contractis": "^0.1.0",
     "cookie-parser": "^1.4.4",
-    "cookie-session": "^1.4.0",
+    "cookie-session": "^2.0.0",
     "csurf": "^1.11.0",
     "csv-stringify": "^5.5.0",
     "express": "^4.17.1",
