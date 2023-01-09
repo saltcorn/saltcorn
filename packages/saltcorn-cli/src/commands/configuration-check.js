@@ -27,6 +27,7 @@ class ConfigurationCheckCommand extends Command {
     await maybe_as_tenant(flags.tenant, async () => {
       const { passes, errors, pass, warnings } = await runConfigurationCheck(
         mockReqRes.req
+        //flags.destructive
       );
 
       if (!pass) {
@@ -59,6 +60,10 @@ ConfigurationCheckCommand.flags = {
     char: "t",
     description: "tenant",
   }),
+  /*destructive: flags.boolean({
+    char: "d",
+    description: "destructive",
+  }),*/
 };
 
 module.exports = ConfigurationCheckCommand;

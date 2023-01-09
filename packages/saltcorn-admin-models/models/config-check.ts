@@ -5,6 +5,9 @@ import File from "@saltcorn/data/models/file";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
 import mocks from "@saltcorn/data/tests/mocks";
+
+const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
+
 // todo tests for files
 // todo tests for tenants
 /**
@@ -193,7 +196,11 @@ const test_trigger = async (
  * Run Configuration check
  * @param req
  */
-export const runConfigurationCheck = async (req: any) => {
+export const runConfigurationCheck = async (
+  req: any,
+  destructive?: boolean,
+  app?: any
+) => {
   const errors: string[] = [];
   const warnings: string[] = [];
   const passes: string[] = [];
@@ -221,6 +228,21 @@ export const runConfigurationCheck = async (req: any) => {
   const triggers = Trigger.find({});
   for (const trigger of triggers) {
     await test_trigger(trigger, passes, errors);
+  }
+
+  if (destructive) {
+    if (!app) throw new Error("Destructive but app not supplied");
+    const seed = set_seed();
+    try {
+      const gcpres = await chaos_guinea_pig(app, {
+        stop_urls: ["/auth/login", "/auth/signup"],
+        steps: 100,
+      });
+      console.log("GCP Log", gcpres.log);
+      passes.push(`Chaos Guinea Pig pass with seed ${seed}`);
+    } catch (e: any) {
+      errors.push(`Chaos Guinea Pig with seed ${seed}: ${e.message}`);
+    }
   }
 
   return { errors, passes, pass: errors.length === 0, warnings };

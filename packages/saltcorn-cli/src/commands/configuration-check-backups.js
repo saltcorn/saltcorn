@@ -17,7 +17,7 @@ class ConfigurationCheckBackupsCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { argv } = this.parse(ConfigurationCheckBackupsCommand);
+    const { argv, flags } = this.parse(ConfigurationCheckBackupsCommand);
     //await init_some_tenants(flags.tenant);
     const {
       runConfigurationCheck,
@@ -64,7 +64,9 @@ class ConfigurationCheckBackupsCommand extends Command {
             hasError = true;
           } else {
             const { passes, errors, pass } = await runConfigurationCheck(
-              mockReqRes.req
+              mockReqRes.req,
+              flags.destructive,
+              flags.destructive ? require("@saltcorn/server/app") : undefined
             );
 
             if (!pass) {
@@ -100,5 +102,12 @@ ConfigurationCheckBackupsCommand.args = [
     description: "backup file to check. can be repeated, e.g. with *",
   },
 ];
+
+ConfigurationCheckBackupsCommand.flags = {
+  destructive: flags.boolean({
+    char: "d",
+    description: "destructive",
+  }),
+};
 
 module.exports = ConfigurationCheckBackupsCommand;

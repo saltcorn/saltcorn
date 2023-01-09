@@ -9,6 +9,7 @@ const load_plugins = require("@saltcorn/server/load_plugins");
 const { restore } = require("@saltcorn/admin-models/models/backup");
 const { getState } = require("@saltcorn/data/db/state");
 const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+const getApp = require("@saltcorn/server/app");
 
 afterAll(db.close);
 
@@ -31,13 +32,20 @@ describe("backup files", () => {
       }
       return load_plugins.loadAndSaveNewPlugin(p);
     };
+
     for (const file of backupFiles) {
       await reset();
       const restore_res = await restore(path.join(dir, file), savePlugin, true);
       expect(restore_res).toBe(undefined);
-      const { errors, pass } = await runConfigurationCheck(mockReqRes.req);
+      const app = await getApp({ disableCsrf: true });
+      const { errors, pass, passes } = await runConfigurationCheck(
+        mockReqRes.req,
+        true,
+        app
+      );
       expect(errors).toStrictEqual([]);
       expect(pass).toBe(true);
+      //console.log("cfg check for", file, "passes", passes);
     }
   });
 });
