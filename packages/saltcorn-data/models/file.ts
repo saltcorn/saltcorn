@@ -18,8 +18,20 @@ import { lookup } from "mime-types";
 const path = require("path");
 const fsp = require("fs").promises;
 const fs = require("fs");
-const xattr = require("fs-xattr");
+const fsx = require("fs-extended-attributes");
 declare let window: any;
+
+function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
+  return new Promise((resolve) => fsx.set(fp, attrName, value, resolve));
+}
+function xattr_get(fp: string, attrName: string): Promise<string> {
+  return new Promise((resolve, reject) =>
+    fsx.get(fp, attrName, (err: string, attrBuf: Buffer) => {
+      if (err) reject(err);
+      else resolve(attrBuf?.toString?.("utf8"));
+    })
+  );
+}
 
 /**
  * File Descriptor class
@@ -177,7 +189,7 @@ class File {
     }
     let min_role_read, user_id;
     try {
-      min_role_read = +(await xattr.get(
+      min_role_read = +(await xattr_get(
         path.join(absoluteFolder, name),
         "user.saltcorn.min_role_read"
       ));
@@ -185,10 +197,13 @@ class File {
       min_role_read = 10;
     }
     try {
-      user_id = +(await xattr.get(
+      const uid = await xattr_get(
         path.join(absoluteFolder, name),
         "user.saltcorn.user_id"
-      ));
+      );
+      //console.log({ name, uid });
+
+      user_id = +uid;
     } catch (e) {}
 
     const isDirectory = stat.isDirectory();
@@ -304,25 +319,25 @@ class File {
   }
 
   async set_role(min_role_read: number) {
-    // const fsx = await import("fs-xattr");
     if (this.id) {
       await File.update(this.id, { min_role_read });
     } else {
-      await xattr.set(
+      await xattr_set(
         this.location,
         "user.saltcorn.min_role_read",
         `${min_role_read}`
       );
     }
+    this.min_role_read = min_role_read;
   }
 
   async set_user(user_id: number) {
-    // const fsx = await import("fs-xattr");
     if (this.id) {
       await File.update(this.id, { user_id });
     } else {
-      await xattr.set(this.location, "user.saltcorn.user_id", `${user_id}`);
+      await xattr_set(this.location, "user.saltcorn.user_id", `${user_id}`);
     }
+    this.user_id = user_id;
   }
 
   async rename(filenameIn: string): Promise<void> {
