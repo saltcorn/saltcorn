@@ -28,7 +28,7 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
   return new Promise((resolve, reject) =>
     fsx.get(fp, attrName, (err: string, attrBuf: Buffer) => {
       if (err) reject(err);
-      else resolve(attrBuf.toString("utf8"));
+      else resolve(attrBuf?.toString?.("utf8"));
     })
   );
 }
