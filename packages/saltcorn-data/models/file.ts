@@ -304,7 +304,6 @@ class File {
   }
 
   async set_role(min_role_read: number) {
-    // const fsx = await import("fs-xattr");
     if (this.id) {
       await File.update(this.id, { min_role_read });
     } else {
@@ -314,15 +313,16 @@ class File {
         `${min_role_read}`
       );
     }
+    this.min_role_read = min_role_read;
   }
 
   async set_user(user_id: number) {
-    // const fsx = await import("fs-xattr");
     if (this.id) {
       await File.update(this.id, { user_id });
     } else {
       await xattr.set(this.location, "user.saltcorn.user_id", `${user_id}`);
     }
+    this.user_id = user_id;
   }
 
   async rename(filenameIn: string): Promise<void> {
