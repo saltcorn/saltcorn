@@ -76,7 +76,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
-    sudo -iu vagrant npx -y saltcorn-install -y
+    sudo -iu vagrant npx -y saltcorn-install -s -y
 
     apt update && apt install -y wget unzip openjdk-11-jdk openjdk-11-demo openjdk-11-doc openjdk-11-jre-headless openjdk-11-source
     
