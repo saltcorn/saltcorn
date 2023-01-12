@@ -134,7 +134,7 @@ export function copyTranslationFiles(buildDir: string) {
  * @param buildDir directory where the app will be build
  */
 export async function createSqliteDb(buildDir: string) {
-  const result = spawnSync(getSafeSaltcornCmd(), ["reset-schema", "-f"], {
+  const result = spawnSync(getSafeSaltcornCmd(), ["add-schema", "-f"], {
     env: {
       ...process.env,
       FORCE_SQLITE: "true",
