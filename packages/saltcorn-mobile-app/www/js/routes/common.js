@@ -69,18 +69,18 @@ const getMenu = (req) => {
           ],
         },
       ];
-
-  return [
-    extraMenu.length > 0 && {
+  const result = [];
+  if (extraMenu.length > 0)
+    result.push({
       section: req.__("Menu"),
       items: extraMenu,
-    },
-    {
-      section: req.__("User"),
-      isUser: true,
-      items: authItems,
-    },
-  ];
+    });
+  result.push({
+    section: req.__("User"),
+    isUser: true,
+    items: authItems,
+  });
+  return result;
 };
 
 const prepareAlerts = (context, req) => {

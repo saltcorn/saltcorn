@@ -2,7 +2,9 @@ import { spawnSync } from "child_process";
 import { existsSync, mkdirSync, copySync, rmSync } from "fs-extra";
 import { join } from "path";
 import { readdirSync } from "fs";
+import File from "@saltcorn/data/models/file";
 const { getState } = require("@saltcorn/data/db/state");
+import type User from "@saltcorn/data/models/user";
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
@@ -171,11 +173,13 @@ function safeEnding(file: string, ending: string): string {
  * copy .apk / .ipa files to 'copyDir' if they exist
  * @param buildDir directory where the app was build
  * @param copyDir directory where the resulting app file will be copied to
+ * @param the user specified by the userEmail (-c) parameter
  * @param appFileName name of the copied app file
  */
 export async function tryCopyAppFiles(
   buildDir: string,
   copyDir: string,
+  user: User,
   appFileName?: string
 ) {
   if (!existsSync(copyDir)) {
@@ -194,24 +198,20 @@ export async function tryCopyAppFiles(
   );
   const apkFile = fileWithEnding(apkBuildDir, ".apk");
   if (apkFile) {
-    copySync(
-      join(apkBuildDir, apkFile),
-      join(
-        copyDir,
-        appFileName ? safeEnding(appFileName, ".apk") : "app-debug.apk"
-      )
-    );
+    const dstFile = appFileName
+      ? safeEnding(appFileName, ".apk")
+      : "app-debug.apk";
+    copySync(join(apkBuildDir, apkFile), join(copyDir, dstFile));
+    await File.set_xattr_of_existing_file(dstFile, copyDir, user);
   }
   // iOS .ipa file
   const ipaBuildDir = join(buildDir, "platforms", "ios", "build", "device");
   const ipaFile = fileWithEnding(ipaBuildDir, ".ipa");
   if (ipaFile) {
-    copySync(
-      join(ipaBuildDir, ipaFile),
-      join(
-        copyDir,
-        appFileName ? safeEnding(appFileName, ".ipa") : "app-debug.ipa"
-      )
-    );
+    const dstFile = appFileName
+      ? safeEnding(appFileName, ".ipa")
+      : "app-debug.ipa";
+    copySync(join(ipaBuildDir, ipaFile), join(copyDir, dstFile));
+    await File.set_xattr_of_existing_file(dstFile, copyDir, user);
   }
 }

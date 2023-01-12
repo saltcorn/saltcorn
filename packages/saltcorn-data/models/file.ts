@@ -15,6 +15,7 @@ import axios from "axios";
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
+import type User from "./user";
 const path = require("path");
 const fsp = require("fs").promises;
 const fs = require("fs");
@@ -615,6 +616,18 @@ class File {
       },
     });
     return response.data.success;
+  }
+
+  static async set_xattr_of_existing_file(
+    name: string,
+    absoluteFolder: string,
+    user: User
+  ): Promise<void> {
+    if (!user.id)
+      throw new Error("Unable to set the attributes, the user has no id");
+    const file = await File.from_file_on_disk(name, absoluteFolder);
+    file.set_user(user.id);
+    file.set_role(user.role_id);
   }
 }
 

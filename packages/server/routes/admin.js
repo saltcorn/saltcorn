@@ -1546,7 +1546,22 @@ router.get(
 const checkFiles = async (outDir, fileNames) => {
   const rootFolder = await File.rootFolder();
   const mobile_app_dir = path.join(rootFolder.location, "mobile_app", outDir);
-  const entries = fs.readdirSync(mobile_app_dir);
+  const unsafeFiles = await Promise.all(
+    fs
+      .readdirSync(mobile_app_dir)
+      .map(
+        async (outFile) => await File.from_file_on_disk(outFile, mobile_app_dir)
+      )
+  );
+  const entries = unsafeFiles
+    .filter(
+      (file) =>
+        file.user_id &&
+        !isNaN(file.user_id) &&
+        file.min_role_read &&
+        !isNaN(file.min_role_read)
+    )
+    .map((file) => file.filename);
   return fileNames.some((fileName) => entries.indexOf(fileName) >= 0);
 };
 
@@ -1639,6 +1654,8 @@ router.post(
       buildDir,
       "-b",
       `${os.userInfo().homedir}/mobile_app_build`,
+      "-u",
+      req.user.email, // ensured by isAdmin
     ];
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
@@ -1673,29 +1690,36 @@ router.post(
       // console.log(data.toString());
       childOutputs.push(data ? data.toString() : req.__("An error occurred"));
     });
-    child.on("exit", async function (exitCode, signal) {
+    child.on("exit", (exitCode, signal) => {
       const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
       fs.writeFile(
         path.join(buildDir, logFile),
         childOutputs.join("\n"),
-        (error) => {
+        async (error) => {
           if (error) {
             console.log(`unable to write '${logFile}' to '${buildDir}'`);
             console.log(error);
+          } else {
+            // no transaction, '/build-mobile-app/finished' filters for valid attributes
+            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
           }
         }
       );
     });
-    child.on("error", function (msg) {
+    child.on("error", (msg) => {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
+      const logFile = "error_logs.txt";
       fs.writeFile(
         path.join(buildDir, "error_logs.txt"),
         [message, stack].join("\n"),
-        (error) => {
+        async (error) => {
           if (error) {
             console.log(`unable to write logFile to '${buildDir}'`);
             console.log(error);
+          } else {
+            // no transaction, '/build-mobile-app/finished' filters for valid attributes
+            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
           }
         }
       );

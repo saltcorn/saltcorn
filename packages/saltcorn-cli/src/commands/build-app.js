@@ -4,6 +4,7 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+const User = require("@saltcorn/data/models/user");
 
 /**
  *
@@ -16,6 +17,12 @@ class BuildAppCommand extends Command {
     const db = require("@saltcorn/data/db");
     if (!flags.buildDirectory) {
       throw new Error("Please specify a build directory");
+    }
+    if (flags.copyAppDirectory) {
+      if (!flags.userEmail)
+        throw new Error(
+          "When 'app target-directory' (-c) is set, a valid 'user email' (-u) is needed"
+        );
     }
     if (!flags.entryPoint) {
       throw new Error("Please specify an entry point for the first view");
@@ -36,6 +43,11 @@ class BuildAppCommand extends Command {
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
     this.validateParameters(flags);
+    const user = flags.userEmail
+      ? await User.findOne({ email: flags.userEmail })
+      : undefined;
+    if (!user && flags.userEmail)
+      throw new Error(`The user '${flags.userEmail}' does not exist'`);
     const mobileAppDir = path.join(
       require.resolve("@saltcorn/mobile-app"),
       ".."
@@ -60,6 +72,7 @@ class BuildAppCommand extends Command {
         serverURL: flags.serverURL,
         plugins: dynamicPlugins,
         copyTargetDir: flags.copyAppDirectory,
+        user,
         copyFileName: flags.appFileName,
         buildForEmulator: flags.buildForEmulator,
         tenantAppName: flags.tenantAppName,
@@ -122,7 +135,13 @@ BuildAppCommand.flags = {
   copyAppDirectory: flags.string({
     name: "app target-directory",
     char: "c",
-    description: "If set, the app file will be copied here",
+    description:
+      "If set, the app file will be copied here, please set 'user email', too",
+  }),
+  userEmail: flags.string({
+    name: "user email",
+    char: "u",
+    description: "Email of the user building the app",
   }),
   appFileName: flags.string({
     name: "app file name",
