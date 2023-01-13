@@ -162,8 +162,24 @@ describe("User group", () => {
 
     const myproj = await projs.getRow({ id: projid });
     assertIsSet(myproj);
-    const owner = projs.is_owner(uobj, myproj);
-    expect(owner).toBe(true);
+    expect(projs.is_owner(uobj, myproj)).toBe(true);
+
+    const projid1 = await projects.insertRow({ name: "Take out trash" });
+    const staff = await User.findOne({ role_id: 4 });
+    assertIsSet(staff);
+    await user_works_proj.insertRow({ project: projid1, user: staff.id });
+    const myproj1 = await projs.getRow({ id: projid1 });
+    assertIsSet(myproj1);
+    const staffobj = await User.findForSession({ id: staff.id });
+    assertIsSet(staffobj);
+    expect(projs.is_owner(staffobj, myproj)).toBe(false);
+    expect(projs.is_owner(staffobj, myproj1)).toBe(true);
+    expect(projs.is_owner(uobj, myproj1)).toBe(false);
+
+    // admin is not "owner" but can still read/write due to min_role etc.
+    const adminobj = await User.findForSession({ role_id: 1 });
+    expect(projs.is_owner(adminobj, myproj)).toBe(false);
+    expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 
     await user_works_proj.delete();
     await projects.delete();
