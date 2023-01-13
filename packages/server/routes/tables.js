@@ -109,6 +109,14 @@ const tableForm = async (table, req) => {
                   .join(", "),
               showIf: { ownership_field_id: "_formula" },
             },
+            {
+              label: req.__("User group"),
+              sublabel: req.__(
+                "Add relations to this table in dropdown options for ownership field"
+              ),
+              name: "is_user_group",
+              type: "Bool",
+            },
           ]
         : []),
       // description of table

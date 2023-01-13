@@ -131,6 +131,7 @@ class Table implements AbstractTable {
   external: boolean;
   description?: string;
   fields?: Field[] | null;
+  is_user_group: boolean;
 
   /**
    * Table constructor
@@ -144,6 +145,7 @@ class Table implements AbstractTable {
     this.ownership_field_id = o.ownership_field_id;
     this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
+    this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
     if (o.fields) this.fields = o.fields.map((f) => new Field(f));
