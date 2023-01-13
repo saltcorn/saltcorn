@@ -289,14 +289,30 @@ class Table implements AbstractTable {
       if (field.is_fkey && field.reftable_name) {
         const refTable = await Table.findOne({ name: field.reftable_name });
         if (refTable?.ownership_field_id) {
+          //todo find in table.fields so we dont hit db
           const ofield = await Field.findOne({
             id: refTable?.ownership_field_id,
           });
           if (ofield)
             opts.push({
               label: `Inherit ${field.label}`,
-              value: `Fml:${field.name}.${ofield.name}==user.id`,
+              value: `Fml:${field.name}.${ofield.name}===user.id`,
             });
+        }
+        if (refTable?.ownership_formula) {
+          if (refTable?.ownership_formula.endsWith("==user.id")) {
+            const path = refTable.ownership_formula
+              .replace("===user.id", "")
+              .replace("==user.id", "")
+              .split(".");
+            const fldNms = new Set((refTable?.fields || []).map((f) => f.name));
+            if (fldNms.has(path[0])) {
+              opts.push({
+                label: `Inherit ${field.label}`,
+                value: `Fml:${field.name}.${refTable.ownership_formula}`,
+              });
+            }
+          }
         }
       }
     }
