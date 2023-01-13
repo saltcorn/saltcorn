@@ -276,6 +276,33 @@ class Table implements AbstractTable {
     return typeof field_name === "string" && row[field_name] === user.id;
   }
 
+  async ownership_options(): Promise<{ label: string; value: string }[]> {
+    const fields = await this.getFields();
+
+    //start with userfields
+    const opts: { label: string; value: string }[] = fields
+      .filter((f) => f.reftable_name === "users")
+      .map((f) => ({ value: `${f.id}`, label: f.name }));
+
+    // inherit from all my fks if table has ownership
+    for (const field of fields) {
+      if (field.is_fkey && field.reftable_name) {
+        const refTable = await Table.findOne({ name: field.reftable_name });
+        if (refTable?.ownership_field_id) {
+          const ofield = await Field.findOne({
+            id: refTable?.ownership_field_id,
+          });
+          if (ofield)
+            opts.push({
+              label: `Inherit ${field.label}`,
+              value: `Fml:${field.name}.${ofield.name}==user.id`,
+            });
+        }
+      }
+    }
+    return opts;
+  }
+
   /**
    * Create table
    * @param name - table name
