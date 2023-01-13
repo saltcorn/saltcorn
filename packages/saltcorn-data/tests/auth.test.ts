@@ -82,6 +82,13 @@ describe("Table with row ownership", () => {
       name: "owner",
       type: "Key to users",
     });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    expect(own_opts?.[0].label).toBe("owner");
+    expect(own_opts?.[0].value).toBe(`${owner.id}`);
     await persons.update({ ownership_formula: "user.id===owner" });
     if (!db.isSQLite) {
       await age.update({ type: "Integer" });
@@ -103,7 +110,7 @@ describe("Table with row ownership", () => {
   });
 });
 describe("User group", () => {
-  it("should create and delete table", async () => {
+  it("should support user groups", async () => {
     const projects = await Table.create("Project");
     await Field.create({
       table: projects,
@@ -120,10 +127,25 @@ describe("User group", () => {
     await Field.create({
       table: user_works_proj,
       name: "project",
-      type: "Key to Projects",
+      type: "Key to Project",
     });
     await user_works_proj.update({ is_user_group: true });
 
-    await persons.delete();
+    const projs = Table.findOne({ name: "Project" });
+    assertIsSet(projs);
+
+    const own_opts = await projs.ownership_options();
+    expect(own_opts).toEqual([
+      {
+        label: "In UserWorksOnProject user group by project",
+        value:
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(id)",
+      },
+    ]);
+    await projs.update({
+      ownership_formula: own_opts[0].value.replace("Fml:", ""),
+    });
+    await user_works_proj.delete();
+    await projects.delete();
   });
 });
