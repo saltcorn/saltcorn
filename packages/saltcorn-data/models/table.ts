@@ -288,6 +288,7 @@ class Table implements AbstractTable {
     for (const field of fields) {
       if (field.is_fkey && field.reftable_name) {
         const refTable = await Table.findOne({ name: field.reftable_name });
+
         if (refTable?.ownership_field_id) {
           //todo find in table.fields so we dont hit db
           const ofield = await Field.findOne({
@@ -300,7 +301,9 @@ class Table implements AbstractTable {
             });
         }
         if (refTable?.ownership_formula) {
-          if (refTable?.ownership_formula.endsWith("==user.id")) {
+          const refFml = refTable.ownership_formula;
+
+          if (refFml.endsWith("==user.id")) {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
               .replace("==user.id", "")
@@ -309,7 +312,31 @@ class Table implements AbstractTable {
             if (fldNms.has(path[0])) {
               opts.push({
                 label: `Inherit ${field.label}`,
-                value: `Fml:${field.name}.${refTable.ownership_formula}`,
+                value: `Fml:${field.name}.${refFml}`,
+              });
+            }
+          }
+          if (refFml.startsWith("user.") && refFml.includes(".includes(")) {
+            const [_pre, post] = refFml.split(").includes(");
+            const ref = post.substring(0, post.length - 1);
+            if (ref === this.pk_name) {
+              const fml = refFml.replace(
+                `.includes(${this.pk_name})`,
+                `.includes(${field.name})`
+              );
+              opts.push({
+                label: `Inherit ${field.label}`,
+                value: `Fml:${fml}`,
+              });
+            } else {
+              const fml = refFml.replace(
+                `.includes(${ref})`,
+                `.includes(${field.name}.${ref})`
+              );
+
+              opts.push({
+                label: `Inherit ${field.label}`,
+                value: `Fml:${fml}`,
               });
             }
           }
