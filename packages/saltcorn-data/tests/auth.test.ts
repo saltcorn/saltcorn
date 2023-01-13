@@ -15,6 +15,7 @@ import {
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
+import User from "../models/user";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -145,6 +146,25 @@ describe("User group", () => {
     await projs.update({
       ownership_formula: own_opts[0].value.replace("Fml:", ""),
     });
+    const projid = await projects.insertRow({ name: "World domination" });
+    const user = await User.findOne({ role_id: 8 });
+    assertIsSet(user);
+    await user_works_proj.insertRow({ project: projid, user: user.id });
+
+    const uobj = await User.findForSession({ id: user.id });
+    assertIsSet(uobj);
+
+    expect(uobj.id).toBe(user.id);
+    expect(uobj.role_id).toBe(8);
+    expect(uobj.UserWorksOnProject_by_user).toEqual([
+      { id: 1, project: 1, user: 3 },
+    ]);
+
+    const myproj = await projs.getRow({ id: projid });
+    assertIsSet(myproj);
+    const owner = projs.is_owner(uobj, myproj);
+    expect(owner).toBe(true);
+
     await user_works_proj.delete();
     await projects.delete();
   });
