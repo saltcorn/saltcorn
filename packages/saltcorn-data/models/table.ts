@@ -316,6 +316,37 @@ class Table implements AbstractTable {
         }
       }
     }
+
+    // get user groups
+    const tables = await Table.find({}, { cached: true });
+    for (const ugtable of tables) {
+      if (ugtable.is_user_group) {
+        // /user.usergroups_by_user.map(g=>g.group).includes(group)
+        const ugfields = await ugtable.getFields();
+        const ug_to_user = ugfields.find((f) => f.reftable_name === "users");
+        if (!ug_to_user) continue;
+
+        // direct field from user group to me
+        const ug_to_me = ugfields.find((f) => f.reftable_name === this.name);
+        if (ug_to_me) {
+          opts.push({
+            label: `In ${ugtable.name} user group by ${ug_to_me.label}`,
+            value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ug_to_me.name}).includes(${this.pk_name})`,
+          });
+        }
+
+        // there is a field from this table to user group
+        for (const field of fields) {
+          if (field.is_fkey && field.reftable_name === ugtable.name) {
+            //const to_me = ugfields.find((f) => f.reftable_name === "users");
+            opts.push({
+              label: `In ${ugtable.name} user group by ${field.label}`,
+              value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ugtable.pk_name}).includes(${field.name})`,
+            });
+          }
+        }
+      }
+    }
     return opts;
   }
 
