@@ -754,9 +754,7 @@ router.get(
     for (const table of tables) {
       if (table.external) continue;
       const fields = await table.getFields();
-      const userFields = fields
-        .filter((f) => f.reftable_name === "users")
-        .map((f) => ({ value: f.id, label: f.name }));
+      const ownership_opts = await table.ownership_options();
       const form = new Form({
         action: "/table",
         noSubmitButton: true,
@@ -771,7 +769,7 @@ router.get(
             input_type: "select",
             options: [
               { value: "", label: req.__("None") },
-              ...userFields,
+              ...ownership_opts,
               { value: "_formula", label: req.__("Formula") },
             ],
           },

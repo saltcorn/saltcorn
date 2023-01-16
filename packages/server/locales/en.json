@@ -1080,5 +1080,7 @@
 	"Save indicator": "Save indicator",
 	"Public cache TTL (minutes)": "Public cache TTL (minutes)",
 	"Cache-control max-age for public views and pages. 0 to disable": "Cache-control max-age for public views and pages. 0 to disable",
-	"Files accept filter": "Files accept filter"
+	"Files accept filter": "Files accept filter",
+	"User group": "User group",
+	"Add relations to this table in dropdown options for ownership field": "Add relations to this table in dropdown options for ownership field"
 }

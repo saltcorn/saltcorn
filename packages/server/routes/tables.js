@@ -73,9 +73,7 @@ const tableForm = async (table, req) => {
     value: r.id,
     label: r.role,
   }));
-  const userFields = fields
-    .filter((f) => f.reftable_name === "users")
-    .map((f) => ({ value: f.id, label: f.name }));
+  const ownership_opts = await table.ownership_options();
   const form = new Form({
     action: "/table",
     noSubmitButton: true,
@@ -92,7 +90,7 @@ const tableForm = async (table, req) => {
               input_type: "select",
               options: [
                 { value: "", label: req.__("None") },
-                ...userFields,
+                ...ownership_opts,
                 { value: "_formula", label: req.__("Formula") },
               ],
             },
@@ -108,6 +106,14 @@ const tableForm = async (table, req) => {
                   .map((fn) => code(fn))
                   .join(", "),
               showIf: { ownership_field_id: "_formula" },
+            },
+            {
+              label: req.__("User group"),
+              sublabel: req.__(
+                "Add relations to this table in dropdown options for ownership field"
+              ),
+              name: "is_user_group",
+              type: "Bool",
             },
           ]
         : []),
@@ -898,6 +904,12 @@ router.post(
           notify = req.__(`Invalid ownership formula: %s`, fmlValidRes);
           hasError = true;
         }
+      } else if (
+        typeof rest.ownership_field_id === "string" &&
+        rest.ownership_field_id.startsWith("Fml:")
+      ) {
+        rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
+        rest.ownership_field_id = null;
       } else rest.ownership_formula = null;
       await table.update(rest);
 

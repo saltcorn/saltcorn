@@ -20,6 +20,7 @@ export type TableCfg = {
   ownership_field_id?: string;
   ownership_formula?: string;
   versioned?: boolean;
+  is_user_group?: boolean;
   description?: string;
   fields: FieldCfg[];
 };
