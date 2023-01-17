@@ -9,6 +9,8 @@ const View = require("../../models/view");
 const Table = require("../../models/table");
 const Field = require("../../models/field");
 const Workflow = require("../../models/workflow");
+const Trigger = require("../../models/trigger");
+const Crash = require("../../models/crash");
 
 const {
   div,
@@ -28,7 +30,9 @@ const {
   readState,
   calcfldViewOptions,
   calcfldViewConfig,
+  run_action_column,
 } = require("../../plugin-helper");
+const { action_link } = require("./viewable_fields");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const {
   eachView,
@@ -85,6 +89,13 @@ const configuration_workflow = () =>
             });
           }
           const actions = ["Clear"];
+          (
+            await Trigger.find({
+              when_trigger: { or: ["API call", "Never"] },
+            })
+          ).forEach((tr) => {
+            actions.push(tr.name);
+          });
           const actionConfigForms = {
             Clear: [
               {
@@ -141,6 +152,7 @@ const configuration_workflow = () =>
             actions,
             views,
             pages,
+            images: [], //temp fix till we rebuild builder
             library,
             field_view_options,
             actionConfigForms,
@@ -345,35 +357,46 @@ const run = async (
         options
       );
     },
-    action({
-      block,
-      action_label,
-      action_style,
-      action_size,
-      action_icon,
-      action_name,
-      configuration,
-    }) {
+    action(segment) {
+      const {
+        block,
+        action_label,
+        action_style,
+        action_size,
+        action_icon,
+        action_name,
+        configuration,
+      } = segment;
       const label = action_label || action_name;
-      if (action_style === "btn-link")
-        return a(
-          {
-            href: `javascript:clear_state('${
-              configuration?.omit_fields || ""
-            }')`,
-          },
-          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
-          label
-        );
-      else
-        return button(
-          {
-            onClick: `clear_state('${configuration?.omit_fields || ""}')`,
-            class: `btn ${action_style || "btn-primary"} ${action_size || ""}`,
-          },
-          action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
-          label
-        );
+      if (action_name === "Clear") {
+        if (action_style === "btn-link")
+          return a(
+            {
+              href: `javascript:clear_state('${
+                configuration?.omit_fields || ""
+              }')`,
+            },
+            action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+            label
+          );
+        else
+          return button(
+            {
+              onClick: `clear_state('${configuration?.omit_fields || ""}')`,
+              class: `btn ${action_style || "btn-primary"} ${
+                action_size || ""
+              }`,
+            },
+            action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+            label
+          );
+      } else {
+        const url = {
+          javascript: `view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'});`,
+        };
+
+        return action_link(url, extra.req, segment);
+      }
     },
     toggle_filter({ field_name, value, preset_value, label, size, style }) {
       const field = fields.find((f) => f.name === field_name);
@@ -431,6 +454,21 @@ const or_if_undef = (x, y) => (typeof x === "undefined" ? y : x);
  * @returns {boolean}
  */
 const eq_string = (x, y) => `${x}` === `${y}`;
+
+const run_action = async (
+  table_id,
+  viewname,
+  { columns, layout },
+  body,
+  { req, res },
+  { actionQuery }
+) => {
+  const result = await actionQuery();
+  if (result.json.error) {
+    Crash.create({ message: result.json.error, stack: "" }, req);
+  }
+  return result;
+};
 module.exports = {
   /** @type {string} */
   name: "Filter",
@@ -451,13 +489,34 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
+  routes: { run_action },
   queries: ({
     table_id,
     viewname,
     configuration: { columns, default_state },
     req,
+    res,
     exttable_name,
   }) => ({
+    async actionQuery() {
+      const body = req.body;
+      const col = columns.find(
+        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+      );
+      const table = await Table.findOne({ id: table_id });
+      try {
+        const result = await run_action_column({
+          col,
+          req,
+          table,
+          res,
+          referrer: req.get("Referrer"),
+        });
+        return { json: { success: "ok", ...(result || {}) } };
+      } catch (e) {
+        return { json: { error: e.message || e } };
+      }
+    },
     async distinctValuesQuery(state) {
       const table = await Table.findOne(table_id || exttable_name);
       const fields = await table.getFields();
