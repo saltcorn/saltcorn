@@ -413,8 +413,8 @@ export /**
                 setProp((prop) => {
                   prop.bgFileId =
                     prop.bgFileId ||
-                    (options.images.length + uploadedFiles.length > 0 &&
-                      options.images[0].location);
+                    ((options.images || []).length + uploadedFiles.length > 0 &&
+                       options.images?.[0]?.location);
                 })
               }
             />

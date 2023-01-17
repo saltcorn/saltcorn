@@ -152,6 +152,7 @@ const configuration_workflow = () =>
             actions,
             views,
             pages,
+            images: [], //temp fix till we rebuild builder
             library,
             field_view_options,
             actionConfigForms,
