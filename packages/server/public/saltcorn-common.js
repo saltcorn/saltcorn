@@ -766,17 +766,34 @@ function unique_field_from_rows(
         return i;
     }
   };
+  const char_to_i = (s) => {
+    switch (char_type) {
+      case "Lowercase Letters":
+        return s.charCodeAt(0) - "a".charCodeAt(0);
+      case "Uppercase Letters":
+        return s.charCodeAt(0) - "A".charCodeAt(0);
+      default:
+        return +s;
+    }
+  };
+  const value_wspace = `${value}${space ? " " : ""}`;
   const vals = rows
     .map((o) => o[field_name])
     .filter((s) => s.startsWith(value));
+
   if (vals.includes(value) || always_append) {
-    for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
-      const newname = `${value}${space ? " " : ""}${gen_char(i)}`;
-      if (!vals.includes(newname)) {
-        $("#" + id).val(newname);
-        return;
-      }
+    let newname;
+    const stripped = vals
+      .filter((v) => v !== value)
+      .map((s) => s.replace(value_wspace, ""))
+      .sort();
+    if (stripped.length === 0) newname = `${value_wspace}${gen_char(start)}`;
+    else {
+      const last_i = char_to_i(stripped[stripped.length - 1]);
+
+      newname = `${value_wspace}${gen_char(last_i + 1)}`;
     }
+    $("#" + id).val(newname);
   }
 }
 
