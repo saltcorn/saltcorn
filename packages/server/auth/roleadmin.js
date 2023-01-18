@@ -42,13 +42,12 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) => {
   let edit_link = "";
   const current_layout = layout_by_role[role.id] || layouts[layouts.length - 1];
   let plugin = getState().plugins[current_layout];
-  console.log(getState().plugin_module_names);
+
   if (plugin?.configuration_workflow)
-    if (Object.values(getState().plugin_module_names).includes(current_layout))
-      edit_link = a(
-        { href: `/plugins/configure/${encodeURIComponent(current_layout)}` },
-        i({ class: "fa fa-cog ms-2" })
-      );
+    edit_link = a(
+      { href: `/plugins/configure/${encodeURIComponent(current_layout)}` },
+      i({ class: "fa fa-cog ms-2" })
+    );
 
   return form(
     {
