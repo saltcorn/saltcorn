@@ -60,7 +60,10 @@ const {
 } = require("../utils");
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-//import type Tag from "../models/tag";
+import type {
+  JoinFieldOption,
+  RelationOption,
+} from "@saltcorn/types/base_types";
 
 /**
  * Transponce Objects
@@ -749,7 +752,16 @@ class Table implements AbstractTable {
    */
   async getField(path: string): Promise<Field | undefined> {
     const fields = await this.getFields();
-    if (path.includes(".")) {
+    if (path.includes("->")) {
+      const joinPath = path.split(".");
+      const tableName = joinPath[0];
+      const joinTable = await Table.findOne({ name: tableName });
+      if (!joinTable)
+        throw new Error(`The table '${tableName}' does not exist.`);
+      const joinedField = joinPath[1].split("->")[1];
+      const fields = await joinTable.getFields();
+      return fields.find((f) => f.name === joinedField);
+    } else if (path.includes(".")) {
       const keypath = path.split(".");
       let field,
         theFields = fields;
@@ -1233,6 +1245,120 @@ class Table implements AbstractTable {
     return {
       success: `Imported ${file_rows.length} rows into table ${this.name}`,
     };
+  }
+
+  /**
+   * get join-field-options joined from a field in this table
+   * @param allow_double
+   * @param allow_triple
+   * @returns
+   */
+  async get_join_field_options(
+    allow_double?: boolean,
+    allow_triple?: boolean
+  ): Promise<JoinFieldOption[]> {
+    const fields = await this.getFields();
+    const result = [];
+    for (const f of fields) {
+      if (f.is_fkey && f.type !== "File") {
+        const table = await Table.findOne({ name: f.reftable_name });
+        if (!table) throw new Error(`Unable to find table '${f.reftable_name}`);
+        await table.getFields();
+        if (!table.fields)
+          throw new Error(`The table '${f.reftable_name} has no fields.`);
+        const subOne = {
+          name: f.name,
+          table: table.name,
+          subFields: new Array<any>(),
+          fieldPath: f.name,
+        };
+        for (const pf of table.fields.filter(
+          (f: Field) => !f.calculated || f.stored
+        )) {
+          const subTwo: any = {
+            name: pf.name,
+            subFields: new Array<any>(),
+            fieldPath: `${f.name}.${pf.name}`,
+          };
+          if (pf.is_fkey && pf.type !== "File" && allow_double) {
+            const table1 = await Table.findOne({ name: pf.reftable_name });
+            if (!table1)
+              throw new Error(`Unable to find table '${pf.reftable_name}`);
+            await table1.getFields();
+            subTwo.table = table1.name;
+            if (!table1.fields)
+              throw new Error(`The table '${pf.reftable_name} has no fields.`);
+            if (table1.fields)
+              for (const gpf of table1.fields.filter(
+                (f: Field) => !f.calculated || f.stored
+              )) {
+                const subThree: any = {
+                  name: gpf.name,
+                  subFields: new Array<any>(),
+                  fieldPath: `${f.name}.${pf.name}.${gpf.name}`,
+                };
+                if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                  const gpfTbl = Table.findOne({
+                    name: gpf.reftable_name,
+                  });
+                  if (gpfTbl) {
+                    subThree.table = gpfTbl.name;
+                    const gpfFields = await gpfTbl.getFields();
+                    for (const ggpf of gpfFields.filter(
+                      (f: Field) => !f.calculated || f.stored
+                    )) {
+                      subThree.subFields.push({
+                        name: ggpf.name,
+                        fieldPath: `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`,
+                      });
+                    }
+                  }
+                }
+                subTwo.subFields.push(subThree);
+              }
+          }
+          subOne.subFields.push(subTwo);
+        }
+        result.push(subOne);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * get relation-options joined from a field of another table
+   * @returns
+   */
+  async get_relation_options(): Promise<RelationOption[]> {
+    return await Promise.all(
+      (await this.get_relation_data()).map(
+        async ({ relationTable, relationField }: RelationData) => {
+          const path = `${relationTable.name}.${relationField.name}`;
+          const relFields = await relationTable.getFields();
+          const names = relFields
+            .filter((f: Field) => f.type !== "Key")
+            .map((f: Field) => f.name);
+          return { relationPath: path, relationFields: names };
+        }
+      )
+    );
+  }
+
+  /**
+   * get relation-data joined from a field of another table
+   * @returns
+   */
+  async get_relation_data(): Promise<RelationData[]> {
+    const result = new Array<RelationData>();
+    const o2o_rels = await Field.find({
+      reftable_name: this.name,
+      is_unique: true,
+    });
+    for (const field of o2o_rels) {
+      const relTbl = Table.findOne({ id: field.table_id });
+      if (relTbl) result.push({ relationTable: relTbl, relationField: field });
+    }
+    return result;
   }
 
   /**
@@ -1742,9 +1868,15 @@ namespace Table {
     }[];
     child_field_list: string[];
   };
+
+  export type RelationData = {
+    relationTable: Table;
+    relationField: Field;
+  };
 }
 
 type ParentRelations = Table.ParentRelations;
 type ChildRelations = Table.ChildRelations;
+type RelationData = Table.RelationData;
 
 export = Table;
