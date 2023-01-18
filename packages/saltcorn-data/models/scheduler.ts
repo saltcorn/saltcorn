@@ -196,6 +196,10 @@ const runScheduler = async ({
         }
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
+        await Crash.create(e, {
+          url: `Scheduler tenant ${db.getTenantSchema()}`,
+          headers: {},
+        });
       }
     });
     //auto backup
@@ -209,6 +213,10 @@ const runScheduler = async ({
       }
     } catch (e) {
       console.error(`scheduler error backup: `, e);
+      await Crash.create(e, {
+        url: `Scheduler auto backup`,
+        headers: {},
+      });
     }
   };
 
