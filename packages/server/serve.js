@@ -291,6 +291,7 @@ module.exports =
           auto_backup_now,
           take_snapshot,
         });
+        require("./systemd")({ port });
       }
       Trigger.emitEvent("Startup");
     } else {
