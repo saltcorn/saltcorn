@@ -196,10 +196,11 @@ const runScheduler = async ({
         }
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
-        await Crash.create(e, {
-          url: `Scheduler tenant ${db.getTenantSchema()}`,
-          headers: {},
-        });
+        if (db.getTenantSchema() === db.connectObj.default_schema)
+          await Crash.create(e, {
+            url: `Scheduler tenant ${db.getTenantSchema()}`,
+            headers: {},
+          });
       }
     });
     //auto backup
