@@ -24,11 +24,13 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
       cwd: ".",
     });
-    console.log("current branch: ");
+    console.log("\nCurrent branch: \n");
     spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
       stdio: "inherit",
       cwd: ".",
     });
+    console.log("\n");
+
     spawnSync("git", ["show", "--summary"], {
       stdio: "inherit",
       cwd: ".",
