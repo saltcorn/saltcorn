@@ -23,4 +23,4 @@ echo -e "Unattended-Upgrade::Automatic-Reboot \"true\";\n" >> /etc/apt/apt.conf.
 /etc/init.d/unattended-upgrades restart
 
 # Remove DO agent
-apt-get purge droplet-agent
+apt-get purge -y droplet-agent
