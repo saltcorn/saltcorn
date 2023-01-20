@@ -5,6 +5,7 @@
 const { Command, flags } = require("@oclif/command");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
+const { sleep } = require("../common");
 
 /**
  * ReleaseCommand Class
@@ -19,7 +20,22 @@ class ReleaseCommand extends Command {
     const {
       args: { version },
     } = this.parse(ReleaseCommand);
-
+    spawnSync("git", ["pull"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
+    console.log("current branch: ");
+    spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
+    spawnSync("git", ["show", "--summary"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
+    console.log("Release begins in five seconds, press Ctrl-C to abort");
+    await sleep(5000);
+    //throw new Error("foo");
     const pkgs = {
       "@saltcorn/e2e": { dir: "e2e" },
       "@saltcorn/db-common": { dir: "db-common", publish: true },
@@ -127,7 +143,10 @@ class ReleaseCommand extends Command {
       `Dockerfile.release`,
       dockerfile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
     );
-    const dockerfileWithMobile = fs.readFileSync(`Dockerfile.mobile.release`, "utf8");
+    const dockerfileWithMobile = fs.readFileSync(
+      `Dockerfile.mobile.release`,
+      "utf8"
+    );
     fs.writeFileSync(
       `Dockerfile.mobile.release`,
       dockerfileWithMobile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
