@@ -37,7 +37,6 @@ class ReleaseCommand extends Command {
     });
     console.log("Release begins in five seconds, press Ctrl-C to abort");
     await sleep(5000);
-    //throw new Error("foo");
     const pkgs = {
       "@saltcorn/e2e": { dir: "e2e" },
       "@saltcorn/db-common": { dir: "db-common", publish: true },
