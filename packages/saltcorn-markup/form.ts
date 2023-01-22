@@ -173,6 +173,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
                   class: "dropdown-toggle field-dropdown-submenu",
                   "data-bs-toggle": "dropdown",
                   "aria-expanded": false,
+                  role: "button",
                 },
                 field.name
               ),
@@ -196,6 +197,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
                               class: "dropdown-toggle field-dropdown-submenu",
                               "data-bs-toggle": "dropdown",
                               "aria-expanded": false,
+                              role: "button",
                             },
                             subOne.name
                           ),
@@ -221,6 +223,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
                                             "dropdown-toggle field-dropdown-submenu",
                                           "data-bs-toggle": "dropdown",
                                           "aria-expanded": false,
+                                          role: "button",
                                         },
                                         subTwo.name
                                       ),
@@ -241,6 +244,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
                                                   class:
                                                     "dropdown-item field-val-item",
                                                   onclick: `join_field_clicked(this, '${subThree.fieldPath}')`,
+                                                  role: "button",
                                                 },
                                                 subThree.name
                                               );
@@ -253,6 +257,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
                                       {
                                         class: "dropdown-item field-val-item",
                                         onclick: `join_field_clicked(this, '${subTwo.fieldPath}')`,
+                                        role: "button",
                                       },
                                       subTwo.name
                                     );
@@ -264,6 +269,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
                           {
                             class: "dropdown-item field-val-item",
                             onclick: `join_field_clicked(this, '${subOne.fieldPath}')`,
+                            role: "button",
                           },
                           subOne.name
                         );
@@ -275,6 +281,7 @@ const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
               {
                 class: "dropdown-item field-val-item",
                 onclick: `join_field_clicked(this, '${field.fieldPath}')`,
+                role: "button",
               },
               field.name
             );
@@ -305,6 +312,7 @@ const buildRelationsMenu = (relationJoins: RelationOption[]) => {
               class: "dropdown-toggle relation-dropdown-submenu",
               "data-bs-toggle": "dropdown",
               "aria-expanded": false,
+              role: "button",
             },
             join.relationPath
           ),
@@ -317,6 +325,7 @@ const buildRelationsMenu = (relationJoins: RelationOption[]) => {
                   {
                     class: "dropdown-item field-val-item",
                     onclick: `join_field_clicked(this, '${join.relationPath}->${fName}')`,
+                    role: "button",
                   },
                   fName
                 );

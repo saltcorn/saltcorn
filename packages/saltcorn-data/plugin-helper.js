@@ -219,6 +219,33 @@ const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
 };
 
 /**
+ * create viewoptions (as_text, as_link, show, ...) for fields
+ * with a foreign_key to 'table' from another table
+ * @param table table of the viewtemplate
+ * @param viewtemplate name of the viewtemplate
+ * @returns an object assigning the path (table.foreign_key->field) to viewoptions
+ */
+const calcrelViewOptions = async (table, viewtemplate) => {
+  const rel_field_view_options = {};
+  for (const {
+    relationTable,
+    relationField,
+  } of await table.get_relation_data()) {
+    const { field_view_options } = calcfldViewOptions(
+      await relationTable.getFields(),
+      viewtemplate,
+      true
+    );
+    for (const [k, v] of Object.entries(field_view_options)) {
+      rel_field_view_options[
+        `${relationTable.name}.${relationField.name}->${k}`
+      ] = v;
+    }
+  }
+  return rel_field_view_options;
+};
+
+/**
  * @function
  * @param {Field[]} fields
  * @param isEdit
@@ -426,23 +453,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   }
   const fldOptions = fields.map((f) => f.name);
   const { field_view_options } = calcfldViewOptions(fields, "list");
-
-  const rel_field_view_options = {};
-  for (const {
-    relationTable,
-    relationField,
-  } of await table.get_relation_data()) {
-    const relOptions = calcfldViewOptions(
-      await relationTable.getFields(),
-      "list",
-      true
-    );
-    for (const [k, v] of Object.entries(relOptions.field_view_options)) {
-      rel_field_view_options[
-        `${relationTable.name}.${relationField.name}->${k}`
-      ] = v;
-    }
-  }
+  const rel_field_view_options = await calcrelViewOptions(table, "list");
   const fieldViewConfigForms = await calcfldViewConfig(fields, false);
   const fvConfigFields = [];
   for (const [field_name, fvOptFields] of Object.entries(
@@ -1732,6 +1743,7 @@ module.exports = {
   stateFieldsToQuery,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcrelViewOptions,
   get_link_view_opts,
   readState,
   readStateStrict,

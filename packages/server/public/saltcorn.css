@@ -374,4 +374,5 @@ table.table-inner-grid td {
 .join-table-header {
   padding: 0.25rem 1rem; 
   margin-bottom: 0 !important;
+  text-decoration: underline;
 }
