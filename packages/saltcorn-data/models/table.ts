@@ -27,6 +27,8 @@ import type {
   TablePack,
 } from "@saltcorn/types/model-abstracts/abstract_table";
 
+import type { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
+
 import type { ResultMessage } from "@saltcorn/types/common_types";
 import {
   instanceOfErrorMsg,
@@ -550,11 +552,16 @@ class Table implements AbstractTable {
    */
   async getRow(
     where: Where = {},
-    selopts: SelectOptions = {}
+    selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row | null> {
     await this.getFields();
-    const row = await db.selectMaybeOne(this.name, where, selopts);
+    const { forUser, forPublic, ...selopts1 } = selopts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const row = await db.selectMaybeOne(this.name, where, selopts1);
     if (!row || !this.fields) return null;
+    if (role && role > this.min_role_read) {
+      //check ownership
+    }
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
