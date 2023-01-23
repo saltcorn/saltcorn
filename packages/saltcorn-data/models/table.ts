@@ -1773,7 +1773,9 @@ class Table implements AbstractTable {
     if (role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return [];
-      else if (this.ownership_formula) {
+      else if (this.ownership_field_id) {
+        //already dealt with by changing where
+      } else if (this.ownership_formula) {
         res.rows = res.rows.filter((row: Row) => this.is_owner(forUser, row));
       } else return []; //no ownership
     }

@@ -26,7 +26,7 @@ beforeAll(async () => {
 jest.setTimeout(30000);
 const non_owner_user = { id: 6, email: "foo@bar.com", role_id: 8 };
 const owner_user = { id: 1, email: "foo@bar.com", role_id: 8 };
-describe("Table with row ownership", () => {
+describe("Table with row ownership field", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwned");
     const name = await Field.create({
@@ -92,11 +92,16 @@ describe("Table with row ownership", () => {
         }
       );
       expect(not_owned_rows.length).toBe(0);
+      const owned_rows1 = await persons.getJoinedRows({
+        forUser: owner_user,
+      });
+      expect(owned_rows1.length).toBe(1);
+      expect(owned_rows1[0].age).toBe(13);
     }
     await persons.delete();
   });
 });
-describe("Table with row ownership", () => {
+describe("Table with row ownership formula", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwnedFml");
     const name = await Field.create({
@@ -166,6 +171,11 @@ describe("Table with row ownership", () => {
         }
       );
       expect(not_owned_rows.length).toBe(0);
+      const owned_rows1 = await persons.getJoinedRows({
+        forUser: owner_user,
+      });
+      expect(owned_rows1.length).toBe(1);
+      expect(owned_rows1[0].age).toBe(13);
     }
     await persons.delete();
   });
