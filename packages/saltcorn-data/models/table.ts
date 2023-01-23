@@ -1552,6 +1552,15 @@ class Table implements AbstractTable {
       const freeVars = freeVariables(this.ownership_formula);
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
     }
+    if (role && role > this.min_role_read && this.ownership_field_id) {
+      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      if (!owner_field)
+        throw new Error(`Owner field in table ${this.name} not found`);
+      if (!opts.where) opts.where = {};
+      mergeIntoWhere(opts.where, {
+        [owner_field.name]: (forUser as AbstractUser).id,
+      });
+    }
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
@@ -1748,14 +1757,24 @@ class Table implements AbstractTable {
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */
-  async getJoinedRows(opts: JoinOptions | any = {}): Promise<Array<Row>> {
+  async getJoinedRows(
+    opts: (JoinOptions & ForUserRequest) | any = {}
+  ): Promise<Array<Row>> {
     const fields = await this.getFields();
-
+    const { forUser, forPublic, ...selopts1 } = opts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
     const { sql, values } = await this.getJoinedQuery(opts);
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
     //console.log(sql);
     //console.log(res.rows);
+    if (role && role > this.min_role_read) {
+      //check ownership
+      if (forPublic) return [];
+      else if (this.ownership_formula) {
+        res.rows = res.rows.filter((row: Row) => this.is_owner(forUser, row));
+      } else return []; //no ownership
+    }
 
     const calcRow = apply_calculated_fields(res.rows, fields);
 
