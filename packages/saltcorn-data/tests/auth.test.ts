@@ -24,7 +24,8 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 jest.setTimeout(30000);
-
+const non_owner_user = { id: 6, email: "foo@bar.com", role_id: 8 };
+const owner_user = { id: 1, email: "foo@bar.com", role_id: 8 };
 describe("Table with row ownership", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwned");
@@ -55,8 +56,7 @@ describe("Table with row ownership", () => {
       expect(row.age).toBe(12);
       const owner_fnm = await persons.owner_fieldname();
       expect(owner_fnm).toBe("owner");
-      const non_owner_user = { id: 6, email: "foo@bar.com", role_id: 8 };
-      const owner_user = { id: 1, email: "foo@bar.com", role_id: 8 };
+
       const is_owner = await persons.is_owner(non_owner_user, row);
       expect(is_owner).toBe(false);
       const not_owned_row = await persons.getRow(
@@ -133,10 +133,39 @@ describe("Table with row ownership", () => {
       expect(row.age).toBe(12);
       const is_owner = await persons.is_owner({ id: 6 }, row);
       expect(is_owner).toBe(false);
+      const not_owned_row = await persons.getRow(
+        { id: row.id },
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_row).toBe(null);
       const row1 = await persons.getRow({ age: 13 });
       assertIsSet(row1);
       const is_owner1 = await persons.is_owner({ id: 1 }, row1);
       expect(is_owner1).toBe(true);
+      const owned_row = await persons.getRow(
+        { id: row1.id },
+        {
+          forUser: owner_user,
+        }
+      );
+      expect(!!owned_row).toBe(true);
+      const owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: owner_user,
+        }
+      );
+      expect(owned_rows.length).toBe(1);
+      expect(owned_rows[0].age).toBe(13);
+      const not_owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_rows.length).toBe(0);
     }
     await persons.delete();
   });
