@@ -6,5 +6,5 @@ export interface AbstractUser {
 
 export interface ForUserRequest {
   forUser?: AbstractUser;
-  forPublic?: true;
+  forPublic?: boolean;
 }
