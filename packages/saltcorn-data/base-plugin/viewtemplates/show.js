@@ -859,17 +859,13 @@ module.exports = {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            const joinFields = {};
-            if (table.ownership_formula) {
-              const freeVars = freeVariables(table.ownership_formula);
-              add_free_variables_to_joinfields(freeVars, joinFields, fields);
-            }
             const row = await table.getJoinedRows({
               where: uniques,
-              joinFields,
+              forPublic: !req.user,
+              forUser: req.user,
             });
-            if (row.length > 0) return table.is_owner(req.user, row[0]);
-            else return true; // TODO ??
+            if (row.length > 0) return true;
+            else return false;
           }
         }
       }
