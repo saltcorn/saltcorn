@@ -736,9 +736,9 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
+  /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
     return await authorizeGetQuery(query, table_id);
-  },
+  },*/
   queries: ({
     table_id,
     exttable_name,
@@ -849,7 +849,7 @@ module.exports = {
         return { json: { error: e.message || e } };
       }
     },
-    async authorizeGetQuery(query, table_id) {
+    /*async authorizeGetQuery(query, table_id) {
       let body = query || {};
       const user_id = req.user ? req.user.id : null;
 
@@ -870,7 +870,7 @@ module.exports = {
         }
       }
       return false;
-    },
+    },*/
   }),
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);
