@@ -776,6 +776,8 @@ module.exports = {
         aggregations,
         limit: 5,
         starFields: tbl.name === "users",
+        forPublic: !req.user,
+        forUser: req.user,
       });
       return {
         rows,
@@ -818,6 +820,8 @@ module.exports = {
         ...(orderBy && { orderBy: orderBy }),
         ...(orderDesc && { orderDesc: orderDesc }),
         ...q,
+        forPublic: !req.user,
+        forUser: req.user,
       });
       if (tbl.ownership_formula && role > tbl.min_role_read && req) {
         rows = rows.filter((row) => tbl.is_owner(req.user, row));

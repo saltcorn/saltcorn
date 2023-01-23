@@ -796,6 +796,8 @@ module.exports = {
         joinFields,
         aggregations,
         ...q,
+        forPublic: !req.user,
+        forUser: req.user,
       });
 
       //TODO this will mean that limit is not respected. change filter to jsexprToWhere
