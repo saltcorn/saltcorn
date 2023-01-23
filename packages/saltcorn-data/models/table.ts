@@ -27,7 +27,10 @@ import type {
   TablePack,
 } from "@saltcorn/types/model-abstracts/abstract_table";
 
-import type { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
+import type {
+  ForUserRequest,
+  AbstractUser,
+} from "@saltcorn/types/model-abstracts/abstract_user";
 
 import type { ResultMessage } from "@saltcorn/types/common_types";
 import {
@@ -52,14 +55,15 @@ import { stat, readFile } from "fs/promises";
 import utils from "../utils";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
-const { prefixFieldsInWhere } = utils;
 const {
+  prefixFieldsInWhere,
   InvalidConfiguration,
   InvalidAdminAction,
   satisfies,
   structuredClone,
   getLines,
-} = require("../utils");
+  mergeIntoWhere,
+} = utils;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 //import type Tag from "../models/tag";
@@ -554,7 +558,7 @@ class Table implements AbstractTable {
     where: Where = {},
     selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row | null> {
-    await this.getFields();
+    const fields = await this.getFields();
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
     const row = await db.selectMaybeOne(this.name, where, selopts1);
@@ -563,13 +567,12 @@ class Table implements AbstractTable {
       //check ownership
       if (forPublic) return null;
       else if (this.ownership_field_id) {
-        const fields = await this.getFields();
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (row[owner_field.name] !== forUser.id) return null;
+        if (row[owner_field.name] !== (forUser as AbstractUser).id) return null;
       } else if (this.ownership_formula) {
         if (!this.is_owner(forUser, row)) return null;
       } else return null; //no ownership
@@ -585,11 +588,32 @@ class Table implements AbstractTable {
    */
   async getRows(
     where: Where = {},
-    selopts: SelectOptions = {}
+    selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row[]> {
-    await this.getFields();
-    const rows = await db.select(this.name, where, selopts);
+    const fields = await this.getFields();
     if (!this.fields) return [];
+    const { forUser, forPublic, ...selopts1 } = selopts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const where1 = { ...where };
+    if (role && role > this.min_role_read && this.ownership_field_id) {
+      if (forPublic) return [];
+      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      if (!owner_field)
+        throw new Error(`Owner field in table ${this.name} not found`);
+      mergeIntoWhere(where1, {
+        [owner_field.name]: (forUser as AbstractUser).id,
+      });
+    }
+
+    let rows = await db.select(this.name, where1, selopts1);
+    if (role && role > this.min_role_read) {
+      //check ownership
+      if (forPublic) return [];
+      else if (this.ownership_formula) {
+        rows = rows.filter((row: Row) => this.is_owner(forUser, row));
+      } else return []; //no ownership
+    }
+
     return apply_calculated_fields(
       rows.map((r: Row) => this.readFromDB(r)),
       this.fields
