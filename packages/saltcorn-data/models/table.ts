@@ -561,6 +561,18 @@ class Table implements AbstractTable {
     if (!row || !this.fields) return null;
     if (role && role > this.min_role_read) {
       //check ownership
+      if (forPublic) return null;
+      else if (this.ownership_field_id) {
+        const fields = await this.getFields();
+        const owner_field = fields.find(
+          (f) => f.id === this.ownership_field_id
+        );
+        if (!owner_field)
+          throw new Error(`Owner field in table ${this.name} not found`);
+        if (row[owner_field.name] !== forUser.id) return null;
+      } else if (this.ownership_formula) {
+        if (!this.is_owner(forUser, row)) return null;
+      } else return null; //no ownership
     }
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
