@@ -15,7 +15,7 @@ import type {
   Where,
   SelectOptions,
   Row,
-  JoinField,
+  JoinFields,
   JoinOptions,
   AggregationOptions,
 } from "@saltcorn/db-common/internal";
@@ -46,6 +46,7 @@ const {
   recalculate_for_stored,
   get_expression_function,
   freeVariables,
+  add_free_variables_to_joinfields,
 } = expression;
 
 import csvtojson from "csvtojson";
@@ -1535,14 +1536,22 @@ class Table implements AbstractTable {
    * @param opts
    * @returns {Promise<{values, sql: string}>}
    */
-  async getJoinedQuery(opts: JoinOptions | any = {}): Promise<any> {
+  async getJoinedQuery(
+    opts: (JoinOptions & ForUserRequest) | any = {}
+  ): Promise<any> {
     const fields = await this.getFields();
     let fldNms = [];
     let joinq = "";
     let joinTables: string[] = [];
-    let joinFields: JoinField = opts.joinFields || {};
+    let joinFields: JoinFields = opts.joinFields || {};
     let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
+    const { forUser, forPublic } = opts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    if (role && role > this.min_role_read && this.ownership_formula) {
+      const freeVars = freeVariables(this.ownership_formula);
+      add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    }
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields

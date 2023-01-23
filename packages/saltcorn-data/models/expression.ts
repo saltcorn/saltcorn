@@ -9,7 +9,7 @@ import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import Table from "./table";
-import { Row, Where } from "@saltcorn/db-common/internal";
+import { JoinFields, Row, Where } from "@saltcorn/db-common/internal";
 import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
@@ -278,6 +278,52 @@ function freeVariables(expression: string): Set<string> {
   return new Set(freeVars);
 }
 
+/**
+ * Add free variables to join fields
+ * @param freeVars
+ * @param joinFields
+ * @param fields
+ */
+const add_free_variables_to_joinfields = (
+  freeVars: Set<string>,
+  joinFields: JoinFields,
+  fields: Field[]
+) => {
+  const joinFieldNames = new Set(
+    fields.filter((f) => f.is_fkey).map((f) => f.name)
+  );
+  [...freeVars]
+    .filter((v) => v.includes("."))
+    .forEach((v) => {
+      const kpath = v.split(".");
+      if (joinFieldNames.has(kpath[0]))
+        if (kpath.length === 2) {
+          const [refNm, targetNm] = kpath;
+          joinFields[`${refNm}_${targetNm}`] = {
+            ref: refNm,
+            target: targetNm,
+            rename_object: [refNm, targetNm],
+          };
+        } else if (kpath.length === 3) {
+          const [refNm, through, targetNm] = kpath;
+          joinFields[`${refNm}_${through}_${targetNm}`] = {
+            ref: refNm,
+            target: targetNm,
+            through,
+            rename_object: [refNm, through, targetNm],
+          };
+        } else if (kpath.length === 4) {
+          const [refNm, through1, through2, targetNm] = kpath;
+          joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+            ref: refNm,
+            target: targetNm,
+            through: [through1, through2],
+            rename_object: [refNm, through1, through2, targetNm],
+          };
+        }
+    });
+};
+
 function isIdentifierWithName(node: any): node is Identifier {
   return node && "name" in node && node.name !== undefined;
 }
@@ -487,4 +533,5 @@ export = {
   jsexprToWhere,
   jsexprToSQL,
   freeVariables,
+  add_free_variables_to_joinfields,
 };
