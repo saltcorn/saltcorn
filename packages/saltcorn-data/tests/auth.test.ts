@@ -85,6 +85,13 @@ describe("Table with row ownership", () => {
       );
       expect(owned_rows.length).toBe(1);
       expect(owned_rows[0].age).toBe(13);
+      const not_owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_rows.length).toBe(0);
     }
     await persons.delete();
   });
