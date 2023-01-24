@@ -1223,6 +1223,8 @@ module.exports = {
         ...(orderBy && { orderBy: orderBy }),
         ...(orderDesc && { orderDesc: orderDesc }),
         ...q,
+        forPublic: !req.user,
+        forUser: req.user,
       });
       return {
         table,
