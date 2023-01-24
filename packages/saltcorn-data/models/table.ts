@@ -706,7 +706,7 @@ class Table implements AbstractTable {
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
-    if (user && user?.role_id > this.min_role_write) {
+    if (user && user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
@@ -714,7 +714,14 @@ class Table implements AbstractTable {
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
         if (v[owner_field.name] && v[owner_field.name] !== user.id) return;
+        else if (!v[owner_field.name]) {
+          //need to check existing
+          if (!existing)
+            existing = await db.selectOne(this.name, { [pk_name]: id });
+          if (existing?.[owner_field.name] !== user.id) return;
+        }
       }
+      if (!this.ownership_field_id && !this.ownership_formula) return;
     }
     if (this.versioned) {
       if (!existing)
@@ -829,6 +836,17 @@ class Table implements AbstractTable {
     const joinFields = this.storedExpressionJoinFields();
     let v;
     let id;
+    if (user && user.role_id > this.min_role_write) {
+      if (this.ownership_field_id) {
+        const owner_field = fields.find(
+          (f) => f.id === this.ownership_field_id
+        );
+        if (!owner_field)
+          throw new Error(`Owner field in table ${this.name} not found`);
+        if (v_in[owner_field.name] !== user.id) return;
+      }
+      if (!this.ownership_field_id && !this.ownership_formula) return;
+    }
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
