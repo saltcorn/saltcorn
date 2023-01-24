@@ -5,7 +5,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import mocks from "./mocks";
-const { rick_file, plugin_with_routes, mockReqRes } = mocks;
+const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
   assertsIsSuccessMessage,
@@ -77,6 +77,7 @@ describe("Table with row ownership field", () => {
         }
       );
       expect(!!owned_row).toBe(true);
+
       const owned_rows = await persons.getRows(
         {},
         {
@@ -97,6 +98,20 @@ describe("Table with row ownership field", () => {
       });
       expect(owned_rows1.length).toBe(1);
       expect(owned_rows1[0].age).toBe(13);
+      const view = await createDefaultView(persons, "Show", 10);
+      const contents = await view.run_possibly_on_page(
+        { id: row.id },
+        { ...mockReqRes.req, user: non_owner_user },
+        mockReqRes.res
+      );
+      expect(contents).toBe("<div>No row selected</div>");
+      const contents1 = await view.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: owner_user },
+        mockReqRes.res
+      );
+      expect(contents1).toContain(">13<");
+      await view.delete();
     }
     await persons.delete();
   });
