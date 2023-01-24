@@ -500,10 +500,28 @@ class Table implements AbstractTable {
    * @param where - condition
    * @returns {Promise<void>}
    */
-  async deleteRows(where: Where) {
+  async deleteRows(where1: Where, user?: Row) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = await this.getFields();
+
+    const where = { ...where1 };
+    if (
+      user &&
+      user.role_id > this.min_role_write &&
+      !this.ownership_field_id &&
+      !this.ownership_formula
+    )
+      return;
+    if (user && user.role_id > this.min_role_write && this.ownership_field_id) {
+      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      if (!owner_field)
+        throw new Error(`Owner field in table ${this.name} not found`);
+      mergeIntoWhere(where, {
+        [owner_field.name]: user.id,
+      });
+    }
+
     const deleteFileFields = fields.filter(
       (f) => f.type === "File" && f.attributes?.also_delete_file
     );
