@@ -159,7 +159,7 @@ test("unique_field_from_rows test", () => {
   $("body").append(`<input id="mkuniq10" value="bar"></div>`);
   unique_field_from_rows(
     [],
-    "mkuniq1",
+    "mkuniq10",
     "foo",
     false,
     100,
@@ -167,5 +167,17 @@ test("unique_field_from_rows test", () => {
     "Digits",
     "bar"
   );
-  expect($("#mkuniq1").val()).toBe("bar100");
+  expect($("#mkuniq10").val()).toBe("bar100");
+  $("body").append(`<input id="mkuniq11" value="bar"></div>`);
+  unique_field_from_rows(
+    [{ foo: "bar100" }, { foo: "bar101" }, { foo: "bar35" }, { foo: "bar103" }],
+    "mkuniq11",
+    "foo",
+    false,
+    100,
+    true,
+    "Digits",
+    "bar"
+  );
+  expect($("#mkuniq11").val()).toBe("bar104");
 });
