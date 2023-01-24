@@ -780,7 +780,8 @@ function unique_field_from_rows(
   const vals = rows
     .map((o) => o[field_name])
     .filter((s) => s.startsWith(value));
-
+  const numtype =
+    char_type !== "Lowercase Letters" && char_type !== "Uppercase Letters";
   if (vals.includes(value) || always_append) {
     let newname;
     const stripped = vals
@@ -789,7 +790,8 @@ function unique_field_from_rows(
       .sort();
     if (stripped.length === 0) newname = `${value_wspace}${gen_char(start)}`;
     else {
-      const last_i = char_to_i(stripped[stripped.length - 1]);
+      const i = char_to_i(stripped[stripped.length - 1]);
+      const last_i = numtype ? Math.max(i, start - 1) : i;
 
       newname = `${value_wspace}${gen_char(last_i + 1)}`;
     }
