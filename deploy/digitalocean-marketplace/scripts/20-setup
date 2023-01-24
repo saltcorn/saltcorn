@@ -17,6 +17,10 @@ ufw allow https
 ufw allow http
 ufw --force enable
 
+# Enable unattended upgrades
 echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\n" > /etc/apt/apt.conf.d/20auto-upgrades
 echo -e "Unattended-Upgrade::Automatic-Reboot \"true\";\n" >> /etc/apt/apt.conf.d/50unattended-upgrades
 /etc/init.d/unattended-upgrades restart
+
+# Remove DO agent
+apt-get purge -y droplet-agent

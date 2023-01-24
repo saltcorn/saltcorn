@@ -143,7 +143,11 @@ const configuration_workflow = (req) =>
             ],
           };
           const { link_view_opts, view_name_opts, view_relation_opts } =
-            await get_link_view_opts(table, context.viewname);
+            await get_link_view_opts(
+              table,
+              context.viewname,
+              (v) => v.viewtemplate !== "Room"
+            );
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");

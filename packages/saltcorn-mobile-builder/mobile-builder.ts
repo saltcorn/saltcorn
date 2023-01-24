@@ -20,6 +20,7 @@ import {
   tryCopyAppFiles,
   prepareBuildDir,
 } from "./utils/cordova-build-utils";
+import User from "@saltcorn/data/models/user";
 
 type EntryPointType = "view" | "page";
 
@@ -40,6 +41,7 @@ export class MobileBuilder {
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
+  user?: User;
   copyFileName?: string;
   buildForEmulator?: boolean;
   tenantAppName?: string;
@@ -60,6 +62,7 @@ export class MobileBuilder {
     serverURL: string;
     plugins: Plugin[];
     copyTargetDir?: string;
+    user?: User;
     copyFileName?: string;
     buildForEmulator?: boolean;
     tenantAppName?: string;
@@ -79,6 +82,7 @@ export class MobileBuilder {
     });
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
+    this.user = cfg.user;
     this.copyFileName = cfg.copyFileName;
     this.buildForEmulator = cfg.buildForEmulator;
     this.tenantAppName = cfg.tenantAppName;
@@ -120,7 +124,8 @@ export class MobileBuilder {
       await tryCopyAppFiles(
         this.buildDir,
         this.copyTargetDir,
-        this.copyFileName
+        this.user!,
+        this.copyFileName,
       );
     }
     return resultCode;

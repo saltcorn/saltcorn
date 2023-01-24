@@ -97,6 +97,7 @@ const View = require("@saltcorn/data/models/view");
 const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
+const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 
 const router = new Router();
 module.exports = router;
@@ -194,6 +195,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Site identity settings"),
+        titleAjaxIndicator: true,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -251,6 +253,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Email settings"),
+        titleAjaxIndicator: true,
         contents: [
           renderForm(form, req.csrfToken()),
           a(
@@ -321,9 +324,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Email settings updated"));
-      if (!req.xhr) res.redirect("/admin/email");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Email settings updated"));
+        res.redirect("/admin/email");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -391,6 +395,7 @@ router.get(
             ? {
                 type: "card",
                 title: req.__("Automated backup"),
+                titleAjaxIndicator: true,
                 contents: div(
                   renderForm(backupForm, req.csrfToken()),
                   a(
@@ -408,6 +413,7 @@ router.get(
           {
             type: "card",
             title: req.__("Snapshots"),
+            titleAjaxIndicator: true,
             contents: div(
               p(
                 i(
@@ -708,9 +714,11 @@ router.post(
     form.validate(req.body);
 
     await save_config_from_form(form);
-    req.flash("success", req.__("Snapshot settings updated"));
-    if (!req.xhr) res.redirect("/admin/backup");
-    else res.json({ success: "ok" });
+
+    if (!req.xhr) {
+      req.flash("success", req.__("Snapshot settings updated"));
+      res.redirect("/admin/backup");
+    } else res.json({ success: "ok" });
   })
 );
 router.post(
@@ -732,9 +740,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Backup settings updated"));
-      if (!req.xhr) res.redirect("/admin/backup");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Backup settings updated"));
+        res.redirect("/admin/backup");
+      } else res.json({ success: "ok" });
     }
   })
 );
@@ -1306,7 +1315,7 @@ const buildDialogScript = () => {
   }
   
   function handleMessages() {
-    notifyAlert("This is still under development and might run longer.")
+    notifyAlert("Building the app, please wait.")
     ${
       getState().getConfig("apple_team_id") &&
       getState().getConfig("apple_team_id") !== "null"
@@ -1537,7 +1546,22 @@ router.get(
 const checkFiles = async (outDir, fileNames) => {
   const rootFolder = await File.rootFolder();
   const mobile_app_dir = path.join(rootFolder.location, "mobile_app", outDir);
-  const entries = fs.readdirSync(mobile_app_dir);
+  const unsafeFiles = await Promise.all(
+    fs
+      .readdirSync(mobile_app_dir)
+      .map(
+        async (outFile) => await File.from_file_on_disk(outFile, mobile_app_dir)
+      )
+  );
+  const entries = unsafeFiles
+    .filter(
+      (file) =>
+        file.user_id &&
+        !isNaN(file.user_id) &&
+        file.min_role_read &&
+        !isNaN(file.min_role_read)
+    )
+    .map((file) => file.filename);
   return fileNames.some((fileName) => entries.indexOf(fileName) >= 0);
 };
 
@@ -1630,6 +1654,8 @@ router.post(
       buildDir,
       "-b",
       `${os.userInfo().homedir}/mobile_app_build`,
+      "-u",
+      req.user.email, // ensured by isAdmin
     ];
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
@@ -1651,7 +1677,7 @@ router.post(
     // end http call, return the out directory name
     // the gui polls for results
     res.json({ build_dir_name: outDirName });
-    const child = spawn("saltcorn", spawnParams, {
+    const child = spawn(getSafeSaltcornCmd(), spawnParams, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
@@ -1664,29 +1690,36 @@ router.post(
       // console.log(data.toString());
       childOutputs.push(data ? data.toString() : req.__("An error occurred"));
     });
-    child.on("exit", async function (exitCode, signal) {
+    child.on("exit", (exitCode, signal) => {
       const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
       fs.writeFile(
         path.join(buildDir, logFile),
         childOutputs.join("\n"),
-        (error) => {
+        async (error) => {
           if (error) {
             console.log(`unable to write '${logFile}' to '${buildDir}'`);
             console.log(error);
+          } else {
+            // no transaction, '/build-mobile-app/finished' filters for valid attributes
+            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
           }
         }
       );
     });
-    child.on("error", function (msg) {
+    child.on("error", (msg) => {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
+      const logFile = "error_logs.txt";
       fs.writeFile(
         path.join(buildDir, "error_logs.txt"),
         [message, stack].join("\n"),
-        (error) => {
+        async (error) => {
           if (error) {
             console.log(`unable to write logFile to '${buildDir}'`);
             console.log(error);
+          } else {
+            // no transaction, '/build-mobile-app/finished' filters for valid attributes
+            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
           }
         }
       );
@@ -1858,6 +1891,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Development settings"),
+        titleAjaxIndicator: true,
         contents: [
           renderForm(form, req.csrfToken()) /*,
                     a(
@@ -1899,9 +1933,10 @@ router.post(
       });
     } else {
       await save_config_from_form(form);
-      req.flash("success", req.__("Development mode settings updated"));
-      if (!req.xhr) res.redirect("/admin/dev");
-      else res.json({ success: "ok" });
+      if (!req.xhr) {
+        req.flash("success", req.__("Development mode settings updated"));
+        res.redirect("/admin/dev");
+      } else res.json({ success: "ok" });
     }
   })
 );

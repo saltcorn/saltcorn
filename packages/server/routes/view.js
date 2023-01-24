@@ -76,6 +76,8 @@ router.get(
           view.attributes?.popup_width_units || "px"
         }`
       );
+    if (isModal && view.attributes?.popup_save_indicator)
+      res.set("SaltcornModalSaveIndicator", `true`);
     res.sendWrap(
       title,
       add_edit_bar({

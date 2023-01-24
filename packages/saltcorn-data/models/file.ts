@@ -15,11 +15,24 @@ import axios from "axios";
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
+import type User from "./user";
 const path = require("path");
 const fsp = require("fs").promises;
 const fs = require("fs");
-const xattr = require("fs-xattr");
+const fsx = require("fs-extended-attributes");
 declare let window: any;
+
+function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
+  return new Promise((resolve) => fsx.set(fp, attrName, value, resolve));
+}
+function xattr_get(fp: string, attrName: string): Promise<string> {
+  return new Promise((resolve, reject) =>
+    fsx.get(fp, attrName, (err: string, attrBuf: Buffer) => {
+      if (err) reject(err);
+      else resolve(attrBuf?.toString?.("utf8"));
+    })
+  );
+}
 
 /**
  * File Descriptor class
@@ -177,7 +190,7 @@ class File {
     }
     let min_role_read, user_id;
     try {
-      min_role_read = +(await xattr.get(
+      min_role_read = +(await xattr_get(
         path.join(absoluteFolder, name),
         "user.saltcorn.min_role_read"
       ));
@@ -185,10 +198,13 @@ class File {
       min_role_read = 10;
     }
     try {
-      user_id = +(await xattr.get(
+      const uid = await xattr_get(
         path.join(absoluteFolder, name),
         "user.saltcorn.user_id"
-      ));
+      );
+      //console.log({ name, uid });
+
+      user_id = +uid;
     } catch (e) {}
 
     const isDirectory = stat.isDirectory();
@@ -304,25 +320,25 @@ class File {
   }
 
   async set_role(min_role_read: number) {
-    // const fsx = await import("fs-xattr");
     if (this.id) {
       await File.update(this.id, { min_role_read });
     } else {
-      await xattr.set(
+      await xattr_set(
         this.location,
         "user.saltcorn.min_role_read",
         `${min_role_read}`
       );
     }
+    this.min_role_read = min_role_read;
   }
 
   async set_user(user_id: number) {
-    // const fsx = await import("fs-xattr");
     if (this.id) {
       await File.update(this.id, { user_id });
     } else {
-      await xattr.set(this.location, "user.saltcorn.user_id", `${user_id}`);
+      await xattr_set(this.location, "user.saltcorn.user_id", `${user_id}`);
     }
+    this.user_id = user_id;
   }
 
   async rename(filenameIn: string): Promise<void> {
@@ -532,8 +548,18 @@ class File {
       if (this.id) await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
       if (unlinker) await unlinker(this);
-      else if (this.isDirectory) await fsp.rmdir(this.location);
-      else await unlink(this.location);
+      else if (this.isDirectory) {
+        //delete all resized before attempting to delete dir
+
+        const fileNms = await fsp.readdir(this.location);
+
+        for (const name of fileNms) {
+          if (name.startsWith("_resized_"))
+            await unlink(path.join(this.location, name));
+        }
+
+        await fsp.rmdir(this.location);
+      } else await unlink(this.location);
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache
       await require("../db/state").getState().refresh_files();
@@ -590,6 +616,18 @@ class File {
       },
     });
     return response.data.success;
+  }
+
+  static async set_xattr_of_existing_file(
+    name: string,
+    absoluteFolder: string,
+    user: User
+  ): Promise<void> {
+    if (!user.id)
+      throw new Error("Unable to set the attributes, the user has no id");
+    const file = await File.from_file_on_disk(name, absoluteFolder);
+    file.set_user(user.id);
+    file.set_role(user.role_id);
   }
 }
 

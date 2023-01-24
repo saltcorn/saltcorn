@@ -467,8 +467,7 @@ const Builder = ({ options, layout, mode }) => {
                   <HistoryPanel />
                   <FontAwesomeIcon
                     icon={faSave}
-                    title={isSaving ? "Saving..." : "All changes saved"}
-                    className={isSaving ? "text-muted" : ""}
+                    className={isSaving ? "d-inline" : "d-none"}
                   />
                   <ViewPageLink />
                   <SettingsPanel />

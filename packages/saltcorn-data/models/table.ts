@@ -134,6 +134,7 @@ class Table implements AbstractTable {
   external: boolean;
   description?: string;
   fields?: Field[] | null;
+  is_user_group: boolean;
 
   /**
    * Table constructor
@@ -147,6 +148,7 @@ class Table implements AbstractTable {
     this.ownership_field_id = o.ownership_field_id;
     this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
+    this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
     if (o.fields) this.fields = o.fields.map((f) => new Field(f));
@@ -275,6 +277,107 @@ class Table implements AbstractTable {
       return user && user.id && row && `${row.id}` === `${user.id}`;
 
     return typeof field_name === "string" && row[field_name] === user.id;
+  }
+
+  async ownership_options(): Promise<{ label: string; value: string }[]> {
+    const fields = await this.getFields();
+
+    //start with userfields
+    const opts: { label: string; value: string }[] = fields
+      .filter((f) => f.reftable_name === "users")
+      .map((f) => ({ value: `${f.id}`, label: f.name }));
+
+    // inherit from all my fks if table has ownership
+    for (const field of fields) {
+      if (field.is_fkey && field.reftable_name) {
+        const refTable = await Table.findOne({ name: field.reftable_name });
+
+        if (refTable?.ownership_field_id) {
+          //todo find in table.fields so we dont hit db
+          const ofield = await Field.findOne({
+            id: refTable?.ownership_field_id,
+          });
+          if (ofield)
+            opts.push({
+              label: `Inherit ${field.label}`,
+              value: `Fml:${field.name}.${ofield.name}===user.id`,
+            });
+        }
+        if (refTable?.ownership_formula) {
+          const refFml = refTable.ownership_formula;
+
+          if (refFml.endsWith("==user.id")) {
+            const path = refTable.ownership_formula
+              .replace("===user.id", "")
+              .replace("==user.id", "")
+              .split(".");
+            const fldNms = new Set((refTable?.fields || []).map((f) => f.name));
+            if (fldNms.has(path[0])) {
+              opts.push({
+                label: `Inherit ${field.label}`,
+                value: `Fml:${field.name}.${refFml}`,
+              });
+            }
+          }
+          if (refFml.startsWith("user.") && refFml.includes(".includes(")) {
+            const [_pre, post] = refFml.split(").includes(");
+            const ref = post.substring(0, post.length - 1);
+            if (ref === this.pk_name) {
+              const fml = refFml.replace(
+                `.includes(${this.pk_name})`,
+                `.includes(${field.name})`
+              );
+              opts.push({
+                label: `Inherit ${field.label}`,
+                value: `Fml:${fml}`,
+              });
+            } else {
+              const fml = refFml.replace(
+                `.includes(${ref})`,
+                `.includes(${field.name}.${ref})`
+              );
+
+              opts.push({
+                label: `Inherit ${field.label}`,
+                value: `Fml:${fml}`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // get user groups
+    const tables = await Table.find({}, { cached: true });
+    for (const ugtable of tables) {
+      if (ugtable.is_user_group) {
+        // /user.usergroups_by_user.map(g=>g.group).includes(group)
+        const ugfields = await ugtable.getFields();
+        const ug_to_user = ugfields.find((f) => f.reftable_name === "users");
+        if (!ug_to_user) continue;
+
+        // direct field from user group to me
+        const ug_to_me = ugfields.find((f) => f.reftable_name === this.name);
+        if (ug_to_me) {
+          opts.push({
+            label: `In ${ugtable.name} user group by ${ug_to_me.label}`,
+            value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ug_to_me.name}).includes(${this.pk_name})`,
+          });
+        }
+
+        // there is a field from this table to user group
+        for (const field of fields) {
+          if (field.is_fkey && field.reftable_name === ugtable.name) {
+            //const to_me = ugfields.find((f) => f.reftable_name === "users");
+            opts.push({
+              label: `In ${ugtable.name} user group by ${field.label}`,
+              value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ugtable.pk_name}).includes(${field.name})`,
+            });
+          }
+        }
+      }
+    }
+    return opts;
   }
 
   /**

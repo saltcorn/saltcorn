@@ -26,6 +26,7 @@ import { Image } from "./elements/Image";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
 import { Link } from "./elements/Link";
+import { Page } from "./elements/Page";
 import optionsCtx from "./context";
 import {
   BoundingBox,
@@ -359,6 +360,20 @@ const DropMenuElem = ({ connectors }) => (
   </WrapElem>
 );
 
+const PageElem = ({connectors, pages}) => (
+  <WrapElem
+    connectors={connectors}
+    icon="fa-fw far fa-file"
+    title="Embed a page"
+    label="Page"
+    disable={pages.length <= 1}
+  >
+    <Page 
+      page={pages.length > 0 ? pages[0].name : "page"}
+    />
+  </WrapElem>
+);
+
 /**
  * @param {object} props
  * @param {object} props.connectors
@@ -654,7 +669,7 @@ export /**
 const ToolboxPage = () => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { views, images } = options;
+  const { views, pages, images } = options;
   return (
     <Fragment>
       <div className="toolbar-row">
@@ -683,6 +698,7 @@ const ToolboxPage = () => {
       </div>
       <div className="toolbar-row">
         <DropMenuElem connectors={connectors} />
+        <PageElem connectors={connectors} pages={pages} />
       </div>
     </Fragment>
   );

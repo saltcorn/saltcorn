@@ -148,7 +148,7 @@ const configuration_workflow = (req) =>
                 label: req.__("Participant field"),
                 type: "String",
                 sublabel: req.__("The field for the participant user id"),
-                required: true,
+                required: false,
                 attributes: {
                   options: participant_field_options,
                 },
@@ -222,31 +222,35 @@ const run = async (
   if (!state.id) return "Need room id";
   const appState = getState();
   const locale = req.getLocale();
+  const role = req && req.user ? req.user.role_id : 10;
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
-  if (
-    !participant_field ||
-    !msgview ||
-    !msgform ||
-    !msgsender_field ||
-    !msg_relation
-  )
+  if (!msgview || !msgform || !msgsender_field || !msg_relation)
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
     );
 
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  const [part_table_name, part_key_to_room, part_user_field] =
-    participant_field.split(".");
+  let partRow, part_table_name, canWrite;
+  if (participant_field) {
+    const [part_table_name1, part_key_to_room, part_user_field] =
+      participant_field.split(".");
+    part_table_name = part_table_name1;
+    // check we participate
+    partRow = await getRowQuery(
+      state.id,
+      part_table_name,
+      part_user_field,
+      part_key_to_room
+    );
+    if (!partRow) return "You are not a participant in this room";
+    canWrite = true;
+  } else {
+    // check we have and write access
+    const canRead = role <= table.min_role_read;
+    if (!canRead) return "You do not have access to this room";
 
-  // check we participate
-  const partRow = await getRowQuery(
-    state.id,
-    part_table_name,
-    part_user_field,
-    part_key_to_room
-  );
-  if (!partRow) return "You are not a participant in this room";
-
+    canWrite = role <= table.min_role_write;
+  }
   const v = await View.findOne({ name: msgview });
   const vresps = await v.runMany(
     { [msgkey_to_room]: state.id },
@@ -272,7 +276,7 @@ const run = async (
       Math,
       vresps.map((r) => r.row.id)
     );
-    if (vresps.length > 0)
+    if (vresps.length > 0 && partRow && part_table_name)
       await updateQuery(
         partRow,
         part_table_name,
@@ -297,7 +301,7 @@ const run = async (
         req.__("Show older messages")
       ),
     div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
-    renderForm(form, req.csrfToken()),
+    canWrite && renderForm(form, req.csrfToken()),
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
@@ -324,7 +328,7 @@ const ack_read = async (
   { req, res },
   { ackReadQuery }
 ) => {
-  if (!participant_maxread_field)
+  if (!participant_maxread_field || !participant_field)
     return {
       json: {
         success: "ok",
@@ -538,19 +542,28 @@ module.exports = {
    * @param {object} user
    * @returns {Promise<object>}
    */
-  authorize_join: async ({ participant_field }, room_id, user) => {
+  authorize_join: async (
+    { table_id, configuration: { participant_field } },
+    room_id,
+    user
+  ) => {
     // TODO ch authorize_join query
     if (!user) return false;
-    const [part_table_name, part_key_to_room, part_user_field] =
-      participant_field.split(".");
+    if (!participant_field) {
+      const table = await Table.findOne({ id: table_id });
+      return user.role_id <= table.min_role_read;
+    } else {
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
 
-    // TODO check we participate
-    const parttable = Table.findOne({ name: part_table_name });
-    const partRow = await parttable.getRow({
-      [part_user_field]: user.id,
-      [part_key_to_room]: room_id,
-    });
-    return !!partRow;
+      // TODO check we participate
+      const parttable = Table.findOne({ name: part_table_name });
+      const partRow = await parttable.getRow({
+        [part_user_field]: user.id,
+        [part_key_to_room]: room_id,
+      });
+      return !!partRow;
+    }
   },
   virtual_triggers,
   /** @returns {object[]} */
@@ -595,24 +608,39 @@ module.exports = {
       msgsender_field,
       participant_maxread_field
     ) {
+      const table = await Table.findOne({ id: table_id });
+
       const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-      const [part_table_name, part_key_to_room, part_user_field] =
-        participant_field.split(".");
-      const parttable = Table.findOne({ name: part_table_name });
-      // check we participate
+      const role = req && req.user ? req.user.role_id : 10;
 
-      const partRow = await parttable.getRow({
-        [part_user_field]: req.user ? req.user.id : 0,
-        [part_key_to_room]: +body.room_id,
-      });
+      let partRow, parttable;
+      if (participant_field) {
+        const [part_table_name, part_key_to_room, part_user_field] =
+          participant_field.split(".");
+        parttable = Table.findOne({ name: part_table_name });
+        // check we participate
 
-      if (!partRow)
-        return {
-          json: {
-            error: "Not participating",
-          },
-        };
+        partRow = await parttable.getRow({
+          [part_user_field]: req.user ? req.user.id : 0,
+          [part_key_to_room]: +body.room_id,
+        });
 
+        if (!partRow)
+          return {
+            json: {
+              error: "Not participating",
+            },
+          };
+      } else {
+        // check we have and write access
+        const canRead = role <= table.min_role_read;
+        if (!canRead)
+          return {
+            json: {
+              error: "Not participating",
+            },
+          };
+      }
       const formview = await View.findOne({ name: msgform });
       if (!formview)
         throw new InvalidConfiguration("Message form view does not exist");
@@ -637,7 +665,7 @@ module.exports = {
           [msgsender_field]: req.user.id,
         };
         const msgid = await msgtable.tryInsertRow(row, req.user);
-        if (participant_maxread_field) {
+        if (participant_maxread_field && partRow) {
           const [part_table_name1, part_key_to_room1, part_maxread_field] =
             participant_maxread_field.split(".");
           await parttable.updateRow(

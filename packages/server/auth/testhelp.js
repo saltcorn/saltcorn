@@ -88,6 +88,9 @@ const toNotInclude =
     }
   };
 
+const resToLoginCookie = (res) =>
+  res.headers["set-cookie"].find((c) => c.includes("connect.sid"));
+
 /**
  *
  * @returns {Promise<void>}
@@ -99,7 +102,7 @@ const getStaffLoginCookie = async () => {
     .send("email=staff@foo.com")
     .send("password=ghrarhr54hg");
   if (res.statusCode !== 302) console.log(res.text);
-  return res.headers["set-cookie"][0];
+  return resToLoginCookie(res);
 };
 
 /**
@@ -113,8 +116,7 @@ const getAdminLoginCookie = async () => {
     .send("email=admin@foo.com")
     .send("password=AhGGr6rhu45");
   if (res.statusCode !== 302) console.log(res.text);
-
-  return res.headers["set-cookie"][0];
+  return resToLoginCookie(res);
 };
 
 /**

@@ -90,6 +90,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__(`Search configuration`),
+        titleAjaxIndicator: true,
         contents: renderForm(form, req.csrfToken()),
       },
     });

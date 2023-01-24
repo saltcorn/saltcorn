@@ -105,6 +105,15 @@ const CardSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
+            field={{
+              label: "Save indicator",
+              name: "titleAjaxIndicator",
+              type: "Bool",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
             field={{ label: "No padding", name: "noPadding", type: "Bool" }}
             node={node}
             setProp={setProp}
@@ -127,6 +136,7 @@ const fields = [
   },
   { label: "URL", name: "url", type: "String", canBeFormula: true },
   { label: "Shadow", name: "shadow", type: "Bool" },
+  { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
   { name: "style", default: {} },
 ];

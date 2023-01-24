@@ -1,10 +1,12 @@
 const { join } = require("path");
 
 const mocksDir = join(__dirname, "dist", "mobile-mocks");
+const webpack = require("webpack");
 
 const nodeMocks = {
   "latest-version": join(mocksDir, "node", "latest-version"),
   fs: join(mocksDir, "node", "fs"),
+  "fs-extra": join(mocksDir, "node", "fs-extra"),
   "fs/promises": join(mocksDir, "node", "fs", "promises"),
   v8: join(mocksDir, "node", "v8"),
   async_hooks: join(mocksDir, "node", "async_hooks"),
@@ -14,10 +16,13 @@ const nodeMocks = {
 
 const npmMocks = {
   "env-paths": join(mocksDir, "npm", "env-paths"),
-  "fs-xattr": join(mocksDir, "npm", "fs-xattr"),
+  "fs-extended-attributes": join(mocksDir, "npm", "fs-extended-attributes"),
+  tar: join(mocksDir, "npm", "tar"),
 };
 
 const saltcornMocks = {
+  "./pack": join(mocksDir, "models", "pack"),
+  "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
   "../models/email": join(mocksDir, "models", "email"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
@@ -52,6 +57,7 @@ module.exports = {
   },
   resolve: {
     fallback: {
+      assert: require.resolve("assert/"),
       path: require.resolve("path-browserify"),
       crypto: require.resolve("crypto-browserify"),
       buffer: require.resolve("buffer/"),
@@ -66,6 +72,7 @@ module.exports = {
       constants: require.resolve("constants-browserify"),
     },
     alias: {
+      process: "process/browser",
       ...nodeMocks,
       ...npmMocks,
       ...saltcornMocks,
@@ -80,4 +87,9 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: "process/browser",
+    }),
+  ],
 };

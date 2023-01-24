@@ -523,6 +523,33 @@ function initialize_page() {
 
 $(initialize_page);
 
+function ajax_indicator(show, e) {
+  const $ind = e
+    ? $(e).closest(".card,.modal").find(".sc-ajax-indicator")
+    : $(".sc-ajax-indicator");
+  $ind.find("svg").attr("data-icon", "save");
+  $ind.find("i").removeClass("fa-exclamation-triangle").addClass("fa-save");
+  $ind.css("color", "");
+  $ind.removeAttr("title");
+  if (show) $ind.show();
+  else $ind.fadeOut();
+}
+
+function ajax_indicate_error(e, resp) {
+  //console.error("ind error", resp);
+  const $ind = e
+    ? $(e).closest(".card,.modal").find(".sc-ajax-indicator")
+    : $(".sc-ajax-indicator");
+  $ind.css("color", "#e74a3b");
+  $ind.find("svg").attr("data-icon", "exclamation-triangle");
+  $ind.find("i").removeClass("fa-save").addClass("fa-exclamation-triangle");
+  $ind.attr(
+    "title",
+    "Save error: " + (resp ? resp.responseText || resp.statusText : "unknown")
+  );
+  $ind.show();
+}
+
 function enable_codemirror(f) {
   $("<link/>", {
     rel: "stylesheet",
@@ -739,17 +766,36 @@ function unique_field_from_rows(
         return i;
     }
   };
+  const char_to_i = (s) => {
+    switch (char_type) {
+      case "Lowercase Letters":
+        return s.charCodeAt(0) - "a".charCodeAt(0);
+      case "Uppercase Letters":
+        return s.charCodeAt(0) - "A".charCodeAt(0);
+      default:
+        return +s;
+    }
+  };
+  const value_wspace = `${value}${space ? " " : ""}`;
   const vals = rows
     .map((o) => o[field_name])
     .filter((s) => s.startsWith(value));
+  const numtype =
+    char_type !== "Lowercase Letters" && char_type !== "Uppercase Letters";
   if (vals.includes(value) || always_append) {
-    for (let i = start || 0; i < vals.length + (start || 0) + 2; i++) {
-      const newname = `${value}${space ? " " : ""}${gen_char(i)}`;
-      if (!vals.includes(newname)) {
-        $("#" + id).val(newname);
-        return;
-      }
+    let newname;
+    const stripped = vals
+      .filter((v) => v !== value)
+      .map((s) => s.replace(value_wspace, ""))
+      .sort();
+    if (stripped.length === 0) newname = `${value_wspace}${gen_char(start)}`;
+    else {
+      const i = char_to_i(stripped[stripped.length - 1]);
+      const last_i = numtype ? Math.max(i, start - 1) : i;
+
+      newname = `${value_wspace}${gen_char(last_i + 1)}`;
     }
+    $("#" + id).val(newname);
   }
 }
 

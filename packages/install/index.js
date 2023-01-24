@@ -38,7 +38,8 @@ if (process.argv.includes("--help")) {
     "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit\n"+
     "  -v, --verbose\tVerbose mode, show debug information\n"+
     "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n"+
-    "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n"
+    "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n"+
+    "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n"
   );
   process.exit(0);
 }
@@ -46,6 +47,7 @@ const yes = process.argv.includes("-y") || process.argv.includes("--yes");
 const verbose = process.argv.includes("-v") || process.argv.includes("--verbose");
 const expert = process.argv.includes("-e") || process.argv.includes("--expert");
 const dryRun = process.argv.includes("-d") || process.argv.includes("--dryrun");
+const skipChromium = process.argv.includes("-s") || process.argv.includes("--skip-chromium");
 
 /**
  * Define saltcorn config dir and path
@@ -278,8 +280,10 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     "git",
     "libsystemd-dev",
   ];
-  if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
-  if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
+  if (!skipChromium) {
+    if (osInfo.distro === "Ubuntu") packages.push("chromium-browser"); 
+    if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
+  }
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
 

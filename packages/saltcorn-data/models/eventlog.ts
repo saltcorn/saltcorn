@@ -34,8 +34,12 @@ class EventLog {
       ? new Date(o.occur_at)
       : o.occur_at;
     this.user_id = o.user_id;
-    this.payload =
-      typeof o.payload === "string" ? JSON.parse(o.payload) : o.payload;
+    try {
+      this.payload =
+        typeof o.payload === "string" ? JSON.parse(o.payload) : o.payload;
+    } catch {
+      this.payload = o.payload;
+    }
   }
 
   /**

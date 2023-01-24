@@ -239,6 +239,13 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
           options: ["px", "%", "vw", "em", "rem"],
         },
       },
+      {
+        name: "popup_save_indicator",
+        label: req.__("Save indicator"),
+        type: "Bool",
+        parent_field: "attributes",
+        tab: "Popup settings",
+      },
       ...(isEdit
         ? [
             new Field({
@@ -457,7 +464,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         type: "breadcrumbs",
         crumbs: [
           { text: req.__("Views"), href: "/viewedit" },
-          { href: `/viewedit/edit/${view.name}`, text: view.name },
+          { href: `/view/${view.name}`, text: view.name },
           { workflow: wf, step: wfres },
         ],
       },
@@ -465,6 +472,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
         type: noCard ? "container" : "card",
         class: !noCard && "mt-0",
         title: wfres.title,
+        titleAjaxIndicator: true,
         contents,
       },
       ...(previewURL
@@ -485,7 +493,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
   if (wfres.renderForm)
     res.sendWrap(
       {
-        title: req.__(`View configuration`),
+        title: req.__(`%s configuration`, view.name),
         headers: [
           {
             script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
@@ -510,7 +518,7 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
-      req.__(`View configuration`),
+      req.__(`%s configuration`, view.name),
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
   } else res.redirect(wfres.redirect);

@@ -1,0 +1,107 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "ubuntu/focal64"
+
+  config.ssh.forward_agent = true
+
+  config.ssh.insert_key = false
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  config.vm.provider "virtualbox" do |vb|  
+    # Customize the amount of memory on the VM:
+    vb.memory = "4096"
+  end
+
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  config.vm.provision "shell", inline: <<-SHELL
+    wget -qO - https://deb.nodesource.com/setup_16.x | bash -
+    apt-get install -qqy nodejs
+    sudo -iu vagrant npx -y saltcorn-install -s -y
+
+    apt update && apt install -y wget unzip openjdk-11-jdk openjdk-11-demo openjdk-11-doc openjdk-11-jre-headless openjdk-11-source
+    
+    cd /home/saltcorn
+    sudo -u saltcorn wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+    sudo -u saltcorn unzip commandlinetools-linux-8512546_latest.zip
+    sudo -u saltcorn mkdir /home/saltcorn/android_sdk
+    yes | sudo -u saltcorn cmdline-tools/bin/sdkmanager --sdk_root=/home/saltcorn/android_sdk --install "cmdline-tools;latest"
+    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/sdkmanager --list
+    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-11"
+    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+
+    npm install -g npm@9.2.0
+
+    sudo -u saltcorn wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip
+    unzip gradle-7.1.1-all.zip -d /opt
+    npm install -g cordova
+
+    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+    export ANDROID_SDK_ROOT=/home/saltcorn/android_sdk
+    export GRADLE_HOME=/opt/gradle-7.1.1
+    export PATH=$PATH:/opt/gradle-7.1.1/bin
+    export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/home/saltcorn/gradle-7.1.1-all.zip
+
+    sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn install-pack -n "Address book"
+    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -p "android" -s "http://10.0.2.2" -b "/home/saltcorn/build_dir" -e "EditPerson"
+  SHELL
+end

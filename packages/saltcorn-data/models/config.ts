@@ -472,6 +472,12 @@ const configTypes: ConfigTypes = {
     sublabel: "Set to 0 for expiration at the end of browser session",
     default: 0,
   },
+  public_cache_maxage: {
+    type: "Integer",
+    label: "Public cache TTL (minutes)",
+    sublabel: "Cache-control max-age for public views and pages. 0 to disable",
+    default: 0,
+  },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",

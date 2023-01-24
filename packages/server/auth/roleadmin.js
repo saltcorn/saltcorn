@@ -17,7 +17,7 @@ const {
 } = require("@saltcorn/markup");
 const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
 const { getState } = require("@saltcorn/data/db/state");
-const { text, form, option, select } = require("@saltcorn/markup/tags");
+const { text, form, option, select, a, i } = require("@saltcorn/markup/tags");
 const { send_users_page } = require("../markup/admin");
 
 /**
@@ -37,8 +37,19 @@ module.exports = router;
  * @param {object} req
  * @returns {Form}
  */
-const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
-  form(
+const editRoleLayoutForm = (role, layouts, layout_by_role, req) => {
+  //console.log(layouts);
+  let edit_link = "";
+  const current_layout = layout_by_role[role.id] || layouts[layouts.length - 1];
+  let plugin = getState().plugins[current_layout];
+
+  if (plugin?.configuration_workflow)
+    edit_link = a(
+      { href: `/plugins/configure/${encodeURIComponent(current_layout)}` },
+      i({ class: "fa fa-cog ms-2" })
+    );
+
+  return form(
     {
       action: `/roleadmin/setrolelayout/${role.id}`,
       method: "post",
@@ -57,8 +68,10 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) =>
           text(layout)
         )
       )
-    )
+    ),
+    edit_link
   );
+};
 
 /**
  *

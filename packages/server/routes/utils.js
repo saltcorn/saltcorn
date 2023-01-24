@@ -76,7 +76,7 @@ const setLanguage = (req, res, state) => {
   } else if (req.cookies?.lang) {
     req.setLocale(req.cookies?.lang);
   }
-  set_custom_http_headers(res, state);
+  set_custom_http_headers(res, req, state);
 };
 
 /**
@@ -85,8 +85,17 @@ const setLanguage = (req, res, state) => {
  * @param {string} state
  * @returns {void}
  */
-const set_custom_http_headers = (res, state) => {
-  const hdrs = (state || getState()).getConfig("custom_http_headers");
+const set_custom_http_headers = (res, req, state) => {
+  const state1 = state || getState();
+  const hdrs = state1.getConfig("custom_http_headers");
+  if (!req.user) {
+    const public_cache_maxage = +state1.getConfig("public_cache_maxage", 0);
+    if (public_cache_maxage)
+      res.header(
+        "Cache-Control",
+        `public, max-age=${public_cache_maxage * 60}`
+      );
+  }
   if (!hdrs) return;
   for (const ln of hdrs.split("\n")) {
     const [k, v] = ln.split(":");

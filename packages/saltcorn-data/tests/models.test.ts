@@ -172,7 +172,17 @@ describe("File", () => {
     expect(f.mime_sub).toBe("png");
     expect(f.mimetype).toBe("image/png");
     expect(f.user_id).toBe(1);
-    //await File.update(f.id, { size_kb: 56 });
+    expect(f.min_role_read).toBe(10);
+
+    await f.set_role(8);
+    await f.set_user(2);
+    expect(f.user_id).toBe(2);
+    expect(f.min_role_read).toBe(8);
+
+    const f2 = await File.findOne("rick.png");
+    assertIsSet(f2);
+    expect(f2.user_id).toBe(2);
+    expect(f2.min_role_read).toBe(8);
     await f.delete();
   });
 });

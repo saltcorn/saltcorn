@@ -393,6 +393,13 @@ router.post(
       f.s3_store ? s3storage.unlinkObject : undefined
     );
     if (result && result.error) {
+      if (req.xhr) {
+        const root = path.join(db.connectObj.file_store, db.getTenantSchema());
+        res.json({
+          error: result.error.replaceAll(root, ""),
+        });
+        return;
+      }
       req.flash("error", result.error);
     }
     res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
@@ -438,6 +445,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Storage settings"),
+        titleAjaxIndicator: true,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
@@ -512,6 +520,7 @@ router.get(
       active_sub: "Settings",
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__("Files settings"),
         contents: [renderForm(form, req.csrfToken())],
       },

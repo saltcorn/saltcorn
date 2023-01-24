@@ -251,6 +251,7 @@ router.get(
         {
           type: "card",
           title: req.__("Root pages"),
+          titleAjaxIndicator: true,
           contents: renderForm(
             getRootPageForm(pages, roles, req),
             req.csrfToken()
@@ -402,7 +403,7 @@ router.get(
         version_tag: db.connectObj.version_tag,
       };
       res.sendWrap(
-        req.__(`Page configuration`),
+        req.__(`%s configuration`, page.name),
         wrap(renderBuilder(builderData, req.csrfToken()), true, req, page)
       );
     }

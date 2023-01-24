@@ -246,6 +246,9 @@ function ensure_modal_exists_and_closed() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
+          <span class="sc-ajax-indicator-wrapper">
+            <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
+          </span>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
         </div>
@@ -280,6 +283,11 @@ function ajax_modal(url, opts = {}) {
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
       var width = request.getResponseHeader("SaltcornModalWidth");
+      var saveIndicate = !!request.getResponseHeader(
+        "SaltcornModalSaveIndicator"
+      );
+      if (saveIndicate) $(".sc-ajax-indicator-wrapper").show();
+      else $(".sc-ajax-indicator-wrapper").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
@@ -303,6 +311,7 @@ function saveAndContinue(e, k) {
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
+  ajax_indicator(true, e);
   $.ajax(url, {
     type: "POST",
     headers: {
@@ -310,6 +319,7 @@ function saveAndContinue(e, k) {
     },
     data: form_data,
     success: function (res) {
+      ajax_indicator(false);
       if (res.id && form.find("input[name=id")) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
@@ -318,6 +328,7 @@ function saveAndContinue(e, k) {
     },
     error: function (request) {
       $("#page-inner-content").html(request.responseText);
+      ajax_indicate_error(e, request);
       initialize_page();
     },
     complete: function () {
@@ -335,6 +346,7 @@ function applyViewConfig(e, url, k) {
   form_data.forEach((item) => {
     cfg[item.name] = item.value;
   });
+  ajax_indicator(true, e);
   $.ajax(url, {
     type: "POST",
     dataType: "json",
@@ -343,11 +355,15 @@ function applyViewConfig(e, url, k) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: JSON.stringify(cfg),
-    error: function (request) {},
+    error: function (request) {
+      ajax_indicate_error(e, request);
+    },
     success: function (res) {
+      ajax_indicator(false);
       k && k(res);
       !k && updateViewPreview();
     },
+    complete: () => {},
   });
 
   return false;
