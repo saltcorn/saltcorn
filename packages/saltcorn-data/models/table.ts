@@ -706,6 +706,16 @@ class Table implements AbstractTable {
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
+    if (user && user?.role_id > this.min_role_write) {
+      if (this.ownership_field_id) {
+        const owner_field = fields.find(
+          (f) => f.id === this.ownership_field_id
+        );
+        if (!owner_field)
+          throw new Error(`Owner field in table ${this.name} not found`);
+        if (v[owner_field.name] && v[owner_field.name] !== user.id) return;
+      }
+    }
     if (this.versioned) {
       if (!existing)
         existing = await db.selectOne(this.name, { [pk_name]: id });
