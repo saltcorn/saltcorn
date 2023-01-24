@@ -100,7 +100,7 @@ describe("Table with row ownership field", () => {
       expect(owned_rows1[0].age).toBe(13);
       const view = await createDefaultView(persons, "Show", 10);
       const contents = await view.run_possibly_on_page(
-        { id: row.id },
+        { id: row1.id },
         { ...mockReqRes.req, user: non_owner_user },
         mockReqRes.res
       );
@@ -112,6 +112,20 @@ describe("Table with row ownership field", () => {
       );
       expect(contents1).toContain(">13<");
       await view.delete();
+      const editView = await createDefaultView(persons, "Edit", 10);
+      const econtents = await editView.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: non_owner_user },
+        mockReqRes.res
+      );
+      expect(econtents).not.toContain('value="13"');
+      const econtents1 = await editView.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: owner_user },
+        mockReqRes.res
+      );
+      expect(econtents1).toContain('value="13"');
+      await editView.delete();
     }
     await persons.delete();
   });
