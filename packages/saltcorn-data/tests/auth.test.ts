@@ -125,6 +125,26 @@ describe("Table with row ownership field", () => {
         mockReqRes.res
       );
       expect(econtents1).toContain('value="13"');
+      await editView.runPost(
+        {},
+        { ...row1, age: 5 },
+        {
+          req: { ...mockReqRes.req, user: non_owner_user },
+          res: mockReqRes.res,
+        },
+        false
+      );
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(13);
+      await editView.runPost(
+        {},
+        { ...row1, age: 5 },
+        {
+          req: { ...mockReqRes.req, user: owner_user },
+          res: mockReqRes.res,
+        },
+        false
+      );
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
       await editView.delete();
     }
     await persons.delete();

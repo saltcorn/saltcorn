@@ -184,6 +184,7 @@ const mockReqRes = {
     isAuthenticated: () => true,
     headers: {},
     query: {},
+    flash: () => {},
   },
   res: {
     redirect(url: string) {
@@ -191,6 +192,7 @@ const mockReqRes = {
     },
     json() {},
     send() {},
+    sendWrap: () => {},
     __: (s: any) => s,
   },
   getStored: () => mockResReqStored,
