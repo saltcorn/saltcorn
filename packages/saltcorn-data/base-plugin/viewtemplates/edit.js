@@ -1281,9 +1281,15 @@ module.exports = {
     },
     async getRowQuery(table_id, view_select, row_id) {
       const childTable = Table.findOne({ id: table_id });
-      return await childTable.getRows({
-        [view_select.field_name]: row_id,
-      });
+      return await childTable.getRows(
+        {
+          [view_select.field_name]: row_id,
+        },
+        {
+          forPublic: !req.user,
+          forUser: req.user,
+        }
+      );
     },
     async actionQuery() {
       const body = req.body;
@@ -1291,7 +1297,15 @@ module.exports = {
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = await Table.findOne({ id: table_id });
-      const row = body.id ? await table.getRow({ id: body.id }) : undefined;
+      const row = body.id
+        ? await table.getRow(
+            { id: body.id },
+            {
+              forPublic: !req.user,
+              forUser: req.user,
+            }
+          )
+        : undefined;
       try {
         const result = await run_action_column({
           col,
