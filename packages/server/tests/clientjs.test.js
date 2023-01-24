@@ -65,10 +65,10 @@ test("updateQueryStringParameter hash", () => {
   );
 });
 test("unique_field_from_rows test", () => {
-  $("body").append(`<input id="mkuniq" value="bar"></div>`);
+  $("body").append(`<input id="mkuniq6" value="bar"></div>`);
   unique_field_from_rows(
     [{ foo: "bar" }, { foo: "bar0" }],
-    "mkuniq",
+    "mkuniq6",
     "foo",
     false,
     0,
@@ -76,12 +76,12 @@ test("unique_field_from_rows test", () => {
     "Digits",
     "bar"
   );
-  expect($("#mkuniq").val()).toBe("bar1");
+  expect($("#mkuniq6").val()).toBe("bar1");
 
-  $("body").append(`<input id="mkuniq" value="bar"></div>`);
+  $("body").append(`<input id="mkuniq5" value="bar"></div>`);
   unique_field_from_rows(
     [{ foo: "bar" }],
-    "mkuniq",
+    "mkuniq5",
     "foo",
     false,
     9,
@@ -89,12 +89,12 @@ test("unique_field_from_rows test", () => {
     "Digits",
     "bar"
   );
-  expect($("#mkuniq").val()).toBe("bar9");
+  expect($("#mkuniq5").val()).toBe("bar9");
 
-  $("body").append(`<input id="mkuniq" value="bar"></div>`);
+  $("body").append(`<input id="mkuniq4" value="bar"></div>`);
   unique_field_from_rows(
-    [{ foo: "bar0" }],
-    "mkuniq",
+    [{ foo: "bar" }, { foo: "bar0" }],
+    "mkuniq4",
     "foo",
     false,
     9,
@@ -102,16 +102,25 @@ test("unique_field_from_rows test", () => {
     "Digits",
     "bar"
   );
-  expect($("#mkuniq").val()).toBe("bar9");
+  expect($("#mkuniq4").val()).toBe("bar9");
 
-  $("#mkuniq").val("bar");
-  unique_field_from_rows([], "mkuniq", "foo", false, 0, false, "Digits", "bar");
-  expect($("#mkuniq").val()).toBe("bar");
+  $("#mkuniq6").val("bar");
+  unique_field_from_rows(
+    [],
+    "mkuniq6",
+    "foo",
+    false,
+    0,
+    false,
+    "Digits",
+    "bar"
+  );
+  expect($("#mkuniq6").val()).toBe("bar");
 
-  $("body").append(`<input id="mkuniq" value="bar"></div>`);
+  $("body").append(`<input id="mkuniq3" value="bar"></div>`);
   unique_field_from_rows(
     [{ foo: "bar" }, { foo: "bar A" }],
-    "mkuniq",
+    "mkuniq3",
     "foo",
     true,
     0,
@@ -119,13 +128,13 @@ test("unique_field_from_rows test", () => {
     "Uppercase Letters",
     "bar"
   );
-  expect($("#mkuniq").val()).toBe("bar B");
+  expect($("#mkuniq3").val()).toBe("bar B");
 
   //skips blanks
-  $("body").append(`<input id="mkuniq" value="bar"></div>`);
+  $("body").append(`<input id="mkuniq2" value="bar"></div>`);
   unique_field_from_rows(
     [{ foo: "bar" }, { foo: "bar0" }, { foo: "bar1" }, { foo: "bar3" }],
-    "mkuniq",
+    "mkuniq2",
     "foo",
     false,
     0,
@@ -133,5 +142,42 @@ test("unique_field_from_rows test", () => {
     "Digits",
     "bar"
   );
-  expect($("#mkuniq").val()).toBe("bar4");
+  expect($("#mkuniq2").val()).toBe("bar4");
+
+  $("body").append(`<input id="mkuniq1" value="bar"></div>`);
+  unique_field_from_rows(
+    [{ foo: "bar100" }, { foo: "bar101" }, { foo: "bar103" }],
+    "mkuniq1",
+    "foo",
+    false,
+    100,
+    true,
+    "Digits",
+    "bar"
+  );
+  expect($("#mkuniq1").val()).toBe("bar104");
+  $("body").append(`<input id="mkuniq10" value="bar"></div>`);
+  unique_field_from_rows(
+    [],
+    "mkuniq10",
+    "foo",
+    false,
+    100,
+    true,
+    "Digits",
+    "bar"
+  );
+  expect($("#mkuniq10").val()).toBe("bar100");
+  $("body").append(`<input id="mkuniq11" value="bar"></div>`);
+  unique_field_from_rows(
+    [{ foo: "bar100" }, { foo: "bar101" }, { foo: "bar35" }, { foo: "bar103" }],
+    "mkuniq11",
+    "foo",
+    false,
+    100,
+    true,
+    "Digits",
+    "bar"
+  );
+  expect($("#mkuniq11").val()).toBe("bar104");
 });
