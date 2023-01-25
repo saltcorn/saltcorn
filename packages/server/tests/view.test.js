@@ -2,6 +2,7 @@ const request = require("supertest");
 const getApp = require("../app");
 const {
   toRedirect,
+  getAdminLoginCookie,
   getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
