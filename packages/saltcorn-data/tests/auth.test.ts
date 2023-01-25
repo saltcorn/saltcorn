@@ -152,9 +152,15 @@ describe("Table with row ownership field", () => {
         false
       );
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await editView.delete();
+
       //update
       await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 });
       expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
+      await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
+      await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
 
       //delete
       await persons.deleteRows({ id: row1.id }, { role_id: 10 });
@@ -164,7 +170,22 @@ describe("Table with row ownership field", () => {
       await persons.deleteRows({ id: row1.id }, owner_user);
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(undefined);
 
-      await editView.delete();
+      //insert
+      await persons.insertRow(
+        { age: 99, lastname: "Tim", owner: owner_user.id },
+        { role_id: 10 }
+      );
+      expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+      await persons.insertRow(
+        { age: 99, lastname: "Tim", owner: owner_user.id },
+        non_owner_user
+      );
+      expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+      await persons.insertRow(
+        { age: 99, lastname: "Tim", owner: owner_user.id },
+        owner_user
+      );
+      expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
     }
     await persons.delete();
   });
