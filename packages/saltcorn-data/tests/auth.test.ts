@@ -93,6 +93,13 @@ describe("Table with row ownership field", () => {
         }
       );
       expect(not_owned_rows.length).toBe(0);
+      const public_owned_rows = await persons.getRows(
+        {},
+        {
+          forPublic: true,
+        }
+      );
+      expect(public_owned_rows.length).toBe(0);
       const owned_rows1 = await persons.getJoinedRows({
         forUser: owner_user,
       });
@@ -145,6 +152,8 @@ describe("Table with row ownership field", () => {
         false
       );
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+
+      //delete
       await persons.deleteRows({ id: row1.id }, "public");
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
       await persons.deleteRows({ id: row1.id }, non_owner_user);

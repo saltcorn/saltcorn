@@ -629,18 +629,15 @@ class Table implements AbstractTable {
     if (!this.fields) return [];
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
-    const where1 = { ...where };
-    if (role && role > this.min_role_read && this.ownership_field_id) {
-      if (forPublic) return [];
-      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
-      if (!owner_field)
-        throw new Error(`Owner field in table ${this.name} not found`);
-      mergeIntoWhere(where1, {
-        [owner_field.name]: (forUser as AbstractUser).id,
-      });
+    if (
+      role &&
+      this.updateWhereWithOwnership(where, fields, forUser || "public")
+        ?.notAuthorized
+    ) {
+      return [];
     }
 
-    let rows = await db.select(this.name, where1, selopts1);
+    let rows = await db.select(this.name, where, selopts1);
     if (role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return [];
