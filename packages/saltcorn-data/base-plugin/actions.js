@@ -907,9 +907,12 @@ module.exports = {
       }
       // delete rows
       if (delete_rows)
-        await table_for_insert.deleteRows({
-          [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
-        });
+        await table_for_insert.deleteRows(
+          {
+            [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
+          },
+          user
+        );
 
       //update existing
       for (const existPK of set_intersect(src_pks, dest_pks)) {

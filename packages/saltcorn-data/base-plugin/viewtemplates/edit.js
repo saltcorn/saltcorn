@@ -940,9 +940,12 @@ const runPost = async (
               });
           for (const db_child_row of childRows) {
             if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
-              await childTable.deleteRows({
-                [childTable.pk_name]: db_child_row[childTable.pk_name],
-              });
+              await childTable.deleteRows(
+                {
+                  [childTable.pk_name]: db_child_row[childTable.pk_name],
+                },
+                req.user || { role_id: 10 }
+              );
             }
           }
         }

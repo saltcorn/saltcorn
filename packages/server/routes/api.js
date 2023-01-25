@@ -475,8 +475,11 @@ router.delete(
               //const fields = await table.getFields();
               const row = req.body;
               //readState(row, fields);
-              await table.deleteRows({ [pk_name]: row[pk_name] });
-            } else await table.deleteRows({ id });
+              await table.deleteRows(
+                { [pk_name]: row[pk_name] },
+                user || { role_id: 10 }
+              );
+            } else await table.deleteRows({ id }, user || { role_id: 10 });
             res.json({ success: true });
           } catch (e) {
             res.status(400).json({ error: e.message });
