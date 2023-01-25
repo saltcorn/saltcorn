@@ -907,7 +907,8 @@ const runPost = async (
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
               childRow,
-              childRow[childTable.pk_name]
+              childRow[childTable.pk_name],
+              req.user || { role_id: 10 }
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
@@ -1246,7 +1247,12 @@ module.exports = {
     async tryUpdateQuery(row, id) {
       const table = await Table.findOne({ id: table_id });
       const result = {};
-      const upd_res = await table.tryUpdateRow(row, id, req.user, result);
+      const upd_res = await table.tryUpdateRow(
+        row,
+        id,
+        req.user || { role_id: 10 },
+        result
+      );
       upd_res.trigger_return = result;
       return upd_res;
     },

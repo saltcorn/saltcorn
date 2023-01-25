@@ -436,7 +436,11 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryUpdateRow(row, id, req.user);
+          const ins_res = await table.tryUpdateRow(
+            row,
+            id,
+            user || { role_id: 10 }
+          );
 
           if (ins_res.error) res.status(400).json(ins_res);
           else res.json(ins_res);
