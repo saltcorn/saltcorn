@@ -78,7 +78,7 @@ describe("edit view", () => {
   });
   it("should submit edit", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getStaffLoginCookie();
+    const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/view/authoredit")
       .set("Cookie", loginCookie)
