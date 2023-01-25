@@ -501,11 +501,12 @@ class Table implements AbstractTable {
     user?: Row | "public"
   ): { notAuthorized?: boolean } | undefined {
     const role = user === "public" ? 10 : user?.role_id;
+
     if (
       role &&
       role > this.min_role_write &&
-      !this.ownership_field_id &&
-      !this.ownership_formula
+      ((!this.ownership_field_id && !this.ownership_formula) ||
+        user === "public")
     )
       return { notAuthorized: true };
     if (
@@ -533,8 +534,9 @@ class Table implements AbstractTable {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = await this.getFields();
 
-    if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized)
+    if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
       return;
+    }
 
     const deleteFileFields = fields.filter(
       (f) => f.type === "File" && f.attributes?.also_delete_file

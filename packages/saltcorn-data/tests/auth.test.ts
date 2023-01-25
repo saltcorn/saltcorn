@@ -145,6 +145,13 @@ describe("Table with row ownership field", () => {
         false
       );
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await persons.deleteRows({ id: row1.id }, "public");
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await persons.deleteRows({ id: row1.id }, non_owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await persons.deleteRows({ id: row1.id }, owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(undefined);
+
       await editView.delete();
     }
     await persons.delete();
