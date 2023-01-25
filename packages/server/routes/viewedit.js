@@ -70,8 +70,8 @@ router.get(
             "danger",
             req.__(
               `<p>You have views with a role to access lower than the table role to read, 
-      with no table ownership. In the next version of Saltcorn, this may cause a
-      denial of access. Users will need to have table read access to any data displayed.</p> 
+      with no table ownership. This may cause a
+      denial of access. Users need to have table read access to any data displayed.</p> 
       Views potentially affected: %s`,
               hasAccessWarning.map((v) => v.name).join(", ")
             )
