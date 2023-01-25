@@ -501,7 +501,7 @@ module.exports = {
         )
           newRow[field.name] = user.id;
       }
-      return await joinTable.insertRow(newRow);
+      return await joinTable.insertRow(newRow, user);
     },
   },
 
@@ -527,7 +527,7 @@ module.exports = {
       const newRow = { ...row };
       await table.getFields();
       delete newRow[table.pk_name];
-      await table.insertRow(newRow);
+      await table.insertRow(newRow, user);
       return { reload_page: true };
     },
   },
