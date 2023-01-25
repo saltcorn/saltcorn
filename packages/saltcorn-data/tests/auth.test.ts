@@ -152,9 +152,12 @@ describe("Table with row ownership field", () => {
         false
       );
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      //update
+      await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 });
+      expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
 
       //delete
-      await persons.deleteRows({ id: row1.id }, "public");
+      await persons.deleteRows({ id: row1.id }, { role_id: 10 });
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
       await persons.deleteRows({ id: row1.id }, non_owner_user);
       expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);

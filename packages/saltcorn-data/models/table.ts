@@ -498,20 +498,19 @@ class Table implements AbstractTable {
   updateWhereWithOwnership(
     where: Where,
     fields: Field[],
-    user?: Row | "public"
+    user?: Row
   ): { notAuthorized?: boolean } | undefined {
-    const role = user === "public" ? 10 : user?.role_id;
+    const role = user?.role_id;
 
     if (
       role &&
       role > this.min_role_write &&
-      ((!this.ownership_field_id && !this.ownership_formula) ||
-        user === "public")
+      ((!this.ownership_field_id && !this.ownership_formula) || role === 10)
     )
       return { notAuthorized: true };
     if (
       user &&
-      user !== "public" &&
+      role < 10 &&
       role > this.min_role_write &&
       this.ownership_field_id
     ) {
@@ -529,7 +528,7 @@ class Table implements AbstractTable {
    * @param where - condition
    * @returns {Promise<void>}
    */
-  async deleteRows(where: Where, user?: Row | "public") {
+  async deleteRows(where: Where, user?: Row) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = await this.getFields();
@@ -631,7 +630,7 @@ class Table implements AbstractTable {
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
     if (
       role &&
-      this.updateWhereWithOwnership(where, fields, forUser || "public")
+      this.updateWhereWithOwnership(where, fields, forUser || { role_id: 10 })
         ?.notAuthorized
     ) {
       return [];
@@ -707,6 +706,7 @@ class Table implements AbstractTable {
     let v = { ...v_in };
     const fields = await this.getFields();
     const pk_name = this.pk_name;
+    const role = user?.role_id;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       const joinFields = this.storedExpressionJoinFields();
       //if any freevars are join fields, update row in db first
@@ -737,7 +737,8 @@ class Table implements AbstractTable {
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
-    if (user && user.role_id > this.min_role_write) {
+    if (user && role && role > this.min_role_write) {
+      if (role === 10) return;
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
@@ -781,7 +782,7 @@ class Table implements AbstractTable {
         this,
         newRow,
         resultCollector,
-        user
+        role === 10 ? undefined : user
       );
       if (resultCollector) await trigPromise;
     }
