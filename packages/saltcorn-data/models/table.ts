@@ -495,25 +495,25 @@ class Table implements AbstractTable {
       await db.reset_sequence(this.name);
   }
 
-  /**
-   * Delete rows from table
-   * @param where - condition
-   * @returns {Promise<void>}
-   */
-  async deleteRows(where1: Where, user?: Row) {
-    // get triggers on delete
-    const triggers = await Trigger.getTableTriggers("Delete", this);
-    const fields = await this.getFields();
-
-    const where = { ...where1 };
+  updateWhereWithOwnership(
+    where: Where,
+    fields: Field[],
+    user?: Row | "public"
+  ): { notAuthorized?: boolean } | undefined {
+    const role = user === "public" ? 10 : user?.role_id;
     if (
-      user &&
-      user.role_id > this.min_role_write &&
+      role &&
+      role > this.min_role_write &&
       !this.ownership_field_id &&
       !this.ownership_formula
     )
-      return;
-    if (user && user.role_id > this.min_role_write && this.ownership_field_id) {
+      return { notAuthorized: true };
+    if (
+      user &&
+      user !== "public" &&
+      role > this.min_role_write &&
+      this.ownership_field_id
+    ) {
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
@@ -521,6 +521,20 @@ class Table implements AbstractTable {
         [owner_field.name]: user.id,
       });
     }
+  }
+
+  /**
+   * Delete rows from table
+   * @param where - condition
+   * @returns {Promise<void>}
+   */
+  async deleteRows(where: Where, user?: Row | "public") {
+    // get triggers on delete
+    const triggers = await Trigger.getTableTriggers("Delete", this);
+    const fields = await this.getFields();
+
+    if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized)
+      return;
 
     const deleteFileFields = fields.filter(
       (f) => f.type === "File" && f.attributes?.also_delete_file
