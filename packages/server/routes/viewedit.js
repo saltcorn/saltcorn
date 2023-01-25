@@ -68,13 +68,12 @@ router.get(
       hasAccessWarning.length > 0
         ? alert(
             "danger",
-            req.__(
-              `<p>You have views with a role to access lower than the table role to read, 
-      with no table ownership. This may cause a
-      denial of access. Users need to have table read access to any data displayed.</p> 
-      Views potentially affected: %s`,
-              hasAccessWarning.map((v) => v.name).join(", ")
-            )
+            `<p>${req.__(
+              `You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.`
+            )}</p> 
+      ${req.__("Views potentially affected")}: ${hasAccessWarning
+              .map((v) => v.name)
+              .join(", ")}`
           )
         : "";
     res.sendWrap(req.__(`Views`), {
