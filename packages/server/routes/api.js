@@ -383,7 +383,7 @@ router.post(
           }
           const ins_res = await table.tryInsertRow(
             row,
-            req.user || { role_id: 10 }
+            req.user || user || { role_id: 10 }
           );
           if (ins_res.error) res.status(400).json(ins_res);
           else res.json(ins_res);
@@ -442,7 +442,7 @@ router.post(
           const ins_res = await table.tryUpdateRow(
             row,
             id,
-            user || { role_id: 10 }
+            user || req.user || { role_id: 10 }
           );
 
           if (ins_res.error) res.status(400).json(ins_res);
@@ -484,9 +484,13 @@ router.delete(
               //readState(row, fields);
               await table.deleteRows(
                 { [pk_name]: row[pk_name] },
-                user || { role_id: 10 }
+                user || req.user || { role_id: 10 }
               );
-            } else await table.deleteRows({ id }, user || { role_id: 10 });
+            } else
+              await table.deleteRows(
+                { id },
+                user || req.user || { role_id: 10 }
+              );
             res.json({ success: true });
           } catch (e) {
             res.status(400).json({ error: e.message });
