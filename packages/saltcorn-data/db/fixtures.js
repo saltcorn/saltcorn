@@ -24,6 +24,7 @@ module.exports =
     getState().registerPlugin("base", require("../base-plugin"));
     const table = await Table.create("books", {
       min_role_read: 10,
+      min_role_write: 4,
     });
     await Field.create({
       table,

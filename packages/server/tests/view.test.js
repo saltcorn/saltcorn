@@ -78,10 +78,11 @@ describe("edit view", () => {
   });
   it("should submit edit", async () => {
     const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
     await request(app)
       .post("/view/authoredit")
+      .set("Cookie", loginCookie)
       .send("author=Chekov")
-
       .expect(toRedirect("/view/authorlist"));
   });
 });
