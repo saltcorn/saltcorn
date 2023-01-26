@@ -806,7 +806,7 @@ describe("Edit view", () => {
   });
 });
 describe("List view", () => {
-  it("should render exactly", async () => {
+  it("should render list view exactly", async () => {
     await test_list({
       columns: [
         {
