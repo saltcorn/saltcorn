@@ -12,7 +12,11 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
-const { jsexprToWhere, freeVariables } = require("./models/expression");
+const {
+  jsexprToWhere,
+  freeVariables,
+  add_free_variables_to_joinfields,
+} = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
 /**
@@ -1176,47 +1180,6 @@ const picked_fields_to_query = (columns, fields, layout) => {
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
   return { joinFields, aggregations };
-};
-/**
- * Add free variables to join fields
- * @param freeVars
- * @param joinFields
- * @param fields
- */
-const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
-  const joinFieldNames = new Set(
-    fields.filter((f) => f.is_fkey).map((f) => f.name)
-  );
-  [...freeVars]
-    .filter((v) => v.includes("."))
-    .forEach((v) => {
-      const kpath = v.split(".");
-      if (joinFieldNames.has(kpath[0]))
-        if (kpath.length === 2) {
-          const [refNm, targetNm] = kpath;
-          joinFields[`${refNm}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            rename_object: [refNm, targetNm],
-          };
-        } else if (kpath.length === 3) {
-          const [refNm, through, targetNm] = kpath;
-          joinFields[`${refNm}_${through}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            through,
-            rename_object: [refNm, through, targetNm],
-          };
-        } else if (kpath.length === 4) {
-          const [refNm, through1, through2, targetNm] = kpath;
-          joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            through: [through1, through2],
-            rename_object: [refNm, through1, through2, targetNm],
-          };
-        }
-    });
 };
 
 /**

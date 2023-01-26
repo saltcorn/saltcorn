@@ -5,7 +5,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import mocks from "./mocks";
-const { rick_file, plugin_with_routes, mockReqRes } = mocks;
+const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
   assertsIsSuccessMessage,
@@ -24,8 +24,9 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 jest.setTimeout(30000);
-
-describe("Table with row ownership", () => {
+const non_owner_user = { id: 6, email: "foo@bar.com", role_id: 8 };
+const owner_user = { id: 1, email: "foo@bar.com", role_id: 8 };
+describe("Table with row ownership field", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwned");
     const name = await Field.create({
@@ -55,17 +56,141 @@ describe("Table with row ownership", () => {
       expect(row.age).toBe(12);
       const owner_fnm = await persons.owner_fieldname();
       expect(owner_fnm).toBe("owner");
-      const is_owner = await persons.is_owner({ id: 6 }, row);
+
+      const is_owner = await persons.is_owner(non_owner_user, row);
       expect(is_owner).toBe(false);
+      const not_owned_row = await persons.getRow(
+        { id: row.id },
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_row).toBe(null);
       const row1 = await persons.getRow({ age: 13 });
       assertIsSet(row1);
       const is_owner1 = await persons.is_owner({ id: 1 }, row1);
       expect(is_owner1).toBe(true);
+      const owned_row = await persons.getRow(
+        { id: row1.id },
+        {
+          forUser: owner_user,
+        }
+      );
+      expect(!!owned_row).toBe(true);
+
+      const owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: owner_user,
+        }
+      );
+      expect(owned_rows.length).toBe(1);
+      expect(owned_rows[0].age).toBe(13);
+      const not_owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_rows.length).toBe(0);
+      const public_owned_rows = await persons.getRows(
+        {},
+        {
+          forPublic: true,
+        }
+      );
+      expect(public_owned_rows.length).toBe(0);
+      const owned_rows1 = await persons.getJoinedRows({
+        forUser: owner_user,
+      });
+      expect(owned_rows1.length).toBe(1);
+      expect(owned_rows1[0].age).toBe(13);
+      const view = await createDefaultView(persons, "Show", 10);
+      const contents = await view.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: non_owner_user },
+        mockReqRes.res
+      );
+      expect(contents).toBe("<div>No row selected</div>");
+      const contents1 = await view.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: owner_user },
+        mockReqRes.res
+      );
+      expect(contents1).toContain(">13<");
+      await view.delete();
+      const editView = await createDefaultView(persons, "Edit", 10);
+      const econtents = await editView.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: non_owner_user },
+        mockReqRes.res
+      );
+      expect(econtents).not.toContain('value="13"');
+      const econtents1 = await editView.run_possibly_on_page(
+        { id: row1.id },
+        { ...mockReqRes.req, user: owner_user },
+        mockReqRes.res
+      );
+      expect(econtents1).toContain('value="13"');
+      await editView.runPost(
+        {},
+        { ...row1, age: 5 },
+        {
+          req: { ...mockReqRes.req, user: non_owner_user },
+          res: mockReqRes.res,
+        },
+        false
+      );
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(13);
+      await editView.runPost(
+        {},
+        { ...row1, age: 5 },
+        {
+          req: { ...mockReqRes.req, user: owner_user },
+          res: mockReqRes.res,
+        },
+        false
+      );
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await editView.delete();
+
+      //update
+      await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 });
+      expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
+      await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
+      await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
+
+      //delete
+      await persons.deleteRows({ id: row1.id }, { role_id: 10 });
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await persons.deleteRows({ id: row1.id }, non_owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+      await persons.deleteRows({ id: row1.id }, owner_user);
+      expect((await persons.getRow({ id: row1.id }))?.age).toBe(undefined);
+
+      //insert
+      await persons.insertRow(
+        { age: 99, lastname: "Tim", owner: owner_user.id },
+        { role_id: 10 }
+      );
+      expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+      await persons.insertRow(
+        { age: 99, lastname: "Tim", owner: owner_user.id },
+        non_owner_user
+      );
+      expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+      await persons.insertRow(
+        { age: 99, lastname: "Tim", owner: owner_user.id },
+        owner_user
+      );
+      expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
     }
     await persons.delete();
   });
 });
-describe("Table with row ownership", () => {
+describe("Table with row ownership formula", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwnedFml");
     const name = await Field.create({
@@ -102,10 +227,44 @@ describe("Table with row ownership", () => {
       expect(row.age).toBe(12);
       const is_owner = await persons.is_owner({ id: 6 }, row);
       expect(is_owner).toBe(false);
+      const not_owned_row = await persons.getRow(
+        { id: row.id },
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_row).toBe(null);
       const row1 = await persons.getRow({ age: 13 });
       assertIsSet(row1);
       const is_owner1 = await persons.is_owner({ id: 1 }, row1);
       expect(is_owner1).toBe(true);
+      const owned_row = await persons.getRow(
+        { id: row1.id },
+        {
+          forUser: owner_user,
+        }
+      );
+      expect(!!owned_row).toBe(true);
+      const owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: owner_user,
+        }
+      );
+      expect(owned_rows.length).toBe(1);
+      expect(owned_rows[0].age).toBe(13);
+      const not_owned_rows = await persons.getRows(
+        {},
+        {
+          forUser: non_owner_user,
+        }
+      );
+      expect(not_owned_rows.length).toBe(0);
+      const owned_rows1 = await persons.getJoinedRows({
+        forUser: owner_user,
+      });
+      expect(owned_rows1.length).toBe(1);
+      expect(owned_rows1[0].age).toBe(13);
     }
     await persons.delete();
   });

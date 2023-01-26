@@ -2,6 +2,7 @@ const request = require("supertest");
 const getApp = require("../app");
 const {
   toRedirect,
+  getAdminLoginCookie,
   getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
@@ -78,10 +79,11 @@ describe("edit view", () => {
   });
   it("should submit edit", async () => {
     const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/view/authoredit")
+      .set("Cookie", loginCookie)
       .send("author=Chekov")
-
       .expect(toRedirect("/view/authorlist"));
   });
 });

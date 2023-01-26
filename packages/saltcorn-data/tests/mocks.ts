@@ -1,10 +1,13 @@
 import Field from "../models/field";
 import File from "../models/file";
+import View from "../models/view";
+import Table from "../models/table";
 import Form from "../models/form";
 import { writeFile } from "fs/promises";
 import Workflow from "../models/workflow";
 import db from "../db";
 import tags from "@saltcorn/markup/tags";
+const { getState } = require("../db/state");
 const { input } = tags;
 const { json_list_to_external_table } = require("../plugin-helper");
 const { sleep } = require("../utils");
@@ -181,6 +184,7 @@ const mockReqRes = {
     isAuthenticated: () => true,
     headers: {},
     query: {},
+    flash: () => {},
   },
   res: {
     redirect(url: string) {
@@ -188,12 +192,28 @@ const mockReqRes = {
     },
     json() {},
     send() {},
+    sendWrap: () => {},
     __: (s: any) => s,
   },
   getStored: () => mockResReqStored,
   reset: () => {
     mockResReqStored = {};
   },
+};
+
+const createDefaultView = async (
+  table: Table,
+  viewtemplate: string,
+  min_role: number
+): Promise<View> => {
+  const vt = getState().viewtemplates[viewtemplate];
+  return await View.create({
+    name: `${viewtemplate}${table.name}${Math.round(Math.random() * 10000)}`,
+    table_id: table.id,
+    min_role: 10,
+    configuration: await vt.initial_config({ table_id: table.id }),
+    viewtemplate,
+  });
 };
 
 export = {
@@ -204,4 +224,5 @@ export = {
   getActionCounter,
   resetActionCounter,
   sleep,
+  createDefaultView,
 };
