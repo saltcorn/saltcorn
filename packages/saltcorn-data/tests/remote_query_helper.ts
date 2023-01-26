@@ -2,6 +2,7 @@ import db from "../db";
 import { sign } from "jsonwebtoken";
 import axios from "axios";
 import User from "../models/user";
+const State = require("../db/state");
 
 declare let global: any;
 
@@ -27,6 +28,8 @@ export const prepareQueryEnviroment = async () => {
       },
     },
   };
+  const state = await State.getState();
+  state.mobileConfig = { jwt: token, localTableIds: [] };
 };
 
 export const sendViewToServer = async (view: any) => {
