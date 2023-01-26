@@ -78,7 +78,7 @@ const buildFieldsMenu = (options, setProp, refetchPreview) => {
             "#f-top-dropdown,.dropdown-submenu.show,#r-top-dropdown.show"
           ).dropdown("toggle");
         }}
-        className="btn btn-primary dropdown-toggle"
+        className="btn btn-outline-primary dropdown-toggle"
         aria-expanded="false"
       >
         Fields
@@ -262,7 +262,7 @@ const buildRelationsMenu = (
             "#r-top-dropdown,.dropdown-submenu.show,#f-top-dropdown.show"
           ).dropdown("toggle");
         }}
-        className="btn btn-primary dropdown-toggle"
+        className="btn btn-outline-primary dropdown-toggle"
         aria-expanded="false"
       >
         Relations

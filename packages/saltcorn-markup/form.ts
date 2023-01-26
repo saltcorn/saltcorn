@@ -358,7 +358,7 @@ const buildJoinFieldPicker = (hdr: any): string => {
             button(
               {
                 type: "button",
-                class: "btn btn-primary dropdown-toggle",
+                class: "btn btn-outline-primary dropdown-toggle",
                 "data-bs-toggle": "dropdown",
                 "aria-expanded": false,
               },
@@ -373,7 +373,7 @@ const buildJoinFieldPicker = (hdr: any): string => {
             button(
               {
                 type: "button",
-                class: "btn btn-primary dropdown-toggle",
+                class: "btn btn-outline-primary dropdown-toggle",
                 "data-bs-toggle": "dropdown",
                 "aria-expanded": false,
               },
