@@ -29,7 +29,7 @@ export const prepareQueryEnviroment = async () => {
     },
   };
   const state = await State.getState();
-  state.mobileConfig = { jwt: token };
+  state.mobileConfig = { jwt: token, localTableIds: [] };
 };
 
 export const sendViewToServer = async (view: any) => {
