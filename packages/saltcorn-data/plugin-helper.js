@@ -128,9 +128,10 @@ const stateToQueryString = (state) => {
  * @function
  * @param {Field[]} fields
  * @param mode
+ * @param don't follow references to other tables (type === "Key")
  * @returns {object}
  */
-const calcfldViewOptions = (fields, mode) => {
+const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
   const isEdit = mode === "edit";
   const isFilter = mode === "filter";
   let fvs = {};
@@ -146,7 +147,7 @@ const calcfldViewOptions = (fields, mode) => {
           .map(([k, v]) => k);
       else
         fvs[f.name] = Object.entries(getState().fileviews).map(([k, v]) => k);
-    } else if (f.type === "Key") {
+    } else if (f.type === "Key" && !noFollowKeys) {
       if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
       else if (isFilter) {
         fvs[f.name] = Object.keys(getState().keyFieldviews);
@@ -219,6 +220,33 @@ const calcfldViewOptions = (fields, mode) => {
     }
   });
   return { field_view_options: fvs, handlesTextStyle, blockDisplay };
+};
+
+/**
+ * create viewoptions (as_text, as_link, show, ...) for fields
+ * with a foreign_key to 'table' from another table
+ * @param table table of the viewtemplate
+ * @param viewtemplate name of the viewtemplate
+ * @returns an object assigning the path (table.foreign_key->field) to viewoptions
+ */
+const calcrelViewOptions = async (table, viewtemplate) => {
+  const rel_field_view_options = {};
+  for (const {
+    relationTable,
+    relationField,
+  } of await table.get_relation_data()) {
+    const { field_view_options } = calcfldViewOptions(
+      await relationTable.getFields(),
+      viewtemplate,
+      true
+    );
+    for (const [k, v] of Object.entries(field_view_options)) {
+      rel_field_view_options[
+        `${relationTable.name}.${relationField.name}->${k}`
+      ] = v;
+    }
+  }
+  return rel_field_view_options;
 };
 
 /**
@@ -429,6 +457,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   }
   const fldOptions = fields.map((f) => f.name);
   const { field_view_options } = calcfldViewOptions(fields, "list");
+  const rel_field_view_options = await calcrelViewOptions(table, "list");
   const fieldViewConfigForms = await calcfldViewConfig(fields, false);
   const fvConfigFields = [];
   for (const [field_name, fvOptFields] of Object.entries(
@@ -463,6 +492,12 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   const { child_field_list, child_relations } = await table.get_child_relations(
     true
   );
+  const join_field_options = await table.get_join_field_options(true, true);
+  const join_field_view_options = {
+    ...field_view_options,
+    ...rel_field_view_options,
+  };
+  const relation_options = await table.get_relation_options();
   const aggStatOptions = {};
   const agg_fieldviews = [];
   Object.values(getState().types).forEach((t) => {
@@ -592,9 +627,11 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "join_field",
       label: __("Join Field"),
       type: "String",
+      input_type: "join_field_picker",
       required: true,
       attributes: {
-        options: parent_field_list,
+        join_field_options,
+        relation_options,
       },
       showIf: { type: "JoinField" },
     },
@@ -604,7 +641,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: false,
       attributes: {
-        calcOptions: ["join_field", field_view_options],
+        calcOptions: ["join_field", join_field_view_options],
       },
       showIf: { type: "JoinField" },
     },
@@ -1669,6 +1706,7 @@ module.exports = {
   stateFieldsToQuery,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcrelViewOptions,
   get_link_view_opts,
   readState,
   readStateStrict,

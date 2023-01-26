@@ -340,3 +340,15 @@ export type MobileConfig = {
   isPublicUser?: boolean;
   jwt?: string;
 };
+
+export type JoinFieldOption = {
+  name: string;
+  table: string;
+  fieldPath: string;
+  subFields?: Array<JoinFieldOption>;
+};
+
+export type RelationOption = {
+  relationPath: string;
+  relationFields: string[];
+};

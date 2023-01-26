@@ -619,6 +619,11 @@ function build_mobile_app(button) {
   });
 }
 
+function join_field_clicked(e, fieldPath) {
+  $("#inputjoin_field").val(fieldPath);
+  apply_showif();
+}
+
 (() => {
   const e = document.querySelector("[data-sidebar-toggler]");
   let closed = localStorage.getItem("sidebarClosed") === "true";

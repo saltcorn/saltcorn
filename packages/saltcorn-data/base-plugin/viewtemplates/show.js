@@ -41,6 +41,7 @@ const {
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcrelViewOptions,
   calcfldViewConfig,
   getActionConfigFields,
   run_action_column,
@@ -146,6 +147,10 @@ const configuration_workflow = (req) =>
             );
             field_view_options.verification_url = ["as_text", "as_link"];
           }
+          const rel_field_view_options = await calcrelViewOptions(
+            table,
+            "show"
+          );
           const { link_view_opts, view_name_opts, view_relation_opts } =
             await get_link_view_opts(table, context.viewname);
           const roles = await User.get_roles();
@@ -153,6 +158,7 @@ const configuration_workflow = (req) =>
             true,
             true
           );
+
           const { child_field_list, child_relations } =
             await table.get_child_relations(true);
           var agg_field_opts = {};
@@ -178,7 +184,10 @@ const configuration_workflow = (req) =>
             actions,
             actionConfigForms,
             fieldViewConfigForms,
-            field_view_options,
+            field_view_options: {
+              ...field_view_options,
+              ...rel_field_view_options,
+            },
             link_view_opts,
             parent_field_list,
             child_field_list,

@@ -370,3 +370,9 @@ table.table-inner-grid td {
   margin-left: 0;
   margin-right: 0.5em;
 }
+
+.join-table-header {
+  padding: 0.25rem 1rem; 
+  margin-bottom: 0 !important;
+  text-decoration: underline;
+}
