@@ -90,7 +90,7 @@ class BuildAppCommand extends Command {
   }
 }
 
-BuildAppCommand.description = "build mobile app";
+BuildAppCommand.description = "Build mobile app";
 
 BuildAppCommand.flags = {
   tenantAppName: flags.string({
