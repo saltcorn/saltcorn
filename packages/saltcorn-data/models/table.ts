@@ -752,9 +752,22 @@ class Table implements AbstractTable {
         else if (!v[owner_field.name]) {
           //need to check existing
           if (!existing)
-            existing = await db.selectOne(this.name, { [pk_name]: id });
+            existing = (
+              await this.getJoinedRows({
+                where: { [pk_name]: id },
+              })
+            )[0];
           if (existing?.[owner_field.name] !== user.id) return;
         }
+      }
+      if (this.ownership_formula) {
+        if (!existing)
+          existing = (
+            await this.getJoinedRows({
+              where: { [pk_name]: id },
+            })
+          )[0];
+        if (!this.is_owner(user, existing)) return;
       }
       if (!this.ownership_field_id && !this.ownership_formula) return;
     }
@@ -1540,16 +1553,16 @@ class Table implements AbstractTable {
    */
   async get_relation_options(): Promise<RelationOption[]> {
     return await Promise.all(
-      (await this.get_relation_data()).map(
-        async ({ relationTable, relationField }: RelationData) => {
-          const path = `${relationTable.name}.${relationField.name}`;
-          const relFields = await relationTable.getFields();
-          const names = relFields
-            .filter((f: Field) => f.type !== "Key")
-            .map((f: Field) => f.name);
-          return { relationPath: path, relationFields: names };
-        }
-      )
+      (
+        await this.get_relation_data()
+      ).map(async ({ relationTable, relationField }: RelationData) => {
+        const path = `${relationTable.name}.${relationField.name}`;
+        const relFields = await relationTable.getFields();
+        const names = relFields
+          .filter((f: Field) => f.type !== "Key")
+          .map((f: Field) => f.name);
+        return { relationPath: path, relationFields: names };
+      })
     );
   }
 
