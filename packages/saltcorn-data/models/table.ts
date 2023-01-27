@@ -539,6 +539,13 @@ class Table implements AbstractTable {
     if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
       return;
     }
+    let rows;
+    if (this.ownership_formula) {
+      rows = await this.getJoinedRows({
+        where,
+      });
+      rows = rows.filter((row: Row) => this.is_owner(user, row));
+    }
 
     const deleteFileFields = fields.filter(
       (f) => f.type === "File" && f.attributes?.also_delete_file
@@ -547,7 +554,10 @@ class Table implements AbstractTable {
     if (triggers.length > 0 || deleteFileFields.length > 0) {
       const File = require("./file");
 
-      const rows = await this.getRows(where);
+      if (!rows)
+        rows = await this.getJoinedRows({
+          where,
+        });
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
@@ -563,7 +573,11 @@ class Table implements AbstractTable {
         }
       }
     }
-    await db.deleteWhere(this.name, where);
+    if (rows)
+      await db.deleteWhere(this.name, {
+        [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
+      });
+    else await db.deleteWhere(this.name, where);
     await this.resetSequence();
     for (const file of deleteFiles) {
       await file.delete();
@@ -772,10 +786,10 @@ class Table implements AbstractTable {
       if (!this.ownership_field_id && !this.ownership_formula) return;
     }
     if (this.versioned) {
-      if (!existing)
-        existing = await db.selectOne(this.name, { [pk_name]: id });
+      const existing1 = await db.selectOne(this.name, { [pk_name]: id });
+      if (!existing) existing = existing1;
       await db.insert(this.name + "__history", {
-        ...existing,
+        ...existing1,
         ...v,
         [pk_name]: id,
         _version: {
