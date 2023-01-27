@@ -540,7 +540,7 @@ class Table implements AbstractTable {
       return;
     }
     let rows;
-    if (this.ownership_formula) {
+    if (user && user.role_id > this.min_role_write && this.ownership_formula) {
       rows = await this.getJoinedRows({
         where,
       });
@@ -896,8 +896,7 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
-    let v;
-    let id;
+    let v, id;
     if (user && user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
@@ -925,6 +924,16 @@ class Table implements AbstractTable {
     } else {
       v = await apply_calculated_fields_stored(v_in, fields);
       id = await db.insert(this.name, v, { pk_name });
+    }
+    if (user && user.role_id > this.min_role_write && this.ownership_formula) {
+      let existing = await this.getJoinedRows({
+        where: { [pk_name]: id },
+      });
+
+      if (!this.is_owner(user, existing[0])) {
+        await this.deleteRows({ [pk_name]: id });
+        return;
+      }
     }
     if (this.versioned)
       await db.insert(this.name + "__history", {

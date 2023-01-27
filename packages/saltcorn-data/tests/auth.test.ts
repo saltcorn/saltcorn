@@ -261,6 +261,87 @@ describe("Table with row ownership formula", () => {
     });
     expect(owned_rows1.length).toBe(1);
     expect(owned_rows1[0].age).toBe(13);
+    const view = await createDefaultView(persons, "Show", 10);
+    const contents = await view.run_possibly_on_page(
+      { id: row1.id },
+      { ...mockReqRes.req, user: non_owner_user },
+      mockReqRes.res
+    );
+    expect(contents).toBe("<div>No row selected</div>");
+    const contents1 = await view.run_possibly_on_page(
+      { id: row1.id },
+      { ...mockReqRes.req, user: owner_user },
+      mockReqRes.res
+    );
+    expect(contents1).toContain(">13<");
+    await view.delete();
+    const editView = await createDefaultView(persons, "Edit", 10);
+    const econtents = await editView.run_possibly_on_page(
+      { id: row1.id },
+      { ...mockReqRes.req, user: non_owner_user },
+      mockReqRes.res
+    );
+    expect(econtents).not.toContain('value="13"');
+    const econtents1 = await editView.run_possibly_on_page(
+      { id: row1.id },
+      { ...mockReqRes.req, user: owner_user },
+      mockReqRes.res
+    );
+    expect(econtents1).toContain('value="13"');
+    await editView.runPost(
+      {},
+      { ...row1, age: 5 },
+      {
+        req: { ...mockReqRes.req, user: non_owner_user },
+        res: mockReqRes.res,
+      },
+      false
+    );
+    expect((await persons.getRow({ id: row1.id }))?.age).toBe(13);
+    await editView.runPost(
+      {},
+      { ...row1, age: 5 },
+      {
+        req: { ...mockReqRes.req, user: owner_user },
+        res: mockReqRes.res,
+      },
+      false
+    );
+    expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+    await editView.delete();
+
+    //update
+    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 });
+    expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
+    await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user);
+    expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
+    await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user);
+    expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
+
+    //delete
+    await persons.deleteRows({ id: row1.id }, { role_id: 10 });
+    expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+    await persons.deleteRows({ id: row1.id }, non_owner_user);
+    expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
+    await persons.deleteRows({ id: row1.id }, owner_user);
+    expect((await persons.getRow({ id: row1.id }))?.age).toBe(undefined);
+
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      { role_id: 10 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
     await persons.delete();
   });
 });
