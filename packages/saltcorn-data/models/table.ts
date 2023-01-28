@@ -1975,7 +1975,7 @@ class Table implements AbstractTable {
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
 
-    return { sql, values };
+    return { sql, values, joinFields };
   }
 
   /**
@@ -1999,30 +1999,19 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     const { forUser, forPublic, ...selopts1 } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
-    const { sql, values, notAuthorized } = await this.getJoinedQuery(opts);
+    const { sql, values, notAuthorized, joinFields } =
+      await this.getJoinedQuery(opts);
+
     if (notAuthorized) return [];
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
-    //console.log(sql);
-    //console.log(res.rows);
-    if (role && role > this.min_role_read) {
-      //check ownership
-      if (forPublic) return [];
-      else if (this.ownership_field_id) {
-        //already dealt with by changing where
-      } else if (this.ownership_formula) {
-        res.rows = res.rows.filter((row: Row) => this.is_owner(forUser, row));
-      } else return []; //no ownership
-    }
 
-    const calcRow = apply_calculated_fields(res.rows, fields);
+    let calcRow = apply_calculated_fields(res.rows, fields);
 
     //rename joinfields
-    if (
-      Object.values(opts.joinFields || {}).some((jf: any) => jf.rename_object)
-    ) {
+    if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {
       let f = (x: any) => x;
-      Object.entries(opts.joinFields || {}).forEach(([k, v]: any) => {
+      Object.entries(joinFields || {}).forEach(([k, v]: any) => {
         if (v.rename_object) {
           if (v.rename_object.length === 2) {
             const oldf = f;
@@ -2074,8 +2063,19 @@ class Table implements AbstractTable {
         }
       });
 
-      return calcRow.map(f);
-    } else return calcRow;
+      calcRow = calcRow.map(f);
+    }
+
+    if (role && role > this.min_role_read) {
+      //check ownership
+      if (forPublic) return [];
+      else if (this.ownership_field_id) {
+        //already dealt with by changing where
+      } else if (this.ownership_formula) {
+        calcRow = calcRow.filter((row: Row) => this.is_owner(forUser, row));
+      } else return []; //no ownership
+    }
+    return calcRow;
   }
 
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {
