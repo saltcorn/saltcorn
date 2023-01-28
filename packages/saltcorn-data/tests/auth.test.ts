@@ -77,6 +77,7 @@ const test_person_table = async (persons: Table) => {
   expect(owned_rows1.length).toBe(1);
   expect(owned_rows1[0].age).toBe(13);
 
+  //show
   const view = await createDefaultView(persons, "Show", 10);
   const contents = await view.run_possibly_on_page(
     { id: row1.id },
@@ -91,11 +92,30 @@ const test_person_table = async (persons: Table) => {
     mockReqRes.res
   );
   expect(contents1).toContain(">13<");
+  const contentsmo = await view.runMany(
+    {},
+    {
+      req: { ...mockReqRes.req, user: owner_user },
+      res: mockReqRes.res,
+    }
+  );
+  expect(contentsmo.length).toBe(1);
+  // @ts-ignore
+  expect(contentsmo[0]?.row?.lastname).toBe("Sam");
+  const contentsmno = await view.runMany(
+    {},
+    {
+      req: { ...mockReqRes.req, user: non_owner_user },
+      res: mockReqRes.res,
+    }
+  );
+  expect(contentsmno.length).toBe(0);
   await view.delete();
 
   const { department, ...row1form } = row1;
   if (department) row1form.department = department.id;
 
+  //edit
   const editView = await createDefaultView(persons, "Edit", 10);
   const econtents = await editView.run_possibly_on_page(
     { id: row1.id },
