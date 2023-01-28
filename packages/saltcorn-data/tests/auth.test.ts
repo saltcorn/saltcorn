@@ -226,6 +226,56 @@ describe("Table with row ownership formula", () => {
     await persons.delete();
   });
 });
+describe("Table with row ownership joined formula", () => {
+  it("should create and delete table", async () => {
+    const department = await Table.create("Department");
+    await Field.create({
+      table: department,
+      name: "name",
+      type: "String",
+    });
+    const manager = await Field.create({
+      table: department,
+      name: "manager",
+      type: "Key to users",
+    });
+    await department.update({ ownership_field_id: manager.id });
+
+    const persons = await Table.create("TableOwnedJnFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const deptkey = await Field.create({
+      table: persons,
+      name: "department",
+      type: "Key to Department",
+    });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedJnFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    //expect(own_opts).toBe(1);
+    expect(own_opts?.[0].label).toBe("Inherit department");
+    expect(own_opts?.[0].value).toBe("Fml:department.manager===user.id");
+    await persons.update({ ownership_formula: "department.manager===user.id" });
+    await department.insertRow({ name: "Accounting", manager: 1 });
+    await department.insertRow({ name: "HR", manager: 2 });
+
+    await persons.insertRow({ lastname: "Joe", age: 12, department: 2 });
+    await persons.insertRow({ lastname: "Sam", age: 13, department: 1 });
+    await test_person_table(persons);
+    await persons.delete();
+    await department.delete();
+  });
+});
 describe("User group", () => {
   it("should support user groups", async () => {
     const projects = await Table.create("Project");
