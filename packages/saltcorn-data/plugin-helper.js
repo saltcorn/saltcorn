@@ -1440,7 +1440,11 @@ const initial_config_all_fields =
       ) {
         cfg.columns.push({
           type: "JoinField",
-          join_field: `${f.name}.${f.attributes.summary_field}`,
+          join_field: `${f.name}.${
+            f.attributes.summary_field ||
+            Table.findOne(f.reftable_name)?.pk_name ||
+            "id"
+          }`,
         });
         aboves.push({
           widths: [2, 10],
