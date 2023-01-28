@@ -910,6 +910,7 @@ class Table implements AbstractTable {
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
         joinFields,
+        forUser: user,
       });
 
       let calced = await apply_calculated_fields_stored(existing[0], fields);
@@ -923,11 +924,12 @@ class Table implements AbstractTable {
       id = await db.insert(this.name, v, { pk_name });
     }
     if (user && user.role_id > this.min_role_write && this.ownership_formula) {
-      let existing = await this.getJoinedRows({
+      let existing = await this.getJoinedRow({
         where: { [pk_name]: id },
+        forUser: user,
       });
 
-      if (!this.is_owner(user, existing[0])) {
+      if (!existing || !this.is_owner(user, existing)) {
         await this.deleteRows({ [pk_name]: id });
         return;
       }
