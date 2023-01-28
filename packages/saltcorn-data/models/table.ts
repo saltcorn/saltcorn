@@ -543,8 +543,8 @@ class Table implements AbstractTable {
     if (user && user.role_id > this.min_role_write && this.ownership_formula) {
       rows = await this.getJoinedRows({
         where,
+        forUser: user,
       });
-      rows = rows.filter((row: Row) => this.is_owner(user, row));
     }
 
     const deleteFileFields = fields.filter(
