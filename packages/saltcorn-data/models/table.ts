@@ -1777,6 +1777,7 @@ class Table implements AbstractTable {
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
     }
     if (role && role > this.min_role_read && this.ownership_field_id) {
+      if (forPublic) return { notAuthorized: true };
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
@@ -1981,13 +1982,25 @@ class Table implements AbstractTable {
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */
+  async getJoinedRow(
+    opts: (JoinOptions & ForUserRequest) | any = {}
+  ): Promise<Row | null> {
+    const rows = await this.getJoinedRows(opts);
+    return rows.length > 0 ? rows[0] : null;
+  }
+
+  /**
+   * @param {object} [opts = {}]
+   * @returns {Promise<object[]>}
+   */
   async getJoinedRows(
     opts: (JoinOptions & ForUserRequest) | any = {}
   ): Promise<Array<Row>> {
     const fields = await this.getFields();
     const { forUser, forPublic, ...selopts1 } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
-    const { sql, values } = await this.getJoinedQuery(opts);
+    const { sql, values, notAuthorized } = await this.getJoinedQuery(opts);
+    if (notAuthorized) return [];
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
     //console.log(sql);
