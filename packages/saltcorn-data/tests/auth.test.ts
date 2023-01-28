@@ -281,8 +281,10 @@ describe("Table with row ownership joined formula", () => {
     expect(own_opts?.length).toBe(1);
     //expect(own_opts).toBe(1);
     expect(own_opts?.[0].label).toBe("Inherit department");
-    expect(own_opts?.[0].value).toBe("Fml:department.manager===user.id");
-    await persons.update({ ownership_formula: "department.manager===user.id" });
+    expect(own_opts?.[0].value).toBe("Fml:department?.manager===user.id");
+    await persons.update({
+      ownership_formula: "department?.manager===user.id",
+    });
     await department.insertRow({ name: "Accounting", manager: 1 });
     await department.insertRow({ name: "HR", manager: 2 });
 

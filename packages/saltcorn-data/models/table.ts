@@ -307,7 +307,7 @@ class Table implements AbstractTable {
           if (ofield)
             opts.push({
               label: `Inherit ${field.label}`,
-              value: `Fml:${field.name}.${ofield.name}===user.id`,
+              value: `Fml:${field.name}?.${ofield.name}===user.id`,
             });
         }
         if (refTable?.ownership_formula) {
@@ -322,7 +322,7 @@ class Table implements AbstractTable {
             if (fldNms.has(path[0])) {
               opts.push({
                 label: `Inherit ${field.label}`,
-                value: `Fml:${field.name}.${refFml}`,
+                value: `Fml:${field.name}?.${refFml}`,
               });
             }
           }
@@ -341,7 +341,7 @@ class Table implements AbstractTable {
             } else {
               const fml = refFml.replace(
                 `.includes(${ref})`,
-                `.includes(${field.name}.${ref})`
+                `.includes(${field.name}?.${ref})`
               );
 
               opts.push({
