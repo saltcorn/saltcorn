@@ -97,10 +97,8 @@ Vagrant.configure("2") do |config|
       # and build the cordova-builder image
       sudo groupadd docker
       sudo usermod -aG docker saltcorn
-      sudo -u saltcorn docker build /home/saltcorn/.local/lib/node_modules/@saltcorn/cli/node_modules/@saltcorn/mobile-builder/docker \
-        --network host -f /home/saltcorn/.local/lib/node_modules/@saltcorn/cli/node_modules/@saltcorn/mobile-builder/docker/Dockerfile \
-        -t saltcorn/cordova-builder
-      
+      sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn build-cordova-builder
+
       cd /home/saltcorn
       sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn install-pack -n "Address book"
       sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -p "android" -s "http://10.0.2.2" -b "/home/saltcorn/build_dir" -e "EditPerson" -d
