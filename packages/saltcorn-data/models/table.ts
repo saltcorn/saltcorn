@@ -738,12 +738,10 @@ class Table implements AbstractTable {
         await db.update(this.name, v, id, { pk_name });
       }
 
-      existing = (
-        await this.getJoinedRows({
-          where: { [pk_name]: id },
-          joinFields,
-        })
-      )[0];
+      existing = await this.getJoinedRow({
+        where: { [pk_name]: id },
+        joinFields,
+      });
 
       let calced = await apply_calculated_fields_stored(
         need_to_update ? existing : { ...existing, ...v_in },
@@ -766,22 +764,21 @@ class Table implements AbstractTable {
         else if (!v[owner_field.name]) {
           //need to check existing
           if (!existing)
-            existing = (
-              await this.getJoinedRows({
-                where: { [pk_name]: id },
-              })
-            )[0];
-          if (existing?.[owner_field.name] !== user.id) return;
+            existing = await this.getJoinedRow({
+              where: { [pk_name]: id },
+              forUser: user,
+            });
+          if (!existing || existing?.[owner_field.name] !== user.id) return;
         }
       }
       if (this.ownership_formula) {
         if (!existing)
-          existing = (
-            await this.getJoinedRows({
-              where: { [pk_name]: id },
-            })
-          )[0];
-        if (!this.is_owner(user, existing)) return;
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: user,
+          });
+
+        if (!existing || !this.is_owner(user, existing)) return;
       }
       if (!this.ownership_field_id && !this.ownership_formula) return;
     }
