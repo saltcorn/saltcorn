@@ -24,7 +24,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 jest.setTimeout(30000);
-const non_owner_user = { id: 6, email: "foo@bar.com", role_id: 8 };
+const non_owner_user = { id: 3, email: "foo@bar.com", role_id: 8 };
 const owner_user = { id: 1, email: "foo@bar.com", role_id: 8 };
 
 const test_person_table = async (persons: Table) => {
@@ -158,7 +158,14 @@ const test_person_table = async (persons: Table) => {
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
   await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user);
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
-
+  if (!department) {
+    await persons.updateRow(
+      { lastname: "Sally", owner: non_owner_user.id },
+      row1.id,
+      non_owner_user
+    );
+    expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
+  }
   //delete
   await persons.deleteRows({ id: row1.id }, { role_id: 10 });
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);

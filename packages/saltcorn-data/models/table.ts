@@ -761,15 +761,14 @@ class Table implements AbstractTable {
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
         if (v[owner_field.name] && v[owner_field.name] !== user.id) return;
-        else if (!v[owner_field.name]) {
-          //need to check existing
-          if (!existing)
-            existing = await this.getJoinedRow({
-              where: { [pk_name]: id },
-              forUser: user,
-            });
-          if (!existing || existing?.[owner_field.name] !== user.id) return;
-        }
+
+        //need to check existing
+        if (!existing)
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: user,
+          });
+        if (!existing || existing?.[owner_field.name] !== user.id) return;
       }
       if (this.ownership_formula) {
         if (!existing)
