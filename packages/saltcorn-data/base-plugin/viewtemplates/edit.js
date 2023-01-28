@@ -1189,7 +1189,8 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
-        row = await table.getRow(uniques, {
+        row = await table.getJoinedRow({
+          where: uniques,
           forPublic: !req.user,
           forUser: req.user,
         });

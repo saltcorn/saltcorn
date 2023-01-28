@@ -294,7 +294,11 @@ module.exports = {
   }) => ({
     async getRowQuery(uniques) {
       const table = await Table.findOne({ id: table_id });
-      return await table.getRow(uniques);
+      return await table.getJoinedRow({
+        where: uniques,
+        forUser: req.user,
+        forPublic: !req.user,
+      });
     },
   }),
   connectedObjects: async ({ list_view, subtables }) => {
