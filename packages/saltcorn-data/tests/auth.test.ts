@@ -33,54 +33,50 @@ const test_person_table = async (persons: Table) => {
   expect(row.lastname).toBe("Joe");
   expect(row.age).toBe(12);
 
-  const is_owner = await persons.is_owner(non_owner_user, row);
-  expect(is_owner).toBe(false);
-  const not_owned_row = await persons.getRow(
-    { id: row.id },
-    {
-      forUser: non_owner_user,
-    }
-  );
+  expect(persons.is_owner(non_owner_user, row)).toBe(false);
+  const not_owned_row = await persons.getJoinedRow({
+    where: { id: row.id },
+    forUser: non_owner_user,
+  });
   expect(not_owned_row).toBe(null);
-  const row1 = await persons.getRow({ age: 13 });
+
+  const row1 = await persons.getJoinedRow({
+    where: { age: 13 },
+    forUser: owner_user,
+  });
+
   assertIsSet(row1);
-  const is_owner1 = await persons.is_owner({ id: 1 }, row1);
-  expect(is_owner1).toBe(true);
-  const owned_row = await persons.getRow(
-    { id: row1.id },
-    {
-      forUser: owner_user,
-    }
-  );
+  expect(persons.is_owner({ id: 1 }, row1)).toBe(true);
+  const owned_row = await persons.getJoinedRow({
+    where: { id: row1.id },
+
+    forUser: owner_user,
+  });
   expect(!!owned_row).toBe(true);
 
-  const owned_rows = await persons.getRows(
-    {},
-    {
-      forUser: owner_user,
-    }
-  );
+  const owned_rows = await persons.getJoinedRows({
+    where: {},
+    forUser: owner_user,
+  });
   expect(owned_rows.length).toBe(1);
   expect(owned_rows[0].age).toBe(13);
-  const not_owned_rows = await persons.getRows(
-    {},
-    {
-      forUser: non_owner_user,
-    }
-  );
+  const not_owned_rows = await persons.getJoinedRows({
+    where: {},
+
+    forUser: non_owner_user,
+  });
   expect(not_owned_rows.length).toBe(0);
-  const public_owned_rows = await persons.getRows(
-    {},
-    {
-      forPublic: true,
-    }
-  );
+  const public_owned_rows = await persons.getJoinedRows({
+    where: {},
+    forPublic: true,
+  });
   expect(public_owned_rows.length).toBe(0);
   const owned_rows1 = await persons.getJoinedRows({
     forUser: owner_user,
   });
   expect(owned_rows1.length).toBe(1);
   expect(owned_rows1[0].age).toBe(13);
+
   const view = await createDefaultView(persons, "Show", 10);
   const contents = await view.run_possibly_on_page(
     { id: row1.id },
@@ -88,6 +84,7 @@ const test_person_table = async (persons: Table) => {
     mockReqRes.res
   );
   expect(contents).toBe("<div>No row selected</div>");
+
   const contents1 = await view.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: owner_user },
