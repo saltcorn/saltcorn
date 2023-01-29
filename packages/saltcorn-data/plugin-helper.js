@@ -1664,6 +1664,15 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     get_parent_relations() {
       return { parent_relations: [], parent_field_list: [] };
     },
+    get_relation_options() {
+      return [];
+    },
+    get_relation_data() {
+      return [];
+    },
+    get_join_field_options() {
+      return [];
+    },
     external: true,
     owner_fieldname() {
       return null;
