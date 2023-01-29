@@ -777,7 +777,7 @@ module.exports = {
       if (default_state?.include_fml) {
         const ctx = { ...state, user_id: req.user?.id || null };
         let where1 = jsexprToWhere(default_state.include_fml, ctx);
-        mergeIntoWhere(where, where1);
+        mergeIntoWhere(where, where1 || {});
       }
       let rows = await table.getJoinedRows({
         where,
