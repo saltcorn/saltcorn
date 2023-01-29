@@ -422,6 +422,7 @@ const configuration_workflow = (req) =>
  */
 const get_state_fields = async (table_id, viewname, { columns }) => {
   const table = Table.findOne(table_id);
+  if (!table) return [];
   const table_fields = await table.getFields();
   //console.log(table_fields);
   let state_fields = [];
@@ -777,7 +778,7 @@ module.exports = {
       if (default_state?.include_fml) {
         const ctx = { ...state, user_id: req.user?.id || null };
         let where1 = jsexprToWhere(default_state.include_fml, ctx);
-        mergeIntoWhere(where, where1);
+        mergeIntoWhere(where, where1 || {});
       }
       let rows = await table.getJoinedRows({
         where,

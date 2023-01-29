@@ -7,6 +7,7 @@ import { writeFile } from "fs/promises";
 import Workflow from "../models/workflow";
 import db from "../db";
 import tags from "@saltcorn/markup/tags";
+import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 const { getState } = require("../db/state");
 const { input } = tags;
 const { json_list_to_external_table } = require("../plugin-helper");
@@ -61,7 +62,7 @@ const getActionCounter = () => actionCounter;
 const resetActionCounter = () => {
   actionCounter = 0;
 };
-const plugin_with_routes = {
+const plugin_with_routes = () => ({
   sc_plugin_api_version: 1,
   onLoad: async () => {
     if (!db.isSQLite)
@@ -71,8 +72,8 @@ const plugin_with_routes = {
     exttab: json_list_to_external_table(
       () => [{ name: "Sam", age: 56 }],
       [
-        { name: "name", type: "String" },
-        { name: "age", type: "Integer" },
+        { name: "name", label: "Name", type: "String" },
+        { name: "age", label: "Age", type: "Integer" },
       ]
     ),
   },
@@ -171,7 +172,7 @@ const plugin_with_routes = {
       run: async () => {},
     },
   ],
-};
+});
 
 let mockResReqStored: any = {};
 
@@ -207,13 +208,17 @@ const createDefaultView = async (
   min_role: number
 ): Promise<View> => {
   const vt = getState().viewtemplates[viewtemplate];
-  return await View.create({
+  const v: ViewCfg = {
     name: `${viewtemplate}${table.name}${Math.round(Math.random() * 10000)}`,
-    table_id: table.id,
     min_role: 10,
-    configuration: await vt.initial_config({ table_id: table.id }),
+    configuration: await vt.initial_config(
+      table.id ? { table_id: table.id } : { exttable_name: table.name }
+    ),
     viewtemplate,
-  });
+  };
+  if (table.id) v.table_id = table.id;
+  else v.exttable_name = table.name;
+  return await View.create(v);
 };
 
 export = {

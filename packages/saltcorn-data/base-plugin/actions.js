@@ -252,6 +252,10 @@ module.exports = {
      */
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
+      if (!view)
+        throw new Error(
+          `In find_or_create_dm_room action, Room view ${viewname} does not exist`
+        );
       const { participant_field } = view.configuration;
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
