@@ -114,7 +114,7 @@ describe("Table Endpoints", () => {
   });
   it("should edit external table role", async () => {
     const loginCookie = await getAdminLoginCookie();
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post(`/table`)

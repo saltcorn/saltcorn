@@ -90,7 +90,7 @@ describe("edit view", () => {
 
 describe("view with routes", () => {
   it("should enable", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     const table = await Table.findOne({ name: "books" });
 

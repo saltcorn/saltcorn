@@ -201,7 +201,7 @@ describe("View", () => {
 });
 describe("View with routes", () => {
   it("should create and delete", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     var html, json;
     const spy = {

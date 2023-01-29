@@ -21,7 +21,7 @@ jest.setTimeout(10000);
 
 describe("Action", () => {
   it("should add insert trigger", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
 
@@ -243,7 +243,7 @@ describe("Events", () => {
 
 describe("Scheduler", () => {
   it("should run and tick", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
 
