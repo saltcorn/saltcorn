@@ -1326,6 +1326,15 @@ describe("external tables", () => {
       mockReqRes.res
     );
     expect(contents).toContain(">Sam<");
+    const configFlow = await view.get_config_flow(mockReqRes.req);
+    await configFlow.run(
+      {
+        exttable_name: view.exttable_name,
+        viewname: view.name,
+        ...view.configuration,
+      },
+      mockReqRes.req
+    );
   });
 });
 
