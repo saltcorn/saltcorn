@@ -875,6 +875,7 @@ function split_paste_handler(e) {
           //const pasted =
           $elem.val(lines.shift());
         } else $elem.val(lines.shift());
+        $elem.trigger("change");
       }
     });
 }
