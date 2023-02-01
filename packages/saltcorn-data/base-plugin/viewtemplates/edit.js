@@ -235,8 +235,11 @@ const configuration_workflow = (req) =>
           var formFields = [];
           omitted_fields.forEach((f) => {
             f.required = false;
-
+            if (f.type?.name === "Bool") {
+              f.fieldview = "tristate";
+            }
             formFields.push(f);
+
             if (f.presets) {
               formFields.push(
                 new Field({
