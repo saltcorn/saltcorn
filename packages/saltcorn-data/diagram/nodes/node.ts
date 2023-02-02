@@ -10,7 +10,7 @@ export default abstract class Node {
   name: string;
   label: string;
   cyId: string;
-  objectId: number;
+  objectId?: number | null;
   linked = new Array<Node>();
   embedded = new Array<Node>();
   tables = new Array<Node>();
@@ -28,14 +28,14 @@ export default abstract class Node {
     name: string,
     label: string,
     tags: Array<AbstractTag>,
-    objectId: number,
+    objectId?: number | null,
   ) {
     this.type = type;
+    this.name = name;
     this.label = label;
-    this.cyId = `${type}_${label}`;
     this.tags = tags;
     this.objectId = objectId;
-    this.name = name;
+    this.cyId = `${this.type}_${this.name}`;
   }
 
   /**
