@@ -57,6 +57,13 @@ const cyStyle = [
       "background-color": "yellow",
     },
   },
+  {
+    selector: "node[?isVirtual]",
+    style: {
+      opacity: 0.4,
+    },
+  },
+
 ];
 
 /**

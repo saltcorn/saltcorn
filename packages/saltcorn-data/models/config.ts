@@ -35,6 +35,7 @@ const configTypes: ConfigTypes = {
     default: defaultTimezone,
     attributes: {
       options: allTimezones,
+      selectizable: true,
     },
   },
   /** @type {object} */

@@ -43,11 +43,6 @@ class BuildAppCommand extends Command {
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
     this.validateParameters(flags);
-    const user = flags.userEmail
-      ? await User.findOne({ email: flags.userEmail })
-      : undefined;
-    if (!user && flags.userEmail)
-      throw new Error(`The user '${flags.userEmail}' does not exist'`);
     const mobileAppDir = path.join(
       require.resolve("@saltcorn/mobile-app"),
       ".."
@@ -57,6 +52,11 @@ class BuildAppCommand extends Command {
       await init_multi_tenant(loadAllPlugins, true, [flags.tenantAppName]);
     }
     const doBuild = async () => {
+      const user = flags.userEmail
+        ? await User.findOne({ email: flags.userEmail })
+        : undefined;
+      if (!user && flags.userEmail)
+        throw new Error(`The user '${flags.userEmail}' does not exist'`);
       const dynamicPlugins = (await Plugin.find()).filter(
         (plugin) => !this.staticPlugins.includes(plugin.name)
       );
@@ -90,7 +90,7 @@ class BuildAppCommand extends Command {
   }
 }
 
-BuildAppCommand.description = "build mobile app";
+BuildAppCommand.description = "Build mobile app";
 
 BuildAppCommand.flags = {
   tenantAppName: flags.string({

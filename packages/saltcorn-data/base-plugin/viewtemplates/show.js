@@ -41,6 +41,7 @@ const {
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcrelViewOptions,
   calcfldViewConfig,
   getActionConfigFields,
   run_action_column,
@@ -146,6 +147,10 @@ const configuration_workflow = (req) =>
             );
             field_view_options.verification_url = ["as_text", "as_link"];
           }
+          const rel_field_view_options = await calcrelViewOptions(
+            table,
+            "show"
+          );
           const { link_view_opts, view_name_opts, view_relation_opts } =
             await get_link_view_opts(table, context.viewname);
           const roles = await User.get_roles();
@@ -153,6 +158,7 @@ const configuration_workflow = (req) =>
             true,
             true
           );
+
           const { child_field_list, child_relations } =
             await table.get_child_relations(true);
           var agg_field_opts = {};
@@ -178,7 +184,10 @@ const configuration_workflow = (req) =>
             actions,
             actionConfigForms,
             fieldViewConfigForms,
-            field_view_options,
+            field_view_options: {
+              ...field_view_options,
+              ...rel_field_view_options,
+            },
             link_view_opts,
             parent_field_list,
             child_field_list,
@@ -736,9 +745,9 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
-  authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
+  /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
     return await authorizeGetQuery(query, table_id);
-  },
+  },*/
   queries: ({
     table_id,
     exttable_name,
@@ -776,6 +785,8 @@ module.exports = {
         aggregations,
         limit: 5,
         starFields: tbl.name === "users",
+        forPublic: !req.user,
+        forUser: req.user,
       });
       return {
         rows,
@@ -818,6 +829,8 @@ module.exports = {
         ...(orderBy && { orderBy: orderBy }),
         ...(orderDesc && { orderDesc: orderDesc }),
         ...q,
+        forPublic: !req.user,
+        forUser: req.user,
       });
       if (tbl.ownership_formula && role > tbl.min_role_read && req) {
         rows = rows.filter((row) => tbl.is_owner(req.user, row));
@@ -845,7 +858,7 @@ module.exports = {
         return { json: { error: e.message || e } };
       }
     },
-    async authorizeGetQuery(query, table_id) {
+    /*async authorizeGetQuery(query, table_id) {
       let body = query || {};
       const user_id = req.user ? req.user.id : null;
 
@@ -855,22 +868,18 @@ module.exports = {
           const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
-            const joinFields = {};
-            if (table.ownership_formula) {
-              const freeVars = freeVariables(table.ownership_formula);
-              add_free_variables_to_joinfields(freeVars, joinFields, fields);
-            }
             const row = await table.getJoinedRows({
               where: uniques,
-              joinFields,
+              forPublic: !req.user,
+              forUser: req.user,
             });
-            if (row.length > 0) return table.is_owner(req.user, row[0]);
-            else return true; // TODO ??
+            if (row.length > 0) return true;
+            else return false;
           }
         }
       }
       return false;
-    },
+    },*/
   }),
   configCheck: async (view) => {
     return await check_view_columns(view, view.configuration.columns);

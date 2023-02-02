@@ -426,12 +426,17 @@ export const orderByIsObject = (
 export type JoinField = {
   ref: any;
   target: any;
-  through: any;
-  [key: string]: any;
+  through?: any;
+  rename_object?: any;
+  ontable?: any;
+};
+
+export type JoinFields = {
+  [key: string]: JoinField;
 };
 
 export type JoinOptions = {
-  joinFields?: JoinField;
+  joinFields?: JoinFields;
   aggregations?: AggregationOptions[];
   where: any;
   starFields?: boolean;

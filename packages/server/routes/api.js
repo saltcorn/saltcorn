@@ -381,7 +381,10 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryInsertRow(row, req.user);
+          const ins_res = await table.tryInsertRow(
+            row,
+            req.user || user || { role_id: 10 }
+          );
           if (ins_res.error) res.status(400).json(ins_res);
           else res.json(ins_res);
         } else {
@@ -436,7 +439,11 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryUpdateRow(row, id, req.user);
+          const ins_res = await table.tryUpdateRow(
+            row,
+            id,
+            user || req.user || { role_id: 10 }
+          );
 
           if (ins_res.error) res.status(400).json(ins_res);
           else res.json(ins_res);
@@ -475,8 +482,15 @@ router.delete(
               //const fields = await table.getFields();
               const row = req.body;
               //readState(row, fields);
-              await table.deleteRows({ [pk_name]: row[pk_name] });
-            } else await table.deleteRows({ id });
+              await table.deleteRows(
+                { [pk_name]: row[pk_name] },
+                user || req.user || { role_id: 10 }
+              );
+            } else
+              await table.deleteRows(
+                { id },
+                user || req.user || { role_id: 10 }
+              );
             res.json({ success: true });
           } catch (e) {
             res.status(400).json({ error: e.message });

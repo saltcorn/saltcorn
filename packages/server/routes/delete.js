@@ -36,11 +36,12 @@ router.post(
     const table = await Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 10;
     try {
-      if (role <= table.min_role_write) await table.deleteRows({ id });
+      if (role <= table.min_role_write)
+        await table.deleteRows({ id }, req.user || { role_id: 10 });
       else if (table.ownership_field_id && req.user) {
         const row = await table.getRow({ id });
         if (row && table.is_owner(req.user, row))
-          await table.deleteRows({ id });
+          await table.deleteRows({ id }, req.user || { role_id: 10 });
         else req.flash("error", req.__("Not authorized"));
       } else
         req.flash(

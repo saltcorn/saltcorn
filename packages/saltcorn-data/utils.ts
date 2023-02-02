@@ -94,7 +94,7 @@ const satisfies = (where: Where) => (obj: any) =>
   Object.entries(where || {}).every((kv) => sat1(obj, kv));
 
 // https://gist.github.com/jadaradix/fd1ef195af87f6890448
-const getLines = (filename: string, lineCount: number) =>
+const getLines = (filename: string, lineCount: number): Promise<string> =>
   new Promise((resolve) => {
     let stream = createReadStream(filename, {
       flags: "r",

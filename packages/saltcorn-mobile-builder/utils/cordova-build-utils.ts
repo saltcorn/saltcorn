@@ -39,7 +39,9 @@ export function buildApkInContainer(buildDir: string) {
     ],
     { cwd: "." }
   );
-  console.log(result.output.toString());
+  if (result.output) console.log(result.output.toString());
+  else if (result.error) console.log(result.error.toString());
+  else console.log("docker finished without output");
   return result.status;
 }
 

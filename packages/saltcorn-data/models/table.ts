@@ -15,7 +15,7 @@ import type {
   Where,
   SelectOptions,
   Row,
-  JoinField,
+  JoinFields,
   JoinOptions,
   AggregationOptions,
 } from "@saltcorn/db-common/internal";
@@ -26,6 +26,11 @@ import type {
   TableCfg,
   TablePack,
 } from "@saltcorn/types/model-abstracts/abstract_table";
+
+import type {
+  ForUserRequest,
+  AbstractUser,
+} from "@saltcorn/types/model-abstracts/abstract_user";
 
 import type { ResultMessage } from "@saltcorn/types/common_types";
 import {
@@ -41,6 +46,7 @@ const {
   recalculate_for_stored,
   get_expression_function,
   freeVariables,
+  add_free_variables_to_joinfields,
 } = expression;
 
 import csvtojson from "csvtojson";
@@ -50,17 +56,21 @@ import { stat, readFile } from "fs/promises";
 import utils from "../utils";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
-const { prefixFieldsInWhere } = utils;
 const {
+  prefixFieldsInWhere,
   InvalidConfiguration,
   InvalidAdminAction,
   satisfies,
   structuredClone,
   getLines,
-} = require("../utils");
+  mergeIntoWhere,
+} = utils;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-//import type Tag from "../models/tag";
+import type {
+  JoinFieldOption,
+  RelationOption,
+} from "@saltcorn/types/base_types";
 
 /**
  * Transponce Objects
@@ -297,7 +307,7 @@ class Table implements AbstractTable {
           if (ofield)
             opts.push({
               label: `Inherit ${field.label}`,
-              value: `Fml:${field.name}.${ofield.name}===user.id`,
+              value: `Fml:${field.name}?.${ofield.name}===user.id`,
             });
         }
         if (refTable?.ownership_formula) {
@@ -312,7 +322,7 @@ class Table implements AbstractTable {
             if (fldNms.has(path[0])) {
               opts.push({
                 label: `Inherit ${field.label}`,
-                value: `Fml:${field.name}.${refFml}`,
+                value: `Fml:${field.name}?.${refFml}`,
               });
             }
           }
@@ -331,7 +341,7 @@ class Table implements AbstractTable {
             } else {
               const fml = refFml.replace(
                 `.includes(${ref})`,
-                `.includes(${field.name}.${ref})`
+                `.includes(${field.name}?.${ref})`
               );
 
               opts.push({
@@ -488,15 +498,55 @@ class Table implements AbstractTable {
       await db.reset_sequence(this.name);
   }
 
+  updateWhereWithOwnership(
+    where: Where,
+    fields: Field[],
+    user?: Row
+  ): { notAuthorized?: boolean } | undefined {
+    const role = user?.role_id;
+
+    if (
+      role &&
+      role > this.min_role_write &&
+      ((!this.ownership_field_id && !this.ownership_formula) || role === 10)
+    )
+      return { notAuthorized: true };
+    if (
+      user &&
+      role < 10 &&
+      role > this.min_role_write &&
+      this.ownership_field_id
+    ) {
+      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      if (!owner_field)
+        throw new Error(`Owner field in table ${this.name} not found`);
+      mergeIntoWhere(where, {
+        [owner_field.name]: user.id,
+      });
+    }
+  }
+
   /**
    * Delete rows from table
    * @param where - condition
    * @returns {Promise<void>}
    */
-  async deleteRows(where: Where) {
+  async deleteRows(where: Where, user?: Row) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = await this.getFields();
+
+    if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
+      return;
+    }
+    let rows;
+    if (user && user.role_id > this.min_role_write && this.ownership_formula) {
+      rows = await this.getJoinedRows({
+        where,
+        forUser: user,
+      });
+    }
+
     const deleteFileFields = fields.filter(
       (f) => f.type === "File" && f.attributes?.also_delete_file
     );
@@ -504,7 +554,10 @@ class Table implements AbstractTable {
     if (triggers.length > 0 || deleteFileFields.length > 0) {
       const File = require("./file");
 
-      const rows = await this.getRows(where);
+      if (!rows)
+        rows = await this.getJoinedRows({
+          where,
+        });
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
@@ -520,7 +573,11 @@ class Table implements AbstractTable {
         }
       }
     }
-    await db.deleteWhere(this.name, where);
+    if (rows)
+      await db.deleteWhere(this.name, {
+        [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
+      });
+    else await db.deleteWhere(this.name, where);
     await this.resetSequence();
     for (const file of deleteFiles) {
       await file.delete();
@@ -550,11 +607,27 @@ class Table implements AbstractTable {
    */
   async getRow(
     where: Where = {},
-    selopts: SelectOptions = {}
+    selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row | null> {
-    await this.getFields();
-    const row = await db.selectMaybeOne(this.name, where, selopts);
+    const fields = await this.getFields();
+    const { forUser, forPublic, ...selopts1 } = selopts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const row = await db.selectMaybeOne(this.name, where, selopts1);
     if (!row || !this.fields) return null;
+    if (role && role > this.min_role_read) {
+      //check ownership
+      if (forPublic) return null;
+      else if (this.ownership_field_id) {
+        const owner_field = fields.find(
+          (f) => f.id === this.ownership_field_id
+        );
+        if (!owner_field)
+          throw new Error(`Owner field in table ${this.name} not found`);
+        if (row[owner_field.name] !== (forUser as AbstractUser).id) return null;
+      } else if (this.ownership_formula) {
+        if (!this.is_owner(forUser, row)) return null;
+      } else return null; //no ownership
+    }
     return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
   }
 
@@ -566,11 +639,31 @@ class Table implements AbstractTable {
    */
   async getRows(
     where: Where = {},
-    selopts: SelectOptions = {}
+    selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row[]> {
-    await this.getFields();
-    const rows = await db.select(this.name, where, selopts);
+    const fields = await this.getFields();
     if (!this.fields) return [];
+    const { forUser, forPublic, ...selopts1 } = selopts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    if (
+      role &&
+      this.updateWhereWithOwnership(where, fields, forUser || { role_id: 10 })
+        ?.notAuthorized
+    ) {
+      return [];
+    }
+
+    let rows = await db.select(this.name, where, selopts1);
+    if (role && role > this.min_role_read) {
+      //check ownership
+      if (forPublic) return [];
+      else if (this.ownership_field_id) {
+        //already dealt with by changing where
+      } else if (this.ownership_formula) {
+        rows = rows.filter((row: Row) => this.is_owner(forUser, row));
+      } else return []; //no ownership
+    }
+
     return apply_calculated_fields(
       rows.map((r: Row) => this.readFromDB(r)),
       this.fields
@@ -630,6 +723,7 @@ class Table implements AbstractTable {
     let v = { ...v_in };
     const fields = await this.getFields();
     const pk_name = this.pk_name;
+    const role = user?.role_id;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       const joinFields = this.storedExpressionJoinFields();
       //if any freevars are join fields, update row in db first
@@ -644,12 +738,10 @@ class Table implements AbstractTable {
         await db.update(this.name, v, id, { pk_name });
       }
 
-      existing = (
-        await this.getJoinedRows({
-          where: { [pk_name]: id },
-          joinFields,
-        })
-      )[0];
+      existing = await this.getJoinedRow({
+        where: { [pk_name]: id },
+        joinFields,
+      });
 
       let calced = await apply_calculated_fields_stored(
         need_to_update ? existing : { ...existing, ...v_in },
@@ -660,11 +752,40 @@ class Table implements AbstractTable {
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
+    if (user && role && role > this.min_role_write) {
+      if (role === 10) return;
+      if (this.ownership_field_id) {
+        const owner_field = fields.find(
+          (f) => f.id === this.ownership_field_id
+        );
+        if (!owner_field)
+          throw new Error(`Owner field in table ${this.name} not found`);
+        if (v[owner_field.name] && v[owner_field.name] !== user.id) return;
+
+        //need to check existing
+        if (!existing)
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: user,
+          });
+        if (!existing || existing?.[owner_field.name] !== user.id) return;
+      }
+      if (this.ownership_formula) {
+        if (!existing)
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: user,
+          });
+
+        if (!existing || !this.is_owner(user, existing)) return;
+      }
+      if (!this.ownership_field_id && !this.ownership_formula) return;
+    }
     if (this.versioned) {
-      if (!existing)
-        existing = await db.selectOne(this.name, { [pk_name]: id });
+      const existing1 = await db.selectOne(this.name, { [pk_name]: id });
+      if (!existing) existing = existing1;
       await db.insert(this.name + "__history", {
-        ...existing,
+        ...existing1,
         ...v,
         [pk_name]: id,
         _version: {
@@ -687,7 +808,7 @@ class Table implements AbstractTable {
         this,
         newRow,
         resultCollector,
-        user
+        role === 10 ? undefined : user
       );
       if (resultCollector) await trigPromise;
     }
@@ -771,13 +892,24 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
-    let v;
-    let id;
+    let v, id;
+    if (user && user.role_id > this.min_role_write) {
+      if (this.ownership_field_id) {
+        const owner_field = fields.find(
+          (f) => f.id === this.ownership_field_id
+        );
+        if (!owner_field)
+          throw new Error(`Owner field in table ${this.name} not found`);
+        if (v_in[owner_field.name] !== user.id) return;
+      }
+      if (!this.ownership_field_id && !this.ownership_formula) return;
+    }
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
         joinFields,
+        forUser: user,
       });
 
       let calced = await apply_calculated_fields_stored(existing[0], fields);
@@ -789,6 +921,17 @@ class Table implements AbstractTable {
     } else {
       v = await apply_calculated_fields_stored(v_in, fields);
       id = await db.insert(this.name, v, { pk_name });
+    }
+    if (user && user.role_id > this.min_role_write && this.ownership_formula) {
+      let existing = await this.getJoinedRow({
+        where: { [pk_name]: id },
+        forUser: user,
+      });
+
+      if (!existing || !this.is_owner(user, existing)) {
+        await this.deleteRows({ [pk_name]: id });
+        return;
+      }
     }
     if (this.versioned)
       await db.insert(this.name + "__history", {
@@ -852,7 +995,16 @@ class Table implements AbstractTable {
    */
   async getField(path: string): Promise<Field | undefined> {
     const fields = await this.getFields();
-    if (path.includes(".")) {
+    if (path.includes("->")) {
+      const joinPath = path.split(".");
+      const tableName = joinPath[0];
+      const joinTable = await Table.findOne({ name: tableName });
+      if (!joinTable)
+        throw new Error(`The table '${tableName}' does not exist.`);
+      const joinedField = joinPath[1].split("->")[1];
+      const fields = await joinTable.getFields();
+      return fields.find((f) => f.name === joinedField);
+    } else if (path.includes(".")) {
       const keypath = path.split(".");
       let field,
         theFields = fields;
@@ -1339,6 +1491,120 @@ class Table implements AbstractTable {
   }
 
   /**
+   * get join-field-options joined from a field in this table
+   * @param allow_double
+   * @param allow_triple
+   * @returns
+   */
+  async get_join_field_options(
+    allow_double?: boolean,
+    allow_triple?: boolean
+  ): Promise<JoinFieldOption[]> {
+    const fields = await this.getFields();
+    const result = [];
+    for (const f of fields) {
+      if (f.is_fkey && f.type !== "File") {
+        const table = await Table.findOne({ name: f.reftable_name });
+        if (!table) throw new Error(`Unable to find table '${f.reftable_name}`);
+        await table.getFields();
+        if (!table.fields)
+          throw new Error(`The table '${f.reftable_name} has no fields.`);
+        const subOne = {
+          name: f.name,
+          table: table.name,
+          subFields: new Array<any>(),
+          fieldPath: f.name,
+        };
+        for (const pf of table.fields.filter(
+          (f: Field) => !f.calculated || f.stored
+        )) {
+          const subTwo: any = {
+            name: pf.name,
+            subFields: new Array<any>(),
+            fieldPath: `${f.name}.${pf.name}`,
+          };
+          if (pf.is_fkey && pf.type !== "File" && allow_double) {
+            const table1 = await Table.findOne({ name: pf.reftable_name });
+            if (!table1)
+              throw new Error(`Unable to find table '${pf.reftable_name}`);
+            await table1.getFields();
+            subTwo.table = table1.name;
+            if (!table1.fields)
+              throw new Error(`The table '${pf.reftable_name} has no fields.`);
+            if (table1.fields)
+              for (const gpf of table1.fields.filter(
+                (f: Field) => !f.calculated || f.stored
+              )) {
+                const subThree: any = {
+                  name: gpf.name,
+                  subFields: new Array<any>(),
+                  fieldPath: `${f.name}.${pf.name}.${gpf.name}`,
+                };
+                if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                  const gpfTbl = Table.findOne({
+                    name: gpf.reftable_name,
+                  });
+                  if (gpfTbl) {
+                    subThree.table = gpfTbl.name;
+                    const gpfFields = await gpfTbl.getFields();
+                    for (const ggpf of gpfFields.filter(
+                      (f: Field) => !f.calculated || f.stored
+                    )) {
+                      subThree.subFields.push({
+                        name: ggpf.name,
+                        fieldPath: `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`,
+                      });
+                    }
+                  }
+                }
+                subTwo.subFields.push(subThree);
+              }
+          }
+          subOne.subFields.push(subTwo);
+        }
+        result.push(subOne);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * get relation-options joined from a field of another table
+   * @returns
+   */
+  async get_relation_options(): Promise<RelationOption[]> {
+    return await Promise.all(
+      (
+        await this.get_relation_data()
+      ).map(async ({ relationTable, relationField }: RelationData) => {
+        const path = `${relationTable.name}.${relationField.name}`;
+        const relFields = await relationTable.getFields();
+        const names = relFields
+          .filter((f: Field) => f.type !== "Key")
+          .map((f: Field) => f.name);
+        return { relationPath: path, relationFields: names };
+      })
+    );
+  }
+
+  /**
+   * get relation-data joined from a field of another table
+   * @returns
+   */
+  async get_relation_data(): Promise<RelationData[]> {
+    const result = new Array<RelationData>();
+    const o2o_rels = await Field.find({
+      reftable_name: this.name,
+      is_unique: true,
+    });
+    for (const field of o2o_rels) {
+      const relTbl = Table.findOne({ id: field.table_id });
+      if (relTbl) result.push({ relationTable: relTbl, relationField: field });
+    }
+    return result;
+  }
+
+  /**
    * Get parent relations for table
    * @param allow_double
    * @param allow_triple
@@ -1492,14 +1758,32 @@ class Table implements AbstractTable {
    * @param opts
    * @returns {Promise<{values, sql: string}>}
    */
-  async getJoinedQuery(opts: JoinOptions | any = {}): Promise<any> {
+  async getJoinedQuery(
+    opts: (JoinOptions & ForUserRequest) | any = {}
+  ): Promise<any> {
     const fields = await this.getFields();
     let fldNms = [];
     let joinq = "";
     let joinTables: string[] = [];
-    let joinFields: JoinField = opts.joinFields || {};
+    let joinFields: JoinFields = opts.joinFields || {};
     let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
+    const { forUser, forPublic } = opts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    if (role && role > this.min_role_read && this.ownership_formula) {
+      const freeVars = freeVariables(this.ownership_formula);
+      add_free_variables_to_joinfields(freeVars, joinFields, fields);
+    }
+    if (role && role > this.min_role_read && this.ownership_field_id) {
+      if (forPublic) return { notAuthorized: true };
+      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      if (!owner_field)
+        throw new Error(`Owner field in table ${this.name} not found`);
+      if (!opts.where) opts.where = {};
+      mergeIntoWhere(opts.where, {
+        [owner_field.name]: (forUser as AbstractUser).id,
+      });
+    }
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
@@ -1689,30 +1973,43 @@ class Table implements AbstractTable {
       this.name
     )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
 
-    return { sql, values };
+    return { sql, values, joinFields };
   }
 
   /**
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */
-  async getJoinedRows(opts: JoinOptions | any = {}): Promise<Array<Row>> {
-    const fields = await this.getFields();
+  async getJoinedRow(
+    opts: (JoinOptions & ForUserRequest) | any = {}
+  ): Promise<Row | null> {
+    const rows = await this.getJoinedRows(opts);
+    return rows.length > 0 ? rows[0] : null;
+  }
 
-    const { sql, values } = await this.getJoinedQuery(opts);
+  /**
+   * @param {object} [opts = {}]
+   * @returns {Promise<object[]>}
+   */
+  async getJoinedRows(
+    opts: (JoinOptions & ForUserRequest) | any = {}
+  ): Promise<Array<Row>> {
+    const fields = await this.getFields();
+    const { forUser, forPublic, ...selopts1 } = opts;
+    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const { sql, values, notAuthorized, joinFields } =
+      await this.getJoinedQuery(opts);
+
+    if (notAuthorized) return [];
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
-    //console.log(sql);
-    //console.log(res.rows);
 
-    const calcRow = apply_calculated_fields(res.rows, fields);
+    let calcRow = apply_calculated_fields(res.rows, fields);
 
     //rename joinfields
-    if (
-      Object.values(opts.joinFields || {}).some((jf: any) => jf.rename_object)
-    ) {
+    if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {
       let f = (x: any) => x;
-      Object.entries(opts.joinFields || {}).forEach(([k, v]: any) => {
+      Object.entries(joinFields || {}).forEach(([k, v]: any) => {
         if (v.rename_object) {
           if (v.rename_object.length === 2) {
             const oldf = f;
@@ -1764,8 +2061,19 @@ class Table implements AbstractTable {
         }
       });
 
-      return calcRow.map(f);
-    } else return calcRow;
+      calcRow = calcRow.map(f);
+    }
+
+    if (role && role > this.min_role_read) {
+      //check ownership
+      if (forPublic) return [];
+      else if (this.ownership_field_id) {
+        //already dealt with by changing where
+      } else if (this.ownership_formula) {
+        calcRow = calcRow.filter((row: Row) => this.is_owner(forUser, row));
+      } else return []; //no ownership
+    }
+    return calcRow;
   }
 
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {
@@ -1845,9 +2153,15 @@ namespace Table {
     }[];
     child_field_list: string[];
   };
+
+  export type RelationData = {
+    relationTable: Table;
+    relationField: Field;
+  };
 }
 
 type ParentRelations = Table.ParentRelations;
 type ChildRelations = Table.ChildRelations;
+type RelationData = Table.RelationData;
 
 export = Table;

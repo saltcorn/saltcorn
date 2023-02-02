@@ -29,7 +29,8 @@ function initMouseOver() {
     };
     node.on("position", update);
     cy.on("pan zoom resize", update);
-    buildPreview(node);
+    const { type } = node.data();
+    if (type === "page" || type === "view") buildPreview(node);
   });
 
   cy.on("mouseout", "node", (event) => {
@@ -41,7 +42,7 @@ function initMouseOver() {
 }
 
 function buildCard(node) {
-  const { type, label } = node.data();
+  const { type, label, isVirtual } = node.data();
   const html = `
     <div class="card" style="width: 20rem;">
       <div class="card-header">
@@ -49,7 +50,7 @@ function buildCard(node) {
         <h6 class="card-subtitle text-muted">${label}</h6>
       </div>
       <div class="card-body">
-        ${buildTagBadges(node)}
+        ${!isVirtual ? buildTagBadges(node) : "<h5>virtual</h5>"}
         ${buildCardBody(node)}
         <div>
           ${type === "page" || type === "view" ? buildPreviewDiv(node) : ""}

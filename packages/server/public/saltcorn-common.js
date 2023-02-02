@@ -787,7 +787,8 @@ function unique_field_from_rows(
     const stripped = vals
       .filter((v) => v !== value)
       .map((s) => s.replace(value_wspace, ""))
-      .sort();
+      .map((s) => (numtype ? +s : s))
+      .sort(numtype ? (a, b) => a - b : undefined);
     if (stripped.length === 0) newname = `${value_wspace}${gen_char(start)}`;
     else {
       const i = char_to_i(stripped[stripped.length - 1]);
@@ -874,6 +875,7 @@ function split_paste_handler(e) {
           //const pasted =
           $elem.val(lines.shift());
         } else $elem.val(lines.shift());
+        $elem.trigger("change");
       }
     });
 }
