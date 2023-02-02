@@ -267,6 +267,11 @@ class User {
     const joinFields = {};
     add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields);
 
+    for (const wk of Object.keys(where)) {
+      const field = fields?.find((f) => f.name === wk);
+      if (!field) delete where[wk];
+    }
+
     const us = await user_table!.getJoinedRows({
       where,
       limit: 2,

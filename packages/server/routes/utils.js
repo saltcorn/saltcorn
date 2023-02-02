@@ -58,7 +58,7 @@ function isAdmin(req, res, next) {
         ? "/auth/twofa/login/totp"
         : req.user
         ? "/"
-        : "/auth/login"
+        : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
     );
   }
 }

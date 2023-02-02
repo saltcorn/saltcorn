@@ -57,6 +57,10 @@ router.get(
       role > view.min_role &&
       !(await view.authorise_get({ query, req, ...view }))
     ) {
+      if (!req.user) {
+        res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+        return;
+      }
       req.flash("danger", req.__("Not authorized"));
       state.log(2, `View ${viewname} not authorized`);
       res.redirect("/");

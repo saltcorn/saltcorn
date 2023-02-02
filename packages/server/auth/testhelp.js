@@ -131,7 +131,10 @@ const itShouldRedirectUnauthToLogin = (path, dest) => {
     const res = await request(app)
       .get(path)
       .expect(302)
-      .expect("Location", dest || "/auth/login");
+      .expect(
+        "Location",
+        dest || `/auth/login?dest=${encodeURIComponent(path)}`
+      );
 
     expect(res.statusCode).toEqual(302);
   });

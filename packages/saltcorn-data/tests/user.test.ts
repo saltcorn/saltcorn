@@ -61,6 +61,15 @@ describe("User", () => {
     });
     expect(u00).toBe(false);
   });
+  it("should survive nonexistant fields", async () => {
+    const u = await User.authenticate({
+      email: "foo@bar.com",
+      password: "YEgege46gew",
+      stuff: 4,
+    });
+    assertIsSet(u);
+  });
+
   it("should reset password", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u);

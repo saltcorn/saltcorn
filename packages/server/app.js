@@ -184,7 +184,7 @@ const getApp = async (opts = {}) => {
     new CustomStrategy((req, done) => {
       loginAttempt();
       async function loginAttempt() {
-        const { remember, _csrf, ...userobj } = req.body;
+        const { remember, _csrf, dest, ...userobj } = req.body;
         if (!is.objVals(is.str).check(userobj))
           return done(
             null,
