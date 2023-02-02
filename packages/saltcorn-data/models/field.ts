@@ -478,7 +478,9 @@ class Field implements AbstractField {
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
       return this.type.sql_name;
     }
-    throw new Error("Unable to get the sql_type");
+    throw new Error(
+      "Unable to get the sql_type" + JSON.stringify(this.type, null, 2)
+    );
   }
 
   /**
@@ -740,7 +742,7 @@ class Field implements AbstractField {
    */
   async update(v: Row): Promise<void> {
     const f = new Field({ ...this, ...v });
-
+    const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;
     if (rename && !this.table?.name) {
       throw new Error("");
@@ -773,12 +775,21 @@ class Field implements AbstractField {
         )}" rename column "${sqlsanitize(this.name)}" TO ${f.name};`
       );
     }
-
     await db.update("_sc_fields", v, this.id);
+
     Object.entries(v).forEach(([k, v]: [string, any]) => {
-      this[k] = v;
+      if (k !== "type") this[k] = v;
     });
-    await require("../db/state").getState().refresh_tables();
+    if (
+      v.type &&
+      v.type !== (typeof this.type === "string" ? this.type : this.type?.name)
+    ) {
+      if (state.types[v.type]) {
+        this.type = state.types[v.type];
+      }
+    }
+
+    await state.refresh_tables();
   }
 
   /**
@@ -978,6 +989,9 @@ class Field implements AbstractField {
         //intentionally omit await
         recalculate_for_stored(table1); //not waiting as there could be a lot of data
       }
+    }
+    if (fld.table && fld.table.fields) {
+      fld.table.fields.push(f);
     }
     return f;
   }

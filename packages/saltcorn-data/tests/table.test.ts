@@ -1287,10 +1287,11 @@ describe("Table with UUID pks", () => {
       getState().registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID1");
       const [pk] = await table.getFields();
+
       await pk.update({ type: "UUID" });
 
-      const [pk1] = await table.getFields();
-      await pk1.update({ type: "Integer" });
+      //const [pk1] = await table.getFields();
+      await pk.update({ type: "Integer" });
 
       await table.delete();
     });
