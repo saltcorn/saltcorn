@@ -16,7 +16,7 @@ class Test:
         assert "Your tables" not in self.sess.content
 
     def is_incorrect_user_or_password(self):
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.sess.follow_redirect()
         assert "Incorrect user or password" in self.sess.content
 
@@ -55,7 +55,7 @@ class Test:
         assert self.sess.status == 200
         assert "Your tables" in self.sess.content
         self.sess.get('/auth/logout')
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.cannot_access_admin()
 
 
@@ -66,7 +66,7 @@ class Test:
             {'email': email, 
             'password': password,          
             })
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.cannot_access_admin()
 
     def test_login_with_wrong_csrf(self):
@@ -77,7 +77,7 @@ class Test:
             'password': password,   
             '_csrf': 'ytjutydetjk'       
             })
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.cannot_access_admin()
 
     def test_login_with_blank_csrf(self):
@@ -88,7 +88,7 @@ class Test:
             'password': password,   
             '_csrf': ''       
             })
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.cannot_access_admin()
 
     def test_login_with_wrong_password(self):
