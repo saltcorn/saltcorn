@@ -20,22 +20,24 @@ publicRoomsView='rooms_view'
 adminRoomsView='admin_rooms_view'
 
 class Test:
-    def setup_class(self):
-        SaltcornSession.reset_to_fixtures()
-        self.sess = SaltcornSession(port=3001)
-        
-    def teardown_class(self):
-        self.sess.close()
+  def setup_class(self):
+    SaltcornSession.reset_to_fixtures()
+    self.sess = SaltcornSession(port=3001)
 
-    """
-      'staff' sends, 'admin' sends
-      assert: both clients have two messages
-             check 'not_for_user_id'
-      'foo' joins and sends one message
-      assert: len(messages) of 'staff' and 'admin' equals 3
-              'foo' has only one message
-    """
-    def test_exchange_messages(self):
+  def teardown_class(self):
+    self.sess.close()
+
+  """
+    'staff' sends, 'admin' sends
+    assert: both clients have two messages
+            check 'not_for_user_id'
+    'foo' joins and sends one message
+    assert: len(messages) of 'staff' and 'admin' equals 3
+            'foo' has only one message
+  """
+  def test_exchange_messages(self):
+    adminClient = staffClient = fooClient = None
+    try:
       # 'staff -> admin', 'admin -> staff'
       adminClient = ChatClient()
       adminClient.login(email=adminEmail, password=adminPassword)
@@ -103,17 +105,23 @@ class Test:
         content=fooMsg,
         not_for_user_id=3
       )
-      adminClient.disconnect()
-      staffClient.disconnect()
-      fooClient.disconnect()
+    finally:
+      if adminClient is not None:
+        adminClient.disconnect()
+      if staffClient is not None:
+        staffClient.disconnect()
+      if fooClient is not None:
+        fooClient.disconnect()
 
-    """
-      'staff' sends into Room B
-      assert: no one receives it
-      'staff' sends into RoomA
-      assert: 'admin' and 'foo' have one message 
-    """
-    def test_not_participating(self):
+  """
+    'staff' sends into Room B
+    assert: no one receives it
+    'staff' sends into RoomA
+    assert: 'admin' and 'foo' have one message 
+  """
+  def test_not_participating(self):
+    adminClient = staffClient = None
+    try:
       adminClient = ChatClient()
       adminClient.login(email=adminEmail, password=adminPassword)
       adminClient.connect()
@@ -147,14 +155,20 @@ class Test:
           content=staffMsg,
           not_for_user_id=2
       )
-      adminClient.disconnect()
-      staffClient.disconnect()
+    finally:
+      if adminClient is not None:
+        adminClient.disconnect()
+      if staffClient is not None:
+        staffClient.disconnect()
 
-    """
-      a client without login joins and sends a message
-      assert: 'staff' has no messages
-    """
-    def test_join_without_login(self):
+
+  """
+    a client without login joins and sends a message
+    assert: 'staff' has no messages
+  """
+  def test_join_without_login(self):
+    withoutLogin = staffClient = None
+    try:
       withoutLogin = ChatClient()
       withoutLogin.connect()
       withoutLogin.join_room(viewName=publicRoomsView, roomId=1)
@@ -169,17 +183,22 @@ class Test:
       time.sleep(0.2)
       assert len(withoutLogin.messages) == 0
       assert len(staffClient.messages) == 0
-      withoutLogin.disconnect()
-      staffClient.disconnect()
+    finally:
+      if withoutLogin is not None:
+        withoutLogin.disconnect()
+      if staffClient is not None:
+        staffClient.disconnect()
 
-    """
-      'staff' sends into 'admin_rooms_view' (min_role=1)
-      assert: 'staff' and 'admin' have no messages
-      'admin' sends into 'admin_rooms_view'
-      assert: only 'admin' has one message 
-              and check 'not_for_user_id'
-    """
-    def test_rooms_insufficient_role(self):
+  """
+    'staff' sends into 'admin_rooms_view' (min_role=1)
+    assert: 'staff' and 'admin' have no messages
+    'admin' sends into 'admin_rooms_view'
+    assert: only 'admin' has one message 
+            and check 'not_for_user_id'
+  """
+  def test_rooms_insufficient_role(self):
+    adminClient = staffClient = None
+    try:
       adminClient = ChatClient()
       adminClient.login(email=adminEmail, password=adminPassword)
       adminClient.connect()
@@ -207,5 +226,8 @@ class Test:
           content=adminMsg,
           not_for_user_id=1
       )
-      adminClient.disconnect()
-      staffClient.disconnect()
+    finally:
+      if adminClient is not None:
+        adminClient.disconnect()
+      if staffClient is not None:
+        staffClient.disconnect()
