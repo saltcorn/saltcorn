@@ -52,7 +52,6 @@ function isAdmin(req, res, next) {
   ) {
     next();
   } else {
-    console.log("orurl", req.originalUrl);
     req.flash("danger", req.__("Must be admin"));
     res.redirect(
       req.user && req.user.pending_user
