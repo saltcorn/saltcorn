@@ -1,9 +1,6 @@
 from scsession import SaltcornSession
 import socketio
 
-# import logging
-# LOGGER = logging.getLogger(__name__)
-
 class ChatClient:
   def __init__(self):
     self.session = SaltcornSession(port=3001, open_process=False)

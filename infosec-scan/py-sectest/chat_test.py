@@ -1,9 +1,5 @@
 from scsession import SaltcornSession
 from chat_client import ChatClient;
-
-# import logging
-# LOGGER = logging.getLogger(__name__)
-
 import socketio
 import time
 
