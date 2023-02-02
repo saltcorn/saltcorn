@@ -254,7 +254,18 @@ class Table implements AbstractTable {
     if (external !== true) {
       //do include db tables
       const tbls = await db.select("_sc_tables", where, selectopts);
-      dbs = tbls.map((t: TableCfg) => new Table(t));
+      const flds = await db.select(
+        "_sc_fields",
+        { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
+        selectopts
+      );
+      dbs = tbls.map((t: TableCfg) => {
+        t.fields = flds
+          .filter((f: any) => f.table_id === t.id)
+          .map((f: any) => new Field(f));
+
+        return new Table(t);
+      });
     }
     return [...dbs, ...externals];
   }
@@ -414,7 +425,7 @@ class Table implements AbstractTable {
   static async create(
     name: string,
     options: SelectOptions | TablePack = {},
-    id?: string
+    id?: number
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -456,6 +467,7 @@ class Table implements AbstractTable {
           primary_key: true,
           required: true,
           is_unique: true,
+          table_id: id,
         }),
       ],
     });
