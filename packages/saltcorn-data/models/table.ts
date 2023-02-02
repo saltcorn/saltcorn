@@ -444,15 +444,17 @@ class Table implements AbstractTable {
       ownership_formula: options.ownership_formula,
       description: options.description || "",
     };
+    let pk_fld_id;
     if (!id) {
       // insert table definition into _sc_tables
       id = await db.insert("_sc_tables", tblrow);
       // add primary key column ID
-      await db.query(
+      const insfldres = await db.query(
         `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-            values($1,'id','ID','Integer', '{}', true, true, true)`,
+            values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
         [id]
       );
+      pk_fld_id = insfldres.rows[0].id;
     }
     // create table
 
@@ -468,6 +470,7 @@ class Table implements AbstractTable {
           required: true,
           is_unique: true,
           table_id: id,
+          id: pk_fld_id,
         }),
       ],
     });
