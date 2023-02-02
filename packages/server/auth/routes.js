@@ -1054,7 +1054,6 @@ router.post(
       res.redirect("/auth/twofa/login/totp");
       return;
     }
-    console.log("post login body", req.body);
     if (req.session.cookie)
       if (req.body.remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 0);
