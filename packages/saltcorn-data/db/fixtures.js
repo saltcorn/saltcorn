@@ -336,7 +336,10 @@ module.exports =
       fixed_states: {},
     });
 
-    const rooms = await Table.create("rooms");
+    const rooms = await Table.create("rooms", {
+      min_role_read: 8,
+      min_role_write: 8,
+    });
     await Field.create({
       table: rooms,
       name: "name",
@@ -351,7 +354,10 @@ module.exports =
       name: "Room B",
     });
 
-    const messages = await Table.create("messages");
+    const messages = await Table.create("messages", {
+      min_role_read: 8,
+      min_role_write: 8,
+    });
     await Field.create({
       table: messages,
       name: "content",
@@ -388,7 +394,10 @@ module.exports =
       room: 1,
     });
 
-    const participants = await Table.create("participants");
+    const participants = await Table.create("participants", {
+      min_role_read: 8,
+      min_role_write: 8,
+    });
     await Field.create({
       table: participants,
       name: "user",
