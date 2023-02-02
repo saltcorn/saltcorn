@@ -61,10 +61,14 @@ router.get(
         })
       );
     } else {
-      state.log(2, `Page $pagename} not found or not authorized`);
-      res
-        .status(404)
-        .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
+      if (db_page && !req.user) {
+        res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+      } else {
+        state.log(2, `Page $pagename} not found or not authorized`);
+        res
+          .status(404)
+          .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
+      }
     }
   })
 );
