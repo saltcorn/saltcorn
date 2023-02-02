@@ -75,6 +75,17 @@ const configuration_workflow = (req) =>
                 },
               },
               {
+                name: "empty_view",
+                label: req.__("Empty view"),
+                type: "String",
+                sublabel: req.__(
+                  "A view that will be shown only if there are no tables rows to show"
+                ),
+                attributes: {
+                  options: create_view_opts,
+                },
+              },
+              {
                 input_type: "section_header",
                 label: "Creating a new view",
               },
@@ -361,6 +372,7 @@ const run = async (
     create_link_size,
     always_create_view,
     include_fml,
+    empty_view,
     ...cols
   },
   state,
@@ -403,6 +415,16 @@ const run = async (
     ...qextra,
   });
   let paginate = "";
+
+  if (sresp.length === 0 && empty_view) {
+    const emptyView = await View.findOne({ name: empty_view });
+    if (!emptyView)
+      throw new InvalidConfiguration(
+        `View ${viewname} incorrectly configured: cannot find empty view ${empty_view}`
+      );
+    return await emptyView.run(state, extraArgs);
+  }
+
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
     const nrows = await countRowsQuery(state);
     if (nrows > qextra.limit || current_page > 1) {

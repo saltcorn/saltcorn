@@ -380,8 +380,11 @@ function updateViewPreview() {
         "CSRF-Token": _sc_globalCsrf,
       },
 
-      error: function (request) {},
+      error: function (resp) {
+        $("#viewcfg-preview-error").html(resp.responseText || resp.statusText);
+      },
       success: function (res) {
+        $("#viewcfg-preview-error").html("");
         $preview.css({ opacity: 1.0 });
 
         //disable functions preview migght try to call

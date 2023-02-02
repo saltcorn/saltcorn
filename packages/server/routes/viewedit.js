@@ -8,7 +8,15 @@
 const Router = require("express-promise-router");
 
 const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
-const { p, a, div, script, text, domReady } = require("@saltcorn/markup/tags");
+const {
+  p,
+  a,
+  div,
+  script,
+  text,
+  domReady,
+  pre,
+} = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
 const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
@@ -480,8 +488,11 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
               type: "card",
               title: req.__("Preview"),
               contents: div(
-                { id: "viewcfg-preview", "data-preview-url": previewURL },
-                script(domReady(`updateViewPreview()`))
+                div(pre({ id: "viewcfg-preview-error", class: "text-danger" })),
+                div(
+                  { id: "viewcfg-preview", "data-preview-url": previewURL },
+                  script(domReady(`updateViewPreview()`))
+                )
               ),
             },
           ]

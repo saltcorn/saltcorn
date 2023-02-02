@@ -220,6 +220,7 @@ export const update = async (
   id: string | number
 ): Promise<void> => {
   const kvs = Object.entries(obj);
+  if (kvs.length === 0) return;
   const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
   let valList = kvs.map(mkVal);
   valList.push(id);
