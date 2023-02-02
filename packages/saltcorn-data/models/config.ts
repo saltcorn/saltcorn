@@ -33,8 +33,10 @@ const configTypes: ConfigTypes = {
     type: "String",
     label: "Home Timezone",
     default: defaultTimezone,
+    required: true,
     attributes: {
       options: allTimezones,
+      selectizable: true,
     },
   },
   /** @type {object} */
