@@ -120,9 +120,10 @@ const loginForm = (req, isCreating) => {
     submitLabel: req.__("Login"),
   });
   const { dest } = req.query;
-  if (dest) form.hidden("dest");
-  form.values.dest = encodeURIComponent(dest);
-
+  if (dest) {
+    form.hidden("dest");
+    form.values.dest = encodeURIComponent(dest);
+  }
   return form;
 };
 
