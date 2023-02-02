@@ -44,7 +44,7 @@ describe("TableIO", () => {
     expect(fields[1].attributes).toStrictEqual({ max: 18 });
   });
 });
-describe("Table create", () => {
+describe("Table create basic tests", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
     const tf = await Table.findOne({ id: tc.id });

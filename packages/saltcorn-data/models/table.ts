@@ -140,7 +140,7 @@ class Table implements AbstractTable {
   versioned: boolean;
   external: boolean;
   description?: string;
-  fields?: Field[] | null;
+  fields: Field[];
   is_user_group: boolean;
 
   /**
@@ -158,7 +158,12 @@ class Table implements AbstractTable {
     this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
-    if (o.fields) this.fields = o.fields.map((f) => new Field(f));
+    if (!o.fields || o.fields.length === 0) {
+      console.trace("missing fields", o);
+      throw new Error("missing fields");
+    }
+
+    this.fields = o.fields.map((f) => new Field(f));
   }
 
   /**
@@ -213,7 +218,19 @@ class Table implements AbstractTable {
     }
     const tbls = await db.select("_sc_tables", where, selectopts);
 
-    return tbls.map((t: TableCfg) => new Table(t));
+    const flds = await db.select(
+      "_sc_fields",
+      { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
+      selectopts
+    );
+
+    return tbls.map((t: TableCfg) => {
+      t.fields = flds
+        .filter((f: any) => f.table_id === t.id)
+        .map((f: any) => new Field(f));
+
+      return new Table(t);
+    });
   }
 
   /**
@@ -428,7 +445,20 @@ class Table implements AbstractTable {
     }
     // create table
 
-    const table = new Table({ ...tblrow, id });
+    const table = new Table({
+      ...tblrow,
+      id,
+      fields: [
+        new Field({
+          type: "Integer",
+          name: "id",
+          label: "ID",
+          primary_key: true,
+          required: true,
+          is_unique: true,
+        }),
+      ],
+    });
     // create table history
     if (table.versioned) await table.create_history_table();
     // refresh tables cache
