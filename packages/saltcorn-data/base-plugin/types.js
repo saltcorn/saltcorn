@@ -123,6 +123,15 @@ const range_interval = (type) => ({
   },
 });
 
+const none_available = (required) =>
+  required
+    ? div(
+        { class: "alert alert-danger", role: "alert" },
+        i({ class: "fas fa-exclamation-triangle" }),
+        "This input is required but there are no available options."
+      )
+    : i("None available");
+
 const progress_bar = (type) => ({
   configFields: (field) => [
     ...(!isdef(field.attributes.min)
@@ -501,7 +510,7 @@ const string = {
                     ]
               )
           : attrs.options
-          ? i("None available")
+          ? none_available(required)
           : attrs.calcOptions
           ? select(
               {
@@ -745,7 +754,7 @@ const string = {
                 : attrs.options.split(",").map((o) => o.trim()),
               value: v,
             })
-          : i("None available"),
+          : none_available(required),
     },
     checkbox_group: {
       isEdit: false,
