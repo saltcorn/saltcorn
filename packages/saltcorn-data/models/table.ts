@@ -1024,13 +1024,7 @@ class Table implements AbstractTable {
    * Get Fields list for table
    * @returns {Promise<Field[]>}
    */
-  async getFields(): Promise<Field[]> {
-    if (!this.fields) {
-      this.fields = await Field.find({ table_id: this.id }, { orderBy: "id" });
-      for (let field of this.fields) {
-        field.table = this;
-      }
-    }
+  getFields(): Field[] {
     return this.fields;
   }
 
