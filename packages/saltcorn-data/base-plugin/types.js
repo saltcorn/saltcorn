@@ -495,7 +495,12 @@ const string = {
               })
             : select(
                 {
-                  class: ["form-control", "form-select", cls],
+                  class: [
+                    "form-control",
+                    "form-select",
+                    cls,
+                    attrs.selectizable ? "selectizable" : false,
+                  ],
                   name: text_attr(nm),
                   "data-fieldname": text_attr(field.name),
                   id: `input${text_attr(nm)}`,
