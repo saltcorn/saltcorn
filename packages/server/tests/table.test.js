@@ -33,9 +33,9 @@ describe("Table Endpoints", () => {
       .post("/table/")
       .send("name=mypostedtable")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/7"));
+      .expect(toRedirect("/table/10"));
     await request(app)
-      .get("/table/7")
+      .get("/table/10")
       .set("Cookie", loginCookie)
       .expect(toInclude("mypostedtable"));
     await request(app)
@@ -149,7 +149,7 @@ Pencil, 0.5,2, t`;
       .set("Cookie", loginCookie)
       .field("name", "expenses")
       .attach("file", Buffer.from(csv, "utf-8"))
-      .expect(toRedirect("/table/8"));
+      .expect(toRedirect("/table/11"));
   });
   it("should upload csv to existing table", async () => {
     const csv = `author,Pages

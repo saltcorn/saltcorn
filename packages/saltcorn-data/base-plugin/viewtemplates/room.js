@@ -543,12 +543,12 @@ module.exports = {
    * @returns {Promise<object>}
    */
   authorize_join: async (
-    { table_id, configuration: { participant_field } },
+    { table_id, min_role, configuration: { participant_field } },
     room_id,
     user
   ) => {
     // TODO ch authorize_join query
-    if (!user) return false;
+    if (!user || user.role_id > min_role) return false;
     if (!participant_field) {
       const table = await Table.findOne({ id: table_id });
       return user.role_id <= table.min_role_read;

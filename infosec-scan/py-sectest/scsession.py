@@ -4,8 +4,10 @@ import subprocess
 import os 
 
 class SaltcornSession(Session):
-  def __init__(self, port=3001):
-    self.salcorn_process = subprocess.Popen(["packages/saltcorn-cli/bin/saltcorn", "serve", "-p", str(port)])
+  def __init__(self, port=3001, open_process=True):
+    self.salcorn_process = None
+    if open_process is True:
+      self.salcorn_process = subprocess.Popen(["packages/saltcorn-cli/bin/saltcorn", "serve", "-p", str(port)])
     Session.__init__(self, 'http://localhost:%d/' % port)
     self.wait_for_port_open()
 
@@ -17,7 +19,8 @@ class SaltcornSession(Session):
     return m[0]
 
   def close(self):
-    self.salcorn_process.kill()
+    if self.salcorn_process is not None:
+      self.salcorn_process.kill()
 
   @staticmethod
   def reset_to_fixtures():
