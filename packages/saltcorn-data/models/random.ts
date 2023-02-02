@@ -32,7 +32,6 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
   if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });
-    table.fields = [];
   }
   //fields
   const nfields = num_between(3, 10);
@@ -144,6 +143,7 @@ const random_field = async (
 
   const f = new Field({ type, label });
   f.table_id = table.id;
+  f.table = table;
   if (instanceOfType(f.type) && f.type.attributes)
     f.attributes = generate_attributes(
       f.type.attributes,
