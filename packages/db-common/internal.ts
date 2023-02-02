@@ -245,7 +245,7 @@ const whereClause =
     k === "_fts"
       ? whereFTS(v, phs)
       : typeof (v || {}).in !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} = ${
+      ? `${quote(sqlsanitizeAllowDots(k))} ${phs.is_sqlite ? "IN" : "="} ${
           phs.is_sqlite ? "" : "ANY"
         } (${phs.push(v.in)})`
       : k === "or" && Array.isArray(v)
