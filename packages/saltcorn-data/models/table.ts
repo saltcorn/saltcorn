@@ -158,7 +158,7 @@ class Table implements AbstractTable {
     this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
-    if (!o.fields || o.fields.length === 0) {
+    if (!o.fields) {
       console.trace("missing fields", o);
       throw new Error("missing fields");
     }
