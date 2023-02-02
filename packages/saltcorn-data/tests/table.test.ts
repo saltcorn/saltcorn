@@ -44,7 +44,7 @@ describe("TableIO", () => {
     expect(fields[1].attributes).toStrictEqual({ max: 18 });
   });
 });
-describe("Table create", () => {
+describe("Table create basic tests", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
     const tf = await Table.findOne({ id: tc.id });
@@ -1205,13 +1205,22 @@ describe("Table with UUID pks", () => {
       const table = await Table.create("TableUUID");
       const [pk] = await table.getFields();
       await pk.update({ type: "UUID" });
+      // @ts-ignore
+      expect(pk.type.name).toBe("UUID");
+
+      const table1 = await Table.findOne({ name: "TableUUID" });
+      assertIsSet(table1);
+      const flds1 = await table1.getFields();
+
+      // @ts-ignore
+      expect(flds1[0].type.name).toBe("UUID");
 
       const name = await Field.create({
         table: table,
         name: "name",
         type: "String",
       });
-      table.fields = null;
+
       await table.insertRow({ name: "Sam" });
       const rows = await table.getRows();
       expect(rows.length).toBe(1);
@@ -1235,9 +1244,14 @@ describe("Table with UUID pks", () => {
       ];
       const fnm = "/tmp/test1.json";
       await writeFile(fnm, JSON.stringify(json));
+
+      await getState().refresh_tables();
       const table = await Table.findOne({ name: "TableUUID" });
       assertIsSet(table);
       expect(!!table).toBe(true);
+      const flds = await table.getFields();
+      // @ts-ignore
+      expect(flds[0].type.name).toBe("UUID");
       const impres = await table.import_json_file(fnm);
       expect(impres).toEqual({
         success: "Imported 1 rows into table TableUUID",
@@ -1287,11 +1301,16 @@ describe("Table with UUID pks", () => {
       getState().registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID1");
       const [pk] = await table.getFields();
+
       await pk.update({ type: "UUID" });
 
-      table.fields = null;
-      const [pk1] = await table.getFields();
-      await pk1.update({ type: "Integer" });
+      const table1 = Table.findOne({ name: table.name });
+      assertIsSet(table1);
+      const [pk1] = await table1.getFields();
+      // @ts-ignore
+      expect(pk1.type?.name).toBe("UUID");
+      //const [pk1] = await table.getFields();
+      await pk.update({ type: "Integer" });
 
       await table.delete();
     });

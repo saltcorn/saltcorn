@@ -21,6 +21,7 @@ class CreateTenantCommand extends Command {
     const { args } = this.parse(CreateTenantCommand);
     const { flags } = this.parse(CreateTenantCommand);
     const db = require("@saltcorn/data/db");
+    const { add_tenant } = require("@saltcorn/data/db/state");
     if (!db.is_it_multi_tenant()) {
       console.error("Multitenancy not enabled");
       this.exit(0);
@@ -35,10 +36,13 @@ class CreateTenantCommand extends Command {
     //const description = flags.description !==  `undefined` ? flags.description : "";
     // TODO Do we need to set default value for base url or not? And what is correct way to get domain of base_url here?
     // const base =  await db.getgetConfig("base_url");
-    await switchToTenant(
-      await insertTenant(args.tenant, flags.email, flags.description),
-      flags.url
+    const tenrow = await insertTenant(
+      args.tenant,
+      flags.email,
+      flags.description
     );
+    add_tenant(args.tenant);
+    await switchToTenant(tenrow, flags.url);
     console.log();
     this.exit(0);
   }

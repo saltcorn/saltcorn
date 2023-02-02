@@ -32,7 +32,6 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
   if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
     const [pk] = await table.getFields();
     await pk.update({ type: "UUID" });
-    table.fields = null;
   }
   //fields
   const nfields = num_between(3, 10);
@@ -47,12 +46,13 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
   for (let index = 0; index < 20; index++) {
     await fill_table_row(table);
   }
-  const fields = await table.getFields();
+  const table1 = Table.findOne({ name }) as Table;
+  const fields = await table1.getFields();
   const userFields = fields.filter((f) => f.reftable_name === "users");
   if (userFields.length > 0 && Math.random() > 0.5)
-    await table.update({ ownership_field_id: userFields[0].id });
+    await table1.update({ ownership_field_id: userFields[0].id });
 
-  return table;
+  return table1;
 };
 
 /**
@@ -143,6 +143,7 @@ const random_field = async (
 
   const f = new Field({ type, label });
   f.table_id = table.id;
+  f.table = table;
   if (instanceOfType(f.type) && f.type.attributes)
     f.attributes = generate_attributes(
       f.type.attributes,
