@@ -220,7 +220,7 @@ class Table implements AbstractTable {
 
     const flds = await db.select(
       "_sc_fields",
-      { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
+      db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
       selectopts
     );
 
@@ -256,7 +256,9 @@ class Table implements AbstractTable {
       const tbls = await db.select("_sc_tables", where, selectopts);
       const flds = await db.select(
         "_sc_fields",
-        { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
+        db.isSQLite
+          ? {}
+          : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
         selectopts
       );
       dbs = tbls.map((t: TableCfg) => {
