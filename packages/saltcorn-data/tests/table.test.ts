@@ -1211,7 +1211,7 @@ describe("Table with UUID pks", () => {
         name: "name",
         type: "String",
       });
-      table.fields = null;
+
       await table.insertRow({ name: "Sam" });
       const rows = await table.getRows();
       expect(rows.length).toBe(1);
@@ -1289,7 +1289,6 @@ describe("Table with UUID pks", () => {
       const [pk] = await table.getFields();
       await pk.update({ type: "UUID" });
 
-      table.fields = null;
       const [pk1] = await table.getFields();
       await pk1.update({ type: "Integer" });
 
