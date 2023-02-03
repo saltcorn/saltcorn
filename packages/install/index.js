@@ -260,7 +260,7 @@ const askOsService = async () => {
  */
 
 const isRedHat =  (osInfo) =>
-  ["Fedora Linux"].includes(osInfo.distro)
+  ["Fedora Linux", "CentOS Linux"].includes(osInfo.distro)
 
 
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {

@@ -16,8 +16,10 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     set -e
     dnf install -y nodejs
-    sudo -iu vagrant npx -y saltcorn-install -y
-    systemctl is-active saltcorn
-    wget -qO- http://localhost/ | grep Please   
+    sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
+    cd /home/vagrant/saltcorn/packages/install/
+    sudo -u vagrant git checkout node-18
+    sudo -u vagrant npm install
+    sudo -u vagrant node index.js -y
   SHELL
 end
