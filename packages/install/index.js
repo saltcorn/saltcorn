@@ -310,7 +310,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
     await asyncSudo(["systemctl", "enable", "--now", "postgresql"], false, dryRun);
     //await asyncSudo(["sed", "-E", "-i", "s/local(\\s+)all(\\s+)all(\\s+)peer/local\\1all\\2all\\3trust/", "/var/lib/pgsql/data/pg_hba.conf"], false, dryRun);
-    await asyncSudo(["systemctl", "reload", "postgresql"], false, dryRun);
+    //await asyncSudo(["systemctl", "reload", "postgresql"], false, dryRun);
 
   }
   
@@ -510,7 +510,7 @@ WantedBy=multi-user.target`
   await asyncSudo([
     "mv",
     "/tmp/saltcorn.service",
-    `/lib/systemd/system/${osService}.service`,
+    `${isRedHat(osInfo)?`/etc/systemd/system/`:`/lib/systemd/system`}/${osService}.service`,
   ], false, dryRun);
   // start systemd service
   await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
