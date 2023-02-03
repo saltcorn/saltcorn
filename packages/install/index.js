@@ -293,7 +293,10 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
   }
   if (port === 80 && installer ==="apt") packages.push("libcap2-bin");
-  if (db === "pg-local") packages.push("postgresql", "postgresql-client");
+  if (db === "pg-local" && installer ==="apt")
+    packages.push("postgresql", "postgresql-client");
+  if (db === "pg-local" && installer ==="dnf") 
+    packages.push("postgresql-server", "postgresql");
 
 
   await asyncSudo([installer, "install", "-y", ...packages], false, dryRun);
