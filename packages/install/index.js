@@ -258,6 +258,11 @@ const askOsService = async () => {
  * @param dryRun - if true then test run
  * @returns {Promise<void>}
  */
+
+const isRedHat =  (osInfo) =>
+  ["Fedora Linux"].includes(osInfo.distro)
+
+
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   const distro_code = `${osInfo.distro} ${osInfo.codename}`;
   let python,installer;
@@ -274,7 +279,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
 
       break;
   }
-  if(["Fedora Linux"].includes(osInfo.distro)) {
+  if(isRedHat(osInfo)) {
     installer = "dnf"
 
   } else {
@@ -322,7 +327,9 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
   //if (user === "saltcorn")
   if (user !== "root")
     await asyncSudo(
-      ["adduser", "--disabled-password", "--gecos", '""', user],
+      isRedHat(osInfo) 
+        ? ["adduser", "--gecos", '""', user]      
+        : ["adduser", "--disabled-password", "--gecos", '""', user],
       true, dryRun
     );
   const { configFileDir } = get_paths(user);
