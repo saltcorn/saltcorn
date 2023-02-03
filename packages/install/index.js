@@ -260,18 +260,24 @@ const askOsService = async () => {
  */
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   const distro_code = `${osInfo.distro} ${osInfo.codename}`;
-  let python;
+  let python,installer;
   switch (distro_code) {
     case "Ubuntu Bionic Beaver":
     case "Debian GNU/Linux buster":
     case "Debian GNU/Linux stretch":
       python = "python3";
+      installer = "apt"
       break;
 
     default:
       python = "python-is-python3";
 
       break;
+  }
+  if(["Fedora Linux"].includes(osInfo.distro)) {
+    installer = "dnf"
+  } else {
+    installer = "apt"
   }
   const packages = [
     "libpq-dev",
@@ -283,9 +289,11 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser"); 
     if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
+    if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
   }
   if (port === 80) packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
+
 
   await asyncSudo(["apt", "install", "-y", ...packages], false, dryRun);
 };
