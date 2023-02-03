@@ -328,7 +328,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
   if (user !== "root")
     await asyncSudo(
       isRedHat(osInfo) 
-        ? ["adduser", "--gecos", '""', user]      
+        ? ["adduser", user]      
         : ["adduser", "--disabled-password", "--gecos", '""', user],
       true, dryRun
     );
