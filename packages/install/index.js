@@ -305,6 +305,11 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
 
 
   await asyncSudo([installer, "install", "-y", ...packages], false, dryRun);
+  if (db === "pg-local" && installer ==="dnf") {
+    await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
+    await asyncSudo(["systemctl", "enable", "--now", "postgresql"], false, dryRun);
+  }
+  
 };
 /**
  * Install Saltcorn
