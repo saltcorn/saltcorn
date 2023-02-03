@@ -295,7 +295,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
 
 
-  await asyncSudo(["apt", "install", "-y", ...packages], false, dryRun);
+  await asyncSudo([installer, "install", "-y", ...packages], false, dryRun);
 };
 /**
  * Install Saltcorn
