@@ -38,7 +38,7 @@
     "moment": "^2.27.0",
     "multer": "^1.4.3",
     "multer-s3": "^2.10.0",
-    "node-fetch": "2.6.2",
+    "node-fetch": "2.6.7",
     "node-watch": "^0.7.2",
     "notp": "2.0.3",
     "passport": "^0.4.1",

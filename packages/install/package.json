@@ -12,7 +12,7 @@
     "env-paths": "^2.2.0",
     "inquirer": "^7.3.3",
     "js-yaml": "^4.1.0",
-    "node-fetch": "2.6.2",
+    "node-fetch": "2.6.7",
     "sudo": "^1.0.3",
     "systeminformation": "^5.8.9",
     "tcp-port-used": "^1.0.2",
