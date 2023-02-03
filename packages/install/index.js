@@ -276,22 +276,23 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   }
   if(["Fedora Linux"].includes(osInfo.distro)) {
     installer = "dnf"
+
   } else {
     installer = "apt"
   }
-  const packages = [
+  const packages = installer ==="apt"? [
     "libpq-dev",
     "build-essential",
     python,
     "git",
     "libsystemd-dev",
-  ];
+  ] : [];
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser"); 
     if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
     if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
   }
-  if (port === 80) packages.push("libcap2-bin");
+  if (port === 80 && installer ==="apt") packages.push("libcap2-bin");
   if (db === "pg-local") packages.push("postgresql", "postgresql-client");
 
 
