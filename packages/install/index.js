@@ -381,16 +381,8 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
     "-U",
     "postgres",
     "-c",
-    `CREATE USER ${user} WITH CREATEDB;`,
+    `CREATE USER ${user} WITH CREATEDB PASSWORD '${pg_pass}';`,
   ], false, dryRun);
-  await asyncSudoPostgres([
-    "psql",
-    "-U",
-    "postgres",
-    "-c",
-    `ALTER USER ${user} WITH PASSWORD '${pg_pass}';`,
-  ], false, dryRun);
-
   await asyncSudoUser(user, ["createdb", dbName], false, dryRun);
   await asyncSudoPostgres([
     "psql",
