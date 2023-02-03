@@ -260,7 +260,7 @@ const askOsService = async () => {
  */
 
 const isRedHat =  (osInfo) =>
-  ["Fedora Linux", "CentOS Linux"].includes(osInfo.distro)
+  ["Fedora Linux", "Fedora", "CentOS Linux", "Rocky Linux", "Red Hat Enterprise Linux", "AlmaLinux"].includes(osInfo.distro)
 
 
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
@@ -309,7 +309,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (db === "pg-local" && installer ==="dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
     await asyncSudo(["systemctl", "enable", "--now", "postgresql"], false, dryRun);
-    await asyncSudo(["bash", "-c","sed -i  '/^local all all peer/ s/peer/password/' /var/lib/pgsql/data/pg_hba.conf"], false, dryRun);
+    await asyncSudo(["bash", "-c","sed -E -i 's/local(\s+)all(\s+)all(\s+)peer/local\1all\2all\password/' /var/lib/pgsql/data/pg_hba.conf"], false, dryRun);
     await asyncSudo(["systemctl", "reload", "postgresql"], false, dryRun);
 
   }
