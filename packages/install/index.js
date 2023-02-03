@@ -309,8 +309,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (db === "pg-local" && installer ==="dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
     await asyncSudo(["systemctl", "enable", "--now", "postgresql"], false, dryRun);
-    await asyncSudo(["echo", "local   all    all      password",
-                     ">>", "/var/lib/pgsql/data/pg_hba.conf"], false, dryRun);
+    await asyncSudo(["bash", "-c","echo 'local   all    all      password' >> /var/lib/pgsql/data/pg_hba.conf"], false, dryRun);
     await asyncSudo(["systemctl", "reload", "postgresql"], false, dryRun);
 
   }
