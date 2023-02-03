@@ -16,7 +16,7 @@ class Test:
     def test_public_home_is_redirect(self):
         self.sess.reset()
         self.sess.get('/')
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.cannot_access_admin()
 
     def test_can_signup(self):
@@ -34,7 +34,7 @@ class Test:
         assert 'Welcome to Saltcorn!' in self.sess.content
         self.cannot_access_admin()
         self.sess.get('/auth/logout')
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.sess.follow_redirect()
         self.sess.postForm('/auth/login', 
             {'email': 'thebestuser@mail.com', 
@@ -93,14 +93,14 @@ class Test:
             })
         assert self.sess.redirect_url == '/'
         self.sess.follow_redirect()
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.sess.follow_redirect()
         self.sess.postForm('/auth/login', 
             {'email': 'thebestus2er@mail.com', 
             'password': 'ty435yqpiOPtyj', 
             '_csrf': self.sess.csrf()
             })
-        assert self.sess.redirect_url == '/auth/login'
+        assert self.sess.redirect_url.startswith('/auth/login')
         self.sess.follow_redirect()
         assert "Incorrect user or password" in self.sess.content
 

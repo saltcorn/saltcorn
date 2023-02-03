@@ -2,6 +2,7 @@ const request = require("supertest");
 const getApp = require("../app");
 const {
   toRedirect,
+  getAdminLoginCookie,
   getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
@@ -33,7 +34,7 @@ describe("nonexisting view", () => {
   itShouldRedirectUnauthToLogin("/view/patlist", "/");
 });
 describe("view patients list endpoint", () => {
-  itShouldRedirectUnauthToLogin("/view/patientlist", "/");
+  itShouldRedirectUnauthToLogin("/view/patientlist");
 
   it("should show view to staff", async () => {
     const loginCookie = await getStaffLoginCookie();
@@ -78,17 +79,18 @@ describe("edit view", () => {
   });
   it("should submit edit", async () => {
     const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/view/authoredit")
+      .set("Cookie", loginCookie)
       .send("author=Chekov")
-
       .expect(toRedirect("/view/authorlist"));
   });
 });
 
 describe("view with routes", () => {
   it("should enable", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     const table = await Table.findOne({ name: "books" });
 

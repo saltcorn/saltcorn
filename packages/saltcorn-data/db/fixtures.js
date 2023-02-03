@@ -24,6 +24,7 @@ module.exports =
     getState().registerPlugin("base", require("../base-plugin"));
     const table = await Table.create("books", {
       min_role_read: 10,
+      min_role_write: 1,
     });
     await Field.create({
       table,
@@ -333,5 +334,179 @@ module.exports =
         ],
       },
       fixed_states: {},
+    });
+
+    const rooms = await Table.create("rooms", {
+      min_role_read: 8,
+      min_role_write: 8,
+    });
+    await Field.create({
+      table: rooms,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await db.insert("rooms", {
+      name: "Room A",
+    });
+    await db.insert("rooms", {
+      name: "Room B",
+    });
+
+    const messages = await Table.create("messages", {
+      min_role_read: 8,
+      min_role_write: 8,
+    });
+    await Field.create({
+      table: messages,
+      name: "content",
+      label: "Content",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: messages,
+      name: "user",
+      label: "User",
+      type: "Key",
+      reftable_name: "users",
+      attributes: { summary_field: "email" },
+      required: false,
+    });
+    await Field.create({
+      table: messages,
+      name: "room",
+      label: "Room",
+      type: "Key",
+      reftable: rooms,
+      required: false,
+      attributes: { summary_field: "name" },
+    });
+    await db.insert("messages", {
+      content: "first message content for room A",
+      user: 1,
+      room: 1,
+    });
+    await db.insert("messages", {
+      content: "second message content for room A",
+      user: 1,
+      room: 1,
+    });
+
+    const participants = await Table.create("participants", {
+      min_role_read: 8,
+      min_role_write: 8,
+    });
+    await Field.create({
+      table: participants,
+      name: "user",
+      label: "User",
+      type: "Key",
+      reftable_name: "users",
+      attributes: { summary_field: "email" },
+      required: false,
+    });
+    await Field.create({
+      table: participants,
+      name: "room",
+      label: "Room",
+      type: "Key",
+      reftable: rooms,
+      required: false,
+      attributes: { summary_field: "name" },
+    });
+    await db.insert("participants", {
+      user: 1,
+      room: 1,
+    });
+    await db.insert("participants", {
+      user: 2,
+      room: 1,
+    });
+    await db.insert("participants", {
+      user: 3,
+      room: 1,
+    });
+
+    const roomsViewCfg = {
+      exttable_name: null,
+      viewname: "room",
+      msg_relation: "messages.room",
+      msgsender_field: "user",
+      msgview: "show_message",
+      msgform: "edit_message",
+      participant_field: "participants.room.user",
+      participant_maxread_field: "",
+    };
+
+    await View.create({
+      table_id: rooms.id,
+      name: "rooms_view",
+      viewtemplate: "Room",
+      configuration: roomsViewCfg,
+      min_role: 8,
+    });
+
+    await View.create({
+      table_id: rooms.id,
+      name: "admin_rooms_view",
+      viewtemplate: "Room",
+      configuration: roomsViewCfg,
+      min_role: 1,
+    });
+
+    await View.create({
+      table_id: messages.id,
+      name: "edit_message",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            field_name: "content",
+            fieldview: "edit",
+            textStyle: "",
+            block: false,
+            configuration: {},
+          },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              field_name: "content",
+              fieldview: "edit",
+              textStyle: "",
+              block: false,
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 8,
+    });
+
+    await View.create({
+      table_id: messages.id,
+      name: "show_message",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { field_name: "content", type: "Field", fieldview: "as_text" },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              field_name: "content",
+            },
+          ],
+        },
+      },
+      min_role: 8,
     });
   };

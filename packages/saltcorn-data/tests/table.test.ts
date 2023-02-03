@@ -7,7 +7,7 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import { writeFile } from "fs/promises";
 import mocks from "./mocks";
-const { rick_file, plugin_with_routes, mockReqRes } = mocks;
+const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
   assertsIsSuccessMessage,
@@ -44,7 +44,7 @@ describe("TableIO", () => {
     expect(fields[1].attributes).toStrictEqual({ max: 18 });
   });
 });
-describe("Table create", () => {
+describe("Table create basic tests", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
     const tf = await Table.findOne({ id: tc.id });
@@ -1201,17 +1201,26 @@ describe("Table with UUID pks", () => {
       expect(typeof rows[0].uuid_generate_v4).toBe("string");
     });
     it("should create and insert stuff in table", async () => {
-      getState().registerPlugin("mock_plugin", plugin_with_routes);
+      getState().registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID");
       const [pk] = await table.getFields();
       await pk.update({ type: "UUID" });
+      // @ts-ignore
+      expect(pk.type.name).toBe("UUID");
+
+      const table1 = await Table.findOne({ name: "TableUUID" });
+      assertIsSet(table1);
+      const flds1 = await table1.getFields();
+
+      // @ts-ignore
+      expect(flds1[0].type.name).toBe("UUID");
 
       const name = await Field.create({
         table: table,
         name: "name",
         type: "String",
       });
-      table.fields = null;
+
       await table.insertRow({ name: "Sam" });
       const rows = await table.getRows();
       expect(rows.length).toBe(1);
@@ -1235,9 +1244,14 @@ describe("Table with UUID pks", () => {
       ];
       const fnm = "/tmp/test1.json";
       await writeFile(fnm, JSON.stringify(json));
+
+      await getState().refresh_tables();
       const table = await Table.findOne({ name: "TableUUID" });
       assertIsSet(table);
       expect(!!table).toBe(true);
+      const flds = await table.getFields();
+      // @ts-ignore
+      expect(flds[0].type.name).toBe("UUID");
       const impres = await table.import_json_file(fnm);
       expect(impres).toEqual({
         success: "Imported 1 rows into table TableUUID",
@@ -1284,14 +1298,19 @@ describe("Table with UUID pks", () => {
       await uuidtable1.delete();
     });
     it("should create and delete table", async () => {
-      getState().registerPlugin("mock_plugin", plugin_with_routes);
+      getState().registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID1");
       const [pk] = await table.getFields();
+
       await pk.update({ type: "UUID" });
 
-      table.fields = null;
-      const [pk1] = await table.getFields();
-      await pk1.update({ type: "Integer" });
+      const table1 = Table.findOne({ name: table.name });
+      assertIsSet(table1);
+      const [pk1] = await table1.getFields();
+      // @ts-ignore
+      expect(pk1.type?.name).toBe("UUID");
+      //const [pk1] = await table.getFields();
+      await pk.update({ type: "Integer" });
 
       await table.delete();
     });
@@ -1299,7 +1318,7 @@ describe("Table with UUID pks", () => {
 });
 describe("external tables", () => {
   it("should register plugin", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes);
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
   });
   it("should find table", async () => {
     const table = await Table.findOne({ name: "exttab" });
@@ -1315,6 +1334,26 @@ describe("external tables", () => {
     const dbtables = await Table.find_with_external({ external: false });
     expect(dbtables.map((t) => t.name)).not.toContain("exttab");
     expect(dbtables.map((t) => t.name)).toContain("books");
+  });
+  it("should build view", async () => {
+    const table = Table.findOne({ name: "exttab" });
+    assertIsSet(table);
+    const view = await createDefaultView(table, "List", 10);
+    const contents = await view.run_possibly_on_page(
+      {},
+      mockReqRes.req,
+      mockReqRes.res
+    );
+    expect(contents).toContain(">Sam<");
+    const configFlow = await view.get_config_flow(mockReqRes.req);
+    await configFlow.run(
+      {
+        exttable_name: view.exttable_name,
+        viewname: view.name,
+        ...view.configuration,
+      },
+      mockReqRes.req
+    );
   });
 });
 

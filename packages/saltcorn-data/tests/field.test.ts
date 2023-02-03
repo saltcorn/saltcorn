@@ -494,7 +494,9 @@ describe("adds new fields to history #1202", () => {
       type: "String",
     });
     await f.delete();
-    const fields = await table.getFields();
+    const table1 = Table.findOne({ id: table.id });
+    assertIsSet(table1);
+    const fields = await table1.getFields();
     expect(fields.length).toBe(1); // id
   });
 });

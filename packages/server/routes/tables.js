@@ -887,8 +887,10 @@ router.post(
           "exttables_min_role_read",
           exttables_min_role_read
         );
-        req.flash("success", req.__("Table saved"));
-        res.redirect(`/table/${table.name}`);
+        if (!req.xhr) {
+          req.flash("success", req.__("Table saved"));
+          res.redirect(`/table/${table.name}`);
+        } else res.json({ success: "ok" });
       }
     } else {
       const { id, _csrf, ...rest } = v;

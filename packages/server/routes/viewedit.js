@@ -8,7 +8,15 @@
 const Router = require("express-promise-router");
 
 const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
-const { p, a, div, script, text, domReady } = require("@saltcorn/markup/tags");
+const {
+  p,
+  a,
+  div,
+  script,
+  text,
+  domReady,
+  pre,
+} = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
 const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
@@ -68,13 +76,12 @@ router.get(
       hasAccessWarning.length > 0
         ? alert(
             "danger",
-            req.__(
-              `<p>You have views with a role to access lower than the table role to read, 
-      with no table ownership. In the next version of Saltcorn, this may cause a
-      denial of access. Users will need to have table read access to any data displayed.</p> 
-      Views potentially affected: %s`,
-              hasAccessWarning.map((v) => v.name).join(", ")
-            )
+            `<p>${req.__(
+              `You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.`
+            )}</p> 
+      ${req.__("Views potentially affected")}: ${hasAccessWarning
+              .map((v) => v.name)
+              .join(", ")}`
           )
         : "";
     res.sendWrap(req.__(`Views`), {
@@ -481,8 +488,11 @@ const respondWorkflow = (view, wf, wfres, req, res) => {
               type: "card",
               title: req.__("Preview"),
               contents: div(
-                { id: "viewcfg-preview", "data-preview-url": previewURL },
-                script(domReady(`updateViewPreview()`))
+                div(pre({ id: "viewcfg-preview-error", class: "text-danger" })),
+                div(
+                  { id: "viewcfg-preview", "data-preview-url": previewURL },
+                  script(domReady(`updateViewPreview()`))
+                )
               ),
             },
           ]

@@ -38,7 +38,7 @@ afterAll(db.close);
 beforeAll(async () => {
   await require("@saltcorn/data/db/reset_schema")();
   await require("@saltcorn/data/db/fixtures")();
-  getState().registerPlugin("mock_plugin", plugin_with_routes);
+  getState().registerPlugin("mock_plugin", plugin_with_routes());
 });
 const seed = set_seed();
 

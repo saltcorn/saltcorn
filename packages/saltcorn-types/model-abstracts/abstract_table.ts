@@ -7,7 +7,7 @@ export interface AbstractTable {
   id?: number;
   // is actually a getter
   sql_name: string;
-  fields?: AbstractField[] | null;
+  fields: AbstractField[];
   getTags(): Promise<Array<AbstractTag>>;
   getForeignTables(): Promise<Array<AbstractTable>>;
 }

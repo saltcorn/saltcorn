@@ -3,6 +3,7 @@
  * @module components/elements/JoinField
  * @subcategory components / elements
  */
+/* eslint-env jquery */
 
 import React, { useContext, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
@@ -65,6 +66,302 @@ const JoinField = ({ name, block, fieldview, textStyle }) => {
   );
 };
 
+const buildFieldsMenu = (options, setProp, refetchPreview) => {
+  const { join_field_options } = options.join_field_picker_data;
+  return (
+    <div className="dropdown">
+      <button
+        id="f-top-dropdown"
+        type="button"
+        onClick={() => {
+          $(
+            "#f-top-dropdown,.dropdown-submenu.show,#r-top-dropdown.show"
+          ).dropdown("toggle");
+        }}
+        className="btn btn-outline-primary dropdown-toggle"
+        aria-expanded="false"
+      >
+        Fields
+      </button>
+      <div className="dropdown-menu">
+        <ul className="ps-0 mb-0">
+          {join_field_options
+            .filter(
+              (field) =>
+                field.subFields &&
+                field.subFields.find(
+                  ({ fieldPath }) =>
+                    options.parent_field_list.indexOf(fieldPath) >= 0
+                )
+            )
+            .map((field) => {
+              return (
+                <li
+                  key={`_li_${field.fieldPath}`}
+                  className="dropdown-item dropstart"
+                >
+                  <div
+                    id={`_field_${field.fieldPath}`}
+                    className="dropdown-toggle dropdown-submenu"
+                    onClick={toggleSubmenu}
+                    role="button"
+                    aria-expanded="false"
+                  >
+                    {field.name}
+                  </div>
+                  <div className="dropdown-menu">
+                    <h5 className="join-table-header">{field.table}</h5>
+                    <ul className="ps-0">
+                      {field.subFields
+                        .filter(
+                          (f) =>
+                            options.parent_field_list.indexOf(f.fieldPath) >= 0
+                        )
+                        .map((subOne) => {
+                          return subOne.subFields &&
+                            subOne.subFields.length > 0 ? (
+                            <li
+                              key={`_li_${subOne.fieldPath}`}
+                              className="dropdown-item dropstart"
+                            >
+                              <div
+                                id={`_field_${subOne.fieldPath}`}
+                                className="dropdown-toggle dropdown-submenu"
+                                onClick={toggleSubmenu}
+                                role="button"
+                                aria-expanded="false"
+                              >
+                                {subOne.name}
+                              </div>
+                              <div className="dropdown-menu">
+                                <h5 className="join-table-header">
+                                  {subOne.table}
+                                </h5>
+                                <ul className="ps-0">
+                                  {subOne.subFields
+                                    .filter(
+                                      (f) =>
+                                        options.parent_field_list.indexOf(
+                                          f.fieldPath
+                                        ) >= 0
+                                    )
+                                    .map((subTwo) => {
+                                      return subTwo.subFields &&
+                                        subTwo.subFields.length > 0 ? (
+                                        <li
+                                          key={`_li_${subTwo.fieldPath}`}
+                                          className="dropdown-item dropstart"
+                                        >
+                                          <div
+                                            id={`_field_${subTwo.fieldPath}`}
+                                            className="dropdown-toggle dropdown-submenu"
+                                            onClick={toggleSubmenu}
+                                            role="button"
+                                            aria-expanded="false"
+                                          >
+                                            {subTwo.name}
+                                          </div>
+                                          <div className="dropdown-menu">
+                                            <h5 className="join-table-header">
+                                              {subTwo.table}
+                                            </h5>
+                                            <ul className="ps-0">
+                                              {subTwo.subFields
+                                                .filter(
+                                                  (f) =>
+                                                    options.parent_field_list.indexOf(
+                                                      f.fieldPath
+                                                    ) >= 0
+                                                )
+                                                .map((subThree) => {
+                                                  return (
+                                                    <li
+                                                      key={`_li_${subThree.fieldPath}`}
+                                                      className="dropdown-item field-val-item"
+                                                      onClick={(e) =>
+                                                        joinFieldClicked(
+                                                          subThree.fieldPath,
+                                                          setProp,
+                                                          options,
+                                                          refetchPreview
+                                                        )
+                                                      }
+                                                      role="button"
+                                                    >
+                                                      {subThree.name}
+                                                    </li>
+                                                  );
+                                                })}
+                                            </ul>
+                                          </div>
+                                        </li>
+                                      ) : (
+                                        <li
+                                          key={`_li_${subTwo.fieldPath}`}
+                                          className="dropdown-item field-val-item"
+                                          onClick={(e) =>
+                                            joinFieldClicked(
+                                              subTwo.fieldPath,
+                                              setProp,
+                                              options,
+                                              refetchPreview
+                                            )
+                                          }
+                                          role="button"
+                                        >
+                                          {subTwo.name}
+                                        </li>
+                                      );
+                                    })}
+                                </ul>
+                              </div>
+                            </li>
+                          ) : (
+                            <li
+                              key={`_li_${subOne.fieldPath}`}
+                              className="dropdown-item field-val-item"
+                              onClick={(e) =>
+                                joinFieldClicked(
+                                  subOne.fieldPath,
+                                  setProp,
+                                  options,
+                                  refetchPreview
+                                )
+                              }
+                              role="button"
+                            >
+                              {subOne.name}
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  </div>
+                </li>
+              );
+            })}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+const buildRelationsMenu = (
+  options,
+  setProp,
+  refetchPreview,
+  hasFieldsPicker
+) => {
+  const { relation_options } = options.join_field_picker_data;
+  return (
+    <div className={`dropdown ${hasFieldsPicker ? "ps-2" : ""}`}>
+      <button
+        id="r-top-dropdown"
+        type="button"
+        onClick={() => {
+          $(
+            "#r-top-dropdown,.dropdown-submenu.show,#f-top-dropdown.show"
+          ).dropdown("toggle");
+        }}
+        className="btn btn-outline-primary dropdown-toggle"
+        aria-expanded="false"
+      >
+        Relations
+      </button>
+      <div className="dropdown-menu">
+        <ul className="ps-0 mb-0">
+          {relation_options
+            .filter(
+              (join) =>
+                options.parent_field_list.find((f) =>
+                  f.startsWith(join.relationPath)
+                ) !== undefined
+            )
+            .map((join) => {
+              return (
+                <li
+                  key={`_li_${join.relationPath}`}
+                  className="dropdown-item dropstart"
+                >
+                  <div
+                    id={`_relation_${join.relationPath}`}
+                    className="dropdown-toggle dropdown-submenu"
+                    onClick={toggleRelationsSubmenu}
+                    role="button"
+                    aria-expanded="false"
+                  >
+                    {join.relationPath}
+                  </div>
+                  <div className="dropdown-menu">
+                    <ul className="ps-0 mb-0">
+                      {join.relationFields
+                        .filter(
+                          (fName) =>
+                            options.parent_field_list.indexOf(
+                              `${join.relationPath}->${fName}`
+                            ) >= 0
+                        )
+                        .map((fName) => {
+                          const fullPath = `${join.relationPath}->${fName}`;
+                          return (
+                            <li
+                              key={`_li_${fullPath}`}
+                              className="dropdown-item field-val-item"
+                              onClick={(e) => {
+                                joinFieldClicked(
+                                  fullPath,
+                                  setProp,
+                                  options,
+                                  refetchPreview
+                                );
+                              }}
+                              role="button"
+                            >
+                              {fName}
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  </div>
+                </li>
+              );
+            })}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+function toggleRelationsSubmenu(e) {
+  $(".dropdown-submenu.show").dropdown("toggle");
+  $(document.getElementById(`${e.target.id}`)).dropdown("toggle");
+}
+
+function toggleSubmenu(e) {
+  $(document.getElementById(`${e.target.id}`)).dropdown("toggle");
+  const clickedField = e.target.id.replace("_field_", "");
+  $(".dropdown-submenu.show").each(function (index) {
+    const openField = this.id.replace("_field_", "");
+    if (clickedField.indexOf(openField) < 0) {
+      $(this).dropdown("toggle");
+    }
+  });
+}
+
+function joinFieldClicked(fieldPath, setProp, options, refetchPreview) {
+  setProp((prop) => (prop.name = fieldPath));
+  const newfvs = options.field_view_options[fieldPath];
+  if (newfvs && newfvs.length > 0) {
+    setProp((prop) => (prop.fieldview = newfvs[0]));
+    refetchPreview({
+      name: fieldPath,
+      fieldview: newfvs[0],
+    });
+  } else refetchPreview({ name: fieldPath });
+  $(
+    ".dropdown-submenu.show,#f-top-dropdown.show,#r-top-dropdown.show"
+  ).dropdown("toggle");
+}
+
 export /**
  * @returns {Fragment}
  * @namespace
@@ -104,6 +401,10 @@ const JoinFieldSettings = () => {
     setPreviews,
     node_id,
   });
+  const showFieldsPicker =
+    options.join_field_picker_data?.join_field_options.length > 0;
+  const showRelationsPicker =
+    options.join_field_picker_data?.relation_options.length > 0;
   return (
     <Fragment>
       <i>
@@ -118,29 +419,31 @@ const JoinFieldSettings = () => {
               <label>Join field</label>
             </td>
             <td>
-              <select
+              <input
+                id="inputjoin_field"
+                type="text"
+                className="form-control bg-white item-menu"
+                name="join_field"
+                data-fieldname="join_field"
+                readOnly="readonly"
                 value={name}
-                className="form-control form-select"
-                onChange={(e) => {
-                  if (!e.target) return;
-                  const value = e.target.value;
-                  setProp((prop) => (prop.name = value));
-                  const newfvs = options.field_view_options[value];
-                  if (newfvs && newfvs.length > 0) {
-                    setProp((prop) => (prop.fieldview = newfvs[0]));
-                    refetchPreview({
-                      name: value,
-                      fieldview: newfvs[0],
-                    });
-                  } else refetchPreview({ name: value });
-                }}
-              >
-                {options.parent_field_list.map((f, ix) => (
-                  <option key={ix} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
+              />
+            </td>
+          </tr>
+
+          <tr>
+            <td colSpan="2">
+              <div className="d-flex">
+                {showFieldsPicker &&
+                  buildFieldsMenu(options, setProp, refetchPreview)}
+                {showRelationsPicker &&
+                  buildRelationsMenu(
+                    options,
+                    setProp,
+                    refetchPreview,
+                    showFieldsPicker
+                  )}
+              </div>
             </td>
           </tr>
           {fvs && (

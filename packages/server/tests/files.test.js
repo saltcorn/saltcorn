@@ -109,6 +109,7 @@ describe("files admin", () => {
 describe("files edit", () => {
   it("creates table and view", async () => {
     const table = await Table.create("thefiletable");
+    await table.update({ min_role_read: 8, min_role_write: 8 });
     await Field.create({
       table,
       name: "first_name",

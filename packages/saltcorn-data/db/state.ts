@@ -222,9 +222,9 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh(noSignal: boolean) {
+    await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
-    await this.refresh_tables(noSignal);
     await this.refresh_files(noSignal);
     await this.refresh_pages(noSignal);
     await this.refresh_config(noSignal);

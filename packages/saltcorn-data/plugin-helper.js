@@ -12,7 +12,11 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
 const { applyAsync, InvalidConfiguration } = require("./utils");
-const { jsexprToWhere, freeVariables } = require("./models/expression");
+const {
+  jsexprToWhere,
+  freeVariables,
+  add_free_variables_to_joinfields,
+} = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
 /**
@@ -124,9 +128,10 @@ const stateToQueryString = (state) => {
  * @function
  * @param {Field[]} fields
  * @param mode
+ * @param don't follow references to other tables (type === "Key")
  * @returns {object}
  */
-const calcfldViewOptions = (fields, mode) => {
+const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
   const isEdit = mode === "edit";
   const isFilter = mode === "filter";
   let fvs = {};
@@ -142,7 +147,7 @@ const calcfldViewOptions = (fields, mode) => {
           .map(([k, v]) => k);
       else
         fvs[f.name] = Object.entries(getState().fileviews).map(([k, v]) => k);
-    } else if (f.type === "Key") {
+    } else if (f.type === "Key" && !noFollowKeys) {
       if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
       else if (isFilter) {
         fvs[f.name] = Object.keys(getState().keyFieldviews);
@@ -215,6 +220,33 @@ const calcfldViewOptions = (fields, mode) => {
     }
   });
   return { field_view_options: fvs, handlesTextStyle, blockDisplay };
+};
+
+/**
+ * create viewoptions (as_text, as_link, show, ...) for fields
+ * with a foreign_key to 'table' from another table
+ * @param table table of the viewtemplate
+ * @param viewtemplate name of the viewtemplate
+ * @returns an object assigning the path (table.foreign_key->field) to viewoptions
+ */
+const calcrelViewOptions = async (table, viewtemplate) => {
+  const rel_field_view_options = {};
+  for (const {
+    relationTable,
+    relationField,
+  } of await table.get_relation_data()) {
+    const { field_view_options } = calcfldViewOptions(
+      await relationTable.getFields(),
+      viewtemplate,
+      true
+    );
+    for (const [k, v] of Object.entries(field_view_options)) {
+      rel_field_view_options[
+        `${relationTable.name}.${relationField.name}->${k}`
+      ] = v;
+    }
+  }
+  return rel_field_view_options;
 };
 
 /**
@@ -425,6 +457,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   }
   const fldOptions = fields.map((f) => f.name);
   const { field_view_options } = calcfldViewOptions(fields, "list");
+  const rel_field_view_options = await calcrelViewOptions(table, "list");
   const fieldViewConfigForms = await calcfldViewConfig(fields, false);
   const fvConfigFields = [];
   for (const [field_name, fvOptFields] of Object.entries(
@@ -459,6 +492,12 @@ const field_picker_fields = async ({ table, viewname, req }) => {
   const { child_field_list, child_relations } = await table.get_child_relations(
     true
   );
+  const join_field_options = await table.get_join_field_options(true, true);
+  const join_field_view_options = {
+    ...field_view_options,
+    ...rel_field_view_options,
+  };
+  const relation_options = await table.get_relation_options();
   const aggStatOptions = {};
   const agg_fieldviews = [];
   Object.values(getState().types).forEach((t) => {
@@ -588,9 +627,11 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       name: "join_field",
       label: __("Join Field"),
       type: "String",
+      input_type: "join_field_picker",
       required: true,
       attributes: {
-        options: parent_field_list,
+        join_field_options,
+        relation_options,
       },
       showIf: { type: "JoinField" },
     },
@@ -600,7 +641,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       type: "String",
       required: false,
       attributes: {
-        calcOptions: ["join_field", field_view_options],
+        calcOptions: ["join_field", join_field_view_options],
       },
       showIf: { type: "JoinField" },
     },
@@ -1140,47 +1181,6 @@ const picked_fields_to_query = (columns, fields, layout) => {
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
   return { joinFields, aggregations };
 };
-/**
- * Add free variables to join fields
- * @param freeVars
- * @param joinFields
- * @param fields
- */
-const add_free_variables_to_joinfields = (freeVars, joinFields, fields) => {
-  const joinFieldNames = new Set(
-    fields.filter((f) => f.is_fkey).map((f) => f.name)
-  );
-  [...freeVars]
-    .filter((v) => v.includes("."))
-    .forEach((v) => {
-      const kpath = v.split(".");
-      if (joinFieldNames.has(kpath[0]))
-        if (kpath.length === 2) {
-          const [refNm, targetNm] = kpath;
-          joinFields[`${refNm}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            rename_object: [refNm, targetNm],
-          };
-        } else if (kpath.length === 3) {
-          const [refNm, through, targetNm] = kpath;
-          joinFields[`${refNm}_${through}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            through,
-            rename_object: [refNm, through, targetNm],
-          };
-        } else if (kpath.length === 4) {
-          const [refNm, through1, through2, targetNm] = kpath;
-          joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
-            ref: refNm,
-            target: targetNm,
-            through: [through1, through2],
-            rename_object: [refNm, through1, through2, targetNm],
-          };
-        }
-    });
-};
 
 /**
  * State fields to Query
@@ -1440,7 +1440,11 @@ const initial_config_all_fields =
       ) {
         cfg.columns.push({
           type: "JoinField",
-          join_field: `${f.name}.${f.attributes.summary_field}`,
+          join_field: `${f.name}.${
+            f.attributes.summary_field ||
+            Table.findOne(f.reftable_name)?.pk_name ||
+            "id"
+          }`,
         });
         aboves.push({
           widths: [2, 10],
@@ -1660,6 +1664,15 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     get_parent_relations() {
       return { parent_relations: [], parent_field_list: [] };
     },
+    get_relation_options() {
+      return [];
+    },
+    get_relation_data() {
+      return [];
+    },
+    get_join_field_options() {
+      return [];
+    },
     external: true,
     owner_fieldname() {
       return null;
@@ -1706,6 +1719,7 @@ module.exports = {
   stateFieldsToQuery,
   initial_config_all_fields,
   calcfldViewOptions,
+  calcrelViewOptions,
   get_link_view_opts,
   readState,
   readStateStrict,

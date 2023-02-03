@@ -16,7 +16,6 @@ const { getState } = require("@saltcorn/data/db/state");
 afterAll(db.close);
 jest.setTimeout(10000);
 
-
 beforeAll(async () => {
   if (!db.isSQLite) {
     await db.query(`drop schema if exists test2 cascade`);
@@ -94,12 +93,9 @@ describe("tenant routes", () => {
         .set("Cookie", loginCookie)
         .expect(toRedirect("/tenant/list"));
     });
-
   } else {
-
     it("does not support tenants on SQLite", async () => {
       expect(db.isSQLite).toBe(true);
     });
-
   }
 });

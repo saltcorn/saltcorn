@@ -30,6 +30,13 @@ class Session:
     else:
         self.redirect_url = None
 
+  def sessionID(self):
+    cookiesDict = self.session.cookies.get_dict()
+    if 'connect.sid' in cookiesDict:
+      return self.session.cookies.get_dict()['connect.sid']
+    else:
+      return ""
+
   def get(self, url):
     resp = self.session.get(urljoin(self.base_url, url), allow_redirects=False)
     self.__read_response(resp)

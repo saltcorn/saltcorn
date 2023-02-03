@@ -305,13 +305,32 @@ class ExtractHelper {
   private async handleTableTrigger(table: Table, tableNode: Node) {
     const triggerNodes = new Array<Node>();
     const triggers = await Trigger.getAllTableTriggers(table);
+    let index = 0;
     for (const trigger of triggers) {
-      if (trigger && includeTrigger(trigger, this.opts)) {
-        const tags = await trigger.getTags();
-        const newNode = new TriggerNode(trigger, tags);
-        this.cyIds.add(newNode.cyId);
-        triggerNodes.push(newNode);
+      if (trigger) {
+        let newNode = null;
+        if (trigger.id && trigger.getTags && includeTrigger(trigger, this.opts))
+          // from db
+          newNode = new TriggerNode(
+            trigger.name!,
+            trigger.name!,
+            await trigger.getTags(),
+            trigger.id
+          );
+        // virtual
+        else
+          newNode = new TriggerNode(
+            `${table.name}_${trigger.when_trigger}_${index}`,
+            trigger.when_trigger,
+            []
+          );
+
+        if (newNode) {
+          this.cyIds.add(newNode.cyId);
+          triggerNodes.push(newNode);
+        }
       }
+      index++;
     }
     if (triggerNodes.length > 0) tableNode.trigger = triggerNodes;
   }

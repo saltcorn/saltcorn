@@ -252,6 +252,10 @@ module.exports = {
      */
     run: async ({ row, table, configuration: { viewname }, user }) => {
       const view = await View.findOne({ name: viewname });
+      if (!view)
+        throw new Error(
+          `In find_or_create_dm_room action, Room view ${viewname} does not exist`
+        );
       const { participant_field } = view.configuration;
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
@@ -501,7 +505,7 @@ module.exports = {
         )
           newRow[field.name] = user.id;
       }
-      return await joinTable.insertRow(newRow);
+      return await joinTable.insertRow(newRow, user);
     },
   },
 
@@ -527,7 +531,7 @@ module.exports = {
       const newRow = { ...row };
       await table.getFields();
       delete newRow[table.pk_name];
-      await table.insertRow(newRow);
+      await table.insertRow(newRow, user);
       return { reload_page: true };
     },
   },
@@ -907,9 +911,12 @@ module.exports = {
       }
       // delete rows
       if (delete_rows)
-        await table_for_insert.deleteRows({
-          [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
-        });
+        await table_for_insert.deleteRows(
+          {
+            [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
+          },
+          user
+        );
 
       //update existing
       for (const existPK of set_intersect(src_pks, dest_pks)) {

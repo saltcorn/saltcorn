@@ -235,8 +235,11 @@ const configuration_workflow = (req) =>
           var formFields = [];
           omitted_fields.forEach((f) => {
             f.required = false;
-
+            if (f.type?.name === "Bool") {
+              f.fieldview = "tristate";
+            }
             formFields.push(f);
+
             if (f.presets) {
               formFields.push(
                 new Field({
@@ -907,7 +910,8 @@ const runPost = async (
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
               childRow,
-              childRow[childTable.pk_name]
+              childRow[childTable.pk_name],
+              req.user || { role_id: 10 }
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
@@ -915,7 +919,10 @@ const runPost = async (
               return;
             }
           } else {
-            const ins_res = await childTable.tryInsertRow(childRow, req.user);
+            const ins_res = await childTable.tryInsertRow(
+              childRow,
+              req.user || { role_id: 10 }
+            );
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
               res.sendWrap(viewname, renderForm(form, req.csrfToken()));
@@ -940,9 +947,12 @@ const runPost = async (
               });
           for (const db_child_row of childRows) {
             if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
-              await childTable.deleteRows({
-                [childTable.pk_name]: db_child_row[childTable.pk_name],
-              });
+              await childTable.deleteRows(
+                {
+                  [childTable.pk_name]: db_child_row[childTable.pk_name],
+                },
+                req.user || { role_id: 10 }
+              );
             }
           }
         }
@@ -1182,7 +1192,11 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
-        row = await table.getRow(uniques);
+        row = await table.getJoinedRow({
+          where: uniques,
+          forPublic: !req.user,
+          forUser: req.user,
+        });
       }
       const isRemote = !isWeb(req);
       return await render({
@@ -1220,6 +1234,8 @@ module.exports = {
         ...(orderBy && { orderBy: orderBy }),
         ...(orderDesc && { orderDesc: orderDesc }),
         ...q,
+        forPublic: !req.user,
+        forUser: req.user,
       });
       return {
         table,
@@ -1230,7 +1246,11 @@ module.exports = {
     async tryInsertQuery(row) {
       const table = await Table.findOne({ id: table_id });
       const result = {};
-      const ins_res = await table.tryInsertRow(row, req.user, result);
+      const ins_res = await table.tryInsertRow(
+        row,
+        req.user || { role_id: 10 },
+        result
+      );
       ins_res.trigger_return = result;
       return ins_res;
     },
@@ -1238,7 +1258,12 @@ module.exports = {
     async tryUpdateQuery(row, id) {
       const table = await Table.findOne({ id: table_id });
       const result = {};
-      const upd_res = await table.tryUpdateRow(row, id, req.user, result);
+      const upd_res = await table.tryUpdateRow(
+        row,
+        id,
+        req.user || { role_id: 10 },
+        result
+      );
       upd_res.trigger_return = result;
       return upd_res;
     },
@@ -1276,9 +1301,15 @@ module.exports = {
     },
     async getRowQuery(table_id, view_select, row_id) {
       const childTable = Table.findOne({ id: table_id });
-      return await childTable.getRows({
-        [view_select.field_name]: row_id,
-      });
+      return await childTable.getRows(
+        {
+          [view_select.field_name]: row_id,
+        },
+        {
+          forPublic: !req.user,
+          forUser: req.user,
+        }
+      );
     },
     async actionQuery() {
       const body = req.body;
@@ -1286,7 +1317,15 @@ module.exports = {
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = await Table.findOne({ id: table_id });
-      const row = body.id ? await table.getRow({ id: body.id }) : undefined;
+      const row = body.id
+        ? await table.getRow(
+            { id: body.id },
+            {
+              forPublic: !req.user,
+              forUser: req.user,
+            }
+          )
+        : undefined;
       try {
         const result = await run_action_column({
           col,

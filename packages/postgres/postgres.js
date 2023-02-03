@@ -182,12 +182,13 @@ const insert = async (tbl, obj, opts = {}) => {
   const sql =
     valPosList.length > 0
       ? `insert into "${schema}"."${sqlsanitize(
-        tbl
-      )}"(${fnameList}) values(${valPosList.join()}) returning ${opts.noid ? "*" : opts.pk_name || "id"
-      }`
+          tbl
+        )}"(${fnameList}) values(${valPosList.join()}) returning ${
+          opts.noid ? "*" : opts.pk_name || "id"
+        }`
       : `insert into "${schema}"."${sqlsanitize(
-        tbl
-      )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
+          tbl
+        )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
   sql_log(sql, valList);
   const { rows } = await (opts.client || pool).query(sql, valList);
   if (opts.noid) return;
@@ -204,6 +205,7 @@ const insert = async (tbl, obj, opts = {}) => {
  */
 const update = async (tbl, obj, id, opts = {}) => {
   const kvs = Object.entries(obj);
+  if (kvs.length === 0) return;
   const assigns = kvs
     .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
     .join();
@@ -227,6 +229,7 @@ const update = async (tbl, obj, id, opts = {}) => {
  */
 const updateWhere = async (tbl, obj, whereObj) => {
   const kvs = Object.entries(obj);
+  if (kvs.length === 0) return;
   const { where, values } = mkWhere(whereObj, false, kvs.length);
   const assigns = kvs
     .map(([k, v], ix) => `"${sqlsanitize(k)}"=$${ix + 1}`)
@@ -305,8 +308,8 @@ const add_unique_constraint = async (table_name, field_names) => {
   )}" add CONSTRAINT "${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique" UNIQUE (${field_names
-      .map((f) => `"${sqlsanitize(f)}"`)
-      .join(",")});`;
+    .map((f) => `"${sqlsanitize(f)}"`)
+    .join(",")});`;
   sql_log(sql);
   await pool.query(sql);
 };

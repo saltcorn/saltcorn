@@ -18,17 +18,22 @@ const {
   script,
   domReady,
   ul,
+  li,
+  input,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
-import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { isdef, select_options, search_bar } = helpers;
 import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
 import {
   AbstractFieldRepeat,
   instanceOfField,
 } from "@saltcorn/types/model-abstracts/abstract_field";
-import { FieldLike } from "@saltcorn/types/base_types";
+import type {
+  FieldLike,
+  JoinFieldOption,
+  RelationOption,
+} from "@saltcorn/types/base_types";
 import layout_utils from "./layout_utils";
 const { renderTabs } = layout_utils;
 
@@ -36,8 +41,8 @@ declare const window: any;
 const isNode = typeof window === "undefined";
 
 /**
- * @param {string} s
- * @returns {string}
+ * @param s
+ * @returns
  */
 const rmInitialDot = (s: string): string =>
   s && s[0] === "." ? s.replace(".", "") : s;
@@ -46,8 +51,8 @@ const buildActionAttribute = (form: Form): string =>
   isNode && !form.req?.smr ? form.action! : "javascript:void(0)";
 
 /**
- * @param {object} sIf
- * @returns {string}
+ * @param sIf
+ * @returns
  */
 const mkShowIf = (sIf: any): string =>
   encodeURIComponent(
@@ -75,18 +80,18 @@ const mkShowIf = (sIf: any): string =>
   );
 
 /**
- * @param {string} formStyle
- * @returns {boolean}
+ * @param formStyle
+ * @returns
  */
 const isHoriz = (formStyle: string): boolean => formStyle === "horiz";
 
 /**
- * @param {object} hdr
- * @param {object} inner
- * @param {string} [error = ""]
- * @param {string} fStyle
- * @param {number} labelCols
- * @returns {string}
+ * @param hdr
+ * @param inner
+ * @param error
+ * @param fStyle
+ * @param labelCols
+ * @returns
  */
 const formRowWrap = (
   hdr: any,
@@ -146,10 +151,283 @@ const formRowWrap = (
   );
 
 /**
- * @param {object} v
- * @param {object[]} errors
- * @param {string} [nameAdd = ""]
- * @returns {function}
+ * builds dropdown submenus to select a field,
+ * joined from the table of the current view template
+ * @param joinsFromTbl
+ * @returns
+ */
+const buildFieldsMenu = (joinsFromTbl: JoinFieldOption[]) => {
+  return div(
+    {
+      class: "dropdown-menu",
+    },
+    ul(
+      { class: "ps-0 mb-0" },
+      joinsFromTbl.map((field: any) => {
+        return field.subFields && field.subFields.length > 0
+          ? li(
+              { class: "dropdown-item dropend" },
+              div(
+                {
+                  id: `_field_${field.fieldPath}`,
+                  class: "dropdown-toggle field-dropdown-submenu",
+                  "data-bs-toggle": "dropdown",
+                  "aria-expanded": false,
+                  role: "button",
+                },
+                field.name
+              ),
+              div(
+                { class: "dropdown-menu" },
+                h5(
+                  {
+                    class: "join-table-header",
+                  },
+                  field.table
+                ),
+                ul(
+                  { class: "ps-0" },
+                  field.subFields.map((subOne: any) => {
+                    return subOne.subFields && subOne.subFields.length > 0
+                      ? li(
+                          { class: "dropdown-item dropend" },
+                          div(
+                            {
+                              id: `_field_${subOne.fieldPath}`,
+                              class: "dropdown-toggle field-dropdown-submenu",
+                              "data-bs-toggle": "dropdown",
+                              "aria-expanded": false,
+                              role: "button",
+                            },
+                            subOne.name
+                          ),
+                          div(
+                            { class: "dropdown-menu" },
+                            h5(
+                              {
+                                class: "join-table-header",
+                              },
+                              subOne.table
+                            ),
+                            ul(
+                              { class: "ps-0" },
+                              subOne.subFields.map((subTwo: any) => {
+                                return (subTwo.subFields &&
+                                  subTwo.subFields.length) > 0
+                                  ? li(
+                                      { class: "dropdown-item dropend" },
+                                      div(
+                                        {
+                                          id: `_field_${subTwo.fieldPath}`,
+                                          class:
+                                            "dropdown-toggle field-dropdown-submenu",
+                                          "data-bs-toggle": "dropdown",
+                                          "aria-expanded": false,
+                                          role: "button",
+                                        },
+                                        subTwo.name
+                                      ),
+                                      div(
+                                        { class: "dropdown-menu" },
+                                        h5(
+                                          {
+                                            class: "join-table-header",
+                                          },
+                                          subTwo.table
+                                        ),
+                                        ul(
+                                          { class: "ps-0" },
+                                          subTwo.subFields.map(
+                                            (subThree: any) => {
+                                              return li(
+                                                {
+                                                  class:
+                                                    "dropdown-item field-val-item",
+                                                  onclick: `join_field_clicked(this, '${subThree.fieldPath}')`,
+                                                  role: "button",
+                                                },
+                                                subThree.name
+                                              );
+                                            }
+                                          )
+                                        )
+                                      )
+                                    )
+                                  : li(
+                                      {
+                                        class: "dropdown-item field-val-item",
+                                        onclick: `join_field_clicked(this, '${subTwo.fieldPath}')`,
+                                        role: "button",
+                                      },
+                                      subTwo.name
+                                    );
+                              })
+                            )
+                          )
+                        )
+                      : li(
+                          {
+                            class: "dropdown-item field-val-item",
+                            onclick: `join_field_clicked(this, '${subOne.fieldPath}')`,
+                            role: "button",
+                          },
+                          subOne.name
+                        );
+                  })
+                )
+              )
+            )
+          : li(
+              {
+                class: "dropdown-item field-val-item",
+                onclick: `join_field_clicked(this, '${field.fieldPath}')`,
+                role: "button",
+              },
+              field.name
+            );
+      })
+    )
+  );
+};
+
+/**
+ * builds dropdown submenus to select a field,
+ * joined from another table to the table of the current view template
+ * @param relationJoins
+ * @returns
+ */
+const buildRelationsMenu = (relationJoins: RelationOption[]) => {
+  return div(
+    {
+      class: "dropdown-menu",
+    },
+    ul(
+      { class: "ps-0 mb-0" },
+      relationJoins.map((join: any) => {
+        return li(
+          { class: "dropdown-item dropend" },
+          div(
+            {
+              id: `_relation_${join.relationPath}`,
+              class: "dropdown-toggle relation-dropdown-submenu",
+              "data-bs-toggle": "dropdown",
+              "aria-expanded": false,
+              role: "button",
+            },
+            join.relationPath
+          ),
+          div(
+            { class: "dropdown-menu" },
+            ul(
+              { class: "ps-0 mb-0" },
+              join.relationFields.map((fName: string) => {
+                return li(
+                  {
+                    class: "dropdown-item field-val-item",
+                    onclick: `join_field_clicked(this, '${join.relationPath}->${fName}')`,
+                    role: "button",
+                  },
+                  fName
+                );
+              })
+            )
+          )
+        );
+      })
+    )
+  );
+};
+
+/**
+ * build a menu with submenus to navigate the table schema and select a join field
+ * @param hdr options for direct join or relation join fields
+ * @returns
+ */
+const buildJoinFieldPicker = (hdr: any): string => {
+  const joinAndRelFields =
+    hdr.attributes.join_field_options?.length > 0 &&
+    hdr.attributes.relation_options?.length > 0;
+  return (
+    div(
+      {
+        class: "d-flex",
+      },
+      hdr.attributes.join_field_options?.length > 0
+        ? div(
+            { class: " dropdown" },
+            button(
+              {
+                type: "button",
+                class: "btn btn-outline-primary dropdown-toggle",
+                "data-bs-toggle": "dropdown",
+                "aria-expanded": false,
+              },
+              "Fields"
+            ),
+            buildFieldsMenu(hdr.attributes.join_field_options)
+          )
+        : "",
+      hdr.attributes.relation_options?.length > 0
+        ? div(
+            { class: `dropdown ${joinAndRelFields ? "ps-2" : ""}` },
+            button(
+              {
+                type: "button",
+                class: "btn btn-outline-primary dropdown-toggle",
+                "data-bs-toggle": "dropdown",
+                "aria-expanded": false,
+              },
+              "Relations"
+            ),
+            buildRelationsMenu(hdr.attributes.relation_options)
+          )
+        : "",
+      div(
+        { class: "flex-grow-1 ps-2" },
+        input({
+          id: "inputjoin_field",
+          type: "text",
+          class: "form-control bg-white item-menu",
+          name: "join_field",
+          "data-fieldname": "join_field",
+          readonly: "readonly",
+        })
+      )
+    ) +
+    script(
+      domReady(`
+    $(".join-table-header").click(function(e) {
+      e.stopPropagation();
+    });
+    $(".field-dropdown-submenu").click(function(e) {
+      e.stopPropagation();
+      const clickedField = e.target.id.replace("_field_", "");
+      $(".field-dropdown-submenu.show").each(function (index) {
+        const openField = this.id.replace("_field_", "");
+        if (clickedField.indexOf(openField) < 0) {
+          $(this).dropdown("toggle");
+        }
+      });
+    });
+    $(".relation-dropdown-submenu").click(function(e) {
+      e.stopPropagation();
+      $(".relation-dropdown-submenu.show").each(function (index) {
+        if(this.id !== e.target.id)
+          $(this).dropdown("toggle");
+      });
+    });
+    const joinItems = $(".field-val-item");
+    if (joinItems.length > 0) joinItems[0].click();    
+    `)
+    )
+  );
+};
+
+/**
+ * @param v
+ * @param errors
+ * @param nameAdd
+ * @returns
  */
 const innerField =
   (
@@ -164,6 +442,8 @@ const innerField =
     const maybe_disabled = hdr.disabled ? " disabled data-disabled" : "";
 
     switch (hdr.input_type) {
+      case "join_field_picker":
+        return buildJoinFieldPicker(hdr);
       case "fromtype":
         return displayEdit(
           hdr,
@@ -265,11 +545,11 @@ const innerField =
   };
 
 /**
- * @param {object[]} v
- * @param {object[]} errors
- * @param {string} formStyle
- * @param {object[]} labelCols
- * @returns {function}
+ * @param v
+ * @param errors
+ * @param formStyle
+ * @param labelCols
+ * @returns
  */
 const mkFormRow =
   (
@@ -286,12 +566,12 @@ const mkFormRow =
       : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
 /**
- * @param {object[]} v
- * @param {object[]} errors
- * @param {string} formStyle
- * @param {object[]} labelCols
- * @param {object} hdr
- * @returns {div}
+ * @param v
+ * @param errors
+ * @param formStyle
+ * @param labelCols
+ * @param hdr
+ * @returns
  */
 const mkFormRowForRepeatFancy = (
   v: any,
@@ -409,12 +689,12 @@ const repeater_adder = (form_name: string) =>
   );
 
 /**
- * @param {object[]} v
- * @param {object[]} errors
- * @param {string} formStyle
- * @param {object[]} labelCols
- * @param {object} hdr
- * @returns {div}
+ * @param v
+ * @param errors
+ * @param formStyle
+ * @param labelCols
+ * @param hdr
+ * @returns
  */
 const mkFormRowForRepeat = (
   v: any,
@@ -478,11 +758,11 @@ const mkFormRowForRepeat = (
 };
 
 /**
- * @param {object} hdr
- * @param {string} name
- * @param {object} v
- * @param {string} extracls
- * @returns {*}
+ * @param hdr
+ * @param name
+ * @param v
+ * @param extracls
+ * @returns
  */
 const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
   let fieldview: any;
@@ -518,12 +798,12 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
 };
 
 /**
- * @param {object[]} v
- * @param {object[]} errors
- * @param {string} formStyle
- * @param {number} labelCols
- * @param {string} [nameAdd = ""]
- * @returns {function}
+ * @param v
+ * @param errors
+ * @param formStyle
+ * @param labelCols
+ * @param nameAdd
+ * @returns
  */
 const mkFormRowForField =
   (
@@ -558,12 +838,12 @@ const mkFormRowForField =
   };
 
 /**
- * @param {object[]} v
- * @param {object[]} errors
- * @param {string} formStyle
- * @param {number} labelCols
- * @param {string} [nameAdd = ""]
- * @returns {function}
+ * @param v
+ * @param errors
+ * @param formStyle
+ * @param labelCols
+ * @param nameAdd
+ * @returns
  */
 const mkFormRowAside = (
   v: any,
@@ -635,8 +915,8 @@ const mkFormRowAside = (
 };
 
 /**
- * @param {object} form
- * @returns {string}
+ * @param form
+ * @returns
  */
 const renderFormLayout = (form: Form): string => {
   const blockDispatch: any = {
@@ -905,9 +1185,9 @@ const splitSnippet = (form: Form) =>
     : "";
 
 /**
- * @param {string|object} form
- * @param {string|false} csrfToken0
- * @returns {string}
+ * @param form
+ * @param csrfToken0
+ * @returns
  */
 const renderForm = (
   form: Form | string,
@@ -924,9 +1204,9 @@ const renderForm = (
 };
 
 /**
- * @param {object} form
- * @param {string} csrfToken
- * @returns {string}
+ * @param form
+ * @param csrfToken
+ * @returns
  */
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
@@ -969,8 +1249,8 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
 };
 
 /**
- * @param {object[]} additionalButtons
- * @returns {string}
+ * @param additionalButtons
+ * @returns
  */
 const displayAdditionalButtons = (additionalButtons: any[]): string =>
   additionalButtons
@@ -1035,10 +1315,10 @@ const mkFormContentNoLayout = (form: Form, errors: any = {}) => {
 };
 
 /**
- * @param {object} form
- * @param {string} csrfToken
- * @param {object} [errors = {}]
- * @returns {string}
+ * @param form
+ * @param csrfToken
+ * @param errors
+ * @returns
  */
 const mkForm = (
   form: Form,

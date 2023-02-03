@@ -773,36 +773,22 @@ module.exports = {
         q.orderDesc = default_state && default_state._descending;
 
       const role = req && req.user ? req.user.role_id : 10;
-      if (table.ownership_field_id && role > table.min_role_read && req) {
-        const owner_field = fields.find(
-          (f) => f.id === table.ownership_field_id
-        );
-        mergeIntoWhere(where, {
-          [owner_field.name]: req.user ? req.user.id : -1,
-        });
-      }
-      if (table.ownership_formula && role > table.min_role_read) {
-        const freeVars = freeVariables(table.ownership_formula);
-        add_free_variables_to_joinfields(freeVars, joinFields, fields);
-      }
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
         const ctx = { ...state, user_id: req.user?.id || null };
         let where1 = jsexprToWhere(default_state.include_fml, ctx);
-        mergeIntoWhere(where, where1);
+        mergeIntoWhere(where, where1 || {});
       }
       let rows = await table.getJoinedRows({
         where,
         joinFields,
         aggregations,
         ...q,
+        forPublic: !req.user,
+        forUser: req.user,
       });
 
-      //TODO this will mean that limit is not respected. change filter to jsexprToWhere
-      if (table.ownership_formula && role > table.min_role_read && req) {
-        rows = rows.filter((row) => table.is_owner(req.user, row));
-      }
       const rowCount = await table.countRows(where);
       return { rows, rowCount };
     },

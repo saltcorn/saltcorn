@@ -30,7 +30,6 @@ beforeAll(async () => {
 });
 
 describe("Tenant", () => {
-
   if (!db.isSQLite) {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
@@ -39,8 +38,12 @@ describe("Tenant", () => {
       add_tenant("test10");
 
       await switchToTenant(
-          await insertTenant("test10", "foo@foo.com", "tenant test10 will be template for test11"),
-          "http://test10.example.com/"
+        await insertTenant(
+          "test10",
+          "foo@foo.com",
+          "tenant test10 will be template for test11"
+        ),
+        "http://test10.example.com/"
       );
 
       await create_tenant({
@@ -55,6 +58,11 @@ describe("Tenant", () => {
         // test base url
         const base = await getConfig("base_url");
         expect(base).toBe("http://test10.example.com/");
+        const state = getState();
+        expect(!!state).toBe(true);
+        const tables = state.tables;
+        expect(tables.length).toBe(1);
+        expect(tables[0].name).toBe("users");
       });
     });
 
@@ -66,9 +74,9 @@ describe("Tenant", () => {
     });
 
     it("can update template", async () => {
-      await Tenant.update("test10",{description:"new description 123"});
-      const t = await Tenant.findOne({subdomain:"test10"});
-      expect(t?.description).toBe("new description 123")
+      await Tenant.update("test10", { description: "new description 123" });
+      const t = await Tenant.findOne({ subdomain: "test10" });
+      expect(t?.description).toBe("new description 123");
     });
 
     it("can create a new tenant with template without description", async () => {
@@ -79,24 +87,23 @@ describe("Tenant", () => {
       add_tenant("test11");
 
       await switchToTenant(
-          await insertTenant("test11", undefined, undefined, tenant_template),
-          "http://test11.example.com/"
+        await insertTenant("test11", undefined, undefined, tenant_template),
+        "http://test11.example.com/"
       );
 
       await create_tenant({
         t: "test11",
-        loadAndSaveNewPlugin(plugin: Plugin): void {
-        }, plugin_loader() {
-        },
+        loadAndSaveNewPlugin(plugin: Plugin): void {},
+        plugin_loader() {},
         tenant_template,
       });
       // check template
-      const t = await Tenant.findOne({subdomain: "test11"});
+      const t = await Tenant.findOne({ subdomain: "test11" });
       expect(t?.template).toBe(tenant_template);
     });
 
     it("can find tenant", async () => {
-      const ten = await Tenant.find({subdomain:"test11"});
+      const ten = await Tenant.find({ subdomain: "test11" });
       expect(ten[0]?.subdomain).toContain("test11");
     });
 
@@ -122,7 +129,6 @@ describe("Tenant", () => {
       db.enable_multi_tenant();
       await deleteTenant("test10");
     });
-
   } else {
     it("does not support tenants on SQLite", async () => {
       expect(db.isSQLite).toBe(true);

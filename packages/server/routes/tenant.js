@@ -279,18 +279,17 @@ router.post(
         const tenant_template = getState().getConfig("tenant_template");
         // tenant creator
         const user_email = req.user && req.user.email;
-        // switch to tenant
-        await switchToTenant(
-          await insertTenant(
-            subdomain,
-            user_email,
-            description,
-            tenant_template
-          ),
-          newurl
+        const tenrow = await insertTenant(
+          subdomain,
+          user_email,
+          description,
+          tenant_template
         );
         // add tenant to global state
         add_tenant(subdomain);
+
+        await switchToTenant(tenrow, newurl);
+
         await create_tenant({
           t: subdomain,
           plugin_loader: loadAllPlugins,

@@ -93,7 +93,7 @@ const loginForm = (req, isCreating) => {
     // TBD unresolved usernameLabel
     .map((auth) => `${auth.usernameLabel} for ${auth.label}`)
     .join(", ");
-  return new Form({
+  const form = new Form({
     class: "login",
     fields: [
       new Field({
@@ -119,6 +119,12 @@ const loginForm = (req, isCreating) => {
     action: "/auth/login",
     submitLabel: req.__("Login"),
   });
+  const { dest } = req.query;
+  if (dest) {
+    form.hidden("dest");
+    form.values.dest = encodeURIComponent(dest);
+  }
+  return form;
 };
 
 /**
@@ -1049,7 +1055,6 @@ router.post(
       res.redirect("/auth/twofa/login/totp");
       return;
     }
-
     if (req.session.cookie)
       if (req.body.remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 0);
@@ -1070,6 +1075,8 @@ router.post(
     }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
+    } else if (req.body.dest) {
+      res.redirect(decodeURIComponent(req.body.dest));
     } else res.redirect("/");
   })
 );
