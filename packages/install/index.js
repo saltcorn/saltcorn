@@ -510,12 +510,12 @@ WantedBy=multi-user.target`
   await asyncSudo([
     "mv",
     "/tmp/saltcorn.service",
-    `${isRedHat(osInfo)?`/etc/systemd/system`:`/lib/systemd/system`}/${osService}.service`,
+    `${isRedHat(osInfo)?`/etc/systemd/user`:`/lib/systemd/system`}/${osService}.service`,
   ], false, dryRun);
   if(isRedHat(osInfo)) {
 
-    await asyncSudo(["chown", "root:root", "/etc/systemd/system/saltcorn.service"], false, dryRun);
-    await asyncSudo(["/sbin/restorecon", "-v", "/etc/systemd/system/saltcorn.service"], false, dryRun);
+    //await asyncSudo(["chown", "root:root", "/etc/systemd/user/saltcorn.service"], false, dryRun);
+    //await asyncSudo(["/sbin/restorecon", "-v", "/etc/systemd/system/saltcorn.service"], false, dryRun);
 
   }
   // start systemd service
