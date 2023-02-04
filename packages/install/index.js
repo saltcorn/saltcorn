@@ -512,6 +512,12 @@ WantedBy=multi-user.target`
     "/tmp/saltcorn.service",
     `${isRedHat(osInfo)?`/etc/systemd/system`:`/lib/systemd/system`}/${osService}.service`,
   ], false, dryRun);
+  if(isRedHat(osInfo)) {
+
+    await asyncSudo(["chown", "root:root", "/etc/systemd/system/saltcorn.service"], false, dryRun);
+    await asyncSudo(["/sbin/restorecon", "-v", "/etc/systemd/system/saltcorn.service"], false, dryRun);
+
+  }
   // start systemd service
   await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
   await asyncSudo(["systemctl", "start", osService], false, dryRun);
