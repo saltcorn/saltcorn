@@ -731,7 +731,7 @@
 	"Forget table": "Забыть таблицу",
 	"Ownership formula": "Owner (формула)",
 	"User is treated as owner if true. In scope: ": "Ownership formula. Пользователь воспринимается как владелец, если значение формулы true. В рамках: ",
-	"This is a translation of a different field in a different language": "Это трансляция перевода полей на разные языки",
+	"This is a translation of a different field in a different language": "Это поле является переводом другого поля на другой язык",
 	"Language locale of translation": "Языковая локализация (locale) для перевода",
 	"Slug": "Slug",
 	"Field that can be used for a prettier URL structure": "Поле, которе используется для настройки структуры URL",
@@ -965,5 +965,8 @@
 	"Recalculate dynamic": "Пересчитать динамические элементы",
 	"Upload size limit (Kb)": "Лимит размера загружаемых файлов (Kb)",
 	"Maximum upload file size in kilobytes": "Максимальный допустимый размер загружаемого файла (указывается в килобайтах)",
-	"Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ": "Определяет максимальный допустимый интервал времени ожидания загрузки данных файла. 0 отключает проверку. "
+	"Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ": "Определяет максимальный допустимый интервал времени ожидания загрузки данных файла. 0 отключает проверку. ",
+	"User group": "Группа пользователей",
+	"Add relations to this table in dropdown options for ownership field": "Добавить связь с этой таблицей в выбор опций для поля Владельца ",
+	"Calculated field will be stored in Database": "Вычисляемое будет сохранено в базе данных"
 }

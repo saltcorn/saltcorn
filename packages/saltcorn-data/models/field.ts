@@ -968,6 +968,7 @@ class Field implements AbstractField {
           calculated: f.calculated,
           expression: f.expression,
           stored: f.stored,
+          description: f.description,
         });
     await require("../db/state").getState().refresh_tables();
 
