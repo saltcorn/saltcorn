@@ -344,13 +344,14 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir], false, dryRun);
-  await asyncSudoUser(user, [
-    "npm",
-    "config",
-    "set",
-    "prefix",
-    `/home/${user}/.local/`,
-  ], false, dryRun);
+  if(!isRedHat(osInfo))
+    await asyncSudoUser(user, [
+      "npm",
+      "config",
+      "set",
+      "prefix",
+      `/home/${user}/.local/`,
+    ], false, dryRun);
   await asyncSudoUser(user, [
     "npm",
     "install",
@@ -359,11 +360,12 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     "@saltcorn/cli@latest",
     "--unsafe",
   ], false, dryRun);
-  await asyncSudo([
-    "bash",
-    "-c",
-    `echo 'export PATH=/home/${user}/.local/bin:$PATH' >> /home/${user}/.bashrc`,
-  ], false, dryRun);
+  if(!isRedHat(osInfo))
+    await asyncSudo([
+      "bash",
+      "-c",
+      `echo 'export PATH=/home/${user}/.local/bin:$PATH' >> /home/${user}/.bashrc`,
+    ], false, dryRun);
 };
 /**
  * Setup Postgres server
@@ -471,7 +473,9 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   );
   //initialize schema
   await asyncSudoUser(user, [
-    `/home/${user}/.local/bin/saltcorn`,
+    isRedHat(osInfo) ? 
+      `/home/${user}/.local/bin/saltcorn`
+      : "/usr/local/bin/saltcorn",
     "reset-schema",
     "-f",
   ], false, dryRun);
@@ -500,7 +504,7 @@ Type=notify
 WatchdogSec=5
 User=${user}
 WorkingDirectory=/home/${user}
-ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
+ExecStart=${isRedHat(osInfo) ? `/usr/local`:`/home/${user}/.local`}/bin/saltcorn serve -p ${port}
 Restart=always
 Environment="NODE_ENV=production"
 
