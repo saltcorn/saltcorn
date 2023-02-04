@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/db-common",
-  "version": "0.8.2",
+  "version": "0.8.3-alpha.0",
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
