@@ -1,0 +1,29 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "rockylinux/8"
+
+  config.ssh.forward_agent = true
+
+  config.ssh.insert_key = false
+  config.vm.provider "virtualbox" do |vb|  
+    # Customize the amount of memory on the VM:
+    vb.memory = "2048"
+  end
+  config.vm.provision "shell", inline: <<-SHELL
+    set -e
+    dnf module install -y nodejs:16
+    sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
+    cd /home/vagrant/saltcorn/packages/install/
+    sudo -u vagrant git checkout node-18
+    sudo -u vagrant npm install
+    sudo -u vagrant node index.js -y
+    systemctl is-active saltcorn
+  SHELL
+end
