@@ -511,6 +511,18 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
       dryRun
     );
 
+  let hasSDnotify;
+  try {
+    await asyncSudo(
+      ["bash", "-c", `find /home/${user}/.local/ | grep sd-notify`],
+      false,
+      dryRun
+    );
+    hasSDnotify = true;
+  } catch {
+    hasSDnotify = false;
+  }
+
   //systemd unit
   if (!dryRun)
     fs.writeFileSync(
@@ -521,8 +533,8 @@ Documentation=https://saltcorn.com
 After=network.target
 
 [Service]
-Type=notify
-WatchdogSec=5
+Type=${hasSDnotify ? `notify` : `simple`}
+${hasSDnotify ? "WatchdogSec=5" : ""}
 User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
@@ -559,6 +571,7 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
   await asyncSudo(["systemctl", "start", osService], false, dryRun);
   await asyncSudo(["systemctl", "enable", osService], false, dryRun);
+  if (!hasSDnotify) await asyncSudo(["sleep", "5"], false, dryRun);
 })().catch((e) => {
   console.error(e.message || e);
   process.exit(1);
