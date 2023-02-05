@@ -522,7 +522,7 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   } catch {
     hasSDnotify = false;
   }
-
+  console.log("Has sd-notify:", hasSDnotify);
   //systemd unit
   if (!dryRun)
     fs.writeFileSync(
