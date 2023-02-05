@@ -7,7 +7,7 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "rockylinux/8"
+  config.vm.box = "almalinux/8"
 
   config.ssh.forward_agent = true
 
