@@ -670,6 +670,20 @@ const configTypes: ConfigTypes = {
     label: "Upload size limit (Kb)",
     blurb: "Maximum upload file size in kilobytes",
   },
+  /** @type {object} */
+  min_role_search: {
+    type: "Role",
+    label: "Role for search",
+    default: 10, // public is default
+    required: true,
+    blurb: "Min role to access search page",
+  },/** @type {object} */
+  search_page_size: {
+    type: "Integer",
+    label: "Search page size",
+    default: 20,
+    blurb: "Search page pagination size",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

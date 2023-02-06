@@ -354,6 +354,7 @@ const permissions_settings_form = async (req) =>
     field_names: [
       "min_role_upload",
       "min_role_apikeygen",
+      "min_role_search",
       //hidden            "exttables_min_role_read",
     ],
     action: "/useradmin/permissions",

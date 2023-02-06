@@ -513,7 +513,9 @@ class View implements AbstractView {
   }
 
   /**
-   * @param {*} query
+   * Run many views with content filtered by query.
+   * Used in Search for example
+   * @param {*} query this is query string
    * @param {*} extraArgs
    * @param {boolean} remote
    * @throws {InvalidConfiguration}
