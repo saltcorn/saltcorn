@@ -577,7 +577,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
-        if (!f(row)) segment.hide = true;
+        if (!f(row, req.user)) segment.hide = true;
       }
     },
   });
