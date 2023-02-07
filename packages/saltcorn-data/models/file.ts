@@ -309,7 +309,6 @@ class File {
    */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_files", row, id);
-    await require("../db/state").getState().refresh_files();
   }
 
   async set_role(min_role_read: number) {
@@ -555,7 +554,6 @@ class File {
       } else await unlink(this.location);
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache
-      await require("../db/state").getState().refresh_files();
     } catch (e: any) {
       return { error: e.message };
     }
@@ -582,7 +580,6 @@ class File {
     // insert file descriptor row to database
     //file.id = await db.insert("_sc_files", rest);
     // refresh file list cache
-    //await require("../db/state").getState().refresh_files();
     await file.set_role(file.min_role_read);
     if (file.user_id) await file.set_user(file.user_id);
     return file;
