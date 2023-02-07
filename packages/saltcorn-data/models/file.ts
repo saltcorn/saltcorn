@@ -95,13 +95,6 @@ class File {
 
     const useS3 = state?.getConfig("storage_s3_enabled");
     if (useS3 || where?.inDB) {
-      if (selectopts.cached) {
-        // TODO ch migrate State and replace any
-        const files = Object.values(getState().files).sort((a: any, b: any) =>
-          a.filename > b.filename ? 1 : -1
-        );
-        return files.map((t: any) => new File(t));
-      }
       if (where?.inDB) delete where.inDB;
       const db_flds = await db.select("_sc_files", where, selectopts);
       return db_flds.map((dbf: FileCfg) => new File(dbf));
