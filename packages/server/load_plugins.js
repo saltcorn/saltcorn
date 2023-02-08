@@ -56,13 +56,17 @@ const defaultManager = new PluginManager({
  * @param force - force flag
  */
 const loadPlugin = async (plugin, force) => {
-  // load pluging
+  // load plugin
   const res = await requirePlugin(plugin, force);
+  const configuration =
+    typeof plugin.configuration === "string"
+      ? JSON.parse(plugin.configuration)
+      : plugin.configuration;
   // register plugin
   getState().registerPlugin(
     res.plugin_module.plugin_name || plugin.name,
     res.plugin_module,
-    plugin.configuration,
+    configuration,
     res.location,
     res.name
   );
