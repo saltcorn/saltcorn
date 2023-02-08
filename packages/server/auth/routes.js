@@ -327,8 +327,9 @@ router.get("/logout", async (req, res, next) => {
       if (req.session.destroy)
         req.session.destroy((err) => {
           if (err) return next(err);
-          req.logout();
-          res.redirect("/auth/login");
+          req.logout(() => {
+            res.redirect("/auth/login");
+          });
         });
       else {
         req.logout(function (err) {
@@ -1448,15 +1449,15 @@ router.get(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
     if (!user) {
-      req.logout();
-      req.flash("danger", req.__("Must be logged in first"));
-      res.redirect("/auth/login");
-      return;
-    }
-    res.sendWrap(
-      req.__("User settings") || "User settings",
-      await userSettings({ req, res, pwform: changPwForm(req), user })
-    );
+      req.logout(() => {
+        req.flash("danger", req.__("Must be logged in first"));
+        res.redirect("/auth/login");
+      });
+    } else
+      res.sendWrap(
+        req.__("User settings") || "User settings",
+        await userSettings({ req, res, pwform: changPwForm(req), user })
+      );
   })
 );
 
