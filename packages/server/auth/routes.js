@@ -1129,7 +1129,6 @@ router.post(
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
-    console.log(method, auth);
     if (auth) {
       passport.authenticate(method, auth.parameters)(
         req,
