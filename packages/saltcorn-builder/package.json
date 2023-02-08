@@ -45,5 +45,8 @@
   },
   "dependencies": {
     "styled-components": "4.4.1"
+  },
+  "overrides": {
+    "immer": "9.0.6"
   }
 }
