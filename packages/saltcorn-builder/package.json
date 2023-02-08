@@ -9,7 +9,9 @@
     "builddev": "webpack --mode none",
     "test": "echo \"Error: no test specified\"",
     "tsc": "echo \"Error: no TypeScript support yet\"",
-    "clean": "echo \"Error: no TypeScript support yet\""
+    "clean": "echo \"Error: no TypeScript support yet\"",
+    "prepare": "npm run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "repository": "github:saltcorn/saltcorn",
   "author": "Tom Nielsen",
@@ -44,6 +46,8 @@
     "access": "public"
   },
   "dependencies": {
-    "styled-components": "4.4.1"
-  }
+    "styled-components": "4.4.1",
+    "@snyk/protect": "latest"
+  },
+  "snyk": true
 }
