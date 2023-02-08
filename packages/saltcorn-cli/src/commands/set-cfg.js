@@ -35,6 +35,7 @@ class SetCfgCommand extends Command {
       if (flags.plugin) {
         const Plugin = require("@saltcorn/data/models/plugin");
         const plugin = await Plugin.findOne({ name: flags.plugin });
+        if (!plugin.configuration) plugin.configuration = {}
         plugin.configuration[args.key] = parseJSONorString(theValue);
         await plugin.upsert();
       } else {

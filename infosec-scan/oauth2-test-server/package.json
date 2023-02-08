@@ -1,0 +1,14 @@
+{
+  "name": "oauth2-test-server",
+  "description": "This is an OAuth2 test server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "express": "^4.18.2",
+    "express-oauth-server": "^2.0.0",
+    "oauth2-server": "^3.1.1"
+  }
+}
