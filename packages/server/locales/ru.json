@@ -968,5 +968,10 @@
 	"Defines how long to wait for data before aborting file upload. Set to 0 if you want to turn off timeout checks. ": "Определяет максимальный допустимый интервал времени ожидания загрузки данных файла. 0 отключает проверку. ",
 	"User group": "Группа пользователей",
 	"Add relations to this table in dropdown options for ownership field": "Добавить связь с этой таблицей в выбор опций для поля Владельца ",
-	"Calculated field will be stored in Database": "Вычисляемое будет сохранено в базе данных"
+	"Calculated field will be stored in Database": "Вычисляемое будет сохранено в базе данных",
+	"Save indicator": "Индикатор сохранения",
+	"%s configuration": "%s конфигурация",
+	"Show only matches in table:": "Показывать только совпадения в таблице:",
+	"Role for search": "Роль для поиска",
+	"Min role to access search page": "Минимальная роль для доступа к странице поиска"
 }

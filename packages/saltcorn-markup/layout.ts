@@ -483,7 +483,7 @@ const render = ({
         return s;
       };
       const hasImgBg = renderBg && bgType === "Image" && bgFileId;
-      const useImgTagAsBg = hasImgBg && imageSize !== "repeat";
+      const useImgTagAsBg = hasImgBg && imageSize !== "repeat" && isTop;
       let image = undefined;
       const isWeb = typeof window === "undefined" && !req?.smr;
       if (hasImgBg && useImgTagAsBg) {
