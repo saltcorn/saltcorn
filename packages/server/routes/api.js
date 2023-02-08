@@ -147,7 +147,7 @@ router.post(
           (await view.authorise_get({ req, ...view })) // TODO set query to state
         ) {
           const queries = view.queries(false, req);
-          if (queries[queryName]) {
+          if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
             const { args } = req.body;
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
