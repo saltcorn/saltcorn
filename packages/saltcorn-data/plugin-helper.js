@@ -1545,8 +1545,11 @@ const readState = (state, fields, req) => {
         //ignore
       } else if (f.type.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
-        const preset = f.presets[current.replace("Preset:", "")];
-        state[f.name] = preset(req);
+        const pname = current.replace("Preset:", "");
+        if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {
+          const preset = f.presets[pname];
+          state[f.name] = preset(req);
+        }
       } else if (f.type === "File") state[f.name] = current;
       else if (f.type === "Key")
         state[f.name] =
