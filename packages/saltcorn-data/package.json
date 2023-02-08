@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.8.2",
+  "version": "0.8.3-alpha.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,18 +37,18 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "0.8.2",
-    "@saltcorn/sqlite": "0.8.2"
+    "@saltcorn/postgres": "0.8.3-alpha.1",
+    "@saltcorn/sqlite": "0.8.3-alpha.1"
   },
   "dependencies": {
-    "@saltcorn/types": "0.8.2",
-    "@saltcorn/markup": "0.8.2",
-    "@saltcorn/db-common": "0.8.2",
-    "@saltcorn/sqlite-mobile": "0.8.2",
+    "@saltcorn/types": "0.8.3-alpha.1",
+    "@saltcorn/markup": "0.8.3-alpha.1",
+    "@saltcorn/db-common": "0.8.3-alpha.1",
+    "@saltcorn/sqlite-mobile": "0.8.3-alpha.1",
     "acorn": "^8.0.3",
     "assert": "^2.0.0",
     "astring": "^1.4.3",
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "bcryptjs": "^2.4.3",
     "blockly": "^6.20210701.0",
     "constants-browserify": "^1.0.0",
@@ -95,7 +95,7 @@
     "@types/dumb-passwords": "^0.2.1",
     "@types/estraverse": "^5.1.1",
     "@types/jest": "^27.0.3",
-    "@types/jsonwebtoken": "^8.5.1",
+    "@types/jsonwebtoken": "^9.0.0",
     "@types/mime-types": "2.1.1",
     "@types/mjml": "4.7.0",
     "@types/node": "^16.11.7",
@@ -104,7 +104,7 @@
     "@types/uuid": "^8.3.3",
     "chaos-guinea-pig": "^0.1.1",
     "jest": "^27.1.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "ts-jest": "^27.1.0",
     "typescript": "^4.4.4",
     "webpack": "5.68.0",

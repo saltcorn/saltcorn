@@ -137,6 +137,9 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Stored"),
         name: "stored",
+        sublabel: req.__(
+            "Calculated field will be stored in Database"
+        ),
         type: "Bool",
         disabled: !!id,
         showIf: { calculated: true },

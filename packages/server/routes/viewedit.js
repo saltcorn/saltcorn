@@ -67,6 +67,7 @@ router.get(
     const viewAccessWarning = (view) => {
       const table = tables.find((t) => t.name === view.table);
       if (!table) return false;
+      if (table.name === "users") return false;
       if (table.ownership_field_id || table.ownership_formula) return false;
 
       return table.min_role_read < view.min_role;
