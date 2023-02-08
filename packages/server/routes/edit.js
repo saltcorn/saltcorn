@@ -32,13 +32,18 @@ router.post(
     const { redirect } = req.query;
     // todo check that works after where change
     const table = await Table.findOne({ name: tableName });
-    const role = req.user && req.user.id ? req.user.role_id : 10;
-    if (role <= table.min_role_write) await table.toggleBool(+id, field_name);
-    else
-      req.flash(
-        "error",
-        req.__("Not allowed to write to table %s", table.name)
+
+    const row = await table.getRow(
+      { [table.pk_name]: id },
+      { forUser: req.user, forPublic: !req.user }
+    );
+    if (row)
+      await table.updateRow(
+        { [field_name]: !row[field_name] },
+        id,
+        req.user || { role_id: 10 }
       );
+
     if (req.xhr) res.send("OK");
     else if (req.get("referer")) res.redirect(req.get("referer"));
     else res.redirect(redirect || `/list/${table.name}`);
