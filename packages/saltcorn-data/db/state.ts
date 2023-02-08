@@ -103,7 +103,6 @@ class State {
   tables: Array<Table>;
   types: Record<string, Type>;
   stashed_fieldviews: Record<string, any>;
-  files: Record<string, File>;
   pages: Array<Page>;
   fields: Array<Field>;
   configs: ConfigTypes;
@@ -142,7 +141,6 @@ class State {
     this.tables = [];
     this.types = {};
     this.stashed_fieldviews = {};
-    this.files = {};
     this.pages = [];
     this.fields = [];
     this.configs = {};
@@ -225,7 +223,6 @@ class State {
     await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
-    await this.refresh_files(noSignal);
     await this.refresh_pages(noSignal);
     await this.refresh_config(noSignal);
   }
@@ -334,24 +331,6 @@ class State {
 
     if (!noSignal && db.is_node)
       process_send({ refresh: "pages", tenant: db.getTenantSchema() });
-  }
-
-  /**
-   * Refresh files
-   * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
-   * @returns {Promise<void>}
-   */
-  // todo what will be if there are a lot of files? Yes, there are cache only ids of files.
-  async refresh_files(noSignal: boolean) {
-    const allfiles = await File.find();
-    this.files = {};
-    for (const f of allfiles) {
-      if (f.id) this.files[f.id] = f;
-    }
-    if (!noSignal) this.log(5, "Refresh files");
-
-    if (!noSignal && db.is_node)
-      process_send({ refresh: "files", tenant: db.getTenantSchema() });
   }
 
   /**
