@@ -28,16 +28,17 @@ const router = new Router();
 module.exports = router;
 
 /**
+ * Search Configuration form
  * @param {object[]} tables
  * @param {object[]} views
  * @param {object} req
  * @returns {Forms}
  */
 const searchConfigForm = (tables, views, req) => {
-  var fields = [];
-  var tbls_noviews = [];
+  let fields = [];
+  let tbls_noviews = [];
   for (const t of tables) {
-    var ok_views = views.filter(
+    const ok_views = views.filter(
       (v) =>
         v.table_id === t.id && v.viewtemplateObj && v.viewtemplateObj.runMany
     );
@@ -70,6 +71,7 @@ const searchConfigForm = (tables, views, req) => {
 };
 
 /**
+ * Show config on GET
  * @name get/config
  * @function
  * @memberof module:routes/search~searchRouter
@@ -79,7 +81,7 @@ router.get(
   "/config",
   isAdmin,
   error_catcher(async (req, res) => {
-    var views = await View.find({}, { orderBy: "name" });
+    const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
     form.values = getState().getConfig("globalSearch");
@@ -98,6 +100,7 @@ router.get(
 );
 
 /**
+ * Execute config update
  * @name post/config
  * @function
  * @memberof module:routes/search~searchRouter
@@ -107,7 +110,7 @@ router.post(
   "/config",
   isAdmin,
   error_catcher(async (req, res) => {
-    var views = await View.find({}, { orderBy: "name" });
+    const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
     const result = form.validate(req.body);
@@ -132,6 +135,7 @@ router.post(
 );
 
 /**
+ * Search form
  * @returns {Form}
  */
 const searchForm = () =>
@@ -150,6 +154,7 @@ const searchForm = () =>
   });
 
 /**
+ * Run search
  * @param {object} opts
  * @param {*} opts.q
  * @param {*} opts._page
@@ -161,7 +166,9 @@ const searchForm = () =>
  */
 const runSearch = async ({ q, _page, table }, req, res) => {
   const role = (req.user || {}).role_id || 10;
+  // globalSearch contains list of pairs: table, view
   const cfg = getState().getConfig("globalSearch");
+  const page_size = getState().getConfig("search_page_size");
 
   if (!cfg) {
     req.flash("warning", req.__("Search not configured"));
@@ -169,7 +176,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     return;
   }
   const current_page = parseInt(_page) || 1;
-  const offset = (current_page - 1) * 20;
+  const offset = (current_page - 1) * page_size;
   let resp = [];
   let tablesWithResults = [];
   let tablesConfigured = 0;
@@ -182,18 +189,19 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       throw new InvalidConfiguration(
         `View ${viewName} selected as search results for ${tableName}: view not found`
       );
+    // search table using view
     const vresps = await view.runMany(
       { _fts: q },
-      { res, req, limit: 20, offset }
+      { res, req, limit: page_size, offset }
     );
     let paginate = "";
-    if (vresps.length === 20 || current_page > 1) {
+    if (vresps.length === page_size || current_page > 1) {
       paginate = pagination({
         current_page,
-        pages: current_page + (vresps.length === 20 ? 1 : 0),
-        trailing_ellipsis: vresps.length === 20,
+        pages: current_page + (vresps.length === page_size ? 1 : 0),
+        trailing_ellipsis: vresps.length === page_size,
         get_page_link: (n) =>
-          `javascript:gopage(${n}, 20, undefined, {table:'${tableName}'})`,
+          `javascript:gopage(${n}, ${page_size}, undefined, {table:'${tableName}'})`,
       });
     }
 
@@ -207,9 +215,11 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     }
   }
 
+  // Prepare search form
   const form = searchForm();
   form.validate({ q });
 
+  // Prepare search result visualization
   const searchResult =
     resp.length === 0
       ? [{ type: "card", contents: req.__("Not found") }]
@@ -250,6 +260,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
 };
 
 /**
+ * Execute search or only show search form
  * @name get
  * @function
  * @memberof module:routes/search~searchRouter
@@ -258,6 +269,14 @@ const runSearch = async ({ q, _page, table }, req, res) => {
 router.get(
   "/",
   error_catcher(async (req, res) => {
+
+    const min_role = getState().getConfig("min_role_search");
+    const role = (req.user || {}).role_id || 10;
+    if(role>min_role){
+      res.redirect("/"); // silent redirect to home page
+      return;
+    }
+
     if (req.query && req.query.q) {
       await runSearch(req.query, req, res);
     } else {
