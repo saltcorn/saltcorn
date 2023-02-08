@@ -3,6 +3,9 @@ from helpers import wait_for_port_open
 
 class OAuth2Server:
   def __init__(self, port=3030):
+    subprocess.call(
+      args=["npm", "install"],
+      cwd="infosec-scan/oauth2-test-server")
     self.auth_server_process = subprocess.Popen(
         args=["node", "app.js"], 
         cwd="infosec-scan/oauth2-test-server")
