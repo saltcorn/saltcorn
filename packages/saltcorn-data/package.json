@@ -65,7 +65,7 @@
     "live-plugin-manager": "^0.16.0",
     "mime-types": "^2.1.35",
     "moment": "^2.29.4",
-    "moment-timezone": "^0.5.33",
+    "moment-timezone": "^0.5.35",
     "node-fetch": "2.6.2",
     "pluralize": "^8.0.0",
     "process": "0.11.10",
