@@ -323,18 +323,20 @@ router.get("/logout", async (req, res, next) => {
     await user.updateLastMobileLogin(null);
     res.json({ success: true });
   } else if (req.logout) {
-    req.logout();
-    if (req.session.destroy)
-      req.session.destroy((err) => {
-        if (err) return next(err);
-        req.logout();
-        res.redirect("/auth/login");
-      });
-    else {
-      req.logout();
-      req.session = null;
-      res.redirect("/auth/login");
-    }
+    req.logout(function (err) {
+      if (req.session.destroy)
+        req.session.destroy((err) => {
+          if (err) return next(err);
+          req.logout();
+          res.redirect("/auth/login");
+        });
+      else {
+        req.logout(function (err) {
+          req.session = null;
+          res.redirect("/auth/login");
+        });
+      }
+    });
   }
 });
 
