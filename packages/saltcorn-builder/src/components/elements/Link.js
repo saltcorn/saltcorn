@@ -244,6 +244,7 @@ const LinkSettings = () => {
             btnClass="btn"
             values={node}
             linkFirst={true}
+            linkIsBlank={true}
           />
         </tbody>
       </table>
