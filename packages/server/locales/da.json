@@ -558,5 +558,11 @@
 	"List options": "List options",
 	"Modules": "Modules",
 	"File not found": "File not found",
-	"Welcome, %s!": "Welcome, %s!"
+	"Welcome, %s!": "Welcome, %s!",
+	"API token": "API token",
+	"No API token issued": "No API token issued",
+	"Generate": "Generate",
+	"Two-factor authentication": "Two-factor authentication",
+	"Two-factor authentication is disabled": "Two-factor authentication is disabled",
+	"Enable TWA": "Enable TWA"
 }

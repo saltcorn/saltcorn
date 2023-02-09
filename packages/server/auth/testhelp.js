@@ -209,4 +209,5 @@ module.exports = {
   succeedJsonWith,
   notAuthorized,
   respondJsonWith,
+  resToLoginCookie,
 };
