@@ -95,13 +95,6 @@ class File {
 
     const useS3 = state?.getConfig("storage_s3_enabled");
     if (useS3 || where?.inDB) {
-      if (selectopts.cached) {
-        // TODO ch migrate State and replace any
-        const files = Object.values(getState().files).sort((a: any, b: any) =>
-          a.filename > b.filename ? 1 : -1
-        );
-        return files.map((t: any) => new File(t));
-      }
       if (where?.inDB) delete where.inDB;
       const db_flds = await db.select("_sc_files", where, selectopts);
       return db_flds.map((dbf: FileCfg) => new File(dbf));
@@ -316,7 +309,6 @@ class File {
    */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_files", row, id);
-    await require("../db/state").getState().refresh_files();
   }
 
   async set_role(min_role_read: number) {
@@ -562,7 +554,6 @@ class File {
       } else await unlink(this.location);
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache
-      await require("../db/state").getState().refresh_files();
     } catch (e: any) {
       return { error: e.message };
     }
@@ -589,7 +580,6 @@ class File {
     // insert file descriptor row to database
     //file.id = await db.insert("_sc_files", rest);
     // refresh file list cache
-    //await require("../db/state").getState().refresh_files();
     await file.set_role(file.min_role_read);
     if (file.user_id) await file.set_user(file.user_id);
     return file;

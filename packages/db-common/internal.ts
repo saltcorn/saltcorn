@@ -74,7 +74,7 @@ const sqlitePlaceHolderStack = (): PlaceHolderStack => {
 };
 
 /**
- *
+ * Where FTS (Search)
  * @param {object} v
  * @param {string} i
  * @param {boolean} is_sqlite

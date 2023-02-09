@@ -70,7 +70,8 @@ const configuration_workflow = () =>
               if (kpath.length === 2) {
                 const [jFieldNm, lblField] = kpath;
                 const jfld = fields.find((f) => f.name === jFieldNm);
-                return `${jFieldNm}.${jfld.reftable_name}->${lblField}`;
+                if (jfld)
+                  return `${jFieldNm}.${jfld.reftable_name}->${lblField}`;
               }
             })
             .filter((f) => f);

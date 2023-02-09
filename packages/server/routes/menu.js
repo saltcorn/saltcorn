@@ -83,10 +83,10 @@ const menuForm = async (req) => {
     labelCols: 3,
     noSubmitButton: true,
     additionalButtons: [
-      { label: "Update", id: "btnUpdate", class: "btn btn-primary" },
-      { label: "Add", id: "btnAdd", class: "btn btn-primary" },
+      { label: req.__("Update"), id: "btnUpdate", class: "btn btn-primary" },
+      { label: req.__("Add"), id: "btnAdd", class: "btn btn-primary" },
       {
-        label: "Recalculate dynamic",
+        label: req.__("Recalculate dynamic"),
         id: "btnRecalc",
         class: "btn btn-primary",
       },

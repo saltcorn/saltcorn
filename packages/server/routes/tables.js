@@ -430,6 +430,7 @@ router.get(
         label: `<b>${t.name}</b>\n${t.fields
           .map((f) => `${f.name} : ${f.pretty_type}`)
           .join("\n")}`,
+        title: t.description? t.description : t.name,
       })),
       edges,
     };
@@ -439,7 +440,7 @@ router.get(
         headers: [
           {
             script:
-              "https://unpkg.com/vis-network@9.0.2/standalone/umd/vis-network.min.js",
+              "https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js",
           },
         ],
       },
