@@ -364,7 +364,7 @@ const setupSocket = (...servers) => {
 
   //io.use(wrap(setTenant));
   io.use(wrap(getSessionStore()));
-  io.use(wrap(passport.initialize()));
+  io.use(wrap(passport.initialize({ keepSessionInfo: true })));
   io.use(wrap(passport.authenticate(["jwt", "session"])));
   if (process.send && !cluster.isMaster) io.adapter(createAdapter());
   getState().setRoomEmitter((tenant, viewname, room_id, msg) => {
