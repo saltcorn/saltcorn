@@ -60,13 +60,13 @@
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
     "fs-extended-attributes": "1.0.1",
-    "i18n": "^0.14.0",
+    "i18n": "^0.15.1",
     "latest-version": "^5.1.0",
     "live-plugin-manager": "^0.16.0",
     "mime-types": "^2.1.35",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.35",
-    "node-fetch": "2.6.2",
+    "node-fetch": "2.6.9",
     "pluralize": "^8.0.0",
     "process": "0.11.10",
     "tmp-promise": "^3.0.2",
@@ -84,7 +84,7 @@
     "https-browserify": "1.0.0",
     "browserify-zlib": "0.2.0",
     "nodemailer": "^6.4.17",
-    "mjml": "4.12.0"
+    "mjml": "4.13.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
