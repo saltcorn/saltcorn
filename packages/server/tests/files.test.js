@@ -9,6 +9,7 @@ const {
   toSucceed,
   toNotInclude,
   resetToFixtures,
+  toSucceedWithImage,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
@@ -90,19 +91,25 @@ describe("files admin", () => {
   });
   it("serve public file", async () => {
     const app = await getApp({ disableCsrf: true });
-    await request(app).get("/files/serve/large-image.png").expect(toSucceed());
+    await request(app)
+      .get("/files/serve/large-image.png")
+      .expect(toSucceedWithImage({ lengthIs: (bs) => bs === 219422 }));
   });
   it("serve resized file", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/files/resize/200/100/large-image.png")
-      .expect(toSucceed());
+      .expect(
+        toSucceedWithImage({ lengthIs: (bs) => bs < 100000 && bs > 2000 })
+      );
   });
   it("serve resized file without height", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/files/resize/200/0/large-image.png")
-      .expect(toSucceed());
+      .expect(
+        toSucceedWithImage({ lengthIs: (bs) => bs < 100000 && bs > 2000 })
+      );
   });
   it("not download file to public", async () => {
     const app = await getApp({ disableCsrf: true });
