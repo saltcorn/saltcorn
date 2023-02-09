@@ -12,6 +12,7 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
+const path = require("path");
 const File = require("@saltcorn/data/models/file");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
@@ -20,13 +21,30 @@ const { table } = require("console");
 
 beforeAll(async () => {
   await resetToFixtures();
-  const mv = async (fnm) => {
-    await fs.writeFile(fnm, "nevergonnagiveyouup");
-  };
+  await File.ensure_file_store();
   await File.from_req_files(
-    { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
+    {
+      mimetype: "image/png",
+      name: "rick.png",
+      mv: async (fnm) => {
+        await fs.writeFile(fnm, "nevergonnagiveyouup");
+      },
+      size: 245752,
+    },
     1,
     4
+  );
+  await File.from_req_files(
+    {
+      mimetype: "image/png",
+      name: "large-image.png",
+      mv: async (fnm) => {
+        await fs.copyFile(path.join(__dirname, "assets/large-image.png"), fnm);
+      },
+      size: 219422,
+    },
+    1,
+    10
   );
 });
 afterAll(db.close);
@@ -69,6 +87,22 @@ describe("files admin", () => {
   it("not serve file to public", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/serve/rick.png").expect(404);
+  });
+  it("serve public file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/files/serve/large-image.png").expect(toSucceed());
+  });
+  it("serve resized file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/files/resize/200/100/large-image.png")
+      .expect(toSucceed());
+  });
+  it("serve resized file without height", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/files/resize/200/0/large-image.png")
+      .expect(toSucceed());
   });
   it("not download file to public", async () => {
     const app = await getApp({ disableCsrf: true });
