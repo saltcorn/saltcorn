@@ -64,8 +64,7 @@ const ViewLink = ({
     <span
       className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${
         selected ? "selected-node" : "is-builder-link"
-      } ${link_style} ${link_size || ""}`}
-      {...blockProps(block)}
+      } ${link_style} ${link_size || ""} ${block ? "d-block" : ""}`}
       ref={(dom) => connect(drag(dom))}
       style={
         link_style === "btn btn-custom-color"
