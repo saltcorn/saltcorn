@@ -278,6 +278,26 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                 isStyle={!!sizeWithStyle}
               />
               <SettingsRow
+                field={{
+                  name: "min-width",
+                  label: "min width",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "max-width",
+                  label: "max width",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
                 field={{ name: "height", label: "height", type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
@@ -292,6 +312,16 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                 node={node}
                 setProp={setProp}
                 isStyle={!!sizeWithStyle}
+              />
+              <SettingsRow
+                field={{
+                  name: "max-height",
+                  label: "max height",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
               />
             </Fragment>
           )}
