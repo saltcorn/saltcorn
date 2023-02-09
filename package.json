@@ -59,5 +59,8 @@
       "no-empty": "warn",
       "no-fallthrough": "warn"
     }
+  },
+  "overrides": {
+    "immer": "9.0.6"
   }
 }
