@@ -50,29 +50,41 @@ const Link = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  return (
-    <span
-      className={`${textStyle} is-builder-link ${
-        selected ? "selected-node" : ""
-      } ${isFormula?.text ? "font-monospace" : ""} ${link_style} ${
-        link_size || ""
-      }`}
-      {...blockProps(block)}
-      ref={(dom) => connect(drag(dom))}
-      style={
-        link_style === "btn btn-custom-color"
-          ? {
-              backgroundColor: link_bgcol || "#000000",
-              borderColor: link_bordercol || "#000000",
-              color: link_textcol || "#000000",
-            }
-          : {}
-      }
-    >
-      <DynamicFontAwesomeIcon icon={link_icon} className="me-1" />
-      {isFormula?.text ? `=${text}` : text}
-    </span>
-  );
+  if (!link_style)
+    return (
+      <span
+        className={`${textStyle} is-builder-link ${
+          selected ? "selected-node" : ""
+        } ${isFormula?.text ? "font-monospace" : ""} ${block ? "d-block" : ""}`}
+        ref={(dom) => connect(drag(dom))}
+      >
+        <DynamicFontAwesomeIcon icon={link_icon} className="me-1" />
+        {isFormula?.text ? `=${text}` : text}
+      </span>
+    );
+  else
+    return (
+      <button
+        className={`${textStyle} is-builder-link ${
+          selected ? "selected-node" : ""
+        } ${isFormula?.text ? "font-monospace" : ""} ${link_style} ${
+          link_size || ""
+        } ${block ? "d-block" : ""}`}
+        ref={(dom) => connect(drag(dom))}
+        style={
+          link_style === "btn btn-custom-color"
+            ? {
+                backgroundColor: link_bgcol || "#000000",
+                borderColor: link_bordercol || "#000000",
+                color: link_textcol || "#000000",
+              }
+            : {}
+        }
+      >
+        <DynamicFontAwesomeIcon icon={link_icon} className="me-1" />
+        {isFormula?.text ? `=${text}` : text}
+      </button>
+    );
 };
 
 export /**
