@@ -20,6 +20,7 @@ Vagrant.configure("2") do |config|
     choco install git visualstudio2017buildtools visualstudio2017-workload-vctools -y
     SET "PATH=%PATH%;C:\Program Files\nodejs\;C:\Program Files\git\bin"
     refreshenv
-    npm install --legacy-peer-deps --unsafe @saltcorn/cli
+    npm install --legacy-peer-deps -g --unsafe @saltcorn/cli
+    saltcorn
   SHELL
 end
