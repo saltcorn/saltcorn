@@ -11,7 +11,7 @@
   "devDependencies": {
     "chaos-guinea-pig": "^0.1.1",
     "jest": "^27.1.0",
-    "supertest": "^4.0.2"
+    "supertest": "^6.3.3"
   },
   "scripts": {
     "test": "jest --runInBand",
