@@ -395,7 +395,7 @@ router.get(
     else if (result) {
       req.flash("success", req.__("Email verified"));
       const u = await User.findForSession({ email });
-      if (u) u.relogin(req);
+      if (u) await u.relogin(req);
     }
     res.redirect("/");
   })
@@ -1618,7 +1618,7 @@ router.all(
       const user = await User.findForSession({ id: req.user.id });
       await user.set_to_verified();
       req.flash("success", req.__("User verified"));
-      user.relogin(req);
+      await user.relogin(req);
     }
     if (wfres.verified === false) {
       req.flash("danger", req.__("User verification failed"));
@@ -1845,7 +1845,7 @@ router.post(
   }),
   error_catcher(async (req, res) => {
     const user = await User.findForSession({ id: req.user.pending_user.id });
-    user.relogin(req);
+    await user.relogin(req);
     Trigger.emitEvent("Login", null, user);
     res.redirect("/");
   })
