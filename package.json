@@ -4,7 +4,7 @@
   "devDependencies": {
     "jest": "^27.1.0",
     "minipass": "3.1.6",
-    "supertest": "^4.0.2",
+    "supertest": "^6.3.3",
     "typedoc": "^0.22.11",
     "typescript": "^4.4.4"
   },
@@ -59,5 +59,8 @@
       "no-empty": "warn",
       "no-fallthrough": "warn"
     }
+  },
+  "overrides": {
+    "immer": "9.0.6"
   }
 }

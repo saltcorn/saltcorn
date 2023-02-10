@@ -1109,6 +1109,7 @@ const ButtonOrLinkSettingsRows = ({
   keyPrefix = "",
   values,
   linkFirst = false,
+  linkIsBlank = false,
 }) => {
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
@@ -1124,7 +1125,9 @@ const ButtonOrLinkSettingsRows = ({
           onChange={setAProp(keyPrefix + "style")}
         >
           {linkFirst ? (
-            <option value={addBtnClass("btn-link")}>Link</option>
+            <option value={linkIsBlank ? "" : addBtnClass("btn-link")}>
+              Link
+            </option>
           ) : null}
           <option value={addBtnClass("btn-primary")}>Primary button</option>
           <option value={addBtnClass("btn-secondary")}>Secondary button</option>

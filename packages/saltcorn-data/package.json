@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "0.8.3-alpha.1",
+  "version": "0.8.3-alpha.2",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,14 +37,14 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "0.8.3-alpha.1",
-    "@saltcorn/sqlite": "0.8.3-alpha.1"
+    "@saltcorn/postgres": "0.8.3-alpha.2",
+    "@saltcorn/sqlite": "0.8.3-alpha.2"
   },
   "dependencies": {
-    "@saltcorn/types": "0.8.3-alpha.1",
-    "@saltcorn/markup": "0.8.3-alpha.1",
-    "@saltcorn/db-common": "0.8.3-alpha.1",
-    "@saltcorn/sqlite-mobile": "0.8.3-alpha.1",
+    "@saltcorn/types": "0.8.3-alpha.2",
+    "@saltcorn/markup": "0.8.3-alpha.2",
+    "@saltcorn/db-common": "0.8.3-alpha.2",
+    "@saltcorn/sqlite-mobile": "0.8.3-alpha.2",
     "acorn": "^8.0.3",
     "assert": "^2.0.0",
     "astring": "^1.4.3",
@@ -60,7 +60,7 @@
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
     "fs-extended-attributes": "1.0.1",
-    "i18n": "^0.14.0",
+    "i18n": "^0.15.1",
     "latest-version": "^5.1.0",
     "live-plugin-manager": "^0.16.0",
     "mime-types": "^2.1.35",
@@ -84,7 +84,7 @@
     "https-browserify": "1.0.0",
     "browserify-zlib": "0.2.0",
     "nodemailer": "^6.4.17",
-    "mjml": "4.12.0"
+    "mjml": "4.13.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

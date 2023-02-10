@@ -67,6 +67,29 @@ const toSucceed =
 
 /**
  *
+ * @param {number} expCode
+ * @returns {void}
+ * @throws {Error}
+ */
+const toSucceedWithImage =
+  ({ expCode = 200, lengthIs }) =>
+  (res) => {
+    if (res.statusCode !== expCode) {
+      console.log(res.text);
+      throw new Error(`Expected status ${expCode}, received ${res.statusCode}`);
+    }
+    if (res.type.split("/")[0] !== "image") {
+      throw new Error(`Expected response type image/*, received ${res.type}`);
+    }
+    if (lengthIs && !lengthIs(res.body.length)) {
+      throw new Error(
+        `Image response not accepted. Length not satisfied. Received ${res.body.length} bytes`
+      );
+    }
+  };
+
+/**
+ *
  * @param {number} txt
  * @param {number} expCode
  * @returns {void}
@@ -209,5 +232,6 @@ module.exports = {
   succeedJsonWith,
   notAuthorized,
   respondJsonWith,
+  toSucceedWithImage,
   resToLoginCookie,
 };

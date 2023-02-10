@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.8.3-alpha.1",
+  "version": "0.8.3-alpha.2",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
@@ -45,5 +45,8 @@
   },
   "dependencies": {
     "styled-components": "4.4.1"
+  },
+  "overrides": {
+    "immer": "9.0.6"
   }
 }

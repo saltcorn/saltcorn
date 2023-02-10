@@ -624,10 +624,15 @@ const render = ({
         segment.besides.every((s: any) => s && s.type === "card") &&
         (!segment.widths || segment.widths.every((w: any) => w === defwidth));
       let markup;
+      console.log(segment.style);
+
       if (cardDeck)
         markup = div(
           {
-            class: `row row-cols-1 row-cols-md-${segment.besides.length} g-4 mb-3`,
+            class: [
+              `row row-cols-1 row-cols-md-${segment.besides.length} g-4`,
+              !segment.style?.["margin-bottom"] && `mb-3`,
+            ],
             style: segment.style,
           },
           segment.besides.map((t: any, ixb: number) => {
