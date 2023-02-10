@@ -624,7 +624,6 @@ const render = ({
         segment.besides.every((s: any) => s && s.type === "card") &&
         (!segment.widths || segment.widths.every((w: any) => w === defwidth));
       let markup;
-      console.log(segment.style);
 
       if (cardDeck)
         markup = div(
