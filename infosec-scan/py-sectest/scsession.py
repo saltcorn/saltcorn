@@ -14,7 +14,10 @@ class SaltcornSession(Session):
 
   def csrf(self):
     m = re.findall('_sc_globalCsrf = "([^"]*)"', self.content)
-    return m[0]
+    if len(m) > 0:
+      return m[0]
+    else:
+      return ""
 
   def close(self):
     if self.salcorn_process is not None:

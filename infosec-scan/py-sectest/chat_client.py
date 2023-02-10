@@ -33,10 +33,11 @@ class ChatClient:
     self.sio.emit("join_room",  [viewName, roomId])
 
   def send_message(self, room_id, content, view_name):
+    self.session.get('/view/rooms_view?id=%d' % room_id)
     self.session.postForm('/view/' + view_name + '/submit_msg_ajax', 
       {'room_id': room_id,
       'content': content,
-      '_csrf': self.csrf
+      '_csrf': self.session.csrf()
       })
 
   def has_message(self, content, not_for_user_id):
