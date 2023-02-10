@@ -48,7 +48,7 @@
     "passport-totp": "0.0.2",
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
-    "qrcode": "1.5.0",
+    "qrcode": "1.5.1",
     "resize-with-sharp-or-jimp": "0.1.6",
     "socket.io": "4.6.0",
     "thirty-two": "1.0.2",
