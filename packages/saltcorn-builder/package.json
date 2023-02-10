@@ -38,7 +38,8 @@
     "@tippyjs/react": "4.2.6",
     "webpack": "4.43.0",
     "webpack-cli": "3.3.12",
-    "lodash": "4.17.21"
+    "lodash": "4.17.21",
+    "immer": ">=9.0.6"
   },
   "publishConfig": {
     "access": "public"
