@@ -41,7 +41,7 @@
     "node-fetch": "2.6.9",
     "node-watch": "^0.7.2",
     "notp": "2.0.3",
-    "passport": "^0.4.1",
+    "passport": "^0.6.0",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
     "passport-jwt": "4.0.1",

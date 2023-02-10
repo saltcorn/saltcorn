@@ -27,7 +27,7 @@ class Test:
     assert 'Set Email' in self.sess.content
   
     self.sess.postForm('/auth/set-email', 
-        data={'email': 'my_mail@auth.com', '_csrf': csrf}, allow_redirects=True)
+        data={'email': 'my_mail@auth.com', '_csrf': self.sess.csrf()}, allow_redirects=True)
     assert 'Welcome, my_mail@auth.com!' in self.sess.content
 
   def test_login_with_userinfo_from_auth_server(self):

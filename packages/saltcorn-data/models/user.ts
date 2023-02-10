@@ -557,9 +557,12 @@ class User {
   /**
    * @param {object} req
    */
-  relogin(req: NonNullable<any>): void {
-    req.login(this.session_object, function (err: any) {
-      if (err) req.flash("danger", err);
+  relogin(req: NonNullable<any>): Promise<void> {
+    return new Promise((resolve, reject) => {
+      req.login(this.session_object, function (err: any) {
+        if (err) req.flash("danger", err);
+        resolve();
+      });
     });
   }
 

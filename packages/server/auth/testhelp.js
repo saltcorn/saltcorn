@@ -233,4 +233,5 @@ module.exports = {
   notAuthorized,
   respondJsonWith,
   toSucceedWithImage,
+  resToLoginCookie,
 };
