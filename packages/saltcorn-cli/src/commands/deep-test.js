@@ -13,6 +13,44 @@ const { maybe_as_tenant, init_some_tenants } = require("../common");
  */
 class DeepTestCommand extends Command {
   static strict = false;
+
+  async generate_tables() {
+    const {
+      random_table,
+      fill_table_row,
+      all_views,
+    } = require("@saltcorn/data/models/random");
+    for (let index = 0; index < 20; index++) {
+      //db.set_sql_logging(true);
+      const table = await random_table();
+      await all_views(table);
+    }
+  }
+
+  async enable_plugins() {
+    const { flags } = this.parse(DeepTestCommand);
+
+    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+
+    await loadAllPlugins();
+
+    const load_plugins = require("@saltcorn/server/load_plugins");
+
+    const Plugin = require("@saltcorn/data/models/plugin");
+    const plugin_names = flags.modules ? flags.modules.split(",") : [];
+
+    for (const pluginName of plugin_names) {
+      console.log("Installing module".pluginName);
+      const plugin = await Plugin.store_by_name(pluginName);
+      if (!plugin) {
+        console.error(`Module ${pluginName} not found in store`);
+        this.exit(1);
+      }
+      delete plugin.id;
+
+      await load_plugins.loadAndSaveNewPlugin(plugin);
+    }
+  }
   /**
    * @returns {Promise<void>}
    */
@@ -29,7 +67,6 @@ class DeepTestCommand extends Command {
       switchToTenant,
       deleteTenant,
     } = require("@saltcorn/admin-models/models/tenant");
-
     if (!db.is_it_multi_tenant()) {
       console.error("Multitenancy not enabled");
       this.exit(0);
@@ -40,39 +77,29 @@ class DeepTestCommand extends Command {
     const ten = "deeptesttenannt";
     await deleteTenant(ten);
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-    const { init_multi_tenant } = require("@saltcorn/data/db/state");
+    const {
+      init_multi_tenant,
+      add_tenant,
+    } = require("@saltcorn/data/db/state");
     await loadAllPlugins();
 
     let hasError = false;
 
     //create tenant, reset schema
-    await switchToTenant(await insertTenant(ten, "", ""), "");
+    const tenrow = await insertTenant(ten, "", "");
+    add_tenant(ten);
+
+    await switchToTenant(tenrow, "");
+
     await init_multi_tenant(loadAllPlugins, undefined, [ten]);
-
     await db.runWithTenant(ten, async () => {
-      //restore
-      const { restore } = require("@saltcorn/admin-models/models/backup");
-      await loadAllPlugins();
-
-      const load_plugins = require("@saltcorn/server/load_plugins");
-
-      const Plugin = require("@saltcorn/data/models/plugin");
-      const plugin_names = flags.modules ? flags.modules.split(",") : [];
-      for (const pluginName of plugin_names) {
-        const plugin = await Plugin.store_by_name(pluginName);
-        if (!plugin) {
-          console.error(`Module ${pluginName} not found in store`);
-          this.exit(1);
-        }
-        delete plugin.id;
-
-        await load_plugins.loadAndSaveNewPlugin(plugin);
-      }
+      await this.enable_plugins();
+      await this.generate_tables();
 
       const { passes, errors, pass } = await runConfigurationCheck(
         mockReqRes.req,
-        flags.destructive,
-        flags.destructive ? require("@saltcorn/server/app") : undefined
+        true,
+        require("@saltcorn/server/app")
       );
 
       if (!pass) {
