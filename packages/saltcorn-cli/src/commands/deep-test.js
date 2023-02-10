@@ -101,10 +101,11 @@ class DeepTestCommand extends Command {
     await db.runWithTenant(ten, async () => {
       await this.enable_plugins();
       await this.generate_tables();
+      //todo set rnd page as root
       console.log("Running configuration check");
       const { passes, errors, pass } = await runConfigurationCheck(
         mockReqRes.req,
-        true,
+        false,
         require("@saltcorn/server/app"),
         true
       );

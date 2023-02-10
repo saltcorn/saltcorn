@@ -247,6 +247,7 @@ export const runConfigurationCheck = async (
       const gcpres = await chaos_guinea_pig(app, {
         stop_urls: ["/auth/login", "/auth/signup"],
         steps: 100,
+        verbose,
       });
       console.log("GCP Log", gcpres.log);
       passes.push(`Chaos Guinea Pig pass with seed ${seed}`);
