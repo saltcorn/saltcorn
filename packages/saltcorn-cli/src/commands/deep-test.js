@@ -46,15 +46,31 @@ class DeepTestCommand extends Command {
     const plugin_names = flags.modules ? flags.modules.split(",") : [];
 
     for (const pluginName of plugin_names) {
-      console.log("Installing module", pluginName);
-      const plugin = await Plugin.store_by_name(pluginName);
-      if (!plugin) {
-        console.error(`Module ${pluginName} not found in store`);
-        this.exit(1);
-      }
-      delete plugin.id;
+      if (pluginName.startsWith("any") && !pluginName.includes("-")) {
+        const plugins0 = await Plugin.store_plugins_available();
+        // shuffle https://stackoverflow.com/a/46545530/19839414
+        const plugins = plugins0
+          .map((value) => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value);
 
-      await load_plugins.loadAndSaveNewPlugin(plugin);
+        const n = +pluginName.replace("any", "") || 1;
+        for (let index = 0; index < n; index++) {
+          const plugin = plugins[index];
+          console.log("Installing module", plugin.name);
+          await load_plugins.loadAndSaveNewPlugin(plugin);
+        }
+      } else {
+        console.log("Installing module", pluginName);
+        const plugin = await Plugin.store_by_name(pluginName);
+        if (!plugin) {
+          console.error(`Module ${pluginName} not found in store`);
+          this.exit(1);
+        }
+        delete plugin.id;
+
+        await load_plugins.loadAndSaveNewPlugin(plugin);
+      }
     }
   }
   /**
