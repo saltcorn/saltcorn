@@ -22,8 +22,14 @@ class DeepTestCommand extends Command {
     } = require("@saltcorn/data/models/random");
     for (let index = 0; index < 20; index++) {
       //db.set_sql_logging(true);
-      const table = await random_table();
-      await all_views(table);
+      try {
+        const table = await random_table();
+        await all_views(table);
+        console.log("Generated table", table.name);
+      } catch (e) {
+        console.error("Error creating table", e);
+        this.exit(1);
+      }
     }
   }
 
@@ -40,7 +46,7 @@ class DeepTestCommand extends Command {
     const plugin_names = flags.modules ? flags.modules.split(",") : [];
 
     for (const pluginName of plugin_names) {
-      console.log("Installing module".pluginName);
+      console.log("Installing module", pluginName);
       const plugin = await Plugin.store_by_name(pluginName);
       if (!plugin) {
         console.error(`Module ${pluginName} not found in store`);
@@ -95,11 +101,12 @@ class DeepTestCommand extends Command {
     await db.runWithTenant(ten, async () => {
       await this.enable_plugins();
       await this.generate_tables();
-
+      console.log("Running configuration check");
       const { passes, errors, pass } = await runConfigurationCheck(
         mockReqRes.req,
         true,
-        require("@saltcorn/server/app")
+        require("@saltcorn/server/app"),
+        true
       );
 
       if (!pass) {
