@@ -679,5 +679,9 @@
 	"Trigger": "Trigger",
 	"All entities": "All entities",
 	"no tags": "no tags",
-	"Add tag": "Add tag"
+	"Add tag": "Add tag",
+	"Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content.": "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content.",
+	"Triggers run actions in response to events.": "Triggers run actions in response to events.",
+	"No triggers": "No triggers",
+	"Code": "Code"
 }

@@ -1102,7 +1102,7 @@ router.post(
     const { id } = req.params;
     const u = await User.findOne({ id });
     if (u) {
-      u.relogin(req);
+      await u.relogin(req);
       req.flash(
         "success",
         req.__(

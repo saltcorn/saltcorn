@@ -1820,18 +1820,21 @@ router.post(
       await db.deleteWhere("users");
       await db.deleteWhere("_sc_roles", { not: { id: { in: [1, 4, 8, 10] } } });
       if (db.reset_sequence) await db.reset_sequence("users");
-      req.logout();
-      if (req.session.destroy)
-        req.session.destroy((err) => {
-          req.logout();
-        });
-      else {
-        req.logout();
-        req.session = null;
-      }
-      // todo make configurable - redirect to create first user
-      // redirect to create first user
-      res.redirect(`/auth/create_first_user`);
+      req.logout(function (err) {
+        if (req.session.destroy)
+          req.session.destroy((err) => {
+            req.logout(() => {
+              res.redirect(`/auth/create_first_user`);
+            });
+          });
+        else {
+          req.logout(() => {
+            req.session = null; // todo make configurable - redirect to create first user
+            // redirect to create first user
+            res.redirect(`/auth/create_first_user`);
+          });
+        }
+      });
     } else {
       req.flash(
         "success",

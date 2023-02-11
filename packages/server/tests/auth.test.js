@@ -12,6 +12,7 @@ const {
   toSucceed,
   resetToFixtures,
   toNotInclude,
+  resToLoginCookie,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -99,14 +100,15 @@ describe("user settings", () => {
   it("should change language", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-    await request(app)
+    const res = await request(app)
       .post("/auth/setlanguage")
       .set("Cookie", loginCookie)
       .send("locale=it")
       .expect(toRedirect("/auth/settings"));
+    const newCookie = resToLoginCookie(res);
     await request(app)
       .get("/auth/settings")
-      .set("Cookie", loginCookie)
+      .set("Cookie", newCookie)
       .expect(toInclude("Cambia password"));
   });
 });
