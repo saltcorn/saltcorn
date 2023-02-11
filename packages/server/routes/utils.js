@@ -296,8 +296,8 @@ const addOnDoneRedirect = (oldPath, req) => {
 };
 
 //https://stackoverflow.com/a/38979205/19839414
-const is_absolute_url = (url) => {
-  return Array.isArray(url) || url.indexOf(":/") > 0 || url.indexOf("//") === 0;
+const is_relative_url = (url) => {
+  return !Array.isArray(url) && !url.includes(":/") && !url.includes("//");
 };
 
 module.exports = {
@@ -313,5 +313,5 @@ module.exports = {
   setTenant,
   get_tenant_from_req,
   addOnDoneRedirect,
-  is_absolute_url,
+  is_relative_url,
 };

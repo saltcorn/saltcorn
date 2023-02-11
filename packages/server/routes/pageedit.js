@@ -25,7 +25,7 @@ const {
   isAdmin,
   error_catcher,
   addOnDoneRedirect,
-  is_absolute_url,
+  is_relative_url,
 } = require("./utils.js");
 const {
   mkTable,
@@ -428,7 +428,7 @@ router.post(
     const { pagename } = req.params;
 
     let redirectTarget =
-      req.query.on_done_redirect && !is_absolute_url(req.query.on_done_redirect)
+      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : "/pageedit";
     const page = await Page.findOne({ name: pagename });

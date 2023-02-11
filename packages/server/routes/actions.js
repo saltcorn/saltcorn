@@ -9,7 +9,7 @@ const {
   isAdmin,
   error_catcher,
   addOnDoneRedirect,
-  is_absolute_url,
+  is_relative_url,
 } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -530,7 +530,7 @@ router.post(
       req.flash("success", "Action configuration saved");
       res.redirect(
         req.query.on_done_redirect &&
-          !is_absolute_url(req.query.on_done_redirect)
+          is_relative_url(req.query.on_done_redirect)
           ? `/${req.query.on_done_redirect}`
           : "/actions/"
       );

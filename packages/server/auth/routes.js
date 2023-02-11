@@ -17,7 +17,7 @@ const {
   loggedIn,
   csrfField,
   setTenant,
-  is_absolute_url,
+  is_relative_url,
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
@@ -1079,7 +1079,7 @@ router.post(
     }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
-    } else if (req.body.dest && !is_absolute_url(req.body.dest)) {
+    } else if (req.body.dest && is_relative_url(req.body.dest)) {
       res.redirect(decodeURIComponent(req.body.dest));
     } else res.redirect("/");
   })
