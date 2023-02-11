@@ -603,7 +603,7 @@ router.post(
         snap.created
       ).fromNow()}`
     );
-    res.redirect(`/${type}edit`);
+    res.redirect(/^[a-z]+$/g.test(type) ? `/${type}edit` : "/");
   })
 );
 router.get(

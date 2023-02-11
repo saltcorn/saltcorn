@@ -5,7 +5,12 @@
  * @subcategory routes
  */
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getTriggerList } = require("./common_lists");
@@ -524,7 +529,8 @@ router.post(
       }
       req.flash("success", "Action configuration saved");
       res.redirect(
-        req.query.on_done_redirect
+        req.query.on_done_redirect &&
+          is_relative_url(req.query.on_done_redirect)
           ? `/${req.query.on_done_redirect}`
           : "/actions/"
       );

@@ -21,7 +21,12 @@ const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
 const { getPageList } = require("./common_lists");
 
-const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -422,9 +427,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
 
-    let redirectTarget = req.query.on_done_redirect
-      ? `/${req.query.on_done_redirect}`
-      : "/pageedit";
+    let redirectTarget =
+      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/pageedit";
     const page = await Page.findOne({ name: pagename });
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
