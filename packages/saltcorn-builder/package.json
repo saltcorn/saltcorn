@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.8.3-alpha.2",
+  "version": "0.8.3-beta.0",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
@@ -41,7 +41,6 @@
     "lodash": "4.17.21",
     "immer": ">=9.0.6",
     "glob-parent": "^5.1.2"
-
   },
   "publishConfig": {
     "access": "public"
