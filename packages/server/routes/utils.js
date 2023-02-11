@@ -297,7 +297,7 @@ const addOnDoneRedirect = (oldPath, req) => {
 
 //https://stackoverflow.com/a/38979205/19839414
 const is_absolute_url = (url) => {
-  return url.indexOf(":/") > 0 || url.indexOf("//") === 0;
+  return Array.isArray(url) || url.indexOf(":/") > 0 || url.indexOf("//") === 0;
 };
 
 module.exports = {
