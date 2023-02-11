@@ -6,7 +6,7 @@
 
 const Router = require("express-promise-router");
 
-const { error_catcher } = require("./utils.js");
+const { error_catcher, is_absolute_url } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 /**
@@ -52,6 +52,9 @@ router.post(
       req.flash("error", e.message);
     }
     if (req.xhr) res.send("OK");
-    else res.redirect(redirect || `/list/${table.name}`);
+    else
+      res.redirect(
+        (is_absolute_url(redirect) ? "" : redirect) || `/list/${table.name}`
+      );
   })
 );

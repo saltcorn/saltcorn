@@ -295,6 +295,11 @@ const addOnDoneRedirect = (oldPath, req) => {
   return oldPath;
 };
 
+//https://stackoverflow.com/a/38979205/19839414
+const is_absolute_url = (url) => {
+  return url.indexOf(":/") > 0 || url.indexOf("//") === 0;
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -308,4 +313,5 @@ module.exports = {
   setTenant,
   get_tenant_from_req,
   addOnDoneRedirect,
+  is_absolute_url,
 };
