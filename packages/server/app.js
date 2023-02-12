@@ -287,21 +287,6 @@ const getApp = async (opts = {}) => {
   });
   app.use(setTenant);
 
-  //https://stackoverflow.com/a/75195471/19839414
-  // register regenerate & save after the cookieSession middleware initialization
-  app.use(function (request, response, next) {
-    if (request.session && !request.session.regenerate) {
-      request.session.regenerate = (cb) => {
-        cb();
-      };
-    }
-    if (request.session && !request.session.save) {
-      request.session.save = (cb) => {
-        cb();
-      };
-    }
-    next();
-  });
   // Change into s3storage compatible selector
   // existing fileupload middleware is moved into s3storage.js
   app.use(s3storage.middlewareSelect);

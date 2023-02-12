@@ -250,13 +250,13 @@ const getGitRevision = () => db.connectObj.git_commit;
  * @returns {session|cookieSession}
  */
 const getSessionStore = () => {
-  if (getState().getConfig("cookie_sessions", false)) {
+  /*if (getState().getConfig("cookie_sessions", false)) {
     return cookieSession({
       keys: [db.connectObj.session_secret || is.str.generate()],
       maxAge: 30 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
-  } else if (db.isSQLite) {
+  } else*/ if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
       store: new SQLiteStore({ db: "sessions.sqlite" }),
