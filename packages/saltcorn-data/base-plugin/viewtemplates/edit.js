@@ -873,6 +873,7 @@ const runPost = async (
     }
     const originalID = id;
     let trigger_return;
+    let ins_upd_error;
     if (!cancel) {
       if (typeof id === "undefined") {
         const ins_res = await tryInsertQuery(row);
@@ -881,21 +882,21 @@ const runPost = async (
           row[pk.name] = id;
           trigger_return = ins_res.trigger_return;
         } else {
-          req.flash("error", text_attr(ins_res.error));
-          res.sendWrap(
-            viewname,
-            renderForm(form, req.csrfToken ? req.csrfToken() : false)
-          );
-          return;
+          ins_upd_error = ins_res.error;
         }
       } else {
         const upd_res = await tryUpdateQuery(row, id);
         if (upd_res.error) {
-          req.flash("error", text_attr(upd_res.error));
-          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-          return;
+          ins_upd_error = upd_res.error;
         }
         trigger_return = upd_res.trigger_return;
+      }
+      if (ins_upd_error) {
+        res.status(422);
+        req.flash("error", text_attr(ins_upd_error));
+        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+
+        return;
       }
       //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
