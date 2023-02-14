@@ -32,6 +32,7 @@ jobs:
           - 5432:5432
     steps:
       - uses: actions/checkout@v2
+      # Cache node dependencies
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
