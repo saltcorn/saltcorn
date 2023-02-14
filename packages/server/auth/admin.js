@@ -200,6 +200,12 @@ const user_dropdown = (user, req, can_reset) =>
         '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
         req
       ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/force-logout/${user.id}`,
+        '<i class="fas fa-sign-out-alt"></i>&nbsp;' + req.__("Force logout"),
+        req
+      ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
       `/useradmin/delete/${user.id}`,
@@ -335,7 +341,7 @@ const http_settings_form = async (req) =>
       "timeout",
       "cookie_duration",
       "cookie_duration_remember",
-      "cookie_sessions",
+      //"cookie_sessions",
       "public_cache_maxage",
       "custom_http_headers",
     ],
@@ -1132,6 +1138,23 @@ router.post(
     await u.update({ disabled: true });
     await u.destroy_sessions();
     req.flash("success", req.__(`Disabled user %s`, u.email));
+    res.redirect(`/useradmin`);
+  })
+);
+
+/**
+ * @name post/force-logout/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/force-logout/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.destroy_sessions();
+    req.flash("success", req.__(`Logged out user %s`, u.email));
     res.redirect(`/useradmin`);
   })
 );

@@ -63,9 +63,10 @@ describe("login process", () => {
 });
 
 describe("user settings", () => {
+  let loginCookie;
   it("should show user settings", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getStaffLoginCookie();
+    loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/auth/settings")
       .set("Cookie", loginCookie)
@@ -74,7 +75,7 @@ describe("user settings", () => {
 
   it("should change password", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getStaffLoginCookie();
+    //const loginCookie = await getStaffLoginCookie();
     await request(app)
       .post("/auth/settings")
       .set("Cookie", loginCookie)
@@ -96,13 +97,20 @@ describe("user settings", () => {
       .send("email=staff@foo.com")
       .send("password=foHRrr46obar")
       .expect(toRedirect("/"));
+    //change back
+    await request(app)
+      .post("/auth/settings")
+      .set("Cookie", loginCookie)
+      .send("password=foHRrr46obar")
+      .send("new_password=ghrarhr54hg")
+      .expect(toRedirect("/auth/settings"));
   });
   it("should change language", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
+    const adminLoginCookie = await getAdminLoginCookie();
     const res = await request(app)
       .post("/auth/setlanguage")
-      .set("Cookie", loginCookie)
+      .set("Cookie", adminLoginCookie)
       .send("locale=it")
       .expect(toRedirect("/auth/settings"));
     const newCookie = resToLoginCookie(res);
@@ -260,6 +268,64 @@ describe("user admin", () => {
     const delusers = await User.find({ email: "staff2@foo.com" });
     expect(delusers.length).toBe(0);
   });
+  if (!db.isSQLite)
+    it("can be disabled", async () => {
+      const staffLoginCookie = await getStaffLoginCookie();
+      const staffUser = await User.findOne({ email: "staff@foo.com" });
+      const adminLoginCookie = await getAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/"));
+      await request(app)
+        .post(`/useradmin/disable/${staffUser.id}`)
+        .set("Cookie", adminLoginCookie)
+        .expect(toRedirect("/useradmin"));
+      await request(app)
+        .get("/auth/settings")
+        .set("Cookie", staffLoginCookie)
+        .expect(toRedirect("/auth/login"));
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/auth/login"));
+      await request(app)
+        .post(`/useradmin/enable/${staffUser.id}`)
+        .set("Cookie", adminLoginCookie)
+        .expect(toRedirect("/useradmin"));
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/"));
+    });
+  if (!db.isSQLite)
+    it("can be force logged out", async () => {
+      const staffLoginCookie = await getStaffLoginCookie();
+      const staffUser = await User.findOne({ email: "staff@foo.com" });
+      const adminLoginCookie = await getAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/auth/settings")
+        .set("Cookie", staffLoginCookie)
+        .expect(toInclude(">staff@foo.com<"));
+      await request(app)
+        .post(`/useradmin/force-logout/${staffUser.id}`)
+        .set("Cookie", adminLoginCookie)
+        .expect(toRedirect("/useradmin"));
+      await request(app)
+        .get("/auth/settings")
+        .set("Cookie", staffLoginCookie)
+        .expect(toRedirect("/auth/login"));
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/"));
+    });
 });
 describe("User fields", () => {
   it("should add fields", async () => {

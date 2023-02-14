@@ -1093,5 +1093,7 @@
 	"Min role to access search page": "Min role to access search page",
 	"Update": "Update",
 	"Add": "Add",
-	"Recalculate dynamic": "Recalculate dynamic"
+	"Recalculate dynamic": "Recalculate dynamic",
+	"Force logout": "Force logout",
+	"Logged out user %s": "Logged out user %s"
 }
