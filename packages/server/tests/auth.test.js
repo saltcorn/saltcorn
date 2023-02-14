@@ -275,6 +275,10 @@ describe("user admin", () => {
       .set("Cookie", adminLoginCookie)
       .expect(toRedirect("/useradmin"));
     await request(app)
+      .get("/auth/settings")
+      .set("Cookie", staffLoginCookie)
+      .expect(toRedirect("/auth/login"));
+    await request(app)
       .post("/auth/login/")
       .send("email=staff@foo.com")
       .send("password=ghrarhr54hg")
@@ -283,6 +287,29 @@ describe("user admin", () => {
       .post(`/useradmin/enable/${staffUser.id}`)
       .set("Cookie", adminLoginCookie)
       .expect(toRedirect("/useradmin"));
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/"));
+  });
+  it("can be force logged out", async () => {
+    const staffLoginCookie = await getStaffLoginCookie();
+    const staffUser = await User.findOne({ email: "staff@foo.com" });
+    const adminLoginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", staffLoginCookie)
+      .expect(toInclude(">staff@foo.com<"));
+    await request(app)
+      .post(`/useradmin/force-logout/${staffUser.id}`)
+      .set("Cookie", adminLoginCookie)
+      .expect(toRedirect("/useradmin"));
+    await request(app)
+      .get("/auth/settings")
+      .set("Cookie", staffLoginCookie)
+      .expect(toRedirect("/auth/login"));
     await request(app)
       .post("/auth/login/")
       .send("email=staff@foo.com")
