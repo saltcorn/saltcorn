@@ -74,8 +74,8 @@
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
 
-  async function POST(url, body) {
-    return await fetch(url, {
+  async function POST(url, body, isDownload) {
+    const go=fetch(url, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "CSRF-Token": window._sc_globalCsrf,
@@ -84,6 +84,23 @@
       method: "POST",
       body: JSON.stringify(body || {}),
     });
+    if(isDownload){
+      const res = await go
+      const blob = await res.blob()
+
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      const header = res.headers.get('Content-Disposition');
+      if(header){
+        const parts = header.split(';');
+        let filename = parts[1].split('=')[1].replaceAll('"', "");
+        link.download = filename;
+      } else link.target = "_blank";
+      link.click();
+    
+      return
+   } else
+      return await go;
   }
 
   async function goAction(e) {
@@ -132,7 +149,7 @@
     await POST(`/files/download-zip`, { 
       files: filesToZip, 
       location: currentFolder
-    });
+    }, true);
   }
   async function moveDirectory(e) {
     for (const fileNm of selectedList) {
@@ -377,7 +394,11 @@
           </select>
         </div>
         {#if selectedList.length > 1}       
-          <a href={"#"} on:click={downloadZip}>Download Zip Archive</a>
+          <button class="btn btn-outline-secondary mt-2" 
+                  on:click={downloadZip}>
+            <i class="fas fa-file-archive"></i>
+            Download Zip Archive
+          </button>
         {/if}
         
       {/if}

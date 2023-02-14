@@ -15,6 +15,7 @@
     "@saltcorn/sbadmin2": "0.8.3-beta.1",
     "@socket.io/cluster-adapter": "^0.1.0",
     "@socket.io/sticky": "^1.0.1",
+    "adm-zip": "0.5.5",
     "aws-sdk": "^2.1037.0",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",

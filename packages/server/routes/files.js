@@ -25,7 +25,8 @@ const {
 } = require("../markup/admin");
 const fs = require("fs");
 const path = require("path");
-
+const Zip = require("adm-zip");
+const stream = require("stream");
 /**
  * @type {object}
  * @const
@@ -145,13 +146,31 @@ router.get(
 
 router.post(
   "/download-zip",
+  isAdmin,
+
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const user_id = req.user && req.user.id;
     const files = req.body.files;
     const location = req.body.location;
-    console.log({ files, location });
-    res.json({ success: "ok" });
+    const zip = new Zip();
+
+    for (const fileNm of files) {
+      const file = await File.findOne(path.join(location, fileNm));
+      if (
+        file &&
+        (role <= file.min_role_read || (user_id && user_id === file.user_id))
+      ) {
+        zip.addLocalFile(file.location);
+      }
+    }
+    const readStream = new stream.PassThrough();
+    readStream.end(zip.toBuffer());
+    res.type("application/zip");
+    res.attachment(
+      `${getState().getConfig("site_name", db.getTenantSchema())}-files.zip`
+    );
+    readStream.pipe(res);
   })
 );
 
