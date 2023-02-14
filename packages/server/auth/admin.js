@@ -335,7 +335,7 @@ const http_settings_form = async (req) =>
       "timeout",
       "cookie_duration",
       "cookie_duration_remember",
-      "cookie_sessions",
+      //"cookie_sessions",
       "public_cache_maxage",
       "custom_http_headers",
     ],
