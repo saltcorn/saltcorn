@@ -123,6 +123,17 @@
     }
     await fetchAndReset(true);
   }
+  async function downloadZip() {
+    const filesToZip=[]
+    for (const fileNm of selectedList) {
+      filesToZip.push(fileNm)
+     
+    }
+    await POST(`/files/download-zip`, { 
+      files: filesToZip, 
+      location: currentFolder
+    });
+  }
   async function moveDirectory(e) {
     for (const fileNm of selectedList) {
       const new_path = e.target.value;
@@ -365,6 +376,10 @@
             {/if}
           </select>
         </div>
+        {#if selectedList.length > 1}       
+          <a href={"#"} on:click={downloadZip}>Download Zip Archive</a>
+        {/if}
+        
       {/if}
     </div>
   </div>

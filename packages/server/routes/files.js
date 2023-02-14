@@ -143,6 +143,18 @@ router.get(
   })
 );
 
+router.post(
+  "/download-zip",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const user_id = req.user && req.user.id;
+    const files = req.body.files;
+    const location = req.body.location;
+    console.log({ files, location });
+    res.json({ success: "ok" });
+  })
+);
+
 /**
  * @name get/serve/:id
  * @function
