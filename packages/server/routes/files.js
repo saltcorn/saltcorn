@@ -27,6 +27,7 @@ const fs = require("fs");
 const path = require("path");
 const Zip = require("adm-zip");
 const stream = require("stream");
+const { extract } = require("@saltcorn/admin-models/models/backup");
 /**
  * @type {object}
  * @const
@@ -326,6 +327,26 @@ router.post(
     const file = await File.findOne(serve_path);
     await file.rename(filename);
 
+    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
+  })
+);
+
+/**
+ * @name post/unzip/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
+router.post(
+  "/unzip/*",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const serve_path = req.params[0];
+    const filename = req.body.value;
+
+    const file = await File.findOne(serve_path);
+    const dir = path.dirname(file.location);
+    if (file) await extract(file.location, dir);
     res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
   })
 );
