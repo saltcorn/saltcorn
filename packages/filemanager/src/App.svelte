@@ -130,6 +130,11 @@
         });
         await fetchAndReset();
         break;
+      case "Unzip":
+        await POST(`/files/unzip/${lastSelected.location}`, {});
+        await fetchAndReset();
+        break;
+
     }
   }
   async function changeAccessRole(e) {
@@ -391,6 +396,9 @@
             {#if selectedList.length === 1}
               <option>Rename</option>
             {/if}
+            {#if selectedList.length === 1 && lastSelected.filename.endsWith(".zip")}
+            <option>Unzip</option>
+          {/if}
           </select>
         </div>
         {#if selectedList.length > 1}       
