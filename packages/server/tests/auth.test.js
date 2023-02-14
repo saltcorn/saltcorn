@@ -260,6 +260,35 @@ describe("user admin", () => {
     const delusers = await User.find({ email: "staff2@foo.com" });
     expect(delusers.length).toBe(0);
   });
+  it("can be disabled", async () => {
+    const staffLoginCookie = await getStaffLoginCookie();
+    const staffUser = await User.findOne({ email: "staff@foo.com" });
+    const adminLoginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/"));
+    await request(app)
+      .post(`/useradmin/disable/${staffUser.id}`)
+      .set("Cookie", adminLoginCookie)
+      .expect(toRedirect("/useradmin"));
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/auth/login"));
+    await request(app)
+      .post(`/useradmin/enable/${staffUser.id}`)
+      .set("Cookie", adminLoginCookie)
+      .expect(toRedirect("/useradmin"));
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/"));
+  });
 });
 describe("User fields", () => {
   it("should add fields", async () => {
