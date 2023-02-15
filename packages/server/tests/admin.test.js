@@ -569,10 +569,24 @@ describe("tags", () => {
       .send("name=MyNewTestTag")
       .expect(toRedirect("/tag/1?show_list=tables"));
   });
+
   itShouldIncludeTextForAdmin("/tag", "MyNewTestTag");
   itShouldIncludeTextForAdmin("/tag/1", "MyNewTestTag");
+  itShouldIncludeTextForAdmin("/tag-entries/add/tables/1", "Add entries");
+  itShouldIncludeTextForAdmin("/tag-entries/add/pages/1", "Add entries");
+  itShouldIncludeTextForAdmin("/tag-entries/add/views/1", "Add entries");
+  itShouldIncludeTextForAdmin("/tag-entries/add/triggers/1", "Add entries");
+  it("adds view to tag ", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag-entries/add/views/1")
+      .set("Cookie", loginCookie)
+      .send("ids=1")
+      .expect(toRedirect("/tag"));
+  });
   itShouldIncludeTextForAdmin("/diagram", "MyNewTestTag");
-  it("creates new tag", async () => {
+  it("deletes new tag", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
