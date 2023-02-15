@@ -1353,14 +1353,14 @@ const userSettings = async ({ req, res, pwform, user }) => {
                           href: "/auth/twofa/disable/totp",
                           class: "btn btn-danger mt-2",
                         },
-                        req.__("Disable TWA")
+                        req.__("Disable 2FA")
                       )
                     : a(
                         {
                           href: "/auth/twofa/setup/totp",
                           class: "btn btn-primary mt-2",
                         },
-                        req.__("Enable TWA")
+                        req.__("Enable 2FA")
                       )
                 ),
               ],
