@@ -195,7 +195,7 @@ class Field implements AbstractField {
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
   static labelToName(label: string): string {
-    return sqlsanitize(label.toLowerCase().replace(" ", "_"));
+    return sqlsanitize(label.toLowerCase().replaceAll(" ", "_"));
   }
 
   get type_name(): string | undefined {

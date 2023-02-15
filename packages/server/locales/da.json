@@ -566,7 +566,7 @@
 	"Generate": "Generate",
 	"Two-factor authentication": "Two-factor authentication",
 	"Two-factor authentication is disabled": "Two-factor authentication is disabled",
-	"Enable TWA": "Enable TWA",
+	"Enable 2FA": "Enable 2FA",
 	"Pattern": "Pattern",
 	"You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.": "You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.",
 	"Views potentially affected": "Views potentially affected",

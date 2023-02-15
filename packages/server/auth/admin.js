@@ -978,7 +978,8 @@ router.post(
 
         req.flash("success", req.__(`User %s created`, email) + pwflash);
 
-        if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
+        if (rnd_password && send_pwreset_email)
+          await send_reset_email(u, req, { creating: true });
       }
     }
     res.redirect(`/useradmin`);
@@ -997,7 +998,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    await send_reset_email(u, req);
+    await send_reset_email(u, req, { from_admin: true });
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
     res.redirect(`/useradmin`);

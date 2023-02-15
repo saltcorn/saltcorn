@@ -892,9 +892,9 @@
 	"Strings": "Strings",
 	"In default language": "In default language",
 	"In %s": "In %s",
-	"Enable TWA": "Enable TWA",
+	"Enable 2FA": "Enable 2FA",
 	"Or enter this code:": "Or enter this code:",
-	"Disable TWA": "Disable TWA",
+	"Disable 2FA": "Disable 2FA",
 	"Cascade delete to file": "Cascade delete to file",
 	"Deleting a row will also delete the file referenced by this field": "Deleting a row will also delete the file referenced by this field",
 	"Has channels?": "Has channels?",
@@ -1095,5 +1095,12 @@
 	"Add": "Add",
 	"Recalculate dynamic": "Recalculate dynamic",
 	"Force logout": "Force logout",
-	"Logged out user %s": "Logged out user %s"
+	"Logged out user %s": "Logged out user %s",
+	"Reset password link sent to %s": "Reset password link sent to %s",
+	"We request that you change your password on %s. You can set your new password through this link: ": "We request that you change your password on %s. You can set your new password through this link: ",
+	"Welcome to %s": "Welcome to %s",
+	"We have created an account for you on %s. You can set your new password through this link: ": "We have created an account for you on %s. You can set your new password through this link: ",
+	"Use this link to access the application once you have set your password: %s": "Use this link to access the application once you have set your password: %s",
+	"Tag: %s": "Tag: %s",
+	"Tag entry": "Tag entry"
 }

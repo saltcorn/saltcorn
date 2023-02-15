@@ -112,6 +112,9 @@ const loginForm = (req, isCreating) => {
         label: req.__("Password"),
         name: "password",
         input_type: "password",
+        attributes: {
+          autocomplete: "current-password",
+        },
         validator: isCreating
           ? (pw) => User.unacceptable_password_reason(pw)
           : undefined,
@@ -1203,11 +1206,17 @@ const changPwForm = (req) =>
         label: req.__("Old password"),
         name: "password",
         input_type: "password",
+        attributes: {
+          autocomplete: "current-password",
+        },
       },
       {
         label: req.__("New password"),
         name: "new_password",
         input_type: "password",
+        attributes: {
+          autocomplete: "new-password",
+        },
         validator: (pw) => User.unacceptable_password_reason(pw),
       },
     ],
@@ -1353,14 +1362,14 @@ const userSettings = async ({ req, res, pwform, user }) => {
                           href: "/auth/twofa/disable/totp",
                           class: "btn btn-danger mt-2",
                         },
-                        req.__("Disable TWA")
+                        req.__("Disable 2FA")
                       )
                     : a(
                         {
                           href: "/auth/twofa/setup/totp",
                           class: "btn btn-primary mt-2",
                         },
-                        req.__("Enable TWA")
+                        req.__("Enable 2FA")
                       )
                 ),
               ],
@@ -1791,6 +1800,12 @@ const totpForm = (req, action) =>
         name: "totpCode",
         label: req.__("Code"),
         type: "Integer",
+        attributes: {
+          type: "text",
+          inputmode: "numeric",
+          pattern: "[0-9]*",
+          autocomplete: "one-time-code",
+        },
         required: true,
       },
     ],
@@ -1828,6 +1843,12 @@ router.get(
           name: "code",
           label: req.__("Code"),
           type: "Integer",
+          attributes: {
+            type: "text",
+            inputmode: "numeric",
+            pattern: "[0-9]*",
+            autocomplete: "one-time-code",
+          },
           required: true,
         },
       ],

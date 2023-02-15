@@ -929,7 +929,10 @@ const int = {
         return attrs?.stepper_btns
           ? number_stepper(name, v, attrs, cls, text_attr(field.name), id)
           : input({
-              type: "number",
+              type: attrs?.type || "number",
+              inputmode: attrs?.inputmode,
+              pattern: attrs?.pattern,
+              autocomplete: attrs?.autocomplete,
               class: ["form-control", cls],
               disabled: attrs.disabled,
               readonly: attrs.readonly,
