@@ -1100,5 +1100,6 @@
 	"We request that you change your password on %s. You can set your new password through this link: ": "We request that you change your password on %s. You can set your new password through this link: ",
 	"Welcome to %s": "Welcome to %s",
 	"We have created an account for you on %s. You can set your new password through this link: ": "We have created an account for you on %s. You can set your new password through this link: ",
-	"Use this link to access the application once you have set your password: %s": "Use this link to access the application once you have set your password: %s"
+	"Use this link to access the application once you have set your password: %s": "Use this link to access the application once you have set your password: %s",
+	"Tag: %s": "Tag: %s"
 }

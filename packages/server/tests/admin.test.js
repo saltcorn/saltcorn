@@ -5,6 +5,7 @@ const {
   getAdminLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
+  itShouldIncludeTextForAdmin,
   toInclude,
   toSucceed,
   //toNotInclude,
@@ -535,14 +536,8 @@ describe("localizer", () => {
  */
 describe("diagram", () => {
   itShouldRedirectUnauthToLogin("/diagram");
-  it("show diagram", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    await request(app)
-      .get("/diagram")
-      .set("Cookie", loginCookie)
-      .expect(toInclude(">All entities<"));
-  });
+  itShouldIncludeTextForAdmin("/diagram", ">All entities<");
+
   it("get data diagram", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -557,8 +552,37 @@ describe("diagram", () => {
       );
   });
 });
+
 /**
- * Pages tests
+ * Diagram tests
+ */
+describe("tags", () => {
+  itShouldRedirectUnauthToLogin("/tag");
+  itShouldIncludeTextForAdmin("/tag", ">Create tag<");
+  itShouldIncludeTextForAdmin("/tag/new", ">Create<");
+  it("creates new tag", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag")
+      .set("Cookie", loginCookie)
+      .send("name=MyNewTestTag")
+      .expect(toRedirect("/tag/1?show_list=tables"));
+  });
+  itShouldIncludeTextForAdmin("/tag", "MyNewTestTag");
+  itShouldIncludeTextForAdmin("/tag/1", "MyNewTestTag");
+  itShouldIncludeTextForAdmin("/diagram", "MyNewTestTag");
+  it("creates new tag", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag/delete/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/tag"));
+  });
+});
+/**
+ * Clear all tests
  */
 describe("clear all page", () => {
   itShouldRedirectUnauthToLogin("/admin/clear-all");
