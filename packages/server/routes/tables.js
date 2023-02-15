@@ -430,7 +430,7 @@ router.get(
         label: `<b>${t.name}</b>\n${t.fields
           .map((f) => `${f.name} : ${f.pretty_type}`)
           .join("\n")}`,
-        title: t.description? t.description : t.name,
+        title: t.description ? t.description : t.name,
       })),
       edges,
     };
@@ -692,7 +692,9 @@ router.get(
           viewCardContents +
           a(
             {
-              href: `/viewedit/new?table=${encodeURIComponent(table.name)}`,
+              href: `/viewedit/new?table=${encodeURIComponent(
+                table.name
+              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
               class: "btn btn-primary",
             },
             req.__("Create view")
