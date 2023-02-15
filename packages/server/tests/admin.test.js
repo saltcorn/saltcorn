@@ -74,6 +74,7 @@ describe("admin page", () => {
     ["/admin/email", "Email settings"],
     ["/admin/system", "Restart server"],
     ["/admin/dev", "Development"],
+    ["/admin/build-mobile-app", "Build mobile app"],
   ]);
   adminPageContains([
     ["/useradmin", "Create user"],
