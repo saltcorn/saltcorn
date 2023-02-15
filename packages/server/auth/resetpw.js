@@ -66,8 +66,7 @@ ${req.__(
 
 ${finalTxt}
 `,
-    html: `${req.__("Hi %s", user.email)},<br />
-    
+    html: `${req.__("Hi %s", user.email)},<br /><br />    
   ${initial}<br />
 <br />
 <a href="${link}">${req.__("Change my password")}</a><br />
