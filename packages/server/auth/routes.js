@@ -112,6 +112,9 @@ const loginForm = (req, isCreating) => {
         label: req.__("Password"),
         name: "password",
         input_type: "password",
+        attributes: {
+          autocomplete: "current-password",
+        },
         validator: isCreating
           ? (pw) => User.unacceptable_password_reason(pw)
           : undefined,
@@ -1203,11 +1206,17 @@ const changPwForm = (req) =>
         label: req.__("Old password"),
         name: "password",
         input_type: "password",
+        attributes: {
+          autocomplete: "current-password",
+        },
       },
       {
         label: req.__("New password"),
         name: "new_password",
         input_type: "password",
+        attributes: {
+          autocomplete: "new-password",
+        },
         validator: (pw) => User.unacceptable_password_reason(pw),
       },
     ],

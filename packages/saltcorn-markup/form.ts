@@ -522,7 +522,11 @@ const innerField =
           hdr.input_type
         }" class="form-control ${validClass} ${
           hdr.class || ""
-        }"${maybe_disabled} data-fieldname="${text_attr(
+        }"${maybe_disabled}${
+          hdr.attributes?.autocomplete
+            ? ` autocomplete="${hdr.attributes?.autocomplete}"`
+            : ""
+        } data-fieldname="${text_attr(
           hdr.form_name
         )}" name="${name}" id="input${text_attr(name)}"${
           v && isdef(v[hdr.form_name])
