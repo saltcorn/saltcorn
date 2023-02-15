@@ -1828,6 +1828,12 @@ router.get(
           name: "code",
           label: req.__("Code"),
           type: "Integer",
+          attributes: {
+            type: "text",
+            inputmode: "numeric",
+            pattern: "[0-9]*",
+            autocomplete: "one-time-code",
+          },
           required: true,
         },
       ],
