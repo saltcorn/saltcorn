@@ -530,7 +530,33 @@ describe("localizer", () => {
       .expect(toRedirect("/site-structure/localizer/edit/da"));
   });
 });
-
+/**
+ * Diagram tests
+ */
+describe("diagram", () => {
+  itShouldRedirectUnauthToLogin("/diagram");
+  it("show diagram", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/diagram")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(">All entities<"));
+  });
+  it("get data diagram", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/diagram/data")
+      .set("Cookie", loginCookie)
+      .expect(
+        respondJsonWith(
+          200,
+          ({ elements, style }) => elements && style.length > 3
+        )
+      );
+  });
+});
 /**
  * Pages tests
  */
