@@ -25,7 +25,9 @@ const {
 } = require("../markup/admin");
 const fs = require("fs");
 const path = require("path");
-
+const Zip = require("adm-zip");
+const stream = require("stream");
+const { extract } = require("@saltcorn/admin-models/models/backup");
 /**
  * @type {object}
  * @const
@@ -140,6 +142,36 @@ router.get(
         .status(404)
         .sendWrap(req.__("Not found"), h1(req.__("File not found")));
     }
+  })
+);
+
+router.post(
+  "/download-zip",
+  isAdmin,
+
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const user_id = req.user && req.user.id;
+    const files = req.body.files;
+    const location = req.body.location;
+    const zip = new Zip();
+
+    for (const fileNm of files) {
+      const file = await File.findOne(path.join(location, fileNm));
+      if (
+        file &&
+        (role <= file.min_role_read || (user_id && user_id === file.user_id))
+      ) {
+        zip.addLocalFile(file.location);
+      }
+    }
+    const readStream = new stream.PassThrough();
+    readStream.end(zip.toBuffer());
+    res.type("application/zip");
+    res.attachment(
+      `${getState().getConfig("site_name", db.getTenantSchema())}-files.zip`
+    );
+    readStream.pipe(res);
   })
 );
 
@@ -295,6 +327,26 @@ router.post(
     const file = await File.findOne(serve_path);
     await file.rename(filename);
 
+    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
+  })
+);
+
+/**
+ * @name post/unzip/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
+router.post(
+  "/unzip/*",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const serve_path = req.params[0];
+    const filename = req.body.value;
+
+    const file = await File.findOne(serve_path);
+    const dir = path.dirname(file.location);
+    if (file) await extract(file.location, dir);
     res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
   })
 );

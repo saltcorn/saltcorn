@@ -460,4 +460,5 @@ export = {
   create_csv_from_rows,
   auto_backup_now,
   create_pack_json,
+  extract,
 };
