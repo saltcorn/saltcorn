@@ -583,9 +583,17 @@ describe("tags", () => {
       .post("/tag-entries/add/views/1")
       .set("Cookie", loginCookie)
       .send("ids=1")
-      .expect(toRedirect("/tag"));
+      .expect(toRedirect("/tag/1?show_list=views"));
   });
   itShouldIncludeTextForAdmin("/diagram", "MyNewTestTag");
+  it("removes view from tag ", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag-entries/remove/views/1/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/tag/1?show_list=views"));
+  });
   it("deletes new tag", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
