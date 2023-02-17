@@ -20,6 +20,7 @@ const {
   ul,
   li,
   input,
+  pre,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -736,6 +737,36 @@ const mkFormRowForRepeat = (
         })
       ),
       adder
+    );
+  } else if (hdr.defaultNone) {
+    const rndid = `fldrep${Math.floor(Math.random() * 16777215).toString(16)}`;
+    let inner =
+      div(
+        {
+          class: `repeats-${hdr.form_name}`,
+        },
+        div(
+          { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
+          repeater_icons,
+          hdr.fields.map((f: any) => {
+            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
+          })
+        )
+      ) + adder;
+    return div(
+      {
+        "data-show-if": hdr.showIf ? mkShowIf(hdr.showIf) : undefined,
+        id: rndid,
+      },
+      pre({ class: "d-none" }, encodeURIComponent(inner)),
+      a(
+        {
+          class: "btn btn-sm btn-outline-primary mb-3",
+          href: `javascript:$('#${rndid}').html(decodeURIComponent($('#${rndid} pre').text()))`,
+          title: "Add",
+        },
+        i({ class: "fas fa-plus" })
+      )
     );
   } else {
     return div(
