@@ -424,7 +424,7 @@ describe("User group", () => {
       {
         label: "Inherit project",
         value:
-          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(project)",
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(project) /* Inherit project */",
       },
     ]);
     await tasks.update({
@@ -446,7 +446,7 @@ describe("User group", () => {
       {
         label: "Inherit task",
         value:
-          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project)",
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project) /* Inherit task */",
       },
     ]);
 
