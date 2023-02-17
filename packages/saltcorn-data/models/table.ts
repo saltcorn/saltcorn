@@ -399,7 +399,7 @@ class Table implements AbstractTable {
         if (ug_to_me) {
           opts.push({
             label: `In ${ugtable.name} user group by ${ug_to_me.label}`,
-            value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ug_to_me.name}).includes(${this.pk_name})`,
+            value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ug_to_me.name}).includes(${this.pk_name}) /* User group ${ugtable.name} */`,
           });
         }
 

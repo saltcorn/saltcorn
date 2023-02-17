@@ -368,7 +368,7 @@ describe("User group", () => {
       {
         label: "In UserWorksOnProject user group by project",
         value:
-          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(id)",
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(id) /* User group UserWorksOnProject */",
       },
     ]);
     await projs.update({
