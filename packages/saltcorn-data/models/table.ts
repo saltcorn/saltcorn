@@ -47,6 +47,7 @@ const {
   get_expression_function,
   freeVariables,
   add_free_variables_to_joinfields,
+  removeComments,
 } = expression;
 
 import csvtojson from "csvtojson";
@@ -341,7 +342,7 @@ class Table implements AbstractTable {
             });
         }
         if (refTable?.ownership_formula) {
-          const refFml = refTable.ownership_formula;
+          const refFml = removeComments(refTable.ownership_formula);
 
           if (refFml.endsWith("==user.id")) {
             const path = refTable.ownership_formula
@@ -352,7 +353,7 @@ class Table implements AbstractTable {
             if (fldNms.has(path[0])) {
               opts.push({
                 label: `Inherit ${field.label}`,
-                value: `Fml:${field.name}?.${refFml}`,
+                value: `Fml:${field.name}?.${refFml} /* Inherit ${field.label} */`,
               });
             }
           }
@@ -366,7 +367,7 @@ class Table implements AbstractTable {
               );
               opts.push({
                 label: `Inherit ${field.label}`,
-                value: `Fml:${fml}`,
+                value: `Fml:${fml} /* Inherit ${field.label} */`,
               });
             } else {
               const fml = refFml.replace(
@@ -376,7 +377,7 @@ class Table implements AbstractTable {
 
               opts.push({
                 label: `Inherit ${field.label}`,
-                value: `Fml:${fml}`,
+                value: `Fml:${fml} /* Inherit ${field.label} */`,
               });
             }
           }
@@ -398,7 +399,7 @@ class Table implements AbstractTable {
         if (ug_to_me) {
           opts.push({
             label: `In ${ugtable.name} user group by ${ug_to_me.label}`,
-            value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ug_to_me.name}).includes(${this.pk_name})`,
+            value: `Fml:user.${ugtable.name}_by_${ug_to_user.name}.map(g=>g.${ug_to_me.name}).includes(${this.pk_name}) /* User group ${ugtable.name} */`,
           });
         }
 

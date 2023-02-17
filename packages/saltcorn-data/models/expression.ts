@@ -520,6 +520,10 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
     if (rows.length > 0) maxid = rows[rows.length - 1].id;
   } while (rows.length === 20);
 };
+//https://stackoverflow.com/a/59094308/19839414
+function removeComments(str: string) {
+  return str.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "").trim();
+}
 export = {
   expressionValidator,
   expressionChecker,
@@ -534,4 +538,5 @@ export = {
   jsexprToSQL,
   freeVariables,
   add_free_variables_to_joinfields,
+  removeComments,
 };
