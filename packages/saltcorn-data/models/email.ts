@@ -1,8 +1,3 @@
-/**
- * @category saltcorn-data
- * @module models/email
- * @subcategory models
- */
 import { createTransport, Transporter } from "nodemailer";
 const { getState } = require("../db/state");
 import tags from "@saltcorn/markup/tags";
@@ -43,17 +38,6 @@ const getMailTransport = (): Transporter => {
 
 const viewToMjml = async (view: View, state: any) => {
   const result = await view.run(state, emailMockReqRes);
-  const allStyles = result.styles.map((style: any) =>
-    mjml.style(`
-      .${style.className} {
-        ${style.style}
-      }
-    `)
-  );
-  const bsCss = link({
-    href: "https://stackpath.bootstrapcdn.com/bootswatch/4.5.0/flatly/bootstrap.min.css",
-    rel: "stylesheet",
-  });
   const faCss = link({
     href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css",
     rel: "stylesheet",
@@ -62,9 +46,12 @@ const viewToMjml = async (view: View, state: any) => {
     mjml.section({ "padding-top": "0px", "padding-bottom": "0px" }),
     mjml.text({ "padding-top": "0px", "padding-bottom": "0px" })
   );
+  const bodyCfg: any = {};
+  if (result.backgroundColor)
+    bodyCfg["background-color"] = result.backgroundColor;
   return mjml.mjml(
-    mjml.head(mjAttributes + mjml.raw(bsCss + faCss) + allStyles.join(" ")) +
-      mjml.body(result.markup)
+    mjml.head(mjAttributes + mjml.raw(faCss)) +
+      mjml.body(bodyCfg, result.markup)
   );
 };
 

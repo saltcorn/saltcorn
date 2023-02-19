@@ -274,7 +274,8 @@ const view_linker = (
   fields,
   __ = (s) => s,
   isWeb = true,
-  user
+  user,
+  targetPrefix = ""
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -297,7 +298,12 @@ const view_linker = (
       return {
         label: vnm,
         key: (r) => {
-          const target = `/view/${encodeURIComponent(vnm)}${get_query(r)}`;
+          const safePrefix = targetPrefix.endsWith("/")
+            ? targetPrefix.substring(0, targetPrefix.length - 1)
+            : targetPrefix;
+          const target = `${safePrefix}/view/${encodeURIComponent(
+            vnm
+          )}${get_query(r)}`;
           return link_view(
             isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             get_label(vnm, r),
