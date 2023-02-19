@@ -337,10 +337,7 @@ const run = async (
   }
   if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
-    return {
-      markup: rendered.markup,
-      styles: rendered.styles,
-    };
+    return rendered;
   }
 };
 
@@ -407,7 +404,7 @@ const renderRows = async (
   const subviewExtra = { ...extra };
   if (extra.req?.generate_email) {
     // no mjml markup for for nested subviews, only for the top view
-    subviewExtra.req = { ...extra.req, generate_email: false };
+    subviewExtra.req = { ...extra.req, isSubView: true };
   }
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
@@ -672,7 +669,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       return action_link(url, req, segment);
     },
     view_link(view) {
-      const { key } = view_linker(view, fields, (s) => s, isWeb(req), req.user);
+      const prefix = req.generate_email && req.get_base_url ? req.get_base_url() : "";
+      const { key } = view_linker(view, fields, (s) => s, isWeb(req), req.user, prefix);
       return key(row);
     },
     tabs(segment, go) {
