@@ -640,6 +640,41 @@ module.exports = {
       else return true;
     },
   },
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  modify_row: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "row_expr",
+          label: "Row expression",
+          sublabel: "Expression for JavaScript object",
+          input_type: "code",
+          attributes: { mode: "application/javascript" },
+        },
+      ];
+    },
+    requireRow: true,
+    run: async ({ row, table, configuration: { row_expr }, user, ...rest }) => {
+      const f = get_async_expression_function(row_expr, [], {
+        row: row || {},
+        user,
+      });
+      const calcrow = await f(row);
+
+      const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
+      if (res.error) return res;
+      else return true;
+    },
+  },
 
   /**
    * @namespace
