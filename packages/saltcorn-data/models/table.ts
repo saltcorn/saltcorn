@@ -586,7 +586,7 @@ class Table implements AbstractTable {
 
     if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
       const state = require("../db/state").getState();
-      state.log(5, `Not authorized to deleteRows in table ${this.name}.`);
+      state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
     let rows;
@@ -814,7 +814,7 @@ class Table implements AbstractTable {
           throw new Error(`Owner field in table ${this.name} not found`);
         if (v[owner_field.name] && v[owner_field.name] !== user.id) {
           state.log(
-            5,
+            4,
             `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in updates`
           );
           return;
@@ -828,7 +828,7 @@ class Table implements AbstractTable {
           });
         if (!existing || existing?.[owner_field.name] !== user.id) {
           state.log(
-            5,
+            4,
             `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in exisiting`
           );
           return;
@@ -843,7 +843,7 @@ class Table implements AbstractTable {
 
         if (!existing || !this.is_owner(user, existing)) {
           state.log(
-            5,
+            4,
             `Not authorized to updateRow in table ${
               this.name
             }. User does not match formula: ${JSON.stringify(user)}`
@@ -853,7 +853,7 @@ class Table implements AbstractTable {
       }
       if (!this.ownership_field_id && !this.ownership_formula) {
         state.log(
-          5,
+          4,
           `Not authorized to updateRow in table ${this.name}. No ownership`
         );
         return;
@@ -981,7 +981,7 @@ class Table implements AbstractTable {
           throw new Error(`Owner field in table ${this.name} not found`);
         if (v_in[owner_field.name] !== user.id) {
           state.log(
-            5,
+            4,
             `Not authorized to insertRow in table ${this.name}. ${user.id} does not match owner field`
           );
 
@@ -990,7 +990,7 @@ class Table implements AbstractTable {
       }
       if (!this.ownership_field_id && !this.ownership_formula) {
         state.log(
-          5,
+          4,
           `Not authorized to insertRow in table ${this.name}. No ownership.`
         );
         return;
@@ -1023,7 +1023,7 @@ class Table implements AbstractTable {
       if (!existing || !this.is_owner(user, existing)) {
         await this.deleteRows({ [pk_name]: id });
         state.log(
-          5,
+          4,
           `Not authorized to insertRow in table ${
             this.name
           }. User does not match formula: ${JSON.stringify(user)}`
