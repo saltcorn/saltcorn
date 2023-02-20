@@ -411,7 +411,7 @@ const string = {
     preFormatted: {
       isEdit: false,
       run: (s) =>
-        s ? span({ style: "white-space:pre" }, text_attr(s || "")) : s,
+        s ? span({ style: "white-space:pre-wrap" }, text_attr(s || "")) : s,
     },
     code: {
       isEdit: false,
