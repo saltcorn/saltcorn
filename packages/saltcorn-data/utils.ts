@@ -232,6 +232,19 @@ const getSafeSaltcornCmd = () => {
     : join(dirname(require!.main!.filename), "saltcorn");
 };
 
+/**
+ * get base_url config without ending slash
+ * @returns url or empty string
+ */
+const getSafeBaseUrl = () => {
+  const path = require("./db/state").getState().getConfig("base_url");
+  return !path
+    ? ""
+    : path.endsWith("/")
+    ? path.substring(0, path.length - 1)
+    : path;
+};
+
 export = {
   objectToQueryString,
   removeEmptyStrings,
@@ -258,4 +271,5 @@ export = {
   hashState,
   extractPagings,
   getSafeSaltcornCmd,
+  getSafeBaseUrl,
 };

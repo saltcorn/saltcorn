@@ -63,6 +63,7 @@ const {
   mergeIntoWhere,
   isWeb,
   hashState,
+  getSafeBaseUrl,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -595,8 +596,12 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const localized_fld = field.attributes.localized_by[locale];
         val = row[localized_fld];
       }
-      const cfg = { ...field.attributes, ...configuration };
+      const cfg = {
+        ...field.attributes,
+        ...configuration,
+      };
       if (fieldview && field.type === "File") {
+        if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
         return val
           ? getState().fileviews[fieldview].run(
               val,
@@ -669,8 +674,16 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       return action_link(url, req, segment);
     },
     view_link(view) {
-      const prefix = req.generate_email && req.get_base_url ? req.get_base_url() : "";
-      const { key } = view_linker(view, fields, (s) => s, isWeb(req), req.user, prefix);
+      const prefix =
+        req.generate_email && req.get_base_url ? req.get_base_url() : "";
+      const { key } = view_linker(
+        view,
+        fields,
+        (s) => s,
+        isWeb(req),
+        req.user,
+        prefix
+      );
       return key(row);
     },
     tabs(segment, go) {
