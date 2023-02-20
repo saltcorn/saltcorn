@@ -585,6 +585,8 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
 
     if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
+      const state = require("../db/state").getState();
+      state.log(5, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
     let rows;
