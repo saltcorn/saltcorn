@@ -210,6 +210,9 @@ class Page implements AbstractPage {
    * @returns {Promise<any>}
    */
   async run(querystate: any, extraArgs: RunExtra): Promise<Layout> {
+    require("../db/state")
+      .getState()
+      .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
     await eachView(this.layout, async (segment: any) => {
       const view = await View.findOne({ name: segment.view });
       if (!view) {
