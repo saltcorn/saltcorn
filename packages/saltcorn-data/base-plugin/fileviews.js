@@ -23,20 +23,21 @@ const path = require("path");
 module.exports = {
   // download link
   "Download link": {
-    run: (filePath) =>
-      link(
+    run: (filePath, file_name, cfg) => {
+      return link(
         isNode()
-          ? `/files/download/${filePath}`
+          ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
         path.basename(filePath) || "Download"
-      ),
+      );
+    },
   },
   // Link
   Link: {
-    run: (filePath) =>
+    run: (filePath, file_name, cfg) =>
       link(
         isNode()
-          ? `/files/serve/${filePath}`
+          ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
           : `javascript:openFile('${filePath}')`,
         path.basename(filePath) || "Open"
       ),
@@ -44,19 +45,25 @@ module.exports = {
 
   // Link (new tab)
   "Link (new tab)": {
-    run: (filePath) =>
+    run: (filePath, file_name, cfg) =>
       a(
         isNode()
-          ? { href: `/files/serve/${filePath}`, target: "_blank" }
+          ? {
+              href: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+              target: "_blank",
+            }
           : { href: `javascript:openFile('${filePath}')` },
         path.basename(filePath) || "Open"
       ),
   },
   // Show Image
   "Show Image": {
-    run: (filePath) => {
+    run: (filePath, file_name, cfg) => {
       if (isNode())
-        return img({ src: `/files/serve/${filePath}`, style: "width: 100%" });
+        return img({
+          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          style: "width: 100%",
+        });
       else {
         const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
@@ -157,10 +164,12 @@ module.exports = {
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
     run: (filePath, file_name, cfg) => {
-      const { width, height, expand } = cfg || {};
+      const { width, height, expand, targetPrefix } = cfg || {};
       if (isNode())
         return img({
-          src: `/files/resize/${width || 50}/${height || 0}/${filePath}`,
+          src: `${targetPrefix || ""}/files/resize/${width || 50}/${
+            height || 0
+          }/${filePath}`,
           onclick: expand
             ? `expand_thumbnail('${filePath}', '${path.basename(filePath)}')`
             : undefined,
