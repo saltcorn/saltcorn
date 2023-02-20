@@ -408,11 +408,18 @@ class View implements AbstractView {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
     try {
+      const viewState = removeEmptyStrings(query);
+      require("../db/state")
+        .getState()
+        .log(
+          5,
+          `Running view ${this.name} with state ${JSON.stringify(viewState)}`
+        );
       return await this.viewtemplateObj!.run(
         table_id,
         this.name,
         this.configuration,
-        removeEmptyStrings(query),
+        viewState,
         extraArgs,
         this.queries(remote, extraArgs.req)
       );
@@ -527,6 +534,9 @@ class View implements AbstractView {
     remote: boolean = !isNode()
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
+    require("../db/state")
+      .getState()
+      .log(5, `runMany view ${this.name} with state ${JSON.stringify(query)}`);
     try {
       if (this.viewtemplateObj?.runMany) {
         if (!this.table_id) {
@@ -600,6 +610,10 @@ class View implements AbstractView {
       remote = false;
     }
     this.check_viewtemplate();
+    getState().log(
+      5,
+      `runPost view ${this.name} with state ${JSON.stringify(query)}`
+    );
     if (!this.viewtemplateObj!.runPost)
       throw new InvalidConfiguration(
         `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
@@ -636,7 +650,13 @@ class View implements AbstractView {
       throw new InvalidConfiguration(
         `Unable to call runRoute of view '${this.name}', ${this.viewtemplate} is missing 'routes'.`
       );
-
+    this.check_viewtemplate();
+    require("../db/state")
+      .getState()
+      .log(
+        5,
+        `Run route ${route} view ${this.name} with body ${JSON.stringify(body)}`
+      );
     const result = await this.viewtemplateObj!.routes[route](
       this.table_id,
       this.name,

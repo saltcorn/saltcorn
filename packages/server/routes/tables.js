@@ -652,19 +652,21 @@ router.get(
       if (views.length > 0) {
         viewCardContents = mkTable(
           [
-            { label: req.__("Name"), key: "name" },
+            {
+              label: req.__("Name"),
+              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+            },
             { label: req.__("Pattern"), key: "viewtemplate" },
             {
-              label: req.__("Run"),
-              key: (r) =>
-                link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
-            },
-            {
-              label: req.__("Edit"),
+              label: req.__("Configure"),
               key: (r) =>
                 link(
-                  `/viewedit/edit/${encodeURIComponent(r.name)}`,
-                  req.__("Edit")
+                  `/viewedit/config/${encodeURIComponent(
+                    r.name
+                  )}?on_done_redirect=${encodeURIComponent(
+                    `table/${table.name}`
+                  )}`,
+                  req.__("Configure")
                 ),
             },
             {
