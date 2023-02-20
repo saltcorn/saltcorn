@@ -941,6 +941,7 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
     let v, id;
+    const state = require("../db/state").getState();
     if (user && user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
@@ -948,9 +949,22 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v_in[owner_field.name] !== user.id) return;
+        if (v_in[owner_field.name] !== user.id) {
+          state.log(
+            5,
+            `Not authorized to insertRow in table ${this.name}. ${user.id} does not match owner field`
+          );
+
+          return;
+        }
       }
-      if (!this.ownership_field_id && !this.ownership_formula) return;
+      if (!this.ownership_field_id && !this.ownership_formula) {
+        state.log(
+          5,
+          `Not authorized to insertRow in table ${this.name}. No ownership.`
+        );
+        return;
+      }
     }
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
@@ -978,6 +992,10 @@ class Table implements AbstractTable {
 
       if (!existing || !this.is_owner(user, existing)) {
         await this.deleteRows({ [pk_name]: id });
+        state.log(
+          5,
+          `Not authorized to insertRow in table ${this.name}. Ownership false for uid=${user.id}`
+        );
         return;
       }
     }
