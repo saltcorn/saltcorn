@@ -193,6 +193,7 @@ const mockReqRes = {
     },
     json() {},
     send() {},
+    status() {},
     sendWrap: () => {},
     __: (s: any) => s,
   },
