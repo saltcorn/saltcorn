@@ -768,7 +768,7 @@ class Table implements AbstractTable {
     user?: Row,
     noTrigger?: boolean,
     resultCollector?: object
-  ): Promise<void> {
+  ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
     const fields = await this.getFields();
@@ -805,7 +805,7 @@ class Table implements AbstractTable {
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
     if (user && role && role > this.min_role_write) {
-      if (role === 10) return;
+      if (role === 10) return "Not authorized";
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
@@ -817,7 +817,7 @@ class Table implements AbstractTable {
             4,
             `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in updates`
           );
-          return;
+          return "Not authorized";
         }
 
         //need to check existing
@@ -831,7 +831,7 @@ class Table implements AbstractTable {
             4,
             `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in exisiting`
           );
-          return;
+          return "Not authorized";
         }
       }
       if (this.ownership_formula) {
@@ -848,7 +848,7 @@ class Table implements AbstractTable {
               this.name
             }. User does not match formula: ${JSON.stringify(user)}`
           );
-          return;
+          return "Not authorized";
         }
       }
       if (!this.ownership_field_id && !this.ownership_formula) {
@@ -856,7 +856,7 @@ class Table implements AbstractTable {
           4,
           `Not authorized to updateRow in table ${this.name}. No ownership`
         );
-        return;
+        return "Not authorized";
       }
     }
     if (this.versioned) {
@@ -907,8 +907,15 @@ class Table implements AbstractTable {
     resultCollector?: object
   ): Promise<ResultMessage> {
     try {
-      await this.updateRow(v, id, user, false, resultCollector);
-      return { success: true };
+      const maybe_err = await this.updateRow(
+        v,
+        id,
+        user,
+        false,
+        resultCollector
+      );
+      if (typeof maybe_err === "string") return { error: maybe_err };
+      else return { success: true };
     } catch (e: any) {
       return { error: normalise_error_message(e.message) };
     }
