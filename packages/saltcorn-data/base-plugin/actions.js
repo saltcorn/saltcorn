@@ -664,7 +664,7 @@ module.exports = {
     },
     requireRow: true,
     run: async ({ row, table, configuration: { row_expr }, user, ...rest }) => {
-      const f = get_async_expression_function(row_expr, [], {
+      const f = get_async_expression_function(row_expr, table.fields, {
         row: row || {},
         user,
       });
@@ -672,7 +672,7 @@ module.exports = {
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
-      else return true;
+      else return { reload_page: true };
     },
   },
 
