@@ -1676,6 +1676,9 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     get_join_field_options() {
       return [];
     },
+    ownership_options() {
+      return [];
+    },
     external: true,
     owner_fieldname() {
       return null;
