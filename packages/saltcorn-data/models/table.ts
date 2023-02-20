@@ -772,6 +772,8 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const role = user?.role_id;
+    const state = require("../db/state").getState();
+
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       const joinFields = this.storedExpressionJoinFields();
       //if any freevars are join fields, update row in db first
@@ -808,7 +810,13 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v[owner_field.name] && v[owner_field.name] !== user.id) return;
+        if (v[owner_field.name] && v[owner_field.name] !== user.id) {
+          state.log(
+            5,
+            `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in updates`
+          );
+          return;
+        }
 
         //need to check existing
         if (!existing)
@@ -816,7 +824,13 @@ class Table implements AbstractTable {
             where: { [pk_name]: id },
             forUser: user,
           });
-        if (!existing || existing?.[owner_field.name] !== user.id) return;
+        if (!existing || existing?.[owner_field.name] !== user.id) {
+          state.log(
+            5,
+            `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in exisiting`
+          );
+          return;
+        }
       }
       if (this.ownership_formula) {
         if (!existing)
@@ -825,9 +839,23 @@ class Table implements AbstractTable {
             forUser: user,
           });
 
-        if (!existing || !this.is_owner(user, existing)) return;
+        if (!existing || !this.is_owner(user, existing)) {
+          state.log(
+            5,
+            `Not authorized to updateRow in table ${
+              this.name
+            }. User does not match formula: ${JSON.stringify(user)}`
+          );
+          return;
+        }
       }
-      if (!this.ownership_field_id && !this.ownership_formula) return;
+      if (!this.ownership_field_id && !this.ownership_formula) {
+        state.log(
+          5,
+          `Not authorized to updateRow in table ${this.name}. No ownership`
+        );
+        return;
+      }
     }
     if (this.versioned) {
       const existing1 = await db.selectOne(this.name, { [pk_name]: id });
@@ -994,7 +1022,9 @@ class Table implements AbstractTable {
         await this.deleteRows({ [pk_name]: id });
         state.log(
           5,
-          `Not authorized to insertRow in table ${this.name}. Ownership false for uid=${user.id}`
+          `Not authorized to insertRow in table ${
+            this.name
+          }. User does not match formula: ${JSON.stringify(user)}`
         );
         return;
       }
