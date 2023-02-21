@@ -119,13 +119,13 @@ const isDate = function (date: Date): boolean {
 const normalise_error_message = (msg: string): string =>
   db.isSQLite
     ? msg.replace(
-        /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
-        "Duplicate value for unique field: $2"
-      )
+      /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
+      "Duplicate value for unique field: $2"
+    )
     : msg.replace(
-        /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/,
-        "Duplicate value for unique field: $2"
-      );
+      /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/,
+      "Duplicate value for unique field: $2"
+    );
 
 /**
  * Table class
@@ -192,8 +192,8 @@ class Table implements AbstractTable {
       where?.id
         ? (v: TableCfg) => v.id === +where.id
         : where?.name
-        ? (v: TableCfg) => v.name === where.name
-        : satisfies(where)
+          ? (v: TableCfg) => v.name === where.name
+          : satisfies(where)
     );
     return tbl ? new Table(structuredClone(tbl)) : null;
   }
@@ -428,8 +428,7 @@ class Table implements AbstractTable {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
     await db.query(
-      `create table ${schema}"${sqlsanitize(name)}" (id ${
-        db.isSQLite ? "integer" : "serial"
+      `create table ${schema}"${sqlsanitize(name)}" (id ${db.isSQLite ? "integer" : "serial"
       } primary key)`
     );
     // populate table definition row
@@ -770,9 +769,9 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
-
+    let joinFields = {}
     if (fields.some((f: Field) => f.calculated && f.stored)) {
-      const joinFields = this.storedExpressionJoinFields();
+      joinFields = this.storedExpressionJoinFields();
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
         Object.values(joinFields).map((jf: any) => jf.ref)
@@ -784,9 +783,14 @@ class Table implements AbstractTable {
       if (need_to_update) {
         await db.update(this.name, v, id, { pk_name });
       }
-
+      if (this.ownership_formula)
+        add_free_variables_to_joinfields(
+          freeVariables(this.ownership_formula),
+          joinFields,
+          fields)
       existing = await this.getJoinedRow({
         where: { [pk_name]: id },
+        forUser: user,
         joinFields,
       });
 
@@ -820,6 +824,7 @@ class Table implements AbstractTable {
           existing = await this.getJoinedRow({
             where: { [pk_name]: id },
             forUser: user,
+            joinFields
           });
         if (!existing || existing?.[owner_field.name] !== user.id) {
           state.log(
@@ -834,13 +839,13 @@ class Table implements AbstractTable {
           existing = await this.getJoinedRow({
             where: { [pk_name]: id },
             forUser: user,
+            joinFields
           });
 
         if (!existing || !this.is_owner(user, existing)) {
           state.log(
             4,
-            `Not authorized to updateRow in table ${
-              this.name
+            `Not authorized to updateRow in table ${this.name
             }. User does not match formula: ${JSON.stringify(user)}`
           );
           return "Not authorized";
@@ -1026,8 +1031,7 @@ class Table implements AbstractTable {
         await this.deleteRows({ [pk_name]: id });
         state.log(
           4,
-          `Not authorized to insertRow in table ${
-            this.name
+          `Not authorized to insertRow in table ${this.name
           }. User does not match formula: ${JSON.stringify(user)}`
         );
         return;
@@ -1434,11 +1438,10 @@ class Table implements AbstractTable {
         if (theError || (copyres && copyres.error)) {
           theError = theError || copyres.error;
           return {
-            error: `Error processing CSV file: ${
-              !theError
-                ? theError
-                : theError.error || theError.message || theError
-            }`,
+            error: `Error processing CSV file: ${!theError
+              ? theError
+              : theError.error || theError.message || theError
+              }`,
           };
         }
       } else {
@@ -1507,9 +1510,8 @@ class Table implements AbstractTable {
       }
     } catch (e: any) {
       return {
-        error: `Error processing CSV file: ${
-          !e ? e : e.error || e.message || e
-        }`,
+        error: `Error processing CSV file: ${!e ? e : e.error || e.message || e
+          }`,
       };
     }
 
@@ -1529,8 +1531,7 @@ class Table implements AbstractTable {
     }
     return {
       success:
-        `Imported ${i > 1 ? i - 1 - rejects : ""} rows into table ${
-          this.name
+        `Imported ${i > 1 ? i - 1 - rejects : ""} rows into table ${this.name
         }` + (rejects ? `. Rejected ${rejects} rows.` : ""),
     };
   }
@@ -1999,9 +2000,8 @@ class Table implements AbstractTable {
             aggField.reftable_name as string
           )}" aggjoin on aggto."${sqlsanitize(
             field
-          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a."${ownField}"${
-            whereStr ? ` and ${whereStr}` : ""
-          }) ${sqlsanitize(fldnm)}`;
+          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a."${ownField}"${whereStr ? ` and ${whereStr}` : ""
+            }) ${sqlsanitize(fldnm)}`;
 
           fldNms.push(newFld);
         } else if (
@@ -2013,36 +2013,30 @@ class Table implements AbstractTable {
           fldNms.push(
             `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
               table
-            )}" where "${dateField}"=(select ${
-              isLatest ? `max` : `min`
+            )}" where "${dateField}"=(select ${isLatest ? `max` : `min`
             }("${dateField}") from ${schema}"${sqlsanitize(
               table
-            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
-              whereStr ? ` and ${whereStr}` : ""
+            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${whereStr ? ` and ${whereStr}` : ""
             }) and "${sqlsanitize(ref)}"=a."${ownField}" limit 1) ${sqlsanitize(
               fldnm
             )}`
           );
         } else if (subselect)
           fldNms.push(
-            `(select ${sqlsanitize(aggregate)}(${
-              field ? `"${sqlsanitize(field)}"` : "*"
+            `(select ${sqlsanitize(aggregate)}(${field ? `"${sqlsanitize(field)}"` : "*"
             }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )}" in (select "${subselect.field}" from ${schema}"${
-              subselect.table.name
+            )}" in (select "${subselect.field}" from ${schema}"${subselect.table.name
             }" where "${subselect.whereField}"=a."${ownField}")) ${sqlsanitize(
               fldnm
             )}`
           );
         else
           fldNms.push(
-            `(select ${sqlsanitize(aggregate)}(${
-              field ? `"${sqlsanitize(field)}"` : "*"
+            `(select ${sqlsanitize(aggregate)}(${field ? `"${sqlsanitize(field)}"` : "*"
             }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
               ref
-            )}"=a."${ownField}"${
-              whereStr ? ` and ${whereStr}` : ""
+            )}"=a."${ownField}"${whereStr ? ` and ${whereStr}` : ""
             }) ${sqlsanitize(fldnm)}`
           );
       }
@@ -2055,10 +2049,10 @@ class Table implements AbstractTable {
         (orderByIsObject(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
-          ? opts.orderBy
-          : opts.orderBy.toLowerCase() === "random()"
-          ? opts.orderBy
-          : "a." + opts.orderBy),
+            ? opts.orderBy
+            : opts.orderBy.toLowerCase() === "random()"
+              ? opts.orderBy
+              : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     };
@@ -2141,7 +2135,7 @@ class Table implements AbstractTable {
                   ...x[v.rename_object[0]]?.[v.rename_object[1]],
                   [v.rename_object[2]]: {
                     ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
-                      v.rename_object[2]
+                    v.rename_object[2]
                     ],
                     [v.rename_object[3]]: x[k],
                   },
