@@ -49,6 +49,7 @@ const DropDownFilterSettings = () => {
     name,
     block,
     neutral_label,
+    label_formula,
     full_width,
     where,
   } = useNode((node) => ({
@@ -56,6 +57,7 @@ const DropDownFilterSettings = () => {
     block: node.data.props.block,
     neutral_label: node.data.props.neutral_label,
     full_width: node.data.props.full_width,
+    label_formula: node.data.props.label_formula,
     where: node.data.props.where,
   }));
   const options = useContext(optionsCtx);
@@ -112,6 +114,18 @@ const DropDownFilterSettings = () => {
           </td>
         </tr>
         <tr>
+          <td>
+            <label>Label formula</label>
+          </td>
+          <td>
+            <input
+              value={label_formula}
+              className="form-control"
+              onChange={setAProp("label_formula")}
+            />
+          </td>
+        </tr>
+        <tr>
           <td></td>
           <td>
             <BlockSetting block={block} setProp={setProp} />
@@ -150,6 +164,7 @@ DropDownFilter.craft = {
       { name: "name", segment_name: "field_name", column_name: "field_name" },
       "full_width",
       "neutral_label",
+      "label_formula",
       "where",
       "block",
     ],
