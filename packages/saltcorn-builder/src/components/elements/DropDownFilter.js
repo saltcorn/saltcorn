@@ -123,6 +123,9 @@ const DropDownFilterSettings = () => {
               className="form-control"
               onChange={setAProp("label_formula")}
             />
+            <i>
+              In scope: <code>{name}</code>
+            </i>
           </td>
         </tr>
         <tr>
