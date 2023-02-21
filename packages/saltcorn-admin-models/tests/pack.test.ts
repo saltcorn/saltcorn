@@ -440,6 +440,9 @@ describe("pack install", () => {
         "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage.",
     });
   });
+  it("installs pack again anyways", async () => {
+    await install_pack(todoPack, "Todo list", () => {});
+  });
   it("uninstalls pack", async () => {
     // todo make pack with trigger to cover all logic!
     await uninstall_pack(todoPack, "Todo list");
