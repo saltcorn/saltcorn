@@ -152,11 +152,17 @@ const test_person_table = async (persons: Table) => {
   await editView.delete();
 
   //update
-  await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 });
+  expect(
+    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 })
+  ).toBe("Not authorized");
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
-  await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user);
+  expect(
+    await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user)
+  ).toBe("Not authorized");
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
-  await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user);
+  expect(
+    await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user)
+  ).toBe(undefined);
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
   if (!department) {
     await persons.updateRow(
