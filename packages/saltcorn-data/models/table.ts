@@ -333,7 +333,7 @@ class Table implements AbstractTable {
           if (ofield)
             opts.push({
               label: `Inherit ${field.label}`,
-              value: `Fml:${field.name}?.${ofield.name}===user.id`,
+              value: `Fml:${field.name}?.${ofield.name}===user.id /* Inherit ${field.label} */`,
             });
         }
         if (refTable?.ownership_formula) {
