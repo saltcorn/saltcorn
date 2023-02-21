@@ -333,7 +333,7 @@ class Table implements AbstractTable {
           if (ofield)
             opts.push({
               label: `Inherit ${field.label}`,
-              value: `Fml:${field.name}?.${ofield.name}===user.id`,
+              value: `Fml:${field.name}?.${ofield.name}===user.id /* Inherit ${field.label} */`,
             });
         }
         if (refTable?.ownership_formula) {
@@ -770,9 +770,9 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
-
+    let joinFields = {};
     if (fields.some((f: Field) => f.calculated && f.stored)) {
-      const joinFields = this.storedExpressionJoinFields();
+      joinFields = this.storedExpressionJoinFields();
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
         Object.values(joinFields).map((jf: any) => jf.ref)
@@ -784,9 +784,15 @@ class Table implements AbstractTable {
       if (need_to_update) {
         await db.update(this.name, v, id, { pk_name });
       }
-
+      if (this.ownership_formula)
+        add_free_variables_to_joinfields(
+          freeVariables(this.ownership_formula),
+          joinFields,
+          fields
+        );
       existing = await this.getJoinedRow({
         where: { [pk_name]: id },
+        forUser: user,
         joinFields,
       });
 
@@ -820,6 +826,7 @@ class Table implements AbstractTable {
           existing = await this.getJoinedRow({
             where: { [pk_name]: id },
             forUser: user,
+            joinFields,
           });
         if (!existing || existing?.[owner_field.name] !== user.id) {
           state.log(
@@ -834,6 +841,7 @@ class Table implements AbstractTable {
           existing = await this.getJoinedRow({
             where: { [pk_name]: id },
             forUser: user,
+            joinFields,
           });
 
         if (!existing || !this.is_owner(user, existing)) {

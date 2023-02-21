@@ -321,7 +321,7 @@ const run = async (
       });
     },
     dropdown_filter(segment) {
-      const { field_name, neutral_label, full_width } = segment;
+      const { field_name, neutral_label, full_width, label_formula } = segment;
 
       const dvs = distinct_values[field_name] || [];
       dvs.sort((a, b) =>
@@ -341,7 +341,15 @@ const run = async (
               (jsvalue === false && state[field_name] === "off"),
             class: !value && !label ? "text-muted" : undefined,
           },
-          !value && !label ? neutral_label : label
+          !value && !label
+            ? neutral_label
+            : label_formula
+            ? eval_expression(
+                label_formula,
+                { [field_name]: value },
+                extra.req.user || { role_id: 10 }
+              )
+            : label
         )
       );
       return select(
