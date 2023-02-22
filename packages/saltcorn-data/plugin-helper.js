@@ -1353,7 +1353,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           // where jFieldNm in (select id from jtnm where lblField=v)
           inSelect: {
             table: db.sqlsanitize(jtNm),
-            tenant: db.getTenantSchema(),
+            tenant: db.isSQLite ? undefined : db.getTenantSchema(),
             field: "id",
             where,
           },
@@ -1369,7 +1369,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
               table: db.sqlsanitize(jtNm),
-              tenant: db.getTenantSchema(),
+              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
               field: db.sqlsanitize(jFieldNm),
               where: { [db.sqlsanitize(lblField)]: v },
             },
@@ -1383,7 +1383,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
               table: db.sqlsanitize(jtNm),
-              tenant: db.getTenantSchema(),
+              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
               field: db.sqlsanitize(jFieldNm),
               valField: "id",
               through: db.sqlsanitize(tblName),
