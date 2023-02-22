@@ -1352,7 +1352,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         {
           // where jFieldNm in (select id from jtnm where lblField=v)
           inSelect: {
-            table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+            table: db.sqlsanitize(jtNm),
+            tenant: db.getTenantSchemaPrefix(),
             field: "id",
             where,
           },
@@ -1367,7 +1368,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
-              table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+              table: db.sqlsanitize(jtNm),
+              tenant: db.getTenantSchemaPrefix(),
               field: db.sqlsanitize(jFieldNm),
               where: { [db.sqlsanitize(lblField)]: v },
             },
@@ -1380,12 +1382,11 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
-              table: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(jtNm)}"`,
+              table: db.sqlsanitize(jtNm),
+              tenant: db.getTenantSchemaPrefix(),
               field: db.sqlsanitize(jFieldNm),
               valField: "id",
-              through: `${db.getTenantSchemaPrefix()}"${db.sqlsanitize(
-                tblName
-              )}"`,
+              through: db.sqlsanitize(tblName),
               where: { [db.sqlsanitize(lblField)]: v },
             },
           },

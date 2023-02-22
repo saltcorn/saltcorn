@@ -218,6 +218,23 @@ describe("mkWhere", () => {
     });
     expect(
       mkWhere({
+        id: [
+          {
+            inSelect: {
+              table: "foo",
+              field: "bar",
+              tenant: "sub1",
+              where: { baz: 7 },
+            },
+          },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where: 'where "id" in (select "bar" from "sub1"."foo" where "baz"=$1)',
+    });
+    expect(
+      mkWhere({
         age: 45,
         id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
         name: "Alice",

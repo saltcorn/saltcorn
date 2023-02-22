@@ -154,11 +154,13 @@ const subSelectWhere =
         where: Where;
         field: string;
         table: string;
+        tenant?: string;
         through?: string;
         valField?: string;
       };
     }
   ): string => {
+    const tenantPrefix = v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
     if (v.inSelect.through && v.inSelect.valField) {
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -168,7 +170,7 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
         v.inSelect.valField
-      }" from "${v.inSelect.table}" ss1 join "${
+      }" from ${tenantPrefix}"${v.inSelect.table}" ss1 join ${tenantPrefix}"${
         v.inSelect.through
       }" ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
     } else {
@@ -180,7 +182,7 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select "${
         v.inSelect.field
-      }" from "${v.inSelect.table}" ${where})`;
+      }" from ${tenantPrefix}"${v.inSelect.table}" ${where})`;
     }
   };
 
