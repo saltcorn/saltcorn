@@ -42,6 +42,8 @@ const TotpStrategy = require("passport-totp").Strategy;
 const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const cors = require("cors");
+const api = require("./routes/api");
+const scapi = require("./routes/scapi");
 
 const locales = Object.keys(available_languages);
 // i18n configuration
@@ -293,6 +295,9 @@ const getApp = async (opts = {}) => {
   app.use(s3storage.middlewareTransform);
 
   app.use(wrapper(version_tag));
+
+  app.use("/api", api);
+  app.use("/scapi", scapi);
 
   const csurf = csrf();
   if (!opts.disableCsrf)
