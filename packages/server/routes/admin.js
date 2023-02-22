@@ -98,6 +98,7 @@ const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
+const stream = require("stream");
 
 const router = new Router();
 module.exports = router;
@@ -555,6 +556,15 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const snap = await Snapshot.findOne({ id });
+    const readStream = new stream.PassThrough();
+    readStream.end(JSON.stringify(snap.pack));
+    res.type("application/json");
+    res.attachment(
+      `${getState().getConfig("site_name", db.getTenantSchema())}-snapshot-${
+        snap.id
+      }.json`
+    );
+    readStream.pipe(res);
     res.send(snap.pack);
   })
 );
