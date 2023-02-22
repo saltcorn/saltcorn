@@ -227,6 +227,60 @@ describe("Table with row ownership field", () => {
     await persons.delete();
   });
 });
+describe("Table with row ownership field and calculated", () => {
+  it("should create and delete table", async () => {
+    const persons = await Table.create("TableOwned");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    await Field.create({
+      table: persons,
+      name: "nameandage",
+      type: "String",
+      calculated: true,
+      stored: true,
+      expression: "lastname+age",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({ ownership_field_id: owner.id });
+
+    await persons.insertRow({ lastname: "Joe", age: 12 });
+    await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+
+    await test_person_table(persons);
+    const owner_fnm = await persons.owner_fieldname();
+    expect(owner_fnm).toBe("owner");
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      { role_id: 10 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+
+    await persons.delete();
+  });
+});
 describe("Table with row ownership formula", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwnedFml");

@@ -773,38 +773,14 @@ class Table implements AbstractTable {
     let joinFields = {};
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       joinFields = this.storedExpressionJoinFields();
-      //if any freevars are join fields, update row in db first
-      const freeVarFKFields = new Set(
-        Object.values(joinFields).map((jf: any) => jf.ref)
-      );
-      let need_to_update = Object.keys(v_in).some((k) =>
-        freeVarFKFields.has(k)
-      );
-
-      if (need_to_update) {
-        await db.update(this.name, v, id, { pk_name });
-      }
-      if (this.ownership_formula)
-        add_free_variables_to_joinfields(
-          freeVariables(this.ownership_formula),
-          joinFields,
-          fields
-        );
-      existing = await this.getJoinedRow({
-        where: { [pk_name]: id },
-        forUser: user,
-        joinFields,
-      });
-
-      let calced = await apply_calculated_fields_stored(
-        need_to_update ? existing : { ...existing, ...v_in },
-        // @ts-ignore TODO ch throw ?
-        this.fields
-      );
-
-      for (const f of fields)
-        if (f.calculated && f.stored) v[f.name] = calced[f.name];
     }
+    if (this.ownership_formula)
+      add_free_variables_to_joinfields(
+        freeVariables(this.ownership_formula),
+        joinFields,
+        fields
+      );
+
     if (user && role && role > this.min_role_write) {
       if (role === 10) return "Not authorized";
       if (this.ownership_field_id) {
@@ -862,6 +838,35 @@ class Table implements AbstractTable {
         return "Not authorized";
       }
     }
+    if (fields.some((f: Field) => f.calculated && f.stored)) {
+      //if any freevars are join fields, update row in db first
+      const freeVarFKFields = new Set(
+        Object.values(joinFields).map((jf: any) => jf.ref)
+      );
+      let need_to_update = Object.keys(v_in).some((k) =>
+        freeVarFKFields.has(k)
+      );
+
+      if (need_to_update) {
+        await db.update(this.name, v, id, { pk_name });
+      }
+
+      existing = await this.getJoinedRow({
+        where: { [pk_name]: id },
+        forUser: user,
+        joinFields,
+      });
+
+      let calced = await apply_calculated_fields_stored(
+        need_to_update ? existing : { ...existing, ...v_in },
+        // @ts-ignore TODO ch throw ?
+        this.fields
+      );
+
+      for (const f of fields)
+        if (f.calculated && f.stored) v[f.name] = calced[f.name];
+    }
+
     if (this.versioned) {
       const existing1 = await db.selectOne(this.name, { [pk_name]: id });
       if (!existing) existing = existing1;
