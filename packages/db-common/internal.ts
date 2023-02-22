@@ -168,9 +168,9 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
         v.inSelect.valField
-      }" from ${v.inSelect.table} ss1 join ${
+      }" from "${v.inSelect.table}" ss1 join "${
         v.inSelect.through
-      } ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
+      }" ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -180,7 +180,7 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select "${
         v.inSelect.field
-      }" from ${v.inSelect.table} ${where})`;
+      }" from "${v.inSelect.table}" ${where})`;
     }
   };
 
