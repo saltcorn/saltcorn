@@ -664,6 +664,7 @@ router.post(
         await install_pack(pack, undefined, (p) =>
           load_plugins.loadAndSaveNewPlugin(p)
         );
+        req.flash("success", req.__("Snapshot restored"));
       } catch (e) {
         console.error(e);
         req.flash("error", e.message);
