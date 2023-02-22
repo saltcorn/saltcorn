@@ -383,8 +383,12 @@ const install_pack = async (
   }
   for (const triggerSpec of pack.triggers || []) {
     const existing = await Trigger.findOne({ name: triggerSpec.name });
-    if (existing) await Trigger.update(existing.id, triggerSpec);
-    else await Trigger.create(triggerSpec);
+    if (existing) {
+      const { table_name, ...tsNoTableName } = triggerSpec;
+      if (table_name)
+        tsNoTableName.table_id = Table.findOne({ name: table_name })?.id;
+      await Trigger.update(existing.id, tsNoTableName);
+    } else await Trigger.create(triggerSpec);
   }
 
   for (const pageFullSpec of pack.pages || []) {
