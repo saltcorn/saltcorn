@@ -1024,6 +1024,15 @@ class Table implements AbstractTable {
         joinFields,
         forUser: user,
       });
+      if (!existing?.[0]) {
+        //failed ownership test
+        if (id) await db.deleteWhere(this.name, { [pk_name]: id });
+        state.log(
+          4,
+          `Not authorized to insertRow in table ${this.name}. Inserted row not retrieved.`
+        );
+        return;
+      }
 
       let calced = await apply_calculated_fields_stored(existing[0], fields);
       v = { ...v_in };
