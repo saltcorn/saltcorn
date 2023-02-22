@@ -980,6 +980,12 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
+    if (this.ownership_formula)
+      add_free_variables_to_joinfields(
+        freeVariables(this.ownership_formula),
+        joinFields,
+        fields
+      );
     let v, id;
     const state = require("../db/state").getState();
     if (user && user.role_id > this.min_role_write) {
@@ -1027,6 +1033,7 @@ class Table implements AbstractTable {
     if (user && user.role_id > this.min_role_write && this.ownership_formula) {
       let existing = await this.getJoinedRow({
         where: { [pk_name]: id },
+        joinFields,
         forUser: user,
       });
 
