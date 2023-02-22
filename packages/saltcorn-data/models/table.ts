@@ -1633,11 +1633,11 @@ class Table implements AbstractTable {
    * get relation-data joined from a field of another table
    * @returns
    */
-  async get_relation_data(): Promise<RelationData[]> {
+  async get_relation_data(unique = true): Promise<RelationData[]> {
     const result = new Array<RelationData>();
     const o2o_rels = await Field.find({
       reftable_name: this.name,
-      is_unique: true,
+      is_unique: unique,
     });
     for (const field of o2o_rels) {
       const relTbl = Table.findOne({ id: field.table_id });
