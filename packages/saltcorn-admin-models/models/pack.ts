@@ -271,7 +271,9 @@ const add_to_menu = async (item: {
   min_role: number;
 }): Promise<void> => {
   const current_menu = getState().getConfigCopy("menu_items", []);
-  current_menu.push(item);
+  const existing = current_menu.findIndex((m: any) => m.label === item.label);
+  if (existing >= 0) current_menu[existing] = item;
+  else current_menu.push(item);
   await save_menu_items(current_menu);
 };
 
@@ -303,10 +305,14 @@ const install_pack = async (
     }
   }
   for (const role of pack.roles || []) {
-    await Role.create(role);
+    const existing = await Role.findOne({ id: role.id });
+    if (existing) await existing.update(role);
+    else await Role.create(role);
   }
   for (const lib of pack.library || []) {
-    await Library.create(lib);
+    const exisiting = await Library.findOne({ name: lib.name });
+    if (exisiting) await exisiting.update(lib);
+    else await Library.create(lib);
   }
   // create tables (users skipped because created by other ways)
   for (const tableSpec of pack.tables) {
