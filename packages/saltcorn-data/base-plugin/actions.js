@@ -13,7 +13,12 @@ const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
-const { getMailTransport, viewToEmailHtml } = require("../models/email");
+const {
+  getMailTransport,
+  viewToEmailHtml,
+  loadAttachments,
+  getFileAggregations,
+} = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
@@ -321,6 +326,13 @@ module.exports = {
             (f.type && f.type.name === "String") || f.reftable_name === "users"
         )
         .map((f) => f.name);
+      const attachment_opts = [""];
+      for (const field of fields) {
+        if (field.type === "File") attachment_opts.push(field.name);
+      }
+      for (const relationPath of await getFileAggregations(table)) {
+        attachment_opts.push(relationPath);
+      }
       return [
         {
           name: "viewname",
@@ -366,6 +378,17 @@ module.exports = {
           required: true,
         },
         {
+          name: "attachment_path",
+          label: "Attachment",
+          sublabel:
+            "Select a field pointing to a file. " +
+            "Direct fields produce a single attachment, relations allow multiple attachments.",
+          input_type: "select",
+          options: attachment_opts,
+          type: "String",
+          default: "",
+        },
+        {
           name: "only_if",
           label: "Only if",
           sublabel:
@@ -393,6 +416,7 @@ module.exports = {
         to_email_field,
         to_email_fixed,
         only_if,
+        attachment_path,
       },
       user,
     }) => {
@@ -430,6 +454,11 @@ module.exports = {
       const view = await View.findOne({ name: viewname });
       const html = await viewToEmailHtml(view, { id: row.id });
       const from = getState().getConfig("email_from");
+      const attachments = await loadAttachments(
+        attachment_path,
+        row,
+        user ? user : { role_id: 10 }
+      );
 
       getState().log(
         3,
@@ -441,8 +470,8 @@ module.exports = {
         to: to_addr,
         subject,
         html,
+        attachments,
       };
-      //console.log(email);
       await getMailTransport().sendMail(email);
       return { notify: `E-mail sent to ${to_addr}` };
     },
