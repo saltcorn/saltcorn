@@ -102,7 +102,6 @@ router.get(
  */
 router.post(
   "/",
-  isAdmin,
   error_catcher(async (req, res) => {
     const err = {
       stack: req.body.stack,
