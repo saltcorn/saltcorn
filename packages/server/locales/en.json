@@ -1103,5 +1103,6 @@
 	"Use this link to access the application once you have set your password: %s": "Use this link to access the application once you have set your password: %s",
 	"Tag: %s": "Tag: %s",
 	"Tag entry": "Tag entry",
-	"Clear": "Clear"
+	"Clear": "Clear",
+	"Restore a snapshot": "Restore a snapshot"
 }

@@ -271,7 +271,9 @@ const add_to_menu = async (item: {
   min_role: number;
 }): Promise<void> => {
   const current_menu = getState().getConfigCopy("menu_items", []);
-  current_menu.push(item);
+  const existing = current_menu.findIndex((m: any) => m.label === item.label);
+  if (existing >= 0) current_menu[existing] = item;
+  else current_menu.push(item);
   await save_menu_items(current_menu);
 };
 
@@ -303,19 +305,28 @@ const install_pack = async (
     }
   }
   for (const role of pack.roles || []) {
-    await Role.create(role);
+    const existing = await Role.findOne({ id: role.id });
+    if (existing) await existing.update(role);
+    else await Role.create(role);
   }
   for (const lib of pack.library || []) {
-    await Library.create(lib);
+    const exisiting = await Library.findOne({ name: lib.name });
+    if (exisiting) await exisiting.update(lib);
+    else await Library.create(lib);
   }
   // create tables (users skipped because created by other ways)
   for (const tableSpec of pack.tables) {
     if (tableSpec.name !== "users") {
-      const table = await Table.create(tableSpec.name, tableSpec);
-      const [tbl_pk] = await table.getFields();
-      //set pk
+      let tbl_pk;
+      const existing = Table.findOne({ name: tableSpec.name });
+      if (existing) {
+        tbl_pk = await existing.getField(existing.pk_name);
+      } else {
+        const table = await Table.create(tableSpec.name, tableSpec);
+        [tbl_pk] = await table.getFields();
+      } //set pk
       const pack_pk = tableSpec.fields.find((f) => f.primary_key);
-      if (pack_pk) {
+      if (pack_pk && tbl_pk) {
         await tbl_pk.update(pack_pk);
       }
     }
@@ -353,10 +364,15 @@ const install_pack = async (
     const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
       viewSpec;
     const vtable = await Table.findOne({ name: table });
-    await View.create({
-      ...viewNoTable,
-      table_id: vtable ? vtable.id : null,
-    });
+    const existing = View.findOne({ name: viewNoTable.name });
+    if (existing?.id) {
+      await View.update(viewNoTable, existing.id);
+    } else {
+      await View.create({
+        ...viewNoTable,
+        table_id: vtable ? vtable.id : null,
+      });
+    }
     if (menu_label)
       await add_to_menu({
         label: menu_label,
@@ -366,12 +382,20 @@ const install_pack = async (
       });
   }
   for (const triggerSpec of pack.triggers || []) {
-    await Trigger.create(triggerSpec);
+    const existing = await Trigger.findOne({ name: triggerSpec.name });
+    if (existing) {
+      const { table_name, ...tsNoTableName } = triggerSpec;
+      if (table_name)
+        tsNoTableName.table_id = Table.findOne({ name: table_name })?.id;
+      await Trigger.update(existing.id, tsNoTableName);
+    } else await Trigger.create(triggerSpec);
   }
 
   for (const pageFullSpec of pack.pages || []) {
     const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
-    await Page.create(pageSpec as PagePack);
+    const existing = Page.findOne({ name: pageSpec.name });
+    if (existing?.id) await Page.update(existing.id, pageSpec);
+    else await Page.create(pageSpec as PagePack);
     for (const role of root_page_for_roles || []) {
       const current_root = getState().getConfigCopy(role + "_home", "");
       if (!current_root || current_root === "")

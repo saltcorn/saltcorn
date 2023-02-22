@@ -69,6 +69,7 @@ const {
   restore,
   auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
+const { install_pack } = require("@saltcorn/admin-models/models/pack");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const {
   runConfigurationCheck,
@@ -98,6 +99,7 @@ const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
+const stream = require("stream");
 
 const router = new Router();
 module.exports = router;
@@ -426,6 +428,36 @@ router.get(
               a(
                 { href: "/admin/snapshot-list" },
                 req.__("List/download snapshots &raquo;")
+              ),
+              form(
+                {
+                  method: "post",
+                  action: "/admin/snapshot-restore-full",
+                  encType: "multipart/form-data",
+                },
+                input({
+                  type: "hidden",
+                  name: "_csrf",
+                  value: req.csrfToken(),
+                }),
+                label(
+                  {
+                    class: "btn-link",
+                    for: "upload_to_snapshot",
+                    style: { cursor: "pointer" },
+                  },
+                  i({ class: "fas fa-upload me-2 mt-2" }),
+                  req.__("Restore a snapshot")
+                ),
+                input({
+                  id: "upload_to_snapshot",
+                  class: "d-none",
+                  name: "file",
+                  type: "file",
+                  accept: ".json,application/json",
+                  onchange:
+                    "notifyAlert('Restoring snapshot...', true);this.form.submit();",
+                })
               )
             ),
           },
@@ -555,6 +587,15 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const snap = await Snapshot.findOne({ id });
+    const readStream = new stream.PassThrough();
+    readStream.end(JSON.stringify(snap.pack));
+    res.type("application/json");
+    res.attachment(
+      `${getState().getConfig("site_name", db.getTenantSchema())}-snapshot-${
+        snap.id
+      }.json`
+    );
+    readStream.pipe(res);
     res.send(snap.pack);
   })
 );
@@ -606,6 +647,33 @@ router.post(
     res.redirect(/^[a-z]+$/g.test(type) ? `/${type}edit` : "/");
   })
 );
+
+/**
+ * @name post/restore
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.post(
+  "/snapshot-restore-full",
+  setTenant, // TODO why is this needed?????
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (req.files?.file?.tempFilePath) {
+      try {
+        const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
+        await install_pack(pack, undefined, (p) =>
+          load_plugins.loadAndSaveNewPlugin(p)
+        );
+        req.flash("success", req.__("Snapshot restored"));
+      } catch (e) {
+        console.error(e);
+        req.flash("error", e.message);
+      }
+    }
+    res.redirect(`/admin/backup`);
+  })
+);
+
 router.get(
   "/auto-backup-download/:filename",
   isAdmin,
