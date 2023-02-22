@@ -69,6 +69,7 @@ const {
   restore,
   auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
+const { install_pack } = require("@saltcorn/admin-models/models/pack");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const {
   runConfigurationCheck,
@@ -660,7 +661,11 @@ router.post(
     if (req.files?.file?.tempFilePath) {
       try {
         const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
+        await install_pack(pack, undefined, (p) =>
+          load_plugins.loadAndSaveNewPlugin(p)
+        );
       } catch (e) {
+        console.error(e);
         req.flash("error", e.message);
       }
     }
