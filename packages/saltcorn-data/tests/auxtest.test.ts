@@ -131,7 +131,8 @@ describe("stateFieldsToWhere", () => {
           {
             inSelect: {
               field: "id",
-              table: '"books"',
+              table: "books",
+              tenant: undefined,
               where: { author: { ilike: "Herman" } },
             },
           },
@@ -143,7 +144,8 @@ describe("stateFieldsToWhere", () => {
           {
             inSelect: {
               field: "id",
-              table: '"public"."books"',
+              table: "books",
+              tenant: "public",
               where: { author: { ilike: "Herman" } },
             },
           },
