@@ -143,7 +143,8 @@ describe("stateFieldsToWhere", () => {
           {
             inSelect: {
               field: "id",
-              table: '"public"."books"',
+              table: "books",
+              tenant: "public",
               where: { author: { ilike: "Herman" } },
             },
           },
