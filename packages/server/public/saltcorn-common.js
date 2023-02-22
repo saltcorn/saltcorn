@@ -198,9 +198,13 @@ function apply_showif() {
           const $def = e
             .closest(".form-namespace")
             .find("input[name=_columndef]");
-          const def = JSON.parse($def.val());
-          def[k] = v;
-          $def.val(JSON.stringify(def));
+          try {
+            const def = JSON.parse($def.val());
+            def[k] = v;
+            $def.val(JSON.stringify(def));
+          } catch (e) {
+            console.error("Invalid json", e);
+          }
         });
     };
 
