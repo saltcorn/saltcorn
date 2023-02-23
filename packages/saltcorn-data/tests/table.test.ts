@@ -1415,6 +1415,32 @@ describe("unique history clash", () => {
     const history1 = await table.get_history(row1!.id);
     expect(history0.length + 1).toBe(history1.length);
   });
+  it("should not clash unique with history", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+    await table.deleteRows({});
+    await table.insertRow({ name: "Bartimaeus", age: 2499 });
+  });
+  it("should disable and enable history", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+    table.versioned = false;
+    await table.update(table);
+    table.versioned = true;
+    await table.update(table);
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+
+    await table.updateRow({ age: 2502 }, row.id);
+    const row1 = await table.getRow({ name: "Bartimaeus" });
+    expect(row1!.name).toBe("Bartimaeus");
+    expect(row1!.age).toBe(2502);
+    await table.deleteRows({});
+    await table.insertRow({ name: "Bartimaeus", age: 2498 });
+  });
 });
 
 describe("distance ordering", () => {
