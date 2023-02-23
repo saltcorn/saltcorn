@@ -1373,6 +1373,14 @@ describe("unique history clash", () => {
       label: "age",
       type: "Integer",
     });
+    await Field.create({
+      table,
+      label: "agep1",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "age ? age+1:null",
+    });
   });
   it("should enable versioning", async () => {
     const table = await Table.findOne({ name: "unihistory" });
