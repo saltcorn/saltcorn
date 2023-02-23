@@ -23,7 +23,7 @@ const path = require("path");
 module.exports = {
   // download link
   "Download link": {
-    run: (filePath, file_name, cfg) => {
+    run: (filePath, file_name, cfg = {}) => {
       return link(
         isNode()
           ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
@@ -34,7 +34,7 @@ module.exports = {
   },
   // Link
   Link: {
-    run: (filePath, file_name, cfg) =>
+    run: (filePath, file_name, cfg = {}) =>
       link(
         isNode()
           ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
@@ -45,7 +45,7 @@ module.exports = {
 
   // Link (new tab)
   "Link (new tab)": {
-    run: (filePath, file_name, cfg) =>
+    run: (filePath, file_name, cfg = {}) =>
       a(
         isNode()
           ? {
@@ -58,7 +58,7 @@ module.exports = {
   },
   // Show Image
   "Show Image": {
-    run: (filePath, file_name, cfg) => {
+    run: (filePath, file_name, cfg = {}) => {
       if (isNode())
         return img({
           src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
@@ -163,7 +163,7 @@ module.exports = {
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
-    run: (filePath, file_name, cfg) => {
+    run: (filePath, file_name, cfg = {}) => {
       const { width, height, expand, targetPrefix } = cfg || {};
       if (isNode())
         return img({
