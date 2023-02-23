@@ -229,7 +229,7 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const pages = await Page.find({}, { orderBy: "name" });
+    const pages = await Page.find({}, { orderBy: "name", nocase: true });
     const roles = await User.get_roles();
 
     res.sendWrap(req.__("Pages"), {
