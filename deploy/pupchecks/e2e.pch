@@ -16,4 +16,4 @@ contains Popup settings
 
 click button[type=submit]
 status 200
-contains No elemnt selected
+contains No element selected
