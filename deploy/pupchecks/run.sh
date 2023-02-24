@@ -19,3 +19,4 @@ while ! nc -z localhost 3012; do
   sleep 0.1 
 done
 
+npx pupcheck -H e2e.pch
