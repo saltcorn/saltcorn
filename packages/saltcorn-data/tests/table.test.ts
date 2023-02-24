@@ -17,6 +17,7 @@ import {
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
+import exp from "constants";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -1367,6 +1368,19 @@ describe("unique history clash", () => {
       type: "String",
       is_unique: true,
     });
+    await Field.create({
+      table,
+      label: "age",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "agep1",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "age ? age+1:null",
+    });
   });
   it("should enable versioning", async () => {
     const table = await Table.findOne({ name: "unihistory" });
@@ -1378,13 +1392,54 @@ describe("unique history clash", () => {
     const table = await Table.findOne({ name: "unihistory" });
     assertIsSet(table);
 
-    await table.insertRow({ name: "Bartimaeus" });
+    await table.insertRow({ name: "Bartimaeus", age: 2500 });
     const row = await table.getRow({ name: "Bartimaeus" });
     expect(row!.name).toBe("Bartimaeus");
     await table.deleteRows({ id: row!.id });
     await table.insertRow({ name: "Bartimaeus" });
     const row1 = await table.getRow({ name: "Bartimaeus" });
     expect(row1!.name).toBe("Bartimaeus");
+  });
+  it("should duplicate row manually", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+    const history0 = await table.get_history(row.id);
+
+    await table.updateRow({ age: 2501 }, row.id);
+    const row1 = await table.getRow({ name: "Bartimaeus" });
+    expect(row1!.name).toBe("Bartimaeus");
+    expect(row1!.age).toBe(2501);
+    const history1 = await table.get_history(row1!.id);
+    expect(history0.length + 1).toBe(history1.length);
+  });
+  it("should not clash unique with history", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+    await table.deleteRows({});
+    await table.insertRow({ name: "Bartimaeus", age: 2499 });
+  });
+  it("should disable and enable history", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+    table.versioned = false;
+    await table.update(table);
+    table.versioned = true;
+    await table.update(table);
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+
+    await table.updateRow({ age: 2502 }, row.id);
+    const row1 = await table.getRow({ name: "Bartimaeus" });
+    expect(row1!.name).toBe("Bartimaeus");
+    expect(row1!.age).toBe(2502);
+    await table.deleteRows({});
+    await table.insertRow({ name: "Bartimaeus", age: 2498 });
   });
 });
 

@@ -410,7 +410,12 @@ const getActionConfigFields = async (action, table) =>
  * @param {object} req
  * @returns {Promise<object[]>}
  */
-const field_picker_fields = async ({ table, viewname, req }) => {
+const field_picker_fields = async ({
+  table,
+  viewname,
+  req,
+  has_click_to_edit,
+}) => {
   const __ = (...s) => (req ? req.__(...s) : s.join(""));
   const fields = await table.getFields();
   for (const field of fields) {
@@ -623,6 +628,7 @@ const field_picker_fields = async ({ table, viewname, req }) => {
       },
       showIf: { type: "Field" },
     },
+
     {
       name: "join_field",
       label: __("Join Field"),
@@ -667,7 +673,16 @@ const field_picker_fields = async ({ table, viewname, req }) => {
           },
           { name: "_columndef", input_type: "hidden" },
         ]),
-
+    ...(has_click_to_edit
+      ? [
+          {
+            name: "click_to_edit",
+            label: "Click to edit?",
+            type: "Bool",
+            showIf: { type: "Field" },
+          },
+        ]
+      : []),
     {
       name: "action_name",
       label: __("Action"),

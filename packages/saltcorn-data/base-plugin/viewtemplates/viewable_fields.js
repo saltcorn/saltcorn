@@ -649,11 +649,12 @@ const get_viewable_fields = (
         f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
       }
       const isNum = f && f.type && f.type.name === "Integer";
+      let fvrun;
       if (
         column.fieldview &&
         f?.type?.fieldviews?.[column.fieldview]?.expandColumns
       ) {
-        return f.type.fieldviews[column.fieldview].expandColumns(
+        fvrun = f.type.fieldviews[column.fieldview].expandColumns(
           f,
           {
             ...f.attributes,
@@ -661,10 +662,8 @@ const get_viewable_fields = (
           },
           column
         );
-      }
-
-      return (
-        f && {
+      } else
+        fvrun = f && {
           ...setWidth,
           align: isNum ? "right" : undefined,
           label: headerLabelForName(column, f, req, __),
@@ -696,8 +695,24 @@ const get_viewable_fields = (
             !f.calculated || f.stored
               ? sortlinkForName(f.name, req, viewname, statehash)
               : undefined,
-        }
-      );
+        };
+      if (column.click_to_edit) {
+        const oldkey =
+          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
+        const newkey = (row) =>
+          div(
+            {
+              "data-inline-edit-field": column.field_name,
+              "data-inline-edit-ajax": "true",
+              "data-inline-edit-dest-url": `/api/${table.name}/${
+                row[table.pk_name]
+              }`,
+            },
+            oldkey(row)
+          );
+        fvrun.key = newkey;
+      }
+      return fvrun;
     }
   }).filter((v) => !!v);
   if (dropdown_actions.length > 0) {

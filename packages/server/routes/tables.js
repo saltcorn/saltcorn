@@ -1030,7 +1030,10 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Table.find_with_external({}, { orderBy: "name" });
+    const rows = await Table.find_with_external(
+      {},
+      { orderBy: "name", nocase: true }
+    );
     const roles = await User.get_roles();
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req);
