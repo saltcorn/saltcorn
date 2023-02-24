@@ -410,8 +410,11 @@ function initialize_page() {
     var url = $(this).attr("data-inline-edit-dest-url");
     var current = $(this).children("span.current").html();
     var key = $(this).attr("data-inline-edit-field") || "value";
+    var ajax = !!$(this).attr("data-inline-edit-ajax");
     $(this).replaceWith(
-      `<form method="post" action="${url}" >
+      `<form method="post" action="${url}" ${
+        ajax ? `onsubmit="inline_ajax_submit(event)"` : ""
+      }>
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="text" name="${key}" value="${current}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
@@ -527,6 +530,28 @@ function initialize_page() {
 }
 
 $(initialize_page);
+
+function inline_ajax_submit(e) {
+  e.preventDefault();
+  var form = $(e.target).closest("form");
+  var form_data = form.serialize();
+  var url = form.attr("action");
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function (res) {
+      location.reload();
+    },
+    error: function (e) {
+      ajax_done(
+        e.responseJSON || { error: "Unknown error: " + e.responseText }
+      );
+    },
+  });
+}
 
 function ajax_indicator(show, e) {
   const $ind = e

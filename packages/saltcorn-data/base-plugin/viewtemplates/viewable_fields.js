@@ -703,7 +703,7 @@ const get_viewable_fields = (
           div(
             {
               "data-inline-edit-field": column.field_name,
-              "data-inline-edit-ajax": true,
+              "data-inline-edit-ajax": "true",
               "data-inline-edit-dest-url": `/api/${table.name}/${
                 row[table.pk_name]
               }`,
