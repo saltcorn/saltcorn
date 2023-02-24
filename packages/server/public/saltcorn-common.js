@@ -409,10 +409,11 @@ function initialize_page() {
   $("[data-inline-edit-dest-url]").click(function () {
     var url = $(this).attr("data-inline-edit-dest-url");
     var current = $(this).children("span.current").html();
+    var key = $(this).attr("data-inline-edit-field") || "value";
     $(this).replaceWith(
       `<form method="post" action="${url}" >
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
-      <input type="text" name="value" value="${current}">
+      <input type="text" name="${key}" value="${current}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       </form>`
     );

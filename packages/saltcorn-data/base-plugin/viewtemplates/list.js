@@ -134,6 +134,7 @@ const configuration_workflow = (req) =>
             table,
             viewname: context.viewname,
             req,
+            has_click_to_edit: true,
           });
           return new Form({
             blurb: req.__("Specify the fields in the table to show"),
