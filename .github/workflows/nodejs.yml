@@ -63,9 +63,17 @@ jobs:
           PGHOST: localhost
           PGUSER: postgres
           PGDATABASE: saltcorn_test
-          PGPASSWORD:
-            postgres
-            # The default PostgreSQL port
+          PGPASSWORD: postgres
+      - run: deploy/pupchecks/run.sh
+        env:
+          CI: true
+          SALTCORN_MULTI_TENANT: true
+          SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: saltcorn_test
+          PGPASSWORD: postgres
       - run: pytest
         env:
           CI: true
@@ -75,9 +83,7 @@ jobs:
           PGHOST: localhost
           PGUSER: postgres
           PGDATABASE: saltcorn_test
-          PGPASSWORD:
-            postgres
-            # The default PostgreSQL port
+          PGPASSWORD: postgres
       - run: packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite
