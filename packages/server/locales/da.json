@@ -700,5 +700,9 @@
 	"No row selected": "No row selected",
 	"Finish": "Finish",
 	"Back": "Back",
-	"Preview": "Preview"
+	"Preview": "Preview",
+	"Tables organise data by fields and rows.": "Tables organise data by fields and rows.",
+	"Views display data from tables. A view is a view pattern applied to a table, with configuration.": "Views display data from tables. A view is a view pattern applied to a table, with configuration.",
+	"No views": "No views",
+	"No pages": "No pages"
 }

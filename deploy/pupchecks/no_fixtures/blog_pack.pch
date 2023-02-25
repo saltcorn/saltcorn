@@ -8,7 +8,7 @@ contains Go to pack store
 goto /plugins?set=packs
 
 click (form[action="/packs/install-named/Blog"] button[type=submit])
-sleep 5000
+wait_for div.alert-success
 
 contains Add Post
 
