@@ -5,18 +5,22 @@ set -e
 PGDATABASE=saltcorn_test
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd $SCRIPT_DIR
-../../packages/saltcorn-cli/bin/saltcorn reset-schema -f
+PATH=../../packages/saltcorn-cli/bin/:$PATH
 
-echo Restoring test application backup...
-../../packages/saltcorn-cli/bin/saltcorn fixtures
+for filename in with_fixtures/*.pch; do
+  saltcorn reset-schema -f
 
-echo Starting background Saltcorn server...
-../../packages/saltcorn-cli/bin/saltcorn serve -p 3012 &
-SCPID=$!
-trap "kill $SCPID" EXIT
+  echo Restoring test application backup...
+  saltcorn fixtures
 
-while ! nc -z localhost 3012; do   
-  sleep 0.2 
+  echo Starting background Saltcorn server...
+  saltcorn serve -p 3012 &
+  SCPID=$!
+  trap "kill $SCPID" EXIT
+
+  while ! nc -z localhost 3012; do   
+    sleep 0.2 
+  done
+
+  npx pupcheck $filename
 done
-
-npx pupcheck e2e.pch
