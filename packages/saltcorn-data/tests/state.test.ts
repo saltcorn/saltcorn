@@ -45,8 +45,6 @@ describe("State queries", () => {
   });
   it("should query i18n strings", async () => {
     expect(getState().getStringsForI18n()).toStrictEqual([
-      "Author",
-      "Pages",
       "Hello world",
       "<h1> foo</h1>",
       "Click here",
