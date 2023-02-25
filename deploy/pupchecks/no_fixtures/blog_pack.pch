@@ -13,12 +13,12 @@ wait_for div.alert-success
 contains Add Post
 
 goto /view/EditPost
-sleep 500
+sleep 1000
 
 type #inputtitle My First Post
 slowly_type #cke_inputexcerpt A wonderful post
 slowly_type #cke_inputbody Lorem ipsum
-sleep 3000
+sleep 500
 click button[type=submit]
 
 contains Published on
