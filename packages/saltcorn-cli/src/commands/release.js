@@ -38,7 +38,6 @@ class ReleaseCommand extends Command {
     console.log("Release begins in five seconds, press Ctrl-C to abort");
     await sleep(5000);
     const pkgs = {
-      "@saltcorn/e2e": { dir: "e2e" },
       "@saltcorn/db-common": { dir: "db-common", publish: true },
       "@saltcorn/sqlite": { dir: "sqlite", publish: true },
       "@saltcorn/sqlite-mobile": { dir: "sqlite-mobile", publish: true },
