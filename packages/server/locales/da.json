@@ -696,5 +696,9 @@
 	"URL after delete": "URL after delete",
 	"Save before going back": "Save before going back",
 	"Reload after going back": "Reload after going back",
-	"Steps to go back": "Steps to go back"
+	"Steps to go back": "Steps to go back",
+	"No row selected": "No row selected",
+	"Finish": "Finish",
+	"Back": "Back",
+	"Preview": "Preview"
 }

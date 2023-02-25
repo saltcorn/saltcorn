@@ -10,11 +10,17 @@ click button[type=submit]
 status 200
 contains The Wiki contains the documentation and tutorials
 
-goto http://localhost:3012/viewedit/edit/authoredit
+goto http://localhost:3012/viewedit/edit/authorshow
 status 200
 contains Popup settings
+
 
 click button[type=submit]
 status 200
 contains No element selected
+contains Author
 
+click button.builder-save
+contains Set page title
+click button[type=submit]
+contains View authorshow saved
