@@ -274,7 +274,9 @@ describe("Show view", () => {
         isFormula: {},
       },
       columns: [],
-      response: `<div class="card mt-4 shadow"><div class="card-body">Herman Melville<br />Herman Melville</div></div>`,
+      response: `<div class="card mt-4 shadow"><div class="card-body">Herman Melville<br /><span style="margin-bottom:1rem"><div class="row w-100" style="margin-bottom:1rem"><div class="col-sm-3">Author</div><div class="col-sm-9">Herman Melville</div></div></span><span style="margin-bottom:1rem"><div class="row w-100" style="margin-bottom:1rem"><div class="col-sm-3">Pages</div><div class="col-sm-9">967</div></div></span><span style="margin-bottom:1rem"><div class="row w-100" style="margin-bottom:1rem"><div class="col-sm-4"><a href="/view/authoredit?id=1">Edit</a></div><div class="col-sm-4"><form action="/delete/books/1?redirect=/view/authorshow" method="post" class="d-inline">
+  <input type="hidden" name="_csrf" value="">
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="col-4"></div></div></span></div></div>`,
     });
     const showbooks1 = {
       layout: {
@@ -1126,7 +1128,9 @@ describe("Page", () => {
             type: "view",
             view: "authorshow",
             state: "fixed",
-            contents: "Herman Melville",
+            contents: `<span style="margin-bottom:1rem"><div class="row w-100" style="margin-bottom:1rem"><div class="col-sm-3">Author</div><div class="col-sm-9">Herman Melville</div></div></span><span style="margin-bottom:1rem"><div class="row w-100" style="margin-bottom:1rem"><div class="col-sm-3">Pages</div><div class="col-sm-9">967</div></div></span><span style="margin-bottom:1rem"><div class="row w-100" style="margin-bottom:1rem"><div class="col-sm-4"><a href="/view/authoredit?id=1">Edit</a></div><div class="col-sm-4"><form action="/delete/books/1?redirect=/view/authorshow" method="post" class="d-inline">
+  <input type="hidden" name="_csrf" value="">
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="col-4">1</div></div></span>`,
           },
         ],
       },
