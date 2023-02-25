@@ -8,7 +8,7 @@ cd $SCRIPT_DIR
 ../../packages/saltcorn-cli/bin/saltcorn reset-schema -f
 
 echo Restoring test application backup...
-../../packages/saltcorn-cli/bin/saltcorn restore ../../packages/saltcorn-random-tests/backup-files/sc-backup-sub2-2023-01-06-21-49.zip
+../../packages/saltcorn-cli/bin/saltcorn fixtures
 
 echo Starting background Saltcorn server...
 ../../packages/saltcorn-cli/bin/saltcorn serve -p 3012 &
