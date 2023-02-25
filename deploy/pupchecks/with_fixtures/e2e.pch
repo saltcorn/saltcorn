@@ -1,7 +1,7 @@
-goto http://localhost:3012/
+goto /
 status 200
 contains Create an account
-goto http://localhost:3012/auth/login
+goto /auth/login
 status 200
 
 type input#inputemail admin@foo.com
@@ -10,7 +10,7 @@ click button[type=submit]
 status 200
 contains The Wiki contains the documentation and tutorials
 
-goto http://localhost:3012/viewedit/edit/authorshow
+goto /viewedit/edit/authorshow
 status 200
 contains Popup settings
 

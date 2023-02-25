@@ -22,5 +22,5 @@ for filename in with_fixtures/*.pch; do
     sleep 0.2 
   done
 
-  npx pupcheck $filename
+  PUPCHECK_BASE_URL="http://localhost:3012" npx pupcheck -H $filename
 done
