@@ -720,7 +720,7 @@ class View implements AbstractView {
     configFlow.autoSave = true;
     configFlow.startAtStepURL = (stepNm) =>
       `/viewedit/config/${this.name}?step=${stepNm}${
-        onDoneRedirect ? onDoneRedirect : ""
+        onDoneRedirect ? `&on_done_redirect=${onDoneRedirect}` : ""
       }`;
     configFlow.previewURL = `/view/${this.name}/preview`;
     return configFlow;
