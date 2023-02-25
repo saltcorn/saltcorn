@@ -60,10 +60,14 @@ contains Destination type
 select #inputview_when_done ListPersons
 click button[type=submit]
 contains View EditPersons saved
+contains Views of this table
 
 goto /viewedit/config/ListPersons?on_done_redirect=table%2FPersons
 contains Column configuration
 click button[type=submit]
 contains Specify how to create a new row
 select #inputview_to_create EditPersons
+click button[type=submit]
+click button#btnbackwf
+contains Specify how to create a new row
 click button[type=submit]
