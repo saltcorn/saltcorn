@@ -1,6 +1,6 @@
 goto http://localhost:3012/
 status 200
-contains authorlist
+contains Create an account
 goto http://localhost:3012/auth/login
 status 200
 
@@ -17,3 +17,4 @@ contains Popup settings
 click button[type=submit]
 status 200
 contains No element selected
+
