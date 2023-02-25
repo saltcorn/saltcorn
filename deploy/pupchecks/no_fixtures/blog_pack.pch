@@ -17,6 +17,9 @@ sleep 500
 
 type #inputtitle My First Post
 slowly_type #cke_inputexcerpt A wonderful post
-slowly_type #cke_inputbody Lorem ipsum;
+slowly_type #cke_inputbody Lorem ipsum
 sleep 3000
 click button[type=submit]
+
+contains Published on
+contains Lorem ipsum
