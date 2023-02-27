@@ -40,12 +40,18 @@ router.get(
     const { pagename } = req.params;
     const state = getState();
     state.log(3, `Route /page/${pagename} user=${req.user?.id}`);
+    const tic = state.logLevel >= 5 ? new Date() : null;
 
     const role = req.user && req.user.id ? req.user.role_id : 10;
     const db_page = await Page.findOne({ name: pagename });
     if (db_page && role <= db_page.min_role) {
       const contents = await db_page.run(req.query, { res, req });
       const title = scan_for_page_title(contents, db_page.title);
+      if (tic) {
+        const tock = new Date();
+        const ms = tock.getTime() - tic.getTime();
+        state.log(5, `Page ${pagename} rendered in ${ms} ms`);
+      }
       res.sendWrap(
         {
           title,
