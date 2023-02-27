@@ -51,6 +51,7 @@ router.get(
       res.redirect("/");
       return;
     }
+    const tic = state.logLevel >= 5 ? new Date() : null;
 
     view.rewrite_query_from_slug(query, req.params);
     if (
@@ -82,6 +83,11 @@ router.get(
       );
     if (isModal && view.attributes?.popup_save_indicator)
       res.set("SaltcornModalSaveIndicator", `true`);
+    if (tic) {
+      const tock = new Date();
+      const ms = tock.getTime() - tic.getTime();
+      state.log(5, `View ${viewname} rendered in ${ms} ms`);
+    }
     res.sendWrap(
       title,
       add_edit_bar({
