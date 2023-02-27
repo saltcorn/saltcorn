@@ -24,6 +24,7 @@ module.exports = {
   // download link
   "Download link": {
     run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
       return link(
         isNode()
           ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
@@ -35,30 +36,35 @@ module.exports = {
   // Link
   Link: {
     run: (filePath, file_name, cfg = {}) =>
-      link(
-        isNode()
-          ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
-          : `javascript:openFile('${filePath}')`,
-        path.basename(filePath) || "Open"
-      ),
+      !filePath
+        ? ""
+        : link(
+            isNode()
+              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              : `javascript:openFile('${filePath}')`,
+            path.basename(filePath) || "Open"
+          ),
   },
 
   // Link (new tab)
   "Link (new tab)": {
     run: (filePath, file_name, cfg = {}) =>
-      a(
-        isNode()
-          ? {
-              href: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
-              target: "_blank",
-            }
-          : { href: `javascript:openFile('${filePath}')` },
-        path.basename(filePath) || "Open"
-      ),
+      !filePath
+        ? ""
+        : a(
+            isNode()
+              ? {
+                  href: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+                  target: "_blank",
+                }
+              : { href: `javascript:openFile('${filePath}')` },
+            path.basename(filePath) || "Open"
+          ),
   },
   // Show Image
   "Show Image": {
     run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
       if (isNode())
         return img({
           src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
@@ -165,6 +171,7 @@ module.exports = {
     ],
     run: (filePath, file_name, cfg = {}) => {
       const { width, height, expand, targetPrefix } = cfg || {};
+      if (!filePath) return "";
       if (isNode())
         return img({
           src: `${targetPrefix || ""}/files/resize/${width || 50}/${
