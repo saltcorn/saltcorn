@@ -187,6 +187,7 @@ class File {
         path.join(absoluteFolder, name),
         "user.saltcorn.min_role_read"
       ));
+      if (isNaN(min_role_read)) min_role_read = 10;
     } catch (e) {
       min_role_read = 10;
     }
