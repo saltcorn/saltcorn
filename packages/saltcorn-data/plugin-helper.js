@@ -442,6 +442,14 @@ const field_picker_fields = async ({
   triggers.forEach((tr) => {
     actions.push(tr.name);
   });
+  if (!table.external)
+    (
+      await Trigger.find({
+        table_id: table.id,
+      })
+    ).forEach((tr) => {
+      actions.push(tr.name);
+    });
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
