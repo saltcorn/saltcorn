@@ -203,7 +203,9 @@ router.get(
     } else {
       getState().log(
         5,
-        `File serve denied. path=${serve_path} file_exists=${!!file} role=${role} user_id=${user_id}`
+        `File serve denied. path=${serve_path} file_exists=${!!file} file_min_role=${
+          file?.min_role_read
+        } role=${role} user_id=${user_id}`
       );
       res
         .status(404)
