@@ -201,6 +201,12 @@ router.get(
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
     } else {
+      getState().log(
+        5,
+        `File serve denied. path=${serve_path} file_exists=${!!file} file_min_role=${
+          file?.min_role_read
+        } role=${role} user_id=${user_id}`
+      );
       res
         .status(404)
         .sendWrap(req.__("Not found"), h1(req.__("File not found")));

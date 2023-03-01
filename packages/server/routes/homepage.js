@@ -32,10 +32,9 @@ const { get_base_url } = require("./utils.js");
 const tableTable = (tables, req) =>
   mkTable(
     [
-      { label: req.__("Name"), key: "name" },
       {
-        label: req.__("Edit"),
-        key: (r) => link(`/table/${r.id}`, req.__("Edit")),
+        label: req.__("Name"),
+        key: (r) => link(`/table/${r.id}`, r.name),
       },
     ],
     tables
