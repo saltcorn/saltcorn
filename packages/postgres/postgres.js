@@ -368,9 +368,9 @@ const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   // TBD describe difference between CopyFrom and CopyFrom1
   const quote = (s) => `"${s}"`;
-  const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
-    .map(quote)
-    .join(",")}) FROM STDIN CSV HEADER`;
+  const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
+    tableName
+  )}" (${fieldNames.map(quote).join(",")}) FROM STDIN CSV HEADER`;
   sql_log(sql);
 
   const stream = client.query(copyStreams.from(sql));
