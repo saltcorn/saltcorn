@@ -453,7 +453,9 @@ function initialize_page() {
           ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
         }>
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
-      <input type="text" name="${key}" value="${current}">
+      <input type="${
+        type === "Integer" || type === "Float" ? "number" : "text"
+      }" name="${key}" value="${current}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, ${opts})" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
       </form>`
