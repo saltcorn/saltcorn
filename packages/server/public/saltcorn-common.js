@@ -411,19 +411,20 @@ function initialize_page() {
     var current = $(this).children("span.current").html();
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
+    const opts = JSON.stringify({
+      url,
+      key,
+      ajax,
+      current,
+    }).replace(/"/g, "'");
     $(this).replaceWith(
       `<form method="post" action="${url}" ${
-        ajax
-          ? `onsubmit="inline_ajax_submit(event, ${JSON.stringify({
-              url,
-              key,
-              ajax,
-            }).replace(/"/g, "'")})"`
-          : ""
+        ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
       }>
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="text" name="${key}" value="${current}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
+      <button onclick="cancel_inline_edit(event, ${opts})" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
       </form>`
     );
   });
@@ -537,6 +538,19 @@ function initialize_page() {
 
 $(initialize_page);
 
+function cancel_inline_edit(e, opts) {
+  var form = $(e.target).closest("form");
+
+  form.replaceWith(`<div 
+  data-inline-edit-field="${opts.key}" 
+  ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+  data-inline-edit-dest-url="${opts.url}">
+    <span class="current">${opts.current}</span>
+    <i class="editicon fas fa-edit ms-1"></i>
+  </div>`);
+  initialize_page();
+}
+
 function inline_ajax_submit(e, opts) {
   e.preventDefault();
   var form = $(e.target).closest("form");
@@ -550,10 +564,8 @@ function inline_ajax_submit(e, opts) {
     },
     data: form_data,
     success: function (res) {
-      console.log(e.target);
       if (opts) {
         const val = formDataArray.find((f) => f.name == opts.key).value;
-        console.log("fd", formDataArray, opts, val);
         $(e.target).replaceWith(`<div 
       data-inline-edit-field="${opts.key}" 
       ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
