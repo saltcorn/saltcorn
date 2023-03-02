@@ -601,6 +601,7 @@ const get_viewable_fields = (
               "data-inline-edit-field": refNm,
               "data-inline-edit-ajax": "true",
               "data-inline-edit-current": row[refNm],
+              "data-inline-edit-current-label": row[key],
               "data-inline-edit-dest-url": `/api/${table.name}/${
                 row[table.pk_name]
               }`,

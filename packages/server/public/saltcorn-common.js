@@ -420,6 +420,7 @@ function initialize_page() {
       key,
       ajax,
       current,
+      current_label: $(this).attr("data-inline-edit-current-label"),
       type,
       is_key,
     }).replace(/"/g, "'");
@@ -574,8 +575,15 @@ function cancel_inline_edit(e, opts) {
   form.replaceWith(`<div 
   data-inline-edit-field="${opts.key}" 
   ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+  ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+  ${opts.current ? `data-inline-edit-current="${opts.current}"` : ""}
+  ${
+    opts.current_label
+      ? `data-inline-edit-current-label="${opts.current_label}"`
+      : ""
+  }
   data-inline-edit-dest-url="${opts.url}">
-    <span class="current">${opts.current}</span>
+    <span class="current">${opts.current_label || opts.current}</span>
     <i class="editicon fas fa-edit ms-1"></i>
   </div>`);
   initialize_page();
@@ -605,6 +613,7 @@ function inline_ajax_submit(e, opts) {
       ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
       ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
       ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
+      ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
       data-inline-edit-dest-url="${opts.url}">
         <span class="current">${val}</span>
         <i class="editicon fas fa-edit ms-1"></i>
