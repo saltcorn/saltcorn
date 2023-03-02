@@ -596,7 +596,6 @@ router.get(
       }.json`
     );
     readStream.pipe(res);
-    res.send(snap.pack);
   })
 );
 
