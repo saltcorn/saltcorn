@@ -97,7 +97,6 @@ module.exports = {
       ];
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
-      console.log("upload", { file_name });
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
       return (
         text(file_name || "") +
