@@ -413,7 +413,13 @@ function initialize_page() {
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     $(this).replaceWith(
       `<form method="post" action="${url}" ${
-        ajax ? `onsubmit="inline_ajax_submit(event)"` : ""
+        ajax
+          ? `onsubmit="inline_ajax_submit(event, ${JSON.stringify({
+              url,
+              key,
+              ajax,
+            }).replace(/"/g, "'")})"`
+          : ""
       }>
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="text" name="${key}" value="${current}">
@@ -531,10 +537,11 @@ function initialize_page() {
 
 $(initialize_page);
 
-function inline_ajax_submit(e) {
+function inline_ajax_submit(e, opts) {
   e.preventDefault();
   var form = $(e.target).closest("form");
   var form_data = form.serialize();
+  var formDataArray = form.serializeArray();
   var url = form.attr("action");
   $.ajax(url, {
     type: "POST",
@@ -543,7 +550,19 @@ function inline_ajax_submit(e) {
     },
     data: form_data,
     success: function (res) {
-      location.reload();
+      console.log(e.target);
+      if (opts) {
+        const val = formDataArray.find((f) => f.name == opts.key).value;
+        console.log("fd", formDataArray, opts, val);
+        $(e.target).replaceWith(`<div 
+      data-inline-edit-field="${opts.key}" 
+      ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+      data-inline-edit-dest-url="${opts.url}">
+        <span class="current">${val}</span>
+        <i class="editicon fas fa-edit ms-1"></i>
+      </div>`);
+        initialize_page();
+      } else location.reload();
     },
     error: function (e) {
       ajax_done(
