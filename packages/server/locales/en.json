@@ -1104,5 +1104,6 @@
 	"Tag: %s": "Tag: %s",
 	"Tag entry": "Tag entry",
 	"Clear": "Clear",
-	"Restore a snapshot": "Restore a snapshot"
+	"Restore a snapshot": "Restore a snapshot",
+	"Snapshot restored": "Snapshot restored"
 }

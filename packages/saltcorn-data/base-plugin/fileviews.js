@@ -98,23 +98,26 @@ module.exports = {
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
-      return text(file_name || "") + typeof attrs.files_accept_filter !==
-        "undefined" || attrs.files_accept_filter !== null
-        ? input({
-            class: `${cls} ${field.class || ""}`,
-            "data-fieldname": field.form_name,
-            name: text_attr(nm),
-            id: `input${text_attr(nm)}`,
-            type: "file",
-            accept: attrs.files_accept_filter,
-          })
-        : input({
-            class: `${cls} ${field.class || ""}`,
-            "data-fieldname": field.form_name,
-            name: text_attr(nm),
-            id: `input${text_attr(nm)}`,
-            type: "file",
-          });
+      return (
+        text(file_name || "") +
+        (typeof attrs.files_accept_filter !== "undefined" ||
+        attrs.files_accept_filter !== null
+          ? input({
+              class: `${cls} ${field.class || ""}`,
+              "data-fieldname": field.form_name,
+              name: text_attr(nm),
+              id: `input${text_attr(nm)}`,
+              type: "file",
+              accept: attrs.files_accept_filter,
+            })
+          : input({
+              class: `${cls} ${field.class || ""}`,
+              "data-fieldname": field.form_name,
+              name: text_attr(nm),
+              id: `input${text_attr(nm)}`,
+              type: "file",
+            }))
+      );
     },
   },
   // select
