@@ -319,6 +319,12 @@ const install_pack = async (
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });
+      getState().log(
+        5,
+        `Restoring table pack name=${
+          tableSpec.name
+        } existing=${!!existing} tenant=${db.getTenantSchema()}`
+      );
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
       } else {
