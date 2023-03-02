@@ -414,14 +414,16 @@ function initialize_page() {
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");
+    var is_key = type?.startsWith("Key:");
     const opts = JSON.stringify({
       url,
       key,
       ajax,
       current,
       type,
+      is_key,
     }).replace(/"/g, "'");
-    if (type?.startsWith("Key:")) {
+    if (is_key) {
       const [tblName, target] = type.replace("Key:", "").split(".");
       $.ajax(`/api/${tblName}`).then((resp) => {
         if (resp.success) {
@@ -593,10 +595,16 @@ function inline_ajax_submit(e, opts) {
     data: form_data,
     success: function (res) {
       if (opts) {
-        const val = formDataArray.find((f) => f.name == opts.key).value;
+        let rawVal = formDataArray.find((f) => f.name == opts.key).value;
+        let val = opts.is_key
+          ? form.find("select").find("option:selected").text()
+          : rawVal;
+
         $(e.target).replaceWith(`<div 
       data-inline-edit-field="${opts.key}" 
       ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+      ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+      ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
       data-inline-edit-dest-url="${opts.url}">
         <span class="current">${val}</span>
         <i class="editicon fas fa-edit ms-1"></i>
