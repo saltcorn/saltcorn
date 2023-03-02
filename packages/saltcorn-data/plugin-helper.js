@@ -1609,11 +1609,16 @@ const readStateStrict = (state, fields) => {
           if (vres.error) hasErrors = true;
         }
         state[f.name] = readval;
-      } else if (f.type === "Key" || f.type === "File")
+      } else if (f.type === "Key")
         state[f.name] =
           current === "null" || current === "" || current === null
             ? null
             : +current;
+      else if (f.type === "File")
+        state[f.name] =
+          current === "null" || current === "" || current === null
+            ? null
+            : current;
     } else if (f.required && !f.primary_key) hasErrors = true;
   });
   return hasErrors ? false : state;
