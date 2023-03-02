@@ -408,25 +408,53 @@ function initialize_page() {
   });
   $("[data-inline-edit-dest-url]").click(function () {
     var url = $(this).attr("data-inline-edit-dest-url");
-    var current = $(this).children("span.current").html();
+    var current =
+      $(this).attr("data-inline-edit-current") ||
+      $(this).children("span.current").html();
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
+    var type = $(this).attr("data-inline-edit-type");
     const opts = JSON.stringify({
       url,
       key,
       ajax,
       current,
+      type,
     }).replace(/"/g, "'");
-    $(this).replaceWith(
-      `<form method="post" action="${url}" ${
-        ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
-      }>
+    if (type?.startsWith("Key:")) {
+      const [tblName, target] = type.replace("Key:", "").split(".");
+      $.ajax(`/api/${tblName}`).then((resp) => {
+        if (resp.success) {
+          const selopts = resp.success.map(
+            (r) =>
+              `<option ${current == r.id ? `selected ` : ``}value="${r.id}">${
+                r[target]
+              }</option>`
+          );
+          $(this).replaceWith(
+            `<form method="post" action="${url}" ${
+              ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
+            }>
+          <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+          <select name="${key}" value="${current}">${selopts}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary">OK</button>
+          <button onclick="cancel_inline_edit(event, ${opts})" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+          </form>`
+          );
+        }
+      });
+    } else
+      $(this).replaceWith(
+        `<form method="post" action="${url}" ${
+          ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
+        }>
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="text" name="${key}" value="${current}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, ${opts})" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
       </form>`
-    );
+      );
   });
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";

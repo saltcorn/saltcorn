@@ -537,6 +537,7 @@ const get_viewable_fields = (
       } else return r;
     } else if (column.type === "JoinField") {
       //console.log(column);
+      let fvrun;
       let refNm, targetNm, through, key, type;
       if (column.join_field.includes("->")) {
         const [relation, target] = column.join_field.split("->");
@@ -569,8 +570,7 @@ const get_viewable_fields = (
           column
         );
       }
-
-      return {
+      fvrun = {
         ...setWidth,
         label: column.header_label
           ? text(__(column.header_label))
@@ -590,6 +590,27 @@ const get_viewable_fields = (
             : (row) => text(row[key]),
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
+      if (column.click_to_edit) {
+        const reffield = fields.find((f) => f.name === refNm);
+
+        const oldkey =
+          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
+        const newkey = (row) =>
+          div(
+            {
+              "data-inline-edit-field": refNm,
+              "data-inline-edit-ajax": "true",
+              "data-inline-edit-current": row[refNm],
+              "data-inline-edit-dest-url": `/api/${table.name}/${
+                row[table.pk_name]
+              }`,
+              "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
+            },
+            oldkey(row)
+          );
+        fvrun.key = newkey;
+      }
+      return fvrun;
     } else if (column.type === "Aggregation") {
       let table, fld, through;
       if (column.agg_relation.includes("->")) {
@@ -707,6 +728,7 @@ const get_viewable_fields = (
               "data-inline-edit-dest-url": `/api/${table.name}/${
                 row[table.pk_name]
               }`,
+              "data-inline-edit-type": f?.type?.name,
             },
             oldkey(row)
           );
