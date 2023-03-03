@@ -352,6 +352,20 @@ function rep_down(e) {
     apply_form_subset_record(theform, vals1);
   }
 }
+//https://stackoverflow.com/a/4835406
+function escapeHtml(text) {
+  var map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+
+  return text.replace(/[&<>"']/g, function (m) {
+    return map[m];
+  });
+}
 
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
@@ -408,18 +422,60 @@ function initialize_page() {
   });
   $("[data-inline-edit-dest-url]").click(function () {
     var url = $(this).attr("data-inline-edit-dest-url");
-    var current = $(this).children("span.current").html();
+    var current =
+      $(this).attr("data-inline-edit-current") ||
+      $(this).children("span.current").html();
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
-    $(this).replaceWith(
-      `<form method="post" action="${url}" ${
-        ajax ? `onsubmit="inline_ajax_submit(event)"` : ""
-      }>
-      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
-      <input type="text" name="${key}" value="${current}">
-      <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      </form>`
+    var type = $(this).attr("data-inline-edit-type");
+    var is_key = type?.startsWith("Key:");
+    const opts = encodeURIComponent(
+      JSON.stringify({
+        url,
+        key,
+        ajax,
+        current,
+        current_label: $(this).attr("data-inline-edit-current-label"),
+        type,
+        is_key,
+      })
     );
+    if (is_key) {
+      const [tblName, target] = type.replace("Key:", "").split(".");
+      $.ajax(`/api/${tblName}`).then((resp) => {
+        if (resp.success) {
+          const selopts = resp.success.map(
+            (r) =>
+              `<option ${current == r.id ? `selected ` : ``}value="${
+                r.id
+              }">${escapeHtml(r[target])}</option>`
+          );
+          $(this).replaceWith(
+            `<form method="post" action="${url}" ${
+              ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
+            }>
+          <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+          <select name="${key}" value="${current}">${selopts}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary">OK</button>
+          <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+          </form>`
+          );
+        }
+      });
+    } else
+      $(this).replaceWith(
+        `<form method="post" action="${url}" ${
+          ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
+        }>
+      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+      <input type="${
+        type === "Integer" || type === "Float" ? "number" : "text"
+      }" name="${key}" value="${escapeHtml(current)}">
+      <button type="submit" class="btn btn-sm btn-primary">OK</button>
+      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      </form>`
+      );
   });
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
@@ -531,10 +587,33 @@ function initialize_page() {
 
 $(initialize_page);
 
-function inline_ajax_submit(e) {
+function cancel_inline_edit(e, opts1) {
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+  var form = $(e.target).closest("form");
+
+  form.replaceWith(`<div 
+  data-inline-edit-field="${opts.key}" 
+  ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+  ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+  ${opts.current ? `data-inline-edit-current="${opts.current}"` : ""}
+  ${
+    opts.current_label
+      ? `data-inline-edit-current-label="${opts.current_label}"`
+      : ""
+  }
+  data-inline-edit-dest-url="${opts.url}">
+    <span class="current">${opts.current_label || opts.current}</span>
+    <i class="editicon fas fa-edit ms-1"></i>
+  </div>`);
+  initialize_page();
+}
+
+function inline_ajax_submit(e, opts1) {
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   e.preventDefault();
   var form = $(e.target).closest("form");
   var form_data = form.serialize();
+  var formDataArray = form.serializeArray();
   var url = form.attr("action");
   $.ajax(url, {
     type: "POST",
@@ -543,7 +622,24 @@ function inline_ajax_submit(e) {
     },
     data: form_data,
     success: function (res) {
-      location.reload();
+      if (opts) {
+        let rawVal = formDataArray.find((f) => f.name == opts.key).value;
+        let val = opts.is_key
+          ? form.find("select").find("option:selected").text()
+          : rawVal;
+
+        $(e.target).replaceWith(`<div 
+      data-inline-edit-field="${opts.key}" 
+      ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+      ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+      ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
+      ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
+      data-inline-edit-dest-url="${opts.url}">
+        <span class="current">${val}</span>
+        <i class="editicon fas fa-edit ms-1"></i>
+      </div>`);
+        initialize_page();
+      } else location.reload();
     },
     error: function (e) {
       ajax_done(

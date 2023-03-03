@@ -537,6 +537,7 @@ const get_viewable_fields = (
       } else return r;
     } else if (column.type === "JoinField") {
       //console.log(column);
+      let fvrun;
       let refNm, targetNm, through, key, type;
       if (column.join_field.includes("->")) {
         const [relation, target] = column.join_field.split("->");
@@ -569,8 +570,7 @@ const get_viewable_fields = (
           column
         );
       }
-
-      return {
+      fvrun = {
         ...setWidth,
         label: column.header_label
           ? text(__(column.header_label))
@@ -590,6 +590,28 @@ const get_viewable_fields = (
             : (row) => text(row[key]),
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
+      if (column.click_to_edit) {
+        const reffield = fields.find((f) => f.name === refNm);
+
+        const oldkey =
+          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
+        const newkey = (row) =>
+          div(
+            {
+              "data-inline-edit-field": refNm,
+              "data-inline-edit-ajax": "true",
+              "data-inline-edit-current": row[refNm],
+              "data-inline-edit-current-label": row[key],
+              "data-inline-edit-dest-url": `/api/${table.name}/${
+                row[table.pk_name]
+              }`,
+              "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
+            },
+            oldkey(row)
+          );
+        fvrun.key = newkey;
+      }
+      return fvrun;
     } else if (column.type === "Aggregation") {
       let table, fld, through;
       if (column.agg_relation.includes("->")) {
@@ -697,20 +719,43 @@ const get_viewable_fields = (
               : undefined,
         };
       if (column.click_to_edit) {
-        const oldkey =
-          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
-        const newkey = (row) =>
-          div(
-            {
-              "data-inline-edit-field": column.field_name,
-              "data-inline-edit-ajax": "true",
-              "data-inline-edit-dest-url": `/api/${table.name}/${
-                row[table.pk_name]
-              }`,
-            },
-            oldkey(row)
-          );
-        fvrun.key = newkey;
+        const updateKey = (fvr, column_key) => {
+          const oldkey =
+            typeof fvr.key === "function" ? fvr.key : (r) => r[fvr.key];
+          const doSetKey =
+            (column.fieldview === "subfield" ||
+              column.fieldview === "keys_expand_columns") &&
+            column_key;
+          const newkey = (row) => {
+            if (role <= table.min_role_write || table.is_owner(req.user, row))
+              return div(
+                {
+                  "data-inline-edit-field": doSetKey
+                    ? `${column.field_name}.${column_key}`
+                    : column.field_name,
+                  "data-inline-edit-ajax": "true",
+                  "data-inline-edit-key": doSetKey
+                    ? `${column.field_name}.${column_key}`
+                    : undefined,
+                  "data-inline-edit-current": doSetKey
+                    ? row[f.name]?.[column_key]
+                    : undefined,
+                  "data-inline-edit-dest-url": `/api/${table.name}/${
+                    row[table.pk_name]
+                  }`,
+                  "data-inline-edit-type": f?.type?.name,
+                },
+                oldkey(row)
+              );
+            else return oldkey(row);
+          };
+          fvr.key = newkey;
+        };
+        if (Array.isArray(fvrun)) {
+          fvrun.forEach((fvr) => {
+            updateKey(fvr, fvr.row_key[1]);
+          });
+        } else updateKey(fvrun, column.key);
       }
       return fvrun;
     }

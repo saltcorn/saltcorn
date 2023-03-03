@@ -687,7 +687,7 @@ const field_picker_fields = async ({
             name: "click_to_edit",
             label: "Click to edit?",
             type: "Bool",
-            showIf: { type: "Field" },
+            showIf: { type: ["Field", "JoinField"] },
           },
         ]
       : []),
