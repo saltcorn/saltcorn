@@ -458,7 +458,7 @@ function initialize_page() {
           <select name="${key}" value="${current}">${selopts}
           </select>
           <button type="submit" class="btn btn-sm btn-primary">OK</button>
-          <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+          <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
           </form>`
           );
         }
@@ -473,7 +473,7 @@ function initialize_page() {
         type === "Integer" || type === "Float" ? "number" : "text"
       }" name="${key}" value="${escapeHtml(current)}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
       );
   });
