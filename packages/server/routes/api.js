@@ -423,11 +423,20 @@ router.post(
           let hasErrors = false;
           Object.keys(row).forEach((k) => {
             const field = fields.find((f) => f.name === k);
-            if (!field || field.calculated) {
+            if (!field && k.includes(".")) {
+              const [fnm, jkey] = k.split(".");
+              const jfield = fields.find((f) => f.name === fnm);
+              if (jfield?.type?.name === "JSON") {
+                if (!row[fnm]) row[fnm] = { [jkey]: row[k] };
+                else row[fnm][jkey] = row[k];
+                delete row[k];
+              }
+            } else if (!field || field.calculated) {
               delete row[k];
               return;
             }
-            if (field.type && field.type.validate) {
+
+            if (field?.type && field.type.validate) {
               const vres = field.type.validate(field.attributes || {})(row[k]);
               if (vres.error) {
                 hasErrors = true;

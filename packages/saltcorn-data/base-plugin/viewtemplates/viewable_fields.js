@@ -724,8 +724,19 @@ const get_viewable_fields = (
         const newkey = (row) =>
           div(
             {
-              "data-inline-edit-field": column.field_name,
+              "data-inline-edit-field":
+                column.fieldview === "subfield" && column.key
+                  ? `${column.field_name}.${column.key}`
+                  : column.field_name,
               "data-inline-edit-ajax": "true",
+              "data-inline-edit-key":
+                column.fieldview === "subfield" && column.key
+                  ? `${column.field_name}.${column.key}`
+                  : undefined,
+              "data-inline-edit-current":
+                column.fieldview === "subfield" && column.key
+                  ? row[f.name]?.[column.key]
+                  : undefined,
               "data-inline-edit-dest-url": `/api/${table.name}/${
                 row[table.pk_name]
               }`,
