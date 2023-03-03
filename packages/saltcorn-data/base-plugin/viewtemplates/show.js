@@ -658,7 +658,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       } else return text(value);
     },
     aggregation(column) {
-      const { agg_relation, stat, aggwhere } = column;
+      const { agg_relation, stat, aggwhere, agg_field } = column;
       let table, fld, through;
       if (agg_relation.includes("->")) {
         let restpath;
@@ -675,6 +675,9 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
           table +
           "_" +
           fld +
+          "_" +
+          (agg_field || "").split("@")[0] +
+          "_" +
           db.sqlsanitize(aggwhere || "")
         ).toLowerCase();
       const val = row[targetNm];

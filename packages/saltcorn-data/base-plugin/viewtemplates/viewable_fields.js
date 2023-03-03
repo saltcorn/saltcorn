@@ -629,6 +629,9 @@ const get_viewable_fields = (
           table +
           "_" +
           fld +
+          "_" +
+          column.agg_field.split("@")[0] +
+          "_" +
           db.sqlsanitize(column.aggwhere || "")
         ).toLowerCase();
 

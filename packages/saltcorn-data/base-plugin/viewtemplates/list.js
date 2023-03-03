@@ -531,6 +531,7 @@ const run = async (
   const { id, ...state } = stateWithId || {};
   const statehash = hashState(state, viewname);
 
+  const { rows, rowCount } = await listQuery(state, statehash);
   const tfields = get_viewable_fields(
     viewname,
     statehash,
@@ -541,8 +542,6 @@ const run = async (
     extraOpts.req,
     __
   );
-
-  const { rows, rowCount } = await listQuery(state, statehash);
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
   var page_opts =
