@@ -618,7 +618,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       )
         fvrun = field.type.fieldviews[fieldview].run(val, req, cfg);
       else fvrun = text(val);
-      if (click_to_edit)
+      if (
+        click_to_edit &&
+        (role <= table.min_role_write || table.is_owner(req.user, row))
+      )
         return div(
           {
             "data-inline-edit-field": field_name,

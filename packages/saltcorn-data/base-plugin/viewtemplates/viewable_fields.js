@@ -726,26 +726,29 @@ const get_viewable_fields = (
             (column.fieldview === "subfield" ||
               column.fieldview === "keys_expand_columns") &&
             column_key;
-          const newkey = (row) =>
-            div(
-              {
-                "data-inline-edit-field": doSetKey
-                  ? `${column.field_name}.${column_key}`
-                  : column.field_name,
-                "data-inline-edit-ajax": "true",
-                "data-inline-edit-key": doSetKey
-                  ? `${column.field_name}.${column_key}`
-                  : undefined,
-                "data-inline-edit-current": doSetKey
-                  ? row[f.name]?.[column_key]
-                  : undefined,
-                "data-inline-edit-dest-url": `/api/${table.name}/${
-                  row[table.pk_name]
-                }`,
-                "data-inline-edit-type": f?.type?.name,
-              },
-              oldkey(row)
-            );
+          const newkey = (row) => {
+            if (role <= table.min_role_write || table.is_owner(req.user, row))
+              return div(
+                {
+                  "data-inline-edit-field": doSetKey
+                    ? `${column.field_name}.${column_key}`
+                    : column.field_name,
+                  "data-inline-edit-ajax": "true",
+                  "data-inline-edit-key": doSetKey
+                    ? `${column.field_name}.${column_key}`
+                    : undefined,
+                  "data-inline-edit-current": doSetKey
+                    ? row[f.name]?.[column_key]
+                    : undefined,
+                  "data-inline-edit-dest-url": `/api/${table.name}/${
+                    row[table.pk_name]
+                  }`,
+                  "data-inline-edit-type": f?.type?.name,
+                },
+                oldkey(row)
+              );
+            else return oldkey(row);
+          };
           fvr.key = newkey;
         };
         if (Array.isArray(fvrun)) {
