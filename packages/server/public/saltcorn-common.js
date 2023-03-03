@@ -352,6 +352,20 @@ function rep_down(e) {
     apply_form_subset_record(theform, vals1);
   }
 }
+//https://stackoverflow.com/a/4835406
+function escapeHtml(text) {
+  var map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+
+  return text.replace(/[&<>"']/g, function (m) {
+    return map[m];
+  });
+}
 
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
@@ -415,34 +429,36 @@ function initialize_page() {
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");
     var is_key = type?.startsWith("Key:");
-    const opts = JSON.stringify({
-      url,
-      key,
-      ajax,
-      current,
-      current_label: $(this).attr("data-inline-edit-current-label"),
-      type,
-      is_key,
-    }).replace(/"/g, "'");
+    const opts = encodeURIComponent(
+      JSON.stringify({
+        url,
+        key,
+        ajax,
+        current,
+        current_label: $(this).attr("data-inline-edit-current-label"),
+        type,
+        is_key,
+      })
+    );
     if (is_key) {
       const [tblName, target] = type.replace("Key:", "").split(".");
       $.ajax(`/api/${tblName}`).then((resp) => {
         if (resp.success) {
           const selopts = resp.success.map(
             (r) =>
-              `<option ${current == r.id ? `selected ` : ``}value="${r.id}">${
-                r[target]
-              }</option>`
+              `<option ${current == r.id ? `selected ` : ``}value="${
+                r.id
+              }">${escapeHtml(r[target])}</option>`
           );
           $(this).replaceWith(
             `<form method="post" action="${url}" ${
-              ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
+              ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
             }>
           <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
           <select name="${key}" value="${current}">${selopts}
           </select>
           <button type="submit" class="btn btn-sm btn-primary">OK</button>
-          <button onclick="cancel_inline_edit(event, ${opts})" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+          <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
           </form>`
           );
         }
@@ -450,14 +466,14 @@ function initialize_page() {
     } else
       $(this).replaceWith(
         `<form method="post" action="${url}" ${
-          ajax ? `onsubmit="inline_ajax_submit(event, ${opts})"` : ""
+          ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
         }>
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="${
         type === "Integer" || type === "Float" ? "number" : "text"
-      }" name="${key}" value="${current}">
+      }" name="${key}" value="${escapeHtml(current)}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      <button onclick="cancel_inline_edit(event, ${opts})" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
       </form>`
       );
   });
@@ -571,7 +587,8 @@ function initialize_page() {
 
 $(initialize_page);
 
-function cancel_inline_edit(e, opts) {
+function cancel_inline_edit(e, opts1) {
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
 
   form.replaceWith(`<div 
@@ -591,7 +608,8 @@ function cancel_inline_edit(e, opts) {
   initialize_page();
 }
 
-function inline_ajax_submit(e, opts) {
+function inline_ajax_submit(e, opts1) {
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   e.preventDefault();
   var form = $(e.target).closest("form");
   var form_data = form.serialize();
