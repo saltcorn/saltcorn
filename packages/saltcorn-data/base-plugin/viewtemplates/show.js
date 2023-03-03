@@ -582,11 +582,12 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const locale = req.getLocale();
   translateLayout(layout, locale);
   const blockDispatch = {
-    field({ field_name, fieldview, configuration }) {
+    field({ field_name, fieldview, configuration, click_to_edit }) {
       let field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
 
       let val = row[field_name];
+      let fvrun;
       if (
         field &&
         field.attributes &&
@@ -602,7 +603,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       };
       if (fieldview && field.type === "File") {
         if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
-        return val
+        fvrun = val
           ? getState().fileviews[fieldview].run(
               val,
               row[`${field_name}__filename`],
@@ -615,8 +616,21 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val, req, cfg);
-      else return text(val);
+        fvrun = field.type.fieldviews[fieldview].run(val, req, cfg);
+      else fvrun = text(val);
+      if (click_to_edit)
+        return div(
+          {
+            "data-inline-edit-field": field_name,
+            "data-inline-edit-ajax": "true",
+            "data-inline-edit-dest-url": `/api/${table.name}/${
+              row[table.pk_name]
+            }`,
+            "data-inline-edit-type": field?.type?.name,
+          },
+          fvrun
+        );
+      else return fvrun;
     },
     join_field(jf) {
       const { join_field, field_type, fieldview, configuration } = jf;
