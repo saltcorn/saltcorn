@@ -657,7 +657,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         } else return text(value);
       } else return text(value);
     },
-    aggregation({ agg_relation, stat, aggwhere }) {
+    aggregation(column) {
+      const { agg_relation, stat, aggwhere } = column;
       let table, fld, through;
       if (agg_relation.includes("->")) {
         let restpath;
@@ -666,14 +667,16 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       } else {
         [table, fld] = agg_relation.split(".");
       }
-      const targetNm = (
-        stat +
-        "_" +
-        table +
-        "_" +
-        fld +
-        db.sqlsanitize(aggwhere || "")
-      ).toLowerCase();
+      const targetNm =
+        column.targetNm ||
+        (
+          stat +
+          "_" +
+          table +
+          "_" +
+          fld +
+          db.sqlsanitize(aggwhere || "")
+        ).toLowerCase();
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");

@@ -621,14 +621,16 @@ const get_viewable_fields = (
       } else {
         [table, fld] = column.agg_relation.split(".");
       }
-      const targetNm = (
-        column.stat.replace(" ", "") +
-        "_" +
-        table +
-        "_" +
-        fld +
-        db.sqlsanitize(column.aggwhere || "")
-      ).toLowerCase();
+      const targetNm =
+        column.targetNm ||
+        (
+          column.stat.replace(" ", "") +
+          "_" +
+          table +
+          "_" +
+          fld +
+          db.sqlsanitize(column.aggwhere || "")
+        ).toLowerCase();
 
       let showValue = (value) => {
         if (value === true || value === false)
