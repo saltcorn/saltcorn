@@ -94,11 +94,13 @@ const FieldSettings = () => {
     inline,
     configuration,
     node_id,
+    click_to_edit,
     textStyle,
   } = useNode((node) => ({
     name: node.data.props.name,
     fieldview: node.data.props.fieldview,
     block: node.data.props.block,
+    click_to_edit: node.data.props.click_to_edit,
     inline: node.data.props.inline,
     textStyle: node.data.props.textStyle,
     configuration: node.data.props.configuration,
@@ -189,6 +191,27 @@ const FieldSettings = () => {
               </td>
             </tr>
           )}
+          <tr>
+            <td></td>
+            <td>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="inline"
+                  type="checkbox"
+                  checked={click_to_edit}
+                  onChange={(e) => {
+                    if (e && e.target) {
+                      const target_value = e.target.checked;
+                      setProp((prop) => (prop.click_to_edit = target_value));
+                    }
+                  }}
+                />
+                <label className="form-check-label">Click to edit?</label>
+              </div>
+            </td>
+          </tr>
+
           {!(blockDisplay && blockDisplay.includes(fieldview)) && (
             <tr>
               <td></td>
@@ -234,6 +257,7 @@ Field.craft = {
       "textStyle",
       "block",
       "inline",
+      "click_to_edit",
       { name: "configuration", default: {} },
     ],
   },
