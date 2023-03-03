@@ -1148,9 +1148,12 @@ const picked_fields_to_query = (columns, fields, layout) => {
           table +
           "_" +
           fld +
+          "_" +
+          field +
+          "_" +
           db.sqlsanitize(column.aggwhere || "")
         ).toLowerCase();
-
+        column.targetNm = targetNm;
         aggregations[targetNm] = {
           table,
           ref: fld,
