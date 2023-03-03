@@ -719,32 +719,40 @@ const get_viewable_fields = (
               : undefined,
         };
       if (column.click_to_edit) {
-        const oldkey =
-          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
-        const newkey = (row) =>
-          div(
-            {
-              "data-inline-edit-field":
-                column.fieldview === "subfield" && column.key
-                  ? `${column.field_name}.${column.key}`
+        const updateKey = (fvr, column_key) => {
+          const oldkey =
+            typeof fvr.key === "function" ? fvr.key : (r) => r[fvr.key];
+          const doSetKey =
+            (column.fieldview === "subfield" ||
+              column.fieldview === "keys_expand_columns") &&
+            column_key;
+          const newkey = (row) =>
+            div(
+              {
+                "data-inline-edit-field": doSetKey
+                  ? `${column.field_name}.${column_key}`
                   : column.field_name,
-              "data-inline-edit-ajax": "true",
-              "data-inline-edit-key":
-                column.fieldview === "subfield" && column.key
-                  ? `${column.field_name}.${column.key}`
+                "data-inline-edit-ajax": "true",
+                "data-inline-edit-key": doSetKey
+                  ? `${column.field_name}.${column_key}`
                   : undefined,
-              "data-inline-edit-current":
-                column.fieldview === "subfield" && column.key
-                  ? row[f.name]?.[column.key]
+                "data-inline-edit-current": doSetKey
+                  ? row[f.name]?.[column_key]
                   : undefined,
-              "data-inline-edit-dest-url": `/api/${table.name}/${
-                row[table.pk_name]
-              }`,
-              "data-inline-edit-type": f?.type?.name,
-            },
-            oldkey(row)
-          );
-        fvrun.key = newkey;
+                "data-inline-edit-dest-url": `/api/${table.name}/${
+                  row[table.pk_name]
+                }`,
+                "data-inline-edit-type": f?.type?.name,
+              },
+              oldkey(row)
+            );
+          fvr.key = newkey;
+        };
+        if (Array.isArray(fvrun)) {
+          fvrun.forEach((fvr) => {
+            updateKey(fvr, fvr.row_key[1]);
+          });
+        } else updateKey(fvrun, column.key);
       }
       return fvrun;
     }
