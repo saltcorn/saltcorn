@@ -57,7 +57,8 @@ const getUserFields = async (req) => {
         (signup_form.configuration.columns || []).forEach((f) => {
           const uf = userFields.find((uff) => uff.name === f.field_name);
           if (uf) {
-            if (!f?.fieldview?.unsuitableAsAdminDefault) {
+            const fvObj = uf.type?.fieldviews?.[uf.fieldview];
+            if (fvObj && !fvObj?.fieldview?.unsuitableAsAdminDefault) {
               uf.fieldview = f.fieldview;
               uf.attributes = { ...f.configuration, ...uf.attributes };
             }
@@ -68,6 +69,7 @@ const getUserFields = async (req) => {
   };
   await iterForm("signup_form");
   await iterForm("new_user_form");
+  //console.log(userFields);
   for (const f of userFields) {
     await f.fill_fkey_options();
     if (f.name === "email") {
