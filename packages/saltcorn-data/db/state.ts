@@ -127,6 +127,7 @@ class State {
   logLevel: number;
   pluginManager?: any;
   codeNPMmodules: Record<string, any>;
+  npm_refresh_in_progess: boolean;
 
   /**
    * State constructor
@@ -167,6 +168,7 @@ class State {
     });
     this.logLevel = 1;
     this.codeNPMmodules = {};
+    this.npm_refresh_in_progess = false;
   }
 
   /**
@@ -225,6 +227,7 @@ class State {
     await this.refresh_triggers(noSignal);
     await this.refresh_pages(noSignal);
     await this.refresh_config(noSignal);
+    await this.refresh_npmpkgs(noSignal);
   }
 
   /**
@@ -637,22 +640,31 @@ class State {
   emitRoom(...args: any[]) {
     globalRoomEmitter(...args);
   }
-  async loadNPMpkgsForJsCode(moduleStr: string) {
+  async refresh_npmpkgs(noSignal?: boolean) {
+    if (this.npm_refresh_in_progess) return;
+    this.npm_refresh_in_progess = true;
+    const moduleStr: string = this.getConfigCopy("npm_available_js_code", "");
     if (!moduleStr) return;
-    const moduleNames = moduleStr.split(",").map((s) => s.trim());
+    const moduleNames = moduleStr
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s);
     if (moduleNames.length === 0) return;
     if (!this.pluginManager) this.pluginManager = new PluginManager();
     for (const moduleName of moduleNames) {
-      if (moduleName) {
+      if (!this.codeNPMmodules[moduleName]) {
         try {
           await this.pluginManager.install(moduleName);
           this.codeNPMmodules[moduleName] =
             this.pluginManager.require(moduleName);
         } catch (e) {
-          console.error(e);
+          console.error("npm install error", e);
         }
       }
     }
+    if (!noSignal && db.is_node)
+      process_send({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
+    this.npm_refresh_in_progess = false;
   }
 }
 
@@ -752,9 +764,6 @@ const init_multi_tenant = async (
       await db.runWithTenant(domain, plugin_loader);
       // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
-      await tenants[domain].loadNPMpkgsForJsCode(
-        tenants[domain].configs.npm_available_js_code?.value
-      );
     } catch (err: any) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,

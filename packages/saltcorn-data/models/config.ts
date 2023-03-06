@@ -254,8 +254,10 @@ const configTypes: ConfigTypes = {
     blurb:
       "Comma-separated list of packages which will be available in JavaScript actions",
     async onChange(val: string) {
-      const { getState } = require("../db/state");
-      await getState().loadNPMpkgsForJsCode(val);
+      setTimeout(async () => {
+        const { getState } = require("../db/state");
+        await getState().refresh_npmpkgs();
+      });
     },
   },
   /** @type {object} */
