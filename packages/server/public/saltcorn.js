@@ -320,6 +320,7 @@ function saveAndContinue(e, k) {
     data: form_data,
     success: function (res) {
       ajax_indicator(false);
+      form.parent().find(".full-form-error").text("");
       if (res.id && form.find("input[name=id")) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
@@ -327,9 +328,23 @@ function saveAndContinue(e, k) {
       }
     },
     error: function (request) {
-      $("#page-inner-content").html(request.responseText);
+      var ct = request.getResponseHeader("content-type") || "";
+      if (ct.startsWith && ct.startsWith("application/json")) {
+        var errorArea = form.parent().find(".full-form-error");
+        if (errorArea.length) {
+          errorArea.text(request.responseJSON.error);
+        } else {
+          form
+            .parent()
+            .append(
+              `<p class="text-danger full-form-error">${request.responseJSON.error}</p>`
+            );
+        }
+      } else {
+        $("#page-inner-content").html(request.responseText);
+        initialize_page();
+      }
       ajax_indicate_error(e, request);
-      initialize_page();
     },
     complete: function () {
       if (k) k();
