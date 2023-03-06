@@ -156,7 +156,7 @@ const loadAttachments = async (path: string, row: any, user: any) => {
     );
   };
   const result = [];
-  if (path.indexOf(".") >= 0) {
+  if (path?.indexOf(".") >= 0) {
     const { relTable, keyField, relField } = parseRelationPath(path);
     const relTbl = _Table.findOne({ name: relTable });
     if (!relTbl) return [];

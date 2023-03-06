@@ -40,6 +40,7 @@ const {
   p,
   code,
   h5,
+  h3,
   pre,
   button,
   form,
@@ -100,6 +101,7 @@ const os = require("os");
 const Page = require("@saltcorn/data/models/page");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 const stream = require("stream");
+const Crash = require("@saltcorn/data/models/crash");
 
 const router = new Router();
 module.exports = router;
@@ -892,7 +894,6 @@ router.get(
                 {
                   href: "/admin/configuration-check",
                   class: "btn btn-info",
-                  onClick: "press_store_button(this)",
                 },
                 i({ class: "fas fa-stethoscope" }),
                 " ",
@@ -1306,48 +1307,73 @@ router.get(
   "/configuration-check",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { passes, errors, pass, warnings } = await runConfigurationCheck(req);
-    const mkError = (err) =>
-      div(
-        { class: "alert alert-danger", role: "alert" },
-        pre({ class: "mb-0" }, code(err))
+    const filename = `${moment().format("YYYMMDDHHmm")}.html`;
+    await File.new_folder("configuration_checks");
+    const go = async () => {
+      const { passes, errors, pass, warnings } = await runConfigurationCheck(
+        req
       );
-    const mkWarning = (err) =>
-      div(
-        { class: "alert alert-warning", role: "alert" },
-        pre({ class: "mb-0" }, code(err))
+      const mkError = (err) =>
+        div(
+          { class: "alert alert-danger", role: "alert" },
+          pre({ class: "mb-0" }, code(err))
+        );
+      const mkWarning = (err) =>
+        div(
+          { class: "alert alert-warning", role: "alert" },
+          pre({ class: "mb-0" }, code(err))
+        );
+
+      const report =
+        div(
+          h3("Errors"),
+          pass
+            ? div(req.__("No errors detected during configuration check"))
+            : errors.map(mkError)
+        ) +
+        div(
+          h3("Warnings"),
+          (warnings || []).length
+            ? (warnings || []).map(mkWarning)
+            : "No warnings"
+        ) +
+        div(
+          h3("Passes"),
+
+          pre(code(passes.join("\n")))
+        );
+      await File.from_contents(
+        filename,
+        "text/html",
+        report,
+        req.user.id,
+        1,
+        "/configuration_checks"
       );
+    };
+    go().catch((err) => Crash.create(err, req));
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Settings") },
-            { text: req.__("Admin"), href: "/admin" },
+            { text: req.__("About application"), href: "/admin" },
+            { text: req.__("System"), href: "/admin/system" },
             { text: req.__("Configuration check") },
           ],
         },
+
         {
           type: "card",
-          title: req.__("Configuration errors"),
+          title: req.__("Configuration check report"),
           contents: div(
-            pass
-              ? div(
-                  { class: "alert alert-success", role: "alert" },
-                  i({ class: "fas fa-check-circle fa-lg me-2" }),
-                  h5(
-                    { class: "d-inline" },
-                    req.__("No errors detected during configuration check")
-                  )
-                )
-              : errors.map(mkError),
-            (warnings || []).map(mkWarning)
+            "When completed, the report will be ready here: ",
+            a(
+              { href: `/files/serve/configuration_checks/${filename}` },
+              "/configuration_checks/" + filename
+            )
           ),
-        },
-        {
-          type: "card",
-          title: req.__("Configuration checks passed"),
-          contents: div(pre(code(passes.join("\n")))),
         },
       ],
     });
