@@ -511,17 +511,20 @@ router.post(
     });
     form.validate(req.body);
     if (form.hasErrors) {
-      send_events_page({
-        res,
-        req,
-        active_sub: "Triggers",
-        sub2_page: "Configure",
-        contents: {
-          type: "card",
-          title: req.__("Configure trigger"),
-          contents: renderForm(form, req.csrfToken()),
-        },
-      });
+      if (req.xhr) {
+        res.status(400).json({ error: form.errorSummary });
+      } else
+        send_events_page({
+          res,
+          req,
+          active_sub: "Triggers",
+          sub2_page: "Configure",
+          contents: {
+            type: "card",
+            title: req.__("Configure trigger"),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        });
     } else {
       await Trigger.update(trigger.id, { configuration: form.values });
       if (req.xhr) {
