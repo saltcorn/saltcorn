@@ -41,6 +41,7 @@ const {
   h6,
   pre,
   text,
+  i,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -623,8 +624,16 @@ router.get(
             div({ class: "testrunoutput" }, output),
 
             a(
-              { href: `/actions`, class: "mt-4 btn btn-primary" },
+              { href: `/actions`, class: "mt-4 btn btn-primary me-1" },
               "&laquo;&nbsp;" + req.__("back to actions")
+            ),
+            a(
+              {
+                href: `/actions/testrun/${id}`,
+                class: "ms-1 mt-4 btn btn-primary",
+              },
+              i({ class: "fas fa-redo me-1" }),
+              req.__("Re-run")
             )
           ),
         },

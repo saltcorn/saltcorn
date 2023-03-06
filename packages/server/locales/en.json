@@ -1106,5 +1106,6 @@
 	"Clear": "Clear",
 	"Restore a snapshot": "Restore a snapshot",
 	"Snapshot restored": "Snapshot restored",
-	"Configuration check report": "Configuration check report"
+	"Configuration check report": "Configuration check report",
+	"Re-run": "Re-run"
 }
