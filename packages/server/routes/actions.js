@@ -598,6 +598,7 @@ router.get(
         user: req.user,
       });
     } catch (e) {
+      console.error(e);
       fakeConsole.error(e.message);
     }
     if (output.length === 0) {
