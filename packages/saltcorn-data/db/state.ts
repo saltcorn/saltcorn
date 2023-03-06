@@ -643,8 +643,15 @@ class State {
     if (moduleNames.length === 0) return;
     if (!this.pluginManager) this.pluginManager = new PluginManager();
     for (const moduleName of moduleNames) {
-      await this.pluginManager.install(moduleName);
-      this.codeNPMmodules[moduleName] = this.pluginManager.require(moduleName);
+      if (moduleName) {
+        try {
+          await this.pluginManager.install(moduleName);
+          this.codeNPMmodules[moduleName] =
+            this.pluginManager.require(moduleName);
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }
 }

@@ -253,10 +253,10 @@ const configTypes: ConfigTypes = {
     restart_required: true,
     blurb:
       "Comma-separated list of packages which will be available in JavaScript actions",
-    /*async onChange(val: string) {
+    async onChange(val: string) {
       const { getState } = require("../db/state");
-      await getState.loadNPMpkgsForJsCode(val);
-    },*/
+      await getState().loadNPMpkgsForJsCode(val);
+    },
   },
   /** @type {object} */
   multitenancy_enabled: {
@@ -677,7 +677,8 @@ const configTypes: ConfigTypes = {
     default: 10, // public is default
     required: true,
     blurb: "Min role to access search page",
-  },/** @type {object} */
+  },
+  /** @type {object} */
   search_page_size: {
     type: "Integer",
     label: "Search page size",
