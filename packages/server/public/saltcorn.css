@@ -227,7 +227,6 @@ footer.bs-mobile-nav-footer {
 
 .containerbgimage {
   position: absolute;
-  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
@@ -372,7 +371,7 @@ table.table-inner-grid td {
 }
 
 .join-table-header {
-  padding: 0.25rem 1rem; 
+  padding: 0.25rem 1rem;
   margin-bottom: 0 !important;
   text-decoration: underline;
 }
