@@ -421,29 +421,29 @@ router.post(
           readState(row, fields);
           let errors = [];
           let hasErrors = false;
-          Object.keys(row).forEach((k) => {
+          for (const k of Object.keys(row)) {
             const field = fields.find((f) => f.name === k);
             if (!field && k.includes(".")) {
               const [fnm, jkey] = k.split(".");
               const jfield = fields.find((f) => f.name === fnm);
               if (jfield?.type?.name === "JSON") {
-                if (!row[fnm]) row[fnm] = { [jkey]: row[k] };
-                else row[fnm][jkey] = row[k];
+                if (typeof row[fnm] === "undefined") {
+                  const dbrow = await table.getRow({ [table.pk_name]: id });
+                  row[fnm] = dbrow[fnm] || {};
+                }
+                row[fnm][jkey] = row[k];
                 delete row[k];
               }
             } else if (!field || field.calculated) {
               delete row[k];
-              return;
-            }
-
-            if (field?.type && field.type.validate) {
+            } else if (field?.type && field.type.validate) {
               const vres = field.type.validate(field.attributes || {})(row[k]);
               if (vres.error) {
                 hasErrors = true;
                 errors.push(`${k}: ${vres.error}`);
               }
             }
-          });
+          }
           if (hasErrors) {
             res.status(400).json({ error: errors.join(", ") });
             return;
