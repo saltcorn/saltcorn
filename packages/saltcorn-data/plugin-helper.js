@@ -1142,7 +1142,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
 
         //console.log(column);
         const field = column.agg_field.split("@")[0];
-        const targetNm = (
+        let targetNm = (
           column.stat.replace(" ", "") +
           "_" +
           table +
@@ -1153,6 +1153,13 @@ const picked_fields_to_query = (columns, fields, layout) => {
           "_" +
           db.sqlsanitize(column.aggwhere || "")
         ).toLowerCase();
+        // postgres fields have a max len
+        if (targetNm.length > 58) {
+          targetNm = targetNm
+            .split("")
+            .filter((c, i) => i % 2 == 0)
+            .join("");
+        }
         column.targetNm = targetNm;
         aggregations[targetNm] = {
           table,
