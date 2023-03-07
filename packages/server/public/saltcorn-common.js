@@ -145,7 +145,7 @@ function apply_showif() {
       });
       element.dispatchEvent(new Event("RefreshSelectOptions"));
       if (e.hasClass("selectized") && $().selectize) {
-        e.selectize()[0].selectize.clearOptions();
+        e.selectize()[0].selectize.clearOptions(true);
         e.selectize()[0].selectize.addOption(dataOptions);
         if (typeof currentDataOption !== "undefined")
           e.selectize()[0].selectize.setValue(currentDataOption);
