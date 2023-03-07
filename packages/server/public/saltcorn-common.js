@@ -444,6 +444,10 @@ function initialize_page() {
       const [tblName, target] = type.replace("Key:", "").split(".");
       $.ajax(`/api/${tblName}`).then((resp) => {
         if (resp.success) {
+          resp.success.sort((a, b) =>
+            a[target]?.toLowerCase?.() > b[target]?.toLowerCase?.() ? 1 : -1
+          );
+
           const selopts = resp.success.map(
             (r) =>
               `<option ${current == r.id ? `selected ` : ``}value="${

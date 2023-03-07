@@ -429,7 +429,7 @@ router.post(
               if (jfield?.type?.name === "JSON") {
                 if (typeof row[fnm] === "undefined") {
                   const dbrow = await table.getRow({ [table.pk_name]: id });
-                  row[fnm] = dbrow[fnm];
+                  row[fnm] = dbrow[fnm] || {};
                 }
                 row[fnm][jkey] = row[k];
                 delete row[k];
