@@ -1307,7 +1307,7 @@ router.get(
   "/configuration-check",
   isAdmin,
   error_catcher(async (req, res) => {
-    const filename = `${moment().format("YYYMMDDHHmm")}.html`;
+    const filename = `${moment().format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
       const { passes, errors, pass, warnings } = await runConfigurationCheck(

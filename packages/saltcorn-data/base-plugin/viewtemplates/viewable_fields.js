@@ -4,7 +4,7 @@
  * @subcategory base-plugin
  */
 const { post_btn } = require("@saltcorn/markup");
-const { text, a, i, div, button } = require("@saltcorn/markup/tags");
+const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { link_view } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
@@ -607,7 +607,8 @@ const get_viewable_fields = (
               }`,
               "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
             },
-            oldkey(row)
+            span({ class: "current" }, oldkey(row)),
+            i({ class: "editicon fas fa-edit ms-1" })
           );
         fvrun.key = newkey;
       }
@@ -731,6 +732,10 @@ const get_viewable_fields = (
             (column.fieldview === "subfield" ||
               column.fieldview === "keys_expand_columns") &&
             column_key;
+          const schema =
+            doSetKey && f.attributes?.hasSchema
+              ? (f.attributes.schema || []).find((s) => s.key === column_key)
+              : undefined;
           const newkey = (row) => {
             if (role <= table.min_role_write || table.is_owner(req.user, row))
               return div(
@@ -742,6 +747,9 @@ const get_viewable_fields = (
                   "data-inline-edit-key": doSetKey
                     ? `${column.field_name}.${column_key}`
                     : undefined,
+                  "data-inline-edit-schema": schema
+                    ? encodeURIComponent(JSON.stringify(schema))
+                    : undefined,
                   "data-inline-edit-current": doSetKey
                     ? row[f.name]?.[column_key]
                     : undefined,
@@ -750,7 +758,8 @@ const get_viewable_fields = (
                   }`,
                   "data-inline-edit-type": f?.type?.name,
                 },
-                oldkey(row)
+                span({ class: "current" }, oldkey(row)),
+                i({ class: "editicon fas fa-edit ms-1" })
               );
             else return oldkey(row);
           };
