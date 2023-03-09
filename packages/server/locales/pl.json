@@ -246,7 +246,7 @@
 	"Set fixed states for views": "Ustaw stałe stany dla widoków",
 	"Page %s saved": "Strona %s zapisana",
 	"Your pages": "Twoje strony",
-	"Add page": Dodaj stronę",
+	"Add page": "Dodaj stronę",
 	"Root pages": "Strony główne",
 	"The root page is the page that is served when the user visits the home location (/). This can be set for each user role.": "Strona główna to strona, która jest wyświetlana, gdy użytkownik odwiedza lokalizację home (/). Może to być ustawione odrębnie dla każdej roli użytkownika.",
 	"Root pages updated": "Strony główne zapisane",
