@@ -1154,8 +1154,15 @@ router.get(
               [
                 { label: req.__("Type"), key: "type" },
                 {
-                  label: req.__("Fields"),
-                  key: (r) => r.configuration.fields.join(", "),
+                  label: req.__("What"),
+                  key: (r) =>
+                    r.type === "Unique"
+                      ? r.configuration.fields.join(", ")
+                      : r.type === "Index"
+                      ? r.configuration.field
+                      : r.type === "Formula"
+                      ? r.configuration.formula
+                      : "",
                 },
                 {
                   label: req.__("Delete"),

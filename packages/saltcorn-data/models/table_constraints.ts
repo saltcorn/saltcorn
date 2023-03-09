@@ -93,10 +93,13 @@ class TableConstraint {
    */
   async delete(): Promise<void> {
     await db.deleteWhere("_sc_table_constraints", { id: this.id });
+    const Table = require("./table");
+    const table = await Table.findOne({ id: this.table_id });
     if (this.type === "Unique" && this.configuration.fields) {
-      const Table = require("./table");
-      const table = await Table.findOne({ id: this.table_id });
       await db.drop_unique_constraint(table.name, this.configuration.fields);
+    } else if (this.type === "Index") {
+    } else if (this.type === "Formula") {
+      //TODO: implement in db
     }
   }
 
