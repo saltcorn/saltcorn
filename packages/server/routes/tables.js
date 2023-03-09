@@ -1189,7 +1189,33 @@ router.get(
 const constraintForm = (req, table_id, fields, type) => {
   switch (type) {
     case "formula":
-      break;
+      return new Form({
+        action: `/table/add-constraint/${table_id}/formula`,
+
+        fields: [
+          {
+            name: "formula",
+            label: req.__("Constraint formula"),
+            validator: expressionValidator,
+            type: "String",
+            class: "validate-expression",
+            sublabel:
+              req.__(
+                "Formula must evaluate to true for valid rows. In scope: "
+              ) +
+              fields
+                .map((f) => f.name)
+                .map((fn) => code(fn))
+                .join(", "),
+          },
+          {
+            name: "errormsg",
+            label: "Error message",
+            sublabel: "Shown the user if formula is false",
+            type: "String",
+          },
+        ],
+      });
     case "unique":
       return new Form({
         action: `/table/add-constraint/${table_id}/unique`,
@@ -1205,7 +1231,9 @@ const constraintForm = (req, table_id, fields, type) => {
     case "index":
       return new Form({
         action: `/table/add-constraint/${table_id}/unique`,
-        blurb: req.__("Choose the field to be indexed"),
+        blurb: req.__(
+          "Choose the field to be indexed. This make searching the table faster."
+        ),
         fields: [
           {
             type: "String",
@@ -1258,7 +1286,7 @@ router.get(
         },
         {
           type: "card",
-          title: req.__(`Add constraint to %s`, table.name),
+          title: req.__(`Add %s constraint to %s`, type, table.name),
           contents: renderForm(form, req.csrfToken()),
         },
       ],

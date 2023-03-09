@@ -1111,5 +1111,8 @@
 	"Add constraint:": "Add constraint:",
 	"Index": "Index",
 	"Add constraint: ": "Add constraint: ",
-	"Choose the field to be indexed": "Choose the field to be indexed"
+	"Choose the field to be indexed": "Choose the field to be indexed",
+	"Constraint formula": "Constraint formula",
+	"Formula must evaluate to true for valid rows. In scope: ": "Formula must evaluate to true for valid rows. In scope: ",
+	"Add %s constraint to %s": "Add %s constraint to %s"
 }
