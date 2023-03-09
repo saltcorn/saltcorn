@@ -1166,7 +1166,12 @@ router.get(
               cons,
               { hover: true }
             ),
-            link(`/table/add-constraint/${id}`, req.__("Add constraint")),
+            req.__("Add constraint: "),
+            link(`/table/add-constraint/${id}/unique`, req.__("Unique")),
+            " | ",
+            link(`/table/add-constraint/${id}/formula`, req.__("Formula")),
+            " | ",
+            link(`/table/add-constraint/${id}/index`, req.__("Index")),
           ],
         },
       ],
@@ -1181,18 +1186,40 @@ router.get(
  * @param {object[]} fields
  * @returns {Form}
  */
-const constraintForm = (req, table_id, fields) =>
-  new Form({
-    action: `/table/add-constraint/${table_id}`,
-    blurb: req.__(
-      "Tick the boxes for the fields that should be jointly unique"
-    ),
-    fields: fields.map((f) => ({
-      name: f.name,
-      label: f.label,
-      type: "Bool",
-    })),
-  });
+const constraintForm = (req, table_id, fields, type) => {
+  switch (type) {
+    case "formula":
+      break;
+    case "unique":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/unique`,
+        blurb: req.__(
+          "Tick the boxes for the fields that should be jointly unique"
+        ),
+        fields: fields.map((f) => ({
+          name: f.name,
+          label: f.label,
+          type: "Bool",
+        })),
+      });
+    case "index":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/unique`,
+        blurb: req.__("Choose the field to be indexed"),
+        fields: [
+          {
+            type: "String",
+            name: "field",
+            label: "Field",
+            required: true,
+            attributes: {
+              options: fields.map((f) => ({ label: f.label, name: f.name })),
+            },
+          },
+        ],
+      });
+  }
+};
 
 /**
  * Add constraint GET handler
@@ -1203,10 +1230,10 @@ const constraintForm = (req, table_id, fields) =>
  * @function
  */
 router.get(
-  "/add-constraint/:id",
+  "/add-constraint/:id/:type",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { id, type } = req.params;
     const table = await Table.findOne({ id });
     if (!table) {
       req.flash("error", `Table not found`);
@@ -1214,7 +1241,7 @@ router.get(
       return;
     }
     const fields = await table.getFields();
-    const form = constraintForm(req, table.id, fields);
+    const form = constraintForm(req, table.id, fields, type);
     res.sendWrap(req.__(`Add constraint to %s`, table.name), {
       above: [
         {
@@ -1247,7 +1274,7 @@ router.get(
  * @function
  */
 router.post(
-  "/add-constraint/:id",
+  "/add-constraint/:id/:type",
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;

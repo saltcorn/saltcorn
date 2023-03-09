@@ -1107,5 +1107,9 @@
 	"Restore a snapshot": "Restore a snapshot",
 	"Snapshot restored": "Snapshot restored",
 	"Configuration check report": "Configuration check report",
-	"Re-run": "Re-run"
+	"Re-run": "Re-run",
+	"Add constraint:": "Add constraint:",
+	"Index": "Index",
+	"Add constraint: ": "Add constraint: ",
+	"Choose the field to be indexed": "Choose the field to be indexed"
 }
