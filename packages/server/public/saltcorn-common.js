@@ -428,6 +428,10 @@ function initialize_page() {
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");
+    var schema = $(this).attr("data-inline-edit-schema");
+    if (schema) {
+      schema = JSON.parse(decodeURIComponent(schema));
+    }
     var is_key = type?.startsWith("Key:");
     const opts = encodeURIComponent(
       JSON.stringify({
@@ -438,10 +442,10 @@ function initialize_page() {
         current_label: $(this).attr("data-inline-edit-current-label"),
         type,
         is_key,
+        schema,
       })
     );
-    if (is_key) {
-      const [tblName, target] = type.replace("Key:", "").split(".");
+    const doAjaxOptionsFetch = (tblName, target) => {
       $.ajax(`/api/${tblName}`).then((resp) => {
         if (resp.success) {
           resp.success.sort((a, b) =>
@@ -467,6 +471,14 @@ function initialize_page() {
           );
         }
       });
+    };
+    if (type === "JSON" && schema && schema.type.startsWith("Key to ")) {
+      const tblName = schema.type.replace("Key to ", "");
+      const target = schema.summary_field || "id";
+      doAjaxOptionsFetch(tblName, target);
+    } else if (is_key) {
+      const [tblName, target] = type.replace("Key:", "").split(".");
+      doAjaxOptionsFetch(tblName, target);
     } else
       $(this).replaceWith(
         `<form method="post" action="${url}" ${
@@ -628,9 +640,10 @@ function inline_ajax_submit(e, opts1) {
     success: function (res) {
       if (opts) {
         let rawVal = formDataArray.find((f) => f.name == opts.key).value;
-        let val = opts.is_key
-          ? form.find("select").find("option:selected").text()
-          : rawVal;
+        let val =
+          opts.is_key || (opts.schema && opts.schema.type.startsWith("Key to "))
+            ? form.find("select").find("option:selected").text()
+            : rawVal;
 
         $(e.target).replaceWith(`<div 
       data-inline-edit-field="${opts.key}" 

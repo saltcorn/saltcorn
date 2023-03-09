@@ -732,6 +732,10 @@ const get_viewable_fields = (
             (column.fieldview === "subfield" ||
               column.fieldview === "keys_expand_columns") &&
             column_key;
+          const schema =
+            doSetKey && f.attributes?.hasSchema
+              ? (f.attributes.schema || []).find((s) => s.key === column_key)
+              : undefined;
           const newkey = (row) => {
             if (role <= table.min_role_write || table.is_owner(req.user, row))
               return div(
@@ -742,6 +746,9 @@ const get_viewable_fields = (
                   "data-inline-edit-ajax": "true",
                   "data-inline-edit-key": doSetKey
                     ? `${column.field_name}.${column_key}`
+                    : undefined,
+                  "data-inline-edit-schema": schema
+                    ? encodeURIComponent(JSON.stringify(schema))
                     : undefined,
                   "data-inline-edit-current": doSetKey
                     ? row[f.name]?.[column_key]
