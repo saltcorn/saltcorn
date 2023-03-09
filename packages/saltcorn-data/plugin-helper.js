@@ -1569,7 +1569,13 @@ const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
-      if (Array.isArray(current) && f.type.read) {
+      if (
+        Array.isArray(current) &&
+        current.length &&
+        typeof current[0] === "object"
+      ) {
+        //ignore (this is or statement)
+      } else if (Array.isArray(current) && f.type.read) {
         state[f.name] = current.map(f.type.read);
       } else if (current && current.slugify)
         state[f.name] = f.type.read
