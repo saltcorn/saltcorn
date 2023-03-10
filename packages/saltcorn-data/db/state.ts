@@ -10,6 +10,7 @@ import View from "../models/view";
 import Trigger from "../models/trigger";
 import File from "../models/file";
 import Table from "../models/table";
+import TableConstraint from "../models/table_constraints";
 import Page from "../models/page";
 import Field from "../models/field";
 import {
@@ -355,9 +356,9 @@ class State {
     const allConstraints = await db.select("_sc_table_constraints", {});
     for (const table of allTables) {
       table.fields = allFields.filter((f: Field) => f.table_id === table.id);
-      table.constraints = allConstraints.filter(
-        (f: any) => f.table_id === table.id
-      );
+      table.constraints = allConstraints
+        .filter((f: any) => f.table_id === table.id)
+        .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: Field) => {
         if (
           f.attributes &&
