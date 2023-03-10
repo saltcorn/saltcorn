@@ -606,7 +606,10 @@ $(initialize_page);
 function cancel_inline_edit(e, opts1) {
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
-
+  var json_fk_opt;
+  if (opts.schema) {
+    json_fk_opt = form.find(`option[value="${opts.current}"]`).text();
+  }
   form.replaceWith(`<div 
   data-inline-edit-field="${opts.key}" 
   ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
@@ -617,8 +620,17 @@ function cancel_inline_edit(e, opts1) {
       ? `data-inline-edit-current-label="${opts.current_label}"`
       : ""
   }
+  ${
+    opts.schema
+      ? `data-inline-edit-schema="${encodeURIComponent(
+          JSON.stringify(opts.schema)
+        )}"`
+      : ""
+  }
   data-inline-edit-dest-url="${opts.url}">
-    <span class="current">${opts.current_label || opts.current}</span>
+    <span class="current">${
+      json_fk_opt || opts.current_label || opts.current
+    }</span>
     <i class="editicon fas fa-edit ms-1"></i>
   </div>`);
   initialize_page();
