@@ -85,6 +85,7 @@ class TableConstraint {
     } else if (con.type === "Formula") {
       //TODO: implement in db
     }
+    await require("../db/state").getState().refresh_tables();
 
     return con;
   }

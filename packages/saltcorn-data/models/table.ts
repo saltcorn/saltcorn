@@ -1028,6 +1028,9 @@ class Table implements AbstractTable {
         return;
       }
     }
+    let constraint_check = this.check_table_constraints(v_in);
+    if (constraint_check) throw new Error(constraint_check);
+
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
