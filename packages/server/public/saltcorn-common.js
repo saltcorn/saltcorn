@@ -650,6 +650,13 @@ function inline_ajax_submit(e, opts1) {
       ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
       ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
       ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
+      ${
+        opts.schema
+          ? `data-inline-edit-schema="${encodeURIComponent(
+              JSON.stringify(opts.schema)
+            )}"`
+          : ""
+      }
       ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
       data-inline-edit-dest-url="${opts.url}">
         <span class="current">${val}</span>
