@@ -222,7 +222,7 @@ export const add_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  await do_add_index(table_name, field_names, query, false);
+  await do_add_index(table_name, field_names, query, true);
 };
 
 /**
@@ -235,7 +235,33 @@ export const drop_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  await do_drop_index(table_name, field_names, query, false);
+  await do_drop_index(table_name, field_names, query, true);
+};
+
+/**
+ * Add unique constraint
+ * @param table_name - table name
+ * @param field_name - column name
+ * @returns no result
+ */
+export const add_index = async (
+  table_name: string,
+  field_name: string
+): Promise<void> => {
+  await do_add_index(table_name, [field_name], query, false);
+};
+
+/**
+ * Drop index
+ * @param table_name - table name
+ * @param field_name - column name
+ * @returns no results
+ */
+export const drop_index = async (
+  table_name: string,
+  field_name: string
+): Promise<void> => {
+  await do_drop_index(table_name, [field_name], query, false);
 };
 
 /**
