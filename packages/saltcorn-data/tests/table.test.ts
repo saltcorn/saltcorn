@@ -1213,7 +1213,12 @@ describe("Table formula constraint", () => {
     const res = await table1.tryInsertRow(row0);
 
     assertIsErrorMsg(res);
-    expect(!!res.error).toBe(true);
+    expect(res.error).toBe("Too short");
+
+    const resup = await table1.updateRow({ pages: 355 }, 1);
+    expect(resup).toBe("Too short");
+    const uprow = await table1.getRow({ id: 1 });
+    expect(uprow?.pages).toBeGreaterThan(400);
 
     await tc.delete();
     const table2 = await Table.findOne({ name: "books" });

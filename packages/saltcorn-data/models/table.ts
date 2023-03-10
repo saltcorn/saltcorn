@@ -850,6 +850,17 @@ class Table implements AbstractTable {
         return "Not authorized";
       }
     }
+    if (this.constraints.filter((c) => c.type === "Formula").length) {
+      if (!existing)
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
+      const newRow = { ...existing, ...v };
+      let constraint_check = this.check_table_constraints(newRow);
+      if (constraint_check) return constraint_check;
+    }
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
