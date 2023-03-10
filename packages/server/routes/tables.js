@@ -762,18 +762,22 @@ router.get(
             })
           )
         ),
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          a(
+            { href: `/table/constraints/${table.id}` },
+            i({ class: "fas fa-2x fa-tasks" }),
+            "<br/>",
+            req.__("Constraints")
+          )
+        ),
+
       // only if table is not external
       !table.external &&
         div(
           { class: "mx-auto" },
           settingsDropdown(`dataMenuButton`, [
-            a(
-              {
-                class: "dropdown-item",
-                href: `/table/constraints/${table.id}`,
-              },
-              '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
-            ),
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
               table.name !== "users" &&
