@@ -1195,7 +1195,7 @@ router.get(
  */
 const constraintForm = (req, table_id, fields, type) => {
   switch (type) {
-    case "formula":
+    case "Formula":
       return new Form({
         action: `/table/add-constraint/${table_id}/${type}`,
 
