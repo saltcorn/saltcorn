@@ -18,6 +18,24 @@ const cookieSession = require("cookie-session");
 const is = require("contractis/is");
 const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
+const si = require("systeminformation");
+
+const get_sys_info = async () => {
+  const disks = await si.fsSize();
+  let size = 0;
+  let used = 0;
+  disks.forEach((d) => {
+    if (d && d.used && d.size) {
+      size += d.size;
+      used += d.used;
+    }
+  });
+  const diskUsage = Math.round(100 * (used / size));
+  const simem = await si.mem();
+  const memUsage = Math.round(100 - 100 * (simem.available / simem.total));
+  const cpuUsage = Math.round((await si.currentLoad()).currentLoad);
+  return { memUsage, diskUsage, cpuUsage };
+};
 
 /**
  * Checks that user logged or not.
@@ -314,4 +332,5 @@ module.exports = {
   get_tenant_from_req,
   addOnDoneRedirect,
   is_relative_url,
+  get_sys_info,
 };

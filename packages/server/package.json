@@ -52,6 +52,7 @@
     "qrcode": "1.5.1",
     "resize-with-sharp-or-jimp": "0.1.6",
     "socket.io": "4.6.0",
+    "systeminformation": "^5.11.12",
     "thirty-two": "1.0.2",
     "tmp-promise": "^3.0.2",
     "uuid": "^8.2.0",
