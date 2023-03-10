@@ -330,6 +330,39 @@ const drop_unique_constraint = async (table_name, field_names) => {
   sql_log(sql);
   await pool.query(sql);
 };
+
+/**
+ * Add index
+ * @param {string} table_name - table name
+ * @param {string} field_name - list of columns (members of constraint)
+ * @returns {Promise<void>} no result
+ */
+const add_index = async (table_name, field_name) => {
+  // TBD check that there are no problems with lenght of constraint name
+  const sql = `create index "${sqlsanitize(table_name)}_${sqlsanitize(
+    field_name
+  )}_index" on "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}" ("${sqlsanitize(field_name)}");`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
+/**
+ * Add index
+ * @param {string} table_name - table name
+ * @param {string} field_name - list of columns (members of constraint)
+ * @returns {Promise<void>} no result
+ */
+const drop_index = async (table_name, field_name) => {
+  // TBD check that there are no problems with lenght of constraint name
+  const sql = `drop index "${sqlsanitize(table_name)}_${sqlsanitize(
+    field_name
+  )}_index";`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
 /**
  * Copy data from CSV to table?
  * Only for PG
@@ -451,6 +484,8 @@ const postgresExports = {
   drop_reset_schema,
   add_unique_constraint,
   drop_unique_constraint,
+  add_index,
+  drop_index,
   reset_sequence,
   getVersion,
   copyFrom,

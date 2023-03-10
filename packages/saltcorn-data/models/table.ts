@@ -45,10 +45,13 @@ const {
   apply_calculated_fields_stored,
   recalculate_for_stored,
   get_expression_function,
+  eval_expression,
   freeVariables,
   add_free_variables_to_joinfields,
   removeComments,
 } = expression;
+
+import type TableConstraint from "./table_constraints";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
@@ -142,6 +145,7 @@ class Table implements AbstractTable {
   external: boolean;
   description?: string;
   fields: Field[];
+  constraints: TableConstraint[];
   is_user_group: boolean;
 
   /**
@@ -159,6 +163,7 @@ class Table implements AbstractTable {
     this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
+    this.constraints = o.constraints || [];
     this.fields = o.fields.map((f) => new Field(f));
   }
 
@@ -219,12 +224,19 @@ class Table implements AbstractTable {
       db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
       selectopts
     );
+    const _TableConstraint = (await import("./table_constraints")).default;
+
+    const constraints = await _TableConstraint.find(
+      db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
+    );
 
     return tbls.map((t: TableCfg) => {
       t.fields = flds
         .filter((f: any) => f.table_id === t.id)
         .map((f: any) => new Field(f));
-
+      t.constraints = constraints
+        .filter((f: any) => f.table_id === t.id)
+        .map((f: any) => new _TableConstraint(f));
       return new Table(t);
     });
   }
@@ -838,6 +850,17 @@ class Table implements AbstractTable {
         return "Not authorized";
       }
     }
+    if (this.constraints.filter((c) => c.type === "Formula").length) {
+      if (!existing)
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
+      const newRow = { ...existing, ...v };
+      let constraint_check = this.check_table_constraints(newRow);
+      if (constraint_check) return constraint_check;
+    }
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
@@ -970,6 +993,16 @@ class Table implements AbstractTable {
     return pkField;
   }
 
+  check_table_constraints(row: Row): string | undefined {
+    const fmls = this.constraints
+      .filter((c) => c.type === "Formula")
+      .map((c) => c.configuration);
+    for (const { formula, errormsg } of fmls) {
+      if (!eval_expression(formula, row)) return errormsg;
+    }
+    return undefined;
+  }
+
   /**
    * Insert row
    * @param v_in
@@ -1017,6 +1050,9 @@ class Table implements AbstractTable {
         return;
       }
     }
+    let constraint_check = this.check_table_constraints(v_in);
+    if (constraint_check) throw new Error(constraint_check);
+
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
@@ -1240,7 +1276,7 @@ class Table implements AbstractTable {
     if (!existing) {
       throw new Error(`Unable to find table with id: ${this.id}`);
     }
-    const { external, fields, ...upd_rec } = new_table_rec;
+    const { external, fields, constraints, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
     await require("../db/state").getState().refresh_tables();
 

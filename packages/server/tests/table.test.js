@@ -198,11 +198,11 @@ Gordon Kane, 217`;
       .set("Cookie", loginCookie)
       .expect(toInclude("books constraints"));
     await request(app)
-      .get("/table/add-constraint/" + id)
+      .get("/table/add-constraint/" + id + "/Unique")
       .set("Cookie", loginCookie)
       .expect(toInclude("Add constraint to books"));
     await request(app)
-      .post("/table/add-constraint/" + id)
+      .post("/table/add-constraint/" + id + "/Unique")
       .send("author=on")
       .send("pages=on")
       .set("Cookie", loginCookie)

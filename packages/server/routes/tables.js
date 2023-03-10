@@ -762,18 +762,22 @@ router.get(
             })
           )
         ),
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          a(
+            { href: `/table/constraints/${table.id}` },
+            i({ class: "fas fa-2x fa-tasks" }),
+            "<br/>",
+            req.__("Constraints")
+          )
+        ),
+
       // only if table is not external
       !table.external &&
         div(
           { class: "mx-auto" },
           settingsDropdown(`dataMenuButton`, [
-            a(
-              {
-                class: "dropdown-item",
-                href: `/table/constraints/${table.id}`,
-              },
-              '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
-            ),
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
               table.name !== "users" &&
@@ -1154,8 +1158,15 @@ router.get(
               [
                 { label: req.__("Type"), key: "type" },
                 {
-                  label: req.__("Fields"),
-                  key: (r) => r.configuration.fields.join(", "),
+                  label: req.__("What"),
+                  key: (r) =>
+                    r.type === "Unique"
+                      ? r.configuration.fields.join(", ")
+                      : r.type === "Index"
+                      ? r.configuration.field
+                      : r.type === "Formula"
+                      ? r.configuration.formula
+                      : "",
                 },
                 {
                   label: req.__("Delete"),
@@ -1166,7 +1177,12 @@ router.get(
               cons,
               { hover: true }
             ),
-            link(`/table/add-constraint/${id}`, req.__("Add constraint")),
+            req.__("Add constraint: "),
+            link(`/table/add-constraint/${id}/Unique`, req.__("Unique")),
+            " | ",
+            link(`/table/add-constraint/${id}/Formula`, req.__("Formula")),
+            " | ",
+            link(`/table/add-constraint/${id}/Index`, req.__("Index")),
           ],
         },
       ],
@@ -1181,18 +1197,68 @@ router.get(
  * @param {object[]} fields
  * @returns {Form}
  */
-const constraintForm = (req, table_id, fields) =>
-  new Form({
-    action: `/table/add-constraint/${table_id}`,
-    blurb: req.__(
-      "Tick the boxes for the fields that should be jointly unique"
-    ),
-    fields: fields.map((f) => ({
-      name: f.name,
-      label: f.label,
-      type: "Bool",
-    })),
-  });
+const constraintForm = (req, table_id, fields, type) => {
+  switch (type) {
+    case "Formula":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/${type}`,
+
+        fields: [
+          {
+            name: "formula",
+            label: req.__("Constraint formula"),
+            validator: expressionValidator,
+            type: "String",
+            class: "validate-expression",
+            sublabel:
+              req.__(
+                "Formula must evaluate to true for valid rows. In scope: "
+              ) +
+              fields
+                .map((f) => f.name)
+                .map((fn) => code(fn))
+                .join(", "),
+          },
+          {
+            name: "errormsg",
+            label: "Error message",
+            sublabel: "Shown the user if formula is false",
+            type: "String",
+          },
+        ],
+      });
+    case "Unique":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/${type}`,
+        blurb: req.__(
+          "Tick the boxes for the fields that should be jointly unique"
+        ),
+        fields: fields.map((f) => ({
+          name: f.name,
+          label: f.label,
+          type: "Bool",
+        })),
+      });
+    case "Index":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/${type}`,
+        blurb: req.__(
+          "Choose the field to be indexed. This make searching the table faster."
+        ),
+        fields: [
+          {
+            type: "String",
+            name: "field",
+            label: "Field",
+            required: true,
+            attributes: {
+              options: fields.map((f) => ({ label: f.label, name: f.name })),
+            },
+          },
+        ],
+      });
+  }
+};
 
 /**
  * Add constraint GET handler
@@ -1203,10 +1269,10 @@ const constraintForm = (req, table_id, fields) =>
  * @function
  */
 router.get(
-  "/add-constraint/:id",
+  "/add-constraint/:id/:type",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { id, type } = req.params;
     const table = await Table.findOne({ id });
     if (!table) {
       req.flash("error", `Table not found`);
@@ -1214,7 +1280,7 @@ router.get(
       return;
     }
     const fields = await table.getFields();
-    const form = constraintForm(req, table.id, fields);
+    const form = constraintForm(req, table.id, fields, type);
     res.sendWrap(req.__(`Add constraint to %s`, table.name), {
       above: [
         {
@@ -1231,7 +1297,7 @@ router.get(
         },
         {
           type: "card",
-          title: req.__(`Add constraint to %s`, table.name),
+          title: req.__(`Add %s constraint to %s`, type, table.name),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -1247,10 +1313,10 @@ router.get(
  * @function
  */
 router.post(
-  "/add-constraint/:id",
+  "/add-constraint/:id/:type",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { id, type } = req.params;
     const table = await Table.findOne({ id });
     if (!table) {
       req.flash("error", `Table not found`);
@@ -1258,16 +1324,20 @@ router.post(
       return;
     }
     const fields = await table.getFields();
-    const form = constraintForm(req, table.id, fields);
+    const form = constraintForm(req, table.id, fields, type);
     form.validate(req.body);
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
+      let configuration = {};
+      if (type === "Unique")
+        configuration.fields = fields
+          .map((f) => f.name)
+          .filter((f) => form.values[f]);
+      else configuration = form.values;
       await TableConstraint.create({
         table_id: table.id,
-        type: "Unique",
-        configuration: {
-          fields: fields.map((f) => f.name).filter((f) => form.values[f]),
-        },
+        type,
+        configuration,
       });
     }
     res.redirect(`/table/constraints/${table.id}`);
