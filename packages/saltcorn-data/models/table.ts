@@ -50,6 +50,8 @@ const {
   removeComments,
 } = expression;
 
+import type TableConstraint from "./table_constraints";
+
 import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
@@ -142,6 +144,7 @@ class Table implements AbstractTable {
   external: boolean;
   description?: string;
   fields: Field[];
+  constraints: TableConstraint[];
   is_user_group: boolean;
 
   /**
@@ -159,6 +162,7 @@ class Table implements AbstractTable {
     this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
+    this.constraints = o.constraints || [];
     this.fields = o.fields.map((f) => new Field(f));
   }
 
@@ -219,12 +223,19 @@ class Table implements AbstractTable {
       db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
       selectopts
     );
+    const _TableConstraint = (await import("./table_constraints")).default;
+
+    const constraints = await _TableConstraint.find(
+      db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
+    );
 
     return tbls.map((t: TableCfg) => {
       t.fields = flds
         .filter((f: any) => f.table_id === t.id)
         .map((f: any) => new Field(f));
-
+      t.constraints = constraints
+        .filter((f: any) => f.table_id === t.id)
+        .map((f: any) => new _TableConstraint(f));
       return new Table(t);
     });
   }
