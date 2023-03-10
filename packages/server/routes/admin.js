@@ -10,6 +10,7 @@ const {
   error_catcher,
   getGitRevision,
   setTenant,
+  get_sys_info,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -864,7 +865,7 @@ router.get(
     const can_update =
       !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
-
+    const { memUsage, diskUsage, cpuUsage } = await get_sys_info();
     send_admin_page({
       res,
       req,
@@ -986,7 +987,20 @@ router.get(
                   tr(
                     th(req.__("Process uptime")),
                     td(moment(get_process_init_time()).fromNow(true))
-                  )
+                  ),
+                  tr(
+                    th(req.__("Disk usage")),
+                    diskUsage > 95
+                      ? td(
+                          { class: "text-danger fw-bold" },
+                          diskUsage,
+                          "%",
+                          i({ class: "fas fa-exclamation-triangle ms-1" })
+                        )
+                      : td(diskUsage, "%")
+                  ),
+                  tr(th(req.__("CPU usage")), td(cpuUsage, "%")),
+                  tr(th(req.__("Mem usage")), td(memUsage, "%"))
                 )
               ),
               p(
