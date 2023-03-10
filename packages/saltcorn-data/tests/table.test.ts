@@ -1191,7 +1191,39 @@ describe("Table joint unique constraint", () => {
     expect(!!res1.error).toBe(false);
   });
 });
+describe("Table formula constraint", () => {
+  it("should create table", async () => {
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    assertIsSet(table.id);
 
+    const row0 = {
+      author: "Murphy",
+      pages: 499,
+    };
+
+    const tc = await TableConstraint.create({
+      table_id: table.id,
+      type: "Formula",
+      configuration: { formula: "pages>500", errormsg: "Too short" },
+    });
+    const table1 = await Table.findOne({ name: "books" });
+    assertIsSet(table1);
+
+    const res = await table1.tryInsertRow(row0);
+
+    assertIsErrorMsg(res);
+    expect(!!res.error).toBe(true);
+
+    await tc.delete();
+    const table2 = await Table.findOne({ name: "books" });
+    assertIsSet(table2);
+    const res1 = await table2.tryInsertRow(row0);
+
+    assertIsErrorMsg(res1);
+    expect(!!res1.error).toBe(false);
+  });
+});
 describe("Table with UUID pks", () => {
   if (!db.isSQLite) {
     it("should select uuid", async () => {

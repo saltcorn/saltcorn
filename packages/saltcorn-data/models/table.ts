@@ -45,6 +45,7 @@ const {
   apply_calculated_fields_stored,
   recalculate_for_stored,
   get_expression_function,
+  eval_expression,
   freeVariables,
   add_free_variables_to_joinfields,
   removeComments,
@@ -979,6 +980,16 @@ class Table implements AbstractTable {
       throw new Error("A primary key field is mandatory");
     }
     return pkField;
+  }
+
+  check_table_constraints(row: Row): string | undefined {
+    const fmls = this.constraints
+      .filter((c) => c.type === "Formula")
+      .map((c) => c.configuration);
+    for (const { formula, errormsg } of fmls) {
+      if (!eval_expression(formula, row)) return errormsg;
+    }
+    return undefined;
   }
 
   /**
