@@ -1178,7 +1178,7 @@ router.get(
             " | ",
             link(`/table/add-constraint/${id}/Formula`, req.__("Formula")),
             " | ",
-            link(`/table/add-constraint/${id}/Fndex`, req.__("Index")),
+            link(`/table/add-constraint/${id}/Index`, req.__("Index")),
           ],
         },
       ],
@@ -1197,7 +1197,7 @@ const constraintForm = (req, table_id, fields, type) => {
   switch (type) {
     case "formula":
       return new Form({
-        action: `/table/add-constraint/${table_id}/formula`,
+        action: `/table/add-constraint/${table_id}/${type}`,
 
         fields: [
           {
@@ -1225,7 +1225,7 @@ const constraintForm = (req, table_id, fields, type) => {
       });
     case "Unique":
       return new Form({
-        action: `/table/add-constraint/${table_id}/unique`,
+        action: `/table/add-constraint/${table_id}/${type}`,
         blurb: req.__(
           "Tick the boxes for the fields that should be jointly unique"
         ),
@@ -1237,7 +1237,7 @@ const constraintForm = (req, table_id, fields, type) => {
       });
     case "Index":
       return new Form({
-        action: `/table/add-constraint/${table_id}/unique`,
+        action: `/table/add-constraint/${table_id}/${type}`,
         blurb: req.__(
           "Choose the field to be indexed. This make searching the table faster."
         ),

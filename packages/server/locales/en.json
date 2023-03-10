@@ -1114,5 +1114,7 @@
 	"Choose the field to be indexed": "Choose the field to be indexed",
 	"Constraint formula": "Constraint formula",
 	"Formula must evaluate to true for valid rows. In scope: ": "Formula must evaluate to true for valid rows. In scope: ",
-	"Add %s constraint to %s": "Add %s constraint to %s"
+	"Add %s constraint to %s": "Add %s constraint to %s",
+	"What": "What",
+	"Choose the field to be indexed. This make searching the table faster.": "Choose the field to be indexed. This make searching the table faster."
 }
