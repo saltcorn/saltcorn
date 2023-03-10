@@ -1201,7 +1201,7 @@ const constraintForm = (req, table_id, fields, type) => {
 
         fields: [
           {
-            name: "Formula",
+            name: "formula",
             label: req.__("Constraint formula"),
             validator: expressionValidator,
             type: "String",
