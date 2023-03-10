@@ -81,6 +81,7 @@ class TableConstraint {
     if (con.type === "Unique" && con.configuration.fields) {
       await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index") {
+      await db.add_index(table.name, con.configuration.field);
     } else if (con.type === "Formula") {
       //TODO: implement in db
     }
@@ -98,6 +99,7 @@ class TableConstraint {
     if (this.type === "Unique" && this.configuration.fields) {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
     } else if (this.type === "Index") {
+      await db.drop_index(table.name, this.configuration.field);
     } else if (this.type === "Formula") {
       //TODO: implement in db
     }

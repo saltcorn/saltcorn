@@ -19,8 +19,8 @@ import {
   doListTables,
   doListUserDefinedTables,
   doListScTables,
-  do_add_unique_constraint,
-  do_drop_unique_constraint,
+  do_add_index,
+  do_drop_index,
 } from "@saltcorn/db-common/sqlite-commons";
 
 declare let window: any;
@@ -222,7 +222,7 @@ export const add_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  await do_add_unique_constraint(table_name, field_names, query);
+  await do_add_index(table_name, field_names, query, false);
 };
 
 /**
@@ -235,7 +235,7 @@ export const drop_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  await do_drop_unique_constraint(table_name, field_names, query);
+  await do_drop_index(table_name, field_names, query, false);
 };
 
 /**
