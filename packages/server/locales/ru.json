@@ -973,5 +973,12 @@
 	"%s configuration": "%s конфигурация",
 	"Show only matches in table:": "Показывать только совпадения в таблице:",
 	"Role for search": "Роль для поиска",
-	"Min role to access search page": "Минимальная роль для доступа к странице поиска"
+	"Min role to access search page": "Минимальная роль для доступа к странице поиска",
+	"Module Store endpoint": "Module Store endpoint",
+	"Force logout": "Force logout",
+	"Disk usage": "Disk usage",
+	"CPU usage": "CPU usage",
+	"Mem usage": "Mem usage",
+	"Configure trigger %s": "Настроить триггер %s",
+	"Done": "Выполнено"
 }
