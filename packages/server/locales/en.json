@@ -1119,5 +1119,6 @@
 	"Choose the field to be indexed. This make searching the table faster.": "Choose the field to be indexed. This make searching the table faster.",
 	"Disk usage": "Disk usage",
 	"CPU usage": "CPU usage",
-	"Mem usage": "Mem usage"
+	"Mem usage": "Mem usage",
+	"The field that will be shown to the user when choosing a value": "The field that will be shown to the user when choosing a value"
 }

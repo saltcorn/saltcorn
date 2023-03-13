@@ -398,9 +398,16 @@ const fieldFlow = (req) =>
           ];
           const keyfields = orderedFields
             .filter((f) => !f.calculated || f.stored)
+            .sort((a, b) =>
+              a.type?.name === "String" && b.type?.name !== "String"
+                ? -1
+                : a.type?.name !== "String" && b.type?.name === "String"
+                ? 1
+                : 0
+            )
             .map((f) => ({
               value: f.name,
-              label: f.label,
+              label: `${f.label} [${f.type?.name || f.type}]`,
             }));
           const textfields = orderedFields
             .filter(
@@ -412,6 +419,9 @@ const fieldFlow = (req) =>
               new Field({
                 name: "summary_field",
                 label: req.__("Summary field"),
+                sublabel: req.__(
+                  "The field that will be shown to the user when choosing a value"
+                ),
                 input_type: "select",
                 options: keyfields,
               }),
