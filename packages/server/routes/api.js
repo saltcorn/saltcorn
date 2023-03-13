@@ -31,6 +31,7 @@ const {
   readState,
   strictParseInt,
 } = require("@saltcorn/data/plugin-helper");
+const Crash = require("@saltcorn/data/models/crash");
 
 /**
  * @type {object}
@@ -331,7 +332,7 @@ router.post(
             });
             res.json({ success: true, data: resp });
           } catch (e) {
-            getState().log(2, `API action ${actionname} error: ${e.message}`);
+            Crash.create(e, req);
             res.status(400).json({ success: false, error: e.message });
           }
         } else {
