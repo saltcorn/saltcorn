@@ -126,6 +126,7 @@ router.post(
     const view = await View.findOne({ name: viewName });
     const db = require("@saltcorn/data/db");
     if (!view) {
+      getState().log(3, `API viewQuery ${view.name} not found`);
       res.status(404).json({
         error: req.__("View %s not found", viewName),
         view: viewName,
@@ -152,6 +153,10 @@ router.post(
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
           } else {
+            getState().log(
+              3,
+              `API viewQuery ${view.name} ${queryName} not found`
+            );
             res.status(404).json({
               error: req.__("Query %s not found", queryName),
               view: viewName,
@@ -163,6 +168,7 @@ router.post(
             });
           }
         } else {
+          getState().log(3, `API viewQuery ${view.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -208,6 +214,10 @@ router.get(
           }
           res.json({ success: dvs });
         } else {
+          getState().log(
+            3,
+            `API distinct ${table.name}.${fieldName} not authorized`
+          );
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -234,6 +244,7 @@ router.get(
         : { name: tableName }
     );
     if (!table) {
+      getState().log(3, `API get ${tableName} table not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -272,6 +283,7 @@ router.get(
           }
           res.json({ success: rows.map(limitFields(fields)) });
         } else {
+          getState().log(3, `API get ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -301,6 +313,7 @@ router.post(
     });
 
     if (!trigger) {
+      getState().log(3, `API action ${actionname} not found`);
       res.status(400).json({ error: req.__("Not found") });
       return;
     }
@@ -318,9 +331,11 @@ router.post(
             });
             res.json({ success: true, data: resp });
           } catch (e) {
+            getState().log(2, `API action ${actionname} error: ${e.message}`);
             res.status(400).json({ success: false, error: e.message });
           }
         } else {
+          getState().log(3, `API action ${actionname} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -340,6 +355,7 @@ router.post(
     const { tableName } = req.params;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
+      getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -378,6 +394,10 @@ router.post(
             }
           });
           if (hasErrors) {
+            getState().log(
+              2,
+              `API POST ${table.name} error: ${errors.join(", ")}`
+            );
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
@@ -385,9 +405,12 @@ router.post(
             row,
             req.user || user || { role_id: 10 }
           );
-          if (ins_res.error) res.status(400).json(ins_res);
-          else res.json(ins_res);
+          if (ins_res.error) {
+            getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
+            res.status(400).json(ins_res);
+          } else res.json(ins_res);
         } else {
+          getState().log(3, `API POST ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -408,6 +431,7 @@ router.post(
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
+      getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -445,6 +469,10 @@ router.post(
             }
           }
           if (hasErrors) {
+            getState().log(
+              2,
+              `API POST ${table.name} error: ${errors.join(", ")}`
+            );
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
@@ -454,9 +482,12 @@ router.post(
             user || req.user || { role_id: 10 }
           );
 
-          if (ins_res.error) res.status(400).json(ins_res);
-          else res.json(ins_res);
+          if (ins_res.error) {
+            getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
+            res.status(400).json(ins_res);
+          } else res.json(ins_res);
         } else {
+          getState().log(3, `API POST ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -477,6 +508,7 @@ router.delete(
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
+      getState().log(3, `API DELETE ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -502,9 +534,11 @@ router.delete(
               );
             res.json({ success: true });
           } catch (e) {
+            getState().log(2, `API DELETE ${table.name} error: ${e.message}`);
             res.status(400).json({ error: e.message });
           }
         } else {
+          getState().log(3, `API DELETE ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
