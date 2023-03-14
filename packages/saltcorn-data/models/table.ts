@@ -556,22 +556,18 @@ class Table implements AbstractTable {
   updateWhereWithOwnership(
     where: Where,
     fields: Field[],
-    user?: Row
+    user?: Row,
+    forRead?: boolean
   ): { notAuthorized?: boolean } | undefined {
     const role = user?.role_id;
-
+    const min_role = forRead ? this.min_role_read : this.min_role_write;
     if (
       role &&
-      role > this.min_role_write &&
+      role > min_role &&
       ((!this.ownership_field_id && !this.ownership_formula) || role === 10)
     )
       return { notAuthorized: true };
-    if (
-      user &&
-      role < 10 &&
-      role > this.min_role_write &&
-      this.ownership_field_id
-    ) {
+    if (user && role < 10 && role > min_role && this.ownership_field_id) {
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
@@ -704,8 +700,12 @@ class Table implements AbstractTable {
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
     if (
       role &&
-      this.updateWhereWithOwnership(where, fields, forUser || { role_id: 10 })
-        ?.notAuthorized
+      this.updateWhereWithOwnership(
+        where,
+        fields,
+        forUser || { role_id: 10 },
+        true
+      )?.notAuthorized
     ) {
       return [];
     }

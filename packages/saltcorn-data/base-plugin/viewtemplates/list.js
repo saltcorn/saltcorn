@@ -194,6 +194,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
                 name: "create_view_label",
@@ -203,7 +204,10 @@ const configuration_workflow = (req) =>
                 ),
                 attributes: { asideNext: true },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_view_location",
@@ -219,7 +223,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_style",
@@ -245,7 +252,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
 
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_size",
@@ -262,7 +272,10 @@ const configuration_workflow = (req) =>
                     { name: "btn-block btn-lg", label: "Large block" },
                   ],
                 },
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
             ],
           });

@@ -439,8 +439,7 @@ router.get(
         title: req.__("Tables"),
         headers: [
           {
-            script:
-              "https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js",
+            script: `/static_assets/${db.connectObj.version_tag}/vis-network.min.js`,
           },
         ],
       },

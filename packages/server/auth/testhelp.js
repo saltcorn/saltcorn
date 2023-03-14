@@ -132,6 +132,20 @@ const getStaffLoginCookie = async () => {
  *
  * @returns {Promise<void>}
  */
+const getUserLoginCookie = async () => {
+  const app = await getApp({ disableCsrf: true });
+  const res = await request(app)
+    .post("/auth/login/")
+    .send("email=user@foo.com")
+    .send("password=GFeggwrwq45fjn");
+  if (res.statusCode !== 302) console.log(res.text);
+  return resToLoginCookie(res);
+};
+
+/**
+ *
+ * @returns {Promise<void>}
+ */
 const getAdminLoginCookie = async () => {
   const app = await getApp({ disableCsrf: true });
   const res = await request(app)
@@ -235,6 +249,7 @@ const notAuthorized = (res) => {
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toRedirect,
   toInclude,
