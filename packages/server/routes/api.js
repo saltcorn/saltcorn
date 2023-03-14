@@ -98,7 +98,10 @@ function accessAllowedWrite(req, user, table) {
       ? user.role_id
       : 10;
 
-  return role <= table.min_role_write;
+  return (
+    role <= table.min_role_read ||
+    (req.user?.id && (table.ownership_field_id || table.ownership_formula))
+  );
 }
 /**
  * Check that user has right to trigger call
