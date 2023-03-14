@@ -99,7 +99,7 @@ function accessAllowedWrite(req, user, table) {
       : 10;
 
   return (
-    role <= table.min_role_read ||
+    role <= table.min_role_write ||
     (req.user?.id && (table.ownership_field_id || table.ownership_formula))
   );
 }
