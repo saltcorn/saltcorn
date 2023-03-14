@@ -77,7 +77,7 @@ function accessAllowedRead(req, user, table, allow_ownership) {
 
   return (
     role <= table.min_role_read ||
-    (req.user?.id &&
+    ((req.user?.id || user?.id) &&
       allow_ownership &&
       (table.ownership_field_id || table.ownership_formula))
   );
@@ -100,7 +100,8 @@ function accessAllowedWrite(req, user, table) {
 
   return (
     role <= table.min_role_write ||
-    (req.user?.id && (table.ownership_field_id || table.ownership_formula))
+    ((req.user?.id || user?.id) &&
+      (table.ownership_field_id || table.ownership_formula))
   );
 }
 /**
@@ -267,8 +268,8 @@ router.get(
           if (versioncount === "on") {
             const joinOpts = {
               orderBy: "id",
-              forUser: req.user || { role_id: 10 },
-              forPublic: !req.user,
+              forUser: req.user || user || { role_id: 10 },
+              forPublic: !(req.user || user),
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
@@ -289,15 +290,15 @@ router.get(
               table,
             });
             rows = await table.getRows(qstate, {
-              forPublic: !req.user,
-              forUser: req.user,
+              forPublic: !(req.user || user),
+              forUser: req.user || user,
             });
           } else {
             rows = await table.getRows(
               {},
               {
-                forPublic: !req.user,
-                forUser: req.user,
+                forPublic: !(req.user || user),
+                forUser: req.user || user,
               }
             );
           }
