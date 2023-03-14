@@ -5,11 +5,13 @@ const Field = require("@saltcorn/data/models/field");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
   toRedirect,
   resetToFixtures,
+  succeedJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
@@ -262,7 +264,22 @@ describe("deletion to table with row ownership", () => {
     const row = await persons.insertRow({ name: "something", owner: user.id });
     expect(await persons.countRows()).toBe(1);
     const loginCookie = await getStaffLoginCookie();
+    const uloginCookie = await getUserLoginCookie();
     const app = await getApp({ disableCsrf: true });
+    await request(app).get("/api/owned").expect(401);
+    await request(app)
+      .get("/api/owned")
+      .set("Cookie", loginCookie)
+      .expect(
+        succeedJsonWith(
+          (rows) => rows.length == 1 && rows[0].name === "something"
+        )
+      );
+    await request(app)
+      .get("/api/owned")
+      .set("Cookie", uloginCookie)
+      .expect(succeedJsonWith((rows) => rows.length == 0));
+
     await request(app)
       .post("/delete/owned/" + row)
       .expect(toRedirect("/list/owned"));
