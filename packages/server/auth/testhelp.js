@@ -132,7 +132,7 @@ const getStaffLoginCookie = async () => {
  *
  * @returns {Promise<void>}
  */
-const userLoginCookie = async () => {
+const getUserLoginCookie = async () => {
   const app = await getApp({ disableCsrf: true });
   const res = await request(app)
     .post("/auth/login/")
@@ -249,7 +249,7 @@ const notAuthorized = (res) => {
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
-  userLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toRedirect,
   toInclude,

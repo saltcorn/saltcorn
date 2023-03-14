@@ -75,7 +75,10 @@ function accessAllowedRead(req, user, table) {
       ? user.role_id
       : 10;
 
-  return role <= table.min_role_read;
+  return (
+    role <= table.min_role_read ||
+    (req.user?.id && (table.ownership_field_id || table.ownership_formula))
+  );
 }
 
 /**
@@ -259,6 +262,8 @@ router.get(
           if (versioncount === "on") {
             const joinOpts = {
               orderBy: "id",
+              forUser: req.user || { role_id: 10 },
+              forPublic: !req.user,
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
@@ -278,9 +283,18 @@ router.get(
               state: req_query,
               table,
             });
-            rows = await table.getRows(qstate);
+            rows = await table.getRows(qstate, {
+              forPublic: !req.user,
+              forUser: req.user,
+            });
           } else {
-            rows = await table.getRows();
+            rows = await table.getRows(
+              {},
+              {
+                forPublic: !req.user,
+                forUser: req.user,
+              }
+            );
           }
           res.json({ success: rows.map(limitFields(fields)) });
         } else {
