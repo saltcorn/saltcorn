@@ -67,7 +67,7 @@ const limitFields = (fields) => (r) => {
  * @param {Table} table
  * @returns {boolean}
  */
-function accessAllowedRead(req, user, table) {
+function accessAllowedRead(req, user, table, allow_ownership) {
   const role =
     req.user && req.user.id
       ? req.user.role_id
@@ -77,7 +77,9 @@ function accessAllowedRead(req, user, table) {
 
   return (
     role <= table.min_role_read ||
-    (req.user?.id && (table.ownership_field_id || table.ownership_formula))
+    (req.user?.id &&
+      allow_ownership &&
+      (table.ownership_field_id || table.ownership_formula))
   );
 }
 
@@ -257,7 +259,7 @@ router.get(
       ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
-        if (accessAllowedRead(req, user, table)) {
+        if (accessAllowedRead(req, user, table, true)) {
           let rows;
           if (versioncount === "on") {
             const joinOpts = {
