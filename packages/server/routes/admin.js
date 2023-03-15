@@ -1321,12 +1321,16 @@ router.get(
   "/configuration-check",
   isAdmin,
   error_catcher(async (req, res) => {
-    const filename = `${moment().format("YYYYMMDDHHmm")}.html`;
+    const start = new Date();
+    const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
       const { passes, errors, pass, warnings } = await runConfigurationCheck(
         req
       );
+      const end = new Date();
+      const secs = Math.round((end.getTime() - start.getTime()) / 1000);
+
       const mkError = (err) =>
         div(
           { class: "alert alert-danger", role: "alert" },
@@ -1355,6 +1359,11 @@ router.get(
           h3("Passes"),
 
           pre(code(passes.join("\n")))
+        ) +
+        p(
+          `Configuration check completed in ${
+            secs > 60 ? `${Math.floor(secs / 60)}m ${secs % 60}s` : secs + "s"
+          }`
         );
       await File.from_contents(
         filename,
