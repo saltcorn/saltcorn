@@ -1121,5 +1121,6 @@
 	"CPU usage": "CPU usage",
 	"Mem usage": "Mem usage",
 	"The field that will be shown to the user when choosing a value": "The field that will be shown to the user when choosing a value",
-	"String value must match regular expression": "String value must match regular expression"
+	"String value must match regular expression": "String value must match regular expression",
+	"Modules up-to-date. Please restart server": "Modules up-to-date. Please restart server"
 }

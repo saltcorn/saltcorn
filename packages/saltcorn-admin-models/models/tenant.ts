@@ -4,6 +4,8 @@
  * @module tenant
  */
 import db from "@saltcorn/data/db/index";
+const { getState } = require("@saltcorn/data/db/state");
+
 const reset = require("@saltcorn/data/db/reset_schema");
 import {
   SelectOptions,
@@ -222,6 +224,54 @@ const create_tenant = async ({
   }
 };
 
+const upgrade_all_tenants_plugins = async (
+  requirePlugin: (arg0: Plugin, arg1: boolean) => { version: string }
+): Promise<void> => {
+  const tenantList = [db.connectObj.default_schema, ...(await getAllTenants())];
+  const latest_versions: any = {};
+
+  for (const domain of tenantList) {
+    await db.runWithTenant(domain, async () => {
+      try {
+        const myplugins = await Plugin.find({ source: "npm" });
+        for (const plugin of myplugins) {
+          if (latest_versions[plugin.location]) {
+            if (plugin.version !== latest_versions[plugin.location]) {
+              plugin.version = latest_versions[plugin.location];
+              await plugin.upsert();
+            }
+          } else {
+            const prevVersion = plugin.version;
+            plugin.version = "latest";
+            const { version } = await requirePlugin(plugin, true);
+            getState().log(
+              5,
+              `Plugin ${plugin.location} latest version ${version} (previously ${prevVersion})`
+            );
+            //console.log(plinfo)
+            if (version) {
+              latest_versions[plugin.location] = version;
+              if (prevVersion !== version) {
+                getState().log(
+                  3,
+                  `Upgrading plugin ${plugin.location} to version ${version}`
+                );
+                plugin.version = version;
+                await plugin.upsert();
+              }
+            }
+          }
+        }
+      } catch (e: any) {
+        getState().log(
+          1,
+          `Upgrading plugins error in tenant ${domain}: ${e.message}`
+        );
+      }
+    });
+  }
+};
+
 /**
  * Class Tenant
  */
@@ -300,5 +350,6 @@ export = {
   deleteTenant,
   eachTenant,
   copy_tenant_template,
+  upgrade_all_tenants_plugins,
   Tenant,
 };
