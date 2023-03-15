@@ -19,6 +19,9 @@ const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
+const {
+  upgrade_all_tenants_plugins,
+} = require("@saltcorn/admin-models/models/tenant");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 const {
@@ -926,14 +929,22 @@ router.get(
   "/upgrade",
   isAdmin,
   error_catcher(async (req, res) => {
-    const installed_plugins = await Plugin.find({});
-    for (const plugin of installed_plugins) {
-      await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+    const schema = db.getTenantSchema();
+    if (schema === db.connectObj.default_schema) {
+      await upgrade_all_tenants_plugins((p, f) =>
+        load_plugins.loadPlugin(p, f)
+      );
+      req.flash("success", req.__(`Modules up-to-date. Please restart server`));
+    } else {
+      const installed_plugins = await Plugin.find({});
+      for (const plugin of installed_plugins) {
+        await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+      }
+      req.flash("success", req.__(`Modules up-to-date`));
+      await restart_tenant(loadAllPlugins);
+      process.send &&
+        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
     }
-    req.flash("success", req.__(`Modules up-to-date`));
-    await restart_tenant(loadAllPlugins);
-    process.send &&
-      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
     res.redirect(`/plugins`);
   })
 );
