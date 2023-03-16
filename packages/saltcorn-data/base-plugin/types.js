@@ -1523,9 +1523,19 @@ const bool = {
      */
     edit: {
       isEdit: true,
+      configFields: [
+        {
+          name: "size",
+          label: "Size",
+          type: "String",
+          attributes: {
+            options: ["normal", "medium", "large"],
+          },
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          class: ["me-2 mt-1", cls],
+          class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
           onChange: attrs.onChange,

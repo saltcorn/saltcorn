@@ -375,3 +375,26 @@ table.table-inner-grid td {
   margin-bottom: 0 !important;
   text-decoration: underline;
 }
+
+@supports (zoom: 2) {
+  input[type="radio"].large,
+  input[type="checkbox"].large {
+    zoom: 2;
+  }
+  input[type="radio"].medium,
+  input[type="checkbox"].medium {
+    zoom: 1.5;
+  }
+}
+@supports not (zoom: 2) {
+  input[type="radio"].large,
+  input[type="checkbox"].large {
+    transform: scale(2);
+    margin: 15px;
+  }
+  input[type="radio"].medium,
+  input[type="checkbox"].medium {
+    transform: scale(1.5);
+    margin: 8px;
+  }
+}
