@@ -63,7 +63,7 @@ const configuration_workflow = () =>
           const fields = await table.getFields();
           const { child_field_list, child_relations } =
             await table.get_child_relations();
-          const { parent_field_list } = await table.get_parent_relations();
+          const { parent_field_list } = await table.get_parent_relations(true);
           const my_parent_field_list = parent_field_list
             .map((pfield) => {
               const kpath = pfield.split(".");
@@ -72,6 +72,18 @@ const configuration_workflow = () =>
                 const jfld = fields.find((f) => f.name === jFieldNm);
                 if (jfld)
                   return `${jFieldNm}.${jfld.reftable_name}->${lblField}`;
+              }
+              if (kpath.length === 3) {
+                const [jFieldNm, throughField, lblField] = kpath;
+                const jfld = fields.find((f) => f.name === jFieldNm);
+                if (!jfld) return;
+                const throughTable = Table.findOne({
+                  name: jfld.reftable_name,
+                });
+                const throughFld = throughTable.fields.find(
+                  (f) => f.name === throughField
+                );
+                return `${jFieldNm}.${jfld.reftable_name}->${throughField}.${throughFld.reftable_name}->${lblField}`;
               }
             })
             .filter((f) => f);
@@ -355,8 +367,10 @@ const run = async (
       return select(
         {
           name: `ddfilter${field_name}`,
-          class: "form-control form-select d-inline-maybe selectizable",
+          class:
+            "form-control form-select d-inline-maybe scfilter selectizable",
           style: full_width ? undefined : "width: unset;",
+          required: true,
           onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
             field_name
           )}'): set_state_field('${encodeURIComponent(
@@ -547,6 +561,20 @@ module.exports = {
                 fields
               )
             );
+          } else if (col.field_name.split("->").length === 3) {
+            //`${jFieldNm}.${jfld.reftable_name}->${throughField}.${throughFld.reftable_name}->${lblField}`;
+            const [jFieldNm, throughPart, finalPart] =
+              col.field_name.split(".");
+            const [thoughTblNm, throughField] = throughPart.split("->");
+            const [jtNm, lblField] = finalPart.split("->");
+            const target = await table.getField(
+              `${jFieldNm}.${throughField}.${lblField}`
+            );
+            if (target)
+              distinct_values[col.field_name] = await target.distinct_values(
+                req,
+                jsexprToWhere(col.where)
+              );
           } else if (col.field_name.includes("->")) {
             const [jFieldNm, krest] = col.field_name.split(".");
             const [jtNm, lblField] = krest.split("->");

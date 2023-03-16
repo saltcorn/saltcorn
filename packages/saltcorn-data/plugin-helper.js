@@ -1365,7 +1365,26 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         ? { or: v.map(field.type.read) }
         : field.type.read(v);
     else if (field) qstate[k] = v;
-    else if (k.includes("->")) {
+    else if (k.split("->").length === 3) {
+      const [jFieldNm, throughPart, finalPart] = k.split(".");
+      const [thoughTblNm, throughField] = throughPart.split("->");
+      const [jtNm, lblField] = finalPart.split("->");
+      let where = { [db.sqlsanitize(lblField)]: v };
+      qstate[jFieldNm] = [
+        ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
+        {
+          // where jFieldNm in (select id from jtnm where lblField=v)
+          inSelect: {
+            table: db.sqlsanitize(thoughTblNm),
+            tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+            field: db.sqlsanitize(throughField),
+            valField: "id",
+            through: db.sqlsanitize(jtNm),
+            where,
+          },
+        },
+      ];
+    } else if (k.includes("->")) {
       // jFieldNm.jtnm->lblField
       // where jFieldNm in (select id from jtnm where lblField=v)
       const [jFieldNm, krest] = k.split(".");
@@ -1413,7 +1432,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         qstate.id = [
           ...(qstate.id ? [qstate.id] : []),
           {
-            // where id in (select jFieldNm from jtnm where lblField=v)
+            // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
             inSelect: {
               table: db.sqlsanitize(jtNm),
               tenant: db.isSQLite ? undefined : db.getTenantSchema(),

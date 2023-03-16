@@ -407,14 +407,13 @@ class View implements AbstractView {
   ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
+    const state = require("../db/state").getState();
     try {
       const viewState = removeEmptyStrings(query);
-      require("../db/state")
-        .getState()
-        .log(
-          5,
-          `Running view ${this.name} with state ${JSON.stringify(viewState)}`
-        );
+      state.log(
+        5,
+        `Running view ${this.name} with state ${JSON.stringify(viewState)}`
+      );
       return await this.viewtemplateObj!.run(
         table_id,
         this.name,
@@ -424,6 +423,7 @@ class View implements AbstractView {
         this.queries(remote, extraArgs.req)
       );
     } catch (error: any) {
+      state.log(2, error.stack);
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }

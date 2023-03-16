@@ -235,6 +235,26 @@ describe("mkWhere", () => {
     });
     expect(
       mkWhere({
+        id: [
+          {
+            inSelect: {
+              table: "foo",
+              field: "bar",
+              tenant: "sub1",
+              valField: "id",
+              through: "baz",
+              where: { baz: 7 },
+            },
+          },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where:
+        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2.id = ss1."bar" where "ss2"."baz"=$1)',
+    });
+    expect(
+      mkWhere({
         age: 45,
         id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
         name: "Alice",
