@@ -742,11 +742,22 @@ class Table implements AbstractTable {
    * @param fieldnm
    * @returns {Promise<Object[]>}
    */
-  async distinctValues(fieldnm: string): Promise<any[]> {
-    const res = await db.query(
-      `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
-    );
-    return res.rows.map((r: Row) => r[fieldnm]);
+  async distinctValues(fieldnm: string, whereObj?: object): Promise<any[]> {
+    if (whereObj) {
+      const { where, values } = mkWhere(whereObj, db.isSQLite);
+      const res = await db.query(
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+          this.sql_name
+        } ${where}`,
+        values
+      );
+      return res.rows.map((r: Row) => r[fieldnm]);
+    } else {
+      const res = await db.query(
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
+      );
+      return res.rows.map((r: Row) => r[fieldnm]);
+    }
   }
 
   storedExpressionJoinFields() {
