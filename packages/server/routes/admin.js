@@ -1973,8 +1973,9 @@ router.post(
  * @returns {Promise<Form>} form
  */
 const dev_form = async (req) => {
-  const role_to_create_tenant = +getRootState().getConfig(
-    "role_to_create_tenant"
+  const tenants_set_npm_modules = +getRootState().getConfig(
+    "tenants_set_npm_modules",
+    false
   );
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
@@ -1985,9 +1986,7 @@ const dev_form = async (req) => {
       "log_sql",
       "log_client_errors",
       "log_level",
-      ...(isRoot || role_to_create_tenant < 10
-        ? ["npm_available_js_code"]
-        : []),
+      ...(isRoot || tenants_set_npm_modules ? ["npm_available_js_code"] : []),
     ],
     action: "/admin/dev",
   });
