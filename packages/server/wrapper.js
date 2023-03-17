@@ -58,10 +58,22 @@ const get_menu = (req) => {
       ]
     : [
         ...(allow_signup
-          ? [{ link: "/auth/signup", label: req.__("Sign up") }]
+          ? [
+              {
+                link: "/auth/signup",
+                icon: "fas fa-user-plus",
+                label: req.__("Sign up"),
+              },
+            ]
           : []),
         ...(login_menu
-          ? [{ link: "/auth/login", label: req.__("Login") }]
+          ? [
+              {
+                link: "/auth/login",
+                icon: "fas fa-sign-in-alt",
+                label: req.__("Login"),
+              },
+            ]
           : []),
       ];
   // const schema = db.getTenantSchema();

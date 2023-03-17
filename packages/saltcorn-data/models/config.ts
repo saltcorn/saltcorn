@@ -300,6 +300,18 @@ const configTypes: ConfigTypes = {
     label: "New tenant template",
     blurb: "Copy site structure for new tenants from this tenant",
   },
+  tenants_install_git: {
+    type: "Bool",
+    label: "Install git plugins",
+  },
+  tenants_set_npm_modules: {
+    type: "Bool",
+    label: "Set available npm modules",
+  },
+  tenants_unsafe_plugins: {
+    type: "Bool",
+    label: "Unsafe modules",
+  },
   /** @type {object} */
   development_mode: {
     type: "Bool",
