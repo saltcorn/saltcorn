@@ -429,6 +429,7 @@ const tenant_settings_form = (req) =>
       { section_header: "Tenant application capabilities" },
       "tenants_install_git",
       "tenants_set_npm_modules",
+      "tenants_unsafe_plugins",
     ],
     action: "/tenant/settings",
     submitLabel: req.__("Save"),
