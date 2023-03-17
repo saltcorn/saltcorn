@@ -1107,4 +1107,20 @@
 	"Restore a snapshot": "Przywróć snapshot",
 	"Snapshot restored": "Snapshot przywrócony",
 	"Configuration check report": "Raport sprawdzenia konfiguracji"
+	"Re-run": "Uruchom ponownie",
+	"Add constraint:": "Dodaj ograniczenie:",
+	"Index": "Index",
+	"Add constraint: ": "Dodaj ograniczenie: ",
+	"Choose the field to be indexed": "Wybierz pole do indeksacji",
+	"Constraint formula": "Formuła ograniczenia",
+	"Formula must evaluate to true for valid rows. In scope: ": "Formuła musi być prawdziwa dla uwierzytelnienia wierszy. W zakresie: ",
+	"Add %s constraint to %s": "Dodaj %s ograniczenie do %s",
+	"What": "Co",
+	"Choose the field to be indexed. This make searching the table faster.": "Wybierz pola, jakie mają być indeksowane. To przyspieszy wyszukiwanie w tabeli.",
+	"Disk usage": "Zużycie dysku",
+	"CPU usage": "Zużycie procesora",
+	"Mem usage": "Zużycie pamięci",
+	"The field that will be shown to the user when choosing a value": "Pole jakie będzie pokazane użytkownikowi przy wyborze wartości",
+	"String value must match regular expression": "Wartość ciągu musi odpowiadać wyrażeniu regularnemu",
+	"Modules up-to-date. Please restart server": "Moduły zaktualizowane. Proszę zresetować serwer"
 }
