@@ -308,6 +308,10 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Set available npm modules",
   },
+  tenants_unsafe_plugins: {
+    type: "Bool",
+    label: "Unsafe modules",
+  },
   /** @type {object} */
   development_mode: {
     type: "Bool",

@@ -157,7 +157,10 @@ const local_has_theme = (name) => {
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-
+  const tenants_unsafe_plugins = getRootState().getConfig(
+    "tenants_unsafe_plugins",
+    false
+  );
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
@@ -175,7 +178,7 @@ const get_store_items = async () => {
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
     }))
-    .filter((p) => !p.unsafe || isRoot);
+    .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
     .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
@@ -1064,7 +1067,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-
+    const tenants_unsafe_plugins = getRootState().getConfig(
+      "tenants_unsafe_plugins",
+      false
+    );
     const plugin = await Plugin.store_by_name(decodeURIComponent(name));
     if (!plugin) {
       req.flash(
@@ -1075,7 +1081,7 @@ router.post(
       return;
     }
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    if (!isRoot && plugin.unsafe) {
+    if (!isRoot && plugin.unsafe && !tenants_unsafe_plugins) {
       req.flash(
         "error",
         req.__("Cannot install unsafe modules on subdomain tenants")
