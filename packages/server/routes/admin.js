@@ -1973,7 +1973,7 @@ router.post(
  * @returns {Promise<Form>} form
  */
 const dev_form = async (req) => {
-  const tenants_set_npm_modules = +getRootState().getConfig(
+  const tenants_set_npm_modules = getRootState().getConfig(
     "tenants_set_npm_modules",
     false
   );

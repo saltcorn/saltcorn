@@ -1124,5 +1124,6 @@
 	"String value must match regular expression": "String value must match regular expression",
 	"Modules up-to-date. Please restart server": "Modules up-to-date. Please restart server",
 	"Install git plugins": "Install git plugins",
-	"Set available npm modules": "Set available npm modules"
+	"Set available npm modules": "Set available npm modules",
+	"Only store modules can be installed on tenant instances": "Only store modules can be installed on tenant instances"
 }

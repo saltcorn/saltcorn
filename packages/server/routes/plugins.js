@@ -14,7 +14,11 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { getState, restart_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  restart_tenant,
+  getRootState,
+} = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -427,8 +431,12 @@ const filter_items_set = (items, query) => {
  * @param {object} req
  * @returns {div}
  */
-const store_actions_dropdown = (req) =>
-  div(
+const store_actions_dropdown = (req) => {
+  const tenants_install_git = getRootState().getConfig(
+    "tenants_install_git",
+    false
+  );
+  return div(
     { class: "dropdown" },
     button(
       {
@@ -463,7 +471,8 @@ const store_actions_dropdown = (req) =>
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed modules")
         ),
-      db.getTenantSchema() === db.connectObj.default_schema &&
+      (db.getTenantSchema() === db.connectObj.default_schema ||
+        tenants_install_git) &&
         a(
           {
             class: "dropdown-item",
@@ -491,6 +500,7 @@ const store_actions_dropdown = (req) =>
       //create pack
     )
   );
+};
 
 /**
  * @param {object[]} items
@@ -981,7 +991,11 @@ router.post(
   error_catcher(async (req, res) => {
     const plugin = new Plugin(req.body);
     const schema = db.getTenantSchema();
-    if (schema !== db.connectObj.default_schema) {
+    const tenants_install_git = getRootState().getConfig(
+      "tenants_install_git",
+      false
+    );
+    if (schema !== db.connectObj.default_schema && !tenants_install_git) {
       req.flash(
         "error",
         req.__(`Only store modules can be installed on tenant instances`)
