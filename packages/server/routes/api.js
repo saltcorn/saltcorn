@@ -348,6 +348,7 @@ router.post(
             const resp = await action.run({
               configuration: trigger.configuration,
               body: req.body,
+              row: req.body,
               req,
             });
             res.json({ success: true, data: resp });
