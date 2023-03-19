@@ -395,6 +395,7 @@ module.exports = {
             "Only send email if this formula evaluates to true. Leave blank to always send email",
           type: "String",
         },
+        { name: "disable_notify", label: "Disable notification", type: "Bool" },
       ];
     },
     requireRow: true,
@@ -417,6 +418,7 @@ module.exports = {
         to_email_fixed,
         only_if,
         attachment_path,
+        disable_notify,
       },
       user,
     }) => {
@@ -473,7 +475,8 @@ module.exports = {
         attachments,
       };
       await getMailTransport().sendMail(email);
-      return { notify: `E-mail sent to ${to_addr}` };
+      if (disable_notify) return;
+      else return { notify: `E-mail sent to ${to_addr}` };
     },
   },
 
