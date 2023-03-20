@@ -23,20 +23,28 @@ router.get(
     await Notification.mark_as_read(
       nots.filter((n) => !n.read).map((n) => n.id)
     );
-    res.sendWrap(req.__("Notifications"), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [{ text: req.__("Notifications") }],
-        },
-        ...nots.map((not) => ({
+    const notifyCards = nots.length
+      ? nots.map((not) => ({
           type: "card",
           contents: [
             h5(not.title),
             not.body && p(not.body),
             not.link && a({ href: not.link }, "Link"),
           ],
-        })),
+        }))
+      : [
+          {
+            type: "card",
+            contents: [h5(req.__("No notifications"))],
+          },
+        ];
+    res.sendWrap(req.__("Notifications"), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: req.__("Notifications") }],
+        },
+        ...notifyCards,
       ],
     });
   })

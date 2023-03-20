@@ -1127,5 +1127,6 @@
 	"Set available npm modules": "Set available npm modules",
 	"Only store modules can be installed on tenant instances": "Only store modules can be installed on tenant instances",
 	"Unsafe modules": "Unsafe modules",
-	"Notifications": "Notifications"
+	"Notifications": "Notifications",
+	"No notifications": "No notifications"
 }

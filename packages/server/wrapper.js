@@ -44,7 +44,7 @@ const get_menu = (req) => {
             { label: small((req.user.email || "").split("@")[0]) },
             {
               label: req.__("Notifications"),
-              icon: "fas fa-bell",
+              icon: "far fa-bell",
 
               link: "/notifications",
             },
