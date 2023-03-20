@@ -13,6 +13,7 @@ const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
+const Notification = require("../models/notification");
 const {
   getMailTransport,
   viewToEmailHtml,
@@ -1003,6 +1004,49 @@ module.exports = {
             existingRow[table_for_insert.pk_name],
             user
           );
+      }
+    },
+  },
+  notify_user: {
+    configFields: () => [
+      {
+        name: "user_spec",
+        label: "User where or email",
+        type: "String",
+      },
+      {
+        name: "title",
+        label: "Title",
+        required: true,
+        type: "String",
+      },
+      {
+        name: "body",
+        label: "Body",
+        type: "String",
+      },
+      {
+        name: "link",
+        label: "Link",
+        type: "String",
+      },
+    ],
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<void>}
+     */
+    run: async ({ row, configuration: { title, body, link, user_spec } }) => {
+      const user_where = User.valid_email(user_spec)
+        ? { email: user_spec }
+        : user_spec === "*"
+        ? {}
+        : eval_expression(user_spec, row || {});
+      const users = await User.find(user_where);
+      for (const user of users) {
+        await Notification.create({ title, body, link, user_id: user.id });
       }
     },
   },

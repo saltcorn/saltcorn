@@ -16,8 +16,8 @@ class Notification {
   id?: number;
   created: Date;
   title: string;
-  body: string;
-  link: string;
+  body?: string;
+  link?: string;
   user_id: number;
   read: boolean;
 
@@ -77,8 +77,8 @@ type NotificationCfg = {
   id?: number;
   created: Date;
   title: string;
-  body: string;
-  link: string;
+  body?: string;
+  link?: string;
   user_id: number;
   read: boolean;
 };
