@@ -43,6 +43,12 @@ const get_menu = (req) => {
           subitems: [
             { label: small((req.user.email || "").split("@")[0]) },
             {
+              label: req.__("Notifications"),
+              icon: "fas fa-bell",
+
+              link: "/notifications",
+            },
+            {
               label: req.__("User Settings"),
               icon: "fas fa-user-cog",
 
