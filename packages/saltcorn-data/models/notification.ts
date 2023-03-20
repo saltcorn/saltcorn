@@ -27,7 +27,7 @@ class Notification {
    */
   constructor(o: NotificationCfg | Notification) {
     this.id = o.id;
-    this.created = o.created;
+    this.created = o.created || new Date();
     this.title = o.title;
     this.body = o.body;
     this.link = o.link;
@@ -75,7 +75,7 @@ class Notification {
 
 type NotificationCfg = {
   id?: number;
-  created: Date;
+  created?: Date;
   title: string;
   body?: string;
   link?: string;
