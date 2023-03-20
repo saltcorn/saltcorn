@@ -1,0 +1,43 @@
+/**
+ * @category server
+ * @module routes/notifications
+ * @subcategory routes
+ */
+
+const Router = require("express-promise-router");
+const { isAdmin, setTenant, error_catcher, loggedIn } = require("./utils.js");
+const Notification = require("@saltcorn/data/models/notification");
+const { div, a, i, text, h5, p } = require("@saltcorn/markup/tags");
+
+const router = new Router();
+module.exports = router;
+
+router.get(
+  "/",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const nots = await Notification.find(
+      { user_id: req.user.id },
+      { orderBy: "id", orderDesc: true, limit: 20 }
+    );
+    await Notification.mark_as_read(
+      nots.filter((n) => !n.read).map((n) => n.id)
+    );
+    res.sendWrap(req.__("Notifications"), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [{ text: req.__("Notifications") }],
+        },
+        ...nots.map((not) => ({
+          type: "card",
+          contents: [
+            h5(not.title),
+            not.body && p(not.body),
+            not.link && a({ href: not.link }, "Link"),
+          ],
+        })),
+      ],
+    });
+  })
+);

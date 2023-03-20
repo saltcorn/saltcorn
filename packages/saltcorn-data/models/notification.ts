@@ -71,6 +71,14 @@ class Notification {
   async mark_as_read() {
     await db.update("_sc_notifications", { read: true }, this.id);
   }
+
+  static async mark_as_read(ids: number[]) {
+    await db.updateWhere(
+      "_sc_notifications",
+      { read: true },
+      { id: { in: ids } }
+    );
+  }
 }
 
 type NotificationCfg = {
