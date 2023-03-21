@@ -7,7 +7,8 @@
 const Router = require("express-promise-router");
 const { isAdmin, setTenant, error_catcher, loggedIn } = require("./utils.js");
 const Notification = require("@saltcorn/data/models/notification");
-const { div, a, i, text, h5, p } = require("@saltcorn/markup/tags");
+const { div, a, i, text, h5, p, span } = require("@saltcorn/markup/tags");
+const moment = require("moment");
 
 const router = new Router();
 module.exports = router;
@@ -26,8 +27,13 @@ router.get(
     const notifyCards = nots.length
       ? nots.map((not) => ({
           type: "card",
+          class: [!not.read && "unread-notify"],
           contents: [
-            h5(not.title),
+            div(
+              { class: "d-flex" },
+              span({ class: "fw-bold" }, not.title),
+              span({ class: "ms-2 text-muted" }, moment(not.created).fromNow())
+            ),
             not.body && p(not.body),
             not.link && a({ href: not.link }, "Link"),
           ],

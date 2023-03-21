@@ -398,3 +398,7 @@ table.table-inner-grid td {
     margin: 8px;
   }
 }
+
+div.unread-notify {
+  border-left: 4px solid green;
+}
