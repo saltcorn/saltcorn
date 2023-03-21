@@ -87,7 +87,7 @@ type NotificationCfg = {
   body?: string;
   link?: string;
   user_id: number;
-  read: boolean;
+  read?: boolean;
 };
 
 export = Notification;

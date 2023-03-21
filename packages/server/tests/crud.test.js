@@ -13,6 +13,7 @@ const {
 const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
+const Notification = require("@saltcorn/data/models/notification");
 const User = require("@saltcorn/data/models/user");
 const reset = require("@saltcorn/data/db/reset_schema");
 
@@ -42,6 +43,58 @@ describe("standard edit form", () => {
   });
 });
 
+describe("notifications", () => {
+  it("show empty notifications", async () => {
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/notifications")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("No notifications"));
+  });
+  it("no unread notifications", async () => {
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/notifications/count-unread")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((n) => n === 0));
+  });
+  it("add notification", async () => {
+    const user = await User.findOne({ role_id: 4 });
+    await Notification.create({
+      user_id: user.id,
+      title: "This is a staff announcement",
+      body: "Will a member of staff please proceed to the checkout area",
+      link: "https://www.sainsburys.co.uk/",
+    });
+  });
+  it("one unread notifications", async () => {
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/notifications/count-unread")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((n) => n === 1));
+  });
+  it("show new notifications", async () => {
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/notifications")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("This is a staff announcement"))
+      .expect(toInclude("unread-notify"));
+  });
+  it("no unread notifications", async () => {
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/notifications/count-unread")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((n) => n === 0));
+  });
+});
 describe("homepage", () => {
   it("shows to admin", async () => {
     const loginCookie = await getAdminLoginCookie();
