@@ -167,7 +167,16 @@ function apply_showif() {
         }
       });
   });
-
+  $("[data-filter-table]").each(function (ix, element) {
+    const e = $(element);
+    const target = $(e.attr("data-filter-table"));
+    $(e).on("keyup", function () {
+      const value = $(this).val().toLowerCase();
+      target.find("tr").filter(function () {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+      });
+    });
+  });
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
     const rec0 = get_form_record(e);

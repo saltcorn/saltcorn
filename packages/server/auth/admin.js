@@ -23,7 +23,16 @@ const {
 const { isAdmin, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, span, code, h5, i, p } = require("@saltcorn/markup/tags");
+const {
+  a,
+  div,
+  span,
+  code,
+  h5,
+  i,
+  p,
+  input,
+} = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const {
   send_users_page,
@@ -243,6 +252,18 @@ router.get(
         type: "card",
         title: req.__("Users"),
         contents: [
+          div(
+            { class: "row mb-3" },
+            div(
+              { class: "col-sm-6 offset-sm-3" },
+              input({
+                class: "form-control",
+                type: "search",
+                "data-filter-table": "table.user-admin",
+                placeholder: "🔍 Search",
+              })
+            )
+          ),
           mkTable(
             [
               { label: req.__("ID"), key: "id" },
@@ -273,7 +294,7 @@ router.get(
               },
             ],
             users,
-            { hover: true }
+            { hover: true, class: "user-admin" }
           ),
           link(`/useradmin/new`, req.__("Create user")),
         ],
