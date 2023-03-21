@@ -202,10 +202,16 @@ const get_headers = (req, version_tag, description, extras = []) => {
   }
   if (notification_in_menu)
     from_cfg.push({ scriptBody: domReady(`check_saltcorn_notifications()`) });
-  if (pwa_enabled)
+  if (pwa_enabled) {
     from_cfg.push({
       headerTag: `<link rel="manifest" href="/notifications/manifest.json">`,
     });
+    from_cfg.push({
+      scriptBody: `if('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/serviceworker.js', { scope: '/' });
+      }`,
+    });
+  }
   return [
     ...stdHeaders,
     ...iconHeader,
