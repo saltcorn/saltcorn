@@ -1449,6 +1449,7 @@ class Table implements AbstractTable {
     const okHeaders: any = {};
     const pk_name = this.pk_name;
     const renames: any[] = [];
+    const fkey_fields: Field[] = [];
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -1466,6 +1467,12 @@ class Table implements AbstractTable {
       } else if (f.required && !f.primary_key) {
         return { error: `Required field missing: ${f.label}` };
       }
+      if (
+        f.is_fkey &&
+        (okHeaders[f.name] || okHeaders[f.label]) &&
+        f.attributes.summary_field
+      )
+        fkey_fields.push(f);
     }
 
     const fieldNames = headers.map((hnm: any) => {
@@ -1520,6 +1527,7 @@ class Table implements AbstractTable {
       } else {
         await new Promise<void>((resolve, reject) => {
           const imported_pk_set = new Set();
+          const summary_field_cache: any = {};
           csvtojson({
             includeColumns: colRe,
           })
@@ -1533,8 +1541,35 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
-
+                  for (const fkfield of fkey_fields) {
+                    const current = rec[fkfield.name];
+                    if (
+                      !(
+                        current === "null" ||
+                        current === "" ||
+                        current === null
+                      ) &&
+                      isNaN(+current)
+                    ) {
+                      //need to look up summary fields
+                      if (summary_field_cache[current])
+                        rec[fkfield.name] = summary_field_cache[current];
+                      else {
+                        const tbl = Table.findOne({
+                          name: fkfield.reftable_name,
+                        });
+                        const row = await tbl?.getRow({
+                          [fkfield.attributes.summary_field]: current,
+                        });
+                        if (tbl && row) {
+                          rec[fkfield.name] = row[tbl.pk_name];
+                          summary_field_cache[current] = row[tbl.pk_name];
+                        }
+                      }
+                    }
+                  }
                   const rowOk = readStateStrict(rec, fields);
+
                   if (rowOk) {
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
