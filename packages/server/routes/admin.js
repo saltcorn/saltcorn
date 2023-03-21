@@ -2010,17 +2010,7 @@ router.get(
         type: "card",
         title: req.__("Development settings"),
         titleAjaxIndicator: true,
-        contents: [
-          renderForm(form, req.csrfToken()) /*,
-                    a(
-                        {
-                            id: "testemail",
-                            href: "/admin/send-test-email",
-                            class: "btn btn-primary",
-                        },
-                        req.__("Send test email")
-                    ),*/,
-        ],
+        contents: [renderForm(form, req.csrfToken())],
       },
     });
   })
@@ -2053,6 +2043,61 @@ router.post(
       await save_config_from_form(form);
       if (!req.xhr) {
         req.flash("success", req.__("Development mode settings updated"));
+        res.redirect("/admin/dev");
+      } else res.json({ success: "ok" });
+    }
+  })
+);
+
+const notifcation_form = async (req) => {
+  return await config_fields_form({
+    req,
+    field_names: ["notification_in_menu"],
+    action: "/admin/notifications",
+  });
+};
+
+router.get(
+  "/notifications",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await notifcation_form(req);
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Notifications",
+      contents: {
+        type: "card",
+        title: req.__("Notification settings"),
+        titleAjaxIndicator: true,
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+
+router.post(
+  "/notifications",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await notifcation_form(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Notifications",
+        contents: {
+          type: "card",
+          title: req.__("Notification settings"),
+          titleAjaxIndicator: true,
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      if (!req.xhr) {
+        req.flash("success", req.__("Notification settings updated"));
         res.redirect("/admin/dev");
       } else res.json({ success: "ok" });
     }

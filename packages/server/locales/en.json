@@ -1128,5 +1128,8 @@
 	"Only store modules can be installed on tenant instances": "Only store modules can be installed on tenant instances",
 	"Unsafe modules": "Unsafe modules",
 	"Notifications": "Notifications",
-	"No notifications": "No notifications"
+	"No notifications": "No notifications",
+	"In user menu": "In user menu",
+	"Show notifications in the user menu": "Show notifications in the user menu",
+	"Notification settings": "Notification settings"
 }
