@@ -743,6 +743,7 @@ David MacKay, ITILA`;
       name: "author",
       label: "Author",
       type: "Key to books",
+      attributes: { summary_field: "author" },
     });
     const csv = `author,review
 1, Awesome
@@ -755,8 +756,23 @@ David MacKay, ITILA`;
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
     });
-    //    const rows = await table.getRows({ author: "David MacKay" });
-    //   expect(rows.length).toBe(0);
+    const row = await table.getRow({ review: "Awesome" });
+    expect(row?.author).toBe(1);
+  });
+  it("import fkeys as summary fields", async () => {
+    const table = Table.findOne({ name: "book_reviews" });
+    assertIsSet(table);
+    const csv = `author,review
+    Leo Tolstoy, Funny
+    Herman Melville, Whaley`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table book_reviews",
+    });
   });
 
   it("should create by importing", async () => {
