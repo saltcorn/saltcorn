@@ -1049,12 +1049,19 @@ function check_saltcorn_notifications() {
   $.ajax(`/notifications/count-unread`).then((resp) => {
     if (resp.success) {
       const n = resp.success;
-      console.log(n);
       const menu_item = $(`a.notify-menu-item`);
 
       menu_item.html(
         `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
       );
+      $(".user-nav-section").html(
+        `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
+      );
+      $(".user-nav-section-with-span").html(
+        `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
+      );
+      window.update_theme_notification_count &&
+        window.update_theme_notification_count(n);
     }
   });
 }

@@ -99,7 +99,11 @@ const sideBarItem = (currentUrl) => (item) => {
       ? [
           a(
             {
-              class: ["nav-link", !is_active && "collapsed"],
+              class: [
+                "nav-link",
+                !is_active && "collapsed",
+                item.isUser && "user-nav-section-with-span",
+              ],
               href: "#",
               "data-bs-toggle": "collapse",
               "data-bs-target": `#collapse${labelToId(item)}`,
