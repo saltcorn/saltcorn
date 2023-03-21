@@ -2098,7 +2098,7 @@ router.post(
       await save_config_from_form(form);
       if (!req.xhr) {
         req.flash("success", req.__("Notification settings updated"));
-        res.redirect("/admin/dev");
+        res.redirect("/admin/notifications");
       } else res.json({ success: "ok" });
     }
   })
