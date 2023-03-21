@@ -64,7 +64,7 @@ router.get(
       user_id: req.user.id,
       read: false,
     });
-    res.set("Cache-Control", "public, max-age=300"); //60*5
+    res.set("Cache-Control", "public, max-age=60"); // 1 minute
     res.json({ success: num_unread });
   })
 );
