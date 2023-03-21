@@ -726,6 +726,39 @@ David MacKay, ITILA`;
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
   });
+
+  it("import fkeys as ints", async () => {
+    const table = await Table.create("book_reviews", {
+      min_role_read: 10,
+    });
+    await Field.create({
+      table,
+      name: "review",
+      label: "Review",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "author",
+      label: "Author",
+      type: "Key to books",
+    });
+    const csv = `author,review
+1, Awesome
+2, Stunning`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table book_reviews",
+    });
+    //    const rows = await table.getRows({ author: "David MacKay" });
+    //   expect(rows.length).toBe(0);
+  });
+
   it("should create by importing", async () => {
     //db.set_sql_logging();
     const csv = `item,cost,count, vatable
