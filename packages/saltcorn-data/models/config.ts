@@ -609,6 +609,12 @@ const configTypes: ConfigTypes = {
     sublabel: "Show notifications in the user menu",
     default: false,
   },
+  pwa_enabled: {
+    type: "Bool",
+    label: "PWA",
+    sublabel: "Progressive Web Application",
+    default: false,
+  },
   log_level: {
     input_type: "select",
     label: "System logging verbosity",

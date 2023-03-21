@@ -2052,7 +2052,7 @@ router.post(
 const notifcation_form = async (req) => {
   return await config_fields_form({
     req,
-    field_names: ["notification_in_menu"],
+    field_names: ["notification_in_menu", "pwa_enabled"],
     action: "/admin/notifications",
   });
 };

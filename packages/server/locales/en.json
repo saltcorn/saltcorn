@@ -1131,5 +1131,7 @@
 	"No notifications": "No notifications",
 	"In user menu": "In user menu",
 	"Show notifications in the user menu": "Show notifications in the user menu",
-	"Notification settings": "Notification settings"
+	"Notification settings": "Notification settings",
+	"PWA": "PWA",
+	"Progressive Web Application": "Progressive Web Application"
 }
