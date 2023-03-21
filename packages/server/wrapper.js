@@ -5,7 +5,7 @@
 const { getState } = require("@saltcorn/data/db/state");
 const { get_extra_menu } = require("@saltcorn/data/web-mobile-commons");
 //const db = require("@saltcorn/data/db");
-const { h3, div, small } = require("@saltcorn/markup/tags");
+const { h3, div, small, domReady } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const renderLayout = require("@saltcorn/markup/layout");
 /**
@@ -30,6 +30,7 @@ const get_menu = (req) => {
   const role = (req.user || {}).role_id || 10;
 
   const allow_signup = state.getConfig("allow_signup");
+  const notification_in_menu = state.getConfig("notification_in_menu");
   const login_menu = state.getConfig("login_menu");
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
@@ -42,6 +43,16 @@ const get_menu = (req) => {
           isUser: true,
           subitems: [
             { label: small((req.user.email || "").split("@")[0]) },
+            ...(notification_in_menu
+              ? [
+                  {
+                    label: req.__("Notifications"),
+                    icon: "far fa-bell",
+                    class: "notify-menu-item",
+                    link: "/notifications",
+                  },
+                ]
+              : []),
             {
               label: req.__("User Settings"),
               icon: "fas fa-user-cog",
@@ -153,6 +164,7 @@ const get_menu = (req) => {
 const get_headers = (req, version_tag, description, extras = []) => {
   const state = getState();
   const favicon = state.getConfig("favicon_id", null);
+  const notification_in_menu = state.getConfig("notification_in_menu");
 
   const iconHeader = favicon
     ? [
@@ -187,6 +199,8 @@ const get_headers = (req, version_tag, description, extras = []) => {
   for (const hs of Object.values(state.headers)) {
     state_headers.push(...hs);
   }
+  if (notification_in_menu)
+    from_cfg.push({ scriptBody: domReady(`check_saltcorn_notifications()`) });
   return [
     ...stdHeaders,
     ...iconHeader,

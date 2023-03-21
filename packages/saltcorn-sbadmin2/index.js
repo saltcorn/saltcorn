@@ -39,16 +39,20 @@ const { isNode } = require("@saltcorn/data/utils");
 const subItem = (currentUrl) => (item) =>
   item.link
     ? a(
-      {
-        class: ["collapse-item", active(currentUrl, item) && "active"],
-        href: text(item.link),
-      },
-      item.icon ? i({ class: `fa-fw mr-05 ${item.icon}` }) : "",
-      item.label
-    )
+        {
+          class: [
+            "collapse-item",
+            active(currentUrl, item) && "active",
+            item.class,
+          ],
+          href: text(item.link),
+        },
+        item.icon ? i({ class: `fa-fw mr-05 ${item.icon}` }) : "",
+        item.label
+      )
     : item.type === "Separator"
-      ? hr({ class: "sidebar-divider my-0" })
-      : h6({ class: "collapse-header" }, item.label);
+    ? hr({ class: "sidebar-divider my-0" })
+    : h6({ class: "collapse-header" }, item.label);
 
 /**
  * @param {object} item
@@ -93,62 +97,66 @@ const sideBarItem = (currentUrl) => (item) => {
     { class: ["nav-item", is_active && "active"] },
     item.subitems
       ? [
-        a(
-          {
-            class: ["nav-link", !is_active && "collapsed"],
-            href: "#",
-            "data-bs-toggle": "collapse",
-            "data-bs-target": `#collapse${labelToId(item)}`,
-            "aria-expanded": "true",
-            "aria-controls": `collapse${labelToId(item)}`,
-          },
-          item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
-          span(text(item.label))
-        ),
-        div(
-          {
-            id: `collapse${labelToId(item)}`,
-            class: ["collapse", is_active && "show"],
-            "data-parent": "#accordionSidebar",
-          },
+          a(
+            {
+              class: [
+                "nav-link",
+                !is_active && "collapsed",
+                item.isUser && "user-nav-section-with-span",
+              ],
+              href: "#",
+              "data-bs-toggle": "collapse",
+              "data-bs-target": `#collapse${labelToId(item)}`,
+              "aria-expanded": "true",
+              "aria-controls": `collapse${labelToId(item)}`,
+            },
+            item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
+            span(text(item.label))
+          ),
           div(
-            { class: "bg-white py-2 collapse-inner rounded" },
-            item.subitems.map(subItem(currentUrl))
-          )
-        ),
-      ]
+            {
+              id: `collapse${labelToId(item)}`,
+              class: ["collapse", is_active && "show"],
+              "data-parent": "#accordionSidebar",
+            },
+            div(
+              { class: "bg-white py-2 collapse-inner rounded" },
+              item.subitems.map(subItem(currentUrl))
+            )
+          ),
+        ]
       : item.link
-        ? a(
+      ? a(
           { class: "nav-link", href: text(item.link) },
           item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
           span(text(item.label))
         )
-        : item.type === "Search"
-          ? form(
-            { action: "/search", class: "menusearch ms-2 me-3", method: "get" },
-            div(
-              { class: "input-group search-bar" },
+      : item.type === "Search"
+      ? form(
+          { action: "/search", class: "menusearch ms-2 me-3", method: "get" },
+          div(
+            { class: "input-group search-bar" },
 
-              input({
-                type: "search",
-                class: "form-control search-bar pl-2p5",
-                placeholder: item.label,
-                id: "inputq",
-                name: "q",
-                "aria-label": "Search",
-                "aria-describedby": "button-search-submit",
-              }),
+            input({
+              type: "search",
+              class: "form-control search-bar pl-2p5",
+              placeholder: item.label,
+              id: "inputq",
+              name: "q",
+              "aria-label": "Search",
+              "aria-describedby": "button-search-submit",
+            }),
 
-              button(
-                {
-                  class: "btn btn-outline-secondary search-bar",
-                  type: "submit",
-                },
-                i({ class: "fas fa-search" })
-              )
+            button(
+              {
+                class: "btn btn-outline-secondary search-bar",
+                type: "submit",
+              },
+              i({ class: "fas fa-search" })
             )
           )
-          : span({ class: "nav-link" }, text(item.label))
+        )
+      : span({ class: "nav-link" }, text(item.label))
   );
 };
 
@@ -159,8 +167,8 @@ const sideBarItem = (currentUrl) => (item) => {
 const sideBarSection = (currentUrl) => (section) =>
   [
     section.section &&
-    hr({ class: "sidebar-divider" }) +
-    div({ class: "sidebar-heading" }, section.section),
+      hr({ class: "sidebar-divider" }) +
+        div({ class: "sidebar-heading" }, section.section),
     section.items.map(sideBarItem(currentUrl)).join(""),
   ];
 
@@ -183,10 +191,10 @@ const sidebar = (brand, sections, currentUrl) =>
         href: "/",
       },
       brand.logo &&
-      div(
-        { class: "sidebar-brand-icon" },
-        img({ src: brand.logo, width: "35", height: "35", alt: "Logo" })
-      ),
+        div(
+          { class: "sidebar-brand-icon" },
+          img({ src: brand.logo, width: "35", height: "35", alt: "Logo" })
+        ),
       div({ class: "sidebar-brand-text mx-3" }, brand.name)
     ),
     sections.map(sideBarSection(currentUrl)),
@@ -196,7 +204,7 @@ const sidebar = (brand, sections, currentUrl) =>
       button({
         class: "rounded-circle border-0",
         "data-sidebar-toggler": true,
-        id: "sidebarToggle"
+        id: "sidebarToggle",
       })
     )
   );
@@ -340,7 +348,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   `<!doctype html>
   <html lang="en">
   <head>
-    ${!isNode() ?  `<base href="http://localhost">` : ""}
+    ${!isNode() ? `<base href="http://localhost">` : ""}
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -355,7 +363,8 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   </head>
   <body ${bodyAttr}>
     ${rest}
-    <script src="${safeSlash()}static_assets/${db.connectObj.version_tag
+    <script src="${safeSlash()}static_assets/${
+    db.connectObj.version_tag
   }/jquery-3.6.0.min.js"></script>
             <script src="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script src="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/jquery-easing/jquery.easing.min.js"></script>

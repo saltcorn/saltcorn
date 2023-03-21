@@ -85,7 +85,7 @@ const navSubitems = ({
     { class: "nav-item dropdown" },
     a(
       {
-        class: "nav-link dropdown-toggle",
+        class: ["nav-link dropdown-toggle", isUser && "user-nav-section"],
         href: "#",
         id: `dropdown${labelToId(label)}`,
         role: "button",
@@ -105,7 +105,10 @@ const navSubitems = ({
         si?.type === "Separator"
           ? hr({ class: "mx-3 my-1" })
           : a(
-              { class: ["dropdown-item", si.style || ""], href: si.link },
+              {
+                class: ["dropdown-item", si.style || "", si.class],
+                href: si.link,
+              },
               si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
               si.label
             )

@@ -64,6 +64,7 @@ const edit = require("./edit");
 const config = require("./config");
 const viewedit = require("./viewedit");
 const crashlog = require("./crashlog");
+const notifications = require("./notifications");
 const del = require("./delete");
 const auth = require("../auth/routes");
 const useradmin = require("../auth/admin");
@@ -96,6 +97,7 @@ module.exports =
     app.use("/actions", actions);
     app.use("/eventlog", eventlog);
     app.use("/library", library);
+    app.use("/notifications", notifications);
     app.use("/site-structure", infoarch);
     app.use("/search", search);
     app.use("/admin", admin);

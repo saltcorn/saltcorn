@@ -603,6 +603,12 @@ const configTypes: ConfigTypes = {
     label: "Snapshots enabled",
     default: false,
   },
+  notification_in_menu: {
+    type: "Bool",
+    label: "In user menu",
+    sublabel: "Show notifications in the user menu",
+    default: false,
+  },
   log_level: {
     input_type: "select",
     label: "System logging verbosity",

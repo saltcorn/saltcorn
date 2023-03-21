@@ -315,6 +315,7 @@ const send_admin_page = (args) => {
       { text: "System", href: "/admin/system" },
       { text: "Mobile app", href: "/admin/build-mobile-app" },
       { text: "Development", href: "/admin/dev" },
+      { text: "Notifications", href: "/admin/notifications" },
     ],
     ...args,
   });
