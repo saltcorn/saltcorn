@@ -962,13 +962,9 @@ const field_picker_fields = async ({
       ? [
           {
             name: "alignment",
-            label: "alignment",
-            type: "String",
-            fieldview: "radio_group",
-            attributes: {
-              inline: true,
-              options: ["Default", "Left", "Center", "Right"],
-            },
+            label: "Alignment",
+            input_type: "select",
+            options: ["Default", "Left", "Center", "Right"],
           },
         ]
       : []),
