@@ -693,7 +693,12 @@ const get_viewable_fields = (
       } else
         fvrun = f && {
           ...setWidth,
-          align: isNum ? "right" : undefined,
+          align:
+            !column.alignment || column.alignment === "Default"
+              ? isNum
+                ? "right"
+                : undefined
+              : column.alignment.toLowerCase(),
           label: headerLabelForName(column, f, req, __),
           row_key: f_with_val.name,
           key:

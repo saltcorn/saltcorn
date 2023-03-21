@@ -681,6 +681,7 @@ Gordon Kane, 217`;
     expect(rowsAfter).toBe(rowsBefore + 1);
     const row = await table.getRow({ id: 1 });
     expect(row?.pages).toBe(540);
+    await table.updateRow({ author: "Herman Melville" }, 1);
   });
   it("fail on required field", async () => {
     const csv = `author,Pagez
@@ -726,6 +727,57 @@ David MacKay, ITILA`;
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
   });
+
+  it("CSV import fkeys as ints", async () => {
+    const table = await Table.create("book_reviews", {
+      min_role_read: 10,
+    });
+    await Field.create({
+      table,
+      name: "review",
+      label: "Review",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "author",
+      label: "Author",
+      type: "Key to books",
+      attributes: { summary_field: "author" },
+    });
+    const csv = `author,review
+1, Awesome
+2, Stunning`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table book_reviews",
+    });
+    const row = await table.getRow({ review: "Awesome" });
+    expect(row?.author).toBe(1);
+  });
+  it("CSV import fkeys as summary fields", async () => {
+    const table = Table.findOne({ name: "book_reviews" });
+    assertIsSet(table);
+    const csv = `author,review
+    Leo Tolstoy, Funny
+    Herman Melville, Whaley`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table book_reviews",
+    });
+    const row = await table.getRow({ review: "Funny" });
+    expect(row?.author).toBe(2);
+  });
+
   it("should create by importing", async () => {
     //db.set_sql_logging();
     const csv = `item,cost,count, vatable
