@@ -1045,3 +1045,16 @@ function split_paste_handler(e) {
 function is_paging_param(key) {
   return key.endsWith("_page") || key.endsWith("_pagesize");
 }
+function check_saltcorn_notifications() {
+  $.ajax(`/notifications/count-unread`).then((resp) => {
+    if (resp.success) {
+      const n = resp.success;
+      console.log(n);
+      const menu_item = $(`a.notify-menu-item`);
+
+      menu_item.html(
+        `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
+      );
+    }
+  });
+}

@@ -68,15 +68,15 @@ class Notification {
     });
   }
 
-  async mark_as_read() {
+  async mark_as_read(): Promise<void> {
     await db.update("_sc_notifications", { read: true }, this.id);
   }
 
-  static async mark_as_read(where: Where) {
+  static async mark_as_read(where: Where): Promise<void> {
     await db.updateWhere("_sc_notifications", { read: true }, where);
   }
-  static async count(where: Where) {
-    await db.count("_sc_notifications", where);
+  static async count(where: Where): Promise<number> {
+    return await db.count("_sc_notifications", where);
   }
 }
 
