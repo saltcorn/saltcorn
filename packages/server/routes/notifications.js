@@ -20,9 +20,9 @@ router.get(
       { user_id: req.user.id },
       { orderBy: "id", orderDesc: true, limit: 20 }
     );
-    await Notification.mark_as_read(
-      nots.filter((n) => !n.read).map((n) => n.id)
-    );
+    await Notification.mark_as_read({
+      id: { in: nots.filter((n) => !n.read).map((n) => n.id) },
+    });
     const notifyCards = nots.length
       ? nots.map((not) => ({
           type: "card",
@@ -47,5 +47,18 @@ router.get(
         ...notifyCards,
       ],
     });
+  })
+);
+
+router.get(
+  "/count-unread",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const num_unread = await Notification.count({
+      user_id: req.user.id,
+      read: false,
+    });
+    res.set("Cache-Control", "public, max-age=300"); //60*5
+    res.json({ success: num_unread });
   })
 );

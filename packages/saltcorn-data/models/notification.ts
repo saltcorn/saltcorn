@@ -72,12 +72,11 @@ class Notification {
     await db.update("_sc_notifications", { read: true }, this.id);
   }
 
-  static async mark_as_read(ids: number[]) {
-    await db.updateWhere(
-      "_sc_notifications",
-      { read: true },
-      { id: { in: ids } }
-    );
+  static async mark_as_read(where: Where) {
+    await db.updateWhere("_sc_notifications", { read: true }, where);
+  }
+  static async count(where: Where) {
+    await db.count("_sc_notifications", where);
   }
 }
 
