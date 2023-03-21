@@ -415,6 +415,7 @@ const field_picker_fields = async ({
   viewname,
   req,
   has_click_to_edit,
+  has_align,
 }) => {
   const __ = (...s) => (req ? req.__(...s) : s.join(""));
   const fields = await table.getFields();
@@ -957,6 +958,20 @@ const field_picker_fields = async ({
         options: ["px", "%", "vw", "em", "rem"],
       },
     },
+    ...(has_align
+      ? [
+          {
+            name: "alignment",
+            label: "alignment",
+            type: "String",
+            fieldview: "radio_group",
+            attributes: {
+              inline: true,
+              options: ["Default", "Left", "Center", "Right"],
+            },
+          },
+        ]
+      : []),
   ];
 };
 
