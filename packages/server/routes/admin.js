@@ -134,25 +134,6 @@ const site_id_form = (req) =>
     action: "/admin",
     submitLabel: req.__("Save"),
   });
-/**
- * Email settings form
- * @param {object} req request
- * @returns {Promise<Form>} form
- */
-const email_form = async (req) => {
-  return await config_fields_form({
-    req,
-    field_names: [
-      "smtp_host",
-      "smtp_username",
-      "smtp_password",
-      "smtp_port",
-      "smtp_secure",
-      "email_from",
-    ],
-    action: "/admin/email",
-  });
-};
 
 const app_files_table = (files, buildDirName, req) =>
   mkTable(
@@ -242,16 +223,20 @@ router.post(
   })
 );
 
-/**
- * @name get/email
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.get(
-  "/email",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await email_form(req);
+admin_config_route({
+  router,
+  path: "/email",
+  super_path: "/admin",
+  flash: "Email settings updated",
+  field_names: [
+    "smtp_host",
+    "smtp_username",
+    "smtp_password",
+    "smtp_port",
+    "smtp_secure",
+    "email_from",
+  ],
+  response(form, req, res) {
     send_admin_page({
       res,
       req,
@@ -273,8 +258,8 @@ router.get(
         ],
       },
     });
-  })
-);
+  },
+});
 
 /**
  * @name get/send-test-email
@@ -303,38 +288,6 @@ router.get(
     }
 
     res.redirect("/admin/email");
-  })
-);
-
-/**
- * @name post/email
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.post(
-  "/email",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await email_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Email",
-        contents: {
-          type: "card",
-          title: req.__("Email settings"),
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      await save_config_from_form(form);
-      if (!req.xhr) {
-        req.flash("success", req.__("Email settings updated"));
-        res.redirect("/admin/email");
-      } else res.json({ success: "ok" });
-    }
   })
 );
 
