@@ -10,6 +10,7 @@ const {
   error_catcher,
   getGitRevision,
   setTenant,
+  admin_config_route,
   get_sys_info,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
@@ -2049,24 +2050,17 @@ router.post(
   })
 );
 
-const notifcation_form = async (req) => {
-  return await config_fields_form({
-    req,
-    field_names: [
-      "notification_in_menu",
-      { section_header: "Progressive Web Application" },
-      "pwa_enabled",
-      { name: "pwa_display", showIf: { pwa_enabled: true } },
-    ],
-    action: "/admin/notifications",
-  });
-};
-
-router.get(
-  "/notifications",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await notifcation_form(req);
+admin_config_route({
+  router,
+  path: "/notifications",
+  super_path: "/admin",
+  field_names: [
+    "notification_in_menu",
+    { section_header: "Progressive Web Application" },
+    "pwa_enabled",
+    { name: "pwa_display", showIf: { pwa_enabled: true } },
+  ],
+  response(form, res, req) {
     send_admin_page({
       res,
       req,
@@ -2078,33 +2072,5 @@ router.get(
         contents: [renderForm(form, req.csrfToken())],
       },
     });
-  })
-);
-
-router.post(
-  "/notifications",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await notifcation_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Notifications",
-        contents: {
-          type: "card",
-          title: req.__("Notification settings"),
-          titleAjaxIndicator: true,
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      await save_config_from_form(form);
-      if (!req.xhr) {
-        req.flash("success", req.__("Notification settings updated"));
-        res.redirect("/admin/notifications");
-      } else res.json({ success: "ok" });
-    }
-  })
-);
+  },
+});

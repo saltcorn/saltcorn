@@ -19,7 +19,10 @@ const is = require("contractis/is");
 const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
 const si = require("systeminformation");
-
+const {
+  config_fields_form,
+  save_config_from_form,
+} = require("../markup/admin.js");
 const get_sys_info = async () => {
   const disks = await si.fsSize();
   let size = 0;
@@ -318,6 +321,52 @@ const is_relative_url = (url) => {
   return typeof url === "string" && !url.includes(":/") && !url.includes("//");
 };
 
+const admin_config_route = ({
+  router,
+  path,
+  super_path = "",
+  get_form,
+  field_names,
+  response,
+  flash,
+}) => {
+  const getTheForm = async (req) =>
+    !get_form && field_names
+      ? await config_fields_form({
+          req,
+          field_names,
+          action: super_path + path,
+        })
+      : typeof get_form === "function"
+      ? await get_form(req)
+      : get_form;
+
+  router.get(
+    path,
+    isAdmin,
+    error_catcher(async (req, res) => {
+      response(await getTheForm(req), res, req);
+    })
+  );
+  router.post(
+    path,
+    isAdmin,
+    error_catcher(async (req, res) => {
+      const form = await getTheForm(req);
+      form.validate(req.body);
+      if (form.hasErrors) {
+        response(form, res, req);
+      } else {
+        await save_config_from_form(form);
+        if (!req.xhr) {
+          req.flash("success", req.__(flash));
+          res.redirect(super_path + path);
+        } else res.json({ success: "ok" });
+      }
+    })
+  );
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -333,4 +382,5 @@ module.exports = {
   addOnDoneRedirect,
   is_relative_url,
   get_sys_info,
+  admin_config_route,
 };
