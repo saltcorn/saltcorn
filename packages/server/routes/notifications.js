@@ -86,6 +86,13 @@ router.get(
           src: `/files/serve/${site_logo}`,
         },
       ];
+    if (state.getConfig("pwa_set_colors", false)) {
+      manifest.theme_color = state.getConfig("pwa_theme_color", "black");
+      manifest.background_color = state.getConfig(
+        "pwa_background_color",
+        "red"
+      );
+    }
     res.json(manifest);
   })
 );

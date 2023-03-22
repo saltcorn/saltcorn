@@ -1917,6 +1917,15 @@ admin_config_route({
     { section_header: "Progressive Web Application" },
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },
+    { name: "pwa_set_colors", showIf: { pwa_enabled: true } },
+    {
+      name: "pwa_theme_color",
+      showIf: { pwa_enabled: true, pwa_set_colors: true },
+    },
+    {
+      name: "pwa_background_color",
+      showIf: { pwa_enabled: true, pwa_set_colors: true },
+    },
   ],
   response(form, req, res) {
     send_admin_page({
