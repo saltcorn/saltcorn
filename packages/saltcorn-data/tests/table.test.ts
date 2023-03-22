@@ -1446,6 +1446,25 @@ describe("external tables", () => {
     );
   });
 });
+describe("table providers", () => {
+  it("should register plugin", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+  });
+  it("should create table", async () => {
+    await Table.create("JoeTable", {
+      provider_name: "provtab",
+      provider_cfg: { middle_name: "Robinette" },
+    });
+  });
+  it("should query", async () => {
+    const table = await Table.findOne({ name: "JoeTable" });
+    assertIsSet(table);
+    const rows = await table.getRows({});
+    expect(rows.length === 1);
+    expect(rows[0].name).toBe("Robinette");
+    expect(rows[0].age).toBe(36);
+  });
+});
 
 describe("unique history clash", () => {
   it("should create table", async () => {

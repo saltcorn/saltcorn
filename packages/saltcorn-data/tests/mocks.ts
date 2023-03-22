@@ -77,6 +77,38 @@ const plugin_with_routes = () => ({
       ]
     ),
   },
+  table_providers: {
+    provtab: {
+      configuration_workflow: () =>
+        new Workflow({
+          steps: [
+            {
+              name: "step1",
+              form: (context: any) =>
+                new Form({
+                  fields: [
+                    {
+                      name: "middle_name",
+                      label: "Middle name",
+                      type: "String",
+                      required: true,
+                    },
+                  ],
+                }),
+            },
+          ],
+        }),
+      get_table(cfg: any) {
+        return json_list_to_external_table(
+          () => [{ name: cfg.middle_name, age: 36 }],
+          [
+            { name: "name", label: "Name", type: "String" },
+            { name: "age", label: "Age", type: "Integer" },
+          ]
+        );
+      },
+    },
+  },
   types: [
     {
       name: "UUID",

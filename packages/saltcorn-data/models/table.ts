@@ -204,7 +204,7 @@ class Table implements AbstractTable {
         ? (v: TableCfg) => v.name === where.name
         : satisfies(where)
     );
-    if (tbl.provider_name) {
+    if (tbl?.provider_name) {
       const provider = getState().table_providers[tbl.provider_name];
       return provider.get_table(tbl.provider_cfg, tbl);
     } else return tbl ? new Table(structuredClone(tbl)) : null;
@@ -501,6 +501,7 @@ class Table implements AbstractTable {
       table = new Table({
         ...tblrow,
         id,
+        fields: [],
       });
     // create table history
     if (table?.versioned) await table.create_history_table();
