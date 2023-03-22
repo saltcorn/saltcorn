@@ -1968,41 +1968,31 @@ router.post(
   })
 );
 
-/**
- * Developer settings form
- * @param {object} req request
- * @returns {Promise<Form>} form
- */
-const dev_form = async (req) => {
-  const tenants_set_npm_modules = getRootState().getConfig(
-    "tenants_set_npm_modules",
-    false
-  );
-  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+admin_config_route({
+  router,
+  path: "/dev",
+  super_path: "/admin",
+  flash: "Development mode settings updated",
+  async get_form(req) {
+    const tenants_set_npm_modules = getRootState().getConfig(
+      "tenants_set_npm_modules",
+      false
+    );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-  return await config_fields_form({
-    req,
-    field_names: [
-      "development_mode",
-      "log_sql",
-      "log_client_errors",
-      "log_level",
-      ...(isRoot || tenants_set_npm_modules ? ["npm_available_js_code"] : []),
-    ],
-    action: "/admin/dev",
-  });
-};
-/**
- * Developer Mode page
- * @name get/dev
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.get(
-  "/dev",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await dev_form(req);
+    return await config_fields_form({
+      req,
+      field_names: [
+        "development_mode",
+        "log_sql",
+        "log_client_errors",
+        "log_level",
+        ...(isRoot || tenants_set_npm_modules ? ["npm_available_js_code"] : []),
+      ],
+      action: "/admin/dev",
+    });
+  },
+  response(form, req, res) {
     send_admin_page({
       res,
       req,
@@ -2014,41 +2004,8 @@ router.get(
         contents: [renderForm(form, req.csrfToken())],
       },
     });
-  })
-);
-
-/**
- * Development mode
- * @name post/email
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.post(
-  "/dev",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await dev_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Development",
-        contents: {
-          type: "card",
-          title: req.__("Development settings"),
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      await save_config_from_form(form);
-      if (!req.xhr) {
-        req.flash("success", req.__("Development mode settings updated"));
-        res.redirect("/admin/dev");
-      } else res.json({ success: "ok" });
-    }
-  })
-);
+  },
+});
 
 admin_config_route({
   router,
@@ -2060,7 +2017,7 @@ admin_config_route({
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },
   ],
-  response(form, res, req) {
+  response(form, req, res) {
     send_admin_page({
       res,
       req,

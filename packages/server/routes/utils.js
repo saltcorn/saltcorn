@@ -345,7 +345,7 @@ const admin_config_route = ({
     path,
     isAdmin,
     error_catcher(async (req, res) => {
-      response(await getTheForm(req), res, req);
+      response(await getTheForm(req), req, res);
     })
   );
   router.post(
@@ -355,7 +355,7 @@ const admin_config_route = ({
       const form = await getTheForm(req);
       form.validate(req.body);
       if (form.hasErrors) {
-        response(form, res, req);
+        response(form, req, res);
       } else {
         await save_config_from_form(form);
         if (!req.xhr) {
