@@ -1467,7 +1467,7 @@ describe("table providers", () => {
   it("should change role", async () => {
     const table = await Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
-    //await table.update({ min_role_read: 4 });
+    await table.update({ min_role_read: 4 });
   });
 });
 

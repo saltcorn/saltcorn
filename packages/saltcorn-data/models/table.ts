@@ -210,6 +210,12 @@ class Table implements AbstractTable {
 
       const { json_list_to_external_table } = require("../plugin-helper");
       const t = json_list_to_external_table(getRows, fields);
+      delete t.min_role_read; //it is a getter
+      Object.assign(t, tbl);
+      t.update = async (upd_rec: any) => {
+        await db.update("_sc_tables", upd_rec, tbl.id);
+        await require("../db/state").getState().refresh_tables();
+      };
       return t;
     } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
