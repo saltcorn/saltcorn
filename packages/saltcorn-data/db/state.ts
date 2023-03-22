@@ -111,6 +111,7 @@ class State {
   actions: Record<string, any>;
   auth_methods: Record<string, any>;
   plugins: Record<string, Plugin>;
+  table_providers: Record<string, any>;
   plugin_cfgs: any;
   plugin_locations: any;
   plugin_module_names: any;
@@ -153,6 +154,7 @@ class State {
     this.plugin_cfgs = {};
     this.plugin_locations = {};
     this.plugin_module_names = {};
+    this.table_providers = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.layouts = { emergency: { wrap: emergency_layout } };
@@ -506,6 +508,9 @@ class State {
     });
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
       this.eventTypes[k] = v;
+    });
+    Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
+      this.table_providers[k] = v;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
