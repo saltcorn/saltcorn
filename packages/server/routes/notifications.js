@@ -77,6 +77,7 @@ router.get(
     const manifest = {
       name: state.getConfig("site_name"),
       start_url: state.getConfig("base_url") || "/",
+      display: state.getConfig("pwa_display", "browser"),
     };
     const site_logo = state.getConfig("site_logo_id");
     if (site_logo)

@@ -611,9 +611,15 @@ const configTypes: ConfigTypes = {
   },
   pwa_enabled: {
     type: "Bool",
-    label: "PWA",
-    sublabel: "Progressive Web Application",
+    label: "Enabled",
+    sublabel: "Progressive Web Application enabled",
     default: false,
+  },
+  pwa_display: {
+    input_type: "select",
+    label: "Display",
+    default: "browser",
+    options: ["browser", "fullscreen", "standalone", "minimal-ui"],
   },
   log_level: {
     input_type: "select",

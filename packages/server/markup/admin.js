@@ -397,13 +397,20 @@ const config_fields_form = async ({
     const tens = await db.select("_sc_tenants");
     return { options: tens.map((t) => t.subdomain) };
   };
-  for (const name of field_names) {
-    if (typeof name === "object" && name.section_header) {
+  for (const name0 of field_names) {
+    if (typeof name0 === "object" && name0.section_header) {
       fields.push({
         input_type: "section_header",
-        label: name.section_header,
+        label: name0.section_header,
       });
       continue;
+    }
+    let name, showIf;
+    if (typeof name0 === "object" && name0.name) {
+      name = name0.name;
+      showIf = name0.showIf;
+    } else {
+      name = name0;
     }
     values[name] = state.getConfig(name);
     // console.log(`config field name: %s`,name);
@@ -428,6 +435,7 @@ const config_fields_form = async ({
           ? undefined
           : configTypes[name].type,
       input_type: configTypes[name].input_type,
+      showIf,
       attributes: isView
         ? await viewAttributes(name)
         : isRole

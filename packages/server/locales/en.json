@@ -1133,5 +1133,7 @@
 	"Show notifications in the user menu": "Show notifications in the user menu",
 	"Notification settings": "Notification settings",
 	"PWA": "PWA",
-	"Progressive Web Application": "Progressive Web Application"
+	"Progressive Web Application": "Progressive Web Application",
+	"Display": "Display",
+	"Progressive Web Application enabled": "Progressive Web Application enabled"
 }
