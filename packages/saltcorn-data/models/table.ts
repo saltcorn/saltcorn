@@ -443,11 +443,12 @@ class Table implements AbstractTable {
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
-    await db.query(
-      `create table ${schema}"${sqlsanitize(name)}" (id ${
-        db.isSQLite ? "integer" : "serial"
-      } primary key)`
-    );
+    if (!options.provider_name)
+      await db.query(
+        `create table ${schema}"${sqlsanitize(name)}" (id ${
+          db.isSQLite ? "integer" : "serial"
+        } primary key)`
+      );
     // populate table definition row
     const tblrow: any = {
       name,
@@ -465,33 +466,41 @@ class Table implements AbstractTable {
       // insert table definition into _sc_tables
       id = await db.insert("_sc_tables", tblrow);
       // add primary key column ID
-      const insfldres = await db.query(
-        `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+      if (!options.provider_name) {
+        const insfldres = await db.query(
+          `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
             values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
-        [id]
-      );
-      pk_fld_id = insfldres.rows[0].id;
+          [id]
+        );
+        pk_fld_id = insfldres.rows[0].id;
+      }
     }
     // create table
-
-    const table = new Table({
-      ...tblrow,
-      id,
-      fields: [
-        new Field({
-          type: "Integer",
-          name: "id",
-          label: "ID",
-          primary_key: true,
-          required: true,
-          is_unique: true,
-          table_id: id,
-          id: pk_fld_id,
-        }),
-      ],
-    });
+    let table;
+    if (!options.provider_name)
+      table = new Table({
+        ...tblrow,
+        id,
+        fields: [
+          new Field({
+            type: "Integer",
+            name: "id",
+            label: "ID",
+            primary_key: true,
+            required: true,
+            is_unique: true,
+            table_id: id,
+            id: pk_fld_id,
+          }),
+        ],
+      });
+    else
+      table = new Table({
+        ...tblrow,
+        id,
+      });
     // create table history
-    if (table.versioned) await table.create_history_table();
+    if (table?.versioned) await table.create_history_table();
     // refresh tables cache
     await require("../db/state").getState().refresh_tables();
 
