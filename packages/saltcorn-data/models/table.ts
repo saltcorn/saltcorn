@@ -204,7 +204,10 @@ class Table implements AbstractTable {
         ? (v: TableCfg) => v.name === where.name
         : satisfies(where)
     );
-    return tbl ? new Table(structuredClone(tbl)) : null;
+    if (tbl.provider_name) {
+      const provider = getState().table_providers[tbl.provider_name];
+      return provider.get_table(tbl.provider_cfg, tbl);
+    } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
   /**
