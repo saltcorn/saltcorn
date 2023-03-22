@@ -412,12 +412,14 @@ export type SelectOptions = {
   nocase?: boolean;
   orderDesc?: boolean;
   cached?: boolean;
-  versioned?: boolean;
+  versioned?: boolean; //TODO rm this and below
   min_role_read?: number;
   min_role_write?: number;
   ownership_field_id?: string;
   ownership_formula?: string;
   description?: string;
+  provider_name?: string;
+  provider_cfg?: any;
 };
 export const orderByIsObject = (
   object: any

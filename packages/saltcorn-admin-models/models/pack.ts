@@ -56,6 +56,8 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
     min_role_read: table.min_role_read,
     min_role_write: table.min_role_write,
     versioned: table.versioned,
+    provider_name: table.provider_name,
+    provider_cfg: table.provider_cfg,
     ownership_formula: table.ownership_formula,
     fields: fields.map((f) => strip_ids(f.toJson)),
     //triggers: triggers.map((tr) => tr.toJson),

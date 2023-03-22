@@ -24,6 +24,8 @@ export type TableCfg = {
   description?: string;
   fields: FieldCfg[];
   constraints?: any[];
+  provider_name?: string;
+  provider_cfg?: any;
 };
 
 export type TablePack = {

@@ -68,6 +68,7 @@ const {
   structuredClone,
   getLines,
   mergeIntoWhere,
+  stringToJSON,
 } = utils;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
@@ -147,7 +148,8 @@ class Table implements AbstractTable {
   fields: Field[];
   constraints: TableConstraint[];
   is_user_group: boolean;
-
+  provider_name?: string;
+  provider_cfg?: any;
   /**
    * Table constructor
    * @param {object} o
@@ -164,6 +166,8 @@ class Table implements AbstractTable {
     this.external = false;
     this.description = o.description;
     this.constraints = o.constraints || [];
+    this.provider_cfg = stringToJSON(o.provider_cfg);
+
     this.fields = o.fields.map((f) => new Field(f));
   }
 
@@ -434,7 +438,7 @@ class Table implements AbstractTable {
    */
   static async create(
     name: string,
-    options: SelectOptions | TablePack = {},
+    options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
@@ -453,6 +457,8 @@ class Table implements AbstractTable {
       ownership_field_id: options.ownership_field_id,
       ownership_formula: options.ownership_formula,
       description: options.description || "",
+      provider_name: options.provider_name,
+      provider_cfg: options.provider_cfg,
     };
     let pk_fld_id;
     if (!id) {
