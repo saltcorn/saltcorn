@@ -9,6 +9,7 @@ const { isAdmin, setTenant, error_catcher, loggedIn } = require("./utils.js");
 const Notification = require("@saltcorn/data/models/notification");
 const { div, a, i, text, h5, p, span } = require("@saltcorn/markup/tags");
 const moment = require("moment");
+const { getState } = require("@saltcorn/data/db/state");
 
 const router = new Router();
 module.exports = router;
@@ -66,5 +67,32 @@ router.get(
     });
     res.set("Cache-Control", "public, max-age=60"); // 1 minute
     res.json({ success: num_unread });
+  })
+);
+
+router.get(
+  "/manifest.json",
+  error_catcher(async (req, res) => {
+    const state = getState();
+    const manifest = {
+      name: state.getConfig("site_name"),
+      start_url: state.getConfig("base_url") || "/",
+      display: state.getConfig("pwa_display", "browser"),
+    };
+    const site_logo = state.getConfig("site_logo_id");
+    if (site_logo)
+      manifest.icons = [
+        {
+          src: `/files/serve/${site_logo}`,
+        },
+      ];
+    if (state.getConfig("pwa_set_colors", false)) {
+      manifest.theme_color = state.getConfig("pwa_theme_color", "black");
+      manifest.background_color = state.getConfig(
+        "pwa_background_color",
+        "red"
+      );
+    }
+    res.json(manifest);
   })
 );

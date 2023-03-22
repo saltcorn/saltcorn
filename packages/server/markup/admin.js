@@ -344,7 +344,7 @@ const viewAttributes = async (key) => {
  * @param {*} req
  * @returns {void}
  */
-const flash_restart_if_required = (cfgForm, req) => {
+const check_if_restart_required = (cfgForm, req) => {
   let restart = false;
   cfgForm.fields.forEach((f) => {
     if (configTypes[f.name]?.restart_required) {
@@ -352,7 +352,7 @@ const flash_restart_if_required = (cfgForm, req) => {
       if (current !== cfgForm.values[f.name]) restart = true;
     }
   });
-  if (restart) flash_restart(req);
+  return restart;
 };
 
 /**
@@ -397,13 +397,20 @@ const config_fields_form = async ({
     const tens = await db.select("_sc_tenants");
     return { options: tens.map((t) => t.subdomain) };
   };
-  for (const name of field_names) {
-    if (typeof name === "object" && name.section_header) {
+  for (const name0 of field_names) {
+    if (typeof name0 === "object" && name0.section_header) {
       fields.push({
         input_type: "section_header",
-        label: name.section_header,
+        label: name0.section_header,
       });
       continue;
+    }
+    let name, showIf;
+    if (typeof name0 === "object" && name0.name) {
+      name = name0.name;
+      showIf = name0.showIf;
+    } else {
+      name = name0;
     }
     values[name] = state.getConfig(name);
     // console.log(`config field name: %s`,name);
@@ -428,6 +435,7 @@ const config_fields_form = async ({
           ? undefined
           : configTypes[name].type,
       input_type: configTypes[name].input_type,
+      showIf,
       attributes: isView
         ? await viewAttributes(name)
         : isRole
@@ -554,7 +562,7 @@ module.exports = {
   send_admin_page,
   send_files_page,
   save_config_from_form,
-  flash_restart_if_required,
+  check_if_restart_required,
   flash_restart,
   send_tags_page,
 };

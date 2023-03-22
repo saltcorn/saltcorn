@@ -609,6 +609,31 @@ const configTypes: ConfigTypes = {
     sublabel: "Show notifications in the user menu",
     default: false,
   },
+  pwa_enabled: {
+    type: "Bool",
+    label: "Enabled",
+    sublabel: "Progressive Web Application enabled",
+    default: false,
+  },
+  pwa_display: {
+    input_type: "select",
+    label: "Display",
+    default: "browser",
+    options: ["browser", "fullscreen", "standalone", "minimal-ui"],
+  },
+  pwa_set_colors: {
+    type: "Bool",
+    label: "Set colors",
+    default: false,
+  },
+  pwa_theme_color: {
+    type: "Color",
+    label: "Theme color",
+  },
+  pwa_background_color: {
+    type: "Color",
+    label: "Background color",
+  },
   log_level: {
     input_type: "select",
     label: "System logging verbosity",

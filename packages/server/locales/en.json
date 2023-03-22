@@ -1131,5 +1131,14 @@
 	"No notifications": "No notifications",
 	"In user menu": "In user menu",
 	"Show notifications in the user menu": "Show notifications in the user menu",
-	"Notification settings": "Notification settings"
+	"Notification settings": "Notification settings",
+	"PWA": "PWA",
+	"Progressive Web Application": "Progressive Web Application",
+	"Display": "Display",
+	"Progressive Web Application enabled": "Progressive Web Application enabled",
+	"Saltcorn test email": "Saltcorn test email",
+	"Hello from Saltcorn": "Hello from Saltcorn",
+	"Set colors": "Set colors",
+	"Theme color": "Theme color",
+	"Background color": "Background color"
 }

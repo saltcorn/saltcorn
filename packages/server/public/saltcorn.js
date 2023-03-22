@@ -326,6 +326,9 @@ function saveAndContinue(e, k) {
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
         );
       }
+      if (res.notify) {
+        notifyAlert(res.notify);
+      }
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
