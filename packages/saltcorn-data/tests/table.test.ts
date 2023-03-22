@@ -1469,6 +1469,11 @@ describe("table providers", () => {
     assertIsSet(table);
     await table.update({ min_role_read: 4 });
   });
+  it("should get role", async () => {
+    const table = await Table.findOne({ name: "JoeTable" });
+    assertIsSet(table);
+    expect(table.min_role_read).toBe(4);
+  });
 });
 
 describe("unique history clash", () => {
