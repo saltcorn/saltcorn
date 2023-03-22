@@ -206,7 +206,11 @@ class Table implements AbstractTable {
     );
     if (tbl?.provider_name) {
       const provider = getState().table_providers[tbl.provider_name];
-      return provider.get_table(tbl.provider_cfg, tbl);
+      const { fields, getRows } = provider.get_table(tbl.provider_cfg, tbl);
+
+      const { json_list_to_external_table } = require("../plugin-helper");
+      const t = json_list_to_external_table(getRows, fields);
+      return t;
     } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
@@ -479,12 +483,11 @@ class Table implements AbstractTable {
       }
     }
     // create table
-    let table;
-    if (!options.provider_name)
-      table = new Table({
-        ...tblrow,
-        id,
-        fields: [
+    //const provider = getState().table_providers[tbl.provider_name];
+    //provider.get_table(tbl.provider_cfg, tbl);
+    const fields = options?.provider_name
+      ? [] //TODO look up
+      : [
           new Field({
             type: "Integer",
             name: "id",
@@ -495,14 +498,13 @@ class Table implements AbstractTable {
             table_id: id,
             id: pk_fld_id,
           }),
-        ],
-      });
-    else
-      table = new Table({
-        ...tblrow,
-        id,
-        fields: [],
-      });
+        ];
+    const table = new Table({
+      ...tblrow,
+      id,
+      fields,
+    });
+
     // create table history
     if (table?.versioned) await table.create_history_table();
     // refresh tables cache
