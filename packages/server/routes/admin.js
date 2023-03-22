@@ -85,7 +85,6 @@ const {
   //send_files_page,
   config_fields_form,
   save_config_from_form,
-  flash_restart_if_required,
 } = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");

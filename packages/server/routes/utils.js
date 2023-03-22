@@ -22,7 +22,8 @@ const si = require("systeminformation");
 const {
   config_fields_form,
   save_config_from_form,
-  flash_restart_if_required,
+  check_if_restart_required,
+  flash_restart,
 } = require("../markup/admin.js");
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -358,13 +359,22 @@ const admin_config_route = ({
       if (form.hasErrors) {
         response(form, req, res);
       } else {
-        flash_restart_if_required(form, req);
+        const restart_required = check_if_restart_required(form, req);
 
         await save_config_from_form(form);
         if (!req.xhr) {
-          req.flash("success", req.__(flash));
+          if (restart_required) {
+            flash_restart(req);
+          } else req.flash("success", req.__(flash));
           res.redirect(super_path + path);
-        } else res.json({ success: "ok" });
+        } else {
+          if (restart_required)
+            res.json({
+              success: "ok",
+              notify: req.__("Restart required for changes to take effect."),
+            });
+          else res.json({ success: "ok" });
+        }
       }
     })
   );

@@ -344,7 +344,7 @@ const viewAttributes = async (key) => {
  * @param {*} req
  * @returns {void}
  */
-const flash_restart_if_required = (cfgForm, req) => {
+const check_if_restart_required = (cfgForm, req) => {
   let restart = false;
   cfgForm.fields.forEach((f) => {
     if (configTypes[f.name]?.restart_required) {
@@ -352,7 +352,7 @@ const flash_restart_if_required = (cfgForm, req) => {
       if (current !== cfgForm.values[f.name]) restart = true;
     }
   });
-  if (restart) flash_restart(req);
+  return restart;
 };
 
 /**
@@ -562,7 +562,7 @@ module.exports = {
   send_admin_page,
   send_files_page,
   save_config_from_form,
-  flash_restart_if_required,
+  check_if_restart_required,
   flash_restart,
   send_tags_page,
 };
