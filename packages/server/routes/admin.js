@@ -108,33 +108,6 @@ const Crash = require("@saltcorn/data/models/crash");
 const router = new Router();
 module.exports = router;
 
-/**
- * Site identity form
- * @param {object} req -http request
- * @returns {Promise<Form>} form
- */
-const site_id_form = (req) =>
-  config_fields_form({
-    req,
-    field_names: [
-      "site_name",
-      "timezone",
-      "base_url",
-      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
-      { section_header: "Logo image" },
-      "site_logo_id",
-      "favicon_id",
-      { section_header: "Custom code" },
-      "page_custom_css",
-      "page_custom_html",
-      { section_header: "Extension store" },
-      "plugins_store_endpoint",
-      "packs_store_endpoint",
-    ],
-    action: "/admin",
-    submitLabel: req.__("Save"),
-  });
-
 const app_files_table = (files, buildDirName, req) =>
   mkTable(
     [
@@ -164,17 +137,27 @@ const app_files_table = (files, buildDirName, req) =>
     files
   );
 
-/**
- * Router get /
- * @name get
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.get(
-  "/",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await site_id_form(req);
+admin_config_route({
+  router,
+  path: "/",
+  super_path: "/admin",
+  flash: "Site identity settings updated",
+  field_names: [
+    "site_name",
+    "timezone",
+    "base_url",
+    ...(getConfigFile() ? ["multitenancy_enabled"] : []),
+    { section_header: "Logo image" },
+    "site_logo_id",
+    "favicon_id",
+    { section_header: "Custom code" },
+    "page_custom_css",
+    "page_custom_html",
+    { section_header: "Extension store" },
+    "plugins_store_endpoint",
+    "packs_store_endpoint",
+  ],
+  response(form, req, res) {
     send_admin_page({
       res,
       req,
@@ -186,42 +169,8 @@ router.get(
         contents: [renderForm(form, req.csrfToken())],
       },
     });
-  })
-);
-
-/**
- * @name post
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.post(
-  "/",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await site_id_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Site identity",
-        contents: {
-          type: "card",
-          title: req.__("Site identity settings"),
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      flash_restart_if_required(form, req);
-      await save_config_from_form(form);
-
-      if (!req.xhr) {
-        req.flash("success", req.__("Site identity settings updated"));
-        res.redirect("/admin");
-      } else res.json({ success: "ok" });
-    }
-  })
-);
+  },
+});
 
 admin_config_route({
   router,
