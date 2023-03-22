@@ -1464,6 +1464,11 @@ describe("table providers", () => {
     expect(rows[0].name).toBe("Robinette");
     expect(rows[0].age).toBe(36);
   });
+  it("should change role", async () => {
+    const table = await Table.findOne({ name: "JoeTable" });
+    assertIsSet(table);
+    //await table.update({ min_role_read: 4 });
+  });
 });
 
 describe("unique history clash", () => {
