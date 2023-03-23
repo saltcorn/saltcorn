@@ -51,6 +51,7 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -180,6 +181,7 @@ router.get(
   "/new/",
   isAdmin,
   error_catcher(async (req, res) => {
+    const table_provider_names = Object.keys(getState().table_providers);
     res.sendWrap(req.__(`New table`), {
       above: [
         {
@@ -203,6 +205,20 @@ router.get(
                   input_type: "text",
                   required: true,
                 },
+                ...(table_provider_names.length
+                  ? [
+                      {
+                        label: req.__("Table provider"),
+                        name: "provider_name",
+                        input_type: "select",
+                        options: [
+                          req.__("Database table"),
+                          ...table_provider_names,
+                        ],
+                        required: true,
+                      },
+                    ]
+                  : []),
               ],
             }),
             req.csrfToken()
@@ -548,9 +564,9 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) table = await Table.findOne({ id });
+    if (id) table = Table.findOne({ id });
     else {
-      table = await Table.findOne({ name: idorname });
+      table = Table.findOne({ name: idorname });
     }
 
     if (!table) {
@@ -645,7 +661,7 @@ router.get(
     var viewCard;
     if (fields.length > 0) {
       const views = await View.find(
-        table.external ? { exttable_name: table.name } : { table_id: table.id }
+        table.id ? { table_id: table.id } : { exttable_name: table.name }
       );
       var viewCardContents;
       if (views.length > 0) {
@@ -726,6 +742,16 @@ router.get(
             : req.__("Edit")
         )
       ),
+      table.provider_name &&
+        div(
+          { class: "mx-auto" },
+          a(
+            { href: `/table/provider-cfg/${table.id}` },
+            i({ class: "fas fa-2x fa-tools" }),
+            "<br/>",
+            req.__("Configure provider")
+          )
+        ),
       div(
         { class: "mx-auto" },
         a(
@@ -820,7 +846,13 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Tables"), href: "/table" },
-            { text: span({ class: "fw-bold text-body" }, table.name) },
+            {
+              text: span(
+                { class: "fw-bold text-body" },
+                table.name,
+                table.provider_name && ` (${table.provider_name} provider)`
+              ),
+            },
           ],
         },
         {
@@ -875,7 +907,14 @@ router.post(
       } else if (db.sqlsanitize(name) === "") {
         req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/new`);
+      } else if (
+        rest.provider_name &&
+        rest.provider_name !== "Database table"
+      ) {
+        const table = await Table.create(name, rest);
+        res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
+        delete rest.provider_name;
         const table = await Table.create(name, rest);
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
@@ -1004,23 +1043,6 @@ router.post(
     }
   })
 );
-/**
- * Table badges to show in System Table list views
- * Currently supports:
- * - Owned - if ownership_field_id? What is it?
- * - History - if table has versioning
- * - External - if this is external table
- * @param {object} t table object
- * @param {object} req http request
- * @returns {string} html string with list of badges
- */
-const tableBadges = (t, req) => {
-  let s = "";
-  if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
-  if (t.versioned) s += badge("success", req.__("History"));
-  if (t.external) s += badge("info", req.__("External"));
-  return s;
-};
 
 /**
  * List Views of Tables (GET Handler)
@@ -1526,5 +1548,121 @@ router.post(
     req.flash("success", req.__("Started recalculating stored fields"));
 
     res.redirect(`/table/${table.id}`);
+  })
+);
+
+const respondWorkflow = (table, wf, wfres, req, res) => {
+  const wrap = (contents, noCard, previewURL) => ({
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [
+          { text: req.__("Tables"), href: "/table" },
+          { href: `/table/${table.id || table.name}`, text: table.name },
+          { text: req.__("Configuration") },
+        ],
+      },
+      {
+        type: noCard ? "container" : "card",
+        class: !noCard && "mt-0",
+        title: wfres.title,
+        titleAjaxIndicator: true,
+        contents,
+      },
+    ],
+  });
+  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
+  if (wfres.renderForm)
+    res.sendWrap(
+      {
+        title: req.__(`%s configuration`, table.name),
+        headers: [
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/iconset-fontawesome5-3-1.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.js`,
+          },
+          {
+            css: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.min.css`,
+          },
+        ],
+      },
+      wrap(
+        renderForm(wfres.renderForm, req.csrfToken()),
+        false,
+        wfres.previewURL
+      )
+    );
+  else res.redirect(wfres.redirect);
+};
+
+const get_provider_workflow = (table, req) => {
+  const provider = getState().table_providers[table.provider_name];
+  if (!provider) {
+    throw new InvalidConfiguration(
+      `Provider not found for rable ${table.name}: table.provider_name`
+    );
+  }
+  const workflow = provider.configuration_workflow(req);
+  workflow.action = `/table/provider-cfg/${table.id}`;
+  const oldOnDone = workflow.onDone || ((c) => c);
+  workflow.onDone = async (ctx) => {
+    const { table_id, ...configuration } = await oldOnDone(ctx);
+    await table.update({ provider_cfg: configuration });
+
+    return {
+      redirect: `/table/${table.id}`,
+      flash: ["success", `Table ${this.name || ""} saved`],
+    };
+  };
+  return workflow;
+};
+
+router.get(
+  "/provider-cfg/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const { step } = req.query;
+
+    const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const workflow = get_provider_workflow(table, req);
+    const wfres = await workflow.run(
+      {
+        ...(table.provider_cfg || {}),
+        table_id: table.id,
+        ...(step ? { stepName: step } : {}),
+      },
+      req
+    );
+    respondWorkflow(table, workflow, wfres, req, res);
+  })
+);
+
+router.post(
+  "/provider-cfg/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const { step } = req.query;
+
+    const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const workflow = get_provider_workflow(table, req);
+    const wfres = await workflow.run(req.body, req);
+    respondWorkflow(table, workflow, wfres, req, res);
   })
 );

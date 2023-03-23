@@ -68,6 +68,7 @@ const {
   structuredClone,
   getLines,
   mergeIntoWhere,
+  stringToJSON,
 } = utils;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
@@ -147,7 +148,8 @@ class Table implements AbstractTable {
   fields: Field[];
   constraints: TableConstraint[];
   is_user_group: boolean;
-
+  provider_name?: string;
+  provider_cfg?: any;
   /**
    * Table constructor
    * @param {object} o
@@ -164,6 +166,9 @@ class Table implements AbstractTable {
     this.external = false;
     this.description = o.description;
     this.constraints = o.constraints || [];
+    this.provider_cfg = stringToJSON(o.provider_cfg);
+    this.provider_name = o.provider_name;
+
     this.fields = o.fields.map((f) => new Field(f));
   }
 
@@ -200,7 +205,28 @@ class Table implements AbstractTable {
         ? (v: TableCfg) => v.name === where.name
         : satisfies(where)
     );
-    return tbl ? new Table(structuredClone(tbl)) : null;
+    if (tbl?.provider_name) {
+      const provider = getState().table_providers[tbl.provider_name];
+      const { getRows } = provider.get_table(tbl.provider_cfg, tbl);
+
+      const { json_list_to_external_table } = require("../plugin-helper");
+      const t = json_list_to_external_table(getRows, tbl.fields);
+      delete t.min_role_read; //it is a getter
+      Object.assign(t, tbl);
+      t.update = async (upd_rec: any) => {
+        await db.update("_sc_tables", upd_rec, tbl.id);
+        await require("../db/state").getState().refresh_tables();
+      };
+      t.delete = async (upd_rec: any) => {
+        const schema = db.getTenantSchemaPrefix();
+
+        await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
+          tbl.id,
+        ]);
+        await require("../db/state").getState().refresh_tables();
+      };
+      return t;
+    } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
   /**
@@ -434,16 +460,17 @@ class Table implements AbstractTable {
    */
   static async create(
     name: string,
-    options: SelectOptions | TablePack = {},
+    options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
-    await db.query(
-      `create table ${schema}"${sqlsanitize(name)}" (id ${
-        db.isSQLite ? "integer" : "serial"
-      } primary key)`
-    );
+    if (!options.provider_name)
+      await db.query(
+        `create table ${schema}"${sqlsanitize(name)}" (id ${
+          db.isSQLite ? "integer" : "serial"
+        } primary key)`
+      );
     // populate table definition row
     const tblrow: any = {
       name,
@@ -453,39 +480,48 @@ class Table implements AbstractTable {
       ownership_field_id: options.ownership_field_id,
       ownership_formula: options.ownership_formula,
       description: options.description || "",
+      provider_name: options.provider_name,
+      provider_cfg: options.provider_cfg,
     };
     let pk_fld_id;
     if (!id) {
       // insert table definition into _sc_tables
       id = await db.insert("_sc_tables", tblrow);
       // add primary key column ID
-      const insfldres = await db.query(
-        `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+      if (!options.provider_name) {
+        const insfldres = await db.query(
+          `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
             values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
-        [id]
-      );
-      pk_fld_id = insfldres.rows[0].id;
+          [id]
+        );
+        pk_fld_id = insfldres.rows[0].id;
+      }
     }
     // create table
-
+    //const provider = getState().table_providers[tbl.provider_name];
+    //provider.get_table(tbl.provider_cfg, tbl);
+    const fields = options?.provider_name
+      ? [] //TODO look up
+      : [
+          new Field({
+            type: "Integer",
+            name: "id",
+            label: "ID",
+            primary_key: true,
+            required: true,
+            is_unique: true,
+            table_id: id,
+            id: pk_fld_id,
+          }),
+        ];
     const table = new Table({
       ...tblrow,
       id,
-      fields: [
-        new Field({
-          type: "Integer",
-          name: "id",
-          label: "ID",
-          primary_key: true,
-          required: true,
-          is_unique: true,
-          table_id: id,
-          id: pk_fld_id,
-        }),
-      ],
+      fields,
     });
+
     // create table history
-    if (table.versioned) await table.create_history_table();
+    if (table?.versioned) await table.create_history_table();
     // refresh tables cache
     await require("../db/state").getState().refresh_tables();
 
