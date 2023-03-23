@@ -1627,7 +1627,6 @@ router.get(
       return;
     }
     const workflow = get_provider_workflow(table, req);
-    console.log({ workflow });
     const wfres = await workflow.run(
       {
         ...(table.provider_cfg || {}),
@@ -1636,6 +1635,25 @@ router.get(
       },
       req
     );
+    respondWorkflow(table, workflow, wfres, req, res);
+  })
+);
+
+router.post(
+  "/provider-cfg/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const { step } = req.query;
+
+    const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const workflow = get_provider_workflow(table, req);
+    const wfres = await workflow.run(req.body, req);
     respondWorkflow(table, workflow, wfres, req, res);
   })
 );
