@@ -1626,7 +1626,7 @@ const get_provider_workflow = (table, req) => {
     await table.update({ provider_cfg: configuration });
 
     return {
-      redirect: `/table/${table.if}`,
+      redirect: `/table/${table.id}`,
       flash: ["success", `Table ${this.name || ""} saved`],
     };
   };
