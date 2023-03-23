@@ -216,6 +216,14 @@ class Table implements AbstractTable {
         await db.update("_sc_tables", upd_rec, tbl.id);
         await require("../db/state").getState().refresh_tables();
       };
+      t.delete = async (upd_rec: any) => {
+        const schema = db.getTenantSchemaPrefix();
+
+        await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
+          tbl.id,
+        ]);
+        await require("../db/state").getState().refresh_tables();
+      };
       return t;
     } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
