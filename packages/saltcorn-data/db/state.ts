@@ -664,9 +664,23 @@ class State {
     for (const moduleName of moduleNames) {
       if (!this.codeNPMmodules[moduleName]) {
         try {
-          await this.pluginManager.install(moduleName);
-          this.codeNPMmodules[moduleName] =
-            this.pluginManager.require(moduleName);
+          if (
+            [
+              "fs",
+              "child_process",
+              "path",
+              "http",
+              "crypto",
+              "dns",
+              "os",
+            ].includes(moduleName)
+          ) {
+            this.codeNPMmodules[moduleName] = require(moduleName);
+          } else {
+            await this.pluginManager.install(moduleName);
+            this.codeNPMmodules[moduleName] =
+              this.pluginManager.require(moduleName);
+          }
         } catch (e) {
           console.error("npm install error", e);
         }
