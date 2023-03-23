@@ -564,9 +564,9 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) table = await Table.findOne({ id });
+    if (id) table = Table.findOne({ id });
     else {
-      table = await Table.findOne({ name: idorname });
+      table = Table.findOne({ name: idorname });
     }
 
     if (!table) {
@@ -661,7 +661,7 @@ router.get(
     var viewCard;
     if (fields.length > 0) {
       const views = await View.find(
-        table.external ? { exttable_name: table.name } : { table_id: table.id }
+        table.id ? { table_id: table.id } : { exttable_name: table.name }
       );
       var viewCardContents;
       if (views.length > 0) {
