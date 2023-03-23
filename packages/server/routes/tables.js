@@ -859,7 +859,17 @@ router.get(
           type: "card",
           title: req.__("Edit table properties"),
           titleAjaxIndicator: true,
-          contents: renderForm(tblForm, req.csrfToken()),
+          contents: [
+            table.provider_name &&
+              div(
+                `Table provider: ${table.provider_name}`,
+                a(
+                  { href: `/table/provider-cfg/${table.id}`, class: "ms-2" },
+                  req.__("Configure")
+                )
+              ),
+            renderForm(tblForm, req.csrfToken()),
+          ],
         },
       ],
     });
