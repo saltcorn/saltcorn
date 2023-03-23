@@ -1140,5 +1140,7 @@
 	"Hello from Saltcorn": "Hello from Saltcorn",
 	"Set colors": "Set colors",
 	"Theme color": "Theme color",
-	"Background color": "Background color"
+	"Background color": "Background color",
+	"Table provider": "Table provider",
+	"Database table": "Database table"
 }

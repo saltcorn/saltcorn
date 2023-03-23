@@ -180,6 +180,7 @@ router.get(
   "/new/",
   isAdmin,
   error_catcher(async (req, res) => {
+    const table_provider_names = Object.keys(getState().table_providers);
     res.sendWrap(req.__(`New table`), {
       above: [
         {
@@ -203,6 +204,20 @@ router.get(
                   input_type: "text",
                   required: true,
                 },
+                ...(table_provider_names.length
+                  ? [
+                      {
+                        label: req.__("Table provider"),
+                        name: "provider_name",
+                        input_type: "select",
+                        options: [
+                          req.__("Database table"),
+                          ...table_provider_names,
+                        ],
+                        required: true,
+                      },
+                    ]
+                  : []),
               ],
             }),
             req.csrfToken()
@@ -875,6 +890,12 @@ router.post(
       } else if (db.sqlsanitize(name) === "") {
         req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/new`);
+      } else if (
+        rest.provider_name &&
+        rest.provider_name !== "Database table"
+      ) {
+        const table = await Table.create(name, rest);
+        res.redirect(`/table/provider_cfg/${table.id}`);
       } else {
         const table = await Table.create(name, rest);
         req.flash("success", req.__(`Table %s created`, name));
