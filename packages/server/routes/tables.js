@@ -1043,23 +1043,6 @@ router.post(
     }
   })
 );
-/**
- * Table badges to show in System Table list views
- * Currently supports:
- * - Owned - if ownership_field_id? What is it?
- * - History - if table has versioning
- * - External - if this is external table
- * @param {object} t table object
- * @param {object} req http request
- * @returns {string} html string with list of badges
- */
-const tableBadges = (t, req) => {
-  let s = "";
-  if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
-  if (t.versioned) s += badge("success", req.__("History"));
-  if (t.external) s += badge("info", req.__("External"));
-  return s;
-};
 
 /**
  * List Views of Tables (GET Handler)

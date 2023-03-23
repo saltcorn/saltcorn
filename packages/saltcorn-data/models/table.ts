@@ -167,6 +167,7 @@ class Table implements AbstractTable {
     this.description = o.description;
     this.constraints = o.constraints || [];
     this.provider_cfg = stringToJSON(o.provider_cfg);
+    this.provider_name = o.provider_name;
 
     this.fields = o.fields.map((f) => new Field(f));
   }
