@@ -32,7 +32,7 @@ import config from "../models/config";
 const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
-const { structuredClone, removeAllWhiteSpace } = utils;
+const { structuredClone, removeAllWhiteSpace, stringToJSON } = utils;
 import I18n from "i18n";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -358,6 +358,7 @@ class State {
     const allConstraints = await db.select("_sc_table_constraints", {});
     for (const table of allTables) {
       if (table.provider_name) {
+        table.provider_cfg = stringToJSON(table.provider_cfg);
         const provider = this.table_providers[table.provider_name];
         if (!provider) table.fields = [];
         else {
