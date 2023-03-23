@@ -219,7 +219,7 @@ class Table implements AbstractTable {
       t.delete = async (upd_rec: any) => {
         const schema = db.getTenantSchemaPrefix();
 
-        await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
+        await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
           tbl.id,
         ]);
         await require("../db/state").getState().refresh_tables();
