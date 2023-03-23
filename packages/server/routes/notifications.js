@@ -11,6 +11,7 @@ const { div, a, i, text, h5, p, span } = require("@saltcorn/markup/tags");
 const moment = require("moment");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
+const User = require("@saltcorn/data/models/user");
 const { renderForm } = require("@saltcorn/markup");
 
 const router = new Router();
@@ -21,6 +22,7 @@ const notificationSettingsForm = () =>
     action: `/notifications/settings`,
     noSubmitButton: true,
     onChange: `saveAndContinue(this)`,
+    labelCols: 4,
     fields: [{ name: "notify_email", label: "Email", type: "Bool" }],
   });
 
@@ -62,7 +64,7 @@ router.get(
           crumbs: [{ text: req.__("Notifications") }],
         },
         {
-          widths: [3, 9],
+          widths: [4, 8],
           besides: [
             {
               type: "card",
@@ -96,6 +98,11 @@ router.post(
   "/settings",
   loggedIn,
   error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    const form = notificationSettingsForm();
+    form.validate(req.body);
+    const _attributes = { ...user._attributes, ...form.values };
+    await user.update({ _attributes });
     res.json({ success: "ok" });
   })
 );
