@@ -742,6 +742,16 @@ router.get(
             : req.__("Edit")
         )
       ),
+      table.provider_name &&
+        div(
+          { class: "mx-auto" },
+          a(
+            { href: `/table/provider-cfg/${table.id}` },
+            i({ class: "fas fa-2x fa-tools" }),
+            "<br/>",
+            req.__("Configure provider")
+          )
+        ),
       div(
         { class: "mx-auto" },
         a(
@@ -836,7 +846,13 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Tables"), href: "/table" },
-            { text: span({ class: "fw-bold text-body" }, table.name) },
+            {
+              text: span(
+                { class: "fw-bold text-body" },
+                table.name,
+                table.provider_name && ` (${table.provider_name} provider)`
+              ),
+            },
           ],
         },
         {
@@ -859,17 +875,7 @@ router.get(
           type: "card",
           title: req.__("Edit table properties"),
           titleAjaxIndicator: true,
-          contents: [
-            table.provider_name &&
-              div(
-                `Table provider: ${table.provider_name}`,
-                a(
-                  { href: `/table/provider-cfg/${table.id}`, class: "ms-2" },
-                  req.__("Configure")
-                )
-              ),
-            renderForm(tblForm, req.csrfToken()),
-          ],
+          contents: renderForm(tblForm, req.csrfToken()),
         },
       ],
     });

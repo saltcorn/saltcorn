@@ -1142,5 +1142,6 @@
 	"Theme color": "Theme color",
 	"Background color": "Background color",
 	"Table provider": "Table provider",
-	"Database table": "Database table"
+	"Database table": "Database table",
+	"Configure provider": "Configure provider"
 }
