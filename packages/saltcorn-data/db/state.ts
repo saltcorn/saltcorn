@@ -357,6 +357,16 @@ class State {
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
     for (const table of allTables) {
+      if (table.provider_name) {
+        const provider = this.table_providers[table.provider_name];
+        if (!provider) table.fields = [];
+        else {
+          if (typeof provider.fields === "function")
+            table.fields = await provider.fields(table.provider_cfg);
+          else table.fields = provider.fields;
+        }
+        continue;
+      }
       table.fields = allFields.filter((f: Field) => f.table_id === table.id);
       table.constraints = allConstraints
         .filter((f: any) => f.table_id === table.id)

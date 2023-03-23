@@ -98,13 +98,13 @@ const plugin_with_routes = () => ({
             },
           ],
         }),
+      fields: async (cfg: any) => [
+        { name: "name", label: "Name", type: "String" },
+        { name: "age", label: "Age", type: "Integer" },
+      ],
       get_table(cfg: any) {
         return {
           getRows: async () => [{ name: cfg.middle_name, age: 36 }],
-          fields: [
-            { name: "name", label: "Name", type: "String" },
-            { name: "age", label: "Age", type: "Integer" },
-          ],
         };
       },
     },

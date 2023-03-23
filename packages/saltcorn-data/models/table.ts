@@ -206,10 +206,10 @@ class Table implements AbstractTable {
     );
     if (tbl?.provider_name) {
       const provider = getState().table_providers[tbl.provider_name];
-      const { fields, getRows } = provider.get_table(tbl.provider_cfg, tbl);
+      const { getRows } = provider.get_table(tbl.provider_cfg, tbl);
 
       const { json_list_to_external_table } = require("../plugin-helper");
-      const t = json_list_to_external_table(getRows, fields);
+      const t = json_list_to_external_table(getRows, tbl.fields);
       delete t.min_role_read; //it is a getter
       Object.assign(t, tbl);
       t.update = async (upd_rec: any) => {
