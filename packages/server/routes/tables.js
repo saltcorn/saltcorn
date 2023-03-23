@@ -1610,6 +1610,16 @@ const get_provider_workflow = (table, req) => {
   }
   const workflow = provider.configuration_workflow(req);
   workflow.action = `/table/provider-cfg/${table.id}`;
+  const oldOnDone = workflow.onDone || ((c) => c);
+  workflow.onDone = async (ctx) => {
+    const { table_id, ...configuration } = await oldOnDone(ctx);
+    await table.update({ provider_cfg: configuration });
+
+    return {
+      redirect: `/table/${table.if}`,
+      flash: ["success", `Table ${this.name || ""} saved`],
+    };
+  };
   return workflow;
 };
 
