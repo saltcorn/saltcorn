@@ -51,6 +51,7 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -895,8 +896,9 @@ router.post(
         rest.provider_name !== "Database table"
       ) {
         const table = await Table.create(name, rest);
-        res.redirect(`/table/provider_cfg/${table.id}`);
+        res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
+        delete rest.provider_name;
         const table = await Table.create(name, rest);
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
@@ -1547,5 +1549,93 @@ router.post(
     req.flash("success", req.__("Started recalculating stored fields"));
 
     res.redirect(`/table/${table.id}`);
+  })
+);
+
+const respondWorkflow = (table, wf, wfres, req, res) => {
+  const wrap = (contents, noCard, previewURL) => ({
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [
+          { text: req.__("Tables"), href: "/table" },
+          { href: `/table/${table.id || table.name}`, text: table.name },
+          { text: req.__("Configuration") },
+        ],
+      },
+      {
+        type: noCard ? "container" : "card",
+        class: !noCard && "mt-0",
+        title: wfres.title,
+        titleAjaxIndicator: true,
+        contents,
+      },
+    ],
+  });
+  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
+  if (wfres.renderForm)
+    res.sendWrap(
+      {
+        title: req.__(`%s configuration`, table.name),
+        headers: [
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/iconset-fontawesome5-3-1.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.js`,
+          },
+          {
+            css: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.min.css`,
+          },
+        ],
+      },
+      wrap(
+        renderForm(wfres.renderForm, req.csrfToken()),
+        false,
+        wfres.previewURL
+      )
+    );
+  else res.redirect(wfres.redirect);
+};
+
+const get_provider_workflow = (table, req) => {
+  const provider = getState().table_providers[table.provider_name];
+  if (!provider) {
+    throw new InvalidConfiguration(
+      `Provider not found for rable ${table.name}: table.provider_name`
+    );
+  }
+  const workflow = provider.configuration_workflow(req);
+  workflow.action = `/table/provider-cfg/${table.id}`;
+  return workflow;
+};
+
+router.get(
+  "/provider-cfg/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const { step } = req.query;
+
+    const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const workflow = get_provider_workflow(table, req);
+    console.log({ workflow });
+    const wfres = await workflow.run(
+      {
+        ...(table.provider_cfg || {}),
+        table_id: table.id,
+        ...(step ? { stepName: step } : {}),
+      },
+      req
+    );
+    respondWorkflow(table, workflow, wfres, req, res);
   })
 );
