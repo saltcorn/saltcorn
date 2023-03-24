@@ -133,6 +133,7 @@ function jsexprToWhere(
     });
     //console.log("before", ast);
     partiallyEvaluate(ast, extraCtx);
+    //console.log("after", ast);
 
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
       (<StringToFunction>{
@@ -141,6 +142,8 @@ function jsexprToWhere(
           const cleftName =
             typeof cleft === "symbol" ? cleft.description : cleft;
           const cright = compile(node.right!);
+          const crightName =
+            typeof cright === "symbol" ? cright.description : cright;
           const cmp =
             typeof cright === "function"
               ? cright(cleft)
@@ -148,7 +151,11 @@ function jsexprToWhere(
               ? cleft(cright)
               : typeof cleft === "string" || cleft === null
               ? { eq: [cleft, cright] }
+              : typeof cright === "symbol" && typeof cleft !== "symbol"
+              ? { [crightName]: cleft }
               : { [cleftName]: cright };
+          //console.log({ cleft, cleftName, cright, cmp });
+
           const operators: StringToFunction = {
             "=="() {
               return cmp;

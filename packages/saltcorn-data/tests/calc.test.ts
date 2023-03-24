@@ -321,6 +321,9 @@ describe("jsexprToWhere", () => {
   it("translates equality", () => {
     expect(jsexprToWhere("foo==4")).toEqual({ foo: 4 });
   });
+  it("translates equality reverse", () => {
+    expect(jsexprToWhere("4==foo")).toEqual({ foo: 4 });
+  });
   it("translates equal to col", () => {
     expect(jsexprToWhere("foo==bar").foo.description).toBe("bar");
   });
