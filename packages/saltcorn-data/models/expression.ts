@@ -39,6 +39,9 @@ type ExtendedNode = {
   operator?: any;
   object?: ExtendedNode;
   property?: ExtendedNode;
+  value?: ExtendedNode;
+  key?: ExtendedNode;
+  properties?: any;
 } & Node;
 
 /**
@@ -94,7 +97,24 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     );
   }
 }
+function partiallyEvaluate(ast: any, extraCtx: any = {}) {
+  const keys = new Set(Object.keys(extraCtx));
+  replace(ast, {
+    // @ts-ignore
+    leave: function (node) {
+      //console.log(node);
+      if (node.type === "Identifier" && keys.has(node.name)) {
+        const valExpression = JSON.stringify(extraCtx[node.name]);
+        const valAst = parseExpressionAt(valExpression, 0, {
+          ecmaVersion: 2020,
+          locations: false,
+        });
 
+        return valAst;
+      }
+    },
+  });
+}
 /**
  * @param {string} expression
  * @throws {Error}
@@ -111,7 +131,9 @@ function jsexprToWhere(
       ecmaVersion: 2020,
       locations: false,
     });
-    //console.log(ast);
+    //console.log("before", ast);
+    partiallyEvaluate(ast, extraCtx);
+
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
       (<StringToFunction>{
         BinaryExpression() {
@@ -155,6 +177,16 @@ function jsexprToWhere(
           };
           return operators[node.operator](node);
         },
+        ObjectExpression() {
+          const rec: any = {};
+          (node.properties || []).forEach(
+            ({ key, value }: { key: ExtendedNode; value: ExtendedNode }) => {
+              // @ts-ignore
+              rec[key.value as string] = value.value;
+            }
+          );
+          return rec;
+        },
         MemberExpression() {
           const cleft = compile(node.object!);
           const cleftName =
@@ -162,9 +194,14 @@ function jsexprToWhere(
           const cright = compile(node.property!);
           const crightName =
             typeof cright === "symbol" ? cright.description : cright;
+          if (cleft[crightName]) return cleft[crightName];
           const field = fields.find((f) => f.name === cleftName);
 
-          if (!field) throw new Error(`Field not found: ${cleftName}`);
+          if (!field) {
+            console.log({ cleftName, cleft, cright, crightName });
+
+            throw new Error(`Field not found: ${cleftName}`);
+          }
           return (val: any) => ({
             [cleftName]: {
               inSelect: {

@@ -364,4 +364,15 @@ describe("jsexprToWhere", () => {
       },
     });
   });
+  it("access context subvars", () => {
+    expect(jsexprToWhere("foo==user.id", { user: { id: 5 } })).toEqual({
+      foo: 5,
+    });
+  });
+  /*it("access context subvars rev", () => {
+    expect(jsexprToWhere("4===foo")).toEqual({ foo: 4 });
+    expect(jsexprToWhere("user.id===foo", { user: { id: 5 } })).toEqual({
+      foo: 5,
+    });
+  });*/
 });
