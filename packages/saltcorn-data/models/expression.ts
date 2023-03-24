@@ -4,7 +4,7 @@
  * @subcategory models
  */
 import { runInNewContext, Script } from "vm";
-import { parseExpressionAt, Node } from "acorn";
+import { parseExpressionAt, Node, parse } from "acorn";
 import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
@@ -99,6 +99,12 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
 }
 function partiallyEvaluate(ast: any, extraCtx: any = {}) {
   const keys = new Set(Object.keys(extraCtx));
+
+  const today = (offset?: number) => {
+    const d = new Date();
+    if (offset) d.setDate(d.getDate() + offset);
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  };
   replace(ast, {
     // @ts-ignore
     leave: function (node) {
@@ -146,6 +152,33 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}) {
         // @ts-ignore
         if (theProperty && theProperty.value) return theProperty.value;
       }
+
+      if (
+        node.type === "CallExpression" &&
+        // @ts-ignore
+        node.callee.name === "today"
+      ) {
+        if (node.arguments.length === 0) {
+          return parseExpressionAt(`'${today()}'`, 0, { ecmaVersion: 2020 });
+        }
+        const arg = node.arguments[0];
+        if (arg.type === "Literal") {
+          // @ts-ignore
+          return parseExpressionAt(`'${today(arg.value)}'`, 0, {
+            ecmaVersion: 2020,
+          });
+        }
+        if (
+          arg.type === "UnaryExpression" &&
+          arg.operator === "-" &&
+          arg.argument.type === "Literal"
+        ) {
+          // @ts-ignore
+          return parseExpressionAt(`'${today(-arg.argument.value)}'`, 0, {
+            ecmaVersion: 2020,
+          });
+        }
+      }
     },
   });
 }
@@ -161,9 +194,9 @@ function jsexprToWhere(
 ): Where {
   if (!expression) return {};
   const now = new Date();
-  extraCtx._year = now.getFullYear();
-  extraCtx._month = now.getMonth() + 1;
-  extraCtx._day = now.getDate();
+  if (!extraCtx.year) extraCtx.year = now.getFullYear();
+  if (!extraCtx.month) extraCtx.month = now.getMonth() + 1;
+  if (!extraCtx.day) extraCtx.day = now.getDate();
   try {
     const ast = parseExpressionAt(expression, 0, {
       ecmaVersion: 2020,

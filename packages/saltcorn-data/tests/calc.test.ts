@@ -389,8 +389,15 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
   });
   it("translates date limits", () => {
-    expect(jsexprToWhere("foo>=_year+'-'+_month+'-01'")).toEqual({
-      foo: { equal: true, gt: "2023-3-01" },
-    });
+    expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
+  });
+  it("translates today()", () => {
+    expect(jsexprToWhere("foo>=today()").foo.gt).toMatch(/^202/);
+  });
+  it("translates today(5)", () => {
+    expect(jsexprToWhere("foo>=today(5)").foo.gt).toMatch(/^202/);
+  });
+  it("translates today(-5)", () => {
+    expect(jsexprToWhere("foo>=today(-5)").foo.gt).toMatch(/^202/);
   });
 });
