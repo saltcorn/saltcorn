@@ -6,6 +6,11 @@
  */
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import User from "./user";
+import state from "../db/state";
+import emailModule from "./email";
+
+const { getState } = state;
 
 /**
  * Notification Class
@@ -66,6 +71,21 @@ class Notification {
       user_id: o.user_id,
       read: o.read,
     });
+    const user = await User.findOne({ id: o.user_id });
+    if (user?._attributes?.notify_email) {
+      const email = {
+        from: getState()?.getConfig("email_from"),
+        to: user.email,
+        subject: o.title,
+        text: `${o.body}   
+        ${o.link}`,
+        html: `${o.body}<br/><a href="${o.link}">${o.link}</a>`,
+      };
+      emailModule
+        .getMailTransport()
+        .sendMail(email)
+        .catch((e) => getState()?.log(1, e.message));
+    }
   }
 
   async mark_as_read(): Promise<void> {
