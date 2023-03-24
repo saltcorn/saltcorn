@@ -377,4 +377,8 @@ describe("jsexprToWhere", () => {
       foo: 5,
     });
   });
+  it("translates sums", () => {
+    expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
+    expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
+  });
 });

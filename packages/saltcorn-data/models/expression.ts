@@ -114,6 +114,28 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}) {
       }
     },
   });
+  replace(ast, {
+    // @ts-ignore
+    leave: function (node) {
+      //console.log(node);
+      if (
+        node.type === "BinaryExpression" &&
+        node.left.type === "Literal" &&
+        node.right.type === "Literal"
+      ) {
+        switch (node.operator) {
+          case "+":
+            // @ts-ignore
+            node.left.value = node.left.value + node.right.value;
+            return node.left;
+          case "-":
+            // @ts-ignore
+            node.left.value = node.left.value - node.right.value;
+            return node.left;
+        }
+      }
+    },
+  });
 }
 /**
  * @param {string} expression
