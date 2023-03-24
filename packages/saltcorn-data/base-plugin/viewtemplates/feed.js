@@ -237,7 +237,18 @@ const configuration_workflow = (req) =>
                 class: "validate-expression",
                 sublabel:
                   req.__("Only include rows where this formula is true. ") +
-                  req.__("Use %s to access current user ID", code("$user_id")),
+                  req.__("In scope:") +
+                  " " +
+                  [
+                    ...fields.map((f) => f.name),
+                    "user",
+                    "year",
+                    "month",
+                    "day",
+                    "today()",
+                  ]
+                    .map((s) => code(s))
+                    .join(", "),
                 type: "String",
               },
 
@@ -421,7 +432,11 @@ const run = async (
   const user_id =
     extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
   if (include_fml)
-    qextra.where = jsexprToWhere(include_fml, { ...state, user_id });
+    qextra.where = jsexprToWhere(include_fml, {
+      ...state,
+      user_id,
+      user: extraArgs?.req?.user,
+    });
 
   const sresp = await sview.runMany(state, {
     ...extraArgs,

@@ -557,7 +557,11 @@ module.exports = {
               req,
               jsexprToWhere(
                 col.where,
-                { ...state, user_id: req.user ? req.user.id : undefined },
+                {
+                  ...state,
+                  user_id: req.user ? req.user.id : undefined,
+                  user: req.user,
+                },
                 fields
               )
             );
