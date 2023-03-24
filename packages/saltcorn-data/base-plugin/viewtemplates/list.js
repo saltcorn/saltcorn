@@ -790,8 +790,8 @@ module.exports = {
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
-        const ctx = { ...state, user_id: req.user?.id || null };
-        let where1 = jsexprToWhere(default_state.include_fml, ctx);
+        const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
+        let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
         mergeIntoWhere(where, where1 || {});
       }
       let rows = await table.getJoinedRows({
