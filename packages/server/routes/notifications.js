@@ -65,6 +65,7 @@ router.get(
         },
         {
           widths: [4, 8],
+          breakpoint: "md",
           besides: [
             {
               type: "card",
