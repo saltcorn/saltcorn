@@ -372,6 +372,13 @@ describe("jsexprToWhere", () => {
       foo: 5,
     });
   });
+  it("access deep context subvars", () => {
+    expect(
+      jsexprToWhere("foo==user.address.id", { user: { address: { id: 5 } } })
+    ).toEqual({
+      foo: 5,
+    });
+  });
   it("access context subvars rev", () => {
     expect(jsexprToWhere("user.id===foo", { user: { id: 5 } })).toEqual({
       foo: 5,

@@ -134,6 +134,18 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}) {
             return node.left;
         }
       }
+      if (
+        node.type === "MemberExpression" &&
+        node.object.type === "ObjectExpression" &&
+        node.property.type === "Identifier"
+      ) {
+        const theProperty = node.object.properties.find(
+          // @ts-ignore
+          (p) => p.key.value === node.property.name
+        );
+        // @ts-ignore
+        if (theProperty && theProperty.value) return theProperty.value;
+      }
     },
   });
 }
@@ -155,7 +167,7 @@ function jsexprToWhere(
     });
     //console.log("before", ast);
     partiallyEvaluate(ast, extraCtx);
-    //console.log("after", ast);
+    //console.log("after", JSON.stringify(ast, null, 2));
 
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
       (<StringToFunction>{
