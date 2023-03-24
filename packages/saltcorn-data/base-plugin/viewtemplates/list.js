@@ -354,7 +354,18 @@ const configuration_workflow = (req) =>
             class: "validate-expression",
             sublabel:
               req.__("Only include rows where this formula is true. ") +
-              req.__("Use %s to access current user ID", code("$user_id")),
+              req.__("In scope:") +
+              " " +
+              [
+                ...table.fields.map((f) => f.name),
+                "user",
+                "year",
+                "month",
+                "day",
+                "today()",
+              ]
+                .map((s) => code(s))
+                .join(", "),
             type: "String",
           });
           formfields.push({

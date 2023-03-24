@@ -1143,5 +1143,6 @@
 	"Background color": "Background color",
 	"Table provider": "Table provider",
 	"Database table": "Database table",
-	"Configure provider": "Configure provider"
+	"Configure provider": "Configure provider",
+	"In scope:": "In scope:"
 }
