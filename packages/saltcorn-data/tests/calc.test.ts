@@ -392,12 +392,15 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
   });
   it("translates today()", () => {
-    expect(jsexprToWhere("foo>=today()").foo.gt).toMatch(/^202/);
-  });
-  it("translates today(5)", () => {
+    const todayW = jsexprToWhere("foo>=today()");
+    const today = todayW.foo.gt;
+    expect(todayW.foo.equal).toEqual(true);
+    expect(today).toMatch(/^202/);
+
     expect(jsexprToWhere("foo>=today(5)").foo.gt).toMatch(/^202/);
-  });
-  it("translates today(-5)", () => {
+    expect(jsexprToWhere("foo>=today(5)").foo.gt > today).toEqual(true);
+
     expect(jsexprToWhere("foo>=today(-5)").foo.gt).toMatch(/^202/);
+    expect(jsexprToWhere("foo>=today(-5)").foo.gt < today).toEqual(true);
   });
 });
