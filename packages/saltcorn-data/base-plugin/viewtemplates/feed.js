@@ -421,7 +421,11 @@ const run = async (
   const user_id =
     extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
   if (include_fml)
-    qextra.where = jsexprToWhere(include_fml, { ...state, user_id });
+    qextra.where = jsexprToWhere(include_fml, {
+      ...state,
+      user_id,
+      user: extraArgs?.req?.user,
+    });
 
   const sresp = await sview.runMany(state, {
     ...extraArgs,
