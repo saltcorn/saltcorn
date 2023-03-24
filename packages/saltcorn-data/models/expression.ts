@@ -160,6 +160,10 @@ function jsexprToWhere(
   fields: Field[] = []
 ): Where {
   if (!expression) return {};
+  const now = new Date();
+  extraCtx._year = now.getFullYear();
+  extraCtx._month = now.getMonth() + 1;
+  extraCtx._day = now.getDate();
   try {
     const ast = parseExpressionAt(expression, 0, {
       ecmaVersion: 2020,

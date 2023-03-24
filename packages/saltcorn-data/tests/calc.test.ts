@@ -388,4 +388,9 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
   });
+  it("translates date limits", () => {
+    expect(jsexprToWhere("foo>=_year+'-'+_month+'-01'")).toEqual({
+      foo: { equal: true, gt: "2023-3-01" },
+    });
+  });
 });
