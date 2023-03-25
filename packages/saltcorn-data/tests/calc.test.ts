@@ -330,6 +330,11 @@ describe("jsexprToWhere", () => {
   it("translates context", () => {
     expect(jsexprToWhere("foo==$bar", { bar: 5 })).toEqual({ foo: 5 });
   });
+  it("translates own context", () => {
+    expect(
+      jsexprToWhere("foo==$foo", { foo: 5 }, [{ name: "foo" }] as Field[])
+    ).toEqual({ foo: 5 });
+  });
   it("translates context", () => {
     const w = jsexprToWhere("$father !== null && married_to === $father", {
       father: "1",

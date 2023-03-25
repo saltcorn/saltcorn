@@ -97,9 +97,9 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     );
   }
 }
-function partiallyEvaluate(ast: any, extraCtx: any = {}) {
+function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
   const keys = new Set(Object.keys(extraCtx));
-
+  const field_names = new Set(fields.map((f) => f.name));
   const today = (offset?: number) => {
     const d = new Date();
     if (offset) d.setDate(d.getDate() + offset);
@@ -109,7 +109,11 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}) {
     // @ts-ignore
     leave: function (node) {
       //console.log(node);
-      if (node.type === "Identifier" && keys.has(node.name)) {
+      if (
+        node.type === "Identifier" &&
+        keys.has(node.name) &&
+        !field_names.has(node.name)
+      ) {
         const valExpression = JSON.stringify(extraCtx[node.name]);
         const valAst = parseExpressionAt(valExpression, 0, {
           ecmaVersion: 2020,
@@ -203,7 +207,7 @@ function jsexprToWhere(
       locations: false,
     });
     //console.log("before", ast);
-    partiallyEvaluate(ast, extraCtx);
+    partiallyEvaluate(ast, extraCtx, fields);
     //console.log("after", JSON.stringify(ast, null, 2));
 
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
