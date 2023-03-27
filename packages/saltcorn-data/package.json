@@ -62,7 +62,7 @@
     "fs-extended-attributes": "1.0.1",
     "i18n": "^0.15.1",
     "latest-version": "^5.1.0",
-    "live-plugin-manager": "^0.16.0",
+    "live-plugin-manager": "^0.17.1",
     "mime-types": "^2.1.35",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.35",
