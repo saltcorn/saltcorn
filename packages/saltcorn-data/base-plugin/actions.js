@@ -97,6 +97,7 @@ const run_code = async ({
     fetch,
     URL,
     File,
+    setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
     getConfig: (k) => sysState.getConfig(k),
