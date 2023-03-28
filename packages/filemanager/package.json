@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/filemanager",
-  "version": "0.8.5-beta.6",
+  "version": "0.8.5-beta.7",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
