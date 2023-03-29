@@ -391,6 +391,15 @@ const run = async (
         configuration,
       } = segment;
       const label = action_label || action_name;
+      if (segment.action_style === "on_page_load") {
+        run_action_column({
+          col: { ...segment },
+          referrer: extra.req.get("Referrer"),
+          req: extra.req,
+        }).catch((e) => Crash.create(e, extra.req));
+        return "";
+      }
+
       if (action_name === "Clear") {
         if (action_style === "btn-link")
           return a(
