@@ -861,7 +861,7 @@ const ConfigField = ({
         styleVal = "";
         styleDim = "auto";
       } else if (isStyle && value && typeof value === "string") {
-        const matches = value.match(/^([0-9]+\.?[0-9]*)(.*)/);
+        const matches = value.match(/^([-]?[0-9]+\.?[0-9]*)(.*)/);
         if (matches) {
           styleVal = matches[1];
           styleDim = matches[2];
