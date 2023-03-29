@@ -271,7 +271,13 @@ function get_form_record(e, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
-  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
+  try {
+    return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
+      rec
+    );
+  } catch (e) {
+    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+  }
 }
 
 function rep_del(e) {
