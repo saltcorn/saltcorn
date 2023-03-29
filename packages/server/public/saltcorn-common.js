@@ -170,6 +170,12 @@ function apply_showif() {
             ...cacheNow,
             [qs]: resp.success,
           });
+        } else {
+          const cacheNow = e.prop("data-fetch-options-cache") || {};
+          e.prop("data-fetch-options-cache", {
+            ...cacheNow,
+            [qs]: undefined,
+          });
         }
       });
     }
