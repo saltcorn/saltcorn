@@ -522,6 +522,11 @@ const render = ({
               Math.random() * 100000
             )}`
           : undefined;
+      const legacyBorder = borderWidth
+        ? `border${borderDirection ? `-${borderDirection}` : ""}: ${
+            borderWidth || 0
+          }px ${borderStyle || "none"} ${borderColor || "black"};`
+        : "";
       return wrap(
         segment,
         isTop,
@@ -550,13 +555,10 @@ const render = ({
             )}${sizeProp("height", "height")}${sizeProp(
               "width",
               "width"
-            )}${sizeProp("widthPct", "width", "%")}border${
-              borderDirection ? `-${borderDirection}` : ""
-            }: ${borderWidth || 0}px ${borderStyle || "none"} ${
-              borderColor || "black"
-            };${sizeProp("borderRadius", "border-radius")}${ppBox(
-              "padding"
-            )}${ppBox("margin")}${
+            )}${sizeProp("widthPct", "width", "%")}${legacyBorder}${sizeProp(
+              "borderRadius",
+              "border-radius"
+            )}${ppBox("padding")}${ppBox("margin")}${
               overflow && overflow !== "visible"
                 ? ` overflow: ${overflow};`
                 : ""

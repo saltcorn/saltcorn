@@ -50,7 +50,7 @@ describe("layout", () => {
       contents: { type: "blank", contents: "bar" },
     };
     expect(render({ blockDispatch, layout: markup })).toBe(
-      '<div style="padding:2rem;border: 0px none black;    ">bar</div>'
+      '<div style="padding:2rem;    ">bar</div>'
     );
   });
 });
