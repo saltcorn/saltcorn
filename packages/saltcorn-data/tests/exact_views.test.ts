@@ -477,14 +477,14 @@ describe("Show view", () => {
     };
     await test_show({
       ...showbooks1,
-      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;border: 0px none black;    "><form action="/delete/books/1?redirect=/view/testshow" method="post" class="d-inline">
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><form action="/delete/books/1?redirect=/view/testshow" method="post" class="d-inline">
   <input type="hidden" name="_csrf" value="">
-<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="text-start" style="min-height: 0px;border: 0px none black;    ">VERY LONG</div>`,
+<button type="submit"  class=" btn  btn-primary ">Delete</button></form></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`,
     });
     await test_show({
       ...showbooks1,
       id: 2,
-      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;border: 0px none black;    "><form action="/delete/books/2?redirect=/view/testshow" method="post" class="d-inline">
+      response: `<div class="row w-100"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row w-100"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><form action="/delete/books/2?redirect=/view/testshow" method="post" class="d-inline">
   <input type="hidden" name="_csrf" value="">
 <button type="submit"  class=" btn  btn-primary ">Delete</button></form></div>`,
     });
