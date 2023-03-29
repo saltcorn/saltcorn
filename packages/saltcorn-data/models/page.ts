@@ -32,6 +32,8 @@ const {
   fill_presets,
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import utils from "../utils";
+const { run_action_column } = require("../plugin-helper");
+
 import { extractFromLayout } from "../diagram/node_extract_utils";
 const {
   InvalidConfiguration,
@@ -41,6 +43,7 @@ const {
   objectToQueryString,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import Crash from "./crash";
 
 /**
  * Page Class
@@ -274,6 +277,18 @@ class Page implements AbstractPage {
     const pagename = this.name;
     traverseSync(this.layout, {
       action(segment: any) {
+        if (segment.action_style === "on_page_load") {
+          //run action
+          run_action_column({
+            col: { ...segment },
+            referrer: extraArgs.req.get("Referrer"),
+            req: extraArgs.req,
+            res: extraArgs.res,
+          }).catch((e: any) => Crash.create(e, extraArgs.req));
+          segment.type = "blank";
+          segment.contents = "";
+          segment.style = {};
+        }
         const url =
           segment.action_name === "GoBack"
             ? `javascript:${isNode() ? "history.back()" : "parent.goBack()"}`
