@@ -686,6 +686,14 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       else return text(val);
     },
     action(segment) {
+      if (segment.action_style === "on_page_load") {
+        run_action_column({
+          col: { ...segment },
+          referrer: req.get("Referrer"),
+          req: req,
+        }).catch((e) => Crash.create(e, req));
+        return "";
+      }
       const url = action_url(
         viewname,
         table,

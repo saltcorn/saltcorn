@@ -288,6 +288,7 @@ class Page implements AbstractPage {
           segment.type = "blank";
           segment.contents = "";
           segment.style = {};
+          return;
         }
         const url =
           segment.action_name === "GoBack"
