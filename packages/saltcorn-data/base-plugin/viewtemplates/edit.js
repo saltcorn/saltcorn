@@ -966,6 +966,9 @@ const runPost = async (
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
       return;
+    } else if (req.xhr && !req.smr) {
+      res.json({ view_when_done, ...trigger_return });
+      return;
     }
 
     if (redirect) {

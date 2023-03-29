@@ -153,9 +153,15 @@ function apply_showif() {
     };
 
     const cache = e.prop("data-fetch-options-cache") || {};
-    if (cache[qs]) {
+    if (cache[qs] === "fetching") {
+      // do nothing, this will be activated by someone else
+    } else if (cache[qs]) {
       activate(cache[qs], qs);
-    } else
+    } else {
+      e.prop("data-fetch-options-cache", {
+        ...cache,
+        [qs]: "fetching",
+      });
       $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
         if (resp.success) {
           activate(resp.success, qs);
@@ -164,8 +170,15 @@ function apply_showif() {
             ...cacheNow,
             [qs]: resp.success,
           });
+        } else {
+          const cacheNow = e.prop("data-fetch-options-cache") || {};
+          e.prop("data-fetch-options-cache", {
+            ...cacheNow,
+            [qs]: undefined,
+          });
         }
       });
+    }
   });
   $("[data-filter-table]").each(function (ix, element) {
     const e = $(element);
@@ -271,7 +284,13 @@ function get_form_record(e, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
-  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
+  try {
+    return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
+      rec
+    );
+  } catch (e) {
+    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+  }
 }
 
 function rep_del(e) {
