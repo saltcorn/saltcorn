@@ -67,6 +67,10 @@ const Action = ({
               borderColor: action_bordercol || "#000000",
               color: action_textcol || "#000000",
             }
+          : action_style === "on_page_load"
+          ? {
+              border: "1px red dashed",
+            }
           : {}
       }
     >
@@ -107,6 +111,7 @@ const ActionSettings = () => {
     confirm,
     configuration,
     action_label,
+    action_style,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -140,26 +145,29 @@ const ActionSettings = () => {
               </select>
             </td>
           </tr>
-          <tr>
-            <td colSpan="2">
-              <label>Label (leave blank for default)</label>
-              <OrFormula
-                nodekey="action_label"
-                {...{ setProp, isFormula, node }}
-              >
-                <input
-                  type="text"
-                  className="form-control"
-                  value={action_label}
-                  onChange={setAProp("action_label")}
-                />
-              </OrFormula>
-            </td>
-          </tr>
+          {action_style !== "on_page_load" ? (
+            <tr>
+              <td colSpan="2">
+                <label>Label (leave blank for default)</label>
+                <OrFormula
+                  nodekey="action_label"
+                  {...{ setProp, isFormula, node }}
+                >
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={action_label}
+                    onChange={setAProp("action_label")}
+                  />
+                </OrFormula>
+              </td>
+            </tr>
+          ) : null}
           <ButtonOrLinkSettingsRows
             setProp={setProp}
             keyPrefix="action_"
             values={node}
+            allowRunOnLoad={true}
           />
           <MinRoleSettingRow minRole={minRole} setProp={setProp} />
         </tbody>
@@ -176,8 +184,9 @@ const ActionSettings = () => {
           <label className="form-check-label">User confirmation?</label>
         </div>
       ) : null}
-      <BlockSetting block={block} setProp={setProp} />
-
+      {action_style !== "on_page_load" ? (
+        <BlockSetting block={block} setProp={setProp} />
+      ) : null}
       {cfgFields ? (
         <ConfigForm
           fields={cfgFields}

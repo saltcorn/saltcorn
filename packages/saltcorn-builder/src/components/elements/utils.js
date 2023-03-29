@@ -861,7 +861,7 @@ const ConfigField = ({
         styleVal = "";
         styleDim = "auto";
       } else if (isStyle && value && typeof value === "string") {
-        const matches = value.match(/^([0-9]+\.?[0-9]*)(.*)/);
+        const matches = value.match(/^([-]?[0-9]+\.?[0-9]*)(.*)/);
         if (matches) {
           styleVal = matches[1];
           styleDim = matches[2];
@@ -1110,6 +1110,7 @@ const ButtonOrLinkSettingsRows = ({
   values,
   linkFirst = false,
   linkIsBlank = false,
+  allowRunOnLoad = false,
 }) => {
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
@@ -1145,42 +1146,49 @@ const ButtonOrLinkSettingsRows = ({
           {!linkFirst ? (
             <option value={addBtnClass("btn-link")}>Link</option>
           ) : null}
+          {!linkFirst ? (
+            <option value="on_page_load">Run on Page Load</option>
+          ) : null}
         </select>
       </td>
     </tr>,
-    <tr key="btnsz">
-      <td>
-        <label>Size</label>
-      </td>
-      <td>
-        <select
-          className="form-control form-select"
-          value={values[keyPrefix + "size"]}
-          onChange={setAProp(keyPrefix + "size")}
-        >
-          <option value="">Standard</option>
-          <option value="btn-lg">Large</option>
-          <option value="btn-sm">Small</option>
-          <option value="btn-block">Block</option>
-          <option value="btn-block btn-lg">Large block</option>
-        </select>
-      </td>
-    </tr>,
-    <tr key="btnicon">
-      <td>
-        <label>Icon</label>
-      </td>
-      <td>
-        <FontIconPicker
-          value={values[keyPrefix + "icon"]}
-          onChange={(value) =>
-            setProp((prop) => (prop[keyPrefix + "icon"] = value))
-          }
-          isMulti={false}
-          icons={faIcons}
-        />
-      </td>
-    </tr>,
+    values[keyPrefix + "style"] !== "on_page_load" ? (
+      <tr key="btnsz">
+        <td>
+          <label>Size</label>
+        </td>
+        <td>
+          <select
+            className="form-control form-select"
+            value={values[keyPrefix + "size"]}
+            onChange={setAProp(keyPrefix + "size")}
+          >
+            <option value="">Standard</option>
+            <option value="btn-lg">Large</option>
+            <option value="btn-sm">Small</option>
+            <option value="btn-block">Block</option>
+            <option value="btn-block btn-lg">Large block</option>
+          </select>
+        </td>
+      </tr>
+    ) : null,
+    values[keyPrefix + "style"] !== "on_page_load" ? (
+      <tr key="btnicon">
+        <td>
+          <label>Icon</label>
+        </td>
+        <td>
+          <FontIconPicker
+            value={values[keyPrefix + "icon"]}
+            onChange={(value) =>
+              setProp((prop) => (prop[keyPrefix + "icon"] = value))
+            }
+            isMulti={false}
+            icons={faIcons}
+          />
+        </td>
+      </tr>
+    ) : null,
     ...(values[keyPrefix + "style"] === addBtnClass("btn-custom-color")
       ? [
           <tr key="btnbgcol">

@@ -141,6 +141,13 @@ div.settings-panel input[type="number"] {
   border-width: 1px;
 }
 
+div.settings-panel .form-control {
+  padding: 0.375rem 0.75rem;
+}
+div.settings-panel .form-select {
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+}
+
 button.btnstylesel {
   padding-left: 5px;
   padding-right: 2px;

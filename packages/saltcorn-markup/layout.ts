@@ -75,11 +75,14 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @param {string} inner
  * @returns {div|span|string}
  */
+const selfStylingTypes = new Set(["card", "container", "besides", "image"]);
+
 const applyTextStyle = (segment: any, inner: string): string => {
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
-  const hasStyle = Object.keys(style).length > 0;
+  const hasStyle =
+    Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
   const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
@@ -519,6 +522,11 @@ const render = ({
               Math.random() * 100000
             )}`
           : undefined;
+      const legacyBorder = borderWidth
+        ? `border${borderDirection ? `-${borderDirection}` : ""}: ${
+            borderWidth || 0
+          }px ${borderStyle || "none"} ${borderColor || "black"};`
+        : "";
       return wrap(
         segment,
         isTop,
@@ -547,13 +555,10 @@ const render = ({
             )}${sizeProp("height", "height")}${sizeProp(
               "width",
               "width"
-            )}${sizeProp("widthPct", "width", "%")}border${
-              borderDirection ? `-${borderDirection}` : ""
-            }: ${borderWidth || 0}px ${borderStyle || "none"} ${
-              borderColor || "black"
-            };${sizeProp("borderRadius", "border-radius")}${ppBox(
-              "padding"
-            )}${ppBox("margin")}${
+            )}${sizeProp("widthPct", "width", "%")}${legacyBorder}${sizeProp(
+              "borderRadius",
+              "border-radius"
+            )}${ppBox("padding")}${ppBox("margin")}${
               overflow && overflow !== "visible"
                 ? ` overflow: ${overflow};`
                 : ""
