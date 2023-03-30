@@ -40,14 +40,21 @@ class ConfigurationCheckBackupsCommand extends Command {
     const ten = "cfgcheckbackuptenannt";
     await deleteTenant(ten);
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-    const { init_multi_tenant } = require("@saltcorn/data/db/state");
+    const {
+      init_multi_tenant,
+      add_tenant,
+    } = require("@saltcorn/data/db/state");
     await loadAllPlugins();
     for (const file of argv) {
       let hasError = false;
       if (file.endsWith(".zip")) {
         console.log(file);
         //create tenant, reset schema
-        await switchToTenant(await insertTenant(ten, "", ""), "");
+        const tenrow = await insertTenant(ten, "", "");
+        add_tenant(ten);
+
+        await switchToTenant(tenrow, "");
+
         await init_multi_tenant(loadAllPlugins, undefined, [ten]);
 
         await db.runWithTenant(ten, async () => {

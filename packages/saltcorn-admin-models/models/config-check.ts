@@ -199,7 +199,8 @@ const test_trigger = async (
 export const runConfigurationCheck = async (
   req: any,
   destructive?: boolean,
-  app?: any
+  app?: any,
+  verbose?: boolean
 ) => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -208,11 +209,14 @@ export const runConfigurationCheck = async (
 
   const tables = await Table.find({});
   for (const table of tables) {
+    if (verbose) console.log("Check table", table.name);
+
     await test_table(table, passes, errors);
   }
 
   const pages = await Page.find({});
   for (const page of pages) {
+    if (verbose) console.log("Check page", page.name);
     try {
       await page.run({}, { res, req });
       passes.push(`Page ${page.name} renders OK`);
@@ -222,21 +226,28 @@ export const runConfigurationCheck = async (
   }
   const views = await View.find({});
   for (const view of views) {
+    if (verbose) console.log("Check view", view.name);
+
     await test_view_render(view, passes, errors, req, res);
     await test_view_config(view, passes, errors, req, res, warnings);
   }
   const triggers = Trigger.find({});
   for (const trigger of triggers) {
+    if (verbose) console.log("Check trigger", trigger.name);
+
     await test_trigger(trigger, passes, errors);
   }
 
   if (destructive) {
     if (!app) throw new Error("Destructive but app not supplied");
     const seed = set_seed();
+    if (verbose) console.log("Unleashing the chaos guinea pig");
+
     try {
       const gcpres = await chaos_guinea_pig(app, {
         stop_urls: ["/auth/login", "/auth/signup"],
         steps: 100,
+        verbose,
       });
       console.log("GCP Log", gcpres.log);
       passes.push(`Chaos Guinea Pig pass with seed ${seed}`);

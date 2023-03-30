@@ -25,9 +25,16 @@ const generate_attributes = (typeattrs, validate, table_id) => {
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a) => {
     if (a.type && (a.required || is.bool.generate())) {
-      const contract = a.type.contract || getState().types[a.type].contract;
-      const gen = contract({}).generate;
-      if (gen) res[a.name] = gen();
+      const contract = a?.type.contract || getState().types[a.type]?.contract;
+      if (contract) {
+        const gen = contract({}).generate;
+        if (gen) res[a.name] = gen();
+      } else if (a.isRepeat) {
+        res[a.name] = [];
+      } else {
+        console.log("attr", a);
+        throw new Error("no contract");
+      }
     }
   });
   if (validate && !validate(res))
