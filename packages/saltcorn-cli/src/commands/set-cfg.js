@@ -4,7 +4,11 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant, init_some_tenants, parseJSONorString } = require("../common");
+const {
+  maybe_as_tenant,
+  init_some_tenants,
+  parseJSONorString,
+} = require("../common");
 const fs = require("fs");
 /**
  * SetCfgCommand Class
@@ -17,30 +21,33 @@ class SetCfgCommand extends Command {
    */
   async run() {
     const { args, flags } = this.parse(SetCfgCommand);
-    if (!!args.value + !!flags.stdin + !!flags.file !== 1) {
-      console.error(
-        "Must supply one value, as argument, stdin (with -i), or file (with -f)"
-      );
-      this.exit(1);
-    }
 
     const theValue = flags.stdin
       ? fs.readFileSync(0, "utf-8")
       : flags.file
       ? fs.readFileSync(flags.file, "utf-8")
       : args.value;
-    if(flags.tenant)
-      await init_some_tenants(flags.tenant);
+    if (flags.tenant) await init_some_tenants(flags.tenant);
     await maybe_as_tenant(flags.tenant, async () => {
       if (flags.plugin) {
         const Plugin = require("@saltcorn/data/models/plugin");
         const plugin = await Plugin.findOne({ name: flags.plugin });
-        if (!plugin.configuration) plugin.configuration = {}
+        if (!plugin.configuration) plugin.configuration = {};
+        if (!args.key) {
+          console.error("Key required for plugin configuration");
+          this.exit(1);
+        }
         plugin.configuration[args.key] = parseJSONorString(theValue);
         await plugin.upsert();
       } else {
         const { getState } = require("@saltcorn/data/db/state");
-        await getState().setConfig(args.key, parseJSONorString(theValue));
+        const { configTypes } = require("@saltcorn/data/models/config");
+        if (args.key)
+          await getState().setConfig(args.key, parseJSONorString(theValue));
+        else {
+          console.log("Valid configuration keys: \n");
+          Object.keys(configTypes).forEach((k) => console.log(k));
+        }
       }
     });
     this.exit(0);
@@ -56,7 +63,7 @@ SetCfgCommand.description = `Set a configuration value. The supplied value (argu
  * @type {object[]}
  */
 SetCfgCommand.args = [
-  { name: "key", required: true, description: "Configuration key" },
+  { name: "key", required: false, description: "Configuration key" },
   {
     name: "value",
     description: "Configuration value (JSON or string)",
