@@ -150,7 +150,9 @@ router.get(
       return;
     }
     if (!create_tenant_allowed(req)) {
-      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
+      const redir = getState().getConfig("tenant_create_unauth_redirect");
+      if (redir) res.redirect(redir);
+      else res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
 
@@ -439,6 +441,7 @@ const tenant_settings_form = (req) =>
       "create_tenant_warning_text",
       "tenant_template",
       "tenant_baseurl",
+      "tenant_create_unauth_redirect",
       { section_header: "Tenant application capabilities" },
       "tenants_install_git",
       "tenants_set_npm_modules",

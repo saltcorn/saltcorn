@@ -306,6 +306,11 @@ const configTypes: ConfigTypes = {
     blurb:
       "Base hostname for newly created tenants. If unset, defaults to hostname",
   },
+  tenant_create_unauth_redirect: {
+    type: "String",
+    label: "Redirect unathorized",
+    blurb: "If tenant creation is not authorized, redirect to this URL",
+  },
   tenants_install_git: {
     type: "Bool",
     label: "Install git plugins",
