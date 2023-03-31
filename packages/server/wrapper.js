@@ -146,11 +146,15 @@ const get_menu = (req) => {
       section: req.__("Admin"),
       items: adminItems,
     },
-    {
-      section: req.__("User"),
-      isUser: true,
-      items: authItems,
-    },
+    ...(authItems.length
+      ? [
+          {
+            section: req.__("User"),
+            isUser: true,
+            items: authItems,
+          },
+        ]
+      : []),
   ].filter((s) => s);
 };
 /**
