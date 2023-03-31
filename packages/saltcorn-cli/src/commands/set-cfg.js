@@ -21,6 +21,12 @@ class SetCfgCommand extends Command {
    */
   async run() {
     const { args, flags } = this.parse(SetCfgCommand);
+    if (args.key && !!args.value + !!flags.stdin + !!flags.file !== 1) {
+      console.error(
+        "Must supply one value, as argument, stdin (with -i), or file (with -f)"
+      );
+      this.exit(1);
+    }
 
     const theValue = flags.stdin
       ? fs.readFileSync(0, "utf-8")
