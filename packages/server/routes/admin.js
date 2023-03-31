@@ -871,10 +871,13 @@ router.get(
                     td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
                   ),
                   isRoot
-                    ? tr(th(req.__("Database host")), td(db.connectObj.host))
-                    : "",
-                  isRoot
-                    ? tr(th(req.__("Database port")), td(db.connectObj.port))
+                    ? tr(
+                        th(req.__("Database host")),
+                        td(
+                          db.connectObj.host +
+                            (db.connectObj.port ? ":" + db.connectObj.port : "")
+                        )
+                      )
                     : "",
                   isRoot
                     ? tr(
