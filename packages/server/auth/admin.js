@@ -7,6 +7,7 @@
 // todo refactor to few modules + rename to be in sync with router url
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
+const { X509Certificate } = require("crypto");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
@@ -593,6 +594,12 @@ router.get(
     const show_warning =
       !hostname_matches_baseurl(req, getBaseDomain()) &&
       is_hsts_tld(getBaseDomain());
+    let expiry = "";
+    if (has_custom) {
+      const cert = getState().getConfig("custom_ssl_certificate", "");
+      const { validTo } = new X509Certificate(cert);
+      expiry = div({ class: "me-2" }, "Expires: ", validTo);
+    }
     send_users_page({
       res,
       req,
@@ -674,6 +681,7 @@ router.get(
                   ? span({ class: "badge bg-primary" }, req.__("Enabled"))
                   : span({ class: "badge bg-secondary" }, req.__("Disabled"))
               ),
+              has_custom && expiry,
               // TBD change to button
               link(
                 "/useradmin/ssl/custom",
