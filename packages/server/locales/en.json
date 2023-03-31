@@ -1144,5 +1144,6 @@
 	"Table provider": "Table provider",
 	"Database table": "Database table",
 	"Configure provider": "Configure provider",
-	"In scope:": "In scope:"
+	"In scope:": "In scope:",
+	"SSL expiry": "SSL expiry"
 }
