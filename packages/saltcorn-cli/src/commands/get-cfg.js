@@ -23,11 +23,23 @@ class SetCfgCommand extends Command {
       if (flags.plugin) {
         const Plugin = require("@saltcorn/data/models/plugin");
         const plugin = await Plugin.findOne({ name: flags.plugin });
-        console.log(JSON.stringify(plugin.configuration[args.key], null, 2));
+        if (args.key)
+          console.log(JSON.stringify(plugin.configuration[args.key], null, 2));
+        else console.log(JSON.stringify(plugin.configuration, null, 2));
+
         await plugin.upsert();
       } else {
         const { getState } = require("@saltcorn/data/db/state");
-        console.log(JSON.stringify(getState().getConfig(args.key), null, 2));
+        if (args.key)
+          console.log(JSON.stringify(getState().getConfig(args.key), null, 2));
+        else {
+          const keys = Object.keys(getState().configs);
+          const kvs = {};
+          keys.forEach((k) => {
+            kvs[k] = getState().getConfig(k);
+          });
+          console.log(JSON.stringify(kvs, null, 2));
+        }
       }
     });
     this.exit(0);
@@ -43,7 +55,7 @@ SetCfgCommand.description = `Get a configuration value. The value is printed to 
  * @type {object[]}
  */
 SetCfgCommand.args = [
-  { name: "key", required: true, description: "Configuration key" },
+  { name: "key", required: false, description: "Configuration key" },
 ];
 
 /**

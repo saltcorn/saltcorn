@@ -7,7 +7,11 @@
 
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
-const { getState, add_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  add_tenant,
+  getRootState,
+} = require("@saltcorn/data/db/state");
 const {
   create_tenant,
   getAllTenants,
@@ -65,6 +69,9 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const router = new Router();
 module.exports = router;
 
+const remove_leading_chars = (cs, s) =>
+  s.startsWith(cs) ? remove_leading_chars(cs, s.substring(cs.length)) : s;
+
 /**
  * Declare Form to create Tenant
  * @param {object} req - Request
@@ -72,7 +79,8 @@ module.exports = router;
  * @category server
  */
 // TBD add form field email for tenant admin
-const tenant_form = (req) =>
+
+const tenant_form = (req, base_url) =>
   new Form({
     action: "/tenant/create",
     submitLabel: req.__("Create"),
@@ -85,7 +93,7 @@ const tenant_form = (req) =>
         name: "subdomain",
         label: req.__("Application name"),
         input_type: "text",
-        postText: text(req.hostname),
+        postText: text("." + base_url),
       },
     ],
   });
@@ -100,7 +108,8 @@ const tenant_form = (req) =>
  */
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
 const create_tenant_allowed = (req) => {
-  const required_role = +getState().getConfig("role_to_create_tenant") || 10;
+  const required_role =
+    +getRootState().getConfig("role_to_create_tenant") || 10;
   const user_role = req.user ? req.user.role_id : 10;
   return user_role <= required_role;
 };
@@ -117,6 +126,13 @@ const is_ip_address = (hostname) => {
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
 
+const get_cfg_tenant_base_url = (req) =>
+  remove_leading_chars(
+    ".",
+    getRootState().getConfig("tenant_baseurl", req.hostname)
+  )
+    .replace("http://", "")
+    .replace("https://", "");
 /**
  * Create tenant screen runnning
  * @name get/create
@@ -126,10 +142,7 @@ const is_ip_address = (hostname) => {
 router.get(
   "/create",
   error_catcher(async (req, res) => {
-    if (
-      !db.is_it_multi_tenant() ||
-      db.getTenantSchema() !== db.connectObj.default_schema
-    ) {
+    if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -137,7 +150,9 @@ router.get(
       return;
     }
     if (!create_tenant_allowed(req)) {
-      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
+      const redir = getState().getConfig("tenant_create_unauth_redirect");
+      if (redir) res.redirect(redir);
+      else res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
 
@@ -149,6 +164,7 @@ router.get(
         )
       );
     let create_tenant_warning_text = "";
+    const base_url = get_cfg_tenant_base_url(req);
     if (getState().getConfig("create_tenant_warning")) {
       create_tenant_warning_text = getState().getConfig(
         "create_tenant_warning_text"
@@ -192,13 +208,13 @@ router.get(
     res.sendWrap(
       req.__("Create application"),
       create_tenant_warning_text +
-        renderForm(tenant_form(req), req.csrfToken()) +
+        renderForm(tenant_form(req, base_url), req.csrfToken()) +
         p(
           { class: "mt-2" },
           req.__("To login to a previously created application, go to: "),
           code(`${req.protocol}://`) +
             i(req.__("Application name")) +
-            code("." + req.hostname)
+            code("." + base_url)
         )
     );
   })
@@ -209,14 +225,14 @@ router.get(
  * @param {string} subdomain - Tenant Subdomain name string
  * @returns {string}
  */
-const getNewURL = (req, subdomain) => {
+const getNewURL = (req, subdomain, base_url) => {
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
     const hosts = host.split(":");
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
-  const hostname = req.hostname;
+  const hostname = base_url || req.hostname;
   // return newurl
   return `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 };
@@ -231,10 +247,7 @@ router.post(
   "/create",
   error_catcher(async (req, res) => {
     // check that multi-tenancy is enabled
-    if (
-      !db.is_it_multi_tenant() ||
-      db.getTenantSchema() !== db.connectObj.default_schema
-    ) {
+    if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -274,7 +287,8 @@ router.post(
         );
       } else {
         // tenant url
-        const newurl = getNewURL(req, subdomain);
+        const base_url = get_cfg_tenant_base_url(req);
+        const newurl = getNewURL(req, subdomain, base_url);
         // tenant template
         const tenant_template = getState().getConfig("tenant_template");
         // tenant creator
@@ -426,6 +440,8 @@ const tenant_settings_form = (req) =>
       "create_tenant_warning",
       "create_tenant_warning_text",
       "tenant_template",
+      "tenant_baseurl",
+      "tenant_create_unauth_redirect",
       { section_header: "Tenant application capabilities" },
       "tenants_install_git",
       "tenants_set_npm_modules",

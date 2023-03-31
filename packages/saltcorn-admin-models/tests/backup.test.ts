@@ -30,6 +30,24 @@ beforeAll(async () => {
 describe("Backup and restore", () => {
   it("should create and restore backup", async () => {
     await setConfig("site_name", "backups rule!");
+    await setConfig("menu_items", [
+      {
+        type: "Page",
+        label: "a_page",
+        min_role: 10,
+        pagename: "a_page",
+      },
+      {
+        url: "https://www.bbc.co.uk/news",
+        icon: "undefined",
+        text: "BBC",
+        type: "Link",
+        label: "BBC",
+        style: "",
+        location: "Standard",
+        min_role: 10,
+      },
+    ]);
     const sn1 = await getConfig("site_name");
     expect(sn1).toBe("backups rule!");
     await Role.create({ role: "paid", id: 6 });
@@ -73,6 +91,8 @@ describe("Backup and restore", () => {
     expect(t2).toBe(null);
     const sn0 = await getConfig("site_name");
     expect(sn0).toBe("Saltcorn");
+    const menus0 = await getConfig("menu_items", []);
+    expect(menus0.length).toBe(0);
     const restore_res = await restore(fnm, (p) => {});
     await unlink(fnm);
     expect(restore_res).toBe(undefined);
@@ -89,6 +109,13 @@ describe("Backup and restore", () => {
     expect(v1.length).toBe(v2.length);
     const sn = await getConfig("site_name");
     expect(sn).toBe("backups rule!");
+    const menus = await getConfig("menu_items");
+    expect(menus.length).toBe(2);
+    expect(menus[0].type).toBe("Page");
+    expect(menus[0].pagename).toBe("a_page");
+    expect(menus[1].type).toBe("Link");
+    expect(menus[1].url).toBe("https://www.bbc.co.uk/news");
+
     await t3.insertRow({ author: "Marcus Rediker", pages: 224 });
     const staff = await User.findOne({ email: "staff@foo.com" });
     expect(!!staff).toBe(true);

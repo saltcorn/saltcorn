@@ -19,6 +19,7 @@ const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
+const { X509Certificate } = require("crypto");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const {
   post_btn,
@@ -768,6 +769,26 @@ router.get(
       !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
     const { memUsage, diskUsage, cpuUsage } = await get_sys_info();
+    const custom_ssl_certificate = getRootState().getConfig(
+      "custom_ssl_certificate",
+      false
+    );
+    let expiry = "";
+    if (custom_ssl_certificate) {
+      const { validTo } = new X509Certificate(custom_ssl_certificate);
+      const diffTime = Math.abs(new Date(validTo) - new Date());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      expiry = tr(
+        th(req.__("SSL expiry")),
+        diffDays < 14
+          ? td(
+              { class: "text-danger fw-bold" },
+              moment(new Date(validTo)).fromNow(),
+              i({ class: "fas fa-exclamation-triangle ms-1" })
+            )
+          : td(moment(new Date(validTo)).fromNow())
+      );
+    }
     send_admin_page({
       res,
       req,
@@ -871,10 +892,13 @@ router.get(
                     td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
                   ),
                   isRoot
-                    ? tr(th(req.__("Database host")), td(db.connectObj.host))
-                    : "",
-                  isRoot
-                    ? tr(th(req.__("Database port")), td(db.connectObj.port))
+                    ? tr(
+                        th(req.__("Database host")),
+                        td(
+                          db.connectObj.host +
+                            (db.connectObj.port ? ":" + db.connectObj.port : "")
+                        )
+                      )
                     : "",
                   isRoot
                     ? tr(
@@ -902,7 +926,8 @@ router.get(
                       : td(diskUsage, "%")
                   ),
                   tr(th(req.__("CPU usage")), td(cpuUsage, "%")),
-                  tr(th(req.__("Mem usage")), td(memUsage, "%"))
+                  tr(th(req.__("Mem usage")), td(memUsage, "%")),
+                  expiry
                 )
               ),
               p(
