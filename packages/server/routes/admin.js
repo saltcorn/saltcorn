@@ -776,9 +776,17 @@ router.get(
     let expiry = "";
     if (custom_ssl_certificate) {
       const { validTo } = new X509Certificate(custom_ssl_certificate);
+      const diffTime = Math.abs(new Date(validTo) - new Date());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       expiry = tr(
         th(req.__("SSL expiry")),
-        td(moment(new Date(validTo)).fromNow())
+        diffDays < 14
+          ? td(
+              { class: "text-danger fw-bold" },
+              moment(new Date(validTo)).fromNow(),
+              i({ class: "fas fa-exclamation-triangle ms-1" })
+            )
+          : td(moment(new Date(validTo)).fromNow())
       );
     }
     send_admin_page({
