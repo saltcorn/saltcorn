@@ -55,9 +55,9 @@ module.exports = router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const pagePropertiesForm = async (req) => {
+const pagePropertiesForm = async (req, isNew) => {
   const roles = await User.get_roles();
-
+  const pages = (await Page.find()).map((p) => p.name);
   const form = new Form({
     action: addOnDoneRedirect("/pageedit/edit-properties", req),
     fields: [
@@ -67,6 +67,8 @@ const pagePropertiesForm = async (req) => {
         required: true,
         validator(s) {
           if (s.length < 1) return req.__("Missing name");
+          if (pages.includes(s) && isNew)
+            return req.__("A page with this name already exists");
         },
         sublabel: req.__("A short name that will be in your URL"),
         type: "String",
@@ -331,7 +333,7 @@ router.get(
   "/new",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await pagePropertiesForm(req);
+    const form = await pagePropertiesForm(req, true);
     res.sendWrap(
       req.__(`Page attributes`),
       wrap(renderForm(form, req.csrfToken()), false, req)
@@ -349,7 +351,7 @@ router.post(
   "/edit-properties",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await pagePropertiesForm(req);
+    const form = await pagePropertiesForm(req, !req.body.id);
     form.hidden("id");
     form.validate(req.body);
     if (form.hasErrors) {

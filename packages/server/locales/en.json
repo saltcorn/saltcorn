@@ -1145,5 +1145,6 @@
 	"Database table": "Database table",
 	"Configure provider": "Configure provider",
 	"In scope:": "In scope:",
-	"SSL expiry": "SSL expiry"
+	"SSL expiry": "SSL expiry",
+	"A page with this name already exists": "A page with this name already exists"
 }
