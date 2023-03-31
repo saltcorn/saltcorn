@@ -7,7 +7,11 @@
 
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
-const { getState, add_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  add_tenant,
+  getRootState,
+} = require("@saltcorn/data/db/state");
 const {
   create_tenant,
   getAllTenants,
@@ -65,6 +69,9 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const router = new Router();
 module.exports = router;
 
+const remove_leading_chars = (cs, s) =>
+  s.startsWith(cs) ? remove_leading_chars(cs, s.substring(cs.length)) : s;
+
 /**
  * Declare Form to create Tenant
  * @param {object} req - Request
@@ -72,7 +79,8 @@ module.exports = router;
  * @category server
  */
 // TBD add form field email for tenant admin
-const tenant_form = (req) =>
+
+const tenant_form = (req, base_url) =>
   new Form({
     action: "/tenant/create",
     submitLabel: req.__("Create"),
@@ -85,7 +93,7 @@ const tenant_form = (req) =>
         name: "subdomain",
         label: req.__("Application name"),
         input_type: "text",
-        postText: text("." + req.hostname),
+        postText: text("." + base_url),
       },
     ],
   });
@@ -126,10 +134,7 @@ const is_ip_address = (hostname) => {
 router.get(
   "/create",
   error_catcher(async (req, res) => {
-    if (
-      !db.is_it_multi_tenant() ||
-      db.getTenantSchema() !== db.connectObj.default_schema
-    ) {
+    if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -149,6 +154,12 @@ router.get(
         )
       );
     let create_tenant_warning_text = "";
+    const base_url = remove_leading_chars(
+      ".",
+      getRootState().getConfig("tenant_baseurl", req.hostname)
+    )
+      .replace("http://", "")
+      .replace("https://", "");
     if (getState().getConfig("create_tenant_warning")) {
       create_tenant_warning_text = getState().getConfig(
         "create_tenant_warning_text"
@@ -192,13 +203,13 @@ router.get(
     res.sendWrap(
       req.__("Create application"),
       create_tenant_warning_text +
-        renderForm(tenant_form(req), req.csrfToken()) +
+        renderForm(tenant_form(req, base_url), req.csrfToken()) +
         p(
           { class: "mt-2" },
           req.__("To login to a previously created application, go to: "),
           code(`${req.protocol}://`) +
             i(req.__("Application name")) +
-            code("." + req.hostname)
+            code("." + base_url)
         )
     );
   })
@@ -426,6 +437,7 @@ const tenant_settings_form = (req) =>
       "create_tenant_warning",
       "create_tenant_warning_text",
       "tenant_template",
+      "tenant_baseurl",
       { section_header: "Tenant application capabilities" },
       "tenants_install_git",
       "tenants_set_npm_modules",

@@ -300,6 +300,12 @@ const configTypes: ConfigTypes = {
     label: "New tenant template",
     blurb: "Copy site structure for new tenants from this tenant",
   },
+  tenant_baseurl: {
+    type: "String",
+    label: "Tenant Base URL",
+    blurb:
+      "Base hostname for newly created tenants. If unset, defaults to hostname",
+  },
   tenants_install_git: {
     type: "Bool",
     label: "Install git plugins",
