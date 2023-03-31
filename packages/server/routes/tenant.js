@@ -108,7 +108,8 @@ const tenant_form = (req, base_url) =>
  */
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
 const create_tenant_allowed = (req) => {
-  const required_role = +getState().getConfig("role_to_create_tenant") || 10;
+  const required_role =
+    +getRootState().getConfig("role_to_create_tenant") || 10;
   const user_role = req.user ? req.user.role_id : 10;
   return user_role <= required_role;
 };
@@ -125,6 +126,13 @@ const is_ip_address = (hostname) => {
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
 
+const get_cfg_tenant_base_url = (req) =>
+  remove_leading_chars(
+    ".",
+    getRootState().getConfig("tenant_baseurl", req.hostname)
+  )
+    .replace("http://", "")
+    .replace("https://", "");
 /**
  * Create tenant screen runnning
  * @name get/create
@@ -154,12 +162,7 @@ router.get(
         )
       );
     let create_tenant_warning_text = "";
-    const base_url = remove_leading_chars(
-      ".",
-      getRootState().getConfig("tenant_baseurl", req.hostname)
-    )
-      .replace("http://", "")
-      .replace("https://", "");
+    const base_url = get_cfg_tenant_base_url(req);
     if (getState().getConfig("create_tenant_warning")) {
       create_tenant_warning_text = getState().getConfig(
         "create_tenant_warning_text"
@@ -220,14 +223,14 @@ router.get(
  * @param {string} subdomain - Tenant Subdomain name string
  * @returns {string}
  */
-const getNewURL = (req, subdomain) => {
+const getNewURL = (req, subdomain, base_url) => {
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
     const hosts = host.split(":");
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
-  const hostname = req.hostname;
+  const hostname = base_url || req.hostname;
   // return newurl
   return `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 };
@@ -242,10 +245,7 @@ router.post(
   "/create",
   error_catcher(async (req, res) => {
     // check that multi-tenancy is enabled
-    if (
-      !db.is_it_multi_tenant() ||
-      db.getTenantSchema() !== db.connectObj.default_schema
-    ) {
+    if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -285,7 +285,8 @@ router.post(
         );
       } else {
         // tenant url
-        const newurl = getNewURL(req, subdomain);
+        const base_url = get_cfg_tenant_base_url(req);
+        const newurl = getNewURL(req, subdomain, base_url);
         // tenant template
         const tenant_template = getState().getConfig("tenant_template");
         // tenant creator
