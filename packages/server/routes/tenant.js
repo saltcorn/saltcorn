@@ -151,7 +151,11 @@ router.get(
     }
     if (!create_tenant_allowed(req)) {
       const redir = getState().getConfig("tenant_create_unauth_redirect");
+      const redirRoot = getRootState().getConfig(
+        "tenant_create_unauth_redirect"
+      );
       if (redir) res.redirect(redir);
+      else if (redirRoot) res.redirect(redirRoot);
       else res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
