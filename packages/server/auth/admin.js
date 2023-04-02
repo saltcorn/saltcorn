@@ -595,7 +595,7 @@ router.get(
       !hostname_matches_baseurl(req, getBaseDomain()) &&
       is_hsts_tld(getBaseDomain());
     let expiry = "";
-    if (has_custom) {
+    if (has_custom && X509Certificate) {
       const cert = getState().getConfig("custom_ssl_certificate", "");
       const { validTo } = new X509Certificate(cert);
       expiry = div({ class: "me-2" }, "Expires: ", validTo);

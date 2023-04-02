@@ -597,7 +597,8 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  if ($.fn.historyTabs) $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+  if ($.fn.historyTabs && $.fn.tab)
+    $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
 
   // Initialize Sliders - https://stackoverflow.com/a/31083391
