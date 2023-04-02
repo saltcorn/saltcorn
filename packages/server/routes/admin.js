@@ -774,7 +774,7 @@ router.get(
       false
     );
     let expiry = "";
-    if (custom_ssl_certificate) {
+    if (custom_ssl_certificate && X509Certificate) {
       const { validTo } = new X509Certificate(custom_ssl_certificate);
       const diffTime = Math.abs(new Date(validTo) - new Date());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
