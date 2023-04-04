@@ -52,7 +52,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
-
+const path = require("path");
 /**
  * @type {object}
  * @const
@@ -1486,18 +1486,53 @@ router.post(
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
+    let parse_res;
     try {
-      const parse_res = await table.import_csv_file(newPath, {
+      parse_res = await table.import_csv_file(newPath, {
         recalc_stored: true,
+        no_table_write: true,
       });
-      if (parse_res.error) req.flash("error", parse_res.error);
-      else req.flash("success", parse_res.success);
     } catch (e) {
-      req.flash("error", e.message);
+      parse_res = { error: e.message };
     }
-
-    await fs.unlink(newPath);
-    res.redirect(`/table/${table.id}`);
+    if (parse_res.error) {
+      if (parse_res.error) req.flash("error", parse_res.error);
+      await fs.unlink(newPath);
+      res.redirect(`/table/${table.id}`);
+    } else {
+      res.sendWrap(req.__(`Import table %s`, table.name), {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: req.__("Tables"), href: "/table" },
+              { href: `/table/${table.id}`, text: table.name },
+              {
+                text: req.__("Import CSV"),
+              },
+            ],
+          },
+          {
+            type: "card",
+            title: req.__(`Preview`),
+            contents: div(
+              mkTable(
+                table.fields.map((f) => ({ label: f.name, key: f.name })),
+                parse_res.rows || []
+              ),
+              post_delete_btn(
+                `/files/delete/${path.basename(newPath)}?redirect=/table/${
+                  table.id
+                }}`,
+                req
+              )
+            ),
+          },
+        ],
+      });
+    }
+    //await fs.unlink(newPath);
+    //res.redirect(`/table/${table.id}`);
   })
 );
 

@@ -1623,7 +1623,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      if (options?.skip_first_data_row) {
+                      if (options?.no_table_write) {
                         if (existing) Object.assign(rec, existing);
                         returnedRows.push(rec);
                       } else if (existing)
@@ -1637,7 +1637,7 @@ class Table implements AbstractTable {
                           client,
                           pk_name,
                         });
-                    } else if (options?.skip_first_data_row) {
+                    } else if (options?.no_table_write) {
                       returnedRows.push(rec);
                     } else
                       await db.insert(this.name, rec, {
