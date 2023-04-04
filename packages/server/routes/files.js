@@ -14,7 +14,12 @@ const resizer = require("resize-with-sharp-or-jimp");
 const db = require("@saltcorn/data/db");
 
 const { renderForm } = require("@saltcorn/markup");
-const { isAdmin, error_catcher, setTenant } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  setTenant,
+  is_relative_url,
+} = require("./utils.js");
 const { h1, div, text } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -441,6 +446,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const serve_path = req.params[0];
+    const { redirect } = req.query;
     const f = await File.findOne(serve_path);
     if (!f) {
       req.flash("error", "File not found");
@@ -460,7 +466,12 @@ router.post(
       }
       req.flash("error", result.error);
     }
-    res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
+    if (!req.xhr)
+      res.redirect(
+        (is_relative_url(redirect) && redirect) ||
+          `/files?dir=${encodeURIComponent(f.current_folder)}`
+      );
+    else res.json({ success: true });
   })
 );
 

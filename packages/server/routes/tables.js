@@ -17,6 +17,7 @@ const {
   link,
   settingsDropdown,
   post_delete_btn,
+  post_btn,
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const {
@@ -52,7 +53,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
-
+const path = require("path");
 /**
  * @type {object}
  * @const
@@ -1463,6 +1464,89 @@ router.post(
   })
 );
 
+const previewCSV = async ({ newPath, table, req, res, full }) => {
+  let parse_res;
+  try {
+    parse_res = await table.import_csv_file(newPath, {
+      recalc_stored: true,
+      no_table_write: true,
+    });
+  } catch (e) {
+    parse_res = { error: e.message };
+  }
+  if (parse_res.error) {
+    if (parse_res.error) req.flash("error", parse_res.error);
+    await fs.unlink(newPath);
+    res.redirect(`/table/${table.id}`);
+  } else {
+    const rows = parse_res.rows || [];
+    res.sendWrap(req.__(`Import table %s`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            {
+              text: req.__("Import CSV"),
+            },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`Import CSV`),
+          contents: div(
+            {
+              "data-csv-filename": path.basename(newPath),
+            },
+            p(parse_res.success),
+            post_btn(
+              `/files/delete/${path.basename(newPath)}?redirect=/table/${
+                table.id
+              }}`,
+              "Cancel",
+              req.csrfToken(),
+              {
+                btnClass: "btn-danger",
+                formClass: "d-inline me-2",
+                icon: "fa fa-times",
+              }
+            ),
+            post_btn(
+              `/table/finish_upload_to_table/${table.name}/${path.basename(
+                newPath
+              )}`,
+              "Proceed",
+              req.csrfToken(),
+              { icon: "fa fa-check", formClass: "d-inline" }
+            )
+          ),
+        },
+        {
+          type: "card",
+          title: req.__(`Preview`),
+          contents: div(
+            mkTable(
+              table.fields.map((f) => ({ label: f.name, key: f.name })),
+              full ? rows : rows.slice(0, 10)
+            ),
+            !full &&
+              rows.length > 10 &&
+              a(
+                {
+                  href: `/table/preview_full_csv_file/${
+                    table.name
+                  }/${path.basename(newPath)}`,
+                },
+                `See all ${rows.length} rows`
+              )
+          ),
+        },
+      ],
+    });
+  }
+};
+
 /**
  * Import Table Data from CSV POST handler
  * @name post/upload_to_table/:name,
@@ -1486,15 +1570,39 @@ router.post(
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
+    await previewCSV({ newPath, table, res, req });
+  })
+);
+
+router.get(
+  "/preview_full_csv_file/:name/:filename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name, filename } = req.params;
+    const table = await Table.findOne({ name });
+    const f = await File.findOne(filename);
+    await previewCSV({ newPath: f.location, table, res, req, full: true });
+  })
+);
+
+router.post(
+  "/finish_upload_to_table/:name/:filename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name, filename } = req.params;
+    const table = await Table.findOne({ name });
+    const f = await File.findOne(filename);
+
     try {
-      const parse_res = await table.import_csv_file(newPath, true);
+      const parse_res = await table.import_csv_file(f.location, {
+        recalc_stored: true,
+      });
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
       req.flash("error", e.message);
     }
-
-    await fs.unlink(newPath);
+    await fs.unlink(f.location);
     res.redirect(`/table/${table.id}`);
   })
 );

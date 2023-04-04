@@ -1150,5 +1150,7 @@
 	"Tenant Base URL": "Tenant Base URL",
 	"Base hostname for newly created tenants. If unset, defaults to hostname": "Base hostname for newly created tenants. If unset, defaults to hostname",
 	"Redirect unathorized": "Redirect unathorized",
-	"If tenant creation is not authorized, redirect to this URL": "If tenant creation is not authorized, redirect to this URL"
+	"If tenant creation is not authorized, redirect to this URL": "If tenant creation is not authorized, redirect to this URL",
+	"Import table %s": "Import table %s",
+	"Import CSV": "Import CSV"
 }

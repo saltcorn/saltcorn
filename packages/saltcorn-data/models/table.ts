@@ -1466,9 +1466,15 @@ class Table implements AbstractTable {
    */
   async import_csv_file(
     filePath: string,
-    recalc_stored?: boolean,
-    skip_first_data_row?: boolean
+    options?: {
+      recalc_stored?: boolean;
+      skip_first_data_row?: boolean;
+      no_table_write?: boolean;
+    }
   ): Promise<ResultMessage> {
+    if (typeof options === "boolean") {
+      options = { recalc_stored: options };
+    }
     let headers;
     const { readStateStrict } = require("../plugin-helper");
     let headerStr;
@@ -1539,7 +1545,7 @@ class Table implements AbstractTable {
     await client.query("BEGIN");
 
     const readStream = createReadStream(filePath);
-
+    const returnedRows: any = [];
     try {
       // for files more 1MB
       if (db.copyFrom && fileSizeInMegabytes > 1) {
@@ -1571,7 +1577,7 @@ class Table implements AbstractTable {
             .subscribe(
               async (rec: any) => {
                 i += 1;
-                if (skip_first_data_row && i === 2) return;
+                if (options?.skip_first_data_row && i === 2) return;
                 try {
                   renames.forEach(({ from, to }) => {
                     rec[to] = rec[from];
@@ -1617,7 +1623,10 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      if (existing)
+                      if (options?.no_table_write) {
+                        if (existing) Object.assign(rec, existing);
+                        returnedRows.push(rec);
+                      } else if (existing)
                         await db.update(this.name, rec, rec[this.pk_name], {
                           pk_name,
                           client,
@@ -1628,6 +1637,8 @@ class Table implements AbstractTable {
                           client,
                           pk_name,
                         });
+                    } else if (options?.no_table_write) {
+                      returnedRows.push(rec);
                     } else
                       await db.insert(this.name, rec, {
                         noid: true,
@@ -1664,11 +1675,20 @@ class Table implements AbstractTable {
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
+
+    if (options?.no_table_write) {
+      return {
+        success:
+          `Found ${i > 1 ? i - 1 - rejects : ""} rows for table ${this.name}` +
+          (rejects ? `. Rejected ${rejects} rows.` : ""),
+        rows: returnedRows,
+      };
+    }
     // reset id sequence
     await this.resetSequence();
     // recalculate fields
     if (
-      recalc_stored &&
+      options?.recalc_stored &&
       this.fields &&
       this.fields.some((f) => f.calculated && f.stored)
     ) {
