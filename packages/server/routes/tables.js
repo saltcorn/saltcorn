@@ -1487,7 +1487,9 @@ router.post(
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
     try {
-      const parse_res = await table.import_csv_file(newPath, true);
+      const parse_res = await table.import_csv_file(newPath, {
+        recalc_stored: true,
+      });
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {

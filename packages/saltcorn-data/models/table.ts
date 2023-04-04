@@ -1466,9 +1466,15 @@ class Table implements AbstractTable {
    */
   async import_csv_file(
     filePath: string,
-    recalc_stored?: boolean,
-    skip_first_data_row?: boolean
+    options?: {
+      recalc_stored?: boolean;
+      skip_first_data_row?: boolean;
+      no_table_write?: boolean;
+    }
   ): Promise<ResultMessage> {
+    if (typeof options === "boolean") {
+      options = { recalc_stored: options };
+    }
     let headers;
     const { readStateStrict } = require("../plugin-helper");
     let headerStr;
@@ -1571,7 +1577,7 @@ class Table implements AbstractTable {
             .subscribe(
               async (rec: any) => {
                 i += 1;
-                if (skip_first_data_row && i === 2) return;
+                if (options?.skip_first_data_row && i === 2) return;
                 try {
                   renames.forEach(({ from, to }) => {
                     rec[to] = rec[from];
@@ -1668,7 +1674,7 @@ class Table implements AbstractTable {
     await this.resetSequence();
     // recalculate fields
     if (
-      recalc_stored &&
+      options?.recalc_stored &&
       this.fields &&
       this.fields.some((f) => f.calculated && f.stored)
     ) {
