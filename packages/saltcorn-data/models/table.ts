@@ -1545,7 +1545,7 @@ class Table implements AbstractTable {
     await client.query("BEGIN");
 
     const readStream = createReadStream(filePath);
-
+    const returnedRows: any = [];
     try {
       // for files more 1MB
       if (db.copyFrom && fileSizeInMegabytes > 1) {
@@ -1623,7 +1623,10 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      if (existing)
+                      if (options?.skip_first_data_row) {
+                        if (existing) Object.assign(rec, existing);
+                        returnedRows.push(rec);
+                      } else if (existing)
                         await db.update(this.name, rec, rec[this.pk_name], {
                           pk_name,
                           client,
@@ -1634,6 +1637,8 @@ class Table implements AbstractTable {
                           client,
                           pk_name,
                         });
+                    } else if (options?.skip_first_data_row) {
+                      returnedRows.push(rec);
                     } else
                       await db.insert(this.name, rec, {
                         noid: true,
@@ -1670,6 +1675,15 @@ class Table implements AbstractTable {
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
+
+    if (options?.no_table_write) {
+      return {
+        success:
+          `Found ${i > 1 ? i - 1 - rejects : ""} rows for table ${this.name}` +
+          (rejects ? `. Rejected ${rejects} rows.` : ""),
+        rows: returnedRows,
+      };
+    }
     // reset id sequence
     await this.resetSequence();
     // recalculate fields
