@@ -1515,19 +1515,38 @@ router.post(
           },
           {
             type: "card",
-            title: req.__(`Preview`),
+            title: req.__(`Import CSV`),
             contents: div(
-              mkTable(
-                table.fields.map((f) => ({ label: f.name, key: f.name })),
-                parse_res.rows || []
-              ),
+              p(parse_res.success),
               post_btn(
                 `/files/delete/${path.basename(newPath)}?redirect=/table/${
                   table.id
                 }}`,
                 "Cancel",
                 req.csrfToken(),
-                { btnClass: "btn-danger", icon: "fa fa-times" }
+                {
+                  btnClass: "btn-danger",
+                  formClass: "d-inline me-2",
+                  icon: "fa fa-times",
+                }
+              ),
+              post_btn(
+                `/table/finish_upload_to_table/${table.name}/${path.basename(
+                  newPath
+                )}`,
+                "Proceed",
+                req.csrfToken(),
+                { icon: "fa fa-check", formClass: "d-inline" }
+              )
+            ),
+          },
+          {
+            type: "card",
+            title: req.__(`Preview`),
+            contents: div(
+              mkTable(
+                table.fields.map((f) => ({ label: f.name, key: f.name })),
+                parse_res.rows || []
               )
             ),
           },
@@ -1536,6 +1555,18 @@ router.post(
     }
     //await fs.unlink(newPath);
     //res.redirect(`/table/${table.id}`);
+  })
+);
+router.post(
+  "/finish_upload_to_table/:name/:filename",
+  setTenant, // TODO why is this needed?????
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name, filename } = req.params;
+    const table = await Table.findOne({ name });
+    const f = await File.findOne(filename);
+    await fs.unlink(f.location);
+    res.redirect(`/table/${table.id}`);
   })
 );
 
