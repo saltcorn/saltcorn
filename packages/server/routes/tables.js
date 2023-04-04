@@ -1565,6 +1565,16 @@ router.post(
     const { name, filename } = req.params;
     const table = await Table.findOne({ name });
     const f = await File.findOne(filename);
+
+    try {
+      const parse_res = await table.import_csv_file(f.location, {
+        recalc_stored: true,
+      });
+      if (parse_res.error) req.flash("error", parse_res.error);
+      else req.flash("success", parse_res.success);
+    } catch (e) {
+      req.flash("error", e.message);
+    }
     await fs.unlink(f.location);
     res.redirect(`/table/${table.id}`);
   })
