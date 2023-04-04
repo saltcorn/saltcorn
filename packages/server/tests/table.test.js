@@ -159,22 +159,28 @@ Joe Celko, 856
 Gordon Kane, 218`;
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
+    let filename;
     await request(app)
       .post("/table/upload_to_table/books")
       .set("Cookie", loginCookie)
       .attach("file", Buffer.from(csv, "utf-8"))
       .expect(toInclude(">Preview<"))
-      .expect(toInclude("Proceed"));
-    /* const count = await Table.findOne("books").getRow({
-      author: "Gordon Kane",
-    });
-    expect(count?.pages).toBe(218);
-    
+      .expect(toInclude("Proceed"))
+      .expect((res) => {
+        filename = res.text.match(
+          /data-csv-filename\=\"([A-Za-z0-9 _\-]*)\"/
+        )[1];
+      });
+
     await request(app)
-      .post(`/table/2`)
+      .post(`/table/finish_upload_to_table/books/${filename}`)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/table/2"));
+    await request(app)
+      .get(`/table/2`)
       .set("Cookie", loginCookie)
       .expect(toInclude("Imported 2 rows"))
-      .expect(toInclude("success"));*/
+      .expect(toInclude("success"));
   });
 
   it("should delete tables", async () => {

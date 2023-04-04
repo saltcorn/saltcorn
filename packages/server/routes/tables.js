@@ -1496,6 +1496,9 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
           type: "card",
           title: req.__(`Import CSV`),
           contents: div(
+            {
+              "data-csv-filename": path.basename(newPath),
+            },
             p(parse_res.success),
             post_btn(
               `/files/delete/${path.basename(newPath)}?redirect=/table/${
