@@ -17,6 +17,7 @@ const {
   link,
   settingsDropdown,
   post_delete_btn,
+  post_btn,
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const {
@@ -1520,11 +1521,13 @@ router.post(
                 table.fields.map((f) => ({ label: f.name, key: f.name })),
                 parse_res.rows || []
               ),
-              post_delete_btn(
+              post_btn(
                 `/files/delete/${path.basename(newPath)}?redirect=/table/${
                   table.id
                 }}`,
-                req
+                "Cancel",
+                req.csrfToken(),
+                { btnClass: "btn-danger", icon: "fa fa-times" }
               )
             ),
           },
