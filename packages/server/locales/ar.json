@@ -266,7 +266,7 @@
   "Create user": "إنشاء مستخدم",
   "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.": "الرجاء إنشاء حساب المستخدم الأول الخاص بك ، والذي سيكون له امتيازات إدارية. يمكنك إضافة مستخدمين آخرين ومنحهم امتيازات إدارية لاحقًا.",
   "Create first user": "إنشاء المستخدم الأول",
-  "Create an account": "انشئ حساب",
+  "Create an account!": "انشئ حساب",
   "No views defined": "لم يتم إنشاء أية طرق عرض",
   "Views define how table rows are displayed to the user": "تحدد طرق العرض كيفية عرض صفوف الجدول للمستخدم",
   "Field %s saved": "تم حفظ الحقل %s",
