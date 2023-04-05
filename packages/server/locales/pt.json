@@ -266,7 +266,7 @@
   "Create user": "Criar usuário",
   "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.": "Por favor, crie sua primeira conta de usuário, que terá privilégios de admnistrador. Você pode adicionar outros usuários e conceder-lhes privilégios de administrador posteriormente.",
   "Create first user": "Criar o primeiro usuário",
-  "Create an account": "Criar uma conta",
+  "Create an account!": "Criar uma conta",
   "No views defined": "Nenhuma view definida",
   "Views define how table rows are displayed to the user": "As views definem como as linhas da tabela são exibidas para o usuário",
   "Field %s saved": "Campo %s salvo",
