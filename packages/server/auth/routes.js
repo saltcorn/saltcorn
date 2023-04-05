@@ -423,10 +423,12 @@ router.post(
         "success",
         req.__("Password reset. Log in with your new password")
       );
+      res.redirect("/auth/login");
     } else {
       req.flash("danger", result.error);
+      res.redirect("/auth/reset?token=${req.body.token}&email=${req.body.email}"
+      );
     }
-    res.redirect("/auth/login");
   })
 );
 
