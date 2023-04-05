@@ -265,7 +265,7 @@
 	"Create user": "Tilføj bruger",
 	"Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.": "Opret venligst din første brugerkonto, som vil have administrations adgang. Du kan tilføje andre brugere og give dem administrativ adgang senere.",
 	"Create first user": "Opret første brugerkonto",
-	"Create an account": "Opret en brugerkonto",
+	"Create an account!": "Opret en brugerkonto",
 	"No views defined": "Ingen visninger defineret",
 	"Views define how table rows are displayed to the user": "Visninger definerer, hvordan tabelrækker vises for brugeren",
 	"Field %s saved": "Felt %s gemt",
