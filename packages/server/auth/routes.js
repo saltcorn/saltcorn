@@ -426,7 +426,7 @@ router.post(
       res.redirect("/auth/login");
     } else {
       req.flash("danger", result.error);
-      res.redirect("/auth/reset?token=${req.body.token}&email=${req.body.email}"
+      res.redirect(`/auth/reset?token=${req.body.token}&email=${req.body.email}`
       );
     }
   })
