@@ -266,7 +266,7 @@
 	"Create user": "Create user",
 	"Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.": "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.",
 	"Create first user": "Create first user",
-	"Create an account": "Create an account",
+	"Create an account!": "Create an account!",
 	"No views defined": "No views defined",
 	"Views define how table rows are displayed to the user": "Views define how table rows are displayed to the user",
 	"Field %s saved": "Field %s saved",
@@ -277,7 +277,7 @@
 	"Invalid form data, try again": "Invalid form data, try again",
 	"Role required to access added files": "Role required to access added files",
 	"The user uploading the file has access irrespective of their role": "The user uploading the file has access irrespective of their role",
-	"Already have an account? Login": "Already have an account? Login",
+	"Already have an account? Login!": "Already have an account? Login!",
 	"Subdomain not found": "Subdomain not found",
 	"You must create at least one table before you can create views.": "You must create at least one table before you can create views.",
 	"Language: ": "Language: ",
@@ -1152,5 +1152,6 @@
 	"Redirect unathorized": "Redirect unathorized",
 	"If tenant creation is not authorized, redirect to this URL": "If tenant creation is not authorized, redirect to this URL",
 	"Import table %s": "Import table %s",
-	"Import CSV": "Import CSV"
+	"Import CSV": "Import CSV",
+	"Forgot password?": "Forgot password?"
 }
