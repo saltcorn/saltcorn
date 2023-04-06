@@ -15,6 +15,7 @@ const {
   script,
   text,
   domReady,
+  code,
   pre,
 } = require("@saltcorn/markup/tags");
 
@@ -324,6 +325,20 @@ router.get(
             viewrow.table_name
           ),
           contents: renderForm(form, req.csrfToken()),
+        },
+        {
+          type: "card",
+
+          title: req.__("View configuration"),
+          contents: {
+            type: "tabs",
+            contents: [
+              pre(code(JSON.stringify(viewrow.configuration, null, 2))),
+            ],
+            tabsStyle: "Accordion",
+            startClosed: true,
+            titles: [req.__("Show configuration object")],
+          },
         },
       ],
     });
