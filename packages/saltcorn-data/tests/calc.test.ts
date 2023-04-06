@@ -403,9 +403,13 @@ describe("jsexprToWhere", () => {
     expect(today).toMatch(/^202/);
 
     expect(jsexprToWhere("foo>=today(5)").foo.gt).toMatch(/^202/);
-    expect(jsexprToWhere("foo>=today(5)").foo.gt > today).toEqual(true);
+    expect(
+      new Date(jsexprToWhere("foo>=today(5)").foo.gt) > new Date(today)
+    ).toEqual(true);
 
     expect(jsexprToWhere("foo>=today(-5)").foo.gt).toMatch(/^202/);
-    expect(jsexprToWhere("foo>=today(-5)").foo.gt < today).toEqual(true);
+    expect(
+      new Date(jsexprToWhere("foo>=today(-5)").foo.gt) < new Date(today)
+    ).toEqual(true);
   });
 });
