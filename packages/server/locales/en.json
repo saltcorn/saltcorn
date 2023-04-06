@@ -1153,5 +1153,8 @@
 	"If tenant creation is not authorized, redirect to this URL": "If tenant creation is not authorized, redirect to this URL",
 	"Import table %s": "Import table %s",
 	"Import CSV": "Import CSV",
-	"Show configuration object": "Show configuration object"
+	"Show configuration object": "Show configuration object",
+	"Already have an account? Login!": "Already have an account? Login!",
+	"Forgot password?": "Forgot password?",
+	"Create an account!": "Create an account!"
 }
