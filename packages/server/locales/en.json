@@ -1152,5 +1152,6 @@
 	"Redirect unathorized": "Redirect unathorized",
 	"If tenant creation is not authorized, redirect to this URL": "If tenant creation is not authorized, redirect to this URL",
 	"Import table %s": "Import table %s",
-	"Import CSV": "Import CSV"
+	"Import CSV": "Import CSV",
+	"Show configuration object": "Show configuration object"
 }
