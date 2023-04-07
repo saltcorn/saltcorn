@@ -1122,7 +1122,7 @@
 	"Mem usage": "Zużycie pamięci",
 	"The field that will be shown to the user when choosing a value": "Pole jakie będzie pokazane użytkownikowi przy wyborze wartości",
 	"String value must match regular expression": "Wartość ciągu musi odpowiadać wyrażeniu regularnemu",
-	"Modules up-to-date. Please restart server": "Moduły zaktualizowane. Proszę zresetować serwer"
+	"Modules up-to-date. Please restart server": "Moduły zaktualizowane. Proszę zresetować serwer",
 	"Install git plugins": "Zainstaluj wtyczki git",
 	"Set available npm modules": "Ustaw dostępne moduły npm",
 	"Only store modules can be installed on tenant instances": "Tylko moduły ze sklepu mogą być zainstalowane na instancjach tenantów",
