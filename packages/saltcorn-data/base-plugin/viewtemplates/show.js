@@ -430,6 +430,16 @@ const renderRows = async (
         let state1;
         const pk_name = table.pk_name;
         switch (view.view_select.type) {
+          case "RelationPath": {
+            const path = view.view_select.path;
+            state1 = {
+              _view_relation_path_: {
+                ...view.view_select,
+                srcId: path[0].fkey ? row[path[0].fkey] : row[pk_name],
+              },
+            };
+            break;
+          }
           case "Own":
             state1 = { [pk_name]: row[pk_name] };
             break;

@@ -206,6 +206,26 @@ const make_link = (
   };
 };
 
+const parseRelationPath = (path) => {
+  const [viewname, vrest] = path.split(":");
+  const tokens = vrest.split(".");
+  const result = {
+    type: "RelationPath",
+    viewname,
+    sourcetable: tokens[1],
+    path: [],
+  };
+  for (const relation of tokens.slice(2)) {
+    if (relation.indexOf("$") > 0) {
+      const [table, inboundKey] = relation.split("$");
+      result.path.push({ table, inboundKey });
+    } else {
+      result.path.push({ fkey: relation });
+    }
+  }
+  return result;
+};
+
 /**
  * @param {string} s
  * @returns {object}
@@ -214,25 +234,30 @@ const parse_view_select = (s) => {
   const colonSplit = s.split(":");
   if (colonSplit.length === 1) return { type: "Own", viewname: s };
   const [type, vrest] = colonSplit;
-  switch (type) {
-    case "Own":
-      return { type, viewname: vrest };
-    case "ChildList":
-    case "OneToOneShow":
-      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
-      return {
-        type,
-        viewname: viewnm,
-        table_name: tbl,
-        field_name: fld,
-        throughTable,
-        through,
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
-    case "Independent":
-      return { type, viewname: vrest };
+  if (vrest.startsWith(".")) {
+    return parseRelationPath(s);
+  } else {
+    // legacy relation path
+    switch (type) {
+      case "Own":
+        return { type, viewname: vrest };
+      case "ChildList":
+      case "OneToOneShow":
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        return {
+          type,
+          viewname: viewnm,
+          table_name: tbl,
+          field_name: fld,
+          throughTable,
+          through,
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+      case "Independent":
+        return { type, viewname: vrest };
+    }
   }
 };
 
@@ -290,105 +315,57 @@ const view_linker = (
       .join("&");
   };
   const [vtype, vrest] = view.split(":");
-  switch (vtype) {
-    case "Own":
-      const vnm = vrest;
-      const viewrow = View.findOne({ name: vnm });
-      const get_query = get_view_link_query(fields, viewrow || {});
-      return {
-        label: vnm,
-        key: (r) => {
-          const safePrefix = targetPrefix.endsWith("/")
-            ? targetPrefix.substring(0, targetPrefix.length - 1)
-            : targetPrefix;
-          const target = `${safePrefix}/view/${encodeURIComponent(
-            vnm
-          )}${get_query(r)}`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(vnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "Independent":
-      const ivnm = vrest;
-      return {
-        label: ivnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(ivnm)}`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(ivnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "ChildList":
-    case "OneToOneShow":
-      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
-      const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
-      return {
-        label: viewnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
-            r.id
-          }`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(viewnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      //console.log([pviewnm, ptbl, pfld])
-      return {
-        label: pviewnm,
-        key: (r) => {
-          const reffield = fields.find((f) => f.name === pfld);
-          const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
-          if (r[pfld]) {
-            const target = `/view/${encodeURIComponent(pviewnm)}?${
-              reffield.refname
-            }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+
+  if (vrest.startsWith(".")) {
+    const parsedRelObj = parseRelationPath(view);
+    const pathStart = parsedRelObj.path[0];
+    const idName = pathStart.fkey ? pathStart.fkey : "id";
+    return {
+      label: parsedRelObj.viewname,
+      key: (r) => {
+        const relObj = {
+          ...parsedRelObj,
+          srcId: r[idName],
+        };
+        const target = `/view/${encodeURIComponent(
+          parsedRelObj.viewname
+        )}?_view_relation_path_=${encodeURIComponent(JSON.stringify(relObj))}`;
+        return link_view(
+          isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+          get_label(parsedRelObj.viewname, r),
+          in_modal,
+          link_style,
+          link_size,
+          link_icon,
+          textStyle,
+          link_bgcol,
+          link_bordercol,
+          link_textcol,
+          in_dropdown && "dropdown-item",
+          get_extra_state(r),
+          link_target_blank
+        );
+      },
+    };
+  } else {
+    // legacy relation path
+    switch (vtype) {
+      case "Own":
+        const vnm = vrest;
+        const viewrow = View.findOne({ name: vnm });
+        const get_query = get_view_link_query(fields, viewrow || {});
+        return {
+          label: vnm,
+          key: (r) => {
+            const safePrefix = targetPrefix.endsWith("/")
+              ? targetPrefix.substring(0, targetPrefix.length - 1)
+              : targetPrefix;
+            const target = `${safePrefix}/view/${encodeURIComponent(
+              vnm
+            )}${get_query(r)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-              get_label(
-                typeof summary_field === "undefined" ? pviewnm : summary_field,
-                r
-              ),
+              get_label(vnm, r),
               in_modal,
               link_style,
               link_size,
@@ -401,11 +378,96 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank
             );
-          } else return "";
-        },
-      };
-    default:
-      throw new Error(view);
+          },
+        };
+      case "Independent":
+        const ivnm = vrest;
+        return {
+          label: ivnm,
+          key: (r) => {
+            const target = `/view/${encodeURIComponent(ivnm)}`;
+            return link_view(
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+              get_label(ivnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r),
+              link_target_blank
+            );
+          },
+        };
+      case "ChildList":
+      case "OneToOneShow":
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
+        return {
+          label: viewnm,
+          key: (r) => {
+            const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+              r.id
+            }`;
+            return link_view(
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+              get_label(viewnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r),
+              link_target_blank
+            );
+          },
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        //console.log([pviewnm, ptbl, pfld])
+        return {
+          label: pviewnm,
+          key: (r) => {
+            const reffield = fields.find((f) => f.name === pfld);
+            const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
+            if (r[pfld]) {
+              const target = `/view/${encodeURIComponent(pviewnm)}?${
+                reffield.refname
+              }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+              return link_view(
+                isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+                get_label(
+                  typeof summary_field === "undefined"
+                    ? pviewnm
+                    : summary_field,
+                  r
+                ),
+                in_modal,
+                link_style,
+                link_size,
+                link_icon,
+                textStyle,
+                link_bgcol,
+                link_bordercol,
+                link_textcol,
+                in_dropdown && "dropdown-item",
+                get_extra_state(r),
+                link_target_blank
+              );
+            } else return "";
+          },
+        };
+      default:
+        throw new Error(view);
+    }
   }
 };
 

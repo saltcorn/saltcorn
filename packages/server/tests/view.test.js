@@ -177,3 +177,167 @@ describe("render view with slug", () => {
       .expect(toInclude(`Herman Melville`));
   });
 });
+
+describe("inbound relations", () => {
+  it("view with inbound relation", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/show_user_with_blog_posts_feed?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+
+    await request(app)
+      .get("/view/show_user_with_blog_posts_feed?id=2")
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toNotInclude("Content of post CPost C"));
+
+    await request(app)
+      .get("/view/show_user_with_blog_posts_feed?id=3")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+  });
+
+  it("view without inbound relation", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/show_user_with_independent_feed?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+    await request(app)
+      .get("/view/show_user_with_independent_feed?id=2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+    await request(app)
+      .get("/view/show_user_with_independent_feed?id=3")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+  });
+
+  it("inbound relation from query", async () => {
+    const queryObj = {
+      type: "RelationPath",
+      path: [
+        {
+          table: "user_interested_in_topic",
+          inboundKey: "user",
+        },
+        {
+          fkey: "topic",
+        },
+        {
+          table: "blog_in_topic",
+          inboundKey: "topic",
+        },
+        {
+          fkey: "post",
+        },
+      ],
+      viewname: "blog_posts_feed",
+      sourcetable: "users",
+      srcId: 1,
+    };
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    await request(app)
+      .get(
+        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+
+    queryObj.srcId = 2;
+    await request(app)
+      .get(
+        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toNotInclude("Content of post CPost C"));
+
+    queryObj.srcId = 3;
+    await request(app)
+      .get(
+        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+  });
+
+  it("inbound relation with levels from query", async () => {
+    const queryObj = {
+      type: "RelationPath",
+      path: [
+        {
+          table: "user_interested_in_topic",
+          inboundKey: "user",
+        },
+        {
+          fkey: "topic",
+        },
+        {
+          table: "inbound_inbound",
+          inboundKey: "topic",
+        },
+        {
+          fkey: "bp_inbound",
+        },
+        {
+          fkey: "post",
+        },
+      ],
+      viewname: "blog_posts_feed",
+      sourcetable: "users",
+      srcId: 1,
+    };
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(
+        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Content of post APost A"))
+      .expect(toNotInclude("Content of post BPost B"))
+      .expect(toInclude("Content of post CPost C"));
+
+    queryObj.srcId = 2;
+    await request(app)
+      .get(
+        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude("Content of post APost A"))
+      .expect(toNotInclude("Content of post BPost B"))
+      .expect(toNotInclude("Content of post CPost C"));
+  });
+});

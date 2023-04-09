@@ -1196,6 +1196,14 @@ class Table implements AbstractTable {
   }
 
   /**
+   * get foreign keys, without the 'File' type
+   * @returns array of FK Fields
+   */
+  getForeignKeys(): Field[] {
+    return this.fields.filter((f) => f.is_fkey && f.type !== "File");
+  }
+
+  /**
    * Get a field, possibly by relation
    * @returns {Promise<Field | undefined>}
    */

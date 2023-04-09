@@ -509,4 +509,418 @@ module.exports =
       },
       min_role: 8,
     });
+
+    const topics = await Table.create("topics");
+    await Field.create({
+      table: topics,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await db.insert("topics", {
+      name: "Topic A",
+    });
+    await db.insert("topics", {
+      name: "Topic B",
+    });
+    await db.insert("topics", {
+      name: "Topic C",
+    });
+    const uiit = await Table.create("user_interested_in_topic");
+    await Field.create({
+      table: uiit,
+      name: "topic",
+      label: "Topic",
+      type: "Key",
+      reftable: topics,
+      required: false,
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: uiit,
+      name: "user",
+      label: "User",
+      type: "Key",
+      reftable_name: "users",
+      required: false,
+      attributes: { summary_field: "email" },
+    });
+    await db.insert("user_interested_in_topic", {
+      topic: 1,
+      user: 1,
+    });
+    await db.insert("user_interested_in_topic", {
+      topic: 2,
+      user: 2,
+    });
+    await db.insert("user_interested_in_topic", {
+      topic: 1,
+      user: 3,
+    });
+    await db.insert("user_interested_in_topic", {
+      topic: 2,
+      user: 3,
+    });
+
+    const bp = await Table.create("blog_posts");
+    await Field.create({
+      table: bp,
+      name: "content",
+      label: "Content",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: bp,
+      name: "title",
+      label: "Title",
+      type: "String",
+      required: true,
+    });
+    await db.insert("blog_posts", {
+      content: "Content of post A",
+      title: "Post A",
+    });
+    await db.insert("blog_posts", {
+      content: "Content of post B",
+      title: "Post B",
+    });
+    await db.insert("blog_posts", {
+      content: "Content of post C",
+      title: "Post C",
+    });
+
+    const bit = await Table.create("blog_in_topic");
+    await Field.create({
+      table: bit,
+      name: "topic",
+      label: "Topic",
+      type: "Key",
+      reftable: topics,
+      required: true,
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: bit,
+      name: "post",
+      label: "Post",
+      type: "Key",
+      reftable: bp,
+      required: true,
+      attributes: { summary_field: "title" },
+    });
+    await db.insert("blog_in_topic", {
+      topic: 1,
+      post: 1,
+    });
+    await db.insert("blog_in_topic", {
+      topic: 1,
+      post: 2,
+    });
+    await db.insert("blog_in_topic", {
+      topic: 1,
+      post: 3,
+    });
+    await db.insert("blog_in_topic", {
+      topic: 2,
+      post: 2,
+    });
+    await db.insert("blog_in_topic", {
+      topic: 3,
+      post: 3,
+    });
+
+    const users = Table.findOne({ name: "users" });
+    // blog_in_topic_feed in show user views
+    await View.create({
+      table_id: bit.id,
+      name: "show_blog_in_topic",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "JoinField", join_field: "post.title" },
+          { type: "JoinField", join_field: "topic.name" },
+        ],
+        layout: {
+          above: [
+            {
+              type: "join_field",
+              block: false,
+              textStyle: "",
+              join_field: "post.title",
+            },
+            {
+              type: "join_field",
+              block: false,
+              textStyle: "",
+              join_field: "topic.name",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: bit.id,
+      name: "edit_blog_in_topic",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "JoinField", join_field: "post.title" },
+          { type: "JoinField", join_field: "topic.name" },
+        ],
+        layout: {
+          above: [
+            {
+              type: "join_field",
+              block: false,
+              textStyle: "",
+              join_field: "post.title",
+            },
+            {
+              type: "join_field",
+              block: false,
+              textStyle: "",
+              join_field: "topic.name",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: bit.id,
+      name: "blog_in_topic_feed",
+      viewtemplate: "Feed",
+      configuration: {
+        cols_lg: 1,
+        cols_md: 1,
+        cols_sm: 1,
+        cols_xl: 1,
+        in_card: false,
+        viewname: "blog_in_topic_feed",
+        show_view: "show_blog_in_topic",
+        descending: false,
+        view_to_create: "edit_blog_in_topic",
+        create_view_display: "Link",
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: users.id,
+      name: "show_user_with_blog_in_topic_feed",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              type: "view",
+              view: "blog_in_topic_feed:.users.user_interested_in_topic$user.topic.blog_in_topic$topic",
+              name: "fc3fc3",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    // blog_post feed in show user views
+    await View.create({
+      table_id: bp.id,
+      name: "show_blog_post",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { field_name: "content", type: "Field", fieldview: "as_text" },
+          { field_name: "title", type: "Field", fieldview: "as_text" },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              field_name: "content",
+            },
+            {
+              type: "field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              field_name: "title",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: bp.id,
+      name: "edit_blog_post",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            field_name: "content",
+            fieldview: "edit",
+          },
+          {
+            type: "Field",
+            field_name: "title",
+            fieldview: "edit",
+          },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              field_name: "content",
+              fieldview: "edit",
+              textStyle: "",
+              block: false,
+              configuration: {},
+            },
+            {
+              type: "field",
+              field_name: "title",
+              fieldview: "edit",
+              textStyle: "",
+              block: false,
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: bp.id,
+      name: "blog_posts_feed",
+      viewtemplate: "Feed",
+      configuration: {
+        cols_lg: 1,
+        cols_md: 1,
+        cols_sm: 1,
+        cols_xl: 1,
+        in_card: false,
+        viewname: "blog_posts_feed",
+        show_view: "show_blog_post",
+        descending: false,
+        view_to_create: "edit_blog_post",
+        create_view_display: "Link",
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: users.id,
+      name: "show_user_with_blog_posts_feed",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              type: "view",
+              view: "blog_posts_feed:.users.user_interested_in_topic$user.topic.blog_in_topic$topic.post",
+              name: "bc653",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    await View.create({
+      table_id: users.id,
+      name: "show_user_with_independent_feed",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              type: "view",
+              view: "Independent:blog_posts_feed",
+              name: "bc653",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+
+    const bpInbound = await Table.create("blog_post_inbound");
+    await Field.create({
+      table: bpInbound,
+      name: "post",
+      label: "Post",
+      type: "Key",
+      reftable: bp,
+      attributes: { summary_field: "title" },
+    });
+    const inboundInbound = await Table.create("inbound_inbound");
+    await Field.create({
+      table: inboundInbound,
+      name: "bp_inbound",
+      label: "BP Inbound",
+      type: "Key",
+      reftable: bpInbound,
+      attributes: { summary_field: "post" },
+    });
+    await Field.create({
+      table: inboundInbound,
+      name: "topic",
+      label: "Topic",
+      type: "Key",
+      reftable: topics,
+      attributes: { summary_field: "name" },
+    });
+
+    await db.insert("blog_post_inbound", {
+      post: 1,
+    });
+    await db.insert("blog_post_inbound", {
+      post: 3,
+    });
+    await db.insert("inbound_inbound", {
+      bp_inbound: 1,
+      topic: 1,
+    });
+    await db.insert("inbound_inbound", {
+      bp_inbound: 2,
+      topic: 1,
+    });
+
+    await View.create({
+      table_id: users.id,
+      name: "show_user_with_blog_posts_feed_two_levels",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              type: "view",
+              view: "blog_posts_feed:.users.user_interested_in_topic$user.topic.inbound_inbound$topic.bp_inbound.post",
+              name: "bc653",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
   };

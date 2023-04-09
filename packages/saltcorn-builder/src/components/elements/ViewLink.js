@@ -8,7 +8,6 @@ import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
-  blockProps,
   BlockSetting,
   MinRoleSettingRow,
   OrFormula,
@@ -17,6 +16,9 @@ import {
   setAPropGen,
   FormulaTooltip,
 } from "./utils";
+
+import { RelationPicker } from "./RelationPicker";
+import { RelationBadges } from "./RelationBadges";
 
 export /**
  * @param {object} props
@@ -168,21 +170,18 @@ const ViewLinkSettings = () => {
           </tr>
           <tr>
             <td colSpan="2">
-              <label>Relation</label>
-              <select
-                value={name}
-                className="form-control form-select"
-                onChange={setAProp("name")}
-                onBlur={setAProp("name")}
-              >
-                {(options.view_relation_opts[use_view_name] || []).map(
-                  (f, ix) => (
-                    <option key={ix} value={f.value}>
-                      {f.label}
-                    </option>
-                  )
-                )}
-              </select>
+              <RelationPicker
+                options={options}
+                viewname={use_view_name}
+                update={(relPath) => {
+                  setProp((prop) => (prop.name = relPath));
+                }}
+              />
+              <RelationBadges
+                view={name}
+                parentTbl={options.tableName}
+                fk_options={options.fk_options}
+              />
             </td>
           </tr>
           <tr>
