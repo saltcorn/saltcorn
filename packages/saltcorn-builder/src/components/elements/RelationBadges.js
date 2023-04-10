@@ -32,11 +32,8 @@ const buildBadgeCfgs = (parsed, parentTbl) => {
 
 const buildBadge = ({ up, table, down }, index) => {
   return (
-    <div
-      key={`badge_${table}_${index}`}
-      className="my-2 d-flex justify-content-center"
-    >
-      <div className="d-flex flex-column align-items-center badge bg-primary">
+    <div key={`badge_${table}_${index}`} className="my-2 d-flex">
+      <div className="m-auto badge bg-primary">
         {up ? (
           <div className="mt-1 d-flex justify-content-center">
             <span className="pe-2">{up}</span>
@@ -63,14 +60,27 @@ export const RelationBadges = ({ view, parentTbl, fk_options }) => {
   const [prefix, rest] = view.split(":");
   if (rest.startsWith(".")) {
     const parsed = parseRelationPath(rest, fk_options);
-    return buildBadgeCfgs(parsed, parentTbl).map(buildBadge);
+    return (
+      <div className="overflow-scroll">
+        {buildBadgeCfgs(parsed, parentTbl).map(buildBadge)}
+      </div>
+    );
   } else {
     const parsed = parseLegacyRelation(prefix, rest, parentTbl);
     if (
       parsed.length === 1 &&
       (parsed[0].type === "Independent" || parsed[0].type === "Own")
     )
-      return buildBadge({ table: parsed[0].table }, 0);
-    else return buildBadgeCfgs(parsed, parentTbl).map(buildBadge);
+      return (
+        <div className="overflow-scroll">
+          {buildBadge({ table: parsed[0].table }, 0)}
+        </div>
+      );
+    else
+      return (
+        <div className="overflow-scroll">
+          {buildBadgeCfgs(parsed, parentTbl).map(buildBadge)}
+        </div>
+      );
   }
 };
