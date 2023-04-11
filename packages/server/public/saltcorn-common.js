@@ -1006,12 +1006,15 @@ function room_older(viewname, room_id, btn) {
 }
 
 function init_room(viewname, room_id) {
-  const socket = parent?.config?.server_path
-    ? io(parent.config.server_path, {
-        query: `jwt=${localStorage.getItem("auth_jwt")}`,
-        transports: ["websocket"],
-      })
-    : io({ transports: ["websocket"] });
+  let socket = null;
+  if (parent?.saltcorn?.data?.state) {
+    const { server_path, jwt } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    socket = io(server_path, {
+      query: `jwt=${jwt}`,
+      transports: ["websocket"],
+    });
+  } else socket = io({ transports: ["websocket"] });
 
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
