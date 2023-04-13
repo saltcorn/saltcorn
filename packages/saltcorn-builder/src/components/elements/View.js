@@ -81,6 +81,7 @@ const ViewSettings = () => {
     view_name: node.data.props.view_name,
     name: node.data.props.name,
     view: node.data.props.view,
+    relation: node.data.props.relation,
     state: node.data.props.state,
     extra_state_fml: node.data.props.extra_state_fml,
     configuration: node.data.props.configuration, // fixed states
@@ -91,6 +92,7 @@ const ViewSettings = () => {
     actions: { setProp },
     name,
     view,
+    relation,
     state,
     node_id,
     configuration,
@@ -155,11 +157,18 @@ const ViewSettings = () => {
             options={options}
             viewname={viewname}
             update={(relPath) => {
-              setProp((prop) => (prop.view = relPath));
+              if (relPath.startsWith(".")) {
+                setProp((prop) => (prop.view = viewname));
+                setProp((prop) => (prop.relation = relPath));
+              } else {
+                setProp((prop) => (prop.view = relPath));
+                setProp((prop) => (prop.relation = undefined));
+              }
             }}
           />
           <RelationBadges
             view={view}
+            relation={relation}
             parentTbl={options.tableName}
             fk_options={options.fk_options}
           />

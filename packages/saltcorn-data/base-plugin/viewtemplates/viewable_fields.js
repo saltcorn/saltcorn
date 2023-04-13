@@ -206,9 +206,8 @@ const make_link = (
   };
 };
 
-const parseRelationPath = (path) => {
-  const [viewname, vrest] = path.split(":");
-  const tokens = vrest.split(".");
+const parseRelationPath = (viewname, path) => {
+  const tokens = path.split(".");
   const result = {
     type: "RelationPath",
     viewname,
@@ -227,17 +226,17 @@ const parseRelationPath = (path) => {
 };
 
 /**
- * @param {string} s
+ * @param {string} view name of the view or a legacy relation (type:telation)
+ * @param {string} relation new relation path syntax
  * @returns {object}
  */
-const parse_view_select = (s) => {
-  const colonSplit = s.split(":");
-  if (colonSplit.length === 1) return { type: "Own", viewname: s };
-  const [type, vrest] = colonSplit;
-  if (vrest.startsWith(".")) {
-    return parseRelationPath(s);
-  } else {
+const parse_view_select = (view, relation) => {
+  if (relation) return parseRelationPath(view, relation);
+  else {
     // legacy relation path
+    const colonSplit = view.split(":");
+    if (colonSplit.length === 1) return { type: "Own", viewname: view };
+    const [type, vrest] = colonSplit;
     switch (type) {
       case "Own":
         return { type, viewname: vrest };
@@ -265,7 +264,8 @@ const parse_view_select = (s) => {
 /**
  * @function
  * @param {object} opts
- * @param {string} opts.view,
+ * @param {string} opts.view
+ * @param {string} opts.relation
  * @param {object} opts.view_label missing in contract
  * @param {object} opts.in_modal
  * @param {object} opts.view_label_formula
@@ -282,6 +282,7 @@ const parse_view_select = (s) => {
 const view_linker = (
   {
     view,
+    relation,
     view_label,
     in_modal,
     view_label_formula,
@@ -314,10 +315,8 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
-  const [vtype, vrest] = view.split(":");
-
-  if (vrest.startsWith(".")) {
-    const parsedRelObj = parseRelationPath(view);
+  if (relation) {
+    const parsedRelObj = parseRelationPath(view, relation);
     const pathStart = parsedRelObj.path[0];
     const idName = pathStart.fkey ? pathStart.fkey : "id";
     return {
@@ -349,6 +348,7 @@ const view_linker = (
     };
   } else {
     // legacy relation path
+    const [vtype, vrest] = view.split(":");
     switch (vtype) {
       case "Own":
         const vnm = vrest;

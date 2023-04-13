@@ -478,7 +478,9 @@ describe("subviews with relations", () => {
           above: [
             {
               type: "view",
-              view: "blog_posts_feed:.users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post",
+              view: "blog_posts_feed",
+              relation:
+                ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post",
               name: "bc653",
               state: "shared",
             },

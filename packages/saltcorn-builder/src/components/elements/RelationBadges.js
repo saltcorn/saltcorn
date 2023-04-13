@@ -32,7 +32,7 @@ const buildBadgeCfgs = (parsed, parentTbl) => {
 
 const buildBadge = ({ up, table, down }, index) => {
   return (
-    <div key={`badge_${table}_${index}`} className="my-2 d-flex">
+    <div key={`badge_${table}_${index}`} className="my-1 d-flex">
       <div className="m-auto badge bg-primary">
         {up ? (
           <div className="mt-1 d-flex justify-content-center">
@@ -42,11 +42,11 @@ const buildBadge = ({ up, table, down }, index) => {
         ) : (
           ""
         )}
-        <div className="m-1 h6">{table}</div>
+        <div className="m-1 fw-bolder">{table}</div>
         {down ? (
           <div className="mb-1 d-flex justify-content-center">
             <span className="pe-2">{down}</span>
-            <i className="fas fa-arrow-down"></i>
+            <i className="fas fa-arrow-down" style={{ marginTop: "-1px" }}></i>
           </div>
         ) : (
           ""
@@ -56,18 +56,22 @@ const buildBadge = ({ up, table, down }, index) => {
   );
 };
 
-export const RelationBadges = ({ view, parentTbl, fk_options }) => {
-  const [prefix, rest] = view.split(":");
-  if (rest.startsWith(".")) {
-    const parsed = parseRelationPath(rest, fk_options);
+export const RelationBadges = ({ view, relation, parentTbl, fk_options }) => {
+  if (relation) {
+    const parsed = parseRelationPath(relation, fk_options);
     return (
       <div className="overflow-scroll">
-        {buildBadgeCfgs(parsed, parentTbl).map(buildBadge)}
+        {parsed.length > 0
+          ? buildBadgeCfgs(parsed, parentTbl).map(buildBadge)
+          : buildBadge({ table: "invalid relation" }, 0)}
       </div>
     );
   } else {
+    const [prefix, rest] = view.split(":");
     const parsed = parseLegacyRelation(prefix, rest, parentTbl);
-    if (
+    if (parsed.length === 0)
+      return buildBadge({ table: "invalid relation" }, 0);
+    else if (
       parsed.length === 1 &&
       (parsed[0].type === "Independent" || parsed[0].type === "Own")
     )

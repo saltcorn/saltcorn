@@ -720,7 +720,9 @@ module.exports =
           above: [
             {
               type: "view",
-              view: "blog_in_topic_feed:.users.user_interested_in_topic$user.topic.blog_in_topic$topic",
+              view: "blog_in_topic_feed",
+              relation:
+                ".users.user_interested_in_topic$user.topic.blog_in_topic$topic",
               name: "fc3fc3",
               state: "shared",
             },
@@ -832,7 +834,9 @@ module.exports =
           above: [
             {
               type: "view",
-              view: "blog_posts_feed:.users.user_interested_in_topic$user.topic.blog_in_topic$topic.post",
+              view: "blog_posts_feed",
+              relation:
+                ".users.user_interested_in_topic$user.topic.blog_in_topic$topic.post",
               name: "bc653",
               state: "shared",
             },
@@ -914,7 +918,9 @@ module.exports =
           above: [
             {
               type: "view",
-              view: "blog_posts_feed:.users.user_interested_in_topic$user.topic.inbound_inbound$topic.bp_inbound.post",
+              view: "blog_posts_feed",
+              relation:
+                ".users.user_interested_in_topic$user.topic.inbound_inbound$topic.bp_inbound.post",
               name: "bc653",
               state: "shared",
             },

@@ -1,4 +1,4 @@
-/*global $ */
+/*global $, notifyAlert */
 import React, { Fragment, useContext, useState } from "react";
 import { parseRelationPath, parseLegacyRelation } from "./utils";
 
@@ -9,23 +9,29 @@ const parseRelations = (allOptions, viewname, parentTbl) => {
   const options = allOptions.view_relation_opts[viewname] || [];
   const result = { table: parentTbl, inboundKeys: [], fkeys: [] };
   if (!viewtable) return result;
-  for (const option of options) {
-    const [prefix, rest] = option.value.split(":");
-    if (rest.startsWith(".")) {
-      buildLevels(
-        option.value,
-        parseRelationPath(rest, allOptions.fk_options),
-        result,
-        parentTbl
-      );
+  const warnings = [];
+  for (const { value } of options) {
+    let path = null;
+    if (value.startsWith(".")) {
+      path = parseRelationPath(value, allOptions.fk_options);
     } else {
-      buildLevels(
-        option.value,
-        parseLegacyRelation(prefix, rest, parentTbl),
-        result,
-        parentTbl
-      );
+      const [prefix, rest] = value.split(":");
+      path = parseLegacyRelation(prefix, rest, parentTbl);
     }
+    if (path.length > 0) buildLevels(value, path, result, parentTbl);
+    else warnings.push(`The relation path '${value}' is invalid`);
+  }
+  if (warnings.length === 1) {
+    notifyAlert({
+      type: "danger",
+      text: warnings[0],
+    });
+  } else if (warnings.length > 1) {
+    notifyAlert({
+      type: "danger",
+      text: `Found multiple invalid relation paths`,
+    });
+    for (const warning of warnings) console.log(warning);
   }
   return result;
 };
@@ -130,7 +136,7 @@ export const RelationPicker = ({ options, viewname, update }) => {
                 <li
                   key={`${identifier}_fkey_key`}
                   className={`dropdown-item ${identifier}_fkey_item item_level_${reclevel} ${
-                    reclevel < 4 ? "dropstart" : "dropdown"
+                    reclevel < 5 ? "dropstart" : "dropdown"
                   }`}
                   role="button"
                 >
@@ -179,7 +185,7 @@ export const RelationPicker = ({ options, viewname, update }) => {
                 <li
                   key={`${identifier}_inboundkey_key`}
                   className={`dropdown-item ${identifier}_inbound_item item_level_${reclevel} ${
-                    reclevel < 4 ? "dropstart" : "dropdown"
+                    reclevel < 5 ? "dropstart" : "dropdown"
                   }`}
                   role="button"
                 >
@@ -230,7 +236,7 @@ export const RelationPicker = ({ options, viewname, update }) => {
       <div style={{ zIndex: 10000 }} className="dropstart">
         <button
           id="_relation_picker_toggle_"
-          className="btn btn-outline-primary dropdown-toggle dropdown_level_0"
+          className="btn btn-outline-primary dropdown-toggle dropdown_level_0 mb-1"
           aria-expanded="false"
           onClick={() => {
             $(".dropdown-item.active").removeClass("active");

@@ -488,8 +488,15 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
       relation: table.name,
     });
   });
-  const link_view_opts_push = (o) => {
+  const link_view_opts_push_legacy = (o) => {
     if (!link_view_opts.map((v) => v.name).includes(o.name))
+      push_view_option(o);
+  };
+  const link_view_opts_push = (o) => {
+    if (
+      !view_relation_opts[o.view] ||
+      !view_relation_opts[o.view].find(({ value }) => value === o.name)
+    )
       push_view_option(o);
   };
   const child_views = await get_child_views(table, viewname);
@@ -502,14 +509,14 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   } of child_views) {
     for (const view of views) {
       if (through && throughTable) {
-        link_view_opts_push({
+        link_view_opts_push_legacy({
           view: view.name,
           name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           relation: `${related_table.name}.${relation.name}.${through.name}`,
         });
       } else {
-        link_view_opts_push({
+        link_view_opts_push_legacy({
           view: view.name,
           name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
@@ -522,7 +529,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const parent_views = await get_parent_views(table, viewname);
   for (const { relation, related_table, views } of parent_views) {
     for (const view of views) {
-      link_view_opts_push({
+      link_view_opts_push_legacy({
         view: view.name,
         name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${relation.name}.${related_table.name}]`,
@@ -533,7 +540,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const onetoone_views = await get_onetoone_views(table, viewname);
   for (const { relation, related_table, views } of onetoone_views) {
     for (const view of views) {
-      link_view_opts_push({
+      link_view_opts_push_legacy({
         view: view.name,
         name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
@@ -545,7 +552,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
     ({ state_fields }) => !state_fields.some((sf) => sf.required)
   );
   independent_views.forEach((view) => {
-    link_view_opts_push({
+    link_view_opts_push_legacy({
       view: view.name,
       label: `${view.name} [${view.viewtemplate}]`,
       name: `Independent:${view.name}`,
@@ -559,7 +566,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
       link_view_opts_push({
         view: view.name,
         label: `${view.name} [${view.viewtemplate} ${table.name}]`,
-        name: `${view.name}:${path}`,
+        name: path,
         relation: path,
       });
     }
@@ -571,7 +578,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
       link_view_opts_push({
         view: view.name,
         label: `${view.name} [${view.viewtemplate} ${table.name}]`,
-        name: `${view.name}:${path}`,
+        name: path,
         relation: path,
       });
     }

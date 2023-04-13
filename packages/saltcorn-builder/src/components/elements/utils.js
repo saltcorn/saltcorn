@@ -1325,22 +1325,29 @@ const Tooltip = ({ children }) => {
 };
 
 const getFkTarget = (field, options) => {
-  return options.find((fk) => fk.name === field).reftable_name;
+  const option = options.find((fk) => fk.name === field);
+  return option ? option.reftable_name : null;
 };
 
 export const parseRelationPath = (path, fk_options) => {
   const result = [];
   const tokens = path.split(".");
-  let currentTbl = tokens[1];
-  for (const relation of tokens.slice(2)) {
-    if (relation.indexOf("$") > 0) {
-      const [inboundTbl, inboundKey] = relation.split("$");
-      result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
-      currentTbl = inboundTbl;
-    } else {
-      const targetTbl = getFkTarget(relation, fk_options[currentTbl]);
-      result.push({ type: "Foreign", table: targetTbl, key: relation });
-      currentTbl = targetTbl;
+  if (tokens.length >= 3) {
+    let currentTbl = tokens[1];
+    for (const relation of tokens.slice(2)) {
+      if (relation.indexOf("$") > 0) {
+        const [inboundTbl, inboundKey] = relation.split("$");
+        result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
+        currentTbl = inboundTbl;
+      } else {
+        const targetTbl = getFkTarget(relation, fk_options[currentTbl]);
+        if (!targetTbl) {
+          console.log(`The foreign key '${relation}' is invalid`);
+          return [];
+        }
+        result.push({ type: "Foreign", table: targetTbl, key: relation });
+        currentTbl = targetTbl;
+      }
     }
   }
   return result;
@@ -1349,7 +1356,7 @@ export const parseRelationPath = (path, fk_options) => {
 export const parseLegacyRelation = (type, rest, parentTbl) => {
   switch (type) {
     case "ChildList": {
-      const path = rest.split(".");
+      const path = rest ? rest.split(".") : [];
       if (path.length === 3) {
         const [viewName, table, key] = path;
         return [
@@ -1359,7 +1366,7 @@ export const parseLegacyRelation = (type, rest, parentTbl) => {
             key,
           },
         ];
-      } else {
+      } else if (path.length === 5) {
         const [viewName, thrTbl, thrTblFkey, fromTbl, fromTblFkey] = path;
         return [
           {
@@ -1374,6 +1381,7 @@ export const parseLegacyRelation = (type, rest, parentTbl) => {
           },
         ];
       }
+      break;
     }
     case "Independent": {
       return [{ type: "Independent", table: "None (no relation)" }];
@@ -1382,12 +1390,17 @@ export const parseLegacyRelation = (type, rest, parentTbl) => {
       return [{ type: "Own", table: `${parentTbl} (same table)` }];
     }
     case "OneToOneShow": {
-      const [viewname, relatedTbl, fkey] = rest.split(".");
+      const tokens = rest ? rest.split(".") : [];
+      if (tokens.length !== 3) break;
+      const [viewname, relatedTbl, fkey] = tokens;
       return [{ type: "Inbound", table: relatedTbl, key: fkey }];
     }
     case "ParentShow": {
-      const [viewname, parentTbl, fkey] = rest.split(".");
+      const tokens = rest ? rest.split(".") : [];
+      if (tokens.length !== 3) break;
+      const [viewname, parentTbl, fkey] = tokens;
       return [{ type: "Foreign", table: parentTbl, key: fkey }];
     }
   }
+  return [];
 };

@@ -68,7 +68,8 @@ export async function prepareSimpleTopicPostRelation() {
         above: [
           {
             type: "view",
-            view: "simple_posts_lists:.users.favsimpletopic.simple_posts$topic",
+            view: "simple_posts_lists",
+            relation: ".users.favsimpletopic.simple_posts$topic",
             name: "bc653",
             state: "shared",
           },
@@ -145,7 +146,8 @@ export async function prepareSimpleTopicPostRelation() {
         above: [
           {
             type: "view",
-            view: "simple_posts_lists:.users.favsimpletopic.simple_post_inbound$topic.post",
+            view: "simple_posts_lists",
+            relation: ".users.favsimpletopic.simple_post_inbound$topic.post",
             name: "bc653",
             state: "shared",
           },
@@ -261,7 +263,8 @@ export async function prepareEmployeeDepartment() {
           { type: "field", fieldview: "show", field_name: "name" },
           {
             type: "view",
-            view: "show_manager:.employee.department.manager",
+            view: "show_manager",
+            relation: ".employee.department.manager",
             name: "bc653",
             state: "shared",
           },

@@ -117,12 +117,12 @@ export function extractFromLayout(layout: any): ConnectedObjects {
   const _Page = require("../models/page");
   traverseSync(layout, {
     view(segment: any) {
-      const select = parse_view_select(segment.view);
+      const select = parse_view_select(segment.view, segment.relation);
       const view = _View.findOne({ name: select.viewname });
       if (view) embeddedViews.push(view);
     },
     view_link(segment: any) {
-      const select = parse_view_select(segment.view);
+      const select = parse_view_select(segment.view, segment.relation);
       const view = _View.findOne({ name: select.viewname });
       if (view) linkedViews.push(view);
     },
@@ -158,7 +158,7 @@ export function extractFromColumns(columns: any[]): ConnectedObjects {
   const _View = require("../models/view");
   for (const column of columns) {
     if (column.type === "ViewLink") {
-      const select = parse_view_select(column.view);
+      const select = parse_view_select(column.view, column.relation);
       const view = _View.findOne({ name: select.viewname });
       if (view) linkedViews.push(view);
     }

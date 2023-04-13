@@ -93,6 +93,7 @@ export /**
 const ViewLinkSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
+    relation: node.data.props.relation,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     isFormula: node.data.props.isFormula,
@@ -112,6 +113,7 @@ const ViewLinkSettings = () => {
   const {
     actions: { setProp },
     name,
+    relation,
     block,
     minRole,
     label,
@@ -174,11 +176,18 @@ const ViewLinkSettings = () => {
                 options={options}
                 viewname={use_view_name}
                 update={(relPath) => {
-                  setProp((prop) => (prop.name = relPath));
+                  if (relPath.startsWith(".")) {
+                    setProp((prop) => (prop.name = use_view_name));
+                    setProp((prop) => (prop.relation = relPath));
+                  } else {
+                    setProp((prop) => (prop.name = relPath));
+                    setProp((prop) => (prop.relation = undefined));
+                  }
                 }}
               />
               <RelationBadges
                 view={name}
+                relation={relation}
                 parentTbl={options.tableName}
                 fk_options={options.fk_options}
               />
@@ -271,6 +280,7 @@ ViewLink.craft = {
     column_type: "ViewLink",
     fields: [
       { name: "name", segment_name: "view", column_name: "view" },
+      "relation",
       { name: "label", segment_name: "view_label", canBeFormula: true },
       "block",
       "textStyle",
