@@ -358,6 +358,15 @@ class Table implements AbstractTable {
       .filter((f) => f.reftable_name === "users")
       .map((f) => ({ value: `${f.id}`, label: f.name }));
 
+    const users = Table.findOne({ name: "users" });
+    for (const ufield of users?.fields || []) {
+      if (ufield.is_fkey && ufield.reftable_name === this.name) {
+        opts.push({
+          label: `users.${ufield.label} [Key to ${this.name}]`,
+          value: `Fml:user.${ufield.name}===id /* users.${ufield.label} */`,
+        });
+      }
+    }
     // inherit from all my fks if table has ownership
     for (const field of fields) {
       if (field.is_fkey && field.reftable_name) {
@@ -376,7 +385,21 @@ class Table implements AbstractTable {
         }
         if (refTable?.ownership_formula) {
           const refFml = removeComments(refTable.ownership_formula);
-
+          if (refFml.startsWith("user.") && !refFml.includes(".includes(")) {
+            for (const ufield of users?.fields || []) {
+              if (
+                ufield.is_fkey &&
+                refFml.startsWith(`user.${ufield.name}===`)
+              ) {
+                const sides = refFml.split("===");
+                const newFml = `${sides[0]}===${field.name}.${sides[1]}`;
+                opts.push({
+                  label: `Inherit ${field.label}`,
+                  value: `Fml:${newFml} /* Inherit ${field.label} */`,
+                });
+              }
+            }
+          }
           if (refFml.endsWith("==user.id")) {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
