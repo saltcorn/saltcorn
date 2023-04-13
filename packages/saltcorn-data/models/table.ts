@@ -385,7 +385,21 @@ class Table implements AbstractTable {
         }
         if (refTable?.ownership_formula) {
           const refFml = removeComments(refTable.ownership_formula);
-
+          if (refFml.startsWith("user.") && !refFml.includes(".includes(")) {
+            for (const ufield of users?.fields || []) {
+              if (
+                ufield.is_fkey &&
+                refFml.startsWith(`user.${ufield.name}===`)
+              ) {
+                const sides = refFml.split("===");
+                const newFml = `${sides[0]}===${field.name}.${sides[1]}`;
+                opts.push({
+                  label: `Inherit ${field.label}`,
+                  value: `Fml:${newFml} /* Inherit ${field.label} */`,
+                });
+              }
+            }
+          }
           if (refFml.endsWith("==user.id")) {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
