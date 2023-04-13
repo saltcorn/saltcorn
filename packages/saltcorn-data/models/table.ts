@@ -358,6 +358,15 @@ class Table implements AbstractTable {
       .filter((f) => f.reftable_name === "users")
       .map((f) => ({ value: `${f.id}`, label: f.name }));
 
+    const users = Table.findOne({ name: "users" });
+    for (const ufield of users?.fields || []) {
+      if (ufield.is_fkey && ufield.reftable_name === this.name) {
+        opts.push({
+          label: `users.${ufield.label} [Key to ${this.name}]`,
+          value: `Fml:user.${ufield.name}===id /* users.${ufield.label} */`,
+        });
+      }
+    }
     // inherit from all my fks if table has ownership
     for (const field of fields) {
       if (field.is_fkey && field.reftable_name) {
