@@ -177,11 +177,15 @@ const ViewLinkSettings = () => {
                 viewname={use_view_name}
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
-                    setProp((prop) => (prop.name = use_view_name));
-                    setProp((prop) => (prop.relation = relPath));
+                    setProp((prop) => {
+                      prop.name = use_view_name;
+                      prop.relation = relPath;
+                    });
                   } else {
-                    setProp((prop) => (prop.name = relPath));
-                    setProp((prop) => (prop.relation = undefined));
+                    setProp((prop) => {
+                      prop.name = relPath;
+                      prop.relation = undefined;
+                    });
                   }
                 }}
               />

@@ -160,11 +160,15 @@ const ViewSettings = () => {
             viewname={viewname}
             update={(relPath) => {
               if (relPath.startsWith(".")) {
-                setProp((prop) => (prop.view = viewname));
-                setProp((prop) => (prop.relation = relPath));
+                setProp((prop) => {
+                  prop.view = viewname;
+                  prop.relation = relPath;
+                });
               } else {
-                setProp((prop) => (prop.view = relPath));
-                setProp((prop) => (prop.relation = undefined));
+                setProp((prop) => {
+                  prop.view = relPath;
+                  prop.relation = undefined;
+                });
               }
             }}
           />
