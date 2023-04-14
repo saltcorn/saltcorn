@@ -142,10 +142,10 @@ const ViewLinkSettings = () => {
       const target_value = e.target.value;
       setProp((prop) => (prop.view_name = target_value));
       if (target_value !== use_view_name) {
-        setProp(
-          (prop) =>
-            (prop.name = options.view_relation_opts[target_value][0].value)
-        );
+        setProp((prop) => {
+          prop.name = options.view_relation_opts[target_value][0].value;
+          prop.relation = undefined;
+        });
       }
     }
   };

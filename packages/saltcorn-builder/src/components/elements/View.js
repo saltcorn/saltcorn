@@ -127,8 +127,10 @@ const ViewSettings = () => {
       setProp((prop) => (prop.view_name = target_value));
       if (target_value !== viewname) {
         setProp((prop) => {
-          if (options.view_relation_opts[target_value])
+          if (options.view_relation_opts[target_value]) {
             prop.view = options.view_relation_opts[target_value][0].value;
+            prop.relation = undefined;
+          }
         });
       }
     }
