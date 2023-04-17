@@ -46,18 +46,21 @@ async function updateUserDefinedTables() {
   const existingTables = await saltcorn.data.db.listUserDefinedTables();
   const tables = await saltcorn.data.models.Table.find();
   for (const table of tables) {
+    const sanitized = saltcorn.data.db.sqlsanitize(table.name);
     if (
       table.name !== "users" &&
-      !existingTables.find((row) => row.name === table.name)
+      !existingTables.find((row) => row.name === sanitized)
     ) {
       // CREATE TABLE without inserting into _sc_tables
       await saltcorn.data.models.Table.create(table.name, {}, table.id);
     }
     const existingFields = (
-      await saltcorn.data.db.query(`PRAGMA table_info('${table.name}')`)
+      await saltcorn.data.db.query(`PRAGMA table_info('${sanitized}')`)
     ).rows.map((row) => row.name);
     for (const field of await table.getFields()) {
-      if (existingFields.indexOf(field.name) < 0) {
+      if (
+        existingFields.indexOf(saltcorn.data.db.sqlsanitize(field.name)) < 0
+      ) {
         // field is new
         await saltcorn.data.models.Field.create(field, false, field.id);
       }

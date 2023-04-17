@@ -58,6 +58,7 @@ module.exports = {
   },
   resolve: {
     fallback: {
+      net: false,
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),
       path: require.resolve("path-browserify"),
