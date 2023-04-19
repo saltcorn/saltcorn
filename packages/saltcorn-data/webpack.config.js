@@ -28,6 +28,7 @@ const saltcornMocks = {
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
+  "./html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
 };
 
 const dbMocks = {
@@ -57,6 +58,7 @@ module.exports = {
   },
   resolve: {
     fallback: {
+      net: false,
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),
       path: require.resolve("path-browserify"),

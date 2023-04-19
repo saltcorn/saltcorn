@@ -124,7 +124,7 @@
                 config.pluginHeaders.push(prepareHeader(header));
               }
             else if (typeof pluginHeaders === "function") {
-              const headerResult = pluginHeaders(row.configuration);
+              const headerResult = pluginHeaders(row.configuration || {});
               if (Array.isArray(headerResult)) {
                 for (const header of headerResult)
                   config.pluginHeaders.push(prepareHeader(header));
