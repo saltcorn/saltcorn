@@ -1,5 +1,9 @@
 import React, { Fragment, useContext, useState } from "react";
-import { parseRelationPath, parseLegacyRelation } from "./utils";
+import {
+  parseRelationPath,
+  parseLegacyRelation,
+  removeWhitespaces,
+} from "./utils";
 
 const buildBadgeCfgs = (parsed, parentTbl) => {
   const result = [];
@@ -32,7 +36,10 @@ const buildBadgeCfgs = (parsed, parentTbl) => {
 
 const buildBadge = ({ up, table, down }, index) => {
   return (
-    <div key={`badge_${table}_${index}`} className="my-1 d-flex">
+    <div
+      key={removeWhitespaces(`badge_${table}_${index}`)}
+      className="my-1 d-flex"
+    >
       <div className="m-auto badge bg-primary">
         {up ? (
           <div className="mt-1 d-flex justify-content-center">

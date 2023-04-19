@@ -1404,3 +1404,7 @@ export const parseLegacyRelation = (type, rest, parentTbl) => {
   }
   return [];
 };
+
+export const removeWhitespaces = (str) => {
+  return str.replace(/\s/g, "X");
+};

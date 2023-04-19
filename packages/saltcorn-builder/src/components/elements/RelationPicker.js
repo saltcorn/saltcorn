@@ -1,6 +1,10 @@
-/*global $, notifyAlert */
+/*global $ */
 import React, { Fragment, useContext, useState } from "react";
-import { parseRelationPath, parseLegacyRelation } from "./utils";
+import {
+  parseRelationPath,
+  parseLegacyRelation,
+  removeWhitespaces,
+} from "./utils";
 
 const parseRelations = (allOptions, viewname, parentTbl) => {
   const viewtable = allOptions.view_name_opts
@@ -9,7 +13,6 @@ const parseRelations = (allOptions, viewname, parentTbl) => {
   const options = allOptions.view_relation_opts[viewname] || [];
   const result = { table: parentTbl, inboundKeys: [], fkeys: [] };
   if (!viewtable) return result;
-  const warnings = [];
   for (const { value } of options) {
     let path = null;
     if (value.startsWith(".")) {
@@ -19,19 +22,7 @@ const parseRelations = (allOptions, viewname, parentTbl) => {
       path = parseLegacyRelation(prefix, rest, parentTbl);
     }
     if (path.length > 0) buildLevels(value, path, result, parentTbl);
-    else warnings.push(`The relation path '${value}' is invalid`);
-  }
-  if (warnings.length === 1) {
-    notifyAlert({
-      type: "danger",
-      text: warnings[0],
-    });
-  } else if (warnings.length > 1) {
-    notifyAlert({
-      type: "danger",
-      text: `Found multiple invalid relation paths`,
-    });
-    for (const warning of warnings) console.log(warning);
+    else console.log(`The relation path '${value}' is invalid`);
   }
   return result;
 };
@@ -131,7 +122,10 @@ export const RelationPicker = ({ options, viewname, update }) => {
             level.fkeys.map((fkey) => {
               const hasSubLevels =
                 fkey.fkeys.length > 0 || fkey.inboundKeys.length > 0;
-              const identifier = `${fkey.name}_${fkey.table}_${level.table}_${reclevel}`;
+              const identifier = removeWhitespaces(
+                `${fkey.name}_${fkey.table}_${level.table}_${reclevel}`
+              );
+
               return hasSubLevels ? (
                 <li
                   key={`${identifier}_fkey_key`}
@@ -180,7 +174,9 @@ export const RelationPicker = ({ options, viewname, update }) => {
               const hasSubLevels =
                 inboundKey.fkeys.length > 0 ||
                 inboundKey.inboundKeys.length > 0;
-              const identifier = `${inboundKey.name}_${inboundKey.table}_${inboundKey.table}_${reclevel}`;
+              const identifier = removeWhitespaces(
+                `${inboundKey.name}_${inboundKey.table}_${inboundKey.table}_${reclevel}`
+              );
               return hasSubLevels ? (
                 <li
                   key={`${identifier}_inboundkey_key`}

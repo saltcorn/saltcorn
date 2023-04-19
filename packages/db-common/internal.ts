@@ -210,48 +210,38 @@ const inSelectWithLevels =
     const joinLevels = v.inSelectWithLevels.joinLevels;
     for (let i = 0; i < joinLevels.length; i++) {
       const { table, fkey, inboundKey } = joinLevels[i];
-      const alias = quote(sqlsanitizeAllowDots(`${table}SubJ${i}`));
+      const alias = quote(sqlsanitize(`${table}SubJ${i}`));
       if (i === 0) {
         selectParts.push(
-          `from ${quote(sqlsanitizeAllowDots(`${table}`))} ${quote(
-            sqlsanitizeAllowDots(`${alias}`)
+          `from ${quote(sqlsanitize(`${table}`))} ${quote(
+            sqlsanitize(`${alias}`)
           )}`
         );
         whereObj = prefixFieldsInWhere(v.inSelectWithLevels.where, alias);
       } else if (i < joinLevels.length - 1) {
         if (fkey) {
           selectParts.push(
-            `join ${quote(
-              sqlsanitizeAllowDots(`${table}`)
-            )} ${alias} on ${quote(
-              sqlsanitizeAllowDots(`${lastAlias}.${fkey}`)
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.${sqlsanitize(fkey)}`
             )} = ${alias}.id`
           );
         } else {
           selectParts.push(
-            `join ${quote(
-              sqlsanitizeAllowDots(`${table}`)
-            )} ${alias} on ${quote(
-              sqlsanitizeAllowDots(`${lastAlias}.id`)
-            )} = ${quote(sqlsanitizeAllowDots(`${alias}.${inboundKey}`))}`
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.id`
+            )} = ${quote(`${alias}.${sqlsanitize(inboundKey!)}`)}`
           );
         }
       } else {
         if (fkey) {
-          inColumn = quote(sqlsanitizeAllowDots(`${lastAlias}.${fkey}`));
+          inColumn = quote(`${lastAlias}.${sqlsanitize(fkey)}`);
         } else {
           selectParts.push(
-            `join ${quote(
-              sqlsanitizeAllowDots(`${table}`)
-            )} ${alias} on ${quote(
-              sqlsanitizeAllowDots(`${lastAlias}.id`)
-            )} = ${quote(
-              sqlsanitizeAllowDots(
-                `${alias}.${quote(sqlsanitizeAllowDots(`${inboundKey}`))}`
-              )
-            )}`
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.id`
+            )} = ${quote(`${alias}.${sqlsanitize(`${inboundKey}`)}`)}`
           );
-          inColumn = quote(sqlsanitizeAllowDots(`${alias}.id`));
+          inColumn = quote(`${alias}.id`);
         }
       }
       lastAlias = alias;
