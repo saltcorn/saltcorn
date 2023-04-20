@@ -665,6 +665,22 @@ Gordon Kane, 217`;
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
   });
+  it("should ignore extra cols when importing", async () => {
+    const csv = `author,Pages,citations
+William H Press, 852,7
+Peter Rossi, 212,9`;
+    const fnm = "/tmp/test1ok.csv";
+    await writeFile(fnm, csv);
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    const rows = await table.getRows({ author: "Peter Rossi" });
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].pages).toBe(212);
+  });
   it("should replace when id given", async () => {
     const csv = `id,author,Pages
 1, Noam Chomsky, 540
