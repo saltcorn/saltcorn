@@ -666,7 +666,7 @@ Gordon Kane, 217`;
     expect(rows[0].pages).toBe(217);
   });
   it("should ignore extra cols when importing", async () => {
-    const csv = `author,Pages,citations
+    const csv = `author,Pages,Pages1
 William H Press, 852,7
 Peter Rossi, 212,9`;
     const fnm = "/tmp/test1ok.csv";
