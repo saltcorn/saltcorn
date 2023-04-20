@@ -599,11 +599,11 @@ function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
     data: { build_dir: outDirName },
     success: function (res) {
       if (!res.finished) {
-        if (pollCount >= 50) {
+        if (pollCount >= 100) {
           removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
           notifyAlert({
             type: "danger",
-            text: "unable to get the build results",
+            text: "Unable to get the build results",
           });
         } else {
           setTimeout(() => {

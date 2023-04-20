@@ -253,7 +253,7 @@ describe("Show view", () => {
       ],
       response: !remoteQueries
         ? `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><a href="javascript:ajax_modal('/view/authorshow?id=1')">foo it</a></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`
-        : `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><a href="javascript:mobile_modal('/view/authorshow?id=1')">foo it</a></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="https://countto.com/967">Herman Melville</a></div></div></div>`,
+        : `<div class="row w-100"><div class="col-6"><div class="card mt-4 shadow"><div class="card-body"><a href="javascript:mobile_modal('/view/authorshow?id=1')">foo it</a></div></div></div><div class="col-6"><div class="text-start" style="min-height: 100px;border: 1px solid black;  background-color: #a9a7a7;  "><a href="javascript:execLink('https://countto.com/967')">Herman Melville</a></div></div></div>`,
     });
     await test_show({
       layout: {
