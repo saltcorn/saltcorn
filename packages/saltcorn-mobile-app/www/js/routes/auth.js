@@ -1,4 +1,4 @@
-/*global sbAdmin2Layout, apiCall, removeJwt, saltcorn*/
+/*global sbAdmin2Layout, apiCall, removeJwt, saltcorn, clearHistory*/
 
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
