@@ -1221,7 +1221,9 @@ const float = {
       case "number":
         return v;
       case "string":
-        const parsed = parseFloat(v);
+        const stripped = v.replace(/[^0-9.\-e]+/g, "");
+        if (!stripped) return undefined;
+        const parsed = Number(stripped);
         return isNaN(parsed) ? undefined : parsed;
       default:
         return undefined;
