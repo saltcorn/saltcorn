@@ -1553,7 +1553,7 @@ class Table implements AbstractTable {
     });
     const colRe = new RegExp(
       `(${Object.keys(okHeaders)
-        .map((k) => renamesInv[k] || k)
+        .map((k) => `^${renamesInv[k] || k}$`)
         .join("|")})`
     );
 
