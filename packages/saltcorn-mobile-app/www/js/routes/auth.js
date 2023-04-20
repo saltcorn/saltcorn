@@ -90,6 +90,7 @@ const logoutAction = async () => {
   const response = await apiCall({ method: "GET", path: "/auth/logout" });
   if (response.data.success) {
     await removeJwt();
+    clearHistory();
     config.jwt = undefined;
     return {
       content: renderLoginView(config.entry_point, config.version_tag),

@@ -293,7 +293,7 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
-
+      const mobile = typeof window !== "undefined";
       return wrap(
         segment,
         isTop,
@@ -301,10 +301,12 @@ const render = ({
         a(
           {
             href: segment.in_modal
-              ? typeof window === "undefined"
+              ? !mobile
                 ? `javascript:ajax_modal('${segment.url}');`
                 : `javascript:mobile_modal('${segment.url}');`
-              : segment.url,
+              : !mobile
+              ? segment.url
+              : `javascript:execLink('${segment.url}')`,
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
