@@ -1,5 +1,9 @@
 const { PluginManager } = require("live-plugin-manager");
-const { staticDependencies } = require("@saltcorn/server/load_plugins");
+const {
+  loadAllPlugins,
+  staticDependencies,
+} = require("@saltcorn/server/load_plugins");
+const { features } = require("@saltcorn/data/db/state");
 import { join } from "path";
 import Plugin from "@saltcorn/data/models/plugin";
 import {
@@ -109,7 +113,9 @@ export class MobileBuilder {
       this.plugins
     );
     if (resultCode !== 0) return resultCode;
-    await copyPublicDirs(this.buildDir, this.pluginManager, this.plugins);
+    features.version_plugin_serve_path = false;
+    await loadAllPlugins();
+    await copyPublicDirs(this.buildDir);
     await installNpmPackages(this.buildDir, this.pluginManager);
     await buildTablesFile(this.buildDir);
     resultCode = await createSqliteDb(this.buildDir);
@@ -125,7 +131,7 @@ export class MobileBuilder {
         this.buildDir,
         this.copyTargetDir,
         this.user!,
-        this.copyFileName,
+        this.copyFileName
       );
     }
     return resultCode;
