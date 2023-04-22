@@ -229,25 +229,8 @@ describe("inbound relations", () => {
 
   it("inbound relation from query", async () => {
     const queryObj = {
-      type: "RelationPath",
-      path: [
-        {
-          table: "user_interested_in_topic",
-          inboundKey: "user",
-        },
-        {
-          fkey: "topic",
-        },
-        {
-          table: "blog_in_topic",
-          inboundKey: "topic",
-        },
-        {
-          fkey: "post",
-        },
-      ],
-      viewname: "blog_posts_feed",
-      sourcetable: "users",
+      relation:
+        ".users.user_interested_in_topic$user.topic.blog_in_topic$topic.post",
       srcId: 1,
     };
     const app = await getApp({ disableCsrf: true });
@@ -255,7 +238,7 @@ describe("inbound relations", () => {
 
     await request(app)
       .get(
-        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -267,7 +250,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 2;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -279,7 +262,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 3;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -291,35 +274,15 @@ describe("inbound relations", () => {
 
   it("inbound relation with levels from query", async () => {
     const queryObj = {
-      type: "RelationPath",
-      path: [
-        {
-          table: "user_interested_in_topic",
-          inboundKey: "user",
-        },
-        {
-          fkey: "topic",
-        },
-        {
-          table: "inbound_inbound",
-          inboundKey: "topic",
-        },
-        {
-          fkey: "bp_inbound",
-        },
-        {
-          fkey: "post",
-        },
-      ],
-      viewname: "blog_posts_feed",
-      sourcetable: "users",
+      relation:
+        ".users.user_interested_in_topic$user.topic.inbound_inbound$topic.bp_inbound.post",
       srcId: 1,
     };
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get(
-        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -331,7 +294,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 2;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_view_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )

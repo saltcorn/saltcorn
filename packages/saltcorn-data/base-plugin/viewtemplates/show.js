@@ -433,7 +433,7 @@ const renderRows = async (
           case "RelationPath": {
             const path = view.view_select.path;
             state1 = {
-              _view_relation_path_: {
+              _inbound_relation_path_: {
                 ...view.view_select,
                 srcId: path[0].fkey ? row[path[0].fkey] : row[pk_name],
               },

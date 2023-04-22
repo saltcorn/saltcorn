@@ -11,7 +11,12 @@ const Trigger = require("./models/trigger");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
-const { applyAsync, InvalidConfiguration } = require("./utils");
+const {
+  applyAsync,
+  InvalidConfiguration,
+  parseRelationPath,
+  buildRelationPath,
+} = require("./utils");
 const {
   jsexprToWhere,
   freeVariables,
@@ -120,7 +125,9 @@ const stateToQueryString = (state) => {
         k === "id"
           ? null
           : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_view_relation_path_" ? JSON.stringify(v) : v
+              k === "_inbound_relation_path_" && typeof v !== "string"
+                ? queryToString(v)
+                : v
             )}`
       )
       .filter((s) => !!s)
@@ -1479,6 +1486,24 @@ const addOrCreateList = (container, key, x) => {
   } else container[key] = [x];
 };
 
+const stringToQuery = (s) => {
+  const json = JSON.parse(s);
+  const { path, sourcetable } = parseRelationPath(json.relation);
+  return {
+    ...json,
+    path,
+    sourcetable,
+  };
+};
+
+const queryToString = (query) => {
+  const relObj = {
+    srcId: query.srcId,
+    relation: buildRelationPath(query.sourcetable, query.path),
+  };
+  return JSON.stringify(relObj);
+};
+
 /**
  * @function
  * @param {object} opts
@@ -1501,8 +1526,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     }
 
     const field = fields.find((fld) => fld.name === k);
-    if (k === "_view_relation_path_") {
-      const queryObj = typeof v === "string" ? JSON.parse(v) : v;
+    if (k === "_inbound_relation_path_") {
+      const queryObj = typeof v === "string" ? stringToQuery(v) : v;
       const levels = [];
       let lastTableName = queryObj.sourcetable;
       let where = null;

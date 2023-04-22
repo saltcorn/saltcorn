@@ -610,7 +610,7 @@ const transformForm = async ({
         case "RelationPath": {
           const path = view_select.path;
           state = {
-            _view_relation_path_: {
+            _inbound_relation_path_: {
               ...view_select,
               srcId: path[0].fkey ? row[path[0].fkey] : row[table.pk_name],
             },

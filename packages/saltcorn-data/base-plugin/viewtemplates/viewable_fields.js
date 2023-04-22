@@ -15,7 +15,7 @@ const { structuredClone, isWeb } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode } = require("../../utils");
+const { isNode, parseRelationPath } = require("../../utils");
 const { bool, date } = require("../types");
 
 /**
@@ -206,33 +206,16 @@ const make_link = (
   };
 };
 
-const parseRelationPath = (viewname, path) => {
-  const tokens = path.split(".");
-  const result = {
-    type: "RelationPath",
-    viewname,
-    sourcetable: tokens[1],
-    path: [],
-  };
-  for (const relation of tokens.slice(2)) {
-    if (relation.indexOf("$") > 0) {
-      const [table, inboundKey] = relation.split("$");
-      result.path.push({ table, inboundKey });
-    } else {
-      result.path.push({ fkey: relation });
-    }
-  }
-  return result;
-};
-
 /**
  * @param {string} view name of the view or a legacy relation (type:telation)
  * @param {string} relation new relation path syntax
  * @returns {object}
  */
 const parse_view_select = (view, relation) => {
-  if (relation) return parseRelationPath(view, relation);
-  else {
+  if (relation) {
+    const { sourcetable, path } = parseRelationPath(relation);
+    return { type: "RelationPath", viewname: view, sourcetable, path };
+  } else {
     // legacy relation path
     const colonSplit = view.split(":");
     if (colonSplit.length === 1) return { type: "Own", viewname: view };
@@ -316,22 +299,24 @@ const view_linker = (
       .join("&");
   };
   if (relation) {
-    const parsedRelObj = parseRelationPath(view, relation);
-    const pathStart = parsedRelObj.path[0];
+    const { path } = parseRelationPath(relation);
+    const pathStart = path[0];
     const idName = pathStart.fkey ? pathStart.fkey : "id";
     return {
-      label: parsedRelObj.viewname,
+      label: view,
       key: (r) => {
         const relObj = {
-          ...parsedRelObj,
           srcId: r[idName],
+          relation: relation,
         };
         const target = `/view/${encodeURIComponent(
-          parsedRelObj.viewname
-        )}?_view_relation_path_=${encodeURIComponent(JSON.stringify(relObj))}`;
+          view
+        )}?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(relObj)
+        )}`;
         return link_view(
           isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-          get_label(parsedRelObj.viewname, r),
+          get_label(view, r),
           in_modal,
           link_style,
           link_size,
