@@ -1,8 +1,8 @@
-import { join } from "path";
+import { dirname, basename, join, sep } from "path";
 import { existsSync, mkdirSync, copySync, readdirSync, rmSync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
 import { spawnSync } from "child_process";
-const { requirePlugin } = require("@saltcorn/server/load_plugins");
+const { getState, features } = require("@saltcorn/data/db/state");
 
 /**
  *
@@ -36,29 +36,61 @@ export async function bundlePackagesAndPlugins(
   return result.status;
 }
 
-/**
- *
- * @param buildDir directory where the app will be build
- * @param manager live-plugin-manager to load a saltcorn-plugin
- * @param plugins saltcorn plugins
- */
-export async function copyPublicDirs(
-  buildDir: string,
-  manager: any,
-  plugins: Plugin[]
+async function copyHeaderToApp(
+  pluginLocation: string,
+  header: string,
+  wwwDir: string
 ) {
+  const pathArr = header.split(sep);
+  if (pathArr.length > 4) {
+    const pluginSubDir = pathArr.slice(4, pathArr.length - 1).join(sep);
+    const dstPublicDir = join(wwwDir, dirname(header));
+    if (!existsSync(dstPublicDir)) {
+      mkdirSync(dstPublicDir, { recursive: true });
+    }
+    const headerFile = basename(header);
+    copySync(
+      join(pluginLocation, "public", pluginSubDir, headerFile),
+      join(dstPublicDir, headerFile)
+    );
+  } else {
+    console.log(`skipping header '${header}'`);
+  }
+}
+
+function copyAllThemeFiles(location: string, dstPublicDir: string) {
+  const srcPublicDir = join(location, "public");
+  if (existsSync(srcPublicDir)) {
+    if (!existsSync(dstPublicDir)) {
+      mkdirSync(dstPublicDir, { recursive: true });
+    }
+    for (const dirEntry of readdirSync(srcPublicDir)) {
+      copySync(join(srcPublicDir, dirEntry), join(dstPublicDir, dirEntry));
+    }
+  }
+}
+
+function hasTheme(plugin: any) {
+  return plugin.layout;
+}
+
+/**
+ * Copy files from the plugin 'public' directories that are needed as headers into the app.
+ * For themes, everything from 'public' will be copied.
+ * @param buildDir directory where the app will be build
+ */
+export async function copyPublicDirs(buildDir: string) {
+  const state = getState();
   const wwwDir = join(buildDir, "www");
-  for (const plugin of plugins) {
-    const required = await requirePlugin(plugin, false, manager);
-    const srcPublicDir = join(required.location, "public");
-    if (existsSync(srcPublicDir)) {
-      const dstPublicDir = join(wwwDir, "plugins", "public", plugin.name);
-      if (!existsSync(dstPublicDir)) {
-        mkdirSync(dstPublicDir, { recursive: true });
+  for (const [k, v] of <[string, any]>Object.entries(state.plugins)) {
+    const location = state.plugin_locations[k];
+    if (location) {
+      for (const { script, css } of state.headers[k] || []) {
+        if (script) copyHeaderToApp(location, script, wwwDir);
+        if (css) copyHeaderToApp(location, css, wwwDir);
       }
-      for (const dirEntry of readdirSync(srcPublicDir)) {
-        copySync(join(srcPublicDir, dirEntry), join(dstPublicDir, dirEntry));
-      }
+      if (hasTheme(v) && k !== "sbadmin2")
+        copyAllThemeFiles(location, join(wwwDir, "plugins", "public", k));
     }
   }
 }
