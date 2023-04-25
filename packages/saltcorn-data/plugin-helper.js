@@ -306,28 +306,34 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
  * @param {Table} targetTbl table to check for an Inbound relation
  * @param {Table} srcTable table of the top view
  * @param {string[]} levelPath inbound levels already visited
+ * @param {*} tableCache helper cache so that we don't have to call Table.findOne() all the time
+ * @param {*} fieldCache helper cache so that we don't have to call Field.find() all the time
  * @returns
  */
-const get_inbound_path_suffixes = async (targetTbl, srcTable, levelPath) => {
+const get_inbound_path_suffixes = async (
+  targetTbl,
+  srcTable,
+  levelPath,
+  tableCache,
+  fieldCache
+) => {
   const result = [];
   // fks from targetTbl
   for (const fkToRelTbl of targetTbl.getForeignKeys()) {
     const relTblName = fkToRelTbl.reftable_name;
     if (relTblName === srcTable.name) continue;
     // inbounds to the target of fk
-    const inboundFks = (
-      await Field.find({
-        reftable_name: relTblName,
-      })
-    ).filter(
-      (field) =>
-        field.table_id !== targetTbl.id &&
-        !levelPath.find(
-          (val) => val.tbl === targetTbl.name && val.fk === fkToRelTbl.name
+    const inboundFks = fieldCache[relTblName]
+      ? fieldCache[relTblName].filter(
+          (field) =>
+            field.table_id !== targetTbl.id &&
+            !levelPath.find(
+              (val) => val.tbl === targetTbl.name && val.fk === fkToRelTbl.name
+            )
         )
-    );
+      : [];
     for (const inboundFk of inboundFks) {
-      const inboundTable = Table.findOne({ id: inboundFk.table_id });
+      const inboundTable = tableCache[inboundFk.table_id];
       if (inboundTable) {
         const relTblRefs = inboundTable
           .getForeignKeys()
@@ -383,10 +389,28 @@ const get_inbound_path_suffixes = async (targetTbl, srcTable, levelPath) => {
  * @returns
  */
 const get_inbound_relation_opts = async (source, viewname) => {
+  const tableCache = {};
+  for (const table of await Table.find()) {
+    tableCache[table.id] = table;
+  }
+  const fieldCache = {};
+  for (const field of await Field.find()) {
+    if (field.reftable_name) {
+      if (!fieldCache[field.reftable_name])
+        fieldCache[field.reftable_name] = [];
+      fieldCache[field.reftable_name].push(field);
+    }
+  }
   const result = [];
   const search = async (table, path, rootTable, visited) => {
     const visitedCopy = new Set(visited);
-    const suffixes = await get_inbound_path_suffixes(table, source, path);
+    const suffixes = await get_inbound_path_suffixes(
+      table,
+      source,
+      path,
+      tableCache,
+      fieldCache
+    );
     if (suffixes.length > 0) {
       const views = await View.find_table_views_where(
         rootTable.id,
@@ -400,9 +424,9 @@ const get_inbound_relation_opts = async (source, viewname) => {
     }
     if (!visitedCopy.has(table.name)) {
       visitedCopy.add(table.name);
-      for (const inboundFk of await Field.find({ reftable_name: table.name })) {
+      for (const inboundFk of fieldCache[table.name] || []) {
         if (inboundFk.table_id === table.id) continue;
-        const inboundTbl = Table.findOne({ id: inboundFk.table_id });
+        const inboundTbl = tableCache[inboundFk.table_id];
         await search(
           inboundTbl,
           [{ tbl: inboundTbl.name, fk: inboundFk.name }, ...path],

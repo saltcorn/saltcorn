@@ -175,7 +175,7 @@ export const RelationPicker = ({ options, viewname, update }) => {
                 inboundKey.fkeys.length > 0 ||
                 inboundKey.inboundKeys.length > 0;
               const identifier = removeWhitespaces(
-                `${inboundKey.name}_${inboundKey.table}_${inboundKey.table}_${reclevel}`
+                `${inboundKey.name}_${inboundKey.table}_${level.table}_${reclevel}`
               );
               return hasSubLevels ? (
                 <li
