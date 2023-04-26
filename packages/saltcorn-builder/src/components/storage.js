@@ -142,6 +142,7 @@ export /**
           <View
             key={ix}
             view={segment.view}
+            relation={segment.relation}
             view_name={segment.view_name}
             name={segment.name}
             state={segment.state}
@@ -457,6 +458,7 @@ export /**
         return {
           type: "view",
           view: node.props.view,
+          relation: node.props.relation,
           name:
             node.props.name === "not_assigned" ? rand_ident() : node.props.name,
           state: node.props.state,

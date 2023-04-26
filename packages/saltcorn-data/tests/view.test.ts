@@ -1,4 +1,5 @@
 import Table from "../models/table";
+import Field from "../models/field";
 import View from "../models/view";
 import db from "../db";
 import mocks from "./mocks";
@@ -8,6 +9,10 @@ import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { GenObj } from "../../saltcorn-types/dist/common_types";
 import { renderEditInEditConfig } from "./remote_query_helper";
+import {
+  prepareEmployeeDepartment,
+  prepareSimpleTopicPostRelation,
+} from "./common_helpers";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -333,6 +338,248 @@ describe("nested views", () => {
     expect(res).toContain("728");
     expect(res).toContain("967");
     expect(res).toContain("Melville");
+  });
+});
+
+describe("subviews with relations", () => {
+  it("blog_posts_feed with inbound relation", async () => {
+    const v = View.findOne({ name: "show_user_with_blog_posts_feed" });
+    assertIsSet(v);
+    {
+      const res = await v.run({ id: 1 }, mockReqRes);
+      expect(res).toContain("Content of post APost A");
+      expect(res).toContain("Content of post BPost B");
+      expect(res).toContain("Content of post CPost C");
+    }
+    {
+      const res = await v.run({ id: 2 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("Content of post APost A")).toBe(-1);
+      expect(res.search("Content of post BPost B") >= 0).toBe(true);
+      expect(res.search("Content of post CPost C")).toBe(-1);
+    }
+    {
+      const res = await v.run({ id: 3 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res).toContain("Content of post APost A");
+      expect(res).toContain("Content of post BPost B");
+      expect(res).toContain("Content of post CPost C");
+    }
+  });
+
+  it("blog_in_topic_feed with inbound relation", async () => {
+    const v = View.findOne({ name: "show_user_with_blog_in_topic_feed" });
+    assertIsSet(v);
+    {
+      const res = await v.run({ id: 1 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("Post ATopic A") >= 0).toBe(true);
+      expect(res.search("Post BTopic A") >= 0).toBe(true);
+      expect(res.search("Post CTopic A") >= 0).toBe(true);
+    }
+    {
+      const res = await v.run({ id: 2 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("Post BTopic B") >= 0).toBe(true);
+    }
+    {
+      const res = await v.run({ id: 3 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("Post ATopic A") >= 0).toBe(true);
+      expect(res.search("Post BTopic A") >= 0).toBe(true);
+      expect(res.search("Post CTopic A") >= 0).toBe(true);
+      expect(res.search("Post BTopic B") >= 0).toBe(true);
+    }
+  });
+
+  it("two levels inbound", async () => {
+    const v = View.findOne({
+      name: "show_user_with_blog_posts_feed_two_levels",
+    });
+    assertIsSet(v);
+    const res = await v.run({ id: 1 }, mockReqRes);
+    expect(res.length > 0).toBe(true);
+    expect(res.search("Content of post APost A") >= 0).toBe(true);
+    expect(res.search("Content of post BPost B")).toBe(-1);
+    expect(res.search("Content of post CPost C") >= 0).toBe(true);
+  });
+
+  it("three levels inbound", async () => {
+    /*
+                  inbound_level_two      bp_inbound              post
+      inbound_level_three -> inbound_inbound -> blog_post_inbound -> blog_posts
+    */
+    const levelThreeInbound = await Table.create("inbound_level_three");
+    const inbound_inbound = Table.findOne({ name: "inbound_inbound" });
+    assertIsSet(inbound_inbound);
+    const topics = Table.findOne({ name: "topics" });
+    assertIsSet(topics);
+    await Field.create({
+      table: levelThreeInbound,
+      name: "inbound_level_two",
+      reftable: inbound_inbound,
+      label: "inbound to level 2",
+      type: "Key",
+      attributes: { summary_field: "id" },
+    });
+    await Field.create({
+      table: levelThreeInbound,
+      name: "topic",
+      reftable: topics,
+      label: "Topic",
+      type: "Key",
+      attributes: { summary_field: "id" },
+    });
+    await db.insert(
+      "blog_post_inbound",
+      {
+        post: 1,
+      },
+      {
+        ignoreExisting: true,
+      }
+    );
+    await db.insert(
+      "blog_post_inbound",
+      {
+        post: 3,
+      },
+      {
+        ignoreExisting: true,
+      }
+    );
+    await db.insert(
+      "inbound_inbound",
+      {
+        bp_inbound: 1,
+        topic: 1,
+      },
+      {
+        ignoreExisting: true,
+      }
+    );
+    await db.insert(
+      "inbound_inbound",
+      {
+        bp_inbound: 2,
+        topic: 1,
+      },
+      {
+        ignoreExisting: true,
+      }
+    );
+    const v = await View.create({
+      table_id: 1,
+      name: "show_user_with_blog_posts_feed_three_levels",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              type: "view",
+              view: "blog_posts_feed",
+              relation:
+                ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post",
+              name: "bc653",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 10,
+    });
+    {
+      const res = await v.run({ id: 1 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("Content of post APost A")).toBe(-1);
+      expect(res.search("Content of post BPost B")).toBe(-1);
+      expect(res.search("Content of post CPost C")).toBe(-1);
+    }
+    await db.insert("inbound_level_three", {
+      inbound_level_two: 1,
+      topic: 1,
+    });
+    await db.insert("inbound_level_three", {
+      inbound_level_two: 2,
+      topic: 1,
+    });
+    {
+      const res = await v.run({ id: 1 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("Content of post APost A") >= 0).toBe(true);
+      expect(res.search("Content of post BPost B")).toBe(-1);
+      expect(res.search("Content of post CPost C") >= 0).toBe(true);
+    }
+  });
+
+  it("employee department relation", async () => {
+    await prepareEmployeeDepartment();
+    const v = View.findOne({ name: "show_employee" });
+    assertIsSet(v);
+    {
+      const res = await v.run({ id: 1 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("managermanager") >= 0).toBe(true);
+    }
+    {
+      const res = await v.run({ id: 2 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("my_employeemanager") >= 0).toBe(true);
+    }
+  });
+
+  it("simple post topic relation", async () => {
+    await prepareSimpleTopicPostRelation();
+    const v = View.findOne({ name: "show_user_with_simple_posts_list" });
+    assertIsSet(v);
+    {
+      const res = await v.run({ id: 1 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("first post in topic A") >= 0).toBe(true);
+      expect(res.search("second post in topic A") >= 0).toBe(true);
+      expect(res.search("post in topic B")).toBe(-1);
+    }
+    {
+      const res = await v.run({ id: 2 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("first post in topic A")).toBe(-1);
+      expect(res.search("second post in topic A")).toBe(-1);
+      expect(res.search("post in topic B")).toBe(-1);
+    }
+    {
+      const res = await v.run({ id: 3 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("first post in topic A")).toBe(-1);
+      expect(res.search("second post in topic A")).toBe(-1);
+      expect(res.search("post in topic B")).toBe(-1);
+    }
+
+    const vlevels = View.findOne({
+      name: "show_user_with_simple_posts_list_levels",
+    });
+    assertIsSet(vlevels);
+    {
+      const res = await vlevels.run({ id: 1 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("first post in topic A") >= 0).toBe(true);
+      expect(res.search("second post in topic A")).toBe(-1);
+      expect(res.search("post in topic B")).toBe(-1);
+    }
+    {
+      const res = await vlevels.run({ id: 2 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("first post in topic A")).toBe(-1);
+      expect(res.search("second post in topic A")).toBe(-1);
+      expect(res.search("post in topic B")).toBe(-1);
+    }
+    {
+      const res = await vlevels.run({ id: 3 }, mockReqRes);
+      expect(res.length > 0).toBe(true);
+      expect(res.search("first post in topic A")).toBe(-1);
+      expect(res.search("second post in topic A")).toBe(-1);
+      expect(res.search("post in topic B")).toBe(-1);
+    }
   });
 });
 

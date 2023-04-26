@@ -11,7 +11,12 @@ const Trigger = require("./models/trigger");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
-const { applyAsync, InvalidConfiguration } = require("./utils");
+const {
+  applyAsync,
+  InvalidConfiguration,
+  parseRelationPath,
+  buildRelationPath,
+} = require("./utils");
 const {
   jsexprToWhere,
   freeVariables,
@@ -117,7 +122,13 @@ const stateToQueryString = (state) => {
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        k === "id" ? null : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+        k === "id"
+          ? null
+          : `${encodeURIComponent(k)}=${encodeURIComponent(
+              k === "_inbound_relation_path_" && typeof v !== "string"
+                ? queryToString(v)
+                : v
+            )}`
       )
       .filter((s) => !!s)
       .join("&")
@@ -291,6 +302,188 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
 };
 
 /**
+ * helper for 'get_inbound_relation_opts'
+ * @param {Table} targetTbl table to check for an Inbound relation
+ * @param {Table} srcTable table of the top view
+ * @param {string[]} levelPath inbound levels already visited
+ * @param {*} tableCache helper cache so that we don't have to call Table.findOne() all the time
+ * @param {*} fieldCache helper cache so that we don't have to call Field.find() all the time
+ * @returns
+ */
+const get_inbound_path_suffixes = async (
+  targetTbl,
+  srcTable,
+  levelPath,
+  tableCache,
+  fieldCache
+) => {
+  const result = [];
+  // fks from targetTbl
+  for (const fkToRelTbl of targetTbl.getForeignKeys()) {
+    const relTblName = fkToRelTbl.reftable_name;
+    if (relTblName === srcTable.name) continue;
+    // inbounds to the target of fk
+    const inboundFks = fieldCache[relTblName]
+      ? fieldCache[relTblName].filter(
+          (field) =>
+            field.table_id !== targetTbl.id &&
+            !levelPath.find(
+              (val) => val.tbl === targetTbl.name && val.fk === fkToRelTbl.name
+            )
+        )
+      : [];
+    for (const inboundFk of inboundFks) {
+      const inboundTable = tableCache[inboundFk.table_id];
+      if (inboundTable) {
+        const relTblRefs = inboundTable
+          .getForeignKeys()
+          .filter((f) => f.reftable_name === relTblName);
+        // the inbound comes from 'srcTable'
+        if (inboundTable.id === srcTable.id) {
+          const levels = levelPath.map((val) => val.fk).join(".");
+          for (const inboundRelTblKey of relTblRefs) {
+            const newSuffix = `.${srcTable.name}.${inboundRelTblKey.name}.${
+              targetTbl.name
+            }$${fkToRelTbl.name}${levels ? `.${levels}` : ""}`;
+            if (result.indexOf(newSuffix) === -1) {
+              result.push(newSuffix);
+            }
+          }
+        } else {
+          // check if there are refs to 'srcTable'
+          const srcRefs = inboundTable
+            .getForeignKeys()
+            .filter((f) => f.reftable_name === srcTable.name);
+          for (const srcTblRef of srcRefs) {
+            for (const relTblRef of relTblRefs) {
+              if (levelPath.length > 0) {
+                let levels = `${levelPath[0].tbl}$${fkToRelTbl.name}`;
+                for (let i = 0; i < levelPath.length; i++) {
+                  levels = `${levels}.${levelPath[i].fk}`;
+                }
+                const newSuffix =
+                  `.${srcTable.name}.${inboundTable.name}$${srcTblRef.name}.${relTblRef.name}.` +
+                  `${levels}`;
+                if (result.indexOf(newSuffix) === -1) {
+                  result.push(newSuffix);
+                }
+              } else {
+                const newSuffix = `.${srcTable.name}.${inboundTable.name}$${srcTblRef.name}.${relTblRef.name}.${targetTbl.name}$${fkToRelTbl.name}`;
+                if (result.indexOf(newSuffix) === -1) {
+                  result.push(newSuffix);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
+};
+
+/**
+ * search for relations where an in select to source is possible
+ * @param {Table} source
+ * @param {string} viewname
+ * @returns
+ */
+const get_inbound_relation_opts = async (source, viewname) => {
+  const tableCache = {};
+  for (const table of await Table.find()) {
+    tableCache[table.id] = table;
+  }
+  const fieldCache = {};
+  for (const field of await Field.find()) {
+    if (field.reftable_name) {
+      if (!fieldCache[field.reftable_name])
+        fieldCache[field.reftable_name] = [];
+      fieldCache[field.reftable_name].push(field);
+    }
+  }
+  const result = [];
+  const search = async (table, path, rootTable, visited) => {
+    const visitedCopy = new Set(visited);
+    const suffixes = await get_inbound_path_suffixes(
+      table,
+      source,
+      path,
+      tableCache,
+      fieldCache
+    );
+    if (suffixes.length > 0) {
+      const views = await View.find_table_views_where(
+        rootTable.id,
+        ({ state_fields, viewrow }) =>
+          viewrow.name !== viewname &&
+          !state_fields.some((sf) => sf.name === "id")
+      );
+      for (const suffix of suffixes) {
+        result.push({ path: suffix, views });
+      }
+    }
+    if (!visitedCopy.has(table.name)) {
+      visitedCopy.add(table.name);
+      for (const inboundFk of fieldCache[table.name] || []) {
+        if (inboundFk.table_id === table.id) continue;
+        const inboundTbl = tableCache[inboundFk.table_id];
+        await search(
+          inboundTbl,
+          [{ tbl: inboundTbl.name, fk: inboundFk.name }, ...path],
+          rootTable,
+          visitedCopy
+        );
+      }
+    }
+  };
+  // search in reverse,
+  // start with the target (table of the subview) to the relation source
+  for (const table of await Table.find()) {
+    const visited = new Set();
+    await search(table, [], table, visited);
+  }
+  return result;
+};
+
+/**
+ * Get all relation options where source has a key to another table (refTable)
+ * and refTable has a key to source.
+ * Otherwise one could use a OneToOneShow from refTable.
+ * @param {Table} source
+ * @param {string} viewname name of the topview
+ * @returns viewnames mapped to arrays of Inbound options
+ */
+const get_inbound_self_relation_opts = async (source, viewname) => {
+  const fields = await Field.find({
+    reftable_name: source.name,
+    is_unique: true,
+  });
+  const result = [];
+  const targetFields = source.getForeignKeys();
+  for (const field of fields) {
+    const refTable = Table.findOne({ id: field.table_id });
+    const fromTargetToRef = targetFields.filter(
+      (field) => field.reftable_name === refTable.name
+    );
+    if (fromTargetToRef.length > 0) {
+      const views = await View.find_table_views_where(
+        source,
+        ({ state_fields, viewrow }) =>
+          viewrow.name !== viewname &&
+          state_fields.some((sf) => sf.name === "id")
+      );
+      for (const toRef of fromTargetToRef) {
+        result.push({
+          path: `.${source.name}.${toRef.name}.${field.name}`,
+          views,
+        });
+      }
+    }
+  }
+  return result;
+};
+
+/**
  * @function
  * @param {Table|object} table
  * @param {string} viewname
@@ -309,6 +502,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
       table_id_to_name[v.table_id] || ""
     }]`,
     name: v.name,
+    table: table_id_to_name[v.table_id] || "",
   }));
   const view_relation_opts = {};
   const link_view_opts = [];
@@ -325,8 +519,15 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
       relation: table.name,
     });
   });
-  const link_view_opts_push = (o) => {
+  const link_view_opts_push_legacy = (o) => {
     if (!link_view_opts.map((v) => v.name).includes(o.name))
+      push_view_option(o);
+  };
+  const link_view_opts_push = (o) => {
+    if (
+      !view_relation_opts[o.view] ||
+      !view_relation_opts[o.view].find(({ value }) => value === o.name)
+    )
       push_view_option(o);
   };
   const child_views = await get_child_views(table, viewname);
@@ -339,14 +540,14 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   } of child_views) {
     for (const view of views) {
       if (through && throughTable) {
-        link_view_opts_push({
+        link_view_opts_push_legacy({
           view: view.name,
           name: `ChildList:${view.name}.${throughTable.name}.${through.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}.${through.name}]`,
           relation: `${related_table.name}.${relation.name}.${through.name}`,
         });
       } else {
-        link_view_opts_push({
+        link_view_opts_push_legacy({
           view: view.name,
           name: `ChildList:${view.name}.${related_table.name}.${relation.name}`,
           label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.name}]`,
@@ -359,7 +560,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const parent_views = await get_parent_views(table, viewname);
   for (const { relation, related_table, views } of parent_views) {
     for (const view of views) {
-      link_view_opts_push({
+      link_view_opts_push_legacy({
         view: view.name,
         name: `ParentShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${relation.name}.${related_table.name}]`,
@@ -370,7 +571,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const onetoone_views = await get_onetoone_views(table, viewname);
   for (const { relation, related_table, views } of onetoone_views) {
     for (const view of views) {
-      link_view_opts_push({
+      link_view_opts_push_legacy({
         view: view.name,
         name: `OneToOneShow:${view.name}.${related_table.name}.${relation.name}`,
         label: `${view.name} [${view.viewtemplate} ${related_table.name}.${relation.label}]`,
@@ -382,13 +583,37 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
     ({ state_fields }) => !state_fields.some((sf) => sf.required)
   );
   independent_views.forEach((view) => {
-    link_view_opts_push({
+    link_view_opts_push_legacy({
       view: view.name,
       label: `${view.name} [${view.viewtemplate}]`,
       name: `Independent:${view.name}`,
       relation: "None",
     });
   });
+
+  const inbound_rel_opts = await get_inbound_relation_opts(table, viewname);
+  for (const { path, views } of inbound_rel_opts) {
+    for (const view of views) {
+      link_view_opts_push({
+        view: view.name,
+        label: `${view.name} [${view.viewtemplate} ${table.name}]`,
+        name: path,
+        relation: path,
+      });
+    }
+  }
+
+  const self_inbounds = await get_inbound_self_relation_opts(table, viewname);
+  for (const { path, views } of self_inbounds) {
+    for (const view of views) {
+      link_view_opts_push({
+        view: view.name,
+        label: `${view.name} [${view.viewtemplate} ${table.name}]`,
+        name: path,
+        relation: path,
+      });
+    }
+  }
   return { link_view_opts, view_name_opts, view_relation_opts };
 };
 
@@ -1279,15 +1504,35 @@ const stateFieldsToQuery = ({ state, stateHash, fields, prefix = "" }) => {
  */
 // todo potentially move to utils
 const addOrCreateList = (container, key, x) => {
-  if (container[key]) container[key].push(x);
-  else container[key] = [x];
+  if (container[key]) {
+    if (container[key].length) container[key].push(x);
+    else container[key] = [container[key], x];
+  } else container[key] = [x];
+};
+
+const stringToQuery = (s) => {
+  const json = JSON.parse(s);
+  const { path, sourcetable } = parseRelationPath(json.relation);
+  return {
+    ...json,
+    path,
+    sourcetable,
+  };
+};
+
+const queryToString = (query) => {
+  const relObj = {
+    srcId: query.srcId,
+    relation: buildRelationPath(query.sourcetable, query.path),
+  };
+  return JSON.stringify(relObj);
 };
 
 /**
  * @function
  * @param {object} opts
  * @param {Field[]} opts.fields
- * @param {object} opts.state missing in contract
+ * @param {object} opts.state
  * @param {boolean} [opts.approximate = true]
  * @param {Table} opts.table
  * @returns {object}
@@ -1305,7 +1550,34 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     }
 
     const field = fields.find((fld) => fld.name === k);
-    if (k.startsWith("_fromdate_")) {
+    if (k === "_inbound_relation_path_") {
+      const queryObj = typeof v === "string" ? stringToQuery(v) : v;
+      const levels = [];
+      let lastTableName = queryObj.sourcetable;
+      let where = null;
+      for (const level of queryObj.path) {
+        if (level.inboundKey) {
+          levels.push({ ...level });
+          lastTableName = level.table;
+          if (!where)
+            where = { [db.sqlsanitize(level.inboundKey)]: queryObj.srcId };
+        } else {
+          const lastTable = Table.findOne({ name: lastTableName });
+          const refField = lastTable.fields.find(
+            (field) => field.name === level.fkey
+          );
+          levels.push({ table: refField.reftable_name, fkey: level.fkey });
+          lastTableName = refField.reftable_name;
+          if (!where) where = { id: queryObj.srcId };
+        }
+      }
+      addOrCreateList(qstate, "id", {
+        inSelectWithLevels: {
+          joinLevels: levels,
+          where,
+        },
+      });
+    } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
@@ -1719,6 +1991,9 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     getFields() {
       return fields;
     },
+    getForeignKeys() {
+      return fields.filter((f) => f.is_fkey && f.type !== "File");
+    },
     getField(fnm) {
       return fields.find((f) => f.name === fnm);
     },
@@ -1794,6 +2069,21 @@ const run_action_column = async ({ col, req, ...rest }) => {
   });
 };
 
+/**
+ * for all tables collect the foreign keys with the targets
+ * should only be used as options for the saltcorn-builder
+ * @returns table names as key and the fks as value
+ */
+const build_schema_fk_options = async () => {
+  const result = {};
+  for (const table of await Table.find()) {
+    result[table.name] = table.getForeignKeys().map((field) => {
+      return { name: field.name, reftable_name: field.reftable_name };
+    });
+  }
+  return result;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -1815,4 +2105,7 @@ module.exports = {
   run_action_column,
   json_list_to_external_table,
   add_free_variables_to_joinfields,
+  get_inbound_relation_opts,
+  get_inbound_self_relation_opts,
+  build_schema_fk_options,
 };

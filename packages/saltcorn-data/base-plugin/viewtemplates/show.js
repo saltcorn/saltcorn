@@ -388,15 +388,15 @@ const renderRows = async (
 
   const role = extra.req.user ? extra.req.user.role_id : 10;
   var views = {};
-  const getView = async (nm) => {
-    if (views[nm]) return views[nm];
-    const view_select = parse_view_select(nm);
+  const getView = async (name, relation) => {
+    if (views[name]) return views[name];
+    const view_select = parse_view_select(name, relation);
     const view = await View.findOne({ name: view_select.viewname });
     if (!view) return false;
     if (view.table_id === table.id) view.table = table;
     else view.table = await Table.findOne({ id: view.table_id });
     view.view_select = view_select;
-    views[nm] = view;
+    views[name] = view;
     return view;
   };
   await set_join_fieldviews({ table, layout, fields });
@@ -409,7 +409,7 @@ const renderRows = async (
   }
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
-      const view = await getView(segment.view);
+      const view = await getView(segment.view, segment.relation);
       if (!view)
         throw new InvalidConfiguration(
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
@@ -430,6 +430,16 @@ const renderRows = async (
         let state1;
         const pk_name = table.pk_name;
         switch (view.view_select.type) {
+          case "RelationPath": {
+            const path = view.view_select.path;
+            state1 = {
+              _inbound_relation_path_: {
+                ...view.view_select,
+                srcId: path[0].fkey ? row[path[0].fkey] : row[pk_name],
+              },
+            };
+            break;
+          }
           case "Own":
             state1 = { [pk_name]: row[pk_name] };
             break;

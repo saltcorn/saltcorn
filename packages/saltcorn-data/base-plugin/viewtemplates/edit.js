@@ -607,6 +607,16 @@ const transformForm = async ({
         );
       let state;
       switch (view_select.type) {
+        case "RelationPath": {
+          const path = view_select.path;
+          state = {
+            _inbound_relation_path_: {
+              ...view_select,
+              srcId: path[0].fkey ? row[path[0].fkey] : row[table.pk_name],
+            },
+          };
+          break;
+        }
         case "Own":
           state = { id: row.id };
           break;

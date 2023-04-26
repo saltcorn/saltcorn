@@ -187,6 +187,76 @@ const subSelectWhere =
   };
 
 /**
+ * creates an in select sql string with joins for joinLevels
+ * and the where gets an alias prefix to the first table of the joinLevels
+ * @param phs
+ * @returns in select sql command
+ */
+const inSelectWithLevels =
+  (phs: PlaceHolderStack) =>
+  (
+    k: string,
+    v: {
+      inSelectWithLevels: {
+        where: Where;
+        joinLevels: { table: string; fkey?: string; inboundKey?: string }[];
+      };
+    }
+  ): string => {
+    let lastAlias = null;
+    let inColumn = null;
+    let whereObj = null;
+    const selectParts = [];
+    const joinLevels = v.inSelectWithLevels.joinLevels;
+    for (let i = 0; i < joinLevels.length; i++) {
+      const { table, fkey, inboundKey } = joinLevels[i];
+      const alias = quote(sqlsanitize(`${table}SubJ${i}`));
+      if (i === 0) {
+        selectParts.push(
+          `from ${quote(sqlsanitize(`${table}`))} ${quote(
+            sqlsanitize(`${alias}`)
+          )}`
+        );
+        whereObj = prefixFieldsInWhere(v.inSelectWithLevels.where, alias);
+      } else if (i < joinLevels.length - 1) {
+        if (fkey) {
+          selectParts.push(
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.${sqlsanitize(fkey)}`
+            )} = ${alias}.id`
+          );
+        } else {
+          selectParts.push(
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.id`
+            )} = ${quote(`${alias}.${sqlsanitize(inboundKey!)}`)}`
+          );
+        }
+      } else {
+        if (fkey) {
+          inColumn = quote(`${lastAlias}.${sqlsanitize(fkey)}`);
+        } else {
+          selectParts.push(
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.id`
+            )} = ${quote(`${alias}.${sqlsanitize(`${inboundKey}`)}`)}`
+          );
+          inColumn = quote(`${alias}.id`);
+        }
+      }
+      lastAlias = alias;
+    }
+    const wheres = whereObj ? Object.entries(whereObj) : [];
+    const where =
+      whereObj && wheres.length > 0
+        ? "where " + wheres.map(whereClause(phs)).join(" and ")
+        : "";
+    return `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
+      sqlsanitizeAllowDots(inColumn!)
+    )} ${selectParts.join(" ")} ${where})`;
+  };
+
+/**
  * @param {string} s
  * @returns {string}
  */
@@ -281,6 +351,8 @@ const whereClause =
         )}`
       : typeof (v || {}).inSelect !== "undefined"
       ? subSelectWhere(phs)(k, v)
+      : typeof (v || {}).inSelectWithLevels !== "undefined"
+      ? inSelectWithLevels(phs)(k, v)
       : typeof (v || {}).json !== "undefined"
       ? jsonWhere(k, v.json, phs)
       : v === null

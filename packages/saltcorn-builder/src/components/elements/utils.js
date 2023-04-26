@@ -471,11 +471,15 @@ export const fetchViewPreview =
     let viewname,
       body = configuration ? { ...configuration } : {};
     if (view.includes(":")) {
-      const [reltype, rest] = view.split(":");
-      const [vnm] = rest.split(".");
-      viewname = vnm;
-      body.reltype = reltype;
-      body.path = rest;
+      const [prefix, rest] = view.split(":");
+      const tokens = rest.split(".");
+      if (rest.startsWith(".")) {
+        viewname = prefix;
+      } else {
+        viewname = tokens[0];
+        body.reltype = prefix;
+        body.path = rest;
+      }
     } else viewname = view;
 
     fetchPreview({
@@ -1318,4 +1322,89 @@ const Tooltip = ({ children }) => {
       </span>
     </Tippy>
   );
+};
+
+const getFkTarget = (field, options) => {
+  const option = options.find((fk) => fk.name === field);
+  return option ? option.reftable_name : null;
+};
+
+export const parseRelationPath = (path, fk_options) => {
+  const result = [];
+  const tokens = path.split(".");
+  if (tokens.length >= 3) {
+    let currentTbl = tokens[1];
+    for (const relation of tokens.slice(2)) {
+      if (relation.indexOf("$") > 0) {
+        const [inboundTbl, inboundKey] = relation.split("$");
+        result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
+        currentTbl = inboundTbl;
+      } else {
+        const targetTbl = getFkTarget(relation, fk_options[currentTbl]);
+        if (!targetTbl) {
+          console.log(`The foreign key '${relation}' is invalid`);
+          return [];
+        }
+        result.push({ type: "Foreign", table: targetTbl, key: relation });
+        currentTbl = targetTbl;
+      }
+    }
+  }
+  return result;
+};
+
+export const parseLegacyRelation = (type, rest, parentTbl) => {
+  switch (type) {
+    case "ChildList": {
+      const path = rest ? rest.split(".") : [];
+      if (path.length === 3) {
+        const [viewName, table, key] = path;
+        return [
+          {
+            type: "Inbound",
+            table,
+            key,
+          },
+        ];
+      } else if (path.length === 5) {
+        const [viewName, thrTbl, thrTblFkey, fromTbl, fromTblFkey] = path;
+        return [
+          {
+            type: "Inbound",
+            table: thrTbl,
+            key: thrTblFkey,
+          },
+          {
+            type: "Inbound",
+            table: fromTbl,
+            key: fromTblFkey,
+          },
+        ];
+      }
+      break;
+    }
+    case "Independent": {
+      return [{ type: "Independent", table: "None (no relation)" }];
+    }
+    case "Own": {
+      return [{ type: "Own", table: `${parentTbl} (same table)` }];
+    }
+    case "OneToOneShow": {
+      const tokens = rest ? rest.split(".") : [];
+      if (tokens.length !== 3) break;
+      const [viewname, relatedTbl, fkey] = tokens;
+      return [{ type: "Inbound", table: relatedTbl, key: fkey }];
+    }
+    case "ParentShow": {
+      const tokens = rest ? rest.split(".") : [];
+      if (tokens.length !== 3) break;
+      const [viewname, parentTbl, fkey] = tokens;
+      return [{ type: "Foreign", table: parentTbl, key: fkey }];
+    }
+  }
+  return [];
+};
+
+export const removeWhitespaces = (str) => {
+  return str.replace(/\s/g, "X");
 };

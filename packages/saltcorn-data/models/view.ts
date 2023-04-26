@@ -246,7 +246,7 @@ class View implements AbstractView {
   static async find_possible_links_to_table(
     table: number | Tablely | string
   ): Promise<Array<View>> {
-    return View.find_table_views_where(
+    return await View.find_table_views_where(
       table,
       ({ state_fields }: { state_fields: Array<FieldLike> }) =>
         state_fields.some((sf: FieldLike) => sf.name === "id" || sf.primary_key)
