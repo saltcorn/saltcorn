@@ -1551,7 +1551,7 @@ const bool = {
     switch: {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) =>
-        div(
+        span(
           { class: "form-switch" },
           input({
             class: ["form-check-input", cls],
