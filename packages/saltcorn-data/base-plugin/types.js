@@ -1548,6 +1548,25 @@ const bool = {
           ...(attrs.disabled && { onclick: "return false;" }),
         }),
     },
+    switch: {
+      isEdit: true,
+      run: (nm, v, attrs, cls, required, field) =>
+        span(
+          { class: "form-switch" },
+          input({
+            class: ["form-check-input", cls],
+            "data-fieldname": text_attr(field.name),
+            type: "checkbox",
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+            role: "switch",
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            ...(v && { checked: true }),
+            ...(attrs.disabled && { onclick: "return false;" }),
+          })
+        ),
+    },
     /**
      * @namespace
      * @category saltcorn-data

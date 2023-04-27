@@ -118,11 +118,13 @@ export function extractFromLayout(layout: any): ConnectedObjects {
   traverseSync(layout, {
     view(segment: any) {
       const select = parse_view_select(segment.view, segment.relation);
+      if (!select?.viewname) return;
       const view = _View.findOne({ name: select.viewname });
       if (view) embeddedViews.push(view);
     },
     view_link(segment: any) {
       const select = parse_view_select(segment.view, segment.relation);
+      if (!select?.viewname) return;
       const view = _View.findOne({ name: select.viewname });
       if (view) linkedViews.push(view);
     },
