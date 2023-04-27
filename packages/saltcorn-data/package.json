@@ -85,7 +85,7 @@
     "https-browserify": "1.0.0",
     "browserify-zlib": "0.2.0",
     "nodemailer": "^6.4.17",
-    "mjml": "4.13.0"
+    "mjml": "4.14.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
