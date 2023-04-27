@@ -741,6 +741,26 @@ class View implements AbstractView {
     }
   }
 
+  //get entities using/linking to this
+  async inbound_connected_objects(): Promise<ConnectedObjects> {
+    const embeddedViews: Array<AbstractView> = [];
+    const linkedViews: Array<AbstractView> = [];
+    const allViews = await View.find({});
+    for (const view of allViews) {
+      if (!view?.viewtemplateObj?.connectedObjects) continue;
+      const result = await view.viewtemplateObj.connectedObjects(
+        view.configuration
+      );
+      for (const eview of result.embeddedViews || []) {
+        if (eview.name === this.name) embeddedViews.push(view);
+      }
+      for (const eview of result.linkedViews || []) {
+        if (eview.name === this.name) linkedViews.push(view);
+      }
+    }
+    return { embeddedViews, linkedViews };
+  }
+
   async connected_objects(): Promise<ConnectedObjects> {
     const Table = (await import("./table")).default;
     const viewTbl = this.table_id
