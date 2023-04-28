@@ -515,7 +515,7 @@ describe("User group", () => {
       ownership_formula: own_opts[0].value.replace("Fml:", ""),
     });
     const projid = await projects.insertRow({ name: "World domination" });
-    const user = await User.findOne({ role_id: 8 });
+    const user = await User.findOne({ role_id: 80 });
     assertIsSet(user);
     await user_works_proj.insertRow({ project: projid, user: user.id });
 
@@ -523,7 +523,7 @@ describe("User group", () => {
     assertIsSet(uobj);
 
     expect(uobj.id).toBe(user.id);
-    expect(uobj.role_id).toBe(8);
+    expect(uobj.role_id).toBe(80);
     expect(uobj.UserWorksOnProject_by_user).toEqual([
       { id: 1, project: 1, user: 3 },
     ]);
@@ -533,7 +533,7 @@ describe("User group", () => {
     expect(projs.is_owner(uobj, myproj)).toBe(true);
 
     const projid1 = await projects.insertRow({ name: "Take out trash" });
-    const staff = await User.findOne({ role_id: 4 });
+    const staff = await User.findOne({ role_id: 40 });
     assertIsSet(staff);
     await user_works_proj.insertRow({ project: projid1, user: staff.id });
     const myproj1 = await projs.getRow({ id: projid1 });

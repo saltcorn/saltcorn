@@ -421,8 +421,8 @@ describe("pack install", () => {
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
     expect(menu).toEqual([
-      { label: "List", type: "View", viewname: "List Todos", min_role: 10 },
-      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 },
+      { label: "List", type: "View", viewname: "List Todos", min_role: 100 },
+      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 100 },
     ]);
     const pubhome = getState().getConfig("public_home", []);
     expect(pubhome).toBe("FooPage");
