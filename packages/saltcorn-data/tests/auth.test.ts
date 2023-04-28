@@ -153,7 +153,7 @@ const test_person_table = async (persons: Table) => {
 
   //update
   expect(
-    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 })
+    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 100 })
   ).toBe("Not authorized");
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
   expect(
@@ -173,7 +173,7 @@ const test_person_table = async (persons: Table) => {
     expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
   }
   //delete
-  await persons.deleteRows({ id: row1.id }, { role_id: 10 });
+  await persons.deleteRows({ id: row1.id }, { role_id: 100 });
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
   await persons.deleteRows({ id: row1.id }, non_owner_user);
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
@@ -210,7 +210,7 @@ describe("Table with row ownership field", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -264,7 +264,7 @@ describe("Table with row ownership field and calculated", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }}}
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -314,7 +314,7 @@ describe("Table with row ownership formula", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -383,7 +383,7 @@ describe("Table with row ownership joined formula", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", department: 1 },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -461,7 +461,7 @@ describe("Table with row ownership joined formula and stored calc", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", department: 1 },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(

@@ -130,7 +130,7 @@ router.get(
 router.get(
   "/download/*",
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = req.params[0];
     const file = await File.findOne(serve_path);
@@ -155,7 +155,7 @@ router.post(
   isAdmin,
 
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const files = req.body.files;
     const location = req.body.location;
@@ -189,7 +189,7 @@ router.post(
 router.get(
   "/serve/*",
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = req.params[0];
     //let file;
@@ -228,7 +228,7 @@ router.get(
 router.get(
   "/resize/:width_str/:height_str/*",
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const { width_str, height_str } = req.params;
     const serve_path = req.params[0];
@@ -386,7 +386,7 @@ router.post(
     let { folder } = req.body;
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     let file_for_redirect;
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));

@@ -142,7 +142,7 @@ const parseRelationPath = (path: string) => {
  * prepare an attachements array that can be used with nodemailer
  * @param path path to a field or an aggregation relation
  * @param row row for which the email should be send
- * @param user user sending it, or { role_id: 10 }
+ * @param user user sending it, or { role_id: 100 }
  * @returns
  */
 const loadAttachments = async (path: string, row: any, user: any) => {

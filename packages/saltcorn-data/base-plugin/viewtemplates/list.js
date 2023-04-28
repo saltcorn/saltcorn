@@ -549,7 +549,7 @@ const run = async (
   const role =
     extraOpts && extraOpts.req && extraOpts.req.user
       ? extraOpts.req.user.role_id
-      : 10;
+      : 100;
   await set_join_fieldviews({ table, columns, fields });
 
   readState(stateWithId, fields, extraOpts.req);
@@ -797,7 +797,7 @@ module.exports = {
       if (!q.orderDesc)
         q.orderDesc = default_state && default_state._descending;
 
-      const role = req && req.user ? req.user.role_id : 10;
+      const role = req && req.user ? req.user.role_id : 100;
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {

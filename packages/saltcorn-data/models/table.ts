@@ -762,7 +762,7 @@ class Table implements AbstractTable {
       this.updateWhereWithOwnership(
         where,
         fields,
-        forUser || { role_id: 10 },
+        forUser || { role_id: 100 },
         true
       )?.notAuthorized
     ) {

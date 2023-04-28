@@ -42,7 +42,7 @@ router.get(
     const { viewname } = req.params;
     const query = { ...req.query };
     const view = await View.findOne({ name: viewname });
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const state = getState();
     state.log(3, `Route /view/${viewname} user=${req.user?.id}`);
     if (!view) {
@@ -157,7 +157,7 @@ router.post(
   "/:viewname/:route",
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const state = getState();
     state.log(
       3,
@@ -191,7 +191,7 @@ router.post(
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const query = { ...req.query };
     const state = getState();
     state.log(3, `Route /view/${viewname} POST user=${req.user?.id}`);

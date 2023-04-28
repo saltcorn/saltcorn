@@ -426,7 +426,7 @@ const welcome_page = async (req) => {
  * @returns {Promise<void>}
  */
 const no_views_logged_in = async (req, res) => {
-  const role = req.user && req.user.id ? req.user.role_id : 10;
+  const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
     res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
   else {
@@ -497,7 +497,7 @@ module.exports =
    */
   async (req, res) => {
     const isAuth = req.user && req.user.id;
-    const role_id = req.user ? req.user.role_id : 10;
+    const role_id = req.user ? req.user.role_id : 100;
     const cfgResp = await get_config_response(role_id, res, req);
     if (cfgResp) return;
 

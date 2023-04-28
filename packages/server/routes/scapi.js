@@ -49,7 +49,7 @@ function accessAllowedRead(req, user) {
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
   if (role === 1) return true;
   return false;

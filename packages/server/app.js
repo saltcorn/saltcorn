@@ -231,7 +231,7 @@ const getApp = async (opts = {}) => {
             { scope: "all" }
           );
         else {
-          return done(null, { role_id: 10 });
+          return done(null, { role_id: 100 });
         }
       }
     })
@@ -253,7 +253,7 @@ const getApp = async (opts = {}) => {
             tenant: db.getTenantSchema(),
           });
         } else {
-          return done(null, { role_id: 10 });
+          return done(null, { role_id: 100 });
         }
       };
       if (

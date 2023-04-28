@@ -27,7 +27,7 @@ const getFlashes = (req) =>
 const get_menu = (req) => {
   const isAuth = req.user && req.user.id;
   const state = getState();
-  const role = (req.user || {}).role_id || 10;
+  const role = (req.user || {}).role_id || 100;
 
   const allow_signup = state.getConfig("allow_signup");
   const notification_in_menu = state.getConfig("notification_in_menu");
@@ -245,7 +245,7 @@ module.exports = (version_tag) =>
    * @param next
    */
   function (req, res, next) {
-    const role = (req.user || {}).role_id || 10;
+    const role = (req.user || {}).role_id || 100;
 
     res.sendAuthWrap = function (title, form, authLinks, ...html) {
       const state = getState();
