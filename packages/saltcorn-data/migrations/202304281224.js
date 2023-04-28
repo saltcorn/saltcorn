@@ -48,5 +48,29 @@ const js = async () => {
   await xform_simple_cfg("min_role_apikeygen");
   await xform_simple_cfg("role_to_create_tenant");
   await xform_simple_cfg("min_role_search");
+
+  const xform_obj_cfg = async (cfg_k) => {
+    const oldObj = state.getConfig(cfg_k, {});
+    const newObj = {};
+    Object.entries(oldObj).forEach(([k, v]) => {
+      newObj[old_to_new_role(k)] = v;
+    });
+    await state.setConfig(cfg_k, newObj);
+  };
+  await xform_obj_cfg("exttables_min_role_read");
+  await xform_obj_cfg("layout_by_role");
+  await xform_obj_cfg("twofa_policy_by_role");
+
+  const old_homepages = state.getConfig("home_page_by_role", []);
+  if (old_homepages && !Array.isArray(old_homepages))
+    await xform_obj_cfg("home_page_by_role");
+  else {
+    const new_homepages = {};
+    // ix is role_id
+    old_homepages.forEach((pageNm, role_id) => {
+      new_homepages[old_to_new_role(role_id)] = pageNm;
+    });
+    await state.setConfig("home_page_by_role", new_homepages);
+  }
 };
 module.exports = { sql, js };

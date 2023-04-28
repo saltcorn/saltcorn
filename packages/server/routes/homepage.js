@@ -463,7 +463,7 @@ const no_views_logged_in = async (req, res) => {
 const get_config_response = async (role_id, res, req) => {
   const modernCfg = getState().getConfig("home_page_by_role", false);
   // predefined roles
-  const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
+  const legacy_role = { 100: "public", 80: "user", 40: "staff", 1: "admin" }[
     role_id
   ];
   let homeCfg = modernCfg && modernCfg[role_id];
