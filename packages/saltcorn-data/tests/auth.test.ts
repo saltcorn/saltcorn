@@ -264,7 +264,7 @@ describe("Table with row ownership field and calculated", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 100 }}}
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
