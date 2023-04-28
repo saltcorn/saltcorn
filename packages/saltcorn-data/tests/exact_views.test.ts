@@ -57,7 +57,7 @@ const mkTester =
       name: rest.name || name,
       viewtemplate,
       configuration: rest,
-      min_role: 10,
+      min_role: 100,
     };
     const v = await View.create(viewCfg);
     if (remoteQueries) await sendViewToServer(viewCfg);
@@ -1133,7 +1133,7 @@ describe("Page", () => {
       name: "testpage",
       title: "gergerger",
       description: "greger",
-      min_role: 10,
+      min_role: 100,
       id: 2,
       layout: {
         above: [

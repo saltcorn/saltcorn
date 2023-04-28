@@ -23,7 +23,7 @@ module.exports =
   async () => {
     getState().registerPlugin("base", require("../base-plugin"));
     const table = await Table.create("books", {
-      min_role_read: 10,
+      min_role_read: 100,
       min_role_write: 1,
     });
     await Field.create({
@@ -42,7 +42,7 @@ module.exports =
       attributes: { min: 0 },
     });
     const patients = await Table.create("patients", {
-      min_role_read: 4,
+      min_role_read: 40,
     });
     await Field.create({
       table: patients,
@@ -86,7 +86,7 @@ module.exports =
           },
         ],
       },
-      min_role: 10,
+      min_role: 100,
     });
     await View.create({
       table_id: table.id,
@@ -108,7 +108,7 @@ module.exports =
           above: [{ type: "field", fieldview: "show", field_name: "author" }],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
     await View.create({
       table_id: table.id,
@@ -124,7 +124,7 @@ module.exports =
         },
         view_when_done: "authorlist",
       },
-      min_role: 10,
+      min_role: 100,
     });
     await View.create({
       table_id: patients.id,
@@ -140,7 +140,7 @@ module.exports =
           { type: "JoinField", join_field: "favbook.pages" },
         ],
       },
-      min_role: 8,
+      min_role: 80,
     });
     const readings = await Table.create("readings");
     await Field.create({
@@ -172,7 +172,7 @@ module.exports =
       type: "Date",
     });
     const disc_books = await Table.create("discusses_books", {
-      min_role_read: 4,
+      min_role_read: 40,
     });
     await Field.create({
       table: disc_books,
@@ -254,13 +254,13 @@ module.exports =
     await User.create({
       email: "staff@foo.com",
       password: "ghrarhr54hg",
-      role_id: 4,
+      role_id: 40,
       last_mobile_login: db.isSQLite ? now.valueOf() : now,
     });
     await User.create({
       email: "user@foo.com",
       password: "GFeggwrwq45fjn",
-      role_id: 8,
+      role_id: 80,
       last_mobile_login: db.isSQLite ? now.valueOf() : now,
     });
     await File.ensure_file_store();
@@ -270,13 +270,13 @@ module.exports =
     await File.from_req_files(
       { mimetype: "image/png", name: "magrite.png", mv, size: 245752 },
       1,
-      10
+      100
     );
     await Page.create({
       name: "a_page",
       title: "grgw",
       description: "rgerg",
-      min_role: 10,
+      min_role: 100,
       layout: {
         above: [
           {
@@ -337,8 +337,8 @@ module.exports =
     });
 
     const rooms = await Table.create("rooms", {
-      min_role_read: 8,
-      min_role_write: 8,
+      min_role_read: 80,
+      min_role_write: 80,
     });
     await Field.create({
       table: rooms,
@@ -355,8 +355,8 @@ module.exports =
     });
 
     const messages = await Table.create("messages", {
-      min_role_read: 8,
-      min_role_write: 8,
+      min_role_read: 80,
+      min_role_write: 80,
     });
     await Field.create({
       table: messages,
@@ -395,8 +395,8 @@ module.exports =
     });
 
     const participants = await Table.create("participants", {
-      min_role_read: 8,
-      min_role_write: 8,
+      min_role_read: 80,
+      min_role_write: 80,
     });
     await Field.create({
       table: participants,
@@ -445,7 +445,7 @@ module.exports =
       name: "rooms_view",
       viewtemplate: "Room",
       configuration: roomsViewCfg,
-      min_role: 8,
+      min_role: 80,
     });
 
     await View.create({
@@ -484,7 +484,7 @@ module.exports =
           ],
         },
       },
-      min_role: 8,
+      min_role: 80,
     });
 
     await View.create({
@@ -507,7 +507,7 @@ module.exports =
           ],
         },
       },
-      min_role: 8,
+      min_role: 80,
     });
 
     const topics = await Table.create("topics");
@@ -659,7 +659,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -688,7 +688,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -707,7 +707,7 @@ module.exports =
         view_to_create: "edit_blog_in_topic",
         create_view_display: "Link",
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -729,7 +729,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     // blog_post feed in show user views
@@ -761,7 +761,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -802,7 +802,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -821,7 +821,7 @@ module.exports =
         view_to_create: "edit_blog_post",
         create_view_display: "Link",
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -843,7 +843,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     await View.create({
@@ -863,7 +863,7 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
 
     const bpInbound = await Table.create("blog_post_inbound");
@@ -927,6 +927,6 @@ module.exports =
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
   };
