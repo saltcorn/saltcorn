@@ -201,7 +201,7 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       res.type(file.mimetype);
-      const cacheability = file.min_role_read === 10 ? "public" : "private";
+      const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
@@ -240,7 +240,7 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       res.type(file.mimetype);
-      const cacheability = file.min_role_read === 10 ? "public" : "private";
+      const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       //TODO s3
       if (file.s3_store) s3storage.serveObject(file, res, false);

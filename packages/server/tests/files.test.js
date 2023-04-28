@@ -171,7 +171,7 @@ describe("files edit", () => {
         columns: [
           { type: "Field", field_name: "mugshot", fieldview: "upload" },
           { type: "Field", field_name: "first_name", fieldview: "edit" },
-          { type: "Action", action_name: "Save", minRole: 10 },
+          { type: "Action", action_name: "Save", minRole: 100 },
         ],
         layout: {
           above: [

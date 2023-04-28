@@ -623,10 +623,10 @@ class Table implements AbstractTable {
     if (
       role &&
       role > min_role &&
-      ((!this.ownership_field_id && !this.ownership_formula) || role === 10)
+      ((!this.ownership_field_id && !this.ownership_formula) || role === 100)
     )
       return { notAuthorized: true };
-    if (user && role < 10 && role > min_role && this.ownership_field_id) {
+    if (user && role < 100 && role > min_role && this.ownership_field_id) {
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
@@ -723,7 +723,7 @@ class Table implements AbstractTable {
   ): Promise<Row | null> {
     const fields = await this.getFields();
     const { forUser, forPublic, ...selopts1 } = selopts;
-    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     const row = await db.selectMaybeOne(this.name, where, selopts1);
     if (!row || !this.fields) return null;
     if (role && role > this.min_role_read) {
@@ -756,7 +756,7 @@ class Table implements AbstractTable {
     const fields = await this.getFields();
     if (!this.fields) return [];
     const { forUser, forPublic, ...selopts1 } = selopts;
-    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     if (
       role &&
       this.updateWhereWithOwnership(
@@ -987,7 +987,7 @@ class Table implements AbstractTable {
         this,
         newRow,
         resultCollector,
-        role === 10 ? undefined : user
+        role === 100 ? undefined : user
       );
       if (resultCollector) await trigPromise;
     }
@@ -2061,7 +2061,7 @@ class Table implements AbstractTable {
     let aggregations: any = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
     const { forUser, forPublic } = opts;
-    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     if (role && role > this.min_role_read && this.ownership_formula) {
       const freeVars = freeVariables(this.ownership_formula);
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
@@ -2288,7 +2288,7 @@ class Table implements AbstractTable {
   ): Promise<Array<Row>> {
     const fields = await this.getFields();
     const { forUser, forPublic, ...selopts1 } = opts;
-    const role = forUser ? forUser.role_id : forPublic ? 10 : null;
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     const { sql, values, notAuthorized, joinFields } =
       await this.getJoinedQuery(opts);
 

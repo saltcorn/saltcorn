@@ -340,7 +340,7 @@ Sitemap: ${base}sitemap.xml
       const urls = [base];
       const loop_menu = (items) => {
         for (const item of items)
-          if (+item.min_role === 10 || item.subitems) {
+          if (+item.min_role === 100 || item.subitems) {
             if (item.type === "Page")
               urls.push(`${base}page/${encodeURIComponent(item.pagename)}`);
             if (item.type === "View")

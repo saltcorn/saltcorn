@@ -133,7 +133,7 @@ async function publicLogin(entryPoint) {
     const loginResult = await loginRequest({ isPublic: true });
     if (typeof loginResult === "string") {
       const config = parent.saltcorn.data.state.getState().mobileConfig;
-      config.role_id = 10;
+      config.role_id = 100;
       config.user_name = "public";
       config.language = "en";
       config.isPublicUser = true;
