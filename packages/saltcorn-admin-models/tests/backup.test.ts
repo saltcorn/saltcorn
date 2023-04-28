@@ -34,7 +34,7 @@ describe("Backup and restore", () => {
       {
         type: "Page",
         label: "a_page",
-        min_role: 10,
+        min_role: 100,
         pagename: "a_page",
       },
       {
@@ -45,7 +45,7 @@ describe("Backup and restore", () => {
         label: "BBC",
         style: "",
         location: "Standard",
-        min_role: 10,
+        min_role: 100,
       },
     ]);
     const sn1 = await getConfig("site_name");

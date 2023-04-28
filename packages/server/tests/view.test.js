@@ -99,7 +99,7 @@ describe("view with routes", () => {
       name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},
-      min_role: 8,
+      min_role: 80,
     });
   });
   it("should redirect if not auth", async () => {

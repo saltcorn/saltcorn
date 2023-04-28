@@ -76,7 +76,7 @@ describe("page action", () => {
       name: "pagewithaction",
       title: "",
       description: "",
-      min_role: 10,
+      min_role: 100,
       id: 2,
       layout: {
         widths: [6, 6],
@@ -153,7 +153,6 @@ describe("pageedit", () => {
       .get("/pageedit/edit/a_page")
       .set("Cookie", loginCookie)
       .expect(toInclude("<script>builder.renderBuilder"));
-
   });
 
   it("sets root page", async () => {

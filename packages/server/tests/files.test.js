@@ -188,7 +188,7 @@ describe("files edit", () => {
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
   });
   it("shows edit view", async () => {

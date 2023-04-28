@@ -121,7 +121,7 @@ describe("send_verification_email", () => {
           },
         ],
       },
-      min_role: 10,
+      min_role: 100,
     });
     await getState().setConfig("verification_view", "verifyview");
     const user = await User.findOne({ id: 1 });
@@ -273,6 +273,6 @@ const mkView = async ({ name, ...rest }: any) => {
     name,
     viewtemplate: "Show",
     configuration: rest,
-    min_role: 10,
+    min_role: 100,
   });
 };

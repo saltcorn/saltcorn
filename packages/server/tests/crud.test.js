@@ -170,7 +170,7 @@ describe("homepage", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
-      min_role: 10,
+      min_role: 100,
     });
     const loginCookie = await getAdminLoginCookie();
 
