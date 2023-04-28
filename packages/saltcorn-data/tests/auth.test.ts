@@ -78,7 +78,7 @@ const test_person_table = async (persons: Table) => {
   expect(owned_rows1[0].age).toBe(13);
 
   //show
-  const view = await createDefaultView(persons, "Show", 10);
+  const view = await createDefaultView(persons, "Show", 100);
   const contents = await view.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: non_owner_user },
@@ -116,7 +116,7 @@ const test_person_table = async (persons: Table) => {
   if (department) row1form.department = department.id;
 
   //edit
-  const editView = await createDefaultView(persons, "Edit", 10);
+  const editView = await createDefaultView(persons, "Edit", 100);
   const econtents = await editView.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: non_owner_user },

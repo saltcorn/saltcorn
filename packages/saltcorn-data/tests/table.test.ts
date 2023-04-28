@@ -717,7 +717,7 @@ David MacKay, ITILA`;
     const fnm = "/tmp/test1.csv";
     await writeFile(fnm, csv);
     const table = await Table.create("books_not_req_pages", {
-      min_role_read: 10,
+      min_role_read: 100,
     });
     await Field.create({
       table,
@@ -745,7 +745,7 @@ David MacKay, ITILA`;
 
   it("CSV import fkeys as ints", async () => {
     const table = await Table.create("book_reviews", {
-      min_role_read: 10,
+      min_role_read: 100,
     });
     await Field.create({
       table,
@@ -1119,7 +1119,7 @@ describe("Table and view deletion ", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: {} },
-      min_role: 10,
+      min_role: 100,
     });
     let error;
     try {
@@ -1205,7 +1205,7 @@ describe("Tables with name clashes", () => {
           { type: "JoinField", join_field: "owner.name" },
         ],
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toContain("Mustang");
@@ -1230,7 +1230,7 @@ describe("Tables with name clashes", () => {
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await v.run({ id: 1 }, mockReqRes);
     expect(res).toContain("Mustang");
@@ -1443,7 +1443,7 @@ describe("external tables", () => {
   it("should build view", async () => {
     const table = Table.findOne({ name: "exttab" });
     assertIsSet(table);
-    const view = await createDefaultView(table, "List", 10);
+    const view = await createDefaultView(table, "List", 100);
     const contents = await view.run_possibly_on_page(
       {},
       mockReqRes.req,
@@ -1482,12 +1482,12 @@ describe("table providers", () => {
   it("should change role", async () => {
     const table = await Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
-    await table.update({ min_role_read: 4 });
+    await table.update({ min_role_read: 40 });
   });
   it("should get role", async () => {
     const table = await Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
-    expect(table.min_role_read).toBe(4);
+    expect(table.min_role_read).toBe(40);
   });
 });
 
