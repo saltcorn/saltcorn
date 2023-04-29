@@ -847,6 +847,7 @@ const features = {
   prefix_or_in_queries: true,
   json_state_query: true,
   async_validate: true,
+  public_user_role: 100,
 };
 
 export = {
