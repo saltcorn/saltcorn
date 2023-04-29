@@ -118,5 +118,10 @@ const js = async () => {
       "unrolled_menu_items",
       iter_menu(state.getConfig("unrolled_menu_items", []))
     );
+
+  for (const folder of await File.allDirectories())
+    for (const file of await File.find({ folder }))
+      if (file.min_role_read && file.min_role_read > 1)
+        await file.set_role(old_to_new_role(file.min_role_read));
 };
 module.exports = { sql, js };
