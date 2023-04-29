@@ -72,6 +72,7 @@ const js = async () => {
     });
     await state.setConfig("home_page_by_role", new_homepages);
   }
+
   // pages etc, other layout items
   const xform_layout = (segment) => {
     if (segment.minRole) {
@@ -99,5 +100,23 @@ const js = async () => {
       view.id
     );
   }
+
+  //menu
+  const iter_menu = (mi) => {
+    if (mi.min_role) mi.min_role = old_to_new_role(mi.min_role);
+    if (mi.subitems) {
+      mi.subitems.forEach(iter_menu);
+    }
+  };
+  if (state.getConfig("menu_items", false))
+    await state.setConfig(
+      "menu_items",
+      iter_menu(state.getConfig("menu_items", []))
+    );
+  if (state.getConfig("unrolled_menu_items", false))
+    await state.setConfig(
+      "unrolled_menu_items",
+      iter_menu(state.getConfig("unrolled_menu_items", []))
+    );
 };
 module.exports = { sql, js };
