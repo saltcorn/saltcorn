@@ -119,8 +119,8 @@ const js = async () => {
       iter_menu(state.getConfig("unrolled_menu_items", []))
     );
 
-  for (const folder of await File.allDirectories())
-    for (const file of await File.find({ folder }))
+  for (const folderFile of await File.allDirectories())
+    for (const file of await File.find({ folder: folderFile.path_to_serve }))
       if (file.min_role_read && file.min_role_read > 1)
         await file.set_role(old_to_new_role(file.min_role_read));
 };
