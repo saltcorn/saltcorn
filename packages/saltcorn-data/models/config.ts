@@ -308,7 +308,7 @@ const configTypes: ConfigTypes = {
   },
   tenant_create_unauth_redirect: {
     type: "String",
-    label: "Redirect unathorized",
+    label: "Redirect unauthorized",
     blurb: "If tenant creation is not authorized, redirect to this URL",
   },
   tenants_install_git: {

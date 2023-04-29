@@ -1149,7 +1149,7 @@
 	"A page with this name already exists": "Strona z tą nazwą już istnieje",
 	"Tenant Base URL": "Bazowy URL tenanta",
 	"Base hostname for newly created tenants. If unset, defaults to hostname": "Bazowa nazwa hosta dla nowo utworzonych tenantów. Jeżeli nie ustawione, domyślnie do nazwy hosta",
-	"Redirect unathorized": "Przekierowanie nieautoryzowane",
+	"Redirect unauthorized": "Przekierowanie nieautoryzowane",
 	"If tenant creation is not authorized, redirect to this URL": "Jeżeli utworzenie tenanta nie jest autoryzowane, przekieruj do tego URL",
 	"Import table %s": "Importuj tabelę %s",
 	"Import CSV": "Importuj CSV",
