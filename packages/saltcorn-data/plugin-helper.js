@@ -1842,7 +1842,7 @@ const initial_config_all_fields =
       aboves.push({
         type: "action",
         block: false,
-        minRole: 10,
+        minRole: 100,
         action_name: "Save",
       });
     cfg.layout = { above: aboves };

@@ -201,7 +201,7 @@ describe("MJML Mail Transformations", () => {
                 contents: {
                   type: "view_link",
                   view: "Own:authorshow",
-                  minRole: 10,
+                  minRole: 100,
                   in_modal: true,
                   view_label: "foo it",
                 },
@@ -234,7 +234,7 @@ describe("MJML Mail Transformations", () => {
         {
           type: "ViewLink",
           view: "Own:authorshow",
-          minRole: 10,
+          minRole: 100,
           in_modal: true,
         },
       ],

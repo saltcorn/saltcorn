@@ -85,7 +85,7 @@ describe("page action", () => {
           {
             type: "action",
             rndid: "56f3ac",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_icon: "far fa-angry",
             action_name: "run_js_code",

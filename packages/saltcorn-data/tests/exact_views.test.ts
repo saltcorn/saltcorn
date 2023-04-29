@@ -171,7 +171,7 @@ describe("Show view", () => {
           {
             type: "action",
             rndid: "1a8ac3",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "run_js_code",
             action_size: "btn-sm",
@@ -191,7 +191,7 @@ describe("Show view", () => {
         {
           type: "Action",
           rndid: "1a8ac3",
-          minRole: 10,
+          minRole: 100,
           isFormula: {},
           action_name: "run_js_code",
           action_size: "btn-sm",
@@ -214,7 +214,7 @@ describe("Show view", () => {
                 contents: {
                   type: "view_link",
                   view: "Own:authorshow",
-                  minRole: 10,
+                  minRole: 100,
                   in_modal: true,
                   view_label: "foo it",
                 },
@@ -247,7 +247,7 @@ describe("Show view", () => {
         {
           type: "ViewLink",
           view: "Own:authorshow",
-          minRole: 10,
+          minRole: 100,
           in_modal: true,
         },
       ],
@@ -364,7 +364,7 @@ describe("Show view", () => {
               block: false,
               rndid: "746098",
               confirm: false,
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_icon: "",
               action_name: "Delete",
@@ -466,7 +466,7 @@ describe("Show view", () => {
           type: "Action",
           rndid: "746098",
           confirm: false,
-          minRole: 10,
+          minRole: 100,
           isFormula: {},
           action_icon: "",
           action_name: "Delete",
@@ -738,7 +738,7 @@ describe("Edit view", () => {
         {
           type: "action",
           rndid: "74310f",
-          minRole: 10,
+          minRole: 100,
           isFormula: {},
           action_name: "Save",
           action_style: "btn-primary",
@@ -753,7 +753,7 @@ describe("Edit view", () => {
       {
         type: "Action",
         rndid: "74310f",
-        minRole: 10,
+        minRole: 100,
         isFormula: {},
         action_name: "Save",
         action_style: "btn-primary",

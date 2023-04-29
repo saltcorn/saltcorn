@@ -342,7 +342,7 @@ describe("User fields", () => {
       configuration: {
         columns: [
           { type: "Field", fieldview: "edit", field_name: "height" },
-          { type: "Action", minRole: 10, action_name: "Save" },
+          { type: "Action", minRole: 100, action_name: "Save" },
         ],
         layout: {
           above: [
@@ -368,7 +368,7 @@ describe("User fields", () => {
               ],
             },
             { type: "line_break" },
-            { type: "action", minRole: 10, action_name: "Save" },
+            { type: "action", minRole: 100, action_name: "Save" },
           ],
         },
       },
@@ -466,7 +466,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "63f01b",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Login",
               action_label: "Login",
@@ -476,7 +476,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "45dd57",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Login with github",
               configuration: {},
@@ -489,7 +489,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "63f01b",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Login",
             action_label: "Login",
@@ -499,7 +499,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "45dd57",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Login with github",
             configuration: {},
@@ -573,7 +573,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "63f01b",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Sign up",
               action_style: "btn-primary",
@@ -588,7 +588,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "63f01b",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Sign up",
             action_style: "btn-primary",
