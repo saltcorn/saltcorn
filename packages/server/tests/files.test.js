@@ -121,7 +121,7 @@ describe("files admin", () => {
     await request(app)
       .post("/files/setrole/rick.png")
       .set("Cookie", loginCookie)
-      .send("role=10")
+      .send("role=100")
       .expect(toRedirect("/files?dir=."));
   });
   it("serve file to public after role change", async () => {

@@ -272,7 +272,7 @@ describe("menu editor", () => {
         url: "",
         type: "View",
         label: "BarMenu",
-        min_role: "10",
+        min_role: "100",
         pagename: null,
         viewname: "dqwdw",
       },

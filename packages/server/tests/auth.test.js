@@ -205,7 +205,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fideRGE54lio")
-      .send("role_id=8")
+      .send("role_id=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
   });
@@ -223,7 +223,7 @@ describe("user admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
-    expect(user.role_id).toBe(8);
+    expect(user.role_id).toBe(80);
     await request(app)
       .get(`/useradmin/${user.id}`)
       .set("Cookie", loginCookie)
@@ -238,11 +238,11 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send(`id=${user.id}`)
-      .send("role_id=4")
+      .send("role_id=40")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const edituser = await User.findOne({ email: "staff2@foo.com" });
-    expect(edituser.role_id).toBe(4);
+    expect(edituser.role_id).toBe(40);
   });
   it("tries to create new user with existing email", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -251,7 +251,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fideRGE54lio")
-      .send("role_id=8")
+      .send("role_id=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const editusers = await User.find({ email: "staff2@foo.com" });

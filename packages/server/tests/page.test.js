@@ -44,7 +44,7 @@ describe("page create", () => {
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/pageedit/edit-properties")
-      .send("name=whales&title=Whales&description=about+whales&min_role=10")
+      .send("name=whales&title=Whales&description=about+whales&min_role=100")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/pageedit/edit/whales"));
   });
@@ -142,7 +142,7 @@ describe("pageedit", () => {
       .send("name=a_page")
       .send("title=mytitle")
       .send("description=mydescript")
-      .send("min_role=8")
+      .send("min_role=80")
       .send("id=1")
       .expect(toRedirect("/pageedit/"));
   });
