@@ -7,6 +7,7 @@
 // todo refactor to few modules + rename to be in sync with router url
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
+const { X509Certificate } = require("crypto");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
@@ -23,7 +24,16 @@ const {
 const { isAdmin, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, span, code, h5, i, p } = require("@saltcorn/markup/tags");
+const {
+  a,
+  div,
+  span,
+  code,
+  h5,
+  i,
+  p,
+  input,
+} = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const {
   send_users_page,
@@ -243,6 +253,18 @@ router.get(
         type: "card",
         title: req.__("Users"),
         contents: [
+          div(
+            { class: "row mb-3" },
+            div(
+              { class: "col-sm-6 offset-sm-3" },
+              input({
+                class: "form-control",
+                type: "search",
+                "data-filter-table": "table.user-admin",
+                placeholder: "🔍 Search",
+              })
+            )
+          ),
           mkTable(
             [
               { label: req.__("ID"), key: "id" },
@@ -273,7 +295,7 @@ router.get(
               },
             ],
             users,
-            { hover: true }
+            { hover: true, class: "user-admin" }
           ),
           link(`/useradmin/new`, req.__("Create user")),
         ],
@@ -572,6 +594,12 @@ router.get(
     const show_warning =
       !hostname_matches_baseurl(req, getBaseDomain()) &&
       is_hsts_tld(getBaseDomain());
+    let expiry = "";
+    if (has_custom && X509Certificate) {
+      const cert = getState().getConfig("custom_ssl_certificate", "");
+      const { validTo } = new X509Certificate(cert);
+      expiry = div({ class: "me-2" }, "Expires: ", validTo);
+    }
     send_users_page({
       res,
       req,
@@ -653,6 +681,7 @@ router.get(
                   ? span({ class: "badge bg-primary" }, req.__("Enabled"))
                   : span({ class: "badge bg-secondary" }, req.__("Disabled"))
               ),
+              has_custom && expiry,
               // TBD change to button
               link(
                 "/useradmin/ssl/custom",

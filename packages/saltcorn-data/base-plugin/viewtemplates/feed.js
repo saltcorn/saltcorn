@@ -108,6 +108,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
                 name: "create_view_label",
@@ -117,7 +118,10 @@ const configuration_workflow = (req) =>
                 ),
                 type: "String",
                 attributes: { asideNext: true },
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_view_location",
@@ -133,7 +137,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_style",
@@ -159,7 +166,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
 
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_size",
@@ -188,6 +198,9 @@ const configuration_workflow = (req) =>
                         "If off, only show create view if the query state is about the current user"
                       ),
                       type: "Bool",
+                      showIf: {
+                        view_to_create: create_view_opts.map((o) => o.name),
+                      },
                     },
                   ]
                 : []),
@@ -224,7 +237,18 @@ const configuration_workflow = (req) =>
                 class: "validate-expression",
                 sublabel:
                   req.__("Only include rows where this formula is true. ") +
-                  req.__("Use %s to access current user ID", code("$user_id")),
+                  req.__("In scope:") +
+                  " " +
+                  [
+                    ...fields.map((f) => f.name),
+                    "user",
+                    "year",
+                    "month",
+                    "day",
+                    "today()",
+                  ]
+                    .map((s) => code(s))
+                    .join(", "),
                 type: "String",
               },
 
@@ -408,7 +432,11 @@ const run = async (
   const user_id =
     extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
   if (include_fml)
-    qextra.where = jsexprToWhere(include_fml, { ...state, user_id });
+    qextra.where = jsexprToWhere(include_fml, {
+      ...state,
+      user_id,
+      user: extraArgs?.req?.user,
+    });
 
   const sresp = await sview.runMany(state, {
     ...extraArgs,

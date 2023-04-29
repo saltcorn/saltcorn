@@ -8,15 +8,9 @@
 const Router = require("express-promise-router");
 
 const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
-const {
-  p,
-  a,
-  div,
-  script,
-  text,
-  domReady,
-  pre,
-} = require("@saltcorn/markup/tags");
+const tags = require("@saltcorn/markup/tags");
+const { p, a, div, script, text, domReady, code, pre, tbody, tr, th, td } =
+  tags;
 
 const { getState } = require("@saltcorn/data/db/state");
 const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
@@ -304,6 +298,7 @@ router.get(
     const roles = await User.get_roles();
     const pages = await Page.find();
     const form = await viewForm(req, tableOptions, roles, pages, viewrow);
+    const inbound_connected = await viewrow.inbound_connected_objects();
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -324,6 +319,37 @@ router.get(
             viewrow.table_name
           ),
           contents: renderForm(form, req.csrfToken()),
+        },
+        {
+          type: "card",
+          title: req.__("View configuration"),
+          contents: {
+            type: "tabs",
+            contents: [
+              pre(code(JSON.stringify(viewrow.configuration, null, 2))),
+            ],
+            tabsStyle: "Accordion",
+            startClosed: true,
+            titles: [req.__("Show configuration object")],
+          },
+        },
+        {
+          type: "card",
+          title: req.__("Connected views"),
+          contents: tags.table(
+            tbody(
+              tr(
+                th({ class: "me-2" }, "Embeeded in"),
+                td(
+                  inbound_connected.embeddedViews.map((v) => v.name).join(", ")
+                )
+              ),
+              tr(
+                th({ class: "me-2" }, "Linked from"),
+                td(inbound_connected.linkedViews.map((v) => v.name).join(", "))
+              )
+            )
+          ),
         },
       ],
     });

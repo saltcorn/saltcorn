@@ -336,6 +336,7 @@ export type MobileConfig = {
   pluginHeaders?: string[];
   role_id?: number;
   user_name?: string;
+  user_id?: number;
   language?: string;
   isPublicUser?: boolean;
   jwt?: string;

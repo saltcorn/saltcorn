@@ -493,6 +493,19 @@ const transformForm = async ({
 }) => {
   await traverse(form.layout, {
     action(segment) {
+      if (segment.action_style === "on_page_load") {
+        //run action
+        run_action_column({
+          col: { ...segment },
+          referrer: req.get("Referrer"),
+          req: req,
+          res: res,
+        }).catch((e) => Crash.create(e, req));
+        segment.type = "blank";
+        segment.contents = "";
+        segment.style = {};
+        return;
+      }
       if (segment.action_name === "Delete") {
         if (form.values && form.values.id) {
           segment.action_url = `/delete/${table.name}/${form.values.id}`;
@@ -594,6 +607,16 @@ const transformForm = async ({
         );
       let state;
       switch (view_select.type) {
+        case "RelationPath": {
+          const path = view_select.path;
+          state = {
+            _inbound_relation_path_: {
+              ...view_select,
+              srcId: path[0].fkey ? row[path[0].fkey] : row[table.pk_name],
+            },
+          };
+          break;
+        }
         case "Own":
           state = { id: row.id };
           break;
@@ -965,6 +988,9 @@ const runPost = async (
 
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
+      return;
+    } else if (req.xhr && !req.smr) {
+      res.json({ view_when_done, ...trigger_return });
       return;
     }
 

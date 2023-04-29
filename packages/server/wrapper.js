@@ -5,7 +5,7 @@
 const { getState } = require("@saltcorn/data/db/state");
 const { get_extra_menu } = require("@saltcorn/data/web-mobile-commons");
 //const db = require("@saltcorn/data/db");
-const { h3, div, small } = require("@saltcorn/markup/tags");
+const { h3, div, small, domReady } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const renderLayout = require("@saltcorn/markup/layout");
 /**
@@ -30,6 +30,7 @@ const get_menu = (req) => {
   const role = (req.user || {}).role_id || 10;
 
   const allow_signup = state.getConfig("allow_signup");
+  const notification_in_menu = state.getConfig("notification_in_menu");
   const login_menu = state.getConfig("login_menu");
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
@@ -42,6 +43,16 @@ const get_menu = (req) => {
           isUser: true,
           subitems: [
             { label: small((req.user.email || "").split("@")[0]) },
+            ...(notification_in_menu
+              ? [
+                  {
+                    label: req.__("Notifications"),
+                    icon: "far fa-bell",
+                    class: "notify-menu-item",
+                    link: "/notifications",
+                  },
+                ]
+              : []),
             {
               label: req.__("User Settings"),
               icon: "fas fa-user-cog",
@@ -58,10 +69,22 @@ const get_menu = (req) => {
       ]
     : [
         ...(allow_signup
-          ? [{ link: "/auth/signup", label: req.__("Sign up") }]
+          ? [
+              {
+                link: "/auth/signup",
+                icon: "fas fa-user-plus",
+                label: req.__("Sign up"),
+              },
+            ]
           : []),
         ...(login_menu
-          ? [{ link: "/auth/login", label: req.__("Login") }]
+          ? [
+              {
+                link: "/auth/login",
+                icon: "fas fa-sign-in-alt",
+                label: req.__("Login"),
+              },
+            ]
           : []),
       ];
   // const schema = db.getTenantSchema();
@@ -123,11 +146,15 @@ const get_menu = (req) => {
       section: req.__("Admin"),
       items: adminItems,
     },
-    {
-      section: req.__("User"),
-      isUser: true,
-      items: authItems,
-    },
+    ...(authItems.length
+      ? [
+          {
+            section: req.__("User"),
+            isUser: true,
+            items: authItems,
+          },
+        ]
+      : []),
   ].filter((s) => s);
 };
 /**
@@ -141,6 +168,8 @@ const get_menu = (req) => {
 const get_headers = (req, version_tag, description, extras = []) => {
   const state = getState();
   const favicon = state.getConfig("favicon_id", null);
+  const notification_in_menu = state.getConfig("notification_in_menu");
+  const pwa_enabled = state.getConfig("pwa_enabled");
 
   const iconHeader = favicon
     ? [
@@ -174,6 +203,18 @@ const get_headers = (req, version_tag, description, extras = []) => {
   const state_headers = [];
   for (const hs of Object.values(state.headers)) {
     state_headers.push(...hs);
+  }
+  if (notification_in_menu)
+    from_cfg.push({ scriptBody: domReady(`check_saltcorn_notifications()`) });
+  if (pwa_enabled) {
+    from_cfg.push({
+      headerTag: `<link rel="manifest" href="/notifications/manifest.json">`,
+    });
+    from_cfg.push({
+      scriptBody: `if('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/serviceworker.js', { scope: '/' });
+      }`,
+    });
   }
   return [
     ...stdHeaders,

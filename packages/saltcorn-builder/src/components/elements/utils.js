@@ -471,11 +471,15 @@ export const fetchViewPreview =
     let viewname,
       body = configuration ? { ...configuration } : {};
     if (view.includes(":")) {
-      const [reltype, rest] = view.split(":");
-      const [vnm] = rest.split(".");
-      viewname = vnm;
-      body.reltype = reltype;
-      body.path = rest;
+      const [prefix, rest] = view.split(":");
+      const tokens = rest.split(".");
+      if (rest.startsWith(".")) {
+        viewname = prefix;
+      } else {
+        viewname = tokens[0];
+        body.reltype = prefix;
+        body.path = rest;
+      }
     } else viewname = view;
 
     fetchPreview({
@@ -861,7 +865,7 @@ const ConfigField = ({
         styleVal = "";
         styleDim = "auto";
       } else if (isStyle && value && typeof value === "string") {
-        const matches = value.match(/^([0-9]+\.?[0-9]*)(.*)/);
+        const matches = value.match(/^([-]?[0-9]+\.?[0-9]*)(.*)/);
         if (matches) {
           styleVal = matches[1];
           styleDim = matches[2];
@@ -1110,6 +1114,7 @@ const ButtonOrLinkSettingsRows = ({
   values,
   linkFirst = false,
   linkIsBlank = false,
+  allowRunOnLoad = false,
 }) => {
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
@@ -1145,42 +1150,49 @@ const ButtonOrLinkSettingsRows = ({
           {!linkFirst ? (
             <option value={addBtnClass("btn-link")}>Link</option>
           ) : null}
+          {!linkFirst ? (
+            <option value="on_page_load">Run on Page Load</option>
+          ) : null}
         </select>
       </td>
     </tr>,
-    <tr key="btnsz">
-      <td>
-        <label>Size</label>
-      </td>
-      <td>
-        <select
-          className="form-control form-select"
-          value={values[keyPrefix + "size"]}
-          onChange={setAProp(keyPrefix + "size")}
-        >
-          <option value="">Standard</option>
-          <option value="btn-lg">Large</option>
-          <option value="btn-sm">Small</option>
-          <option value="btn-block">Block</option>
-          <option value="btn-block btn-lg">Large block</option>
-        </select>
-      </td>
-    </tr>,
-    <tr key="btnicon">
-      <td>
-        <label>Icon</label>
-      </td>
-      <td>
-        <FontIconPicker
-          value={values[keyPrefix + "icon"]}
-          onChange={(value) =>
-            setProp((prop) => (prop[keyPrefix + "icon"] = value))
-          }
-          isMulti={false}
-          icons={faIcons}
-        />
-      </td>
-    </tr>,
+    values[keyPrefix + "style"] !== "on_page_load" ? (
+      <tr key="btnsz">
+        <td>
+          <label>Size</label>
+        </td>
+        <td>
+          <select
+            className="form-control form-select"
+            value={values[keyPrefix + "size"]}
+            onChange={setAProp(keyPrefix + "size")}
+          >
+            <option value="">Standard</option>
+            <option value="btn-lg">Large</option>
+            <option value="btn-sm">Small</option>
+            <option value="btn-block">Block</option>
+            <option value="btn-block btn-lg">Large block</option>
+          </select>
+        </td>
+      </tr>
+    ) : null,
+    values[keyPrefix + "style"] !== "on_page_load" ? (
+      <tr key="btnicon">
+        <td>
+          <label>Icon</label>
+        </td>
+        <td>
+          <FontIconPicker
+            value={values[keyPrefix + "icon"]}
+            onChange={(value) =>
+              setProp((prop) => (prop[keyPrefix + "icon"] = value))
+            }
+            isMulti={false}
+            icons={faIcons}
+          />
+        </td>
+      </tr>
+    ) : null,
     ...(values[keyPrefix + "style"] === addBtnClass("btn-custom-color")
       ? [
           <tr key="btnbgcol">
@@ -1310,4 +1322,89 @@ const Tooltip = ({ children }) => {
       </span>
     </Tippy>
   );
+};
+
+const getFkTarget = (field, options) => {
+  const option = options.find((fk) => fk.name === field);
+  return option ? option.reftable_name : null;
+};
+
+export const parseRelationPath = (path, fk_options) => {
+  const result = [];
+  const tokens = path.split(".");
+  if (tokens.length >= 3) {
+    let currentTbl = tokens[1];
+    for (const relation of tokens.slice(2)) {
+      if (relation.indexOf("$") > 0) {
+        const [inboundTbl, inboundKey] = relation.split("$");
+        result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
+        currentTbl = inboundTbl;
+      } else {
+        const targetTbl = getFkTarget(relation, fk_options[currentTbl]);
+        if (!targetTbl) {
+          console.log(`The foreign key '${relation}' is invalid`);
+          return [];
+        }
+        result.push({ type: "Foreign", table: targetTbl, key: relation });
+        currentTbl = targetTbl;
+      }
+    }
+  }
+  return result;
+};
+
+export const parseLegacyRelation = (type, rest, parentTbl) => {
+  switch (type) {
+    case "ChildList": {
+      const path = rest ? rest.split(".") : [];
+      if (path.length === 3) {
+        const [viewName, table, key] = path;
+        return [
+          {
+            type: "Inbound",
+            table,
+            key,
+          },
+        ];
+      } else if (path.length === 5) {
+        const [viewName, thrTbl, thrTblFkey, fromTbl, fromTblFkey] = path;
+        return [
+          {
+            type: "Inbound",
+            table: thrTbl,
+            key: thrTblFkey,
+          },
+          {
+            type: "Inbound",
+            table: fromTbl,
+            key: fromTblFkey,
+          },
+        ];
+      }
+      break;
+    }
+    case "Independent": {
+      return [{ type: "Independent", table: "None (no relation)" }];
+    }
+    case "Own": {
+      return [{ type: "Own", table: `${parentTbl} (same table)` }];
+    }
+    case "OneToOneShow": {
+      const tokens = rest ? rest.split(".") : [];
+      if (tokens.length !== 3) break;
+      const [viewname, relatedTbl, fkey] = tokens;
+      return [{ type: "Inbound", table: relatedTbl, key: fkey }];
+    }
+    case "ParentShow": {
+      const tokens = rest ? rest.split(".") : [];
+      if (tokens.length !== 3) break;
+      const [viewname, parentTbl, fkey] = tokens;
+      return [{ type: "Foreign", table: parentTbl, key: fkey }];
+    }
+  }
+  return [];
+};
+
+export const removeWhitespaces = (str) => {
+  return str.replace(/\s/g, "X");
 };

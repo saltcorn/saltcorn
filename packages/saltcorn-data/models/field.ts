@@ -13,7 +13,7 @@ const {
   freeVariables,
 } = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
-const { InvalidAdminAction } = require("../utils");
+const { InvalidAdminAction, isNode } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -972,7 +972,7 @@ class Field implements AbstractField {
         });
     await require("../db/state").getState().refresh_tables();
 
-    if (table.versioned && !(f.calculated && !f.stored)) {
+    if (isNode() && table.versioned && !(f.calculated && !f.stored)) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name

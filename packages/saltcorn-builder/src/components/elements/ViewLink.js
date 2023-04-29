@@ -8,7 +8,6 @@ import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
-  blockProps,
   BlockSetting,
   MinRoleSettingRow,
   OrFormula,
@@ -17,6 +16,9 @@ import {
   setAPropGen,
   FormulaTooltip,
 } from "./utils";
+
+import { RelationPicker } from "./RelationPicker";
+import { RelationBadges } from "./RelationBadges";
 
 export /**
  * @param {object} props
@@ -91,6 +93,7 @@ export /**
 const ViewLinkSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
+    relation: node.data.props.relation,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     isFormula: node.data.props.isFormula,
@@ -110,6 +113,7 @@ const ViewLinkSettings = () => {
   const {
     actions: { setProp },
     name,
+    relation,
     block,
     minRole,
     label,
@@ -138,10 +142,10 @@ const ViewLinkSettings = () => {
       const target_value = e.target.value;
       setProp((prop) => (prop.view_name = target_value));
       if (target_value !== use_view_name) {
-        setProp(
-          (prop) =>
-            (prop.name = options.view_relation_opts[target_value][0].value)
-        );
+        setProp((prop) => {
+          prop.name = options.view_relation_opts[target_value][0].value;
+          prop.relation = undefined;
+        });
       }
     }
   };
@@ -168,21 +172,29 @@ const ViewLinkSettings = () => {
           </tr>
           <tr>
             <td colSpan="2">
-              <label>Relation</label>
-              <select
-                value={name}
-                className="form-control form-select"
-                onChange={setAProp("name")}
-                onBlur={setAProp("name")}
-              >
-                {(options.view_relation_opts[use_view_name] || []).map(
-                  (f, ix) => (
-                    <option key={ix} value={f.value}>
-                      {f.label}
-                    </option>
-                  )
-                )}
-              </select>
+              <RelationPicker
+                options={options}
+                viewname={use_view_name}
+                update={(relPath) => {
+                  if (relPath.startsWith(".")) {
+                    setProp((prop) => {
+                      prop.name = use_view_name;
+                      prop.relation = relPath;
+                    });
+                  } else {
+                    setProp((prop) => {
+                      prop.name = relPath;
+                      prop.relation = undefined;
+                    });
+                  }
+                }}
+              />
+              <RelationBadges
+                view={name}
+                relation={relation}
+                parentTbl={options.tableName}
+                fk_options={options.fk_options}
+              />
             </td>
           </tr>
           <tr>
@@ -272,6 +284,7 @@ ViewLink.craft = {
     column_type: "ViewLink",
     fields: [
       { name: "name", segment_name: "view", column_name: "view" },
+      "relation",
       { name: "label", segment_name: "view_label", canBeFormula: true },
       "block",
       "textStyle",

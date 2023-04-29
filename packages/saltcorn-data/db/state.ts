@@ -32,7 +32,7 @@ import config from "../models/config";
 const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
-const { structuredClone, removeAllWhiteSpace } = utils;
+const { structuredClone, removeAllWhiteSpace, stringToJSON } = utils;
 import I18n from "i18n";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -111,6 +111,7 @@ class State {
   actions: Record<string, any>;
   auth_methods: Record<string, any>;
   plugins: Record<string, Plugin>;
+  table_providers: Record<string, any>;
   plugin_cfgs: any;
   plugin_locations: any;
   plugin_module_names: any;
@@ -153,6 +154,7 @@ class State {
     this.plugin_cfgs = {};
     this.plugin_locations = {};
     this.plugin_module_names = {};
+    this.table_providers = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.layouts = { emergency: { wrap: emergency_layout } };
@@ -355,6 +357,17 @@ class State {
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
     for (const table of allTables) {
+      if (table.provider_name) {
+        table.provider_cfg = stringToJSON(table.provider_cfg);
+        const provider = this.table_providers[table.provider_name];
+        if (!provider) table.fields = [];
+        else {
+          if (typeof provider.fields === "function")
+            table.fields = await provider.fields(table.provider_cfg);
+          else table.fields = provider.fields;
+        }
+        continue;
+      }
       table.fields = allFields.filter((f: Field) => f.table_id === table.id);
       table.constraints = allConstraints
         .filter((f: any) => f.table_id === table.id)
@@ -506,6 +519,9 @@ class State {
     });
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
       this.eventTypes[k] = v;
+    });
+    Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
+      this.table_providers[k] = v;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
@@ -659,9 +675,23 @@ class State {
     for (const moduleName of moduleNames) {
       if (!this.codeNPMmodules[moduleName]) {
         try {
-          await this.pluginManager.install(moduleName);
-          this.codeNPMmodules[moduleName] =
-            this.pluginManager.require(moduleName);
+          if (
+            [
+              "fs",
+              "child_process",
+              "path",
+              "http",
+              "crypto",
+              "dns",
+              "os",
+            ].includes(moduleName)
+          ) {
+            this.codeNPMmodules[moduleName] = require(moduleName);
+          } else {
+            await this.pluginManager.install(moduleName);
+            this.codeNPMmodules[moduleName] =
+              this.pluginManager.require(moduleName);
+          }
         } catch (e) {
           console.error("npm install error", e);
         }

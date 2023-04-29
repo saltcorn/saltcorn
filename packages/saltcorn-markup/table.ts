@@ -17,7 +17,7 @@ const headerCell = (hdr: any): string =>
   th(
     (hdr.align || hdr.width) && {
       style:
-        (hdr.align ? `text-align: ` + hdr.align : "") +
+        (hdr.align ? `text-align: ${hdr.align};` : "") +
         (hdr.width ? `width: ` + hdr.width : ""),
     },
     hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label

@@ -15,10 +15,8 @@ import db from "../db";
 
 import type Field from "./field";
 import Form from "./form";
-import type {
-  JoinFieldOption,
-  RelationOption,
-} from "@saltcorn/types/base_types";
+
+const { build_schema_fk_options } = require("../plugin-helper");
 
 const { getState } = require("../db/state");
 const { applyAsync, apply } = require("../utils");
@@ -240,13 +238,18 @@ class Workflow implements AbstractWorkflow {
         fonts: getState().fonts,
       };
       const Table = (await import("./table")).default;
-      const table = Table.findOne({ id: context.table_id });
+      const table = Table.findOne(
+        context.table_id
+          ? { id: context.table_id }
+          : { name: context.exttable_name }
+      );
       if (table) {
         options.join_field_picker_data = {
           join_field_options: await table.get_join_field_options(true, true),
           relation_options: await table.get_relation_options(),
         };
       }
+      options.fk_options = await build_schema_fk_options();
       return {
         renderBuilder: {
           options,

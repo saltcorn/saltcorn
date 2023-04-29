@@ -356,7 +356,7 @@ const add_index = async (table_name, field_name) => {
  */
 const drop_index = async (table_name, field_name) => {
   // TBD check that there are no problems with lenght of constraint name
-  const sql = `drop index "${sqlsanitize(table_name)}_${sqlsanitize(
+  const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(table_name)}_${sqlsanitize(
     field_name
   )}_index";`;
   sql_log(sql);
@@ -374,6 +374,10 @@ const drop_index = async (table_name, field_name) => {
  */
 const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
   // TBD describe difference between CopyFrom and CopyFrom1
+  //  1. No tenant support
+  //  2. Manual promisification.
+  //  3. ???
+  //  4. Not exported nor used anywhere
   const quote = (s) => `"${s}"`;
   const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
     .map(quote)

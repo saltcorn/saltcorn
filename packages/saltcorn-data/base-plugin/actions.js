@@ -13,6 +13,7 @@ const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
+const Notification = require("../models/notification");
 const {
   getMailTransport,
   viewToEmailHtml,
@@ -96,6 +97,7 @@ const run_code = async ({
     fetch,
     URL,
     File,
+    setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
     getConfig: (k) => sysState.getConfig(k),
@@ -395,6 +397,7 @@ module.exports = {
             "Only send email if this formula evaluates to true. Leave blank to always send email",
           type: "String",
         },
+        { name: "disable_notify", label: "Disable notification", type: "Bool" },
       ];
     },
     requireRow: true,
@@ -417,6 +420,7 @@ module.exports = {
         to_email_fixed,
         only_if,
         attachment_path,
+        disable_notify,
       },
       user,
     }) => {
@@ -473,7 +477,8 @@ module.exports = {
         attachments,
       };
       await getMailTransport().sendMail(email);
-      return { notify: `E-mail sent to ${to_addr}` };
+      if (disable_notify) return;
+      else return { notify: `E-mail sent to ${to_addr}` };
     },
   },
 
@@ -1000,6 +1005,49 @@ module.exports = {
             existingRow[table_for_insert.pk_name],
             user
           );
+      }
+    },
+  },
+  notify_user: {
+    configFields: () => [
+      {
+        name: "user_spec",
+        label: "User where or email",
+        type: "String",
+      },
+      {
+        name: "title",
+        label: "Title",
+        required: true,
+        type: "String",
+      },
+      {
+        name: "body",
+        label: "Body",
+        type: "String",
+      },
+      {
+        name: "link",
+        label: "Link",
+        type: "String",
+      },
+    ],
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<void>}
+     */
+    run: async ({ row, configuration: { title, body, link, user_spec } }) => {
+      const user_where = User.valid_email(user_spec)
+        ? { email: user_spec }
+        : user_spec === "*"
+        ? {}
+        : eval_expression(user_spec, row || {});
+      const users = await User.find(user_where);
+      for (const user of users) {
+        await Notification.create({ title, body, link, user_id: user.id });
       }
     },
   },

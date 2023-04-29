@@ -4,7 +4,7 @@
  * @subcategory models
  */
 import { runInNewContext, Script } from "vm";
-import { parseExpressionAt, Node } from "acorn";
+import { parseExpressionAt, Node, parse } from "acorn";
 import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
@@ -39,6 +39,9 @@ type ExtendedNode = {
   operator?: any;
   object?: ExtendedNode;
   property?: ExtendedNode;
+  value?: ExtendedNode;
+  key?: ExtendedNode;
+  properties?: any;
 } & Node;
 
 /**
@@ -94,7 +97,95 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     );
   }
 }
+function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
+  const keys = new Set(Object.keys(extraCtx));
+  const field_names = new Set(fields.map((f) => f.name));
+  const today = (offset?: number) => {
+    const d = new Date();
+    if (offset) d.setDate(d.getDate() + offset);
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  };
+  replace(ast, {
+    // @ts-ignore
+    leave: function (node) {
+      //console.log(node);
+      if (
+        node.type === "Identifier" &&
+        keys.has(node.name) &&
+        !field_names.has(node.name)
+      ) {
+        const valExpression = JSON.stringify(extraCtx[node.name]);
+        const valAst = parseExpressionAt(valExpression, 0, {
+          ecmaVersion: 2020,
+          locations: false,
+        });
 
+        return valAst;
+      }
+    },
+  });
+  replace(ast, {
+    // @ts-ignore
+    leave: function (node) {
+      //console.log(node);
+      if (
+        node.type === "BinaryExpression" &&
+        node.left.type === "Literal" &&
+        node.right.type === "Literal"
+      ) {
+        switch (node.operator) {
+          case "+":
+            // @ts-ignore
+            node.left.value = node.left.value + node.right.value;
+            return node.left;
+          case "-":
+            // @ts-ignore
+            node.left.value = node.left.value - node.right.value;
+            return node.left;
+        }
+      }
+      if (
+        node.type === "MemberExpression" &&
+        node.object.type === "ObjectExpression" &&
+        node.property.type === "Identifier"
+      ) {
+        const theProperty = node.object.properties.find(
+          // @ts-ignore
+          (p) => p.key.value === node.property.name
+        );
+        // @ts-ignore
+        if (theProperty && theProperty.value) return theProperty.value;
+      }
+
+      if (
+        node.type === "CallExpression" &&
+        // @ts-ignore
+        node.callee.name === "today"
+      ) {
+        if (node.arguments.length === 0) {
+          return parseExpressionAt(`'${today()}'`, 0, { ecmaVersion: 2020 });
+        }
+        const arg = node.arguments[0];
+        if (arg.type === "Literal") {
+          // @ts-ignore
+          return parseExpressionAt(`'${today(arg.value)}'`, 0, {
+            ecmaVersion: 2020,
+          });
+        }
+        if (
+          arg.type === "UnaryExpression" &&
+          arg.operator === "-" &&
+          arg.argument.type === "Literal"
+        ) {
+          // @ts-ignore
+          return parseExpressionAt(`'${today(-arg.argument.value)}'`, 0, {
+            ecmaVersion: 2020,
+          });
+        }
+      }
+    },
+  });
+}
 /**
  * @param {string} expression
  * @throws {Error}
@@ -106,12 +197,19 @@ function jsexprToWhere(
   fields: Field[] = []
 ): Where {
   if (!expression) return {};
+  const now = new Date();
+  if (!extraCtx.year) extraCtx.year = now.getFullYear();
+  if (!extraCtx.month) extraCtx.month = now.getMonth() + 1;
+  if (!extraCtx.day) extraCtx.day = now.getDate();
   try {
     const ast = parseExpressionAt(expression, 0, {
       ecmaVersion: 2020,
       locations: false,
     });
-    //console.log(ast);
+    //console.log("before", ast);
+    partiallyEvaluate(ast, extraCtx, fields);
+    //console.log("after", JSON.stringify(ast, null, 2));
+
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
       (<StringToFunction>{
         BinaryExpression() {
@@ -119,6 +217,8 @@ function jsexprToWhere(
           const cleftName =
             typeof cleft === "symbol" ? cleft.description : cleft;
           const cright = compile(node.right!);
+          const crightName =
+            typeof cright === "symbol" ? cright.description : cright;
           const cmp =
             typeof cright === "function"
               ? cright(cleft)
@@ -126,7 +226,11 @@ function jsexprToWhere(
               ? cleft(cright)
               : typeof cleft === "string" || cleft === null
               ? { eq: [cleft, cright] }
+              : typeof cright === "symbol" && typeof cleft !== "symbol"
+              ? { [crightName]: cleft }
               : { [cleftName]: cright };
+          //console.log({ cleft, cleftName, cright, cmp });
+
           const operators: StringToFunction = {
             "=="() {
               return cmp;
@@ -155,6 +259,16 @@ function jsexprToWhere(
           };
           return operators[node.operator](node);
         },
+        ObjectExpression() {
+          const rec: any = {};
+          (node.properties || []).forEach(
+            ({ key, value }: { key: ExtendedNode; value: ExtendedNode }) => {
+              // @ts-ignore
+              rec[key.value as string] = value.value;
+            }
+          );
+          return rec;
+        },
         MemberExpression() {
           const cleft = compile(node.object!);
           const cleftName =
@@ -162,9 +276,14 @@ function jsexprToWhere(
           const cright = compile(node.property!);
           const crightName =
             typeof cright === "symbol" ? cright.description : cright;
+          if (cleft[crightName]) return cleft[crightName];
           const field = fields.find((f) => f.name === cleftName);
 
-          if (!field) throw new Error(`Field not found: ${cleftName}`);
+          if (!field) {
+            console.log({ cleftName, cleft, cright, crightName });
+
+            throw new Error(`Field not found: ${cleftName}`);
+          }
           return (val: any) => ({
             [cleftName]: {
               inSelect: {

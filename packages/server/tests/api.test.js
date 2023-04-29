@@ -19,7 +19,7 @@ beforeAll(async () => {
 afterAll(db.close);
 
 describe("API read", () => {
-  it("should get books for public", async () => {
+  it("should get books for public simple", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/books/")
@@ -32,7 +32,7 @@ describe("API read", () => {
         )
       );
   });
-  it("should get books for public", async () => {
+  it("should get books for public fts", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/api/books/?_fts=Herman")

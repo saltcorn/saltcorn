@@ -135,6 +135,7 @@ const configuration_workflow = (req) =>
             viewname: context.viewname,
             req,
             has_click_to_edit: true,
+            has_align: true,
           });
           return new Form({
             blurb: req.__("Specify the fields in the table to show"),
@@ -194,6 +195,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
                 name: "create_view_label",
@@ -203,7 +205,10 @@ const configuration_workflow = (req) =>
                 ),
                 attributes: { asideNext: true },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_view_location",
@@ -219,7 +224,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_style",
@@ -245,7 +253,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
 
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_size",
@@ -262,7 +273,10 @@ const configuration_workflow = (req) =>
                     { name: "btn-block btn-lg", label: "Large block" },
                   ],
                 },
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
             ],
           });
@@ -340,7 +354,18 @@ const configuration_workflow = (req) =>
             class: "validate-expression",
             sublabel:
               req.__("Only include rows where this formula is true. ") +
-              req.__("Use %s to access current user ID", code("$user_id")),
+              req.__("In scope:") +
+              " " +
+              [
+                ...table.fields.map((f) => f.name),
+                "user",
+                "year",
+                "month",
+                "day",
+                "today()",
+              ]
+                .map((s) => code(s))
+                .join(", "),
             type: "String",
           });
           formfields.push({
@@ -776,8 +801,8 @@ module.exports = {
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
-        const ctx = { ...state, user_id: req.user?.id || null };
-        let where1 = jsexprToWhere(default_state.include_fml, ctx);
+        const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
+        let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
         mergeIntoWhere(where, where1 || {});
       }
       let rows = await table.getJoinedRows({

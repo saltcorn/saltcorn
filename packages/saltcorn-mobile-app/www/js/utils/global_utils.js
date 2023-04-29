@@ -16,6 +16,10 @@ function addRoute(routeEntry) {
   routingHistory.push(routeEntry);
 }
 
+function clearHistory() {
+  routingHistory = [];
+}
+
 async function apiCall({ method, path, params, body, responseType }) {
   const config = saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
@@ -155,8 +159,12 @@ async function handleRoute(route, query, files) {
       files: files,
     });
     if (page.redirect) {
-      const { path, query } = splitPathQuery(page.redirect);
-      await handleRoute(path, query);
+      if (page.redirect.startsWith("http://localhost")) {
+        await gotoEntryView();
+      } else {
+        const { path, query } = splitPathQuery(page.redirect);
+        await handleRoute(path, query);
+      }
     } else if (page.content) {
       if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
       else await replaceIframe(page.content);
@@ -173,7 +181,10 @@ async function handleRoute(route, query, files) {
 }
 
 async function goBack(steps = 1, exitOnFirstPage = false) {
-  if (exitOnFirstPage && routingHistory.length === 1) {
+  if (
+    routingHistory.length === 0 ||
+    (exitOnFirstPage && routingHistory.length === 1)
+  ) {
     navigator.app.exitApp();
   } else if (routingHistory.length <= steps) {
     routingHistory = [];

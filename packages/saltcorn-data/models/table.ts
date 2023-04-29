@@ -68,6 +68,7 @@ const {
   structuredClone,
   getLines,
   mergeIntoWhere,
+  stringToJSON,
 } = utils;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
@@ -147,7 +148,8 @@ class Table implements AbstractTable {
   fields: Field[];
   constraints: TableConstraint[];
   is_user_group: boolean;
-
+  provider_name?: string;
+  provider_cfg?: any;
   /**
    * Table constructor
    * @param {object} o
@@ -164,6 +166,9 @@ class Table implements AbstractTable {
     this.external = false;
     this.description = o.description;
     this.constraints = o.constraints || [];
+    this.provider_cfg = stringToJSON(o.provider_cfg);
+    this.provider_name = o.provider_name;
+
     this.fields = o.fields.map((f) => new Field(f));
   }
 
@@ -200,7 +205,28 @@ class Table implements AbstractTable {
         ? (v: TableCfg) => v.name === where.name
         : satisfies(where)
     );
-    return tbl ? new Table(structuredClone(tbl)) : null;
+    if (tbl?.provider_name) {
+      const provider = getState().table_providers[tbl.provider_name];
+      const { getRows } = provider.get_table(tbl.provider_cfg, tbl);
+
+      const { json_list_to_external_table } = require("../plugin-helper");
+      const t = json_list_to_external_table(getRows, tbl.fields);
+      delete t.min_role_read; //it is a getter
+      Object.assign(t, tbl);
+      t.update = async (upd_rec: any) => {
+        await db.update("_sc_tables", upd_rec, tbl.id);
+        await require("../db/state").getState().refresh_tables();
+      };
+      t.delete = async (upd_rec: any) => {
+        const schema = db.getTenantSchemaPrefix();
+
+        await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
+          tbl.id,
+        ]);
+        await require("../db/state").getState().refresh_tables();
+      };
+      return t;
+    } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
   /**
@@ -332,6 +358,15 @@ class Table implements AbstractTable {
       .filter((f) => f.reftable_name === "users")
       .map((f) => ({ value: `${f.id}`, label: f.name }));
 
+    const users = Table.findOne({ name: "users" });
+    for (const ufield of users?.fields || []) {
+      if (ufield.is_fkey && ufield.reftable_name === this.name) {
+        opts.push({
+          label: `users.${ufield.label} [Key to ${this.name}]`,
+          value: `Fml:user.${ufield.name}===id /* users.${ufield.label} */`,
+        });
+      }
+    }
     // inherit from all my fks if table has ownership
     for (const field of fields) {
       if (field.is_fkey && field.reftable_name) {
@@ -350,7 +385,21 @@ class Table implements AbstractTable {
         }
         if (refTable?.ownership_formula) {
           const refFml = removeComments(refTable.ownership_formula);
-
+          if (refFml.startsWith("user.") && !refFml.includes(".includes(")) {
+            for (const ufield of users?.fields || []) {
+              if (
+                ufield.is_fkey &&
+                refFml.startsWith(`user.${ufield.name}===`)
+              ) {
+                const sides = refFml.split("===");
+                const newFml = `${sides[0]}===${field.name}.${sides[1]}`;
+                opts.push({
+                  label: `Inherit ${field.label}`,
+                  value: `Fml:${newFml} /* Inherit ${field.label} */`,
+                });
+              }
+            }
+          }
           if (refFml.endsWith("==user.id")) {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
@@ -434,16 +483,17 @@ class Table implements AbstractTable {
    */
   static async create(
     name: string,
-    options: SelectOptions | TablePack = {},
+    options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
     const schema = db.getTenantSchemaPrefix();
     // create table in database
-    await db.query(
-      `create table ${schema}"${sqlsanitize(name)}" (id ${
-        db.isSQLite ? "integer" : "serial"
-      } primary key)`
-    );
+    if (!options.provider_name)
+      await db.query(
+        `create table ${schema}"${sqlsanitize(name)}" (id ${
+          db.isSQLite ? "integer" : "serial"
+        } primary key)`
+      );
     // populate table definition row
     const tblrow: any = {
       name,
@@ -453,39 +503,48 @@ class Table implements AbstractTable {
       ownership_field_id: options.ownership_field_id,
       ownership_formula: options.ownership_formula,
       description: options.description || "",
+      provider_name: options.provider_name,
+      provider_cfg: options.provider_cfg,
     };
     let pk_fld_id;
     if (!id) {
       // insert table definition into _sc_tables
       id = await db.insert("_sc_tables", tblrow);
       // add primary key column ID
-      const insfldres = await db.query(
-        `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+      if (!options.provider_name) {
+        const insfldres = await db.query(
+          `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
             values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
-        [id]
-      );
-      pk_fld_id = insfldres.rows[0].id;
+          [id]
+        );
+        pk_fld_id = insfldres.rows[0].id;
+      }
     }
     // create table
-
+    //const provider = getState().table_providers[tbl.provider_name];
+    //provider.get_table(tbl.provider_cfg, tbl);
+    const fields = options?.provider_name
+      ? [] //TODO look up
+      : [
+          new Field({
+            type: "Integer",
+            name: "id",
+            label: "ID",
+            primary_key: true,
+            required: true,
+            is_unique: true,
+            table_id: id,
+            id: pk_fld_id,
+          }),
+        ];
     const table = new Table({
       ...tblrow,
       id,
-      fields: [
-        new Field({
-          type: "Integer",
-          name: "id",
-          label: "ID",
-          primary_key: true,
-          required: true,
-          is_unique: true,
-          table_id: id,
-          id: pk_fld_id,
-        }),
-      ],
+      fields,
     });
+
     // create table history
-    if (table.versioned) await table.create_history_table();
+    if (table?.versioned) await table.create_history_table();
     // refresh tables cache
     await require("../db/state").getState().refresh_tables();
 
@@ -556,22 +615,18 @@ class Table implements AbstractTable {
   updateWhereWithOwnership(
     where: Where,
     fields: Field[],
-    user?: Row
+    user?: Row,
+    forRead?: boolean
   ): { notAuthorized?: boolean } | undefined {
     const role = user?.role_id;
-
+    const min_role = forRead ? this.min_role_read : this.min_role_write;
     if (
       role &&
-      role > this.min_role_write &&
+      role > min_role &&
       ((!this.ownership_field_id && !this.ownership_formula) || role === 10)
     )
       return { notAuthorized: true };
-    if (
-      user &&
-      role < 10 &&
-      role > this.min_role_write &&
-      this.ownership_field_id
-    ) {
+    if (user && role < 10 && role > min_role && this.ownership_field_id) {
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
@@ -704,8 +759,12 @@ class Table implements AbstractTable {
     const role = forUser ? forUser.role_id : forPublic ? 10 : null;
     if (
       role &&
-      this.updateWhereWithOwnership(where, fields, forUser || { role_id: 10 })
-        ?.notAuthorized
+      this.updateWhereWithOwnership(
+        where,
+        fields,
+        forUser || { role_id: 10 },
+        true
+      )?.notAuthorized
     ) {
       return [];
     }
@@ -742,11 +801,22 @@ class Table implements AbstractTable {
    * @param fieldnm
    * @returns {Promise<Object[]>}
    */
-  async distinctValues(fieldnm: string): Promise<any[]> {
-    const res = await db.query(
-      `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
-    );
-    return res.rows.map((r: Row) => r[fieldnm]);
+  async distinctValues(fieldnm: string, whereObj?: object): Promise<any[]> {
+    if (whereObj) {
+      const { where, values } = mkWhere(whereObj, db.isSQLite);
+      const res = await db.query(
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+          this.sql_name
+        } ${where}`,
+        values
+      );
+      return res.rows.map((r: Row) => r[fieldnm]);
+    } else {
+      const res = await db.query(
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
+      );
+      return res.rows.map((r: Row) => r[fieldnm]);
+    }
   }
 
   storedExpressionJoinFields() {
@@ -1149,6 +1219,14 @@ class Table implements AbstractTable {
   }
 
   /**
+   * get foreign keys, without the 'File' type
+   * @returns array of FK Fields
+   */
+  getForeignKeys(): Field[] {
+    return this.fields.filter((f) => f.is_fkey && f.type !== "File");
+  }
+
+  /**
    * Get a field, possibly by relation
    * @returns {Promise<Field | undefined>}
    */
@@ -1419,9 +1497,15 @@ class Table implements AbstractTable {
    */
   async import_csv_file(
     filePath: string,
-    recalc_stored?: boolean,
-    skip_first_data_row?: boolean
+    options?: {
+      recalc_stored?: boolean;
+      skip_first_data_row?: boolean;
+      no_table_write?: boolean;
+    }
   ): Promise<ResultMessage> {
+    if (typeof options === "boolean") {
+      options = { recalc_stored: options };
+    }
     let headers;
     const { readStateStrict } = require("../plugin-helper");
     let headerStr;
@@ -1438,6 +1522,7 @@ class Table implements AbstractTable {
     const okHeaders: any = {};
     const pk_name = this.pk_name;
     const renames: any[] = [];
+    const fkey_fields: Field[] = [];
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -1455,6 +1540,12 @@ class Table implements AbstractTable {
       } else if (f.required && !f.primary_key) {
         return { error: `Required field missing: ${f.label}` };
       }
+      if (
+        f.is_fkey &&
+        (okHeaders[f.name] || okHeaders[f.label]) &&
+        f.attributes.summary_field
+      )
+        fkey_fields.push(f);
     }
 
     const fieldNames = headers.map((hnm: any) => {
@@ -1470,7 +1561,7 @@ class Table implements AbstractTable {
     });
     const colRe = new RegExp(
       `(${Object.keys(okHeaders)
-        .map((k) => renamesInv[k] || k)
+        .map((k) => `^${renamesInv[k] || k}$`)
         .join("|")})`
     );
 
@@ -1485,7 +1576,7 @@ class Table implements AbstractTable {
     await client.query("BEGIN");
 
     const readStream = createReadStream(filePath);
-
+    const returnedRows: any = [];
     try {
       // for files more 1MB
       if (db.copyFrom && fileSizeInMegabytes > 1) {
@@ -1509,6 +1600,7 @@ class Table implements AbstractTable {
       } else {
         await new Promise<void>((resolve, reject) => {
           const imported_pk_set = new Set();
+          const summary_field_cache: any = {};
           csvtojson({
             includeColumns: colRe,
           })
@@ -1516,14 +1608,41 @@ class Table implements AbstractTable {
             .subscribe(
               async (rec: any) => {
                 i += 1;
-                if (skip_first_data_row && i === 2) return;
+                if (options?.skip_first_data_row && i === 2) return;
                 try {
                   renames.forEach(({ from, to }) => {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
-
+                  for (const fkfield of fkey_fields) {
+                    const current = rec[fkfield.name];
+                    if (
+                      !(
+                        current === "null" ||
+                        current === "" ||
+                        current === null
+                      ) &&
+                      isNaN(+current)
+                    ) {
+                      //need to look up summary fields
+                      if (summary_field_cache[current])
+                        rec[fkfield.name] = summary_field_cache[current];
+                      else {
+                        const tbl = Table.findOne({
+                          name: fkfield.reftable_name,
+                        });
+                        const row = await tbl?.getRow({
+                          [fkfield.attributes.summary_field]: current,
+                        });
+                        if (tbl && row) {
+                          rec[fkfield.name] = row[tbl.pk_name];
+                          summary_field_cache[current] = row[tbl.pk_name];
+                        }
+                      }
+                    }
+                  }
                   const rowOk = readStateStrict(rec, fields);
+
                   if (rowOk) {
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
@@ -1535,7 +1654,10 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      if (existing)
+                      if (options?.no_table_write) {
+                        if (existing) Object.assign(rec, existing);
+                        returnedRows.push(rec);
+                      } else if (existing)
                         await db.update(this.name, rec, rec[this.pk_name], {
                           pk_name,
                           client,
@@ -1546,6 +1668,8 @@ class Table implements AbstractTable {
                           client,
                           pk_name,
                         });
+                    } else if (options?.no_table_write) {
+                      returnedRows.push(rec);
                     } else
                       await db.insert(this.name, rec, {
                         noid: true,
@@ -1582,11 +1706,20 @@ class Table implements AbstractTable {
     await client.query("COMMIT");
 
     if (!db.isSQLite) await client.release(true);
+
+    if (options?.no_table_write) {
+      return {
+        success:
+          `Found ${i > 1 ? i - 1 - rejects : ""} rows for table ${this.name}` +
+          (rejects ? `. Rejected ${rejects} rows.` : ""),
+        rows: returnedRows,
+      };
+    }
     // reset id sequence
     await this.resetSequence();
     // recalculate fields
     if (
-      recalc_stored &&
+      options?.recalc_stored &&
       this.fields &&
       this.fields.some((f) => f.calculated && f.stored)
     ) {

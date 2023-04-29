@@ -193,7 +193,7 @@ class Trigger implements AbstractTrigger {
         const Table = require("./table");
         table = await Table.findOne({ name: channel });
         findArgs.table_id = table.id;
-      } else if (channel) findArgs.channel = channel;
+      } else if (channel) findArgs.channel = {in: ['', channel]};
 
       const triggers = Trigger.find(findArgs);
 

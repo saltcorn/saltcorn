@@ -40,6 +40,19 @@ describe("layout", () => {
       '<div class="row w-100"><div class="col-6">hello</div><div class="col-6">world</div></div><div class="row w-100"><div class="col-6">bar</div><div class="col-6">foo</div></div>'
     );
   });
+  it("renders a container with padding", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      style: {
+        padding: "2rem",
+      },
+      contents: { type: "blank", contents: "bar" },
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<div style="padding:2rem;    ">bar</div>'
+    );
+  });
 });
 
 describe("MJML layout", () => {

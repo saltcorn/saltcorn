@@ -326,6 +326,9 @@ function saveAndContinue(e, k) {
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
         );
       }
+      if (res.notify) {
+        notifyAlert(res.notify);
+      }
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
@@ -596,11 +599,11 @@ function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
     data: { build_dir: outDirName },
     success: function (res) {
       if (!res.finished) {
-        if (pollCount >= 50) {
+        if (pollCount >= 100) {
           removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
           notifyAlert({
             type: "danger",
-            text: "unable to get the build results",
+            text: "Unable to get the build results",
           });
         } else {
           setTimeout(() => {

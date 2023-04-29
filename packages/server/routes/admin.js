@@ -10,6 +10,7 @@ const {
   error_catcher,
   getGitRevision,
   setTenant,
+  admin_config_route,
   get_sys_info,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
@@ -18,6 +19,7 @@ const File = require("@saltcorn/data/models/file");
 const { spawn } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
+const { X509Certificate } = require("crypto");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const {
   post_btn,
@@ -84,7 +86,6 @@ const {
   //send_files_page,
   config_fields_form,
   save_config_from_form,
-  flash_restart_if_required,
 } = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
@@ -106,52 +107,6 @@ const Crash = require("@saltcorn/data/models/crash");
 
 const router = new Router();
 module.exports = router;
-
-/**
- * Site identity form
- * @param {object} req -http request
- * @returns {Promise<Form>} form
- */
-const site_id_form = (req) =>
-  config_fields_form({
-    req,
-    field_names: [
-      "site_name",
-      "timezone",
-      "base_url",
-      ...(getConfigFile() ? ["multitenancy_enabled"] : []),
-      { section_header: "Logo image" },
-      "site_logo_id",
-      "favicon_id",
-      { section_header: "Custom code" },
-      "page_custom_css",
-      "page_custom_html",
-      { section_header: "Extension store" },
-      "plugins_store_endpoint",
-      "packs_store_endpoint",
-    ],
-    action: "/admin",
-    submitLabel: req.__("Save"),
-  });
-/**
- * Email settings form
- * @param {object} req request
- * @returns {Promise<Form>} form
- */
-const email_form = async (req) => {
-  return await config_fields_form({
-    req,
-    field_names: [
-      "smtp_host",
-      "smtp_username",
-      "smtp_password",
-      "smtp_port",
-      "smtp_secure",
-      "email_from",
-    ],
-    action: "/admin/email",
-  });
-};
 
 const app_files_table = (files, buildDirName, req) =>
   mkTable(
@@ -182,17 +137,27 @@ const app_files_table = (files, buildDirName, req) =>
     files
   );
 
-/**
- * Router get /
- * @name get
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.get(
-  "/",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await site_id_form(req);
+admin_config_route({
+  router,
+  path: "/",
+  super_path: "/admin",
+  flash: "Site identity settings updated",
+  field_names: [
+    "site_name",
+    "timezone",
+    "base_url",
+    ...(getConfigFile() ? ["multitenancy_enabled"] : []),
+    { section_header: "Logo image" },
+    "site_logo_id",
+    "favicon_id",
+    { section_header: "Custom code" },
+    "page_custom_css",
+    "page_custom_html",
+    { section_header: "Extension store" },
+    "plugins_store_endpoint",
+    "packs_store_endpoint",
+  ],
+  response(form, req, res) {
     send_admin_page({
       res,
       req,
@@ -204,53 +169,23 @@ router.get(
         contents: [renderForm(form, req.csrfToken())],
       },
     });
-  })
-);
+  },
+});
 
-/**
- * @name post
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.post(
-  "/",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await site_id_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Site identity",
-        contents: {
-          type: "card",
-          title: req.__("Site identity settings"),
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      flash_restart_if_required(form, req);
-      await save_config_from_form(form);
-
-      if (!req.xhr) {
-        req.flash("success", req.__("Site identity settings updated"));
-        res.redirect("/admin");
-      } else res.json({ success: "ok" });
-    }
-  })
-);
-
-/**
- * @name get/email
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.get(
-  "/email",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await email_form(req);
+admin_config_route({
+  router,
+  path: "/email",
+  super_path: "/admin",
+  flash: "Email settings updated",
+  field_names: [
+    "smtp_host",
+    "smtp_username",
+    "smtp_password",
+    "smtp_port",
+    "smtp_secure",
+    "email_from",
+  ],
+  response(form, req, res) {
     send_admin_page({
       res,
       req,
@@ -272,8 +207,8 @@ router.get(
         ],
       },
     });
-  })
-);
+  },
+});
 
 /**
  * @name get/send-test-email
@@ -302,38 +237,6 @@ router.get(
     }
 
     res.redirect("/admin/email");
-  })
-);
-
-/**
- * @name post/email
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.post(
-  "/email",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await email_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Email",
-        contents: {
-          type: "card",
-          title: req.__("Email settings"),
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      await save_config_from_form(form);
-      if (!req.xhr) {
-        req.flash("success", req.__("Email settings updated"));
-        res.redirect("/admin/email");
-      } else res.json({ success: "ok" });
-    }
   })
 );
 
@@ -866,6 +769,26 @@ router.get(
       !is_latest && !process.env.SALTCORN_DISABLE_UPGRADE && !git_commit;
     const dbversion = await db.getVersion(true);
     const { memUsage, diskUsage, cpuUsage } = await get_sys_info();
+    const custom_ssl_certificate = getRootState().getConfig(
+      "custom_ssl_certificate",
+      false
+    );
+    let expiry = "";
+    if (custom_ssl_certificate && X509Certificate) {
+      const { validTo } = new X509Certificate(custom_ssl_certificate);
+      const diffTime = Math.abs(new Date(validTo) - new Date());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      expiry = tr(
+        th(req.__("SSL expiry")),
+        diffDays < 14
+          ? td(
+              { class: "text-danger fw-bold" },
+              moment(new Date(validTo)).fromNow(),
+              i({ class: "fas fa-exclamation-triangle ms-1" })
+            )
+          : td(moment(new Date(validTo)).fromNow())
+      );
+    }
     send_admin_page({
       res,
       req,
@@ -969,10 +892,13 @@ router.get(
                     td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
                   ),
                   isRoot
-                    ? tr(th(req.__("Database host")), td(db.connectObj.host))
-                    : "",
-                  isRoot
-                    ? tr(th(req.__("Database port")), td(db.connectObj.port))
+                    ? tr(
+                        th(req.__("Database host")),
+                        td(
+                          db.connectObj.host +
+                            (db.connectObj.port ? ":" + db.connectObj.port : "")
+                        )
+                      )
                     : "",
                   isRoot
                     ? tr(
@@ -1000,7 +926,8 @@ router.get(
                       : td(diskUsage, "%")
                   ),
                   tr(th(req.__("CPU usage")), td(cpuUsage, "%")),
-                  tr(th(req.__("Mem usage")), td(memUsage, "%"))
+                  tr(th(req.__("Mem usage")), td(memUsage, "%")),
+                  expiry
                 )
               ),
               p(
@@ -1321,12 +1248,16 @@ router.get(
   "/configuration-check",
   isAdmin,
   error_catcher(async (req, res) => {
-    const filename = `${moment().format("YYYYMMDDHHmm")}.html`;
+    const start = new Date();
+    const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
       const { passes, errors, pass, warnings } = await runConfigurationCheck(
         req
       );
+      const end = new Date();
+      const secs = Math.round((end.getTime() - start.getTime()) / 1000);
+
       const mkError = (err) =>
         div(
           { class: "alert alert-danger", role: "alert" },
@@ -1355,6 +1286,11 @@ router.get(
           h3("Passes"),
 
           pre(code(passes.join("\n")))
+        ) +
+        p(
+          `Configuration check completed in ${
+            secs > 60 ? `${Math.floor(secs / 60)}m ${secs % 60}s` : secs + "s"
+          }`
         );
       await File.from_contents(
         filename,
@@ -1958,42 +1894,31 @@ router.post(
   })
 );
 
-/**
- * Developer settings form
- * @param {object} req request
- * @returns {Promise<Form>} form
- */
-const dev_form = async (req) => {
-  const role_to_create_tenant = +getRootState().getConfig(
-    "role_to_create_tenant"
-  );
-  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+admin_config_route({
+  router,
+  path: "/dev",
+  super_path: "/admin",
+  flash: "Development mode settings updated",
+  async get_form(req) {
+    const tenants_set_npm_modules = getRootState().getConfig(
+      "tenants_set_npm_modules",
+      false
+    );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-  return await config_fields_form({
-    req,
-    field_names: [
-      "development_mode",
-      "log_sql",
-      "log_client_errors",
-      "log_level",
-      ...(isRoot || role_to_create_tenant < 10
-        ? ["npm_available_js_code"]
-        : []),
-    ],
-    action: "/admin/dev",
-  });
-};
-/**
- * Developer Mode page
- * @name get/dev
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.get(
-  "/dev",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await dev_form(req);
+    return await config_fields_form({
+      req,
+      field_names: [
+        "development_mode",
+        "log_sql",
+        "log_client_errors",
+        "log_level",
+        ...(isRoot || tenants_set_npm_modules ? ["npm_available_js_code"] : []),
+      ],
+      action: "/admin/dev",
+    });
+  },
+  response(form, req, res) {
     send_admin_page({
       res,
       req,
@@ -2002,51 +1927,42 @@ router.get(
         type: "card",
         title: req.__("Development settings"),
         titleAjaxIndicator: true,
-        contents: [
-          renderForm(form, req.csrfToken()) /*,
-                    a(
-                        {
-                            id: "testemail",
-                            href: "/admin/send-test-email",
-                            class: "btn btn-primary",
-                        },
-                        req.__("Send test email")
-                    ),*/,
-        ],
+        contents: [renderForm(form, req.csrfToken())],
       },
     });
-  })
-);
+  },
+});
 
-/**
- * Development mode
- * @name post/email
- * @function
- * @memberof module:routes/admin~routes/adminRouter
- */
-router.post(
-  "/dev",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const form = await dev_form(req);
-    form.validate(req.body);
-    if (form.hasErrors) {
-      send_admin_page({
-        res,
-        req,
-        active_sub: "Development",
-        contents: {
-          type: "card",
-          title: req.__("Development settings"),
-          contents: [renderForm(form, req.csrfToken())],
-        },
-      });
-    } else {
-      await save_config_from_form(form);
-      if (!req.xhr) {
-        req.flash("success", req.__("Development mode settings updated"));
-        res.redirect("/admin/dev");
-      } else res.json({ success: "ok" });
-    }
-  })
-);
+admin_config_route({
+  router,
+  path: "/notifications",
+  super_path: "/admin",
+  field_names: [
+    "notification_in_menu",
+    { section_header: "Progressive Web Application" },
+    "pwa_enabled",
+    { name: "pwa_display", showIf: { pwa_enabled: true } },
+    { name: "pwa_set_colors", showIf: { pwa_enabled: true } },
+    {
+      name: "pwa_theme_color",
+      showIf: { pwa_enabled: true, pwa_set_colors: true },
+    },
+    {
+      name: "pwa_background_color",
+      showIf: { pwa_enabled: true, pwa_set_colors: true },
+    },
+  ],
+  response(form, req, res) {
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Notifications",
+      contents: {
+        type: "card",
+        title: req.__("Notification settings"),
+        titleAjaxIndicator: true,
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  },
+});

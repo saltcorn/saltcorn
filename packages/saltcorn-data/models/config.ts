@@ -300,6 +300,29 @@ const configTypes: ConfigTypes = {
     label: "New tenant template",
     blurb: "Copy site structure for new tenants from this tenant",
   },
+  tenant_baseurl: {
+    type: "String",
+    label: "Tenant Base URL",
+    blurb:
+      "Base hostname for newly created tenants. If unset, defaults to hostname",
+  },
+  tenant_create_unauth_redirect: {
+    type: "String",
+    label: "Redirect unathorized",
+    blurb: "If tenant creation is not authorized, redirect to this URL",
+  },
+  tenants_install_git: {
+    type: "Bool",
+    label: "Install git plugins",
+  },
+  tenants_set_npm_modules: {
+    type: "Bool",
+    label: "Set available npm modules",
+  },
+  tenants_unsafe_plugins: {
+    type: "Bool",
+    label: "Unsafe modules",
+  },
   /** @type {object} */
   development_mode: {
     type: "Bool",
@@ -590,6 +613,37 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Snapshots enabled",
     default: false,
+  },
+  notification_in_menu: {
+    type: "Bool",
+    label: "In user menu",
+    sublabel: "Show notifications in the user menu",
+    default: false,
+  },
+  pwa_enabled: {
+    type: "Bool",
+    label: "Enabled",
+    sublabel: "Progressive Web Application enabled",
+    default: false,
+  },
+  pwa_display: {
+    input_type: "select",
+    label: "Display",
+    default: "browser",
+    options: ["browser", "fullscreen", "standalone", "minimal-ui"],
+  },
+  pwa_set_colors: {
+    type: "Bool",
+    label: "Set colors",
+    default: false,
+  },
+  pwa_theme_color: {
+    type: "Color",
+    label: "Theme color",
+  },
+  pwa_background_color: {
+    type: "Color",
+    label: "Background color",
   },
   log_level: {
     input_type: "select",

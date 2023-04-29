@@ -40,6 +40,20 @@ class BuildAppCommand extends Command {
     }
   }
 
+  async uniquePlugins() {
+    const dynamicPlugins = (await Plugin.find()).filter(
+      (plugin) => !this.staticPlugins.includes(plugin.name)
+    );
+    const pluginsMap = new Map();
+    for (const plugin of dynamicPlugins) {
+      const existing = pluginsMap.get(plugin.name);
+      if (existing) {
+        if (!existing.configuration) pluginsMap.set(plugin.name, plugin);
+      } else pluginsMap.set(plugin.name, plugin);
+    }
+    return Array.from(pluginsMap.values());
+  }
+
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
     this.validateParameters(flags);
@@ -57,9 +71,6 @@ class BuildAppCommand extends Command {
         : undefined;
       if (!user && flags.userEmail)
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
-      const dynamicPlugins = (await Plugin.find()).filter(
-        (plugin) => !this.staticPlugins.includes(plugin.name)
-      );
       const builder = new MobileBuilder({
         templateDir: mobileAppDir,
         buildDir: flags.buildDirectory,
@@ -70,7 +81,7 @@ class BuildAppCommand extends Command {
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
-        plugins: dynamicPlugins,
+        plugins: await this.uniquePlugins(),
         copyTargetDir: flags.copyAppDirectory,
         user,
         copyFileName: flags.appFileName,

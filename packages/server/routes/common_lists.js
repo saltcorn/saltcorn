@@ -33,6 +33,7 @@ const tableBadges = (t, req) => {
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
   if (t.versioned) s += badge("success", req.__("History"));
   if (t.external) s += badge("info", req.__("External"));
+  if (t.provider_name) s += badge("success", t.provider_name);
   return s;
 };
 

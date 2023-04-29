@@ -124,7 +124,7 @@
                 config.pluginHeaders.push(prepareHeader(header));
               }
             else if (typeof pluginHeaders === "function") {
-              const headerResult = pluginHeaders(row.configuration);
+              const headerResult = pluginHeaders(row.configuration || {});
               if (Array.isArray(headerResult)) {
                 for (const header of headerResult)
                   config.pluginHeaders.push(prepareHeader(header));
@@ -146,10 +146,9 @@
       const initJwt = async () => {
         if (!(await saltcorn.data.db.tableExists("jwt_table"))) {
           await createJwtTable();
-        }
-        else {
+        } else {
           const jwt = await getJwt();
-          if(jwt) {
+          if (jwt) {
             const state = saltcorn.data.state.getState();
             state.mobileConfig.jwt = jwt;
           }
@@ -159,14 +158,13 @@
       const checkJWT = async () => {
         const state = saltcorn.data.state.getState();
         const jwt = state.mobileConfig.jwt;
-        if(jwt && jwt !== "undefined") {
+        if (jwt && jwt !== "undefined") {
           const response = await apiCall({
             method: "GET",
             path: "/auth/authenticated",
           });
           return response.data.authenticated;
-        }
-        else return false;
+        } else return false;
       };
 
       const initI18Next = async () => {

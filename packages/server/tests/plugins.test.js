@@ -318,7 +318,7 @@ describe("config endpoints", () => {
       .send("site_name=FooSiteName")
       .send("multitenancy_enabled=on")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/admin"));
+      .expect(toRedirect("/admin/"));
     await request(app)
       .get("/admin")
       .set("Cookie", loginCookie)

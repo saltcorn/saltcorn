@@ -153,9 +153,15 @@ function apply_showif() {
     };
 
     const cache = e.prop("data-fetch-options-cache") || {};
-    if (cache[qs]) {
+    if (cache[qs] === "fetching") {
+      // do nothing, this will be activated by someone else
+    } else if (cache[qs]) {
       activate(cache[qs], qs);
-    } else
+    } else {
+      e.prop("data-fetch-options-cache", {
+        ...cache,
+        [qs]: "fetching",
+      });
       $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
         if (resp.success) {
           activate(resp.success, qs);
@@ -164,10 +170,26 @@ function apply_showif() {
             ...cacheNow,
             [qs]: resp.success,
           });
+        } else {
+          const cacheNow = e.prop("data-fetch-options-cache") || {};
+          e.prop("data-fetch-options-cache", {
+            ...cacheNow,
+            [qs]: undefined,
+          });
         }
       });
+    }
   });
-
+  $("[data-filter-table]").each(function (ix, element) {
+    const e = $(element);
+    const target = $(e.attr("data-filter-table"));
+    $(e).on("keyup", function () {
+      const value = $(this).val().toLowerCase();
+      target.find("tr").filter(function () {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+      });
+    });
+  });
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
     const rec0 = get_form_record(e);
@@ -262,7 +284,13 @@ function get_form_record(e, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
-  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
+  try {
+    return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
+      rec
+    );
+  } catch (e) {
+    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+  }
 }
 
 function rep_del(e) {
@@ -569,7 +597,8 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
-  if ($.fn.historyTabs) $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+  if ($.fn.historyTabs && $.fn.tab)
+    $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
 
   // Initialize Sliders - https://stackoverflow.com/a/31083391
@@ -977,12 +1006,15 @@ function room_older(viewname, room_id, btn) {
 }
 
 function init_room(viewname, room_id) {
-  const socket = parent?.config?.server_path
-    ? io(parent.config.server_path, {
-        query: `jwt=${localStorage.getItem("auth_jwt")}`,
-        transports: ["websocket"],
-      })
-    : io({ transports: ["websocket"] });
+  let socket = null;
+  if (parent?.saltcorn?.data?.state) {
+    const { server_path, jwt } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    socket = io(server_path, {
+      query: `jwt=${jwt}`,
+      transports: ["websocket"],
+    });
+  } else socket = io({ transports: ["websocket"] });
 
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
@@ -1044,4 +1076,24 @@ function split_paste_handler(e) {
 
 function is_paging_param(key) {
   return key.endsWith("_page") || key.endsWith("_pagesize");
+}
+function check_saltcorn_notifications() {
+  $.ajax(`/notifications/count-unread`).then((resp) => {
+    if (resp.success) {
+      const n = resp.success;
+      const menu_item = $(`a.notify-menu-item`);
+
+      menu_item.html(
+        `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
+      );
+      $(".user-nav-section").html(
+        `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
+      );
+      $(".user-nav-section-with-span").html(
+        `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
+      );
+      window.update_theme_notification_count &&
+        window.update_theme_notification_count(n);
+    }
+  });
 }

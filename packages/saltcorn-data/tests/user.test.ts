@@ -141,6 +141,7 @@ describe("User", () => {
   it("should validate email", async () => {
     expect(User.valid_email("foobar")).toBe(false);
     expect(User.valid_email("foo@bar.com")).toBe(true);
+    expect(User.valid_email(`{email:"foo@bar.com"}`)).toBe(false);
   });
 
   it("should verify with token", async () => {

@@ -15,7 +15,7 @@ const { structuredClone, isWeb } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode } = require("../../utils");
+const { isNode, parseRelationPath } = require("../../utils");
 const { bool, date } = require("../types");
 
 /**
@@ -207,32 +207,39 @@ const make_link = (
 };
 
 /**
- * @param {string} s
+ * @param {string} view name of the view or a legacy relation (type:telation)
+ * @param {string} relation new relation path syntax
  * @returns {object}
  */
-const parse_view_select = (s) => {
-  const colonSplit = s.split(":");
-  if (colonSplit.length === 1) return { type: "Own", viewname: s };
-  const [type, vrest] = colonSplit;
-  switch (type) {
-    case "Own":
-      return { type, viewname: vrest };
-    case "ChildList":
-    case "OneToOneShow":
-      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
-      return {
-        type,
-        viewname: viewnm,
-        table_name: tbl,
-        field_name: fld,
-        throughTable,
-        through,
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
-    case "Independent":
-      return { type, viewname: vrest };
+const parse_view_select = (view, relation) => {
+  if (relation) {
+    const { sourcetable, path } = parseRelationPath(relation);
+    return { type: "RelationPath", viewname: view, sourcetable, path };
+  } else {
+    // legacy relation path
+    const colonSplit = view.split(":");
+    if (colonSplit.length === 1) return { type: "Own", viewname: view };
+    const [type, vrest] = colonSplit;
+    switch (type) {
+      case "Own":
+        return { type, viewname: vrest };
+      case "ChildList":
+      case "OneToOneShow":
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        return {
+          type,
+          viewname: viewnm,
+          table_name: tbl,
+          field_name: fld,
+          throughTable,
+          through,
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+      case "Independent":
+        return { type, viewname: vrest };
+    }
   }
 };
 
@@ -240,7 +247,8 @@ const parse_view_select = (s) => {
 /**
  * @function
  * @param {object} opts
- * @param {string} opts.view,
+ * @param {string} opts.view
+ * @param {string} opts.relation
  * @param {object} opts.view_label missing in contract
  * @param {object} opts.in_modal
  * @param {object} opts.view_label_formula
@@ -257,6 +265,7 @@ const parse_view_select = (s) => {
 const view_linker = (
   {
     view,
+    relation,
     view_label,
     in_modal,
     view_label_formula,
@@ -289,106 +298,59 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
-  const [vtype, vrest] = view.split(":");
-  switch (vtype) {
-    case "Own":
-      const vnm = vrest;
-      const viewrow = View.findOne({ name: vnm });
-      const get_query = get_view_link_query(fields, viewrow || {});
-      return {
-        label: vnm,
-        key: (r) => {
-          const safePrefix = targetPrefix.endsWith("/")
-            ? targetPrefix.substring(0, targetPrefix.length - 1)
-            : targetPrefix;
-          const target = `${safePrefix}/view/${encodeURIComponent(
-            vnm
-          )}${get_query(r)}`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(vnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "Independent":
-      const ivnm = vrest;
-      return {
-        label: ivnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(ivnm)}`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(ivnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "ChildList":
-    case "OneToOneShow":
-      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
-      const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
-      return {
-        label: viewnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
-            r.id
-          }`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(viewnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      //console.log([pviewnm, ptbl, pfld])
-      return {
-        label: pviewnm,
-        key: (r) => {
-          const reffield = fields.find((f) => f.name === pfld);
-          const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
-          if (r[pfld]) {
-            const target = `/view/${encodeURIComponent(pviewnm)}?${
-              reffield.refname
-            }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+  if (relation) {
+    const { path } = parseRelationPath(relation);
+    const pathStart = path[0];
+    const idName = pathStart.fkey ? pathStart.fkey : "id";
+    return {
+      label: view,
+      key: (r) => {
+        const relObj = {
+          srcId: r[idName],
+          relation: relation,
+        };
+        const target = `/view/${encodeURIComponent(
+          view
+        )}?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(relObj)
+        )}`;
+        return link_view(
+          isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+          get_label(view, r),
+          in_modal,
+          link_style,
+          link_size,
+          link_icon,
+          textStyle,
+          link_bgcol,
+          link_bordercol,
+          link_textcol,
+          in_dropdown && "dropdown-item",
+          get_extra_state(r),
+          link_target_blank
+        );
+      },
+    };
+  } else {
+    // legacy relation path
+    const [vtype, vrest] = view.split(":");
+    switch (vtype) {
+      case "Own":
+        const vnm = vrest;
+        const viewrow = View.findOne({ name: vnm });
+        const get_query = get_view_link_query(fields, viewrow || {});
+        return {
+          label: vnm,
+          key: (r) => {
+            const safePrefix = targetPrefix.endsWith("/")
+              ? targetPrefix.substring(0, targetPrefix.length - 1)
+              : targetPrefix;
+            const target = `${safePrefix}/view/${encodeURIComponent(
+              vnm
+            )}${get_query(r)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-              get_label(
-                typeof summary_field === "undefined" ? pviewnm : summary_field,
-                r
-              ),
+              get_label(vnm, r),
               in_modal,
               link_style,
               link_size,
@@ -401,11 +363,96 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank
             );
-          } else return "";
-        },
-      };
-    default:
-      throw new Error(view);
+          },
+        };
+      case "Independent":
+        const ivnm = vrest;
+        return {
+          label: ivnm,
+          key: (r) => {
+            const target = `/view/${encodeURIComponent(ivnm)}`;
+            return link_view(
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+              get_label(ivnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r),
+              link_target_blank
+            );
+          },
+        };
+      case "ChildList":
+      case "OneToOneShow":
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
+        return {
+          label: viewnm,
+          key: (r) => {
+            const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+              r.id
+            }`;
+            return link_view(
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+              get_label(viewnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r),
+              link_target_blank
+            );
+          },
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        //console.log([pviewnm, ptbl, pfld])
+        return {
+          label: pviewnm,
+          key: (r) => {
+            const reffield = fields.find((f) => f.name === pfld);
+            const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
+            if (r[pfld]) {
+              const target = `/view/${encodeURIComponent(pviewnm)}?${
+                reffield.refname
+              }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+              return link_view(
+                isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+                get_label(
+                  typeof summary_field === "undefined"
+                    ? pviewnm
+                    : summary_field,
+                  r
+                ),
+                in_modal,
+                link_style,
+                link_size,
+                link_icon,
+                textStyle,
+                link_bgcol,
+                link_bordercol,
+                link_textcol,
+                in_dropdown && "dropdown-item",
+                get_extra_state(r),
+                link_target_blank
+              );
+            } else return "";
+          },
+        };
+      default:
+        throw new Error(view);
+    }
   }
 };
 
@@ -693,7 +740,12 @@ const get_viewable_fields = (
       } else
         fvrun = f && {
           ...setWidth,
-          align: isNum ? "right" : undefined,
+          align:
+            !column.alignment || column.alignment === "Default"
+              ? isNum
+                ? "right"
+                : undefined
+              : column.alignment.toLowerCase(),
           label: headerLabelForName(column, f, req, __),
           row_key: f_with_val.name,
           key:
