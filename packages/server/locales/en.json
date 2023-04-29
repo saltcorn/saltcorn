@@ -1155,5 +1155,7 @@
 	"Import CSV": "Import CSV",
 	"Show configuration object": "Show configuration object",
 	"Connected views": "Connected views",
-	"Edit Module": "Edit Module"
+	"Edit Module": "Edit Module",
+	"Roles 2-10 are reserved": "Roles 2-10 are reserved",
+	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved"
 }
