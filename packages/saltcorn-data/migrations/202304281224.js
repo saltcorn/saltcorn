@@ -72,5 +72,32 @@ const js = async () => {
     });
     await state.setConfig("home_page_by_role", new_homepages);
   }
+  // pages etc, other layout items
+  const xform_layout = (segment) => {
+    if (segment.minRole) {
+      segment.minRole = old_to_new_role(segment.minRole);
+    }
+    if (segment.showForRole) {
+      const newShowForRole = {};
+      Object.entries(segment.showForRole).forEach(([k, v]) => {
+        newShowForRole[old_to_new_role(k)] = v;
+      });
+      segment.showForRole = newShowForRole;
+    }
+  };
+  for (const page of await Page.find()) {
+    const layout = page.layout;
+    traverseSync(layout, xform_layout);
+    await Page.update(page.id, { layout });
+  }
+  for (const view of await View.find()) {
+    const layout = view.configuration.layout;
+    if (!layout) continue;
+    traverseSync(layout, xform_layout);
+    await View.update(
+      { configuration: { ...view.configuration, layout } },
+      view.id
+    );
+  }
 };
 module.exports = { sql, js };
