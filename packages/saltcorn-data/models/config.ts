@@ -730,7 +730,7 @@ const configTypes: ConfigTypes = {
   min_role_search: {
     type: "Role",
     label: "Role for search",
-    default: 10, // public is default
+    default: 100, // public is default
     required: true,
     blurb: "Min role to access search page",
   },

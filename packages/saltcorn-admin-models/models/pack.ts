@@ -386,7 +386,7 @@ const install_pack = async (
         label: menu_label,
         type: "View",
         viewname: viewSpec.name,
-        min_role: viewSpec.min_role || 10,
+        min_role: viewSpec.min_role || 100,
       });
   }
   for (const triggerSpec of pack.triggers || []) {
