@@ -16,6 +16,7 @@ const old_to_new_role = (old_roleS) => {
   if (!old_role || isNaN(old_role)) return old_roleS;
 
   if (old_role === 1) return 1;
+  if (old_role > 10) return old_role;
   else return old_role * 10;
 };
 
