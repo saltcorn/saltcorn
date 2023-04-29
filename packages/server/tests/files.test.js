@@ -33,7 +33,7 @@ beforeAll(async () => {
       size: 245752,
     },
     1,
-    4
+    40
   );
   await File.from_req_files(
     {
@@ -45,7 +45,7 @@ beforeAll(async () => {
       size: 219422,
     },
     1,
-    10
+    100
   );
 });
 afterAll(db.close);
@@ -150,7 +150,7 @@ describe("files admin", () => {
 describe("files edit", () => {
   it("creates table and view", async () => {
     const table = await Table.create("thefiletable");
-    await table.update({ min_role_read: 8, min_role_write: 8 });
+    await table.update({ min_role_read: 80, min_role_write: 80 });
     await Field.create({
       table,
       name: "first_name",

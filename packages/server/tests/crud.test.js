@@ -61,7 +61,7 @@ describe("notifications", () => {
       .expect(succeedJsonWith((n) => n === 0));
   });
   it("add notification", async () => {
-    const user = await User.findOne({ role_id: 4 });
+    const user = await User.findOne({ role_id: 40 });
     await Notification.create({
       user_id: user.id,
       title: "This is a staff announcement",
