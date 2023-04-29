@@ -26,7 +26,7 @@ describe("State constants", () => {
   it("should have fonts", async () => {
     expect(state.features.fieldrepeats_in_field_attributes).toBe(true);
     Object.values(state.features).forEach((v) => {
-      expect(typeof v).toBe("boolean");
+      expect(["number", "boolean"]).toContain(typeof v);
       expect(!!v).toBe(true);
     });
   });
