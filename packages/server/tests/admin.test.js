@@ -321,32 +321,32 @@ describe("roleadmin", () => {
     await request(app)
       .post("/roleadmin/edit")
       .set("Cookie", loginCookie)
-      .send("id=5")
+      .send("id=50")
       .send("role=muppets")
       .expect(toRedirect("/roleadmin"));
     const roles = await User.get_roles();
-    expect(roles).toContainEqual({ id: 5, role: "muppets" });
+    expect(roles).toContainEqual({ id: 50, role: "muppets" });
   });
   it("show set layout for role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/roleadmin/setrolelayout/5")
+      .post("/roleadmin/setrolelayout/50")
       .set("Cookie", loginCookie)
       .send("layout=tabler")
       .expect(toRedirect("/roleadmin"));
     const roles = await User.get_roles();
-    expect(roles).toContainEqual({ id: 5, role: "muppets" });
+    expect(roles).toContainEqual({ id: 50, role: "muppets" });
   });
   it("show delete role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/roleadmin/delete/5")
+      .post("/roleadmin/delete/50")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/roleadmin"));
     const roles = await User.get_roles();
-    expect(roles).not.toContainEqual({ id: 5, role: "muppets" });
+    expect(roles).not.toContainEqual({ id: 50, role: "muppets" });
   });
 });
 /**
