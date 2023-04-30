@@ -107,14 +107,16 @@ class RunTestsCommand extends Command {
     this.validateCall(args, flags);
     let env;
 
+    const dbname = flags.database? flags.database: "saltcorn_test";
+
     const db = require("@saltcorn/data/db");
     if (db.isSQLite) {
       const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });
       env = { ...process.env, SQLITE_FILEPATH: testdbpath };
-    } else if (db.connectObj.database !== "saltcorn_test") {
-      await db.changeConnection({ database: "saltcorn_test" });
-      env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    } else if (db.connectObj.database !== dbname) {
+      await db.changeConnection({ database: dbname });
+      env = { ...process.env, PGDATABASE: dbname };
     }
     spawnSync("npm", ["run", "tsc"], {
       stdio: "inherit",
@@ -203,6 +205,10 @@ RunTestsCommand.flags = {
   watchAll: flags.boolean({
     string: "watchAll",
     description: "Watch files for changes and rerun all tests.",
+  }),
+  database: flags.string({
+    string: "database",
+    description: "Run on specified database. Default is saltcorn_test",
   }),
 };
 

@@ -339,13 +339,13 @@ router.get(
           contents: tags.table(
             tbody(
               tr(
-                th({ class: "me-2" }, "Embeeded in"),
+                th({ class: "me-2" }, req.__("Embedded in")),
                 td(
                   inbound_connected.embeddedViews.map((v) => v.name).join(", ")
                 )
               ),
               tr(
-                th({ class: "me-2" }, "Linked from"),
+                th({ class: "me-2" }, req.__("Linked from")),
                 td(inbound_connected.linkedViews.map((v) => v.name).join(", "))
               )
             )

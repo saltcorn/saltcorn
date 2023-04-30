@@ -2,7 +2,7 @@
  * Table Data API handler
  * Allows to manipulate with saltcorn tables data.
  *
- * Attention! Currently you cannot insert / update users table via this api
+ * Attention! Currently, you cannot insert / update users table via this api
  * because users table has specific meaning in SC and
  * not all required (mandatory) fields of user available via this api.
  * For now this is platform limitation.
@@ -185,7 +185,9 @@ router.post(
     )(req, res, next);
   })
 );
-
+/**
+ *
+ */
 router.get(
   "/:tableName/distinct/:fieldName",
   //passport.authenticate("api-bearer", { session: false }),
@@ -206,7 +208,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table)) {
-          const field = (await table.getFields()).find(
+          const field = (table.getFields()).find(
             (f) => f.name === fieldName
           );
           if (!field) {
@@ -260,7 +262,7 @@ router.get(
     }
 
     await passport.authenticate(
-      ["api-bearer", "jwt"],
+        ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table, true)) {
@@ -281,7 +283,7 @@ router.get(
             };
             rows = await table.getJoinedRows(joinOpts);
           } else if (req_query && req_query !== {}) {
-            const tbl_fields = await table.getFields();
+            const tbl_fields = table.getFields();
             readState(req_query, tbl_fields, req);
             const qstate = await stateFieldsToWhere({
               fields: tbl_fields,
@@ -335,7 +337,7 @@ router.post(
 
     if (!trigger) {
       getState().log(3, `API action ${actionname} not found`);
-      res.status(400).json({ error: req.__("Not found") });
+      res.status(404).json({ error: req.__("Not found") });
       return;
     }
     await passport.authenticate(
@@ -387,8 +389,8 @@ router.post(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
-          const fields = await table.getFields();
-          readState(row, fields);
+          const fields = table.getFields();
+          readState(row, fields, req);
           let errors = [];
           let hasErrors = false;
           Object.keys(row).forEach((k) => {
@@ -463,8 +465,8 @@ router.post(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
-          const fields = await table.getFields();
-          readState(row, fields);
+          const fields = table.getFields();
+          readState(row, fields, req);
           let errors = [];
           let hasErrors = false;
           for (const k of Object.keys(row)) {
