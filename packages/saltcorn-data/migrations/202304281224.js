@@ -108,6 +108,7 @@ const js = async () => {
     if (mi.subitems) {
       mi.subitems.forEach(iter_menu);
     }
+    return mi;
   };
   if (state.getConfig("menu_items", false))
     await state.setConfig(
