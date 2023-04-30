@@ -589,7 +589,7 @@ const get_tenant_info = async (subdomain) => {
     // tags
     info.ntags = await db.count("_sc_tags");
     // tag_entries
-    info.ntags = await db.count("_sc_tag_entries");
+    info.ntag_entries = await db.count("_sc_tag_entries");
     // snapshots
     info.nsnapshots = await db.count("_sc_snapshots");
     // session - Only for main app?
@@ -665,8 +665,8 @@ router.get(
                 tr(
                   th(req.__("Table constraints")),
                   td(a({ href: info.base_url + "table" }, info.ntable_constraints)),
-                  th(req.__("Snapshots")),
-                  td(a({ href: info.base_url + "admin/backup" }, info.nsnapshots))
+                  th(req.__("Library")),
+                  td(a({ href: info.base_url + "library/list" }, info.nlibrary)),
                 ),
                 tr(
                   th(req.__("Views")),
@@ -697,7 +697,19 @@ router.get(
                   // Notifications only for main site?
                   //th(req.__("Notifications")),
                   //td(a({ href: info.base_url + "???" }, info.nnotifications)),
-                )
+                ),
+                tr(
+                  th(req.__("Snapshots")),
+                  td(a({ href: info.base_url + "admin/backup" }, info.nsnapshots)),
+                  th(req.__("Migrations")),
+                  td(a({ href: info.base_url + "admin" }, info.nmigrations))
+                ),
+                tr(
+                  th(req.__("Tags")),
+                  td(a({ href: info.base_url + "tag" }, info.ntags)),
+                  th(req.__("Tag Entries")),
+                  td(a({ href: info.base_url + "tag" }, info.ntag_entries))
+                ),
               ),
             ],
           },
