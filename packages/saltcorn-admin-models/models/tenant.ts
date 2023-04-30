@@ -326,16 +326,12 @@ class Tenant {
 
   /**
    * Update tenant
-   * @param subdomain
-   * @param row
+   * @param subdomain - Subdomain to update
+   * @param row - Fields to update
    * @returns {Promise<void>}
    */
   static async update(subdomain: string, row: Row): Promise<void> {
-    //await db.update("_sc_tenants", row, subdomain);
-    await db.query(
-      `update _sc_tenants set description = '${row.description}' where subdomain = '${subdomain}'`
-    );
-    //Object.assign(this, row);
+    await db.update("_sc_tenants", row, subdomain ,{ pk_name : "subdomain" } );
     // todo trigger if need
   }
 }

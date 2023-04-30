@@ -1003,5 +1003,9 @@
 	"Show configuration object": "Отобразить конфигурацию объекта (raw)",
 	"Connected views": "Связанные представления",
 	"Embedded in": "Встроенно в",
-	"Linked from": "Ссылается из"
+	"Linked from": "Ссылается из",
+	"First user E-mail": "First user E-mail",
+	"Table constraints": "Table constraints",
+	"Sessions": "Sessions",
+	"Event logs": "Event logs"
 }
