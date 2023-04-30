@@ -1764,6 +1764,8 @@ class Table implements AbstractTable {
         });
       try {
         readState(rec, fields);
+        if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
+          rec.role_id = rec.role_id * 10;
         await db.insert(this.name, rec, { noid: true, client, pk_name });
       } catch (e: any) {
         await client.query("ROLLBACK");
