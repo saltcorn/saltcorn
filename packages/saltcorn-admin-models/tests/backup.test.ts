@@ -50,8 +50,8 @@ describe("Backup and restore", () => {
     ]);
     const sn1 = await getConfig("site_name");
     expect(sn1).toBe("backups rule!");
-    await Role.create({ role: "paid", id: 6 });
-    await Table.create("myblanktable", { min_role_read: 6 });
+    await Role.create({ role: "paid", id: 60 });
+    await Table.create("myblanktable", { min_role_read: 60 });
     await Trigger.create({
       name: "footrig",
       table_id: 1,
@@ -102,7 +102,7 @@ describe("Backup and restore", () => {
     const t5 = await Table.findOne({ name: "myblanktable" });
     assertIsSet(t5);
     expect(!!t5).toBe(true);
-    expect(t5.min_role_read).toBe(6);
+    expect(t5.min_role_read).toBe(60);
     const t3c = await t3.countRows();
     expect(t1c).toBe(t3c);
     const v2 = await View.find();
