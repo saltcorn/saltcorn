@@ -1005,7 +1005,7 @@
 	"Embedded in": "Встроенно в",
 	"Linked from": "Ссылается из",
 	"First user E-mail": "First user E-mail",
-	"Table constraints": "Table constraints",
-	"Sessions": "Sessions",
-	"Event logs": "Event logs"
+	"Table constraints": "Констрейны таблиц",
+	"Sessions": "Сессии",
+	"Event logs": "Лог событий"
 }

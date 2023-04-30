@@ -687,12 +687,16 @@ router.get(
                   td(a({ href: info.base_url + "admin" }, info.nconfigs))
                 ),
                 tr(
+                  // Crashlogs only for main site?
                   th(req.__("Crashlogs")),
                   td(a({ href: info.base_url + "crashlog" }, info.nerrors)),
                   //th(req.__("Sessions")),
                   //td(a({ href: info.base_url + "crashlog" }, info.nsessions)),
                   th(req.__("Event logs")),
-                  td(a({ href: info.base_url + "crashlog" }, info.nevent_log))
+                  td(a({ href: info.base_url + "eventlog" }, info.nevent_log))
+                  // Notifications only for main site?
+                  //th(req.__("Notifications")),
+                  //td(a({ href: info.base_url + "???" }, info.nnotifications)),
                 )
               ),
             ],
