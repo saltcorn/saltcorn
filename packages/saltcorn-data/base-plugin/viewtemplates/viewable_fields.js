@@ -467,7 +467,7 @@ const action_requires_write = (nm) => {
 };
 
 // flapMap if f returns array
-const flapMaipish = (xs, f) => {
+const flapMapish = (xs, f) => {
   const res = [];
   let index = 0;
   for (const x of xs) {
@@ -500,7 +500,7 @@ const get_viewable_fields = (
   __
 ) => {
   const dropdown_actions = [];
-  const tfields = flapMaipish(columns, (column, index) => {
+  const tfields = flapMapish(columns, (column, index) => {
     const role = req.user ? req.user.role_id : 10;
     const user_id = req.user ? req.user.id : null;
     const setWidth = column.col_width
