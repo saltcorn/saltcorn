@@ -8,8 +8,6 @@ import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { ModelCfg } from "@saltcorn/types/model-abstracts/abstract_model";
 
-const { traverseSync } = require("./layout");
-
 /**
  * Model Class
  * @category saltcorn-data

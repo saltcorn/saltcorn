@@ -14,7 +14,8 @@ export type ModelInstanceCfg = {
   hyperparameters: any;
   trained_on: Date;
   report: string;
-  metrics: any;
+  metric_values: any;
+  blob: any;
 };
 
 //export type LibraryPack = {} & LibraryCfg;

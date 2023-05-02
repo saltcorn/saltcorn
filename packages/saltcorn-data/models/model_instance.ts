@@ -1,5 +1,5 @@
 /**
- * Model Database Access Layer
+ * Model Instance Database Access Layer
  * @category saltcorn-data
  * @module models/model_instance
  * @subcategory models
@@ -7,8 +7,6 @@
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { ModelInstanceCfg } from "@saltcorn/types/model-abstracts/abstract_model";
-
-const { traverseSync } = require("./layout");
 
 /**
  * Model Class
@@ -22,7 +20,8 @@ class ModelInstance {
   hyperparameters: any;
   trained_on: Date;
   report: string;
-  metrics: any;
+  metric_values: any;
+  blob: any;
 
   /**
    * ModelInstance constructor
