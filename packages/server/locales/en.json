@@ -1160,5 +1160,10 @@
 	"New model": "New model",
 	"Edit Module": "Edit Module",
 	"Roles 2-10 are reserved": "Roles 2-10 are reserved",
-	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved"
+	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved",
+	"%s model": "%s model",
+	"Train new instance": "Train new instance",
+	"Model instances": "Model instances",
+	"Train model": "Train model",
+	"Train": "Train"
 }

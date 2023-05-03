@@ -1735,7 +1735,7 @@ const get_provider_workflow = (table, req) => {
 
     return {
       redirect: `/table/${table.id}`,
-      flash: ["success", `Table ${this.name || ""} saved`],
+      flash: ["success", `Table ${table.name || ""} saved`],
     };
   };
   return workflow;
