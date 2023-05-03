@@ -59,3 +59,19 @@ router.get(
     });
   })
 );
+
+router.post(
+  "/new/:table_id",
+  error_catcher(async (req, res) => {
+    const { table_id } = req.params;
+    const table = await Table.findOne({ id: table_id });
+    const form = newModelForm(table, req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendWrap(req.__(`New model`), renderForm(form, req.csrfToken()));
+    } else {
+      const model = await Model.create({ ...form.values, table_id: table.id });
+      res.redirect(`/models/show/${model.id}`);
+    }
+  })
+);

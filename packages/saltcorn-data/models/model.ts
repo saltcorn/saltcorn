@@ -37,14 +37,16 @@ class Model {
   /**
    * @param {object} lib_in
    */
-  static async create(lib_in: ModelCfg): Promise<void> {
+  static async create(lib_in: ModelCfg): Promise<Model> {
     const lib = new Model(lib_in);
-    await db.insert("_sc_models", {
+    const id = await db.insert("_sc_models", {
       name: lib.name,
       modeltemplate: lib.modeltemplate,
       table_id: lib.table_id,
       configuration: lib.configuration,
     });
+    lib.id = id;
+    return lib;
   }
 
   /**

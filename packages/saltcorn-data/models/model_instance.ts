@@ -23,6 +23,7 @@ class ModelInstance {
   metric_values: any;
   parameters: any;
   blob: any;
+  is_default: boolean;
 
   /**
    * ModelInstance constructor
@@ -44,7 +45,8 @@ class ModelInstance {
     this.trained_on = ["string", "number"].includes(typeof o.trained_on)
       ? new Date(o.trained_on)
       : o.trained_on;
-    this.report = o.report;
+    this.blob = o.blob;
+    this.is_default = o.is_default || false;
     this.report =
       typeof o.report === "string" ? JSON.parse(o.report) : o.report;
   }
@@ -52,9 +54,9 @@ class ModelInstance {
   /**
    * @param {object} lib_in
    */
-  static async create(lib_in: ModelInstanceCfg): Promise<void> {
+  static async create(lib_in: ModelInstanceCfg): Promise<ModelInstance> {
     const lib = new ModelInstance(lib_in);
-    await db.insert("_sc_model_instances", {
+    const id = await db.insert("_sc_model_instances", {
       name: lib.name,
       model_id: lib.model_id,
       state: lib.state,
@@ -63,7 +65,11 @@ class ModelInstance {
       trained_on: lib.trained_on,
       report: lib.report,
       metrics: lib.metric_values,
+      blob: lib.blob,
+      is_default: lib.is_default,
     });
+    lib.id = id;
+    return lib;
   }
 
   /**

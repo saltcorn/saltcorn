@@ -17,6 +17,7 @@ export type ModelInstanceCfg = {
   metric_values: any;
   parameters: any;
   blob: any;
+  is_default?: boolean;
 };
 
 //export type LibraryPack = {} & LibraryCfg;
