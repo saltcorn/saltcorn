@@ -202,7 +202,7 @@ router.post(
     }
     const workflow = get_model_workflow(model, req);
     const wfres = await workflow.run(req.body, req);
-    respondWorkflow(table, workflow, wfres, req, res);
+    respondWorkflow(model, table, workflow, wfres, req, res);
   })
 );
 
@@ -242,7 +242,25 @@ router.get(
     });
   })
 );
-
+const model_train_form = (model, table, req) => {
+  const hyperparameter_fields =
+    model.templateObj.hyperparameter_fields?.({
+      table,
+      ...model,
+    }) || [];
+  return new Form({
+    action: `/models/train/${model.id}`,
+    fields: [
+      {
+        name: "name",
+        label: req.__("Name"),
+        type: "String",
+        required: true,
+      },
+      ...hyperparameter_fields,
+    ],
+  });
+};
 router.get(
   "/train/:id",
   isAdmin,
@@ -250,11 +268,7 @@ router.get(
     const { id } = req.params;
     const model = await Model.findOne({ id });
     const table = await Table.findOne({ id: model.table_id });
-    const hyperparameter_fields =
-      model.templateObj.hyperparameter_fields?.({
-        table,
-        ...model,
-      }) || [];
+    const form = model_train_form(model, table, req);
     res.sendWrap(req.__(`Train model`), {
       above: [
         {
@@ -270,23 +284,33 @@ router.get(
           type: "card",
           class: "mt-0",
           title: req.__(`New model`),
-          contents: renderForm(
-            new Form({
-              action: `/models/train/${model.id}`,
-              fields: [
-                {
-                  name: "name",
-                  label: req.__("Name"),
-                  type: "String",
-                  required: true,
-                },
-                ...hyperparameter_fields,
-              ],
-            }),
-            req.csrfToken()
-          ),
+          contents: renderForm(form, req.csrfToken()),
         },
       ],
     });
+  })
+);
+router.post(
+  "/train/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const model = await Model.findOne({ id });
+    const table = await Table.findOne({ id: model.table_id });
+    const form = model_train_form(model, table, req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.sendWrap(req.__(`Train model`), renderForm(form, req.csrfToken()));
+    } else {
+      const trainf = model.templateObj.train;
+      const { name, ...hyperparameters } = form.values;
+      console.log(model);
+      const result = await trainf({
+        table,
+        configuration: model.configuration,
+        hyperparameters,
+        state: {},
+      });
+    }
   })
 );
