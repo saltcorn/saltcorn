@@ -47,8 +47,7 @@ class ModelInstance {
       : o.trained_on;
     this.fit_object = o.fit_object;
     this.is_default = o.is_default || false;
-    this.report =
-      typeof o.report === "string" ? JSON.parse(o.report) : o.report;
+    this.report = o.report;
   }
 
   /**
@@ -64,7 +63,7 @@ class ModelInstance {
       parameters: lib.parameters,
       trained_on: lib.trained_on,
       report: lib.report,
-      metrics: lib.metric_values,
+      metric_values: lib.metric_values,
       fit_object: lib.fit_object,
       is_default: lib.is_default,
     });

@@ -214,7 +214,6 @@ router.get(
     const model = await Model.findOne({ id });
     const table = await Table.findOne({ id: model.table_id });
     const instances = await ModelInstance.find({ model_id: model.id });
-
     res.sendWrap(req.__(`New field`), {
       above: [
         {
@@ -230,7 +229,7 @@ router.get(
           class: "mt-0",
           title: req.__("Model instances"),
           contents: div(
-            mkTable([{ label: req.__("Name"), key: "label" }], instances),
+            mkTable([{ label: req.__("Name"), key: "name" }], instances),
             a(
               { href: `/models/train/${model.id}`, class: "btn btn-primary" },
               i({ class: "fas fa-graduation-cap me-1" }),
@@ -276,7 +275,7 @@ router.get(
           crumbs: [
             { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
-            { href: `/models/show//${model.id}`, text: model.name },
+            { href: `/models/show/${model.id}`, text: model.name },
             { text: req.__(`Train`) },
           ],
         },
@@ -304,13 +303,25 @@ router.post(
     } else {
       const trainf = model.templateObj.train;
       const { name, ...hyperparameters } = form.values;
-      console.log(model);
+      const state = {};
       const result = await trainf({
         table,
         configuration: model.configuration,
         hyperparameters,
-        state: {},
+        state,
       });
+      await ModelInstance.create({
+        name,
+        hyperparameters,
+        model_id: model.id,
+        state,
+        configuration: model.configuration,
+        trained_on: new Date(),
+        is_default: false,
+        ...result,
+      });
+      req.flash("success", "Model trained?");
+      res.redirect(`/models/show/${model.id}`);
     }
   })
 );

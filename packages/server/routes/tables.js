@@ -11,6 +11,7 @@ const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const Model = require("@saltcorn/data/models/model");
 const {
   mkTable,
   renderForm,
@@ -719,10 +720,23 @@ router.get(
           ),
       };
     }
-    const modelCard = a(
-      { href: `/models/new/${table.id}`, class: "btn btn-primary" },
-      i({ class: "fas fa-plus-square me-1" }),
-      req.__("Create model")
+    const models = await Model.find({ table_id: table.id });
+    const modelCard = div(
+      mkTable(
+        [
+          {
+            label: req.__("Name"),
+            key: (r) => link(`/models/show/${r.id}`, r.name),
+          },
+          { label: req.__("Pattern"), key: "modeltemplate" },
+        ],
+        models
+      ),
+      a(
+        { href: `/models/new/${table.id}`, class: "btn btn-primary" },
+        i({ class: "fas fa-plus-square me-1" }),
+        req.__("Create model")
+      )
     );
 
     // Table Data card
