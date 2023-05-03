@@ -1154,5 +1154,8 @@
 	"Import table %s": "Import table %s",
 	"Import CSV": "Import CSV",
 	"Show configuration object": "Show configuration object",
-	"Connected views": "Connected views"
+	"Connected views": "Connected views",
+	"Create model": "Create model",
+	"Models": "Models",
+	"New model": "New model"
 }

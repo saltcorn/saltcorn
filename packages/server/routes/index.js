@@ -56,6 +56,7 @@ const eventlog = require("./eventlog");
 const infoarch = require("./infoarch");
 const events = require("./events");
 const tenant = require("./tenant");
+const models = require("./models");
 const library = require("./library");
 const settings = require("./settings");
 const plugins = require("./plugins");
@@ -92,6 +93,7 @@ module.exports =
     app.use("/crashlog", crashlog);
     app.use("/events", events);
     app.use("/page", page);
+    app.use("/models", models);
     app.use("/settings", settings);
     app.use("/pageedit", pageedit);
     app.use("/actions", actions);

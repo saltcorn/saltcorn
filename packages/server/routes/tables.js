@@ -719,6 +719,12 @@ router.get(
           ),
       };
     }
+    const modelCard = a(
+      { href: `/models/new/${table.id}`, class: "btn btn-primary" },
+      i({ class: "fas fa-plus-square me-1" }),
+      req.__("Create model")
+    );
+
     // Table Data card
     const dataCard = div(
       { class: "d-flex text-center" },
@@ -877,6 +883,11 @@ router.get(
           title: req.__("Edit table properties"),
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
+        },
+        {
+          type: "card",
+          title: req.__("Models"),
+          contents: modelCard,
         },
       ],
     });
