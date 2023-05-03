@@ -454,7 +454,7 @@ router.post(
   "/runaction/:name",
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const role = (req.user || {}).role_id || 10;
+    const role = (req.user || {}).role_id || 100;
     const state = getState();
     const menu_items = state.getConfig("menu_items");
     let menu_item;

@@ -103,7 +103,7 @@ const simple_page_pack = {
       name: "simplepage",
       title: "A simple page",
       description: "The simplest page ever",
-      min_role: 10,
+      min_role: 100,
       layout: {
         icon: "",
         type: "blank",

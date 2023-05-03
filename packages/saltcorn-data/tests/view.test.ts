@@ -26,7 +26,7 @@ describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
     assertIsSet(v);
-    expect(v.min_role).toBe(10);
+    expect(v.min_role).toBe(100);
     const res = await v.run({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
@@ -91,7 +91,7 @@ describe("View", () => {
     await View.create({
       name: "innerReads",
       table_id: readingsTbl.id,
-      min_role: 10,
+      min_role: 100,
       configuration: renderEditInEditConfig.innerEdit,
       viewtemplate: "Edit",
     });
@@ -102,7 +102,7 @@ describe("View", () => {
       name: "PatientEditWithReads",
       viewtemplate: "Edit",
       configuration: renderEditInEditConfig.outerEdit,
-      min_role: 10,
+      min_role: 100,
     });
     await v.runPost(
       {},
@@ -139,7 +139,7 @@ describe("View", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
-      min_role: 10,
+      min_role: 100,
     });
     expect(typeof v.id).toBe("number");
     expect(typeof v.viewtemplateObj).toBe("object");
@@ -152,7 +152,7 @@ describe("View", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: { foo: "bar" } },
-      min_role: 10,
+      min_role: 100,
     });
     assertIsSet(v1.id);
     await View.update({ name: "anewestview" }, v1.id);
@@ -196,7 +196,7 @@ describe("View", () => {
         ],
         default_state: {},
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toBe(
@@ -225,7 +225,7 @@ describe("View with routes", () => {
       name: "aviewwithroutes",
       viewtemplate: "ViewWithRoutes",
       configuration: {},
-      min_role: 10,
+      min_role: 100,
     });
     await v.runRoute("the_json_route", {}, spy, mockReqRes);
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
@@ -265,7 +265,7 @@ describe("nested views", () => {
         columns: [{ type: "Field", fieldview: "show", field_name: "pages" }],
         viewname: "small",
       },
-      min_role: 10,
+      min_role: 100,
     });
     const medium = await View.create({
       table_id: table.id,
@@ -300,7 +300,7 @@ describe("nested views", () => {
         ],
         viewname: "medium",
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await medium.run({ id: 2 }, mockReqRes);
 
@@ -330,7 +330,7 @@ describe("nested views", () => {
         view_to_create: "",
         create_view_display: "Link",
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await large.run({}, mockReqRes);
 
@@ -487,7 +487,7 @@ describe("subviews with relations", () => {
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
     {
       const res = await v.run({ id: 1 }, mockReqRes);

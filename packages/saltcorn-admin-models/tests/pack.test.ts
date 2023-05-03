@@ -86,7 +86,7 @@ describe("pack create", () => {
         ],
       },
       exttable_name: null,
-      min_role: 10,
+      min_role: 100,
       name: "authorlist",
       menu_label: undefined,
       slug: null,
@@ -132,7 +132,7 @@ describe("pack create", () => {
       title: "grgw",
       description: "rgerg",
       menu_label: undefined,
-      min_role: 10,
+      min_role: 100,
       layout: {
         above: [
           {
@@ -275,7 +275,7 @@ const todoPack: Pack = {
       name: "EditTodo",
       table: "TodoItems",
       on_menu: false,
-      min_role: 10,
+      min_role: 100,
       viewtemplate: "Edit",
       configuration: {
         fixed: { done: false },
@@ -311,12 +311,12 @@ const todoPack: Pack = {
               ],
             },
             { type: "line_break" },
-            { type: "action", block: false, minRole: 10, action_name: "Save" },
+            { type: "action", block: false, minRole: 100, action_name: "Save" },
           ],
         },
         columns: [
           { type: "Field", fieldview: "edit", field_name: "description" },
-          { type: "Action", minRole: 10, action_name: "Save" },
+          { type: "Action", minRole: 100, action_name: "Save" },
         ],
         viewname: "EditTodo",
         view_when_done: "List Todos",
@@ -325,7 +325,7 @@ const todoPack: Pack = {
     {
       name: "List Todos",
       table: "TodoItems",
-      min_role: 10,
+      min_role: 100,
       menu_label: "List",
       viewtemplate: "List",
       configuration: {
@@ -402,7 +402,7 @@ const todoPack: Pack = {
       title: "Foo",
       description: "Foo",
       layout: {},
-      min_role: 10,
+      min_role: 100,
       root_page_for_roles: ["public"],
     },
   ],
@@ -421,8 +421,8 @@ describe("pack install", () => {
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
     expect(menu).toEqual([
-      { label: "List", type: "View", viewname: "List Todos", min_role: 10 },
-      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 10 },
+      { label: "List", type: "View", viewname: "List Todos", min_role: 100 },
+      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 100 },
     ]);
     const pubhome = getState().getConfig("public_home", []);
     expect(pubhome).toBe("FooPage");

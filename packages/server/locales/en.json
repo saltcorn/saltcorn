@@ -1157,5 +1157,8 @@
 	"Connected views": "Connected views",
 	"Create model": "Create model",
 	"Models": "Models",
-	"New model": "New model"
+	"New model": "New model",
+	"Edit Module": "Edit Module",
+	"Roles 2-10 are reserved": "Roles 2-10 are reserved",
+	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved"
 }

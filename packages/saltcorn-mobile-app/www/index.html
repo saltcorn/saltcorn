@@ -231,7 +231,7 @@
             const decodedJwt = jwt_decode(mobileConfig.jwt);
             mobileConfig.role_id = decodedJwt.user.role_id
               ? decodedJwt.user.role_id
-              : 10;
+              : 100;
             mobileConfig.user_name = decodedJwt.user.email;
             mobileConfig.language = decodedJwt.user.language;
             mobileConfig.isPublicUser = false;

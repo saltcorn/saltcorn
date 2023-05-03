@@ -717,7 +717,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
 
     const fields = await table.getFields();
     let row = { ...req.body };

@@ -359,7 +359,7 @@ const run = async (
             ? eval_expression(
                 label_formula,
                 { [field_name]: value },
-                extra.req.user || { role_id: 10 }
+                extra.req.user || { role_id: 100 }
               )
             : label
         )
@@ -553,7 +553,7 @@ module.exports = {
       const table = await Table.findOne(table_id || exttable_name);
       const fields = await table.getFields();
       let distinct_values = {};
-      const role = req.user ? req.user.role_id : 10;
+      const role = req.user ? req.user.role_id : 100;
       for (const col of columns) {
         if (col.type === "DropDownFilter") {
           const field = fields.find((f) => f.name === col.field_name);

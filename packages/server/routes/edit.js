@@ -41,7 +41,7 @@ router.post(
       await table.updateRow(
         { [field_name]: !row[field_name] },
         id,
-        req.user || { role_id: 10 }
+        req.user || { role_id: 100 }
       );
 
     if (req.xhr) res.send("OK");

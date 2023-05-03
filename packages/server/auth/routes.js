@@ -263,7 +263,7 @@ const loginWithJwt = async (email, password, saltcornApp, res) => {
         {
           sub: "public",
           user: {
-            role_id: 10,
+            role_id: 100,
             language: "en",
           },
           iss: "saltcorn@saltcorn",

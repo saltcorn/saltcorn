@@ -24,8 +24,8 @@ const pack = {
   tables: [
     {
       name: "cats",
-      min_role_read: 10,
-      min_role_write: 10,
+      min_role_read: 100,
+      min_role_write: 100,
       versioned: false,
       fields: [
         {
@@ -75,7 +75,7 @@ const pack = {
         latitude_field: "lat",
         longtitude_field: "long",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -100,7 +100,7 @@ const pack = {
         ],
         viewname: "ShowName",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -115,7 +115,7 @@ const pack = {
         reload_on_drag: false,
         view_to_create: "",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -130,7 +130,7 @@ const pack = {
         reload_on_drag: false,
         view_to_create: "",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -151,7 +151,7 @@ const pack = {
         columns: [],
         viewname: "NestedShow",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -165,7 +165,7 @@ const pack = {
         latitude_field: "lat",
         longtitude_field: "long",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -180,7 +180,7 @@ const pack = {
         reload_on_drag: false,
         view_to_create: "",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -201,7 +201,7 @@ const pack = {
         columns: [],
         viewname: "NestedShowNoPop",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
     {
@@ -216,7 +216,7 @@ const pack = {
         reload_on_drag: false,
         view_to_create: "",
       },
-      min_role: 10,
+      min_role: 100,
       table: "cats",
     },
   ],

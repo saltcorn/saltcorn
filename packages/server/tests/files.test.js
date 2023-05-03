@@ -33,7 +33,7 @@ beforeAll(async () => {
       size: 245752,
     },
     1,
-    4
+    40
   );
   await File.from_req_files(
     {
@@ -45,7 +45,7 @@ beforeAll(async () => {
       size: 219422,
     },
     1,
-    10
+    100
   );
 });
 afterAll(db.close);
@@ -121,7 +121,7 @@ describe("files admin", () => {
     await request(app)
       .post("/files/setrole/rick.png")
       .set("Cookie", loginCookie)
-      .send("role=10")
+      .send("role=100")
       .expect(toRedirect("/files?dir=."));
   });
   it("serve file to public after role change", async () => {
@@ -150,7 +150,7 @@ describe("files admin", () => {
 describe("files edit", () => {
   it("creates table and view", async () => {
     const table = await Table.create("thefiletable");
-    await table.update({ min_role_read: 8, min_role_write: 8 });
+    await table.update({ min_role_read: 80, min_role_write: 80 });
     await Field.create({
       table,
       name: "first_name",
@@ -171,7 +171,7 @@ describe("files edit", () => {
         columns: [
           { type: "Field", field_name: "mugshot", fieldview: "upload" },
           { type: "Field", field_name: "first_name", fieldview: "edit" },
-          { type: "Action", action_name: "Save", minRole: 10 },
+          { type: "Action", action_name: "Save", minRole: 100 },
         ],
         layout: {
           above: [
@@ -188,7 +188,7 @@ describe("files edit", () => {
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
   });
   it("shows edit view", async () => {

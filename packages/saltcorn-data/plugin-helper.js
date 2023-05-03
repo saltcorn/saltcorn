@@ -1842,7 +1842,7 @@ const initial_config_all_fields =
       aboves.push({
         type: "action",
         block: false,
-        minRole: 10,
+        minRole: 100,
         action_name: "Save",
       });
     cfg.layout = { above: aboves };
@@ -2001,7 +2001,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     getRows,
     get min_role_read() {
       const roles = getState().getConfig("exttables_min_role_read", {});
-      return roles[tbl.name] || 10;
+      return roles[tbl.name] || 100;
     },
     getJoinedRows(opts = {}) {
       const { where, ...rest } = opts;

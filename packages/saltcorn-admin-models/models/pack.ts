@@ -260,6 +260,16 @@ const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
   }
 };
 
+const old_to_new_role = (old_roleS: any) => {
+  if (!old_roleS) return old_roleS;
+  const old_role = +old_roleS;
+  if (!old_role || isNaN(old_role)) return old_roleS;
+
+  if (old_role === 1) return 1;
+  if (old_role > 10) return old_role;
+  else return old_role * 10;
+};
+
 /**
  * @function
  * @param {object} item
@@ -272,6 +282,7 @@ const add_to_menu = async (item: {
   pagename?: string;
   min_role: number;
 }): Promise<void> => {
+  item.min_role = old_to_new_role(item.min_role);
   const current_menu = getState().getConfigCopy("menu_items", []);
   const existing = current_menu.findIndex((m: any) => m.label === item.label);
   if (existing >= 0) current_menu[existing] = item;
@@ -307,6 +318,7 @@ const install_pack = async (
     }
   }
   for (const role of pack.roles || []) {
+    role.id = old_to_new_role(role.id);
     const existing = await Role.findOne({ id: role.id });
     if (existing) await existing.update(role);
     else await Role.create(role);
@@ -330,6 +342,8 @@ const install_pack = async (
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
       } else {
+        tableSpec.min_role_read = old_to_new_role(tableSpec.min_role_read);
+        tableSpec.min_role_write = old_to_new_role(tableSpec.min_role_write);
         const table = await Table.create(tableSpec.name, tableSpec);
         [tbl_pk] = await table.getFields();
       } //set pk
@@ -356,6 +370,7 @@ const install_pack = async (
       }
     }
     for (const { table, ...trigger } of tableSpec.triggers || []) {
+      trigger.min_role = old_to_new_role(trigger.min_role);
       await Trigger.create({ table: _table, ...trigger }); //legacy, not in new packs
     }
     for (const constraint of tableSpec.constraints || [])
@@ -369,6 +384,7 @@ const install_pack = async (
     }
   }
   for (const viewSpec of pack.views) {
+    viewSpec.min_role = old_to_new_role(viewSpec.min_role);
     const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
       viewSpec;
     const vtable = await Table.findOne({ name: table });
@@ -386,10 +402,12 @@ const install_pack = async (
         label: menu_label,
         type: "View",
         viewname: viewSpec.name,
-        min_role: viewSpec.min_role || 10,
+        min_role: viewSpec.min_role || 100,
       });
   }
   for (const triggerSpec of pack.triggers || []) {
+    triggerSpec.min_role = old_to_new_role(triggerSpec.min_role);
+
     const existing = await Trigger.findOne({ name: triggerSpec.name });
     if (existing) {
       const { table_name, ...tsNoTableName } = triggerSpec;
@@ -400,6 +418,7 @@ const install_pack = async (
   }
 
   for (const pageFullSpec of pack.pages || []) {
+    pageFullSpec.min_role = old_to_new_role(pageFullSpec.min_role);
     const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
     const existing = Page.findOne({ name: pageSpec.name });
     if (existing?.id) await Page.update(existing.id, pageSpec);
