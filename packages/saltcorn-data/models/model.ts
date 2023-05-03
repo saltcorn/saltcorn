@@ -8,6 +8,8 @@ import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { ModelCfg } from "@saltcorn/types/model-abstracts/abstract_model";
 
+import state from "../db/state";
+const { getState } = state;
 /**
  * Model Class
  * @category saltcorn-data
@@ -93,6 +95,10 @@ class Model {
    */
   async update(row: Row): Promise<void> {
     await db.update("_sc_models", row, this.id);
+  }
+
+  get templateObj() {
+    return getState()?.modeltemplates[this.modeltemplate];
   }
 }
 

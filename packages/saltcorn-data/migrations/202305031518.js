@@ -18,8 +18,7 @@ create table _sc_model_instances (
   parameters jsonb,
   fit_object bytea, 
   is_default boolean
-);
-`;
+);`;
 
 const sql_sqlite = `
 create table _sc_models (
@@ -41,7 +40,6 @@ create table _sc_model_instances (
   parameters json,
   fit_object blob, 
   is_default boolean
-);
-`;
+);`;
 
 module.exports = { sql_pg, sql_sqlite };
