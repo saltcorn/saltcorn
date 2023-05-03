@@ -16,7 +16,7 @@ export type ModelInstanceCfg = {
   report: string;
   metric_values: any;
   parameters: any;
-  blob: any;
+  fit_object: Buffer;
   is_default?: boolean;
 };
 

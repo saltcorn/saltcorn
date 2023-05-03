@@ -22,7 +22,7 @@ class ModelInstance {
   report: string;
   metric_values: any;
   parameters: any;
-  blob: any;
+  fit_object: Buffer;
   is_default: boolean;
 
   /**
@@ -45,7 +45,7 @@ class ModelInstance {
     this.trained_on = ["string", "number"].includes(typeof o.trained_on)
       ? new Date(o.trained_on)
       : o.trained_on;
-    this.blob = o.blob;
+    this.fit_object = o.fit_object;
     this.is_default = o.is_default || false;
     this.report =
       typeof o.report === "string" ? JSON.parse(o.report) : o.report;
@@ -65,7 +65,7 @@ class ModelInstance {
       trained_on: lib.trained_on,
       report: lib.report,
       metrics: lib.metric_values,
-      blob: lib.blob,
+      fit_object: lib.fit_object,
       is_default: lib.is_default,
     });
     lib.id = id;
