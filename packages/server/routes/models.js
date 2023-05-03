@@ -11,13 +11,15 @@ const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const Model = require("@saltcorn/data/models/model");
 const ModelInstance = require("@saltcorn/data/models/model_instance");
+const { getState } = require("@saltcorn/data/db/state");
+
 const { renderForm } = require("@saltcorn/markup");
 
 const router = new Router();
 module.exports = router;
 
-const newModelForm = (table, req) =>
-  new Form({
+const newModelForm = (table, req) => {
+  return new Form({
     action: "/models/new/" + table.id,
     fields: [
       { name: "name", label: "Name", type: "String", required: true },
@@ -26,10 +28,11 @@ const newModelForm = (table, req) =>
         label: "Model template",
         type: "String",
         required: true,
-        attributes: { options: [] },
+        attributes: { options: Object.keys(getState().modeltemplates) },
       },
     ],
   });
+};
 
 router.get(
   "/new/:table_id",
