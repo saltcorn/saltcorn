@@ -21,6 +21,7 @@ class ModelInstance {
   trained_on: Date;
   report: string;
   metric_values: any;
+  parameters: any;
   blob: any;
 
   /**
@@ -36,6 +37,10 @@ class ModelInstance {
       typeof o.hyperparameters === "string"
         ? JSON.parse(o.hyperparameters)
         : o.hyperparameters;
+    this.parameters =
+      typeof o.parameters === "string"
+        ? JSON.parse(o.parameters)
+        : o.parameters;
     this.trained_on = ["string", "number"].includes(typeof o.trained_on)
       ? new Date(o.trained_on)
       : o.trained_on;
@@ -54,9 +59,10 @@ class ModelInstance {
       model_id: lib.model_id,
       state: lib.state,
       hyperparameters: lib.hyperparameters,
+      parameters: lib.parameters,
       trained_on: lib.trained_on,
       report: lib.report,
-      metrics: lib.metrics,
+      metrics: lib.metric_values,
     });
   }
 

@@ -15,6 +15,7 @@ export type ModelInstanceCfg = {
   trained_on: Date;
   report: string;
   metric_values: any;
+  parameters: any;
   blob: any;
 };
 
