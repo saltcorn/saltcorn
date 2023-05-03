@@ -615,6 +615,7 @@ class State {
    */
   async refresh_plugins(noSignal?: boolean) {
     this.viewtemplates = {};
+    this.modeltemplates = {};
     this.types = {};
     this.stashed_fieldviews = {};
     this.fields = [];
