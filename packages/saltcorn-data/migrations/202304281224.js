@@ -104,6 +104,7 @@ const js = async () => {
 
   //menu
   const iter_menu = (mi) => {
+    if (Array.isArray(mi)) mi.forEach(iter_menu);
     if (mi.min_role) mi.min_role = old_to_new_role(mi.min_role);
     if (mi.subitems) {
       mi.subitems.forEach(iter_menu);
