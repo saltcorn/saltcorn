@@ -78,7 +78,7 @@ const test_person_table = async (persons: Table) => {
   expect(owned_rows1[0].age).toBe(13);
 
   //show
-  const view = await createDefaultView(persons, "Show", 10);
+  const view = await createDefaultView(persons, "Show", 100);
   const contents = await view.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: non_owner_user },
@@ -116,7 +116,7 @@ const test_person_table = async (persons: Table) => {
   if (department) row1form.department = department.id;
 
   //edit
-  const editView = await createDefaultView(persons, "Edit", 10);
+  const editView = await createDefaultView(persons, "Edit", 100);
   const econtents = await editView.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: non_owner_user },
@@ -153,7 +153,7 @@ const test_person_table = async (persons: Table) => {
 
   //update
   expect(
-    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 })
+    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 100 })
   ).toBe("Not authorized");
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
   expect(
@@ -173,7 +173,7 @@ const test_person_table = async (persons: Table) => {
     expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
   }
   //delete
-  await persons.deleteRows({ id: row1.id }, { role_id: 10 });
+  await persons.deleteRows({ id: row1.id }, { role_id: 100 });
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
   await persons.deleteRows({ id: row1.id }, non_owner_user);
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
@@ -210,7 +210,7 @@ describe("Table with row ownership field", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -264,7 +264,7 @@ describe("Table with row ownership field and calculated", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -314,7 +314,7 @@ describe("Table with row ownership formula", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -383,7 +383,7 @@ describe("Table with row ownership joined formula", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", department: 1 },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -461,7 +461,7 @@ describe("Table with row ownership joined formula and stored calc", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", department: 1 },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -515,7 +515,7 @@ describe("User group", () => {
       ownership_formula: own_opts[0].value.replace("Fml:", ""),
     });
     const projid = await projects.insertRow({ name: "World domination" });
-    const user = await User.findOne({ role_id: 8 });
+    const user = await User.findOne({ role_id: 80 });
     assertIsSet(user);
     await user_works_proj.insertRow({ project: projid, user: user.id });
 
@@ -523,7 +523,7 @@ describe("User group", () => {
     assertIsSet(uobj);
 
     expect(uobj.id).toBe(user.id);
-    expect(uobj.role_id).toBe(8);
+    expect(uobj.role_id).toBe(80);
     expect(uobj.UserWorksOnProject_by_user).toEqual([
       { id: 1, project: 1, user: 3 },
     ]);
@@ -533,7 +533,7 @@ describe("User group", () => {
     expect(projs.is_owner(uobj, myproj)).toBe(true);
 
     const projid1 = await projects.insertRow({ name: "Take out trash" });
-    const staff = await User.findOne({ role_id: 4 });
+    const staff = await User.findOne({ role_id: 40 });
     assertIsSet(staff);
     await user_works_proj.insertRow({ project: projid1, user: staff.id });
     const myproj1 = await projs.getRow({ id: projid1 });

@@ -501,7 +501,7 @@ const get_viewable_fields = (
 ) => {
   const dropdown_actions = [];
   const tfields = flapMaipish(columns, (column, index) => {
-    const role = req.user ? req.user.role_id : 10;
+    const role = req.user ? req.user.role_id : 100;
     const user_id = req.user ? req.user.id : null;
     const setWidth = column.col_width
       ? { width: `${column.col_width}${column.col_width_units}` }

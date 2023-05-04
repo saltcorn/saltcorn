@@ -165,7 +165,7 @@ const searchForm = () =>
  * @returns {Promise<void>}
  */
 const runSearch = async ({ q, _page, table }, req, res) => {
-  const role = (req.user || {}).role_id || 10;
+  const role = (req.user || {}).role_id || 100;
   // globalSearch contains list of pairs: table, view
   const cfg = getState().getConfig("globalSearch");
   const page_size = getState().getConfig("search_page_size");
@@ -269,10 +269,9 @@ const runSearch = async ({ q, _page, table }, req, res) => {
 router.get(
   "/",
   error_catcher(async (req, res) => {
-
     const min_role = getState().getConfig("min_role_search");
-    const role = (req.user || {}).role_id || 10;
-    if(role>min_role){
+    const role = (req.user || {}).role_id || 100;
+    if (role > min_role) {
       res.redirect("/"); // silent redirect to home page
       return;
     }
@@ -283,7 +282,7 @@ router.get(
       const cfg = getState().getConfig("globalSearch");
 
       if (!cfg) {
-        const role = (req.user || {}).role_id || 10;
+        const role = (req.user || {}).role_id || 100;
 
         req.flash("warning", req.__("Search not configured"));
         res.redirect(role === 1 ? "/search/config" : "/");

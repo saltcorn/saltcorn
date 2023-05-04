@@ -44,7 +44,7 @@ const configTypes: ConfigTypes = {
     label: "Site logo",
     default: 0,
     attributes: {
-      select_file_where: { min_role_read: 10, mime_super: "image" },
+      select_file_where: { min_role_read: 100, mime_super: "image" },
     },
     blurb: "Select a publicly accessible image file for the menu logo",
   },
@@ -54,7 +54,7 @@ const configTypes: ConfigTypes = {
     label: "Favicon",
     default: 0,
     attributes: {
-      select_file_where: { min_role_read: 10, mime_super: "image" },
+      select_file_where: { min_role_read: 100, mime_super: "image" },
     },
     blurb: "Select a publicly accessible image file for the browser tab icon",
   },
@@ -730,7 +730,7 @@ const configTypes: ConfigTypes = {
   min_role_search: {
     type: "Role",
     label: "Role for search",
-    default: 10, // public is default
+    default: 100, // public is default
     required: true,
     blurb: "Min role to access search page",
   },

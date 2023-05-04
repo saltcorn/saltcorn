@@ -187,9 +187,9 @@ class File {
         path.join(absoluteFolder, name),
         "user.saltcorn.min_role_read"
       ));
-      if (isNaN(min_role_read)) min_role_read = 10;
+      if (isNaN(min_role_read)) min_role_read = 100;
     } catch (e) {
-      min_role_read = 10;
+      min_role_read = 100;
     }
     try {
       const uid = await xattr_get(

@@ -181,7 +181,7 @@ class State {
    * @returns {object}
    */
   getLayout(user: User) {
-    const role_id = user ? +user.role_id : 10;
+    const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {
       const chosen = this.layouts[layout_by_role[role_id]];
@@ -197,7 +197,7 @@ class State {
    * @returns {string}
    */
   get2FApolicy(user: User) {
-    const role_id = user ? +user.role_id : 10;
+    const role_id = user ? +user.role_id : 100;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
     if (twofa_policy_by_role && twofa_policy_by_role[role_id])
       return twofa_policy_by_role[role_id];
@@ -847,6 +847,7 @@ const features = {
   prefix_or_in_queries: true,
   json_state_query: true,
   async_validate: true,
+  public_user_role: 100,
 };
 
 export = {

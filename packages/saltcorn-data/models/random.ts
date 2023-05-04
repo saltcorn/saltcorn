@@ -197,7 +197,7 @@ const initial_view = async (
     configuration,
     viewtemplate,
     table_id: table.id,
-    min_role: 10,
+    min_role: 100,
   });
   return view;
 };

@@ -34,14 +34,14 @@ router.post(
     const { redirect } = req.query;
     // todo check that works after where change
     const table = await Table.findOne({ name: tableName });
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     try {
       if (role <= table.min_role_write)
-        await table.deleteRows({ id }, req.user || { role_id: 10 });
+        await table.deleteRows({ id }, req.user || { role_id: 100 });
       else if (table.ownership_field_id && req.user) {
         const row = await table.getRow({ id });
         if (row && table.is_owner(req.user, row))
-          await table.deleteRows({ id }, req.user || { role_id: 10 });
+          await table.deleteRows({ id }, req.user || { role_id: 100 });
         else req.flash("error", req.__("Not authorized"));
       } else
         req.flash(

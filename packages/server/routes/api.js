@@ -73,7 +73,7 @@ function accessAllowedRead(req, user, table, allow_ownership) {
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
   return (
     role <= table.min_role_read ||
@@ -96,7 +96,7 @@ function accessAllowedWrite(req, user, table) {
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
   return (
     role <= table.min_role_write ||
@@ -117,7 +117,7 @@ function accessAllowed(req, user, trigger) {
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
   return role <= trigger.min_role;
 }
@@ -152,7 +152,7 @@ router.post(
       "jwt",
       { session: false },
       async function (err, user, info) {
-        const role = user && user.id ? user.role_id : 10;
+        const role = user && user.id ? user.role_id : 100;
         if (
           role <= view.min_role ||
           (await view.authorise_get({ req, ...view })) // TODO set query to state
@@ -270,7 +270,7 @@ router.get(
           if (versioncount === "on") {
             const joinOpts = {
               orderBy: "id",
-              forUser: req.user || user || { role_id: 10 },
+              forUser: req.user || user || { role_id: 100 },
               forPublic: !(req.user || user),
               aggregations: {
                 _versions: {
@@ -427,7 +427,7 @@ router.post(
           }
           const ins_res = await table.tryInsertRow(
             row,
-            req.user || user || { role_id: 10 }
+            req.user || user || { role_id: 100 }
           );
           if (ins_res.error) {
             getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
@@ -503,7 +503,7 @@ router.post(
           const ins_res = await table.tryUpdateRow(
             row,
             id,
-            user || req.user || { role_id: 10 }
+            user || req.user || { role_id: 100 }
           );
 
           if (ins_res.error) {
@@ -549,12 +549,12 @@ router.delete(
               //readState(row, fields);
               await table.deleteRows(
                 { [pk_name]: row[pk_name] },
-                user || req.user || { role_id: 10 }
+                user || req.user || { role_id: 100 }
               );
             } else
               await table.deleteRows(
                 { id },
-                user || req.user || { role_id: 10 }
+                user || req.user || { role_id: 100 }
               );
             res.json({ success: true });
           } catch (e) {

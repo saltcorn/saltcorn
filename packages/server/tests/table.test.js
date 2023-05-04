@@ -98,19 +98,19 @@ describe("Table Endpoints", () => {
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .send("min_role_read=100&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .send("min_role_read=100&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .send("min_role_read=100&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
   });
@@ -121,7 +121,7 @@ describe("Table Endpoints", () => {
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=8&name=exttab&external=on")
+      .send("min_role_read=80&name=exttab&external=on")
       .expect(toRedirect(`/table/exttab`));
   });
   it("should download csv ", async () => {

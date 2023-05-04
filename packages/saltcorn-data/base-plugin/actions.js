@@ -461,7 +461,7 @@ module.exports = {
       const attachments = await loadAttachments(
         attachment_path,
         row,
-        user ? user : { role_id: 10 }
+        user ? user : { role_id: 100 }
       );
 
       getState().log(

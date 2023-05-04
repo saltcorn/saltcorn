@@ -56,7 +56,7 @@ export async function prepareSimpleTopicPostRelation() {
         { type: "Field", field_name: "title", state_field: "on" },
       ],
     },
-    min_role: 10,
+    min_role: 100,
   });
   await View.create({
     table_id: users.id,
@@ -76,7 +76,7 @@ export async function prepareSimpleTopicPostRelation() {
         ],
       },
     },
-    min_role: 10,
+    min_role: 100,
   });
 
   await db.insert("simple_topics", {
@@ -154,7 +154,7 @@ export async function prepareSimpleTopicPostRelation() {
         ],
       },
     },
-    min_role: 10,
+    min_role: 100,
   });
   await db.insert("simple_post_inbound", {
     post: 1,
@@ -249,7 +249,7 @@ export async function prepareEmployeeDepartment() {
         above: [{ type: "field", fieldview: "show", field_name: "name" }],
       },
     },
-    min_role: 10,
+    min_role: 100,
   });
 
   await View.create({
@@ -271,7 +271,7 @@ export async function prepareEmployeeDepartment() {
         ],
       },
     },
-    min_role: 10,
+    min_role: 100,
   });
 }
 

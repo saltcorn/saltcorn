@@ -243,7 +243,7 @@ const createDefaultView = async (
   const vt = getState().viewtemplates[viewtemplate];
   const v: ViewCfg = {
     name: `${viewtemplate}${table.name}${Math.round(Math.random() * 10000)}`,
-    min_role: 10,
+    min_role,
     configuration: await vt.initial_config(
       table.id ? { table_id: table.id } : { exttable_name: table.name }
     ),

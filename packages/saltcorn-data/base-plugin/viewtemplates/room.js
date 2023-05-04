@@ -222,7 +222,7 @@ const run = async (
   if (!state.id) return "Need room id";
   const appState = getState();
   const locale = req.getLocale();
-  const role = req && req.user ? req.user.role_id : 10;
+  const role = req && req.user ? req.user.role_id : 100;
   const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
   if (!msgview || !msgform || !msgsender_field || !msg_relation)
     throw new InvalidConfiguration(
@@ -611,7 +611,7 @@ module.exports = {
       const table = await Table.findOne({ id: table_id });
 
       const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-      const role = req && req.user ? req.user.role_id : 10;
+      const role = req && req.user ? req.user.role_id : 100;
 
       let partRow, parttable;
       if (participant_field) {

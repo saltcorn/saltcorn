@@ -266,7 +266,7 @@ class Page implements AbstractPage {
               : "no page specified")
         );
       } else {
-        const role = (extraArgs.req.user || {}).role_id || 10;
+        const role = (extraArgs.req.user || {}).role_id || 100;
         const pageContent = await page.run(querystate, extraArgs);
         const { getState } = require("../db/state");
         segment.contents = getState()

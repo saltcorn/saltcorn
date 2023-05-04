@@ -44,7 +44,7 @@ describe("page create", () => {
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .post("/pageedit/edit-properties")
-      .send("name=whales&title=Whales&description=about+whales&min_role=10")
+      .send("name=whales&title=Whales&description=about+whales&min_role=100")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/pageedit/edit/whales"));
   });
@@ -76,7 +76,7 @@ describe("page action", () => {
       name: "pagewithaction",
       title: "",
       description: "",
-      min_role: 10,
+      min_role: 100,
       id: 2,
       layout: {
         widths: [6, 6],
@@ -85,7 +85,7 @@ describe("page action", () => {
           {
             type: "action",
             rndid: "56f3ac",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_icon: "far fa-angry",
             action_name: "run_js_code",
@@ -142,7 +142,7 @@ describe("pageedit", () => {
       .send("name=a_page")
       .send("title=mytitle")
       .send("description=mydescript")
-      .send("min_role=8")
+      .send("min_role=80")
       .send("id=1")
       .expect(toRedirect("/pageedit/"));
   });
@@ -153,7 +153,6 @@ describe("pageedit", () => {
       .get("/pageedit/edit/a_page")
       .set("Cookie", loginCookie)
       .expect(toInclude("<script>builder.renderBuilder"));
-
   });
 
   it("sets root page", async () => {

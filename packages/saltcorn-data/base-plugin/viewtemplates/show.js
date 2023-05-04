@@ -386,7 +386,7 @@ const renderRows = async (
 
   const fields = await table.getFields();
 
-  const role = extra.req.user ? extra.req.user.role_id : 10;
+  const role = extra.req.user ? extra.req.user.role_id : 100;
   var views = {};
   const getView = async (name, relation) => {
     if (views[name]) return views[name];
@@ -858,7 +858,7 @@ module.exports = {
       const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
       const q = await stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
-      const role = req && req.user ? req.user.role_id : 10;
+      const role = req && req.user ? req.user.role_id : 100;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
         const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
         if (qstate[owner_field.name])

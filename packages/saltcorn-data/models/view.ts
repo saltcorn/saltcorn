@@ -262,7 +262,7 @@ class View implements AbstractView {
   static async create(v: ViewCfg): Promise<View> {
     // is_public flag processing
     if (!v.min_role && typeof v.is_public !== "undefined") {
-      v.min_role = v.is_public ? 10 : 8;
+      v.min_role = v.is_public ? 100 : 80;
       delete v.is_public;
     }
     const { table, ...row } = v;

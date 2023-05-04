@@ -98,7 +98,7 @@ async function login(e, entryPoint, isSignup) {
     // use it as a token
     const decodedJwt = parent.jwt_decode(loginResult);
     const config = parent.saltcorn.data.state.getState().mobileConfig;
-    config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 10;
+    config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 100;
     config.user_name = decodedJwt.user.email;
     config.user_id = decodedJwt.user.id;
     config.language = decodedJwt.user.language;
@@ -133,7 +133,7 @@ async function publicLogin(entryPoint) {
     const loginResult = await loginRequest({ isPublic: true });
     if (typeof loginResult === "string") {
       const config = parent.saltcorn.data.state.getState().mobileConfig;
-      config.role_id = 10;
+      config.role_id = 100;
       config.user_name = "public";
       config.language = "en";
       config.isPublicUser = true;
