@@ -397,7 +397,9 @@ class State {
       });
       const models = allModels.filter((m: any) => m.table_id == table.id);
       for (const model of models) {
-        this.functions[model.name] = model.predictor_function;
+        const predictor_function = model.predictor_function;
+        this.functions[model.name] = predictor_function;
+        this.function_context[model.name] = predictor_function;
       }
     }
     this.tables = allTables;

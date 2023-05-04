@@ -125,7 +125,7 @@ class Model {
       if (!row) return instance.parameters;
 
       const template = this.templateObj;
-      const results = template.predict({
+      const results = await template.predict({
         ...instance,
         configuration: this.configuration,
         rows: [row],
