@@ -104,7 +104,11 @@ class Model {
   get predictor_function() {
     const ModelInstance = require("../models/model_instance");
 
-    //overloaded
+    //overloaded. Call with
+    // (string, obj) -- model instance name, row. Returns predictions
+    // (string) -- model instance name. Return parameters
+    // (obj) -- row. Return prediction from default instance
+    // () -- Return parameters from default instance
     return async (arg1: any, arg2: any) => {
       let instance, row;
       if (typeof arg1 === "string") {
