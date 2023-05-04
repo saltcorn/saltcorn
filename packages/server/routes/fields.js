@@ -699,6 +699,7 @@ router.post(
         } is: <pre>${JSON.stringify(result)}</pre>`
       );
     } catch (e) {
+      console.error(e);
       return res.send(
         `Error on running on row with id=${rows[0].id}: ${e.message}`
       );

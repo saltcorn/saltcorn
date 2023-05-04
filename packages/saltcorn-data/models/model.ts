@@ -127,7 +127,7 @@ class Model {
       const template = this.templateObj;
       const results = await template.predict({
         ...instance,
-        configuration: this.configuration,
+        model: this,
         rows: [row],
       });
       return results[0];
