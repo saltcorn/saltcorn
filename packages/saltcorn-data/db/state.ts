@@ -358,6 +358,8 @@ class State {
       { orderBy: "name", nocase: true }
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
+    const Model = require("../models/model");
+    const allModels = await Model.find({});
     for (const table of allTables) {
       if (table.provider_name) {
         table.provider_cfg = stringToJSON(table.provider_cfg);
@@ -393,8 +395,13 @@ class State {
           }
         }
       });
+      const models = allModels.filter((m: any) => m.table_id == table.id);
+      for (const model of models) {
+        this.functions[model.name] = model.predictor_function;
+      }
     }
     this.tables = allTables;
+
     if (!noSignal) this.log(5, "Refresh table");
 
     if (!noSignal && db.is_node)

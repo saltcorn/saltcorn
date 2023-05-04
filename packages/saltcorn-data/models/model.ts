@@ -100,6 +100,39 @@ class Model {
   get templateObj() {
     return getState()?.modeltemplates[this.modeltemplate];
   }
+
+  get predictor_function() {
+    const ModelInstance = require("../models/model_instance");
+
+    //overloaded
+    return async (arg1: any, arg2: any) => {
+      let instance, row;
+      if (typeof arg1 === "string") {
+        instance = await ModelInstance.findOne({
+          model_id: this.id,
+          name: arg1,
+        });
+      } else {
+        instance = await ModelInstance.findOne({
+          model_id: this.id,
+          is_default: true,
+        });
+      }
+      if (!instance)
+        throw new Error("Instance not found or no default instance");
+      if (arg2) row = arg2;
+      else if (arg1 && typeof arg1 !== "string") row = arg1;
+      if (!row) return instance.parameters;
+
+      const template = this.templateObj;
+      const results = template.predict({
+        ...instance,
+        configuration: this.configuration,
+        rows: [row],
+      });
+      return results[0];
+    };
+  }
 }
 
 export = Model;
