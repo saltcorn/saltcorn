@@ -205,7 +205,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fideRGE54lio")
-      .send("role_id=8")
+      .send("role_id=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
   });
@@ -223,7 +223,7 @@ describe("user admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
-    expect(user.role_id).toBe(8);
+    expect(user.role_id).toBe(80);
     await request(app)
       .get(`/useradmin/${user.id}`)
       .set("Cookie", loginCookie)
@@ -238,11 +238,11 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send(`id=${user.id}`)
-      .send("role_id=4")
+      .send("role_id=40")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const edituser = await User.findOne({ email: "staff2@foo.com" });
-    expect(edituser.role_id).toBe(4);
+    expect(edituser.role_id).toBe(40);
   });
   it("tries to create new user with existing email", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -251,7 +251,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fideRGE54lio")
-      .send("role_id=8")
+      .send("role_id=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const editusers = await User.find({ email: "staff2@foo.com" });
@@ -342,7 +342,7 @@ describe("User fields", () => {
       configuration: {
         columns: [
           { type: "Field", fieldview: "edit", field_name: "height" },
-          { type: "Action", minRole: 10, action_name: "Save" },
+          { type: "Action", minRole: 100, action_name: "Save" },
         ],
         layout: {
           above: [
@@ -368,7 +368,7 @@ describe("User fields", () => {
               ],
             },
             { type: "line_break" },
-            { type: "action", minRole: 10, action_name: "Save" },
+            { type: "action", minRole: 100, action_name: "Save" },
           ],
         },
       },
@@ -466,7 +466,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "63f01b",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Login",
               action_label: "Login",
@@ -476,7 +476,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "45dd57",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Login with github",
               configuration: {},
@@ -489,7 +489,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "63f01b",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Login",
             action_label: "Login",
@@ -499,7 +499,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "45dd57",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Login with github",
             configuration: {},
@@ -573,7 +573,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "63f01b",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Sign up",
               action_style: "btn-primary",
@@ -588,7 +588,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "63f01b",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Sign up",
             action_style: "btn-primary",

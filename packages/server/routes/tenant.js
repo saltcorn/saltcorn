@@ -111,8 +111,8 @@ const tenant_form = (req, base_url) =>
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
 const create_tenant_allowed = (req) => {
   const required_role =
-    +getRootState().getConfig("role_to_create_tenant") || 10;
-  const user_role = req.user ? req.user.role_id : 10;
+    +getRootState().getConfig("role_to_create_tenant") || 100;
+  const user_role = req.user ? req.user.role_id : 100;
   return user_role <= required_role;
 };
 

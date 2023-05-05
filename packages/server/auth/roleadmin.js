@@ -102,6 +102,9 @@ const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
 const roleForm = (req) =>
   new Form({
     action: "/roleadmin/edit",
+    validator: (vs) => {
+      if (vs.id > 1 && vs.id < 11) return req.__("Role IDs 2-10 are reserved");
+    },
     fields: [
       {
         name: "id",
@@ -110,8 +113,8 @@ const roleForm = (req) =>
         sublabel: req.__(
           "This is the rank of the user role, lower role IDs will be able to access more resources."
         ),
-        default: 7,
-        attributes: { max: 10, min: 1 },
+        default: 70,
+        attributes: { max: 100, min: 1 },
       },
       { name: "role", label: req.__("Role name"), type: "String" },
     ],
@@ -156,7 +159,7 @@ router.get(
               {
                 label: req.__("2FA policy"),
                 key: (role) =>
-                  role.id === 10
+                  role.id === 100
                     ? ""
                     : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
               },
@@ -278,7 +281,7 @@ router.post(
     res.redirect(`/roleadmin`);
   })
 );
-const unDeletableRoles = [1, 8, 10];
+const unDeletableRoles = [1, 80, 100];
 /**
  * @name post/delete/:id
  * @function

@@ -17,10 +17,11 @@ type Visitors = { [key: string]: (segment: any) => void };
  * @param visitors
  * @returns
  */
-const traverseSync = (layout: Layout, visitors: Visitors): void => {
+const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
   const go = (segment: any) => {
     if (!segment) return;
-    if (visitors[segment.type]) {
+    if (typeof visitors === "function") visitors(segment);
+    else if (visitors[segment.type]) {
       visitors[segment.type](segment);
     }
     if (Array.isArray(segment)) {
@@ -86,12 +87,12 @@ const eachView = (layout: Layout, f: any): Promise<void> =>
 
 /**
  * execute a function on each page in the layout
- * @param layout 
- * @param f 
- * @returns 
+ * @param layout
+ * @param f
+ * @returns
  */
 const eachPage = (layout: Layout, f: any): Promise<void> =>
-  traverse(layout, { page: f});
+  traverse(layout, { page: f });
 
 /**
  * @param layout

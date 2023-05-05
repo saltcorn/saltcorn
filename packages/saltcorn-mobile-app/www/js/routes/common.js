@@ -35,7 +35,7 @@ const sbAdmin2Layout = () => {
 const getMenu = (req) => {
   const state = saltcorn.data.state.getState();
   const mobileCfg = saltcorn.data.state.getState().mobileConfig;
-  const role = mobileCfg.role_id || 10;
+  const role = mobileCfg.role_id || 100;
   const extraMenu = saltcorn.data.web_mobile_commons.get_extra_menu(
     role,
     req.__

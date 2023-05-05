@@ -935,7 +935,7 @@ const runPost = async (
             const upd_res = await childTable.tryUpdateRow(
               childRow,
               childRow[childTable.pk_name],
-              req.user || { role_id: 10 }
+              req.user || { role_id: 100 }
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
@@ -945,7 +945,7 @@ const runPost = async (
           } else {
             const ins_res = await childTable.tryInsertRow(
               childRow,
-              req.user || { role_id: 10 }
+              req.user || { role_id: 100 }
             );
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
@@ -975,7 +975,7 @@ const runPost = async (
                 {
                   [childTable.pk_name]: db_child_row[childTable.pk_name],
                 },
-                req.user || { role_id: 10 }
+                req.user || { role_id: 100 }
               );
             }
           }
@@ -1275,7 +1275,7 @@ module.exports = {
       const result = {};
       const ins_res = await table.tryInsertRow(
         row,
-        req.user || { role_id: 10 },
+        req.user || { role_id: 100 },
         result
       );
       ins_res.trigger_return = result;
@@ -1288,7 +1288,7 @@ module.exports = {
       const upd_res = await table.tryUpdateRow(
         row,
         id,
-        req.user || { role_id: 10 },
+        req.user || { role_id: 100 },
         result
       );
       upd_res.trigger_return = result;

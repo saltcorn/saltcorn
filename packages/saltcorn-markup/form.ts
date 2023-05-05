@@ -1198,7 +1198,7 @@ const renderFormLayout = (form: Form): string => {
       return mkBtn('type="submit"');
     },
   };
-  const role = form.req?.user?.role_id || 10;
+  const role = form.req?.user?.role_id || 100;
 
   return renderLayout({
     blockDispatch,

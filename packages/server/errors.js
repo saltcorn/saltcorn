@@ -21,7 +21,7 @@ module.exports =
 
     const devmode = getState().getConfig("development_mode", false);
     const log_sql = getState().getConfig("log_sql", false);
-    const role = (req.user || {}).role_id || 10;
+    const role = (req.user || {}).role_id || 100;
     if (err.message && err.message.includes("invalid csrf token")) {
       console.error(err.message);
 
