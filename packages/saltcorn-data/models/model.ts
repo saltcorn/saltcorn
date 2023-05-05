@@ -99,6 +99,13 @@ class Model {
     await db.update("_sc_models", row, this.id);
   }
 
+  async get_instances(opts?: any) {
+    if (typeof opts === "string")
+      return await ModelInstance.find({ name: opts, model_id: this.id });
+    else
+      return await ModelInstance.find({ ...(opts || {}), model_id: this.id });
+  }
+
   get templateObj() {
     return getState()?.modeltemplates[this.modeltemplate];
   }

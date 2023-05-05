@@ -306,6 +306,13 @@ class Table implements AbstractTable {
     return [...dbs, ...externals];
   }
 
+  async get_models(opts?: any) {
+    const Model = require("./model");
+    if (typeof opts === "string")
+      return await Model.find({ name: opts, table_id: this.id });
+    else return await Model.find({ ...(opts || {}), table_id: this.id });
+  }
+
   /**
    * Get owner column name
    * @param fields - fields list
