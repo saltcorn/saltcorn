@@ -122,6 +122,17 @@ class ModelInstance {
   async update(row: Row): Promise<void> {
     await db.update("_sc_model_instances", row, this.id);
   }
+
+  async predict(rows: Row): Promise<any> {
+    const Model = require("./model");
+    const model = await Model.findOne({ id: this.model_id });
+    const template = model.templateObj;
+    return await template.predict({
+      ...this,
+      model,
+      rows,
+    });
+  }
 }
 
 export = ModelInstance;
