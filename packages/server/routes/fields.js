@@ -353,9 +353,69 @@ const fieldFlow = (req) =>
         form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const fields = await table.getFields();
+          const models = await table.get_models();
+          const instance_options = {};
+          const output_options = {};
+          for (const model of models) {
+            instance_options[model.name] = ["default"];
+            const instances = await model.get_instances();
+            instance_options[model.name].push(...instances.map((i) => i.name));
+
+            const outputs = model.templateObj.prediction_outputs || [];
+            output_options[model.name] = outputs.map((o) => o.name);
+          }
           return new Form({
-            blurb: expressionBlurb(context.type, context.stored, fields, req),
             fields: [
+              {
+                name: "expression_type",
+                label: "Formula type",
+                input_type: "select",
+                options: [
+                  "JavaScript expression",
+                  ...(models.length ? ["Model prediction"] : []),
+                ],
+              },
+              {
+                name: "model",
+                label: req.__("Model"),
+                input_type: "select",
+                options: models.map((m) => m.name),
+                showIf: { expression_type: "Model prediction" },
+              },
+              {
+                name: "model_instance",
+                label: req.__("Model instance"),
+                type: "String",
+                required: true,
+                attributes: {
+                  calcOptions: ["model", instance_options],
+                },
+                showIf: { expression_type: "Model prediction" },
+              },
+              {
+                name: "model_output",
+                label: req.__("Prediction output"),
+                type: "String",
+                required: true,
+                attributes: {
+                  calcOptions: ["model", output_options],
+                },
+                showIf: { expression_type: "Model prediction" },
+              },
+              {
+                input_type: "custom_html",
+                name: "expr_blurb",
+                label: " ",
+                showIf: { expression_type: "JavaScript expression" },
+                attributes: {
+                  html: expressionBlurb(
+                    context.type,
+                    context.stored,
+                    fields,
+                    req
+                  ),
+                },
+              },
               new Field({
                 name: "expression",
                 label: req.__("Formula"),
@@ -363,10 +423,12 @@ const fieldFlow = (req) =>
                 type: "String",
                 class: "validate-expression",
                 validator: expressionValidator,
+                showIf: { expression_type: "JavaScript expression" },
               }),
               new Field({
                 name: "test_btn",
                 label: req.__("Test"),
+                showIf: { expression_type: "JavaScript expression" },
                 // todo sublabel
                 input_type: "custom_html",
                 attributes: {
