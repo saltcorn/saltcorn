@@ -1003,5 +1003,11 @@
 	"Show configuration object": "Отобразить конфигурацию объекта (raw)",
 	"Connected views": "Связанные представления",
 	"Embedded in": "Встроенно в",
-	"Linked from": "Ссылается из"
+	"Linked from": "Ссылается из",
+	"First user E-mail": "First user E-mail",
+	"Table constraints": "Констрейнты таблиц",
+	"Sessions": "Сессии",
+	"Event logs": "Лог событий",
+	"Migrations": "Миграции",
+	"Tag Entries": "Экземпляры тегов"
 }
