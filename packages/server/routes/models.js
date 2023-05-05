@@ -172,7 +172,6 @@ router.get(
     const model = await Model.findOne({ id });
     const table = await Table.findOne({ id: model.table_id });
     const configFlow = get_model_workflow(model, req);
-    console.log({ configFlow });
     const wfres = await configFlow.run(
       {
         ...model.configuration,
@@ -214,6 +213,11 @@ router.get(
     const model = await Model.findOne({ id });
     const table = await Table.findOne({ id: model.table_id });
     const instances = await ModelInstance.find({ model_id: model.id });
+    const metrics = model.templateObj.metrics;
+    const metricCols = Object.entries(metrics).map(([k, v]) => ({
+      label: k,
+      key: (inst) => inst.metric_values?.[k],
+    }));
     res.sendWrap(req.__(`New field`), {
       above: [
         {
@@ -229,7 +233,10 @@ router.get(
           class: "mt-0",
           title: req.__("Model instances"),
           contents: div(
-            mkTable([{ label: req.__("Name"), key: "name" }], instances),
+            mkTable(
+              [{ label: req.__("Name"), key: "name" }, ...metricCols],
+              instances
+            ),
             a(
               { href: `/models/train/${model.id}`, class: "btn btn-primary" },
               i({ class: "fas fa-graduation-cap me-1" }),

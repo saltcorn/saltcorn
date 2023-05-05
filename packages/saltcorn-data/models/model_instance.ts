@@ -42,6 +42,10 @@ class ModelInstance {
       typeof o.parameters === "string"
         ? JSON.parse(o.parameters)
         : o.parameters;
+    this.metric_values =
+      typeof o.metric_values === "string"
+        ? JSON.parse(o.metric_values)
+        : o.metric_values;
     this.trained_on = ["string", "number"].includes(typeof o.trained_on)
       ? new Date(o.trained_on)
       : o.trained_on;
