@@ -302,31 +302,15 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const table = Table.findOne({ id: model.table_id });
     const form = model_train_form(model, table, req);
     form.validate(req.body);
     if (form.hasErrors) {
       res.sendWrap(req.__(`Train model`), renderForm(form, req.csrfToken()));
     } else {
-      const trainf = model.templateObj.train;
       const { name, ...hyperparameters } = form.values;
-      const state = {};
-      const result = await trainf({
-        table,
-        configuration: model.configuration,
-        hyperparameters,
-        state,
-      });
-      await ModelInstance.create({
-        name,
-        hyperparameters,
-        model_id: model.id,
-        state,
-        configuration: model.configuration,
-        trained_on: new Date(),
-        is_default: false,
-        ...result,
-      });
+
+      await model.train_instance(name, hyperparameters, {});
       req.flash("success", "Model trained?");
       res.redirect(`/models/show/${model.id}`);
     }

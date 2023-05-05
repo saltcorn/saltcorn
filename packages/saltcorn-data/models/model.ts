@@ -7,6 +7,8 @@
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { ModelCfg } from "@saltcorn/types/model-abstracts/abstract_model";
+import ModelInstance from "./model_instance";
+import Table from "./table";
 
 import state from "../db/state";
 const { getState } = state;
@@ -105,9 +107,32 @@ class Model {
     return Object.keys(getState()?.modeltemplates || {}).length > 0;
   }
 
-  get predictor_function() {
-    const ModelInstance = require("../models/model_instance");
+  async train_instance(
+    name: string,
+    hyperparameters: any,
+    state: {}
+  ): Promise<ModelInstance> {
+    const trainf = this.templateObj.train;
+    const table = Table.findOne({ id: this.table_id });
+    const result = await trainf({
+      table,
+      configuration: this.configuration,
+      hyperparameters,
+      state,
+    });
+    return await ModelInstance.create({
+      name,
+      hyperparameters,
+      model_id: this.id,
+      state,
+      configuration: this.configuration,
+      trained_on: new Date(),
+      is_default: false,
+      ...result,
+    });
+  }
 
+  get predictor_function() {
     //overloaded. Call with
     // (string, obj) -- model instance name, row. Returns predictions
     // (string) -- model instance name. Return parameters
