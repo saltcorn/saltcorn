@@ -489,13 +489,14 @@ function get_expression_function(
 ): Function {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
-    ? `{${field_names.join()}}`
-    : `{${field_names.join()}}, user`;
+    ? `row, {${field_names.join()}}`
+    : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
-  return runInNewContext(
+  const f = runInNewContext(
     `(${args})=>(${expression})`,
     getState().function_context
   );
+  return (row: any, user: any) => f(row, row, user);
 }
 
 /**
@@ -528,15 +529,16 @@ function get_async_expression_function(
 ): any {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
-    ? `{${field_names.join()}}`
-    : `{${field_names.join()}}, user`;
+    ? `row, {${field_names.join()}}`
+    : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
-  return runInNewContext(evalStr, {
+  const f = runInNewContext(evalStr, {
     ...getState().function_context,
     ...extraContext,
   });
+  return (row: any, user: any) => f(row, row, user);
 }
 
 /**
