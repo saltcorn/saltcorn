@@ -13,6 +13,7 @@ const Model = require("@saltcorn/data/models/model");
 const ModelInstance = require("@saltcorn/data/models/model_instance");
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
+const moment = require("moment");
 
 const { mkTable, renderForm } = require("@saltcorn/markup");
 const {
@@ -234,7 +235,14 @@ router.get(
           title: req.__("Model instances"),
           contents: div(
             mkTable(
-              [{ label: req.__("Name"), key: "name" }, ...metricCols],
+              [
+                { label: req.__("Name"), key: "name" },
+                {
+                  label: req.__("Trained"),
+                  key: (inst) => moment(inst.trained_on).fromNow(),
+                },
+                ...metricCols,
+              ],
               instances
             ),
             a(
