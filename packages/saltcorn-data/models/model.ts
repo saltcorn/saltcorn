@@ -50,6 +50,7 @@ class Model {
       configuration: lib.configuration,
     });
     lib.id = id;
+    await require("../db/state").getState().refresh_tables();
     return lib;
   }
 
@@ -89,6 +90,7 @@ class Model {
   async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await db.query(`delete FROM ${schema}_sc_models WHERE id = $1`, [this.id]);
+    await require("../db/state").getState().refresh_tables();
   }
 
   /**
