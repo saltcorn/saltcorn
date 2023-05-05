@@ -101,6 +101,10 @@ class Model {
     return getState()?.modeltemplates[this.modeltemplate];
   }
 
+  static get has_templates() {
+    return Object.keys(getState()?.modeltemplates || {}).length > 0;
+  }
+
   get predictor_function() {
     const ModelInstance = require("../models/model_instance");
 

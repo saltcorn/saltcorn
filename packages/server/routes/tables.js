@@ -898,11 +898,15 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
-        {
-          type: "card",
-          title: req.__("Models"),
-          contents: modelCard,
-        },
+        ...(Model.has_templates
+          ? [
+              {
+                type: "card",
+                title: req.__("Models"),
+                contents: modelCard,
+              },
+            ]
+          : []),
       ],
     });
   })
