@@ -20,14 +20,16 @@ create table _sc_model_instances (
   is_default boolean
 );`;
 
-const sql_sqlite = `
+const sql_sqlite = [
+  `
 create table _sc_models (
   id integer primary key,
   name text not null unique,
   table_id integer references _sc_tables(id),
   modeltemplate text not null,
   configuration json
-);
+);`,
+  `
 create table _sc_model_instances (
   id integer primary key,
   name text not null unique,
@@ -40,6 +42,7 @@ create table _sc_model_instances (
   parameters json,
   fit_object blob, 
   is_default boolean
-);`;
+);`,
+];
 
 module.exports = { sql_pg, sql_sqlite };
