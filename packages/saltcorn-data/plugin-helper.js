@@ -641,6 +641,7 @@ const field_picker_fields = async ({
   req,
   has_click_to_edit,
   has_align,
+  no_fieldviews,
 }) => {
   const __ = (...s) => (req ? req.__(...s) : s.join(""));
   const fields = await table.getFields();
@@ -852,16 +853,20 @@ const field_picker_fields = async ({
       },
       showIf: { type: "Field" },
     },
-    {
-      name: "fieldview",
-      label: __("Field view"),
-      type: "String",
-      required: false,
-      attributes: {
-        calcOptions: ["field_name", field_view_options],
-      },
-      showIf: { type: "Field" },
-    },
+    ...(no_fieldviews
+      ? []
+      : [
+          {
+            name: "fieldview",
+            label: __("Field view"),
+            type: "String",
+            required: false,
+            attributes: {
+              calcOptions: ["field_name", field_view_options],
+            },
+            showIf: { type: "Field" },
+          },
+        ]),
 
     {
       name: "join_field",
