@@ -217,7 +217,7 @@ router.get(
     const metrics = model.templateObj.metrics;
     const metricCols = Object.entries(metrics).map(([k, v]) => ({
       label: k,
-      key: (inst) => inst.metric_values?.[k],
+      key: (inst) => inst.metric_values?.[k]?.toPrecision(6),
     }));
     res.sendWrap(req.__(`New field`), {
       above: [
