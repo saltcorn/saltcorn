@@ -136,6 +136,15 @@ class ModelInstance {
       rows,
     });
   }
+
+  async make_default(): Promise<void> {
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `update ${schema}_sc_model_instances set is_default = (id = $1)`,
+      [this.id]
+    );
+    this.is_default = true;
+  }
 }
 
 export = ModelInstance;

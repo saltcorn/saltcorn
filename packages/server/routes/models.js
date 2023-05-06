@@ -242,6 +242,32 @@ router.get(
                   key: (inst) => moment(inst.trained_on).fromNow(),
                 },
                 ...metricCols,
+                {
+                  label: req.__("Default"),
+                  key: (inst) =>
+                    form(
+                      {
+                        action: `/models/make-default-instance/${inst.id}`,
+                        method: "POST",
+                      },
+                      span(
+                        { class: "form-switch" },
+                        input({
+                          class: ["form-check-input"],
+                          type: "checkbox",
+                          onChange: "this.form.submit()",
+                          role: "switch",
+                          name: "enables",
+                          ...(inst.is_default && { checked: true }),
+                        })
+                      ),
+                      input({
+                        type: "hidden",
+                        name: "_csrf",
+                        value: req.csrfToken(),
+                      })
+                    ),
+                },
               ],
               instances
             ),
@@ -322,5 +348,16 @@ router.post(
       req.flash("success", "Model trained?");
       res.redirect(`/models/show/${model.id}`);
     }
+  })
+);
+
+router.post(
+  "/make-default-instance/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const model_instance = await ModelInstance.findOne({ id });
+    await model_instance.make_default();
+    res.redirect(`/models/show/${model_instance.model_id}`);
   })
 );
