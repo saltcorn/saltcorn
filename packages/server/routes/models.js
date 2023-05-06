@@ -257,7 +257,7 @@ router.get(
                           type: "checkbox",
                           onChange: "this.form.submit()",
                           role: "switch",
-                          name: "enables",
+                          name: "enabled",
                           ...(inst.is_default && { checked: true }),
                         })
                       ),
@@ -357,7 +357,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const model_instance = await ModelInstance.findOne({ id });
-    await model_instance.make_default();
+    await model_instance.make_default(!req.body.enabled);
     res.redirect(`/models/show/${model_instance.model_id}`);
   })
 );
