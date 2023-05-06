@@ -6,6 +6,8 @@ import TableConstraint from "../models/table_constraints";
 import Form from "../models/form";
 import Field from "../models/field";
 import Crash from "../models/crash";
+import Model from "../models/model";
+import ModelInstance from "../models/model_instance";
 import File from "../models/file";
 import View from "../models/view";
 import Page from "../models/page";
@@ -288,5 +290,41 @@ describe("Form new", () => {
       ],
     });
     expect(form.fields[0].constructor.name).toBe(Field.name);
+  });
+});
+
+describe("Model", () => {
+  it("should create", async () => {
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const mdl = await Model.create({
+      name: "mymodel",
+      table_id: table.id as number,
+      modeltemplate: "modtype",
+      configuration: { numcluster: 2 },
+    });
+    const mdl1 = await Model.findOne({ name: "mymodel" });
+    expect(JSON.stringify(mdl1.configuration)).toBe(
+      JSON.stringify(mdl.configuration)
+    );
+  });
+  it("should create instance", async () => {
+    const mdl = await Model.findOne({ name: "mymodel" });
+    const inst = await ModelInstance.create({
+      name: "mymodel",
+      model_id: mdl.id as number,
+      fit_object: Buffer.from("foo"),
+      hyperparameters: { numcluster: 2 },
+      trained_on: new Date(),
+      is_default: false,
+      metric_values: {},
+      parameters: {},
+      state: {},
+      report: "",
+    });
+    await inst.make_default();
+    expect(inst.is_default).toBe(true);
+    await inst.make_default(true);
+    expect(inst.is_default).toBe(false);
   });
 });

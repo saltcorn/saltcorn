@@ -137,13 +137,13 @@ class ModelInstance {
     });
   }
 
-  async make_default(disable: boolean): Promise<void> {
+  async make_default(disable?: boolean): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await db.query(
       `update ${schema}_sc_model_instances set is_default = (id = $1) where model_id = $2`,
       [disable ? -1 : this.id, this.model_id]
     );
-    this.is_default = true;
+    this.is_default = !disable;
   }
 }
 
