@@ -172,7 +172,6 @@ class Model {
 
       if (!instance)
         throw new Error("Instance not found or no default instance");
-      console.log("instance", instance.name);
 
       if (arg2) row = arg2;
       else if (arg1 && typeof arg1 !== "string") row = arg1;
