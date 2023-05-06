@@ -359,7 +359,11 @@ class State {
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
     const Model = require("../models/model");
-    const allModels = await Model.find({});
+    let allModels = [];
+    try {
+      //needed for refresh in pre-model migration
+      allModels = await Model.find({});
+    } catch (e) {}
     for (const table of allTables) {
       if (table.provider_name) {
         table.provider_cfg = stringToJSON(table.provider_cfg);
