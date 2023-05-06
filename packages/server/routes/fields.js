@@ -199,10 +199,18 @@ const fieldFlow = (req) =>
         required,
         is_unique,
         calculated,
-        expression,
         stored,
         description,
       } = context;
+      let expression = context.expression;
+      if (context.expression_type === "Model prediction") {
+        const { model, model_instance, model_output } = context;
+        expression = `${model}(${
+          model_instance && model_instance !== "Default"
+            ? `"${model_instance}",`
+            : ""
+        }row).${model_output}`;
+      }
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
         table_id,
@@ -357,7 +365,7 @@ const fieldFlow = (req) =>
           const instance_options = {};
           const output_options = {};
           for (const model of models) {
-            instance_options[model.name] = ["default"];
+            instance_options[model.name] = ["Default"];
             const instances = await model.get_instances();
             instance_options[model.name].push(...instances.map((i) => i.name));
 
