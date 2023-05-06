@@ -100,8 +100,11 @@ class ModelInstance {
    * @param {*} where
    * @returns {ModelInstance}
    */
-  static async findOne(where: Where): Promise<ModelInstance> {
-    const u = await db.selectMaybeOne("_sc_model_instances", where);
+  static async findOne(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<ModelInstance> {
+    const u = await db.selectMaybeOne("_sc_model_instances", where, selectopts);
     return u ? new ModelInstance(u) : u;
   }
 

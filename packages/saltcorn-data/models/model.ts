@@ -160,8 +160,20 @@ class Model {
           is_default: true,
         });
       }
+      if (!instance) {
+        // TODO more efficiently by sorting prev query by is_default DESC, trained_on ASC
+        instance = await ModelInstance.findOne(
+          {
+            model_id: this.id,
+          },
+          { orderBy: "trained_on" }
+        );
+      }
+
       if (!instance)
         throw new Error("Instance not found or no default instance");
+      console.log("instance", instance.name);
+
       if (arg2) row = arg2;
       else if (arg1 && typeof arg1 !== "string") row = arg1;
       if (!row) return instance.parameters;
