@@ -765,6 +765,7 @@ const get_other_domain_tenant = (hostname: string) =>
  */
 const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
+  if (ten === "public") return singleton;
   return tenants[ten];
 };
 
@@ -809,6 +810,11 @@ const init_multi_tenant = async (
   tenantList: string[]
 ) => {
   // for each domain
+  if (singleton?.configs?.base_url.value) {
+    const cfg_domain = get_domain(singleton?.configs?.base_url.value);
+    otherdomaintenants[cfg_domain] = "public";
+  }
+
   for (const domain of tenantList) {
     try {
       // create new state for each domain

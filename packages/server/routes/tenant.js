@@ -42,7 +42,7 @@ const {
   code,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
-//const url = require("url");
+
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
 const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
@@ -53,6 +53,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
+//const {quote} = require("@saltcorn/db-common");
 // todo add button backup / restore for particular tenant (available in admin tenants screens)
 //const {
 //  create_backup,
@@ -75,6 +76,7 @@ const remove_leading_chars = (cs, s) =>
 /**
  * Declare Form to create Tenant
  * @param {object} req - Request
+ * @param base_url - Base URL
  * @returns {Form} - Saltcorn Form Declaration
  * @category server
  */
@@ -227,6 +229,7 @@ router.get(
  * Return URL of new Tenant
  * @param {object} req - Request
  * @param {string} subdomain - Tenant Subdomain name string
+ * @param base_url - Base URL
  * @returns {string}
  */
 const getNewURL = (req, subdomain, base_url) => {
@@ -280,7 +283,7 @@ router.post(
       const description = valres.success.description;
       // get list of tenants
       const allTens = await getAllTenants();
-      if (allTens.includes(subdomain) || !subdomain) {
+      if (allTens.includes(subdomain) || !subdomain || subdomain === "public") {
         form.errors.subdomain = req.__(
           "A site with this subdomain already exists"
         );
@@ -536,8 +539,11 @@ const get_tenant_info = async (subdomain) => {
   // get tenant row
   const ten = await Tenant.findOne({ subdomain: saneDomain });
   if (ten) {
+    //info.ten = ten;
     info.description = ten.description;
     info.created = ten.created;
+    info.template = ten.template;
+    info.email = ten.email;
   }
 
   // get data from tenant schema
@@ -547,10 +553,19 @@ const get_tenant_info = async (subdomain) => {
     if (firstUser && firstUser.length > 0) {
       info.first_user_email = firstUser[0].email;
     }
+    // todo sort in alphabet order
+    // config items count
+    info.nconfigs = await db.count("_sc_config");
+    // error messages count
+    info.nerrors = await db.count("_sc_errors");
+    // event log
+    info.nevent_log = await db.count("_sc_event_log");
     // users count
     info.nusers = await db.count("users");
     // roles count
     info.nroles = await db.count("_sc_roles");
+    // table_constraints count
+    info.ntable_constraints = await db.count("_sc_table_constraints");
     // tables count
     info.ntables = await db.count("_sc_tables");
     // table fields count
@@ -561,19 +576,25 @@ const get_tenant_info = async (subdomain) => {
     info.nfiles = await db.count("_sc_files");
     // pages count
     info.npages = await db.count("_sc_pages");
-    // triggers (actions) ccount
+    // triggers (actions) count
     info.nactions = await db.count("_sc_triggers");
-    // error messages count
-    info.nerrors = await db.count("_sc_errors");
-    // config items count
-    info.nconfigs = await db.count("_sc_config");
     // plugins count
     info.nplugins = await db.count("_sc_plugins");
     // migration count
     info.nmigrations = await db.count("_sc_migrations");
     // library count
     info.nlibrary = await db.count("_sc_library");
-    // TBD decide Do we need count tenants, table constraints
+    // notifications
+    info.nnotifications = await db.count("_sc_notifications");
+    // tags
+    info.ntags = await db.count("_sc_tags");
+    // tag_entries
+    info.ntag_entries = await db.count("_sc_tag_entries");
+    // snapshots
+    info.nsnapshots = await db.count("_sc_snapshots");
+    // session - Only for main app?
+    //info.nsession = await db.count("_sc_session");
+
     // base url
     info.base_url = await getConfig("base_url");
     return info;
@@ -628,51 +649,76 @@ router.get(
                       { href: "mailto:" + info.first_user_email },
                       info.first_user_email
                     )
-                  )
+                  ),
+                  th(req.__("Template")),
+                  td(a({ href: info.base_url }, info.template))
                 ),
                 tr(
                   th(req.__("Users")),
-                  td(a({ href: info.base_url + "useradmin" }, info.nusers))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "useradmin" }, info.nusers)),
                   th(req.__("Roles")),
                   td(a({ href: info.base_url + "roleadmin" }, info.nroles))
                 ),
                 tr(
                   th(req.__("Tables")),
-                  td(a({ href: info.base_url + "table" }, info.ntables))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "table" }, info.ntables)),
                   th(req.__("Table columns")),
                   td(a({ href: info.base_url + "table" }, info.nfields))
                 ),
                 tr(
-                  th(req.__("Views")),
-                  td(a({ href: info.base_url + "viewedit" }, info.nviews))
+                  th(req.__("Table constraints")),
+                  td(
+                    a(
+                      { href: info.base_url + "table" },
+                      info.ntable_constraints
+                    )
+                  ),
+                  th(req.__("Library")),
+                  td(a({ href: info.base_url + "library/list" }, info.nlibrary))
                 ),
                 tr(
+                  th(req.__("Views")),
+                  td(a({ href: info.base_url + "viewedit" }, info.nviews)),
                   th(req.__("Pages")),
                   td(a({ href: info.base_url + "pageedit" }, info.npages))
                 ),
                 tr(
                   th(req.__("Files")),
-                  td(a({ href: info.base_url + "files" }, info.nfiles))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "files" }, info.nfiles)),
                   th(req.__("Actions")),
                   td(a({ href: info.base_url + "actions" }, info.nactions))
                 ),
                 tr(
                   th(req.__("Modules")),
-                  td(a({ href: info.base_url + "plugins" }, info.nplugins))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "plugins" }, info.nplugins)),
                   th(req.__("Configuration items")),
                   td(a({ href: info.base_url + "admin" }, info.nconfigs))
                 ),
                 tr(
+                  // Crashlogs only for main site?
                   th(req.__("Crashlogs")),
-                  td(a({ href: info.base_url + "crashlog" }, info.nerrors))
+                  td(a({ href: info.base_url + "crashlog" }, info.nerrors)),
+                  //th(req.__("Sessions")),
+                  //td(a({ href: info.base_url + "crashlog" }, info.nsessions)),
+                  th(req.__("Event logs")),
+                  td(a({ href: info.base_url + "eventlog" }, info.nevent_log))
+                  // Notifications only for main site?
+                  //th(req.__("Notifications")),
+                  //td(a({ href: info.base_url + "???" }, info.nnotifications)),
+                ),
+                tr(
+                  th(req.__("Snapshots")),
+                  td(
+                    a({ href: info.base_url + "admin/backup" }, info.nsnapshots)
+                  ),
+                  th(req.__("Migrations")),
+                  td(a({ href: info.base_url + "admin" }, info.nmigrations))
+                ),
+                tr(
+                  th(req.__("Tags")),
+                  td(a({ href: info.base_url + "tag" }, info.ntags)),
+                  th(req.__("Tag Entries")),
+                  td(a({ href: info.base_url + "tag" }, info.ntag_entries))
                 )
               ),
             ],
@@ -697,6 +743,7 @@ router.get(
                       name: "description",
                       label: req.__("Description"),
                       type: "String",
+                      fieldview: "textarea",
                     },
                   ],
                   values: {
