@@ -283,7 +283,7 @@ router.post(
       const description = valres.success.description;
       // get list of tenants
       const allTens = await getAllTenants();
-      if (allTens.includes(subdomain) || !subdomain) {
+      if (allTens.includes(subdomain) || !subdomain || subdomain === "public") {
         form.errors.subdomain = req.__(
           "A site with this subdomain already exists"
         );
@@ -644,9 +644,12 @@ router.get(
               table(
                 tr(
                   th(req.__("First user E-mail")),
-                  td(a( { href: "mailto:" + info.first_user_email },
-                     info.first_user_email
-                    )),
+                  td(
+                    a(
+                      { href: "mailto:" + info.first_user_email },
+                      info.first_user_email
+                    )
+                  ),
                   th(req.__("Template")),
                   td(a({ href: info.base_url }, info.template))
                 ),
@@ -660,13 +663,18 @@ router.get(
                   th(req.__("Tables")),
                   td(a({ href: info.base_url + "table" }, info.ntables)),
                   th(req.__("Table columns")),
-                  td(a({ href: info.base_url + "table" }, info.nfields)),
+                  td(a({ href: info.base_url + "table" }, info.nfields))
                 ),
                 tr(
                   th(req.__("Table constraints")),
-                  td(a({ href: info.base_url + "table" }, info.ntable_constraints)),
+                  td(
+                    a(
+                      { href: info.base_url + "table" },
+                      info.ntable_constraints
+                    )
+                  ),
                   th(req.__("Library")),
-                  td(a({ href: info.base_url + "library/list" }, info.nlibrary)),
+                  td(a({ href: info.base_url + "library/list" }, info.nlibrary))
                 ),
                 tr(
                   th(req.__("Views")),
@@ -700,7 +708,9 @@ router.get(
                 ),
                 tr(
                   th(req.__("Snapshots")),
-                  td(a({ href: info.base_url + "admin/backup" }, info.nsnapshots)),
+                  td(
+                    a({ href: info.base_url + "admin/backup" }, info.nsnapshots)
+                  ),
                   th(req.__("Migrations")),
                   td(a({ href: info.base_url + "admin" }, info.nmigrations))
                 ),
@@ -709,7 +719,7 @@ router.get(
                   td(a({ href: info.base_url + "tag" }, info.ntags)),
                   th(req.__("Tag Entries")),
                   td(a({ href: info.base_url + "tag" }, info.ntag_entries))
-                ),
+                )
               ),
             ],
           },
@@ -797,7 +807,7 @@ router.post(
 
     // save description
     const { description } = req.body;
-    await Tenant.update(saneDomain, { description: description } );
+    await Tenant.update(saneDomain, { description: description });
 
     await db.runWithTenant(saneDomain, async () => {
       await getState().setConfig("base_url", base_url);
