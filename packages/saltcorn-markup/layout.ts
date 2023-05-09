@@ -181,7 +181,7 @@ const render = ({
         segment,
         isTop,
         ix,
-        breadcrumbs(segment.crumbs || [], segment.right)
+        breadcrumbs(segment.crumbs || [], segment.right, segment.after)
       );
     }
     if (segment.type === "view") {

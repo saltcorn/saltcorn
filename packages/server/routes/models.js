@@ -228,6 +228,11 @@ router.get(
             { href: `/table/${table.id}`, text: table.name },
             { text: model.name },
           ],
+          after: a(
+            { href: `/models/config/${model.id}` },
+            req.__("Edit"),
+            i({ class: "ms-1 fas fa-edit" })
+          ),
         },
         {
           type: "card",
