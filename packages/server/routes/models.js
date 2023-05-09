@@ -30,6 +30,8 @@ const {
   script,
   domReady,
   code,
+  iframe,
+  style,
 } = require("@saltcorn/markup/tags");
 
 const router = new Router();
@@ -382,6 +384,20 @@ router.post(
   })
 );
 
+const encode = (s) =>
+  s.replace(
+    //https://stackoverflow.com/a/57448862/19839414
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      }[tag])
+  );
+
 router.get(
   "/show-report/:id",
   isAdmin,
@@ -406,7 +422,13 @@ router.get(
           type: "card",
           class: "mt-0",
           title: req.__(`Model training report`),
-          contents: model_instance.report,
+          contents:
+            iframe({
+              id: "trainreport",
+              width: "100%",
+              height: "100vh",
+              srcdoc: encode(model_instance.report),
+            }) + style(`iframe#trainreport { height: 100vh}`),
         },
       ],
     });
