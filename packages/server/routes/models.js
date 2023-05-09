@@ -59,7 +59,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { table_id } = req.params;
     const table = await Table.findOne({ id: table_id });
-    res.sendWrap(req.__(`New field`), {
+    res.sendWrap(req.__(`New model`), {
       above: [
         {
           type: "breadcrumbs",
@@ -222,7 +222,7 @@ router.get(
       key: (inst) => inst.metric_values?.[k]?.toPrecision(6),
     }));
     const anyReport = instances.some((i) => !!i.report);
-    res.sendWrap(req.__(`New field`), {
+    res.sendWrap(req.__(`Show model`), {
       above: [
         {
           type: "breadcrumbs",
