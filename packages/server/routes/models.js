@@ -219,6 +219,7 @@ router.get(
       label: k,
       key: (inst) => inst.metric_values?.[k]?.toPrecision(6),
     }));
+    const anyReport = instances.some((i) => !!i.report);
     res.sendWrap(req.__(`New field`), {
       above: [
         {
@@ -246,6 +247,20 @@ router.get(
                   label: req.__("Trained"),
                   key: (inst) => moment(inst.trained_on).fromNow(),
                 },
+                ...(anyReport
+                  ? [
+                      {
+                        label: req.__("Report"),
+                        key: (inst) =>
+                          inst.report
+                            ? a(
+                                { href: `/models/show-report/${inst.id}` },
+                                i({ class: "fas fa-file-alt" })
+                              )
+                            : "",
+                      },
+                    ]
+                  : []),
                 ...metricCols,
                 {
                   label: req.__("Default"),
@@ -364,5 +379,36 @@ router.post(
     const model_instance = await ModelInstance.findOne({ id });
     await model_instance.make_default(!req.body.enabled);
     res.redirect(`/models/show/${model_instance.model_id}`);
+  })
+);
+
+router.get(
+  "/show-report/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const model_instance = await ModelInstance.findOne({ id });
+    const model = await Model.findOne({ id: model_instance.model_id });
+    const table = Table.findOne({ id: model.table_id });
+    res.sendWrap(req.__(`Train model`), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            { href: `/models/show/${model.id}`, text: model.name },
+            { text: model_instance.name },
+            { text: req.__(`Report`) },
+          ],
+        },
+        {
+          type: "card",
+          class: "mt-0",
+          title: req.__(`Model training report`),
+          contents: model_instance.report,
+        },
+      ],
+    });
   })
 );
