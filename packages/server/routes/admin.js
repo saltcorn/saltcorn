@@ -1564,6 +1564,27 @@ router.get(
                         placeholder: getState().getConfig("base_url") || "",
                       })
                     )
+                  ),
+                  div(
+                    // TODO only for some tables?
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-4" },
+                      input({
+                        type: "checkbox",
+                        id: "offlineModeBoxId",
+                        class: "form-check-input me-2",
+                        name: "allowOfflineMode",
+                        checked: true,
+                      }),
+                      label(
+                        {
+                          for: "offlineModeBoxId",
+                          class: "form-label",
+                        },
+                        req.__("Allow offline mode")
+                      )
+                    )
                   )
                 ),
                 button(
@@ -1664,6 +1685,7 @@ router.post(
       useDocker,
       appFile,
       serverURL,
+      allowOfflineMode,
     } = req.body;
     if (!androidPlatform && !iOSPlatform) {
       return res.json({
@@ -1711,6 +1733,7 @@ router.post(
     }
     if (appFile) spawnParams.push("-a", appFile);
     if (serverURL) spawnParams.push("-s", serverURL);
+    if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (
       db.is_it_multi_tenant() &&
       db.getTenantSchema() !== db.connectObj.default_schema

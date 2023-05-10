@@ -5,7 +5,8 @@ const deleteRows = async (context) => {
   const { name, id } = context.params;
   const table = await saltcorn.data.models.Table.findOne({ name });
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-
+  if (mobileConfig.isOfflineMode)
+    throw new Error(i18next.t("Deletes are not supported in offline mode."));
   if (mobileConfig.localTableIds.indexOf(table.id) >= 0) {
     if (mobileConfig.role_id <= table.min_role_write) {
       await table.deleteRows({ id });

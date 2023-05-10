@@ -10,6 +10,7 @@
     <script src="js/utils/iframe_view_utils.js"></script>
     <script src="js/utils/file_helpers.js"></script>
     <script src="js/utils/table_utils.js"></script>
+    <script src="js/utils/offline_mode_helper.js"></script>
 
     <script src="js/mocks/request.js"></script>
     <script src="js/mocks/response.js"></script>
@@ -20,6 +21,7 @@
     <script src="js/routes/error.js"></script>
     <script src="js/routes/page.js"></script>
     <script src="js/routes/view.js"></script>
+    <script src="js/routes/sync.js"></script>
     <script src="js/routes/init.js"></script>
 
     <script src="js/mocks/response.js"></script>
@@ -155,18 +157,6 @@
         }
       };
 
-      const checkJWT = async () => {
-        const state = saltcorn.data.state.getState();
-        const jwt = state.mobileConfig.jwt;
-        if (jwt && jwt !== "undefined") {
-          const response = await apiCall({
-            method: "GET",
-            path: "/auth/authenticated",
-          });
-          return response.data.authenticated;
-        } else return false;
-      };
-
       const initI18Next = async () => {
         const resources = {};
         for (const key of Object.keys(
@@ -184,6 +174,19 @@
           lng: "en",
           resources,
         });
+      };
+
+      const tryDownloadServerData = async (alerts) => {
+        try {
+          await offlineHelper.downloadServerData();
+        } catch (error) {
+          alerts.push({
+            type: "warning",
+            msg: `Unable to download the server data: ${
+              error.message ? error.message : "unknown error"
+            }`,
+          });
+        }
       };
 
       // device is ready
@@ -225,28 +228,74 @@
         setVersionTtag();
         const entryPoint = config.entry_point;
         await initI18Next();
+        state.mobileConfig.networkState = navigator.connection.type;
+        document.addEventListener(
+          "offline",
+          offlineHelper.offlineCallback,
+          false
+        );
+        document.addEventListener(
+          "online",
+          offlineHelper.onlineCallback,
+          false
+        );
+        const networkDisabled = state.mobileConfig.networkState === "none";
+        const jwt = state.mobileConfig.jwt;
         try {
-          if (await checkJWT()) {
+          const alerts = [];
+          if ((networkDisabled && jwt) || (await checkJWT(jwt))) {
             const mobileConfig = state.mobileConfig;
             const decodedJwt = jwt_decode(mobileConfig.jwt);
             mobileConfig.role_id = decodedJwt.user.role_id
               ? decodedJwt.user.role_id
               : 100;
+            mobileConfig.user_id = decodedJwt.user.id;
             mobileConfig.user_name = decodedJwt.user.email;
             mobileConfig.language = decodedJwt.user.language;
             mobileConfig.isPublicUser = false;
             await i18next.changeLanguage(mobileConfig.language);
+            if (mobileConfig.allowOfflineMode) {
+              const userWithOfflineData = await offlineHelper.lastOfflineUser();
+              if (networkDisabled) {
+                if (
+                  userWithOfflineData &&
+                  userWithOfflineData !== mobileConfig.user_name
+                )
+                  throw new Error(
+                    `The offline mode is not available, '${userWithOfflineData}' has not yet uploaded offline data.`
+                  );
+                else {
+                  await offlineHelper.startOfflineMode();
+                  alerts.push({ type: "info", msg: "You are in offline mode" });
+                }
+              } else {
+                if (userWithOfflineData) {
+                  if (userWithOfflineData === mobileConfig.user_name)
+                    alerts.push({
+                      type: "info",
+                      msg: "You have offline data, open the Sync menu to handle it.",
+                    });
+                  else
+                    alerts.push({
+                      type: "warning",
+                      msg: `'${userWithOfflineData}' has not yet uploaded offline data.`,
+                    });
+                } else await tryDownloadServerData(alerts);
+              }
+            }
             addRoute({ route: entryPoint, query: undefined });
             const page = await router.resolve({
               pathname: entryPoint,
               fullWrap: true,
+              alerts,
             });
             await replaceIframe(page.content);
           } else {
             const page = await router.resolve({
               pathname: "get/auth/login",
+              alerts,
             });
-            replaceIframe(page.content);
+            await replaceIframe(page.content);
           }
         } catch (error) {
           const page = await router.resolve({
@@ -259,7 +308,6 @@
             ],
           });
           await replaceIframe(page.content);
-          console.error(error);
         }
       };
 

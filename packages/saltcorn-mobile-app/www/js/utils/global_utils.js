@@ -1,4 +1,4 @@
-/*global axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
+/*global offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
 
 let routingHistory = [];
 
@@ -18,6 +18,10 @@ function addRoute(routeEntry) {
 
 function clearHistory() {
   routingHistory = [];
+}
+
+function popRoute() {
+  routingHistory.pop();
 }
 
 async function apiCall({ method, path, params, body, responseType }) {
@@ -45,6 +49,13 @@ async function apiCall({ method, path, params, body, responseType }) {
     error.message = `Unable to call ${method} ${url}:\n${error.message}`;
     throw error;
   }
+}
+
+function clearAlerts() {
+  const iframe = document.getElementById("content-iframe");
+  const alertsArea =
+    iframe.contentWindow.document.getElementById("alerts-area");
+  alertsArea.innerHTML = "";
 }
 
 function showAlerts(alerts) {
@@ -140,23 +151,50 @@ async function replaceIframeInnerContent(content) {
 }
 
 async function gotoEntryView() {
-  const config = saltcorn.data.state.getState().mobileConfig;
-  const entryPath = config.entry_point;
-  const page = await router.resolve({
-    pathname: entryPath,
-  });
-  addRoute({ entryPath, query: undefined });
-  await replaceIframeInnerContent(page.content);
+  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
+  try {
+    if (
+      mobileConfig.networkState === "none" &&
+      mobileConfig.allowOfflineMode &&
+      !mobileConfig.isOfflineMode
+    )
+      await offlineHelper.startOfflineMode();
+    const page = await router.resolve({
+      pathname: mobileConfig.entry_point,
+      alerts: mobileConfig.isOfflineMode
+        ? [{ type: "info", msg: "You are in offline mode" }]
+        : [],
+    });
+    addRoute({ route: mobileConfig.entry_point, query: undefined });
+    await replaceIframeInnerContent(page.content);
+  } catch (error) {
+    showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+  }
 }
 
 async function handleRoute(route, query, files) {
+  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   try {
+    if (
+      mobileConfig.networkState === "none" &&
+      mobileConfig.allowOfflineMode &&
+      !mobileConfig.isOfflineMode
+    )
+      await offlineHelper.startOfflineMode();
     if (route === "/") return await gotoEntryView();
     addRoute({ route, query });
     const page = await router.resolve({
       pathname: route,
       query: query,
       files: files,
+      alerts: mobileConfig.isOfflineMode
+        ? [{ type: "info", msg: "You are in offline mode" }]
+        : [],
     });
     if (page.redirect) {
       if (page.redirect.startsWith("http://localhost")) {
@@ -176,7 +214,6 @@ async function handleRoute(route, query, files) {
         msg: error.message ? error.message : "An error occured.",
       },
     ]);
-    console.error(error);
   }
 }
 
@@ -208,4 +245,14 @@ function errorAlert(error) {
     },
   ]);
   console.error(error);
+}
+
+async function checkJWT(jwt) {
+  if (jwt && jwt !== "undefined") {
+    const response = await apiCall({
+      method: "GET",
+      path: "/auth/authenticated",
+    });
+    return response.data.authenticated;
+  } else return false;
 }

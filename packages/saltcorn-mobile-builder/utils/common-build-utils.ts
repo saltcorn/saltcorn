@@ -5,6 +5,7 @@ import { join } from "path";
 import { existsSync, mkdirSync, copySync, writeFileSync } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync } from "child_process";
+import Table from "@saltcorn/data/models/table";
 
 /**
  * copy files from 'server/public' into the www folder (with a version_tag prefix)
@@ -79,6 +80,7 @@ export function writeCfgFile({
   serverPath,
   localUserTables,
   tenantAppName,
+  allowOfflineMode,
 }: any) {
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
@@ -88,6 +90,7 @@ export function writeCfgFile({
       ? serverPath
       : serverPath.substring(0, serverPath.length - 1),
     localUserTables,
+    allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
   writeFileSync(join(wwwDir, "config"), JSON.stringify(cfg));

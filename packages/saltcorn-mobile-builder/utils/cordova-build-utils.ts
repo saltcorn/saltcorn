@@ -109,6 +109,18 @@ function addPlugins(buildDir: string) {
     }
   );
   console.log(result.output.toString());
+  result = spawnSync(
+    "npm",
+    ["run", "add-plugin", "--", "cordova-plugin-network-information"],
+    {
+      cwd: buildDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
+    }
+  );
+  console.log(result.output.toString());
 }
 
 /**

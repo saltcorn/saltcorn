@@ -1,6 +1,10 @@
 /*global i18next, saltcorn*/
 
-function MobileRequest({ xhr = false, files = undefined, query = undefined }) {
+function MobileRequest({
+  xhr = false,
+  files = undefined,
+  query = undefined,
+} = {}) {
   const cfg = saltcorn.data.state.getState().mobileConfig;
   const roleId = cfg.role_id ? cfg.role_id : 100;
   const userId = cfg.user_id ? cfg.user_id : undefined;
