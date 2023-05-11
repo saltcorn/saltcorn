@@ -83,6 +83,13 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           if (!s || s === "") return req.__("Missing label");
           if (!id && existing_names.includes(Field.labelToName(s)))
             return req.__("Column %s already exists", s);
+          if (Field.labelToName(s) === "row")
+            return req.__("Not a valid field name");
+          try {
+            new Function(s, "return;");
+          } catch {
+            return req.__("Not a valid field name");
+          }
         },
       }),
       // description

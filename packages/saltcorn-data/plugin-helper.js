@@ -1540,7 +1540,7 @@ const queryToString = (query) => {
 const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
   let qstate = {};
   Object.entries(state || {}).forEach(([k, v]) => {
-    if (k === "_fts" || (table?.name && k === `_fts_${table.name}`)) {
+    if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
@@ -1597,6 +1597,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
+    } else if (Array.isArray(v) && field && field.type && field.type.read) {
+      qstate[k] = { or: v.map(field.type.read) };
     } else if (
       field &&
       field.type.name === "String" &&
