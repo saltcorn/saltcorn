@@ -1597,6 +1597,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
+    } else if (Array.isArray(v) && field && field.type && field.type.read) {
+      qstate[k] = { or: v.map(field.type.read) };
     } else if (
       field &&
       field.type.name === "String" &&
