@@ -474,6 +474,9 @@ class Table implements AbstractTable {
     return opts;
   }
 
+  get santized_name() {
+    return sqlsanitize(this.name);
+  }
   /**
    * Create table
    * @param name - table name

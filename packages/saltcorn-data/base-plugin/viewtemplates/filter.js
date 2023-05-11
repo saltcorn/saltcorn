@@ -324,7 +324,7 @@ const run = async (
     },
     search_bar({ has_dropdown, contents, show_badges }, go) {
       const rendered_contents = go(contents);
-      const stVar = `_fts_${table.name.split(" ").join("")}`;
+      const stVar = `_fts_${table.santized_name}`;
       return search_bar(stVar, state[stVar], {
         stateField: stVar,
         has_dropdown,
