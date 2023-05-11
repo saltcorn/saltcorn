@@ -189,8 +189,25 @@
         }
       };
 
+      // the app comes back from background
+      const onResume = async () => {
+        const state = saltcorn.data.state.getState();
+        const mobileConfig = state.mobileConfig;
+        if (mobileConfig.allowOfflineMode) {
+          mobileConfig.networkState = navigator.connection.type;
+          if (
+            mobileConfig.networkState === "none" &&
+            !mobileConfig.isOfflineMode
+          ) {
+            // starts the offline mode, if needed
+            await gotoEntryView();
+          }
+        }
+      };
+
       // device is ready
       const init = async () => {
+        document.addEventListener("resume", onResume, false);
         const config = await readJSON(
           "config",
           `${cordova.file.applicationDirectory}www`
