@@ -12,13 +12,10 @@ var offlineHelper = (() => {
     try {
       await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
       await saltcorn.data.db.query("BEGIN TRANSACTION");
+      // replace all data
       for (const [k, v] of Object.entries(data)) {
-        const table = saltcorn.data.models.Table.findOne({ name: k });
-        const ids = (await table.getRows()).map((row) => row.id);
         await saltcorn.data.db.query(
-          `delete from "${saltcorn.data.db.sqlsanitize(
-            k
-          )}" where id in (${ids.join(",")})`
+          `delete from "${saltcorn.data.db.sqlsanitize(k)}"`
         );
         for (const row of v.rows) {
           await saltcorn.data.db.insert(k, row);
