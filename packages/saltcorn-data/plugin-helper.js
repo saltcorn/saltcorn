@@ -1540,7 +1540,10 @@ const queryToString = (query) => {
 const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
   let qstate = {};
   Object.entries(state || {}).forEach(([k, v]) => {
-    if (k === "_fts" || (table?.name && k === `_fts_${table.name}`)) {
+    if (
+      k === "_fts" ||
+      (table?.name && k === `_fts_${table.name.split(" ").join("")}`)
+    ) {
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
