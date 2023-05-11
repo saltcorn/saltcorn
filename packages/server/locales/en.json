@@ -1158,5 +1158,6 @@
 	"Tenant application capabilities": "Tenant application capabilities",
 	"Edit Module": "Edit Module",
 	"Roles 2-10 are reserved": "Roles 2-10 are reserved",
-	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved"
+	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved",
+	"Not a valid field name": "Not a valid field name"
 }

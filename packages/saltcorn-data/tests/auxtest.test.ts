@@ -252,8 +252,8 @@ describe("plugin helper", () => {
 });
 describe("stateFieldsToWhere", () => {
   const fields = [
-    { name: "astr", type: { name: "String" } },
-    { name: "age", type: { name: "Integer" } },
+    new Field({ name: "astr", type: "String" }),
+    new Field({ name: "age", type: "Integer" }),
     { name: "props", type: { name: "JSON" } },
     {
       name: "attrs",
@@ -329,6 +329,13 @@ describe("stateFieldsToWhere", () => {
     expect(w).toStrictEqual({
       attrs: [{ json: { cars: { gte: 2, lte: 4 } } }],
     });
+  });
+  it("array or", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { astr: ["foo", "bar"] },
+    });
+    expect(w).toStrictEqual({ astr: { or: ["foo", "bar"] } });
   });
   it("join field", async () => {
     const table = Table.findOne({ name: "patients" });
