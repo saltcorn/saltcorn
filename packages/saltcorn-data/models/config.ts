@@ -74,6 +74,13 @@ const configTypes: ConfigTypes = {
     blurb:
       "The URL at which your site is available. For instance, https://example.com/",
   },
+  user_with_offline_data: {
+    type: "String",
+    label: "User with offline data",
+    default: "",
+    blurb:
+      "This is the email of the last user who created offline data in the mobile app.",
+  },
   /** @type {object} */
   menu_items: { type: "hidden", label: "Menu items" },
   /** @type {object} */

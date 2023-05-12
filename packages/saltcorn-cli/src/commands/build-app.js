@@ -5,6 +5,7 @@ const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
+const Table = require("@saltcorn/data/models/table");
 
 /**
  *
@@ -81,6 +82,7 @@ class BuildAppCommand extends Command {
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
+        allowOfflineMode: flags.allowOfflineMode,
         plugins: await this.uniquePlugins(),
         copyTargetDir: flags.copyAppDirectory,
         user,
@@ -163,6 +165,12 @@ BuildAppCommand.flags = {
     name: "server URL",
     char: "s",
     description: "URL to a saltcorn server",
+  }),
+  allowOfflineMode: flags.boolean({
+    name: "Allow offline mode",
+    string: "allowOfflineMode",
+    description:
+      "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
   }),
   buildForEmulator: flags.boolean({
     name: "build for emulator",

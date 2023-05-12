@@ -34,7 +34,7 @@ const sbAdmin2Layout = () => {
 
 const getMenu = (req) => {
   const state = saltcorn.data.state.getState();
-  const mobileCfg = saltcorn.data.state.getState().mobileConfig;
+  const mobileCfg = state.mobileConfig;
   const role = mobileCfg.role_id || 100;
   const extraMenu = saltcorn.data.web_mobile_commons.get_extra_menu(
     role,
@@ -80,6 +80,17 @@ const getMenu = (req) => {
     isUser: true,
     items: authItems,
   });
+  if (mobileCfg.allowOfflineMode)
+    result.push({
+      section: "Sync",
+      items: [
+        {
+          link: "javascript:execLink('/sync/sync_settings')",
+          icon: "fas fa-sync",
+          label: "Sync",
+        },
+      ],
+    });
   return result;
 };
 

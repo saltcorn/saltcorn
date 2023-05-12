@@ -1159,5 +1159,12 @@
 	"Edit Module": "Edit Module",
 	"Roles 2-10 are reserved": "Roles 2-10 are reserved",
 	"Role IDs 2-10 are reserved": "Role IDs 2-10 are reserved",
+	"Allow offline mode": "Allow offline mode",
+	"Embedded in": "Embedded in",
+	"Linked from": "Linked from",
+	"Table constraints": "Table constraints",
+	"Event logs": "Event logs",
+	"Migrations": "Migrations",
+	"Tag Entries": "Tag Entries",
 	"Not a valid field name": "Not a valid field name"
 }

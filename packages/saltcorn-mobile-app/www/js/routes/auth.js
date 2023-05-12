@@ -35,7 +35,7 @@ const getAuthLinks = (current, entryPoint) => {
   return links;
 };
 
-const renderLoginView = (entryPoint, versionTag) => {
+const renderLoginView = (entryPoint, versionTag, alerts = []) => {
   const form = prepareAuthForm(entryPoint);
   form.onSubmit = `javascript:loginFormSubmit(this, '${entryPoint}')`;
   form.submitLabel = "Login";
@@ -43,7 +43,7 @@ const renderLoginView = (entryPoint, versionTag) => {
     title: "login",
     form: form,
     authLinks: getAuthLinks("login", entryPoint),
-    alerts: [],
+    alerts,
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
       { script: "js/utils/iframe_view_utils.js" },
@@ -69,10 +69,14 @@ const renderSignupView = (entryPoint, versionTag) => {
   });
 };
 
-const getLoginView = async () => {
-  const config = saltcorn.data.state.getState().mobileConfig;
+const getLoginView = async (context) => {
+  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   return {
-    content: renderLoginView(config.entry_point, config.version_tag),
+    content: renderLoginView(
+      mobileConfig.entry_point,
+      mobileConfig.version_tag,
+      context.alerts ? context.alerts : []
+    ),
     replaceIframe: true,
   };
 };

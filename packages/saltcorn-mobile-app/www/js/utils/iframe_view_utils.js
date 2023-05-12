@@ -97,28 +97,47 @@ async function login(e, entryPoint, isSignup) {
   if (typeof loginResult === "string") {
     // use it as a token
     const decodedJwt = parent.jwt_decode(loginResult);
-    const config = parent.saltcorn.data.state.getState().mobileConfig;
+    const state = parent.saltcorn.data.state.getState();
+    const config = state.mobileConfig;
     config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 100;
     config.user_name = decodedJwt.user.email;
     config.user_id = decodedJwt.user.id;
     config.language = decodedJwt.user.language;
     config.isPublicUser = false;
+    config.isOfflineMode = false;
     await parent.setJwt(loginResult);
     config.jwt = loginResult;
     await parent.i18next.changeLanguage(config.language);
+    const alerts = [];
+    if (config.allowOfflineMode) {
+      const userWithOfflineData = await parent.offlineHelper.lastOfflineUser();
+      if (!userWithOfflineData) await parent.offlineHelper.downloadServerData();
+      else {
+        if (userWithOfflineData === config.user_name) {
+          alerts.push({
+            type: "info",
+            msg: "You have offline data, open the Sync menu to handle it.",
+          });
+        } else {
+          alerts.push({
+            type: "warning",
+            msg: `'${userWithOfflineData}' has not yet uploaded offline data.`,
+          });
+        }
+      }
+    }
+    alerts.push({
+      type: "success",
+      msg: parent.i18next.t("Welcome, %s!", {
+        postProcess: "sprintf",
+        sprintf: [config.user_name],
+      }),
+    });
     parent.addRoute({ route: entryPoint, query: undefined });
     const page = await parent.router.resolve({
       pathname: entryPoint,
       fullWrap: true,
-      alerts: [
-        {
-          type: "success",
-          msg: parent.i18next.t("Welcome, %s!", {
-            postProcess: "sprintf",
-            sprintf: [config.user_name],
-          }),
-        },
-      ],
+      alerts,
     });
     await parent.replaceIframe(page.content);
   } else if (loginResult?.alerts) {
@@ -313,9 +332,9 @@ async function gopage(n, pagesize, viewIdentifier, extra) {
   );
 }
 
-function mobile_modal(url, opts = {}) {
+async function mobile_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
-    $("body").append(`<div id="scmodal", class="modal">
+    $("body").append(`<div id="scmodal" class="modal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -334,18 +353,41 @@ function mobile_modal(url, opts = {}) {
     var modal = bootstrap.Modal.getInstance(myModalEl);
     modal.dispose();
   }
-  const { path, query } = parent.splitPathQuery(url);
-  // submitReload ?
-  parent.router
-    .resolve({ pathname: `get${path}`, query: query })
-    .then((page) => {
-      const modalContent = page.content;
-      const title = page.title;
-      if (title) $("#scmodal .modal-title").html(title);
-      $("#scmodal .modal-body").html(modalContent);
-      new bootstrap.Modal($("#scmodal")).show();
-      // onOpen onClose initialize_page?
+  try {
+    const { path, query } = parent.splitPathQuery(url);
+    // submitReload ?
+    const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
+    if (
+      mobileConfig.networkState === "none" &&
+      mobileConfig.allowOfflineMode &&
+      !mobileConfig.isOfflineMode
+    )
+      await parent.offlineHelper.startOfflineMode();
+    const page = await parent.router.resolve({
+      pathname: `get${path}`,
+      query: query,
+      alerts: mobileConfig.isOfflineMode
+        ? [{ type: "info", msg: "You are in offline mode" }]
+        : [],
     });
+    const modalContent = page.content;
+    const title = page.title;
+    if (title) $("#scmodal .modal-title").html(title);
+    $("#scmodal .modal-body").html(modalContent);
+    new bootstrap.Modal($("#scmodal")).show();
+    // onOpen onClose initialize_page?
+  } catch (error) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+  }
+}
+
+function closeModal() {
+  $("#scmodal").modal("toggle");
 }
 
 async function local_post(url, args) {
@@ -480,6 +522,97 @@ async function view_post(viewname, route, data, onDone) {
   } catch (error) {
     parent.errorAlert(error);
   }
+}
+
+async function callUploadSync() {
+  if (!(await parent.offlineHelper.lastOfflineUser())) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: "You don't have any offline data.",
+      },
+    ]);
+  } else {
+    showLoadSpinner();
+    try {
+      await parent.offlineHelper.uploadLocalData();
+      await parent.offlineHelper.endOfflineMode();
+      parent.clearAlerts();
+      parent.showAlerts([
+        {
+          type: "info",
+          msg: "Sucessfully uploaded your local data.",
+        },
+      ]);
+    } catch (error) {
+      parent.errorAlert(error);
+    } finally {
+      removeLoadSpinner();
+    }
+  }
+}
+
+async function callDownloadSync(force = false) {
+  const lastOfflineUser = await parent.offlineHelper.lastOfflineUser();
+  const { user_name } = parent.saltcorn.data.state.getState().mobileConfig;
+  if (lastOfflineUser === user_name && !force) {
+    await mobile_modal("/sync/ask_overwrite");
+  } else if (lastOfflineUser && !force) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: `The user '${lastOfflineUser}' has offline data, the download is not available.`,
+      },
+    ]);
+  } else {
+    showLoadSpinner();
+    try {
+      await parent.offlineHelper.downloadServerData();
+      await parent.offlineHelper.endOfflineMode();
+      parent.clearAlerts();
+      parent.showAlerts([
+        {
+          type: "info",
+          msg: "Sucessfully updated your local data.",
+        },
+      ]);
+    } catch (error) {
+      parent.errorAlert(error);
+    } finally {
+      removeLoadSpinner();
+    }
+  }
+}
+
+function showLoadSpinner() {
+  if ($("#scspinner").length === 0) {
+    $("body").append(`
+    <div 
+      id="scspinner" 
+      style="position: absolute;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;"
+    >
+      <div 
+        class="spinner-border"
+        role="status"
+        style="position: absolute;
+          left: 50%;
+          top: 50%;
+          height:60px;
+          width:60px;
+          margin:0px auto;"
+      >
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>`);
+  }
+}
+
+function removeLoadSpinner() {
+  $("#scspinner").remove();
 }
 
 function reload_on_init() {

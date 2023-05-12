@@ -810,7 +810,7 @@ module.exports = {
         joinFields,
         aggregations,
         ...q,
-        forPublic: !req.user,
+        forPublic: !req.user || req.user.role_id === 100, // TODO in mobile set user null for public
         forUser: req.user,
       });
 
