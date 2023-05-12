@@ -840,7 +840,7 @@ class Table implements AbstractTable {
    * @param _userid - user id
    * @param noTrigger
    * @param resultCollector
-   * @returns {Promise<void>}
+   * @returns
    */
   async updateRow(
     v_in: any,

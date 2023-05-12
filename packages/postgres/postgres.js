@@ -217,7 +217,7 @@ const update = async (tbl, obj, id, opts = {}) => {
     tbl
   )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
   sql_log(q, valList);
-  await pool.query(q, valList);
+  await (opts.client || pool).query(q, valList);
 };
 
 /**
@@ -225,9 +225,10 @@ const update = async (tbl, obj, id, opts = {}) => {
  * @param {string} tbl - table name
  * @param {object} obj - columns names and data
  * @param {object} whereObj - where object
+ * @param {object} opts - can contain a db client for transactions
  * @returns {Promise<void>} no result
  */
-const updateWhere = async (tbl, obj, whereObj) => {
+const updateWhere = async (tbl, obj, whereObj, opts = {}) => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const { where, values } = mkWhere(whereObj, false, kvs.length);
@@ -240,7 +241,7 @@ const updateWhere = async (tbl, obj, whereObj) => {
     tbl
   )}" set ${assigns} ${where}`;
   sql_log(q, valList);
-  await pool.query(q, valList);
+  await (opts.client || pool).query(q, valList);
 };
 
 /**
@@ -356,9 +357,9 @@ const add_index = async (table_name, field_name) => {
  */
 const drop_index = async (table_name, field_name) => {
   // TBD check that there are no problems with lenght of constraint name
-  const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(table_name)}_${sqlsanitize(
-    field_name
-  )}_index";`;
+  const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}_${sqlsanitize(field_name)}_index";`;
   sql_log(sql);
   await pool.query(sql);
 };

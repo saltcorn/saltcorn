@@ -18,8 +18,9 @@ const postView = async (context) => {
   const req = new MobileRequest({ xhr: context.xhr, files: context.files });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
+  const mobileCfg = state.mobileConfig;
   if (
-    state.mobileConfig.role_id > view.min_role &&
+    mobileCfg.role_id > view.min_role &&
     !(await view.authorise_post({ body, req, ...view }))
   ) {
     throw new Error(req.__("Not authorized"));
@@ -34,6 +35,8 @@ const postView = async (context) => {
     },
     view.isRemoteTable()
   );
+  if (mobileCfg.isOfflineMode)
+    await state.setConfig("user_with_offline_data", mobileCfg.user_name);
   return res.getJson();
 };
 
@@ -48,9 +51,8 @@ const postViewRoute = async (context) => {
   const req = new MobileRequest({ xhr: context.xhr });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
-  if (state.mobileConfig.role_id > view.min_role) {
-    throw new Error(req.__("Not authorized"));
-  }
+  const { role_id, isOfflineMode, user_name } = state.mobileConfig;
+  if (role_id > view.min_role) throw new Error(req.__("Not authorized"));
   await view.runRoute(
     context.params.route,
     context.data,
@@ -58,6 +60,7 @@ const postViewRoute = async (context) => {
     { req, res },
     view.isRemoteTable()
   );
+  if (isOfflineMode) await state.setConfig("user_with_offline_data", user_name);
   return res.getJson();
 };
 
@@ -75,9 +78,8 @@ const getView = async (context) => {
   if (
     state.mobileConfig.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
-  ) {
+  )
     throw new Error(req.__("Not authorized"));
-  }
   const contents = await view.run_possibly_on_page(
     query,
     req,
