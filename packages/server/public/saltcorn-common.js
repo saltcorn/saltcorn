@@ -597,6 +597,12 @@ function initialize_page() {
     const options = parse(el.attr("locale-date-options"));
     el.text(date.toLocaleDateString(locale, options));
   });
+  $("time[locale-date-format]").each(function () {
+    var el = $(this);
+    var date = el.attr("datetime");
+    const format = parse(el.attr("locale-date-format"));
+    el.text(dayjs(date).format(format));
+  });
   if ($.fn.historyTabs && $.fn.tab)
     $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
