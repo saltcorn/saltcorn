@@ -28,6 +28,7 @@ const {
   section,
   pre,
   code,
+  time,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
@@ -1328,15 +1329,15 @@ const date = {
       ],
       run: (d, req, options) => {
         if (!d) return "";
-        const loc = locale(req);
-        if (loc) {
-          if (!options || !options.format)
-            return text(moment(d).locale(loc).format());
-          return text(moment(d).locale(loc).format(options.format));
-        } else {
-          if (!options || !options.format) return text(moment(d).format());
-          return text(moment(d).format(options.format));
-        }
+        return time(
+          {
+            datetime: new Date(d).toISOString(),
+            "locale-date-format": encodeURIComponent(
+              JSON.stringify(options?.format)
+            ),
+          },
+          moment(d).format(options?.format)
+        );
       },
     },
     /**
