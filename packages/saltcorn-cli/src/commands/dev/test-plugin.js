@@ -5,8 +5,8 @@
 const { Command, flags } = require("@oclif/command");
 
 /**
- * 
- * @param {object[]} ps 
+ *
+ * @param {object[]} ps
  * @returns {object}
  */
 const lastPath = (ps) =>
@@ -16,7 +16,7 @@ const lastPath = (ps) =>
  * TestPluginCommand Class
  * @extends oclif.Command
  * @category saltcorn-cli
- */    
+ */
 class TestPluginCommand extends Command {
   /**
    * @returns {Promise<void>}

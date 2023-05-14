@@ -3,7 +3,7 @@
  * @module commands/localize-plugin
  */
 const { Command, flags } = require("@oclif/command");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant } = require("../../common");
 const path = require("path");
 
 /**
