@@ -21,6 +21,8 @@ class TakeSnapshotCommand extends Command {
     await init_some_tenants(flags.tenant);
 
     await maybe_as_tenant(flags.tenant, async () => {
+      if(flags.fresh)
+        await Snapshot.take_if_changed();
       const snps = await Snapshot.latest();
       console.log(JSON.stringify(snps, null, 2));
     });
@@ -40,6 +42,10 @@ TakeSnapshotCommand.flags = {
   tenant: flags.string({
     char: "t",
     description: "tenant",
+  }),
+  fresh: flags.boolean({
+    char: "f",
+    description: "fresh",
   }),
 };
 
