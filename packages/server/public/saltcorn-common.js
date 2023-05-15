@@ -257,6 +257,42 @@ function apply_showif() {
       },
     });
   });
+  const locale =
+    navigator.userLanguage ||
+    (navigator.languages &&
+      navigator.languages.length &&
+      navigator.languages[0]) ||
+    navigator.language ||
+    navigator.browserLanguage ||
+    navigator.systemLanguage ||
+    "en";
+  window.detected_locale = locale;
+  const parse = (s) => JSON.parse(decodeURIComponent(s));
+  $("time[locale-time-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-time-options"));
+    el.text(date.toLocaleTimeString(locale, options));
+  });
+  $("time[locale-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-options"));
+    el.text(date.toLocaleString(locale, options));
+  });
+  $("time[locale-date-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-date-options"));
+    el.text(date.toLocaleDateString(locale, options));
+  });
+  $("time[locale-date-format]").each(function () {
+    var el = $(this);
+    var date = el.attr("datetime");
+    const format = parse(el.attr("locale-date-format"));
+    el.text(dayjs(date).format(format));
+  });
+
   _apply_showif_plugins.forEach((p) => p());
 }
 
@@ -568,41 +604,7 @@ function initialize_page() {
         });
       }, 100);
     });
-  const locale =
-    navigator.userLanguage ||
-    (navigator.languages &&
-      navigator.languages.length &&
-      navigator.languages[0]) ||
-    navigator.language ||
-    navigator.browserLanguage ||
-    navigator.systemLanguage ||
-    "en";
-  window.detected_locale = locale;
-  const parse = (s) => JSON.parse(decodeURIComponent(s));
-  $("time[locale-time-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-time-options"));
-    el.text(date.toLocaleTimeString(locale, options));
-  });
-  $("time[locale-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-options"));
-    el.text(date.toLocaleString(locale, options));
-  });
-  $("time[locale-date-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-date-options"));
-    el.text(date.toLocaleDateString(locale, options));
-  });
-  $("time[locale-date-format]").each(function () {
-    var el = $(this);
-    var date = el.attr("datetime");
-    const format = parse(el.attr("locale-date-format"));
-    el.text(dayjs(date).format(format));
-  });
+
   if ($.fn.historyTabs && $.fn.tab)
     $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
