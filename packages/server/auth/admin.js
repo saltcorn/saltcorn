@@ -86,6 +86,10 @@ const getUserFields = async (req) => {
       f.validator = (s) => {
         if (!User.valid_email(s)) return req.__("Not a valid e-mail address");
       };
+      f.attributes = {
+        ...(f.attributes || {}),
+        input_type: "email",
+      };
     }
   }
   return userFields;
