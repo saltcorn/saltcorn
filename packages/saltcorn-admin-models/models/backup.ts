@@ -149,7 +149,8 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
     const files = await File.find(folder ? { folder } : {});
     for (const f of files) {
       const base = basename(f.location);
-      if (f.isDirectory) {
+      if (f.isDirectory && (await f.is_symlink())) continue;
+      else if (f.isDirectory && !(await f.is_symlink())) {
         await mkdir(join(dirpath, f.path_to_serve as string));
         await iterFolder(f.path_to_serve as string);
       } else {
