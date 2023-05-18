@@ -53,6 +53,8 @@ const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
+const { sleep } = require("@saltcorn/data/utils");
+
 const path = require("path");
 /**
  * @type {object}
@@ -913,10 +915,12 @@ router.post(
         rest.provider_name !== "Database table"
       ) {
         const table = await Table.create(name, rest);
+        await sleep(500); // Allow other workers to load this view
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
         const table = await Table.create(name, rest);
+        await sleep(500); // Allow other workers to load this view
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }

@@ -23,6 +23,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const db = require("@saltcorn/data/db");
+const { sleep } = require("@saltcorn/data/utils");
 
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 
@@ -469,6 +470,7 @@ router.post(
           else v.configuration = {};
           //console.log(v);
           await View.create(v);
+          await sleep(500); // Allow other workers to load this view
         }
         res.redirect(
           addOnDoneRedirect(
