@@ -410,7 +410,8 @@ router.post(
             if (
               field.required &&
               !field.primary_key &&
-              typeof row[field.name] === "undefined"
+              typeof row[field.name] === "undefined" &&
+              !field.attributes.default
             ) {
               hasErrors = true;
               errors.push(`${field.name}: required`);
