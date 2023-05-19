@@ -1,4 +1,4 @@
-/*global i18next, apiCall, saltcorn*/
+/*global i18next, apiCall, saltcorn, offlineHelper*/
 
 // /toggle/:name/:id/:field_name
 const postToggleField = async (context) => {
@@ -11,8 +11,8 @@ const postToggleField = async (context) => {
     if (role_id > table.min_role_write)
       throw new Error(i18next.t("Not authorized"));
     await table.toggleBool(+id, field_name);
-    if (isOfflineMode)
-      await state.setConfig("user_with_offline_data", user_name);
+    if (isOfflineMode && !(await offlineHelper.getLastOfflineSession()))
+      await offlineHelper.setOfflineSession({ offlineUser: user_name });
   } else {
     await apiCall({
       method: "POST",

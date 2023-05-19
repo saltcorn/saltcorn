@@ -351,6 +351,8 @@ export type MobileConfig = {
   language?: string;
   isPublicUser?: boolean;
   jwt?: string;
+  inErrorState?: boolean;
+  inLoadState?: boolean;
 };
 
 export type JoinFieldOption = {

@@ -1,4 +1,4 @@
-/*global offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
+/*global window, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
 
 let routingHistory = [];
 
@@ -24,7 +24,7 @@ function popRoute() {
   routingHistory.pop();
 }
 
-async function apiCall({ method, path, params, body, responseType }) {
+async function apiCall({ method, path, params, body, responseType, timeout }) {
   const config = saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
   const url = `${serverPath}${path}`;
@@ -43,6 +43,7 @@ async function apiCall({ method, path, params, body, responseType }) {
       headers,
       responseType: responseType ? responseType : "json",
       data: body,
+      timeout: timeout ? timeout : 0,
     });
     return result;
   } catch (error) {
@@ -153,16 +154,19 @@ async function replaceIframeInnerContent(content) {
 async function gotoEntryView() {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   try {
-    if (
+    if (mobileConfig.inErrorState) window.location.reload(true);
+    else if (
       mobileConfig.networkState === "none" &&
       mobileConfig.allowOfflineMode &&
       !mobileConfig.isOfflineMode
-    )
+    ) {
       await offlineHelper.startOfflineMode();
+      clearHistory();
+    }
     const page = await router.resolve({
       pathname: mobileConfig.entry_point,
       alerts: mobileConfig.isOfflineMode
-        ? [{ type: "info", msg: "You are in offline mode" }]
+        ? [{ type: "info", msg: offlineHelper.getOfflineMsg() }]
         : [],
     });
     addRoute({ route: mobileConfig.entry_point, query: undefined });
@@ -184,28 +188,37 @@ async function handleRoute(route, query, files) {
       mobileConfig.networkState === "none" &&
       mobileConfig.allowOfflineMode &&
       !mobileConfig.isOfflineMode
-    )
+    ) {
       await offlineHelper.startOfflineMode();
-    if (route === "/") return await gotoEntryView();
-    addRoute({ route, query });
-    const page = await router.resolve({
-      pathname: route,
-      query: query,
-      files: files,
-      alerts: mobileConfig.isOfflineMode
-        ? [{ type: "info", msg: "You are in offline mode" }]
-        : [],
-    });
-    if (page.redirect) {
-      if (page.redirect.startsWith("http://localhost")) {
-        await gotoEntryView();
-      } else {
-        const { path, query } = splitPathQuery(page.redirect);
-        await handleRoute(path, query);
+      clearHistory();
+      await gotoEntryView();
+    } else {
+      if (route === "/") return await gotoEntryView();
+      addRoute({ route, query });
+      const page = await router.resolve({
+        pathname: route,
+        query: query,
+        files: files,
+        alerts: mobileConfig.isOfflineMode
+          ? [
+              {
+                type: "info",
+                msg: offlineHelper.getOfflineMsg(),
+              },
+            ]
+          : [],
+      });
+      if (page.redirect) {
+        if (page.redirect.startsWith("http://localhost")) {
+          await gotoEntryView();
+        } else {
+          const { path, query } = splitPathQuery(page.redirect);
+          await handleRoute(path, query);
+        }
+      } else if (page.content) {
+        if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
+        else await replaceIframe(page.content);
       }
-    } else if (page.content) {
-      if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
-      else await replaceIframe(page.content);
     }
   } catch (error) {
     showAlerts([
@@ -218,6 +231,8 @@ async function handleRoute(route, query, files) {
 }
 
 async function goBack(steps = 1, exitOnFirstPage = false) {
+  const { inLoadState } = saltcorn.data.state.getState().mobileConfig;
+  if (inLoadState) return;
   if (
     routingHistory.length === 0 ||
     (exitOnFirstPage && routingHistory.length === 1)
@@ -252,6 +267,7 @@ async function checkJWT(jwt) {
     const response = await apiCall({
       method: "GET",
       path: "/auth/authenticated",
+      timeout: 10000,
     });
     return response.data.authenticated;
   } else return false;

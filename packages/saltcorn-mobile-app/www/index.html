@@ -176,19 +176,6 @@
         });
       };
 
-      const tryDownloadServerData = async (alerts) => {
-        try {
-          await offlineHelper.downloadServerData();
-        } catch (error) {
-          alerts.push({
-            type: "warning",
-            msg: `Unable to download the server data: ${
-              error.message ? error.message : "unknown error"
-            }`,
-          });
-        }
-      };
-
       // the app comes back from background
       const onResume = async () => {
         const state = saltcorn.data.state.getState();
@@ -197,10 +184,28 @@
           mobileConfig.networkState = navigator.connection.type;
           if (
             mobileConfig.networkState === "none" &&
-            !mobileConfig.isOfflineMode
+            !mobileConfig.isOfflineMode &&
+            mobileConfig.jwt
           ) {
-            // starts the offline mode, if needed
-            await gotoEntryView();
+            await offlineHelper.startOfflineMode();
+            clearHistory();
+            if (mobileConfig.user_id) await gotoEntryView();
+            else {
+              const decodedJwt = jwt_decode(mobileConfig.jwt);
+              mobileConfig.role_id = decodedJwt.user.role_id
+                ? decodedJwt.user.role_id
+                : 100;
+              mobileConfig.user_id = decodedJwt.user.id;
+              mobileConfig.user_name = decodedJwt.user.email;
+              mobileConfig.language = decodedJwt.user.language;
+              mobileConfig.isPublicUser = false;
+            }
+            addRoute({ route: entryPoint, query: undefined });
+            const page = await router.resolve({
+              pathname: mobileConfig.entry_point,
+              fullWrap: true,
+              alerts: [],
+            });
           }
         }
       };
@@ -272,32 +277,38 @@
             mobileConfig.isPublicUser = false;
             await i18next.changeLanguage(mobileConfig.language);
             if (mobileConfig.allowOfflineMode) {
-              const userWithOfflineData = await offlineHelper.lastOfflineUser();
+              const { offlineUser, upload_started_at, upload_ended_at } =
+                (await offlineHelper.getLastOfflineSession()) || {};
               if (networkDisabled) {
-                if (
-                  userWithOfflineData &&
-                  userWithOfflineData !== mobileConfig.user_name
-                )
+                if (offlineUser && offlineUser !== mobileConfig.user_name)
                   throw new Error(
-                    `The offline mode is not available, '${userWithOfflineData}' has not yet uploaded offline data.`
+                    `The offline mode is not available, '${offlineUser}' has not yet uploaded offline data.`
                   );
                 else {
                   await offlineHelper.startOfflineMode();
-                  alerts.push({ type: "info", msg: "You are in offline mode" });
+                  alerts.push({
+                    type: "info",
+                    msg: offlineHelper.getOfflineMsg(),
+                  });
                 }
-              } else {
-                if (userWithOfflineData) {
-                  if (userWithOfflineData === mobileConfig.user_name)
-                    alerts.push({
-                      type: "info",
-                      msg: "You have offline data, open the Sync menu to handle it.",
-                    });
-                  else
+              } else if (offlineUser) {
+                if (offlineUser === mobileConfig.user_name) {
+                  if (upload_started_at && !upload_ended_at) {
                     alerts.push({
                       type: "warning",
-                      msg: `'${userWithOfflineData}' has not yet uploaded offline data.`,
+                      msg: "Please check if your offline data is already online. An upload was started but did not finish.",
                     });
-                } else await tryDownloadServerData(alerts);
+                  } else {
+                    alerts.push({
+                      type: "info",
+                      msg: "You have offline data, to handle it open the Network menu.",
+                    });
+                  }
+                } else
+                  alerts.push({
+                    type: "warning",
+                    msg: `'${offlineUser}' has not yet uploaded offline data.`,
+                  });
               }
             }
             addRoute({ route: entryPoint, query: undefined });
@@ -315,8 +326,10 @@
             await replaceIframe(page.content);
           }
         } catch (error) {
+          state.mobileConfig.inErrorState = true;
           const page = await router.resolve({
             pathname: "get/error_page",
+            fullWrap: true,
             alerts: [
               {
                 type: "error",

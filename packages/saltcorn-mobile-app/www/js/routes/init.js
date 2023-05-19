@@ -1,4 +1,4 @@
-/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window, getSyncView, getSyncModalContent, getAskOverwriteDialog, getSyncSettingsView*/
+/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window, getSyncSettingsView, getAskDeleteOfflineData, getAskUploadNotEnded */
 // TODO module namespacese
 
 const initRoutes = async () => {
@@ -52,8 +52,12 @@ const initRoutes = async () => {
       action: getSyncSettingsView,
     },
     {
-      path: "get/sync/ask_overwrite",
-      action: getAskOverwriteDialog,
+      path: "get/sync/ask_upload_not_ended",
+      action: getAskUploadNotEnded,
+    },
+    {
+      path: "get/sync/ask_delete_offline_data",
+      action: getAskDeleteOfflineData,
     },
   ];
   window.router = new window.UniversalRouter(routes);
