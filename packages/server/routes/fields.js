@@ -471,14 +471,11 @@ const fieldFlow = (req) =>
       },
       {
         name: req.__("Default"),
-        onlyWhen: async (context) => {
-          if (!context.required || context.id || context.calculated)
-            return false;
+        onlyWhen: async (context) => context.required && !context.calculated,
+
+        form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const nrows = await table.countRows();
-          return nrows > 0;
-        },
-        form: async (context) => {
           const formfield = new Field({
             name: "default",
             label: req.__("Default"),
@@ -491,11 +488,21 @@ const fieldFlow = (req) =>
             },
           });
           await formfield.fill_fkey_options();
+          if (nrows === 0) formfield.showIf = { set_default: true };
+
           return new Form({
-            blurb: req.__(
-              "A default value is required when adding required fields to nonempty tables"
-            ),
-            fields: [formfield],
+            blurb:
+              nrows === 0
+                ? req.__("Set a default value for missing data")
+                : req.__(
+                    "A default value is required when adding required fields to nonempty tables"
+                  ),
+            fields: [
+              ...(nrows === 0
+                ? [{ name: "set_default", label: "Set Default", type: "Bool" }]
+                : []),
+              formfield,
+            ],
           });
         },
       },
