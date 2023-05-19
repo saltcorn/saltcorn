@@ -79,7 +79,7 @@ function set_state_field(key, value) {
 function check_state_field(that) {
   const checked = that.checked;
   const name = that.name;
-  const value = that.value.replace(' ', '%20');
+  const value = encodeURIComponent(that.value);
   var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
   let dest;
   if (checked) dest = get_current_state_url() + `${separator}${name}=${value}`;
