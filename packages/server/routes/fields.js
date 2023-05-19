@@ -488,22 +488,28 @@ const fieldFlow = (req) =>
             },
           });
           await formfield.fill_fkey_options();
-          if (nrows === 0) formfield.showIf = { set_default: true };
+          const defaultOptional = nrows === 0 || context.id;
+          if (defaultOptional) formfield.showIf = { set_default: true };
 
-          return new Form({
-            blurb:
-              nrows === 0
-                ? req.__("Set a default value for missing data")
-                : req.__(
-                    "A default value is required when adding required fields to nonempty tables"
-                  ),
+          const form = new Form({
+            blurb: defaultOptional
+              ? req.__("Set a default value for missing data")
+              : req.__(
+                  "A default value is required when adding required fields to nonempty tables"
+                ),
             fields: [
-              ...(nrows === 0
+              ...(defaultOptional
                 ? [{ name: "set_default", label: "Set Default", type: "Bool" }]
                 : []),
               formfield,
             ],
           });
+          if (
+            typeof context.default !== "undefined" &&
+            context.default !== null
+          )
+            form.values.set_default = true;
+          return form;
         },
       },
     ],
