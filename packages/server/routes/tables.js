@@ -541,11 +541,7 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
-      if (
-        ["summary_field", "default", "on_delete_cascade", "on_delete"].includes(
-          k
-        )
-      )
+      if (["summary_field", "on_delete_cascade", "on_delete"].includes(k))
         return;
       if (v || v === 0) s += badge("secondary", k);
     });
