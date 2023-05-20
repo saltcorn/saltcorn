@@ -86,7 +86,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           if (Field.labelToName(s) === "row")
             return req.__("Not a valid field name");
           try {
-            new Function(s, "return;");
+            new Function(Field.labelToName(s), "return;");
           } catch {
             return req.__("Not a valid field name");
           }
