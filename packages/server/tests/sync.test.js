@@ -2,9 +2,10 @@ const request = require("supertest");
 const getApp = require("../app");
 const {
   getUserLoginCookie,
-  getStaffLoginCookie,
   getAdminLoginCookie,
   resetToFixtures,
+  notAuthorized,
+  respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 
@@ -15,42 +16,16 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-describe("Load offline data", () => {
-  it("public request", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const resp = await request(app).get("/sync/table_data");
-    for (const [k, v] of Object.entries(resp._body)) {
-      expect(v.rows.length).toBe(k === "books" ? 2 : 0);
-    }
-  });
-
-  it("user request", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getUserLoginCookie();
-    const resp = await request(app)
-      .get("/sync/table_data")
-      .set("Cookie", loginCookie);
-    const data = resp._body;
-    expect(data.patients.rows.length).toBe(0);
-  });
-
-  it("admin request", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    const resp = await request(app)
-      .get("/sync/table_data")
-      .set("Cookie", loginCookie);
-    const data = resp._body;
-    expect(data.patients.rows.length).toBe(2);
-  });
-});
-
 describe("Synchronise with mobile offline data", () => {
-  if (!db.isSQLite) {
-    it("not permitted", async () => {
+  it("not permitted", async () => {
+    if (!db.isSQLite) {
+      const patients = Table.findOne({ name: "patients" });
+      const books = Table.findOne({ name: "books" });
+      const patientsBefore = await patients.countRows();
+      const booksBefore = await books.countRows();
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getUserLoginCookie();
-      const uploadResp = await request(app)
+      await request(app)
         .post("/sync/table_data")
         .set("Cookie", loginCookie)
         .send({
@@ -68,26 +43,35 @@ describe("Synchronise with mobile offline data", () => {
                 parent: 1,
               },
             ],
+            books: [
+              {
+                id: 3,
+                author: "foo",
+                pages: 20,
+                publisher: 1,
+              },
+            ],
           },
-        });
-      const translateIds = uploadResp._body.translateIds;
-      expect(translateIds).toBeDefined();
-      expect(Object.keys(translateIds).length).toBe(0);
+        })
+        .expect(notAuthorized);
+      const patientsAfter = await patients.countRows();
+      const booksAfter = await books.countRows();
+      expect(patientsAfter).toBe(patientsBefore);
+      expect(booksAfter).toBe(booksBefore);
+    }
+  });
 
-      const adminCookie = await getAdminLoginCookie();
-      const downloadResp = await request(app)
-        .get("/sync/table_data")
-        .set("Cookie", adminCookie);
-      const data = downloadResp._body;
-      expect(data.patients.rows.length).toBe(2);
-    });
-
-    it("upload patients and books", async () => {
+  it("upload patients and books", async () => {
+    if (!db.isSQLite) {
+      const patients = Table.findOne({ name: "patients" });
+      const books = Table.findOne({ name: "books" });
+      const patientsBefore = await patients.countRows();
+      const booksBefore = await books.countRows();
       const app = await getApp({ disableCsrf: true });
-      const adminCookie = await getAdminLoginCookie();
-      const uploadResp = await request(app)
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
         .post("/sync/table_data")
-        .set("Cookie", adminCookie)
+        .set("Cookie", loginCookie)
         .send({
           data: {
             patients: [
@@ -97,7 +81,7 @@ describe("Synchronise with mobile offline data", () => {
                 parent: 1,
               },
               {
-                id: 84, // will be translated to 3
+                id: 84,
                 name: "Pitt Brad",
                 favbook: 2,
                 parent: 1,
@@ -105,83 +89,20 @@ describe("Synchronise with mobile offline data", () => {
             ],
             books: [
               {
-                id: 3, // stays at 3
+                id: 3,
                 author: "foo",
                 pages: 20,
                 publisher: 1,
               },
             ],
           },
-        });
-      const translateIds = uploadResp._body.translateIds;
-      expect(translateIds).toBeDefined();
-      expect(Object.keys(translateIds).length).toBe(1);
-      expect(translateIds.patients.length).toBe(1);
-      expect(translateIds.patients[0]).toEqual({ from: 84, to: 3 });
-
-      const staffCookie = await getStaffLoginCookie();
-      const downloadResp = await request(app)
-        .get("/sync/table_data")
-        .set("Cookie", staffCookie);
-      const data = downloadResp._body;
-      expect(data.patients.rows.length).toBe(3);
-      expect(data.books.rows.length).toBe(3);
-    });
-
-    it("upload with ownership_field", async () => {
-      const messagesTbl = Table.findOne({ name: "messages" });
-      const userField = messagesTbl
-        .getFields()
-        .find((field) => field.name === "user");
-      await messagesTbl.update({
-        min_role_read: 1,
-        min_role_write: 1,
-        ownership_field_id: userField.id,
-      });
-      const staffMsgId = await db.insert("messages", {
-        content: "message from staff",
-        user: 2,
-        room: 1,
-      });
-      const userMsgId = await db.insert("messages", {
-        content: "message from user",
-        user: 3,
-        room: 1,
-      });
-
-      const app = await getApp({ disableCsrf: true });
-      const userCookie = await getUserLoginCookie();
-      const uploadResp = await request(app)
-        .post("/sync/table_data")
-        .set("Cookie", userCookie)
-        .send({
-          data: {
-            messages: [
-              {
-                id: staffMsgId, // will be skipped
-                user: 3,
-                room: 1,
-                content: "offline change",
-              },
-              {
-                id: userMsgId, // will be updated because user is the owner
-                user: 2,
-                room: 1,
-                content: "offline change",
-              },
-            ],
-          },
-        });
-      const translateIds = uploadResp._body.translateIds;
-      expect(translateIds).toBeDefined();
-      expect(Object.keys(translateIds).length).toBe(0);
-      // load the admin data
-      const adminCookie = await getAdminLoginCookie();
-      const resp = await request(app)
-        .get("/sync/table_data")
-        .set("Cookie", adminCookie);
-      const data = resp._body;
-      expect(data.messages.rows.length).toBe(4);
-    });
-  }
+        })
+        .expect(respondJsonWith(200, ({ success }) => success));
+      const patientsAfter = await patients.countRows();
+      const booksAfter = await books.countRows();
+      expect(patientsAfter).toBe(patientsBefore + 2);
+      expect(booksAfter).toBe(booksBefore + 1);
+      expect((await patients.getRows({ id: 84 })).length).toBe(0);
+    }
+  });
 });

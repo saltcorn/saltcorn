@@ -74,8 +74,8 @@ const configTypes: ConfigTypes = {
     blurb:
       "The URL at which your site is available. For instance, https://example.com/",
   },
-  user_with_offline_data: {
-    type: "String",
+  last_offline_session: {
+    type: "Object",
     label: "User with offline data",
     default: "",
     blurb:
