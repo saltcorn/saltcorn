@@ -298,7 +298,7 @@ const navbar = (
     {
       class: `navbar d-print-none navbar-expand-md ${opts.class || ""} ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
-      } ${opts.fixedTop ? "fixed-top" : ""}`,
+      } ${opts.fixedTop && isNode ? "fixed-top" : ""}`,
       id: "mainNav",
     },
     div(
