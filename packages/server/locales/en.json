@@ -1167,5 +1167,16 @@
 	"Migrations": "Migrations",
 	"Tag Entries": "Tag Entries",
 	"Not a valid field name": "Not a valid field name",
-	"Set a default value for missing data": "Set a default value for missing data"
+	"Set a default value for missing data": "Set a default value for missing data",
+	"Create model": "Create model",
+	"Models": "Models",
+	"New model": "New model",
+	"Show model": "Show model",
+	"Model instances": "Model instances",
+	"Trained": "Trained",
+	"Train new instance": "Train new instance",
+	"Train model": "Train model",
+	"Train": "Train",
+	"Report": "Report",
+	"Model training report": "Model training report"
 }
