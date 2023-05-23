@@ -363,13 +363,21 @@ const logit = (x: any, s: any): any => {
  */
 const standardBreadcrumbItem =
   (len: number) =>
-  ({ href, text }: { href?: string; text: string }, ix: number): string =>
+  (
+    {
+      href,
+      text,
+      postLinkText,
+    }: { href?: string; text: string; postLinkText?: string },
+    ix: number
+  ): string =>
     li(
       {
         class: ["breadcrumb-item", ix == len - 1 && "active"],
         "aria-current": ix == len - 1 && "page",
       },
-      href ? a({ href }, text) : text
+      href ? a({ href }, text) : text,
+      postLinkText ? "&nbsp;" + postLinkText : ""
     );
 
 /**

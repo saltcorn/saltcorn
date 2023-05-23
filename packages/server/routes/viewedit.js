@@ -493,14 +493,22 @@ router.post(
  * @param {object} res
  * @returns {void}
  */
-const respondWorkflow = (view, wf, wfres, req, res) => {
+const respondWorkflow = (view, wf, wfres, req, res, table) => {
   const wrap = (contents, noCard, previewURL) => ({
     above: [
       {
         type: "breadcrumbs",
         crumbs: [
           { text: req.__("Views"), href: "/viewedit" },
-          { href: `/view/${view.name}`, text: view.name },
+          {
+            href: `/view/${view.name}`,
+            text: view.name,
+            postLinkText: `[${view.viewtemplate}${
+              table
+                ? ` on ${a({ href: `/table/` + table.name }, table.name)}`
+                : ""
+            }]`,
+          },
           { workflow: wf, step: wfres },
         ],
       },
@@ -584,6 +592,9 @@ router.get(
     (view.configuration?.columns || []).forEach((c) => {
       c._columndef = JSON.stringify(c);
     });
+    let table;
+    if (view.table_id) table = Table.findOne({ id: view.table_id });
+    if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
     const configFlow = await view.get_config_flow(req);
     const hasConfig =
       view.configuration && Object.keys(view.configuration).length > 0;
@@ -598,7 +609,7 @@ router.get(
       },
       req
     );
-    respondWorkflow(view, configFlow, wfres, req, res);
+    respondWorkflow(view, configFlow, wfres, req, res, table);
   })
 );
 
@@ -617,7 +628,11 @@ router.post(
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run(req.body, req);
-    respondWorkflow(view, configFlow, wfres, req, res);
+
+    let table;
+    if (view.table_id) table = Table.findOne({ id: view.table_id });
+    if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
+    respondWorkflow(view, configFlow, wfres, req, res, table);
   })
 );
 
