@@ -41,6 +41,7 @@ export class MobileBuilder {
   entryPoint: string;
   entryPointType: EntryPointType;
   serverURL: string;
+  allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -64,6 +65,7 @@ export class MobileBuilder {
     entryPoint: string;
     entryPointType: EntryPointType;
     serverURL: string;
+    allowOfflineMode: string;
     plugins: Plugin[];
     copyTargetDir?: string;
     user?: User;
@@ -80,6 +82,7 @@ export class MobileBuilder {
     this.entryPoint = cfg.entryPoint;
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
+    this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
       staticDependencies,
@@ -107,6 +110,7 @@ export class MobileBuilder {
       serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: this.localUserTables,
       tenantAppName: this.tenantAppName,
+      allowOfflineMode: this.allowOfflineMode,
     });
     let resultCode = await bundlePackagesAndPlugins(
       this.buildDir,

@@ -10,6 +10,7 @@
     <script src="js/utils/iframe_view_utils.js"></script>
     <script src="js/utils/file_helpers.js"></script>
     <script src="js/utils/table_utils.js"></script>
+    <script src="js/utils/offline_mode_helper.js"></script>
 
     <script src="js/mocks/request.js"></script>
     <script src="js/mocks/response.js"></script>
@@ -20,6 +21,7 @@
     <script src="js/routes/error.js"></script>
     <script src="js/routes/page.js"></script>
     <script src="js/routes/view.js"></script>
+    <script src="js/routes/sync.js"></script>
     <script src="js/routes/init.js"></script>
 
     <script src="js/mocks/response.js"></script>
@@ -155,18 +157,6 @@
         }
       };
 
-      const checkJWT = async () => {
-        const state = saltcorn.data.state.getState();
-        const jwt = state.mobileConfig.jwt;
-        if (jwt && jwt !== "undefined") {
-          const response = await apiCall({
-            method: "GET",
-            path: "/auth/authenticated",
-          });
-          return response.data.authenticated;
-        } else return false;
-      };
-
       const initI18Next = async () => {
         const resources = {};
         for (const key of Object.keys(
@@ -186,8 +176,43 @@
         });
       };
 
+      // the app comes back from background
+      const onResume = async () => {
+        const state = saltcorn.data.state.getState();
+        const mobileConfig = state.mobileConfig;
+        if (mobileConfig.allowOfflineMode) {
+          mobileConfig.networkState = navigator.connection.type;
+          if (
+            mobileConfig.networkState === "none" &&
+            !mobileConfig.isOfflineMode &&
+            mobileConfig.jwt
+          ) {
+            await offlineHelper.startOfflineMode();
+            clearHistory();
+            if (mobileConfig.user_id) await gotoEntryView();
+            else {
+              const decodedJwt = jwt_decode(mobileConfig.jwt);
+              mobileConfig.role_id = decodedJwt.user.role_id
+                ? decodedJwt.user.role_id
+                : 100;
+              mobileConfig.user_id = decodedJwt.user.id;
+              mobileConfig.user_name = decodedJwt.user.email;
+              mobileConfig.language = decodedJwt.user.language;
+              mobileConfig.isPublicUser = false;
+            }
+            addRoute({ route: entryPoint, query: undefined });
+            const page = await router.resolve({
+              pathname: mobileConfig.entry_point,
+              fullWrap: true,
+              alerts: [],
+            });
+          }
+        }
+      };
+
       // device is ready
       const init = async () => {
+        document.addEventListener("resume", onResume, false);
         const config = await readJSON(
           "config",
           `${cordova.file.applicationDirectory}www`
@@ -225,32 +250,86 @@
         setVersionTtag();
         const entryPoint = config.entry_point;
         await initI18Next();
+        state.mobileConfig.networkState = navigator.connection.type;
+        document.addEventListener(
+          "offline",
+          offlineHelper.offlineCallback,
+          false
+        );
+        document.addEventListener(
+          "online",
+          offlineHelper.onlineCallback,
+          false
+        );
+        const networkDisabled = state.mobileConfig.networkState === "none";
+        const jwt = state.mobileConfig.jwt;
         try {
-          if (await checkJWT()) {
+          const alerts = [];
+          if ((networkDisabled && jwt) || (await checkJWT(jwt))) {
             const mobileConfig = state.mobileConfig;
             const decodedJwt = jwt_decode(mobileConfig.jwt);
             mobileConfig.role_id = decodedJwt.user.role_id
               ? decodedJwt.user.role_id
               : 100;
+            mobileConfig.user_id = decodedJwt.user.id;
             mobileConfig.user_name = decodedJwt.user.email;
             mobileConfig.language = decodedJwt.user.language;
             mobileConfig.isPublicUser = false;
             await i18next.changeLanguage(mobileConfig.language);
+            if (mobileConfig.allowOfflineMode) {
+              const { offlineUser, upload_started_at, upload_ended_at } =
+                (await offlineHelper.getLastOfflineSession()) || {};
+              if (networkDisabled) {
+                if (offlineUser && offlineUser !== mobileConfig.user_name)
+                  throw new Error(
+                    `The offline mode is not available, '${offlineUser}' has not yet uploaded offline data.`
+                  );
+                else {
+                  await offlineHelper.startOfflineMode();
+                  alerts.push({
+                    type: "info",
+                    msg: offlineHelper.getOfflineMsg(),
+                  });
+                }
+              } else if (offlineUser) {
+                if (offlineUser === mobileConfig.user_name) {
+                  if (upload_started_at && !upload_ended_at) {
+                    alerts.push({
+                      type: "warning",
+                      msg: "Please check if your offline data is already online. An upload was started but did not finish.",
+                    });
+                  } else {
+                    alerts.push({
+                      type: "info",
+                      msg: "You have offline data, to handle it open the Network menu.",
+                    });
+                  }
+                } else
+                  alerts.push({
+                    type: "warning",
+                    msg: `'${offlineUser}' has not yet uploaded offline data.`,
+                  });
+              }
+            }
             addRoute({ route: entryPoint, query: undefined });
             const page = await router.resolve({
               pathname: entryPoint,
               fullWrap: true,
+              alerts,
             });
             await replaceIframe(page.content);
           } else {
             const page = await router.resolve({
               pathname: "get/auth/login",
+              alerts,
             });
-            replaceIframe(page.content);
+            await replaceIframe(page.content);
           }
         } catch (error) {
+          state.mobileConfig.inErrorState = true;
           const page = await router.resolve({
             pathname: "get/error_page",
+            fullWrap: true,
             alerts: [
               {
                 type: "error",
@@ -259,7 +338,6 @@
             ],
           });
           await replaceIframe(page.content);
-          console.error(error);
         }
       };
 

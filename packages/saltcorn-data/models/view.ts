@@ -33,7 +33,7 @@ import type {
 import type Table from "./table";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
-import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
+import { GenObj } from "@saltcorn/types/common_types";
 import type {
   ViewCfg,
   AbstractView,
@@ -789,10 +789,9 @@ class View implements AbstractView {
   isRemoteTable(): boolean {
     if (isNode() || !this.table_id) return false;
     const { getState } = require("../db/state");
-    return (
-      getState().mobileConfig &&
-      getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0
-    );
+    const mobileConfig = getState().mobileConfig;
+    if (mobileConfig?.isOfflineMode) return false;
+    else return mobileConfig?.localTableIds.indexOf(this.table_id) < 0;
   }
 
   async getTags(): Promise<Array<AbstractTag>> {

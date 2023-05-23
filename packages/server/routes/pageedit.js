@@ -387,7 +387,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
-    const page = await Page.findOne({ name: pagename });
+    const [page] = await Page.find({ name: pagename });
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);

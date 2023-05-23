@@ -208,9 +208,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table)) {
-          const field = (table.getFields()).find(
-            (f) => f.name === fieldName
-          );
+          const field = table.getFields().find((f) => f.name === fieldName);
           if (!field) {
             res.status(404).json({ error: req.__("Not found") });
             return;
@@ -262,7 +260,7 @@ router.get(
     }
 
     await passport.authenticate(
-        ["api-bearer", "jwt"],
+      ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table, true)) {
@@ -352,6 +350,7 @@ router.post(
               body: req.body,
               row: req.body,
               req,
+              user: user || req.user,
             });
             res.json({ success: true, data: resp });
           } catch (e) {
@@ -411,7 +410,8 @@ router.post(
             if (
               field.required &&
               !field.primary_key &&
-              typeof row[field.name] === "undefined"
+              typeof row[field.name] === "undefined" &&
+              !field.attributes.default
             ) {
               hasErrors = true;
               errors.push(`${field.name}: required`);

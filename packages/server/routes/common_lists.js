@@ -363,7 +363,10 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
       { label: req.__("Action"), key: "action" },
       {
         label: req.__("Table or Channel"),
-        key: (r) => r.table_name || r.channel,
+        key: (r) =>
+          r.table_name
+            ? a({ href: `/table/${r.table_name}` }, r.table_name)
+            : r.channel,
       },
       {
         label: req.__("When"),

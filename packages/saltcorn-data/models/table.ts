@@ -481,6 +481,9 @@ class Table implements AbstractTable {
     return opts;
   }
 
+  get santized_name() {
+    return sqlsanitize(this.name);
+  }
   /**
    * Create table
    * @param name - table name
@@ -844,7 +847,7 @@ class Table implements AbstractTable {
    * @param _userid - user id
    * @param noTrigger
    * @param resultCollector
-   * @returns {Promise<void>}
+   * @returns
    */
   async updateRow(
     v_in: any,
