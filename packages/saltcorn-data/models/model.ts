@@ -120,7 +120,7 @@ class Model {
     name: string,
     hyperparameters: any,
     state: {}
-  ): Promise<ModelInstance> {
+  ): Promise<ModelInstance | string> {
     const trainf = this.templateObj.train;
     const table = Table.findOne({ id: this.table_id });
     const result = await trainf({
@@ -129,16 +129,18 @@ class Model {
       hyperparameters,
       state,
     });
-    return await ModelInstance.create({
-      name,
-      hyperparameters,
-      model_id: this.id,
-      state,
-      configuration: this.configuration,
-      trained_on: new Date(),
-      is_default: false,
-      ...result,
-    });
+    if (result.error) return result.error;
+    else
+      return await ModelInstance.create({
+        name,
+        hyperparameters,
+        model_id: this.id,
+        state,
+        configuration: this.configuration,
+        trained_on: new Date(),
+        is_default: false,
+        ...result,
+      });
   }
 
   get predictor_function() {

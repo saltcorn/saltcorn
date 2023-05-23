@@ -32,6 +32,7 @@ const {
   code,
   iframe,
   style,
+  pre,
 } = require("@saltcorn/markup/tags");
 
 const router = new Router();
@@ -366,9 +367,31 @@ router.post(
     } else {
       const { name, ...hyperparameters } = form.values;
 
-      await model.train_instance(name, hyperparameters, {});
-      req.flash("success", "Model trained?");
-      res.redirect(`/models/show/${model.id}`);
+      const train_res = await model.train_instance(name, hyperparameters, {});
+      if (typeof train_res === "string") {
+        res.sendWrap(req.__(`Model training error`), {
+          above: [
+            {
+              type: "breadcrumbs",
+              crumbs: [
+                { text: req.__("Tables"), href: "/table" },
+                { href: `/table/${table.id}`, text: table.name },
+                { href: `/models/show/${model.id}`, text: model.name },
+                { text: req.__(`Training error`) },
+              ],
+            },
+            {
+              type: "card",
+              class: "mt-0",
+              title: req.__(`Training error`),
+              contents: pre(train_res),
+            },
+          ],
+        });
+      } else {
+        req.flash("success", "Model trained?");
+        res.redirect(`/models/show/${model.id}`);
+      }
     }
   })
 );

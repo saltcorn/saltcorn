@@ -1178,5 +1178,7 @@
 	"Train model": "Train model",
 	"Train": "Train",
 	"Report": "Report",
-	"Model training report": "Model training report"
+	"Model training report": "Model training report",
+	"Model training error": "Model training error",
+	"Training error": "Training error"
 }
