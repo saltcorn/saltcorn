@@ -165,6 +165,41 @@ module.exports = {
       );
     },
   },
+  // Capture
+  Capture: {
+    isEdit: true,
+    multipartFormData: true,
+    valueIsFilename: true,
+
+    configFields: async () => {
+      const dirs = await File.allDirectories();
+      return [
+        {
+          name: "folder",
+          label: "Folder",
+          type: "String",
+          attributes: { options: dirs.map((d) => d.path_to_serve) },
+        },
+        {
+          name: "device",
+          label: "Device",
+          type: "String",
+          required: true,
+          attributes: { options: ["camera", "camcorder", "microphone"] },
+        },
+      ];
+    },
+    run: (nm, file_name, attrs, cls, reqd, field) => {
+      return input({
+        class: `${cls} ${field.class || ""}`,
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        type: "file",
+        accept: `image/*;capture=${attrs.device}`,
+      });
+    },
+  },
   // Thumbnail
   Thumbnail: {
     configFields: () => [
