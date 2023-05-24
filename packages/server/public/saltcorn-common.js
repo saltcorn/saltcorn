@@ -809,8 +809,11 @@ function notifyAlert(note, spin) {
 }
 
 function press_store_button(clicked) {
-  const width = $(clicked).width();
-  $(clicked).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+  let btn = clicked;
+  if ($(clicked).is("form")) btn = $(clicked).find("button[type=submit]");
+
+  const width = $(btn).width();
+  $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
 }
 
 function common_done(res, isWeb = true) {

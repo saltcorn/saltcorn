@@ -313,6 +313,7 @@ const model_train_form = (model, table, req) => {
     }) || [];
   return new Form({
     action: `/models/train/${model.id}`,
+    onSubmit: "press_store_button(this)",
     fields: [
       {
         name: "name",
