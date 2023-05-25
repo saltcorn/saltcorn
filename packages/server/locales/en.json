@@ -1180,5 +1180,8 @@
 	"Report": "Report",
 	"Model training report": "Model training report",
 	"Model training error": "Model training error",
-	"Training error": "Training error"
+	"Training error": "Training error",
+	"Model": "Model",
+	"Model instance": "Model instance",
+	"Prediction output": "Prediction output"
 }
