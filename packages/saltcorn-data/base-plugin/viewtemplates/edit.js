@@ -866,6 +866,32 @@ const runPost = async (
     for (const field of file_fields) {
       if (field.fieldviewObj?.setsFileId) {
         //do nothing
+      } else if (field.fieldviewObj?.setsDataURL) {
+        if (body[field.name]) {
+          if (body[field.name].startsWith("data:")) {
+            const [pre, allData] = body[field.name].split(",");
+            const buffer = Buffer.from(allData, "base64");
+            const mimetype = pre.split(";")[0].split(":")[1];
+            const filename =
+              field.fieldviewObj?.setsDataURL?.get_filename?.({
+                ...row,
+                ...field.attributes,
+              }) || "file";
+            const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
+              ...row,
+              ...field.attributes,
+            });
+            const file = await File.from_contents(
+              filename,
+              mimetype,
+              buffer,
+              req.user?.id,
+              field.attributes.min_role_read || 1,
+              folder
+            );
+            row[field.name] = file.path_to_serve;
+          }
+        }
       } else if (req.files && req.files[field.name]) {
         if (!isNode() && !remote) {
           req.flash(
