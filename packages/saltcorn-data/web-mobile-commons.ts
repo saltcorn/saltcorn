@@ -42,17 +42,46 @@ const get_extra_menu = (role: number, __: (str: string) => string) => {
             : item.type === "View"
             ? is_node
               ? `/view/${encodeURIComponent(item.viewname)}`
-              : `javascript:execLink('/view/${item.viewname}')`
+              : `javascript:execNavbarLink('/view/${item.viewname}')`
             : item.type === "Page"
             ? is_node
               ? `/page/${encodeURIComponent(item.pagename)}`
-              : `javascript:execLink('/page/${item.pagename}')`
+              : `javascript:execNavbarLink('/page/${item.pagename}')`
             : undefined,
         ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
       }));
   return transform(cfg);
 };
 
+const prepare_update_row = async (table: any, row: any, id: any) => {
+  const fields = table.getFields();
+  let errors = [];
+  for (const k of Object.keys(row)) {
+    const field = fields.find((f: any) => f.name === k);
+    if (!field && k.includes(".")) {
+      const [fnm, jkey] = k.split(".");
+      const jfield = fields.find((f: any) => f.name === fnm);
+      if (jfield?.type?.name === "JSON") {
+        if (typeof row[fnm] === "undefined") {
+          const dbrow = await table.getRow({ [table.pk_name]: id });
+          row[fnm] = dbrow[fnm] || {};
+        }
+        row[fnm][jkey] = row[k];
+        delete row[k];
+      }
+    } else if (!field || field.calculated) {
+      delete row[k];
+    } else if (field?.type && field.type.validate) {
+      const vres = field.type.validate(field.attributes || {})(row[k]);
+      if (vres.error) {
+        errors.push(`${k}: ${vres.error}`);
+      }
+    }
+  }
+  return errors;
+};
+
 export = {
   get_extra_menu,
+  prepare_update_row,
 };

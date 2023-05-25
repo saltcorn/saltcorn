@@ -1,5 +1,5 @@
 /*eslint-env browser*/
-/*global $, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows*/
+/*global $, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success*/
 
 function combineFormAndQuery(form, query) {
   let paramsList = [];
@@ -24,6 +24,11 @@ async function execLink(url) {
   await parent.handleRoute(`get${path}`, query);
 }
 
+async function execNavbarLink(url) {
+  $(".navbar-toggler").click();
+  execLink(url);
+}
+
 /**
  *
  * @param {*} e
@@ -40,6 +45,31 @@ async function formSubmit(e, urlSuffix, viewname) {
   }
   const queryStr = urlParams.toString();
   await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
+}
+
+async function inline_local_submit(e, opts1) {
+  try {
+    e.preventDefault();
+    const opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+    const form = $(e.target).closest("form");
+    const urlParams = new URLSearchParams();
+    for (const entry of new FormData(form[0]).entries()) {
+      urlParams.append(entry[0], entry[1]);
+    }
+    const url = form.attr("action");
+    await parent.router.resolve({
+      pathname: `post${url}`,
+      query: urlParams.toString(),
+    });
+    inline_submit_success(e, form, opts);
+  } catch (error) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+  }
 }
 
 async function saveAndContinue(e, action, k) {
@@ -105,6 +135,12 @@ async function login(e, entryPoint, isSignup) {
     config.language = decodedJwt.user.language;
     config.isPublicUser = false;
     config.isOfflineMode = false;
+    await parent.insertUser({
+      id: config.user_id,
+      email: config.user_name,
+      role_id: config.role_id,
+      language: config.language,
+    });
     await parent.setJwt(loginResult);
     config.jwt = loginResult;
     await parent.i18next.changeLanguage(config.language);
@@ -198,6 +234,7 @@ async function logout() {
       entryView: config.entry_point,
       versionTag: config.version_tag,
     });
+    await parent.deleteUser();
     await parent.replaceIframe(page.content);
   } catch (error) {
     parent.showAlerts([
