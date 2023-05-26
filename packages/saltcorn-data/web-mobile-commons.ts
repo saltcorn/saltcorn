@@ -56,7 +56,7 @@ const get_extra_menu = (role: number, __: (str: string) => string) => {
 };
 
 /**
- * takes a row build from a form and prepares makes ist ready for a db update
+ * takes a row build from a form, and prepares it for a db update
  * @param table
  * @param row output parameter
  * @param id
