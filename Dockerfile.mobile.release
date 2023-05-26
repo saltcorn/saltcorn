@@ -46,6 +46,6 @@ RUN chmod -R o+rwx "/root/.npm"
 ENV NODE_ENV "production"
 ENV SALTCORN_DISABLE_UPGRADE "true"
 
-RUN npm install -g @saltcorn/cli@0.8.6-beta.7 --unsafe
+RUN npm install -g @saltcorn/cli@0.8.6-beta.8 --unsafe
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
