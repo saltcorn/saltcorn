@@ -209,11 +209,17 @@ async function handleRoute(route, query, files) {
           : [],
       });
       if (page.redirect) {
-        if (page.redirect.startsWith("http://localhost")) {
+        if (
+          page.redirect.startsWith("http://localhost") ||
+          page.redirect === "undefined"
+        ) {
           await gotoEntryView();
         } else {
           const { path, query } = splitPathQuery(page.redirect);
-          await handleRoute(path, query);
+          await handleRoute(
+            path.startsWith("/") && path.length > 1 ? `get${path}` : path,
+            query
+          );
         }
       } else if (page.content) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);

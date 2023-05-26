@@ -114,3 +114,11 @@ async function setJwt(jwt) {
   await removeJwt();
   await saltcorn.data.db.insert(jwtTableName, { jwt: jwt });
 }
+
+async function insertUser({ id, email, role_id, language }) {
+  await saltcorn.data.db.insert(
+    "users",
+    { id, email, role_id, language },
+    { ignoreExisting: true }
+  );
+}

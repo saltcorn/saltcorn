@@ -64,13 +64,13 @@ const getMenu = (req) => {
     const authItems = mobileCfg.isPublicUser
       ? [
           {
-            link: "javascript:execLink('/auth/login')",
+            link: "javascript:execNavbarLink('/auth/login')",
             label: req.__("Login"),
           },
           ...(allowSignup
             ? [
                 {
-                  link: "javascript:execLink('/auth/signup')",
+                  link: "javascript:execNavbarLink('/auth/signup')",
                   label: req.__("Sign up"),
                 },
               ]
@@ -107,7 +107,7 @@ const getMenu = (req) => {
         section: "Network",
         items: [
           {
-            link: "javascript:execLink('/sync/sync_settings')",
+            link: "javascript:execNavbarLink('/sync/sync_settings')",
             icon: "fas fa-sync",
             label: "Network",
           },

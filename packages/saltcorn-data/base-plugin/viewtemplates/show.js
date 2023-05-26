@@ -640,6 +640,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
               row[table.pk_name]
             }`,
             "data-inline-edit-type": field?.type?.name,
+            class: !isWeb(req) ? "mobile-data-inline-edit" : "",
           },
           fvrun
         );
