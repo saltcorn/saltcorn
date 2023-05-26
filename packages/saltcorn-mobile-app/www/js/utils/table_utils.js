@@ -116,10 +116,9 @@ async function setJwt(jwt) {
 }
 
 async function insertUser({ id, email, role_id, language }) {
-  await deleteUser();
-  await saltcorn.data.db.insert("users", { id, email, role_id, language });
-}
-
-async function deleteUser() {
-  await saltcorn.data.db.deleteWhere("users");
+  await saltcorn.data.db.insert(
+    "users",
+    { id, email, role_id, language },
+    { ignoreExisting: true }
+  );
 }

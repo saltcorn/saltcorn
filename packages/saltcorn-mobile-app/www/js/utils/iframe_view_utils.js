@@ -234,7 +234,6 @@ async function logout() {
       entryView: config.entry_point,
       versionTag: config.version_tag,
     });
-    await parent.deleteUser();
     await parent.replaceIframe(page.content);
   } catch (error) {
     parent.showAlerts([
