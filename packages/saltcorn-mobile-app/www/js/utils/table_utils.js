@@ -25,8 +25,18 @@ async function updateScTables(tablesJSON, skipScPlugins = true) {
     if (skipScPlugins && table === "_sc_plugins") continue;
     if (table === "_sc_tables") await dropDeletedTables(rows);
     await saltcorn.data.db.deleteWhere(table);
+    const existingFields = (
+      await saltcorn.data.db.query(
+        `PRAGMA table_info('${saltcorn.data.db.sqlsanitize(table)}')`
+      )
+    ).rows.map((row) => row.name);
     for (const row of rows) {
-      await saltcorn.data.db.insert(table, row);
+      // pick fields that really exist
+      const insertRow = {};
+      for (const safeField of existingFields) {
+        if (row[safeField]) insertRow[safeField] = row[safeField];
+      }
+      await saltcorn.data.db.insert(table, insertRow);
     }
   }
   await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
