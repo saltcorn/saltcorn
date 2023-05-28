@@ -77,14 +77,7 @@ var offlineHelper = (() => {
           `The upload is not available, '${lastOfflineUser}' has not yet uploaded offline data.`
         );
       const fromSqlite = await loadOfflineData(localTableIds);
-      try {
-        await setUploadStartedTime(new Date());
-        await sendToServer(fromSqlite);
-        await setUploadFinishedTime(new Date());
-      } catch (error) {
-        await setUploadFinishedTime(null);
-        throw error;
-      }
+      await sendToServer(fromSqlite);
     },
     clearLocalData: async () => {
       const { localTableIds } = saltcorn.data.state.getState().mobileConfig;
@@ -132,5 +125,7 @@ var offlineHelper = (() => {
         ? "You are offline."
         : "You are offline, an internet connection is available.";
     },
+    setUploadStartedTime,
+    setUploadFinishedTime,
   };
 })();

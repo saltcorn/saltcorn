@@ -661,8 +661,10 @@ async function callUpload(force = false) {
       try {
         showLoadSpinner();
         mobileConfig.inLoadState = true;
+        await parent.offlineHelper.setUploadStartedTime(new Date());
         await parent.offlineHelper.uploadLocalData();
         await parent.offlineHelper.clearLocalData();
+        await parent.offlineHelper.setUploadFinishedTime(new Date());
         await parent.offlineHelper.endOfflineMode();
         parent.clearHistory();
         parent.addRoute({ route: "/" });
@@ -685,6 +687,7 @@ async function callUpload(force = false) {
           ]);
         }
       } catch (error) {
+        await parent.offlineHelper.setUploadFinishedTime(null);
         parent.errorAlert(error);
       } finally {
         mobileConfig.inLoadState = false;

@@ -623,7 +623,7 @@ const render = ({
     }
     if (segment.above) {
       return segment.above
-        .map((s: any, ix: number) => go(s, isTop, ix))
+        .map((s: any, segmentIx: number) => go(s, isTop, segmentIx + ix))
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
