@@ -990,7 +990,7 @@ router.post(
       child.stdout.on("data", (data) => {
         res.write(data);
       });
-      child.stderr.on("data", (data) => {
+      child.stderr?.on("data", (data) => {
         res.write(data);
       });
       child.on("exit", function (code, signal) {
