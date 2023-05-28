@@ -4,7 +4,7 @@ const { join } = require("path");
 if (process.env.SKIP_DOCKER_IMAGE_INSTALL === "true") {
   console.log("skipping build 'saltcorn/cordova-builder' docker image");
 } else {
-  spawn(
+  const child = spawn(
     "docker",
     [
       "build",
@@ -17,5 +17,9 @@ if (process.env.SKIP_DOCKER_IMAGE_INSTALL === "true") {
       "saltcorn/cordova-builder",
     ],
     { cwd: ".", stdio: "ignore", detached: true }
-  ).unref();
+  );
+  child.unref();
+  child.on("error", () => {
+    // console not available
+  });
 }
