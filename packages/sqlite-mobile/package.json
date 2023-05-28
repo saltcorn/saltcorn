@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/sqlite-mobile",
-  "version": "0.8.6-beta.10",
+  "version": "0.8.6-beta.11",
   "description": "cordova-sqlite-storage structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -26,7 +26,7 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@saltcorn/db-common": "0.8.6-beta.10"
+    "@saltcorn/db-common": "0.8.6-beta.11"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {
