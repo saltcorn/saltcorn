@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.8.3-alpha.1",
+  "version": "0.8.6-beta.15",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
@@ -36,9 +36,11 @@
     "react-dom": "16.13.1",
     "react-transition-group": "4.4.1",
     "@tippyjs/react": "4.2.6",
-    "webpack": "4.43.0",
-    "webpack-cli": "3.3.12",
-    "lodash": "4.17.21"
+    "webpack": "5.68.0",
+    "webpack-cli": "4.9.2",
+    "lodash": "4.17.21",
+    "immer": ">=9.0.6",
+    "glob-parent": "^5.1.2"
   },
   "publishConfig": {
     "access": "public"
@@ -47,6 +49,7 @@
     "styled-components": "4.4.1"
   },
   "overrides": {
-    "immer": "9.0.6"
+    "immer": "9.0.6",
+    "glob-parent": "^5.1.2"
   }
 }

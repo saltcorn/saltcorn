@@ -33,6 +33,7 @@ const tableBadges = (t, req) => {
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
   if (t.versioned) s += badge("success", req.__("History"));
   if (t.external) s += badge("info", req.__("External"));
+  if (t.provider_name) s += badge("success", t.provider_name);
   return s;
 };
 
@@ -362,7 +363,10 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
       { label: req.__("Action"), key: "action" },
       {
         label: req.__("Table or Channel"),
-        key: (r) => r.table_name || r.channel,
+        key: (r) =>
+          r.table_name
+            ? a({ href: `/table/${r.table_name}` }, r.table_name)
+            : r.channel,
       },
       {
         label: req.__("When"),

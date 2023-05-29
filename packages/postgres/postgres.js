@@ -217,7 +217,7 @@ const update = async (tbl, obj, id, opts = {}) => {
     tbl
   )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
   sql_log(q, valList);
-  await pool.query(q, valList);
+  await (opts.client || pool).query(q, valList);
 };
 
 /**
@@ -225,9 +225,10 @@ const update = async (tbl, obj, id, opts = {}) => {
  * @param {string} tbl - table name
  * @param {object} obj - columns names and data
  * @param {object} whereObj - where object
+ * @param {object} opts - can contain a db client for transactions
  * @returns {Promise<void>} no result
  */
-const updateWhere = async (tbl, obj, whereObj) => {
+const updateWhere = async (tbl, obj, whereObj, opts = {}) => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const { where, values } = mkWhere(whereObj, false, kvs.length);
@@ -240,7 +241,7 @@ const updateWhere = async (tbl, obj, whereObj) => {
     tbl
   )}" set ${assigns} ${where}`;
   sql_log(q, valList);
-  await pool.query(q, valList);
+  await (opts.client || pool).query(q, valList);
 };
 
 /**
@@ -330,6 +331,39 @@ const drop_unique_constraint = async (table_name, field_names) => {
   sql_log(sql);
   await pool.query(sql);
 };
+
+/**
+ * Add index
+ * @param {string} table_name - table name
+ * @param {string} field_name - list of columns (members of constraint)
+ * @returns {Promise<void>} no result
+ */
+const add_index = async (table_name, field_name) => {
+  // TBD check that there are no problems with lenght of constraint name
+  const sql = `create index "${sqlsanitize(table_name)}_${sqlsanitize(
+    field_name
+  )}_index" on "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}" ("${sqlsanitize(field_name)}");`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
+/**
+ * Add index
+ * @param {string} table_name - table name
+ * @param {string} field_name - list of columns (members of constraint)
+ * @returns {Promise<void>} no result
+ */
+const drop_index = async (table_name, field_name) => {
+  // TBD check that there are no problems with lenght of constraint name
+  const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}_${sqlsanitize(field_name)}_index";`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
 /**
  * Copy data from CSV to table?
  * Only for PG
@@ -341,6 +375,10 @@ const drop_unique_constraint = async (table_name, field_names) => {
  */
 const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
   // TBD describe difference between CopyFrom and CopyFrom1
+  //  1. No tenant support
+  //  2. Manual promisification.
+  //  3. ???
+  //  4. Not exported nor used anywhere
   const quote = (s) => `"${s}"`;
   const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
     .map(quote)
@@ -368,9 +406,9 @@ const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   // TBD describe difference between CopyFrom and CopyFrom1
   const quote = (s) => `"${s}"`;
-  const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
-    .map(quote)
-    .join(",")}) FROM STDIN CSV HEADER`;
+  const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
+    tableName
+  )}" (${fieldNames.map(quote).join(",")}) FROM STDIN CSV HEADER`;
   sql_log(sql);
 
   const stream = client.query(copyStreams.from(sql));
@@ -451,6 +489,8 @@ const postgresExports = {
   drop_reset_schema,
   add_unique_constraint,
   drop_unique_constraint,
+  add_index,
+  drop_index,
   reset_sequence,
   getVersion,
   copyFrom,

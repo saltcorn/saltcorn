@@ -42,6 +42,8 @@ const TotpStrategy = require("passport-totp").Strategy;
 const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const cors = require("cors");
+const api = require("./routes/api");
+const scapi = require("./routes/scapi");
 
 const locales = Object.keys(available_languages);
 // i18n configuration
@@ -229,7 +231,7 @@ const getApp = async (opts = {}) => {
             { scope: "all" }
           );
         else {
-          return done(null, { role_id: 10 });
+          return done(null, { role_id: 100 });
         }
       }
     })
@@ -251,7 +253,7 @@ const getApp = async (opts = {}) => {
             tenant: db.getTenantSchema(),
           });
         } else {
-          return done(null, { role_id: 10 });
+          return done(null, { role_id: 100 });
         }
       };
       if (
@@ -294,6 +296,9 @@ const getApp = async (opts = {}) => {
 
   app.use(wrapper(version_tag));
 
+  app.use("/api", api);
+  app.use("/scapi", scapi);
+
   const csurf = csrf();
   if (!opts.disableCsrf)
     app.use(function (req, res, next) {
@@ -335,7 +340,7 @@ Sitemap: ${base}sitemap.xml
       const urls = [base];
       const loop_menu = (items) => {
         for (const item of items)
-          if (+item.min_role === 10 || item.subitems) {
+          if (+item.min_role === 100 || item.subitems) {
             if (item.type === "Page")
               urls.push(`${base}page/${encodeURIComponent(item.pagename)}`);
             if (item.type === "View")

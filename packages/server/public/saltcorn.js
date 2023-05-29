@@ -79,7 +79,7 @@ function set_state_field(key, value) {
 function check_state_field(that) {
   const checked = that.checked;
   const name = that.name;
-  const value = that.value;
+  const value = encodeURIComponent(that.value);
   var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
   let dest;
   if (checked) dest = get_current_state_url() + `${separator}${name}=${value}`;
@@ -320,16 +320,34 @@ function saveAndContinue(e, k) {
     data: form_data,
     success: function (res) {
       ajax_indicator(false);
+      form.parent().find(".full-form-error").text("");
       if (res.id && form.find("input[name=id")) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
         );
       }
+      if (res.notify) {
+        notifyAlert(res.notify);
+      }
     },
     error: function (request) {
-      $("#page-inner-content").html(request.responseText);
+      var ct = request.getResponseHeader("content-type") || "";
+      if (ct.startsWith && ct.startsWith("application/json")) {
+        var errorArea = form.parent().find(".full-form-error");
+        if (errorArea.length) {
+          errorArea.text(request.responseJSON.error);
+        } else {
+          form
+            .parent()
+            .append(
+              `<p class="text-danger full-form-error">${request.responseJSON.error}</p>`
+            );
+        }
+      } else {
+        $("#page-inner-content").html(request.responseText);
+        initialize_page();
+      }
       ajax_indicate_error(e, request);
-      initialize_page();
     },
     complete: function () {
       if (k) k();
@@ -581,11 +599,11 @@ function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
     data: { build_dir: outDirName },
     success: function (res) {
       if (!res.finished) {
-        if (pollCount >= 50) {
+        if (pollCount >= 100) {
           removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
           notifyAlert({
             type: "danger",
-            text: "unable to get the build results",
+            text: "Unable to get the build results",
           });
         } else {
           setTimeout(() => {

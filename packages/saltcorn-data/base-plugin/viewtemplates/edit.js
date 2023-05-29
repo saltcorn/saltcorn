@@ -493,6 +493,19 @@ const transformForm = async ({
 }) => {
   await traverse(form.layout, {
     action(segment) {
+      if (segment.action_style === "on_page_load") {
+        //run action
+        run_action_column({
+          col: { ...segment },
+          referrer: req.get("Referrer"),
+          req: req,
+          res: res,
+        }).catch((e) => Crash.create(e, req));
+        segment.type = "blank";
+        segment.contents = "";
+        segment.style = {};
+        return;
+      }
       if (segment.action_name === "Delete") {
         if (form.values && form.values.id) {
           segment.action_url = `/delete/${table.name}/${form.values.id}`;
@@ -594,6 +607,16 @@ const transformForm = async ({
         );
       let state;
       switch (view_select.type) {
+        case "RelationPath": {
+          const path = view_select.path;
+          state = {
+            _inbound_relation_path_: {
+              ...view_select,
+              srcId: path[0].fkey ? row[path[0].fkey] : row[table.pk_name],
+            },
+          };
+          break;
+        }
         case "Own":
           state = { id: row.id };
           break;
@@ -843,6 +866,32 @@ const runPost = async (
     for (const field of file_fields) {
       if (field.fieldviewObj?.setsFileId) {
         //do nothing
+      } else if (field.fieldviewObj?.setsDataURL) {
+        if (body[field.name]) {
+          if (body[field.name].startsWith("data:")) {
+            const [pre, allData] = body[field.name].split(",");
+            const buffer = Buffer.from(allData, "base64");
+            const mimetype = pre.split(";")[0].split(":")[1];
+            const filename =
+              field.fieldviewObj?.setsDataURL?.get_filename?.({
+                ...row,
+                ...field.attributes,
+              }) || "file";
+            const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
+              ...row,
+              ...field.attributes,
+            });
+            const file = await File.from_contents(
+              filename,
+              mimetype,
+              buffer,
+              req.user?.id,
+              field.attributes.min_role_read || 1,
+              folder
+            );
+            row[field.name] = file.path_to_serve;
+          }
+        }
       } else if (req.files && req.files[field.name]) {
         if (!isNode() && !remote) {
           req.flash(
@@ -873,6 +922,7 @@ const runPost = async (
     }
     const originalID = id;
     let trigger_return;
+    let ins_upd_error;
     if (!cancel) {
       if (typeof id === "undefined") {
         const ins_res = await tryInsertQuery(row);
@@ -881,21 +931,21 @@ const runPost = async (
           row[pk.name] = id;
           trigger_return = ins_res.trigger_return;
         } else {
-          req.flash("error", text_attr(ins_res.error));
-          res.sendWrap(
-            viewname,
-            renderForm(form, req.csrfToken ? req.csrfToken() : false)
-          );
-          return;
+          ins_upd_error = ins_res.error;
         }
       } else {
         const upd_res = await tryUpdateQuery(row, id);
         if (upd_res.error) {
-          req.flash("error", text_attr(upd_res.error));
-          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-          return;
+          ins_upd_error = upd_res.error;
         }
         trigger_return = upd_res.trigger_return;
+      }
+      if (ins_upd_error) {
+        res.status(422);
+        req.flash("error", text_attr(ins_upd_error));
+        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+
+        return;
       }
       //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
@@ -911,7 +961,7 @@ const runPost = async (
             const upd_res = await childTable.tryUpdateRow(
               childRow,
               childRow[childTable.pk_name],
-              req.user || { role_id: 10 }
+              req.user || { role_id: 100 }
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
@@ -921,7 +971,7 @@ const runPost = async (
           } else {
             const ins_res = await childTable.tryInsertRow(
               childRow,
-              req.user || { role_id: 10 }
+              req.user || { role_id: 100 }
             );
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
@@ -951,7 +1001,7 @@ const runPost = async (
                 {
                   [childTable.pk_name]: db_child_row[childTable.pk_name],
                 },
-                req.user || { role_id: 10 }
+                req.user || { role_id: 100 }
               );
             }
           }
@@ -964,6 +1014,9 @@ const runPost = async (
 
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
+      return;
+    } else if (req.xhr && !req.smr) {
+      res.json({ view_when_done, ...trigger_return });
       return;
     }
 
@@ -1248,7 +1301,7 @@ module.exports = {
       const result = {};
       const ins_res = await table.tryInsertRow(
         row,
-        req.user || { role_id: 10 },
+        req.user || { role_id: 100 },
         result
       );
       ins_res.trigger_return = result;
@@ -1261,7 +1314,7 @@ module.exports = {
       const upd_res = await table.tryUpdateRow(
         row,
         id,
-        req.user || { role_id: 10 },
+        req.user || { role_id: 100 },
         result
       );
       upd_res.trigger_return = result;

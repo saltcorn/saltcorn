@@ -75,11 +75,14 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
  * @param {string} inner
  * @returns {div|span|string}
  */
+const selfStylingTypes = new Set(["card", "container", "besides", "image"]);
+
 const applyTextStyle = (segment: any, inner: string): string => {
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
-  const hasStyle = Object.keys(style).length > 0;
+  const hasStyle =
+    Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
   const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
   if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
     style.display = "inline-block";
@@ -290,7 +293,7 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
-
+      const mobile = typeof window !== "undefined";
       return wrap(
         segment,
         isTop,
@@ -298,10 +301,12 @@ const render = ({
         a(
           {
             href: segment.in_modal
-              ? typeof window === "undefined"
+              ? !mobile
                 ? `javascript:ajax_modal('${segment.url}');`
                 : `javascript:mobile_modal('${segment.url}');`
-              : segment.url,
+              : !mobile
+              ? segment.url
+              : `javascript:execLink('${segment.url}')`,
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
@@ -519,6 +524,11 @@ const render = ({
               Math.random() * 100000
             )}`
           : undefined;
+      const legacyBorder = borderWidth
+        ? `border${borderDirection ? `-${borderDirection}` : ""}: ${
+            borderWidth || 0
+          }px ${borderStyle || "none"} ${borderColor || "black"};`
+        : "";
       return wrap(
         segment,
         isTop,
@@ -547,13 +557,10 @@ const render = ({
             )}${sizeProp("height", "height")}${sizeProp(
               "width",
               "width"
-            )}${sizeProp("widthPct", "width", "%")}border${
-              borderDirection ? `-${borderDirection}` : ""
-            }: ${borderWidth || 0}px ${borderStyle || "none"} ${
-              borderColor || "black"
-            };${sizeProp("borderRadius", "border-radius")}${ppBox(
-              "padding"
-            )}${ppBox("margin")}${
+            )}${sizeProp("widthPct", "width", "%")}${legacyBorder}${sizeProp(
+              "borderRadius",
+              "border-radius"
+            )}${ppBox("padding")}${ppBox("margin")}${
               overflow && overflow !== "visible"
                 ? ` overflow: ${overflow};`
                 : ""
@@ -616,7 +623,7 @@ const render = ({
     }
     if (segment.above) {
       return segment.above
-        .map((s: any, ix: number) => go(s, isTop, ix))
+        .map((s: any, segmentIx: number) => go(s, isTop, segmentIx + ix))
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
@@ -624,7 +631,6 @@ const render = ({
         segment.besides.every((s: any) => s && s.type === "card") &&
         (!segment.widths || segment.widths.every((w: any) => w === defwidth));
       let markup;
-      console.log(segment.style);
 
       if (cardDeck)
         markup = div(

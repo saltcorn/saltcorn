@@ -154,11 +154,13 @@ const subSelectWhere =
         where: Where;
         field: string;
         table: string;
+        tenant?: string;
         through?: string;
         valField?: string;
       };
     }
   ): string => {
+    const tenantPrefix = v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
     if (v.inSelect.through && v.inSelect.valField) {
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -168,9 +170,9 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
         v.inSelect.valField
-      }" from ${v.inSelect.table} ss1 join ${
+      }" from ${tenantPrefix}"${v.inSelect.table}" ss1 join ${tenantPrefix}"${
         v.inSelect.through
-      } ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
+      }" ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -180,8 +182,78 @@ const subSelectWhere =
           : "";
       return `${quote(sqlsanitizeAllowDots(k))} in (select "${
         v.inSelect.field
-      }" from ${v.inSelect.table} ${where})`;
+      }" from ${tenantPrefix}"${v.inSelect.table}" ${where})`;
     }
+  };
+
+/**
+ * creates an in select sql string with joins for joinLevels
+ * and the where gets an alias prefix to the first table of the joinLevels
+ * @param phs
+ * @returns in select sql command
+ */
+const inSelectWithLevels =
+  (phs: PlaceHolderStack) =>
+  (
+    k: string,
+    v: {
+      inSelectWithLevels: {
+        where: Where;
+        joinLevels: { table: string; fkey?: string; inboundKey?: string }[];
+      };
+    }
+  ): string => {
+    let lastAlias = null;
+    let inColumn = null;
+    let whereObj = null;
+    const selectParts = [];
+    const joinLevels = v.inSelectWithLevels.joinLevels;
+    for (let i = 0; i < joinLevels.length; i++) {
+      const { table, fkey, inboundKey } = joinLevels[i];
+      const alias = quote(sqlsanitize(`${table}SubJ${i}`));
+      if (i === 0) {
+        selectParts.push(
+          `from ${quote(sqlsanitize(`${table}`))} ${quote(
+            sqlsanitize(`${alias}`)
+          )}`
+        );
+        whereObj = prefixFieldsInWhere(v.inSelectWithLevels.where, alias);
+      } else if (i < joinLevels.length - 1) {
+        if (fkey) {
+          selectParts.push(
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.${sqlsanitize(fkey)}`
+            )} = ${alias}.id`
+          );
+        } else {
+          selectParts.push(
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.id`
+            )} = ${quote(`${alias}.${sqlsanitize(inboundKey!)}`)}`
+          );
+        }
+      } else {
+        if (fkey) {
+          inColumn = quote(`${lastAlias}.${sqlsanitize(fkey)}`);
+        } else {
+          selectParts.push(
+            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+              `${lastAlias}.id`
+            )} = ${quote(`${alias}.${sqlsanitize(`${inboundKey}`)}`)}`
+          );
+          inColumn = quote(`${alias}.id`);
+        }
+      }
+      lastAlias = alias;
+    }
+    const wheres = whereObj ? Object.entries(whereObj) : [];
+    const where =
+      whereObj && wheres.length > 0
+        ? "where " + wheres.map(whereClause(phs)).join(" and ")
+        : "";
+    return `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
+      sqlsanitizeAllowDots(inColumn!)
+    )} ${selectParts.join(" ")} ${where})`;
   };
 
 /**
@@ -279,6 +351,8 @@ const whereClause =
         )}`
       : typeof (v || {}).inSelect !== "undefined"
       ? subSelectWhere(phs)(k, v)
+      : typeof (v || {}).inSelectWithLevels !== "undefined"
+      ? inSelectWithLevels(phs)(k, v)
       : typeof (v || {}).json !== "undefined"
       ? jsonWhere(k, v.json, phs)
       : v === null
@@ -410,12 +484,14 @@ export type SelectOptions = {
   nocase?: boolean;
   orderDesc?: boolean;
   cached?: boolean;
-  versioned?: boolean;
+  versioned?: boolean; //TODO rm this and below
   min_role_read?: number;
   min_role_write?: number;
   ownership_field_id?: string;
   ownership_formula?: string;
   description?: string;
+  provider_name?: string;
+  provider_cfg?: any;
 };
 export const orderByIsObject = (
   object: any

@@ -17,6 +17,7 @@ const {
   link,
   settingsDropdown,
   post_delete_btn,
+  post_btn,
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const {
@@ -51,7 +52,10 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
+const { InvalidConfiguration } = require("@saltcorn/data/utils");
+const { sleep } = require("@saltcorn/data/utils");
 
+const path = require("path");
 /**
  * @type {object}
  * @const
@@ -180,6 +184,7 @@ router.get(
   "/new/",
   isAdmin,
   error_catcher(async (req, res) => {
+    const table_provider_names = Object.keys(getState().table_providers);
     res.sendWrap(req.__(`New table`), {
       above: [
         {
@@ -203,6 +208,20 @@ router.get(
                   input_type: "text",
                   required: true,
                 },
+                ...(table_provider_names.length
+                  ? [
+                      {
+                        label: req.__("Table provider"),
+                        name: "provider_name",
+                        input_type: "select",
+                        options: [
+                          req.__("Database table"),
+                          ...table_provider_names,
+                        ],
+                        required: true,
+                      },
+                    ]
+                  : []),
               ],
             }),
             req.csrfToken()
@@ -430,7 +449,7 @@ router.get(
         label: `<b>${t.name}</b>\n${t.fields
           .map((f) => `${f.name} : ${f.pretty_type}`)
           .join("\n")}`,
-        title: t.description? t.description : t.name,
+        title: t.description ? t.description : t.name,
       })),
       edges,
     };
@@ -439,8 +458,7 @@ router.get(
         title: req.__("Tables"),
         headers: [
           {
-            script:
-              "https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js",
+            script: `/static_assets/${db.connectObj.version_tag}/vis-network.min.js`,
           },
         ],
       },
@@ -523,11 +541,7 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
-      if (
-        ["summary_field", "default", "on_delete_cascade", "on_delete"].includes(
-          k
-        )
-      )
+      if (["summary_field", "on_delete_cascade", "on_delete"].includes(k))
         return;
       if (v || v === 0) s += badge("secondary", k);
     });
@@ -549,9 +563,9 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) table = await Table.findOne({ id });
+    if (id) table = Table.findOne({ id });
     else {
-      table = await Table.findOne({ name: idorname });
+      table = Table.findOne({ name: idorname });
     }
 
     if (!table) {
@@ -646,25 +660,27 @@ router.get(
     var viewCard;
     if (fields.length > 0) {
       const views = await View.find(
-        table.external ? { exttable_name: table.name } : { table_id: table.id }
+        table.id ? { table_id: table.id } : { exttable_name: table.name }
       );
       var viewCardContents;
       if (views.length > 0) {
         viewCardContents = mkTable(
           [
-            { label: req.__("Name"), key: "name" },
+            {
+              label: req.__("Name"),
+              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+            },
             { label: req.__("Pattern"), key: "viewtemplate" },
             {
-              label: req.__("Run"),
-              key: (r) =>
-                link(`/view/${encodeURIComponent(r.name)}`, req.__("Run")),
-            },
-            {
-              label: req.__("Edit"),
+              label: req.__("Configure"),
               key: (r) =>
                 link(
-                  `/viewedit/edit/${encodeURIComponent(r.name)}`,
-                  req.__("Edit")
+                  `/viewedit/config/${encodeURIComponent(
+                    r.name
+                  )}?on_done_redirect=${encodeURIComponent(
+                    `table/${table.name}`
+                  )}`,
+                  req.__("Configure")
                 ),
             },
             {
@@ -692,7 +708,9 @@ router.get(
           viewCardContents +
           a(
             {
-              href: `/viewedit/new?table=${encodeURIComponent(table.name)}`,
+              href: `/viewedit/new?table=${encodeURIComponent(
+                table.name
+              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
               class: "btn btn-primary",
             },
             req.__("Create view")
@@ -723,6 +741,16 @@ router.get(
             : req.__("Edit")
         )
       ),
+      table.provider_name &&
+        div(
+          { class: "mx-auto" },
+          a(
+            { href: `/table/provider-cfg/${table.id}` },
+            i({ class: "fas fa-2x fa-tools" }),
+            "<br/>",
+            req.__("Configure provider")
+          )
+        ),
       div(
         { class: "mx-auto" },
         a(
@@ -758,18 +786,22 @@ router.get(
             })
           )
         ),
+      !table.external &&
+        div(
+          { class: "mx-auto" },
+          a(
+            { href: `/table/constraints/${table.id}` },
+            i({ class: "fas fa-2x fa-tasks" }),
+            "<br/>",
+            req.__("Constraints")
+          )
+        ),
+
       // only if table is not external
       !table.external &&
         div(
           { class: "mx-auto" },
           settingsDropdown(`dataMenuButton`, [
-            a(
-              {
-                class: "dropdown-item",
-                href: `/table/constraints/${table.id}`,
-              },
-              '<i class="fas fa-ban"></i>&nbsp;' + req.__("Constraints")
-            ),
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
               table.name !== "users" &&
@@ -813,7 +845,13 @@ router.get(
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Tables"), href: "/table" },
-            { text: span({ class: "fw-bold text-body" }, table.name) },
+            {
+              text: span(
+                { class: "fw-bold text-body" },
+                table.name,
+                table.provider_name && ` (${table.provider_name} provider)`
+              ),
+            },
           ],
         },
         {
@@ -868,8 +906,17 @@ router.post(
       } else if (db.sqlsanitize(name) === "") {
         req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/new`);
-      } else {
+      } else if (
+        rest.provider_name &&
+        rest.provider_name !== "Database table"
+      ) {
         const table = await Table.create(name, rest);
+        await sleep(500); // Allow other workers to load this view
+        res.redirect(`/table/provider-cfg/${table.id}`);
+      } else {
+        delete rest.provider_name;
+        const table = await Table.create(name, rest);
+        await sleep(500); // Allow other workers to load this view
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }
@@ -997,23 +1044,6 @@ router.post(
     }
   })
 );
-/**
- * Table badges to show in System Table list views
- * Currently supports:
- * - Owned - if ownership_field_id? What is it?
- * - History - if table has versioning
- * - External - if this is external table
- * @param {object} t table object
- * @param {object} req http request
- * @returns {string} html string with list of badges
- */
-const tableBadges = (t, req) => {
-  let s = "";
-  if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
-  if (t.versioned) s += badge("success", req.__("History"));
-  if (t.external) s += badge("info", req.__("External"));
-  return s;
-};
 
 /**
  * List Views of Tables (GET Handler)
@@ -1026,7 +1056,10 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Table.find_with_external({}, { orderBy: "name" });
+    const rows = await Table.find_with_external(
+      {},
+      { orderBy: "name", nocase: true }
+    );
     const roles = await User.get_roles();
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req);
@@ -1147,8 +1180,15 @@ router.get(
               [
                 { label: req.__("Type"), key: "type" },
                 {
-                  label: req.__("Fields"),
-                  key: (r) => r.configuration.fields.join(", "),
+                  label: req.__("What"),
+                  key: (r) =>
+                    r.type === "Unique"
+                      ? r.configuration.fields.join(", ")
+                      : r.type === "Index"
+                      ? r.configuration.field
+                      : r.type === "Formula"
+                      ? r.configuration.formula
+                      : "",
                 },
                 {
                   label: req.__("Delete"),
@@ -1159,7 +1199,12 @@ router.get(
               cons,
               { hover: true }
             ),
-            link(`/table/add-constraint/${id}`, req.__("Add constraint")),
+            req.__("Add constraint: "),
+            link(`/table/add-constraint/${id}/Unique`, req.__("Unique")),
+            " | ",
+            link(`/table/add-constraint/${id}/Formula`, req.__("Formula")),
+            " | ",
+            link(`/table/add-constraint/${id}/Index`, req.__("Index")),
           ],
         },
       ],
@@ -1174,18 +1219,68 @@ router.get(
  * @param {object[]} fields
  * @returns {Form}
  */
-const constraintForm = (req, table_id, fields) =>
-  new Form({
-    action: `/table/add-constraint/${table_id}`,
-    blurb: req.__(
-      "Tick the boxes for the fields that should be jointly unique"
-    ),
-    fields: fields.map((f) => ({
-      name: f.name,
-      label: f.label,
-      type: "Bool",
-    })),
-  });
+const constraintForm = (req, table_id, fields, type) => {
+  switch (type) {
+    case "Formula":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/${type}`,
+
+        fields: [
+          {
+            name: "formula",
+            label: req.__("Constraint formula"),
+            validator: expressionValidator,
+            type: "String",
+            class: "validate-expression",
+            sublabel:
+              req.__(
+                "Formula must evaluate to true for valid rows. In scope: "
+              ) +
+              fields
+                .map((f) => f.name)
+                .map((fn) => code(fn))
+                .join(", "),
+          },
+          {
+            name: "errormsg",
+            label: "Error message",
+            sublabel: "Shown the user if formula is false",
+            type: "String",
+          },
+        ],
+      });
+    case "Unique":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/${type}`,
+        blurb: req.__(
+          "Tick the boxes for the fields that should be jointly unique"
+        ),
+        fields: fields.map((f) => ({
+          name: f.name,
+          label: f.label,
+          type: "Bool",
+        })),
+      });
+    case "Index":
+      return new Form({
+        action: `/table/add-constraint/${table_id}/${type}`,
+        blurb: req.__(
+          "Choose the field to be indexed. This make searching the table faster."
+        ),
+        fields: [
+          {
+            type: "String",
+            name: "field",
+            label: "Field",
+            required: true,
+            attributes: {
+              options: fields.map((f) => ({ label: f.label, name: f.name })),
+            },
+          },
+        ],
+      });
+  }
+};
 
 /**
  * Add constraint GET handler
@@ -1196,10 +1291,10 @@ const constraintForm = (req, table_id, fields) =>
  * @function
  */
 router.get(
-  "/add-constraint/:id",
+  "/add-constraint/:id/:type",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { id, type } = req.params;
     const table = await Table.findOne({ id });
     if (!table) {
       req.flash("error", `Table not found`);
@@ -1207,7 +1302,7 @@ router.get(
       return;
     }
     const fields = await table.getFields();
-    const form = constraintForm(req, table.id, fields);
+    const form = constraintForm(req, table.id, fields, type);
     res.sendWrap(req.__(`Add constraint to %s`, table.name), {
       above: [
         {
@@ -1224,7 +1319,7 @@ router.get(
         },
         {
           type: "card",
-          title: req.__(`Add constraint to %s`, table.name),
+          title: req.__(`Add %s constraint to %s`, type, table.name),
           contents: renderForm(form, req.csrfToken()),
         },
       ],
@@ -1240,10 +1335,10 @@ router.get(
  * @function
  */
 router.post(
-  "/add-constraint/:id",
+  "/add-constraint/:id/:type",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
+    const { id, type } = req.params;
     const table = await Table.findOne({ id });
     if (!table) {
       req.flash("error", `Table not found`);
@@ -1251,16 +1346,20 @@ router.post(
       return;
     }
     const fields = await table.getFields();
-    const form = constraintForm(req, table.id, fields);
+    const form = constraintForm(req, table.id, fields, type);
     form.validate(req.body);
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
+      let configuration = {};
+      if (type === "Unique")
+        configuration.fields = fields
+          .map((f) => f.name)
+          .filter((f) => form.values[f]);
+      else configuration = form.values;
       await TableConstraint.create({
         table_id: table.id,
-        type: "Unique",
-        configuration: {
-          fields: fields.map((f) => f.name).filter((f) => form.values[f]),
-        },
+        type,
+        configuration,
       });
     }
     res.redirect(`/table/constraints/${table.id}`);
@@ -1365,6 +1464,89 @@ router.post(
   })
 );
 
+const previewCSV = async ({ newPath, table, req, res, full }) => {
+  let parse_res;
+  try {
+    parse_res = await table.import_csv_file(newPath, {
+      recalc_stored: true,
+      no_table_write: true,
+    });
+  } catch (e) {
+    parse_res = { error: e.message };
+  }
+  if (parse_res.error) {
+    if (parse_res.error) req.flash("error", parse_res.error);
+    await fs.unlink(newPath);
+    res.redirect(`/table/${table.id}`);
+  } else {
+    const rows = parse_res.rows || [];
+    res.sendWrap(req.__(`Import table %s`, table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            { href: `/table/${table.id}`, text: table.name },
+            {
+              text: req.__("Import CSV"),
+            },
+          ],
+        },
+        {
+          type: "card",
+          title: req.__(`Import CSV`),
+          contents: div(
+            {
+              "data-csv-filename": path.basename(newPath),
+            },
+            p(parse_res.success),
+            post_btn(
+              `/files/delete/${path.basename(newPath)}?redirect=/table/${
+                table.id
+              }}`,
+              "Cancel",
+              req.csrfToken(),
+              {
+                btnClass: "btn-danger",
+                formClass: "d-inline me-2",
+                icon: "fa fa-times",
+              }
+            ),
+            post_btn(
+              `/table/finish_upload_to_table/${table.name}/${path.basename(
+                newPath
+              )}`,
+              "Proceed",
+              req.csrfToken(),
+              { icon: "fa fa-check", formClass: "d-inline" }
+            )
+          ),
+        },
+        {
+          type: "card",
+          title: req.__(`Preview`),
+          contents: div(
+            mkTable(
+              table.fields.map((f) => ({ label: f.name, key: f.name })),
+              full ? rows : rows.slice(0, 10)
+            ),
+            !full &&
+              rows.length > 10 &&
+              a(
+                {
+                  href: `/table/preview_full_csv_file/${
+                    table.name
+                  }/${path.basename(newPath)}`,
+                },
+                `See all ${rows.length} rows`
+              )
+          ),
+        },
+      ],
+    });
+  }
+};
+
 /**
  * Import Table Data from CSV POST handler
  * @name post/upload_to_table/:name,
@@ -1388,15 +1570,39 @@ router.post(
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
     //console.log(req.files.file.data)
+    await previewCSV({ newPath, table, res, req });
+  })
+);
+
+router.get(
+  "/preview_full_csv_file/:name/:filename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name, filename } = req.params;
+    const table = await Table.findOne({ name });
+    const f = await File.findOne(filename);
+    await previewCSV({ newPath: f.location, table, res, req, full: true });
+  })
+);
+
+router.post(
+  "/finish_upload_to_table/:name/:filename",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name, filename } = req.params;
+    const table = await Table.findOne({ name });
+    const f = await File.findOne(filename);
+
     try {
-      const parse_res = await table.import_csv_file(newPath, true);
+      const parse_res = await table.import_csv_file(f.location, {
+        recalc_stored: true,
+      });
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
       req.flash("error", e.message);
     }
-
-    await fs.unlink(newPath);
+    await fs.unlink(f.location);
     res.redirect(`/table/${table.id}`);
   })
 );
@@ -1450,5 +1656,121 @@ router.post(
     req.flash("success", req.__("Started recalculating stored fields"));
 
     res.redirect(`/table/${table.id}`);
+  })
+);
+
+const respondWorkflow = (table, wf, wfres, req, res) => {
+  const wrap = (contents, noCard, previewURL) => ({
+    above: [
+      {
+        type: "breadcrumbs",
+        crumbs: [
+          { text: req.__("Tables"), href: "/table" },
+          { href: `/table/${table.id || table.name}`, text: table.name },
+          { text: req.__("Configuration") },
+        ],
+      },
+      {
+        type: noCard ? "container" : "card",
+        class: !noCard && "mt-0",
+        title: wfres.title,
+        titleAjaxIndicator: true,
+        contents,
+      },
+    ],
+  });
+  if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
+  if (wfres.renderForm)
+    res.sendWrap(
+      {
+        title: req.__(`%s configuration`, table.name),
+        headers: [
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/jquery-menu-editor.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/iconset-fontawesome5-3-1.min.js`,
+          },
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.js`,
+          },
+          {
+            css: `/static_assets/${db.connectObj.version_tag}/bootstrap-iconpicker.min.css`,
+          },
+        ],
+      },
+      wrap(
+        renderForm(wfres.renderForm, req.csrfToken()),
+        false,
+        wfres.previewURL
+      )
+    );
+  else res.redirect(wfres.redirect);
+};
+
+const get_provider_workflow = (table, req) => {
+  const provider = getState().table_providers[table.provider_name];
+  if (!provider) {
+    throw new InvalidConfiguration(
+      `Provider not found for rable ${table.name}: table.provider_name`
+    );
+  }
+  const workflow = provider.configuration_workflow(req);
+  workflow.action = `/table/provider-cfg/${table.id}`;
+  const oldOnDone = workflow.onDone || ((c) => c);
+  workflow.onDone = async (ctx) => {
+    const { table_id, ...configuration } = await oldOnDone(ctx);
+    await table.update({ provider_cfg: configuration });
+
+    return {
+      redirect: `/table/${table.id}`,
+      flash: ["success", `Table ${this.name || ""} saved`],
+    };
+  };
+  return workflow;
+};
+
+router.get(
+  "/provider-cfg/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const { step } = req.query;
+
+    const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const workflow = get_provider_workflow(table, req);
+    const wfres = await workflow.run(
+      {
+        ...(table.provider_cfg || {}),
+        table_id: table.id,
+        ...(step ? { stepName: step } : {}),
+      },
+      req
+    );
+    respondWorkflow(table, workflow, wfres, req, res);
+  })
+);
+
+router.post(
+  "/provider-cfg/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const { step } = req.query;
+
+    const table = await Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const workflow = get_provider_workflow(table, req);
+    const wfres = await workflow.run(req.body, req);
+    respondWorkflow(table, workflow, wfres, req, res);
   })
 );

@@ -12,6 +12,7 @@ const {
   toSucceed,
   resetToFixtures,
   toNotInclude,
+  resToLoginCookie,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -62,9 +63,10 @@ describe("login process", () => {
 });
 
 describe("user settings", () => {
+  let loginCookie;
   it("should show user settings", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getStaffLoginCookie();
+    loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/auth/settings")
       .set("Cookie", loginCookie)
@@ -73,7 +75,7 @@ describe("user settings", () => {
 
   it("should change password", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getStaffLoginCookie();
+    //const loginCookie = await getStaffLoginCookie();
     await request(app)
       .post("/auth/settings")
       .set("Cookie", loginCookie)
@@ -95,18 +97,26 @@ describe("user settings", () => {
       .send("email=staff@foo.com")
       .send("password=foHRrr46obar")
       .expect(toRedirect("/"));
+    //change back
+    await request(app)
+      .post("/auth/settings")
+      .set("Cookie", loginCookie)
+      .send("password=foHRrr46obar")
+      .send("new_password=ghrarhr54hg")
+      .expect(toRedirect("/auth/settings"));
   });
   it("should change language", async () => {
     const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    await request(app)
+    const adminLoginCookie = await getAdminLoginCookie();
+    const res = await request(app)
       .post("/auth/setlanguage")
-      .set("Cookie", loginCookie)
+      .set("Cookie", adminLoginCookie)
       .send("locale=it")
       .expect(toRedirect("/auth/settings"));
+    const newCookie = resToLoginCookie(res);
     await request(app)
       .get("/auth/settings")
-      .set("Cookie", loginCookie)
+      .set("Cookie", newCookie)
       .expect(toInclude("Cambia password"));
   });
 });
@@ -195,7 +205,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fideRGE54lio")
-      .send("role_id=8")
+      .send("role_id=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
   });
@@ -213,7 +223,7 @@ describe("user admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     const user = await User.findOne({ email: "staff2@foo.com" });
-    expect(user.role_id).toBe(8);
+    expect(user.role_id).toBe(80);
     await request(app)
       .get(`/useradmin/${user.id}`)
       .set("Cookie", loginCookie)
@@ -228,11 +238,11 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send(`id=${user.id}`)
-      .send("role_id=4")
+      .send("role_id=40")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const edituser = await User.findOne({ email: "staff2@foo.com" });
-    expect(edituser.role_id).toBe(4);
+    expect(edituser.role_id).toBe(40);
   });
   it("tries to create new user with existing email", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -241,7 +251,7 @@ describe("user admin", () => {
       .post("/useradmin/save")
       .send("email=staff2@foo.com")
       .send("password=fideRGE54lio")
-      .send("role_id=8")
+      .send("role_id=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin"));
     const editusers = await User.find({ email: "staff2@foo.com" });
@@ -258,6 +268,64 @@ describe("user admin", () => {
     const delusers = await User.find({ email: "staff2@foo.com" });
     expect(delusers.length).toBe(0);
   });
+  if (!db.isSQLite)
+    it("can be disabled", async () => {
+      const staffLoginCookie = await getStaffLoginCookie();
+      const staffUser = await User.findOne({ email: "staff@foo.com" });
+      const adminLoginCookie = await getAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/"));
+      await request(app)
+        .post(`/useradmin/disable/${staffUser.id}`)
+        .set("Cookie", adminLoginCookie)
+        .expect(toRedirect("/useradmin"));
+      await request(app)
+        .get("/auth/settings")
+        .set("Cookie", staffLoginCookie)
+        .expect(toRedirect("/auth/login"));
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/auth/login"));
+      await request(app)
+        .post(`/useradmin/enable/${staffUser.id}`)
+        .set("Cookie", adminLoginCookie)
+        .expect(toRedirect("/useradmin"));
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/"));
+    });
+  if (!db.isSQLite)
+    it("can be force logged out", async () => {
+      const staffLoginCookie = await getStaffLoginCookie();
+      const staffUser = await User.findOne({ email: "staff@foo.com" });
+      const adminLoginCookie = await getAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/auth/settings")
+        .set("Cookie", staffLoginCookie)
+        .expect(toInclude(">staff@foo.com<"));
+      await request(app)
+        .post(`/useradmin/force-logout/${staffUser.id}`)
+        .set("Cookie", adminLoginCookie)
+        .expect(toRedirect("/useradmin"));
+      await request(app)
+        .get("/auth/settings")
+        .set("Cookie", staffLoginCookie)
+        .expect(toRedirect("/auth/login"));
+      await request(app)
+        .post("/auth/login/")
+        .send("email=staff@foo.com")
+        .send("password=ghrarhr54hg")
+        .expect(toRedirect("/"));
+    });
 });
 describe("User fields", () => {
   it("should add fields", async () => {
@@ -274,7 +342,7 @@ describe("User fields", () => {
       configuration: {
         columns: [
           { type: "Field", fieldview: "edit", field_name: "height" },
-          { type: "Action", minRole: 10, action_name: "Save" },
+          { type: "Action", minRole: 100, action_name: "Save" },
         ],
         layout: {
           above: [
@@ -300,7 +368,7 @@ describe("User fields", () => {
               ],
             },
             { type: "line_break" },
-            { type: "action", minRole: 10, action_name: "Save" },
+            { type: "action", minRole: 100, action_name: "Save" },
           ],
         },
       },
@@ -398,7 +466,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "63f01b",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Login",
               action_label: "Login",
@@ -408,7 +476,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "45dd57",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Login with github",
               configuration: {},
@@ -421,7 +489,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "63f01b",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Login",
             action_label: "Login",
@@ -431,7 +499,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "45dd57",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Login with github",
             configuration: {},
@@ -505,7 +573,7 @@ describe("signup with custom login form", () => {
             {
               type: "action",
               rndid: "63f01b",
-              minRole: 10,
+              minRole: 100,
               isFormula: {},
               action_name: "Sign up",
               action_style: "btn-primary",
@@ -520,7 +588,7 @@ describe("signup with custom login form", () => {
           {
             type: "Action",
             rndid: "63f01b",
-            minRole: 10,
+            minRole: 100,
             isFormula: {},
             action_name: "Sign up",
             action_style: "btn-primary",

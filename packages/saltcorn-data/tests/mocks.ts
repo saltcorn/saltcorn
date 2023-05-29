@@ -77,6 +77,38 @@ const plugin_with_routes = () => ({
       ]
     ),
   },
+  table_providers: {
+    provtab: {
+      configuration_workflow: () =>
+        new Workflow({
+          steps: [
+            {
+              name: "step1",
+              form: (context: any) =>
+                new Form({
+                  fields: [
+                    {
+                      name: "middle_name",
+                      label: "Middle name",
+                      type: "String",
+                      required: true,
+                    },
+                  ],
+                }),
+            },
+          ],
+        }),
+      fields: async (cfg: any) => [
+        { name: "name", label: "Name", type: "String" },
+        { name: "age", label: "Age", type: "Integer" },
+      ],
+      get_table(cfg: any) {
+        return {
+          getRows: async () => [{ name: cfg.middle_name, age: 36 }],
+        };
+      },
+    },
+  },
   types: [
     {
       name: "UUID",
@@ -193,6 +225,7 @@ const mockReqRes = {
     },
     json() {},
     send() {},
+    status() {},
     sendWrap: () => {},
     __: (s: any) => s,
   },
@@ -210,7 +243,7 @@ const createDefaultView = async (
   const vt = getState().viewtemplates[viewtemplate];
   const v: ViewCfg = {
     name: `${viewtemplate}${table.name}${Math.round(Math.random() * 10000)}`,
-    min_role: 10,
+    min_role,
     configuration: await vt.initial_config(
       table.id ? { table_id: table.id } : { exttable_name: table.name }
     ),

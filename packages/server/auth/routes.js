@@ -17,6 +17,7 @@ const {
   loggedIn,
   csrfField,
   setTenant,
+  is_relative_url,
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
@@ -111,6 +112,9 @@ const loginForm = (req, isCreating) => {
         label: req.__("Password"),
         name: "password",
         input_type: "password",
+        attributes: {
+          autocomplete: "current-password",
+        },
         validator: isCreating
           ? (pw) => User.unacceptable_password_reason(pw)
           : undefined,
@@ -259,7 +263,7 @@ const loginWithJwt = async (email, password, saltcornApp, res) => {
         {
           sub: "public",
           user: {
-            role_id: 10,
+            role_id: 100,
             language: "en",
           },
           iss: "saltcorn@saltcorn",
@@ -323,18 +327,21 @@ router.get("/logout", async (req, res, next) => {
     await user.updateLastMobileLogin(null);
     res.json({ success: true });
   } else if (req.logout) {
-    req.logout();
-    if (req.session.destroy)
-      req.session.destroy((err) => {
-        if (err) return next(err);
-        req.logout();
-        res.redirect("/auth/login");
-      });
-    else {
-      req.logout();
-      req.session = null;
-      res.redirect("/auth/login");
-    }
+    req.logout(function (err) {
+      if (req.session.destroy)
+        req.session.destroy((err) => {
+          if (err) return next(err);
+          req.logout(() => {
+            res.redirect("/auth/login");
+          });
+        });
+      else {
+        req.logout(function (err) {
+          req.session = null;
+          res.redirect("/auth/login");
+        });
+      }
+    });
   }
 });
 
@@ -392,7 +399,7 @@ router.get(
     else if (result) {
       req.flash("success", req.__("Email verified"));
       const u = await User.findForSession({ email });
-      if (u) u.relogin(req);
+      if (u) await u.relogin(req);
     }
     res.redirect("/");
   })
@@ -1075,7 +1082,7 @@ router.post(
     }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
-    } else if (req.body.dest) {
+    } else if (req.body.dest && is_relative_url(req.body.dest)) {
       res.redirect(decodeURIComponent(req.body.dest));
     } else res.redirect("/");
   })
@@ -1199,11 +1206,17 @@ const changPwForm = (req) =>
         label: req.__("Old password"),
         name: "password",
         input_type: "password",
+        attributes: {
+          autocomplete: "current-password",
+        },
       },
       {
         label: req.__("New password"),
         name: "new_password",
         input_type: "password",
+        attributes: {
+          autocomplete: "new-password",
+        },
         validator: (pw) => User.unacceptable_password_reason(pw),
       },
     ],
@@ -1349,14 +1362,14 @@ const userSettings = async ({ req, res, pwform, user }) => {
                           href: "/auth/twofa/disable/totp",
                           class: "btn btn-danger mt-2",
                         },
-                        req.__("Disable TWA")
+                        req.__("Disable 2FA")
                       )
                     : a(
                         {
                           href: "/auth/twofa/setup/totp",
                           class: "btn btn-primary mt-2",
                         },
-                        req.__("Enable TWA")
+                        req.__("Enable 2FA")
                       )
                 ),
               ],
@@ -1445,15 +1458,15 @@ router.get(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
     if (!user) {
-      req.logout();
-      req.flash("danger", req.__("Must be logged in first"));
-      res.redirect("/auth/login");
-      return;
-    }
-    res.sendWrap(
-      req.__("User settings") || "User settings",
-      await userSettings({ req, res, pwform: changPwForm(req), user })
-    );
+      req.logout(() => {
+        req.flash("danger", req.__("Must be logged in first"));
+        res.redirect("/auth/login");
+      });
+    } else
+      res.sendWrap(
+        req.__("User settings") || "User settings",
+        await userSettings({ req, res, pwform: changPwForm(req), user })
+      );
   })
 );
 
@@ -1615,7 +1628,7 @@ router.all(
       const user = await User.findForSession({ id: req.user.id });
       await user.set_to_verified();
       req.flash("success", req.__("User verified"));
-      user.relogin(req);
+      await user.relogin(req);
     }
     if (wfres.verified === false) {
       req.flash("danger", req.__("User verification failed"));
@@ -1787,6 +1800,12 @@ const totpForm = (req, action) =>
         name: "totpCode",
         label: req.__("Code"),
         type: "Integer",
+        attributes: {
+          type: "text",
+          inputmode: "numeric",
+          pattern: "[0-9]*",
+          autocomplete: "one-time-code",
+        },
         required: true,
       },
     ],
@@ -1824,6 +1843,12 @@ router.get(
           name: "code",
           label: req.__("Code"),
           type: "Integer",
+          attributes: {
+            type: "text",
+            inputmode: "numeric",
+            pattern: "[0-9]*",
+            autocomplete: "one-time-code",
+          },
           required: true,
         },
       ],
@@ -1842,7 +1867,7 @@ router.post(
   }),
   error_catcher(async (req, res) => {
     const user = await User.findForSession({ id: req.user.pending_user.id });
-    user.relogin(req);
+    await user.relogin(req);
     Trigger.emitEvent("Login", null, user);
     res.redirect("/");
   })

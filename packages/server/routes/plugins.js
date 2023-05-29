@@ -14,11 +14,18 @@ const {
   post_btn,
   post_delete_btn,
 } = require("@saltcorn/markup");
-const { getState, restart_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  restart_tenant,
+  getRootState,
+} = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
+const {
+  upgrade_all_tenants_plugins,
+} = require("@saltcorn/admin-models/models/tenant");
 const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 const {
@@ -150,7 +157,10 @@ const local_has_theme = (name) => {
 const get_store_items = async () => {
   const installed_plugins = await Plugin.find({});
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-
+  const tenants_unsafe_plugins = getRootState().getConfig(
+    "tenants_unsafe_plugins",
+    false
+  );
   const instore = await Plugin.store_plugins_available();
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
@@ -168,7 +178,7 @@ const get_store_items = async () => {
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
     }))
-    .filter((p) => !p.unsafe || isRoot);
+    .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
     .filter((p) => !store_plugin_names.includes(p.name) && p.name !== "base")
     .map((plugin) => ({
@@ -424,8 +434,12 @@ const filter_items_set = (items, query) => {
  * @param {object} req
  * @returns {div}
  */
-const store_actions_dropdown = (req) =>
-  div(
+const store_actions_dropdown = (req) => {
+  const tenants_install_git = getRootState().getConfig(
+    "tenants_install_git",
+    false
+  );
+  return div(
     { class: "dropdown" },
     button(
       {
@@ -460,7 +474,8 @@ const store_actions_dropdown = (req) =>
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed modules")
         ),
-      db.getTenantSchema() === db.connectObj.default_schema &&
+      (db.getTenantSchema() === db.connectObj.default_schema ||
+        tenants_install_git) &&
         a(
           {
             class: "dropdown-item",
@@ -488,6 +503,7 @@ const store_actions_dropdown = (req) =>
       //create pack
     )
   );
+};
 
 /**
  * @param {object[]} items
@@ -926,14 +942,22 @@ router.get(
   "/upgrade",
   isAdmin,
   error_catcher(async (req, res) => {
-    const installed_plugins = await Plugin.find({});
-    for (const plugin of installed_plugins) {
-      await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+    const schema = db.getTenantSchema();
+    if (schema === db.connectObj.default_schema) {
+      await upgrade_all_tenants_plugins((p, f) =>
+        load_plugins.loadPlugin(p, f)
+      );
+      req.flash("success", req.__(`Modules up-to-date. Please restart server`));
+    } else {
+      const installed_plugins = await Plugin.find({});
+      for (const plugin of installed_plugins) {
+        await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+      }
+      req.flash("success", req.__(`Modules up-to-date`));
+      await restart_tenant(loadAllPlugins);
+      process.send &&
+        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
     }
-    req.flash("success", req.__(`Modules up-to-date`));
-    await restart_tenant(loadAllPlugins);
-    process.send &&
-      process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
     res.redirect(`/plugins`);
   })
 );
@@ -970,7 +994,11 @@ router.post(
   error_catcher(async (req, res) => {
     const plugin = new Plugin(req.body);
     const schema = db.getTenantSchema();
-    if (schema !== db.connectObj.default_schema) {
+    const tenants_install_git = getRootState().getConfig(
+      "tenants_install_git",
+      false
+    );
+    if (schema !== db.connectObj.default_schema && !tenants_install_git) {
       req.flash(
         "error",
         req.__(`Only store modules can be installed on tenant instances`)
@@ -1039,7 +1067,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-
+    const tenants_unsafe_plugins = getRootState().getConfig(
+      "tenants_unsafe_plugins",
+      false
+    );
     const plugin = await Plugin.store_by_name(decodeURIComponent(name));
     if (!plugin) {
       req.flash(
@@ -1050,7 +1081,7 @@ router.post(
       return;
     }
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    if (!isRoot && plugin.unsafe) {
+    if (!isRoot && plugin.unsafe && !tenants_unsafe_plugins) {
       req.flash(
         "error",
         req.__("Cannot install unsafe modules on subdomain tenants")

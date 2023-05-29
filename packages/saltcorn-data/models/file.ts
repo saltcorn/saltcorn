@@ -171,6 +171,15 @@ class File {
 
     return allDirs;
   }
+  async is_symlink(): Promise<boolean> {
+    try {
+      let stat = await fsp.lstat(this.location);
+      return stat.isSymbolicLink();
+    } catch (e) {
+      throw new Error("File.is_symlink: File not found: " + this.location);
+    }
+  }
+
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string
@@ -187,8 +196,9 @@ class File {
         path.join(absoluteFolder, name),
         "user.saltcorn.min_role_read"
       ));
+      if (isNaN(min_role_read)) min_role_read = 100;
     } catch (e) {
-      min_role_read = 10;
+      min_role_read = 100;
     }
     try {
       const uid = await xattr_get(
@@ -268,6 +278,11 @@ class File {
     return files.length > 0 ? new File(files[0]) : null;
   }
 
+  /**
+   * Create new folder
+   * @param name
+   * @param inFolder
+   */
   static async new_folder(
     name: string,
     inFolder: string = ""
@@ -287,6 +302,9 @@ class File {
     return;
   }
 
+  /**
+   * Get path to serve
+   */
   get path_to_serve(): string | number {
     if (this.s3_store && this.id) return this.id;
     const tenant = db.getTenantSchema();
@@ -297,6 +315,9 @@ class File {
     return s[0] === "/" ? s.substring(1) : s;
   }
 
+  /**
+   * Get current folder
+   */
   get current_folder() {
     return path.dirname(this.path_to_serve);
   }
@@ -311,6 +332,10 @@ class File {
     await db.update("_sc_files", row, id);
   }
 
+  /**
+   * Set Min Role to read for file
+   * @param min_role_read target Role for file to read
+   */
   async set_role(min_role_read: number) {
     if (this.id) {
       await File.update(this.id, { min_role_read });
@@ -324,6 +349,10 @@ class File {
     this.min_role_read = min_role_read;
   }
 
+  /**
+   * Set user for file
+   * @param user_id target user_id
+   */
   async set_user(user_id: number) {
     if (this.id) {
       await File.update(this.id, { user_id });
@@ -333,6 +362,10 @@ class File {
     this.user_id = user_id;
   }
 
+  /**
+   * Rename file
+   * @param filenameIn target file name
+   */
   async rename(filenameIn: string): Promise<void> {
     const filename = File.normalise(filenameIn);
     if (this.id) {
@@ -350,6 +383,11 @@ class File {
     }
   }
 
+  /**
+   *
+   * @param from
+   * @param to
+   */
   static async update_table_references(from: string, to: string) {
     const Field = require("./field");
     const Table = require("./table");
@@ -366,6 +404,10 @@ class File {
     }
   }
 
+  /**
+   * Move file to other folder
+   * @param newFolder target folder for file
+   */
   async move_to_dir(newFolder: string): Promise<void> {
     const newFolderNormd = File.normalise(newFolder);
     const tenant = db.getTenantSchema();
@@ -492,7 +534,9 @@ class File {
   }
   /**
    * Create new file
-   * @param file
+   * @param name
+   * @param mimetype
+   * @param contents
    * @param user_id
    * @param min_role_read
    * @param folder
@@ -616,8 +660,8 @@ class File {
     if (!user.id)
       throw new Error("Unable to set the attributes, the user has no id");
     const file = await File.from_file_on_disk(name, absoluteFolder);
-    file.set_user(user.id);
-    file.set_role(user.role_id);
+    await file.set_user(user.id);
+    await file.set_role(user.role_id);
   }
 }
 

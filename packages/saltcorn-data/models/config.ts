@@ -44,7 +44,7 @@ const configTypes: ConfigTypes = {
     label: "Site logo",
     default: 0,
     attributes: {
-      select_file_where: { min_role_read: 10, mime_super: "image" },
+      select_file_where: { min_role_read: 100, mime_super: "image" },
     },
     blurb: "Select a publicly accessible image file for the menu logo",
   },
@@ -54,7 +54,7 @@ const configTypes: ConfigTypes = {
     label: "Favicon",
     default: 0,
     attributes: {
-      select_file_where: { min_role_read: 10, mime_super: "image" },
+      select_file_where: { min_role_read: 100, mime_super: "image" },
     },
     blurb: "Select a publicly accessible image file for the browser tab icon",
   },
@@ -73,6 +73,13 @@ const configTypes: ConfigTypes = {
     },
     blurb:
       "The URL at which your site is available. For instance, https://example.com/",
+  },
+  last_offline_session: {
+    type: "Object",
+    label: "User with offline data",
+    default: "",
+    blurb:
+      "This is the email of the last user who created offline data in the mobile app.",
   },
   /** @type {object} */
   menu_items: { type: "hidden", label: "Menu items" },
@@ -253,10 +260,12 @@ const configTypes: ConfigTypes = {
     restart_required: true,
     blurb:
       "Comma-separated list of packages which will be available in JavaScript actions",
-    /*async onChange(val: string) {
-      const { getState } = require("../db/state");
-      await getState.loadNPMpkgsForJsCode(val);
-    },*/
+    async onChange(val: string) {
+      setTimeout(async () => {
+        const { getState } = require("../db/state");
+        await getState().refresh_npmpkgs();
+      });
+    },
   },
   /** @type {object} */
   multitenancy_enabled: {
@@ -297,6 +306,29 @@ const configTypes: ConfigTypes = {
     type: "Tenant",
     label: "New tenant template",
     blurb: "Copy site structure for new tenants from this tenant",
+  },
+  tenant_baseurl: {
+    type: "String",
+    label: "Tenant Base URL",
+    blurb:
+      "Base hostname for newly created tenants. If unset, defaults to hostname",
+  },
+  tenant_create_unauth_redirect: {
+    type: "String",
+    label: "Redirect unauthorized",
+    blurb: "If tenant creation is not authorized, redirect to this URL",
+  },
+  tenants_install_git: {
+    type: "Bool",
+    label: "Install git plugins",
+  },
+  tenants_set_npm_modules: {
+    type: "Bool",
+    label: "Set available npm modules",
+  },
+  tenants_unsafe_plugins: {
+    type: "Bool",
+    label: "Unsafe modules",
   },
   /** @type {object} */
   development_mode: {
@@ -589,6 +621,37 @@ const configTypes: ConfigTypes = {
     label: "Snapshots enabled",
     default: false,
   },
+  notification_in_menu: {
+    type: "Bool",
+    label: "In user menu",
+    sublabel: "Show notifications in the user menu",
+    default: false,
+  },
+  pwa_enabled: {
+    type: "Bool",
+    label: "Enabled",
+    sublabel: "Progressive Web Application enabled",
+    default: false,
+  },
+  pwa_display: {
+    input_type: "select",
+    label: "Display",
+    default: "browser",
+    options: ["browser", "fullscreen", "standalone", "minimal-ui"],
+  },
+  pwa_set_colors: {
+    type: "Bool",
+    label: "Set colors",
+    default: false,
+  },
+  pwa_theme_color: {
+    type: "Color",
+    label: "Theme color",
+  },
+  pwa_background_color: {
+    type: "Color",
+    label: "Background color",
+  },
   log_level: {
     input_type: "select",
     label: "System logging verbosity",
@@ -674,10 +737,11 @@ const configTypes: ConfigTypes = {
   min_role_search: {
     type: "Role",
     label: "Role for search",
-    default: 10, // public is default
+    default: 100, // public is default
     required: true,
     blurb: "Min role to access search page",
-  },/** @type {object} */
+  },
+  /** @type {object} */
   search_page_size: {
     type: "Integer",
     label: "Search page size",
@@ -700,6 +764,8 @@ const available_languages = {
   ar: "العربية",
   it: "Italiano",
   zh: "中文",
+  pl: "Polski",
+  uk: "Українська",
 };
 /**
  * Get Config variable value by key (contract)

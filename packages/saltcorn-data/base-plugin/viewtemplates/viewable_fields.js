@@ -4,7 +4,7 @@
  * @subcategory base-plugin
  */
 const { post_btn } = require("@saltcorn/markup");
-const { text, a, i, div, button } = require("@saltcorn/markup/tags");
+const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { link_view } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
@@ -15,7 +15,7 @@ const { structuredClone, isWeb } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode } = require("../../utils");
+const { isNode, parseRelationPath } = require("../../utils");
 const { bool, date } = require("../types");
 
 /**
@@ -207,32 +207,39 @@ const make_link = (
 };
 
 /**
- * @param {string} s
+ * @param {string} view name of the view or a legacy relation (type:telation)
+ * @param {string} relation new relation path syntax
  * @returns {object}
  */
-const parse_view_select = (s) => {
-  const colonSplit = s.split(":");
-  if (colonSplit.length === 1) return { type: "Own", viewname: s };
-  const [type, vrest] = colonSplit;
-  switch (type) {
-    case "Own":
-      return { type, viewname: vrest };
-    case "ChildList":
-    case "OneToOneShow":
-      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
-      return {
-        type,
-        viewname: viewnm,
-        table_name: tbl,
-        field_name: fld,
-        throughTable,
-        through,
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
-    case "Independent":
-      return { type, viewname: vrest };
+const parse_view_select = (view, relation) => {
+  if (relation) {
+    const { sourcetable, path } = parseRelationPath(relation);
+    return { type: "RelationPath", viewname: view, sourcetable, path };
+  } else {
+    // legacy relation path
+    const colonSplit = view.split(":");
+    if (colonSplit.length === 1) return { type: "Own", viewname: view };
+    const [type, vrest] = colonSplit;
+    switch (type) {
+      case "Own":
+        return { type, viewname: vrest };
+      case "ChildList":
+      case "OneToOneShow":
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        return {
+          type,
+          viewname: viewnm,
+          table_name: tbl,
+          field_name: fld,
+          throughTable,
+          through,
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        return { type, viewname: pviewnm, table_name: ptbl, field_name: pfld };
+      case "Independent":
+        return { type, viewname: vrest };
+    }
   }
 };
 
@@ -240,7 +247,8 @@ const parse_view_select = (s) => {
 /**
  * @function
  * @param {object} opts
- * @param {string} opts.view,
+ * @param {string} opts.view
+ * @param {string} opts.relation
  * @param {object} opts.view_label missing in contract
  * @param {object} opts.in_modal
  * @param {object} opts.view_label_formula
@@ -257,6 +265,7 @@ const parse_view_select = (s) => {
 const view_linker = (
   {
     view,
+    relation,
     view_label,
     in_modal,
     view_label_formula,
@@ -274,7 +283,8 @@ const view_linker = (
   fields,
   __ = (s) => s,
   isWeb = true,
-  user
+  user,
+  targetPrefix = ""
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -288,101 +298,59 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
-  const [vtype, vrest] = view.split(":");
-  switch (vtype) {
-    case "Own":
-      const vnm = vrest;
-      const viewrow = View.findOne({ name: vnm });
-      const get_query = get_view_link_query(fields, viewrow || {});
-      return {
-        label: vnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(vnm)}${get_query(r)}`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(vnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "Independent":
-      const ivnm = vrest;
-      return {
-        label: ivnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(ivnm)}`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(ivnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "ChildList":
-    case "OneToOneShow":
-      const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
-      const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
-      return {
-        label: viewnm,
-        key: (r) => {
-          const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
-            r.id
-          }`;
-          return link_view(
-            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-            get_label(viewnm, r),
-            in_modal,
-            link_style,
-            link_size,
-            link_icon,
-            textStyle,
-            link_bgcol,
-            link_bordercol,
-            link_textcol,
-            in_dropdown && "dropdown-item",
-            get_extra_state(r),
-            link_target_blank
-          );
-        },
-      };
-    case "ParentShow":
-      const [pviewnm, ptbl, pfld] = vrest.split(".");
-      //console.log([pviewnm, ptbl, pfld])
-      return {
-        label: pviewnm,
-        key: (r) => {
-          const reffield = fields.find((f) => f.name === pfld);
-          const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
-          if (r[pfld]) {
-            const target = `/view/${encodeURIComponent(pviewnm)}?${
-              reffield.refname
-            }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+  if (relation) {
+    const { path } = parseRelationPath(relation);
+    const pathStart = path[0];
+    const idName = pathStart.fkey ? pathStart.fkey : "id";
+    return {
+      label: view,
+      key: (r) => {
+        const relObj = {
+          srcId: r[idName],
+          relation: relation,
+        };
+        const target = `/view/${encodeURIComponent(
+          view
+        )}?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(relObj)
+        )}`;
+        return link_view(
+          isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+          get_label(view, r),
+          in_modal,
+          link_style,
+          link_size,
+          link_icon,
+          textStyle,
+          link_bgcol,
+          link_bordercol,
+          link_textcol,
+          in_dropdown && "dropdown-item",
+          get_extra_state(r),
+          link_target_blank
+        );
+      },
+    };
+  } else {
+    // legacy relation path
+    const [vtype, vrest] = view.split(":");
+    switch (vtype) {
+      case "Own":
+        const vnm = vrest;
+        const viewrow = View.findOne({ name: vnm });
+        const get_query = get_view_link_query(fields, viewrow || {});
+        return {
+          label: vnm,
+          key: (r) => {
+            const safePrefix = targetPrefix.endsWith("/")
+              ? targetPrefix.substring(0, targetPrefix.length - 1)
+              : targetPrefix;
+            const target = `${safePrefix}/view/${encodeURIComponent(
+              vnm
+            )}${get_query(r)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-              get_label(
-                typeof summary_field === "undefined" ? pviewnm : summary_field,
-                r
-              ),
+              get_label(vnm, r),
               in_modal,
               link_style,
               link_size,
@@ -395,11 +363,96 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank
             );
-          } else return "";
-        },
-      };
-    default:
-      throw new Error(view);
+          },
+        };
+      case "Independent":
+        const ivnm = vrest;
+        return {
+          label: ivnm,
+          key: (r) => {
+            const target = `/view/${encodeURIComponent(ivnm)}`;
+            return link_view(
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+              get_label(ivnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r),
+              link_target_blank
+            );
+          },
+        };
+      case "ChildList":
+      case "OneToOneShow":
+        const [viewnm, tbl, fld, throughTable, through] = vrest.split(".");
+        const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
+        return {
+          label: viewnm,
+          key: (r) => {
+            const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+              r.id
+            }`;
+            return link_view(
+              isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+              get_label(viewnm, r),
+              in_modal,
+              link_style,
+              link_size,
+              link_icon,
+              textStyle,
+              link_bgcol,
+              link_bordercol,
+              link_textcol,
+              in_dropdown && "dropdown-item",
+              get_extra_state(r),
+              link_target_blank
+            );
+          },
+        };
+      case "ParentShow":
+        const [pviewnm, ptbl, pfld] = vrest.split(".");
+        //console.log([pviewnm, ptbl, pfld])
+        return {
+          label: pviewnm,
+          key: (r) => {
+            const reffield = fields.find((f) => f.name === pfld);
+            const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
+            if (r[pfld]) {
+              const target = `/view/${encodeURIComponent(pviewnm)}?${
+                reffield.refname
+              }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+              return link_view(
+                isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+                get_label(
+                  typeof summary_field === "undefined"
+                    ? pviewnm
+                    : summary_field,
+                  r
+                ),
+                in_modal,
+                link_style,
+                link_size,
+                link_icon,
+                textStyle,
+                link_bgcol,
+                link_bordercol,
+                link_textcol,
+                in_dropdown && "dropdown-item",
+                get_extra_state(r),
+                link_target_blank
+              );
+            } else return "";
+          },
+        };
+      default:
+        throw new Error(view);
+    }
   }
 };
 
@@ -448,7 +501,7 @@ const get_viewable_fields = (
 ) => {
   const dropdown_actions = [];
   const tfields = flapMaipish(columns, (column, index) => {
-    const role = req.user ? req.user.role_id : 10;
+    const role = req.user ? req.user.role_id : 100;
     const user_id = req.user ? req.user.id : null;
     const setWidth = column.col_width
       ? { width: `${column.col_width}${column.col_width_units}` }
@@ -531,6 +584,7 @@ const get_viewable_fields = (
       } else return r;
     } else if (column.type === "JoinField") {
       //console.log(column);
+      let fvrun;
       let refNm, targetNm, through, key, type;
       if (column.join_field.includes("->")) {
         const [relation, target] = column.join_field.split("->");
@@ -563,8 +617,7 @@ const get_viewable_fields = (
           column
         );
       }
-
-      return {
+      fvrun = {
         ...setWidth,
         label: column.header_label
           ? text(__(column.header_label))
@@ -584,6 +637,29 @@ const get_viewable_fields = (
             : (row) => text(row[key]),
         // sortlink: `javascript:sortby('${text(targetNm)}')`
       };
+      if (column.click_to_edit) {
+        const reffield = fields.find((f) => f.name === refNm);
+
+        const oldkey =
+          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
+        const newkey = (row) =>
+          div(
+            {
+              "data-inline-edit-field": refNm,
+              "data-inline-edit-ajax": "true",
+              "data-inline-edit-current": row[refNm],
+              "data-inline-edit-current-label": row[key],
+              "data-inline-edit-dest-url": `/api/${table.name}/${
+                row[table.pk_name]
+              }`,
+              "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
+            },
+            span({ class: "current" }, oldkey(row)),
+            i({ class: "editicon fas fa-edit ms-1" })
+          );
+        fvrun.key = newkey;
+      }
+      return fvrun;
     } else if (column.type === "Aggregation") {
       let table, fld, through;
       if (column.agg_relation.includes("->")) {
@@ -593,14 +669,19 @@ const get_viewable_fields = (
       } else {
         [table, fld] = column.agg_relation.split(".");
       }
-      const targetNm = (
-        column.stat.replace(" ", "") +
-        "_" +
-        table +
-        "_" +
-        fld +
-        db.sqlsanitize(column.aggwhere || "")
-      ).toLowerCase();
+      const targetNm =
+        column.targetNm ||
+        (
+          column.stat.replace(" ", "") +
+          "_" +
+          table +
+          "_" +
+          fld +
+          "_" +
+          column.agg_field.split("@")[0] +
+          "_" +
+          db.sqlsanitize(column.aggwhere || "")
+        ).toLowerCase();
 
       let showValue = (value) => {
         if (value === true || value === false)
@@ -643,11 +724,12 @@ const get_viewable_fields = (
         f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
       }
       const isNum = f && f.type && f.type.name === "Integer";
+      let fvrun;
       if (
         column.fieldview &&
         f?.type?.fieldviews?.[column.fieldview]?.expandColumns
       ) {
-        return f.type.fieldviews[column.fieldview].expandColumns(
+        fvrun = f.type.fieldviews[column.fieldview].expandColumns(
           f,
           {
             ...f.attributes,
@@ -655,12 +737,15 @@ const get_viewable_fields = (
           },
           column
         );
-      }
-
-      return (
-        f && {
+      } else
+        fvrun = f && {
           ...setWidth,
-          align: isNum ? "right" : undefined,
+          align:
+            !column.alignment || column.alignment === "Default"
+              ? isNum
+                ? "right"
+                : undefined
+              : column.alignment.toLowerCase(),
           label: headerLabelForName(column, f, req, __),
           row_key: f_with_val.name,
           key:
@@ -690,8 +775,55 @@ const get_viewable_fields = (
             !f.calculated || f.stored
               ? sortlinkForName(f.name, req, viewname, statehash)
               : undefined,
-        }
-      );
+        };
+      if (column.click_to_edit) {
+        const updateKey = (fvr, column_key) => {
+          const oldkey =
+            typeof fvr.key === "function" ? fvr.key : (r) => r[fvr.key];
+          const doSetKey =
+            (column.fieldview === "subfield" ||
+              column.fieldview === "keys_expand_columns") &&
+            column_key;
+          const schema =
+            doSetKey && f.attributes?.hasSchema
+              ? (f.attributes.schema || []).find((s) => s.key === column_key)
+              : undefined;
+          const newkey = (row) => {
+            if (role <= table.min_role_write || table.is_owner(req.user, row))
+              return div(
+                {
+                  "data-inline-edit-field": doSetKey
+                    ? `${column.field_name}.${column_key}`
+                    : column.field_name,
+                  "data-inline-edit-ajax": "true",
+                  "data-inline-edit-key": doSetKey
+                    ? `${column.field_name}.${column_key}`
+                    : undefined,
+                  "data-inline-edit-schema": schema
+                    ? encodeURIComponent(JSON.stringify(schema))
+                    : undefined,
+                  "data-inline-edit-current": doSetKey
+                    ? row[f.name]?.[column_key]
+                    : undefined,
+                  "data-inline-edit-dest-url": `/api/${table.name}/${
+                    row[table.pk_name]
+                  }`,
+                  "data-inline-edit-type": f?.type?.name,
+                },
+                span({ class: "current" }, oldkey(row)),
+                i({ class: "editicon fas fa-edit ms-1" })
+              );
+            else return oldkey(row);
+          };
+          fvr.key = newkey;
+        };
+        if (Array.isArray(fvrun)) {
+          fvrun.forEach((fvr) => {
+            updateKey(fvr, fvr.row_key[1]);
+          });
+        } else updateKey(fvrun, column.key);
+      }
+      return fvrun;
     }
   }).filter((v) => !!v);
   if (dropdown_actions.length > 0) {

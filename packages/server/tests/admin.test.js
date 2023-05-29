@@ -5,6 +5,7 @@ const {
   getAdminLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
+  itShouldIncludeTextForAdmin,
   toInclude,
   toSucceed,
   //toNotInclude,
@@ -28,7 +29,7 @@ beforeAll(async () => {
   await File.from_req_files(
     { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
     1,
-    4
+    40
   );
 });
 
@@ -73,6 +74,7 @@ describe("admin page", () => {
     ["/admin/email", "Email settings"],
     ["/admin/system", "Restart server"],
     ["/admin/dev", "Development"],
+    ["/admin/build-mobile-app", "Build mobile app"],
   ]);
   adminPageContains([
     ["/useradmin", "Create user"],
@@ -270,7 +272,7 @@ describe("menu editor", () => {
         url: "",
         type: "View",
         label: "BarMenu",
-        min_role: "10",
+        min_role: "100",
         pagename: null,
         viewname: "dqwdw",
       },
@@ -319,32 +321,32 @@ describe("roleadmin", () => {
     await request(app)
       .post("/roleadmin/edit")
       .set("Cookie", loginCookie)
-      .send("id=5")
+      .send("id=50")
       .send("role=muppets")
       .expect(toRedirect("/roleadmin"));
     const roles = await User.get_roles();
-    expect(roles).toContainEqual({ id: 5, role: "muppets" });
+    expect(roles).toContainEqual({ id: 50, role: "muppets" });
   });
   it("show set layout for role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/roleadmin/setrolelayout/5")
+      .post("/roleadmin/setrolelayout/50")
       .set("Cookie", loginCookie)
       .send("layout=tabler")
       .expect(toRedirect("/roleadmin"));
     const roles = await User.get_roles();
-    expect(roles).toContainEqual({ id: 5, role: "muppets" });
+    expect(roles).toContainEqual({ id: 50, role: "muppets" });
   });
   it("show delete role", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/roleadmin/delete/5")
+      .post("/roleadmin/delete/50")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/roleadmin"));
     const roles = await User.get_roles();
-    expect(roles).not.toContainEqual({ id: 5, role: "muppets" });
+    expect(roles).not.toContainEqual({ id: 50, role: "muppets" });
   });
 });
 /**
@@ -530,9 +532,80 @@ describe("localizer", () => {
       .expect(toRedirect("/site-structure/localizer/edit/da"));
   });
 });
+/**
+ * Diagram tests
+ */
+describe("diagram", () => {
+  itShouldRedirectUnauthToLogin("/diagram");
+  itShouldIncludeTextForAdmin("/diagram", ">All entities<");
+
+  it("get data diagram", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/diagram/data")
+      .set("Cookie", loginCookie)
+      .expect(
+        respondJsonWith(
+          200,
+          ({ elements, style }) => elements && style.length > 3
+        )
+      );
+  });
+});
 
 /**
- * Pages tests
+ * Diagram tests
+ */
+describe("tags", () => {
+  itShouldRedirectUnauthToLogin("/tag");
+  itShouldIncludeTextForAdmin("/tag", ">Create tag<");
+  itShouldIncludeTextForAdmin("/tag/new", ">Create<");
+  it("creates new tag", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag")
+      .set("Cookie", loginCookie)
+      .send("name=MyNewTestTag")
+      .expect(toRedirect("/tag/1?show_list=tables"));
+  });
+
+  itShouldIncludeTextForAdmin("/tag", "MyNewTestTag");
+  itShouldIncludeTextForAdmin("/tag/1", "MyNewTestTag");
+  itShouldIncludeTextForAdmin("/tag-entries/add/tables/1", "Add entries");
+  itShouldIncludeTextForAdmin("/tag-entries/add/pages/1", "Add entries");
+  itShouldIncludeTextForAdmin("/tag-entries/add/views/1", "Add entries");
+  itShouldIncludeTextForAdmin("/tag-entries/add/triggers/1", "Add entries");
+  it("adds view to tag ", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag-entries/add/views/1")
+      .set("Cookie", loginCookie)
+      .send("ids=1")
+      .expect(toRedirect("/tag/1?show_list=views"));
+  });
+  itShouldIncludeTextForAdmin("/diagram", "MyNewTestTag");
+  it("removes view from tag ", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag-entries/remove/views/1/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/tag/1?show_list=views"));
+  });
+  it("deletes new tag", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/tag/delete/1")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/tag"));
+  });
+});
+/**
+ * Clear all tests
  */
 describe("clear all page", () => {
   itShouldRedirectUnauthToLogin("/admin/clear-all");

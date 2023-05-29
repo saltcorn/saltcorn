@@ -83,6 +83,13 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           if (!s || s === "") return req.__("Missing label");
           if (!id && existing_names.includes(Field.labelToName(s)))
             return req.__("Column %s already exists", s);
+          if (Field.labelToName(s) === "row")
+            return req.__("Not a valid field name");
+          try {
+            new Function(Field.labelToName(s), "return;");
+          } catch {
+            return req.__("Not a valid field name");
+          }
         },
       }),
       // description
@@ -398,9 +405,16 @@ const fieldFlow = (req) =>
           ];
           const keyfields = orderedFields
             .filter((f) => !f.calculated || f.stored)
+            .sort((a, b) =>
+              a.type?.name === "String" && b.type?.name !== "String"
+                ? -1
+                : a.type?.name !== "String" && b.type?.name === "String"
+                ? 1
+                : 0
+            )
             .map((f) => ({
               value: f.name,
-              label: f.label,
+              label: `${f.label} [${f.type?.name || f.type}]`,
             }));
           const textfields = orderedFields
             .filter(
@@ -412,6 +426,9 @@ const fieldFlow = (req) =>
               new Field({
                 name: "summary_field",
                 label: req.__("Summary field"),
+                sublabel: req.__(
+                  "The field that will be shown to the user when choosing a value"
+                ),
                 input_type: "select",
                 options: keyfields,
               }),
@@ -454,14 +471,11 @@ const fieldFlow = (req) =>
       },
       {
         name: req.__("Default"),
-        onlyWhen: async (context) => {
-          if (!context.required || context.id || context.calculated)
-            return false;
+        onlyWhen: async (context) => context.required && !context.calculated,
+
+        form: async (context) => {
           const table = await Table.findOne({ id: context.table_id });
           const nrows = await table.countRows();
-          return nrows > 0;
-        },
-        form: async (context) => {
           const formfield = new Field({
             name: "default",
             label: req.__("Default"),
@@ -474,12 +488,28 @@ const fieldFlow = (req) =>
             },
           });
           await formfield.fill_fkey_options();
-          return new Form({
-            blurb: req.__(
-              "A default value is required when adding required fields to nonempty tables"
-            ),
-            fields: [formfield],
+          const defaultOptional = nrows === 0 || context.id;
+          if (defaultOptional) formfield.showIf = { set_default: true };
+
+          const form = new Form({
+            blurb: defaultOptional
+              ? req.__("Set a default value for missing data")
+              : req.__(
+                  "A default value is required when adding required fields to nonempty tables"
+                ),
+            fields: [
+              ...(defaultOptional
+                ? [{ name: "set_default", label: "Set Default", type: "Bool" }]
+                : []),
+              formfield,
+            ],
           });
+          if (
+            typeof context.default !== "undefined" &&
+            context.default !== null
+          )
+            form.values.set_default = true;
+          return form;
         },
       },
     ],
@@ -707,7 +737,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
     const table = await Table.findOne({ name: tableName });
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
 
     const fields = await table.getFields();
     let row = { ...req.body };

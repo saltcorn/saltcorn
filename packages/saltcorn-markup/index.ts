@@ -8,7 +8,7 @@ import renderBuilder = require("./builder");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
-const { a, text, div, button, time, i } = tags;
+const { a, text, div, button, hr, time, i, input } = tags;
 import layoutUtils = require("./layout_utils");
 const { alert } = layoutUtils;
 
@@ -249,5 +249,8 @@ export = {
   div,
   a,
   i,
+  button,
+  input,
+  hr,
   alert,
 };

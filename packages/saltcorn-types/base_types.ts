@@ -333,12 +333,26 @@ export type MobileConfig = {
   entry_point: string;
   // server_path <=> base_url
   localTableIds: number[];
+  allowOfflineMode?: boolean;
+  isOfflineMode?: boolean;
+  networkState?:
+    | "cellular"
+    | "2g"
+    | "3g"
+    | "4g"
+    | "ethernet"
+    | "none"
+    | "unknown"
+    | "wifi";
   pluginHeaders?: string[];
   role_id?: number;
   user_name?: string;
+  user_id?: number;
   language?: string;
   isPublicUser?: boolean;
   jwt?: string;
+  inErrorState?: boolean;
+  inLoadState?: boolean;
 };
 
 export type JoinFieldOption = {

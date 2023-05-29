@@ -40,7 +40,7 @@ const sum = (xs) => {
  * @param {number} ncols
  * @returns {number}
  */
-const resetWidths = (ncols) => ntimes(ncols - 1, () => 12 / ncols);
+const resetWidths = (ncols) => ntimes(ncols - 1, () => Math.floor(12 / ncols));
 
 /**
  * @param {number[]} widths
@@ -117,7 +117,7 @@ const ColumnsSettings = () => {
                 className="form-control"
                 step="1"
                 min="1"
-                max="4"
+                max="6"
                 onChange={(e) => {
                   if (!e.target) return;
                   const value = e.target.value;

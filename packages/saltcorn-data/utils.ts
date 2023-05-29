@@ -232,6 +232,53 @@ const getSafeSaltcornCmd = () => {
     : join(dirname(require!.main!.filename), "saltcorn");
 };
 
+/**
+ * get base_url config without ending slash
+ * @returns url or empty string
+ */
+const getSafeBaseUrl = () => {
+  const path = require("./db/state").getState().getConfig("base_url");
+  return !path
+    ? ""
+    : path.endsWith("/")
+    ? path.substring(0, path.length - 1)
+    : path;
+};
+
+/**
+ * @param s relation syntax
+ * @returns the first table (source) and the relation as path array
+ */
+const parseRelationPath = (s: string) => {
+  const tokens = s.split(".");
+  const path = [];
+  for (const relation of tokens.slice(2)) {
+    if (relation.indexOf("$") > 0) {
+      const [table, inboundKey] = relation.split("$");
+      path.push({ table, inboundKey });
+    } else {
+      path.push({ fkey: relation });
+    }
+  }
+  return { sourcetable: tokens[1], path };
+};
+
+/**
+ * @param sourcetable the first table (source)
+ * @param path relation as path array
+ * @returns relation syntax as string
+ */
+const buildRelationPath = (
+  sourcetable: string,
+  path: { table: string; fkey?: string; inboundKey?: string }[]
+) => {
+  return `.${sourcetable}.${path
+    .map(({ table, fkey, inboundKey }) => {
+      return inboundKey ? `${table}$${inboundKey} ` : fkey;
+    })
+    .join(".")}`;
+};
+
 export = {
   objectToQueryString,
   removeEmptyStrings,
@@ -258,4 +305,7 @@ export = {
   hashState,
   extractPagings,
   getSafeSaltcornCmd,
+  getSafeBaseUrl,
+  parseRelationPath,
+  buildRelationPath,
 };

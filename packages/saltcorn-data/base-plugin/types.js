@@ -28,6 +28,7 @@ const {
   section,
   pre,
   code,
+  time,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
@@ -327,40 +328,47 @@ const string = {
     );
     return [
       {
-        name: "regexp",
-        type: "String",
-        required: false,
-        sublabel: "Match regular expression",
-        validator(s) {
-          if (!is_valid_regexp(s)) return "Not a valid Regular Expression";
-        },
-      },
-      {
-        name: "re_invalid_error",
-        type: "String",
-        required: false,
-        sublabel: "Error message when regular expression does not match",
-      },
-      {
-        name: "min_length",
-        type: "Integer",
-        required: false,
-        sublabel: "The minimum number of characters in the string",
-      },
-      {
-        name: "max_length",
-        type: "Integer",
-        required: false,
-        sublabel: "The maximum number of characters in the string",
-      },
-
-      {
         name: "options",
+        label: "Options",
         type: "String",
         required: false,
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
       },
+      {
+        name: "min_length",
+        label: "Min length",
+        type: "Integer",
+        required: false,
+        sublabel: "The minimum number of characters in the string",
+        attributes: { asideNext: true },
+      },
+      {
+        name: "max_length",
+        label: "Max length",
+        type: "Integer",
+        required: false,
+        sublabel: "The maximum number of characters in the string",
+      },
+      {
+        name: "regexp",
+        type: "String",
+        label: "Regular expression",
+        required: false,
+        sublabel: "String value must match regular expression",
+        validator(s) {
+          if (!is_valid_regexp(s)) return "Not a valid Regular Expression";
+        },
+        attributes: { asideNext: true },
+      },
+      {
+        name: "re_invalid_error",
+        label: "Error message",
+        type: "String",
+        required: false,
+        sublabel: "Error message when regular expression does not match",
+      },
+
       ...(table
         ? [
             {
@@ -411,11 +419,11 @@ const string = {
     preFormatted: {
       isEdit: false,
       run: (s) =>
-        s ? span({ style: "white-space:pre" }, text_attr(s || "")) : s,
+        s ? span({ style: "white-space:pre-wrap" }, text_attr(s || "")) : "",
     },
     code: {
       isEdit: false,
-      run: (s) => (s ? pre(code(text_attr(s || ""))) : s),
+      run: (s) => (s ? pre(code(text_attr(s || ""))) : ""),
     },
     /**
      * @namespace
@@ -929,7 +937,10 @@ const int = {
         return attrs?.stepper_btns
           ? number_stepper(name, v, attrs, cls, text_attr(field.name), id)
           : input({
-              type: "number",
+              type: attrs?.type || "number",
+              inputmode: attrs?.inputmode,
+              pattern: attrs?.pattern,
+              autocomplete: attrs?.autocomplete,
               class: ["form-control", cls],
               disabled: attrs.disabled,
               readonly: attrs.readonly,
@@ -1012,8 +1023,8 @@ const int = {
   },
   /** @type {object[]}  */
   attributes: [
-    { name: "min", type: "Integer", required: false },
-    { name: "max", type: "Integer", required: false },
+    { name: "min", label: "Minimum", type: "Integer", required: false },
+    { name: "max", label: "Maximum", type: "Integer", required: false },
   ],
   /**
    * @param {object} param
@@ -1211,7 +1222,9 @@ const float = {
       case "number":
         return v;
       case "string":
-        const parsed = parseFloat(v);
+        const stripped = v.replace(/[^0-9.\-e]+/g, "");
+        if (!stripped) return undefined;
+        const parsed = Number(stripped);
         return isNaN(parsed) ? undefined : parsed;
       default:
         return undefined;
@@ -1316,15 +1329,15 @@ const date = {
       ],
       run: (d, req, options) => {
         if (!d) return "";
-        const loc = locale(req);
-        if (loc) {
-          if (!options || !options.format)
-            return text(moment(d).locale(loc).format());
-          return text(moment(d).locale(loc).format(options.format));
-        } else {
-          if (!options || !options.format) return text(moment(d).format());
-          return text(moment(d).format(options.format));
-        }
+        return time(
+          {
+            datetime: new Date(d).toISOString(),
+            "locale-date-format": encodeURIComponent(
+              JSON.stringify(options?.format)
+            ),
+          },
+          moment(d).format(options?.format)
+        );
       },
     },
     /**
@@ -1513,9 +1526,19 @@ const bool = {
      */
     edit: {
       isEdit: true,
+      configFields: [
+        {
+          name: "size",
+          label: "Size",
+          type: "String",
+          attributes: {
+            options: ["normal", "medium", "large"],
+          },
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          class: ["me-2 mt-1", cls],
+          class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
           onChange: attrs.onChange,
@@ -1525,6 +1548,25 @@ const bool = {
           ...(v && { checked: true }),
           ...(attrs.disabled && { onclick: "return false;" }),
         }),
+    },
+    switch: {
+      isEdit: true,
+      run: (nm, v, attrs, cls, required, field) =>
+        span(
+          { class: "form-switch" },
+          input({
+            class: ["form-check-input", cls],
+            "data-fieldname": text_attr(field.name),
+            type: "checkbox",
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+            role: "switch",
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+            ...(v && { checked: true }),
+            ...(attrs.disabled && { onclick: "return false;" }),
+          })
+        ),
     },
     /**
      * @namespace

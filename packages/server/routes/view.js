@@ -42,7 +42,7 @@ router.get(
     const { viewname } = req.params;
     const query = { ...req.query };
     const view = await View.findOne({ name: viewname });
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const state = getState();
     state.log(3, `Route /view/${viewname} user=${req.user?.id}`);
     if (!view) {
@@ -51,6 +51,7 @@ router.get(
       res.redirect("/");
       return;
     }
+    const tic = state.logLevel >= 5 ? new Date() : null;
 
     view.rewrite_query_from_slug(query, req.params);
     if (
@@ -82,6 +83,11 @@ router.get(
       );
     if (isModal && view.attributes?.popup_save_indicator)
       res.set("SaltcornModalSaveIndicator", `true`);
+    if (tic) {
+      const tock = new Date();
+      const ms = tock.getTime() - tic.getTime();
+      state.log(5, `View ${viewname} rendered in ${ms} ms`);
+    }
     res.sendWrap(
       title,
       add_edit_bar({
@@ -151,7 +157,7 @@ router.post(
   "/:viewname/:route",
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const state = getState();
     state.log(
       3,
@@ -185,7 +191,7 @@ router.post(
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const query = { ...req.query };
     const state = getState();
     state.log(3, `Route /view/${viewname} POST user=${req.user?.id}`);

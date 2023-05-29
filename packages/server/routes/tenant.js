@@ -7,7 +7,11 @@
 
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
-const { getState, add_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  add_tenant,
+  getRootState,
+} = require("@saltcorn/data/db/state");
 const {
   create_tenant,
   getAllTenants,
@@ -38,7 +42,7 @@ const {
   code,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
-//const url = require("url");
+
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
 const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
@@ -49,6 +53,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
+//const {quote} = require("@saltcorn/db-common");
 // todo add button backup / restore for particular tenant (available in admin tenants screens)
 //const {
 //  create_backup,
@@ -65,14 +70,19 @@ const { getConfig } = require("@saltcorn/data/models/config");
 const router = new Router();
 module.exports = router;
 
+const remove_leading_chars = (cs, s) =>
+  s.startsWith(cs) ? remove_leading_chars(cs, s.substring(cs.length)) : s;
+
 /**
  * Declare Form to create Tenant
  * @param {object} req - Request
+ * @param base_url - Base URL
  * @returns {Form} - Saltcorn Form Declaration
  * @category server
  */
 // TBD add form field email for tenant admin
-const tenant_form = (req) =>
+
+const tenant_form = (req, base_url) =>
   new Form({
     action: "/tenant/create",
     submitLabel: req.__("Create"),
@@ -85,7 +95,7 @@ const tenant_form = (req) =>
         name: "subdomain",
         label: req.__("Application name"),
         input_type: "text",
-        postText: text(req.hostname),
+        postText: text("." + base_url),
       },
     ],
   });
@@ -100,8 +110,9 @@ const tenant_form = (req) =>
  */
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
 const create_tenant_allowed = (req) => {
-  const required_role = +getState().getConfig("role_to_create_tenant") || 10;
-  const user_role = req.user ? req.user.role_id : 10;
+  const required_role =
+    +getRootState().getConfig("role_to_create_tenant") || 100;
+  const user_role = req.user ? req.user.role_id : 100;
   return user_role <= required_role;
 };
 
@@ -117,6 +128,13 @@ const is_ip_address = (hostname) => {
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
 
+const get_cfg_tenant_base_url = (req) =>
+  remove_leading_chars(
+    ".",
+    getRootState().getConfig("tenant_baseurl", req.hostname)
+  )
+    .replace("http://", "")
+    .replace("https://", "");
 /**
  * Create tenant screen runnning
  * @name get/create
@@ -126,10 +144,7 @@ const is_ip_address = (hostname) => {
 router.get(
   "/create",
   error_catcher(async (req, res) => {
-    if (
-      !db.is_it_multi_tenant() ||
-      db.getTenantSchema() !== db.connectObj.default_schema
-    ) {
+    if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -137,7 +152,13 @@ router.get(
       return;
     }
     if (!create_tenant_allowed(req)) {
-      res.sendWrap(req.__("Create application"), req.__("Not allowed"));
+      const redir = getState().getConfig("tenant_create_unauth_redirect");
+      const redirRoot = getRootState().getConfig(
+        "tenant_create_unauth_redirect"
+      );
+      if (redir) res.redirect(redir);
+      else if (redirRoot) res.redirect(redirRoot);
+      else res.sendWrap(req.__("Create application"), req.__("Not allowed"));
       return;
     }
 
@@ -149,6 +170,7 @@ router.get(
         )
       );
     let create_tenant_warning_text = "";
+    const base_url = get_cfg_tenant_base_url(req);
     if (getState().getConfig("create_tenant_warning")) {
       create_tenant_warning_text = getState().getConfig(
         "create_tenant_warning_text"
@@ -192,13 +214,13 @@ router.get(
     res.sendWrap(
       req.__("Create application"),
       create_tenant_warning_text +
-        renderForm(tenant_form(req), req.csrfToken()) +
+        renderForm(tenant_form(req, base_url), req.csrfToken()) +
         p(
           { class: "mt-2" },
           req.__("To login to a previously created application, go to: "),
           code(`${req.protocol}://`) +
             i(req.__("Application name")) +
-            code("." + req.hostname)
+            code("." + base_url)
         )
     );
   })
@@ -207,16 +229,17 @@ router.get(
  * Return URL of new Tenant
  * @param {object} req - Request
  * @param {string} subdomain - Tenant Subdomain name string
+ * @param base_url - Base URL
  * @returns {string}
  */
-const getNewURL = (req, subdomain) => {
+const getNewURL = (req, subdomain, base_url) => {
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
     const hosts = host.split(":");
     if (hosts.length > 1) ports = `:${hosts[1]}`;
   }
-  const hostname = req.hostname;
+  const hostname = base_url || req.hostname;
   // return newurl
   return `${req.protocol}://${subdomain}.${hostname}${ports}/`;
 };
@@ -231,10 +254,7 @@ router.post(
   "/create",
   error_catcher(async (req, res) => {
     // check that multi-tenancy is enabled
-    if (
-      !db.is_it_multi_tenant() ||
-      db.getTenantSchema() !== db.connectObj.default_schema
-    ) {
+    if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -263,7 +283,7 @@ router.post(
       const description = valres.success.description;
       // get list of tenants
       const allTens = await getAllTenants();
-      if (allTens.includes(subdomain) || !subdomain) {
+      if (allTens.includes(subdomain) || !subdomain || subdomain === "public") {
         form.errors.subdomain = req.__(
           "A site with this subdomain already exists"
         );
@@ -274,7 +294,8 @@ router.post(
         );
       } else {
         // tenant url
-        const newurl = getNewURL(req, subdomain);
+        const base_url = get_cfg_tenant_base_url(req);
+        const newurl = getNewURL(req, subdomain, base_url);
         // tenant template
         const tenant_template = getState().getConfig("tenant_template");
         // tenant creator
@@ -426,6 +447,12 @@ const tenant_settings_form = (req) =>
       "create_tenant_warning",
       "create_tenant_warning_text",
       "tenant_template",
+      "tenant_baseurl",
+      "tenant_create_unauth_redirect",
+      { section_header: req.__("Tenant application capabilities") },
+      "tenants_install_git",
+      "tenants_set_npm_modules",
+      "tenants_unsafe_plugins",
     ],
     action: "/tenant/settings",
     submitLabel: req.__("Save"),
@@ -512,8 +539,11 @@ const get_tenant_info = async (subdomain) => {
   // get tenant row
   const ten = await Tenant.findOne({ subdomain: saneDomain });
   if (ten) {
+    //info.ten = ten;
     info.description = ten.description;
     info.created = ten.created;
+    info.template = ten.template;
+    info.email = ten.email;
   }
 
   // get data from tenant schema
@@ -523,10 +553,19 @@ const get_tenant_info = async (subdomain) => {
     if (firstUser && firstUser.length > 0) {
       info.first_user_email = firstUser[0].email;
     }
+    // todo sort in alphabet order
+    // config items count
+    info.nconfigs = await db.count("_sc_config");
+    // error messages count
+    info.nerrors = await db.count("_sc_errors");
+    // event log
+    info.nevent_log = await db.count("_sc_event_log");
     // users count
     info.nusers = await db.count("users");
     // roles count
     info.nroles = await db.count("_sc_roles");
+    // table_constraints count
+    info.ntable_constraints = await db.count("_sc_table_constraints");
     // tables count
     info.ntables = await db.count("_sc_tables");
     // table fields count
@@ -537,19 +576,25 @@ const get_tenant_info = async (subdomain) => {
     info.nfiles = await db.count("_sc_files");
     // pages count
     info.npages = await db.count("_sc_pages");
-    // triggers (actions) ccount
+    // triggers (actions) count
     info.nactions = await db.count("_sc_triggers");
-    // error messages count
-    info.nerrors = await db.count("_sc_errors");
-    // config items count
-    info.nconfigs = await db.count("_sc_config");
     // plugins count
     info.nplugins = await db.count("_sc_plugins");
     // migration count
     info.nmigrations = await db.count("_sc_migrations");
     // library count
     info.nlibrary = await db.count("_sc_library");
-    // TBD decide Do we need count tenants, table constraints
+    // notifications
+    info.nnotifications = await db.count("_sc_notifications");
+    // tags
+    info.ntags = await db.count("_sc_tags");
+    // tag_entries
+    info.ntag_entries = await db.count("_sc_tag_entries");
+    // snapshots
+    info.nsnapshots = await db.count("_sc_snapshots");
+    // session - Only for main app?
+    //info.nsession = await db.count("_sc_session");
+
     // base url
     info.base_url = await getConfig("base_url");
     return info;
@@ -604,51 +649,76 @@ router.get(
                       { href: "mailto:" + info.first_user_email },
                       info.first_user_email
                     )
-                  )
+                  ),
+                  th(req.__("Template")),
+                  td(a({ href: info.base_url }, info.template))
                 ),
                 tr(
                   th(req.__("Users")),
-                  td(a({ href: info.base_url + "useradmin" }, info.nusers))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "useradmin" }, info.nusers)),
                   th(req.__("Roles")),
                   td(a({ href: info.base_url + "roleadmin" }, info.nroles))
                 ),
                 tr(
                   th(req.__("Tables")),
-                  td(a({ href: info.base_url + "table" }, info.ntables))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "table" }, info.ntables)),
                   th(req.__("Table columns")),
                   td(a({ href: info.base_url + "table" }, info.nfields))
                 ),
                 tr(
-                  th(req.__("Views")),
-                  td(a({ href: info.base_url + "viewedit" }, info.nviews))
+                  th(req.__("Table constraints")),
+                  td(
+                    a(
+                      { href: info.base_url + "table" },
+                      info.ntable_constraints
+                    )
+                  ),
+                  th(req.__("Library")),
+                  td(a({ href: info.base_url + "library/list" }, info.nlibrary))
                 ),
                 tr(
+                  th(req.__("Views")),
+                  td(a({ href: info.base_url + "viewedit" }, info.nviews)),
                   th(req.__("Pages")),
                   td(a({ href: info.base_url + "pageedit" }, info.npages))
                 ),
                 tr(
                   th(req.__("Files")),
-                  td(a({ href: info.base_url + "files" }, info.nfiles))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "files" }, info.nfiles)),
                   th(req.__("Actions")),
                   td(a({ href: info.base_url + "actions" }, info.nactions))
                 ),
                 tr(
                   th(req.__("Modules")),
-                  td(a({ href: info.base_url + "plugins" }, info.nplugins))
-                ),
-                tr(
+                  td(a({ href: info.base_url + "plugins" }, info.nplugins)),
                   th(req.__("Configuration items")),
                   td(a({ href: info.base_url + "admin" }, info.nconfigs))
                 ),
                 tr(
+                  // Crashlogs only for main site?
                   th(req.__("Crashlogs")),
-                  td(a({ href: info.base_url + "crashlog" }, info.nerrors))
+                  td(a({ href: info.base_url + "crashlog" }, info.nerrors)),
+                  //th(req.__("Sessions")),
+                  //td(a({ href: info.base_url + "crashlog" }, info.nsessions)),
+                  th(req.__("Event logs")),
+                  td(a({ href: info.base_url + "eventlog" }, info.nevent_log))
+                  // Notifications only for main site?
+                  //th(req.__("Notifications")),
+                  //td(a({ href: info.base_url + "???" }, info.nnotifications)),
+                ),
+                tr(
+                  th(req.__("Snapshots")),
+                  td(
+                    a({ href: info.base_url + "admin/backup" }, info.nsnapshots)
+                  ),
+                  th(req.__("Migrations")),
+                  td(a({ href: info.base_url + "admin" }, info.nmigrations))
+                ),
+                tr(
+                  th(req.__("Tags")),
+                  td(a({ href: info.base_url + "tag" }, info.ntags)),
+                  th(req.__("Tag Entries")),
+                  td(a({ href: info.base_url + "tag" }, info.ntag_entries))
                 )
               ),
             ],
@@ -673,6 +743,7 @@ router.get(
                       name: "description",
                       label: req.__("Description"),
                       type: "String",
+                      fieldview: "textarea",
                     },
                   ],
                   values: {

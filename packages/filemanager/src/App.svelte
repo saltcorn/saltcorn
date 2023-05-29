@@ -74,8 +74,8 @@
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
 
-  async function POST(url, body) {
-    return await fetch(url, {
+  async function POST(url, body, isDownload) {
+    const go=fetch(url, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "CSRF-Token": window._sc_globalCsrf,
@@ -84,6 +84,23 @@
       method: "POST",
       body: JSON.stringify(body || {}),
     });
+    if(isDownload){
+      const res = await go
+      const blob = await res.blob()
+
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      const header = res.headers.get('Content-Disposition');
+      if(header){
+        const parts = header.split(';');
+        let filename = parts[1].split('=')[1].replaceAll('"', "");
+        link.download = filename;
+      } else link.target = "_blank";
+      link.click();
+    
+      return
+   } else
+      return await go;
   }
 
   async function goAction(e) {
@@ -113,6 +130,11 @@
         });
         await fetchAndReset();
         break;
+      case "Unzip":
+        await POST(`/files/unzip/${lastSelected.location}`, {});
+        await fetchAndReset();
+        break;
+
     }
   }
   async function changeAccessRole(e) {
@@ -122,6 +144,17 @@
       await POST(`/files/setrole/${file.location}`, { role });
     }
     await fetchAndReset(true);
+  }
+  async function downloadZip() {
+    const filesToZip=[]
+    for (const fileNm of selectedList) {
+      filesToZip.push(fileNm)
+     
+    }
+    await POST(`/files/download-zip`, { 
+      files: filesToZip, 
+      location: currentFolder
+    }, true);
   }
   async function moveDirectory(e) {
     for (const fileNm of selectedList) {
@@ -363,8 +396,19 @@
             {#if selectedList.length === 1}
               <option>Rename</option>
             {/if}
+            {#if selectedList.length === 1 && lastSelected.filename.endsWith(".zip")}
+            <option>Unzip</option>
+          {/if}
           </select>
         </div>
+        {#if selectedList.length > 1}       
+          <button class="btn btn-outline-secondary mt-2" 
+                  on:click={downloadZip}>
+            <i class="fas fa-file-archive"></i>
+            Download Zip Archive
+          </button>
+        {/if}
+        
       {/if}
     </div>
   </div>

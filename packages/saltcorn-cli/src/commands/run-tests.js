@@ -61,25 +61,6 @@ class RunTestsCommand extends Command {
   }
 
   /**
-   * RUN End To End Text (E2E) using npm
-   * @param {*} env
-   * @returns {Promise<void>}
-   */
-  async e2etest(env) {
-    const port = 2987;
-    const server = await this.prepareTestServer(env, port);
-    const res = await this.do_test(
-      "npm",
-      ["run", "gotest"],
-      env,
-      "packages/e2e",
-      true
-    );
-    server.kill();
-    if (res.status !== 0) this.exit(res.status);
-  }
-
-  /**
    * Remote Query tests run
    * @param {*} env
    * @param jestParams
@@ -126,14 +107,16 @@ class RunTestsCommand extends Command {
     this.validateCall(args, flags);
     let env;
 
+    const dbname = flags.database? flags.database: "saltcorn_test";
+
     const db = require("@saltcorn/data/db");
     if (db.isSQLite) {
       const testdbpath = "/tmp/sctestdb";
       await db.changeConnection({ sqlite_path: testdbpath });
       env = { ...process.env, SQLITE_FILEPATH: testdbpath };
-    } else if (db.connectObj.database !== "saltcorn_test") {
-      await db.changeConnection({ database: "saltcorn_test" });
-      env = { ...process.env, PGDATABASE: "saltcorn_test" };
+    } else if (db.connectObj.database !== dbname) {
+      await db.changeConnection({ database: dbname });
+      env = { ...process.env, PGDATABASE: dbname };
     }
     spawnSync("npm", ["run", "tsc"], {
       stdio: "inherit",
@@ -155,7 +138,7 @@ class RunTestsCommand extends Command {
     if (flags.verbose) {
       jestParams.push("--verbose");
     }
-    if (flags.detectOpenHandles){
+    if (flags.detectOpenHandles) {
       jestParams.push("--detectOpenHandles");
     }
     if (flags.testFilter) {
@@ -171,8 +154,6 @@ class RunTestsCommand extends Command {
       await this.do_test("npm", ["run", "test", ...jestParams], env);
     } else if (args.package === "view-queries") {
       await this.remoteQueryTest(env, jestParams);
-    } else if (args.package === "e2e") {
-      await this.e2etest(env);
     } else if (args.package) {
       const cwd = "packages/" + args.package;
       await this.do_test("npm", ["run", "test", ...jestParams], env, cwd);
@@ -184,7 +165,6 @@ class RunTestsCommand extends Command {
         env,
         cwd
       );
-      //await this.e2etest(env);
     }
     this.exit(0);
   }
@@ -209,7 +189,10 @@ RunTestsCommand.flags = {
   coverage: flags.boolean({ char: "c", description: "Coverage" }),
   listTests: flags.boolean({ char: "l", description: "List tests" }),
   verbose: flags.boolean({ char: "v", description: "Verbose" }),
-  detectOpenHandles: flags.boolean({ char: "d", description: "Detect Open Handles"}),
+  detectOpenHandles: flags.boolean({
+    char: "d",
+    description: "Detect Open Handles",
+  }),
   testFilter: flags.string({
     char: "t",
     description: "Filter tests by suite or test name",
@@ -222,6 +205,10 @@ RunTestsCommand.flags = {
   watchAll: flags.boolean({
     string: "watchAll",
     description: "Watch files for changes and rerun all tests.",
+  }),
+  database: flags.string({
+    string: "database",
+    description: "Run on specified database. Default is saltcorn_test",
   }),
 };
 

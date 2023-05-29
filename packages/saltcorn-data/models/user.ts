@@ -100,7 +100,7 @@ class User {
     if (o.id) this.id = +o.id as number;
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry = convertDateParam(o.reset_password_expiry);
-    this.role_id = o.role_id ? +o.role_id : 8;
+    this.role_id = o.role_id ? +o.role_id : 80;
     this.last_mobile_login = convertDateParam(o.last_mobile_login);
     Object.assign(this, safeUserFields(o));
   }
@@ -557,9 +557,12 @@ class User {
   /**
    * @param {object} req
    */
-  relogin(req: NonNullable<any>): void {
-    req.login(this.session_object, function (err: any) {
-      if (err) req.flash("danger", err);
+  relogin(req: NonNullable<any>): Promise<void> {
+    return new Promise((resolve, reject) => {
+      req.login(this.session_object, function (err: any) {
+        if (err) req.flash("danger", err);
+        resolve();
+      });
     });
   }
 

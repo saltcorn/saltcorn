@@ -21,7 +21,12 @@ const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
 const { getPageList } = require("./common_lists");
 
-const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("./utils.js");
 const {
   mkTable,
   renderForm,
@@ -50,9 +55,9 @@ module.exports = router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const pagePropertiesForm = async (req) => {
+const pagePropertiesForm = async (req, isNew) => {
   const roles = await User.get_roles();
-
+  const pages = (await Page.find()).map((p) => p.name);
   const form = new Form({
     action: addOnDoneRedirect("/pageedit/edit-properties", req),
     fields: [
@@ -62,6 +67,8 @@ const pagePropertiesForm = async (req) => {
         required: true,
         validator(s) {
           if (s.length < 1) return req.__("Missing name");
+          if (pages.includes(s) && isNew)
+            return req.__("A page with this name already exists");
         },
         sublabel: req.__("A short name that will be in your URL"),
         type: "String",
@@ -224,7 +231,7 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const pages = await Page.find({}, { orderBy: "name" });
+    const pages = await Page.find({}, { orderBy: "name", nocase: true });
     const roles = await User.get_roles();
 
     res.sendWrap(req.__("Pages"), {
@@ -326,7 +333,7 @@ router.get(
   "/new",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await pagePropertiesForm(req);
+    const form = await pagePropertiesForm(req, true);
     res.sendWrap(
       req.__(`Page attributes`),
       wrap(renderForm(form, req.csrfToken()), false, req)
@@ -344,7 +351,7 @@ router.post(
   "/edit-properties",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await pagePropertiesForm(req);
+    const form = await pagePropertiesForm(req, !req.body.id);
     form.hidden("id");
     form.validate(req.body);
     if (form.hasErrors) {
@@ -380,7 +387,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
-    const page = await Page.findOne({ name: pagename });
+    const [page] = await Page.find({ name: pagename });
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
@@ -422,9 +429,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
 
-    let redirectTarget = req.query.on_done_redirect
-      ? `/${req.query.on_done_redirect}`
-      : "/pageedit";
+    let redirectTarget =
+      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/pageedit";
     const page = await Page.findOne({ name: pagename });
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
@@ -498,7 +506,7 @@ router.post(
     const valres = form.validate(req.body);
     if (valres.success) {
       const home_page_by_role =
-        getState().getConfigCopy("home_page_by_role", []) || [];
+        getState().getConfigCopy("home_page_by_role", {}) || {};
       for (const role of roles) {
         home_page_by_role[role.id] = valres.success[role.role];
       }

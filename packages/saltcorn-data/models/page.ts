@@ -32,6 +32,8 @@ const {
   fill_presets,
 } = require("../base-plugin/viewtemplates/viewable_fields");
 import utils from "../utils";
+const { run_action_column } = require("../plugin-helper");
+
 import { extractFromLayout } from "../diagram/node_extract_utils";
 const {
   InvalidConfiguration,
@@ -41,6 +43,7 @@ const {
   objectToQueryString,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import Crash from "./crash";
 
 /**
  * Page Class
@@ -210,6 +213,9 @@ class Page implements AbstractPage {
    * @returns {Promise<any>}
    */
   async run(querystate: any, extraArgs: RunExtra): Promise<Layout> {
+    require("../db/state")
+      .getState()
+      .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
     await eachView(this.layout, async (segment: any) => {
       const view = await View.findOne({ name: segment.view });
       if (!view) {
@@ -260,7 +266,7 @@ class Page implements AbstractPage {
               : "no page specified")
         );
       } else {
-        const role = (extraArgs.req.user || {}).role_id || 10;
+        const role = (extraArgs.req.user || {}).role_id || 100;
         const pageContent = await page.run(querystate, extraArgs);
         const { getState } = require("../db/state");
         segment.contents = getState()
@@ -271,6 +277,19 @@ class Page implements AbstractPage {
     const pagename = this.name;
     traverseSync(this.layout, {
       action(segment: any) {
+        if (segment.action_style === "on_page_load") {
+          //run action
+          run_action_column({
+            col: { ...segment },
+            referrer: extraArgs.req.get("Referrer"),
+            req: extraArgs.req,
+            res: extraArgs.res,
+          }).catch((e: any) => Crash.create(e, extraArgs.req));
+          segment.type = "blank";
+          segment.contents = "";
+          segment.style = {};
+          return;
+        }
         const url =
           segment.action_name === "GoBack"
             ? `javascript:${isNode() ? "history.back()" : "parent.goBack()"}`

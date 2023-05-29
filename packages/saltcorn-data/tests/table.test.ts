@@ -664,6 +664,22 @@ Gordon Kane, 217`;
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
   });
+  it("should ignore extra cols when importing", async () => {
+    const csv = `author,Pages,Pages1,citations
+William H Press, 852,7,100
+Peter Rossi, 212,9,200`;
+    const fnm = "/tmp/test1ok.csv";
+    await writeFile(fnm, csv);
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    const rows = await table.getRows({ author: "Peter Rossi" });
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].pages).toBe(212);
+  });
   it("should replace when id given", async () => {
     const csv = `id,author,Pages
 1, Noam Chomsky, 540
@@ -680,6 +696,7 @@ Gordon Kane, 217`;
     expect(rowsAfter).toBe(rowsBefore + 1);
     const row = await table.getRow({ id: 1 });
     expect(row?.pages).toBe(540);
+    await table.updateRow({ author: "Herman Melville" }, 1);
   });
   it("fail on required field", async () => {
     const csv = `author,Pagez
@@ -700,7 +717,7 @@ David MacKay, ITILA`;
     const fnm = "/tmp/test1.csv";
     await writeFile(fnm, csv);
     const table = await Table.create("books_not_req_pages", {
-      min_role_read: 10,
+      min_role_read: 100,
     });
     await Field.create({
       table,
@@ -725,6 +742,57 @@ David MacKay, ITILA`;
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
   });
+
+  it("CSV import fkeys as ints", async () => {
+    const table = await Table.create("book_reviews", {
+      min_role_read: 100,
+    });
+    await Field.create({
+      table,
+      name: "review",
+      label: "Review",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "author",
+      label: "Author",
+      type: "Key to books",
+      attributes: { summary_field: "author" },
+    });
+    const csv = `author,review
+1, Awesome
+2, Stunning`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table book_reviews",
+    });
+    const row = await table.getRow({ review: "Awesome" });
+    expect(row?.author).toBe(1);
+  });
+  it("CSV import fkeys as summary fields", async () => {
+    const table = Table.findOne({ name: "book_reviews" });
+    assertIsSet(table);
+    const csv = `author,review
+    Leo Tolstoy, Funny
+    Herman Melville, Whaley`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table book_reviews",
+    });
+    const row = await table.getRow({ review: "Funny" });
+    expect(row?.author).toBe(2);
+  });
+
   it("should create by importing", async () => {
     //db.set_sql_logging();
     const csv = `item,cost,count, vatable
@@ -1051,7 +1119,7 @@ describe("Table and view deletion ", () => {
       name: "anewview",
       viewtemplate: "List",
       configuration: { columns: [], default_state: {} },
-      min_role: 10,
+      min_role: 100,
     });
     let error;
     try {
@@ -1137,7 +1205,7 @@ describe("Tables with name clashes", () => {
           { type: "JoinField", join_field: "owner.name" },
         ],
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toContain("Mustang");
@@ -1162,7 +1230,7 @@ describe("Tables with name clashes", () => {
           ],
         },
       },
-      min_role: 10,
+      min_role: 100,
     });
     const res = await v.run({ id: 1 }, mockReqRes);
     expect(res).toContain("Mustang");
@@ -1190,7 +1258,44 @@ describe("Table joint unique constraint", () => {
     expect(!!res1.error).toBe(false);
   });
 });
+describe("Table formula constraint", () => {
+  it("should create table", async () => {
+    const table = await Table.findOne({ name: "books" });
+    assertIsSet(table);
+    assertIsSet(table.id);
 
+    const row0 = {
+      author: "Murphy",
+      pages: 499,
+    };
+
+    const tc = await TableConstraint.create({
+      table_id: table.id,
+      type: "Formula",
+      configuration: { formula: "pages>500", errormsg: "Too short" },
+    });
+    const table1 = await Table.findOne({ name: "books" });
+    assertIsSet(table1);
+
+    const res = await table1.tryInsertRow(row0);
+
+    assertIsErrorMsg(res);
+    expect(res.error).toBe("Too short");
+
+    const resup = await table1.updateRow({ pages: 355 }, 1);
+    expect(resup).toBe("Too short");
+    const uprow = await table1.getRow({ id: 1 });
+    expect(uprow?.pages).toBeGreaterThan(400);
+
+    await tc.delete();
+    const table2 = await Table.findOne({ name: "books" });
+    assertIsSet(table2);
+    const res1 = await table2.tryInsertRow(row0);
+
+    assertIsErrorMsg(res1);
+    expect(!!res1.error).toBe(false);
+  });
+});
 describe("Table with UUID pks", () => {
   if (!db.isSQLite) {
     it("should select uuid", async () => {
@@ -1338,7 +1443,7 @@ describe("external tables", () => {
   it("should build view", async () => {
     const table = Table.findOne({ name: "exttab" });
     assertIsSet(table);
-    const view = await createDefaultView(table, "List", 10);
+    const view = await createDefaultView(table, "List", 100);
     const contents = await view.run_possibly_on_page(
       {},
       mockReqRes.req,
@@ -1356,6 +1461,35 @@ describe("external tables", () => {
     );
   });
 });
+describe("table providers", () => {
+  it("should register plugin", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+  });
+  it("should create table", async () => {
+    await Table.create("JoeTable", {
+      provider_name: "provtab",
+      provider_cfg: { middle_name: "Robinette" },
+    });
+  });
+  it("should query", async () => {
+    const table = await Table.findOne({ name: "JoeTable" });
+    assertIsSet(table);
+    const rows = await table.getRows({});
+    expect(rows.length === 1);
+    expect(rows[0].name).toBe("Robinette");
+    expect(rows[0].age).toBe(36);
+  });
+  it("should change role", async () => {
+    const table = await Table.findOne({ name: "JoeTable" });
+    assertIsSet(table);
+    await table.update({ min_role_read: 40 });
+  });
+  it("should get role", async () => {
+    const table = await Table.findOne({ name: "JoeTable" });
+    assertIsSet(table);
+    expect(table.min_role_read).toBe(40);
+  });
+});
 
 describe("unique history clash", () => {
   it("should create table", async () => {
@@ -1366,6 +1500,19 @@ describe("unique history clash", () => {
       label: "Name",
       type: "String",
       is_unique: true,
+    });
+    await Field.create({
+      table,
+      label: "age",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "agep1",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "age ? age+1:null",
     });
   });
   it("should enable versioning", async () => {
@@ -1378,13 +1525,54 @@ describe("unique history clash", () => {
     const table = await Table.findOne({ name: "unihistory" });
     assertIsSet(table);
 
-    await table.insertRow({ name: "Bartimaeus" });
+    await table.insertRow({ name: "Bartimaeus", age: 2500 });
     const row = await table.getRow({ name: "Bartimaeus" });
     expect(row!.name).toBe("Bartimaeus");
     await table.deleteRows({ id: row!.id });
     await table.insertRow({ name: "Bartimaeus" });
     const row1 = await table.getRow({ name: "Bartimaeus" });
     expect(row1!.name).toBe("Bartimaeus");
+  });
+  it("should duplicate row manually", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+    const history0 = await table.get_history(row.id);
+
+    await table.updateRow({ age: 2501 }, row.id);
+    const row1 = await table.getRow({ name: "Bartimaeus" });
+    expect(row1!.name).toBe("Bartimaeus");
+    expect(row1!.age).toBe(2501);
+    const history1 = await table.get_history(row1!.id);
+    expect(history0.length + 1).toBe(history1.length);
+  });
+  it("should not clash unique with history", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+    await table.deleteRows({});
+    await table.insertRow({ name: "Bartimaeus", age: 2499 });
+  });
+  it("should disable and enable history", async () => {
+    const table = Table.findOne({ name: "unihistory" });
+    assertIsSet(table);
+    table.versioned = false;
+    await table.update(table);
+    table.versioned = true;
+    await table.update(table);
+    const row = await table.getRow({ name: "Bartimaeus" });
+    assertIsSet(row);
+
+    await table.updateRow({ age: 2502 }, row.id);
+    const row1 = await table.getRow({ name: "Bartimaeus" });
+    expect(row1!.name).toBe("Bartimaeus");
+    expect(row1!.age).toBe(2502);
+    await table.deleteRows({});
+    await table.insertRow({ name: "Bartimaeus", age: 2498 });
   });
 });
 

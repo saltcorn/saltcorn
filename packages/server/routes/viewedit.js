@@ -8,15 +8,9 @@
 const Router = require("express-promise-router");
 
 const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
-const {
-  p,
-  a,
-  div,
-  script,
-  text,
-  domReady,
-  pre,
-} = require("@saltcorn/markup/tags");
+const tags = require("@saltcorn/markup/tags");
+const { p, a, div, script, text, domReady, code, pre, tbody, tr, th, td } =
+  tags;
 
 const { getState } = require("@saltcorn/data/db/state");
 const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
@@ -29,6 +23,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const db = require("@saltcorn/data/db");
+const { sleep } = require("@saltcorn/data/utils");
 
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 
@@ -304,6 +299,7 @@ router.get(
     const roles = await User.get_roles();
     const pages = await Page.find();
     const form = await viewForm(req, tableOptions, roles, pages, viewrow);
+    const inbound_connected = await viewrow.inbound_connected_objects();
     form.hidden("id");
     res.sendWrap(req.__(`Edit view`), {
       above: [
@@ -324,6 +320,37 @@ router.get(
             viewrow.table_name
           ),
           contents: renderForm(form, req.csrfToken()),
+        },
+        {
+          type: "card",
+          title: req.__("View configuration"),
+          contents: {
+            type: "tabs",
+            contents: [
+              pre(code(JSON.stringify(viewrow.configuration, null, 2))),
+            ],
+            tabsStyle: "Accordion",
+            startClosed: true,
+            titles: [req.__("Show configuration object")],
+          },
+        },
+        {
+          type: "card",
+          title: req.__("Connected views"),
+          contents: tags.table(
+            tbody(
+              tr(
+                th({ class: "me-2" }, req.__("Embedded in")),
+                td(
+                  inbound_connected.embeddedViews.map((v) => v.name).join(", ")
+                )
+              ),
+              tr(
+                th({ class: "me-2" }, req.__("Linked from")),
+                td(inbound_connected.linkedViews.map((v) => v.name).join(", "))
+              )
+            )
+          ),
         },
       ],
     });
@@ -443,6 +470,7 @@ router.post(
           else v.configuration = {};
           //console.log(v);
           await View.create(v);
+          await sleep(500); // Allow other workers to load this view
         }
         res.redirect(
           addOnDoneRedirect(
@@ -465,14 +493,22 @@ router.post(
  * @param {object} res
  * @returns {void}
  */
-const respondWorkflow = (view, wf, wfres, req, res) => {
+const respondWorkflow = (view, wf, wfres, req, res, table) => {
   const wrap = (contents, noCard, previewURL) => ({
     above: [
       {
         type: "breadcrumbs",
         crumbs: [
           { text: req.__("Views"), href: "/viewedit" },
-          { href: `/view/${view.name}`, text: view.name },
+          {
+            href: `/view/${view.name}`,
+            text: view.name,
+            postLinkText: `[${view.viewtemplate}${
+              table
+                ? ` on ${a({ href: `/table/` + table.name }, table.name)}`
+                : ""
+            }]`,
+          },
           { workflow: wf, step: wfres },
         ],
       },
@@ -556,6 +592,9 @@ router.get(
     (view.configuration?.columns || []).forEach((c) => {
       c._columndef = JSON.stringify(c);
     });
+    let table;
+    if (view.table_id) table = Table.findOne({ id: view.table_id });
+    if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
     const configFlow = await view.get_config_flow(req);
     const hasConfig =
       view.configuration && Object.keys(view.configuration).length > 0;
@@ -570,7 +609,7 @@ router.get(
       },
       req
     );
-    respondWorkflow(view, configFlow, wfres, req, res);
+    respondWorkflow(view, configFlow, wfres, req, res, table);
   })
 );
 
@@ -589,7 +628,11 @@ router.post(
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run(req.body, req);
-    respondWorkflow(view, configFlow, wfres, req, res);
+
+    let table;
+    if (view.table_id) table = Table.findOne({ id: view.table_id });
+    if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
+    respondWorkflow(view, configFlow, wfres, req, res, table);
   })
 );
 

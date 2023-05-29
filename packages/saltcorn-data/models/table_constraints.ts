@@ -76,11 +76,16 @@ class TableConstraint {
     const { id, ...rest } = con;
     const fid = await db.insert("_sc_table_constraints", rest);
     con.id = fid;
+    const Table = require("./table");
+    const table = await Table.findOne({ id: con.table_id });
     if (con.type === "Unique" && con.configuration.fields) {
-      const Table = require("./table");
-      const table = await Table.findOne({ id: con.table_id });
       await db.add_unique_constraint(table.name, con.configuration.fields);
+    } else if (con.type === "Index") {
+      await db.add_index(table.name, con.configuration.field);
+    } else if (con.type === "Formula") {
+      //TODO: implement in db
     }
+    await require("../db/state").getState().refresh_tables();
 
     return con;
   }
@@ -90,11 +95,16 @@ class TableConstraint {
    */
   async delete(): Promise<void> {
     await db.deleteWhere("_sc_table_constraints", { id: this.id });
+    const Table = require("./table");
+    const table = await Table.findOne({ id: this.table_id });
     if (this.type === "Unique" && this.configuration.fields) {
-      const Table = require("./table");
-      const table = await Table.findOne({ id: this.table_id });
       await db.drop_unique_constraint(table.name, this.configuration.fields);
+    } else if (this.type === "Index") {
+      await db.drop_index(table.name, this.configuration.field);
+    } else if (this.type === "Formula") {
+      //TODO: implement in db
     }
+    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -111,6 +121,7 @@ class TableConstraint {
       if (c.configuration.fields && c.configuration.fields.includes(field.name))
         await c.delete();
     }
+    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -122,7 +133,7 @@ class TableConstraint {
 }
 
 // type union from array with const assertion
-const type_options = ["Unique"] as const;
+const type_options = ["Unique", "Index", "Formula"] as const;
 type TypeOption = typeof type_options[number];
 
 namespace TableConstraint {

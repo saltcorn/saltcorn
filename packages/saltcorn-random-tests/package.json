@@ -1,15 +1,15 @@
 {
   "name": "@saltcorn/random-tests",
-  "version": "0.8.3-alpha.1",
+  "version": "0.8.6-beta.15",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/admin-models": "0.8.3-alpha.1",
-    "@saltcorn/data": "0.8.3-alpha.1",
-    "@saltcorn/server": "0.8.3-alpha.1"
+    "@saltcorn/admin-models": "0.8.6-beta.15",
+    "@saltcorn/data": "0.8.6-beta.15",
+    "@saltcorn/server": "0.8.6-beta.15"
   },
   "devDependencies": {
-    "chaos-guinea-pig": "^0.1.1",
+    "chaos-guinea-pig": "^0.1.4",
     "jest": "^27.1.0",
     "supertest": "^6.3.3"
   },

@@ -1,9 +1,13 @@
 /*global i18next, saltcorn*/
 
-function MobileRequest({ xhr = false, files = undefined, query = undefined }) {
-  const roleId = saltcorn.data.state.getState().mobileConfig.role_id
-    ? saltcorn.data.state.getState().mobileConfig.role_id
-    : 10;
+function MobileRequest({
+  xhr = false,
+  files = undefined,
+  query = undefined,
+} = {}) {
+  const cfg = saltcorn.data.state.getState().mobileConfig;
+  const roleId = cfg.role_id ? cfg.role_id : 100;
+  const userId = cfg.user_id ? cfg.user_id : undefined;
   const flashMessages = [];
 
   return {
@@ -21,6 +25,7 @@ function MobileRequest({ xhr = false, files = undefined, query = undefined }) {
       return mobileCfg?.language ? mobileCfg.language : "en";
     },
     user: {
+      id: userId,
       role_id: roleId,
     },
     flash: (type, msg) => {

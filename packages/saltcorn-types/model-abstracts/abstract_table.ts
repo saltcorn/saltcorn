@@ -23,6 +23,9 @@ export type TableCfg = {
   is_user_group?: boolean;
   description?: string;
   fields: FieldCfg[];
+  constraints?: any[];
+  provider_name?: string;
+  provider_cfg?: any;
 };
 
 export type TablePack = {

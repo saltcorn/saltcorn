@@ -13,7 +13,7 @@ const {
   freeVariables,
 } = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
-const { InvalidAdminAction } = require("../utils");
+const { InvalidAdminAction, isNode } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -195,7 +195,7 @@ class Field implements AbstractField {
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
   static labelToName(label: string): string {
-    return sqlsanitize(label.toLowerCase().replace(" ", "_"));
+    return sqlsanitize(label.toLowerCase().split(" ").join("_"));
   }
 
   get type_name(): string | undefined {
@@ -756,6 +756,38 @@ class Field implements AbstractField {
       if (!v.is_unique && this.is_unique) await this.remove_unique_constraint();
       await db.update("_sc_fields", { is_unique: v.is_unique }, this.id);
     }
+    const schema = db.getTenantSchemaPrefix();
+
+    if (f.attributes.default !== this.attributes.default) {
+      const Table = require("./table");
+      const table = Table.findOne({ id: this.table_id });
+
+      if (
+        typeof f.attributes.default === "undefined" ||
+        f.attributes.default === null
+      )
+        await db.query(
+          `alter table ${schema}"${sqlsanitize(
+            table!.name // ensured above
+          )}" alter column "${sqlsanitize(this.name)}" drop default;`
+        );
+      else {
+        const q = `DROP FUNCTION IF EXISTS edit_field_${sqlsanitize(f.name)};
+        CREATE FUNCTION edit_field_${sqlsanitize(f.name)}(thedef ${
+          f.sql_bare_type
+        }) RETURNS void AS $$
+        BEGIN
+        EXECUTE format('alter table ${schema}"${sqlsanitize(
+          table.name
+        )}"alter column "${sqlsanitize(f.name)}" set default %L', thedef);
+        END;
+        $$ LANGUAGE plpgsql;`;
+        await db.query(q);
+        await db.query(`SELECT edit_field_${sqlsanitize(f.name)}($1)`, [
+          f.attributes.default,
+        ]);
+      }
+    }
 
     if (typeof v.required !== "undefined" && !!v.required !== !!this.required)
       await this.toggle_not_null(!!v.required);
@@ -767,8 +799,6 @@ class Field implements AbstractField {
       await this.alter_sql_type(f);
     }
     if (rename) {
-      const schema = db.getTenantSchemaPrefix();
-
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           this.table!.name // ensured above
@@ -972,7 +1002,7 @@ class Field implements AbstractField {
         });
     await require("../db/state").getState().refresh_tables();
 
-    if (table.versioned && !(f.calculated && !f.stored)) {
+    if (isNode() && table.versioned && !(f.calculated && !f.stored)) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name

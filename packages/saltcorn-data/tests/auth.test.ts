@@ -78,7 +78,7 @@ const test_person_table = async (persons: Table) => {
   expect(owned_rows1[0].age).toBe(13);
 
   //show
-  const view = await createDefaultView(persons, "Show", 10);
+  const view = await createDefaultView(persons, "Show", 100);
   const contents = await view.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: non_owner_user },
@@ -116,7 +116,7 @@ const test_person_table = async (persons: Table) => {
   if (department) row1form.department = department.id;
 
   //edit
-  const editView = await createDefaultView(persons, "Edit", 10);
+  const editView = await createDefaultView(persons, "Edit", 100);
   const econtents = await editView.run_possibly_on_page(
     { id: row1.id },
     { ...mockReqRes.req, user: non_owner_user },
@@ -152,11 +152,17 @@ const test_person_table = async (persons: Table) => {
   await editView.delete();
 
   //update
-  await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 10 });
+  expect(
+    await persons.updateRow({ lastname: "Fred" }, row1.id, { role_id: 100 })
+  ).toBe("Not authorized");
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
-  await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user);
+  expect(
+    await persons.updateRow({ lastname: "Fred" }, row1.id, non_owner_user)
+  ).toBe("Not authorized");
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Sam");
-  await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user);
+  expect(
+    await persons.updateRow({ lastname: "Fred" }, row1.id, owner_user)
+  ).toBe(undefined);
   expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
   if (!department) {
     await persons.updateRow(
@@ -167,7 +173,7 @@ const test_person_table = async (persons: Table) => {
     expect((await persons.getRow({ id: row1.id }))?.lastname).toBe("Fred");
   }
   //delete
-  await persons.deleteRows({ id: row1.id }, { role_id: 10 });
+  await persons.deleteRows({ id: row1.id }, { role_id: 100 });
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
   await persons.deleteRows({ id: row1.id }, non_owner_user);
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(5);
@@ -204,7 +210,61 @@ describe("Table with row ownership field", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+
+    await persons.delete();
+  });
+});
+describe("Table with row ownership field and calculated", () => {
+  it("should create and delete table", async () => {
+    const persons = await Table.create("TableOwned");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    await Field.create({
+      table: persons,
+      name: "nameandage",
+      type: "String",
+      calculated: true,
+      stored: true,
+      expression: "lastname+age",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+    await persons.update({ ownership_field_id: owner.id });
+
+    await persons.insertRow({ lastname: "Joe", age: 12 });
+    await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+
+    await test_person_table(persons);
+    const owner_fnm = await persons.owner_fieldname();
+    expect(owner_fnm).toBe("owner");
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -254,7 +314,7 @@ describe("Table with row ownership formula", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
-      { role_id: 10 }
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -308,7 +368,9 @@ describe("Table with row ownership joined formula", () => {
     expect(own_opts?.length).toBe(1);
     //expect(own_opts).toBe(1);
     expect(own_opts?.[0].label).toBe("Inherit department");
-    expect(own_opts?.[0].value).toBe("Fml:department?.manager===user.id");
+    expect(own_opts?.[0].value).toBe(
+      "Fml:department?.manager===user.id /* Inherit department */"
+    );
     await persons.update({
       ownership_formula: "department?.manager===user.id",
     });
@@ -321,7 +383,85 @@ describe("Table with row ownership joined formula", () => {
     //insert
     await persons.insertRow(
       { age: 99, lastname: "Tim", department: 1 },
-      { role_id: 10 }
+      { role_id: 100 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.delete();
+    await department.delete();
+  });
+});
+describe("Table with row ownership joined formula and stored calc", () => {
+  it("should create and delete table", async () => {
+    const department = await Table.create("Department");
+    await Field.create({
+      table: department,
+      name: "name",
+      type: "String",
+    });
+    const manager = await Field.create({
+      table: department,
+      name: "manager",
+      type: "Key to users",
+    });
+    await department.update({ ownership_field_id: manager.id });
+
+    const persons = await Table.create("TableOwnedJnFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    await Field.create({
+      table: persons,
+      name: "nameandage",
+      type: "String",
+      calculated: true,
+      stored: true,
+      expression: "lastname+age",
+    });
+    const deptkey = await Field.create({
+      table: persons,
+      name: "department",
+      type: "Key to Department",
+    });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedJnFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    //expect(own_opts).toBe(1);
+    expect(own_opts?.[0].label).toBe("Inherit department");
+    expect(own_opts?.[0].value).toBe(
+      "Fml:department?.manager===user.id /* Inherit department */"
+    );
+    await persons.update({
+      ownership_formula: "department?.manager===user.id",
+    });
+    await department.insertRow({ name: "Accounting", manager: 1 });
+    await department.insertRow({ name: "HR", manager: 2 });
+
+    await persons.insertRow({ lastname: "Joe", age: 12, department: 2 });
+    await persons.insertRow({ lastname: "Sam", age: 13, department: 1 });
+    await test_person_table(persons);
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
     await persons.insertRow(
@@ -368,14 +508,14 @@ describe("User group", () => {
       {
         label: "In UserWorksOnProject user group by project",
         value:
-          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(id)",
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(id) /* User group UserWorksOnProject */",
       },
     ]);
     await projs.update({
       ownership_formula: own_opts[0].value.replace("Fml:", ""),
     });
     const projid = await projects.insertRow({ name: "World domination" });
-    const user = await User.findOne({ role_id: 8 });
+    const user = await User.findOne({ role_id: 80 });
     assertIsSet(user);
     await user_works_proj.insertRow({ project: projid, user: user.id });
 
@@ -383,7 +523,7 @@ describe("User group", () => {
     assertIsSet(uobj);
 
     expect(uobj.id).toBe(user.id);
-    expect(uobj.role_id).toBe(8);
+    expect(uobj.role_id).toBe(80);
     expect(uobj.UserWorksOnProject_by_user).toEqual([
       { id: 1, project: 1, user: 3 },
     ]);
@@ -393,7 +533,7 @@ describe("User group", () => {
     expect(projs.is_owner(uobj, myproj)).toBe(true);
 
     const projid1 = await projects.insertRow({ name: "Take out trash" });
-    const staff = await User.findOne({ role_id: 4 });
+    const staff = await User.findOne({ role_id: 40 });
     assertIsSet(staff);
     await user_works_proj.insertRow({ project: projid1, user: staff.id });
     const myproj1 = await projs.getRow({ id: projid1 });
@@ -424,7 +564,7 @@ describe("User group", () => {
       {
         label: "Inherit project",
         value:
-          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(project)",
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(project) /* Inherit project */",
       },
     ]);
     await tasks.update({
@@ -446,7 +586,7 @@ describe("User group", () => {
       {
         label: "Inherit task",
         value:
-          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project)",
+          "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project) /* Inherit task */",
       },
     ]);
 

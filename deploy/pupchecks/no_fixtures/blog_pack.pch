@@ -1,0 +1,27 @@
+goto /
+contains Create first user
+type input#inputemail admin@foo.com
+type input#inputpassword AhGGr6rhu45
+click button[type=submit]
+
+contains Go to pack store
+goto /plugins?set=packs
+
+click (form[action="/packs/install-named/Blog"] button[type=submit])
+wait_for div.alert-success
+
+contains Add Post
+
+goto /view/EditPost
+wait_for #cke_inputexcerpt
+sleep 1000
+
+
+type #inputtitle My First Post
+slowly_type #cke_inputexcerpt A wonderful post
+slowly_type #cke_inputbody Lorem ipsum
+sleep 500
+click button[type=submit]
+
+contains Published on
+contains Lorem ipsum

@@ -5,6 +5,7 @@ const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
+const Table = require("@saltcorn/data/models/table");
 
 /**
  *
@@ -40,6 +41,20 @@ class BuildAppCommand extends Command {
     }
   }
 
+  async uniquePlugins() {
+    const dynamicPlugins = (await Plugin.find()).filter(
+      (plugin) => !this.staticPlugins.includes(plugin.name)
+    );
+    const pluginsMap = new Map();
+    for (const plugin of dynamicPlugins) {
+      const existing = pluginsMap.get(plugin.name);
+      if (existing) {
+        if (!existing.configuration) pluginsMap.set(plugin.name, plugin);
+      } else pluginsMap.set(plugin.name, plugin);
+    }
+    return Array.from(pluginsMap.values());
+  }
+
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
     this.validateParameters(flags);
@@ -57,9 +72,6 @@ class BuildAppCommand extends Command {
         : undefined;
       if (!user && flags.userEmail)
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
-      const dynamicPlugins = (await Plugin.find()).filter(
-        (plugin) => !this.staticPlugins.includes(plugin.name)
-      );
       const builder = new MobileBuilder({
         templateDir: mobileAppDir,
         buildDir: flags.buildDirectory,
@@ -70,7 +82,8 @@ class BuildAppCommand extends Command {
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
-        plugins: dynamicPlugins,
+        allowOfflineMode: flags.allowOfflineMode,
+        plugins: await this.uniquePlugins(),
         copyTargetDir: flags.copyAppDirectory,
         user,
         copyFileName: flags.appFileName,
@@ -152,6 +165,12 @@ BuildAppCommand.flags = {
     name: "server URL",
     char: "s",
     description: "URL to a saltcorn server",
+  }),
+  allowOfflineMode: flags.boolean({
+    name: "Allow offline mode",
+    string: "allowOfflineMode",
+    description:
+      "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
   }),
   buildForEmulator: flags.boolean({
     name: "build for emulator",

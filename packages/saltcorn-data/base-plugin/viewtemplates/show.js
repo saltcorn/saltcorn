@@ -63,6 +63,7 @@ const {
   mergeIntoWhere,
   isWeb,
   hashState,
+  getSafeBaseUrl,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -337,10 +338,7 @@ const run = async (
   }
   if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
-    return {
-      markup: rendered.markup,
-      styles: rendered.styles,
-    };
+    return rendered;
   }
 };
 
@@ -388,17 +386,17 @@ const renderRows = async (
 
   const fields = await table.getFields();
 
-  const role = extra.req.user ? extra.req.user.role_id : 10;
+  const role = extra.req.user ? extra.req.user.role_id : 100;
   var views = {};
-  const getView = async (nm) => {
-    if (views[nm]) return views[nm];
-    const view_select = parse_view_select(nm);
+  const getView = async (name, relation) => {
+    if (views[name]) return views[name];
+    const view_select = parse_view_select(name, relation);
     const view = await View.findOne({ name: view_select.viewname });
     if (!view) return false;
     if (view.table_id === table.id) view.table = table;
     else view.table = await Table.findOne({ id: view.table_id });
     view.view_select = view_select;
-    views[nm] = view;
+    views[name] = view;
     return view;
   };
   await set_join_fieldviews({ table, layout, fields });
@@ -407,11 +405,11 @@ const renderRows = async (
   const subviewExtra = { ...extra };
   if (extra.req?.generate_email) {
     // no mjml markup for for nested subviews, only for the top view
-    subviewExtra.req = { ...extra.req, generate_email: false };
+    subviewExtra.req = { ...extra.req, isSubView: true };
   }
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
-      const view = await getView(segment.view);
+      const view = await getView(segment.view, segment.relation);
       if (!view)
         throw new InvalidConfiguration(
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
@@ -432,6 +430,16 @@ const renderRows = async (
         let state1;
         const pk_name = table.pk_name;
         switch (view.view_select.type) {
+          case "RelationPath": {
+            const path = view.view_select.path;
+            state1 = {
+              _inbound_relation_path_: {
+                ...view.view_select,
+                srcId: path[0].fkey ? row[path[0].fkey] : row[pk_name],
+              },
+            };
+            break;
+          }
           case "Own":
             state1 = { [pk_name]: row[pk_name] };
             break;
@@ -584,11 +592,12 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
   const locale = req.getLocale();
   translateLayout(layout, locale);
   const blockDispatch = {
-    field({ field_name, fieldview, configuration }) {
+    field({ field_name, fieldview, configuration, click_to_edit }) {
       let field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
 
       let val = row[field_name];
+      let fvrun;
       if (
         field &&
         field.attributes &&
@@ -598,9 +607,13 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const localized_fld = field.attributes.localized_by[locale];
         val = row[localized_fld];
       }
-      const cfg = { ...field.attributes, ...configuration };
+      const cfg = {
+        ...field.attributes,
+        ...configuration,
+      };
       if (fieldview && field.type === "File") {
-        return val
+        if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
+        fvrun = val
           ? getState().fileviews[fieldview].run(
               val,
               row[`${field_name}__filename`],
@@ -613,8 +626,25 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         field.type.fieldviews &&
         field.type.fieldviews[fieldview]
       )
-        return field.type.fieldviews[fieldview].run(val, req, cfg);
-      else return text(val);
+        fvrun = field.type.fieldviews[fieldview].run(val, req, cfg);
+      else fvrun = text(val);
+      if (
+        click_to_edit &&
+        (role <= table.min_role_write || table.is_owner(req.user, row))
+      )
+        return div(
+          {
+            "data-inline-edit-field": field_name,
+            "data-inline-edit-ajax": "true",
+            "data-inline-edit-dest-url": `/api/${table.name}/${
+              row[table.pk_name]
+            }`,
+            "data-inline-edit-type": field?.type?.name,
+            class: !isWeb(req) ? "mobile-data-inline-edit" : "",
+          },
+          fvrun
+        );
+      else return fvrun;
     },
     join_field(jf) {
       const { join_field, field_type, fieldview, configuration } = jf;
@@ -638,7 +668,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         } else return text(value);
       } else return text(value);
     },
-    aggregation({ agg_relation, stat, aggwhere }) {
+    aggregation(column) {
+      const { agg_relation, stat, aggwhere, agg_field } = column;
       let table, fld, through;
       if (agg_relation.includes("->")) {
         let restpath;
@@ -647,20 +678,33 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       } else {
         [table, fld] = agg_relation.split(".");
       }
-      const targetNm = (
-        stat +
-        "_" +
-        table +
-        "_" +
-        fld +
-        db.sqlsanitize(aggwhere || "")
-      ).toLowerCase();
+      const targetNm =
+        column.targetNm ||
+        (
+          stat +
+          "_" +
+          table +
+          "_" +
+          fld +
+          "_" +
+          (agg_field || "").split("@")[0] +
+          "_" +
+          db.sqlsanitize(aggwhere || "")
+        ).toLowerCase();
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
       else return text(val);
     },
     action(segment) {
+      if (segment.action_style === "on_page_load") {
+        run_action_column({
+          col: { ...segment },
+          referrer: req.get("Referrer"),
+          req: req,
+        }).catch((e) => Crash.create(e, req));
+        return "";
+      }
       const url = action_url(
         viewname,
         table,
@@ -672,7 +716,16 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       return action_link(url, req, segment);
     },
     view_link(view) {
-      const { key } = view_linker(view, fields, (s) => s, isWeb(req), req.user);
+      const prefix =
+        req.generate_email && req.get_base_url ? req.get_base_url() : "";
+      const { key } = view_linker(
+        view,
+        fields,
+        (s) => s,
+        isWeb(req),
+        req.user,
+        prefix
+      );
       return key(row);
     },
     tabs(segment, go) {
@@ -806,7 +859,7 @@ module.exports = {
       const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
       const q = await stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
-      const role = req && req.user ? req.user.role_id : 10;
+      const role = req && req.user ? req.user.role_id : 100;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
         const owner_field = fields.find((f) => f.id === tbl.ownership_field_id);
         if (qstate[owner_field.name])

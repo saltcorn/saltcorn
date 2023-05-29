@@ -1,18 +1,18 @@
-/*global i18next, apiCall, saltcorn*/
+/*global i18next, apiCall, saltcorn, offlineHelper*/
 
 // post/delete/:name/:id
 const deleteRows = async (context) => {
   const { name, id } = context.params;
   const table = await saltcorn.data.models.Table.findOne({ name });
-  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-
-  if (mobileConfig.localTableIds.indexOf(table.id) >= 0) {
-    if (mobileConfig.role_id <= table.min_role_write) {
+  const { isOfflineMode, localTableIds, role_id } =
+    saltcorn.data.state.getState().mobileConfig;
+  if (isOfflineMode || localTableIds.indexOf(table.id) >= 0) {
+    if (role_id <= table.min_role_write) {
       await table.deleteRows({ id });
-    }
-    // TODO 'table.is_owner' check?
-    else {
-      throw new Error(i18next.t("Not authorized"));
+      // TODO 'table.is_owner' check?
+    } else throw new Error(i18next.t("Not authorized"));
+    if (isOfflineMode && !(await offlineHelper.hasOfflineRows())) {
+      await offlineHelper.setOfflineSession(null);
     }
   } else {
     await apiCall({ method: "POST", path: `/delete/${name}/${id}` });

@@ -6,7 +6,7 @@
 
 const Router = require("express-promise-router");
 
-const { error_catcher } = require("./utils.js");
+const { error_catcher, is_relative_url } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 /**
@@ -41,11 +41,14 @@ router.post(
       await table.updateRow(
         { [field_name]: !row[field_name] },
         id,
-        req.user || { role_id: 10 }
+        req.user || { role_id: 100 }
       );
 
     if (req.xhr) res.send("OK");
     else if (req.get("referer")) res.redirect(req.get("referer"));
-    else res.redirect(redirect || `/list/${table.name}`);
+    else
+      res.redirect(
+        (is_relative_url(redirect) && redirect) || `/list/${table.name}`
+      );
   })
 );

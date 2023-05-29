@@ -227,7 +227,6 @@ footer.bs-mobile-nav-footer {
 
 .containerbgimage {
   position: absolute;
-  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
@@ -372,7 +371,51 @@ table.table-inner-grid td {
 }
 
 .join-table-header {
-  padding: 0.25rem 1rem; 
+  padding: 0.25rem 1rem;
   margin-bottom: 0 !important;
   text-decoration: underline;
+}
+
+@supports (zoom: 2) {
+  input[type="radio"].large,
+  input[type="checkbox"].large {
+    zoom: 2;
+  }
+  input[type="radio"].medium,
+  input[type="checkbox"].medium {
+    zoom: 1.5;
+  }
+}
+@supports not (zoom: 2) {
+  input[type="radio"].large,
+  input[type="checkbox"].large {
+    transform: scale(2);
+    margin: 15px;
+  }
+  input[type="radio"].medium,
+  input[type="checkbox"].medium {
+    transform: scale(1.5);
+    margin: 8px;
+  }
+}
+
+div.unread-notify {
+  border-left: 4px solid green;
+}
+
+.mobile-data-inline-edit {
+  position: relative;
+}
+
+.mobile-data-inline-edit::after {
+  content: "";
+  position: absolute;
+  top: -25%;
+  left: 0%;
+  width: 100%;
+  height: 150%;
+}
+
+.mt-6 {
+  margin-top: 5rem;
 }

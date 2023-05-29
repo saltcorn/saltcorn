@@ -106,15 +106,18 @@ export const doDeleteWhere = async (
  * @param field_names - list of columns (members of constraint)
  * @returns no result
  */
-export const do_add_unique_constraint = async (
+export const do_add_index = async (
   table_name: string,
   field_names: string[],
   query_func: any,
+  is_unique: boolean,
   logger?: any
 ): Promise<void> => {
-  const sql = `create unique index ${sqlsanitize(table_name)}_${field_names
-    .map((f) => sqlsanitize(f))
-    .join("_")}_unique on "${sqlsanitize(table_name)}"(${field_names
+  const sql = `create ${is_unique ? `unique ` : ""}index ${sqlsanitize(
+    table_name
+  )}_${field_names.map((f) => sqlsanitize(f)).join("_")}${
+    is_unique ? `_unique` : ""
+  } on "${sqlsanitize(table_name)}"(${field_names
     .map((f) => `"${sqlsanitize(f)}"`)
     .join(",")});`;
   if (logger) logger(sql);
@@ -127,15 +130,16 @@ export const do_add_unique_constraint = async (
  * @param field_names - list of columns (members of constraint)
  * @returns no results
  */
-export const do_drop_unique_constraint = async (
+export const do_drop_index = async (
   table_name: string,
   field_names: string[],
   query_func: any,
+  is_unique: boolean,
   logger?: any
 ): Promise<void> => {
   const sql = `drop index ${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
-    .join("_")}_unique;`;
+    .join("_")}${is_unique ? `_unique` : ""};`;
   if (logger) logger(sql);
   await query_func(sql);
 };

@@ -145,7 +145,7 @@ function apply_showif() {
       });
       element.dispatchEvent(new Event("RefreshSelectOptions"));
       if (e.hasClass("selectized") && $().selectize) {
-        e.selectize()[0].selectize.clearOptions();
+        e.selectize()[0].selectize.clearOptions(true);
         e.selectize()[0].selectize.addOption(dataOptions);
         if (typeof currentDataOption !== "undefined")
           e.selectize()[0].selectize.setValue(currentDataOption);
@@ -153,9 +153,15 @@ function apply_showif() {
     };
 
     const cache = e.prop("data-fetch-options-cache") || {};
-    if (cache[qs]) {
+    if (cache[qs] === "fetching") {
+      // do nothing, this will be activated by someone else
+    } else if (cache[qs]) {
       activate(cache[qs], qs);
-    } else
+    } else {
+      e.prop("data-fetch-options-cache", {
+        ...cache,
+        [qs]: "fetching",
+      });
       $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
         if (resp.success) {
           activate(resp.success, qs);
@@ -164,10 +170,26 @@ function apply_showif() {
             ...cacheNow,
             [qs]: resp.success,
           });
+        } else {
+          const cacheNow = e.prop("data-fetch-options-cache") || {};
+          e.prop("data-fetch-options-cache", {
+            ...cacheNow,
+            [qs]: undefined,
+          });
         }
       });
+    }
   });
-
+  $("[data-filter-table]").each(function (ix, element) {
+    const e = $(element);
+    const target = $(e.attr("data-filter-table"));
+    $(e).on("keyup", function () {
+      const value = $(this).val().toLowerCase();
+      target.find("tr").filter(function () {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+      });
+    });
+  });
   $("[data-source-url]").each(function (ix, element) {
     const e = $(element);
     const rec0 = get_form_record(e);
@@ -198,9 +220,13 @@ function apply_showif() {
           const $def = e
             .closest(".form-namespace")
             .find("input[name=_columndef]");
-          const def = JSON.parse($def.val());
-          def[k] = v;
-          $def.val(JSON.stringify(def));
+          try {
+            const def = JSON.parse($def.val());
+            def[k] = v;
+            $def.val(JSON.stringify(def));
+          } catch (e) {
+            console.error("Invalid json", e);
+          }
         });
     };
 
@@ -231,6 +257,42 @@ function apply_showif() {
       },
     });
   });
+  const locale =
+    navigator.userLanguage ||
+    (navigator.languages &&
+      navigator.languages.length &&
+      navigator.languages[0]) ||
+    navigator.language ||
+    navigator.browserLanguage ||
+    navigator.systemLanguage ||
+    "en";
+  window.detected_locale = locale;
+  const parse = (s) => JSON.parse(decodeURIComponent(s));
+  $("time[locale-time-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-time-options"));
+    el.text(date.toLocaleTimeString(locale, options));
+  });
+  $("time[locale-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-options"));
+    el.text(date.toLocaleString(locale, options));
+  });
+  $("time[locale-date-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-date-options"));
+    el.text(date.toLocaleDateString(locale, options));
+  });
+  $("time[locale-date-format]").each(function () {
+    var el = $(this);
+    var date = el.attr("datetime");
+    const format = parse(el.attr("locale-date-format"));
+    el.text(dayjs(date).format(format));
+  });
+
   _apply_showif_plugins.forEach((p) => p());
 }
 
@@ -258,7 +320,13 @@ function get_form_record(e, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
-  return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(rec);
+  try {
+    return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
+      rec
+    );
+  } catch (e) {
+    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+  }
 }
 
 function rep_del(e) {
@@ -348,11 +416,26 @@ function rep_down(e) {
     apply_form_subset_record(theform, vals1);
   }
 }
+//https://stackoverflow.com/a/4835406
+function escapeHtml(text) {
+  var map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+
+  return text.replace(/[&<>"']/g, function (m) {
+    return map[m];
+  });
+}
 
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
 function initialize_page() {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   //console.log("init page");
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
@@ -398,20 +481,92 @@ function initialize_page() {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();
       $(this).html(
-        `<span class="current">${current}</span><i class="editicon fas fa-edit ms-1"></i>`
+        `<span class="current">${current}</span><i class="editicon ${
+          !isNode ? "visible" : ""
+        } fas fa-edit ms-1"></i>`
       );
     }
   });
   $("[data-inline-edit-dest-url]").click(function () {
     var url = $(this).attr("data-inline-edit-dest-url");
-    var current = $(this).children("span.current").html();
-    $(this).replaceWith(
-      `<form method="post" action="${url}" >
-      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
-      <input type="text" name="value" value="${current}">
-      <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      </form>`
+    var current =
+      $(this).attr("data-inline-edit-current") ||
+      $(this).children("span.current").html();
+    var key = $(this).attr("data-inline-edit-field") || "value";
+    var ajax = !!$(this).attr("data-inline-edit-ajax");
+    var type = $(this).attr("data-inline-edit-type");
+    var schema = $(this).attr("data-inline-edit-schema");
+    if (schema) {
+      schema = JSON.parse(decodeURIComponent(schema));
+    }
+    var is_key = type?.startsWith("Key:");
+    const opts = encodeURIComponent(
+      JSON.stringify({
+        url,
+        key,
+        ajax,
+        current,
+        current_label: $(this).attr("data-inline-edit-current-label"),
+        type,
+        is_key,
+        schema,
+      })
     );
+    const doAjaxOptionsFetch = (tblName, target) => {
+      $.ajax(`/api/${tblName}`).then((resp) => {
+        if (resp.success) {
+          resp.success.sort((a, b) =>
+            a[target]?.toLowerCase?.() > b[target]?.toLowerCase?.() ? 1 : -1
+          );
+
+          const selopts = resp.success.map(
+            (r) =>
+              `<option ${current == r.id ? `selected ` : ``}value="${
+                r.id
+              }">${escapeHtml(r[target])}</option>`
+          );
+          $(this).replaceWith(
+            `<form method="post" action="${url}" ${
+              ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
+            }>
+          <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+          <select name="${key}" value="${current}">${selopts}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary">OK</button>
+          <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+          </form>`
+          );
+        }
+      });
+    };
+    if (type === "JSON" && schema && schema.type.startsWith("Key to ")) {
+      const tblName = schema.type.replace("Key to ", "");
+      const target = schema.summary_field || "id";
+      doAjaxOptionsFetch(tblName, target);
+    } else if (is_key) {
+      const [tblName, target] = type.replace("Key:", "").split(".");
+      doAjaxOptionsFetch(tblName, target);
+    } else
+      $(this).replaceWith(
+        `<form method="post" action="${url}" ${
+          ajax
+            ? `onsubmit="inline_${
+                isNode ? "ajax" : "local"
+              }_submit(event, '${opts}')"`
+            : ""
+        }>
+        ${
+          isNode
+            ? `<input type="hidden" name="_csrf" value="${_sc_globalCsrf}"></input>`
+            : ""
+        }
+        <input type="${
+          type === "Integer" || type === "Float" ? "number" : "text"
+        }" name="${key}" value="${escapeHtml(current)}">
+      <button type="submit" class="btn btn-sm btn-primary">OK</button>
+      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      </form>`
+      );
   });
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
@@ -460,36 +615,9 @@ function initialize_page() {
         });
       }, 100);
     });
-  const locale =
-    navigator.userLanguage ||
-    (navigator.languages &&
-      navigator.languages.length &&
-      navigator.languages[0]) ||
-    navigator.language ||
-    navigator.browserLanguage ||
-    navigator.systemLanguage ||
-    "en";
-  window.detected_locale = locale;
-  const parse = (s) => JSON.parse(decodeURIComponent(s));
-  $("time[locale-time-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-time-options"));
-    el.text(date.toLocaleTimeString(locale, options));
-  });
-  $("time[locale-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-options"));
-    el.text(date.toLocaleString(locale, options));
-  });
-  $("time[locale-date-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-date-options"));
-    el.text(date.toLocaleDateString(locale, options));
-  });
-  if ($.fn.historyTabs) $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+
+  if ($.fn.historyTabs && $.fn.tab)
+    $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
 
   // Initialize Sliders - https://stackoverflow.com/a/31083391
@@ -522,6 +650,94 @@ function initialize_page() {
 }
 
 $(initialize_page);
+
+function cancel_inline_edit(e, opts1) {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+  var form = $(e.target).closest("form");
+  var json_fk_opt;
+  if (opts.schema) {
+    json_fk_opt = form.find(`option[value="${opts.current}"]`).text();
+  }
+  form.replaceWith(`<div 
+  data-inline-edit-field="${opts.key}" 
+  ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+  ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+  ${opts.current ? `data-inline-edit-current="${opts.current}"` : ""}
+  ${
+    opts.current_label
+      ? `data-inline-edit-current-label="${opts.current_label}"`
+      : ""
+  }
+  ${
+    opts.schema
+      ? `data-inline-edit-schema="${encodeURIComponent(
+          JSON.stringify(opts.schema)
+        )}"`
+      : ""
+  }
+  data-inline-edit-dest-url="${opts.url}">
+    <span class="current">${
+      json_fk_opt || opts.current_label || opts.current
+    }</span>
+    <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
+  </div>`);
+  initialize_page();
+}
+
+function inline_submit_success(e, form, opts) {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const formDataArray = form.serializeArray();
+  if (opts) {
+    let rawVal = formDataArray.find((f) => f.name == opts.key).value;
+    let val =
+      opts.is_key || (opts.schema && opts.schema.type.startsWith("Key to "))
+        ? form.find("select").find("option:selected").text()
+        : rawVal;
+
+    $(e.target).replaceWith(`<div 
+  data-inline-edit-field="${opts.key}" 
+  ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+  ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+  ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
+  ${
+    opts.schema
+      ? `data-inline-edit-schema="${encodeURIComponent(
+          JSON.stringify(opts.schema)
+        )}"`
+      : ""
+  }
+  ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
+  data-inline-edit-dest-url="${opts.url}">
+    <span class="current">${val}</span>
+    <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
+  </div>`);
+    initialize_page();
+  } else location.reload();
+}
+
+function inline_ajax_submit(e, opts1) {
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+  e.preventDefault();
+  var form = $(e.target).closest("form");
+  var form_data = form.serialize();
+  var url = form.attr("action");
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function (res) {
+      inline_submit_success(e, form, opts);
+    },
+    error: function (e) {
+      ajax_done(
+        e.responseJSON || { error: "Unknown error: " + e.responseText }
+      );
+    },
+  });
+}
 
 function ajax_indicator(show, e) {
   const $ind = e
@@ -815,12 +1031,15 @@ function room_older(viewname, room_id, btn) {
 }
 
 function init_room(viewname, room_id) {
-  const socket = parent?.config?.server_path
-    ? io(parent.config.server_path, {
-        query: `jwt=${localStorage.getItem("auth_jwt")}`,
-        transports: ["websocket"],
-      })
-    : io({ transports: ["websocket"] });
+  let socket = null;
+  if (parent?.saltcorn?.data?.state) {
+    const { server_path, jwt } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    socket = io(server_path, {
+      query: `jwt=${jwt}`,
+      transports: ["websocket"],
+    });
+  } else socket = io({ transports: ["websocket"] });
 
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
@@ -882,4 +1101,24 @@ function split_paste_handler(e) {
 
 function is_paging_param(key) {
   return key.endsWith("_page") || key.endsWith("_pagesize");
+}
+function check_saltcorn_notifications() {
+  $.ajax(`/notifications/count-unread`).then((resp) => {
+    if (resp.success) {
+      const n = resp.success;
+      const menu_item = $(`a.notify-menu-item`);
+
+      menu_item.html(
+        `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
+      );
+      $(".user-nav-section").html(
+        `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
+      );
+      $(".user-nav-section-with-span").html(
+        `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
+      );
+      window.update_theme_notification_count &&
+        window.update_theme_notification_count(n);
+    }
+  });
 }

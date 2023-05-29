@@ -149,7 +149,8 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
     const files = await File.find(folder ? { folder } : {});
     for (const f of files) {
       const base = basename(f.location);
-      if (f.isDirectory) {
+      if (f.isDirectory && (await f.is_symlink())) continue;
+      else if (f.isDirectory && !(await f.is_symlink())) {
         await mkdir(join(dirpath, f.path_to_serve as string));
         await iterFolder(f.path_to_serve as string);
       } else {
@@ -328,11 +329,9 @@ const restore_tables = async (
       );
       if (res.error) err = (err || "") + res.error;
     } else if (existsSync(fnm_csv)) {
-      const res = await table.import_csv_file(
-        fnm_csv,
-        false,
-        table.name === "users" && !restore_first_user
-      );
+      const res = await table.import_csv_file(fnm_csv, {
+        skip_first_data_row: table.name === "users" && !restore_first_user,
+      });
       if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
     }
   }
@@ -460,4 +459,5 @@ export = {
   create_csv_from_rows,
   auto_backup_now,
   create_pack_json,
+  extract,
 };

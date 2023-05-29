@@ -1,9 +1,5 @@
-/**
- * @category saltcorn-markup
- * @module layout
- */
-
 import tags = require("./tags");
+const { table, tr, td } = tags;
 import mjml = require("./mjml-tags");
 const {
   div,
@@ -26,15 +22,111 @@ const {
 } = tags;
 import crypto from "crypto";
 
-/**
- * build a unique className for a style string
- * @param style style string
- * @param prefix prefix of the className
- * @returns className
- */
-const createClassName = (style: string, prefix: string) => {
-  const hash = crypto.createHash("sha1").update(style).digest("hex");
-  return `${prefix}_${hash}`;
+const isBlock = (segment: any) => {
+  if (["h1", "h2", "h3", "h4", "h5", "h6"].indexOf(segment.textStyle) >= 0) {
+    return !segment.inline;
+  } else {
+    return segment.block;
+  }
+};
+
+const transformTextStyle = (textStyle: string) => {
+  switch (textStyle) {
+    case "h1":
+      return {
+        "font-size": "2em",
+        "margin-top": "0.67em",
+        "margin-bottom": "0.67em",
+        "margin-left": 0,
+        "margin-right": 0,
+        "font-weight": "bold",
+      };
+    case "h2":
+      return {
+        "font-size": "1.5em",
+        "margin-top": "0.83em",
+        "margin-bottom": "0.83em",
+        "margin-left": "0",
+        "margin-right": "0",
+        "font-weight": "bold",
+      };
+    case "h3":
+      return {
+        "font-size": "1.17em",
+        "margin-top": "1em",
+        "margin-bottom": "1em",
+        "margin-left": "0",
+        "margin-right": "0",
+        "font-weight": "bold",
+      };
+    case "h4":
+      return {
+        "font-size": "1em",
+        "margin-top": "1.33em",
+        "margin-bottom": "1.33em",
+        "margin-left": "0",
+        "margin-right": "0",
+        "font-weight": "bold",
+      };
+    case "h5":
+      return {
+        "font-size": ".83em",
+        "margin-top": "1.67em",
+        "margin-bottom": "1.67em",
+        "margin-left": "0",
+        "margin-right": "0",
+        "font-weight": "bold",
+      };
+    case "h6":
+      return {
+        "font-size": ".67em",
+        "margin-top": "2.33em",
+        "margin-bottom": "2.33em",
+        "margin-left": "0",
+        "margin-right": "0",
+        "font-weight": "bold",
+      };
+    case "fw-bold":
+      return { "font-weight": "700 !important" };
+    case "fst-italic":
+      return { "font-style": "italic !important" };
+    case "small":
+      return { "font-size": "0.875em" };
+    case "text-muted":
+      return {
+        "--bs-text-opacity": "1",
+        color: "#858796 !important",
+      };
+    case "text-underline":
+      return {
+        "text-decoration": "underline",
+      };
+    case "font-monospace":
+      return {
+        "font-family": "monospace !important",
+      };
+    default:
+      return {};
+  }
+};
+
+const transformLinkSize = (linkSize: string) => {
+  switch (linkSize) {
+    case "btn-lg":
+    case "btn-block btn-lg":
+      return {
+        padding: "0.5rem 1rem",
+        "font-size": "1.25rem",
+      };
+    case "btn-sm":
+      return {
+        padding: "0.25rem 0.5rem",
+        "font-size": "0.875rem",
+      };
+    case "btn-block":
+    default:
+      return {};
+  }
 };
 
 /**
@@ -47,33 +139,18 @@ const applyTextStyle = (segment: any, inner: string): string => {
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
-  const hasStyle = Object.keys(style).length > 0;
-  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
-  const labelFor = (s: string) =>
-    segment.labelFor ? label({ for: `input${text(segment.labelFor)}` }, s) : s;
-  if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
-    style.display = "inline-block";
-  const wrapText = (s: string) => mjml.text(labelFor(s));
-  switch (segment.textStyle) {
-    case "h1":
-      return h1({ style }, inner);
-    case "h2":
-      return h2({ style }, inner);
-    case "h3":
-      return h3({ style }, inner);
-    case "h4":
-      return h4({ style }, inner);
-    case "h5":
-      return h5({ style }, inner);
-    case "h6":
-      return h6({ style }, inner);
-    default:
-      return segment.block
-        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
-        : segment.textStyle || hasStyle
-        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
-        : inner;
-  }
+  const hasStyle =
+    Object.entries(style).filter(([k, v]): any => {
+      return v && v !== "" && v !== "px";
+    }).length > 0;
+  const textStyle = transformTextStyle(segment.textStyle);
+  const linkSize = transformLinkSize(segment.link_size);
+  const _style = { ...style, ...textStyle, ...linkSize };
+  return isBlock(segment)
+    ? div({ style: _style }, inner)
+    : segment.textStyle || hasStyle
+    ? span({ style: _style }, inner)
+    : inner;
 };
 
 // declaration merging
@@ -108,31 +185,12 @@ const render = ({
   req,
 }: RenderOpts): any => {
   //console.log(JSON.stringify(layout, null, 2));
-  function wrap(
-    segment: any,
-    isTop: boolean,
-    ix: number,
-    inner: string,
-    inEndingTag: boolean
-  ) {
+  function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     const content = applyTextStyle(segment, iconTag + inner);
-    const isInline =
-      segment &&
-      (segment.display === "inline" ||
-        segment.block === false ||
-        segment.inline === true);
-    return !inEndingTag && isTop && !isInline
-      ? mjml.section(mjml.column(mjml.text(content)))
-      : content;
+    return content;
   }
-  const styles = new Array<any>();
-  function go(
-    segment: any,
-    isTop: boolean = false,
-    ix: number = 0,
-    inEndingTag: boolean = false
-  ): string {
+  function go(segment: any, isTop: boolean = false, ix: number = 0): string {
     if (!segment) return "";
     if (
       typeof segment === "object" &&
@@ -140,49 +198,51 @@ const render = ({
       segment.constructor === Object
     )
       return "";
-    if (typeof segment === "string")
-      return wrap(segment, isTop, ix, segment, inEndingTag);
+    if (typeof segment === "string") return wrap(segment, isTop, ix, segment);
     if (Array.isArray(segment))
       return wrap(
         segment,
         isTop,
         ix,
-        segment.map((s, jx) => go(s, isTop, jx + ix)).join(""),
-        inEndingTag
+        segment.map((s, jx) => go(s, isTop, jx + ix)).join("")
       );
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
       const rendered = blockDispatch[segment.type](segment, go);
-      return rendered ? wrap(segment, isTop, ix, rendered, inEndingTag) : "";
+      if (!rendered) return "";
+      else {
+        return wrap(segment, isTop, ix, rendered);
+      }
     }
     if (segment.type === "blank") {
-      return wrap(segment, isTop, ix, segment.contents || "", inEndingTag);
+      return wrap(segment, isTop, ix, segment.contents || "");
     }
     if (segment.type === "view") {
-      return wrap(segment, isTop, ix, segment.contents || "", inEndingTag);
+      return wrap(segment, isTop, ix, segment.contents || "");
     }
     if (segment.type === "pageHeader") {
       return wrap(
         segment,
         isTop,
         ix,
-        h1(segment.title) + p(segment.blurb || ""),
-        inEndingTag
+        h1(segment.title) + p(segment.blurb || "")
       );
     }
     if (segment.type === "image") {
-      const { style, alt, fileid, url } = segment;
+      const { alt, fileid, url } = segment;
       const srctype = segment.srctype || "File";
       const urlFromReq = req.get_base_url();
       const base_url = urlFromReq.endsWith("/")
         ? urlFromReq.substring(0, urlFromReq.length - 1)
         : urlFromReq;
-      return img({
-        class: segment.style && segment.style.width ? null : "w-100",
+      const style = segment.style ? segment.style : {};
+      if (!style.width) style.width = "100% !important";
+      const inner = img({
         style: style,
         alt: alt,
         src: srctype === "File" ? `${base_url}/files/serve/${fileid}` : url,
       });
+      return segment.block ? div(inner) : inner;
     }
     if (segment.type === "link") {
       let style =
@@ -197,20 +257,16 @@ const render = ({
         segment,
         isTop,
         ix,
-        mjml.raw(
-          a(
-            {
-              href: segment.url,
-              class: [segment.link_style || "", segment.link_size || ""],
-              target: segment.target_blank ? "_blank" : false,
-              rel: segment.nofollow ? "nofollow" : false,
-              style,
-            },
-            segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
-            segment.text
-          )
-        ),
-        inEndingTag
+        a(
+          {
+            href: segment.url,
+            target: segment.target_blank ? "_blank" : false,
+            rel: segment.nofollow ? "nofollow" : false,
+            style,
+          },
+          segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
+          segment.text
+        )
       );
     }
     if (segment.type === "card") {
@@ -291,8 +347,7 @@ const render = ({
               go(segment.contents)
             ),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
-        ),
-        inEndingTag
+        )
       );
     }
 
@@ -349,15 +404,6 @@ const render = ({
             };`;
       const ppCustomCSS = (s?: string) =>
         s ? s.split("\n").join("") + ";" : "";
-      const baseDisplayClass =
-        block === false ? "inline-block" : display ? display : "block";
-      let displayClass = minScreenWidth
-        ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
-        : baseDisplayClass === "block"
-        ? false // no need
-        : `d-${baseDisplayClass}`;
-      if (maxScreenWidth)
-        displayClass = `${displayClass} d-${maxScreenWidth}-none`;
       const allZero = (xs: any) => xs.every((x: number) => +x === 0);
       const ppBox = (what: string) =>
         !segment[what] || allZero(segment[what])
@@ -365,9 +411,7 @@ const render = ({
           : `${what}: ${segment[what].map((p: string) => p + "px").join(" ")};`;
       let flexStyles = "";
       Object.keys(style || {}).forEach((k) => {
-        flexStyles += `${k}:${style[k]} ${
-          k.startsWith("margin") ? "!important" : ""
-        };`;
+        if (style[k]) flexStyles += `${k}:${style[k]};`;
       });
       let styleString = `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
         "minHeight",
@@ -397,7 +441,7 @@ const render = ({
           : ""
       } ${setTextColor ? `color: ${textColor};` : ""}${
         rotate ? `transform: rotate(${rotate}deg);` : ""
-      }`;
+      } ${display === "none" ? "display: none; " : ""}`;
       if (!style || !(style["border-width"] && style["border-style"])) {
         styleString += `border${
           borderDirection ? `-${borderDirection}` : ""
@@ -405,152 +449,72 @@ const render = ({
           borderColor || "black"
         };${sizeProp("borderRadius", "border-radius")}`;
       }
-      const tagCfg: any = {
-        /*class: [
-          customClass || false,
-          hAlign && `text-${hAlign}`,
-          vAlign === "middle" && "d-flex align-items-center",
-          vAlign === "bottom" && "d-flex align-items-end",
-          vAlign === "middle" &&
-            hAlign === "center" &&
-            "justify-content-center",
-          displayClass,
-          url && "with-link",
-          hoverColor && `hover-${hoverColor}`,
-          fullPageWidth && "full-page-width",
-        ],*/
-        onclick: segment.url ? `location.href='${segment.url}'` : false,
-        // ...(showIfFormulaInputs
-        //   ? {
-        //       "data-show-if": encodeURIComponent(
-        //         `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
-        //       ),
-        //     }
-        //   : {}),
-      };
-      let content = go(segment.contents, isTop, ix, true);
-      const inner = genericElement(
-        htmlElement || "div",
+      return genericElement(
+        display === "inline" || display === "inline-block" ? "span" : "div",
         {
           style: styleString,
-          class: displayClass,
         },
-        content
+        go(segment.contents, false, ix)
       );
-      const bg =
-        renderBg &&
-        bgType === "Image" &&
-        bgFileId &&
-        +bgFileId &&
-        div(
-          { style: "display:none" },
-          img({
-            height: "1",
-            width: "1",
-            alt: "",
-            src: `/files/serve/${bgFileId}`,
-          })
-        );
-      if (inEndingTag) return inner;
-      else if (isTop && segment.display === "block")
-        return mjml.section(tagCfg, bg, mjml.column(mjml.text(inner)));
-      else return mjml.text(inner);
+      // const bg =
+      //   renderBg &&
+      //   bgType === "Image" &&
+      //   bgFileId &&
+      //   +bgFileId &&
+      //   div(
+      //     { style: "display:none" },
+      //     img({
+      //       height: "1",
+      //       width: "1",
+      //       alt: "",
+      //       src: `/files/serve/${bgFileId}`,
+      //     })
+      //   );
     }
     if (segment.type === "line_break") {
-      return mjml.raw("<br />");
+      return "<br />";
     }
     if (segment.above) {
-      let index = 0;
-      let wasInline = false;
-      const arr: Array<string> = [];
-      for (const current of segment.above) {
-        const currentResult = go(current, isTop, index, inEndingTag);
-        const isInline =
-          current &&
-          (current.display === "inline" ||
-            current.block === false ||
-            current.inline === true);
-        if (isInline) {
-          // combine inline elements into the last array index
-          if (arr.length === 0 || !wasInline) arr.push(currentResult);
-          else arr[arr.length - 1] += currentResult;
-          wasInline = true;
-        } else if (wasInline && !isInline) {
-          // inline ended => add a mjml.section
-          wasInline = false;
-          const content = arr[arr.length - 1];
-          arr[arr.length - 1] = inEndingTag
-            ? content
-            : mjml.section(mjml.column(mjml.text(content)));
-          arr.push(currentResult);
-        } else {
-          arr.push(currentResult);
-        }
-        index++;
-      }
-      if (wasInline) {
-        const content = arr[arr.length - 1];
-        arr[arr.length - 1] = inEndingTag
-          ? content
-          : mjml.section(mjml.column(mjml.text(content)));
-      }
-      return arr.join("");
+      return segment.above
+        .map((s: any, ix: number) => go(s, isTop, ix))
+        .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      if (isTop && !inEndingTag) {
-        let styleString = "";
-        Object.keys(segment.style || {}).forEach((k) => {
-          styleString += `${k}:${segment.style[k]} ${
-            k.startsWith("margin") ? "!important" : ""
-          };`;
-        });
-        const className = createClassName(styleString, "group");
-        styles.push({ className, style: styleString });
-        const inner = segment.besides.map((t: any, ixb: number) =>
-          mjml.column(
-            {
-              width: `${Math.round(
-                (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
-              )}%`,
-            },
-            mjml.text(go(t, false, ixb, true))
-          )
-        );
-        return mjml.section({ "css-class": className }, inner);
-      } else {
-        const inner = div(
-          {
-            class: [
-              "row",
-              segment.style && segment.style.width ? null : "w-100",
-            ],
-            style: segment.style,
-          },
-          segment.besides.map((t: any, ixb: number) =>
-            div(
+      return table(
+        { width: "100%", style: segment.style },
+        tr(
+          segment.besides.map((t: any, ixb: number) => {
+            return td(
               {
-                class:
-                  segment.widths === false
-                    ? ""
-                    : `col-${
-                        segment.breakpoint
-                          ? segment.breakpoint + "-"
-                          : segment.breakpoints && segment.breakpoints[ixb]
-                          ? segment.breakpoints[ixb] + "-"
-                          : ""
-                      }${segment.widths ? segment.widths[ixb] : defwidth}${
-                        segment.aligns ? " text-" + segment.aligns[ixb] : ""
-                      }`,
+                width: `${Math.round(
+                  (100 * (segment.widths ? segment.widths[ixb] : defwidth)) / 12
+                )}%`,
               },
               go(t, false, ixb)
-            )
-          )
-        );
-        return inEndingTag ? inner : mjml.text(inner);
-      }
+            );
+          })
+        )
+      );
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  return { markup: go(layout, true, 0), styles };
+  if (req.isSubView) {
+    return go(layout, true, 0);
+  } else if (layout.type === "container") {
+    const inner = div(
+      { style: "text-align: left !important; font-size: 16px;" },
+      go(layout.contents, true, 0)
+    );
+    return {
+      markup: mjml.section(mjml.raw(inner)),
+      backgroundColor: layout.bgColor,
+    };
+  } else {
+    const inner = div(
+      { style: "text-align: left !important; font-size: 16px;" },
+      go(layout, true, 0)
+    );
+    return { markup: mjml.section(mjml.raw(inner)) };
+  }
 };
 
 // declaration merging

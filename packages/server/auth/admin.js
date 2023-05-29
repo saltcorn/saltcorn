@@ -7,6 +7,7 @@
 // todo refactor to few modules + rename to be in sync with router url
 const Router = require("express-promise-router");
 const { contract, is } = require("contractis");
+const { X509Certificate } = require("crypto");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
@@ -23,7 +24,16 @@ const {
 const { isAdmin, error_catcher } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
-const { a, div, span, code, h5, i, p } = require("@saltcorn/markup/tags");
+const {
+  a,
+  div,
+  span,
+  code,
+  h5,
+  i,
+  p,
+  input,
+} = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const {
   send_users_page,
@@ -57,7 +67,8 @@ const getUserFields = async (req) => {
         (signup_form.configuration.columns || []).forEach((f) => {
           const uf = userFields.find((uff) => uff.name === f.field_name);
           if (uf) {
-            if (!f?.fieldview?.unsuitableAsAdminDefault) {
+            const fvObj = uf.type?.fieldviews?.[uf.fieldview];
+            if (fvObj && !fvObj?.fieldview?.unsuitableAsAdminDefault) {
               uf.fieldview = f.fieldview;
               uf.attributes = { ...f.configuration, ...uf.attributes };
             }
@@ -68,11 +79,16 @@ const getUserFields = async (req) => {
   };
   await iterForm("signup_form");
   await iterForm("new_user_form");
+  //console.log(userFields);
   for (const f of userFields) {
     await f.fill_fkey_options();
     if (f.name === "email") {
       f.validator = (s) => {
         if (!User.valid_email(s)) return req.__("Not a valid e-mail address");
+      };
+      f.attributes = {
+        ...(f.attributes || {}),
+        input_type: "email",
       };
     }
   }
@@ -200,6 +216,12 @@ const user_dropdown = (user, req, can_reset) =>
         '<i class="fas fa-pause"></i>&nbsp;' + req.__("Disable"),
         req
       ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/force-logout/${user.id}`,
+        '<i class="fas fa-sign-out-alt"></i>&nbsp;' + req.__("Force logout"),
+        req
+      ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
       `/useradmin/delete/${user.id}`,
@@ -235,6 +257,18 @@ router.get(
         type: "card",
         title: req.__("Users"),
         contents: [
+          div(
+            { class: "row mb-3" },
+            div(
+              { class: "col-sm-6 offset-sm-3" },
+              input({
+                class: "form-control",
+                type: "search",
+                "data-filter-table": "table.user-admin",
+                placeholder: "🔍 Search",
+              })
+            )
+          ),
           mkTable(
             [
               { label: req.__("ID"), key: "id" },
@@ -265,7 +299,7 @@ router.get(
               },
             ],
             users,
-            { hover: true }
+            { hover: true, class: "user-admin" }
           ),
           link(`/useradmin/new`, req.__("Create user")),
         ],
@@ -335,7 +369,7 @@ const http_settings_form = async (req) =>
       "timeout",
       "cookie_duration",
       "cookie_duration_remember",
-      "cookie_sessions",
+      //"cookie_sessions",
       "public_cache_maxage",
       "custom_http_headers",
     ],
@@ -564,6 +598,12 @@ router.get(
     const show_warning =
       !hostname_matches_baseurl(req, getBaseDomain()) &&
       is_hsts_tld(getBaseDomain());
+    let expiry = "";
+    if (has_custom && X509Certificate) {
+      const cert = getState().getConfig("custom_ssl_certificate", "");
+      const { validTo } = new X509Certificate(cert);
+      expiry = div({ class: "me-2" }, "Expires: ", validTo);
+    }
     send_users_page({
       res,
       req,
@@ -645,6 +685,7 @@ router.get(
                   ? span({ class: "badge bg-primary" }, req.__("Enabled"))
                   : span({ class: "badge bg-secondary" }, req.__("Disabled"))
               ),
+              has_custom && expiry,
               // TBD change to button
               link(
                 "/useradmin/ssl/custom",
@@ -972,7 +1013,8 @@ router.post(
 
         req.flash("success", req.__(`User %s created`, email) + pwflash);
 
-        if (rnd_password && send_pwreset_email) await send_reset_email(u, req);
+        if (rnd_password && send_pwreset_email)
+          await send_reset_email(u, req, { creating: true });
       }
     }
     res.redirect(`/useradmin`);
@@ -991,7 +1033,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
-    await send_reset_email(u, req);
+    await send_reset_email(u, req, { from_admin: true });
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
     res.redirect(`/useradmin`);
@@ -1102,7 +1144,7 @@ router.post(
     const { id } = req.params;
     const u = await User.findOne({ id });
     if (u) {
-      u.relogin(req);
+      await u.relogin(req);
       req.flash(
         "success",
         req.__(
@@ -1132,6 +1174,23 @@ router.post(
     await u.update({ disabled: true });
     await u.destroy_sessions();
     req.flash("success", req.__(`Disabled user %s`, u.email));
+    res.redirect(`/useradmin`);
+  })
+);
+
+/**
+ * @name post/force-logout/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/force-logout/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const u = await User.findOne({ id });
+    await u.destroy_sessions();
+    req.flash("success", req.__(`Logged out user %s`, u.email));
     res.redirect(`/useradmin`);
   })
 );

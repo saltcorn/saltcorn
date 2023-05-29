@@ -241,13 +241,16 @@ router.get(
     for (const f of fields) {
       if (f.type === "File") f.attributes = { select_file_where: {} };
       await f.fill_fkey_options();
+
+      if (f.type === "File") {
+        //add existing values in folders
+        const dvs = await f.distinct_values();
+        dvs.forEach((dv) => {
+          if (dv?.value?.includes("/")) f.options.push(dv);
+        });
+      }
     }
 
-    //console.log(fields);
-    // todo remove keyfields - unused
-    const keyfields = fields
-      .filter((f) => f.type === "Key" || f.type === "File")
-      .map((f) => ({ name: f.name, type: f.reftype }));
     const jsfields = arrangeIdFirst(fields).map((f) =>
       typeToGridType(f.type, f)
     );

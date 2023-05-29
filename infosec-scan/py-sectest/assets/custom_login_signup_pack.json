@@ -146,7 +146,7 @@
               "type": "action",
               "block": false,
               "rndid": "d2d797",
-              "minRole": 10,
+              "minRole": 100,
               "isFormula": {},
               "action_icon": "",
               "action_name": "Login",
@@ -173,7 +173,7 @@
           {
             "type": "Action",
             "rndid": "d2d797",
-            "minRole": 10,
+            "minRole": 100,
             "isFormula": {},
             "action_icon": "",
             "action_name": "Login",
@@ -186,7 +186,7 @@
         "viewname": "login",
         "exttable_name": null
       },
-      "min_role": 10,
+      "min_role": 100,
       "table": "users",
       "default_render_page": ""
     },
@@ -316,7 +316,7 @@
               "type": "action",
               "block": false,
               "rndid": "d2d797",
-              "minRole": 10,
+              "minRole": 100,
               "isFormula": {},
               "action_icon": "",
               "action_name": "Sign up",
@@ -355,7 +355,7 @@
           {
             "type": "Action",
             "rndid": "d2d797",
-            "minRole": 10,
+            "minRole": 100,
             "isFormula": {},
             "action_icon": "",
             "action_name": "Sign up",
@@ -369,7 +369,7 @@
         "exttable_name": null,
         "view_when_done": "signup"
       },
-      "min_role": 10,
+      "min_role": 100,
       "table": "users",
       "default_render_page": ""
     },
@@ -472,7 +472,7 @@
               "type": "action",
               "block": false,
               "rndid": "d2d797",
-              "minRole": 10,
+              "minRole": 100,
               "isFormula": {},
               "action_icon": "",
               "action_name": "Sign up",
@@ -505,7 +505,7 @@
           {
             "type": "Action",
             "rndid": "d2d797",
-            "minRole": 10,
+            "minRole": 100,
             "isFormula": {},
             "action_icon": "",
             "action_name": "Sign up",
@@ -519,7 +519,7 @@
         "exttable_name": null,
         "view_when_done": "signup"
       },
-      "min_role": 10,
+      "min_role": 100,
       "table": "users",
       "default_render_page": ""
     },
@@ -572,7 +572,7 @@
               "type": "action",
               "block": false,
               "rndid": "103a76",
-              "minRole": 10,
+              "minRole": 100,
               "isFormula": {},
               "action_icon": "",
               "action_name": "Save",
@@ -593,7 +593,7 @@
           {
             "type": "Action",
             "rndid": "103a76",
-            "minRole": 10,
+            "minRole": 100,
             "isFormula": {},
             "action_icon": "",
             "action_name": "Save",
@@ -607,7 +607,7 @@
         "exttable_name": null,
         "view_when_done": "login"
       },
-      "min_role": 10,
+      "min_role": 100,
       "table": "users",
       "default_render_page": ""
     },
@@ -684,7 +684,7 @@
               "type": "action",
               "block": false,
               "rndid": "103a76",
-              "minRole": 10,
+              "minRole": 100,
               "isFormula": {},
               "action_icon": "",
               "action_name": "Save",
@@ -711,7 +711,7 @@
           {
             "type": "Action",
             "rndid": "103a76",
-            "minRole": 10,
+            "minRole": 100,
             "isFormula": {},
             "action_icon": "",
             "action_name": "Save",
@@ -725,7 +725,7 @@
         "exttable_name": null,
         "view_when_done": "login"
       },
-      "min_role": 10,
+      "min_role": 100,
       "table": "users",
       "default_render_page": ""
     }
@@ -736,7 +736,7 @@
       "name": "publicpage",
       "title": "",
       "description": "",
-      "min_role": 10,
+      "min_role": 100,
       "layout": {
         "icon": "",
         "type": "blank",

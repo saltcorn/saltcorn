@@ -114,7 +114,7 @@ class Trigger implements AbstractTrigger {
     const schema = db.getTenantSchemaPrefix();
 
     const sql = `select a.id, a.name, a.action, t.name as table_name, a. when_trigger, a.channel, a.min_role 
-    from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by a.id`;
+    from ${schema}_sc_triggers a left join ${schema}_sc_tables t on t.id=table_id order by lower(a.name)`;
     const { rows } = await db.query(sql);
     return rows.map((dbf: any) => new Trigger(dbf));
   }
@@ -193,7 +193,7 @@ class Trigger implements AbstractTrigger {
         const Table = require("./table");
         table = await Table.findOne({ name: channel });
         findArgs.table_id = table.id;
-      } else if (channel) findArgs.channel = channel;
+      } else if (channel) findArgs.channel = {in: ['', channel]};
 
       const triggers = Trigger.find(findArgs);
 

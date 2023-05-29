@@ -5,11 +5,13 @@ const Field = require("@saltcorn/data/models/field");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
   toNotInclude,
   toRedirect,
   resetToFixtures,
+  succeedJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
@@ -33,7 +35,7 @@ describe("Table Endpoints", () => {
       .post("/table/")
       .send("name=mypostedtable")
       .set("Cookie", loginCookie)
-      .expect(toRedirect("/table/10"));
+      .expect(toRedirect("/table/16"));
     await request(app)
       .get("/table/10")
       .set("Cookie", loginCookie)
@@ -96,19 +98,19 @@ describe("Table Endpoints", () => {
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .send("min_role_read=100&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .send("min_role_read=100&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=10&min_role_write=1&id=" + tbl.id)
+      .send("min_role_read=100&min_role_write=1&id=" + tbl.id)
       .expect(toRedirect(`/table/${tbl.id}`));
     await request(app).get(`/table/${tbl.id}`).set("Cookie", loginCookie);
   });
@@ -119,7 +121,7 @@ describe("Table Endpoints", () => {
     await request(app)
       .post(`/table`)
       .set("Cookie", loginCookie)
-      .send("min_role_read=8&name=exttab&external=on")
+      .send("min_role_read=80&name=exttab&external=on")
       .expect(toRedirect(`/table/exttab`));
   });
   it("should download csv ", async () => {
@@ -149,18 +151,30 @@ Pencil, 0.5,2, t`;
       .set("Cookie", loginCookie)
       .field("name", "expenses")
       .attach("file", Buffer.from(csv, "utf-8"))
-      .expect(toRedirect("/table/11"));
+      .expect(toRedirect("/table/17"));
   });
   it("should upload csv to existing table", async () => {
     const csv = `author,Pages
 Joe Celko, 856
-Gordon Kane, 217`;
+Gordon Kane, 218`;
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
+    let filename;
     await request(app)
       .post("/table/upload_to_table/books")
       .set("Cookie", loginCookie)
       .attach("file", Buffer.from(csv, "utf-8"))
+      .expect(toInclude(">Preview<"))
+      .expect(toInclude("Proceed"))
+      .expect((res) => {
+        filename = res.text.match(
+          /data-csv-filename\=\"([A-Za-z0-9 _\-]*)\"/
+        )[1];
+      });
+
+    await request(app)
+      .post(`/table/finish_upload_to_table/books/${filename}`)
+      .set("Cookie", loginCookie)
       .expect(toRedirect("/table/2"));
     await request(app)
       .get(`/table/2`)
@@ -198,11 +212,11 @@ Gordon Kane, 217`;
       .set("Cookie", loginCookie)
       .expect(toInclude("books constraints"));
     await request(app)
-      .get("/table/add-constraint/" + id)
+      .get("/table/add-constraint/" + id + "/Unique")
       .set("Cookie", loginCookie)
       .expect(toInclude("Add constraint to books"));
     await request(app)
-      .post("/table/add-constraint/" + id)
+      .post("/table/add-constraint/" + id + "/Unique")
       .send("author=on")
       .send("pages=on")
       .set("Cookie", loginCookie)
@@ -262,7 +276,22 @@ describe("deletion to table with row ownership", () => {
     const row = await persons.insertRow({ name: "something", owner: user.id });
     expect(await persons.countRows()).toBe(1);
     const loginCookie = await getStaffLoginCookie();
+    const uloginCookie = await getUserLoginCookie();
     const app = await getApp({ disableCsrf: true });
+    await request(app).get("/api/owned").expect(401);
+    await request(app)
+      .get("/api/owned")
+      .set("Cookie", loginCookie)
+      .expect(
+        succeedJsonWith(
+          (rows) => rows.length == 1 && rows[0].name === "something"
+        )
+      );
+    await request(app)
+      .get("/api/owned")
+      .set("Cookie", uloginCookie)
+      .expect(succeedJsonWith((rows) => rows.length == 0));
+
     await request(app)
       .post("/delete/owned/" + row)
       .expect(toRedirect("/list/owned"));

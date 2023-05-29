@@ -25,8 +25,18 @@ async function updateScTables(tablesJSON, skipScPlugins = true) {
     if (skipScPlugins && table === "_sc_plugins") continue;
     if (table === "_sc_tables") await dropDeletedTables(rows);
     await saltcorn.data.db.deleteWhere(table);
+    const existingFields = (
+      await saltcorn.data.db.query(
+        `PRAGMA table_info('${saltcorn.data.db.sqlsanitize(table)}')`
+      )
+    ).rows.map((row) => row.name);
     for (const row of rows) {
-      await saltcorn.data.db.insert(table, row);
+      // pick fields that really exist
+      const insertRow = {};
+      for (const safeField of existingFields) {
+        if (row[safeField]) insertRow[safeField] = row[safeField];
+      }
+      await saltcorn.data.db.insert(table, insertRow);
     }
   }
   await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
@@ -46,18 +56,21 @@ async function updateUserDefinedTables() {
   const existingTables = await saltcorn.data.db.listUserDefinedTables();
   const tables = await saltcorn.data.models.Table.find();
   for (const table of tables) {
+    const sanitized = saltcorn.data.db.sqlsanitize(table.name);
     if (
       table.name !== "users" &&
-      !existingTables.find((row) => row.name === table.name)
+      !existingTables.find((row) => row.name === sanitized)
     ) {
       // CREATE TABLE without inserting into _sc_tables
       await saltcorn.data.models.Table.create(table.name, {}, table.id);
     }
     const existingFields = (
-      await saltcorn.data.db.query(`PRAGMA table_info('${table.name}')`)
+      await saltcorn.data.db.query(`PRAGMA table_info('${sanitized}')`)
     ).rows.map((row) => row.name);
     for (const field of await table.getFields()) {
-      if (existingFields.indexOf(field.name) < 0) {
+      if (
+        existingFields.indexOf(saltcorn.data.db.sqlsanitize(field.name)) < 0
+      ) {
         // field is new
         await saltcorn.data.models.Field.create(field, false, field.id);
       }
@@ -110,4 +123,12 @@ async function removeJwt() {
 async function setJwt(jwt) {
   await removeJwt();
   await saltcorn.data.db.insert(jwtTableName, { jwt: jwt });
+}
+
+async function insertUser({ id, email, role_id, language }) {
+  await saltcorn.data.db.insert(
+    "users",
+    { id, email, role_id, language },
+    { ignoreExisting: true }
+  );
 }

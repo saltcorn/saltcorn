@@ -29,8 +29,8 @@ import {
   doListTables,
   doListUserDefinedTables,
   doListScTables,
-  do_add_unique_constraint,
-  do_drop_unique_constraint,
+  do_add_index,
+  do_drop_index,
 } from "@saltcorn/db-common/sqlite-commons";
 
 let sqliteDatabase: Database | null = null;
@@ -228,6 +228,19 @@ export const update = async (
   await query(q, valList);
 };
 
+export const updateWhere = async (
+  tbl: string,
+  obj: Row,
+  whereObj: Where
+): Promise<void> => {
+  const kvs = Object.entries(obj);
+  if (kvs.length === 0) return;
+  const { where, values } = mkWhere(whereObj, true, kvs.length);
+  const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
+  let valList = [...kvs.map(mkVal), ...values];
+  const q = `update "${sqlsanitize(tbl)}" set ${assigns} ${where}`;
+  await query(q, valList);
+};
 /**
  * Delete rows in table
  * @param {string} tbl - table name
@@ -350,7 +363,7 @@ export const add_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  await do_add_unique_constraint(table_name, field_names, query, sql_log);
+  await do_add_index(table_name, field_names, query, true, sql_log);
 };
 
 /**
@@ -363,7 +376,33 @@ export const drop_unique_constraint = async (
   table_name: string,
   field_names: string[]
 ): Promise<void> => {
-  await do_drop_unique_constraint(table_name, field_names, query, sql_log);
+  await do_drop_index(table_name, field_names, query, true, sql_log);
+};
+
+/**
+ * Add index
+ * @param table_name - table name
+ * @param field_name - column name
+ * @returns no result
+ */
+export const add_index = async (
+  table_name: string,
+  field_name: string
+): Promise<void> => {
+  await do_add_index(table_name, [field_name], query, false, sql_log);
+};
+
+/**
+ * Drop index
+ * @param table_name - table name
+ * @param field_name - column name
+ * @returns no results
+ */
+export const drop_index = async (
+  table_name: string,
+  field_name: string
+): Promise<void> => {
+  await do_drop_index(table_name, [field_name], query, false, sql_log);
 };
 
 export const slugify = (s: string): string =>

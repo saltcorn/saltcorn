@@ -2,7 +2,7 @@
  * Table Data API handler
  * Allows to manipulate with saltcorn tables data.
  *
- * Attention! Currently you cannot insert / update users table via this api
+ * Attention! Currently, you cannot insert / update users table via this api
  * because users table has specific meaning in SC and
  * not all required (mandatory) fields of user available via this api.
  * For now this is platform limitation.
@@ -19,6 +19,7 @@ const Router = require("express-promise-router");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
+const { prepare_update_row } = require("@saltcorn/data/web-mobile-commons");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
@@ -31,6 +32,7 @@ const {
   readState,
   strictParseInt,
 } = require("@saltcorn/data/plugin-helper");
+const Crash = require("@saltcorn/data/models/crash");
 
 /**
  * @type {object}
@@ -66,15 +68,20 @@ const limitFields = (fields) => (r) => {
  * @param {Table} table
  * @returns {boolean}
  */
-function accessAllowedRead(req, user, table) {
+function accessAllowedRead(req, user, table, allow_ownership) {
   const role =
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
-  return role <= table.min_role_read;
+  return (
+    role <= table.min_role_read ||
+    ((req.user?.id || user?.id) &&
+      allow_ownership &&
+      (table.ownership_field_id || table.ownership_formula))
+  );
 }
 
 /**
@@ -90,9 +97,13 @@ function accessAllowedWrite(req, user, table) {
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
-  return role <= table.min_role_write;
+  return (
+    role <= table.min_role_write ||
+    ((req.user?.id || user?.id) &&
+      (table.ownership_field_id || table.ownership_formula))
+  );
 }
 /**
  * Check that user has right to trigger call
@@ -107,7 +118,7 @@ function accessAllowed(req, user, trigger) {
       ? req.user.role_id
       : user && user.role_id
       ? user.role_id
-      : 10;
+      : 100;
 
   return role <= trigger.min_role;
 }
@@ -126,6 +137,7 @@ router.post(
     const view = await View.findOne({ name: viewName });
     const db = require("@saltcorn/data/db");
     if (!view) {
+      getState().log(3, `API viewQuery ${view.name} not found`);
       res.status(404).json({
         error: req.__("View %s not found", viewName),
         view: viewName,
@@ -141,7 +153,7 @@ router.post(
       "jwt",
       { session: false },
       async function (err, user, info) {
-        const role = user && user.id ? user.role_id : 10;
+        const role = user && user.id ? user.role_id : 100;
         if (
           role <= view.min_role ||
           (await view.authorise_get({ req, ...view })) // TODO set query to state
@@ -152,6 +164,10 @@ router.post(
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
           } else {
+            getState().log(
+              3,
+              `API viewQuery ${view.name} ${queryName} not found`
+            );
             res.status(404).json({
               error: req.__("Query %s not found", queryName),
               view: viewName,
@@ -163,13 +179,16 @@ router.post(
             });
           }
         } else {
+          getState().log(3, `API viewQuery ${view.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
     )(req, res, next);
   })
 );
-
+/**
+ *
+ */
 router.get(
   "/:tableName/distinct/:fieldName",
   //passport.authenticate("api-bearer", { session: false }),
@@ -190,9 +209,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table)) {
-          const field = (await table.getFields()).find(
-            (f) => f.name === fieldName
-          );
+          const field = table.getFields().find((f) => f.name === fieldName);
           if (!field) {
             res.status(404).json({ error: req.__("Not found") });
             return;
@@ -208,6 +225,10 @@ router.get(
           }
           res.json({ success: dvs });
         } else {
+          getState().log(
+            3,
+            `API distinct ${table.name}.${fieldName} not authorized`
+          );
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -234,6 +255,7 @@ router.get(
         : { name: tableName }
     );
     if (!table) {
+      getState().log(3, `API get ${tableName} table not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -242,11 +264,13 @@ router.get(
       ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
-        if (accessAllowedRead(req, user, table)) {
+        if (accessAllowedRead(req, user, table, true)) {
           let rows;
           if (versioncount === "on") {
             const joinOpts = {
               orderBy: "id",
+              forUser: req.user || user || { role_id: 100 },
+              forPublic: !(req.user || user),
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
@@ -258,7 +282,7 @@ router.get(
             };
             rows = await table.getJoinedRows(joinOpts);
           } else if (req_query && req_query !== {}) {
-            const tbl_fields = await table.getFields();
+            const tbl_fields = table.getFields();
             readState(req_query, tbl_fields, req);
             const qstate = await stateFieldsToWhere({
               fields: tbl_fields,
@@ -266,12 +290,22 @@ router.get(
               state: req_query,
               table,
             });
-            rows = await table.getRows(qstate);
+            rows = await table.getRows(qstate, {
+              forPublic: !(req.user || user),
+              forUser: req.user || user,
+            });
           } else {
-            rows = await table.getRows();
+            rows = await table.getRows(
+              {},
+              {
+                forPublic: !(req.user || user),
+                forUser: req.user || user,
+              }
+            );
           }
           res.json({ success: rows.map(limitFields(fields)) });
         } else {
+          getState().log(3, `API get ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -301,7 +335,8 @@ router.post(
     });
 
     if (!trigger) {
-      res.status(400).json({ error: req.__("Not found") });
+      getState().log(3, `API action ${actionname} not found`);
+      res.status(404).json({ error: req.__("Not found") });
       return;
     }
     await passport.authenticate(
@@ -314,13 +349,17 @@ router.post(
             const resp = await action.run({
               configuration: trigger.configuration,
               body: req.body,
+              row: req.body,
               req,
+              user: user || req.user,
             });
             res.json({ success: true, data: resp });
           } catch (e) {
+            Crash.create(e, req);
             res.status(400).json({ success: false, error: e.message });
           }
         } else {
+          getState().log(3, `API action ${actionname} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -340,6 +379,7 @@ router.post(
     const { tableName } = req.params;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
+      getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -349,8 +389,8 @@ router.post(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
-          const fields = await table.getFields();
-          readState(row, fields);
+          const fields = table.getFields();
+          readState(row, fields, req);
           let errors = [];
           let hasErrors = false;
           Object.keys(row).forEach((k) => {
@@ -371,23 +411,31 @@ router.post(
             if (
               field.required &&
               !field.primary_key &&
-              typeof row[field.name] === "undefined"
+              typeof row[field.name] === "undefined" &&
+              !field.attributes.default
             ) {
               hasErrors = true;
               errors.push(`${field.name}: required`);
             }
           });
           if (hasErrors) {
+            getState().log(
+              2,
+              `API POST ${table.name} error: ${errors.join(", ")}`
+            );
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
           const ins_res = await table.tryInsertRow(
             row,
-            req.user || user || { role_id: 10 }
+            req.user || user || { role_id: 100 }
           );
-          if (ins_res.error) res.status(400).json(ins_res);
-          else res.json(ins_res);
+          if (ins_res.error) {
+            getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
+            res.status(400).json(ins_res);
+          } else res.json(ins_res);
         } else {
+          getState().log(3, `API POST ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -408,46 +456,39 @@ router.post(
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
+      getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
     await passport.authenticate(
-      "api-bearer",
+      ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
-          const fields = await table.getFields();
-          readState(row, fields);
-          let errors = [];
-          let hasErrors = false;
-          Object.keys(row).forEach((k) => {
-            const field = fields.find((f) => f.name === k);
-            if (!field || field.calculated) {
-              delete row[k];
-              return;
-            }
-            if (field.type && field.type.validate) {
-              const vres = field.type.validate(field.attributes || {})(row[k]);
-              if (vres.error) {
-                hasErrors = true;
-                errors.push(`${k}: ${vres.error}`);
-              }
-            }
-          });
-          if (hasErrors) {
+          const fields = table.getFields();
+          readState(row, fields, req);
+          const errors = await prepare_update_row(table, row, id);
+          if (errors.length > 0) {
+            getState().log(
+              2,
+              `API POST ${table.name} error: ${errors.join(", ")}`
+            );
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
           const ins_res = await table.tryUpdateRow(
             row,
             id,
-            user || req.user || { role_id: 10 }
+            user || req.user || { role_id: 100 }
           );
 
-          if (ins_res.error) res.status(400).json(ins_res);
-          else res.json(ins_res);
+          if (ins_res.error) {
+            getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
+            res.status(400).json(ins_res);
+          } else res.json(ins_res);
         } else {
+          getState().log(3, `API POST ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -468,6 +509,7 @@ router.delete(
     const { tableName, id } = req.params;
     const table = await Table.findOne({ name: tableName });
     if (!table) {
+      getState().log(3, `API DELETE ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
@@ -484,18 +526,20 @@ router.delete(
               //readState(row, fields);
               await table.deleteRows(
                 { [pk_name]: row[pk_name] },
-                user || req.user || { role_id: 10 }
+                user || req.user || { role_id: 100 }
               );
             } else
               await table.deleteRows(
                 { id },
-                user || req.user || { role_id: 10 }
+                user || req.user || { role_id: 100 }
               );
             res.json({ success: true });
           } catch (e) {
+            getState().log(2, `API DELETE ${table.name} error: ${e.message}`);
             res.status(400).json({ error: e.message });
           }
         } else {
+          getState().log(3, `API DELETE ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }

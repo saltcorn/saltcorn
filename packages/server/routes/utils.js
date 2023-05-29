@@ -18,6 +18,29 @@ const cookieSession = require("cookie-session");
 const is = require("contractis/is");
 const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
+const si = require("systeminformation");
+const {
+  config_fields_form,
+  save_config_from_form,
+  check_if_restart_required,
+  flash_restart,
+} = require("../markup/admin.js");
+const get_sys_info = async () => {
+  const disks = await si.fsSize();
+  let size = 0;
+  let used = 0;
+  disks.forEach((d) => {
+    if (d && d.used && d.size) {
+      size += d.size;
+      used += d.used;
+    }
+  });
+  const diskUsage = Math.round(100 * (used / size));
+  const simem = await si.mem();
+  const memUsage = Math.round(100 - 100 * (simem.available / simem.total));
+  const cpuUsage = Math.round((await si.currentLoad()).currentLoad);
+  return { memUsage, diskUsage, cpuUsage };
+};
 
 /**
  * Checks that user logged or not.
@@ -250,13 +273,13 @@ const getGitRevision = () => db.connectObj.git_commit;
  * @returns {session|cookieSession}
  */
 const getSessionStore = () => {
-  if (getState().getConfig("cookie_sessions", false)) {
+  /*if (getState().getConfig("cookie_sessions", false)) {
     return cookieSession({
       keys: [db.connectObj.session_secret || is.str.generate()],
       maxAge: 30 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
-  } else if (db.isSQLite) {
+  } else*/ if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
       store: new SQLiteStore({ db: "sessions.sqlite" }),
@@ -295,6 +318,68 @@ const addOnDoneRedirect = (oldPath, req) => {
   return oldPath;
 };
 
+//https://stackoverflow.com/a/38979205/19839414
+const is_relative_url = (url) => {
+  return typeof url === "string" && !url.includes(":/") && !url.includes("//");
+};
+
+const admin_config_route = ({
+  router,
+  path,
+  super_path = "",
+  get_form,
+  field_names,
+  response,
+  flash,
+}) => {
+  const getTheForm = async (req) =>
+    !get_form && field_names
+      ? await config_fields_form({
+          req,
+          field_names,
+          action: super_path + path,
+        })
+      : typeof get_form === "function"
+      ? await get_form(req)
+      : get_form;
+
+  router.get(
+    path,
+    isAdmin,
+    error_catcher(async (req, res) => {
+      response(await getTheForm(req), req, res);
+    })
+  );
+  router.post(
+    path,
+    isAdmin,
+    error_catcher(async (req, res) => {
+      const form = await getTheForm(req);
+      form.validate(req.body);
+      if (form.hasErrors) {
+        response(form, req, res);
+      } else {
+        const restart_required = check_if_restart_required(form, req);
+
+        await save_config_from_form(form);
+        if (!req.xhr) {
+          if (restart_required) {
+            flash_restart(req);
+          } else req.flash("success", req.__(flash));
+          res.redirect(super_path + path);
+        } else {
+          if (restart_required)
+            res.json({
+              success: "ok",
+              notify: req.__("Restart required for changes to take effect."),
+            });
+          else res.json({ success: "ok" });
+        }
+      }
+    })
+  );
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -308,4 +393,7 @@ module.exports = {
   setTenant,
   get_tenant_from_req,
   addOnDoneRedirect,
+  is_relative_url,
+  get_sys_info,
+  admin_config_route,
 };

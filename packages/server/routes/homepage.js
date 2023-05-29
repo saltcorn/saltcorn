@@ -32,10 +32,9 @@ const { get_base_url } = require("./utils.js");
 const tableTable = (tables, req) =>
   mkTable(
     [
-      { label: req.__("Name"), key: "name" },
       {
-        label: req.__("Edit"),
-        key: (r) => link(`/table/${r.id}`, req.__("Edit")),
+        label: req.__("Name"),
+        key: (r) => link(`/table/${r.id}`, r.name),
       },
     ],
     tables
@@ -427,7 +426,7 @@ const welcome_page = async (req) => {
  * @returns {Promise<void>}
  */
 const no_views_logged_in = async (req, res) => {
-  const role = req.user && req.user.id ? req.user.role_id : 10;
+  const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
     res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
   else {
@@ -464,7 +463,7 @@ const no_views_logged_in = async (req, res) => {
 const get_config_response = async (role_id, res, req) => {
   const modernCfg = getState().getConfig("home_page_by_role", false);
   // predefined roles
-  const legacy_role = { 10: "public", 8: "user", 4: "staff", 1: "admin" }[
+  const legacy_role = { 100: "public", 80: "user", 40: "staff", 1: "admin" }[
     role_id
   ];
   let homeCfg = modernCfg && modernCfg[role_id];
@@ -498,7 +497,7 @@ module.exports =
    */
   async (req, res) => {
     const isAuth = req.user && req.user.id;
-    const role_id = req.user ? req.user.role_id : 10;
+    const role_id = req.user ? req.user.role_id : 100;
     const cfgResp = await get_config_response(role_id, res, req);
     if (cfgResp) return;
 

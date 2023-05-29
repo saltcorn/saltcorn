@@ -1,5 +1,9 @@
 const { PluginManager } = require("live-plugin-manager");
-const { staticDependencies } = require("@saltcorn/server/load_plugins");
+const {
+  loadAllPlugins,
+  staticDependencies,
+} = require("@saltcorn/server/load_plugins");
+const { features } = require("@saltcorn/data/db/state");
 import { join } from "path";
 import Plugin from "@saltcorn/data/models/plugin";
 import {
@@ -37,6 +41,7 @@ export class MobileBuilder {
   entryPoint: string;
   entryPointType: EntryPointType;
   serverURL: string;
+  allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -60,6 +65,7 @@ export class MobileBuilder {
     entryPoint: string;
     entryPointType: EntryPointType;
     serverURL: string;
+    allowOfflineMode: string;
     plugins: Plugin[];
     copyTargetDir?: string;
     user?: User;
@@ -76,6 +82,7 @@ export class MobileBuilder {
     this.entryPoint = cfg.entryPoint;
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
+    this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
       staticDependencies,
@@ -103,13 +110,16 @@ export class MobileBuilder {
       serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: this.localUserTables,
       tenantAppName: this.tenantAppName,
+      allowOfflineMode: this.allowOfflineMode,
     });
     let resultCode = await bundlePackagesAndPlugins(
       this.buildDir,
       this.plugins
     );
     if (resultCode !== 0) return resultCode;
-    await copyPublicDirs(this.buildDir, this.pluginManager, this.plugins);
+    features.version_plugin_serve_path = false;
+    await loadAllPlugins();
+    await copyPublicDirs(this.buildDir);
     await installNpmPackages(this.buildDir, this.pluginManager);
     await buildTablesFile(this.buildDir);
     resultCode = await createSqliteDb(this.buildDir);
@@ -125,7 +135,7 @@ export class MobileBuilder {
         this.buildDir,
         this.copyTargetDir,
         this.user!,
-        this.copyFileName,
+        this.copyFileName
       );
     }
     return resultCode;

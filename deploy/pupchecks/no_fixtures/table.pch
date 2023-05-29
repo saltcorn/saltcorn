@@ -1,0 +1,73 @@
+goto /
+contains Create first user
+type input#inputemail admin@foo.com
+type input#inputpassword AhGGr6rhu45
+click button[type=submit]
+
+goto /table
+contains Your tables
+contains Create table
+
+goto /table/new
+contains Table name
+
+type input#inputname Persons
+click button[type=submit]
+
+contains Fields
+contains Table data
+
+goto /field/new/2
+contains New field: Basic properties
+
+type input#inputlabel Name
+click button[type=submit]
+contains Translation of
+click button[type=submit]
+contains Field Name created
+
+goto /field/new/2
+contains New field: Basic properties
+
+type input#inputlabel Age
+select select#inputtype Integer
+click button[type=submit]
+contains max
+click button[type=submit]
+contains Field Age created
+
+goto /viewedit/new?table=Persons&on_done_redirect=table%2FPersons
+contains basic information about the view
+type input#inputname ListPersons
+select select#inputviewtemplate List
+click button[type=submit]
+contains Column configuration
+click button[type=submit]
+contains Default search form values when first loaded
+click button[type=submit]
+contains Row inclusion formula
+click button[type=submit]
+contains View ListPersons saved
+
+goto /viewedit/new?table=Persons&on_done_redirect=table%2FPersons
+contains basic information about the view
+type input#inputname EditPersons
+select select#inputviewtemplate Edit
+click button[type=submit]
+contains No element selected
+click button.builder-save
+contains Destination type
+select #inputview_when_done ListPersons
+click button[type=submit]
+contains View EditPersons saved
+contains Views of this table
+
+goto /viewedit/config/ListPersons?on_done_redirect=table%2FPersons
+contains Column configuration
+click button[type=submit]
+contains Specify how to create a new row
+select #inputview_to_create EditPersons
+click button[type=submit]
+click button#btnbackwf
+contains Specify how to create a new row
+click button[type=submit]

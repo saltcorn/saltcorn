@@ -141,10 +141,11 @@ describe("User", () => {
   it("should validate email", async () => {
     expect(User.valid_email("foobar")).toBe(false);
     expect(User.valid_email("foo@bar.com")).toBe(true);
+    expect(User.valid_email(`{email:"foo@bar.com"}`)).toBe(false);
   });
 
   it("should verify with token", async () => {
-    await getState().setConfig("elevate_verified", "4");
+    await getState().setConfig("elevate_verified", "40");
 
     const u = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u);
@@ -164,7 +165,7 @@ describe("User", () => {
     const u2 = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u2);
     expect(!!u2.verified_on).toBe(true);
-    expect(u2.role_id).toBe(4);
+    expect(u2.role_id).toBe(40);
   });
   it("should count", async () => {
     const n = await User.count();
@@ -224,7 +225,7 @@ describe("User fields", () => {
     });
     assertsObjectIsUser(u);
     expect(u.email).toBe("foo1@bar.com");
-    expect(u.role_id).toBe(8);
+    expect(u.role_id).toBe(80);
     expect(u.height).toBe(183);
     expect(u.password === "YEge56FGew").toBe(false);
     const ut = await table.getRow({ id: u.id });

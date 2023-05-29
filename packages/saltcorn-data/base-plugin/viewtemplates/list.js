@@ -134,6 +134,8 @@ const configuration_workflow = (req) =>
             table,
             viewname: context.viewname,
             req,
+            has_click_to_edit: true,
+            has_align: true,
           });
           return new Form({
             blurb: req.__("Specify the fields in the table to show"),
@@ -193,6 +195,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
                 name: "create_view_label",
@@ -202,7 +205,10 @@ const configuration_workflow = (req) =>
                 ),
                 attributes: { asideNext: true },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_view_location",
@@ -218,7 +224,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
                 type: "String",
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_style",
@@ -244,7 +253,10 @@ const configuration_workflow = (req) =>
                   ],
                 },
 
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
               {
                 name: "create_link_size",
@@ -261,7 +273,10 @@ const configuration_workflow = (req) =>
                     { name: "btn-block btn-lg", label: "Large block" },
                   ],
                 },
-                showIf: { create_view_display: ["Link", "Popup"] },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
               },
             ],
           });
@@ -339,7 +354,18 @@ const configuration_workflow = (req) =>
             class: "validate-expression",
             sublabel:
               req.__("Only include rows where this formula is true. ") +
-              req.__("Use %s to access current user ID", code("$user_id")),
+              req.__("In scope:") +
+              " " +
+              [
+                ...table.fields.map((f) => f.name),
+                "user",
+                "year",
+                "month",
+                "day",
+                "today()",
+              ]
+                .map((s) => code(s))
+                .join(", "),
             type: "String",
           });
           formfields.push({
@@ -523,13 +549,14 @@ const run = async (
   const role =
     extraOpts && extraOpts.req && extraOpts.req.user
       ? extraOpts.req.user.role_id
-      : 10;
+      : 100;
   await set_join_fieldviews({ table, columns, fields });
 
   readState(stateWithId, fields, extraOpts.req);
   const { id, ...state } = stateWithId || {};
   const statehash = hashState(state, viewname);
 
+  const { rows, rowCount } = await listQuery(state, statehash);
   const tfields = get_viewable_fields(
     viewname,
     statehash,
@@ -540,8 +567,6 @@ const run = async (
     extraOpts.req,
     __
   );
-
-  const { rows, rowCount } = await listQuery(state, statehash);
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
   var page_opts =
@@ -772,12 +797,12 @@ module.exports = {
       if (!q.orderDesc)
         q.orderDesc = default_state && default_state._descending;
 
-      const role = req && req.user ? req.user.role_id : 10;
+      const role = req && req.user ? req.user.role_id : 100;
 
       //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
-        const ctx = { ...state, user_id: req.user?.id || null };
-        let where1 = jsexprToWhere(default_state.include_fml, ctx);
+        const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
+        let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
         mergeIntoWhere(where, where1 || {});
       }
       let rows = await table.getJoinedRows({
@@ -785,7 +810,7 @@ module.exports = {
         joinFields,
         aggregations,
         ...q,
-        forPublic: !req.user,
+        forPublic: !req.user || req.user.role_id === 100, // TODO in mobile set user null for public
         forUser: req.user,
       });
 

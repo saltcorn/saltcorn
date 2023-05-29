@@ -10,6 +10,7 @@ import View from "../models/view";
 import Trigger from "../models/trigger";
 import File from "../models/file";
 import Table from "../models/table";
+import TableConstraint from "../models/table_constraints";
 import Page from "../models/page";
 import Field from "../models/field";
 import {
@@ -31,7 +32,7 @@ import config from "../models/config";
 const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
-const { structuredClone, removeAllWhiteSpace } = utils;
+const { structuredClone, removeAllWhiteSpace, stringToJSON } = utils;
 import I18n from "i18n";
 import { join } from "path";
 import { existsSync } from "fs";
@@ -110,6 +111,7 @@ class State {
   actions: Record<string, any>;
   auth_methods: Record<string, any>;
   plugins: Record<string, Plugin>;
+  table_providers: Record<string, any>;
   plugin_cfgs: any;
   plugin_locations: any;
   plugin_module_names: any;
@@ -127,6 +129,7 @@ class State {
   logLevel: number;
   pluginManager?: any;
   codeNPMmodules: Record<string, any>;
+  npm_refresh_in_progess: boolean;
 
   /**
    * State constructor
@@ -151,6 +154,7 @@ class State {
     this.plugin_cfgs = {};
     this.plugin_locations = {};
     this.plugin_module_names = {};
+    this.table_providers = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.layouts = { emergency: { wrap: emergency_layout } };
@@ -167,6 +171,7 @@ class State {
     });
     this.logLevel = 1;
     this.codeNPMmodules = {};
+    this.npm_refresh_in_progess = false;
   }
 
   /**
@@ -176,7 +181,7 @@ class State {
    * @returns {object}
    */
   getLayout(user: User) {
-    const role_id = user ? +user.role_id : 10;
+    const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {
       const chosen = this.layouts[layout_by_role[role_id]];
@@ -192,7 +197,7 @@ class State {
    * @returns {string}
    */
   get2FApolicy(user: User) {
-    const role_id = user ? +user.role_id : 10;
+    const role_id = user ? +user.role_id : 100;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
     if (twofa_policy_by_role && twofa_policy_by_role[role_id])
       return twofa_policy_by_role[role_id];
@@ -225,6 +230,7 @@ class State {
     await this.refresh_triggers(noSignal);
     await this.refresh_pages(noSignal);
     await this.refresh_config(noSignal);
+    await this.refresh_npmpkgs(noSignal);
   }
 
   /**
@@ -349,8 +355,23 @@ class State {
       {},
       { orderBy: "name", nocase: true }
     );
+    const allConstraints = await db.select("_sc_table_constraints", {});
     for (const table of allTables) {
+      if (table.provider_name) {
+        table.provider_cfg = stringToJSON(table.provider_cfg);
+        const provider = this.table_providers[table.provider_name];
+        if (!provider) table.fields = [];
+        else {
+          if (typeof provider.fields === "function")
+            table.fields = await provider.fields(table.provider_cfg);
+          else table.fields = provider.fields;
+        }
+        continue;
+      }
       table.fields = allFields.filter((f: Field) => f.table_id === table.id);
+      table.constraints = allConstraints
+        .filter((f: any) => f.table_id === table.id)
+        .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: Field) => {
         if (
           f.attributes &&
@@ -499,6 +520,9 @@ class State {
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
       this.eventTypes[k] = v;
     });
+    Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
+      this.table_providers[k] = v;
+    });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
     });
@@ -637,15 +661,45 @@ class State {
   emitRoom(...args: any[]) {
     globalRoomEmitter(...args);
   }
-  async loadNPMpkgsForJsCode(moduleStr: string) {
+  async refresh_npmpkgs(noSignal?: boolean) {
+    if (this.npm_refresh_in_progess) return;
+    this.npm_refresh_in_progess = true;
+    const moduleStr: string = this.getConfigCopy("npm_available_js_code", "");
     if (!moduleStr) return;
-    const moduleNames = moduleStr.split(",").map((s) => s.trim());
+    const moduleNames = moduleStr
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s);
     if (moduleNames.length === 0) return;
     if (!this.pluginManager) this.pluginManager = new PluginManager();
     for (const moduleName of moduleNames) {
-      await this.pluginManager.install(moduleName);
-      this.codeNPMmodules[moduleName] = this.pluginManager.require(moduleName);
+      if (!this.codeNPMmodules[moduleName]) {
+        try {
+          if (
+            [
+              "fs",
+              "child_process",
+              "path",
+              "http",
+              "crypto",
+              "dns",
+              "os",
+            ].includes(moduleName)
+          ) {
+            this.codeNPMmodules[moduleName] = require(moduleName);
+          } else {
+            await this.pluginManager.install(moduleName);
+            this.codeNPMmodules[moduleName] =
+              this.pluginManager.require(moduleName);
+          }
+        } catch (e) {
+          console.error("npm install error", e);
+        }
+      }
     }
+    if (!noSignal && db.is_node)
+      process_send({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
+    this.npm_refresh_in_progess = false;
   }
 }
 
@@ -690,6 +744,7 @@ const get_other_domain_tenant = (hostname: string) =>
  */
 const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
+  if (ten === "public") return singleton;
   return tenants[ten];
 };
 
@@ -734,6 +789,11 @@ const init_multi_tenant = async (
   tenantList: string[]
 ) => {
   // for each domain
+  if (singleton?.configs?.base_url.value) {
+    const cfg_domain = get_domain(singleton?.configs?.base_url.value);
+    otherdomaintenants[cfg_domain] = "public";
+  }
+
   for (const domain of tenantList) {
     try {
       // create new state for each domain
@@ -745,9 +805,6 @@ const init_multi_tenant = async (
       await db.runWithTenant(domain, plugin_loader);
       // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
-      await tenants[domain].loadNPMpkgsForJsCode(
-        tenants[domain].configs.npm_available_js_code?.value
-      );
     } catch (err: any) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
@@ -796,6 +853,7 @@ const features = {
   prefix_or_in_queries: true,
   json_state_query: true,
   async_validate: true,
+  public_user_role: 100,
 };
 
 export = {

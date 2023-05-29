@@ -53,7 +53,7 @@ describe("viewedit edit endpoint", () => {
       .send("table_name=books")
       .send("id=" + v.id)
       .send("name=authorlist")
-      .send("min_role=10")
+      .send("min_role=100")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/authorlist"));
   });
@@ -95,7 +95,7 @@ describe("viewedit new List", () => {
       .send("viewtemplate=List")
       .send("table_name=books")
       .send("name=mybooklist")
-      .send("min_role=8")
+      .send("min_role=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/mybooklist"));
     //expect(res.text.includes("View configuration")).toBe(true);
@@ -212,7 +212,7 @@ describe("viewedit new List with one field", () => {
       .send("viewtemplate=List")
       .send("table_name=books")
       .send("name=mybooklist1")
-      .send("min_role=8")
+      .send("min_role=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/mybooklist1"));
     //expect(res.text.includes("View configuration")).toBe(true);
@@ -334,7 +334,7 @@ describe("viewedit new Show", () => {
       .send("viewtemplate=Show")
       .send("table_name=books")
       .send("name=mybook")
-      .send("min_role=8")
+      .send("min_role=80")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit/config/mybook"));
     //expect(res.text.includes("View configuration")).toBe(true);

@@ -321,11 +321,19 @@ describe("jsexprToWhere", () => {
   it("translates equality", () => {
     expect(jsexprToWhere("foo==4")).toEqual({ foo: 4 });
   });
+  it("translates equality reverse", () => {
+    expect(jsexprToWhere("4==foo")).toEqual({ foo: 4 });
+  });
   it("translates equal to col", () => {
     expect(jsexprToWhere("foo==bar").foo.description).toBe("bar");
   });
   it("translates context", () => {
     expect(jsexprToWhere("foo==$bar", { bar: 5 })).toEqual({ foo: 5 });
+  });
+  it("translates own context", () => {
+    expect(
+      jsexprToWhere("foo==$foo", { foo: 5 }, [{ name: "foo" }] as Field[])
+    ).toEqual({ foo: 5 });
   });
   it("translates context", () => {
     const w = jsexprToWhere("$father !== null && married_to === $father", {
@@ -357,10 +365,51 @@ describe("jsexprToWhere", () => {
       publisher: {
         inSelect: {
           field: "id",
-          table: db.isSQLite ? '"publisher"' : '"public"."publisher"',
+          table: "publisher",
+          tenant: "public",
           where: { name: "AK Press" },
         },
       },
     });
+  });
+  it("access context subvars", () => {
+    expect(jsexprToWhere("foo==user.id", { user: { id: 5 } })).toEqual({
+      foo: 5,
+    });
+  });
+  it("access deep context subvars", () => {
+    expect(
+      jsexprToWhere("foo==user.address.id", { user: { address: { id: 5 } } })
+    ).toEqual({
+      foo: 5,
+    });
+  });
+  it("access context subvars rev", () => {
+    expect(jsexprToWhere("user.id===foo", { user: { id: 5 } })).toEqual({
+      foo: 5,
+    });
+  });
+  it("translates sums", () => {
+    expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
+    expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
+  });
+  it("translates date limits", () => {
+    expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
+  });
+  it("translates today()", () => {
+    const todayW = jsexprToWhere("foo>=today()");
+    const today = todayW.foo.gt;
+    expect(todayW.foo.equal).toEqual(true);
+    expect(today).toMatch(/^202/);
+
+    expect(jsexprToWhere("foo>=today(5)").foo.gt).toMatch(/^202/);
+    expect(
+      new Date(jsexprToWhere("foo>=today(5)").foo.gt) > new Date(today)
+    ).toEqual(true);
+
+    expect(jsexprToWhere("foo>=today(-5)").foo.gt).toMatch(/^202/);
+    expect(
+      new Date(jsexprToWhere("foo>=today(-5)").foo.gt) < new Date(today)
+    ).toEqual(true);
   });
 });

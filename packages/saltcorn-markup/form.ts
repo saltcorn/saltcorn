@@ -20,6 +20,7 @@ const {
   ul,
   li,
   input,
+  pre,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -522,7 +523,11 @@ const innerField =
           hdr.input_type
         }" class="form-control ${validClass} ${
           hdr.class || ""
-        }"${maybe_disabled} data-fieldname="${text_attr(
+        }"${maybe_disabled}${
+          hdr.attributes?.autocomplete
+            ? ` autocomplete="${hdr.attributes?.autocomplete}"`
+            : ""
+        } data-fieldname="${text_attr(
           hdr.form_name
         )}" name="${name}" id="input${text_attr(name)}"${
           v && isdef(v[hdr.form_name])
@@ -732,6 +737,36 @@ const mkFormRowForRepeat = (
         })
       ),
       adder
+    );
+  } else if (hdr.defaultNone) {
+    const rndid = `fldrep${Math.floor(Math.random() * 16777215).toString(16)}`;
+    let inner =
+      div(
+        {
+          class: `repeats-${hdr.form_name}`,
+        },
+        div(
+          { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
+          repeater_icons,
+          hdr.fields.map((f: any) => {
+            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
+          })
+        )
+      ) + adder;
+    return div(
+      {
+        "data-show-if": hdr.showIf ? mkShowIf(hdr.showIf) : undefined,
+        id: rndid,
+      },
+      pre({ class: "d-none" }, encodeURIComponent(inner)),
+      a(
+        {
+          class: "btn btn-sm btn-outline-primary mb-3",
+          href: `javascript:$('#${rndid}').html(decodeURIComponent($('#${rndid} pre').text()))`,
+          title: "Add",
+        },
+        i({ class: "fas fa-plus" })
+      )
     );
   } else {
     return div(
@@ -1163,7 +1198,7 @@ const renderFormLayout = (form: Form): string => {
       return mkBtn('type="submit"');
     },
   };
-  const role = form.req?.user?.role_id || 10;
+  const role = form.req?.user?.role_id || 100;
 
   return renderLayout({
     blockDispatch,

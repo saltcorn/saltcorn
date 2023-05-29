@@ -195,6 +195,10 @@ module.exports =
     dev,
     ...appargs
   } = {}) => {
+    process.on("unhandledRejection", (reason, p) => {
+      console.error(reason, "Unhandled Rejection at Promise");
+    });
+
     if (dev && cluster.isMaster) {
       listenForChanges(getRelevantPackages(), await getPluginDirectories());
     }

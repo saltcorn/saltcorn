@@ -14,7 +14,12 @@ const resizer = require("resize-with-sharp-or-jimp");
 const db = require("@saltcorn/data/db");
 
 const { renderForm } = require("@saltcorn/markup");
-const { isAdmin, error_catcher, setTenant } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  setTenant,
+  is_relative_url,
+} = require("./utils.js");
 const { h1, div, text } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -25,7 +30,9 @@ const {
 } = require("../markup/admin");
 const fs = require("fs");
 const path = require("path");
-
+const Zip = require("adm-zip");
+const stream = require("stream");
+const { extract } = require("@saltcorn/admin-models/models/backup");
 /**
  * @type {object}
  * @const
@@ -123,7 +130,7 @@ router.get(
 router.get(
   "/download/*",
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = req.params[0];
     const file = await File.findOne(serve_path);
@@ -143,6 +150,36 @@ router.get(
   })
 );
 
+router.post(
+  "/download-zip",
+  isAdmin,
+
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const files = req.body.files;
+    const location = req.body.location;
+    const zip = new Zip();
+
+    for (const fileNm of files) {
+      const file = await File.findOne(path.join(location, fileNm));
+      if (
+        file &&
+        (role <= file.min_role_read || (user_id && user_id === file.user_id))
+      ) {
+        zip.addLocalFile(file.location);
+      }
+    }
+    const readStream = new stream.PassThrough();
+    readStream.end(zip.toBuffer());
+    res.type("application/zip");
+    res.attachment(
+      `${getState().getConfig("site_name", db.getTenantSchema())}-files.zip`
+    );
+    readStream.pipe(res);
+  })
+);
+
 /**
  * @name get/serve/:id
  * @function
@@ -152,7 +189,7 @@ router.get(
 router.get(
   "/serve/*",
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = req.params[0];
     //let file;
@@ -164,11 +201,17 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       res.type(file.mimetype);
-      const cacheability = file.min_role_read === 10 ? "public" : "private";
+      const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
     } else {
+      getState().log(
+        5,
+        `File serve denied. path=${serve_path} file_exists=${!!file} file_min_role=${
+          file?.min_role_read
+        } role=${role} user_id=${user_id}`
+      );
       res
         .status(404)
         .sendWrap(req.__("Not found"), h1(req.__("File not found")));
@@ -185,7 +228,7 @@ router.get(
 router.get(
   "/resize/:width_str/:height_str/*",
   error_catcher(async (req, res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const { width_str, height_str } = req.params;
     const serve_path = req.params[0];
@@ -197,7 +240,7 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       res.type(file.mimetype);
-      const cacheability = file.min_role_read === 10 ? "public" : "private";
+      const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       //TODO s3
       if (file.s3_store) s3storage.serveObject(file, res, false);
@@ -299,6 +342,26 @@ router.post(
   })
 );
 
+/**
+ * @name post/unzip/:id
+ * @function
+ * @memberof module:routes/files~filesRouter
+ * @function
+ */
+router.post(
+  "/unzip/*",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const serve_path = req.params[0];
+    const filename = req.body.value;
+
+    const file = await File.findOne(serve_path);
+    const dir = path.dirname(file.location);
+    if (file) await extract(file.location, dir);
+    res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
+  })
+);
+
 router.post(
   "/new-folder",
   isAdmin,
@@ -323,7 +386,7 @@ router.post(
     let { folder } = req.body;
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
-    const role = req.user && req.user.id ? req.user.role_id : 10;
+    const role = req.user && req.user.id ? req.user.role_id : 100;
     let file_for_redirect;
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
@@ -383,6 +446,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const serve_path = req.params[0];
+    const { redirect } = req.query;
     const f = await File.findOne(serve_path);
     if (!f) {
       req.flash("error", "File not found");
@@ -402,7 +466,12 @@ router.post(
       }
       req.flash("error", result.error);
     }
-    res.redirect(`/files?dir=${encodeURIComponent(f.current_folder)}`);
+    if (!req.xhr)
+      res.redirect(
+        (is_relative_url(redirect) && redirect) ||
+          `/files?dir=${encodeURIComponent(f.current_folder)}`
+      );
+    else res.json({ success: true });
   })
 );
 

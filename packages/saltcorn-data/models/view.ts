@@ -33,7 +33,7 @@ import type {
 import type Table from "./table";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 import type Workflow from "./workflow";
-import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
+import { GenObj } from "@saltcorn/types/common_types";
 import type {
   ViewCfg,
   AbstractView,
@@ -246,7 +246,7 @@ class View implements AbstractView {
   static async find_possible_links_to_table(
     table: number | Tablely | string
   ): Promise<Array<View>> {
-    return View.find_table_views_where(
+    return await View.find_table_views_where(
       table,
       ({ state_fields }: { state_fields: Array<FieldLike> }) =>
         state_fields.some((sf: FieldLike) => sf.name === "id" || sf.primary_key)
@@ -262,7 +262,7 @@ class View implements AbstractView {
   static async create(v: ViewCfg): Promise<View> {
     // is_public flag processing
     if (!v.min_role && typeof v.is_public !== "undefined") {
-      v.min_role = v.is_public ? 10 : 8;
+      v.min_role = v.is_public ? 100 : 80;
       delete v.is_public;
     }
     const { table, ...row } = v;
@@ -407,16 +407,23 @@ class View implements AbstractView {
   ): Promise<any> {
     this.check_viewtemplate();
     const table_id = this.exttable_name || this.table_id;
+    const state = require("../db/state").getState();
     try {
+      const viewState = removeEmptyStrings(query);
+      state.log(
+        5,
+        `Running view ${this.name} with state ${JSON.stringify(viewState)}`
+      );
       return await this.viewtemplateObj!.run(
         table_id,
         this.name,
         this.configuration,
-        removeEmptyStrings(query),
+        viewState,
         extraArgs,
         this.queries(remote, extraArgs.req)
       );
     } catch (error: any) {
+      state.log(2, error.stack);
       error.message = `In ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
@@ -527,6 +534,9 @@ class View implements AbstractView {
     remote: boolean = !isNode()
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
+    require("../db/state")
+      .getState()
+      .log(5, `runMany view ${this.name} with state ${JSON.stringify(query)}`);
     try {
       if (this.viewtemplateObj?.runMany) {
         if (!this.table_id) {
@@ -600,6 +610,10 @@ class View implements AbstractView {
       remote = false;
     }
     this.check_viewtemplate();
+    getState().log(
+      5,
+      `runPost view ${this.name} with state ${JSON.stringify(query)}`
+    );
     if (!this.viewtemplateObj!.runPost)
       throw new InvalidConfiguration(
         `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
@@ -636,7 +650,13 @@ class View implements AbstractView {
       throw new InvalidConfiguration(
         `Unable to call runRoute of view '${this.name}', ${this.viewtemplate} is missing 'routes'.`
       );
-
+    this.check_viewtemplate();
+    require("../db/state")
+      .getState()
+      .log(
+        5,
+        `Run route ${route} view ${this.name} with body ${JSON.stringify(body)}`
+      );
     const result = await this.viewtemplateObj!.routes[route](
       this.table_id,
       this.name,
@@ -700,7 +720,7 @@ class View implements AbstractView {
     configFlow.autoSave = true;
     configFlow.startAtStepURL = (stepNm) =>
       `/viewedit/config/${this.name}?step=${stepNm}${
-        onDoneRedirect ? onDoneRedirect : ""
+        onDoneRedirect ? `&on_done_redirect=${onDoneRedirect}` : ""
       }`;
     configFlow.previewURL = `/view/${this.name}/preview`;
     return configFlow;
@@ -719,6 +739,26 @@ class View implements AbstractView {
         pix += 1;
       }
     }
+  }
+
+  //get entities using/linking to this
+  async inbound_connected_objects(): Promise<ConnectedObjects> {
+    const embeddedViews: Array<AbstractView> = [];
+    const linkedViews: Array<AbstractView> = [];
+    const allViews = await View.find({});
+    for (const view of allViews) {
+      if (!view?.viewtemplateObj?.connectedObjects) continue;
+      const result = await view.viewtemplateObj.connectedObjects(
+        view.configuration
+      );
+      for (const eview of result.embeddedViews || []) {
+        if (eview.name === this.name) embeddedViews.push(view);
+      }
+      for (const eview of result.linkedViews || []) {
+        if (eview.name === this.name) linkedViews.push(view);
+      }
+    }
+    return { embeddedViews, linkedViews };
   }
 
   async connected_objects(): Promise<ConnectedObjects> {
@@ -749,10 +789,9 @@ class View implements AbstractView {
   isRemoteTable(): boolean {
     if (isNode() || !this.table_id) return false;
     const { getState } = require("../db/state");
-    return (
-      getState().mobileConfig &&
-      getState().mobileConfig.localTableIds.indexOf(this.table_id) < 0
-    );
+    const mobileConfig = getState().mobileConfig;
+    if (mobileConfig?.isOfflineMode) return false;
+    else return mobileConfig?.localTableIds.indexOf(this.table_id) < 0;
   }
 
   async getTags(): Promise<Array<AbstractTag>> {

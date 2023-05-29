@@ -166,6 +166,7 @@ const runScheduler = async ({
           payload: null,
           occur_at: new Date(),
         });
+        const isThisTenantHourly = await intervalIsNow("Hourly");
 
         const triggers = await Trigger.find({ when_trigger: "Often" });
         const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
@@ -188,7 +189,6 @@ const runScheduler = async ({
               });
           }
         }
-        const isThisTenantHourly = await intervalIsNow("Hourly");
 
         const snapshots_enabled = getState().getConfig("snapshots_enabled");
         if (snapshots_enabled && isThisTenantHourly) {

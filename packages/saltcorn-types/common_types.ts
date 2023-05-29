@@ -10,6 +10,7 @@ export type ErrorMessage = {
 export type SuccessMessage = {
   success: any;
   table?: any;
+  rows?: any;
 };
 
 export type ReqRes = {

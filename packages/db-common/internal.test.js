@@ -72,12 +72,12 @@ describe("mkWhere", () => {
     });
   });
   it("should query json gte and lte", () => {
-    expect(mkWhere({ foo: { json: { bar: { gte: 6, lte: 1 } } } })).toStrictEqual(
-      {
-        values: [6, 1],
-        where: `where "foo"->'bar' >= $1 and "foo"->'bar' <= $2`,
-      }
-    );
+    expect(
+      mkWhere({ foo: { json: { bar: { gte: 6, lte: 1 } } } })
+    ).toStrictEqual({
+      values: [6, 1],
+      where: `where "foo"->'bar' >= $1 and "foo"->'bar' <= $2`,
+    });
   });
 
   it("should set id", () => {
@@ -214,7 +214,44 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: [7],
-      where: 'where "id" in (select "bar" from foo where "baz"=$1)',
+      where: 'where "id" in (select "bar" from "foo" where "baz"=$1)',
+    });
+    expect(
+      mkWhere({
+        id: [
+          {
+            inSelect: {
+              table: "foo",
+              field: "bar",
+              tenant: "sub1",
+              where: { baz: 7 },
+            },
+          },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where: 'where "id" in (select "bar" from "sub1"."foo" where "baz"=$1)',
+    });
+    expect(
+      mkWhere({
+        id: [
+          {
+            inSelect: {
+              table: "foo",
+              field: "bar",
+              tenant: "sub1",
+              valField: "id",
+              through: "baz",
+              where: { baz: 7 },
+            },
+          },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where:
+        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2.id = ss1."bar" where "ss2"."baz"=$1)',
     });
     expect(
       mkWhere({
@@ -224,7 +261,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: [45, 7, "Alice"],
-      where: `where "age"=$1 and "id" in (select "bar" from foo where "baz"=$2) and "name"=$3`,
+      where: `where "age"=$1 and "id" in (select "bar" from "foo" where "baz"=$2) and "name"=$3`,
     });
   });
   it("should query or", () => {

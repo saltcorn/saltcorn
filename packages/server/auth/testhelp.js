@@ -132,6 +132,20 @@ const getStaffLoginCookie = async () => {
  *
  * @returns {Promise<void>}
  */
+const getUserLoginCookie = async () => {
+  const app = await getApp({ disableCsrf: true });
+  const res = await request(app)
+    .post("/auth/login/")
+    .send("email=user@foo.com")
+    .send("password=GFeggwrwq45fjn");
+  if (res.statusCode !== 302) console.log(res.text);
+  return resToLoginCookie(res);
+};
+
+/**
+ *
+ * @returns {Promise<void>}
+ */
 const getAdminLoginCookie = async () => {
   const app = await getApp({ disableCsrf: true });
   const res = await request(app)
@@ -160,6 +174,18 @@ const itShouldRedirectUnauthToLogin = (path, dest) => {
       );
 
     expect(res.statusCode).toEqual(302);
+  });
+};
+
+const itShouldIncludeTextForAdmin = (path, text) => {
+  it(`should show admin ${text} on ${path}`, async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(path)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude(text));
   });
 };
 
@@ -223,6 +249,7 @@ const notAuthorized = (res) => {
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toRedirect,
   toInclude,
@@ -233,4 +260,6 @@ module.exports = {
   notAuthorized,
   respondJsonWith,
   toSucceedWithImage,
+  resToLoginCookie,
+  itShouldIncludeTextForAdmin,
 };

@@ -23,40 +23,53 @@ const path = require("path");
 module.exports = {
   // download link
   "Download link": {
-    run: (filePath) =>
-      link(
+    run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
+      return link(
         isNode()
-          ? `/files/download/${filePath}`
+          ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
         path.basename(filePath) || "Download"
-      ),
+      );
+    },
   },
   // Link
   Link: {
-    run: (filePath) =>
-      link(
-        isNode()
-          ? `/files/serve/${filePath}`
-          : `javascript:openFile('${filePath}')`,
-        path.basename(filePath) || "Open"
-      ),
+    run: (filePath, file_name, cfg = {}) =>
+      !filePath
+        ? ""
+        : link(
+            isNode()
+              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              : `javascript:openFile('${filePath}')`,
+            path.basename(filePath) || "Open"
+          ),
   },
 
   // Link (new tab)
   "Link (new tab)": {
-    run: (filePath) =>
-      a(
-        isNode()
-          ? { href: `/files/serve/${filePath}`, target: "_blank" }
-          : { href: `javascript:openFile('${filePath}')` },
-        path.basename(filePath) || "Open"
-      ),
+    run: (filePath, file_name, cfg = {}) =>
+      !filePath
+        ? ""
+        : a(
+            isNode()
+              ? {
+                  href: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+                  target: "_blank",
+                }
+              : { href: `javascript:openFile('${filePath}')` },
+            path.basename(filePath) || "Open"
+          ),
   },
   // Show Image
   "Show Image": {
-    run: (filePath) => {
+    run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
       if (isNode())
-        return img({ src: `/files/serve/${filePath}`, style: "width: 100%" });
+        return img({
+          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          style: "width: 100%",
+        });
       else {
         const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
         return div(
@@ -85,23 +98,26 @@ module.exports = {
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
-      return text(file_name || "") + typeof attrs.files_accept_filter !==
-        "undefined" || attrs.files_accept_filter !== null
-        ? input({
-            class: `${cls} ${field.class || ""}`,
-            "data-fieldname": field.form_name,
-            name: text_attr(nm),
-            id: `input${text_attr(nm)}`,
-            type: "file",
-            accept: attrs.files_accept_filter,
-          })
-        : input({
-            class: `${cls} ${field.class || ""}`,
-            "data-fieldname": field.form_name,
-            name: text_attr(nm),
-            id: `input${text_attr(nm)}`,
-            type: "file",
-          });
+      return (
+        text(file_name || "") +
+        (typeof attrs.files_accept_filter !== "undefined" ||
+        attrs.files_accept_filter !== null
+          ? input({
+              class: `${cls} ${field.class || ""}`,
+              "data-fieldname": field.form_name,
+              name: text_attr(nm),
+              id: `input${text_attr(nm)}`,
+              type: "file",
+              accept: attrs.files_accept_filter,
+            })
+          : input({
+              class: `${cls} ${field.class || ""}`,
+              "data-fieldname": field.form_name,
+              name: text_attr(nm),
+              id: `input${text_attr(nm)}`,
+              type: "file",
+            }))
+      );
     },
   },
   // select
@@ -149,6 +165,41 @@ module.exports = {
       );
     },
   },
+  // Capture
+  Capture: {
+    isEdit: true,
+    multipartFormData: true,
+    valueIsFilename: true,
+
+    configFields: async () => {
+      const dirs = await File.allDirectories();
+      return [
+        {
+          name: "folder",
+          label: "Folder",
+          type: "String",
+          attributes: { options: dirs.map((d) => d.path_to_serve) },
+        },
+        {
+          name: "device",
+          label: "Device",
+          type: "String",
+          required: true,
+          attributes: { options: ["camera", "camcorder", "microphone"] },
+        },
+      ];
+    },
+    run: (nm, file_name, attrs, cls, reqd, field) => {
+      return input({
+        class: `${cls} ${field.class || ""}`,
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        type: "file",
+        accept: `image/*;capture=${attrs.device}`,
+      });
+    },
+  },
   // Thumbnail
   Thumbnail: {
     configFields: () => [
@@ -156,11 +207,14 @@ module.exports = {
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
-    run: (filePath, file_name, cfg) => {
-      const { width, height, expand } = cfg || {};
+    run: (filePath, file_name, cfg = {}) => {
+      const { width, height, expand, targetPrefix } = cfg || {};
+      if (!filePath) return "";
       if (isNode())
         return img({
-          src: `/files/resize/${width || 50}/${height || 0}/${filePath}`,
+          src: `${targetPrefix || ""}/files/resize/${width || 50}/${
+            height || 0
+          }/${filePath}`,
           onclick: expand
             ? `expand_thumbnail('${filePath}', '${path.basename(filePath)}')`
             : undefined,
