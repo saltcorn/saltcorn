@@ -179,6 +179,7 @@
 
       // the app comes back from background
       const onResume = async () => {
+        if (!saltcorn?.data?.state) return;
         const state = saltcorn.data.state.getState();
         const mobileConfig = state.mobileConfig;
         if (mobileConfig?.allowOfflineMode) {

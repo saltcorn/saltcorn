@@ -34,7 +34,10 @@ async function updateScTables(tablesJSON, skipScPlugins = true) {
       // pick fields that really exist
       const insertRow = {};
       for (const safeField of existingFields) {
-        if (row[safeField]) insertRow[safeField] = row[safeField];
+        const fromRow = row[safeField];
+        if (fromRow !== null && fromRow !== undefined) {
+          insertRow[safeField] = fromRow;
+        }
       }
       await saltcorn.data.db.insert(table, insertRow);
     }

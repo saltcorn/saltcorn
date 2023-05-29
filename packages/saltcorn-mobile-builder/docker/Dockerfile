@@ -16,7 +16,7 @@ RUN android_sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 RUN wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip \
     && unzip gradle-7.1.1-all.zip -d /opt
 
-RUN npm install -g cordova
+RUN npm install -g cordova@11.1.0
 
 # create an empty project, the first init seems to take longer
 WORKDIR /init_project
