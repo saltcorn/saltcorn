@@ -7,7 +7,7 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "boxomatic/debian-12"
+  config.vm.box = "debian/testing64"
 
   config.ssh.forward_agent = true
 
@@ -22,8 +22,9 @@ Vagrant.configure("2") do |config|
    end
 
   config.vm.provision "shell", inline: <<-SHELL
-    set -e    
-    apt-get install -qqy nodejs npm
+    set -e
+    apt update    
+    apt install -qqy nodejs npm
     sudo -iu vagrant npx -y saltcorn-install -y
     systemctl is-active saltcorn
     wget -qO- http://localhost/ | grep Please      
