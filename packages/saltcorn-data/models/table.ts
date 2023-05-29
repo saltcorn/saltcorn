@@ -243,6 +243,13 @@ class Table implements AbstractTable {
       const { getState } = require("../db/state");
       return getState().tables.map((t: TableCfg) => new Table(t));
     }
+
+    if (where?.name) {
+      const { getState } = require("../db/state");
+      const extTable = getState().external_tables[where.name];
+      if (extTable) return [extTable];
+    }
+
     const tbls = await db.select("_sc_tables", where, selectopts);
 
     const flds = await db.select(

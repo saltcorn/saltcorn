@@ -563,9 +563,9 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) table = Table.findOne({ id });
+    if (id) [table] = await Table.find({ id });
     else {
-      table = Table.findOne({ name: idorname });
+      [table] = await Table.find({ name: idorname });
     }
 
     if (!table) {
