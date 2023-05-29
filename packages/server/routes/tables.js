@@ -911,12 +911,10 @@ router.post(
         rest.provider_name !== "Database table"
       ) {
         const table = await Table.create(name, rest);
-        await sleep(500); // Allow other workers to load this view
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
         const table = await Table.create(name, rest);
-        await sleep(500); // Allow other workers to load this view
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }

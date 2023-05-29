@@ -117,7 +117,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
-    const view = await View.findOne({ name: viewname });
+    const [view] = await View.find({ name: viewname });
     if (!view) {
       res.send("");
       return;
