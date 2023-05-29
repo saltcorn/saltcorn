@@ -371,6 +371,12 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     false,
     dryRun
   );
+  await asyncSudoUser(
+    user,
+    ["npm", "install", "-g", "sd-notify"],
+    true,
+    dryRun
+  );
   await asyncSudo(
     [
       "bash",
