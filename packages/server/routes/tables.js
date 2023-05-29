@@ -563,9 +563,9 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) table = Table.findOne({ id });
+    if (id) [table] = await Table.find({ id });
     else {
-      table = Table.findOne({ name: idorname });
+      [table] = await Table.find({ name: idorname });
     }
 
     if (!table) {
@@ -911,12 +911,10 @@ router.post(
         rest.provider_name !== "Database table"
       ) {
         const table = await Table.create(name, rest);
-        await sleep(500); // Allow other workers to load this view
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
         const table = await Table.create(name, rest);
-        await sleep(500); // Allow other workers to load this view
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }

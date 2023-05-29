@@ -263,7 +263,7 @@ module.exports =
             httpsServer.setTimeout(timeout * 1000);
             process.on("message", workerDispatchMsg);
             glx.serveApp(app);
-            process.send && process.send("Start");
+            getState().processSend("Start");
           })
           .master(() => {
             initMaster(appargs).then(initMasterListeners);
@@ -349,7 +349,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
       console.log(`Saltcorn listening on http://localhost:${port}/`);
     });
   }
-  process.send && process.send("Start");
+  getState().processSend("Start");
 };
 
 /**

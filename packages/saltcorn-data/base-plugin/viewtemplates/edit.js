@@ -269,10 +269,18 @@ const configuration_workflow = (req) =>
               viewrow.table_id === context.table_id ||
               state_fields.every((sf) => !sf.required)
           );
-          const table = await Table.findOne({ id: context.table_id });
+          const table = Table.findOne({ id: context.table_id });
+          own_views.forEach((v) => {
+            if (!v.table && v.table_id === table.id) v.table = table;
+            else if (!v.table && v.table_id) {
+              const vtable = Table.findOne({ id: v.table_id });
+              v.table = vtable;
+            }
+          });
           const parent_views = await get_parent_views(table, context.viewname);
 
           const done_view_opts = own_views.map((v) => v.select_option);
+          console.log(done_view_opts);
           parent_views.forEach(({ relation, related_table, views }) =>
             views.forEach((v) => {
               done_view_opts.push(`${v.name}.${relation.name}`);

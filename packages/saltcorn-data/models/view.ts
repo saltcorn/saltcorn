@@ -208,9 +208,11 @@ class View implements AbstractView {
       name: this.name,
       label: `${this.name} [${this.viewtemplate}${
         this.table
-          ? ` ${this.table.name}`
+          ? ` on ${this.table.name}`
           : this.table_name
-          ? ` ${this.table_name}`
+          ? ` on ${this.table_name}`
+          : this.exttable_name
+          ? ` on ${this.exttable_name}`
           : ""
       }]`,
     };

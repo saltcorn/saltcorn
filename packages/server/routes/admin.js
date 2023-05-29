@@ -954,12 +954,14 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      if (process.send) process.send("RestartServer");
+      if (process.send) getState().processSend("RestartServer");
       else process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
-      process.send &&
-        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
+      getState().processSend({
+        restart_tenant: true,
+        tenant: db.getTenantSchema(),
+      });
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }
@@ -1000,7 +1002,7 @@ router.post(
           )
         );
         setTimeout(() => {
-          if (process.send) process.send("RestartServer");
+          getState().processSend("RestartServer");
           process.exit(0);
         }, 100);
       });

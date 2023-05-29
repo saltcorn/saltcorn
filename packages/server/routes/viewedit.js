@@ -470,7 +470,6 @@ router.post(
           else v.configuration = {};
           //console.log(v);
           await View.create(v);
-          await sleep(500); // Allow other workers to load this view
         }
         res.redirect(
           addOnDoneRedirect(
@@ -583,7 +582,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const { step } = req.query;
-    const view = await View.findOne({ name });
+    const [view] = await View.find({ name });
     if (!view) {
       req.flash("error", `View not found: ${text(name)}`);
       res.redirect("/viewedit");
