@@ -361,7 +361,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
       isRedHat(osInfo)
         ? ["adduser", user]
         : osInfo.distro.includes("SUSE")
-        ? ["useradd", user, "-g", "users", "-d", "/home/" + user, "-m", user]
+        ? ["useradd", "-g", "users", "-d", "/home/" + user, "-m", user]
         : ["adduser", "--disabled-password", "--gecos", '""', user],
       true,
       dryRun
