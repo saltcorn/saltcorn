@@ -257,6 +257,42 @@ function apply_showif() {
       },
     });
   });
+  const locale =
+    navigator.userLanguage ||
+    (navigator.languages &&
+      navigator.languages.length &&
+      navigator.languages[0]) ||
+    navigator.language ||
+    navigator.browserLanguage ||
+    navigator.systemLanguage ||
+    "en";
+  window.detected_locale = locale;
+  const parse = (s) => JSON.parse(decodeURIComponent(s));
+  $("time[locale-time-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-time-options"));
+    el.text(date.toLocaleTimeString(locale, options));
+  });
+  $("time[locale-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-options"));
+    el.text(date.toLocaleString(locale, options));
+  });
+  $("time[locale-date-options]").each(function () {
+    var el = $(this);
+    var date = new Date(el.attr("datetime"));
+    const options = parse(el.attr("locale-date-options"));
+    el.text(date.toLocaleDateString(locale, options));
+  });
+  $("time[locale-date-format]").each(function () {
+    var el = $(this);
+    var date = el.attr("datetime");
+    const format = parse(el.attr("locale-date-format"));
+    el.text(dayjs(date).format(format));
+  });
+
   _apply_showif_plugins.forEach((p) => p());
 }
 
@@ -399,6 +435,7 @@ function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
 function initialize_page() {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   //console.log("init page");
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
@@ -444,7 +481,9 @@ function initialize_page() {
     if ($(this).find(".editicon").length === 0) {
       var current = $(this).html();
       $(this).html(
-        `<span class="current">${current}</span><i class="editicon fas fa-edit ms-1"></i>`
+        `<span class="current">${current}</span><i class="editicon ${
+          !isNode ? "visible" : ""
+        } fas fa-edit ms-1"></i>`
       );
     }
   });
@@ -510,12 +549,20 @@ function initialize_page() {
     } else
       $(this).replaceWith(
         `<form method="post" action="${url}" ${
-          ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
+          ajax
+            ? `onsubmit="inline_${
+                isNode ? "ajax" : "local"
+              }_submit(event, '${opts}')"`
+            : ""
         }>
-      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
-      <input type="${
-        type === "Integer" || type === "Float" ? "number" : "text"
-      }" name="${key}" value="${escapeHtml(current)}">
+        ${
+          isNode
+            ? `<input type="hidden" name="_csrf" value="${_sc_globalCsrf}"></input>`
+            : ""
+        }
+        <input type="${
+          type === "Integer" || type === "Float" ? "number" : "text"
+        }" name="${key}" value="${escapeHtml(current)}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
@@ -568,41 +615,7 @@ function initialize_page() {
         });
       }, 100);
     });
-  const locale =
-    navigator.userLanguage ||
-    (navigator.languages &&
-      navigator.languages.length &&
-      navigator.languages[0]) ||
-    navigator.language ||
-    navigator.browserLanguage ||
-    navigator.systemLanguage ||
-    "en";
-  window.detected_locale = locale;
-  const parse = (s) => JSON.parse(decodeURIComponent(s));
-  $("time[locale-time-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-time-options"));
-    el.text(date.toLocaleTimeString(locale, options));
-  });
-  $("time[locale-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-options"));
-    el.text(date.toLocaleString(locale, options));
-  });
-  $("time[locale-date-options]").each(function () {
-    var el = $(this);
-    var date = new Date(el.attr("datetime"));
-    const options = parse(el.attr("locale-date-options"));
-    el.text(date.toLocaleDateString(locale, options));
-  });
-  $("time[locale-date-format]").each(function () {
-    var el = $(this);
-    var date = el.attr("datetime");
-    const format = parse(el.attr("locale-date-format"));
-    el.text(dayjs(date).format(format));
-  });
+
   if ($.fn.historyTabs && $.fn.tab)
     $('a[data-bs-toggle="tab"].deeplink').historyTabs();
   init_bs5_dropdowns();
@@ -639,6 +652,7 @@ function initialize_page() {
 $(initialize_page);
 
 function cancel_inline_edit(e, opts1) {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
   var json_fk_opt;
@@ -666,9 +680,40 @@ function cancel_inline_edit(e, opts1) {
     <span class="current">${
       json_fk_opt || opts.current_label || opts.current
     }</span>
-    <i class="editicon fas fa-edit ms-1"></i>
+    <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
   </div>`);
   initialize_page();
+}
+
+function inline_submit_success(e, form, opts) {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const formDataArray = form.serializeArray();
+  if (opts) {
+    let rawVal = formDataArray.find((f) => f.name == opts.key).value;
+    let val =
+      opts.is_key || (opts.schema && opts.schema.type.startsWith("Key to "))
+        ? form.find("select").find("option:selected").text()
+        : rawVal;
+
+    $(e.target).replaceWith(`<div 
+  data-inline-edit-field="${opts.key}" 
+  ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
+  ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
+  ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
+  ${
+    opts.schema
+      ? `data-inline-edit-schema="${encodeURIComponent(
+          JSON.stringify(opts.schema)
+        )}"`
+      : ""
+  }
+  ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
+  data-inline-edit-dest-url="${opts.url}">
+    <span class="current">${val}</span>
+    <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
+  </div>`);
+    initialize_page();
+  } else location.reload();
 }
 
 function inline_ajax_submit(e, opts1) {
@@ -676,7 +721,6 @@ function inline_ajax_submit(e, opts1) {
   e.preventDefault();
   var form = $(e.target).closest("form");
   var form_data = form.serialize();
-  var formDataArray = form.serializeArray();
   var url = form.attr("action");
   $.ajax(url, {
     type: "POST",
@@ -685,32 +729,7 @@ function inline_ajax_submit(e, opts1) {
     },
     data: form_data,
     success: function (res) {
-      if (opts) {
-        let rawVal = formDataArray.find((f) => f.name == opts.key).value;
-        let val =
-          opts.is_key || (opts.schema && opts.schema.type.startsWith("Key to "))
-            ? form.find("select").find("option:selected").text()
-            : rawVal;
-
-        $(e.target).replaceWith(`<div 
-      data-inline-edit-field="${opts.key}" 
-      ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
-      ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
-      ${opts.current ? `data-inline-edit-current="${rawVal}"` : ""}
-      ${
-        opts.schema
-          ? `data-inline-edit-schema="${encodeURIComponent(
-              JSON.stringify(opts.schema)
-            )}"`
-          : ""
-      }
-      ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
-      data-inline-edit-dest-url="${opts.url}">
-        <span class="current">${val}</span>
-        <i class="editicon fas fa-edit ms-1"></i>
-      </div>`);
-        initialize_page();
-      } else location.reload();
+      inline_submit_success(e, form, opts);
     },
     error: function (e) {
       ajax_done(

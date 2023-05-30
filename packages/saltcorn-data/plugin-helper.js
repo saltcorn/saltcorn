@@ -694,7 +694,10 @@ const field_picker_fields = async ({
       actionConfigFields.push(cfgFld);
     }
   }
-  const fldOptions = fields.map((f) => f.name);
+  const fldOptions = fields.map((f) => ({
+    label: `${f.name} [${f.pretty_type}]`,
+    name: f.name,
+  }));
   const { field_view_options } = calcfldViewOptions(fields, "list");
   const rel_field_view_options = await calcrelViewOptions(table, "list");
   const fieldViewConfigForms = await calcfldViewConfig(fields, false);

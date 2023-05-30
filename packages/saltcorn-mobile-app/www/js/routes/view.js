@@ -1,4 +1,4 @@
-/*global MobileRequest, MobileResponse, parseQuery, wrapContents, saltcorn*/
+/*global MobileRequest, MobileResponse, parseQuery, wrapContents, saltcorn, offlineHelper*/
 
 /**
  *
@@ -35,8 +35,8 @@ const postView = async (context) => {
     },
     view.isRemoteTable()
   );
-  if (mobileCfg.isOfflineMode)
-    await state.setConfig("user_with_offline_data", mobileCfg.user_name);
+  if (mobileCfg.isOfflineMode && !(await offlineHelper.getLastOfflineSession()))
+    await offlineHelper.setOfflineSession({ offlineUser: mobileCfg.user_name });
   return res.getJson();
 };
 
@@ -60,7 +60,8 @@ const postViewRoute = async (context) => {
     { req, res },
     view.isRemoteTable()
   );
-  if (isOfflineMode) await state.setConfig("user_with_offline_data", user_name);
+  if (isOfflineMode && !(await offlineHelper.getLastOfflineSession()))
+    await offlineHelper.setOfflineSession({ offlineUser: user_name });
   return res.getJson();
 };
 

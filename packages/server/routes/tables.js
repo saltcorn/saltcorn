@@ -53,6 +53,8 @@ const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
 const { tablesList } = require("./common_lists");
 const { InvalidConfiguration } = require("@saltcorn/data/utils");
+const { sleep } = require("@saltcorn/data/utils");
+
 const path = require("path");
 /**
  * @type {object}
@@ -539,11 +541,7 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
-      if (
-        ["summary_field", "default", "on_delete_cascade", "on_delete"].includes(
-          k
-        )
-      )
+      if (["summary_field", "on_delete_cascade", "on_delete"].includes(k))
         return;
       if (v || v === 0) s += badge("secondary", k);
     });
@@ -565,9 +563,9 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) table = Table.findOne({ id });
+    if (id) [table] = await Table.find({ id });
     else {
-      table = Table.findOne({ name: idorname });
+      [table] = await Table.find({ name: idorname });
     }
 
     if (!table) {

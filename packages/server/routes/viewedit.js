@@ -23,6 +23,7 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const db = require("@saltcorn/data/db");
+const { sleep } = require("@saltcorn/data/utils");
 
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 
@@ -491,14 +492,22 @@ router.post(
  * @param {object} res
  * @returns {void}
  */
-const respondWorkflow = (view, wf, wfres, req, res) => {
+const respondWorkflow = (view, wf, wfres, req, res, table) => {
   const wrap = (contents, noCard, previewURL) => ({
     above: [
       {
         type: "breadcrumbs",
         crumbs: [
           { text: req.__("Views"), href: "/viewedit" },
-          { href: `/view/${view.name}`, text: view.name },
+          {
+            href: `/view/${view.name}`,
+            text: view.name,
+            postLinkText: `[${view.viewtemplate}${
+              table
+                ? ` on ${a({ href: `/table/` + table.name }, table.name)}`
+                : ""
+            }]`,
+          },
           { workflow: wf, step: wfres },
         ],
       },
@@ -573,7 +582,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const { step } = req.query;
-    const view = await View.findOne({ name });
+    const [view] = await View.find({ name });
     if (!view) {
       req.flash("error", `View not found: ${text(name)}`);
       res.redirect("/viewedit");
@@ -582,6 +591,9 @@ router.get(
     (view.configuration?.columns || []).forEach((c) => {
       c._columndef = JSON.stringify(c);
     });
+    let table;
+    if (view.table_id) table = Table.findOne({ id: view.table_id });
+    if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
     const configFlow = await view.get_config_flow(req);
     const hasConfig =
       view.configuration && Object.keys(view.configuration).length > 0;
@@ -596,7 +608,7 @@ router.get(
       },
       req
     );
-    respondWorkflow(view, configFlow, wfres, req, res);
+    respondWorkflow(view, configFlow, wfres, req, res, table);
   })
 );
 
@@ -615,7 +627,11 @@ router.post(
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
     const wfres = await configFlow.run(req.body, req);
-    respondWorkflow(view, configFlow, wfres, req, res);
+
+    let table;
+    if (view.table_id) table = Table.findOne({ id: view.table_id });
+    if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
+    respondWorkflow(view, configFlow, wfres, req, res, table);
   })
 );
 

@@ -171,6 +171,15 @@ class File {
 
     return allDirs;
   }
+  async is_symlink(): Promise<boolean> {
+    try {
+      let stat = await fsp.lstat(this.location);
+      return stat.isSymbolicLink();
+    } catch (e) {
+      throw new Error("File.is_symlink: File not found: " + this.location);
+    }
+  }
+
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string

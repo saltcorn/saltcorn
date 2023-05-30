@@ -174,6 +174,10 @@ class State {
     this.npm_refresh_in_progess = false;
   }
 
+  processSend(v: any) {
+    process_send(v);
+  }
+
   /**
    * Get Layout by user
    * Based on role of user

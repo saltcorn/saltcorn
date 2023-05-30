@@ -1,48 +1,13 @@
-/*global $, apiCall, saltcorn, apiCall, navigator, clearAlerts*/
+/*global $, apiCall, saltcorn, navigator, clearAlerts*/
 
 var offlineHelper = (() => {
-  const loadServerData = async () => {
-    const response = await apiCall({
-      method: "GET",
-      path: "/sync/table_data",
-    });
-    return response.data;
-  };
-  const updateLocalData = async (data) => {
-    try {
-      await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
-      await saltcorn.data.db.query("BEGIN TRANSACTION");
-      // replace all data
-      for (const [k, v] of Object.entries(data)) {
-        await saltcorn.data.db.query(
-          `delete from "${saltcorn.data.db.sqlsanitize(k)}"`
-        );
-        for (const row of v.rows) {
-          await saltcorn.data.db.insert(k, row);
-        }
-      }
-      await saltcorn.data.db.query("COMMIT TRANSACTION");
-    } catch (error) {
-      await saltcorn.data.db.query("ROLLBACK TRANSACTION");
-      throw error;
-    } finally {
-      await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
-    }
-  };
-
-  const loadLocalData = async () => {
+  const loadOfflineData = async (localTableIds) => {
     const result = {};
-    const { user_id } = saltcorn.data.state.getState().mobileConfig;
-    const user = await saltcorn.data.models.User.findOne({ id: user_id });
-    if (!user) throw new Error(`The user with id '${user_id}' does not exist.`);
     for (const table of await saltcorn.data.models.Table.find()) {
-      // ignore min_role_read, one can insert a row which is not readable
-      // but that invisible row should be synched
-      const rows =
-        user.role_id > table.min_role_write
-          ? (await table.getRows()).filter((row) => table.is_owner(user, row))
-          : await table.getRows();
-      result[table.name] = rows;
+      if (table.name !== "users" && !localTableIds.indexOf(table.id) >= 0) {
+        const rows = await table.getRows();
+        if (rows.length > 0) result[table.name] = rows;
+      }
     }
     return result;
   };
@@ -56,30 +21,28 @@ var offlineHelper = (() => {
     });
     return response.data;
   };
-  const applyTranslatedIds = async (translateIds) => {
-    try {
-      await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
-      await saltcorn.data.db.query("BEGIN TRANSACTION");
-      for (const [k, v] of Object.entries(translateIds)) {
-        const table = saltcorn.data.models.Table.findOne({ name: k });
-        for (const { from, to } of v) {
-          await table.updateRow({ id: to }, from);
-        }
-      }
-      await saltcorn.data.db.query("COMMIT TRANSACTION");
-    } catch (error) {
-      await saltcorn.data.db.query("ROLLBACK TRANSACTION");
-      throw error;
-    } finally {
-      await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
-    }
+  const setUploadStartedTime = async (date) => {
+    const state = saltcorn.data.state.getState();
+    const oldSession = await state.getConfig("last_offline_session");
+    const newSession = { ...oldSession };
+    newSession.upload_started_at = date;
+    newSession.upload_ended_at = null;
+    await state.setConfig("last_offline_session", newSession);
+  };
+  const setUploadFinishedTime = async (date) => {
+    const state = saltcorn.data.state.getState();
+    const oldSession = await state.getConfig("last_offline_session");
+    const newSession = { ...oldSession };
+    newSession.upload_ended_at = date;
+    await state.setConfig("last_offline_session", newSession);
   };
 
   return {
     startOfflineMode: async () => {
       const state = saltcorn.data.state.getState();
       const mobileConfig = state.mobileConfig;
-      const oldOfflineUser = await offlineHelper.lastOfflineUser();
+      const oldOfflineUser = (await offlineHelper.getLastOfflineSession())
+        ?.offlineUser;
       if (oldOfflineUser && oldOfflineUser !== mobileConfig.user_name) {
         throw new Error(
           `The offline mode is not available, '${oldOfflineUser}' has not yet uploaded offline data.`
@@ -92,28 +55,38 @@ var offlineHelper = (() => {
       const state = saltcorn.data.state.getState();
       const mobileConfig = state.mobileConfig;
       mobileConfig.isOfflineMode = false;
-      await state.setConfig("user_with_offline_data", "");
+      if (!(await offlineHelper.hasOfflineRows()))
+        await state.setConfig("last_offline_session", null);
     },
-    lastOfflineUser: async () => {
+    getLastOfflineSession: async () => {
       const state = saltcorn.data.state.getState();
-      return await state.getConfig("user_with_offline_data");
+      return await state.getConfig("last_offline_session");
+    },
+    setOfflineSession: async (sessObj) => {
+      const state = saltcorn.data.state.getState();
+      await state.setConfig("last_offline_session", sessObj);
     },
     uploadLocalData: async () => {
-      const lastOfflineUser = await offlineHelper.lastOfflineUser();
+      const lastOfflineUser = (await offlineHelper.getLastOfflineSession())
+        ?.offlineUser;
       if (!lastOfflineUser) throw new Error("You don't have any offline data.");
-      const { user_name } = saltcorn.data.state.getState().mobileConfig;
+      const { user_name, localTableIds } =
+        saltcorn.data.state.getState().mobileConfig;
       if (lastOfflineUser !== user_name)
         throw new Error(
           `The upload is not available, '${lastOfflineUser}' has not yet uploaded offline data.`
         );
-      const fromSqlite = await loadLocalData();
-      const { translateIds } = await sendToServer(fromSqlite);
-      if (translateIds && Object.keys(translateIds).length > 0)
-        await applyTranslatedIds(translateIds);
+      const fromSqlite = await loadOfflineData(localTableIds);
+      await sendToServer(fromSqlite);
     },
-    downloadServerData: async () => {
-      const fromServer = await loadServerData();
-      await updateLocalData(fromServer);
+    clearLocalData: async () => {
+      const { localTableIds } = saltcorn.data.state.getState().mobileConfig;
+      const tables = await saltcorn.data.models.Table.find();
+      for (const table of tables) {
+        if (table.name !== "users" && !localTableIds.indexOf(table.id) >= 0) {
+          await table.deleteRows();
+        }
+      }
     },
     offlineCallback: async () => {
       const mobileConfig = saltcorn.data.state.getState().mobileConfig;
@@ -124,23 +97,35 @@ var offlineHelper = (() => {
       if (mobileConfig.isOfflineMode) {
         const iframeWindow = $("#content-iframe")[0].contentWindow;
         if (iframeWindow) {
-          if (await offlineHelper.lastOfflineUser()) {
-            iframeWindow.notifyAlert(
-              `An internet connection is available, to handle your offline data Click ${saltcorn.markup.a(
-                {
-                  href: "javascript:execLink('/sync/sync_settings')",
-                },
-                "here"
-              )}`
-            );
-          } else {
-            clearAlerts();
-            iframeWindow.notifyAlert("You are online again.");
-            mobileConfig.isOfflineMode = false;
-          }
+          clearAlerts();
+          iframeWindow.notifyAlert(
+            `An internet connection is available, to end the offline mode click ${saltcorn.markup.a(
+              {
+                href: "javascript:execLink('/sync/sync_settings')",
+              },
+              "here"
+            )}`
+          );
         }
       }
       mobileConfig.networkState = navigator.connection.type;
     },
+    hasOfflineRows: async () => {
+      const { localTableIds } = saltcorn.data.state.getState().mobileConfig;
+      for (const table of await saltcorn.data.models.Table.find()) {
+        if (table.name !== "users" && !localTableIds.indexOf(table.id) >= 0) {
+          if ((await table.countRows()) > 0) return true;
+        }
+      }
+      return false;
+    },
+    getOfflineMsg: () => {
+      const { networkState } = saltcorn.data.state.getState().mobileConfig;
+      return networkState === "none"
+        ? "You are offline."
+        : "You are offline, an internet connection is available.";
+    },
+    setUploadStartedTime,
+    setUploadFinishedTime,
   };
 })();

@@ -19,6 +19,7 @@ const Router = require("express-promise-router");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
+const { prepare_update_row } = require("@saltcorn/data/web-mobile-commons");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
@@ -208,9 +209,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table)) {
-          const field = (table.getFields()).find(
-            (f) => f.name === fieldName
-          );
+          const field = table.getFields().find((f) => f.name === fieldName);
           if (!field) {
             res.status(404).json({ error: req.__("Not found") });
             return;
@@ -262,7 +261,7 @@ router.get(
     }
 
     await passport.authenticate(
-        ["api-bearer", "jwt"],
+      ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table, true)) {
@@ -352,6 +351,7 @@ router.post(
               body: req.body,
               row: req.body,
               req,
+              user: user || req.user,
             });
             res.json({ success: true, data: resp });
           } catch (e) {
@@ -411,7 +411,8 @@ router.post(
             if (
               field.required &&
               !field.primary_key &&
-              typeof row[field.name] === "undefined"
+              typeof row[field.name] === "undefined" &&
+              !field.attributes.default
             ) {
               hasErrors = true;
               errors.push(`${field.name}: required`);
@@ -460,39 +461,15 @@ router.post(
       return;
     }
     await passport.authenticate(
-      "api-bearer",
+      ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
           const fields = table.getFields();
           readState(row, fields, req);
-          let errors = [];
-          let hasErrors = false;
-          for (const k of Object.keys(row)) {
-            const field = fields.find((f) => f.name === k);
-            if (!field && k.includes(".")) {
-              const [fnm, jkey] = k.split(".");
-              const jfield = fields.find((f) => f.name === fnm);
-              if (jfield?.type?.name === "JSON") {
-                if (typeof row[fnm] === "undefined") {
-                  const dbrow = await table.getRow({ [table.pk_name]: id });
-                  row[fnm] = dbrow[fnm] || {};
-                }
-                row[fnm][jkey] = row[k];
-                delete row[k];
-              }
-            } else if (!field || field.calculated) {
-              delete row[k];
-            } else if (field?.type && field.type.validate) {
-              const vres = field.type.validate(field.attributes || {})(row[k]);
-              if (vres.error) {
-                hasErrors = true;
-                errors.push(`${k}: ${vres.error}`);
-              }
-            }
-          }
-          if (hasErrors) {
+          const errors = await prepare_update_row(table, row, id);
+          if (errors.length > 0) {
             getState().log(
               2,
               `API POST ${table.name} error: ${errors.join(", ")}`

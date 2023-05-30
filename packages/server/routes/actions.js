@@ -171,6 +171,13 @@ const triggerForm = async (req, trigger) => {
         required: true,
         options: Trigger.when_options.map((t) => ({ value: t, label: t })),
         sublabel: req.__("Event type which runs the trigger"),
+        attributes: {
+          explainers: {
+            Often: "Every 5 minutes",
+            Never:
+              "Not scheduled but can be run as an action from a button click",
+          },
+        },
       },
       {
         name: "table_id",

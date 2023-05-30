@@ -243,6 +243,13 @@ class Table implements AbstractTable {
       const { getState } = require("../db/state");
       return getState().tables.map((t: TableCfg) => new Table(t));
     }
+
+    if (where?.name) {
+      const { getState } = require("../db/state");
+      const extTable = getState().external_tables[where.name];
+      if (extTable) return [extTable];
+    }
+
     const tbls = await db.select("_sc_tables", where, selectopts);
 
     const flds = await db.select(
@@ -642,7 +649,8 @@ class Table implements AbstractTable {
   /**
    * Delete rows from table
    * @param where - condition
-   * @returns {Promise<void>}
+   * @param user - optional user, if null then no authorization will be checked
+   * @returns
    */
   async deleteRows(where: Where, user?: Row) {
     // get triggers on delete
@@ -693,7 +701,7 @@ class Table implements AbstractTable {
         [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
       });
     else await db.deleteWhere(this.name, where);
-    await this.resetSequence();
+    if (fields.find((f) => f.primary_key)) await this.resetSequence();
     for (const file of deleteFiles) {
       await file.delete();
     }

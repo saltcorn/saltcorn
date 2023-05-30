@@ -269,10 +269,18 @@ const configuration_workflow = (req) =>
               viewrow.table_id === context.table_id ||
               state_fields.every((sf) => !sf.required)
           );
-          const table = await Table.findOne({ id: context.table_id });
+          const table = Table.findOne({ id: context.table_id });
+          own_views.forEach((v) => {
+            if (!v.table && v.table_id === table.id) v.table = table;
+            else if (!v.table && v.table_id) {
+              const vtable = Table.findOne({ id: v.table_id });
+              v.table = vtable;
+            }
+          });
           const parent_views = await get_parent_views(table, context.viewname);
 
           const done_view_opts = own_views.map((v) => v.select_option);
+          console.log(done_view_opts);
           parent_views.forEach(({ relation, related_table, views }) =>
             views.forEach((v) => {
               done_view_opts.push(`${v.name}.${relation.name}`);
@@ -866,6 +874,32 @@ const runPost = async (
     for (const field of file_fields) {
       if (field.fieldviewObj?.setsFileId) {
         //do nothing
+      } else if (field.fieldviewObj?.setsDataURL) {
+        if (body[field.name]) {
+          if (body[field.name].startsWith("data:")) {
+            const [pre, allData] = body[field.name].split(",");
+            const buffer = Buffer.from(allData, "base64");
+            const mimetype = pre.split(";")[0].split(":")[1];
+            const filename =
+              field.fieldviewObj?.setsDataURL?.get_filename?.({
+                ...row,
+                ...field.attributes,
+              }) || "file";
+            const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
+              ...row,
+              ...field.attributes,
+            });
+            const file = await File.from_contents(
+              filename,
+              mimetype,
+              buffer,
+              req.user?.id,
+              field.attributes.min_role_read || 1,
+              folder
+            );
+            row[field.name] = file.path_to_serve;
+          }
+        }
       } else if (req.files && req.files[field.name]) {
         if (!isNode() && !remote) {
           req.flash(

@@ -74,8 +74,8 @@ const configTypes: ConfigTypes = {
     blurb:
       "The URL at which your site is available. For instance, https://example.com/",
   },
-  user_with_offline_data: {
-    type: "String",
+  last_offline_session: {
+    type: "Object",
     label: "User with offline data",
     default: "",
     blurb:
@@ -658,23 +658,20 @@ const configTypes: ConfigTypes = {
     default: "1",
 
     options: [
-      { label: "0 - None", value: "0" },
-      { label: "1 - Few", value: "1" },
-      { label: "2 - Some", value: "2" },
-      { label: "3 - Many", value: "3" },
-      { label: "4 - Most", value: "4" },
-      { label: "5 - All", value: "5" },
-    ],
-    attributes: {
-      explainers: {
-        "0": "Silent",
-        "1": "Crashes",
-        "2": "Crashes, handled errors, warnings",
-        "3": "All errors, pageloads",
-        "4": "All Errors, pageloads, triggers, scheduler ticks",
-        "5": "All Errors, pageloads, triggers, scheduler ticks, events, state refreshes",
+      { label: "None: Silent", value: "0" },
+      { label: "Few: Crashes", value: "1" },
+      { label: "Some: Crashes, handled errors, warnings", value: "2" },
+      { label: "Many: All errors, pageloads", value: "3" },
+      {
+        label: "Most: All Errors, pageloads, triggers, scheduler ticks",
+        value: "4",
       },
-    },
+      {
+        label:
+          "All: All Errors, pageloads, triggers, scheduler ticks, events, state refreshes",
+        value: "5",
+      },
+    ],
   },
   apple_team_id: {
     type: "String",
@@ -765,6 +762,7 @@ const available_languages = {
   it: "Italiano",
   zh: "中文",
   pl: "Polski",
+  uk: "Українська",
 };
 /**
  * Get Config variable value by key (contract)
