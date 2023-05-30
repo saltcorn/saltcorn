@@ -16,7 +16,7 @@
     "@socket.io/cluster-adapter": "^0.2.1",
     "@socket.io/sticky": "^1.0.1",
     "adm-zip": "0.5.10",
-    "aws-sdk": "^2.1037.0",
+    "aws-sdk": "^2.1386.0",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^6.1.0",
     "content-disposition": "^0.5.3",
