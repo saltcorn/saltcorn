@@ -7,21 +7,23 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "almalinux/8"
 
   config.ssh.forward_agent = true
 
   config.ssh.insert_key = false
-
+  config.vm.provider "virtualbox" do |vb|  
+    # Customize the amount of memory on the VM:
+    vb.memory = "2048"
+  end
   config.vm.provision "shell", inline: <<-SHELL
     set -e
-
-    wget -qO - https://deb.nodesource.com/setup_16.x | bash -
-    apt-get install -qqy nodejs
-    sudo -iu vagrant npx -y saltcorn-install -y
+    dnf module install -y nodejs:16
+    sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
+    cd /home/vagrant/saltcorn/packages/install/
+    sudo -u vagrant git checkout node-18
+    sudo -u vagrant npm install
+    sudo -u vagrant node index.js -y
     systemctl is-active saltcorn
-
-    wget -qO- http://localhost/ | grep Please      
-
   SHELL
 end
