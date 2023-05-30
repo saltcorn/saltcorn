@@ -332,7 +332,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     dryRun
   );
   console.log({ db, installer });
-  if (db === "pg-local" && installer === "zupper") {
+  if (db === "pg-local" && isSUSE) {
     await asyncSudo(["systemctl", "enable", "postgresql"], false, dryRun);
     await asyncSudo(["systemctl", "start", "postgresql"], false, dryRun);
   }
