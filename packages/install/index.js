@@ -34,20 +34,22 @@ if (process.argv.includes("--help")) {
   console.log("Install saltcorn\n");
   console.log("OPTIONS:");
   console.log(
-    "  -y, --yes\tNon-interactive, accept all defaults: \n"+
-    "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit\n"+
-    "  -v, --verbose\tVerbose mode, show debug information\n"+
-    "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n"+
-    "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n"+
-    "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n"
+    "  -y, --yes\tNon-interactive, accept all defaults: \n" +
+      "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit\n" +
+      "  -v, --verbose\tVerbose mode, show debug information\n" +
+      "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n" +
+      "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n" +
+      "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n"
   );
   process.exit(0);
 }
 const yes = process.argv.includes("-y") || process.argv.includes("--yes");
-const verbose = process.argv.includes("-v") || process.argv.includes("--verbose");
+const verbose =
+  process.argv.includes("-v") || process.argv.includes("--verbose");
 const expert = process.argv.includes("-e") || process.argv.includes("--expert");
 const dryRun = process.argv.includes("-d") || process.argv.includes("--dryrun");
-const skipChromium = process.argv.includes("-s") || process.argv.includes("--skip-chromium");
+const skipChromium =
+  process.argv.includes("-s") || process.argv.includes("--skip-chromium");
 
 /**
  * Define saltcorn config dir and path
@@ -76,8 +78,10 @@ const write_connection_config = async (connobj, user, dryRun) => {
   const { configFilePath, configFileDir } = get_paths(user);
   await asyncSudo(["mkdir", "-p", configFileDir], false, dryRun);
   await asyncSudo(["chown", `${user}:${user}`, configFileDir], false, dryRun);
-  if(!dryRun)
-    fs.writeFileSync("/tmp/.saltcorn", JSON.stringify(connobj), { mode: 0o600 });
+  if (!dryRun)
+    fs.writeFileSync("/tmp/.saltcorn", JSON.stringify(connobj), {
+      mode: 0o600,
+    });
   await asyncSudo(["mv", "/tmp/.saltcorn", configFilePath], false, dryRun);
   await asyncSudo(["chown", `${user}:${user}`, configFilePath], false, dryRun);
 };
@@ -116,7 +120,7 @@ const askUserNonExpertMode = async () => {
  */
 const askUser = async () => {
   let user = "saltcorn";
-  if(!expert) return await askUserNonExpertMode();
+  if (!expert) return await askUserNonExpertMode();
 
   const responses = await inquirer.prompt([
     {
@@ -134,7 +138,7 @@ const askUser = async () => {
  */
 const askDatabaseName = async () => {
   let dbName = "saltcorn";
-  if(!expert) return dbName;
+  if (!expert) return dbName;
 
   const responses = await inquirer.prompt([
     {
@@ -215,8 +219,8 @@ const askDevServer = async (db) => {
  * @returns {Promise<number|number>}
  */
 const askHttpPort = async (mode) => {
-  let port = mode === "dev"? 3000 : 80;
-  if(!expert) {
+  let port = mode === "dev" ? 3000 : 80;
+  if (!expert) {
     if (yes) return 80;
   }
   const responses = await inquirer.prompt([
@@ -235,7 +239,7 @@ const askHttpPort = async (mode) => {
  */
 const askOsService = async () => {
   let osService = "saltcorn";
-  if(!expert) return osService;
+  if (!expert) return osService;
 
   const responses = await inquirer.prompt([
     {
@@ -258,14 +262,27 @@ const askOsService = async () => {
  * @param dryRun - if true then test run
  * @returns {Promise<void>}
  */
+
+const isRedHat = (osInfo) =>
+  [
+    "Fedora Linux",
+    "Fedora",
+    "CentOS Linux",
+    "Rocky Linux",
+    "Red Hat Enterprise Linux",
+    "AlmaLinux",
+  ].includes(osInfo.distro);
+
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   const distro_code = `${osInfo.distro} ${osInfo.codename}`;
-  let python;
+  console.log("Distro code: ", distro_code);
+  let python, installer;
   switch (distro_code) {
     case "Ubuntu Bionic Beaver":
     case "Debian GNU/Linux buster":
     case "Debian GNU/Linux stretch":
       python = "python3";
+      installer = "apt";
       break;
 
     default:
@@ -273,21 +290,64 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
 
       break;
   }
-  const packages = [
-    "libpq-dev",
-    "build-essential",
-    python,
-    "git",
-    "libsystemd-dev",
-  ];
-  if (!skipChromium) {
-    if (osInfo.distro === "Ubuntu") packages.push("chromium-browser"); 
-    if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
-  }
-  if (port === 80) packages.push("libcap2-bin");
-  if (db === "pg-local") packages.push("postgresql", "postgresql-client");
+  const isSUSE = osInfo.distro.includes("SUSE");
 
-  await asyncSudo(["apt", "install", "-y", ...packages], false, dryRun);
+  if (isRedHat(osInfo)) {
+    installer = "dnf";
+  }
+  if (isSUSE) {
+    installer = "zypper";
+  } else {
+    installer = "apt";
+  }
+  const packages =
+    installer === "apt"
+      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev"]
+      : ["systemd-devel"];
+  if (!skipChromium) {
+    if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
+    if (osInfo.distro === "Debian GNU/Linux" || isSUSE)
+      packages.push("chromium");
+    if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
+  }
+  if (port === 80 && installer === "apt") packages.push("libcap2-bin"); // libcap-progs
+  if (port === 80 && installer === "zypper") packages.push("libcap-progs"); //
+  if (db === "pg-local" && installer === "apt")
+    packages.push("postgresql", "postgresql-client");
+  if (db === "pg-local" && installer === "dnf")
+    packages.push("postgresql-server", "postgresql");
+  if (db === "pg-local" && installer === "zypper")
+    packages.push(
+      "postgresql",
+      "postgresql-server",
+      "postgresql-contrib",
+      "make",
+      "gcc-c++"
+    );
+
+  const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
+
+  await asyncSudo(
+    [installer, ...nonInteractiveFlag, "install", "-y", ...packages],
+    false,
+    dryRun
+  );
+  console.log({ db, installer });
+  if (db === "pg-local" && isSUSE) {
+    await asyncSudo(["systemctl", "enable", "postgresql"], false, dryRun);
+    await asyncSudo(["systemctl", "start", "postgresql"], false, dryRun);
+  }
+
+  if (db === "pg-local" && installer === "dnf") {
+    await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
+    await asyncSudo(
+      ["systemctl", "enable", "--now", "postgresql"],
+      false,
+      dryRun
+    );
+    //await asyncSudo(["sed", "-E", "-i", "s/local(\\s+)all(\\s+)all(\\s+)peer/local\\1all\\2all\\3trust/", "/var/lib/pgsql/data/pg_hba.conf"], false, dryRun);
+    //await asyncSudo(["systemctl", "reload", "postgresql"], false, dryRun);
+  }
 };
 /**
  * Install Saltcorn
@@ -308,34 +368,56 @@ sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsa
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
  */
   //if (user === "saltcorn")
-  if (user !== "root")
+  const isSUSE = osInfo.distro.includes("SUSE");
+  if (user !== "root") {
+    if (isSUSE) await asyncSudo(["groupadd", user], true, dryRun);
     await asyncSudo(
-      ["adduser", "--disabled-password", "--gecos", '""', user],
-      true, dryRun
+      isRedHat(osInfo)
+        ? ["adduser", user]
+        : isSUSE
+        ? ["useradd", "-g", user, "-d", "/home/" + user, "-m", user]
+        : ["adduser", "--disabled-password", "--gecos", '""', user],
+      true,
+      dryRun
     );
+  }
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir], false, dryRun);
-  await asyncSudoUser(user, [
-    "npm",
-    "config",
-    "set",
-    "prefix",
-    `/home/${user}/.local/`,
-  ], false, dryRun);
-  await asyncSudoUser(user, [
-    "npm",
-    "install",
-    "-g",
-    "--legacy-peer-deps",
-    "@saltcorn/cli@latest",
-    "--unsafe",
-  ], false, dryRun);
-  await asyncSudo([
-    "bash",
-    "-c",
-    `echo 'export PATH=/home/${user}/.local/bin:$PATH' >> /home/${user}/.bashrc`,
-  ], false, dryRun);
+  await asyncSudoUser(
+    user,
+    ["npm", "config", "set", "prefix", `/home/${user}/.local/`],
+    false,
+    dryRun
+  );
+  await asyncSudoUser(
+    user,
+    [
+      "npm",
+      "install",
+      "-g",
+      "--legacy-peer-deps",
+      "@saltcorn/cli@latest",
+      "--unsafe",
+    ],
+    false,
+    dryRun
+  );
+  await asyncSudoUser(
+    user,
+    ["npm", "install", "-g", "sd-notify"],
+    true,
+    dryRun
+  );
+  await asyncSudo(
+    [
+      "bash",
+      "-c",
+      `echo 'export PATH=/home/${user}/.local/bin:$PATH' >> /home/${user}/.bashrc`,
+    ],
+    false,
+    dryRun
+  );
 };
 /**
  * Setup Postgres server
@@ -348,31 +430,31 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
  * @returns {Promise<void>}
  */
 const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
-  await asyncSudoPostgres([
-    "psql",
-    "-U",
-    "postgres",
-    "-c",
-    `CREATE USER ${user} WITH CREATEDB;`,
-  ], false, dryRun);
-  await asyncSudoPostgres([
-    "psql",
-    "-U",
-    "postgres",
-    "-c",
-    `ALTER USER ${user} WITH PASSWORD '${pg_pass}';`,
-  ], false, dryRun);
-
+  await asyncSudoPostgres(
+    [
+      "psql",
+      "-U",
+      "postgres",
+      "-c",
+      `CREATE USER ${user} WITH CREATEDB PASSWORD '${pg_pass}';`,
+    ],
+    false,
+    dryRun
+  );
   await asyncSudoUser(user, ["createdb", dbName], false, dryRun);
-  await asyncSudoPostgres([
-    "psql",
-    "-U",
-    "postgres",
-    "-d",
-    dbName,
-    "-c",
-    `ALTER SCHEMA public OWNER TO ${user};`,
-  ], false, dryRun);
+  await asyncSudoPostgres(
+    [
+      "psql",
+      "-U",
+      "postgres",
+      "-d",
+      dbName,
+      "-c",
+      `ALTER SCHEMA public OWNER TO ${user};`,
+    ],
+    false,
+    dryRun
+  );
 };
 /** main logic of script **/
 (async () => {
@@ -437,7 +519,7 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   //save cfg
   await write_connection_config(
     {
-      host: "localhost",
+      host: "/var/run/postgresql",
       port: 5432,
       database: dbName,
       user,
@@ -450,34 +532,47 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
     dryRun
   );
   //initialize schema
-  await asyncSudoUser(user, [
-    `/home/${user}/.local/bin/saltcorn`,
-    "reset-schema",
-    "-f",
-  ], false, dryRun);
+  await asyncSudoUser(
+    user,
+    [`/home/${user}/.local/bin/saltcorn`, "reset-schema", "-f"],
+    false,
+    dryRun
+  );
 
   if (mode === "dev") return;
 
   // if 80, setcap
   if (port === 80)
-    await asyncSudo([
-      "bash",
-      "-c",
-      "setcap 'cap_net_bind_service=+ep' `which node`",
-    ], false, dryRun);
+    await asyncSudo(
+      ["bash", "-c", "setcap 'cap_net_bind_service=+ep' `which node`"],
+      false,
+      dryRun
+    );
 
+  let hasSDnotify;
+  try {
+    await asyncSudo(
+      ["bash", "-c", `find /home/${user}/.local/ | grep sd-notify`],
+      false,
+      dryRun
+    );
+    hasSDnotify = true;
+  } catch {
+    hasSDnotify = false;
+  }
+  console.log("Has sd-notify:", hasSDnotify);
   //systemd unit
-  if(!dryRun)
+  if (!dryRun)
     fs.writeFileSync(
-    "/tmp/saltcorn.service",
-    `[Unit]
+      "/tmp/saltcorn.service",
+      `[Unit]
 Description=saltcorn
 Documentation=https://saltcorn.com
 After=network.target
 
 [Service]
-Type=notify
-WatchdogSec=5
+Type=${hasSDnotify ? `notify` : `simple`}
+${hasSDnotify ? "WatchdogSec=5" : ""}
 User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
@@ -486,16 +581,37 @@ Environment="NODE_ENV=production"
 
 [Install]
 WantedBy=multi-user.target`
+    );
+  await asyncSudo(
+    [
+      "mv",
+      "/tmp/saltcorn.service",
+      `${
+        isRedHat(osInfo) || osInfo.distro.includes("SUSE")
+          ? `/etc/systemd/system`
+          : `/lib/systemd/system`
+      }/${osService}.service`,
+    ],
+    false,
+    dryRun
   );
-  await asyncSudo([
-    "mv",
-    "/tmp/saltcorn.service",
-    `/lib/systemd/system/${osService}.service`,
-  ], false, dryRun);
+  if (isRedHat(osInfo)) {
+    await asyncSudo(
+      ["chown", "root:root", "/etc/systemd/system/saltcorn.service"],
+      false,
+      dryRun
+    );
+    await asyncSudo(
+      ["/sbin/restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
+      false,
+      dryRun
+    );
+  }
   // start systemd service
   await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
   await asyncSudo(["systemctl", "start", osService], false, dryRun);
   await asyncSudo(["systemctl", "enable", osService], false, dryRun);
+  if (!hasSDnotify) await asyncSudo(["sleep", "5"], false, dryRun);
 })().catch((e) => {
   console.error(e.message || e);
   process.exit(1);

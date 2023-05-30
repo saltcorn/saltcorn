@@ -8,6 +8,7 @@ const runScheduler = require("@saltcorn/data/models/scheduler");
 const User = require("@saltcorn/data/models/user");
 const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
+const { getConfigFile, configFilePath } = require("@saltcorn/data/db/connect");
 const {
   getState,
   init_multi_tenant,
@@ -49,9 +50,31 @@ const {
 } = require("@saltcorn/admin-models/models/tenant");
 const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
+const { writeFileSync } = require("fs");
 
 const take_snapshot = async () => {
   return await Snapshot.take_if_changed();
+};
+
+/**
+ * Ensure the cfg file has a jwt_secret
+ */
+const ensureJwtSecret = () => {
+  const cfg = getConfigFile();
+  if (cfg && !cfg.jwt_secret) {
+    try {
+      const newSecret = require("crypto").randomBytes(64).toString("hex");
+      cfg.jwt_secret = newSecret;
+      writeFileSync(configFilePath, JSON.stringify(cfg, null, 2));
+      db.connectObj.jwt_secret = newSecret;
+    } catch (error) {
+      console.log(
+        `Unable to set a jwt_secret: ${
+          error.message ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
 };
 
 // helpful https://gist.github.com/jpoehls/2232358
@@ -195,6 +218,7 @@ module.exports =
     dev,
     ...appargs
   } = {}) => {
+    ensureJwtSecret();
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
     });

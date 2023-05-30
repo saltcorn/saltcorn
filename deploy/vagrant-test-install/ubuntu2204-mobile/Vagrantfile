@@ -6,13 +6,11 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure("2") do |config|
-
-  config.vm.box = "ubuntu/focal64"
+   config.vm.box = "ubuntu/jammy64"
 
   config.ssh.forward_agent = true
 
   config.ssh.insert_key = false
-
 
   config.vm.provider "virtualbox" do |vb|  
     # Customize the amount of memory on the VM:
@@ -23,7 +21,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
-    sudo -iu vagrant npx -y saltcorn-install -s -y
+    sudo -iu vagrant npx -y saltcorn-install -y
 
     apt update && apt install -y wget unzip openjdk-11-jdk openjdk-11-demo openjdk-11-doc openjdk-11-jre-headless openjdk-11-source
     

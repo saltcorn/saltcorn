@@ -9,6 +9,7 @@ sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO 
 sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
 sudo -iu saltcorn npm config set prefix /home/saltcorn/.local
 sudo -iu saltcorn NODE_ENV=production ATTTACH_DOCKER_IMAGE_BUILD=true npm install -g @saltcorn/cli@latest --unsafe
+sudo -iu saltcorn NODE_ENV=production npm install -g sd-notify
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
 
 # Protect the droplet
