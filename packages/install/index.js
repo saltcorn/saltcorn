@@ -587,7 +587,9 @@ WantedBy=multi-user.target`
       "mv",
       "/tmp/saltcorn.service",
       `${
-        isRedHat(osInfo) ? `/etc/systemd/system` : `/lib/systemd/system`
+        isRedHat(osInfo) || osInfo.distro.includes("SUSE")
+          ? `/etc/systemd/system`
+          : `/lib/systemd/system`
       }/${osService}.service`,
     ],
     false,
