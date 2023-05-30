@@ -1536,18 +1536,21 @@ const bool = {
           },
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
-        input({
+      run: (nm, v, attrs, cls, required, field) => {
+        const onChange =
+          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+        return input({
           class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
-          onChange: attrs.onChange,
+          onChange,
           readonly: attrs.readonly,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true }),
           ...(attrs.disabled && { onclick: "return false;" }),
-        }),
+        });
+      },
     },
     switch: {
       isEdit: true,
