@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision "shell", inline: <<-SHELL
     set -e  
-    sudo zypper -n install nodejs16 npm16 git nodejs16-devel
+    sudo zypper -n install nodejs16 npm16 git nodejs16-devel wget
     sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
     cd /home/vagrant/saltcorn/packages/install/
     sudo -u vagrant git checkout node-18
