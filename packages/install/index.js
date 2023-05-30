@@ -367,16 +367,19 @@ sudo -iu saltcorn NODE_ENV=production npm install -g @saltcorn/cli@latest --unsa
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
  */
   //if (user === "saltcorn")
-  if (user !== "root")
+  const isSUSE = osInfo.distro.includes("SUSE");
+  if (user !== "root") {
+    if (isSUSE) await asyncSudo(["groupadd", user], true, dryRun);
     await asyncSudo(
       isRedHat(osInfo)
         ? ["adduser", user]
-        : osInfo.distro.includes("SUSE")
-        ? ["useradd", "-g", "users", "-d", "/home/" + user, "-m", user]
+        : isSUSE
+        ? ["useradd", "-g", user, "-d", "/home/" + user, "-m", user]
         : ["adduser", "--disabled-password", "--gecos", '""', user],
       true,
       dryRun
     );
+  }
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir], false, dryRun);
