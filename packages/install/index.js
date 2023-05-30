@@ -315,8 +315,21 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     packages.push("postgresql", "postgresql-client");
   if (db === "pg-local" && installer === "dnf")
     packages.push("postgresql-server", "postgresql");
+  if (db === "pg-local" && installer === "zypper")
+    packages.push(
+      "postgresql",
+      "postgresql-server",
+      "postgresql-contrib",
+      "postgresql-client"
+    );
 
-  await asyncSudo([installer, "install", "-y", ...packages], false, dryRun);
+  const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
+
+  await asyncSudo(
+    [installer, ...nonInteractiveFlag, "install", "-y", ...packages],
+    false,
+    dryRun
+  );
   console.log({ db, installer });
   if (db === "pg-local" && installer === "dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
@@ -352,6 +365,8 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
     await asyncSudo(
       isRedHat(osInfo)
         ? ["adduser", user]
+        : osInfo.distro.includes("SUSE")
+        ? ["useradd", user]
         : ["adduser", "--disabled-password", "--gecos", '""', user],
       true,
       dryRun
