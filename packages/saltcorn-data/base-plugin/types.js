@@ -1554,14 +1554,16 @@ const bool = {
     },
     switch: {
       isEdit: true,
-      run: (nm, v, attrs, cls, required, field) =>
-        span(
+      run: (nm, v, attrs, cls, required, field) => {
+        const onChange =
+          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+        return span(
           { class: "form-switch" },
           input({
             class: ["form-check-input", cls],
             "data-fieldname": text_attr(field.name),
             type: "checkbox",
-            onChange: attrs.onChange,
+            onChange,
             readonly: attrs.readonly,
             role: "switch",
             name: text_attr(nm),
@@ -1569,7 +1571,8 @@ const bool = {
             ...(v && { checked: true }),
             ...(attrs.disabled && { onclick: "return false;" }),
           })
-        ),
+        );
+      },
     },
     /**
      * @namespace
