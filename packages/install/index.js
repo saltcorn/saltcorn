@@ -316,12 +316,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (db === "pg-local" && installer === "dnf")
     packages.push("postgresql-server", "postgresql");
   if (db === "pg-local" && installer === "zypper")
-    packages.push(
-      "postgresql",
-      "postgresql-server",
-      "postgresql-contrib",
-      "postgresql-client"
-    );
+    packages.push("postgresql", "postgresql-server", "postgresql-contrib");
 
   const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
 
