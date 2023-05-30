@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     set -e
-    wget -qO - https://deb.nodesource.com/setup_19.x | bash -
+    wget -qO - https://deb.nodesource.com/setup_20.x | bash -
     apt-get install -qqy nodejs
     sudo -iu vagrant npx -y saltcorn-install -y
     systemctl is-active saltcorn

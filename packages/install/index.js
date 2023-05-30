@@ -290,8 +290,12 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
 
       break;
   }
+  const isSUSE= osInfo.distro.includes("SUSE")
+
   if (isRedHat(osInfo)) {
     installer = "dnf";
+  } if(isSUSE) {
+    installer = "zypper"
   } else {
     installer = "apt";
   }
@@ -301,7 +305,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       : ["systemd-devel"];
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
-    if (osInfo.distro === "Debian GNU/Linux") packages.push("chromium");
+    if (osInfo.distro === "Debian GNU/Linux"||isSUSE) packages.push("chromium");
     if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
   }
   if (port === 80 && installer === "apt") packages.push("libcap2-bin");
