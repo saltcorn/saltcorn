@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     set -e
     apt update    
-    apt install -qqy nodejs npm node-gyp node-pre-gyp build-essential
+    apt install -qqy nodejs npm
     sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
     cd /home/vagrant/saltcorn/packages/install/
     sudo -u vagrant git checkout node-18
