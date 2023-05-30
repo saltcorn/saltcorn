@@ -316,7 +316,13 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (db === "pg-local" && installer === "dnf")
     packages.push("postgresql-server", "postgresql");
   if (db === "pg-local" && installer === "zypper")
-    packages.push("postgresql", "postgresql-server", "postgresql-contrib");
+    packages.push(
+      "postgresql",
+      "postgresql-server",
+      "postgresql-contrib",
+      "make",
+      "gcc-c++"
+    );
 
   const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
 
@@ -326,6 +332,11 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     dryRun
   );
   console.log({ db, installer });
+  if (db === "pg-local" && installer === "zupper") {
+    await asyncSudo(["systemctl", "enable", "postgresql"], false, dryRun);
+    await asyncSudo(["systemctl", "start", "postgresql"], false, dryRun);
+  }
+
   if (db === "pg-local" && installer === "dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
     await asyncSudo(
