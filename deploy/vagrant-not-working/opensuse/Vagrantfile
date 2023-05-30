@@ -24,5 +24,7 @@ Vagrant.configure("2") do |config|
     sudo -u vagrant git checkout node-18
     sudo -u vagrant npm install
     sudo -u vagrant node index.js -y
+    systemctl is-active saltcorn
+    wget -qO- http://localhost/ | grep Please  
   SHELL
 end
