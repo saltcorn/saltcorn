@@ -179,7 +179,7 @@
 
       // the app comes back from background
       const onResume = async () => {
-        if (!saltcorn?.data?.state) return;
+        if (typeof saltcorn === "undefined") return;
         const state = saltcorn.data.state.getState();
         const mobileConfig = state.mobileConfig;
         if (mobileConfig?.allowOfflineMode) {
@@ -368,6 +368,7 @@
         overflow: hidden;
         z-index: 999999;
       "
+      src="splash_page.html"
     >
       <p>Your browser does not support iframes.</p>
     </iframe>

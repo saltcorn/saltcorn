@@ -20,7 +20,7 @@ import {
   MobileConfig,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
-import { ConfigTypes, SingleConfig } from "models/config";
+import type { ConfigTypes, SingleConfig } from "../models/config";
 import User from "../models/user";
 const { PluginManager } = require("live-plugin-manager");
 
@@ -184,7 +184,7 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user: User) {
+  getLayout(user?: User) {
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {

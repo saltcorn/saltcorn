@@ -1464,7 +1464,7 @@ router.get(
                       // select entry-view
                       select(
                         {
-                          class: "form-control",
+                          class: "form-select",
                           name: "entryPoint",
                           id: "viewInputID",
                         },
@@ -1477,14 +1477,14 @@ router.get(
                       // select entry-page
                       select(
                         {
-                          class: "form-control d-none",
+                          class: "form-select d-none",
                           id: "pageInputID",
                         },
                         pages
                           .map((page) =>
                             option({ value: page.name }, page.name)
                           )
-                          .join(",")
+                          .join("")
                       )
                     ),
                     div(
@@ -1536,7 +1536,7 @@ router.get(
                       { class: "col-sm-8" },
                       label(
                         {
-                          for: "appNameInputId",
+                          for: "appFileInputId",
                           class: "form-label fw-bold",
                         },
                         req.__("App file")
@@ -1551,7 +1551,7 @@ router.get(
                     )
                   ),
                   div(
-                    { class: "row pb-3" },
+                    { class: "row pb-2" },
                     div(
                       { class: "col-sm-8" },
                       label(
@@ -1570,6 +1570,34 @@ router.get(
                       })
                     )
                   ),
+
+                  div(
+                    { class: "row pb-3" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "splashPageInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("Splash Page")
+                      ),
+                      select(
+                        {
+                          class: "form-select",
+                          name: "splashPage",
+                          id: "splashPageInputId",
+                        },
+                        [
+                          option({ value: "" }, ""),
+                          ...pages.map((page) =>
+                            option({ value: page.name }, page.name)
+                          ),
+                        ].join("")
+                      )
+                    )
+                  ),
+
                   div(
                     // TODO only for some tables?
                     { class: "row pb-2" },
@@ -1690,6 +1718,7 @@ router.post(
       useDocker,
       appFile,
       serverURL,
+      splashPage,
       allowOfflineMode,
     } = req.body;
     if (!androidPlatform && !iOSPlatform) {
@@ -1738,6 +1767,7 @@ router.post(
     }
     if (appFile) spawnParams.push("-a", appFile);
     if (serverURL) spawnParams.push("-s", serverURL);
+    if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (
       db.is_it_multi_tenant() &&

@@ -1,4 +1,4 @@
-/*global window, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
+/*global window, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig*/
 
 let routingHistory = [];
 
@@ -25,7 +25,10 @@ function popRoute() {
 }
 
 async function apiCall({ method, path, params, body, responseType, timeout }) {
-  const config = saltcorn.data.state.getState().mobileConfig;
+  const config =
+    typeof saltcorn !== "undefined"
+      ? saltcorn.data.state.getState().mobileConfig
+      : splashConfig;
   const serverPath = config.server_path;
   const url = `${serverPath}${path}`;
   const headers = {
@@ -60,12 +63,17 @@ function clearAlerts() {
 }
 
 function showAlerts(alerts) {
-  const iframe = document.getElementById("content-iframe");
-  const alertsArea =
-    iframe.contentWindow.document.getElementById("alerts-area");
-  alertsArea.innerHTML = "";
-  for (const { type, msg } of alerts) {
-    alertsArea.innerHTML += saltcorn.markup.alert(type, msg);
+  if (typeof saltcorn === "undefined") {
+    console.log("Not yet initalized.");
+    console.log(alerts);
+  } else {
+    const iframe = document.getElementById("content-iframe");
+    const alertsArea =
+      iframe.contentWindow.document.getElementById("alerts-area");
+    alertsArea.innerHTML = "";
+    for (const { type, msg } of alerts) {
+      alertsArea.innerHTML += saltcorn.markup.alert(type, msg);
+    }
   }
 }
 

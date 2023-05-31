@@ -82,6 +82,7 @@ class BuildAppCommand extends Command {
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
+        splashPage: flags.splashPage,
         allowOfflineMode: flags.allowOfflineMode,
         plugins: await this.uniquePlugins(),
         copyTargetDir: flags.copyAppDirectory,
@@ -165,6 +166,12 @@ BuildAppCommand.flags = {
     name: "server URL",
     char: "s",
     description: "URL to a saltcorn server",
+  }),
+  splashPage: flags.string({
+    name: "splash page",
+    string: "splashPage",
+    description:
+      "Name of a page that should be shown while the app is loading.",
   }),
   allowOfflineMode: flags.boolean({
     name: "Allow offline mode",

@@ -13,6 +13,7 @@ import {
   copyTranslationFiles,
   createSqliteDb,
   writeCfgFile,
+  prepareSplashPage,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -41,6 +42,7 @@ export class MobileBuilder {
   entryPoint: string;
   entryPointType: EntryPointType;
   serverURL: string;
+  splashPage?: string;
   allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
@@ -65,6 +67,7 @@ export class MobileBuilder {
     entryPoint: string;
     entryPointType: EntryPointType;
     serverURL: string;
+    splashPage?: string;
     allowOfflineMode: string;
     plugins: Plugin[];
     copyTargetDir?: string;
@@ -82,6 +85,7 @@ export class MobileBuilder {
     this.entryPoint = cfg.entryPoint;
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
+    this.splashPage = cfg.splashPage;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -122,6 +126,14 @@ export class MobileBuilder {
     await copyPublicDirs(this.buildDir);
     await installNpmPackages(this.buildDir, this.pluginManager);
     await buildTablesFile(this.buildDir);
+    if (this.splashPage)
+      await prepareSplashPage(
+        this.buildDir,
+        this.splashPage,
+        this.serverURL,
+        this.tenantAppName,
+        this.user
+      );
     resultCode = await createSqliteDb(this.buildDir);
     if (resultCode !== 0) return resultCode;
     resultCode = buildApp(
