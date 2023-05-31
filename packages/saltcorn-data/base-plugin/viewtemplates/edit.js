@@ -500,18 +500,23 @@ const transformForm = async ({
   viewname,
 }) => {
   await traverse(form.layout, {
-    action(segment) {
+    async action(segment) {
       if (segment.action_style === "on_page_load") {
         //run action
-        run_action_column({
+        const actionResult = await run_action_column({
           col: { ...segment },
           referrer: req.get("Referrer"),
-          req: req,
-          res: res,
-        }).catch((e) => Crash.create(e, req));
+          req,
+          res,
+          row,
+        });
         segment.type = "blank";
-        segment.contents = "";
         segment.style = {};
+        if (actionResult)
+          segment.contents = script(
+            domReady(`common_done(${JSON.stringify(actionResult)})`)
+          );
+        else segment.contents = "";
         return;
       }
       if (segment.action_name === "Delete") {

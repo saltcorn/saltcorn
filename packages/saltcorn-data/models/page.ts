@@ -8,8 +8,14 @@ import db from "../db";
 import View from "./view";
 import Table from "./table";
 import layout from "./layout";
-const { eachView, eachPage, traverseSync, getStringsForI18n, translateLayout } =
-  layout;
+const {
+  eachView,
+  eachPage,
+  traverse,
+  traverseSync,
+  getStringsForI18n,
+  translateLayout,
+} = layout;
 import config from "./config";
 import type {
   Layout,
@@ -24,6 +30,8 @@ import type {
   PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
 import expression from "./expression";
+import tags from "@saltcorn/markup/tags";
+const { script, domReady } = tags;
 const { eval_expression } = expression;
 
 const { remove_from_menu } = config;
@@ -275,19 +283,23 @@ class Page implements AbstractPage {
       }
     });
     const pagename = this.name;
-    traverseSync(this.layout, {
-      action(segment: any) {
+    await traverse(this.layout, {
+      async action(segment: any) {
         if (segment.action_style === "on_page_load") {
           //run action
-          run_action_column({
+          const actionResult = await run_action_column({
             col: { ...segment },
             referrer: extraArgs.req.get("Referrer"),
             req: extraArgs.req,
             res: extraArgs.res,
-          }).catch((e: any) => Crash.create(e, extraArgs.req));
+          });
           segment.type = "blank";
-          segment.contents = "";
           segment.style = {};
+          if (actionResult)
+            segment.contents = script(
+              domReady(`common_done(${JSON.stringify(actionResult)})`)
+            );
+          else segment.contents = "";
           return;
         }
         const url =
