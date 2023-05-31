@@ -292,7 +292,7 @@ class Page implements AbstractPage {
             referrer: extraArgs.req.get("Referrer"),
             req: extraArgs.req,
             res: extraArgs.res,
-          }).catch((e: any) => Crash.create(e, extraArgs.req));
+          });
           segment.type = "blank";
           segment.style = {};
           if (actionResult)
