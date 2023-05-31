@@ -179,7 +179,9 @@ This may be in a different location in non-Debian systems, e.g. in `/etc/systemd
 In order to allow the `saltcorn` user to open port 80, you need to permission node.js to allow
 this by running:
 
-`sudo setcap 'cap_net_bind_service=+ep' \`which node\``
+```
+sudo setcap 'cap_net_bind_service=+ep' `which node`
+```
 
 #### SSL certificate
 
