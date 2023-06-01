@@ -24,7 +24,18 @@ class PostReleaseCommand extends Command {
     });
   }
   async vagrant() {
-    console.log(this.version);
+    const vagrantDir = path.join(
+      this.baseRepoDir,
+      "deploy",
+      "vagrant-test-install"
+    );
+    const dirs = fs.readdirSync(vagrantDir);
+    for (const dir of dirs) {
+      spawnSync("bash", ["deploy/docker_build_push.sh"], {
+        stdio: "inherit",
+        cwd: path.join(vagrantDir, dir),
+      });
+    }
   }
 
   /**
