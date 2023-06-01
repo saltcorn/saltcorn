@@ -10,7 +10,7 @@ import { Layout } from "@saltcorn/types/base_types";
 import db from "../db/index";
 const { is_node } = db;
 
-type Visitors = { [key: string]: (segment: any) => void };
+type Visitors = { [key: string]: (segment: any) => any };
 
 /**
  * @param layout
@@ -50,10 +50,12 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
  * @returns
  */
 const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
+  //todo rewrite this without async/await to optimise?
   const go = async (segment: any) => {
     if (!segment) return;
     if (visitors[segment.type]) {
-      await visitors[segment.type](segment);
+      const vres = visitors[segment.type](segment);
+      if (vres && vres instanceof Promise) await vres;
       return;
     }
     if (Array.isArray(segment)) {

@@ -11,6 +11,7 @@ const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const Trigger = require("@saltcorn/data/models/trigger");
 const {
   mkTable,
   renderForm,
@@ -579,6 +580,7 @@ router.get(
     const inbound_refs = [
       ...new Set(child_relations.map(({ table }) => table.name)),
     ];
+    const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
     let fieldCard;
     if (fields.length === 0) {
       fieldCard = [
@@ -645,6 +647,13 @@ router.get(
         inbound_refs.length > 0
           ? req.__("Inbound keys: ") +
             inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
+            "<br>"
+          : "",
+        triggers.length
+          ? req.__("Table triggers: ") +
+            triggers
+              .map((t) => link(`/actions/configure/${t.id}`, t.name))
+              .join(", ") +
             "<br>"
           : "",
         !table.external &&
