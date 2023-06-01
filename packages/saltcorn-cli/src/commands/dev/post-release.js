@@ -18,9 +18,9 @@ class PostReleaseCommand extends Command {
     return path.join(__dirname, "..", "..", "..", "..", "..");
   }
   async docker() {
-    spawnSync("bash", ["docker_build_push.sh"], {
+    spawnSync("bash", ["deploy/docker_build_push.sh"], {
       stdio: "inherit",
-      cwd: path.join(this.baseRepoDir, "deploy"),
+      cwd: this.baseRepoDir,
     });
   }
   async vagrant() {
