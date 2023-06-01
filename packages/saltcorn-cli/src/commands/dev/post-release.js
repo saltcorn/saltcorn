@@ -31,7 +31,11 @@ class PostReleaseCommand extends Command {
     );
     const dirs = fs.readdirSync(vagrantDir);
     for (const dir of dirs) {
-      spawnSync("bash", ["deploy/docker_build_push.sh"], {
+      spawnSync("vagrant", ["up"], {
+        stdio: "inherit",
+        cwd: path.join(vagrantDir, dir),
+      });
+      spawnSync("vagrant", ["destroy", "-f"], {
         stdio: "inherit",
         cwd: path.join(vagrantDir, dir),
       });
