@@ -279,6 +279,14 @@ const buildRelationPath = (
     .join(".")}`;
 };
 
+/**
+ * @param str
+ * @returns
+ */
+const removeWhitespaces = (str: string) => {
+  return str.replace(/\s/g, "X");
+};
+
 export = {
   objectToQueryString,
   removeEmptyStrings,
@@ -308,4 +316,5 @@ export = {
   getSafeBaseUrl,
   parseRelationPath,
   buildRelationPath,
+  removeWhitespaces,
 };

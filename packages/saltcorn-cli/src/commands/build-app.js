@@ -73,6 +73,8 @@ class BuildAppCommand extends Command {
       if (!user && flags.userEmail)
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
       const builder = new MobileBuilder({
+        appName: flags.appName,
+        appIcon: flags.appIcon,
         templateDir: mobileAppDir,
         buildDir: flags.buildDirectory,
         cliDir: path.join(__dirname, "../.."),
@@ -87,7 +89,6 @@ class BuildAppCommand extends Command {
         plugins: await this.uniquePlugins(),
         copyTargetDir: flags.copyAppDirectory,
         user,
-        copyFileName: flags.appFileName,
         buildForEmulator: flags.buildForEmulator,
         tenantAppName: flags.tenantAppName,
       });
@@ -157,10 +158,16 @@ BuildAppCommand.flags = {
     char: "u",
     description: "Email of the user building the app",
   }),
-  appFileName: flags.string({
-    name: "app file name",
-    char: "a",
-    description: "If set, the copied app will get this name",
+  appName: flags.string({
+    name: "app name",
+    string: "appName",
+    description: "Name of the mobile app (default SaltcornMobileApp)",
+  }),
+  appIcon: flags.string({
+    name: "app icon",
+    string: "appIcon",
+    description:
+      "A png that will be used as launcher icon. The default is a png of a saltcorn symbol.",
   }),
   serverURL: flags.string({
     name: "server URL",

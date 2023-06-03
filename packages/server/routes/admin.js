@@ -1387,6 +1387,9 @@ router.get(
   error_catcher(async (req, res) => {
     const views = await View.find();
     const pages = await Page.find();
+    const images = (await File.find({ mime_super: "image" })).filter((image) =>
+      image.filename?.endsWith(".png")
+    );
 
     send_admin_page({
       res,
@@ -1539,14 +1542,14 @@ router.get(
                           for: "appFileInputId",
                           class: "form-label fw-bold",
                         },
-                        req.__("App file")
+                        req.__("App name")
                       ),
                       input({
                         type: "text",
                         class: "form-control",
-                        name: "appFile",
-                        id: "appFileInputId",
-                        placeholder: "app-debug",
+                        name: "appName",
+                        id: "appNameInputId",
+                        placeholder: "SaltcornMobileApp",
                       })
                     )
                   ),
@@ -1570,7 +1573,33 @@ router.get(
                       })
                     )
                   ),
-
+                  // app icon
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "appIconInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("App icon")
+                      ),
+                      select(
+                        {
+                          class: "form-select",
+                          name: "appIcon",
+                          id: "appIconInputId",
+                        },
+                        [
+                          option({ value: "" }, ""),
+                          ...images.map((image) =>
+                            option({ value: image.location }, image.filename)
+                          ),
+                        ].join("")
+                      )
+                    )
+                  ),
                   div(
                     { class: "row pb-3" },
                     div(
@@ -1716,7 +1745,8 @@ router.post(
       androidPlatform,
       iOSPlatform,
       useDocker,
-      appFile,
+      appName,
+      appIcon,
       serverURL,
       splashPage,
       allowOfflineMode,
@@ -1765,7 +1795,8 @@ router.post(
         spawnParams.push("--buildForEmulator");
       }
     }
-    if (appFile) spawnParams.push("-a", appFile);
+    if (appName) spawnParams.push("--appName", appName);
+    if (appIcon) spawnParams.push("--appIcon", appIcon);
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");

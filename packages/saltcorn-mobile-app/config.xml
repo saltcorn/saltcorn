@@ -3,6 +3,7 @@
   <name>SaltcornMobileApp</name>
   <description>Apache Cordova application with @saltcorn/markup</description>
   <platform name="android">
+    <icon density="ldpi" foreground="res/icon/android/icon.png" background="res/icon/android/icon.png" />
     <edit-config file="app/src/main/AndroidManifest.xml" target="/manifest/application" mode="merge">
       <application android:usesCleartextTraffic="true"/>
     </edit-config>

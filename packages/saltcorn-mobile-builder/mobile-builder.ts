@@ -24,6 +24,8 @@ import {
   buildApp,
   tryCopyAppFiles,
   prepareBuildDir,
+  setAppName,
+  prepareAppIcon,
 } from "./utils/cordova-build-utils";
 import User from "@saltcorn/data/models/user";
 
@@ -33,6 +35,8 @@ type EntryPointType = "view" | "page";
  *
  */
 export class MobileBuilder {
+  appName?: string;
+  appIcon?: string;
   templateDir: string;
   buildDir: string;
   cliDir: string;
@@ -49,7 +53,6 @@ export class MobileBuilder {
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   user?: User;
-  copyFileName?: string;
   buildForEmulator?: boolean;
   tenantAppName?: string;
 
@@ -58,6 +61,8 @@ export class MobileBuilder {
    * @param cfg
    */
   constructor(cfg: {
+    appName?: string;
+    appIcon?: string;
     templateDir: string;
     buildDir: string;
     cliDir: string;
@@ -72,10 +77,11 @@ export class MobileBuilder {
     plugins: Plugin[];
     copyTargetDir?: string;
     user?: User;
-    copyFileName?: string;
     buildForEmulator?: boolean;
     tenantAppName?: string;
   }) {
+    this.appName = cfg.appName;
+    this.appIcon = cfg.appIcon;
     this.templateDir = cfg.templateDir;
     this.buildDir = cfg.buildDir;
     this.cliDir = cfg.cliDir;
@@ -94,7 +100,6 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.copyFileName = cfg.copyFileName;
     this.buildForEmulator = cfg.buildForEmulator;
     this.tenantAppName = cfg.tenantAppName;
   }
@@ -104,6 +109,8 @@ export class MobileBuilder {
    */
   async build() {
     prepareBuildDir(this.buildDir, this.templateDir);
+    if (this.appName) setAppName(this.buildDir, this.appName);
+    if (this.appIcon) prepareAppIcon(this.buildDir, this.appIcon);
     copyStaticAssets(this.buildDir);
     copySbadmin2Deps(this.buildDir);
     copyTranslationFiles(this.buildDir);
@@ -147,7 +154,7 @@ export class MobileBuilder {
         this.buildDir,
         this.copyTargetDir,
         this.user!,
-        this.copyFileName
+        this.appName
       );
     }
     return resultCode;
