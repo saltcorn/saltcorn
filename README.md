@@ -3,6 +3,7 @@
 [![Build and Test](https://github.com/saltcorn/saltcorn/workflows/Node.js%20CI/badge.svg)](https://github.com/saltcorn/saltcorn/actions/workflows/nodejs.yml) [![OpenCollective](https://img.shields.io/badge/OpenCollective-1F87FF?style=flat&logo=OpenCollective&logoColor=black)](https://opencollective.com/saltcorn)
 
 # Saltcorn
+
 Saltcorn is an extensible open source no-code database application builder. Use it to build web applications based on relational data with flexible views, datatypes and layouts.
 
 This repository contains the core codebase, including the code necessary to self-host an instance and to host a multitenant instance.
@@ -30,7 +31,7 @@ NOTE: The dependencies to build mobile apps are quite large, they are not instal
 
 ## Quick install server on Debian/Ubuntu
 
-This has been tested on Debian 9, 10 and 11 and Ubuntu 18.04, 20.04 and 21.04. All you need is to run these
+This has been tested on Debian 9, 10 and 11 and Ubuntu 18.04, 20.04 and 22.04. All you need is to run these
 three lines on the command line shell, as root or as a user with sudo access:
 
 ```
@@ -74,6 +75,12 @@ sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 If this fails, you may need to tell npm to disregard file permissions during compilation:
 
 `npm install -g @saltcorn/cli --unsafe`
+
+Sometimes, the above commands fail to install the library `sd-notify` (which is useful for
+integrating with systemd) even though it is installable. You can rectify that by installing
+it subsequently:
+
+`npm install -g sd-notify`
 
 ### Setup (automated)
 
@@ -165,6 +172,15 @@ run:
 sudo systemctl daemon-reload
 sudo systemctl start saltcorn
 sudo systemctl enable saltcorn
+```
+
+This may be in a different location in non-Debian systems, e.g. in `/etc/systemd/system` instead.
+
+In order to allow the `saltcorn` user to open port 80, you need to permission node.js to allow
+this by running:
+
+```
+sudo setcap 'cap_net_bind_service=+ep' `which node`
 ```
 
 #### SSL certificate

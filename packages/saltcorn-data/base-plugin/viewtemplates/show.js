@@ -31,6 +31,8 @@ const {
   text_attr,
   i,
   button,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
@@ -315,7 +317,14 @@ const run = async (
       }&email=${encodeURIComponent(row.email)}`;
     }
   }
-  await set_join_fieldviews({ table: tbl, layout, fields });
+  await set_load_actions_join_fieldviews({
+    table: tbl,
+    layout,
+    fields,
+    req: extra.req,
+    res: extra.res,
+    row: rows[0],
+  });
 
   const rendered = (
     await renderRows(
@@ -348,7 +357,14 @@ const run = async (
  * @param {object[]} opts.fields
  * @returns {Promise<void>}
  */
-const set_join_fieldviews = async ({ table, layout, fields }) => {
+const set_load_actions_join_fieldviews = async ({
+  table,
+  layout,
+  fields,
+  req,
+  res,
+  row,
+}) => {
   await traverse(layout, {
     join_field: async (segment) => {
       const { join_field, fieldview } = segment;
@@ -358,6 +374,25 @@ const set_join_fieldviews = async ({ table, layout, fields }) => {
       if (field && field.type === "File") segment.field_type = "File";
       else if (field?.type.name && field?.type?.fieldviews[fieldview])
         segment.field_type = field.type.name;
+    },
+    async action(segment) {
+      if (segment.action_style === "on_page_load") {
+        //run action
+        const actionResult = await run_action_column({
+          col: { ...segment },
+          referrer: req.get("Referrer"),
+          req,
+          res,
+          row,
+        });
+        segment.type = "blank";
+        segment.style = {};
+        if (actionResult)
+          segment.contents = script(
+            domReady(`common_done(${JSON.stringify(actionResult)})`)
+          );
+        else segment.contents = "";
+      }
     },
   });
 };
@@ -399,7 +434,13 @@ const renderRows = async (
     views[name] = view;
     return view;
   };
-  await set_join_fieldviews({ table, layout, fields });
+  await set_load_actions_join_fieldviews({
+    table,
+    layout,
+    fields,
+    req: extra.req,
+    res: extra.res,
+  });
 
   const owner_field = await table.owner_fieldname();
   const subviewExtra = { ...extra };
