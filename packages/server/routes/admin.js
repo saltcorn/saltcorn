@@ -1533,6 +1533,7 @@ router.get(
                       })
                     )
                   ),
+                  // app name
                   div(
                     { class: "row pb-2" },
                     div(
@@ -1553,6 +1554,28 @@ router.get(
                       })
                     )
                   ),
+                  // app version
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "appVersionInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("App version")
+                      ),
+                      input({
+                        type: "text",
+                        class: "form-control",
+                        name: "appVersion",
+                        id: "appVersionInputId",
+                        placeholder: "1.0.0",
+                      })
+                    )
+                  ),
+                  // server url
                   div(
                     { class: "row pb-2" },
                     div(
@@ -1746,6 +1769,7 @@ router.post(
       iOSPlatform,
       useDocker,
       appName,
+      appVersion,
       appIcon,
       serverURL,
       splashPage,
@@ -1796,6 +1820,7 @@ router.post(
       }
     }
     if (appName) spawnParams.push("--appName", appName);
+    if (appVersion) spawnParams.push("--appVersion", appVersion);
     if (appIcon) spawnParams.push("--appIcon", appIcon);
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);

@@ -74,6 +74,7 @@ class BuildAppCommand extends Command {
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
       const builder = new MobileBuilder({
         appName: flags.appName,
+        appVersion: flags.appVersion,
         appIcon: flags.appIcon,
         templateDir: mobileAppDir,
         buildDir: flags.buildDirectory,
@@ -162,6 +163,11 @@ BuildAppCommand.flags = {
     name: "app name",
     string: "appName",
     description: "Name of the mobile app (default SaltcornMobileApp)",
+  }),
+  appVersion: flags.string({
+    name: "app version",
+    string: "appVersion",
+    description: "Version of the mobile app (default 1.0.0)",
   }),
   appIcon: flags.string({
     name: "app icon",

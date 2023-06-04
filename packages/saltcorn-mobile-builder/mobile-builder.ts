@@ -25,6 +25,7 @@ import {
   tryCopyAppFiles,
   prepareBuildDir,
   setAppName,
+  setAppVersion,
   prepareAppIcon,
 } from "./utils/cordova-build-utils";
 import User from "@saltcorn/data/models/user";
@@ -36,6 +37,7 @@ type EntryPointType = "view" | "page";
  */
 export class MobileBuilder {
   appName?: string;
+  appVersion?: string;
   appIcon?: string;
   templateDir: string;
   buildDir: string;
@@ -62,6 +64,7 @@ export class MobileBuilder {
    */
   constructor(cfg: {
     appName?: string;
+    appVersion?: string;
     appIcon?: string;
     templateDir: string;
     buildDir: string;
@@ -81,6 +84,7 @@ export class MobileBuilder {
     tenantAppName?: string;
   }) {
     this.appName = cfg.appName;
+    this.appVersion = cfg.appVersion;
     this.appIcon = cfg.appIcon;
     this.templateDir = cfg.templateDir;
     this.buildDir = cfg.buildDir;
@@ -109,8 +113,9 @@ export class MobileBuilder {
    */
   async build() {
     prepareBuildDir(this.buildDir, this.templateDir);
-    if (this.appName) setAppName(this.buildDir, this.appName);
-    if (this.appIcon) prepareAppIcon(this.buildDir, this.appIcon);
+    if (this.appName) await setAppName(this.buildDir, this.appName);
+    if (this.appVersion) await setAppVersion(this.buildDir, this.appVersion);
+    if (this.appIcon) await prepareAppIcon(this.buildDir, this.appIcon);
     copyStaticAssets(this.buildDir);
     copySbadmin2Deps(this.buildDir);
     copyTranslationFiles(this.buildDir);

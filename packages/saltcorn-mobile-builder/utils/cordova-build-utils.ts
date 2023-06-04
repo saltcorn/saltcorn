@@ -56,6 +56,30 @@ export async function setAppName(buildDir: string, appName: string) {
 }
 
 /**
+ * parse the config.xml file and replace the version parameter
+ * on error the defaults will be used
+ * @param buildDir directory where the app will be build
+ * @param appVersion 
+ */
+export async function setAppVersion(buildDir: string, appVersion: string) {
+  try {
+    const configXml = join(buildDir, "config.xml");
+    const content = readFileSync(configXml);
+    const parsed = await parseStringPromise(content);
+    parsed.widget.$.version = appVersion;
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(configXml, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to set the appVersion to '${appVersion}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
  * copy a png file into the build dir and use it as launcher icon
  * @param buildDir
  * @param appIcon path to appIcon file
