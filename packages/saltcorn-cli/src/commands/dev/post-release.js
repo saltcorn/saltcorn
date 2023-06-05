@@ -20,14 +20,16 @@ const runWithOutput = (cmd, args, opts = {}) =>
       ...opts,
     });
     child.stdout.on("data", (data) => {
-      stdouterrs.push(data);
+      console.log(data.toString())
+      stdouterrs.push(data.toString());
     });
     child.stderr.on("data", (data) => {
-      stdouterrs.push(data);
+      console.error(data.toString())
+      stdouterrs.push(data.toString());
     });
     child.on("exit", function (code, signal) {
       exitCode = code;
-      resolve({ output: stdouterrs.join("\n"), exitCode });
+      resolve({ output: stdouterrs.join(""), exitCode });
     });
   });
 
@@ -63,7 +65,6 @@ class PostReleaseCommand extends Command {
         version: this.version,
       }),
     });
-    console.log(fres);
     const jresp = await fres.json();
     const release_id = jresp.success;
     if (!release_id) {
@@ -78,6 +79,7 @@ class PostReleaseCommand extends Command {
     );
     const dirs = fs.readdirSync(vagrantDir);
     for (const dir of [dirs[0]]) {
+      console.log(dir);
       const cwd = path.join(vagrantDir, dir);
 
       const stat = await fsp.stat(cwd);
@@ -85,7 +87,6 @@ class PostReleaseCommand extends Command {
       const runres = await runWithOutput("vagrant", ["up"], {
         cwd,
       });
-
       spawnSync("vagrant", ["destroy", "-f"], {
         stdio: "inherit",
         cwd,
@@ -108,7 +109,6 @@ class PostReleaseCommand extends Command {
           }),
         }
       );
-      console.log(await fres1.json());
     }
   }
 
