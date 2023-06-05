@@ -1168,5 +1168,9 @@
 	"Tag Entries": "Tag Entries",
 	"Not a valid field name": "Not a valid field name",
 	"Set a default value for missing data": "Set a default value for missing data",
-	"Table triggers: ": "Table triggers: "
+	"Table triggers: ": "Table triggers: ",
+	"App name": "App name",
+	"App icon": "App icon",
+	"Splash Page": "Splash Page",
+	"App version": "App version"
 }

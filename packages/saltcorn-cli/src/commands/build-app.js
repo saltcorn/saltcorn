@@ -73,6 +73,9 @@ class BuildAppCommand extends Command {
       if (!user && flags.userEmail)
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
       const builder = new MobileBuilder({
+        appName: flags.appName,
+        appVersion: flags.appVersion,
+        appIcon: flags.appIcon,
         templateDir: mobileAppDir,
         buildDir: flags.buildDirectory,
         cliDir: path.join(__dirname, "../.."),
@@ -82,11 +85,11 @@ class BuildAppCommand extends Command {
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
+        splashPage: flags.splashPage,
         allowOfflineMode: flags.allowOfflineMode,
         plugins: await this.uniquePlugins(),
         copyTargetDir: flags.copyAppDirectory,
         user,
-        copyFileName: flags.appFileName,
         buildForEmulator: flags.buildForEmulator,
         tenantAppName: flags.tenantAppName,
       });
@@ -156,15 +159,32 @@ BuildAppCommand.flags = {
     char: "u",
     description: "Email of the user building the app",
   }),
-  appFileName: flags.string({
-    name: "app file name",
-    char: "a",
-    description: "If set, the copied app will get this name",
+  appName: flags.string({
+    name: "app name",
+    string: "appName",
+    description: "Name of the mobile app (default SaltcornMobileApp)",
+  }),
+  appVersion: flags.string({
+    name: "app version",
+    string: "appVersion",
+    description: "Version of the mobile app (default 1.0.0)",
+  }),
+  appIcon: flags.string({
+    name: "app icon",
+    string: "appIcon",
+    description:
+      "A png that will be used as launcher icon. The default is a png of a saltcorn symbol.",
   }),
   serverURL: flags.string({
     name: "server URL",
     char: "s",
     description: "URL to a saltcorn server",
+  }),
+  splashPage: flags.string({
+    name: "splash page",
+    string: "splashPage",
+    description:
+      "Name of a page that should be shown while the app is loading.",
   }),
   allowOfflineMode: flags.boolean({
     name: "Allow offline mode",

@@ -13,6 +13,7 @@ import {
   copyTranslationFiles,
   createSqliteDb,
   writeCfgFile,
+  prepareSplashPage,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -23,6 +24,9 @@ import {
   buildApp,
   tryCopyAppFiles,
   prepareBuildDir,
+  setAppName,
+  setAppVersion,
+  prepareAppIcon,
 } from "./utils/cordova-build-utils";
 import User from "@saltcorn/data/models/user";
 
@@ -32,6 +36,9 @@ type EntryPointType = "view" | "page";
  *
  */
 export class MobileBuilder {
+  appName?: string;
+  appVersion?: string;
+  appIcon?: string;
   templateDir: string;
   buildDir: string;
   cliDir: string;
@@ -41,13 +48,13 @@ export class MobileBuilder {
   entryPoint: string;
   entryPointType: EntryPointType;
   serverURL: string;
+  splashPage?: string;
   allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   user?: User;
-  copyFileName?: string;
   buildForEmulator?: boolean;
   tenantAppName?: string;
 
@@ -56,6 +63,9 @@ export class MobileBuilder {
    * @param cfg
    */
   constructor(cfg: {
+    appName?: string;
+    appVersion?: string;
+    appIcon?: string;
     templateDir: string;
     buildDir: string;
     cliDir: string;
@@ -65,14 +75,17 @@ export class MobileBuilder {
     entryPoint: string;
     entryPointType: EntryPointType;
     serverURL: string;
+    splashPage?: string;
     allowOfflineMode: string;
     plugins: Plugin[];
     copyTargetDir?: string;
     user?: User;
-    copyFileName?: string;
     buildForEmulator?: boolean;
     tenantAppName?: string;
   }) {
+    this.appName = cfg.appName;
+    this.appVersion = cfg.appVersion;
+    this.appIcon = cfg.appIcon;
     this.templateDir = cfg.templateDir;
     this.buildDir = cfg.buildDir;
     this.cliDir = cfg.cliDir;
@@ -82,6 +95,7 @@ export class MobileBuilder {
     this.entryPoint = cfg.entryPoint;
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
+    this.splashPage = cfg.splashPage;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -90,7 +104,6 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.copyFileName = cfg.copyFileName;
     this.buildForEmulator = cfg.buildForEmulator;
     this.tenantAppName = cfg.tenantAppName;
   }
@@ -100,6 +113,9 @@ export class MobileBuilder {
    */
   async build() {
     prepareBuildDir(this.buildDir, this.templateDir);
+    if (this.appName) await setAppName(this.buildDir, this.appName);
+    if (this.appVersion) await setAppVersion(this.buildDir, this.appVersion);
+    if (this.appIcon) await prepareAppIcon(this.buildDir, this.appIcon);
     copyStaticAssets(this.buildDir);
     copySbadmin2Deps(this.buildDir);
     copyTranslationFiles(this.buildDir);
@@ -122,6 +138,14 @@ export class MobileBuilder {
     await copyPublicDirs(this.buildDir);
     await installNpmPackages(this.buildDir, this.pluginManager);
     await buildTablesFile(this.buildDir);
+    if (this.splashPage)
+      await prepareSplashPage(
+        this.buildDir,
+        this.splashPage,
+        this.serverURL,
+        this.tenantAppName,
+        this.user
+      );
     resultCode = await createSqliteDb(this.buildDir);
     if (resultCode !== 0) return resultCode;
     resultCode = buildApp(
@@ -135,7 +159,7 @@ export class MobileBuilder {
         this.buildDir,
         this.copyTargetDir,
         this.user!,
-        this.copyFileName
+        this.appName
       );
     }
     return resultCode;
