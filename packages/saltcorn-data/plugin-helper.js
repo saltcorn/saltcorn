@@ -1381,17 +1381,19 @@ const picked_fields_to_query = (columns, fields, layout) => {
 
         //console.log(column);
         const field = column.agg_field.split("@")[0];
-        let targetNm = (
-          column.stat.replace(" ", "") +
-          "_" +
-          table +
-          "_" +
-          fld +
-          "_" +
-          field +
-          "_" +
-          db.sqlsanitize(column.aggwhere || "")
-        ).toLowerCase();
+        let targetNm = db.sqlsanitize(
+          (
+            column.stat.replace(" ", "") +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              field +
+              "_" +
+              column.aggwhere || ""
+          ).toLowerCase()
+        );
         // postgres fields have a max len
         if (targetNm.length > 58) {
           targetNm = targetNm

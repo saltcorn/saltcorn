@@ -671,17 +671,19 @@ const get_viewable_fields = (
       }
       const targetNm =
         column.targetNm ||
-        (
-          column.stat.replace(" ", "") +
-          "_" +
-          table +
-          "_" +
-          fld +
-          "_" +
-          column.agg_field.split("@")[0] +
-          "_" +
-          db.sqlsanitize(column.aggwhere || "")
-        ).toLowerCase();
+        db.sqlsanitize(
+          (
+            column.stat.replace(" ", "") +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              column.agg_field.split("@")[0] +
+              "_" +
+              column.aggwhere || ""
+          ).toLowerCase()
+        );
 
       let showValue = (value) => {
         if (value === true || value === false)
