@@ -4,9 +4,32 @@
  */
 const { Command, flags } = require("@oclif/command");
 const fs = require("fs");
-const { spawnSync } = require("child_process");
+const fsp = fs.promises;
+const { spawnSync, spawn } = require("child_process");
 const { sleep } = require("../../common");
 const path = require("path");
+const fetch = require("node-fetch");
+const { exitCode } = require("process");
+
+const runWithOutput = (cmd, args, opts = {}) =>
+  new Promise(function (resolve, reject) {
+    const stdouterrs = [];
+    let exitCode;
+    const child = spawn(cmd, args, {
+      stdio: "pipe",
+      ...opts,
+    });
+    child.stdout.on("data", (data) => {
+      stdouterrs.push(data);
+    });
+    child.stderr.on("data", (data) => {
+      stdouterrs.push(data);
+    });
+    child.on("exit", function (code, signal) {
+      exitCode = code;
+      resolve({ output: stdouterrs.join("\n"), exitCode });
+    });
+  });
 
 /**
  * PostReleaseCommand Class
@@ -24,21 +47,68 @@ class PostReleaseCommand extends Command {
     });
   }
   async vagrant() {
+    const token = process.env.SALTCORN_RELEASE_REPORT_TOKEN;
+    if (!token) {
+      console.error("Token not found in env var SALTCORN_RELEASE_REPORT_TOKEN");
+      process.exit(1);
+    }
+    const fres = await fetch("https://releases.saltcorn.com/api/Release", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        version: this.version,
+      }),
+    });
+    console.log(fres);
+    const jresp = await fres.json();
+    const release_id = jresp.success;
+    if (!release_id) {
+      console.error("cannot insert");
+      process.exit(1);
+    }
+
     const vagrantDir = path.join(
       this.baseRepoDir,
       "deploy",
       "vagrant-test-install"
     );
     const dirs = fs.readdirSync(vagrantDir);
-    for (const dir of dirs) {
-      spawnSync("vagrant", ["up"], {
-        stdio: "inherit",
-        cwd: path.join(vagrantDir, dir),
+    for (const dir of [dirs[0]]) {
+      const cwd = path.join(vagrantDir, dir);
+
+      const stat = await fsp.stat(cwd);
+      if (!stat.isDirectory()) continue;
+      const runres = await runWithOutput("vagrant", ["up"], {
+        cwd,
       });
+
       spawnSync("vagrant", ["destroy", "-f"], {
         stdio: "inherit",
-        cwd: path.join(vagrantDir, dir),
+        cwd,
       });
+      const fres1 = await fetch(
+        "https://releases.saltcorn.com/api/Build Result",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            build_output: runres.output,
+            pass: runres.exitCode === 0,
+            name: dir,
+            release: release_id,
+            vagrantfile: `https://github.com/saltcorn/saltcorn/blob/v${this.version}/deploy/vagrant-test-install/${dir}/Vagrantfile`,
+          }),
+        }
+      );
+      console.log(await fres1.json());
     }
   }
 
