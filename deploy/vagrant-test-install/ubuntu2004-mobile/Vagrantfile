@@ -22,8 +22,8 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     set -e
-    sudo apt update 
-    sudo apt upgrade
+    sudo apt update -q
+    sudo apt upgrade -qqy
 
     wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
