@@ -436,11 +436,14 @@ const string = {
           name: "link_title",
           label: "Link title",
           type: "String",
+          sublabel: "Optional. If blank, label is URL",
         },
       ],
       isEdit: false,
       run: (s, req, attrs = {}) =>
-        a({ href: text(s || "") }, text_attr(attrs?.link_title || s || "")),
+        s
+          ? a({ href: text(s || "") }, text_attr(attrs?.link_title || s || ""))
+          : "",
     },
     /**
      * @namespace
