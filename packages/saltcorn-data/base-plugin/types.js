@@ -431,8 +431,19 @@ const string = {
      * @subcategory types / string
      */
     as_link: {
+      configFields: [
+        {
+          name: "link_title",
+          label: "Link title",
+          type: "String",
+          sublabel: "Optional. If blank, label is URL",
+        },
+      ],
       isEdit: false,
-      run: (s) => a({ href: text(s || "") }, text_attr(s || "")),
+      run: (s, req, attrs = {}) =>
+        s
+          ? a({ href: text(s || "") }, text_attr(attrs?.link_title || s || ""))
+          : "",
     },
     /**
      * @namespace

@@ -986,7 +986,7 @@ router.post(
         "npm",
         ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
         {
-          stdio: ["ignore", "pipe", process.stderr],
+          stdio: ["ignore", "pipe", "pipe"],
         }
       );
       child.stdout.on("data", (data) => {

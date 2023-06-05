@@ -55,7 +55,12 @@
     "bin": "saltcorn",
     "plugins": [
       "@oclif/plugin-help"
-    ]
+    ],
+    "topics": {
+      "dev": {
+        "description": "Tools for core and plugin developers"
+      }
+    }
   },
   "repository": "github:saltcorn/saltcorn",
   "scripts": {

@@ -5,7 +5,7 @@
 const { Command, flags } = require("@oclif/command");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
-const { sleep } = require("../common");
+const { sleep } = require("../../common");
 
 /**
  * ReleaseCommand Class
@@ -101,7 +101,7 @@ class ReleaseCommand extends Command {
         cwd: `packages/${dir}/`,
       });
 
-    const rootPackageJson = require(`../../../../package.json`);
+    const rootPackageJson = require(`../../../../../package.json`);
 
     compileTsFiles();
     //for each package:

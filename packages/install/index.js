@@ -613,6 +613,6 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "enable", osService], false, dryRun);
   if (!hasSDnotify) await asyncSudo(["sleep", "5"], false, dryRun);
 })().catch((e) => {
-  console.error(e.message || e);
+  console.error(e ? e.message || e : e);
   process.exit(1);
 });
