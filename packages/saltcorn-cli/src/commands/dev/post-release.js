@@ -20,11 +20,11 @@ const runWithOutput = (cmd, args, opts = {}) =>
       ...opts,
     });
     child.stdout.on("data", (data) => {
-      console.log(data.toString())
+      console.log(data.toString());
       stdouterrs.push(data.toString());
     });
     child.stderr.on("data", (data) => {
-      console.error(data.toString())
+      console.error(data.toString());
       stdouterrs.push(data.toString());
     });
     child.on("exit", function (code, signal) {
