@@ -431,8 +431,13 @@ const string = {
      * @subcategory types / string
      */
     as_link: {
+      configFields: [{
+        name: "link_title",
+        label: "Link title",
+        type: "String"
+      }],
       isEdit: false,
-      run: (s) => a({ href: text(s || "") }, text_attr(s || "")),
+      run: (s, req, attrs = {}) => a({ href: text(s || "") }, text_attr(attrs?.link_title || s || "")),
     },
     /**
      * @namespace
