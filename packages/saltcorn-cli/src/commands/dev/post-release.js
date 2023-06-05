@@ -78,7 +78,7 @@ class PostReleaseCommand extends Command {
       "vagrant-test-install"
     );
     const dirs = fs.readdirSync(vagrantDir);
-    for (const dir of [dirs[0]]) {
+    for (const dir of dirs) {
       console.log(dir);
       const cwd = path.join(vagrantDir, dir);
 
