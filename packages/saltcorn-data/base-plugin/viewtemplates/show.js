@@ -721,17 +721,19 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       }
       const targetNm =
         column.targetNm ||
-        (
-          stat +
-          "_" +
-          table +
-          "_" +
-          fld +
-          "_" +
-          (agg_field || "").split("@")[0] +
-          "_" +
-          db.sqlsanitize(aggwhere || "")
-        ).toLowerCase();
+        db.sqlsanitize(
+          (
+            stat +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              (agg_field || "").split("@")[0] +
+              "_" +
+              aggwhere || ""
+          ).toLowerCase()
+        );
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");

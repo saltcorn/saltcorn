@@ -280,7 +280,6 @@ const configuration_workflow = (req) =>
           const parent_views = await get_parent_views(table, context.viewname);
 
           const done_view_opts = own_views.map((v) => v.select_option);
-          console.log(done_view_opts);
           parent_views.forEach(({ relation, related_table, views }) =>
             views.forEach((v) => {
               done_view_opts.push(`${v.name}.${relation.name}`);
