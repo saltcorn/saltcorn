@@ -819,7 +819,7 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery, getRowQuery },
+  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery },
   remote
 ) => {
   const table = await Table.findOne({ id: table_id });
@@ -882,27 +882,13 @@ const runPost = async (
       } else if (field.fieldviewObj?.setsDataURL) {
         if (body[field.name]) {
           if (body[field.name].startsWith("data:")) {
-            const [pre, allData] = body[field.name].split(",");
-            const buffer = Buffer.from(allData, "base64");
-            const mimetype = pre.split(";")[0].split(":")[1];
-            const filename =
-              field.fieldviewObj?.setsDataURL?.get_filename?.({
-                ...row,
-                ...field.attributes,
-              }) || "file";
-            const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
-              ...row,
-              ...field.attributes,
-            });
-            const file = await File.from_contents(
-              filename,
-              mimetype,
-              buffer,
-              req.user?.id,
-              field.attributes.min_role_read || 1,
-              folder
+            const path_to_serve = await saveFileQuery(
+              body[field.name],
+              field.id,
+              field.fieldview,
+              row
             );
-            row[field.name] = file.path_to_serve;
+            row[field.name] = path_to_serve;
           }
         }
       } else if (req.files && req.files[field.name]) {
@@ -1333,7 +1319,31 @@ module.exports = {
       upd_res.trigger_return = result;
       return upd_res;
     },
-
+    async saveFileQuery(fieldVal, fieldId, fieldView, row) {
+      const field = await Field.findOne({ id: fieldId });
+      field.fieldviewObj = getState().fileviews[fieldView];
+      const [pre, allData] = fieldVal.split(",");
+      const buffer = require("buffer/").Buffer.from(allData, "base64");
+      const mimetype = pre.split(";")[0].split(":")[1];
+      const filename =
+        field.fieldviewObj?.setsDataURL?.get_filename?.({
+          ...row,
+          ...field.attributes,
+        }) || "file";
+      const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
+        ...row,
+        ...field.attributes,
+      });
+      const file = await File.from_contents(
+        filename,
+        mimetype,
+        buffer,
+        req.user?.id,
+        field.attributes.min_role_read || 1,
+        folder
+      );
+      return file.path_to_serve;
+    },
     async authorizePostQuery(body, table_id /*overwrites*/) {
       return await doAuthPost({ body, table_id, req });
     },
