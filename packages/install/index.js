@@ -326,13 +326,12 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     );
 
   const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
-
+  const quietFlags = installer === "apt" ? "-qqy" : "-y";
   await asyncSudo(
-    [installer, ...nonInteractiveFlag, "install", "-y", ...packages],
+    [installer, ...nonInteractiveFlag, "install", quietFlags, ...packages],
     false,
     dryRun
   );
-  console.log({ db, installer });
   if (db === "pg-local" && isSUSE) {
     await asyncSudo(["systemctl", "enable", "postgresql"], false, dryRun);
     await asyncSudo(["systemctl", "start", "postgresql"], false, dryRun);

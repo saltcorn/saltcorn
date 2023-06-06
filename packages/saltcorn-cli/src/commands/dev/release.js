@@ -73,7 +73,7 @@ class ReleaseCommand extends Command {
     };
 
     const updatePkgJson = (dir) => {
-      const json = require(`../../../${dir}/package.json`);
+      const json = require(`../../../../${dir}/package.json`);
       json.version = version;
       if (json.dependencies || json.devDependencies)
         Object.keys(pkgs).forEach((dpkgnm) => {
