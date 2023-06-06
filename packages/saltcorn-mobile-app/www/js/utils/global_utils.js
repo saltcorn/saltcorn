@@ -194,9 +194,10 @@ async function handleRoute(route, query, files) {
       await gotoEntryView();
     } else {
       if (route === "/") return await gotoEntryView();
-      addRoute({ route, query });
+      const safeRoute = route ? route : currentLocation();
+      addRoute({ route: safeRoute, query });
       const page = await router.resolve({
-        pathname: route,
+        pathname: safeRoute,
         query: query,
         files: files,
         alerts: mobileConfig.isOfflineMode
