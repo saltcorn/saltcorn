@@ -35,8 +35,8 @@ async function execNavbarLink(url) {
  * @param {*} urlSuffix
  * @returns
  */
-async function formSubmit(e, urlSuffix, viewname) {
-  e.submit();
+async function formSubmit(e, urlSuffix, viewname, noSubmitCb) {
+  if (!noSubmitCb) e.submit();
   const files = {};
   const urlParams = new URLSearchParams();
   for (const entry of new FormData(e).entries()) {
