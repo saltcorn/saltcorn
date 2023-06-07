@@ -126,7 +126,9 @@ class View implements AbstractView {
   ): Promise<Array<View>> {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
-      return getState().views.map((t: View) => new View(t));
+      return getState()
+        .views.map((t: View) => new View(t))
+        .filter(satisfies(where || {}));
     }
     const views = await db.select("_sc_views", where, selectopts);
 
@@ -182,7 +184,7 @@ class View implements AbstractView {
         : typeof table === "string"
         ? { exttable_name: table }
         : { table_id: table },
-      { orderBy: "name", nocase: true }
+      { orderBy: "name", nocase: true, cached: true }
     );
 
     for (const viewrow of link_views) {
