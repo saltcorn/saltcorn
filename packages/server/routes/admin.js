@@ -1975,7 +1975,9 @@ router.post(
         if (f.name !== "email" && f.name !== "id") await f.delete();
       }
       await db.deleteWhere("users");
-      await db.deleteWhere("_sc_roles", { not: { id: { in: [1, 4, 8, 10] } } });
+      await db.deleteWhere("_sc_roles", {
+        not: { id: { in: [1, 40, 80, 100] } },
+      });
       if (db.reset_sequence) await db.reset_sequence("users");
       req.logout(function (err) {
         if (req.session.destroy)
