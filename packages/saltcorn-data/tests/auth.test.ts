@@ -578,7 +578,7 @@ describe("User group", () => {
       name: "task",
       type: "Key to tasks",
     });
-    const subtask_opts = Table.findOne({
+    const subtask_opts = await Table.findOne({
       name: "subtasks",
     })?.ownership_options();
 
