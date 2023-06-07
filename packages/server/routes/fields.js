@@ -1004,7 +1004,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName } = req.params;
-    const {
+    let {
       field_name,
       fieldview,
       type,
@@ -1013,6 +1013,13 @@ router.post(
       _columndef,
     } = req.body;
     const table = await Table.findOne({ name: tableName });
+    if (typeof type !== "string") {
+      try {
+        type = JSON.parse(_columndef).type;
+      } catch {
+        //ignore
+      }
+    }
     const fieldName = type == "Field" ? field_name : join_field;
     const fv_name = type == "Field" ? fieldview : join_fieldview;
     if (!fieldName) {
