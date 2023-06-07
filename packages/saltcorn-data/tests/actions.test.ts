@@ -25,7 +25,7 @@ describe("Action", () => {
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
 
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const trigger = await Trigger.create({
       action: "incrementCounter",
@@ -53,7 +53,7 @@ describe("Action", () => {
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(1);
 
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
 
     await Trigger.create({
@@ -71,7 +71,7 @@ describe("Action", () => {
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(17);
 
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
 
     await Trigger.create({
@@ -88,7 +88,7 @@ describe("Action", () => {
     expect(getActionCounter()).toBe(37);
   });
   it("should run js code", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
 
     await Trigger.create({
@@ -97,13 +97,13 @@ describe("Action", () => {
       when_trigger: "Insert",
       configuration: {
         code: `
-        const table = await Table.findOne({ name: "patients" });
+        const table = Table.findOne({ name: "patients" });
         await table.insertRow({ name: "TriggeredInsert" });
       `,
       },
     });
     await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
 
     await sleep(10);
@@ -112,7 +112,7 @@ describe("Action", () => {
     expect(rows.length).toBe(1);
   });
   it("should run webhook", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
 
     await Trigger.create({
@@ -131,7 +131,7 @@ describe("Action", () => {
   });
 
   it("should list triggers", async () => {
-    //const table = await Table.findOne({ name: "books" });
+    //const table = Table.findOne({ name: "books" });
 
     const triggers = await Trigger.findAllWithTableName();
     expect(triggers.length).toBe(5);
@@ -145,7 +145,7 @@ describe("Action", () => {
     expect(Trigger.when_options).toContain("Insert");
   });
   it("should get triggers", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const trigger = await Trigger.findOne({
       table_id: table.id,
@@ -166,7 +166,7 @@ describe("Action", () => {
     expect(ins_trigger1.length).toBe(1);
   });
   it("should run webhook on insert", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
 
     await Trigger.create({

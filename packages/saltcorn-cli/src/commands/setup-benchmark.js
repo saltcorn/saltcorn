@@ -51,8 +51,8 @@ class SetupBenchmarkCommand extends Command {
       const user = await User.findOne({});
       // insert rows
       const Table = require("@saltcorn/data/models/table");
-      const threads = await Table.findOne({ name: "Threads" });
-      const replies = await Table.findOne({ name: "Replies" });
+      const threads = Table.findOne({ name: "Threads" });
+      const replies = Table.findOne({ name: "Replies" });
       const thread_id = await threads.insertRow({
         title: "How fast is Saltcorn?",
         body: "How fast is it really?",

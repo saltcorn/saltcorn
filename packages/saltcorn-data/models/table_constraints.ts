@@ -77,7 +77,7 @@ class TableConstraint {
     const fid = await db.insert("_sc_table_constraints", rest);
     con.id = fid;
     const Table = require("./table");
-    const table = await Table.findOne({ id: con.table_id });
+    const table = Table.findOne({ id: con.table_id });
     if (con.type === "Unique" && con.configuration.fields) {
       await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index") {
@@ -96,7 +96,7 @@ class TableConstraint {
   async delete(): Promise<void> {
     await db.deleteWhere("_sc_table_constraints", { id: this.id });
     const Table = require("./table");
-    const table = await Table.findOne({ id: this.table_id });
+    const table = Table.findOne({ id: this.table_id });
     if (this.type === "Unique" && this.configuration.fields) {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
     } else if (this.type === "Index") {
@@ -134,7 +134,7 @@ class TableConstraint {
 
 // type union from array with const assertion
 const type_options = ["Unique", "Index", "Formula"] as const;
-type TypeOption = typeof type_options[number];
+type TypeOption = (typeof type_options)[number];
 
 namespace TableConstraint {
   export type TableConstraintCfg = {

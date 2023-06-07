@@ -218,7 +218,7 @@ describe("files edit", () => {
       .expect(toRedirect("/"));
   });
   it("has file", async () => {
-    const table = await Table.findOne({ name: "thefiletable" });
+    const table = Table.findOne({ name: "thefiletable" });
     const row = await table.getRow({ first_name: "elvis" });
     const file = await File.findOne({ id: row.mugshot });
     expect(!!file).toBe(true);

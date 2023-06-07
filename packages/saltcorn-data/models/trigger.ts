@@ -191,9 +191,9 @@ class Trigger implements AbstractTrigger {
       let table;
       if (channel && ["Insert", "Update", "Delete"].includes(channel)) {
         const Table = require("./table");
-        table = await Table.findOne({ name: channel });
+        table = Table.findOne({ name: channel });
         findArgs.table_id = table.id;
-      } else if (channel) findArgs.channel = {in: ['', channel]};
+      } else if (channel) findArgs.channel = { in: ["", channel] };
 
       const triggers = Trigger.find(findArgs);
 

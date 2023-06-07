@@ -149,7 +149,7 @@ const two_level_select = {
    */
   configFields: async ({ table, name }) => {
     if (!table) return [];
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const relOpts = [""];
     const field = fields.find((f) => f.name === name);
     if (!field) return [];
@@ -158,7 +158,7 @@ const two_level_select = {
       const relTable = Table.findOne(field.reftable_name);
       if (!relTable) return [];
 
-      const relFields = await relTable.getFields();
+      const relFields = relTable.getFields();
       relFields.forEach((relField) => {
         if (relField.is_fkey) {
           relOpts.push(relField.name);
@@ -284,7 +284,7 @@ const search_or_create = {
    * @returns {Promise<object[]>}
    */
   configFields: async (field) => {
-    const reftable = await Table.findOne({ name: field.reftable_name });
+    const reftable = Table.findOne({ name: field.reftable_name });
     if (!reftable) return [];
     const views = await View.find({ table_id: reftable.id });
     return [
@@ -361,9 +361,9 @@ const search_join_field = {
   isEdit: false,
   isFilter: true,
   configFields: async (field) => {
-    const reftable = await Table.findOne({ name: field.reftable_name });
+    const reftable = Table.findOne({ name: field.reftable_name });
     if (!reftable) return [];
-    const fields = await reftable.getFields();
+    const fields = reftable.getFields();
     return [
       {
         name: "joinfield",

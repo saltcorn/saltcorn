@@ -139,7 +139,7 @@ const check_view_columns = async (view, columns) => {
       : { id: -1 }
   );
   let fields;
-  if (table) fields = await table.getFields();
+  if (table) fields = table.getFields();
   const check_formula = (s, loc) => {
     const v = expressionValidator(s, loc);
     if (v === true) return;

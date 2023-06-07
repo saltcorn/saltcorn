@@ -321,7 +321,7 @@ module.exports = {
       );
 
       const view_opts = views.map((v) => v.name);
-      const fields = await table.getFields();
+      const fields = table.getFields();
       const field_opts = fields
         .filter(
           (f) =>
@@ -438,7 +438,7 @@ module.exports = {
           to_addr = user.email;
           break;
         case "Field":
-          const fields = await table.getFields();
+          const fields = table.getFields();
           const field = fields.find((f) => f.name === to_email_field);
           if (field && field.type.name === "String")
             to_addr = row[to_email_field];
@@ -523,12 +523,12 @@ module.exports = {
           `Table ${join_table_name} not found in insert_joined_row action`
         );
       const [join_table_name, join_field] = joined_table.split(".");
-      const joinTable = await Table.findOne({ name: join_table_name });
+      const joinTable = Table.findOne({ name: join_table_name });
       if (!joinTable)
         throw new Error(
           `Table ${join_table_name} not found in insert_joined_row action`
         );
-      const fields = await joinTable.getFields();
+      const fields = joinTable.getFields();
       const newRow = { [join_field]: row.id };
       for (const field of fields) {
         if (
@@ -563,7 +563,7 @@ module.exports = {
      */
     run: async ({ row, table, user }) => {
       const newRow = { ...row };
-      await table.getFields();
+      table.getFields();
       delete newRow[table.pk_name];
       await table.insertRow(newRow, user);
       return { reload_page: true };
@@ -605,7 +605,7 @@ module.exports = {
      * @returns {Promise<void>}
      */
     run: async ({ table, row, configuration }) => {
-      const table_for_recalc = await Table.findOne({
+      const table_for_recalc = Table.findOne({
         name: configuration.table,
       });
 
@@ -668,7 +668,7 @@ module.exports = {
         console,
       });
       const calcrow = await f({});
-      const table_for_insert = await Table.findOne({ name: table });
+      const table_for_insert = Table.findOne({ name: table });
       const res = await table_for_insert.tryInsertRow(calcrow, user);
       if (res.error) return res;
       else return true;
@@ -722,7 +722,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     configFields: async ({ table }) => {
-      const fields = table ? (await table.getFields()).map((f) => f.name) : [];
+      const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
         "user",
@@ -775,7 +775,7 @@ module.exports = {
   },
   duplicate_row_prefill_edit: {
     configFields: async ({ table }) => {
-      const fields = table ? await table.getFields() : [];
+      const fields = table ? table.getFields() : [];
       const views = await View.find_table_views_where(
         table,
         ({ viewrow }) => viewrow.viewtemplate === "Edit"
@@ -864,7 +864,7 @@ module.exports = {
       const tables = await Table.find_with_external();
       const pk_options = {};
       for (const table of tables) {
-        const fields = await table.getFields();
+        const fields = table.getFields();
         pk_options[table.name] = fields.map((f) => f.name);
       }
       return [
@@ -943,9 +943,9 @@ module.exports = {
       const set_diff = (a, b) => new Set([...a].filter((x) => !b.has(x)));
       let set_intersect = (a, b) => new Set([...a].filter((x) => b.has(x)));
 
-      const source_table = await Table.findOne({ name: table_src });
+      const source_table = Table.findOne({ name: table_src });
       const source_rows = await source_table.getRows({});
-      const table_for_insert = await Table.findOne({ name: table_dest });
+      const table_for_insert = Table.findOne({ name: table_dest });
       const dest_rows = await table_for_insert.getRows({});
       const srcPKfield = source_table.fields.find((f) => f.primary_key).name;
       const src_pks = new Set(source_rows.map((r) => r[srcPKfield]));
@@ -953,8 +953,8 @@ module.exports = {
       let match_expr;
       if (match_field_names) {
         const matched_fields = [];
-        const dest_fields = await table_for_insert.getFields();
-        const src_fields = await source_table.getFields();
+        const dest_fields = table_for_insert.getFields();
+        const src_fields = source_table.getFields();
         dest_fields.forEach((df) => {
           const s = src_fields.find(
             (sf) =>

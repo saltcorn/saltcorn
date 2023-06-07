@@ -88,7 +88,7 @@ const configuration_workflow = (req) =>
         name: req.__("Subtables"),
         contextField: "subtables",
         form: async (context) => {
-          const tbl = await Table.findOne({ id: context.table_id });
+          const tbl = Table.findOne({ id: context.table_id });
           var fields = [];
           const child_views = await get_child_views(tbl, context.viewname);
           for (const { relation, related_table, views } of child_views) {
@@ -167,8 +167,8 @@ const run = async (
   extraArgs,
   { getRowQuery }
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
+  const table = Table.findOne({ id: table_id });
+  const fields = table.getFields();
   readState(state, fields);
 
   var lresp;
@@ -293,7 +293,7 @@ module.exports = {
     req,
   }) => ({
     async getRowQuery(uniques) {
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       return await table.getJoinedRow({
         where: uniques,
         forUser: req.user,
