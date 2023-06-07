@@ -394,7 +394,7 @@ const get_inbound_relation_opts = async (source, viewname) => {
     tableCache[table.id] = table;
   }
   const fieldCache = {};
-  for (const field of await Field.find()) {
+  for (const field of await Field.find({}, { cached: true })) {
     if (field.reftable_name) {
       if (!fieldCache[field.reftable_name])
         fieldCache[field.reftable_name] = [];

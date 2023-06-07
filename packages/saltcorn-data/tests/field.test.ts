@@ -37,6 +37,8 @@ describe("Field", () => {
     await f.delete();
     const fs = await Field.find({ name: "height1" });
     expect(fs.length).toBe(0);
+    const fs1 = await Field.find({ name: "height1" }, { cached: true });
+    expect(fs1.length).toBe(0);
   });
   it("should add and then delete nonrequired field", async () => {
     const patients = await Table.findOne({ name: "patients" });
@@ -54,6 +56,8 @@ describe("Field", () => {
     await f.delete();
     const fs = await Field.find({ name: "Height11" });
     expect(fs.length).toBe(0);
+    const fsc = await Field.find({ name: "Height11" }, { cached: true });
+    expect(fsc.length).toBe(0);
   });
   it("creates file field", async () => {
     const patients = await Table.findOne({ name: "patients" });

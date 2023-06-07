@@ -391,7 +391,7 @@ class File {
   static async update_table_references(from: string, to: string) {
     const Field = require("./field");
     const Table = require("./table");
-    const fileFields = await Field.find({ type: "File" });
+    const fileFields = await Field.find({ type: "File" }, { cached: true });
     const schema = db.getTenantSchemaPrefix();
     for (const field of fileFields) {
       const table = Table.findOne({ id: field.table_id });
