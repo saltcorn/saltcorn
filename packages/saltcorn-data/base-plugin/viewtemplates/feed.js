@@ -44,7 +44,7 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Views"),
         form: async (context) => {
-          const table = Table.findOne(context.table_id);
+          const table = await Table.findOne(context.table_id);
           const show_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewtemplate, viewrow }) =>
@@ -211,8 +211,8 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Order and layout"),
         form: async (context) => {
-          const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields();
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
           return new Form({
             fields: [
               {
@@ -404,8 +404,8 @@ const run = async (
   extraArgs,
   { countRowsQuery }
 ) => {
-  const table = Table.findOne({ id: table_id });
-  const fields = table.getFields();
+  const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
   readState(state, fields);
   const stateHash = hashState(state, show_view);
   const appState = getState();
@@ -579,8 +579,8 @@ module.exports = {
     req,
   }) => ({
     async countRowsQuery(state) {
-      const table = Table.findOne({ id: table_id });
-      const fields = table.getFields();
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
       const where = await stateFieldsToWhere({ fields, state, table });
       return await table.countRows(where);
     },

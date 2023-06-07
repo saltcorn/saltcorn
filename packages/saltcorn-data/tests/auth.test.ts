@@ -300,7 +300,7 @@ describe("Table with row ownership formula", () => {
       type: "Key to users",
     });
 
-    const own_opts = Table.findOne({
+    const own_opts = await Table.findOne({
       name: "TableOwnedFml",
     })?.ownership_options();
     expect(own_opts?.length).toBe(1);
@@ -362,7 +362,7 @@ describe("Table with row ownership joined formula", () => {
       type: "Key to Department",
     });
 
-    const own_opts = Table.findOne({
+    const own_opts = await Table.findOne({
       name: "TableOwnedJnFml",
     })?.ownership_options();
     expect(own_opts?.length).toBe(1);
@@ -440,7 +440,7 @@ describe("Table with row ownership joined formula and stored calc", () => {
       type: "Key to Department",
     });
 
-    const own_opts = Table.findOne({
+    const own_opts = await Table.findOne({
       name: "TableOwnedJnFml",
     })?.ownership_options();
     expect(own_opts?.length).toBe(1);
@@ -557,7 +557,7 @@ describe("User group", () => {
       type: "Key to Project",
     });
 
-    const task_opts = Table.findOne({
+    const task_opts = await Table.findOne({
       name: "tasks",
     })?.ownership_options();
     expect(task_opts).toEqual([
@@ -578,7 +578,7 @@ describe("User group", () => {
       name: "task",
       type: "Key to tasks",
     });
-    const subtask_opts = Table.findOne({
+    const subtask_opts = await Table.findOne({
       name: "subtasks",
     })?.ownership_options();
 

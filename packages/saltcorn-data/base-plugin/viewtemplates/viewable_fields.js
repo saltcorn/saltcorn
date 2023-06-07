@@ -941,7 +941,7 @@ const getForm = async (
   req,
   isRemote
 ) => {
-  const fields = table.getFields();
+  const fields = await table.getFields();
 
   const tfields = (columns || [])
     .map((column) => {
@@ -1032,7 +1032,7 @@ const getForm = async (
  */
 const fill_presets = async (table, req, fixed) => {
   if (!table) return fixed;
-  const fields = table.getFields();
+  const fields = await table.getFields();
   Object.keys(fixed || {}).forEach((k) => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {

@@ -379,7 +379,7 @@ class Table implements AbstractTable {
     // inherit from all my fks if table has ownership
     for (const field of fields) {
       if (field.is_fkey && field.reftable_name) {
-        const refTable = Table.findOne({ name: field.reftable_name });
+        const refTable = await Table.findOne({ name: field.reftable_name });
 
         if (refTable?.ownership_field_id) {
           //todo find in table.fields so we dont hit db
@@ -1363,7 +1363,7 @@ class Table implements AbstractTable {
   async update(new_table_rec: any): Promise<void> {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
-    const existing = Table.findOne({ id: this.id });
+    const existing = await Table.findOne({ id: this.id });
     if (!existing) {
       throw new Error(`Unable to find table with id: ${this.id}`);
     }
@@ -1371,7 +1371,7 @@ class Table implements AbstractTable {
     await db.update("_sc_tables", upd_rec, this.id);
     await require("../db/state").getState().refresh_tables();
 
-    const new_table = Table.findOne({ id: this.id });
+    const new_table = await Table.findOne({ id: this.id });
     if (!new_table) {
       throw new Error(`Unable to find table with id: ${this.id}`);
     } else {
@@ -1811,9 +1811,9 @@ class Table implements AbstractTable {
     const result = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
-        const table = Table.findOne({ name: f.reftable_name });
+        const table = await Table.findOne({ name: f.reftable_name });
         if (!table) throw new Error(`Unable to find table '${f.reftable_name}`);
-        table.getFields();
+        await table.getFields();
         if (!table.fields)
           throw new Error(`The table '${f.reftable_name} has no fields.`);
         const subOne = {
@@ -1831,7 +1831,7 @@ class Table implements AbstractTable {
             fieldPath: `${f.name}.${pf.name}`,
           };
           if (pf.is_fkey && pf.type !== "File" && allow_double) {
-            const table1 = Table.findOne({ name: pf.reftable_name });
+            const table1 = await Table.findOne({ name: pf.reftable_name });
             if (!table1)
               throw new Error(`Unable to find table '${pf.reftable_name}`);
             await table1.getFields();
@@ -1929,9 +1929,9 @@ class Table implements AbstractTable {
     let parent_field_list = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
-        const table = Table.findOne({ name: f.reftable_name });
+        const table = await Table.findOne({ name: f.reftable_name });
         if (!table) throw new Error(`Unable to find table '${f.reftable_name}`);
-        table.getFields();
+        await table.getFields();
         if (!table.fields)
           throw new Error(`The table '${f.reftable_name} has no fields.`);
 
@@ -1940,7 +1940,7 @@ class Table implements AbstractTable {
         )) {
           parent_field_list.push(`${f.name}.${pf.name}`);
           if (pf.is_fkey && pf.type !== "File" && allow_double) {
-            const table1 = Table.findOne({ name: pf.reftable_name });
+            const table1 = await Table.findOne({ name: pf.reftable_name });
             if (!table1)
               throw new Error(`Unable to find table '${pf.reftable_name}`);
             await table1.getFields();
@@ -1982,7 +1982,7 @@ class Table implements AbstractTable {
       { cached: true }
     );
     for (const relation of o2o_rels) {
-      const related_table = Table.findOne({ id: relation.table_id });
+      const related_table = await Table.findOne({ id: relation.table_id });
       if (related_table) {
         const relfields = await related_table.getFields();
         for (const relfield of relfields) {
@@ -2041,12 +2041,12 @@ class Table implements AbstractTable {
     let child_field_list = [];
     for (const f of cfields) {
       if (f.is_fkey) {
-        const table = Table.findOne({ id: f.table_id });
+        const table = await Table.findOne({ id: f.table_id });
         if (!table) {
           throw new Error(`Unable to find table with id: ${f.table_id}`);
         }
         child_field_list.push(`${table.name}.${f.name}`);
-        table.getFields();
+        await table.getFields();
         child_relations.push({ key_field: f, table });
       }
     }
@@ -2054,7 +2054,7 @@ class Table implements AbstractTable {
       const fields = await this.getFields();
       for (const f of fields) {
         if (f.is_fkey && f.type !== "File") {
-          const refTable = Table.findOne({ name: f.reftable_name });
+          const refTable = await Table.findOne({ name: f.reftable_name });
           if (!refTable)
             throw new Error(`Unable to find table '${f.reftable_name}`);
 
@@ -2142,7 +2142,7 @@ class Table implements AbstractTable {
         for (let i = 0; i < throughs.length; i++) {
           const through1 = throughs[i];
           const throughPath = throughs.slice(0, i + 1);
-          const throughTable = Table.findOne({
+          const throughTable = await Table.findOne({
             name: last_reffield.reftable_name,
           });
           if (!throughTable)
@@ -2442,7 +2442,7 @@ class Table implements AbstractTable {
     if (this.fields) {
       for (const field of this.fields) {
         if (field.is_fkey) {
-          const refTable = Table.findOne({ name: field.reftable_name! });
+          const refTable = await Table.findOne({ name: field.reftable_name! });
           if (refTable) result.push(refTable);
         }
       }

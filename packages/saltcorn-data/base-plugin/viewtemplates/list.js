@@ -56,8 +56,8 @@ const {
  * @returns {Promise<void>}
  */
 const create_db_view = async (context) => {
-  const table = Table.findOne({ id: context.table_id });
-  const fields = table.getFields();
+  const table = await Table.findOne({ id: context.table_id });
+  const fields = await table.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(
     context.columns,
     fields
@@ -70,7 +70,7 @@ const create_db_view = async (context) => {
   });
   const schema = db.getTenantSchemaPrefix();
   // is there already a table with this name ? if yes add _sqlview
-  const extable = Table.findOne({ name: context.viewname });
+  const extable = await Table.findOne({ name: context.viewname });
   const sql_view_name = `${schema}"${db.sqlsanitize(context.viewname)}${
     extable ? "_sqlview" : ""
   }"`;
@@ -114,7 +114,7 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Columns"),
         form: async (context) => {
-          const table = Table.findOne(
+          const table = await Table.findOne(
             context.table_id
               ? { id: context.table_id }
               : { name: context.exttable_name }
@@ -161,7 +161,7 @@ const configuration_workflow = (req) =>
           return create_views.length > 0;
         },
         form: async (context) => {
-          const table = Table.findOne(
+          const table = await Table.findOne(
             context.table_id
               ? { id: context.table_id }
               : { name: context.exttable_name }
@@ -286,12 +286,12 @@ const configuration_workflow = (req) =>
         name: req.__("Default state"),
         contextField: "default_state",
         form: async (context) => {
-          const table = Table.findOne(
+          const table = await Table.findOne(
             context.table_id || context.exttable_name
           );
-          const table_fields = table
-            .getFields()
-            .filter((f) => !f.calculated || f.stored);
+          const table_fields = (await table.getFields()).filter(
+            (f) => !f.calculated || f.stored
+          );
           const formfields = table_fields.map((f) => {
             return {
               name: f.name,
@@ -326,12 +326,12 @@ const configuration_workflow = (req) =>
         name: req.__("Options"),
         contextField: "default_state", //legacy...
         form: async (context) => {
-          const table = Table.findOne(
+          const table = await Table.findOne(
             context.table_id || context.exttable_name
           );
-          const table_fields = table
-            .getFields()
-            .filter((f) => !f.calculated || f.stored);
+          const table_fields = (await table.getFields()).filter(
+            (f) => !f.calculated || f.stored
+          );
           const formfields = [];
           formfields.push({
             name: "_order_field",
@@ -518,10 +518,10 @@ const run = async (
   extraOpts,
   { listQuery }
 ) => {
-  const table = Table.findOne(
+  const table = await Table.findOne(
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
   );
-  const fields = table.getFields();
+  const fields = await table.getFields();
   const appState = getState();
   const locale = extraOpts.req.getLocale();
   const __ = (s) =>
@@ -688,7 +688,7 @@ const run_action = async (
       (body.column_index ? body.column_index === index : true)
   );
 
-  const table = Table.findOne({ id: table_id });
+  const table = await Table.findOne({ id: table_id });
   const row = await getRowQuery(body.id);
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
@@ -771,12 +771,12 @@ module.exports = {
     req,
   }) => ({
     async listQuery(state, stateHash) {
-      const table = Table.findOne(
+      const table = await Table.findOne(
         typeof exttable_name === "string"
           ? { name: exttable_name }
           : { id: table_id }
       );
-      const fields = table.getFields();
+      const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields
@@ -818,7 +818,7 @@ module.exports = {
       return { rows, rowCount };
     },
     async getRowQuery(id) {
-      const table = Table.findOne({ id: table_id });
+      const table = await Table.findOne({ id: table_id });
       return await table.getRow({ id });
     },
   }),

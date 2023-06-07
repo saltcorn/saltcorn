@@ -917,7 +917,7 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
       if (item.type === "Dynamic") {
         const table = Table.findOne({ name: item.dyn_table });
         if (!table) throw new Error(`Unable to find table ${item.dyn_table}`);
-        const fields = table.getFields();
+        const fields = await table.getFields();
         const where = item.dyn_include_fml
           ? jsexprToWhere(item.dyn_include_fml)
           : {};

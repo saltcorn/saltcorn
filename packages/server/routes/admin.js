@@ -1904,7 +1904,7 @@ router.post(
       await View.delete({});
     }
     //user fields
-    const users = Table.findOne({ name: "users" });
+    const users = await Table.findOne({ name: "users" });
     const userfields = await users.getFields();
     for (const f of userfields) {
       if (f.is_fkey) {
@@ -1925,7 +1925,7 @@ router.post(
           table_id: table.id,
         });
         await table.update({ ownership_field_id: null });
-        const fields = table.getFields();
+        const fields = await table.getFields();
         for (const f of fields) {
           if (f.is_fkey) {
             await f.delete();
@@ -1968,7 +1968,7 @@ router.post(
       await getState().refresh();
     }
     if (form.values.users) {
-      const users1 = Table.findOne({ name: "users" });
+      const users1 = await Table.findOne({ name: "users" });
       const userfields1 = await users1.getFields();
 
       for (const f of userfields1) {

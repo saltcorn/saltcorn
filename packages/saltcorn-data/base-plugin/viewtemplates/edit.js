@@ -80,11 +80,13 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Layout"),
         builder: async (context) => {
-          const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields().filter((f) => !f.primary_key);
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = (await table.getFields()).filter(
+            (f) => !f.primary_key
+          );
           for (const field of fields) {
             if (field.type === "Key") {
-              field.reftable = Table.findOne({
+              field.reftable = await Table.findOne({
                 name: field.reftable_name,
               });
               if (field.reftable) await field.reftable.getFields();
@@ -210,8 +212,8 @@ const configuration_workflow = (req) =>
         name: req.__("Fixed fields"),
         contextField: "fixed",
         onlyWhen: async (context) => {
-          const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields();
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           return fields.some(
             (f) =>
@@ -221,8 +223,8 @@ const configuration_workflow = (req) =>
           );
         },
         form: async (context) => {
-          const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields();
+          const table = await Table.findOne({ id: context.table_id });
+          const fields = await table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           const omitted_fields = fields.filter(
             (f) =>
@@ -455,7 +457,7 @@ const runMany = async (
   });
   if (!isNode()) {
     table = Table.findOne({ id: table.id });
-    fields = table.getFields();
+    fields = await table.getFields();
   }
   return await asyncMap(rows, async (row) => {
     const html = await render({
@@ -819,8 +821,8 @@ const runPost = async (
   { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery },
   remote
 ) => {
-  const table = Table.findOne({ id: table_id });
-  const fields = table.getFields();
+  const table = await Table.findOne({ id: table_id });
+  const fields = await table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
@@ -1079,12 +1081,12 @@ const runPost = async (
 };
 
 const doAuthPost = async ({ body, table_id, req }) => {
-  const table = Table.findOne({ id: table_id });
+  const table = await Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
     const field_name = await table.owner_fieldname();
     if (typeof body[field_name] === "undefined") {
-      const fields = table.getFields();
+      const fields = await table.getFields();
       const { uniques } = splitUniques(fields, body);
       if (Object.keys(uniques).length > 0) {
         body = await table.getRow(uniques);
@@ -1097,7 +1099,7 @@ const doAuthPost = async ({ body, table_id, req }) => {
     if (body[table.pk_name]) {
       const joinFields = {};
       if (table.ownership_formula) {
-        const fields = table.getFields();
+        const fields = await table.getFields();
         const freeVars = freeVariables(table.ownership_formula);
         add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
@@ -1111,7 +1113,7 @@ const doAuthPost = async ({ body, table_id, req }) => {
     } else {
       // need to check new row conforms to ownership fml
       const freeVars = freeVariables(table.ownership_formula);
-      const fields = table.getFields();
+      const fields = await table.getFields();
 
       const field_names = new Set(fields.map((f) => f.name));
 
@@ -1236,8 +1238,8 @@ module.exports = {
     res,
   }) => ({
     async editQuery(state) {
-      const table = Table.findOne({ id: table_id });
-      const fields = table.getFields();
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
@@ -1265,8 +1267,8 @@ module.exports = {
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
-      const table = Table.findOne({ id: table_id });
-      const fields = table.getFields();
+      const table = await Table.findOne({ id: table_id });
+      const fields = await table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields
@@ -1293,7 +1295,7 @@ module.exports = {
       };
     },
     async tryInsertQuery(row) {
-      const table = Table.findOne({ id: table_id });
+      const table = await Table.findOne({ id: table_id });
       const result = {};
       const ins_res = await table.tryInsertRow(
         row,
@@ -1305,7 +1307,7 @@ module.exports = {
     },
 
     async tryUpdateQuery(row, id) {
-      const table = Table.findOne({ id: table_id });
+      const table = await Table.findOne({ id: table_id });
       const result = {};
       const upd_res = await table.tryUpdateRow(
         row,
@@ -1349,7 +1351,7 @@ module.exports = {
       const table = Table.findOne({ id: table_id });
       if (Object.keys(body).length == 1) {
         if (table.ownership_field_id || table.ownership_formula) {
-          const fields = table.getFields();
+          const fields = await table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
             const joinFields = {};
@@ -1389,7 +1391,7 @@ module.exports = {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
-      const table = Table.findOne({ id: table_id });
+      const table = await Table.findOne({ id: table_id });
       const row = body.id
         ? await table.getRow(
             { id: body.id },

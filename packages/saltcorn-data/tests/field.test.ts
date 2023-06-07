@@ -19,7 +19,7 @@ beforeAll(async () => {
 
 describe("Field", () => {
   it("should add and then delete required field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = await Table.findOne({ name: "patients" });
     const fc = await Field.create({
       table: patients,
       label: "Height1",
@@ -41,7 +41,7 @@ describe("Field", () => {
     expect(fs1.length).toBe(0);
   });
   it("should add and then delete nonrequired field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = await Table.findOne({ name: "patients" });
     const fc = await Field.create({
       table: patients,
       name: "Height11",
@@ -60,7 +60,7 @@ describe("Field", () => {
     expect(fsc.length).toBe(0);
   });
   it("creates file field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = await Table.findOne({ name: "patients" });
     const fc = await Field.create({
       table: patients,
       name: "pic",
@@ -296,7 +296,7 @@ describe("Field update", () => {
     await Table.create("changingtable");
   });
   it("changes to on delete cascade", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = await Table.findOne({ name: "changingtable" });
 
     const fc = await Field.create({
       table,
@@ -315,7 +315,7 @@ describe("Field update", () => {
     }
   });
   it("changes to required", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = await Table.findOne({ name: "changingtable" });
 
     const fc = await Field.create({
       table,
@@ -331,7 +331,7 @@ describe("Field update", () => {
     }
   });
   it("changes int to float", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = await Table.findOne({ name: "changingtable" });
 
     const fc = await Field.create({
       table,
@@ -345,7 +345,7 @@ describe("Field update", () => {
     }
   });
   it("changes fkey ref table", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = await Table.findOne({ name: "changingtable" });
 
     const fc = await Field.create({
       table,
@@ -386,7 +386,7 @@ describe("Field.distinct_values", () => {
   });
 
   it("gives int values", async () => {
-    const table = Table.findOne({ name: "fdvtable" });
+    const table = await Table.findOne({ name: "fdvtable" });
     assertIsSet(table);
     const fc = await Field.create({
       table,
@@ -424,7 +424,7 @@ describe("Field.distinct_values", () => {
     ]);
   });
   it("gives string values", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = await Table.findOne({ name: "books" });
     assertIsSet(books);
     await books.insertRow({ author: "Herman Melville", pages: 56 });
     const fc = await Field.findOne({ name: "author" });

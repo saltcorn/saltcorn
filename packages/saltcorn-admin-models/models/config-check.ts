@@ -24,7 +24,7 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
     hasErrors = true;
   };
   try {
-    const fields = table.getFields();
+    const fields = await table.getFields();
     for (const field of fields) {
       if (!field.type) {
         mkError(
@@ -46,7 +46,7 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
           );
           continue;
         }
-        const reftable_fields = reftable.getFields();
+        const reftable_fields = await reftable.getFields();
         const summary_field = reftable_fields.find(
           (f) => f.name === field.attributes.summary_field
         );
