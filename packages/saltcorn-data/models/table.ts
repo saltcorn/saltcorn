@@ -1243,16 +1243,16 @@ class Table implements AbstractTable {
    * Get a field, possibly by relation
    * @returns {Promise<Field | undefined>}
    */
-  async getField(path: string): Promise<Field | undefined> {
-    const fields = await this.getFields();
+  getField(path: string): Field | undefined {
+    const fields = this.fields;
     if (path.includes("->")) {
       const joinPath = path.split(".");
       const tableName = joinPath[0];
-      const joinTable = await Table.findOne({ name: tableName });
+      const joinTable = Table.findOne({ name: tableName });
       if (!joinTable)
         throw new Error(`The table '${tableName}' does not exist.`);
       const joinedField = joinPath[1].split("->")[1];
-      const fields = await joinTable.getFields();
+      const fields = joinTable.getFields();
       return fields.find((f) => f.name === joinedField);
     } else if (path.includes(".")) {
       const keypath = path.split(".");
@@ -1262,9 +1262,9 @@ class Table implements AbstractTable {
         const refNm = keypath[i];
         field = theFields.find((f) => f.name === refNm);
         if (!field || !field.reftable_name) break;
-        const table = await Table.findOne({ name: field.reftable_name });
+        const table = Table.findOne({ name: field.reftable_name });
         if (!table) break;
-        theFields = await table.getFields();
+        theFields = table.fields;
       }
       return field;
     } else return fields.find((f) => f.name === path);
