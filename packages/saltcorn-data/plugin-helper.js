@@ -454,10 +454,13 @@ const get_inbound_relation_opts = async (source, viewname) => {
  * @returns viewnames mapped to arrays of Inbound options
  */
 const get_inbound_self_relation_opts = async (source, viewname) => {
-  const fields = await Field.find({
-    reftable_name: source.name,
-    is_unique: true,
-  });
+  const fields = await Field.find(
+    {
+      reftable_name: source.name,
+      is_unique: true,
+    },
+    { cached: true }
+  );
   const result = [];
   const targetFields = source.getForeignKeys();
   for (const field of fields) {
@@ -1208,7 +1211,10 @@ const field_picker_fields = async ({
  * @returns {Promise<object[]>}
  */
 const get_child_views = async (table, viewname, nrecurse = 2) => {
-  const rels = await Field.find({ reftable_name: table.name });
+  const rels = await Field.find(
+    { reftable_name: table.name },
+    { cached: true }
+  );
   const possibleThroughTables = new Set();
   let child_views = [];
   for (const relation of rels) {
@@ -1275,10 +1281,13 @@ const get_parent_views = async (table, viewname) => {
  * @returns {Promise<object[]>}
  */
 const get_onetoone_views = async (table, viewname) => {
-  const rels = await Field.find({
-    reftable_name: table.name,
-    is_unique: true,
-  });
+  const rels = await Field.find(
+    {
+      reftable_name: table.name,
+      is_unique: true,
+    },
+    { cached: true }
+  );
   let child_views = [];
   for (const relation of rels) {
     const related_table = await Table.findOne({ id: relation.table_id });

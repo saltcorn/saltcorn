@@ -241,7 +241,9 @@ class Table implements AbstractTable {
   ): Promise<Table[]> {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
-      return getState().tables.map((t: TableCfg) => new Table(t));
+      return getState()
+        .tables.map((t: TableCfg) => new Table(structuredClone(t)))
+        .filter(satisfies(where || {}));
     }
 
     if (where?.name) {
@@ -1898,10 +1900,13 @@ class Table implements AbstractTable {
    */
   async get_relation_data(unique = true): Promise<RelationData[]> {
     const result = new Array<RelationData>();
-    const o2o_rels = await Field.find({
-      reftable_name: this.name,
-      is_unique: unique,
-    });
+    const o2o_rels = await Field.find(
+      {
+        reftable_name: this.name,
+        is_unique: unique,
+      },
+      { cached: true }
+    );
     for (const field of o2o_rels) {
       const relTbl = Table.findOne({ id: field.table_id });
       if (relTbl) result.push({ relationTable: relTbl, relationField: field });
@@ -1969,10 +1974,13 @@ class Table implements AbstractTable {
         parent_relations.push({ key_field: f, table });
       }
     }
-    const o2o_rels = await Field.find({
-      reftable_name: this.name,
-      is_unique: true,
-    });
+    const o2o_rels = await Field.find(
+      {
+        reftable_name: this.name,
+        is_unique: true,
+      },
+      { cached: true }
+    );
     for (const relation of o2o_rels) {
       const related_table = await Table.findOne({ id: relation.table_id });
       if (related_table) {
@@ -2025,7 +2033,10 @@ class Table implements AbstractTable {
   async get_child_relations(
     allow_join_aggregations?: boolean
   ): Promise<ChildRelations> {
-    const cfields = await Field.find({ reftable_name: this.name });
+    const cfields = await Field.find(
+      { reftable_name: this.name },
+      { cached: true }
+    );
     let child_relations = [];
     let child_field_list = [];
     for (const f of cfields) {

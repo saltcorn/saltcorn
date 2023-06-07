@@ -13,7 +13,12 @@ const {
   freeVariables,
 } = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
-const { InvalidAdminAction, isNode } = require("../utils");
+const {
+  InvalidAdminAction,
+  isNode,
+  satisfies,
+  structuredClone,
+} = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -603,6 +608,13 @@ class Field implements AbstractField {
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Field[]> {
+    if (selectopts.cached) {
+      const { getState } = require("../db/state");
+      return getState()
+        .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
+        .filter(satisfies(where || {}));
+    }
+
     const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map((dbf: FieldCfg) => new Field(dbf));
   }
