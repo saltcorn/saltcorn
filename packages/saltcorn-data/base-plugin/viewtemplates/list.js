@@ -449,7 +449,7 @@ const configuration_workflow = (req) =>
 const get_state_fields = async (table_id, viewname, { columns }) => {
   const table = Table.findOne(table_id);
   if (!table) return [];
-  const table_fields = await table.getFields();
+  const table_fields = table.fields;
   //console.log(table_fields);
   let state_fields = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
