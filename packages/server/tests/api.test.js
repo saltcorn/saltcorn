@@ -128,7 +128,7 @@ describe("API read", () => {
       .expect(succeedJsonWith((rows) => rows.length == 2));
   });
   it("should add version counts", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     await patients.update({ versioned: true });
 
     const loginCookie = await getStaffLoginCookie();

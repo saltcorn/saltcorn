@@ -87,10 +87,10 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Layout"),
         builder: async (context) => {
-          const table = await Table.findOne(
+          const table = Table.findOne(
             context.table_id || context.exttable_name
           );
-          const fields = await table.getFields();
+          const fields = table.getFields();
 
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
@@ -120,7 +120,7 @@ const configuration_workflow = (req) =>
           });
           for (const field of fields) {
             if (field.type === "Key") {
-              field.reftable = await Table.findOne({
+              field.reftable = Table.findOne({
                 name: field.reftable_name,
               });
               if (field.reftable) await field.reftable.getFields();
@@ -275,7 +275,7 @@ const run = async (
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
-  const tbl = await Table.findOne(table_id);
+  const tbl = Table.findOne(table_id);
   const fields = await tbl.getFields();
   if (tbl.name === "users") {
     fields.push(
@@ -419,7 +419,7 @@ const renderRows = async (
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
 
-  const fields = await table.getFields();
+  const fields = table.getFields();
 
   const role = extra.req.user ? extra.req.user.role_id : 100;
   var views = {};
@@ -429,7 +429,7 @@ const renderRows = async (
     const view = await View.findOne({ name: view_select.viewname });
     if (!view) return false;
     if (view.table_id === table.id) view.table = table;
-    else view.table = await Table.findOne({ id: view.table_id });
+    else view.table = Table.findOne({ id: view.table_id });
     view.view_select = view_select;
     views[name] = view;
     return view;
@@ -546,7 +546,7 @@ const runMany = async (
   extra,
   { runManyQuery }
 ) => {
-  const tbl = await Table.findOne({ id: table_id });
+  const tbl = Table.findOne({ id: table_id });
   const rows = await runManyQuery(state, {
     where: extra.where,
     limit: extra.limit,
@@ -859,7 +859,7 @@ module.exports = {
         layout
       );
       readState(state, fields);
-      const tbl = await Table.findOne(table_id || exttable_name);
+      const tbl = Table.findOne(table_id || exttable_name);
       const qstate = await stateFieldsToWhere({
         fields,
         state,
@@ -890,7 +890,7 @@ module.exports = {
       };
     },
     async runManyQuery(state, { where, limit, offset, orderBy, orderDesc }) {
-      const tbl = await Table.findOne({ id: table_id });
+      const tbl = Table.findOne({ id: table_id });
       const fields = await tbl.getFields();
       readState(state, fields);
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -938,7 +938,7 @@ module.exports = {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       const row = await table.getRow({ id: body.id });
       try {
         const result = await run_action_column({
@@ -959,9 +959,9 @@ module.exports = {
       const user_id = req.user ? req.user.id : null;
 
       if (user_id && Object.keys(body).length == 1) {
-        const table = await Table.findOne({ id: table_id });
+        const table = Table.findOne({ id: table_id });
         if (table.ownership_field_id || table.ownership_formula) {
-          const fields = await table.getFields();
+          const fields = table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
             const row = await table.getJoinedRows({

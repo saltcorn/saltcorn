@@ -329,7 +329,7 @@ describe("user admin", () => {
 });
 describe("User fields", () => {
   it("should add fields", async () => {
-    const table = await Table.findOne({ name: "users" });
+    const table = Table.findOne({ name: "users" });
     await Field.create({
       table,
       label: "Height",
@@ -395,7 +395,7 @@ describe("User fields", () => {
       .send("password=seCERGERG45et")
       .send("height=191")
       .expect(toRedirect("/"));
-    const table = await Table.findOne({ name: "users" });
+    const table = Table.findOne({ name: "users" });
     const ut = await table.getRow({ email: "staff14@foo.com" });
     expect(ut.email).toBe("staff14@foo.com");
     expect(ut.height).toBe(191);
@@ -404,7 +404,7 @@ describe("User fields", () => {
 
 describe("signup with custom login form", () => {
   it("should create user fields and login form", async () => {
-    const table = await Table.findOne({ name: "users" });
+    const table = Table.findOne({ name: "users" });
     const fc = await Field.create({
       table,
       label: "Username",
@@ -662,7 +662,7 @@ describe("signup with custom login form", () => {
       .send("height=15")
       .expect(toRedirect("/"));
 
-    const table = await Table.findOne({ name: "users" });
+    const table = Table.findOne({ name: "users" });
     const user = await User.findOne({ email: "staff8@foo.com" });
     expect(!!user).toBe(true);
     expect(user.checkPassword("seCERRG45et")).toBe(true);

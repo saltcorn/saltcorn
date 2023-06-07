@@ -66,7 +66,7 @@ describe("calculated", () => {
       expression: "y-x",
       stored: true,
     });
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const fzf = get_expression_function(fz.expression!, fields);
     expect(fzf({ x: 4, y: 2 })).toBe(6);
     await table.insertRow({ x: 5, y: 8 });
@@ -110,7 +110,7 @@ describe("calculated", () => {
       calculated: true,
       expression: "process.exit(0)",
     });
-    const fields = await table.getFields();
+    const fields = table.getFields();
     assertIsSet(fz.expression);
     const fzf = get_expression_function(fz.expression, fields);
     let error;

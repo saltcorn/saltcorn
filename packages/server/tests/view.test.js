@@ -92,7 +92,7 @@ describe("view with routes", () => {
   it("should enable", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes());
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const v = await View.create({
       table_id: table.id,
@@ -143,7 +143,7 @@ describe("render view on page", () => {
 describe("render view with slug", () => {
   it("should show with id slug in list", async () => {
     const view = await View.findOne({ name: "authorshow" });
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     const slugOpts = await table.slug_options();
     const slugOpt = slugOpts.find((so) => so.label === "/:id");
     expect(!!slugOpt).toBe(true);
@@ -158,11 +158,11 @@ describe("render view with slug", () => {
   });
   it("should show with name slug in list", async () => {
     const view = await View.findOne({ name: "authorshow" });
-    const table0 = await Table.findOne({ name: "books" });
+    const table0 = Table.findOne({ name: "books" });
     const fields = await table0.getFields();
     const field = fields.find((f) => f.name === "author");
     await field.update({ is_unique: true });
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const slugOpts = await table.slug_options();
     const slugOpt = slugOpts.find((so) => so.label === "/slugify-author");

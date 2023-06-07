@@ -646,10 +646,10 @@ const field_picker_fields = async ({
   has_align,
 }) => {
   const __ = (...s) => (req ? req.__(...s) : s.join(""));
-  const fields = await table.getFields();
+  const fields = table.getFields();
   for (const field of fields) {
     if (field.type === "Key") {
-      field.reftable = await Table.findOne({ name: field.reftable_name });
+      field.reftable = Table.findOne({ name: field.reftable_name });
       if (field.reftable) await field.reftable.getFields();
     }
   }
@@ -1255,11 +1255,11 @@ const get_child_views = async (table, viewname, nrecurse = 2) => {
  */
 const get_parent_views = async (table, viewname) => {
   let parent_views = [];
-  const parentrels = (await table.getFields()).filter(
-    (f) => f.is_fkey && f.type !== "File"
-  );
+  const parentrels = table
+    .getFields()
+    .filter((f) => f.is_fkey && f.type !== "File");
   for (const relation of parentrels) {
-    const related_table = await Table.findOne({
+    const related_table = Table.findOne({
       name: relation.reftable_name,
     });
     const views = await View.find_table_views_where(
@@ -1290,7 +1290,7 @@ const get_onetoone_views = async (table, viewname) => {
   );
   let child_views = [];
   for (const relation of rels) {
-    const related_table = await Table.findOne({ id: relation.table_id });
+    const related_table = Table.findOne({ id: relation.table_id });
     const views = await View.find_table_views_where(
       related_table.id,
       ({ state_fields, viewrow }) =>
@@ -1757,13 +1757,13 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
 const initial_config_all_fields =
   (isEdit) =>
   async ({ table_id, exttable_name }) => {
-    const table = await Table.findOne(
+    const table = Table.findOne(
       table_id ? { id: table_id } : { name: exttable_name }
     );
 
-    const fields = (await table.getFields()).filter(
-      (f) => !f.primary_key && (!isEdit || !f.calculated)
-    );
+    const fields = table
+      .getFields()
+      .filter((f) => !f.primary_key && (!isEdit || !f.calculated));
     let cfg = { columns: [] };
     let aboves = [null];
     const style = {

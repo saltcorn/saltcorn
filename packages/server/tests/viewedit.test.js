@@ -102,7 +102,7 @@ describe("viewedit new List", () => {
   });
   it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -125,7 +125,7 @@ describe("viewedit new List", () => {
   });
   it("save new views default state", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -153,7 +153,7 @@ describe("viewedit new List", () => {
   });
   it("save new views options", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -219,7 +219,7 @@ describe("viewedit new List with one field", () => {
   });
   it("save new view", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -240,7 +240,7 @@ describe("viewedit new List with one field", () => {
   });
   it("save new views default state", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -264,7 +264,7 @@ describe("viewedit new List with one field", () => {
   });
   it("save new views options", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -341,7 +341,7 @@ describe("viewedit new Show", () => {
   });
   it("save new view layout", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -362,7 +362,7 @@ describe("viewedit new Show", () => {
   });
   it("save new view page title", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({

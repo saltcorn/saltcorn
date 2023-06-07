@@ -464,7 +464,7 @@ router.get(
     } else {
       // get table related to trigger
       const table = trigger.table_id
-        ? await Table.findOne({ id: trigger.table_id })
+        ? Table.findOne({ id: trigger.table_id })
         : null;
       // get configuration fields
       const cfgFields = await getActionConfigFields(action, table);
@@ -509,7 +509,7 @@ router.post(
     const trigger = await Trigger.findOne({ id });
     const action = getState().actions[trigger.action];
     const table = trigger.table_id
-      ? await Table.findOne({ id: trigger.table_id })
+      ? Table.findOne({ id: trigger.table_id })
       : null;
     const cfgFields = await getActionConfigFields(action, table);
     const form = new Form({
@@ -595,7 +595,7 @@ router.get(
     };
     let table, row;
     if (trigger.table_id) {
-      table = await Table.findOne({ id: trigger.table_id });
+      table = Table.findOne({ id: trigger.table_id });
       row = await table.getRow({});
     }
     try {

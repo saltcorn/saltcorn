@@ -51,9 +51,9 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, id } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
 
-    const fields = await table.getFields();
+    const fields = table.getFields();
     var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
 
     tfields.push({
@@ -99,9 +99,9 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tableName, id, _version } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
 
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const row = await db.selectOne(`${db.sqlsanitize(table.name)}__history`, {
       id,
       _version,
@@ -231,13 +231,13 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { tname } = req.params;
-    const table = await Table.findOne({ name: tname });
+    const table = Table.findOne({ name: tname });
     if (!table) {
       req.flash("error", req.__("Table %s not found", text(tname)));
       res.redirect(`/table`);
       return;
     }
-    const fields = await table.getFields();
+    const fields = table.getFields();
     for (const f of fields) {
       if (f.type === "File") f.attributes = { select_file_where: {} };
       await f.fill_fkey_options();

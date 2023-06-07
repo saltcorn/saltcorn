@@ -194,7 +194,7 @@ router.get(
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     let { tableName, fieldName } = req.params;
-    const table = await Table.findOne(
+    const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
         : { name: tableName }
@@ -249,7 +249,7 @@ router.get(
   error_catcher(async (req, res, next) => {
     let { tableName } = req.params;
     const { fields, versioncount, approximate, ...req_query } = req.query;
-    const table = await Table.findOne(
+    const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
         : { name: tableName }
@@ -377,7 +377,7 @@ router.post(
   "/:tableName/",
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -454,7 +454,7 @@ router.post(
   "/:tableName/:id",
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -507,7 +507,7 @@ router.delete(
   // in case of primary key different from id - id will be string "undefined"
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API DELETE ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -521,7 +521,7 @@ router.delete(
           try {
             if (id === "undefined") {
               const pk_name = table.pk_name;
-              //const fields = await table.getFields();
+              //const fields = table.getFields();
               const row = req.body;
               //readState(row, fields);
               await table.deleteRows(

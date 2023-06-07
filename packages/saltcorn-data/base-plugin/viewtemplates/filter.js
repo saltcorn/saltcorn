@@ -57,10 +57,10 @@ const configuration_workflow = () =>
       {
         name: "Layout",
         builder: async (context) => {
-          const table = await Table.findOne(
+          const table = Table.findOne(
             context.table_id || context.exttable_name
           );
-          const fields = await table.getFields();
+          const fields = table.getFields();
           const { child_field_list, child_relations } =
             await table.get_child_relations();
           const { parent_field_list } = await table.get_parent_relations(true);
@@ -207,8 +207,8 @@ const run = async (
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
-  const table = await Table.findOne(table_id);
-  const fields = await table.getFields();
+  const table = Table.findOne(table_id);
+  const fields = table.getFields();
   readState(state, fields);
   const formFieldNames = (columns || [])
     .map((c) => c.field_name)
@@ -535,7 +535,7 @@ module.exports = {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       try {
         const result = await run_action_column({
           col,
@@ -550,8 +550,8 @@ module.exports = {
       }
     },
     async distinctValuesQuery(state) {
-      const table = await Table.findOne(table_id || exttable_name);
-      const fields = await table.getFields();
+      const table = Table.findOne(table_id || exttable_name);
+      const fields = table.getFields();
       let distinct_values = {};
       const role = req.user ? req.user.role_id : 100;
       for (const col of columns) {
@@ -591,7 +591,7 @@ module.exports = {
           } else if (col.field_name.includes("->")) {
             const [jFieldNm, krest] = col.field_name.split(".");
             const [jtNm, lblField] = krest.split("->");
-            const jtable = await Table.findOne({ name: jtNm });
+            const jtable = Table.findOne({ name: jtNm });
             if (!jtable)
               throw new InvalidConfiguration(
                 `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
@@ -607,7 +607,7 @@ module.exports = {
             const kpath = col.field_name.split(".");
             if (kpath.length === 3) {
               const [jtNm, jFieldNm, lblField] = kpath;
-              const jtable = await Table.findOne({ name: jtNm });
+              const jtable = Table.findOne({ name: jtNm });
               if (!jtable)
                 throw new InvalidConfiguration(
                   `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`

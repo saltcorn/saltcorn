@@ -70,7 +70,7 @@ async function updateUserDefinedTables() {
     const existingFields = (
       await saltcorn.data.db.query(`PRAGMA table_info('${sanitized}')`)
     ).rows.map((row) => row.name);
-    for (const field of await table.getFields()) {
+    for (const field of table.getFields()) {
       if (
         existingFields.indexOf(saltcorn.data.db.sqlsanitize(field.name)) < 0
       ) {

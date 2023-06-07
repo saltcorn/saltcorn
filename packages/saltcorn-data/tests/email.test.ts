@@ -266,7 +266,7 @@ describe("MJML Mail Transformations", () => {
 });
 
 const mkView = async ({ name, ...rest }: any) => {
-  const tbl = await Table.findOne({ name: "books" });
+  const tbl = Table.findOne({ name: "books" });
   if (!tbl) throw new Error("no such table");
   return await View.create({
     table_id: tbl.id,
