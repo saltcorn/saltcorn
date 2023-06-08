@@ -354,7 +354,7 @@ class State {
       {},
       { orderBy: "name", nocase: true }
     );
-    const allFields = await db.select(
+    this.fields = await db.select(
       "_sc_fields",
       {},
       { orderBy: "name", nocase: true }
@@ -372,7 +372,7 @@ class State {
         }
         continue;
       }
-      table.fields = allFields.filter((f: Field) => f.table_id === table.id);
+      table.fields = this.fields.filter((f: Field) => f.table_id === table.id);
       table.constraints = allConstraints
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));

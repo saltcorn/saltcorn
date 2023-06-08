@@ -72,7 +72,7 @@ describe("Backup and restore", () => {
     });
 
     const fnm = await create_backup();
-    const t1 = await Table.findOne({ name: "books" });
+    const t1 = Table.findOne({ name: "books" });
     assertIsSet(t1);
     const t1c = await t1.countRows();
     const v1 = await View.find();
@@ -87,7 +87,7 @@ describe("Backup and restore", () => {
     assertsObjectIsUser(admu);
     expect(typeof admu.password).toBe("string");
 
-    const t2 = await Table.findOne({ name: "books" });
+    const t2 = Table.findOne({ name: "books" });
     expect(t2).toBe(null);
     const sn0 = await getConfig("site_name");
     expect(sn0).toBe("Saltcorn");
@@ -96,10 +96,10 @@ describe("Backup and restore", () => {
     const restore_res = await restore(fnm, (p) => {});
     await unlink(fnm);
     expect(restore_res).toBe(undefined);
-    const t3 = await Table.findOne({ name: "books" });
+    const t3 = Table.findOne({ name: "books" });
     assertIsSet(t3);
     expect(!!t3).toBe(true);
-    const t5 = await Table.findOne({ name: "myblanktable" });
+    const t5 = Table.findOne({ name: "myblanktable" });
     assertIsSet(t5);
     expect(!!t5).toBe(true);
     expect(t5.min_role_read).toBe(60);

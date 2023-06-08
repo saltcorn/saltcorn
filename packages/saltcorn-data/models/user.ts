@@ -284,7 +284,10 @@ class User {
     //child fields
 
     //user.usergroups_by_user.map(g=>g.group).includes(group)
-    const cfields = await Field.find({ reftable_name: "users" });
+    const cfields = await Field.find(
+      { reftable_name: "users" },
+      { cached: true }
+    );
 
     for (const cfield of cfields) {
       const table = Table.findOne(cfield.table_id) as Table;

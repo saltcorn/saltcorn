@@ -31,8 +31,8 @@ class TransformFieldCommand extends Command {
     }
     const tenant = args.tenant || db.connectObj.default_schema;
     await db.runWithTenant(tenant, async () => {
-      const table = await Table.findOne({ name: args.table });
-      const fields = await table.getFields();
+      const table = Table.findOne({ name: args.table });
+      const fields = table.getFields();
       const field = fields.find((f) => f.name === args.field);
       if (!field) {
         console.error("field not found");

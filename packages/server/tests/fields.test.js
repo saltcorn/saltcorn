@@ -44,7 +44,7 @@ describe("Field Endpoints", () => {
 
   it("should post new int field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -61,7 +61,7 @@ describe("Field Endpoints", () => {
 
   it("should post new int field with attributes", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(
       JSON.stringify({
@@ -228,7 +228,7 @@ describe("Field Endpoints", () => {
 
   it("should post new calculated int field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -258,14 +258,14 @@ describe("Field Endpoints", () => {
       .send("contextEnc=" + ctx1)
       .set("Cookie", loginCookie)
       .expect(toRedirect("/table/2"));
-    const table1 = await Table.findOne({ name: "books" });
+    const table1 = Table.findOne({ name: "books" });
 
     const row = await table1.getRow({ id: 1 });
     expect(row.pagesplus10).toBe(977);
   });
   it("should post new calculated string field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -283,7 +283,7 @@ describe("Field Endpoints", () => {
   });
   it("should post new calculated float field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -301,7 +301,7 @@ describe("Field Endpoints", () => {
   });
   it("should post new calculated boolean field", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -319,7 +319,7 @@ describe("Field Endpoints", () => {
   });
   it("should test expression", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -335,7 +335,7 @@ describe("Field Endpoints", () => {
   });
   it("should test stored expression", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
     const app = await getApp({ disableCsrf: true });
@@ -351,7 +351,7 @@ describe("Field Endpoints", () => {
   });
   it("should show calculated", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     await Field.create({
       table,
       label: "pagesp1",

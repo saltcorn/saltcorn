@@ -51,7 +51,7 @@ const menuForm = async (req) => {
   for (const table of tables) {
     dynOrderFieldOptions[table.name] = [""];
     dynSectionFieldOptions[table.name] = [""];
-    const fields = await table.getFields();
+    const fields = table.getFields();
     for (const field of fields) {
       dynOrderFieldOptions[table.name].push(field.name);
       if (

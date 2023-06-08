@@ -38,11 +38,11 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
   // todo check this change
   const table =
     typeof nameOrTable === "string"
-      ? await Table.findOne({ name: nameOrTable })
+      ? Table.findOne({ name: nameOrTable })
       : nameOrTable;
   if (!table) throw new Error(`Unable to find table '${nameOrTable}'`);
 
-  const fields = await table.getFields();
+  const fields = table.getFields();
   const strip_ids = (o: any) => {
     delete o.id;
     delete o.table_id;
@@ -74,7 +74,7 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
 const view_pack = async (name: string): Promise<ViewPack> => {
   const view = await View.findOne({ name });
   if (!view) throw new Error(`Unable to find view '${name}'`);
-  const table = await Table.findOne({ id: view.table_id });
+  const table = Table.findOne({ id: view.table_id });
   //if (!table)
   //  throw new Error(`Unable to find table with id '${view.table_id}'`);
   return {
@@ -232,10 +232,10 @@ const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
     if (view) await view.delete();
   }
   for (const tableSpec of pack.tables) {
-    const table = await Table.findOne({ name: tableSpec.name });
+    const table = Table.findOne({ name: tableSpec.name });
     if (table && table.name === "users") continue;
     if (table) {
-      const fields = await table.getFields();
+      const fields = table.getFields();
       for (const field of fields) {
         if (field.is_fkey) await field.delete();
       }
@@ -246,7 +246,7 @@ const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
     }
   }
   for (const tableSpec of pack.tables) {
-    const table = await Table.findOne({ name: tableSpec.name });
+    const table = Table.findOne({ name: tableSpec.name });
     if (table && table.name !== "users") await table.delete();
   }
 
@@ -345,7 +345,7 @@ const install_pack = async (
         tableSpec.min_role_read = old_to_new_role(tableSpec.min_role_read);
         tableSpec.min_role_write = old_to_new_role(tableSpec.min_role_write);
         const table = await Table.create(tableSpec.name, tableSpec);
-        [tbl_pk] = await table.getFields();
+        [tbl_pk] = table.getFields();
       } //set pk
       const pack_pk = tableSpec.fields.find((f) => f.primary_key);
       if (pack_pk && tbl_pk) {
@@ -354,10 +354,10 @@ const install_pack = async (
     }
   }
   for (const tableSpec of pack.tables) {
-    const _table = await Table.findOne({ name: tableSpec.name });
+    const _table = Table.findOne({ name: tableSpec.name });
     if (!_table) throw new Error(`Unable to find table '${tableSpec.name}'`);
 
-    const exfields = await _table.getFields();
+    const exfields = _table.getFields();
     for (const field of tableSpec.fields) {
       const exfield = exfields.find((f) => f.name === field.name);
       if (!((_table.name === "users" && field.name === "email") || exfield)) {
@@ -387,7 +387,7 @@ const install_pack = async (
     viewSpec.min_role = old_to_new_role(viewSpec.min_role);
     const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
       viewSpec;
-    const vtable = await Table.findOne({ name: table });
+    const vtable = Table.findOne({ name: table });
     const existing = View.findOne({ name: viewNoTable.name });
     if (existing?.id) {
       await View.update(viewNoTable, existing.id);

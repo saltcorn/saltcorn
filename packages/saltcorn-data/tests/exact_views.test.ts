@@ -50,7 +50,7 @@ const mkTester =
     id?: number;
     [key: string]: any; // ...rest
   }) => {
-    const tbl = await Table.findOne({ name: rest.table || table });
+    const tbl = Table.findOne({ name: rest.table || table });
     assertIsSet(tbl);
     const viewCfg: any = {
       table_id: tbl.id,

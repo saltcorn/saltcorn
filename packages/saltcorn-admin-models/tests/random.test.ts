@@ -53,7 +53,7 @@ describe("Random tables", () => {
       //db.set_sql_logging(true);
       const table = await random_table();
       const rows = await table.getJoinedRows({});
-      const fields = await table.getFields();
+      const fields = table.getFields();
       const nonFkey = fields.filter((f: Field) => !f.is_fkey && !f.primary_key);
       expect(rows.length > -1).toBe(true);
       //enable versioning
@@ -106,7 +106,7 @@ describe("Random tables", () => {
     const tables = await Table.find({});
     for (const table of tables) {
       const count = await table.countRows();
-      await table.getFields();
+      table.getFields();
       tableCounts.push([table, count]);
     }
 
@@ -123,7 +123,7 @@ describe("Random tables", () => {
     });
     const restoreres = await restore(fnm, (p) => {});
     for (const [oldtable, n] of tableCounts) {
-      const table = await Table.findOne({ name: oldtable.name });
+      const table = Table.findOne({ name: oldtable.name });
       assertIsSet(table);
       expect(!!table).toBe(true);
       const count = await table.countRows();

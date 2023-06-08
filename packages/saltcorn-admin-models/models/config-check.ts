@@ -10,6 +10,7 @@ const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
 
 // todo tests for files
 // todo tests for tenants
+//
 /**
  * Test table
  * @param table
@@ -23,7 +24,7 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
     hasErrors = true;
   };
   try {
-    const fields = await table.getFields();
+    const fields = table.getFields();
     for (const field of fields) {
       if (!field.type) {
         mkError(
@@ -45,7 +46,7 @@ const test_table = async (table: Table, passes: string[], errors: string[]) => {
           );
           continue;
         }
-        const reftable_fields = await reftable.getFields();
+        const reftable_fields = reftable.getFields();
         const summary_field = reftable_fields.find(
           (f) => f.name === field.attributes.summary_field
         );

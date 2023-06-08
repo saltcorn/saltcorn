@@ -33,7 +33,7 @@ router.post(
     const { tableName, id } = req.params;
     const { redirect } = req.query;
     // todo check that works after where change
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 100;
     try {
       if (role <= table.min_role_write)
