@@ -29,6 +29,7 @@ RUN cordova plugin add cordova-plugin-file
 RUN cordova plugin add cordova-plugin-inappbrowser
 RUN cordova plugin add cordova-plugin-network-information
 RUN cordova plugin add cordova-plugin-geolocation
+RUN cordova plugin add cordova-plugin-camera
 RUN cordova platform add android
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk

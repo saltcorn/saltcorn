@@ -636,9 +636,10 @@ class File {
    */
   static async upload(f: any): Promise<any> {
     const { getState } = require("../db/state");
-    const base_url = getState().getConfig("base_url") || "http://10.0.2.2:3000";
+    const state = getState();
+    const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
     const url = `${base_url}/files/upload`;
-    const token = window.localStorage.getItem("auth_jwt");
+    const token = state.mobileConfig.jwt;
     const formData = new FormData();
     formData.append("file", f);
     const response = await axios.post(url, formData, {

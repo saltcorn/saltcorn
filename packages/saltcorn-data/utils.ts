@@ -283,8 +283,8 @@ const buildRelationPath = (
  * @param str
  * @returns
  */
-const removeWhitespaces = (str: string) => {
-  return str.replace(/\s/g, "X");
+const removeNonWordChars = (str: string) => {
+  return str.replace(/[\W_]+/g, "");
 };
 
 export = {
@@ -316,5 +316,5 @@ export = {
   getSafeBaseUrl,
   parseRelationPath,
   buildRelationPath,
-  removeWhitespaces,
+  removeNonWordChars,
 };
