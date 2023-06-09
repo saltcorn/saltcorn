@@ -33,6 +33,7 @@ RUN cordova plugin add cordova-plugin-camera
 RUN cordova platform add android
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
+ENV ANDROID_HOME=/android_sdk
 ENV GRADLE_HOME=/opt/gradle-7.1.1
 ENV PATH=$PATH:/opt/gradle-7.1.1/bin
 # stop gradle from downloading itself
