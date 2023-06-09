@@ -13,7 +13,7 @@ import File from "@saltcorn/data/models/file";
 const { getState } = require("@saltcorn/data/db/state");
 import type User from "@saltcorn/data/models/user";
 import { parseStringPromise, Builder } from "xml2js";
-import { removeWhitespaces } from "@saltcorn/data/utils";
+import { removeNonWordChars } from "@saltcorn/data/utils";
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
@@ -41,7 +41,7 @@ export async function setAppName(buildDir: string, appName: string) {
     const configXml = join(buildDir, "config.xml");
     const content = readFileSync(configXml);
     const parsed = await parseStringPromise(content);
-    parsed.widget.$.id = `${removeWhitespaces(appName)}.mobile.app`;
+    parsed.widget.$.id = `${removeNonWordChars(appName)}.mobile.app`;
     parsed.widget.name[0] = appName;
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
@@ -59,7 +59,7 @@ export async function setAppName(buildDir: string, appName: string) {
  * parse the config.xml file and replace the version parameter
  * on error the defaults will be used
  * @param buildDir directory where the app will be build
- * @param appVersion 
+ * @param appVersion
  */
 export async function setAppVersion(buildDir: string, appVersion: string) {
   try {
@@ -201,6 +201,18 @@ function addPlugins(buildDir: string) {
   result = spawnSync(
     "npm",
     ["run", "add-plugin", "--", "cordova-plugin-geolocation"],
+    {
+      cwd: buildDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
+    }
+  );
+  console.log(result.output.toString());
+  result = spawnSync(
+    "npm",
+    ["run", "add-plugin", "--", "cordova-plugin-camera"],
     {
       cwd: buildDir,
       env: {

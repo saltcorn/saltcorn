@@ -41,7 +41,20 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb) {
   const urlParams = new URLSearchParams();
   for (const entry of new FormData(e).entries()) {
     if (entry[1] instanceof File) files[entry[0]] = entry[1];
-    else urlParams.append(entry[0], entry[1]);
+    else {
+      // is there a hidden input with a filename?
+      const domEl = $(e).find(
+        `[name='${entry[0]}'][mobile-camera-input='true']`
+      );
+      if (domEl.length > 0) {
+        const tokens = entry[1].split("/");
+        const fileName = tokens[tokens.length - 1];
+        const directory = tokens.splice(0, tokens.length - 1).join("/");
+        // read and add file to submit
+        const binary = await parent.readBinary(fileName, directory);
+        files[entry[0]] = new File([binary], fileName);
+      } else urlParams.append(entry[0], entry[1]);
+    }
   }
   const queryStr = urlParams.toString();
   await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
@@ -769,6 +782,48 @@ function showLoadSpinner() {
 
 function removeLoadSpinner() {
   $("#scspinner").remove();
+}
+
+/**
+ * is called when an input with capture=camera is used
+ * It takes a picture with the camera plugin, saves the file, and adds the filename as a hidden input.
+ * @param {*} fieldName
+ */
+async function getPicture(fieldName) {
+  const cameraOptions = {
+    quality: 50,
+    encodingType: parent.Camera.EncodingType.JPEG,
+    destinationType: parent.Camera.DestinationType.FILE_URI,
+  };
+  const getPictureWithPromise = () => {
+    return new Promise((resolve, reject) => {
+      parent.navigator.camera.getPicture(
+        (imageDate) => {
+          return resolve(imageDate);
+        },
+        (message) => {
+          return reject(message);
+        },
+        cameraOptions
+      );
+    });
+  };
+  try {
+    const form = $(`#cptbtn${fieldName}`).closest("form");
+    const onsubmit = form.attr("onsubmit");
+    form.attr("onsubmit", "javascript:void(0)");
+    const fileURI = await getPictureWithPromise();
+    form.attr("onsubmit", onsubmit);
+    const inputId = `input${fieldName}`;
+    form.find(`#${inputId}`).remove();
+    form.append(
+      `<input class="d-none" id="${inputId}" name="${fieldName}" value="${fileURI}" mobile-camera-input="true" />`
+    );
+    const tokens = fileURI.split("/");
+    $(`#cpt-file-name-${fieldName}`).text(tokens[tokens.length - 1]);
+  } catch (error) {
+    parent.errorAlert(error);
+  }
 }
 
 function reload_on_init() {

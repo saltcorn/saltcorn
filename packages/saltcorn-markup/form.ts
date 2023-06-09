@@ -1045,6 +1045,8 @@ const renderFormLayout = (form: Form): string => {
           : "";
         if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
+        // TODO ch: get it more generic, split up editQuery
+        field.attributes.isMobile = !isNode || form.req?.smr;
         return (
           innerField(
             in_repeat

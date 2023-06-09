@@ -18,6 +18,7 @@ npm run add-plugin /init_project/project/plugins/cordova-plugin-file
 npm run add-plugin /init_project/project/plugins/cordova-sqlite-ext
 npm run add-plugin /init_project/project/plugins/cordova-plugin-network-information
 npm run add-plugin /init_project/project/plugins/cordova-plugin-geolocation
+npm run add-plugin /init_project/project/plugins/cordova-plugin-camera
 echo "calling cordova build";
 cordova build android
 
