@@ -19,6 +19,7 @@ const Router = require("express-promise-router");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
+const { prepare_update_row } = require("@saltcorn/data/web-mobile-commons");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
@@ -193,7 +194,7 @@ router.get(
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     let { tableName, fieldName } = req.params;
-    const table = await Table.findOne(
+    const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
         : { name: tableName }
@@ -248,7 +249,7 @@ router.get(
   error_catcher(async (req, res, next) => {
     let { tableName } = req.params;
     const { fields, versioncount, approximate, ...req_query } = req.query;
-    const table = await Table.findOne(
+    const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
         : { name: tableName }
@@ -376,7 +377,7 @@ router.post(
   "/:tableName/",
   error_catcher(async (req, res, next) => {
     const { tableName } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -453,46 +454,22 @@ router.post(
   "/:tableName/:id",
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
     await passport.authenticate(
-      "api-bearer",
+      ["api-bearer", "jwt"],
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           const { _versions, ...row } = req.body;
           const fields = table.getFields();
           readState(row, fields, req);
-          let errors = [];
-          let hasErrors = false;
-          for (const k of Object.keys(row)) {
-            const field = fields.find((f) => f.name === k);
-            if (!field && k.includes(".")) {
-              const [fnm, jkey] = k.split(".");
-              const jfield = fields.find((f) => f.name === fnm);
-              if (jfield?.type?.name === "JSON") {
-                if (typeof row[fnm] === "undefined") {
-                  const dbrow = await table.getRow({ [table.pk_name]: id });
-                  row[fnm] = dbrow[fnm] || {};
-                }
-                row[fnm][jkey] = row[k];
-                delete row[k];
-              }
-            } else if (!field || field.calculated) {
-              delete row[k];
-            } else if (field?.type && field.type.validate) {
-              const vres = field.type.validate(field.attributes || {})(row[k]);
-              if (vres.error) {
-                hasErrors = true;
-                errors.push(`${k}: ${vres.error}`);
-              }
-            }
-          }
-          if (hasErrors) {
+          const errors = await prepare_update_row(table, row, id);
+          if (errors.length > 0) {
             getState().log(
               2,
               `API POST ${table.name} error: ${errors.join(", ")}`
@@ -530,7 +507,7 @@ router.delete(
   // in case of primary key different from id - id will be string "undefined"
   error_catcher(async (req, res, next) => {
     const { tableName, id } = req.params;
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API DELETE ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -544,7 +521,7 @@ router.delete(
           try {
             if (id === "undefined") {
               const pk_name = table.pk_name;
-              //const fields = await table.getFields();
+              //const fields = table.getFields();
               const row = req.body;
               //readState(row, fields);
               await table.deleteRows(

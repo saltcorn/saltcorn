@@ -54,7 +54,7 @@ module.exports = router;
  * @returns {Promise<object>}
  */
 const getUserFields = async (req) => {
-  const userTable = await Table.findOne({ name: "users" });
+  const userTable = Table.findOne({ name: "users" });
   const userFields = (await userTable.getFields()).filter(
     (f) => !f.calculated && f.name !== "id"
   );
@@ -795,7 +795,7 @@ router.get(
     const contents = [];
     for (const table of tables) {
       if (table.external) continue;
-      const fields = await table.getFields();
+      const fields = table.getFields();
       const ownership_opts = await table.ownership_options();
       const form = new Form({
         action: "/table",

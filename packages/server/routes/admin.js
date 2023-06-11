@@ -954,12 +954,14 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      if (process.send) process.send("RestartServer");
+      if (process.send) getState().processSend("RestartServer");
       else process.exit(0);
     } else {
       await restart_tenant(loadAllPlugins);
-      process.send &&
-        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
+      getState().processSend({
+        restart_tenant: true,
+        tenant: db.getTenantSchema(),
+      });
       req.flash("success", req.__("Restart complete"));
       res.redirect("/admin");
     }
@@ -984,13 +986,13 @@ router.post(
         "npm",
         ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
         {
-          stdio: ["ignore", "pipe", process.stderr],
+          stdio: ["ignore", "pipe", "pipe"],
         }
       );
       child.stdout.on("data", (data) => {
         res.write(data);
       });
-      child.stderr.on("data", (data) => {
+      child.stderr?.on("data", (data) => {
         res.write(data);
       });
       child.on("exit", function (code, signal) {
@@ -1000,7 +1002,7 @@ router.post(
           )
         );
         setTimeout(() => {
-          if (process.send) process.send("RestartServer");
+          getState().processSend("RestartServer");
           process.exit(0);
         }, 100);
       });
@@ -1385,6 +1387,9 @@ router.get(
   error_catcher(async (req, res) => {
     const views = await View.find();
     const pages = await Page.find();
+    const images = (await File.find({ mime_super: "image" })).filter((image) =>
+      image.filename?.endsWith(".png")
+    );
 
     send_admin_page({
       res,
@@ -1462,7 +1467,7 @@ router.get(
                       // select entry-view
                       select(
                         {
-                          class: "form-control",
+                          class: "form-select",
                           name: "entryPoint",
                           id: "viewInputID",
                         },
@@ -1475,14 +1480,14 @@ router.get(
                       // select entry-page
                       select(
                         {
-                          class: "form-control d-none",
+                          class: "form-select d-none",
                           id: "pageInputID",
                         },
                         pages
                           .map((page) =>
                             option({ value: page.name }, page.name)
                           )
-                          .join(",")
+                          .join("")
                       )
                     ),
                     div(
@@ -1528,28 +1533,51 @@ router.get(
                       })
                     )
                   ),
+                  // app name
                   div(
                     { class: "row pb-2" },
                     div(
                       { class: "col-sm-8" },
                       label(
                         {
-                          for: "appNameInputId",
+                          for: "appFileInputId",
                           class: "form-label fw-bold",
                         },
-                        req.__("App file")
+                        req.__("App name")
                       ),
                       input({
                         type: "text",
                         class: "form-control",
-                        name: "appFile",
-                        id: "appFileInputId",
-                        placeholder: "app-debug",
+                        name: "appName",
+                        id: "appNameInputId",
+                        placeholder: "SaltcornMobileApp",
                       })
                     )
                   ),
+                  // app version
                   div(
-                    { class: "row pb-3" },
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "appVersionInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("App version")
+                      ),
+                      input({
+                        type: "text",
+                        class: "form-control",
+                        name: "appVersion",
+                        id: "appVersionInputId",
+                        placeholder: "1.0.0",
+                      })
+                    )
+                  ),
+                  // server url
+                  div(
+                    { class: "row pb-2" },
                     div(
                       { class: "col-sm-8" },
                       label(
@@ -1568,6 +1596,60 @@ router.get(
                       })
                     )
                   ),
+                  // app icon
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "appIconInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("App icon")
+                      ),
+                      select(
+                        {
+                          class: "form-select",
+                          name: "appIcon",
+                          id: "appIconInputId",
+                        },
+                        [
+                          option({ value: "" }, ""),
+                          ...images.map((image) =>
+                            option({ value: image.location }, image.filename)
+                          ),
+                        ].join("")
+                      )
+                    )
+                  ),
+                  div(
+                    { class: "row pb-3" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "splashPageInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("Splash Page")
+                      ),
+                      select(
+                        {
+                          class: "form-select",
+                          name: "splashPage",
+                          id: "splashPageInputId",
+                        },
+                        [
+                          option({ value: "" }, ""),
+                          ...pages.map((page) =>
+                            option({ value: page.name }, page.name)
+                          ),
+                        ].join("")
+                      )
+                    )
+                  ),
+
                   div(
                     // TODO only for some tables?
                     { class: "row pb-2" },
@@ -1686,8 +1768,11 @@ router.post(
       androidPlatform,
       iOSPlatform,
       useDocker,
-      appFile,
+      appName,
+      appVersion,
+      appIcon,
       serverURL,
+      splashPage,
       allowOfflineMode,
     } = req.body;
     if (!androidPlatform && !iOSPlatform) {
@@ -1734,8 +1819,11 @@ router.post(
         spawnParams.push("--buildForEmulator");
       }
     }
-    if (appFile) spawnParams.push("-a", appFile);
+    if (appName) spawnParams.push("--appName", appName);
+    if (appVersion) spawnParams.push("--appVersion", appVersion);
+    if (appIcon) spawnParams.push("--appIcon", appIcon);
     if (serverURL) spawnParams.push("-s", serverURL);
+    if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (
       db.is_it_multi_tenant() &&
@@ -1816,7 +1904,7 @@ router.post(
       await View.delete({});
     }
     //user fields
-    const users = await Table.findOne({ name: "users" });
+    const users = Table.findOne({ name: "users" });
     const userfields = await users.getFields();
     for (const f of userfields) {
       if (f.is_fkey) {
@@ -1839,7 +1927,7 @@ router.post(
           table_id: table.id,
         });
         await table.update({ ownership_field_id: null });
-        const fields = await table.getFields();
+        const fields = table.getFields();
         for (const f of fields) {
           if (f.is_fkey) {
             await f.delete();
@@ -1882,14 +1970,16 @@ router.post(
       await getState().refresh();
     }
     if (form.values.users) {
-      const users1 = await Table.findOne({ name: "users" });
+      const users1 = Table.findOne({ name: "users" });
       const userfields1 = await users1.getFields();
 
       for (const f of userfields1) {
         if (f.name !== "email" && f.name !== "id") await f.delete();
       }
       await db.deleteWhere("users");
-      await db.deleteWhere("_sc_roles", { not: { id: { in: [1, 4, 8, 10] } } });
+      await db.deleteWhere("_sc_roles", {
+        not: { id: { in: [1, 40, 80, 100] } },
+      });
       if (db.reset_sequence) await db.reset_sequence("users");
       req.logout(function (err) {
         if (req.session.destroy)

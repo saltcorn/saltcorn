@@ -117,7 +117,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
-    const view = await View.findOne({ name: viewname });
+    const [view] = await View.find({ name: viewname });
     if (!view) {
       res.send("");
       return;
@@ -131,7 +131,7 @@ router.post(
         if (!row) {
           if (!table)
             // todo check after where change
-            table = await Table.findOne(
+            table = Table.findOne(
               view.table_id
                 ? { id: view.table_id }
                 : { name: view.exttable_name }

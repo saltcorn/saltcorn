@@ -163,7 +163,7 @@ describe("homepage", () => {
       .expect(toInclude("No views"));
   });
   it("shows with-view quick start", async () => {
-    const table = await Table.findOne({ name: "mytable" });
+    const table = Table.findOne({ name: "mytable" });
 
     const v = await View.create({
       table_id: table.id,
@@ -200,7 +200,7 @@ describe("bool toggle", () => {
 
 describe("history", () => {
   it("should enable history", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
 
     const loginCookie = await getAdminLoginCookie();
 
@@ -211,7 +211,7 @@ describe("history", () => {
       .send("id=" + table.id)
       .send("versioned=on")
       .expect(toRedirect("/table/" + table.id));
-    const table1 = await Table.findOne({ name: "books" });
+    const table1 = Table.findOne({ name: "books" });
     expect(table1.versioned).toBe(true);
   });
   it("create new row in versioned table", async () => {
@@ -231,7 +231,7 @@ describe("history", () => {
   it("edit row in versioned table", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     await request(app)
       .post("/api/books/" + tolstoy.id)
@@ -247,7 +247,7 @@ describe("history", () => {
   it("edit row in versioned table again", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     await request(app)
       .post("/api/books/" + tolstoy.id)
@@ -263,7 +263,7 @@ describe("history", () => {
 
   it("show versions", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -276,7 +276,7 @@ describe("history", () => {
   });
   it("restores old version", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     const tolstoy = await table.getRow({ author: "Leo Tolstoy" });
     const app = await getApp({ disableCsrf: true });
     await request(app)

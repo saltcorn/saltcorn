@@ -33,7 +33,7 @@ describe("Table create", () => {
   it("should create", async () => {
     expect.assertions(3);
     const tc = await Table.create("mytable");
-    const tf = await Table.findOne({ id: tc.id });
+    const tf = Table.findOne({ id: tc.id });
     assertIsSet(tf);
     expect(tf.name).toStrictEqual("mytable");
   });
@@ -247,7 +247,7 @@ describe("Library", () => {
 
 describe("TableConstraint", () => {
   it("should create", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const con = await TableConstraint.create({
       table,

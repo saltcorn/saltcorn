@@ -191,6 +191,7 @@ class Form implements AbstractForm {
     this.hasErrors = false;
     this.errors = {};
     this.fields.forEach((f) => {
+      if (f instanceof Field && f?.input_type === "section_header") return;
       if (hasFieldMembers(f)) {
         if (f.disabled || f.calculated) return;
         if (

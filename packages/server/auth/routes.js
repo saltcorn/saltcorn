@@ -467,7 +467,7 @@ const default_signup_form = async (req) => {
   const form = loginForm(req, true);
   const new_user_form = getState().getConfig("new_user_form", "");
   if (!new_user_form) {
-    const userTable = await Table.findOne({ name: "users" });
+    const userTable = Table.findOne({ name: "users" });
     const userFields = await userTable.getFields();
 
     for (const f of userFields) {
@@ -631,8 +631,8 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
   const view = await View.findOne({ name: new_user_view_name });
   if (!view)
     throw new InvalidConfiguration("New user form view does not exist");
-  const table = await Table.findOne({ name: "users" });
-  const fields = await table.getFields();
+  const table = Table.findOne({ name: "users" });
+  const fields = table.getFields();
   const { columns, layout } = view.configuration;
 
   const tfields = (columns || [])
@@ -776,8 +776,8 @@ router.post(
 
       signup_login_with_user(u, req, res);
     } catch (e) {
-      const table = await Table.findOne({ name: "users" });
-      const fields = await table.getFields();
+      const table = Table.findOne({ name: "users" });
+      const fields = table.getFields();
       form.hasErrors = true;
       const unique_field_error = fields.find(
         (f) =>
@@ -833,8 +833,8 @@ router.post(
 
           signup_login_with_user(u, req, res);
         } catch (e) {
-          const table = await Table.findOne({ name: "users" });
-          const fields = await table.getFields();
+          const table = Table.findOne({ name: "users" });
+          const fields = table.getFields();
           form.hasErrors = true;
           const unique_field_error = fields.find(
             (f) =>

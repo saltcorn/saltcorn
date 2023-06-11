@@ -671,17 +671,19 @@ const get_viewable_fields = (
       }
       const targetNm =
         column.targetNm ||
-        (
-          column.stat.replace(" ", "") +
-          "_" +
-          table +
-          "_" +
-          fld +
-          "_" +
-          column.agg_field.split("@")[0] +
-          "_" +
-          db.sqlsanitize(column.aggwhere || "")
-        ).toLowerCase();
+        db.sqlsanitize(
+          (
+            column.stat.replace(" ", "") +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              column.agg_field.split("@")[0] +
+              "_" +
+              column.aggwhere || ""
+          ).toLowerCase()
+        );
 
       let showValue = (value) => {
         if (value === true || value === false)
@@ -939,7 +941,7 @@ const getForm = async (
   req,
   isRemote
 ) => {
-  const fields = await table.getFields();
+  const fields = table.getFields();
 
   const tfields = (columns || [])
     .map((column) => {
@@ -1030,7 +1032,7 @@ const getForm = async (
  */
 const fill_presets = async (table, req, fixed) => {
   if (!table) return fixed;
-  const fields = await table.getFields();
+  const fields = table.getFields();
   Object.keys(fixed || {}).forEach((k) => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {

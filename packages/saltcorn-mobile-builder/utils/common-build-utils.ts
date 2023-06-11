@@ -5,7 +5,9 @@ import { join } from "path";
 import { existsSync, mkdirSync, copySync, writeFileSync } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync } from "child_process";
-import Table from "@saltcorn/data/models/table";
+import Page from "@saltcorn/data/models/page";
+import type User from "@saltcorn/data/models/user";
+import { getState } from "@saltcorn/data/db/state";
 
 /**
  * copy files from 'server/public' into the www folder (with a version_tag prefix)
@@ -154,5 +156,71 @@ export async function createSqliteDb(buildDir: string) {
         : "'reset-schema' finished without output"
     );
     return result.status;
+  }
+}
+
+/**
+ * Prepare a splash page
+ * runs a page and writes the html into 'splash_page.html' of the www directory
+ * @param buildDir
+ * @param pageName splash page
+ * @param serverUrl needed, if 'pageName' uses images from the server
+ * @param tenantAppName
+ * @param user
+ */
+export async function prepareSplashPage(
+  buildDir: string,
+  pageName: string,
+  serverUrl: string,
+  tenantAppName?: string,
+  user?: User
+) {
+  try {
+    const role = user ? user.role_id : 100;
+    const page = Page.findOne({ name: pageName });
+    if (!page) throw new Error(`The page '${pageName}' does not exist`);
+    const state = getState();
+    if (!state) throw new Error("Unable to get the state object");
+    // @ts-ignore
+    global.window = {};
+    const contents = await page.run(
+      {},
+      {
+        req: {
+          user,
+          getLocale: () => {
+            return "en";
+          },
+        },
+      }
+    );
+    const sbadmin2 = state.plugins["sbadmin2"];
+    // @ts-ignore TODO CH fix base_types
+    const html = sbadmin2.layout.wrap({
+      title: page.title,
+      body: { above: [contents] },
+      alerts: [],
+      role: role,
+      menu: [],
+      headers: [
+        { css: `static_assets/${db.connectObj.version_tag}/saltcorn.css` },
+        {
+          script: `static_assets/${db.connectObj.version_tag}/saltcorn-common.js`,
+        },
+        { script: "js/utils/iframe_view_utils.js" },
+        {
+          headerTag: `<script>parent.splashConfig = { server_path: '${serverUrl}', tenantAppName: ${tenantAppName}, };</script>`,
+        },
+      ],
+      brand: { name: "" },
+      bodyClass: "",
+      currentUrl: "",
+    });
+    // @ts-ignore
+    global.window = undefined;
+    writeFileSync(join(buildDir, "www", "splash_page.html"), html);
+  } catch (error) {
+    console.log("Unable to build a splash page");
+    console.log(error);
   }
 }

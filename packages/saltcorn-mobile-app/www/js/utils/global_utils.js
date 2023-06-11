@@ -1,4 +1,4 @@
-/*global window, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator*/
+/*global window, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig*/
 
 let routingHistory = [];
 
@@ -25,7 +25,10 @@ function popRoute() {
 }
 
 async function apiCall({ method, path, params, body, responseType, timeout }) {
-  const config = saltcorn.data.state.getState().mobileConfig;
+  const config =
+    typeof saltcorn !== "undefined"
+      ? saltcorn.data.state.getState().mobileConfig
+      : splashConfig;
   const serverPath = config.server_path;
   const url = `${serverPath}${path}`;
   const headers = {
@@ -60,12 +63,17 @@ function clearAlerts() {
 }
 
 function showAlerts(alerts) {
-  const iframe = document.getElementById("content-iframe");
-  const alertsArea =
-    iframe.contentWindow.document.getElementById("alerts-area");
-  alertsArea.innerHTML = "";
-  for (const { type, msg } of alerts) {
-    alertsArea.innerHTML += saltcorn.markup.alert(type, msg);
+  if (typeof saltcorn === "undefined") {
+    console.log("Not yet initalized.");
+    console.log(alerts);
+  } else {
+    const iframe = document.getElementById("content-iframe");
+    const alertsArea =
+      iframe.contentWindow.document.getElementById("alerts-area");
+    alertsArea.innerHTML = "";
+    for (const { type, msg } of alerts) {
+      alertsArea.innerHTML += saltcorn.markup.alert(type, msg);
+    }
   }
 }
 
@@ -194,9 +202,10 @@ async function handleRoute(route, query, files) {
       await gotoEntryView();
     } else {
       if (route === "/") return await gotoEntryView();
-      addRoute({ route, query });
+      const safeRoute = route ? route : currentLocation();
+      addRoute({ route: safeRoute, query });
       const page = await router.resolve({
-        pathname: route,
+        pathname: safeRoute,
         query: query,
         files: files,
         alerts: mobileConfig.isOfflineMode
@@ -209,11 +218,17 @@ async function handleRoute(route, query, files) {
           : [],
       });
       if (page.redirect) {
-        if (page.redirect.startsWith("http://localhost")) {
+        if (
+          page.redirect.startsWith("http://localhost") ||
+          page.redirect === "undefined"
+        ) {
           await gotoEntryView();
         } else {
           const { path, query } = splitPathQuery(page.redirect);
-          await handleRoute(path, query);
+          await handleRoute(
+            path.startsWith("/") && path.length > 1 ? `get${path}` : path,
+            query
+          );
         }
       } else if (page.content) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);

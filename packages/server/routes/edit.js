@@ -31,7 +31,7 @@ router.post(
     const { tableName, id, field_name } = req.params;
     const { redirect } = req.query;
     // todo check that works after where change
-    const table = await Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName });
 
     const row = await table.getRow(
       { [table.pk_name]: id },

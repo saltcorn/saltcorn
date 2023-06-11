@@ -47,6 +47,30 @@ async function readJSON(fileName, dirName) {
   });
 }
 
+async function readBinary(fileName, dirName) {
+  const dirEntry = await getDirEntry(dirName);
+  return new Promise((resolve, reject) => {
+    dirEntry.getFile(
+      fileName,
+      { create: false, exclusive: false },
+      function (fileEntry) {
+        fileEntry.file(function (file) {
+          let reader = new FileReader();
+          reader.onloadend = function (e) {
+            resolve(this.result);
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      },
+      function (err) {
+        console.log(`unable to read  ${fileName}`);
+        console.log(err);
+        reject(err);
+      }
+    );
+  });
+}
+
 async function write(fileName, dirName, content) {
   const dirEntry = await getDirEntry(dirName);
   return new Promise((resolve, reject) => {

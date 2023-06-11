@@ -30,7 +30,7 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
   const table = await Table.create(name);
   // test UUID type
   if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
-    const [pk] = await table.getFields();
+    const [pk] = table.getFields();
     await pk.update({ type: "UUID" });
   }
   //fields
@@ -61,7 +61,7 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
  * @returns {Promise<*>}
  */
 const fill_table_row = async (table: Table): Promise<void> => {
-  const fields = await table.getFields();
+  const fields = table.getFields();
   const row: Row = {};
   for (const f of fields) {
     if (!f.calculated && (f.required || generateBool()) && !f.primary_key)
@@ -156,7 +156,7 @@ const random_field = async (
     } else if (f.reftable_name === "_sc_files") {
       f.attributes.summary_field = "email";
     } else {
-      const reftable = await Table.findOne({ name: f.reftable_name });
+      const reftable = Table.findOne({ name: f.reftable_name });
       if (!reftable)
         throw new Error(`The table '${f.reftable_name} does not exist'`);
       const reffields = (await reftable.getFields()).filter(

@@ -39,7 +39,7 @@ afterAll(db.close);
 
 describe("plugin helper", () => {
   it("get parent views", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     const x = await get_parent_views(patients, "foobar");
     expect(x[0].views.map((v: View) => v.name)).toStrictEqual([
       "authoredit",
@@ -47,7 +47,7 @@ describe("plugin helper", () => {
     ]);
   });
   it("get child views", async () => {
-    const books = await Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" });
     const x = await get_child_views(books, "foobar");
     expect(x[1].views.map((v: View) => v.name)).toStrictEqual(["patientlist"]);
   });
@@ -60,7 +60,7 @@ describe("plugin helper", () => {
     ];
 
     it("single keys to source and rel table", async () => {
-      const sourceTbl = await Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" });
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expected of expectedBase) {
         const actual = opts.find(
@@ -78,7 +78,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$another_user.topic.blog_in_topic$topic.post",
         ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post"
       );
-      const sourceTbl = await Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" });
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -101,7 +101,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post",
         ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic.post"
       );
-      const sourceTbl = await Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" });
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -130,7 +130,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post",
         ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic.post"
       );
-      const sourceTbl = await Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" });
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -159,7 +159,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic.post",
         ".users.user_interested_in_topic$user.topic.inbound_inbound$topic.post_from_level_two"
       );
-      const sourceTbl = await Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" });
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -193,7 +193,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post",
         ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.post_from_level_two"
       );
-      const sourceTbl = await Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" });
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(

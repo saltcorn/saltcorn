@@ -1,10 +1,19 @@
 import { spawnSync } from "child_process";
-import { existsSync, mkdirSync, copySync, rmSync } from "fs-extra";
+import {
+  existsSync,
+  mkdirSync,
+  copySync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+} from "fs-extra";
 import { join } from "path";
 import { readdirSync } from "fs";
 import File from "@saltcorn/data/models/file";
 const { getState } = require("@saltcorn/data/db/state");
 import type User from "@saltcorn/data/models/user";
+import { parseStringPromise, Builder } from "xml2js";
+import { removeNonWordChars } from "@saltcorn/data/utils";
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
@@ -19,6 +28,74 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     cwd: buildDir,
   });
   console.log(result.output.toString());
+}
+
+/**
+ * parse the config.xml file and replace the id and name parameters
+ * on error the defaults will be used
+ * @param buildDir directory where the app will be build
+ * @param appName
+ */
+export async function setAppName(buildDir: string, appName: string) {
+  try {
+    const configXml = join(buildDir, "config.xml");
+    const content = readFileSync(configXml);
+    const parsed = await parseStringPromise(content);
+    parsed.widget.$.id = `${removeNonWordChars(appName)}.mobile.app`;
+    parsed.widget.name[0] = appName;
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(configXml, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to set the appName to '${appName}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
+ * parse the config.xml file and replace the version parameter
+ * on error the defaults will be used
+ * @param buildDir directory where the app will be build
+ * @param appVersion
+ */
+export async function setAppVersion(buildDir: string, appVersion: string) {
+  try {
+    const configXml = join(buildDir, "config.xml");
+    const content = readFileSync(configXml);
+    const parsed = await parseStringPromise(content);
+    parsed.widget.$.version = appVersion;
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(configXml, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to set the appVersion to '${appVersion}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
+ * copy a png file into the build dir and use it as launcher icon
+ * @param buildDir
+ * @param appIcon path to appIcon file
+ */
+export async function prepareAppIcon(buildDir: string, appIcon: string) {
+  try {
+    copySync(appIcon, join(buildDir, "res", "icon", "android", "icon.png"), {
+      overwrite: true,
+    });
+  } catch (error: any) {
+    console.log(
+      `Unable to set the app icon '${appIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 /**
@@ -133,6 +210,18 @@ function addPlugins(buildDir: string) {
     }
   );
   console.log(result.output.toString());
+  result = spawnSync(
+    "npm",
+    ["run", "add-plugin", "--", "cordova-plugin-camera"],
+    {
+      cwd: buildDir,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
+    }
+  );
+  console.log(result.output.toString());
 }
 
 /**
@@ -199,14 +288,14 @@ function safeEnding(file: string, ending: string): string {
  * copy .apk / .ipa files to 'copyDir' if they exist
  * @param buildDir directory where the app was build
  * @param copyDir directory where the resulting app file will be copied to
- * @param the user specified by the userEmail (-c) parameter
- * @param appFileName name of the copied app file
+ * @param user the user specified by the userEmail (-c) parameter
+ * @param appName
  */
 export async function tryCopyAppFiles(
   buildDir: string,
   copyDir: string,
   user: User,
-  appFileName?: string
+  appName?: string
 ) {
   if (!existsSync(copyDir)) {
     mkdirSync(copyDir);
@@ -224,9 +313,7 @@ export async function tryCopyAppFiles(
   );
   const apkFile = fileWithEnding(apkBuildDir, ".apk");
   if (apkFile) {
-    const dstFile = appFileName
-      ? safeEnding(appFileName, ".apk")
-      : "app-debug.apk";
+    const dstFile = appName ? safeEnding(appName, ".apk") : "app-debug.apk";
     copySync(join(apkBuildDir, apkFile), join(copyDir, dstFile));
     await File.set_xattr_of_existing_file(dstFile, copyDir, user);
   }
@@ -234,9 +321,7 @@ export async function tryCopyAppFiles(
   const ipaBuildDir = join(buildDir, "platforms", "ios", "build", "device");
   const ipaFile = fileWithEnding(ipaBuildDir, ".ipa");
   if (ipaFile) {
-    const dstFile = appFileName
-      ? safeEnding(appFileName, ".ipa")
-      : "app-debug.ipa";
+    const dstFile = appName ? safeEnding(appName, ".ipa") : "app-debug.ipa";
     copySync(join(ipaBuildDir, ipaFile), join(copyDir, dstFile));
     await File.set_xattr_of_existing_file(dstFile, copyDir, user);
   }

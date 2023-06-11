@@ -256,7 +256,7 @@ describe("Kitten tracker", () => {
       .expect(toRedirect("/"));
   });
   it("should insert rows", async () => {
-    const tbl = await Table.findOne({ name: "cats" });
+    const tbl = Table.findOne({ name: "cats" });
     expect(!!tbl).toBe(true);
     await tbl.insertRow({ name: "Charlie", stage: "Kitten", lat: 51, long: 0 });
     await tbl.insertRow({

@@ -31,6 +31,8 @@ const {
   text_attr,
   i,
   button,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const renderLayout = require("@saltcorn/markup/layout");
 
@@ -85,10 +87,10 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Layout"),
         builder: async (context) => {
-          const table = await Table.findOne(
+          const table = Table.findOne(
             context.table_id || context.exttable_name
           );
-          const fields = await table.getFields();
+          const fields = table.getFields();
 
           const boolfields = fields.filter(
             (f) => f.type && f.type.name === "Bool"
@@ -118,7 +120,7 @@ const configuration_workflow = (req) =>
           });
           for (const field of fields) {
             if (field.type === "Key") {
-              field.reftable = await Table.findOne({
+              field.reftable = Table.findOne({
                 name: field.reftable_name,
               });
               if (field.reftable) await field.reftable.getFields();
@@ -273,7 +275,7 @@ const run = async (
   //console.log(columns);
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
-  const tbl = await Table.findOne(table_id);
+  const tbl = Table.findOne(table_id);
   const fields = await tbl.getFields();
   if (tbl.name === "users") {
     fields.push(
@@ -315,7 +317,14 @@ const run = async (
       }&email=${encodeURIComponent(row.email)}`;
     }
   }
-  await set_join_fieldviews({ table: tbl, layout, fields });
+  await set_load_actions_join_fieldviews({
+    table: tbl,
+    layout,
+    fields,
+    req: extra.req,
+    res: extra.res,
+    row: rows[0],
+  });
 
   const rendered = (
     await renderRows(
@@ -348,7 +357,14 @@ const run = async (
  * @param {object[]} opts.fields
  * @returns {Promise<void>}
  */
-const set_join_fieldviews = async ({ table, layout, fields }) => {
+const set_load_actions_join_fieldviews = async ({
+  table,
+  layout,
+  fields,
+  req,
+  res,
+  row,
+}) => {
   await traverse(layout, {
     join_field: async (segment) => {
       const { join_field, fieldview } = segment;
@@ -358,6 +374,25 @@ const set_join_fieldviews = async ({ table, layout, fields }) => {
       if (field && field.type === "File") segment.field_type = "File";
       else if (field?.type.name && field?.type?.fieldviews[fieldview])
         segment.field_type = field.type.name;
+    },
+    async action(segment) {
+      if (segment.action_style === "on_page_load") {
+        //run action
+        const actionResult = await run_action_column({
+          col: { ...segment },
+          referrer: req.get("Referrer"),
+          req,
+          res,
+          row,
+        });
+        segment.type = "blank";
+        segment.style = {};
+        if (actionResult)
+          segment.contents = script(
+            domReady(`common_done(${JSON.stringify(actionResult)})`)
+          );
+        else segment.contents = "";
+      }
     },
   });
 };
@@ -384,7 +419,7 @@ const renderRows = async (
   //console.log(layout);
   if (!columns || !layout) return "View not yet built";
 
-  const fields = await table.getFields();
+  const fields = table.getFields();
 
   const role = extra.req.user ? extra.req.user.role_id : 100;
   var views = {};
@@ -394,12 +429,18 @@ const renderRows = async (
     const view = await View.findOne({ name: view_select.viewname });
     if (!view) return false;
     if (view.table_id === table.id) view.table = table;
-    else view.table = await Table.findOne({ id: view.table_id });
+    else view.table = Table.findOne({ id: view.table_id });
     view.view_select = view_select;
     views[name] = view;
     return view;
   };
-  await set_join_fieldviews({ table, layout, fields });
+  await set_load_actions_join_fieldviews({
+    table,
+    layout,
+    fields,
+    req: extra.req,
+    res: extra.res,
+  });
 
   const owner_field = await table.owner_fieldname();
   const subviewExtra = { ...extra };
@@ -505,7 +546,7 @@ const runMany = async (
   extra,
   { runManyQuery }
 ) => {
-  const tbl = await Table.findOne({ id: table_id });
+  const tbl = Table.findOne({ id: table_id });
   const rows = await runManyQuery(state, {
     where: extra.where,
     limit: extra.limit,
@@ -640,6 +681,7 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
               row[table.pk_name]
             }`,
             "data-inline-edit-type": field?.type?.name,
+            class: !isWeb(req) ? "mobile-data-inline-edit" : "",
           },
           fvrun
         );
@@ -679,17 +721,19 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       }
       const targetNm =
         column.targetNm ||
-        (
-          stat +
-          "_" +
-          table +
-          "_" +
-          fld +
-          "_" +
-          (agg_field || "").split("@")[0] +
-          "_" +
-          db.sqlsanitize(aggwhere || "")
-        ).toLowerCase();
+        db.sqlsanitize(
+          (
+            stat +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              (agg_field || "").split("@")[0] +
+              "_" +
+              aggwhere || ""
+          ).toLowerCase()
+        );
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
@@ -815,7 +859,7 @@ module.exports = {
         layout
       );
       readState(state, fields);
-      const tbl = await Table.findOne(table_id || exttable_name);
+      const tbl = Table.findOne(table_id || exttable_name);
       const qstate = await stateFieldsToWhere({
         fields,
         state,
@@ -846,7 +890,7 @@ module.exports = {
       };
     },
     async runManyQuery(state, { where, limit, offset, orderBy, orderDesc }) {
-      const tbl = await Table.findOne({ id: table_id });
+      const tbl = Table.findOne({ id: table_id });
       const fields = await tbl.getFields();
       readState(state, fields);
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -894,7 +938,7 @@ module.exports = {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       const row = await table.getRow({ id: body.id });
       try {
         const result = await run_action_column({
@@ -915,9 +959,9 @@ module.exports = {
       const user_id = req.user ? req.user.id : null;
 
       if (user_id && Object.keys(body).length == 1) {
-        const table = await Table.findOne({ id: table_id });
+        const table = Table.findOne({ id: table_id });
         if (table.ownership_field_id || table.ownership_formula) {
-          const fields = await table.getFields();
+          const fields = table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
             const row = await table.getJoinedRows({

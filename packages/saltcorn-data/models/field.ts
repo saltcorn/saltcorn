@@ -13,7 +13,12 @@ const {
   freeVariables,
 } = require("./expression");
 import { sqlsanitize } from "@saltcorn/db-common/internal";
-const { InvalidAdminAction, isNode } = require("../utils");
+const {
+  InvalidAdminAction,
+  isNode,
+  satisfies,
+  structuredClone,
+} = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -228,7 +233,7 @@ class Field implements AbstractField {
     }
     if (label_formula) {
       const { add_free_variables_to_joinfields } = require("../plugin-helper");
-      const fields = await table.getFields();
+      const fields = table.getFields();
       add_free_variables_to_joinfields(
         freeVariables(label_formula),
         joinFields,
@@ -603,6 +608,13 @@ class Field implements AbstractField {
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Field[]> {
+    if (selectopts.cached) {
+      const { getState } = require("../db/state");
+      return getState()
+        .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
+        .filter(satisfies(where || {}));
+    }
+
     const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map((dbf: FieldCfg) => new Field(dbf));
   }
@@ -853,7 +865,7 @@ class Field implements AbstractField {
    */
   async delete(): Promise<void> {
     const Table = require("./table");
-    const table = await Table.findOne({ id: this.table_id });
+    const table = Table.findOne({ id: this.table_id });
     const TableConstraint = require("./table_constraints");
     await TableConstraint.delete_field_constraints(table, this);
     if (table.ownership_field_id === this.id) {
@@ -934,7 +946,7 @@ class Field implements AbstractField {
     //console.log({ tables, fld });
     if (f.is_fkey) {
       //need to check ref types
-      const reftable = await Table.findOne({ name: f.reftable_name });
+      const reftable = Table.findOne({ name: f.reftable_name });
       if (reftable) {
         const reffields = await reftable.getFields();
         const refpk = reffields.find((rf: Field) => rf.primary_key);
@@ -944,7 +956,7 @@ class Field implements AbstractField {
     }
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
-    const table = await Table.findOne({ id: f.table_id });
+    const table = Table.findOne({ id: f.table_id });
     if (!f.calculated || f.stored) {
       if (typeof f.attributes.default === "undefined") {
         const q = `alter table ${schema}"${sqlsanitize(
@@ -1015,7 +1027,7 @@ class Field implements AbstractField {
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
       if (nrows > 0) {
-        const table1 = await Table.findOne({ id: f.table_id });
+        const table1 = Table.findOne({ id: f.table_id });
 
         //intentionally omit await
         recalculate_for_stored(table1); //not waiting as there could be a lot of data

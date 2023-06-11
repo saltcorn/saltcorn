@@ -279,6 +279,14 @@ const buildRelationPath = (
     .join(".")}`;
 };
 
+/**
+ * @param str
+ * @returns
+ */
+const removeNonWordChars = (str: string) => {
+  return str.replace(/[\W_]+/g, "");
+};
+
 export = {
   objectToQueryString,
   removeEmptyStrings,
@@ -308,4 +316,5 @@ export = {
   getSafeBaseUrl,
   parseRelationPath,
   buildRelationPath,
+  removeNonWordChars,
 };

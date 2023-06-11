@@ -9,13 +9,10 @@ const deleteRows = async (context) => {
   if (isOfflineMode || localTableIds.indexOf(table.id) >= 0) {
     if (role_id <= table.min_role_write) {
       await table.deleteRows({ id });
-    }
+      // TODO 'table.is_owner' check?
+    } else throw new Error(i18next.t("Not authorized"));
     if (isOfflineMode && !(await offlineHelper.hasOfflineRows())) {
       await offlineHelper.setOfflineSession(null);
-    }
-    // TODO 'table.is_owner' check?
-    else {
-      throw new Error(i18next.t("Not authorized"));
     }
   } else {
     await apiCall({ method: "POST", path: `/delete/${name}/${id}` });

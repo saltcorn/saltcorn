@@ -47,7 +47,7 @@ describe("TableIO", () => {
 describe("Table create basic tests", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
-    const tf = await Table.findOne({ id: tc.id });
+    const tf = Table.findOne({ id: tc.id });
     assertIsSet(tf);
     expect(tf.external).toBe(false);
     expect(tc.external).toBe(false);
@@ -72,7 +72,7 @@ describe("Table create basic tests", () => {
     expect(row.group).toBe(false);
   });
   it("should create required field in empty table without default", async () => {
-    const mytable1 = await Table.findOne({ name: "mytable1" });
+    const mytable1 = Table.findOne({ name: "mytable1" });
     expect(!!mytable1).toBe(true);
     await Field.create({
       table: mytable1,
@@ -83,7 +83,7 @@ describe("Table create basic tests", () => {
     });
   });
   it("should insert", async () => {
-    const mytable1 = await Table.findOne({ name: "mytable1" });
+    const mytable1 = Table.findOne({ name: "mytable1" });
     assertIsSet(mytable1);
     expect(mytable1.name).toBe("mytable1");
     const id = await db.insert(mytable1.name, { height1: 6 });
@@ -108,13 +108,13 @@ describe("Table create basic tests", () => {
     ).rejects.toThrow();
   });
   it("should get distinct values", async () => {
-    const table = await Table.findOne({ name: "mytable1" });
+    const table = Table.findOne({ name: "mytable1" });
     assertIsSet(table);
     const vs = await table.distinctValues("height1");
     expect(vs).toEqual([7]);
   });
   it("should delete", async () => {
-    const table = await Table.findOne({ name: "mytable1" });
+    const table = Table.findOne({ name: "mytable1" });
     assertIsSet(table);
     await table.delete();
     const table1 = await Table.find({ name: "mytable1" });
@@ -124,20 +124,20 @@ describe("Table create basic tests", () => {
 
 describe("Table get data", () => {
   it("should get rows", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const all = await patients.getRows();
     expect(all.length).toStrictEqual(2);
   });
   it("should get rows where name is Michael", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getRows({ name: "Michael Douglas" });
     assertIsSet(michaels);
     expect(michaels.length).toStrictEqual(1);
   });
   it("should get limited rows", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getRows(
       { name: { ilike: "Douglas" } },
@@ -147,7 +147,7 @@ describe("Table get data", () => {
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
   it("should get rows by slug", async () => {
-    const books = await Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const all = await books.getRows({
       author: { slugify: "herman-melville" },
@@ -156,7 +156,7 @@ describe("Table get data", () => {
     expect(all[0].pages).toStrictEqual(967);
   });
   it("should get joined rows where name is Michael", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       where: { name: "Michael Douglas" },
@@ -165,7 +165,7 @@ describe("Table get data", () => {
     expect(michaels[0].favbook).toBe(2);
   });
   it("should get joined rows where name is not null", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const nameds = await patients.getJoinedRows({
       where: { not: { name: null } },
@@ -173,13 +173,13 @@ describe("Table get data", () => {
     expect(nameds.length).toStrictEqual(2);
   });
   it("should get rows in id range", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const rows = await patients.getRows({ id: [{ gt: 0 }, { lt: 10 }] });
     expect(rows.length).toStrictEqual(2);
   });
   it("should get rows by subselect", async () => {
-    const books = await Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const nrows = await books.countRows({
       id: {
@@ -194,7 +194,7 @@ describe("Table get data", () => {
   });
 
   it("should get joined rows with limit and order", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const all = await patients.getJoinedRows({
       limit: 2,
@@ -204,7 +204,7 @@ describe("Table get data", () => {
     expect(all[1].favbook).toBe(2);
   });
   it("should get joined rows with limit and desc order", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const all = await patients.getJoinedRows({
       limit: 2,
@@ -215,7 +215,7 @@ describe("Table get data", () => {
     expect(all[0].favbook).toBe(2);
   });
   it("should get joined rows with aggregations", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -232,7 +232,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
   it("should get fkey aggregations", async () => {
-    const books = await Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     if (!db.isSQLite) {
       const rows = await books.getJoinedRows({
@@ -252,7 +252,7 @@ describe("Table get data", () => {
   });
   it("should get join-aggregations", async () => {
     //how many books has my publisher published
-    const books = await Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     if (!db.isSQLite) {
       const rows = await books.getJoinedRows({
@@ -273,7 +273,7 @@ describe("Table get data", () => {
     }
   });
   it("should get joined rows with latest aggregations", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -290,7 +290,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].last_temp)).toBe(37);
   });
   it("should get joined rows with earliest aggregations", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -307,7 +307,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].last_temp)).toBe(37);
   });
   it("should get double joined rows", async () => {
-    const readings = await Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",
@@ -319,7 +319,7 @@ describe("Table get data", () => {
     expect(reads[0].author).toBe("Herman Melville");
   });
   it("should get triple joined rows", async () => {
-    const readings = await Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",
@@ -336,7 +336,7 @@ describe("Table get data", () => {
     expect(reads[2].publisher).toBe("AK Press");
   });
   it("should rename joined rows signly", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const pats = await patients.getJoinedRows({
       orderBy: "id",
@@ -353,7 +353,7 @@ describe("Table get data", () => {
     expect(pats[0].favbook.id).toBe(1);
   });
   it("should rename joined rows doubly", async () => {
-    const readings = await Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",
@@ -370,7 +370,7 @@ describe("Table get data", () => {
     expect(reads[0].patient_id.favbook.author).toBe("Herman Melville");
   });
   it("should get joined rows with aggregations and joins", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -393,9 +393,9 @@ describe("Table get data", () => {
   });
 
   it("should support full text search", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const rows = await db.select("patients", {
       _fts: { fields, searchTerm: "Douglas" },
     });
@@ -403,13 +403,13 @@ describe("Table get data", () => {
     expect(rows.length).toBe(2);
   });
   it("should enable versioning", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     table.versioned = true;
     await table.update(table);
   });
   it("should save version on insert", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     await table.insertRow({ name: "Bunny foo-foo", favbook: 1 });
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
@@ -421,7 +421,7 @@ describe("Table get data", () => {
     expect(history1[0].name).toBe("Bunny foo-foo");
   });
   it("should save version on update", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
 
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
@@ -444,7 +444,7 @@ describe("Table get data", () => {
     expect(goon.favbook).toBe(1);
   });
   it("create field on version table", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
 
     const fc = await Field.create({
       table: table,
@@ -457,9 +457,9 @@ describe("Table get data", () => {
     await fc.delete();
   });
   it("should disable versioning", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    await table.getFields();
+    table.getFields();
     await table.update({ versioned: false });
   });
   it("should rename", async () => {
@@ -491,12 +491,12 @@ describe("Table get data", () => {
     expect(!!rows[0].reftall).toBe(false); //for sqlite
     if (!db.isSQLite) {
       await table.rename("isthisbetter");
-      const table3 = await Table.findOne({ name: "refsunsure" });
+      const table3 = Table.findOne({ name: "refsunsure" });
       assertIsSet(table3);
       const rows1 = await table3.getJoinedRows({ joinFields });
       expect(rows1[0].theref).toBe(id);
       expect(rows1[0].reftall).toBe(false);
-      const table2 = await Table.findOne({ name: "isthisbetter" });
+      const table2 = Table.findOne({ name: "isthisbetter" });
       assertIsSet(table2);
       expect(!!table2).toBe(true);
       table2.versioned = true;
@@ -505,7 +505,7 @@ describe("Table get data", () => {
     }
   });
   it("should get joined rows with arbitrary fieldnames", async () => {
-    const patients = await Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       where: { name: "Michael Douglas" },
@@ -535,7 +535,7 @@ describe("Table get data", () => {
       table: ratings,
     });
     await ratings.insertRow({ book: 1, rating: 7 });
-    const books = await Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     //db.set_sql_logging();
     const reads = await books.getJoinedRows({
@@ -554,7 +554,7 @@ describe("Table get data", () => {
 
 describe("relations", () => {
   it("get parent relations", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const rels = await table.get_parent_relations();
     expect(rels.parent_field_list).toContain("favbook.author");
@@ -562,7 +562,7 @@ describe("relations", () => {
   });
 
   it("get parent relations with one-to-one", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const rels = await table.get_parent_relations();
     expect(rels.parent_field_list).toEqual([
@@ -574,7 +574,7 @@ describe("relations", () => {
     ]);
   });
   it("get child relations", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const rels = await table.get_child_relations();
     expect(rels.child_field_list).toEqual([
@@ -585,7 +585,7 @@ describe("relations", () => {
     expect(rels.child_relations.length).toBe(3);
   });
   it("get child relations with join", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const rels = await table.get_child_relations(true);
     expect(rels.child_field_list).toEqual([
@@ -597,7 +597,7 @@ describe("relations", () => {
     expect(rels.child_relations.length).toBe(4);
   });
   it("get grandparent relations", async () => {
-    const table = await Table.findOne({ name: "readings" });
+    const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     const rels = await table.get_parent_relations(true);
     expect(rels.parent_field_list).toEqual([
@@ -617,7 +617,7 @@ describe("relations", () => {
     expect(rels.parent_relations.length).toBe(3);
   });
   it("get triple relations", async () => {
-    const table = await Table.findOne({ name: "readings" });
+    const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     const rels = await table.get_parent_relations(true, true);
     expect(rels.parent_field_list).toEqual([
@@ -655,7 +655,7 @@ Joe Celko, 856
 Gordon Kane, 217`;
     const fnm = "/tmp/test1ok.csv";
     await writeFile(fnm, csv);
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
@@ -670,7 +670,7 @@ William H Press, 852,7,100
 Peter Rossi, 212,9,200`;
     const fnm = "/tmp/test1ok.csv";
     await writeFile(fnm, csv);
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
@@ -686,7 +686,7 @@ Peter Rossi, 212,9,200`;
 17, David Harvey, 612`;
     const fnm = "/tmp/testreplaceid.csv";
     await writeFile(fnm, csv);
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     expect(!!table).toBe(true);
     const rowsBefore = await table.countRows();
@@ -704,7 +704,7 @@ Joe Celko, 856
 Gordon Kane, 217`;
     const fnm = "/tmp/test1f.csv";
     await writeFile(fnm, csv);
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
@@ -804,7 +804,7 @@ Pencil, 0.5,2, t`;
     assertsIsSuccessMessage(result);
     const { table }: { table?: Table } = result;
     assertIsSet(table);
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const vatField = fields.find((f) => f.name === "vatable");
     assertIsSet(vatField);
     assertIsType(vatField.type);
@@ -833,7 +833,7 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: "Invalid column name ! - Use A-Z, a-z, 0-9, _ only",
     });
-    const table = await Table.findOne({ name: "Invoice1" });
+    const table = Table.findOne({ name: "Invoice1" });
     expect(table).toBe(null);
   });
   it("ignores a col on duplicate col nm", async () => {
@@ -856,7 +856,7 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: `Columns named "id" must have only integers`,
     });
-    const table = await Table.findOne({ name: "Invoice2" });
+    const table = Table.findOne({ name: "Invoice2" });
     expect(table).toBe(null);
   });
   it("should fail missing id", async () => {
@@ -869,7 +869,7 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: `Columns named "id" must not have missing values`,
     });
-    const table = await Table.findOne({ name: "Invoice3" });
+    const table = Table.findOne({ name: "Invoice3" });
     expect(table).toBe(null);
   });
   it("should succeed on good id", async () => {
@@ -881,7 +881,7 @@ Pencil, 0.5,2, t`;
     const res = await Table.create_from_csv("Invoice3", fnm);
     assertsIsSuccessMessage(res);
     expect(res.table.fields.length).toEqual(4); // incl id
-    const table = await Table.findOne({ name: "Invoice3" });
+    const table = Table.findOne({ name: "Invoice3" });
     assertIsSet(table);
     const rows = await table.getRows();
     expect(rows.length).toBe(2);
@@ -899,7 +899,7 @@ Pencil, 0.5,2, t`;
     assertIsErrorMsg(res);
 
     expect(res.error).toContain("Error");
-    const table = await Table.findOne({ name: "Invoice4" });
+    const table = Table.findOne({ name: "Invoice4" });
     expect(table).toBe(null);
   });
   it("should import with missing", async () => {
@@ -913,7 +913,7 @@ Pencil, 0.5,, t`;
     const { table }: { table?: Table } = result;
     assertIsSet(table);
     expect(!!table).toBe(true);
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const countField = fields.find((f) => f.name === "count");
     assertIsSet(countField);
     assertIsType(countField.type);
@@ -935,7 +935,7 @@ Pencil, 0.5,2, t`;
     const result = await Table.create_from_csv("Invoice5", fnm);
     assertsIsSuccessMessage(result);
     const { table } = result;
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const nameField = fields.find((f: Field) => f.name === "item_name");
     expect(nameField.type.name).toBe("String");
     expect(nameField.label).toBe("Item Name");
@@ -953,7 +953,7 @@ Pencil, 0.5,2, t`;
     const result = await Table.create_from_csv("Invoice6", fnm);
     assertsIsSuccessMessage(result);
     const { table } = result;
-    const fields = await table.getFields();
+    const fields = table.getFields();
     expect(fields.map((f: Field) => f.name)).toContain("item_name");
     const nameField = fields.find((f: Field) => f.name === "item_name");
     expect(nameField.type.name).toBe("String");
@@ -975,7 +975,7 @@ Pencil, 0.5,2, t`;
     assertsIsSuccessMessage(result);
     const { table }: { table?: Table } = result;
     assertIsSet(table);
-    const fields = await table.getFields();
+    const fields = table.getFields();
     const rows1 = await table.getJoinedRows({
       where: { item: { ilike: "East" } },
     });
@@ -1060,7 +1060,7 @@ describe("Table not null constraint", () => {
     }
   });
   it("should query null", async () => {
-    const table = await Table.findOne({ name: "TableWithNotNulls" });
+    const table = Table.findOne({ name: "TableWithNotNulls" });
     assertIsSet(table);
     await table.insertRow({ name: "Ageless", age: null });
 
@@ -1131,7 +1131,7 @@ describe("Table and view deletion ", () => {
     await v.delete();
   });
   it("should delete table after view delete", async () => {
-    const tc = await Table.findOne({ name: "mytable19" });
+    const tc = Table.findOne({ name: "mytable19" });
     if (tc) await tc.delete();
   });
 });
@@ -1176,7 +1176,7 @@ describe("Tables with name clashes", () => {
     await cars.insertRow({ name: "Mustang", owner: sally });
   });
   it("should query", async () => {
-    const cars = await Table.findOne({ name: "TableClashCar" });
+    const cars = Table.findOne({ name: "TableClashCar" });
     assertIsSet(cars);
 
     const rows = await cars.getJoinedRows({
@@ -1193,7 +1193,7 @@ describe("Tables with name clashes", () => {
   });
 
   it("should show list view", async () => {
-    const cars = await Table.findOne({ name: "TableClashCar" });
+    const cars = Table.findOne({ name: "TableClashCar" });
     assertIsSet(cars);
     const v = await View.create({
       table_id: cars.id,
@@ -1212,7 +1212,7 @@ describe("Tables with name clashes", () => {
     expect(res).toContain("Sally");
   });
   it("should show show view", async () => {
-    const cars = await Table.findOne({ name: "TableClashCar" });
+    const cars = Table.findOne({ name: "TableClashCar" });
     assertIsSet(cars);
     const v = await View.create({
       table_id: cars.id,
@@ -1239,7 +1239,7 @@ describe("Tables with name clashes", () => {
 });
 describe("Table joint unique constraint", () => {
   it("should create table", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     assertIsSet(table.id);
     const rows = await table.getRows();
@@ -1260,7 +1260,7 @@ describe("Table joint unique constraint", () => {
 });
 describe("Table formula constraint", () => {
   it("should create table", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     assertIsSet(table.id);
 
@@ -1274,7 +1274,7 @@ describe("Table formula constraint", () => {
       type: "Formula",
       configuration: { formula: "pages>500", errormsg: "Too short" },
     });
-    const table1 = await Table.findOne({ name: "books" });
+    const table1 = Table.findOne({ name: "books" });
     assertIsSet(table1);
 
     const res = await table1.tryInsertRow(row0);
@@ -1288,7 +1288,7 @@ describe("Table formula constraint", () => {
     expect(uprow?.pages).toBeGreaterThan(400);
 
     await tc.delete();
-    const table2 = await Table.findOne({ name: "books" });
+    const table2 = Table.findOne({ name: "books" });
     assertIsSet(table2);
     const res1 = await table2.tryInsertRow(row0);
 
@@ -1308,12 +1308,12 @@ describe("Table with UUID pks", () => {
     it("should create and insert stuff in table", async () => {
       getState().registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID");
-      const [pk] = await table.getFields();
+      const [pk] = table.getFields();
       await pk.update({ type: "UUID" });
       // @ts-ignore
       expect(pk.type.name).toBe("UUID");
 
-      const table1 = await Table.findOne({ name: "TableUUID" });
+      const table1 = Table.findOne({ name: "TableUUID" });
       assertIsSet(table1);
       const flds1 = await table1.getFields();
 
@@ -1351,10 +1351,10 @@ describe("Table with UUID pks", () => {
       await writeFile(fnm, JSON.stringify(json));
 
       await getState().refresh_tables();
-      const table = await Table.findOne({ name: "TableUUID" });
+      const table = Table.findOne({ name: "TableUUID" });
       assertIsSet(table);
       expect(!!table).toBe(true);
-      const flds = await table.getFields();
+      const flds = table.getFields();
       // @ts-ignore
       expect(flds[0].type.name).toBe("UUID");
       const impres = await table.import_json_file(fnm);
@@ -1365,7 +1365,7 @@ describe("Table with UUID pks", () => {
       expect(rows.length).toBe(2);
     });
     it("should be joinable to", async () => {
-      const uuidtable1 = await Table.findOne({ name: "TableUUID" });
+      const uuidtable1 = Table.findOne({ name: "TableUUID" });
       assertIsSet(uuidtable1);
 
       const table = await Table.create("JoinUUID");
@@ -1405,7 +1405,7 @@ describe("Table with UUID pks", () => {
     it("should create and delete table", async () => {
       getState().registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID1");
-      const [pk] = await table.getFields();
+      const [pk] = table.getFields();
 
       await pk.update({ type: "UUID" });
 
@@ -1414,7 +1414,7 @@ describe("Table with UUID pks", () => {
       const [pk1] = await table1.getFields();
       // @ts-ignore
       expect(pk1.type?.name).toBe("UUID");
-      //const [pk1] = await table.getFields();
+      //const [pk1] = table.getFields();
       await pk.update({ type: "Integer" });
 
       await table.delete();
@@ -1426,9 +1426,9 @@ describe("external tables", () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes());
   });
   it("should find table", async () => {
-    const table = await Table.findOne({ name: "exttab" });
+    const table = Table.findOne({ name: "exttab" });
     expect(!!table).toBe(true);
-    const notable = await Table.findOne({ name: "exttnosuchab" });
+    const notable = Table.findOne({ name: "exttnosuchab" });
     expect(!!notable).toBe(false);
     const tables = await Table.find_with_external();
     expect(tables.map((t) => t.name)).toContain("exttab");
@@ -1472,7 +1472,7 @@ describe("table providers", () => {
     });
   });
   it("should query", async () => {
-    const table = await Table.findOne({ name: "JoeTable" });
+    const table = Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
     const rows = await table.getRows({});
     expect(rows.length === 1);
@@ -1480,12 +1480,12 @@ describe("table providers", () => {
     expect(rows[0].age).toBe(36);
   });
   it("should change role", async () => {
-    const table = await Table.findOne({ name: "JoeTable" });
+    const table = Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
     await table.update({ min_role_read: 40 });
   });
   it("should get role", async () => {
-    const table = await Table.findOne({ name: "JoeTable" });
+    const table = Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
     expect(table.min_role_read).toBe(40);
   });
@@ -1516,13 +1516,13 @@ describe("unique history clash", () => {
     });
   });
   it("should enable versioning", async () => {
-    const table = await Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" });
     assertIsSet(table);
     table.versioned = true;
     await table.update(table);
   });
   it("should not error on history with unique", async () => {
-    const table = await Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" });
     assertIsSet(table);
 
     await table.insertRow({ name: "Bartimaeus", age: 2500 });
@@ -1602,7 +1602,7 @@ describe("distance ordering", () => {
     await tc.insertRow({ name: "George", lat: 20, long: 20 });
   });
   it("should query", async () => {
-    const table = await Table.findOne({ name: "geotable1" });
+    const table = Table.findOne({ name: "geotable1" });
     assertIsSet(table);
 
     const fred_rows = await table.getRows(
@@ -1627,14 +1627,14 @@ describe("distance ordering", () => {
 
 describe("getField", () => {
   it("should find own field", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const field = await table.getField("name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(7);
   });
   it("should find single join field", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const field = await table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
@@ -1642,21 +1642,21 @@ describe("getField", () => {
     expect(field?.id).toBe(5);
   });
   it("should find double join field", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const field = await table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(19);
   });
   it("should find triple join field", async () => {
-    const table = await Table.findOne({ name: "readings" });
+    const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     const field = await table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(19);
   });
   it("should find own key field", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const field = await table.getField("favbook");
     expect(field?.name).toBe("favbook");
@@ -1664,7 +1664,7 @@ describe("getField", () => {
     expect(field?.id).toBe(8);
   });
   it("should find single join key field", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const field = await table.getField("favbook.publisher");
     expect(field?.name).toBe("publisher");
@@ -1676,12 +1676,12 @@ describe("getField", () => {
 
 describe("field_options", () => {
   it("should find own fields", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     const opts = await table?.field_options();
     expect(opts).toStrictEqual(["favbook", "id", "name", "parent"]);
   });
   it("should find one-level join fields", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     const opts = await table?.field_options(1);
     expect(opts).toStrictEqual([
       "favbook",
@@ -1699,7 +1699,7 @@ describe("field_options", () => {
     ]);
   });
   it("should find string fields", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     const opts = await table?.field_options(1, (f) => f.type_name === "String");
     expect(opts).toStrictEqual(["name", "favbook.author", "parent.name"]);
   });
@@ -1707,9 +1707,9 @@ describe("field_options", () => {
 
 describe("grandparent join", () => {
   it("should define rows", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const fields = await table.getFields();
+    const fields = table.getFields();
 
     const greatgranny = await table.insertRow({ name: "Greatgranny" });
     const granny = await table.insertRow({

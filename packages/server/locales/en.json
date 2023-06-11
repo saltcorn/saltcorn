@@ -1183,5 +1183,11 @@
 	"Training error": "Training error",
 	"Model": "Model",
 	"Model instance": "Model instance",
-	"Prediction output": "Prediction output"
+	"Prediction output": "Prediction output",
+	"Table triggers: ": "Table triggers: ",
+	"App name": "App name",
+	"App icon": "App icon",
+	"Splash Page": "Splash Page",
+	"App version": "App version",
+	"Forgot password?": "Forgot password?"
 }

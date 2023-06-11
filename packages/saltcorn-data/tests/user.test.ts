@@ -207,7 +207,7 @@ describe("User", () => {
 
 describe("User fields", () => {
   it("should add fields", async () => {
-    const table = await Table.findOne({ name: "users" });
+    const table = Table.findOne({ name: "users" });
     assertIsSet(table);
     const fc = await Field.create({
       table,

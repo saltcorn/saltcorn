@@ -55,7 +55,7 @@ const configuration_workflow = (req) =>
                 - participant field: key to user in table with fkey to this
             */
 
-          const roomtable = await Table.findOne(context.table_id);
+          const roomtable = Table.findOne(context.table_id);
           const { child_relations } = await roomtable.get_child_relations();
           //const msg_table_options = child_relations.map(cr=>cr.table.name)
           const participant_field_options = [];
@@ -67,7 +67,7 @@ const configuration_workflow = (req) =>
           const msg_own_options = [];
 
           for (const { table, key_field } of child_relations) {
-            const fields = await table.getFields();
+            const fields = table.getFields();
             for (const f of fields) {
               if (f.reftable_name === "users") {
                 participant_field_options.push(
@@ -216,8 +216,8 @@ const run = async (
   { req, res },
   { getRowQuery, updateQuery, optionsQuery }
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
+  const table = Table.findOne({ id: table_id });
+  const fields = table.getFields();
   readState(state, fields);
   if (!state.id) return "Need room id";
   const appState = getState();
@@ -550,7 +550,7 @@ module.exports = {
     // TODO ch authorize_join query
     if (!user || user.role_id > min_role) return false;
     if (!participant_field) {
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       return user.role_id <= table.min_role_read;
     } else {
       const [part_table_name, part_key_to_room, part_user_field] =
@@ -608,7 +608,7 @@ module.exports = {
       msgsender_field,
       participant_maxread_field
     ) {
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
 
       const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
       const role = req && req.user ? req.user.role_id : 100;

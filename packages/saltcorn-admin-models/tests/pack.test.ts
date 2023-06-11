@@ -46,7 +46,7 @@ describe("pack create", () => {
   });
 
   it("creates table pack for patients 2", async () => {
-    const table = await Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" });
     expect(table !== null).toBe(true);
     const tpack = await table_pack(table !== null ? table : "patients");
     expect(tpack.fields.length > 1).toBe(true);
@@ -417,7 +417,7 @@ describe("pack install", () => {
     const can = await can_install_pack(todoPack);
     expect(can).toBe(true);
     await install_pack(todoPack, "Todo list", () => {});
-    const tbl = await Table.findOne({ name: "TodoItems" });
+    const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
     expect(menu).toEqual([
@@ -446,7 +446,7 @@ describe("pack install", () => {
   it("uninstalls pack", async () => {
     // todo make pack with trigger to cover all logic!
     await uninstall_pack(todoPack, "Todo list");
-    const tbl = await Table.findOne({ name: "TodoItems" });
+    const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(false);
   });
 });

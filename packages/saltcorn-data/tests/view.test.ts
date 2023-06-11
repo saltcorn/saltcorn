@@ -86,7 +86,7 @@ describe("View", () => {
     });
   });
   it("should runPost with edit in edit", async () => {
-    const readingsTbl = await Table.findOne({ name: "readings" });
+    const readingsTbl = Table.findOne({ name: "readings" });
     assertIsSet(readingsTbl);
     await View.create({
       name: "innerReads",
@@ -95,7 +95,7 @@ describe("View", () => {
       configuration: renderEditInEditConfig.innerEdit,
       viewtemplate: "Edit",
     });
-    const patientsTable = await Table.findOne({ name: "patients" });
+    const patientsTable = Table.findOne({ name: "patients" });
     assertIsSet(patientsTable);
     const v = await View.create({
       table_id: patientsTable.id,
@@ -118,7 +118,7 @@ describe("View", () => {
     });
   });
   it("should find", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const link_views = await View.find({
       table_id: table.id,
@@ -132,7 +132,7 @@ describe("View", () => {
     expect(link_views.length).toBe(1);
   });
   it("should create and delete", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const v = await View.create({
       table_id: table.id,
@@ -170,7 +170,7 @@ describe("View", () => {
     expect(res.length > 0).toBe(true);
   });
   it("list join-aggs", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const v = await View.create({
       table_id: table.id,
@@ -217,7 +217,7 @@ describe("View with routes", () => {
         json = h;
       },
     };
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
 
     const v = await View.create({
@@ -236,7 +236,7 @@ describe("View with routes", () => {
 });
 describe("nested views", () => {
   it("should create and run", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
 
     const small = await View.create({
@@ -310,7 +310,7 @@ describe("nested views", () => {
     expect(res).not.toContain("Melville");
   });
   it("should create and run feed of nested", async () => {
-    const table = await Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" });
     assertIsSet(table);
 
     const large = await View.create({

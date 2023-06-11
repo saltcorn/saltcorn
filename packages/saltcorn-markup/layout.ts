@@ -218,11 +218,14 @@ const render = ({
                 )
                 .join(",")
             : undefined,
-        src: isWeb
-          ? srctype === "File"
-            ? `/files/serve/${encodeURIComponent(segment.fileid)}`
-            : segment.url
-          : undefined,
+        src:
+          srctype === "Base64"
+            ? segment.encoded_image
+            : isWeb
+            ? srctype === "File"
+              ? `/files/serve/${encodeURIComponent(segment.fileid)}`
+              : segment.url
+            : undefined,
         id: elementId,
       });
       return wrap(
@@ -623,7 +626,7 @@ const render = ({
     }
     if (segment.above) {
       return segment.above
-        .map((s: any, ix: number) => go(s, isTop, ix))
+        .map((s: any, segmentIx: number) => go(s, isTop, segmentIx + ix))
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);

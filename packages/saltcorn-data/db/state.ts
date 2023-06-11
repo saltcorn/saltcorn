@@ -20,7 +20,7 @@ import {
   MobileConfig,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
-import { ConfigTypes, SingleConfig } from "models/config";
+import type { ConfigTypes, SingleConfig } from "../models/config";
 import User from "../models/user";
 const { PluginManager } = require("live-plugin-manager");
 
@@ -176,13 +176,17 @@ class State {
     this.npm_refresh_in_progess = false;
   }
 
+  processSend(v: any) {
+    process_send(v);
+  }
+
   /**
    * Get Layout by user
    * Based on role of user
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user: User) {
+  getLayout(user?: User) {
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {
@@ -352,7 +356,7 @@ class State {
       {},
       { orderBy: "name", nocase: true }
     );
-    const allFields = await db.select(
+    this.fields = await db.select(
       "_sc_fields",
       {},
       { orderBy: "name", nocase: true }
@@ -376,7 +380,7 @@ class State {
         }
         continue;
       }
-      table.fields = allFields.filter((f: Field) => f.table_id === table.id);
+      table.fields = this.fields.filter((f: Field) => f.table_id === table.id);
       table.constraints = allConstraints
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));

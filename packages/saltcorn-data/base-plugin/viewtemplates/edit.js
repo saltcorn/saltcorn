@@ -80,13 +80,11 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Layout"),
         builder: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
-          const fields = (await table.getFields()).filter(
-            (f) => !f.primary_key
-          );
+          const table = Table.findOne({ id: context.table_id });
+          const fields = table.getFields().filter((f) => !f.primary_key);
           for (const field of fields) {
             if (field.type === "Key") {
-              field.reftable = await Table.findOne({
+              field.reftable = Table.findOne({
                 name: field.reftable_name,
               });
               if (field.reftable) await field.reftable.getFields();
@@ -212,8 +210,8 @@ const configuration_workflow = (req) =>
         name: req.__("Fixed fields"),
         contextField: "fixed",
         onlyWhen: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
-          const fields = await table.getFields();
+          const table = Table.findOne({ id: context.table_id });
+          const fields = table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           return fields.some(
             (f) =>
@@ -223,8 +221,8 @@ const configuration_workflow = (req) =>
           );
         },
         form: async (context) => {
-          const table = await Table.findOne({ id: context.table_id });
-          const fields = await table.getFields();
+          const table = Table.findOne({ id: context.table_id });
+          const fields = table.getFields();
           const in_form_fields = context.columns.map((f) => f.field_name);
           const omitted_fields = fields.filter(
             (f) =>
@@ -269,7 +267,14 @@ const configuration_workflow = (req) =>
               viewrow.table_id === context.table_id ||
               state_fields.every((sf) => !sf.required)
           );
-          const table = await Table.findOne({ id: context.table_id });
+          const table = Table.findOne({ id: context.table_id });
+          own_views.forEach((v) => {
+            if (!v.table && v.table_id === table.id) v.table = table;
+            else if (!v.table && v.table_id) {
+              const vtable = Table.findOne({ id: v.table_id });
+              v.table = vtable;
+            }
+          });
           const parent_views = await get_parent_views(table, context.viewname);
 
           const done_view_opts = own_views.map((v) => v.select_option);
@@ -450,7 +455,7 @@ const runMany = async (
   });
   if (!isNode()) {
     table = Table.findOne({ id: table.id });
-    fields = await table.getFields();
+    fields = table.getFields();
   }
   return await asyncMap(rows, async (row) => {
     const html = await render({
@@ -492,18 +497,23 @@ const transformForm = async ({
   viewname,
 }) => {
   await traverse(form.layout, {
-    action(segment) {
+    async action(segment) {
       if (segment.action_style === "on_page_load") {
         //run action
-        run_action_column({
+        const actionResult = await run_action_column({
           col: { ...segment },
           referrer: req.get("Referrer"),
-          req: req,
-          res: res,
-        }).catch((e) => Crash.create(e, req));
+          req,
+          res,
+          row,
+        });
         segment.type = "blank";
-        segment.contents = "";
         segment.style = {};
+        if (actionResult)
+          segment.contents = script(
+            domReady(`common_done(${JSON.stringify(actionResult)})`)
+          );
+        else segment.contents = "";
         return;
       }
       if (segment.action_name === "Delete") {
@@ -806,11 +816,11 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery, getRowQuery },
+  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery },
   remote
 ) => {
-  const table = await Table.findOne({ id: table_id });
-  const fields = await table.getFields();
+  const table = Table.findOne({ id: table_id });
+  const fields = table.getFields();
   const form = await getForm(table, viewname, columns, layout, body.id, req);
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
@@ -866,6 +876,18 @@ const runPost = async (
     for (const field of file_fields) {
       if (field.fieldviewObj?.setsFileId) {
         //do nothing
+      } else if (field.fieldviewObj?.setsDataURL) {
+        if (body[field.name]) {
+          if (body[field.name].startsWith("data:")) {
+            const path_to_serve = await saveFileQuery(
+              body[field.name],
+              field.id,
+              field.fieldview,
+              row
+            );
+            row[field.name] = path_to_serve;
+          }
+        }
       } else if (req.files && req.files[field.name]) {
         if (!isNode() && !remote) {
           req.flash(
@@ -1057,12 +1079,12 @@ const runPost = async (
 };
 
 const doAuthPost = async ({ body, table_id, req }) => {
-  const table = await Table.findOne({ id: table_id });
+  const table = Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
   if (table.ownership_field_id && user_id) {
     const field_name = await table.owner_fieldname();
     if (typeof body[field_name] === "undefined") {
-      const fields = await table.getFields();
+      const fields = table.getFields();
       const { uniques } = splitUniques(fields, body);
       if (Object.keys(uniques).length > 0) {
         body = await table.getRow(uniques);
@@ -1075,7 +1097,7 @@ const doAuthPost = async ({ body, table_id, req }) => {
     if (body[table.pk_name]) {
       const joinFields = {};
       if (table.ownership_formula) {
-        const fields = await table.getFields();
+        const fields = table.getFields();
         const freeVars = freeVariables(table.ownership_formula);
         add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
@@ -1089,7 +1111,7 @@ const doAuthPost = async ({ body, table_id, req }) => {
     } else {
       // need to check new row conforms to ownership fml
       const freeVars = freeVariables(table.ownership_formula);
-      const fields = await table.getFields();
+      const fields = table.getFields();
 
       const field_names = new Set(fields.map((f) => f.name));
 
@@ -1214,8 +1236,8 @@ module.exports = {
     res,
   }) => ({
     async editQuery(state) {
-      const table = await Table.findOne({ id: table_id });
-      const fields = await table.getFields();
+      const table = Table.findOne({ id: table_id });
+      const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
@@ -1243,8 +1265,8 @@ module.exports = {
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
-      const table = await Table.findOne({ id: table_id });
-      const fields = await table.getFields();
+      const table = Table.findOne({ id: table_id });
+      const fields = table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields
@@ -1271,7 +1293,7 @@ module.exports = {
       };
     },
     async tryInsertQuery(row) {
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       const result = {};
       const ins_res = await table.tryInsertRow(
         row,
@@ -1283,7 +1305,7 @@ module.exports = {
     },
 
     async tryUpdateQuery(row, id) {
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       const result = {};
       const upd_res = await table.tryUpdateRow(
         row,
@@ -1294,7 +1316,31 @@ module.exports = {
       upd_res.trigger_return = result;
       return upd_res;
     },
-
+    async saveFileQuery(fieldVal, fieldId, fieldView, row) {
+      const field = await Field.findOne({ id: fieldId });
+      field.fieldviewObj = getState().fileviews[fieldView];
+      const [pre, allData] = fieldVal.split(",");
+      const buffer = require("buffer/").Buffer.from(allData, "base64");
+      const mimetype = pre.split(";")[0].split(":")[1];
+      const filename =
+        field.fieldviewObj?.setsDataURL?.get_filename?.({
+          ...row,
+          ...field.attributes,
+        }) || "file";
+      const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
+        ...row,
+        ...field.attributes,
+      });
+      const file = await File.from_contents(
+        filename,
+        mimetype,
+        buffer,
+        req.user?.id,
+        field.attributes.min_role_read || 1,
+        folder
+      );
+      return file.path_to_serve;
+    },
     async authorizePostQuery(body, table_id /*overwrites*/) {
       return await doAuthPost({ body, table_id, req });
     },
@@ -1303,7 +1349,7 @@ module.exports = {
       const table = Table.findOne({ id: table_id });
       if (Object.keys(body).length == 1) {
         if (table.ownership_field_id || table.ownership_formula) {
-          const fields = await table.getFields();
+          const fields = table.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
             const joinFields = {};
@@ -1343,7 +1389,7 @@ module.exports = {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
-      const table = await Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id });
       const row = body.id
         ? await table.getRow(
             { id: body.id },

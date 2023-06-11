@@ -209,13 +209,14 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
     }
   }
   if (version) plugin.version = version;
-  if (!noSignalOrDB) await plugin.upsert();
-  if (!noSignalOrDB && process.send)
-    process.send({
+  if (!noSignalOrDB) {
+    await plugin.upsert();
+    getState().processSend({
       installPlugin: plugin,
       tenant: db.getTenantSchema(),
       force,
     });
+  }
 };
 
 module.exports = {

@@ -394,7 +394,7 @@ const get_inbound_relation_opts = async (source, viewname) => {
     tableCache[table.id] = table;
   }
   const fieldCache = {};
-  for (const field of await Field.find()) {
+  for (const field of await Field.find({}, { cached: true })) {
     if (field.reftable_name) {
       if (!fieldCache[field.reftable_name])
         fieldCache[field.reftable_name] = [];
@@ -454,10 +454,13 @@ const get_inbound_relation_opts = async (source, viewname) => {
  * @returns viewnames mapped to arrays of Inbound options
  */
 const get_inbound_self_relation_opts = async (source, viewname) => {
-  const fields = await Field.find({
-    reftable_name: source.name,
-    is_unique: true,
-  });
+  const fields = await Field.find(
+    {
+      reftable_name: source.name,
+      is_unique: true,
+    },
+    { cached: true }
+  );
   const result = [];
   const targetFields = source.getForeignKeys();
   for (const field of fields) {
@@ -644,10 +647,10 @@ const field_picker_fields = async ({
   no_fieldviews,
 }) => {
   const __ = (...s) => (req ? req.__(...s) : s.join(""));
-  const fields = await table.getFields();
+  const fields = table.getFields();
   for (const field of fields) {
     if (field.type === "Key") {
-      field.reftable = await Table.findOne({ name: field.reftable_name });
+      field.reftable = Table.findOne({ name: field.reftable_name });
       if (field.reftable) await field.reftable.getFields();
     }
   }
@@ -1213,7 +1216,10 @@ const field_picker_fields = async ({
  * @returns {Promise<object[]>}
  */
 const get_child_views = async (table, viewname, nrecurse = 2) => {
-  const rels = await Field.find({ reftable_name: table.name });
+  const rels = await Field.find(
+    { reftable_name: table.name },
+    { cached: true }
+  );
   const possibleThroughTables = new Set();
   let child_views = [];
   for (const relation of rels) {
@@ -1254,11 +1260,11 @@ const get_child_views = async (table, viewname, nrecurse = 2) => {
  */
 const get_parent_views = async (table, viewname) => {
   let parent_views = [];
-  const parentrels = (await table.getFields()).filter(
-    (f) => f.is_fkey && f.type !== "File"
-  );
+  const parentrels = table
+    .getFields()
+    .filter((f) => f.is_fkey && f.type !== "File");
   for (const relation of parentrels) {
-    const related_table = await Table.findOne({
+    const related_table = Table.findOne({
       name: relation.reftable_name,
     });
     const views = await View.find_table_views_where(
@@ -1280,13 +1286,16 @@ const get_parent_views = async (table, viewname) => {
  * @returns {Promise<object[]>}
  */
 const get_onetoone_views = async (table, viewname) => {
-  const rels = await Field.find({
-    reftable_name: table.name,
-    is_unique: true,
-  });
+  const rels = await Field.find(
+    {
+      reftable_name: table.name,
+      is_unique: true,
+    },
+    { cached: true }
+  );
   let child_views = [];
   for (const relation of rels) {
-    const related_table = await Table.findOne({ id: relation.table_id });
+    const related_table = Table.findOne({ id: relation.table_id });
     const views = await View.find_table_views_where(
       related_table.id,
       ({ state_fields, viewrow }) =>
@@ -1386,17 +1395,19 @@ const picked_fields_to_query = (columns, fields, layout) => {
 
         //console.log(column);
         const field = column.agg_field.split("@")[0];
-        let targetNm = (
-          column.stat.replace(" ", "") +
-          "_" +
-          table +
-          "_" +
-          fld +
-          "_" +
-          field +
-          "_" +
-          db.sqlsanitize(column.aggwhere || "")
-        ).toLowerCase();
+        let targetNm = db.sqlsanitize(
+          (
+            column.stat.replace(" ", "") +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              field +
+              "_" +
+              column.aggwhere || ""
+          ).toLowerCase()
+        );
         // postgres fields have a max len
         if (targetNm.length > 58) {
           targetNm = targetNm
@@ -1751,13 +1762,13 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
 const initial_config_all_fields =
   (isEdit) =>
   async ({ table_id, exttable_name }) => {
-    const table = await Table.findOne(
+    const table = Table.findOne(
       table_id ? { id: table_id } : { name: exttable_name }
     );
 
-    const fields = (await table.getFields()).filter(
-      (f) => !f.primary_key && (!isEdit || !f.calculated)
-    );
+    const fields = table
+      .getFields()
+      .filter((f) => !f.primary_key && (!isEdit || !f.calculated));
     let cfg = { columns: [] };
     let aboves = [null];
     const style = {

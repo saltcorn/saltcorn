@@ -391,7 +391,7 @@ class File {
   static async update_table_references(from: string, to: string) {
     const Field = require("./field");
     const Table = require("./table");
-    const fileFields = await Field.find({ type: "File" });
+    const fileFields = await Field.find({ type: "File" }, { cached: true });
     const schema = db.getTenantSchemaPrefix();
     for (const field of fileFields) {
       const table = Table.findOne({ id: field.table_id });
@@ -636,9 +636,10 @@ class File {
    */
   static async upload(f: any): Promise<any> {
     const { getState } = require("../db/state");
-    const base_url = getState().getConfig("base_url") || "http://10.0.2.2:3000";
+    const state = getState();
+    const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
     const url = `${base_url}/files/upload`;
-    const token = window.localStorage.getItem("auth_jwt");
+    const token = state.mobileConfig.jwt;
     const formData = new FormData();
     formData.append("file", f);
     const response = await axios.post(url, formData, {

@@ -669,11 +669,10 @@ router.post(
       const instore = await Plugin.store_plugins_available();
       const store_plugin = instore.find((p) => p.name === plugin.name);
       if (store_plugin && store_plugin.has_auth) flash_restart(req);
-      process.send &&
-        process.send({
-          refresh_plugin_cfg: plugin.name,
-          tenant: db.getTenantSchema(),
-        });
+      getState().processSend({
+        refresh_plugin_cfg: plugin.name,
+        tenant: db.getTenantSchema(),
+      });
       if (module.layout) await sleep(500); // Allow other workers to reload this plugin
       res.redirect("/plugins");
     }
@@ -700,11 +699,10 @@ router.post(
         };
         await plugin.upsert();
         await load_plugins.loadPlugin(plugin);
-        process.send &&
-          process.send({
-            refresh_plugin_cfg: plugin.name,
-            tenant: db.getTenantSchema(),
-          });
+        getState().processSend({
+          refresh_plugin_cfg: plugin.name,
+          tenant: db.getTenantSchema(),
+        });
         res.json({ success: "ok" });
       }
     }
@@ -955,8 +953,10 @@ router.get(
       }
       req.flash("success", req.__(`Modules up-to-date`));
       await restart_tenant(loadAllPlugins);
-      process.send &&
-        process.send({ restart_tenant: true, tenant: db.getTenantSchema() });
+      getState().processSend({
+        restart_tenant: true,
+        tenant: db.getTenantSchema(),
+      });
     }
     res.redirect(`/plugins`);
   })

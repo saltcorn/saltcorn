@@ -1,5 +1,5 @@
 /*eslint-env browser*/
-/*global $, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows*/
+/*global $, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success*/
 
 function combineFormAndQuery(form, query) {
   let paramsList = [];
@@ -24,22 +24,65 @@ async function execLink(url) {
   await parent.handleRoute(`get${path}`, query);
 }
 
+async function execNavbarLink(url) {
+  $(".navbar-toggler").click();
+  execLink(url);
+}
+
 /**
  *
  * @param {*} e
  * @param {*} urlSuffix
  * @returns
  */
-async function formSubmit(e, urlSuffix, viewname) {
-  e.submit();
+async function formSubmit(e, urlSuffix, viewname, noSubmitCb) {
+  if (!noSubmitCb) e.submit();
   const files = {};
   const urlParams = new URLSearchParams();
   for (const entry of new FormData(e).entries()) {
     if (entry[1] instanceof File) files[entry[0]] = entry[1];
-    else urlParams.append(entry[0], entry[1]);
+    else {
+      // is there a hidden input with a filename?
+      const domEl = $(e).find(
+        `[name='${entry[0]}'][mobile-camera-input='true']`
+      );
+      if (domEl.length > 0) {
+        const tokens = entry[1].split("/");
+        const fileName = tokens[tokens.length - 1];
+        const directory = tokens.splice(0, tokens.length - 1).join("/");
+        // read and add file to submit
+        const binary = await parent.readBinary(fileName, directory);
+        files[entry[0]] = new File([binary], fileName);
+      } else urlParams.append(entry[0], entry[1]);
+    }
   }
   const queryStr = urlParams.toString();
   await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
+}
+
+async function inline_local_submit(e, opts1) {
+  try {
+    e.preventDefault();
+    const opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+    const form = $(e.target).closest("form");
+    const urlParams = new URLSearchParams();
+    for (const entry of new FormData(form[0]).entries()) {
+      urlParams.append(entry[0], entry[1]);
+    }
+    const url = form.attr("action");
+    await parent.router.resolve({
+      pathname: `post${url}`,
+      query: urlParams.toString(),
+    });
+    inline_submit_success(e, form, opts);
+  } catch (error) {
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+  }
 }
 
 async function saveAndContinue(e, action, k) {
@@ -105,6 +148,12 @@ async function login(e, entryPoint, isSignup) {
     config.language = decodedJwt.user.language;
     config.isPublicUser = false;
     config.isOfflineMode = false;
+    await parent.insertUser({
+      id: config.user_id,
+      email: config.user_name,
+      role_id: config.role_id,
+      language: config.language,
+    });
     await parent.setJwt(loginResult);
     config.jwt = loginResult;
     await parent.i18next.changeLanguage(config.language);
@@ -625,8 +674,10 @@ async function callUpload(force = false) {
       try {
         showLoadSpinner();
         mobileConfig.inLoadState = true;
+        await parent.offlineHelper.setUploadStartedTime(new Date());
         await parent.offlineHelper.uploadLocalData();
         await parent.offlineHelper.clearLocalData();
+        await parent.offlineHelper.setUploadFinishedTime(new Date());
         await parent.offlineHelper.endOfflineMode();
         parent.clearHistory();
         parent.addRoute({ route: "/" });
@@ -649,6 +700,7 @@ async function callUpload(force = false) {
           ]);
         }
       } catch (error) {
+        await parent.offlineHelper.setUploadFinishedTime(null);
         parent.errorAlert(error);
       } finally {
         mobileConfig.inLoadState = false;
@@ -730,6 +782,48 @@ function showLoadSpinner() {
 
 function removeLoadSpinner() {
   $("#scspinner").remove();
+}
+
+/**
+ * is called when an input with capture=camera is used
+ * It takes a picture with the camera plugin, saves the file, and adds the filename as a hidden input.
+ * @param {*} fieldName
+ */
+async function getPicture(fieldName) {
+  const cameraOptions = {
+    quality: 50,
+    encodingType: parent.Camera.EncodingType.JPEG,
+    destinationType: parent.Camera.DestinationType.FILE_URI,
+  };
+  const getPictureWithPromise = () => {
+    return new Promise((resolve, reject) => {
+      parent.navigator.camera.getPicture(
+        (imageDate) => {
+          return resolve(imageDate);
+        },
+        (message) => {
+          return reject(message);
+        },
+        cameraOptions
+      );
+    });
+  };
+  try {
+    const form = $(`#cptbtn${fieldName}`).closest("form");
+    const onsubmit = form.attr("onsubmit");
+    form.attr("onsubmit", "javascript:void(0)");
+    const fileURI = await getPictureWithPromise();
+    form.attr("onsubmit", onsubmit);
+    const inputId = `input${fieldName}`;
+    form.find(`#${inputId}`).remove();
+    form.append(
+      `<input class="d-none" id="${inputId}" name="${fieldName}" value="${fileURI}" mobile-camera-input="true" />`
+    );
+    const tokens = fileURI.split("/");
+    $(`#cpt-file-name-${fieldName}`).text(tokens[tokens.length - 1]);
+  } catch (error) {
+    parent.errorAlert(error);
+  }
 }
 
 function reload_on_init() {

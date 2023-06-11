@@ -431,8 +431,19 @@ const string = {
      * @subcategory types / string
      */
     as_link: {
+      configFields: [
+        {
+          name: "link_title",
+          label: "Link title",
+          type: "String",
+          sublabel: "Optional. If blank, label is URL",
+        },
+      ],
       isEdit: false,
-      run: (s) => a({ href: text(s || "") }, text_attr(s || "")),
+      run: (s, req, attrs = {}) =>
+        s
+          ? a({ href: text(s || "") }, text_attr(attrs?.link_title || s || ""))
+          : "",
     },
     /**
      * @namespace
@@ -1536,29 +1547,34 @@ const bool = {
           },
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
-        input({
+      run: (nm, v, attrs, cls, required, field) => {
+        const onChange =
+          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+        return input({
           class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
           type: "checkbox",
-          onChange: attrs.onChange,
+          onChange,
           readonly: attrs.readonly,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(v && { checked: true }),
           ...(attrs.disabled && { onclick: "return false;" }),
-        }),
+        });
+      },
     },
     switch: {
       isEdit: true,
-      run: (nm, v, attrs, cls, required, field) =>
-        span(
+      run: (nm, v, attrs, cls, required, field) => {
+        const onChange =
+          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+        return span(
           { class: "form-switch" },
           input({
             class: ["form-check-input", cls],
             "data-fieldname": text_attr(field.name),
             type: "checkbox",
-            onChange: attrs.onChange,
+            onChange,
             readonly: attrs.readonly,
             role: "switch",
             name: text_attr(nm),
@@ -1566,7 +1582,8 @@ const bool = {
             ...(v && { checked: true }),
             ...(attrs.disabled && { onclick: "return false;" }),
           })
-        ),
+        );
+      },
     },
     /**
      * @namespace

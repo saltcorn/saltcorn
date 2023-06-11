@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# ubuntu host: need to modify /etc/ssl/openssl.cnf to enable legacy_sect
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "gusztavvargadr/windows-11"
+
+  config.ssh.forward_agent = true
+
+  config.ssh.insert_key = false
+  config.vm.provider "virtualbox" do |vb|  
+    # Customize the amount of memory on the VM:
+    vb.memory = "2048"
+  end
+  config.vm.provision "shell", privileged: "true", powershell_elevated_interactive: "true",inline: <<-SHELL   
+    choco install nodejs --version=16.19.0 -y
+    choco install python --version=3.10.8 -y
+    choco install git visualstudio2017buildtools visualstudio2017-workload-vctools -y
+    SET "PATH=%PATH%;C:\Program Files\nodejs\;C:\Program Files\git\bin"
+    refreshenv
+    npm install --legacy-peer-deps -g --unsafe @saltcorn/cli
+    saltcorn
+  SHELL
+end

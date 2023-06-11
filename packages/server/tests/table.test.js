@@ -86,7 +86,7 @@ describe("Table Endpoints", () => {
   it("should edit tables", async () => {
     const loginCookie = await getAdminLoginCookie();
 
-    const tbl = await Table.findOne({ name: "mypostedtable" });
+    const tbl = Table.findOne({ name: "mypostedtable" });
 
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -186,7 +186,7 @@ Gordon Kane, 218`;
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
-    const tbl = await Table.findOne({ name: "mypostedtable" });
+    const tbl = Table.findOne({ name: "mypostedtable" });
     const delres = await request(app)
       .post(`/table/delete/${tbl.id}`)
       .set("Cookie", loginCookie);
@@ -200,7 +200,7 @@ Gordon Kane, 218`;
   });
   it("should show constraints", async () => {
     const loginCookie = await getAdminLoginCookie();
-    const tbl = await Table.findOne({ name: "books" });
+    const tbl = Table.findOne({ name: "books" });
     const id = tbl.id;
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -241,7 +241,7 @@ Gordon Kane, 218`;
   it("should delete tables", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
-    const tbl = await Table.findOne({ name: "books" });
+    const tbl = Table.findOne({ name: "books" });
     await request(app)
       .post(`/table/delete/${tbl.id}`)
       .set("Cookie", loginCookie)

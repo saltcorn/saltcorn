@@ -7,8 +7,10 @@
 import db from "../db";
 import View from "./view";
 import Table from "./table";
+import File from "./file";
+import { readFile } from "fs/promises";
 import layout from "./layout";
-const { eachView, eachPage, traverseSync, getStringsForI18n, translateLayout } =
+const { eachView, eachPage, traverse, getStringsForI18n, translateLayout } =
   layout;
 import config from "./config";
 import type {
@@ -24,6 +26,8 @@ import type {
   PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
 import expression from "./expression";
+import tags from "@saltcorn/markup/tags";
+const { script, domReady } = tags;
 const { eval_expression } = expression;
 
 const { remove_from_menu } = config;
@@ -43,7 +47,6 @@ const {
   objectToQueryString,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import Crash from "./crash";
 
 /**
  * Page Class
@@ -275,19 +278,23 @@ class Page implements AbstractPage {
       }
     });
     const pagename = this.name;
-    traverseSync(this.layout, {
-      action(segment: any) {
+    await traverse(this.layout, {
+      async action(segment: any) {
         if (segment.action_style === "on_page_load") {
           //run action
-          run_action_column({
+          const actionResult = await run_action_column({
             col: { ...segment },
             referrer: extraArgs.req.get("Referrer"),
             req: extraArgs.req,
             res: extraArgs.res,
-          }).catch((e: any) => Crash.create(e, extraArgs.req));
+          });
           segment.type = "blank";
-          segment.contents = "";
           segment.style = {};
+          if (actionResult)
+            segment.contents = script(
+              domReady(`common_done(${JSON.stringify(actionResult)})`)
+            );
+          else segment.contents = "";
           return;
         }
         const url =
@@ -311,6 +318,23 @@ class Page implements AbstractPage {
           segment.url +=
             (segment.transfer_state ? "" : `?`) +
             objectToQueryString(extra_state || {});
+        }
+      },
+      image: async (segment) => {
+        if (segment.srctype === "Base64") {
+          const file = await File.findOne(segment.fileid);
+          if (file) {
+            const base64 = await readFile(file.location, "base64");
+            segment.encoded_image = `data:${file.mimetype};base64, ${base64}`;
+          } else {
+            segment.encoded_image = "";
+            require("../db/state")
+              .getState()
+              .log(
+                3,
+                `Unable to encode '${segment.fileid}', the file does not exist.`
+              );
+          }
         }
       },
     });

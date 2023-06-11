@@ -2,6 +2,7 @@
 
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export ANDROID_SDK_ROOT=/android_sdk
+export ANDROID_HOME=/android_sdk
 export GRADLE_HOME=/opt/gradle-7.1.1
 export PATH=$PATH:/opt/gradle-7.1.1/bin
 # stop gradle from downloading itself
@@ -18,6 +19,7 @@ npm run add-plugin /init_project/project/plugins/cordova-plugin-file
 npm run add-plugin /init_project/project/plugins/cordova-sqlite-ext
 npm run add-plugin /init_project/project/plugins/cordova-plugin-network-information
 npm run add-plugin /init_project/project/plugins/cordova-plugin-geolocation
+npm run add-plugin /init_project/project/plugins/cordova-plugin-camera
 echo "calling cordova build";
 cordova build android
 
