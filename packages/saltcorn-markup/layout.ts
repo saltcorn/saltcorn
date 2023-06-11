@@ -218,21 +218,18 @@ const render = ({
                 )
                 .join(",")
             : undefined,
-        src:
-          srctype === "Base64"
-            ? segment.encoded_image
-            : isWeb
-            ? srctype === "File"
-              ? `/files/serve/${encodeURIComponent(segment.fileid)}`
-              : segment.url
-            : undefined,
+        src: isWeb
+          ? srctype === "File"
+            ? `/files/serve/${encodeURIComponent(segment.fileid)}`
+            : segment.url
+          : segment.encoded_image ? segment.encoded_image : undefined,
         id: elementId,
       });
       return wrap(
         segment,
         isTop,
         ix,
-        isWeb || srctype === "Base64"
+        isWeb || segment.encoded_image
           ? image
           : div(
               image,

@@ -27,6 +27,7 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_page";
 import expression from "./expression";
 import tags from "@saltcorn/markup/tags";
+import axios from "axios";
 const { script, domReady } = tags;
 const { eval_expression } = expression;
 
@@ -321,19 +322,36 @@ class Page implements AbstractPage {
         }
       },
       image: async (segment) => {
-        if (segment.srctype === "Base64") {
-          const file = await File.findOne(segment.fileid);
-          if (file) {
-            const base64 = await readFile(file.location, "base64");
-            segment.encoded_image = `data:${file.mimetype};base64, ${base64}`;
-          } else {
-            segment.encoded_image = "";
-            require("../db/state")
-              .getState()
-              .log(
-                3,
-                `Unable to encode '${segment.fileid}', the file does not exist.`
+        if (extraArgs.req.isSplashPage) {
+          try {
+            if (segment.srctype === "File") {
+              const file = await File.findOne(segment.fileid);
+              if (file) {
+                const base64 = await readFile(file.location, "base64");
+                segment.encoded_image = `data:${file.mimetype};base64, ${base64}`;
+              } else
+                throw new Error(`The file '${segment.fileid}' does not exist.`);
+            } else if (segment.srctype === "URL") {
+              const response = await axios.get(segment.url, {
+                responseType: "arraybuffer",
+              });
+              const contentType = response.headers["content-type"];
+              if (!contentType)
+                throw new Error("The image has no content-type.");
+              const base64 = Buffer.from(response.data, "binary").toString(
+                "base64"
               );
+              segment.encoded_image = `data:${contentType};base64, ${base64}`;
+            }
+          } catch (error: any) {
+            segment.encoded_image = "";
+            // was started from the build-app command
+            // console.log() is redirected into a logfile
+            console.log(
+              `Unable to encode the image: ${
+                error.message ? error.message : "Unknown error"
+              }`
+            );
           }
         }
       },

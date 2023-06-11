@@ -191,6 +191,7 @@ export async function prepareSplashPage(
           getLocale: () => {
             return "en";
           },
+          isSplashPage: true,
         },
       }
     );
