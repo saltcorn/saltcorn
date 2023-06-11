@@ -232,7 +232,7 @@ const render = ({
         segment,
         isTop,
         ix,
-        isWeb
+        isWeb || srctype === "Base64"
           ? image
           : div(
               image,
