@@ -16,7 +16,7 @@ RUN android_sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 RUN wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip \
     && unzip gradle-7.1.1-all.zip -d /opt
 
-RUN npm install -g cordova
+RUN npm install -g cordova@11.1.0
 
 # create an empty project, the first init seems to take longer
 WORKDIR /init_project
@@ -27,9 +27,13 @@ WORKDIR /init_project/project
 RUN cordova plugin add cordova-sqlite-ext
 RUN cordova plugin add cordova-plugin-file
 RUN cordova plugin add cordova-plugin-inappbrowser
+RUN cordova plugin add cordova-plugin-network-information
+RUN cordova plugin add cordova-plugin-geolocation
+RUN cordova plugin add cordova-plugin-camera
 RUN cordova platform add android
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
+ENV ANDROID_HOME=/android_sdk
 ENV GRADLE_HOME=/opt/gradle-7.1.1
 ENV PATH=$PATH:/opt/gradle-7.1.1/bin
 # stop gradle from downloading itself
