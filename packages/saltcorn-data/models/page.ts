@@ -334,6 +334,7 @@ class Page implements AbstractPage {
             } else if (segment.srctype === "URL") {
               const response = await axios.get(segment.url, {
                 responseType: "arraybuffer",
+                timeout: 20000,
               });
               const contentType = response.headers["content-type"];
               if (!contentType)
@@ -344,7 +345,7 @@ class Page implements AbstractPage {
               segment.encoded_image = `data:${contentType};base64, ${base64}`;
             }
           } catch (error: any) {
-            segment.encoded_image = "";
+            segment.encoded_image = "invalid";
             // was started from the build-app command
             // console.log() is redirected into a logfile
             console.log(
