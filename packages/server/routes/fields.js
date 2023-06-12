@@ -376,7 +376,10 @@ const fieldFlow = (req) =>
             const instances = await model.get_instances();
             instance_options[model.name].push(...instances.map((i) => i.name));
 
-            const outputs = model.templateObj.prediction_outputs || [];
+            const outputs = await applyAsync(
+              model.templateObj.prediction_outputs || [],
+              { table, configuration: model.configuration }
+            );
             output_options[model.name] = outputs.map((o) => o.name);
           }
           return new Form({
