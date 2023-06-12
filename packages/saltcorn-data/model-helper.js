@@ -63,4 +63,18 @@ const write_csv = async (rows, columns, fields, filename) => {
   });
 };
 
-module.exports = { get_predictor, write_csv };
+function shorten_trackback(s) {
+  if (!s) return s;
+  //https://stackoverflow.com/a/29497680/19839414
+
+  const noAnsi = (t) =>
+    t.replace(
+      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+      ""
+    );
+  const parts = s.split("nbclient.exceptions.CellExecutionError: ");
+  if (parts.length === 2) return noAnsi(parts[1]);
+  return noAnsi(s);
+}
+
+module.exports = { get_predictor, write_csv, shorten_trackback };

@@ -57,6 +57,7 @@
       "no-unused-vars": "off",
       "no-case-declarations": "off",
       "no-empty": "warn",
+      "no-control-regex": "off",
       "no-fallthrough": "warn"
     }
   },
