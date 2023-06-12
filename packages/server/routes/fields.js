@@ -471,7 +471,8 @@ const fieldFlow = (req) =>
       },
       {
         name: req.__("Default"),
-        onlyWhen: async (context) => context.required && !context.calculated,
+        onlyWhen: async (context) =>
+          context.required && !context.calculated && !context.primary_key,
 
         form: async (context) => {
           const table = Table.findOne({ id: context.table_id });
