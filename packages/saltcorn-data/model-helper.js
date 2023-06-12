@@ -1,5 +1,9 @@
 const fs = require("fs");
 const { eval_expression } = require("./models/expression");
+const fsp = fs.promises;
+
+const util = require("util");
+const exec = util.promisify(require("child_process").exec);
 
 const get_predictor = (nbfile) => {
   const ipynb = JSON.parse(fs.readFileSync(nbfile));
@@ -77,4 +81,49 @@ function shorten_trackback(s) {
   return noAnsi(s);
 }
 
-module.exports = { get_predictor, write_csv, shorten_trackback };
+const run_jupyter_model = async ({
+  csvPath,
+  configuration,
+  hyperparameters,
+  ipynbPath,
+}) => {
+  try {
+    //run notebook
+    await exec(
+      `jupyter nbconvert --to html --ClearOutputPreprocessor.enabled=True --embed-images ${ipynbPath} --execute --output /tmp/scmodelreport.html`,
+      {
+        cwd: "/tmp",
+        env: {
+          ...process.env,
+          SC_MODEL_CFG: JSON.stringify(configuration),
+          SC_MODEL_HYPERPARAMS: JSON.stringify(hyperparameters),
+          SC_MODEL_DATA_FILE: csvPath,
+          SC_MODEL_FIT_DEST: "/tmp/scanomallymodel",
+          SC_MODEL_METRICS_DEST: "/tmp/scmodelmetrics.json",
+        },
+      }
+    );
+  } catch (e) {
+    return {
+      error: shorten_trackback(e.message),
+    };
+  }
+  //pick up
+  const fit_object = await fsp.readFile("/tmp/scanomallymodel");
+  const report = await fsp.readFile("/tmp/scmodelreport.html");
+  const metric_values = JSON.parse(
+    await fsp.readFile("/tmp/scmodelmetrics.json")
+  );
+  return {
+    fit_object,
+    report,
+    metric_values,
+  };
+};
+
+module.exports = {
+  get_predictor,
+  write_csv,
+  shorten_trackback,
+  run_jupyter_model,
+};
