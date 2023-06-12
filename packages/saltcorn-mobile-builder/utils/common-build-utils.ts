@@ -191,6 +191,7 @@ export async function prepareSplashPage(
           getLocale: () => {
             return "en";
           },
+          isSplashPage: true,
         },
       }
     );
@@ -198,7 +199,7 @@ export async function prepareSplashPage(
     // @ts-ignore TODO CH fix base_types
     const html = sbadmin2.layout.wrap({
       title: page.title,
-      body: { above: [contents] },
+      body: contents.above ? contents : { above: [contents] },
       alerts: [],
       role: role,
       menu: [],

@@ -793,7 +793,7 @@ const init_multi_tenant = async (
   tenantList: string[]
 ) => {
   // for each domain
-  if (singleton?.configs?.base_url.value) {
+  if (singleton?.configs?.base_url?.value) {
     const cfg_domain = get_domain(singleton?.configs?.base_url.value);
     otherdomaintenants[cfg_domain] = "public";
   }
