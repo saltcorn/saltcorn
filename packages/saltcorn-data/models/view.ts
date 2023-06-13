@@ -526,16 +526,16 @@ class View implements AbstractView {
   /**
    * Run many views with content filtered by query.
    * Used in Search for example
-   * @param {*} query this is query string
-   * @param {*} extraArgs
-   * @param {boolean} remote
-   * @throws {InvalidConfiguration}
-   * @returns {Promise<object>}
+   * @param query this is query string
+   * @param extraArgs
+   * @param remote
+   * @throws
+   * @returns
    */
   async runMany(
     query: GenObj,
     extraArgs: RunExtra,
-    remote: boolean = !isNode()
+    remote?: boolean
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     this.check_viewtemplate();
     require("../db/state")
@@ -548,6 +548,7 @@ class View implements AbstractView {
             `Unable to call runMany, ${this.viewtemplate} is missing 'table_id'.`
           );
         }
+        if (remote === undefined) remote = this.isRemoteTable();
         return await this.viewtemplateObj!.runMany(
           this.table_id,
           this.name,
@@ -792,10 +793,10 @@ class View implements AbstractView {
    */
   isRemoteTable(): boolean {
     if (isNode()) return false;
-    else if (this.viewtemplateObj?.tableless || !this.table_id) return true;
     const { getState } = require("../db/state");
     const mobileConfig = getState().mobileConfig;
     if (mobileConfig?.isOfflineMode) return false;
+    else if (this.viewtemplateObj?.tableless || !this.table_id) return true;
     else return mobileConfig?.localTableIds.indexOf(this.table_id) < 0;
   }
 
