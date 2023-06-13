@@ -791,7 +791,8 @@ class View implements AbstractView {
    * @returns true if server-side table
    */
   isRemoteTable(): boolean {
-    if (isNode() || !this.table_id) return false;
+    if (isNode()) return false;
+    else if (this.viewtemplateObj?.tableless || !this.table_id) return true;
     const { getState } = require("../db/state");
     const mobileConfig = getState().mobileConfig;
     if (mobileConfig?.isOfflineMode) return false;

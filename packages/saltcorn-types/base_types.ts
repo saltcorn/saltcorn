@@ -180,6 +180,7 @@ export type ConnectedObjects = {
 
 export type ViewTemplate = {
   name: string;
+  tableless?: boolean;
   get_state_fields?: (
     arg0: number | string,
     arg1: string,
