@@ -70,6 +70,8 @@ const {
   mergeIntoWhere,
   stringToJSON,
 } = utils;
+import tags from "@saltcorn/markup/tags";
+const { text } = tags;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import type {
@@ -1555,7 +1557,6 @@ class Table implements AbstractTable {
       options = { recalc_stored: options };
     }
     let headers;
-    const { readStateStrict } = require("../plugin-helper");
     let headerStr;
     try {
       headerStr = await getLines(filePath, 1);
@@ -1688,11 +1689,24 @@ class Table implements AbstractTable {
                           summary_field_cache[current] = row[tbl.pk_name];
                         }
                       }
+                      if (isNaN(+rec[fkfield.name])) {
+                        rejectDetails += `Reject row ${i} because in field ${
+                          fkfield.name
+                        } value "${text(
+                          current
+                        )}" not matched by a value in table ${
+                          fkfield.reftable_name
+                        } field ${fkfield.attributes.summary_field}\n`;
+                        rejects += 1;
+                        return;
+                      }
                     }
                   }
                   const rowOk = this.read_state_strict(rec);
 
                   if (typeof rowOk !== "string") {
+                    console.log(rec);
+
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
                       if (imported_pk_set.has(rec[this.pk_name]))
@@ -1703,6 +1717,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
+
                       if (options?.no_table_write) {
                         if (existing) Object.assign(rec, existing);
                         returnedRows.push(rec);
