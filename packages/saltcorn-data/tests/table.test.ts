@@ -659,7 +659,10 @@ Gordon Kane, 217`;
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rows = await table.getRows({ author: "Gordon Kane" });
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
@@ -674,7 +677,10 @@ Peter Rossi, 212,9,200`;
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rows = await table.getRows({ author: "Peter Rossi" });
 
     expect(rows.length).toBe(1);
@@ -691,7 +697,10 @@ Peter Rossi, 212,9,200`;
     expect(!!table).toBe(true);
     const rowsBefore = await table.countRows();
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rowsAfter = await table.countRows();
     expect(rowsAfter).toBe(rowsBefore + 1);
     const row = await table.getRow({ id: 1 });
@@ -738,6 +747,8 @@ David MacKay, ITILA`;
     expect(impres).toEqual({
       success:
         "Imported 1 rows into table books_not_req_pages. Rejected 1 rows.",
+      details:
+        "Reject row 3 because: No valid value for required field pages. \n",
     });
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
@@ -771,6 +782,7 @@ David MacKay, ITILA`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
+      details: "",
     });
     const row = await table.getRow({ review: "Awesome" });
     expect(row?.author).toBe(1);
@@ -788,6 +800,7 @@ David MacKay, ITILA`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
+      details: "",
     });
     const row = await table.getRow({ review: "Funny" });
     expect(row?.author).toBe(2);

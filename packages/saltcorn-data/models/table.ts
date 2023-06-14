@@ -1705,8 +1705,6 @@ class Table implements AbstractTable {
                   const rowOk = this.read_state_strict(rec);
 
                   if (typeof rowOk !== "string") {
-                    console.log(rec);
-
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
                       if (imported_pk_set.has(rec[this.pk_name]))
