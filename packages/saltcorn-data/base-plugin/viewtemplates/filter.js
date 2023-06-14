@@ -580,7 +580,7 @@ module.exports = {
               col.field_name.split(".");
             const [thoughTblNm, throughField] = throughPart.split("->");
             const [jtNm, lblField] = finalPart.split("->");
-            const target = await table.getField(
+            const target = table.getField(
               `${jFieldNm}.${throughField}.${lblField}`
             );
             if (target)
@@ -612,7 +612,7 @@ module.exports = {
                 throw new InvalidConfiguration(
                   `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
                 );
-              const jfields = await jtable.getFields();
+              const jfields = jtable.fields;
               const jfield = jfields.find((f) => f.name === lblField);
               if (jfield)
                 distinct_values[col.field_name] = await jfield.distinct_values(
@@ -620,7 +620,7 @@ module.exports = {
                   jsexprToWhere(col.where)
                 );
             } else if (kpath.length === 2) {
-              const target = await table.getField(col.field_name);
+              const target = table.getField(col.field_name);
               if (target)
                 distinct_values[col.field_name] = await target.distinct_values(
                   req,

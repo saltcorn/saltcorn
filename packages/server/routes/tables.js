@@ -41,6 +41,7 @@ const {
   script,
   domReady,
   code,
+  pre,
 } = require("@saltcorn/markup/tags");
 const stringify = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -1549,6 +1550,15 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
               )
           ),
         },
+        ...(parse_res.details
+          ? [
+              {
+                type: "card",
+                title: req.__(`Details`),
+                contents: pre(parse_res.details),
+              },
+            ]
+          : []),
       ],
     });
   }

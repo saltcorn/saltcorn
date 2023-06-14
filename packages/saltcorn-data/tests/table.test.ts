@@ -659,7 +659,10 @@ Gordon Kane, 217`;
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rows = await table.getRows({ author: "Gordon Kane" });
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
@@ -674,7 +677,10 @@ Peter Rossi, 212,9,200`;
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rows = await table.getRows({ author: "Peter Rossi" });
 
     expect(rows.length).toBe(1);
@@ -691,7 +697,10 @@ Peter Rossi, 212,9,200`;
     expect(!!table).toBe(true);
     const rowsBefore = await table.countRows();
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rowsAfter = await table.countRows();
     expect(rowsAfter).toBe(rowsBefore + 1);
     const row = await table.getRow({ id: 1 });
@@ -738,6 +747,8 @@ David MacKay, ITILA`;
     expect(impres).toEqual({
       success:
         "Imported 1 rows into table books_not_req_pages. Rejected 1 rows.",
+      details:
+        "Reject row 3 because: No valid value for required field pages. \n",
     });
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
@@ -771,6 +782,7 @@ David MacKay, ITILA`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
+      details: "",
     });
     const row = await table.getRow({ review: "Awesome" });
     expect(row?.author).toBe(1);
@@ -788,6 +800,25 @@ David MacKay, ITILA`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
+      details: "",
+    });
+    const row = await table.getRow({ review: "Funny" });
+    expect(row?.author).toBe(2);
+  });
+  it("CSV import fkeys as summary fields gives error message ", async () => {
+    const table = Table.findOne({ name: "book_reviews" });
+    assertIsSet(table);
+    const csv = `author,review
+    China Mieville, Scar`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 0 rows into table book_reviews. Rejected 1 rows.",
+      details:
+        'Reject row 2 because in field author value "China Mieville" not matched by a value in table books field author.\n',
     });
     const row = await table.getRow({ review: "Funny" });
     expect(row?.author).toBe(2);
@@ -1629,14 +1660,14 @@ describe("getField", () => {
   it("should find own field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("name");
+    const field = table.getField("name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(7);
   });
   it("should find single join field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook.pages");
+    const field = table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
 
     expect(field?.id).toBe(5);
@@ -1644,21 +1675,21 @@ describe("getField", () => {
   it("should find double join field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook.publisher.name");
+    const field = table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(19);
   });
   it("should find triple join field", async () => {
     const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
-    const field = await table.getField("patient_id.favbook.publisher.name");
+    const field = table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(19);
   });
   it("should find own key field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook");
+    const field = table.getField("favbook");
     expect(field?.name).toBe("favbook");
     expect(field?.is_fkey).toBe(true);
     expect(field?.id).toBe(8);
@@ -1666,7 +1697,7 @@ describe("getField", () => {
   it("should find single join key field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook.publisher");
+    const field = table.getField("favbook.publisher");
     expect(field?.name).toBe("publisher");
     expect(field?.is_fkey).toBe(true);
 

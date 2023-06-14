@@ -15,7 +15,16 @@ const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
 const { getState } = require("../../db/state");
-const { text, text_attr, script, domReady } = require("@saltcorn/markup/tags");
+const {
+  text,
+  text_attr,
+  script,
+  domReady,
+  div,
+  button,
+  i,
+  pre,
+} = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const {
@@ -1005,7 +1014,30 @@ const runPost = async (
       }
     }
     trigger_return = trigger_return || {};
-    if (trigger_return.notify) req.flash("success", trigger_return.notify);
+    if (trigger_return.notify && trigger_return.details)
+      req.flash(
+        "success",
+        div(
+          { class: "d-inline" },
+          trigger_return.notify,
+          button(
+            {
+              class: "btn btn-sm btn-outline-secondary btn-xs",
+              type: "button",
+              "data-bs-toggle": "collapse",
+              "data-bs-target": "#notifyDetails",
+              "aria-expanded": "false",
+              "aria-controls": "notifyDetails",
+            },
+            i({ class: "fas fa-plus" })
+          ),
+          div(
+            { class: "collapse", id: "notifyDetails" },
+            pre(trigger_return.details)
+          )
+        )
+      );
+    else if (trigger_return.notify) req.flash("success", trigger_return.notify);
     if (trigger_return.error) req.flash("danger", trigger_return.error);
 
     if (req.xhr && !originalID && !req.smr) {
