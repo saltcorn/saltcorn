@@ -1696,7 +1696,7 @@ class Table implements AbstractTable {
                           current
                         )}" not matched by a value in table ${
                           fkfield.reftable_name
-                        } field ${fkfield.attributes.summary_field}\n`;
+                        } field ${fkfield.attributes.summary_field}.\n`;
                         rejects += 1;
                         return;
                       }

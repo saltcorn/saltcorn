@@ -805,6 +805,24 @@ David MacKay, ITILA`;
     const row = await table.getRow({ review: "Funny" });
     expect(row?.author).toBe(2);
   });
+  it("CSV import fkeys as summary fields gives error message ", async () => {
+    const table = Table.findOne({ name: "book_reviews" });
+    assertIsSet(table);
+    const csv = `author,review
+    China Mieville, Scar`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 0 rows into table book_reviews. Rejected 1 rows.",
+      details:
+        'Reject row 2 because in field author value "China Mieville" not matched by a value in table books field author.\n',
+    });
+    const row = await table.getRow({ review: "Funny" });
+    expect(row?.author).toBe(2);
+  });
 
   it("should create by importing", async () => {
     //db.set_sql_logging();
