@@ -1501,6 +1501,41 @@ class Table implements AbstractTable {
     return parse_res;
   }
 
+  read_state_strict(state: Row): Row | string {
+    let errorString = "";
+    this.fields.forEach((f) => {
+      const current = state[f.name];
+      //console.log(f.name, current, typeof current);
+
+      if (typeof current !== "undefined") {
+        if (instanceOfType(f.type) && f.type?.read) {
+          const readval = f.type?.read(current);
+          if (typeof readval === "undefined") {
+            if (current === "" && !f.required) delete state[f.name];
+            else errorString += `No valid value for required field ${f.name}. `;
+          }
+          if (f.type && f.type.validate) {
+            const vres = f.type.validate(f.attributes || {})(readval);
+            if (vres.error)
+              errorString += `Validation error in field ${f.name}. `;
+          }
+          state[f.name] = readval;
+        } else if (f.type === "Key")
+          state[f.name] =
+            current === "null" || current === "" || current === null
+              ? null
+              : +current;
+        else if (f.type === "File")
+          state[f.name] =
+            current === "null" || current === "" || current === null
+              ? null
+              : current;
+      } else if (f.required && !f.primary_key)
+        errorString += `No valid value for required field ${f.name}. `;
+    });
+    return errorString || state;
+  }
+
   /**
    * Import CSV file to existing table
    * @param filePath
@@ -1531,7 +1566,7 @@ class Table implements AbstractTable {
     } catch (e) {
       return { error: `Error processing CSV file header: ${headerStr}` };
     }
-    const fields = (await this.getFields()).filter((f) => !f.calculated);
+    const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};
     const pk_name = this.pk_name;
     const renames: any[] = [];
@@ -1580,6 +1615,7 @@ class Table implements AbstractTable {
 
     let i = 1;
     let rejects = 0;
+    let rejectDetails = "";
     const client = db.isSQLite ? db : await db.getClient();
 
     const stats = await stat(filePath);
@@ -1654,9 +1690,9 @@ class Table implements AbstractTable {
                       }
                     }
                   }
-                  const rowOk = readStateStrict(rec, fields);
+                  const rowOk = this.read_state_strict(rec);
 
-                  if (rowOk) {
+                  if (typeof rowOk !== "string") {
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
                       if (imported_pk_set.has(rec[this.pk_name]))
@@ -1689,7 +1725,10 @@ class Table implements AbstractTable {
                         client,
                         pk_name,
                       });
-                  } else rejects += 1;
+                  } else {
+                    rejectDetails += `Reject row ${i} because: ${rowOk}\n`;
+                    rejects += 1;
+                  }
                 } catch (e: any) {
                   await client.query("ROLLBACK");
 
@@ -1725,6 +1764,7 @@ class Table implements AbstractTable {
         success:
           `Found ${i > 1 ? i - 1 - rejects : ""} rows for table ${this.name}` +
           (rejects ? `. Rejected ${rejects} rows.` : ""),
+        details: rejectDetails,
         rows: returnedRows,
       };
     }
@@ -1739,6 +1779,7 @@ class Table implements AbstractTable {
       await recalculate_for_stored(this);
     }
     return {
+      details: rejectDetails,
       success:
         `Imported ${i > 1 ? i - 1 - rejects : ""} rows into table ${
           this.name

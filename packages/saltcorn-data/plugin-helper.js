@@ -1921,6 +1921,7 @@ const readState = (state, fields, req) => {
 
 /**
  * Read State Strict
+ * @deprecated use Table.read_state_strict
  * @param {object} state
  * @param {object[]} fields
  * @returns {boolean|*}

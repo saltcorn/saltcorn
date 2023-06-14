@@ -4,6 +4,7 @@
  */
 export type ErrorMessage = {
   error: string;
+  details?: string;
   errors?: string[];
 };
 
@@ -11,6 +12,7 @@ export type SuccessMessage = {
   success: any;
   table?: any;
   rows?: any;
+  details?: string;
 };
 
 export type ReqRes = {
