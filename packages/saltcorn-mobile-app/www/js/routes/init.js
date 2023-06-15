@@ -1,4 +1,4 @@
-/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window, getSyncSettingsView, getAskDeleteOfflineData, getAskUploadNotEnded, updateTableRow */
+/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window, getSyncSettingsView, getAskDeleteOfflineData, getAskUploadNotEnded, updateTableRow, getTableRow */
 // TODO module namespacese
 
 const initRoutes = async () => {
@@ -18,6 +18,10 @@ const initRoutes = async () => {
     {
       path: "post/api/:tableName/:id",
       action: updateTableRow,
+    },
+    {
+      path: "get/api/:tableName",
+      action: getTableRow,
     },
     {
       path: "post/edit/toggle/:name/:id/:field_name",

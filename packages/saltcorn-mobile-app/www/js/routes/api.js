@@ -37,3 +37,23 @@ const updateTableRow = async (context) => {
     return response.data;
   }
 };
+
+// get/api/:tableName
+const getTableRow = async (context) => {
+  const { tableName } = context.params;
+  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
+  if (mobileConfig.isOfflineMode) {
+    // TODO offline mode with tabulator
+  } else {
+    const queryObj = {};
+    for (const [k, v] of new URLSearchParams(context.query).entries()) {
+      queryObj[k] = v;
+    }
+    const response = await apiCall({
+      method: "GET",
+      path: `/api/${tableName}`,
+      params: queryObj,
+    });
+    return response.data;
+  }
+};
