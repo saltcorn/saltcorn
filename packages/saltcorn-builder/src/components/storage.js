@@ -250,6 +250,17 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           contents={contents}
         />
       );
+    } else if (segment.type === "table") {
+      return (
+        <Table
+          key={ix}
+          rows={segment.rows || 2}
+          columns={segment.columns || 2}
+          contents={(segment.contents || []).map((row) =>
+            (row || []).map(toTag)
+          )}
+        />
+      );
     } else if (segment.besides) {
       return (
         <Columns
