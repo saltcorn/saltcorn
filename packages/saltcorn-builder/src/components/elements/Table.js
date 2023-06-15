@@ -71,7 +71,14 @@ const fields = [
 Table.craft = {
   displayName: "Table",
   related: {
-    settings: SettingsFromFields(fields),
+    settings: SettingsFromFields(fields, {
+      onChange(fnm, v, setProp) {
+        if (fnm === "rows")
+          setProp((prop) => {
+            if (!prop.columns[v - 1]) prop.columns[v - 1] = [];
+          });
+      },
+    }),
     segment_type: "table",
     fields,
   },
