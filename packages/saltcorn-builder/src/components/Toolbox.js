@@ -21,6 +21,7 @@ import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Tabs } from "./elements/Tabs";
+import { Table } from "./elements/Table";
 import { Container } from "./elements/Container";
 import { Image } from "./elements/Image";
 import { View } from "./elements/View";
@@ -360,7 +361,7 @@ const DropMenuElem = ({ connectors }) => (
   </WrapElem>
 );
 
-const PageElem = ({connectors, pages}) => (
+const PageElem = ({ connectors, pages }) => (
   <WrapElem
     connectors={connectors}
     icon="fa-fw far fa-file"
@@ -368,9 +369,7 @@ const PageElem = ({connectors, pages}) => (
     label="Page"
     disable={pages.length <= 1}
   >
-    <Page 
-      page={pages.length > 0 ? pages[0].name : "page"}
-    />
+    <Page page={pages.length > 0 ? pages[0].name : "page"} />
   </WrapElem>
 );
 
@@ -497,6 +496,18 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
       aggwhere={""}
       block={false}
     />
+  </WrapElem>
+);
+
+const TableElem = ({ connectors }) => (
+  <WrapElem
+    connectors={connectors}
+    innerClass="mt-m1px"
+    icon="fas fa-table"
+    title="Table"
+    label="Table"
+  >
+    <Table contents={[[], []]} rows={2} columns={2} />
   </WrapElem>
 );
 
@@ -699,6 +710,9 @@ const ToolboxPage = () => {
       <div className="toolbar-row">
         <DropMenuElem connectors={connectors} />
         <PageElem connectors={connectors} pages={pages} />
+      </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
       </div>
     </Fragment>
   );

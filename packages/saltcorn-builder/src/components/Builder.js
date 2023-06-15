@@ -24,6 +24,7 @@ import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
 import { Image } from "./elements/Image";
 import { Tabs } from "./elements/Tabs";
+import { Table } from "./elements/Table";
 import { Empty } from "./elements/Empty";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { DropMenu } from "./elements/DropMenu";
@@ -454,6 +455,7 @@ const Builder = ({ options, layout, mode }) => {
                       DropDownFilter,
                       DropMenu,
                       Tabs,
+                      Table,
                       ToggleFilter,
                     }}
                   >
