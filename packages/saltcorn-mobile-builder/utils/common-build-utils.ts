@@ -2,10 +2,17 @@ import db from "@saltcorn/data/db/index";
 import utils = require("@saltcorn/data/utils");
 const { getSafeSaltcornCmd } = utils;
 import { join } from "path";
-import { existsSync, mkdirSync, copySync, writeFileSync } from "fs-extra";
+import {
+  existsSync,
+  mkdirSync,
+  copySync,
+  writeFileSync,
+  readFileSync,
+} from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync } from "child_process";
 import Page from "@saltcorn/data/models/page";
+import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 
@@ -68,6 +75,41 @@ export function copySbadmin2Deps(buildDir: string) {
   ];
   for (const srcFile of srcFiles) {
     copySync(join(srcPrefix, srcFile), join(sbadmin2Dst, srcFile));
+  }
+}
+
+/**
+ * Copy the 'site_logo_id' file into the www folder
+ * @param buildDir
+ * @returns
+ */
+export async function copySiteLogo(buildDir: string) {
+  try {
+    const state = getState();
+    if (!state) {
+      console.log("Unable to get the state object");
+    } else {
+      await state.refresh_config(true);
+      const siteLogo = state?.getConfig("site_logo_id");
+      if (siteLogo) {
+        const file = await File.findOne(siteLogo);
+        if (file) {
+          const base64 = readFileSync(file.location, "base64");
+          writeFileSync(
+            join(buildDir, "www", "encoded_site_logo.txt"),
+            `data:${file.mimetype};base64, ${base64}`
+          );
+        } else {
+          console.log(`The file '${siteLogo}' does not exist`);
+        }
+      }
+    }
+  } catch (error: any) {
+    console.log(
+      `Unable to copy the site logo: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 

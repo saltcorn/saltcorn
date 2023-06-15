@@ -353,6 +353,7 @@ export type MobileConfig = {
   jwt?: string;
   inErrorState?: boolean;
   inLoadState?: boolean;
+  encodedSiteLogo?: string;
 };
 
 export type JoinFieldOption = {

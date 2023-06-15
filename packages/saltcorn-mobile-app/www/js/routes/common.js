@@ -131,8 +131,10 @@ const wrapContents = (contents, title, context, req) => {
         role: state.mobileConfig.role_id,
         menu: getMenu(req),
         headers: getHeaders(),
-        // TODO logo as BASE 64 image
-        brand: { name: state.getConfig("site_name") || "Saltcorn" },
+        brand: {
+          name: state.getConfig("site_name") || "Saltcorn",
+          logo: state.mobileConfig.encodedSiteLogo,
+        },
         bodyClass: "",
         currentUrl: "",
       })
