@@ -12,6 +12,7 @@ import { Empty } from "./elements/Empty";
 import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
 import { Tabs } from "./elements/Tabs";
+import { Table } from "./elements/Table";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
@@ -73,6 +74,7 @@ const allElements = [
   ToggleFilter,
   DropMenu,
   Page,
+  Table,
 ];
 
 export /**
@@ -418,6 +420,20 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,
+      };
+    }
+
+    if (node.displayName === Table.craft.displayName) {
+      const rows = node.props.rows;
+      const columns = node.props.columns;
+      const contents = ntimes(rows, (ri) =>
+        ntimes(rows, (ci) => go(nodes[node.linkedNodes[`cell_${ri}_${ci}`]]))
+      );
+      return {
+        type: "table",
+        rows,
+        columns,
+        contents,
       };
     }
 

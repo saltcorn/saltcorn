@@ -39,7 +39,7 @@ const Table = ({ contents, rows, columns }) => {
             {ntimes(columns, (ci) => (
               <td key={ci}>
                 <Element canvas id={`cell_${ri}_${ci}`} is={Column}>
-                  {contents[ri][ci]}
+                  {contents?.[ri]?.[ci]}
                 </Element>
               </td>
             ))}
@@ -79,7 +79,6 @@ Table.craft = {
           });
       },
     }),
-    segment_type: "table",
     fields,
   },
 };
