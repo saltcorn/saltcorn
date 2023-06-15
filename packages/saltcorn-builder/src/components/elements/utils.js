@@ -956,15 +956,26 @@ const SettingsFromFields =
     return (
       <table className="w-100">
         <tbody>
-          {fields.map((f, ix) => (
-            <SettingsRow
-              field={f}
-              key={ix}
-              node={node}
-              onChange={opts.onChange || noop}
-              setProp={setProp}
-            />
-          ))}
+          {fields.map((f, ix) => {
+            if (f.showIf) {
+              let noshow = false;
+              Object.entries(f.showIf).forEach(([nm, value]) => {
+                if (Array.isArray(value))
+                  noshow = noshow || value.includes(node[nm]);
+                else noshow = noshow || value !== node[nm];
+              });
+              if (noshow) return null;
+            }
+            return (
+              <SettingsRow
+                field={f}
+                key={ix}
+                node={node}
+                onChange={opts.onChange || noop}
+                setProp={setProp}
+              />
+            );
+          })}
         </tbody>
       </table>
     );

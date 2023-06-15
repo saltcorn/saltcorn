@@ -23,14 +23,29 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Table = ({ contents, rows, columns }) => {
+const Table = ({
+  contents,
+  rows,
+  columns,
+  bs_style,
+  bs_small,
+  bs_striped,
+  bs_bordered,
+  bs_borderless,
+}) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <table
-      className={`${selected ? "selected-node" : ""}`}
+      className={`${selected ? "selected-node" : ""} ${
+        bs_style ? "table" : ""
+      } ${bs_style && bs_small ? "table-sm" : ""} ${
+        bs_style && bs_striped ? "table-striped" : ""
+      } ${bs_style && bs_bordered ? "table-bordered" : ""} ${
+        bs_style && bs_borderless ? "table-borderless" : ""
+      }`}
       ref={(dom) => connect(drag(dom))}
     >
       <tbody>
@@ -62,6 +77,35 @@ const fields = [
     name: "columns",
     type: "Integer",
     attributes: { min: 0 },
+  },
+  {
+    label: "Bootstrap style",
+    name: "bs_style",
+    type: "Bool",
+  },
+  {
+    label: "Small",
+    name: "bs_small",
+    type: "Bool",
+    showIf: { bs_style: true },
+  },
+  {
+    label: "Striped",
+    name: "bs_striped",
+    type: "Bool",
+    showIf: { bs_style: true },
+  },
+  {
+    label: "Bordered",
+    name: "bs_bordered",
+    type: "Bool",
+    showIf: { bs_style: true },
+  },
+  {
+    label: "Borderless",
+    name: "bs_borderless",
+    type: "Bool",
+    showIf: { bs_style: true },
   },
 ];
 
