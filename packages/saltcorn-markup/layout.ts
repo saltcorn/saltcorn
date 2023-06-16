@@ -25,6 +25,10 @@ const {
   genericElement,
   script,
   domReady,
+  table,
+  tr,
+  td,
+  tbody,
 } = tags;
 const { alert, breadcrumbs, renderTabs } = require("./layout_utils");
 
@@ -197,6 +201,27 @@ const render = ({
         ix,
         h1(segment.title) + p(segment.blurb || "")
       );
+    }
+    if (segment.type === "table") {
+      const ntimes = (n: number, f: (i: number) => any) => {
+        const res = [];
+        for (let index = 0; index < n; index++) {
+          res.push(f(index));
+        }
+        return res;
+      };
+      const tabHtml = table(
+        tbody(
+          ntimes(segment.rows, (ri) =>
+            tr(
+              ntimes(segment.columns, (ci) =>
+                td(go(segment.contents?.[ri]?.[ci]))
+              )
+            )
+          )
+        )
+      );
+      return wrap(segment, isTop, ix, tabHtml);
     }
     if (segment.type === "image") {
       const isWeb = typeof window === "undefined" && !req?.smr;
