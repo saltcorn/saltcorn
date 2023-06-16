@@ -256,6 +256,11 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           key={ix}
           rows={segment.rows || 2}
           columns={segment.columns || 2}
+          bs_style={segment.bs_style || false}
+          bs_small={segment.bs_small || false}
+          bs_striped={segment.bs_striped || false}
+          bs_bordered={segment.bs_bordered || false}
+          bs_borderless={segment.bs_borderless || false}
           contents={(segment.contents || []).map((row) =>
             (row || []).map(toTag)
           )}
@@ -445,6 +450,11 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         rows,
         columns,
         contents,
+        bs_style: node.props.bs_style,
+        bs_small: node.props.bs_small,
+        bs_striped: node.props.bs_striped,
+        bs_bordered: node.props.bs_bordered,
+        bs_borderless: node.props.bs_borderless,
       };
     }
 
