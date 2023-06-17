@@ -8,7 +8,7 @@ import React, { Fragment } from "react";
 import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
-import { Accordion, reactifyStyles } from "./utils";
+import { Accordion, ConfigField, SettingsRow, reactifyStyles } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
 
 export /**
@@ -60,14 +60,16 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Columns = ({ widths, contents, ncols, style }) => {
+const Columns = ({ widths, contents, ncols, style, gx, gy }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <div
-      className={`row ${selected ? "selected-node" : ""}`}
+      className={`row ${selected ? "selected-node" : ""} ${
+        typeof gx !== "undefined" ? `gx-${gx}` : ""
+      } ${typeof gy !== "undefined" ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
       style={reactifyStyles(style || {})}
     >
@@ -94,6 +96,9 @@ const ColumnsSettings = () => {
     ncols: node.data.props.ncols,
     breakpoints: node.data.props.breakpoints,
     style: node.data.props.style,
+    setting_col_n: node.data.props.setting_col_n,
+    gx: node.data.props.gx,
+    gy: node.data.props.gy,
   }));
   const {
     actions: { setProp },
@@ -101,6 +106,7 @@ const ColumnsSettings = () => {
     ncols,
     breakpoints,
     style,
+    setting_col_n,
   } = node;
   return (
     <Accordion>
@@ -181,6 +187,46 @@ const ColumnsSettings = () => {
               </tr>
             </Fragment>
           ))}
+        </tbody>
+      </table>
+      <div accordiontitle="Column settings">
+        Settings for colunn #
+        <ConfigField
+          field={{
+            name: "setting_col_n",
+            label: "Column number",
+            type: "btn_select",
+            options: ntimes(ncols, (i) => ({
+              value: `${i + 1}`,
+              title: `${i + 1}`,
+              label: `${i + 1}`,
+            })),
+          }}
+          node={node}
+          setProp={setProp}
+          props={node}
+        ></ConfigField>
+      </div>
+      <table className="w-100" accordiontitle="Gutters">
+        <tbody>
+          <SettingsRow
+            field={{
+              name: "gx",
+              label: "Horizontal 0-5",
+              type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "gy",
+              label: "Vertical 0-5",
+              type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
         </tbody>
       </table>
       <div accordiontitle="Box" className="w-100">
