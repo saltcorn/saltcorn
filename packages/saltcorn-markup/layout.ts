@@ -210,7 +210,20 @@ const render = ({
         }
         return res;
       };
+      const { bs_style, bs_small, bs_striped, bs_bordered, bs_borderless } =
+        segment;
       const tabHtml = table(
+        {
+          class: !bs_style
+            ? []
+            : [
+                "table",
+                bs_small && "table-sm",
+                bs_striped && "table-striped",
+                bs_bordered && "table-bordered",
+                bs_borderless && "table-borderless",
+              ],
+        },
         tbody(
           ntimes(segment.rows, (ri) =>
             tr(
