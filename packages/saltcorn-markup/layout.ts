@@ -697,6 +697,12 @@ const render = ({
             class: [
               "row",
               segment.style && segment.style.width ? null : "w-100",
+              typeof segment.gx !== "undefined" &&
+                segment.gx !== null &&
+                `gx-${segment.gx}`,
+              typeof segment.gy !== "undefined" &&
+                segment.gy !== null &&
+                `gy-${segment.gy}`,
             ],
             style: segment.style,
           },

@@ -277,7 +277,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           gx={segment.gx}
           gy={segment.gy}
           vAligns={segment.vAligns}
-          hAligns={segment.hAligns}
+          aligns={segment.aligns}
           setting_col_n={1}
           contents={segment.besides.map(toTag)}
         />
@@ -309,7 +309,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
             gx={segment.gx}
             gy={segment.gy}
             vAligns={segment.vAligns}
-            hAligns={segment.hAligns}
+            aligns={segment.aligns}
             setting_col_n={1}
             contents={segment.besides.map(toTag)}
           />
@@ -475,7 +475,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         breakpoints: node.props.breakpoints,
         gx: +node.props.gx,
         gy: +node.props.gy,
-        hAligns: node.props.hAligns,
+        aligns: node.props.aligns,
         vAligns: node.props.vAligns,
         style: node.props.style,
         widths,
