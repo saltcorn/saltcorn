@@ -233,10 +233,17 @@ class Workflow implements AbstractWorkflow {
         ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
       };
     } else if (step.builder) {
-      const options = {
-        ...(await applyAsync(step.builder, context)),
-        fonts: getState().fonts,
-      };
+      const File = (await import("./file")).default;
+      let options;
+      try {
+        await File.buildDirCache();
+        options = {
+          ...(await applyAsync(step.builder, context)),
+          fonts: getState().fonts,
+        };
+      } finally {
+        File.destroyDirCache();
+      }
       const Table = (await import("./table")).default;
       const table = Table.findOne(
         context.table_id

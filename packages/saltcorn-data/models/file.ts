@@ -156,21 +156,37 @@ class File {
     const s = absPath.replace(path.join(db.connectObj.file_store, tenant), "");
     return s[0] === "/" ? s.substring(1) : s;
   }
-  static async allDirectories(): Promise<Array<File>> {
-    const allDirs: File[] = [await File.rootFolder()];
-    const iterFolder = async (folder?: string) => {
-      const files = await File.find(folder ? { folder } : {});
-      for (const f of files) {
-        if (f.isDirectory) {
-          allDirs.push(f);
-          await iterFolder(f.path_to_serve as string);
-        }
-      }
-    };
-    await iterFolder();
 
-    return allDirs;
+  private static dirCache: File[] | null = null;
+
+  static async allDirectories(): Promise<Array<File>> {
+    if (File.dirCache) return File.dirCache;
+    else {
+      const allDirs: File[] = [await File.rootFolder()];
+      const iterFolder = async (folder?: string) => {
+        const files = await File.find(folder ? { folder } : {});
+        for (const f of files) {
+          if (f.isDirectory) {
+            allDirs.push(f);
+            await iterFolder(f.path_to_serve as string);
+          }
+        }
+      };
+      await iterFolder();
+
+      return allDirs;
+    }
   }
+
+  static async buildDirCache() {
+    File.destroyDirCache();
+    File.dirCache = await File.allDirectories();
+  }
+
+  static destroyDirCache() {
+    File.dirCache = null;
+  }
+
   async is_symlink(): Promise<boolean> {
     try {
       let stat = await fsp.lstat(this.location);
