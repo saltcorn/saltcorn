@@ -24,6 +24,11 @@ function getDirEntry(directory) {
 }
 
 async function readJSON(fileName, dirName) {
+  const text = await readText(fileName, dirName);
+  return JSON.parse(text);
+}
+
+async function readText(fileName, dirName) {
   const dirEntry = await getDirEntry(dirName);
   return new Promise((resolve, reject) => {
     dirEntry.getFile(
@@ -33,7 +38,7 @@ async function readJSON(fileName, dirName) {
         fileEntry.file(function (file) {
           let reader = new FileReader();
           reader.onloadend = function (e) {
-            resolve(JSON.parse(this.result));
+            resolve(this.result);
           };
           reader.readAsText(file);
         });
