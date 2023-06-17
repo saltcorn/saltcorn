@@ -80,7 +80,7 @@ const Columns = ({
   style,
   gx,
   gy,
-  hAligns,
+  aligns,
   vAligns,
 }) => {
   const {
@@ -99,8 +99,8 @@ const Columns = ({
         <div
           key={ix}
           className={`split-col col-sm-${getWidth(widths, ix)} text-${
-            hAligns?.[ix]
-          }`}
+            aligns?.[ix]
+          } align-items-${vAligns?.[ix]}`}
         >
           <Element canvas id={`Col${ix}`} is={Column}>
             {contents[ix]}
@@ -127,7 +127,7 @@ const ColumnsSettings = () => {
     gx: node.data.props.gx,
     gy: node.data.props.gy,
     vAligns: node.data.props.vAligns,
-    hAligns: node.data.props.hAligns,
+    aligns: node.data.props.aligns,
   }));
   const {
     actions: { setProp },
@@ -137,11 +137,11 @@ const ColumnsSettings = () => {
     style,
     setting_col_n,
     vAligns,
-    hAligns,
+    aligns,
   } = node;
   const colSetsNode = {
     vAlign: vAligns?.[setting_col_n - 1],
-    hAlign: hAligns?.[setting_col_n - 1],
+    hAlign: aligns?.[setting_col_n - 1],
   };
   return (
     <Accordion>
@@ -250,9 +250,9 @@ const ColumnsSettings = () => {
                 label: "Vertical",
                 type: "btn_select",
                 options: [
-                  { value: "top", title: "All", label: <AlignTop /> },
-                  { value: "middle", title: "All", label: <AlignMiddle /> },
-                  { value: "bottom", title: "All", label: <AlignBottom /> },
+                  { value: "start", title: "All", label: <AlignTop /> },
+                  { value: "center", title: "All", label: <AlignMiddle /> },
+                  { value: "end", title: "All", label: <AlignBottom /> },
                 ],
               }}
               node={colSetsNode}
@@ -279,8 +279,8 @@ const ColumnsSettings = () => {
               setProp={setProp}
               onChange={(k, v) =>
                 setProp((prop) => {
-                  if (!prop.hAligns) prop.hAligns = [];
-                  prop.hAligns[setting_col_n - 1] = v;
+                  if (!prop.aligns) prop.aligns = [];
+                  prop.aligns[setting_col_n - 1] = v;
                 })
               }
             />

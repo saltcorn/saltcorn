@@ -720,6 +720,10 @@ const render = ({
                           : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
                         segment.aligns ? " text-" + segment.aligns[ixb] : ""
+                      }${
+                        segment.vAligns
+                          ? " align-items-" + segment.vAligns[ixb]
+                          : ""
                       }`,
               },
               go(t, false, ixb)
