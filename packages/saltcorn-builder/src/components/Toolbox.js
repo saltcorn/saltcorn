@@ -131,7 +131,7 @@ const ColumnsElem = ({ connectors }) => (
     title="Split into columns"
     label="Columns"
   >
-    <Columns contents={[]} />
+    <Columns contents={[]} setting_col_n={1} />
   </WrapElem>
 );
 /**
@@ -570,6 +570,9 @@ const ToolboxShow = () => {
         <HTMLElem connectors={connectors} />
         <DropMenuElem connectors={connectors} />
       </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -619,6 +622,9 @@ const ToolboxFilter = () => {
         <HTMLElem connectors={connectors} />
         <LinkElem connectors={connectors} />
       </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -666,6 +672,9 @@ const ToolboxEdit = () => {
       <div className="toolbar-row">
         <JoinFieldElem connectors={connectors} options={options} />
         <DropMenuElem connectors={connectors} />
+      </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
       </div>
     </Fragment>
   );
