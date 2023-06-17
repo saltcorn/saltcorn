@@ -389,9 +389,9 @@ const ContainerSettings = () => {
               label: "Horizontal",
               type: "btn_select",
               options: [
-                { value: "left", title: "Left", label: <AlignStart /> },
+                { value: "start", title: "Left", label: <AlignStart /> },
                 { value: "center", title: "Center", label: <AlignCenter /> },
-                { value: "right", title: "Right", label: <AlignEnd /> },
+                { value: "end", title: "Right", label: <AlignEnd /> },
               ],
             }}
             node={node}
