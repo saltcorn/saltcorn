@@ -1800,6 +1800,7 @@ const initial_config_all_fields =
         });
         aboves.push({
           widths: [2, 10],
+          aligns: ["end", "start"],
           style,
           besides: [
             flabel,
@@ -1835,6 +1836,7 @@ const initial_config_all_fields =
         });
         aboves.push({
           widths: [2, 10],
+          aligns: ["end", "start"],
           style,
           besides: [
             flabel,
