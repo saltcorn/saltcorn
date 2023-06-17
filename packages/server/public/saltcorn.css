@@ -419,10 +419,3 @@ div.unread-notify {
 .mt-6 {
   margin-top: 5rem;
 }
-
-table.table-grid,
-table.table-grid th,
-table.table-grid td {
-  border: 1px solid black;
-  border-collapse: collapse;
-}
