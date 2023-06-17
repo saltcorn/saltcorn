@@ -197,7 +197,7 @@ const ColumnsSettings = () => {
             label: "Column number",
             type: "btn_select",
             options: ntimes(ncols, (i) => ({
-              value: `${i + 1}`,
+              value: i + 1,
               title: `${i + 1}`,
               label: `${i + 1}`,
             })),
@@ -246,6 +246,7 @@ Columns.craft = {
     ncols: 2,
     style: {},
     breakpoints: ["sm", "sm"],
+    setting_col_n: 1,
   },
   related: {
     settings: ColumnsSettings,
