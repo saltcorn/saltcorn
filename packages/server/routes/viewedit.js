@@ -22,6 +22,7 @@ const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
+const File = require("@saltcorn/data/models/file");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/utils");
 
@@ -580,6 +581,12 @@ router.get(
   "/config/:name",
   isAdmin,
   error_catcher(async (req, res) => {
+    req.socket.on("close", () => {
+      File.destroyDirCache();
+    });
+    req.socket.on("timeout", () => {
+      File.destroyDirCache();
+    });
     const { name } = req.params;
     const { step } = req.query;
     const [view] = await View.find({ name });
