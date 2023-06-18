@@ -25,6 +25,10 @@ const {
   genericElement,
   script,
   domReady,
+  table,
+  tr,
+  td,
+  tbody,
 } = tags;
 const { alert, breadcrumbs, renderTabs } = require("./layout_utils");
 
@@ -197,6 +201,40 @@ const render = ({
         ix,
         h1(segment.title) + p(segment.blurb || "")
       );
+    }
+    if (segment.type === "table") {
+      const ntimes = (n: number, f: (i: number) => any) => {
+        const res = [];
+        for (let index = 0; index < n; index++) {
+          res.push(f(index));
+        }
+        return res;
+      };
+      const { bs_style, bs_small, bs_striped, bs_bordered, bs_borderless } =
+        segment;
+      const tabHtml = table(
+        {
+          class: !bs_style
+            ? []
+            : [
+                "table",
+                bs_small && "table-sm",
+                bs_striped && "table-striped",
+                bs_bordered && "table-bordered",
+                bs_borderless && "table-borderless",
+              ],
+        },
+        tbody(
+          ntimes(segment.rows, (ri) =>
+            tr(
+              ntimes(segment.columns, (ci) =>
+                td(go(segment.contents?.[ri]?.[ci]))
+              )
+            )
+          )
+        )
+      );
+      return wrap(segment, isTop, ix, tabHtml);
     }
     if (segment.type === "image") {
       const isWeb = typeof window === "undefined" && !req?.smr;
@@ -659,6 +697,12 @@ const render = ({
             class: [
               "row",
               segment.style && segment.style.width ? null : "w-100",
+              typeof segment.gx !== "undefined" &&
+                segment.gx !== null &&
+                `gx-${segment.gx}`,
+              typeof segment.gy !== "undefined" &&
+                segment.gy !== null &&
+                `gy-${segment.gy}`,
             ],
             style: segment.style,
           },
@@ -676,6 +720,10 @@ const render = ({
                           : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
                         segment.aligns ? " text-" + segment.aligns[ixb] : ""
+                      }${
+                        segment.vAligns
+                          ? " align-items-" + segment.vAligns[ixb]
+                          : ""
                       }`,
               },
               go(t, false, ixb)

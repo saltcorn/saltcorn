@@ -8,9 +8,22 @@ import React, { Fragment } from "react";
 import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
-import { Accordion, reactifyStyles } from "./utils";
+import {
+  Accordion,
+  ConfigField,
+  SettingsRow,
+  reactifyStyles,
+  SettingsSectionHeaderRow,
+} from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
-
+import {
+  AlignTop,
+  AlignMiddle,
+  AlignStart,
+  AlignEnd,
+  AlignCenter,
+  AlignBottom,
+} from "react-bootstrap-icons";
 export /**
  *
  * @param {number} n
@@ -60,19 +73,35 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Columns = ({ widths, contents, ncols, style }) => {
+const Columns = ({
+  widths,
+  contents,
+  ncols,
+  style,
+  gx,
+  gy,
+  aligns,
+  vAligns,
+}) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <div
-      className={`row ${selected ? "selected-node" : ""}`}
+      className={`row ${selected ? "selected-node" : ""} ${
+        typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
+      } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
       style={reactifyStyles(style || {})}
     >
       {ntimes(ncols, (ix) => (
-        <div key={ix} className={`split-col col-sm-${getWidth(widths, ix)}`}>
+        <div
+          key={ix}
+          className={`split-col col-sm-${getWidth(widths, ix)} text-${
+            aligns?.[ix]
+          } align-items-${vAligns?.[ix]}`}
+        >
           <Element canvas id={`Col${ix}`} is={Column}>
             {contents[ix]}
           </Element>
@@ -94,6 +123,11 @@ const ColumnsSettings = () => {
     ncols: node.data.props.ncols,
     breakpoints: node.data.props.breakpoints,
     style: node.data.props.style,
+    setting_col_n: node.data.props.setting_col_n,
+    gx: node.data.props.gx,
+    gy: node.data.props.gy,
+    vAligns: node.data.props.vAligns,
+    aligns: node.data.props.aligns,
   }));
   const {
     actions: { setProp },
@@ -101,7 +135,14 @@ const ColumnsSettings = () => {
     ncols,
     breakpoints,
     style,
+    setting_col_n,
+    vAligns,
+    aligns,
   } = node;
+  const colSetsNode = {
+    vAlign: vAligns?.[setting_col_n - 1],
+    hAlign: aligns?.[setting_col_n - 1],
+  };
   return (
     <Accordion>
       <table accordiontitle="Column properties">
@@ -183,6 +224,91 @@ const ColumnsSettings = () => {
           ))}
         </tbody>
       </table>
+      <div accordiontitle="Column settings">
+        Settings for column #
+        <ConfigField
+          field={{
+            name: "setting_col_n",
+            label: "Column number",
+            type: "btn_select",
+            options: ntimes(ncols, (i) => ({
+              value: i + 1,
+              title: `${i + 1}`,
+              label: `${i + 1}`,
+            })),
+          }}
+          node={node}
+          setProp={setProp}
+          props={node}
+        ></ConfigField>
+        <table>
+          <tbody>
+            <SettingsSectionHeaderRow title="Align" />
+            <SettingsRow
+              field={{
+                name: "vAlign",
+                label: "Vertical",
+                type: "btn_select",
+                options: [
+                  { value: "start", title: "All", label: <AlignTop /> },
+                  { value: "center", title: "All", label: <AlignMiddle /> },
+                  { value: "end", title: "All", label: <AlignBottom /> },
+                ],
+              }}
+              node={colSetsNode}
+              setProp={setProp}
+              onChange={(k, v) =>
+                setProp((prop) => {
+                  if (!prop.vAligns) prop.vAligns = [];
+                  prop.vAligns[setting_col_n - 1] = v;
+                })
+              }
+            />
+            <SettingsRow
+              field={{
+                name: "hAlign",
+                label: "Horizontal",
+                type: "btn_select",
+                options: [
+                  { value: "start", title: "Left", label: <AlignStart /> },
+                  { value: "center", title: "Center", label: <AlignCenter /> },
+                  { value: "end", title: "Right", label: <AlignEnd /> },
+                ],
+              }}
+              node={colSetsNode}
+              setProp={setProp}
+              onChange={(k, v) =>
+                setProp((prop) => {
+                  if (!prop.aligns) prop.aligns = [];
+                  prop.aligns[setting_col_n - 1] = v;
+                })
+              }
+            />
+          </tbody>
+        </table>
+      </div>
+      <table className="w-100" accordiontitle="Gutters">
+        <tbody>
+          <SettingsRow
+            field={{
+              name: "gx",
+              label: "Horizontal 0-5",
+              type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "gy",
+              label: "Vertical 0-5",
+              type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+        </tbody>
+      </table>
       <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
@@ -200,6 +326,7 @@ Columns.craft = {
     ncols: 2,
     style: {},
     breakpoints: ["sm", "sm"],
+    setting_col_n: 1,
   },
   related: {
     settings: ColumnsSettings,
