@@ -34,6 +34,8 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
   );
 }
 
+const dirCache: Record<string, File[] | null> = {};
+
 /**
  * File Descriptor class
  *
@@ -157,34 +159,41 @@ class File {
     return s[0] === "/" ? s.substring(1) : s;
   }
 
-  private static dirCache: File[] | null = null;
-
-  static async allDirectories(): Promise<Array<File>> {
-    if (File.dirCache) return File.dirCache;
-    else {
-      const allDirs: File[] = [await File.rootFolder()];
-      const iterFolder = async (folder?: string) => {
-        const files = await File.find(folder ? { folder } : {});
-        for (const f of files) {
-          if (f.isDirectory) {
-            allDirs.push(f);
-            await iterFolder(f.path_to_serve as string);
-          }
-        }
-      };
-      await iterFolder();
-
-      return allDirs;
+  /**
+   * get all directories in the root folder (tenant root dir for multi-tenant)
+   * @param ignoreCache if a cache exists, ignore it
+   * @returns
+   */
+  static async allDirectories(ignoreCache?: boolean): Promise<Array<File>> {
+    if (!ignoreCache) {
+      const cache = File.getDirCache();
+      if (cache) return cache;
     }
+    const allDirs: File[] = [await File.rootFolder()];
+    const iterFolder = async (folder?: string) => {
+      const files = await File.find(folder ? { folder } : {});
+      for (const f of files) {
+        if (f.isDirectory) {
+          allDirs.push(f);
+          await iterFolder(f.path_to_serve as string);
+        }
+      }
+    };
+    await iterFolder();
+
+    return allDirs;
   }
 
   static async buildDirCache() {
-    File.destroyDirCache();
-    File.dirCache = await File.allDirectories();
+    dirCache[db.getTenantSchema()] = await File.allDirectories();
+  }
+
+  static getDirCache() {
+    return dirCache[db.getTenantSchema()];
   }
 
   static destroyDirCache() {
-    File.dirCache = null;
+    dirCache[db.getTenantSchema()] = null;
   }
 
   async is_symlink(): Promise<boolean> {

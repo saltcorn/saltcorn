@@ -90,7 +90,7 @@ router.get(
       for (const file of rows) {
         file.location = file.path_to_serve;
       }
-      const directories = await File.allDirectories();
+      const directories = await File.allDirectories(true);
       for (const file of directories) {
         file.location = file.path_to_serve;
       }
