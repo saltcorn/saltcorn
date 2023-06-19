@@ -119,7 +119,9 @@ Table.craft = {
       onChange(fnm, v, setProp) {
         if (fnm === "rows")
           setProp((prop) => {
-            if (!prop.columns[v - 1]) prop.columns[v - 1] = [];
+            ntimes(v, (i) => {
+              if (!prop.contents[i]) prop.contents[i] = [];
+            });
           });
       },
     }),
