@@ -65,7 +65,8 @@ function get_current_state_url(e) {
   const localizer = e ? $(e).closest(".sc-state-localizer") : [];
   let $modal = $("#scmodal");
   if (localizer.length) {
-    return localizer.prop("data-local-state") || "";
+    const localState = localizer.attr("data-local-state") || "";
+    return localState;
   } else if ($modal.length === 0 || !$modal.hasClass("show"))
     return window.location.href;
   else return $modal.prop("data-modal-state");
@@ -129,6 +130,7 @@ $(function () {
 
 function pjax_to(href, e) {
   let $modal = $("#scmodal");
+  console.log({ href });
   const inModal = $modal.length && $modal.hasClass("show");
   const localizer = e ? $(e).closest(".sc-state-localizer") : [];
   let $dest = localizer.length
@@ -155,7 +157,7 @@ function pjax_to(href, e) {
           document.title = res.substring(start + 9, end);
         }
         $dest.html(res);
-        if (localizer.length) localizer.prop("data-local-state", href);
+        if (localizer.length) localizer.attr("data-local-state", href);
         initialize_page();
       },
       error: function (res) {
