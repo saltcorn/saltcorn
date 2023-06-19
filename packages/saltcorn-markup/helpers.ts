@@ -273,7 +273,7 @@ const search_bar = (
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const input_id = `input${text_attr(name)}_${rndid}`;
   const clickHandler = stateField
-    ? `(function(v){v ? set_state_field('${stateField}', v):unset_state_field('${stateField}');})($('#${input_id}').val())`
+    ? `(function(v, that){v ? set_state_field('${stateField}', v, that):unset_state_field('${stateField}', that);})($('#${input_id}').val(), this)`
     : onClick || "";
   return `<div class="input-group search-bar" id="search-input-group-${rndid}">
   

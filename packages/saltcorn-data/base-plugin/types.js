@@ -1549,7 +1549,9 @@ const bool = {
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
-          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+          attrs.isFilter && v
+            ? `unset_state_field('${nm}', this)`
+            : attrs.onChange;
         return input({
           class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
@@ -1567,7 +1569,9 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
-          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+          attrs.isFilter && v
+            ? `unset_state_field('${nm}', this)`
+            : attrs.onChange;
         return span(
           { class: "form-switch" },
           input({

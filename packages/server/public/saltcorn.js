@@ -65,7 +65,8 @@ function get_current_state_url(e) {
   const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
   let $modal = $("#scmodal");
   if (localizer.length) {
-    return localizer.attr("data-sc-local-state") || "";
+    const localState = localizer.attr("data-sc-local-state") || "";
+    return localState;
   } else if ($modal.length === 0 || !$modal.hasClass("show"))
     return window.location.href;
   else return $modal.prop("data-modal-state");
@@ -100,8 +101,8 @@ function invalidate_pagings(href) {
   return newhref;
 }
 
-function set_state_fields(kvs, disable_pjax) {
-  let newhref = get_current_state_url();
+function set_state_fields(kvs, disable_pjax, e) {
+  let newhref = get_current_state_url(e);
   if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
     newhref = invalidate_pagings(newhref);
   }
@@ -111,10 +112,10 @@ function set_state_fields(kvs, disable_pjax) {
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
   if (disable_pjax) href_to(newhref.replace("&&", "&").replace("?&", "?"));
-  else pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
+  else pjax_to(newhref.replace("&&", "&").replace("?&", "?"), e);
 }
-function unset_state_field(key) {
-  pjax_to(removeQueryStringParameter(get_current_state_url(), key));
+function unset_state_field(key, e) {
+  pjax_to(removeQueryStringParameter(get_current_state_url(e), key), e);
 }
 
 let loadPage = true;
