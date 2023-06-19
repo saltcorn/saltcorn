@@ -129,7 +129,6 @@ $(function () {
 
 function pjax_to(href, e) {
   let $modal = $("#scmodal");
-  console.log({ href });
   const inModal = $modal.length && $modal.hasClass("show");
   const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
   let $dest = localizer.length
@@ -140,10 +139,12 @@ function pjax_to(href, e) {
   if (!$dest.length) window.location.href = href;
   else {
     loadPage = false;
+    const headers = {
+      pjaxpageload: "true",
+    };
+    if (localizer.length) headers.localizedstate = "true";
     $.ajax(href, {
-      headers: {
-        pjaxpageload: "true",
-      },
+      headers,
       success: function (res, textStatus, request) {
         if (!inModal && !localizer.length)
           window.history.pushState({ url: href }, "", href);
