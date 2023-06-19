@@ -989,12 +989,18 @@ class Table implements AbstractTable {
         _userid: user?.id,
       });
     }
-    await db.update(this.name, v, id, { pk_name });
     if (typeof existing === "undefined") {
       const triggers = await Trigger.getTableTriggers("Update", this);
       if (triggers.length > 0)
-        existing = await db.selectOne(this.name, { [pk_name]: id });
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
     }
+
+    await db.update(this.name, v, id, { pk_name });
+
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
@@ -1002,7 +1008,8 @@ class Table implements AbstractTable {
         this,
         newRow,
         resultCollector,
-        role === 100 ? undefined : user
+        role === 100 ? undefined : user,
+        { old_row: existing, updated_fields: v_in }
       );
       if (resultCollector) await trigPromise;
     }
