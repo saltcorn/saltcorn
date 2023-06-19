@@ -225,7 +225,7 @@ const run = async (
       }
       badges.push({
         text: `${text_attr(k)}:${text_attr(showv)}`,
-        onclick: `unset_state_field('${text_attr(k)}')`,
+        onclick: `unset_state_field('${text_attr(k)}', this)`,
       });
     }
   });
@@ -285,7 +285,7 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value)`,
+              onChange: `set_state_field('${field_name}', this.value, this)`,
               ...field.attributes,
               isFilter: true,
               ...configuration,
@@ -309,7 +309,7 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value)`,
+              onChange: `set_state_field('${field_name}', this.value, this)`,
               isFilter: true,
               ...field.attributes,
               ...configuration,
@@ -373,9 +373,9 @@ const run = async (
           required: true,
           onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
             field_name
-          )}'): set_state_field('${encodeURIComponent(
+          )}', this): set_state_field('${encodeURIComponent(
             field_name
-          )}', this.value)`,
+          )}', this.value, this)`,
         },
         options
       );
@@ -406,7 +406,7 @@ const run = async (
             {
               href: `javascript:clear_state('${
                 configuration?.omit_fields || ""
-              }')`,
+              }', this)`,
             },
             action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
             label
@@ -414,7 +414,9 @@ const run = async (
         else
           return button(
             {
-              onClick: `clear_state('${configuration?.omit_fields || ""}')`,
+              onClick: `clear_state('${
+                configuration?.omit_fields || ""
+              }', this)`,
               class: `btn ${action_style || "btn-primary"} ${
                 action_size || ""
               }`,
@@ -460,8 +462,8 @@ const run = async (
           ],
           onClick:
             active || use_value === undefined
-              ? `unset_state_field('${field_name}')`
-              : `set_state_field('${field_name}', '${use_value || ""}')`,
+              ? `unset_state_field('${field_name}', this)`
+              : `set_state_field('${field_name}', '${use_value || ""}', this)`,
         },
         label || value || preset_value
       );

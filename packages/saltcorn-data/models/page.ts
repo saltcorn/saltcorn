@@ -27,7 +27,7 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_page";
 import expression from "./expression";
 import tags from "@saltcorn/markup/tags";
-const { script, domReady } = tags;
+const { script, domReady, div } = tags;
 const { eval_expression } = expression;
 
 const { remove_from_menu } = config;
@@ -241,6 +241,19 @@ class Page implements AbstractPage {
           mystate,
           extraArgs,
           view.isRemoteTable()
+        );
+      } else if (segment.state === "local") {
+        const extra_state = segment.extra_state_fml
+          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
+          : {};
+
+        const mystate = view.combine_state_and_default_state({
+          ...querystate,
+          ...extra_state,
+        });
+        segment.contents = div(
+          { class: "d-inline sc-state-localizer" },
+          await view.run(mystate, extraArgs, view.isRemoteTable())
         );
       } else {
         const table = Table.findOne({ id: view.table_id });

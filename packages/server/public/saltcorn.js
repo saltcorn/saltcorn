@@ -61,9 +61,12 @@ function removeQueryStringParameter(uri1, key) {
   return uri + hash;
 }
 
-function get_current_state_url() {
+function get_current_state_url(e) {
+  const localizer = e ? $(e).closest(".sc-state-localizer") : [];
   let $modal = $("#scmodal");
-  if ($modal.length === 0 || !$modal.hasClass("show"))
+  if (localizer.length) {
+    return localizer.prop("data-local-state") || "";
+  } else if ($modal.length === 0 || !$modal.hasClass("show"))
     return window.location.href;
   else return $modal.prop("data-modal-state");
 }
@@ -72,8 +75,8 @@ function select_id(id) {
   pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id));
 }
 
-function set_state_field(key, value) {
-  pjax_to(updateQueryStringParameter(get_current_state_url(), key, value));
+function set_state_field(key, value, e) {
+  pjax_to(updateQueryStringParameter(get_current_state_url(e), key, value), e);
 }
 
 function check_state_field(that) {
@@ -124,11 +127,15 @@ $(function () {
   });
 });
 
-function pjax_to(href) {
+function pjax_to(href, e) {
   let $modal = $("#scmodal");
   const inModal = $modal.length && $modal.hasClass("show");
-  let $dest = inModal ? $("#scmodal .modal-body") : $("#page-inner-content");
-
+  const localizer = e ? $(e).closest(".sc-state-localizer") : [];
+  let $dest = localizer.length
+    ? localizer
+    : inModal
+    ? $("#scmodal .modal-body")
+    : $("#page-inner-content");
   if (!$dest.length) window.location.href = href;
   else {
     loadPage = false;
@@ -137,16 +144,18 @@ function pjax_to(href) {
         pjaxpageload: "true",
       },
       success: function (res, textStatus, request) {
-        if (!inModal) window.history.pushState({ url: href }, "", href);
+        if (!inModal && !localizer.length)
+          window.history.pushState({ url: href }, "", href);
         setTimeout(() => {
           loadPage = true;
         }, 0);
-        if (!inModal && res.includes("<!--SCPT:")) {
+        if (!inModal && !localizer.length && res.includes("<!--SCPT:")) {
           const start = res.indexOf("<!--SCPT:");
           const end = res.indexOf("-->", start);
           document.title = res.substring(start + 9, end);
         }
         $dest.html(res);
+        if (localizer.length) localizer.prop("data-local-state", href);
         initialize_page();
       },
       error: function (res) {
