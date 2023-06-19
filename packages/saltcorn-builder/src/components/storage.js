@@ -452,8 +452,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
     if (node.displayName === Table.craft.displayName) {
       const rows = node.props.rows;
       const columns = node.props.columns;
+
       const contents = ntimes(rows, (ri) =>
-        ntimes(rows, (ci) => go(nodes[node.linkedNodes[`cell_${ri}_${ci}`]]))
+        ntimes(columns, (ci) => go(nodes[node.linkedNodes[`cell_${ri}_${ci}`]]))
       );
       return {
         type: "table",

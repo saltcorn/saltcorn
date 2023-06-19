@@ -33,7 +33,7 @@ class Trigger implements AbstractTrigger {
   id?: number | null;
   configuration: any;
   min_role?: number | null;
-  run?: (row: Row) => boolean;
+  run?: (row: Row, extraArgs?: any) => boolean;
 
   /**
    * Trigger constructor
@@ -235,7 +235,8 @@ class Trigger implements AbstractTrigger {
     table: Table,
     row: Row,
     resultCollector?: any,
-    user?: Row
+    user?: Row,
+    extraArgs?: any
   ): Promise<void> {
     const triggers = await Trigger.getTableTriggers(when_trigger, table, user);
     const { getState } = require("../db/state");
@@ -247,7 +248,7 @@ class Trigger implements AbstractTrigger {
       );
 
       try {
-        const res = await trigger.run!(row); // getTableTriggers ensures run is set
+        const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (res && resultCollector) Object.assign(resultCollector, res);
       } catch (e: any) {
         if (resultCollector)
@@ -292,7 +293,7 @@ class Trigger implements AbstractTrigger {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
       const action = getState().actions[trigger.action];
-      trigger.run = (row: Row) =>
+      trigger.run = (row: Row, extraArgs?: any) =>
         action &&
         action.run &&
         action.run({
@@ -301,6 +302,7 @@ class Trigger implements AbstractTrigger {
           configuration: trigger.configuration,
           row,
           ...row,
+          ...(extraArgs || {}),
         });
     }
   }
