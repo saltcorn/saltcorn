@@ -253,8 +253,8 @@ class Page implements AbstractPage {
         });
         segment.contents = div(
           {
-            class: "d-inline sc-state-localizer",
-            "data-local-state": `/view/${view.name}`,
+            class: "d-inline",
+            "data-sc-local-state": `/view/${view.name}`,
           },
           await view.run(mystate, extraArgs, view.isRemoteTable())
         );
