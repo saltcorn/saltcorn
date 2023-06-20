@@ -247,7 +247,7 @@ const run = async (
     view: async (segment) => {
       const view = await View.findOne({ name: segment.view });
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, {}, extra.req.user)
+        ? eval_expression(segment.extra_state_fml, state, extra.req.user)
         : {};
       const state1 = { ...state, ...extra_state };
       if (!view)
@@ -257,12 +257,13 @@ const run = async (
       else segment.contents = await view.run(state1, extra);
     },
     link: (segment) => {
+      //console.log("link:", segment, state);
       if (segment.transfer_state) {
         segment.url += `?` + objectToQueryString(state || {});
       }
       if (segment.view_state_fml) {
         const extra_state = segment.view_state_fml
-          ? eval_expression(segment.view_state_fml, {}, extra.req.user)
+          ? eval_expression(segment.view_state_fml, state, extra.req.user)
           : {};
         segment.url +=
           (segment.transfer_state ? "" : `?`) +
