@@ -504,7 +504,10 @@ function get_expression_function(
  * @returns {any}
  */
 function eval_expression(expression: string, row: any, user?: any): any {
-  const field_names = Object.keys(row);
+  const field_names = Object.keys(row).filter(
+    (nm) =>
+      nm.indexOf(".") === -1 && nm.indexOf(">") === -1 && nm.indexOf("-") === -1
+  );
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;

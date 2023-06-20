@@ -103,7 +103,7 @@ const range_interval = (type) => ({
         type: "range",
         disabled: attrs.disabled,
         readonly: attrs.readonly,
-        onChange: `set_state_field('_gte_${nm}', this.value)`,
+        onChange: `set_state_field('_gte_${nm}', this.value, this)`,
       }),
       input({
         ...(isdef(state[`_lte_${nm}`])
@@ -118,7 +118,7 @@ const range_interval = (type) => ({
         type: "range",
         disabled: attrs.disabled,
         readonly: attrs.readonly,
-        onChange: `set_state_field('_lte_${nm}', this.value)`,
+        onChange: `set_state_field('_lte_${nm}', this.value, this)`,
       })
     );
   },
@@ -173,7 +173,7 @@ const number_limit = (direction) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
-    const onChange = `set_state_field('_${direction}_${nm}', this.value)`;
+    const onChange = `set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
           undefined,
@@ -182,7 +182,7 @@ const number_limit = (direction) => ({
             : undefined,
           {
             ...attrs,
-            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val())`,
+            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
           },
           cls,
           undefined,
@@ -214,7 +214,7 @@ const float_number_limit = (direction) => ({
       class: ["form-control", cls],
       disabled: attrs.disabled,
       readonly: attrs.readonly,
-      onChange: `set_state_field('_${direction}_${nm}', this.value)`,
+      onChange: `set_state_field('_${direction}_${nm}', this.value, this)`,
       step: attrs.decimal_places ? Math.pow(10, -attrs.decimal_places) : "0.01",
       ...(attrs.max && { max: attrs.max }),
       ...(attrs.min && { min: attrs.min }),
@@ -1549,7 +1549,9 @@ const bool = {
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
-          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+          attrs.isFilter && v
+            ? `unset_state_field('${nm}', this)`
+            : attrs.onChange;
         return input({
           class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
@@ -1567,7 +1569,9 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
-          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+          attrs.isFilter && v
+            ? `unset_state_field('${nm}', this)`
+            : attrs.onChange;
         return span(
           { class: "form-switch" },
           input({
