@@ -19,7 +19,11 @@ const Router = require("express-promise-router");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
-const { prepare_update_row } = require("@saltcorn/data/web-mobile-commons");
+const {
+  prepare_update_row,
+  prepare_insert_row,
+  get_rows,
+} = require("@saltcorn/data/web-mobile-commons");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
@@ -27,11 +31,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
 
-const {
-  stateFieldsToWhere,
-  readState,
-  strictParseInt,
-} = require("@saltcorn/data/plugin-helper");
+const { readState, strictParseInt } = require("@saltcorn/data/plugin-helper");
 const Crash = require("@saltcorn/data/models/crash");
 
 /**
@@ -265,44 +265,14 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table, true)) {
-          let rows;
-          if (versioncount === "on") {
-            const joinOpts = {
-              orderBy: "id",
-              forUser: req.user || user || { role_id: 100 },
-              forPublic: !(req.user || user),
-              aggregations: {
-                _versions: {
-                  table: table.name + "__history",
-                  ref: "id",
-                  field: "id",
-                  aggregate: "count",
-                },
-              },
-            };
-            rows = await table.getJoinedRows(joinOpts);
-          } else if (req_query && req_query !== {}) {
-            const tbl_fields = table.getFields();
-            readState(req_query, tbl_fields, req);
-            const qstate = await stateFieldsToWhere({
-              fields: tbl_fields,
-              approximate: !!approximate,
-              state: req_query,
-              table,
-            });
-            rows = await table.getRows(qstate, {
-              forPublic: !(req.user || user),
-              forUser: req.user || user,
-            });
-          } else {
-            rows = await table.getRows(
-              {},
-              {
-                forPublic: !(req.user || user),
-                forUser: req.user || user,
-              }
-            );
-          }
+          const rows = await get_rows({
+            table,
+            req,
+            user,
+            req_query,
+            approximate,
+            versioncount,
+          });
           res.json({ success: rows.map(limitFields(fields)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);
@@ -391,34 +361,8 @@ router.post(
           const { _versions, ...row } = req.body;
           const fields = table.getFields();
           readState(row, fields, req);
-          let errors = [];
-          let hasErrors = false;
-          Object.keys(row).forEach((k) => {
-            const field = fields.find((f) => f.name === k);
-            if (!field || field.calculated || row[k] === undefined) {
-              delete row[k];
-              return;
-            }
-            if (field.type && field.type.validate) {
-              const vres = field.type.validate(field.attributes || {})(row[k]);
-              if (vres.error) {
-                hasErrors = true;
-                errors.push(`${k}: ${vres.error}`);
-              }
-            }
-          });
-          fields.forEach((field) => {
-            if (
-              field.required &&
-              !field.primary_key &&
-              typeof row[field.name] === "undefined" &&
-              !field.attributes.default
-            ) {
-              hasErrors = true;
-              errors.push(`${field.name}: required`);
-            }
-          });
-          if (hasErrors) {
+          const errors = prepare_insert_row(row, fields);
+          if (errors.length > 0) {
             getState().log(
               2,
               `API POST ${table.name} error: ${errors.join(", ")}`

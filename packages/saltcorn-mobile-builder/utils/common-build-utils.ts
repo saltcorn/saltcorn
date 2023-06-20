@@ -20,15 +20,16 @@ import { getState } from "@saltcorn/data/db/state";
  * copy files from 'server/public' into the www folder (with a version_tag prefix)
  * @param buildDir directory where the app will be build
  */
-export function copyStaticAssets(buildDir: string) {
+export function copyServerFiles(buildDir: string) {
   const wwwDir = join(buildDir, "www");
+  // assets
   const assetsDst = join(wwwDir, "static_assets", db.connectObj.version_tag);
   if (!existsSync(assetsDst)) {
     mkdirSync(assetsDst, { recursive: true });
   }
   const serverRoot = join(require.resolve("@saltcorn/server"), "..");
   const srcPrefix = join(serverRoot, "public");
-  const srcFiles = [
+  const srcAssests = [
     "jquery-3.6.0.min.js",
     "saltcorn-common.js",
     "saltcorn.js",
@@ -36,9 +37,21 @@ export function copyStaticAssets(buildDir: string) {
     "codemirror.js",
     "codemirror.css",
     "socket.io.min.js",
+    "flatpickr.min.css",
+    "gridedit.js",
+    "flatpickr.min.js",
   ];
-  for (const srcFile of srcFiles) {
+  for (const srcFile of srcAssests) {
     copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
+  }
+  // publics
+  const srcs = [
+    "flatpickr.min.css",
+    "flatpickr.min.js",
+    "gridedit.js"
+  ];
+  for (const srcFile of srcs) {
+    copySync(join(srcPrefix, srcFile), join(wwwDir, srcFile));
   }
 }
 

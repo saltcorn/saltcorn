@@ -3,9 +3,12 @@
  */
 
 import type Table from "./models/table";
+import type Field from "./models/field";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
 const { isNode } = utils;
+import pluginHelper from "./plugin-helper";
+const { readState, stateFieldsToWhere } = pluginHelper;
 const { getState } = require("./db/state");
 
 const disabledMobileMenus = ["Link", "Action", "Search"];
@@ -56,7 +59,7 @@ const get_extra_menu = (role: number, __: (str: string) => string) => {
 };
 
 /**
- * takes a row build from a form, and prepares it for a db update
+ * take a row from a form, and prepare it for a db update
  * @param table
  * @param row output parameter
  * @param id
@@ -94,7 +97,95 @@ const prepare_update_row = async (table: Table, row: any, id: number) => {
   return errors;
 };
 
+/**
+ *
+ * @param row
+ * @param fields
+ * @returns
+ */
+const prepare_insert_row = async (row: any, fields: Field[]) => {
+  let errors: any = [];
+  Object.keys(row).forEach((k) => {
+    const field = fields.find((f: Field) => f.name === k);
+    if (!field || field.calculated || row[k] === undefined) {
+      delete row[k];
+      return;
+    }
+    if (field.type && instanceOfType(field.type) && field.type.validate) {
+      const vres = field.type.validate(field.attributes || {})(row[k]);
+      if (vres.error) {
+        errors.push(`${k}: ${vres.error}`);
+      }
+    }
+  });
+  fields.forEach((field: Field) => {
+    if (
+      field.required &&
+      !field.primary_key &&
+      typeof row[field.name] === "undefined" &&
+      !field.attributes.default
+    ) {
+      errors.push(`${field.name}: required`);
+    }
+  });
+  return errors;
+};
+
+/**
+ *
+ * @param param0
+ * @returns
+ */
+const get_rows = async ({
+  table,
+  req,
+  user,
+  req_query,
+  approximate,
+  versioncount,
+}: any) => {
+  if (versioncount === "on") {
+    const joinOpts = {
+      orderBy: "id",
+      forUser: req.user || user || { role_id: 100 },
+      forPublic: !(req.user || user),
+      aggregations: {
+        _versions: {
+          table: table.name + "__history",
+          ref: "id",
+          field: "id",
+          aggregate: "count",
+        },
+      },
+    };
+    return await table.getJoinedRows(joinOpts);
+  } else if (req_query && Object.keys(req_query).length > 0) {
+    const tbl_fields = table.getFields();
+    readState(req_query, tbl_fields, req);
+    const qstate = await stateFieldsToWhere({
+      fields: tbl_fields,
+      approximate: !!approximate,
+      state: req_query,
+      table,
+    });
+    return await table.getRows(qstate, {
+      forPublic: !(req.user || user),
+      forUser: req.user || user,
+    });
+  } else {
+    return await table.getRows(
+      {},
+      {
+        forPublic: !(req.user || user),
+        forUser: req.user || user,
+      }
+    );
+  }
+};
+
 export = {
   get_extra_menu,
   prepare_update_row,
+  prepare_insert_row,
+  get_rows,
 };
