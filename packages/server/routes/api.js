@@ -361,7 +361,7 @@ router.post(
           const { _versions, ...row } = req.body;
           const fields = table.getFields();
           readState(row, fields, req);
-          const errors = prepare_insert_row(row, fields);
+          const errors = await prepare_insert_row(row, fields);
           if (errors.length > 0) {
             getState().log(
               2,

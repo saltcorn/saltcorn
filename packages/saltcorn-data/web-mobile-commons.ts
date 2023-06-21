@@ -60,6 +60,7 @@ const get_extra_menu = (role: number, __: (str: string) => string) => {
 
 /**
  * take a row from a form, and prepare it for a db update
+ * needed for tabulator
  * @param table
  * @param row output parameter
  * @param id
@@ -98,7 +99,8 @@ const prepare_update_row = async (table: Table, row: any, id: number) => {
 };
 
 /**
- *
+ * take a row from a form, and prepare it for a db insert
+ * needed for tabulator
  * @param row
  * @param fields
  * @returns
@@ -132,7 +134,8 @@ const prepare_insert_row = async (row: any, fields: Field[]) => {
 };
 
 /**
- *
+ * get an row array
+ * needed for tabulator
  * @param param0
  * @returns
  */
