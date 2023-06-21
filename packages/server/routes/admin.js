@@ -451,7 +451,10 @@ router.get(
   "/snapshot-list",
   isAdmin,
   error_catcher(async (req, res) => {
-    const snaps = await Snapshot.find();
+    const snaps = await Snapshot.find(
+      {},
+      { orderBy: "created", orderDesc: true, fields: ["id", "created", "hash"] }
+    );
     send_admin_page({
       res,
       req,
