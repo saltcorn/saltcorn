@@ -22,7 +22,6 @@ const { getState } = require("@saltcorn/data/db/state");
 const {
   prepare_update_row,
   prepare_insert_row,
-  get_rows,
 } = require("@saltcorn/data/web-mobile-commons");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -31,7 +30,11 @@ const Trigger = require("@saltcorn/data/models/trigger");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
 
-const { readState, strictParseInt } = require("@saltcorn/data/plugin-helper");
+const {
+  readState,
+  strictParseInt,
+  stateFieldsToWhere,
+} = require("@saltcorn/data/plugin-helper");
 const Crash = require("@saltcorn/data/models/crash");
 
 /**
@@ -265,14 +268,44 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table, true)) {
-          const rows = await get_rows({
-            table,
-            req,
-            user,
-            req_query,
-            approximate,
-            versioncount,
-          });
+          let rows;
+          if (versioncount === "on") {
+            const joinOpts = {
+              orderBy: "id",
+              forUser: req.user || user || { role_id: 100 },
+              forPublic: !(req.user || user),
+              aggregations: {
+                _versions: {
+                  table: table.name + "__history",
+                  ref: "id",
+                  field: "id",
+                  aggregate: "count",
+                },
+              },
+            };
+            rows = await table.getJoinedRows(joinOpts);
+          } else if (req_query && req_query !== {}) {
+            const tbl_fields = table.getFields();
+            readState(req_query, tbl_fields, req);
+            const qstate = await stateFieldsToWhere({
+              fields: tbl_fields,
+              approximate: !!approximate,
+              state: req_query,
+              table,
+            });
+            rows = await table.getRows(qstate, {
+              forPublic: !(req.user || user),
+              forUser: req.user || user,
+            });
+          } else {
+            rows = await table.getRows(
+              {},
+              {
+                forPublic: !(req.user || user),
+                forUser: req.user || user,
+              }
+            );
+          }
           res.json({ success: rows.map(limitFields(fields)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);

@@ -34,7 +34,7 @@ const updateTableRow = async (context) => {
       await offlineHelper.setOfflineSession({
         offlineUser: mobileConfig.user_name,
       });
-    return { ins_res };
+    return ins_res;
   } else {
     const response = await apiCall({
       method: "POST",
@@ -79,36 +79,12 @@ const insertTableRow = async (context) => {
       await offlineHelper.setOfflineSession({
         offlineUser: mobileConfig.user_name,
       });
-    return { ins_res };
+    return ins_res;
   } else {
     const response = await apiCall({
       method: "POST",
       path: `/api/${tableName}`,
       body: context.query,
-    });
-    return response.data;
-  }
-};
-
-// get/api/:tableName
-const getTableRow = async (context) => {
-  const { tableName } = context.params;
-  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  if (mobileConfig.isOfflineMode) {
-    const table = saltcorn.data.models.Table.findOne({ name: tableName });
-    return await saltcorn.data.web_mobile_commons.get_rows({
-      table,
-      req: new MobileRequest(),
-    });
-  } else {
-    const queryObj = {};
-    for (const [k, v] of new URLSearchParams(context.query).entries()) {
-      queryObj[k] = v;
-    }
-    const response = await apiCall({
-      method: "GET",
-      path: `/api/${tableName}`,
-      params: queryObj,
     });
     return response.data;
   }

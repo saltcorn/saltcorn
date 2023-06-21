@@ -7,8 +7,6 @@ import type Field from "./models/field";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
 const { isNode } = utils;
-import pluginHelper from "./plugin-helper";
-const { readState, stateFieldsToWhere } = pluginHelper;
 const { getState } = require("./db/state");
 
 const disabledMobileMenus = ["Link", "Action", "Search"];
@@ -133,62 +131,8 @@ const prepare_insert_row = async (row: any, fields: Field[]) => {
   return errors;
 };
 
-/**
- * get an row array
- * needed for tabulator
- * @param param0
- * @returns
- */
-const get_rows = async ({
-  table,
-  req,
-  user,
-  req_query,
-  approximate,
-  versioncount,
-}: any) => {
-  if (versioncount === "on") {
-    const joinOpts = {
-      orderBy: "id",
-      forUser: req.user || user || { role_id: 100 },
-      forPublic: !(req.user || user),
-      aggregations: {
-        _versions: {
-          table: table.name + "__history",
-          ref: "id",
-          field: "id",
-          aggregate: "count",
-        },
-      },
-    };
-    return await table.getJoinedRows(joinOpts);
-  } else if (req_query && Object.keys(req_query).length > 0) {
-    const tbl_fields = table.getFields();
-    readState(req_query, tbl_fields, req);
-    const qstate = await stateFieldsToWhere({
-      fields: tbl_fields,
-      approximate: !!approximate,
-      state: req_query,
-      table,
-    });
-    return await table.getRows(qstate, {
-      forPublic: !(req.user || user),
-      forUser: req.user || user,
-    });
-  } else {
-    return await table.getRows(
-      {},
-      {
-        forPublic: !(req.user || user),
-        forUser: req.user || user,
-      }
-    );
-  }
-};
-
 export = {
   get_extra_menu,
   prepare_update_row,
   prepare_insert_row,
-  get_rows,
 };

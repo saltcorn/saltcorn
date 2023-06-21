@@ -19,7 +19,7 @@ function MobileResponse() {
   }
 
   function getSendData() {
-    return getSendData;
+    return sendData;
   }
 
   return {

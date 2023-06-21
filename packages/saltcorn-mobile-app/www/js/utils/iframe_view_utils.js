@@ -574,14 +574,31 @@ async function clear_state() {
 }
 
 async function view_post(viewname, route, data, onDone) {
+  const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
+  const view = parent.saltcorn.data.models.View.findOne({ name: viewname });
   try {
-    const response = await parent.apiCall({
-      method: "POST",
-      path: "/view/" + viewname + "/" + route,
-      body: data,
-    });
-    if (onDone) onDone(response.data);
-    common_done(response.data);
+    let respData = undefined;
+    if (
+      mobileConfig.isOfflineMode ||
+      (view?.table_id && mobileConfig.localTableIds.indexOf(view.table_id) >= 0)
+    ) {
+      respData = await parent.router.resolve({
+        pathname: `post/view/${viewname}/${route}`,
+        data,
+      });
+    } else {
+      const response = await parent.apiCall({
+        method: "POST",
+        path: "/view/" + viewname + "/" + route,
+        body: data,
+      });
+      if (response) respData = response.data;
+    }
+
+    if (!respData)
+      throw new Error(`The response of '${viewname}/${route}' is ${respData}`);
+    if (onDone) onDone(respData);
+    common_done(respData);
   } catch (error) {
     parent.errorAlert(error);
   }
