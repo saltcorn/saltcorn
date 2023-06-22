@@ -75,7 +75,9 @@ const changeConnection = async (connObj = {}) => {
  */
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `SELECT * FROM "${getTenantSchema()}"."${sqlsanitize(
+  const sql = `SELECT ${
+    selectopts.fields ? selectopts.fields.join(", ") : `*`
+  } FROM "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where} ${mkSelectOptions(selectopts)}`;
   sql_log(sql, values);

@@ -577,17 +577,23 @@ router.get(
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const output = [];
+    const ppVal = (x) =>
+      typeof x === "string"
+        ? x
+        : typeof x === "function"
+        ? x.toString()
+        : JSON.stringify(x, null, 2);
     const fakeConsole = {
       log(...s) {
         console.log(...s);
-        output.push(div(code(pre(text(s.join(" "))))));
+        output.push(div(code(pre(text(s.map(ppVal).join(" "))))));
       },
       error(...s) {
         output.push(
           div(
             code(
               { style: "color:red;font-weight:bold;" },
-              pre(text(s.join(" ")))
+              pre(text(s.map(ppVal).join(" ")))
             )
           )
         );

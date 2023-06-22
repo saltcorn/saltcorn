@@ -791,8 +791,9 @@ David MacKay, ITILA`;
     const table = Table.findOne({ name: "book_reviews" });
     assertIsSet(table);
     const csv = `author,review
-    Leo Tolstoy, Funny
-    Herman Melville, Whaley`;
+Leo Tolstoy, "Funny
+as hell",  
+Herman Melville, Whaley`;
     const fnm = "/tmp/test1.csv";
     await writeFile(fnm, csv);
 
@@ -802,7 +803,8 @@ David MacKay, ITILA`;
       success: "Imported 2 rows into table book_reviews",
       details: "",
     });
-    const row = await table.getRow({ review: "Funny" });
+
+    const row = await table.getRow({ review: "Funny\nas hell" });
     expect(row?.author).toBe(2);
   });
   it("CSV import fkeys as summary fields gives error message ", async () => {
@@ -820,8 +822,6 @@ David MacKay, ITILA`;
       details:
         'Reject row 2 because in field author value "China Mieville" not matched by a value in table books field author.\n',
     });
-    const row = await table.getRow({ review: "Funny" });
-    expect(row?.author).toBe(2);
   });
 
   it("should create by importing", async () => {

@@ -151,8 +151,16 @@ const menuForm = async (req) => {
       {
         name: "url",
         label: req.__("URL"),
-        class: "item-menu",
+        class: "item-menu validate-expression validate-expression-conditional",
         input_type: "text",
+        showIf: { type: "Link" },
+      },
+      {
+        name: "url_formula",
+        label: req.__("URL is a formula?"),
+        type: "Bool",
+        class: "item-menu",
+        required: false,
         showIf: { type: "Link" },
       },
       {
