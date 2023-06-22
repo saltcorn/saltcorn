@@ -213,6 +213,7 @@ async function publicLogin(entryPoint) {
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
       parent.i18next.changeLanguage(config.language);
+      parent.addRoute({ route: entryPoint, query: undefined });
       const page = await parent.router.resolve({
         pathname: entryPoint,
         fullWrap: true,
