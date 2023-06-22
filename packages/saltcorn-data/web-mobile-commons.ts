@@ -5,6 +5,8 @@
 import type Table from "./models/table";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
+import expression from "./models/expression";
+import type User from "./models/user";
 const { isNode } = utils;
 const { getState } = require("./db/state");
 
@@ -16,7 +18,12 @@ const disabledMobileMenus = ["Link", "Action", "Search"];
  * @param __ translation function
  * @returns array of extra menu items
  */
-const get_extra_menu = (role: number, __: (str: string) => string) => {
+const get_extra_menu = (
+  role: number,
+  __: (str: string) => string,
+  user?: User,
+  locale?: string
+) => {
   let cfg = getState().getConfig("unrolled_menu_items", []);
   if (!cfg || cfg.length === 0) {
     cfg = getState().getConfig("menu_items", []);
@@ -35,7 +42,9 @@ const get_extra_menu = (role: number, __: (str: string) => string) => {
         style: item.style || "",
         type: item.type,
         link:
-          item.type === "Link"
+          item.type === "Link" && item.url_formula
+            ? expression.eval_expression(item.url, { locale, role }, user)
+            : item.type === "Link"
             ? item.url
             : item.type === "Action"
             ? `javascript:${
