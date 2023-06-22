@@ -3,6 +3,7 @@
  */
 
 import type Table from "./models/table";
+import type Field from "./models/field";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
 import expression from "./models/expression";
@@ -65,7 +66,8 @@ const get_extra_menu = (
 };
 
 /**
- * takes a row build from a form, and prepares it for a db update
+ * take a row from a form, and prepare it for a db update
+ * needed for tabulator
  * @param table
  * @param row output parameter
  * @param id
@@ -103,7 +105,43 @@ const prepare_update_row = async (table: Table, row: any, id: number) => {
   return errors;
 };
 
+/**
+ * take a row from a form, and prepare it for a db insert
+ * needed for tabulator
+ * @param row
+ * @param fields
+ * @returns
+ */
+const prepare_insert_row = async (row: any, fields: Field[]) => {
+  let errors: any = [];
+  Object.keys(row).forEach((k) => {
+    const field = fields.find((f: Field) => f.name === k);
+    if (!field || field.calculated || row[k] === undefined) {
+      delete row[k];
+      return;
+    }
+    if (field.type && instanceOfType(field.type) && field.type.validate) {
+      const vres = field.type.validate(field.attributes || {})(row[k]);
+      if (vres.error) {
+        errors.push(`${k}: ${vres.error}`);
+      }
+    }
+  });
+  fields.forEach((field: Field) => {
+    if (
+      field.required &&
+      !field.primary_key &&
+      typeof row[field.name] === "undefined" &&
+      !field.attributes.default
+    ) {
+      errors.push(`${field.name}: required`);
+    }
+  });
+  return errors;
+};
+
 export = {
   get_extra_menu,
   prepare_update_row,
+  prepare_insert_row,
 };

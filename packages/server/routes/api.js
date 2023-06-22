@@ -19,7 +19,10 @@ const Router = require("express-promise-router");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
-const { prepare_update_row } = require("@saltcorn/data/web-mobile-commons");
+const {
+  prepare_update_row,
+  prepare_insert_row,
+} = require("@saltcorn/data/web-mobile-commons");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
@@ -28,9 +31,9 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const passport = require("passport");
 
 const {
-  stateFieldsToWhere,
   readState,
   strictParseInt,
+  stateFieldsToWhere,
 } = require("@saltcorn/data/plugin-helper");
 const Crash = require("@saltcorn/data/models/crash");
 
@@ -391,34 +394,8 @@ router.post(
           const { _versions, ...row } = req.body;
           const fields = table.getFields();
           readState(row, fields, req);
-          let errors = [];
-          let hasErrors = false;
-          Object.keys(row).forEach((k) => {
-            const field = fields.find((f) => f.name === k);
-            if (!field || field.calculated || row[k] === undefined) {
-              delete row[k];
-              return;
-            }
-            if (field.type && field.type.validate) {
-              const vres = field.type.validate(field.attributes || {})(row[k]);
-              if (vres.error) {
-                hasErrors = true;
-                errors.push(`${k}: ${vres.error}`);
-              }
-            }
-          });
-          fields.forEach((field) => {
-            if (
-              field.required &&
-              !field.primary_key &&
-              typeof row[field.name] === "undefined" &&
-              !field.attributes.default
-            ) {
-              hasErrors = true;
-              errors.push(`${field.name}: required`);
-            }
-          });
-          if (hasErrors) {
+          const errors = await prepare_insert_row(row, fields);
+          if (errors.length > 0) {
             getState().log(
               2,
               `API POST ${table.name} error: ${errors.join(", ")}`
