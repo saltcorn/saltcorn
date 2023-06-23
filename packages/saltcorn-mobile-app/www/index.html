@@ -228,6 +228,21 @@
         }
       };
 
+      const isPublicJwt = (jwt) => {
+        try {
+          if (!jwt) return false;
+          const decoded = jwt_decode(jwt);
+          return decoded.sub === "public";
+        } catch (error) {
+          console.log(
+            `Unable to inspect '${jwt}': ${
+              error.message ? error.message : "Unknown error"
+            }`
+          );
+          return false;
+        }
+      };
+
       // device is ready
       const init = async () => {
         document.addEventListener("resume", onResume, false);
@@ -330,6 +345,20 @@
                   });
               }
             }
+            addRoute({ route: entryPoint, query: undefined });
+            const page = await router.resolve({
+              pathname: entryPoint,
+              fullWrap: true,
+              alerts,
+            });
+            await replaceIframe(page.content);
+          } else if (isPublicJwt(jwt)) {
+            const config = state.mobileConfig;
+            config.role_id = 100;
+            config.user_name = "public";
+            config.language = "en";
+            config.isPublicUser = true;
+            i18next.changeLanguage(config.language);
             addRoute({ route: entryPoint, query: undefined });
             const page = await router.resolve({
               pathname: entryPoint,
