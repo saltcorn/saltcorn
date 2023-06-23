@@ -77,8 +77,10 @@ const link_view = (
           style,
           class: [textStyle, link_style, link_size, extraClass],
         },
-        link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-        label
+        link_icon
+          ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
+          : "",
+        label === " " && link_icon ? "" : label
       );
     else
       return button(
@@ -94,8 +96,10 @@ const link_view = (
           onClick: isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`,
           style,
         },
-        link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-        label
+        link_icon
+          ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
+          : "",
+        label === " " && link_icon ? "" : label
       );
   } else
     return a(
@@ -105,8 +109,10 @@ const link_view = (
         style,
         target: link_target_blank ? "_blank" : undefined,
       },
-      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-      text(label)
+      link_icon
+        ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
+        : "",
+      text(label === " " && link_icon ? "" : label)
     );
 };
 
