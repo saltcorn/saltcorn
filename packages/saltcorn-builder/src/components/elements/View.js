@@ -208,6 +208,7 @@ const ViewSettings = () => {
             >
               <option value="shared">Shared</option>
               <option value="fixed">Fixed</option>
+              <option value="local">Local</option>
             </select>
           </div>
           {state === "fixed" &&

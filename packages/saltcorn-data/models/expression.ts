@@ -112,7 +112,8 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
       if (
         node.type === "Identifier" &&
         keys.has(node.name) &&
-        !field_names.has(node.name)
+        !field_names.has(node.name) &&
+        extraCtx[node.name] !== `$${node.name}`
       ) {
         const valExpression = JSON.stringify(extraCtx[node.name]);
         const valAst = parseExpressionAt(valExpression, 0, {
@@ -504,7 +505,10 @@ function get_expression_function(
  * @returns {any}
  */
 function eval_expression(expression: string, row: any, user?: any): any {
-  const field_names = Object.keys(row);
+  const field_names = Object.keys(row).filter(
+    (nm) =>
+      nm.indexOf(".") === -1 && nm.indexOf(">") === -1 && nm.indexOf("-") === -1
+  );
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;

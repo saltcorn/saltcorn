@@ -81,6 +81,7 @@ const add_edit_bar = ({
 }) => {
   if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
   if (role > 1) return contents;
+  if (req && req.headers.localizedstate) return { above: [contents] };
   let viewSpec = "";
   if (viewtemplate) viewSpec = viewtemplate;
   if (table) {

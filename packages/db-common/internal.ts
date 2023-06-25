@@ -492,6 +492,7 @@ export type SelectOptions = {
   description?: string;
   provider_name?: string;
   provider_cfg?: any;
+  fields?: [string];
 };
 export const orderByIsObject = (
   object: any

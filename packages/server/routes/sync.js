@@ -9,8 +9,9 @@ module.exports = router;
 
 const pickFields = (table, row) => {
   const result = {};
-  for (const { name, type } of table.getFields()) {
-    if (name === "id") continue;
+  const fields = table.getFields();
+  for (const { name, type, calculated } of table.getFields()) {
+    if (name === "id" || calculated) continue;
     if (type?.name === "Date") {
       result[name] = row[name] ? new Date(row[name]) : undefined;
     } else {

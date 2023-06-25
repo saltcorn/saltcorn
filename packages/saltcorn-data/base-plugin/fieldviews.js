@@ -387,7 +387,7 @@ const search_join_field = {
       disabled: attrs.disabled,
       onBlur: `set_state_field('${nm}.${encodeURIComponent(
         attrs.joinfield
-      )}', this.value)`,
+      )}', this.value, this)`,
       value: text_attr(state[`${nm}.${attrs.joinfield}`] || ""),
     });
   },

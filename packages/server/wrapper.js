@@ -34,7 +34,7 @@ const get_menu = (req) => {
   const login_menu = state.getConfig("login_menu");
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
-  const extra_menu = get_extra_menu(role, __);
+  const extra_menu = get_extra_menu(role, __, req.user || {}, locale);
   const authItems = isAuth
     ? [
         {
