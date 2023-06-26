@@ -488,12 +488,12 @@ const ContainerSettings = () => {
                     onChange={setAProp("bgFileId")}
                   >
                     {options.images.map((f, ix) => (
-                      <option key={ix} value={f.location}>
+                      <option key={ix} value={f.id}>
                         {f.filename}
                       </option>
                     ))}
                     {(uploadedFiles || []).map((uf, ix) => (
-                      <option key={ix} value={uf.location}>
+                      <option key={ix} value={uf.id}>
                         {uf.filename}
                       </option>
                     ))}{" "}

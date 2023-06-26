@@ -239,8 +239,14 @@ const render = ({
     if (segment.type === "image") {
       const isWeb = typeof window === "undefined" && !req?.smr;
       const srctype = segment.srctype || "File";
-      const elementId = `_sc_file_id_${segment.fileid}_`;
-      const image = img({
+      const src = isWeb
+        ? srctype === "File"
+          ? `/files/serve/${encodeURIComponent(segment.fileid)}`
+          : segment.url
+        : segment.encoded_image
+        ? segment.encoded_image
+        : segment.url;
+      const imageCfg: any = {
         class: segment.style && segment.style.width ? null : "w-100",
         alt: segment.alt,
         style: segment.style,
@@ -256,30 +262,10 @@ const render = ({
                 )
                 .join(",")
             : undefined,
-        src: isWeb
-          ? srctype === "File"
-            ? `/files/serve/${encodeURIComponent(segment.fileid)}`
-            : segment.url
-          : segment.encoded_image
-          ? segment.encoded_image
-          : segment.url,
-        id: elementId,
-      });
-      return wrap(
-        segment,
-        isTop,
-        ix,
-        isWeb || segment.encoded_image || segment.url
-          ? image
-          : div(
-              image,
-              script(
-                domReady(
-                  `buildEncodedImage('${segment.fileid}', '${elementId}')`
-                )
-              )
-            )
-      );
+        src,
+      };
+      if (!isWeb && !src) imageCfg["mobile-img-path"] = segment.fileid;
+      return wrap(segment, isTop, ix, img(imageCfg));
     }
     if (segment.type === "dropdown_menu") {
       const rndid = `actiondd${Math.floor(Math.random() * 16777215).toString(
@@ -532,8 +518,7 @@ const render = ({
       let image = undefined;
       const isWeb = typeof window === "undefined" && !req?.smr;
       if (hasImgBg && useImgTagAsBg) {
-        const elementId = `_sc_file_id_${bgFileId}_`;
-        const imgTag = img({
+        const imgCfg: any = {
           class: `containerbgimage `,
           srcset: imgResponsiveWidths
             ? imgResponsiveWidths
@@ -546,24 +531,11 @@ const render = ({
             : undefined,
           style: { "object-fit": imageSize || "contain" },
           alt: "",
-          src: isWeb ? `/files/serve/${bgFileId}` : undefined,
-          //id: elementId,
-        });
-        image = isWeb
-          ? imgTag
-          : div(
-              imgTag,
-              script(
-                domReady(`buildEncodedImage('${bgFileId}', '${elementId}')`)
-              )
-            );
+        };
+        if (isWeb) imgCfg.src = `/files/serve/${bgFileId}`;
+        else imgCfg["mobile-img-path"] = bgFileId;
+        image = img(imgCfg);
       }
-      const bgImageScriptId = // in really rare cases not unique, but shouldn't cause problems
-        !isWeb && hasImgBg && !useImgTagAsBg
-          ? `_segment_${ix}_bg_file_${bgFileId}_${Math.floor(
-              Math.random() * 100000
-            )}`
-          : undefined;
       const legacyBorder = borderWidth
         ? `border${borderDirection ? `-${borderDirection}` : ""}: ${
             borderWidth || 0
@@ -636,19 +608,14 @@ const render = ({
                   ),
                 }
               : {}),
+            ...(!isWeb && hasImgBg && !useImgTagAsBg
+              ? { "mobile-bg-img-path": bgFileId }
+              : {}),
           },
           hasImgBg && useImgTagAsBg && image,
 
           go(segment.contents)
-        ) +
-          (!isWeb && hasImgBg && !useImgTagAsBg
-            ? script(
-                domReady(
-                  `buildEncodedBgImage(${bgFileId}, '${bgImageScriptId}')`
-                ),
-                { id: bgImageScriptId }
-              )
-            : "")
+        )
       );
     }
 
