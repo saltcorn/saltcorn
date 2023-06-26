@@ -107,7 +107,9 @@ const post_btn = (
       : ""
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
     style ? ` style="${style}"` : ""
-  }>${icon ? `<i class="${icon}"></i>&nbsp;` : ""}${s}</button></form>`;
+  }>${
+    icon ? `<i class="${icon}"></i>${s ? "&nbsp;" : ""}` : ""
+  }${s}</button></form>`;
 
 /**
  * UI Form for Delete Item confirmation
