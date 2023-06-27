@@ -745,6 +745,11 @@ const configTypes: ConfigTypes = {
     default: 20,
     blurb: "Search page pagination size",
   },
+  backup_file_prefix: {
+    type: "String",
+    label: "Backup file prefix",
+    default: "sc-backup-",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
