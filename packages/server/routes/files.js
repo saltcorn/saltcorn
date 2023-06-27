@@ -449,7 +449,7 @@ router.post(
     const { redirect } = req.query;
     const f = await File.findOne(serve_path);
     if (!f) {
-      req.flash("error", "File not found");
+      req.flash("error", req.__("File not found"));
       res.redirect("/files");
       return;
     }

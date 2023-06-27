@@ -388,9 +388,10 @@ router.get(
       return;
     }
     const auto_backup_directory = getState().getConfig("auto_backup_directory");
+    const backup_file_prefix = getState().getConfig("backup_file_prefix");
     const fileNms = await fs.promises.readdir(auto_backup_directory);
     const backupFiles = fileNms.filter(
-      (fnm) => fnm.startsWith("sc-backup") && fnm.endsWith(".zip")
+      (fnm) => fnm.startsWith(backup_file_prefix) && fnm.endsWith(".zip")
     );
     send_admin_page({
       res,
@@ -588,9 +589,10 @@ router.get(
   error_catcher(async (req, res) => {
     const { filename } = req.params;
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const backup_file_prefix = getState().getConfig("backup_file_prefix");
     if (
       !isRoot ||
-      !(filename.startsWith("sc-backup") && filename.endsWith(".zip"))
+      !(filename.startsWith(backup_file_prefix) && filename.endsWith(".zip"))
     ) {
       res.redirect("/admin/backup");
       return;
