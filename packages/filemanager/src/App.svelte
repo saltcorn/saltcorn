@@ -51,7 +51,7 @@
     const url = new URL(window.location)
     sortBy = url.searchParams.get("sortBy");
     sortDesc = url.searchParams.get("sortDesc") === "on";
-    const response = await fetch(`/files?dir=${currentFolder}`, {
+    const response = await fetch(`/files?dir=${encodeURIComponent(currentFolder)}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" },
     });
     const data = await response.json();
