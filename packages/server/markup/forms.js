@@ -66,7 +66,13 @@ const fileUploadForm = (req, folder) => {
       onchange: "form.submit()",
       multiple: true,
     }),
-    folder && input({ type: "hidden", name: "folder", value: folder })
+    folder &&
+      input({
+        id: "uploadFolderInpId",
+        type: "hidden",
+        name: "folder",
+        value: folder,
+      })
   );
   return frm;
 };

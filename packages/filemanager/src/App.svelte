@@ -26,6 +26,20 @@
   let selectedFiles = {};
   let rolesList;
   let lastSelected;
+  
+  const dirParam = new URL(window.location).searchParams.get("dir");
+  if (dirParam)
+    currentFolder = dirParam;
+
+  const updateDirState = () => {
+    const url = new URL(window.location);
+    if (url.searchParams.get("dir") !== currentFolder) {
+      url.searchParams.set("dir", currentFolder);
+      window.history.replaceState(null, "", url.toString());
+    }
+    const uploadInput = document.getElementById("uploadFolderInpId");
+    if (uploadInput?.value !== currentFolder) uploadInput.value = currentFolder;
+  };
   const fetchAndReset = async function (keepSelection) {
     const response = await fetch(`/files?dir=${currentFolder}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -168,6 +182,7 @@
 
   function gotoFolder(folder) {
     currentFolder = folder;
+    updateDirState();
     fetchAndReset();
   }
 
