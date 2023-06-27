@@ -40,7 +40,17 @@
     const uploadInput = document.getElementById("uploadFolderInpId");
     if (uploadInput?.value !== currentFolder) uploadInput.value = currentFolder;
   };
+  const updateSortState = () => {
+    const url = new URL(window.location);
+    url.searchParams.set("sortBy", sortBy);
+    if (sortDesc) url.searchParams.set("sortDesc", "on");
+    else url.searchParams.delete("sortDesc");
+    window.history.replaceState(null, "", url.toString());
+  };
   const fetchAndReset = async function (keepSelection) {
+    const url = new URL(window.location)
+    sortBy = url.searchParams.get("sortBy");
+    sortDesc = url.searchParams.get("sortDesc") === "on";
     const response = await fetch(`/files?dir=${currentFolder}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" },
     });
@@ -64,7 +74,7 @@
     } else if (lastSelected) {
       lastSelected = files.find((f) => f.filename === lastSelected.filename);
     }
-    clickHeader("filename");
+    clickHeader(sortBy || "filename", true);
   };
   onMount(fetchAndReset);
   function rowClick(file, e) {
@@ -221,9 +231,12 @@
 
   let sortBy;
   let sortDesc = false;
-  function clickHeader(varNm) {
-    if (sortBy === varNm) sortDesc = !sortDesc;
-    else sortBy = varNm;
+  function clickHeader(varNm, isInit) {
+    if (sortBy === varNm && !isInit) sortDesc = !sortDesc;
+    else if (sortBy !== varNm) {
+      sortBy = varNm;
+      sortDesc = false;
+    }
     let getter = (x) => x[sortBy];
     if (sortBy === "uploaded_at") getter = (x) => new Date(x[sortBy]);
     if (sortBy === "filename") getter = (x) => (x[sortBy] || "").toLowerCase();
@@ -233,6 +246,7 @@
       return 0;
     };
     files = files.sort(cmp);
+    updateSortState();
   }
   function getSorterIcon(varNm) {   
     if (varNm !== sortBy) return null;
