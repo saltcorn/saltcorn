@@ -1563,7 +1563,7 @@ class Table implements AbstractTable {
     if (typeof options === "boolean") {
       options = { recalc_stored: options };
     }
-    let headers;
+    let headers: string[];
     let headerStr;
     try {
       headerStr = await getLines(filePath, 1);
@@ -1579,6 +1579,7 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const renames: any[] = [];
     const fkey_fields: Field[] = [];
+    const json_schema_fields: Field[] = [];
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -1592,6 +1593,18 @@ class Table implements AbstractTable {
         renames.push({
           from: headers.find((h: string) => Field.labelToName(h) === f.name),
           to: f.name,
+        });
+      } else if (
+        instanceOfType(f.type) &&
+        f.type?.name === "JSON" &&
+        headers.some((h) => h.startsWith(`${f.name}.`))
+      ) {
+        const hs = headers.filter((h) => h.startsWith(`${f.name}.`));
+        hs.forEach((h) => {
+          const f1 = new Field(f);
+          f1.attributes.subfield = h.replace(`${f.name}.`, "");
+          okHeaders[h] = f1;
+          json_schema_fields.push(f1);
         });
       } else if (f.required && !f.primary_key) {
         return { error: `Required field missing: ${f.label}` };
@@ -1671,6 +1684,14 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
+                  for (const jfield of json_schema_fields) {
+                    const k = `${jfield.name}.${jfield.attributes.subfield}`;
+                    if (typeof rec[k] !== "undefined") {
+                      if (!rec[jfield.name]) rec[jfield.name] = {};
+                      rec[jfield.name][jfield.attributes.subfield] = rec[k];
+                      delete rec[k];
+                    }
+                  }
                   for (const fkfield of fkey_fields) {
                     const current = rec[fkfield.name];
                     if (
