@@ -561,6 +561,22 @@ function create_new_folder(folder) {
     });
 }
 
+function handle_upload_file_change(form) {
+  const url = new URL(window.location);
+  const dir = url.searchParams.get("dir");
+  if (dir) $("#uploadFolderInpId").val(dir);
+  const jqForm = $(form);
+  const sortBy = url.searchParams.get("sortBy");
+  if (sortBy) {
+    jqForm.append(`<input type="hidden" name="sortBy" value="${sortBy}" />`);
+  }
+  const sortDesc = url.searchParams.get("sortDesc");
+  if (sortDesc === "on") {
+    jqForm.append('<input type="hidden" name="sortDesc" value="on" />');
+  }
+  form.submit();
+}
+
 async function fill_formula_btn_click(btn, k) {
   const formula = decodeURIComponent($(btn).attr("data-formula"));
   const free_vars = JSON.parse(

@@ -26,10 +26,6 @@
   let selectedFiles = {};
   let rolesList;
   let lastSelected;
-  
-  const dirParam = new URL(window.location).searchParams.get("dir");
-  if (dirParam)
-    currentFolder = dirParam;
 
   const updateDirState = () => {
     const url = new URL(window.location);
@@ -37,8 +33,6 @@
       url.searchParams.set("dir", currentFolder);
       window.history.replaceState(null, "", url.toString());
     }
-    const uploadInput = document.getElementById("uploadFolderInpId");
-    if (uploadInput?.value !== currentFolder) uploadInput.value = currentFolder;
   };
   const updateSortState = () => {
     const url = new URL(window.location);
@@ -47,10 +41,15 @@
     else url.searchParams.delete("sortDesc");
     window.history.replaceState(null, "", url.toString());
   };
-  const fetchAndReset = async function (keepSelection) {
+  const readState = () => {
     const url = new URL(window.location)
     sortBy = url.searchParams.get("sortBy");
     sortDesc = url.searchParams.get("sortDesc") === "on";
+    const dirParam = url.searchParams.get("dir");
+    if (dirParam)
+      currentFolder = dirParam;
+  };
+  const fetchAndReset = async function (keepSelection) {
     const response = await fetch(`/files?dir=${encodeURIComponent(currentFolder)}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" },
     });
@@ -76,7 +75,10 @@
     }
     clickHeader(sortBy || "filename", true);
   };
-  onMount(fetchAndReset);
+  onMount(async () => { 
+    readState(); 
+    await fetchAndReset(); 
+  });
   function rowClick(file, e) {
     file.selected = true;
     const prev = selectedFiles[file.filename];
@@ -92,6 +94,8 @@
       else lastSelected = null;
     }
     document.getSelection().removeAllRanges();
+    const select = document.getElementById("setRoleSelectId");
+    if (select) select.value = "";
     console.log(lastSelected);
   }
   $: selectedList = Object.entries(selectedFiles)
@@ -406,7 +410,7 @@
           </strong>
         {/if}
         <div class="file-actions d-flex">
-          <select class="form-select" on:change={changeAccessRole}>
+          <select id="setRoleSelectId" class="form-select" on:change={changeAccessRole}>
             <option value="" disabled selected>Set access</option>
             {#each rolesList as role}
               <option value={role.id}>{role.role}</option>

@@ -383,7 +383,7 @@ router.post(
   "/upload",
   setTenant,
   error_catcher(async (req, res) => {
-    let { folder } = req.body;
+    let { folder, sortBy, sortDesc } = req.body;
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 100;
@@ -425,13 +425,14 @@ router.post(
           },
         };
     }
-    if (!req.xhr)
-      res.redirect(
-        !file_for_redirect
-          ? "/files"
-          : `/files?dir=${encodeURIComponent(file_for_redirect.current_folder)}`
-      );
-    else res.json(jsonResp);
+    if (!req.xhr) {
+      const sp = new URLSearchParams();
+      if (file_for_redirect) sp.append("dir", file_for_redirect.current_folder);
+      if (sortBy) sp.append("sortBy", sortBy);
+      if (sortDesc) sp.append("sortDesc", sortDesc);
+      const query = sp.toString();
+      res.redirect(`/files${query ? `?${query}` : ""}`);
+    } else res.json(jsonResp);
   })
 );
 

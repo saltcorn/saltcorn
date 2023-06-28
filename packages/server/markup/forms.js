@@ -63,7 +63,7 @@ const fileUploadForm = (req, folder) => {
       name: "file",
       class: "form-control ms-1 w-unset d-inline",
       type: "file",
-      onchange: "form.submit()",
+      onchange: "handle_upload_file_change(form)",
       multiple: true,
     }),
     folder &&
