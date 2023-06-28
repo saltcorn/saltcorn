@@ -88,20 +88,23 @@ router.get(
       const ms = tock.getTime() - tic.getTime();
       state.log(5, `View ${viewname} rendered in ${ms} ms`);
     }
-    res.sendWrap(
-      title,
-      add_edit_bar({
-        role,
-        title: view.name,
-        what: req.__("View"),
-        url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
-        cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}`,
-        contents,
-        req,
-        viewtemplate: view.viewtemplate,
-        table: view.table_id || view.exttable_name,
-      })
-    );
+    if (typeof contents === "object" && contents.goto)
+      res.redirect(contents.goto);
+    else
+      res.sendWrap(
+        title,
+        add_edit_bar({
+          role,
+          title: view.name,
+          what: req.__("View"),
+          url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+          cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}`,
+          contents,
+          req,
+          viewtemplate: view.viewtemplate,
+          table: view.table_id || view.exttable_name,
+        })
+      );
   })
 );
 
