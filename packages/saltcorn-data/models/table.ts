@@ -1687,6 +1687,12 @@ class Table implements AbstractTable {
                     delete rec[from];
                   });
 
+                  for (const jfield of json_schema_fields) {
+                    const sf = jfield.attributes.subfield;
+                    if (rec[jfield.name][sf] === "")
+                      delete rec[jfield.name][sf];
+                  }
+
                   for (const fkfield of fkey_fields) {
                     const current = rec[fkfield.name];
                     if (
