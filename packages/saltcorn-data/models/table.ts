@@ -1689,8 +1689,20 @@ class Table implements AbstractTable {
 
                   for (const jfield of json_schema_fields) {
                     const sf = jfield.attributes.subfield;
+                    const jtype = jfield.attributes.schema.find(
+                      ({ key }: { key: string }) => key === sf
+                    );
+
                     if (rec[jfield.name][sf] === "")
                       delete rec[jfield.name][sf];
+                    else if (
+                      jtype?.type === "Integer" ||
+                      jtype?.type === "Float"
+                    ) {
+                      rec[jfield.name][sf] = +rec[jfield.name][sf];
+                      if (isNaN(rec[jfield.name][sf]))
+                        delete rec[jfield.name][sf];
+                    }
                   }
 
                   for (const fkfield of fkey_fields) {
