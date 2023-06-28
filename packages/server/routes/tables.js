@@ -1550,7 +1550,13 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
           title: req.__(`Preview`),
           contents: div(
             mkTable(
-              table.fields.map((f) => ({ label: f.name, key: f.name })),
+              table.fields.map((f) => ({
+                label: f.name,
+                key:
+                  f.type?.name === "JSON"
+                    ? (r) => JSON.stringify(r[f.name])
+                    : f.name,
+              })),
               full ? rows : rows.slice(0, 10)
             ),
             !full &&

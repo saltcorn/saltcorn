@@ -1601,7 +1601,10 @@ class Table implements AbstractTable {
       ) {
         const hs = headers.filter((h) => h.startsWith(`${f.name}.`));
         hs.forEach((h) => {
-          const f1 = new Field(f);
+          const f1 = new Field({
+            ...f,
+            attributes: structuredClone(f.attributes),
+          });
           f1.attributes.subfield = h.replace(`${f.name}.`, "");
           okHeaders[h] = f1;
           json_schema_fields.push(f1);
@@ -1616,7 +1619,6 @@ class Table implements AbstractTable {
       )
         fkey_fields.push(f);
     }
-
     const fieldNames = headers.map((hnm: any) => {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
@@ -1684,14 +1686,7 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
-                  for (const jfield of json_schema_fields) {
-                    const k = `${jfield.name}.${jfield.attributes.subfield}`;
-                    if (typeof rec[k] !== "undefined") {
-                      if (!rec[jfield.name]) rec[jfield.name] = {};
-                      rec[jfield.name][jfield.attributes.subfield] = rec[k];
-                      delete rec[k];
-                    }
-                  }
+
                   for (const fkfield of fkey_fields) {
                     const current = rec[fkfield.name];
                     if (
