@@ -568,6 +568,22 @@ function initialize_page() {
       </form>`
       );
   });
+  $("[mobile-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-img-path");
+      const base64Encoded = await parent.loadEncodedFile(fileId);
+      this.src = base64Encoded;
+    }
+  });
+  $("[mobile-bg-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-bg-img-path");
+      if (fileId) {
+        const base64Encoded = await parent.loadEncodedFile(fileId);
+        this.style.backgroundImage = `url("${base64Encoded}")`;
+      }
+    }
+  });
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 

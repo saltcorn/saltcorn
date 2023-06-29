@@ -74,11 +74,10 @@ module.exports = {
           style: "width: 100%",
         });
       else {
-        const rndid = `el${Math.floor(Math.random() * 16777215).toString(16)}`;
-        return div(
-          img({ style: "width: 100%", id: rndid }),
-          script(domReady(`buildEncodedImage('${filePath}', '${rndid}')`))
-        );
+        return img({
+          "mobile-img-path": filePath,
+          style: "width: 100%",
+        });
       }
     },
   },
@@ -239,11 +238,13 @@ module.exports = {
             : undefined,
         });
       else {
-        const elementId = `_sc_file_id_${filePath}_`;
-        return div(
-          img({ width, height, id: elementId }),
-          script(domReady(`buildEncodedImage('${filePath}', '${elementId}')`))
-        );
+        // TODO resizer on mobile?
+        const style = { width: `${width || 50}px` };
+        if (height) style.height = `${height}px`;
+        return img({
+          "mobile-img-path": filePath,
+          style,
+        });
       }
     },
   },

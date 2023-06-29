@@ -38,7 +38,7 @@ describe("View", () => {
       mockReqRes.req,
       mockReqRes.res
     );
-    expect(res.length > 0).toBe(true);
+    expect(typeof res === "string" && res.length > 0).toBe(true);
   });
   it("should run with string query", async () => {
     const v = await View.findOne({ name: "authorlist" });

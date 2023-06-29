@@ -500,7 +500,7 @@ class View implements AbstractView {
     req: any,
     res: any,
     remote: boolean = false
-  ): Promise<string> {
+  ): Promise<string | { goto?: string }> {
     const view = this;
     this.check_viewtemplate();
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
@@ -520,7 +520,7 @@ class View implements AbstractView {
     }
 
     // return contents
-    return div(resp);
+    return typeof resp === "string" ? div(resp) : resp;
   }
 
   /**

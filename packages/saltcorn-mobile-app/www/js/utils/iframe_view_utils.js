@@ -213,6 +213,7 @@ async function publicLogin(entryPoint) {
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
       parent.i18next.changeLanguage(config.language);
+      parent.addRoute({ route: entryPoint, query: undefined });
       const page = await parent.router.resolve({
         pathname: entryPoint,
         fullWrap: true,
@@ -528,19 +529,6 @@ async function make_unique_field(
     ]);
     console.error(error);
   }
-}
-
-async function buildEncodedImage(fileId, elementId) {
-  const base64Encoded = await parent.loadEncodedFile(fileId);
-  document.getElementById(elementId).src = base64Encoded;
-}
-
-async function buildEncodedBgImage(fileId, elementId) {
-  const base64Encoded = await parent.loadEncodedFile(fileId);
-  // ensure that not unique IDs work, but should not happen
-  $(`#${elementId}`).each(function () {
-    $(this).prev()[0].style.backgroundImage = `url("${base64Encoded}")`;
-  });
 }
 
 function openFile(fileId) {

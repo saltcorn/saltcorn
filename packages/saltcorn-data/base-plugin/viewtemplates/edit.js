@@ -1039,6 +1039,10 @@ const runPost = async (
       );
     else if (trigger_return.notify) req.flash("success", trigger_return.notify);
     if (trigger_return.error) req.flash("danger", trigger_return.error);
+    if (trigger_return.goto) {
+      res.redirect(trigger_return.goto);
+      return;
+    }
 
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
