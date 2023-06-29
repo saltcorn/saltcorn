@@ -1563,7 +1563,7 @@ class Table implements AbstractTable {
     if (typeof options === "boolean") {
       options = { recalc_stored: options };
     }
-    let headers;
+    let headers: string[];
     let headerStr;
     try {
       headerStr = await getLines(filePath, 1);
@@ -1579,6 +1579,7 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const renames: any[] = [];
     const fkey_fields: Field[] = [];
+    const json_schema_fields: Field[] = [];
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -1593,6 +1594,21 @@ class Table implements AbstractTable {
           from: headers.find((h: string) => Field.labelToName(h) === f.name),
           to: f.name,
         });
+      } else if (
+        instanceOfType(f.type) &&
+        f.type?.name === "JSON" &&
+        headers.some((h) => h.startsWith(`${f.name}.`))
+      ) {
+        const hs = headers.filter((h) => h.startsWith(`${f.name}.`));
+        hs.forEach((h) => {
+          const f1 = new Field({
+            ...f,
+            attributes: structuredClone(f.attributes),
+          });
+          f1.attributes.subfield = h.replace(`${f.name}.`, "");
+          okHeaders[h] = f1;
+          json_schema_fields.push(f1);
+        });
       } else if (f.required && !f.primary_key) {
         return { error: `Required field missing: ${f.label}` };
       }
@@ -1603,7 +1619,6 @@ class Table implements AbstractTable {
       )
         fkey_fields.push(f);
     }
-
     const fieldNames = headers.map((hnm: any) => {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
@@ -1671,6 +1686,25 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
+
+                  for (const jfield of json_schema_fields) {
+                    const sf = jfield.attributes.subfield;
+                    const jtype = jfield.attributes.schema.find(
+                      ({ key }: { key: string }) => key === sf
+                    );
+
+                    if (rec[jfield.name][sf] === "")
+                      delete rec[jfield.name][sf];
+                    else if (
+                      jtype?.type === "Integer" ||
+                      jtype?.type === "Float"
+                    ) {
+                      rec[jfield.name][sf] = +rec[jfield.name][sf];
+                      if (isNaN(rec[jfield.name][sf]))
+                        delete rec[jfield.name][sf];
+                    }
+                  }
+
                   for (const fkfield of fkey_fields) {
                     const current = rec[fkfield.name];
                     if (
