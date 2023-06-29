@@ -46,9 +46,10 @@ class BackupCommand extends Command {
     } else {
       const pguser = connobj.user;
       const pghost = connobj.host || "localhost";
+      const pgport = connobj.port || 5432;
       const outfnm = flags.output || default_filenm;
       const env = { ...process.env, PGPASSWORD: connobj.password };
-      execSync(`pg_dump ${pgdb} -U ${pguser} -h ${pghost} -F c >${outfnm}`, {
+      execSync(`pg_dump ${pgdb} -U ${pguser} -h ${pghost} -p ${pgport} -F c >${outfnm}`, {
         stdio: "inherit",
         env,
       });
