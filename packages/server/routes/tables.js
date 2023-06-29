@@ -1135,7 +1135,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
-    const rows = await table.getRows({}, { orderBy: "id", orderDesc: true });
+    const rows = await table.getRows({}, { orderBy: "id" });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
