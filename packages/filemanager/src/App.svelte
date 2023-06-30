@@ -42,17 +42,19 @@
     window.history.replaceState(null, "", url.toString());
   };
   const readState = () => {
-    const url = new URL(window.location)
+    const url = new URL(window.location);
     sortBy = url.searchParams.get("sortBy");
     sortDesc = url.searchParams.get("sortDesc") === "on";
     const dirParam = url.searchParams.get("dir");
-    if (dirParam)
-      currentFolder = dirParam;
+    if (dirParam) currentFolder = dirParam;
   };
   const fetchAndReset = async function (keepSelection) {
-    const response = await fetch(`/files?dir=${encodeURIComponent(currentFolder)}`, {
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-    });
+    const response = await fetch(
+      `/files?dir=${encodeURIComponent(currentFolder)}`,
+      {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      }
+    );
     const data = await response.json();
     files = data.files;
     for (const file of files) {
@@ -75,9 +77,9 @@
     }
     clickHeader(sortBy || "filename", true);
   };
-  onMount(async () => { 
-    readState(); 
-    await fetchAndReset(); 
+  onMount(async () => {
+    readState();
+    await fetchAndReset();
   });
   function rowClick(file, e) {
     file.selected = true;
@@ -98,12 +100,34 @@
     if (select) select.value = "";
     console.log(lastSelected);
   }
+
+  let ctrlDown = false;
+  function onKeyDown(e) {
+    if (e.keyCode === 17) ctrlDown = true;
+    else if (ctrlDown && e.keyCode === 65) {
+      e.preventDefault();
+      const selectedLength = Object.values(selectedFiles).filter(
+        (v) => v
+      ).length;
+      const select = selectedLength !== files.length;
+      if (!select) lastSelected = undefined;
+      for (const file of files) {
+        file.selected = select;
+        selectedFiles[file.filename] = select;
+      }
+      if (select && !lastSelected) lastSelected = files[files.length - 1];
+    }
+  }
+
+  function onKeyUp(e) {
+    if (e.keyCode === 17) ctrlDown = false;
+  }
   $: selectedList = Object.entries(selectedFiles)
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
 
   async function POST(url, body, isDownload) {
-    const go=fetch(url, {
+    const go = fetch(url, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "CSRF-Token": window._sc_globalCsrf,
@@ -112,23 +136,22 @@
       method: "POST",
       body: JSON.stringify(body || {}),
     });
-    if(isDownload){
-      const res = await go
-      const blob = await res.blob()
+    if (isDownload) {
+      const res = await go;
+      const blob = await res.blob();
 
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
-      const header = res.headers.get('Content-Disposition');
-      if(header){
-        const parts = header.split(';');
-        let filename = parts[1].split('=')[1].replaceAll('"', "");
+      const header = res.headers.get("Content-Disposition");
+      if (header) {
+        const parts = header.split(";");
+        let filename = parts[1].split("=")[1].replaceAll('"', "");
         link.download = filename;
       } else link.target = "_blank";
       link.click();
-    
-      return
-   } else
-      return await go;
+
+      return;
+    } else return await go;
   }
 
   async function goAction(e) {
@@ -139,10 +162,10 @@
         if (!confirm(`Delete files: ${selectedList.join()}`)) return;
         for (const fileNm of selectedList) {
           const file = files.find((f) => f.filename === fileNm);
-          const delres=await POST(`/files/delete/${file.location}`);
-          const deljson = await delres.json()
-          if(deljson.error) {
-            window.notifyAlert({ type: "danger", text: deljson.error })
+          const delres = await POST(`/files/delete/${file.location}`);
+          const deljson = await delres.json();
+          if (deljson.error) {
+            window.notifyAlert({ type: "danger", text: deljson.error });
           }
         }
         await fetchAndReset();
@@ -162,7 +185,6 @@
         await POST(`/files/unzip/${lastSelected.location}`, {});
         await fetchAndReset();
         break;
-
     }
   }
   async function changeAccessRole(e) {
@@ -174,15 +196,18 @@
     await fetchAndReset(true);
   }
   async function downloadZip() {
-    const filesToZip=[]
+    const filesToZip = [];
     for (const fileNm of selectedList) {
-      filesToZip.push(fileNm)
-     
+      filesToZip.push(fileNm);
     }
-    await POST(`/files/download-zip`, { 
-      files: filesToZip, 
-      location: currentFolder
-    }, true);
+    await POST(
+      `/files/download-zip`,
+      {
+        files: filesToZip,
+        location: currentFolder,
+      },
+      true
+    );
   }
   async function moveDirectory(e) {
     for (const fileNm of selectedList) {
@@ -252,7 +277,7 @@
     files = files.sort(cmp);
     updateSortState();
   }
-  function getSorterIcon(varNm) {   
+  function getSorterIcon(varNm) {
     if (varNm !== sortBy) return null;
     return sortDesc ? faCaretDown : faCaretUp;
   }
@@ -430,22 +455,22 @@
               <option>Rename</option>
             {/if}
             {#if selectedList.length === 1 && lastSelected.filename.endsWith(".zip")}
-            <option>Unzip</option>
-          {/if}
+              <option>Unzip</option>
+            {/if}
           </select>
         </div>
-        {#if selectedList.length > 1}       
-          <button class="btn btn-outline-secondary mt-2" 
-                  on:click={downloadZip}>
-            <i class="fas fa-file-archive"></i>
+        {#if selectedList.length > 1}
+          <button class="btn btn-outline-secondary mt-2" on:click={downloadZip}>
+            <i class="fas fa-file-archive" />
             Download Zip Archive
           </button>
         {/if}
-        
       {/if}
     </div>
   </div>
 </main>
+
+<svelte:window on:keydown={onKeyDown} on:keyup={onKeyUp} />
 
 <style>
   tr.selected {
