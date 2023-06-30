@@ -439,10 +439,17 @@ const auto_backup_now = async () => {
   const fileName = await create_backup();
 
   const destination = getState().getConfig("auto_backup_destination", "Saltcorn files");
+  const directory = getState().getConfig("auto_backup_directory", "");
+  if (directory === null) throw new Error("Directory is unspecified");
 
   switch (destination) {
     case "Saltcorn files":
-      const newPath = File.get_new_path(fileName);
+
+      if(directory.length>0) {
+        await File.new_folder(directory);
+      }
+
+      const newPath = File.get_new_path(join(directory,fileName));
       const stats = statSync(fileName);
       await copyFile(fileName, newPath);
       await File.create({
@@ -457,7 +464,12 @@ const auto_backup_now = async () => {
       await unlink(fileName);
       break;
     case "Local directory":
-      const directory = getState().getConfig("auto_backup_directory");
+      //const directory = getState().getConfig("auto_backup_directory");
+
+      if(directory.length>0) {
+        await mkdir(directory, { recursive: true });
+      }
+
       await copyFile(fileName, join(directory, fileName));
       await unlink(fileName);
       await delete_old_backups();

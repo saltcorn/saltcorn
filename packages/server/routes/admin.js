@@ -249,6 +249,13 @@ router.get(
   "/backup",
   isAdmin,
   error_catcher(async (req, res) => {
+
+    //
+    const aBackupFilePrefixForm = backupFilePrefixForm(req);
+    aBackupFilePrefixForm.values.backup_file_prefix = getState().getConfig(
+        "backup_file_prefix"
+    );
+    //
     const backupForm = autoBackupForm(req);
     backupForm.values.auto_backup_frequency = getState().getConfig(
       "auto_backup_frequency"
@@ -262,18 +269,28 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
+    //
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
       getState().getConfig("snapshots_enabled");
+    //
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-
+    //
     send_admin_page({
       res,
       req,
       active_sub: "Backup",
       contents: {
         above: [
-          {
+            {
+                type: "card",
+                title: req.__("Backup File Prefix"),
+                titleAjaxIndicator: true,
+                contents: div(
+                    renderForm(aBackupFilePrefixForm, req.csrfToken()),
+                ),
+            },
+            {
             type: "card",
             title: req.__("Manual backup"),
             contents: {
@@ -388,11 +405,15 @@ router.get(
       return;
     }
     const auto_backup_directory = getState().getConfig("auto_backup_directory");
+
     const backup_file_prefix = getState().getConfig("backup_file_prefix");
-    const fileNms = await fs.promises.readdir(auto_backup_directory);
+
+    const fileNms = auto_backup_directory ? await fs.promises.readdir(auto_backup_directory) : [];
+
     const backupFiles = fileNms.filter(
       (fnm) => fnm.startsWith(backup_file_prefix) && fnm.endsWith(".zip")
     );
+
     send_admin_page({
       res,
       req,
@@ -403,6 +424,7 @@ router.get(
             type: "card",
             title: req.__("Download automated backup"),
             contents: div(
+              ( backupFiles.length > 0 ?
               ul(
                 backupFiles.map((fnm) =>
                   li(
@@ -416,7 +438,7 @@ router.get(
                     )
                   )
                 )
-              )
+              ) : p( req.__("No files")))
             ),
           },
           {
@@ -466,6 +488,7 @@ router.get(
             type: "card",
             title: req.__("Download snapshots"),
             contents: div(
+              ( snaps.length > 0 ?
               ul(
                 snaps.map((snap) =>
                   li(
@@ -482,7 +505,7 @@ router.get(
                     )
                   )
                 )
-              )
+              ) : p( req.__("No files")))
             ),
           },
         ],
@@ -603,6 +626,29 @@ router.get(
 );
 
 /**
+ * Set Backup File Prefix Form
+ * @param req
+ * @returns {Form}
+ */
+const backupFilePrefixForm = (req) =>
+    new Form({
+        action: "/admin/set-backup-prefix",
+        onChange: `saveAndContinue(this);`,
+        noSubmitButton: true,
+        fields: [
+            {
+                type: "String",
+                label: req.__("Backup file prefix"),
+                name: "backup_file_prefix",
+                sublabel: req.__(
+                    "Backup file prefix"
+                ),
+                default: "sc-backup-",
+            },
+        ],
+    });
+
+/**
  * Auto backup Form
  * @param {object} req
  * @returns {Form} form
@@ -640,9 +686,10 @@ const autoBackupForm = (req) =>
         type: "String",
         label: req.__("Directory"),
         name: "auto_backup_directory",
+        sublabel: req.__("Directory for backup files"),
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
-          auto_backup_destination: "Local directory",
+          //auto_backup_destination: "Local directory",
         },
       },
       {
@@ -660,6 +707,11 @@ const autoBackupForm = (req) =>
     ],
   });
 
+/**
+ * Snapshot Form
+ * @param req
+ * @returns {Form}
+ */
 const snapshotForm = (req) =>
   new Form({
     action: "/admin/set-snapshot",
@@ -684,6 +736,9 @@ const snapshotForm = (req) =>
       },
     ],
   });
+/**
+ * Do Set snapshot
+ */
 router.post(
   "/set-snapshot",
   isAdmin,
@@ -699,6 +754,38 @@ router.post(
     } else res.json({ success: "ok" });
   })
 );
+/**
+ * Do Set Backup Prefix
+ */
+router.post(
+    "/set-backup-prefix",
+    isAdmin,
+    error_catcher(async (req, res) => {
+        const form = await backupFilePrefixForm(req);
+        form.validate(req.body);
+        if (form.hasErrors) {
+            send_admin_page({
+                res,
+                req,
+                active_sub: "Backup",
+                contents: {
+                    type: "card",
+                    title: req.__("Backup settings"),
+                    contents: [renderForm(form, req.csrfToken())],
+                },
+            });
+        } else {
+            await save_config_from_form(form);
+            if (!req.xhr) {
+                req.flash("success", req.__("Backup settings updated"));
+                res.redirect("/admin/backup");
+            } else res.json({ success: "ok" });
+        }
+    })
+);
+/**
+ * Do Set auto backup
+ */
 router.post(
   "/set-auto-backup",
   isAdmin,
@@ -725,6 +812,9 @@ router.post(
     }
   })
 );
+/**
+ * Do Auto backup now
+ */
 router.post(
   "/auto-backup-now",
   isAdmin,
@@ -739,7 +829,9 @@ router.post(
     res.json({ reload_page: true });
   })
 );
-
+/**
+ * Do Snapshot now
+ */
 router.post(
   "/snapshot-now",
   isAdmin,
@@ -757,6 +849,7 @@ router.post(
 );
 
 /**
+ * Show System page
  * @name get/system
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -950,6 +1043,7 @@ router.get(
 );
 
 /**
+ * Do Restart
  * @name post/restart
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -974,6 +1068,7 @@ router.post(
 );
 
 /**
+ * Do Upgrade
  * @name post/upgrade
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -1015,7 +1110,7 @@ router.post(
   })
 );
 /**
- * /check-for-updates
+ * Do Check for Update
  */
 router.post(
   "/check-for-upgrade",
@@ -1027,6 +1122,7 @@ router.post(
   })
 );
 /**
+ * Do Manual Backup
  * @name post/backup
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -1047,6 +1143,7 @@ router.post(
 );
 
 /**
+ * Do Restore from Backup
  * @name post/restore
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -1145,6 +1242,7 @@ const clearAllForm = (req) =>
   });
 
 /**
+ * Do Enable letsencrypt
  * @name post/enable-letsencrypt
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -1224,6 +1322,7 @@ router.post(
 );
 
 /**
+ * Do Clear All
  * @name get/clear-all
  * @function
  * @memberof module:routes/admin~routes/adminRouter
@@ -1252,7 +1351,7 @@ router.get(
   })
 );
 /**
- * /configuration-check
+ * Do Configuration Check
  */
 router.get(
   "/configuration-check",
@@ -1339,7 +1438,6 @@ router.get(
     });
   })
 );
-
 const buildDialogScript = () => {
   return `<script>
   function swapEntryInputs(activeTab, activeInput, disabledTab, disabledInput) {
@@ -1762,7 +1860,9 @@ router.get(
     });
   })
 );
-
+/**
+ * Do Build Mobile App
+ */
 router.post(
   "/build-mobile-app",
   isAdmin,
@@ -1790,7 +1890,7 @@ router.post(
         error: req.__("Only the android build supports docker."),
       });
     }
-    if (!serverURL || serverURL.length == 0) {
+    if (!serverURL || serverURL.length === 0) {
       serverURL = getState().getConfig("base_url") || "";
     }
     if (!serverURL.startsWith("http")) {
@@ -1890,8 +1990,7 @@ router.post(
 );
 
 /**
- * Clear all
- * @name post/clear-all
+ * Do Clear All
  * @function
  * @memberof module:routes/admin~routes/adminRouter
  */
@@ -2014,7 +2113,9 @@ router.post(
     }
   })
 );
-
+/**
+ * Dev / Admin
+ */
 admin_config_route({
   router,
   path: "/dev",
@@ -2053,7 +2154,9 @@ admin_config_route({
     });
   },
 });
-
+/**
+ * Notifications
+ */
 admin_config_route({
   router,
   path: "/notifications",

@@ -1038,5 +1038,8 @@
 	"JavaScript code:": "JavaScript code:",
 	"code here": "ваш программный код",
 	"No notifications": "Нет уведомлений",
-	"Receive notifications by:": "Receive notifications by:"
+	"Receive notifications by:": "Receive notifications by:",
+	"Backup file prefix": "Префикс имени файлов backup",
+	"Directory for backup files": "Папка для файлов backup",
+	"Backup File Prefix": "Префикс имени файлов backup"
 }
