@@ -249,12 +249,10 @@ router.get(
   "/backup",
   isAdmin,
   error_catcher(async (req, res) => {
-
     //
     const aBackupFilePrefixForm = backupFilePrefixForm(req);
-    aBackupFilePrefixForm.values.backup_file_prefix = getState().getConfig(
-        "backup_file_prefix"
-    );
+    aBackupFilePrefixForm.values.backup_file_prefix =
+      getState().getConfig("backup_file_prefix");
     //
     const backupForm = autoBackupForm(req);
     backupForm.values.auto_backup_frequency = getState().getConfig(
@@ -282,15 +280,7 @@ router.get(
       active_sub: "Backup",
       contents: {
         above: [
-            {
-                type: "card",
-                title: req.__("Backup File Prefix"),
-                titleAjaxIndicator: true,
-                contents: div(
-                    renderForm(aBackupFilePrefixForm, req.csrfToken()),
-                ),
-            },
-            {
+          {
             type: "card",
             title: req.__("Manual backup"),
             contents: {
@@ -384,6 +374,12 @@ router.get(
               )
             ),
           },
+          {
+            type: "card",
+            title: req.__("Backup settings"),
+            titleAjaxIndicator: true,
+            contents: div(renderForm(aBackupFilePrefixForm, req.csrfToken())),
+          },
         ],
       },
     });
@@ -408,7 +404,9 @@ router.get(
 
     const backup_file_prefix = getState().getConfig("backup_file_prefix");
 
-    const fileNms = auto_backup_directory ? await fs.promises.readdir(auto_backup_directory) : [];
+    const fileNms = auto_backup_directory
+      ? await fs.promises.readdir(auto_backup_directory)
+      : [];
 
     const backupFiles = fileNms.filter(
       (fnm) => fnm.startsWith(backup_file_prefix) && fnm.endsWith(".zip")
@@ -424,21 +422,22 @@ router.get(
             type: "card",
             title: req.__("Download automated backup"),
             contents: div(
-              ( backupFiles.length > 0 ?
-              ul(
-                backupFiles.map((fnm) =>
-                  li(
-                    a(
-                      {
-                        href: `/admin/auto-backup-download/${encodeURIComponent(
+              backupFiles.length > 0
+                ? ul(
+                    backupFiles.map((fnm) =>
+                      li(
+                        a(
+                          {
+                            href: `/admin/auto-backup-download/${encodeURIComponent(
+                              fnm
+                            )}`,
+                          },
                           fnm
-                        )}`,
-                      },
-                      fnm
+                        )
+                      )
                     )
                   )
-                )
-              ) : p( req.__("No files")))
+                : p(req.__("No files"))
             ),
           },
           {
@@ -488,24 +487,25 @@ router.get(
             type: "card",
             title: req.__("Download snapshots"),
             contents: div(
-              ( snaps.length > 0 ?
-              ul(
-                snaps.map((snap) =>
-                  li(
-                    a(
-                      {
-                        href: `/admin/snapshot-download/${encodeURIComponent(
-                          snap.id
-                        )}`,
-                        target: "_blank",
-                      },
-                      `${localeDateTime(snap.created)} (${moment(
-                        snap.created
-                      ).fromNow()})`
+              snaps.length > 0
+                ? ul(
+                    snaps.map((snap) =>
+                      li(
+                        a(
+                          {
+                            href: `/admin/snapshot-download/${encodeURIComponent(
+                              snap.id
+                            )}`,
+                            target: "_blank",
+                          },
+                          `${localeDateTime(snap.created)} (${moment(
+                            snap.created
+                          ).fromNow()})`
+                        )
+                      )
                     )
                   )
-                )
-              ) : p( req.__("No files")))
+                : p(req.__("No files"))
             ),
           },
         ],
@@ -631,22 +631,20 @@ router.get(
  * @returns {Form}
  */
 const backupFilePrefixForm = (req) =>
-    new Form({
-        action: "/admin/set-backup-prefix",
-        onChange: `saveAndContinue(this);`,
-        noSubmitButton: true,
-        fields: [
-            {
-                type: "String",
-                label: req.__("Backup file prefix"),
-                name: "backup_file_prefix",
-                sublabel: req.__(
-                    "Backup file prefix"
-                ),
-                default: "sc-backup-",
-            },
-        ],
-    });
+  new Form({
+    action: "/admin/set-backup-prefix",
+    onChange: `saveAndContinue(this);`,
+    noSubmitButton: true,
+    fields: [
+      {
+        type: "String",
+        label: req.__("Backup file prefix"),
+        name: "backup_file_prefix",
+        sublabel: req.__("Backup file prefix"),
+        default: "sc-backup-",
+      },
+    ],
+  });
 
 /**
  * Auto backup Form
@@ -758,30 +756,30 @@ router.post(
  * Do Set Backup Prefix
  */
 router.post(
-    "/set-backup-prefix",
-    isAdmin,
-    error_catcher(async (req, res) => {
-        const form = await backupFilePrefixForm(req);
-        form.validate(req.body);
-        if (form.hasErrors) {
-            send_admin_page({
-                res,
-                req,
-                active_sub: "Backup",
-                contents: {
-                    type: "card",
-                    title: req.__("Backup settings"),
-                    contents: [renderForm(form, req.csrfToken())],
-                },
-            });
-        } else {
-            await save_config_from_form(form);
-            if (!req.xhr) {
-                req.flash("success", req.__("Backup settings updated"));
-                res.redirect("/admin/backup");
-            } else res.json({ success: "ok" });
-        }
-    })
+  "/set-backup-prefix",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const form = await backupFilePrefixForm(req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      send_admin_page({
+        res,
+        req,
+        active_sub: "Backup",
+        contents: {
+          type: "card",
+          title: req.__("Backup settings"),
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    } else {
+      await save_config_from_form(form);
+      if (!req.xhr) {
+        req.flash("success", req.__("Backup settings updated"));
+        res.redirect("/admin/backup");
+      } else res.json({ success: "ok" });
+    }
+  })
 );
 /**
  * Do Set auto backup
