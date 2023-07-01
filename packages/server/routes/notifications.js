@@ -70,7 +70,7 @@ router.get(
             {
               type: "card",
               contents: [
-                "Receive notifications by:",
+                req.__("Receive notifications by:"),
                 renderForm(notificationSettingsForm(), req.csrfToken()),
               ],
             },
