@@ -141,6 +141,9 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
  * @returns {Promise<void>}
  */
 const backup_files = async (root_dirpath: string): Promise<void> => {
+
+  const backup_file_prefix = getState().getConfig("backup_file_prefix");
+
   const dirpath = join(root_dirpath, "files");
   await mkdir(dirpath);
 
@@ -157,7 +160,7 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
         //exclude auto backups
         if (
           base.startsWith(
-            `sc-backup-${getState().getConfig("site_name", "Saltcorn")}`
+            `${backup_file_prefix}${getState().getConfig("site_name", "Saltcorn")}`
           ) &&
           f.mime_sub === "zip" &&
           !f.user_id
@@ -194,7 +197,7 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
 };
 
 /**
- *
+ * Create backup
  * @param fnm
  */
 const create_backup = async (fnm?: string): Promise<string> => {
@@ -212,7 +215,8 @@ const create_backup = async (fnm?: string): Promise<string> => {
     ten === db.connectObj.default_schema
       ? getState().getConfig("site_name", "Saltcorn")
       : ten;
-  const zipFileName = fnm || `sc-backup-${tens}-${day}.zip`;
+  const backup_file_prefix = getState().getConfig("backup_file_prefix");
+  const zipFileName = fnm || `${backup_file_prefix}${tens}-${day}.zip`;
 
   const zip = new Zip();
   zip.addLocalFolder(tmpDir.path);
@@ -273,6 +277,10 @@ const restore_files = async (dirpath: string): Promise<any> => {
   }
   return { file_users, newLocations };
 };
+/**
+ * Correct fileid references to location
+ * @param newLocations
+ */
 const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
   for (const field of fileFields) {
@@ -290,7 +298,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
   }
 };
 /**
- * @function
+ * @function Restore file users
  * @param {object} file_users
  * @returns {Promise<void>}
  */
@@ -305,7 +313,7 @@ const restore_file_users = async (file_users: any): Promise<void> => {
 };
 
 /**
- * @function
+ * @function Restore Tables
  * @param {string} dirpath
  * @param {boolean} [restore_first_user]
  * @returns {Promise<string|undefined>}
@@ -346,7 +354,7 @@ const restore_tables = async (
 };
 
 /**
- * @function
+ * @function Restore config
  * @param {string} dirpath
  * @returns {Promise<void>}
  */
@@ -361,6 +369,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 };
 
 /**
+ * Restore from backup
  * @param fnm
  * @param loadAndSaveNewPlugin
  * @param restore_first_user
@@ -406,28 +415,41 @@ const restore = async (
   return err;
 };
 
+/**
+ * Delete old backups
+ */
 const delete_old_backups = async () => {
   const directory = getState().getConfig("auto_backup_directory");
   const expire_days = getState().getConfig("auto_backup_expire_days");
+  const backup_file_prefix = getState().getConfig("backup_file_prefix");
   if (!expire_days || expire_days < 0) return;
   const files = await readdir(directory);
   for (const file of files) {
-    if (!file.startsWith("sc-backup-")) continue;
+    if (!file.startsWith(backup_file_prefix)) continue;
     const stats = await stat(path.join(directory, file));
     const ageDays =
       (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
     if (ageDays > expire_days) await unlink(path.join(directory, file));
   }
 };
-
+/**
+ * Do autobackup now
+ */
 const auto_backup_now = async () => {
   const fileName = await create_backup();
 
-  const destination = getState().getConfig("auto_backup_destination");
+  const destination = getState().getConfig("auto_backup_destination", "Saltcorn files");
+  const directory = getState().getConfig("auto_backup_directory", "");
+  if (directory === null) throw new Error("Directory is unspecified");
 
   switch (destination) {
     case "Saltcorn files":
-      const newPath = File.get_new_path(fileName);
+
+      if(directory.length>0) {
+        await File.new_folder(directory);
+      }
+
+      const newPath = File.get_new_path(join(directory,fileName));
       const stats = statSync(fileName);
       await copyFile(fileName, newPath);
       await File.create({
@@ -442,7 +464,12 @@ const auto_backup_now = async () => {
       await unlink(fileName);
       break;
     case "Local directory":
-      const directory = getState().getConfig("auto_backup_directory");
+      //const directory = getState().getConfig("auto_backup_directory");
+
+      if(directory.length>0) {
+        await mkdir(directory, { recursive: true });
+      }
+
       await copyFile(fileName, join(directory, fileName));
       await unlink(fileName);
       await delete_old_backups();
