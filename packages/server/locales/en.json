@@ -1177,7 +1177,12 @@
 	"Details": "Details",
 	"URL is a formula?": "URL is a formula?",
 	"Receive notifications by:": "Receive notifications by:",
+	"Backup settings": "Backup settings",
+	"Logo image": "Logo image",
+	"Custom code": "Custom code",
+	"Extension store": "Extension store",
 	"Backup file prefix": "Backup file prefix",
 	"Directory for backup files": "Directory for backup files",
-	"Backup settings": "Backup settings"
+	"Backup File Prefix": "Backup File Prefix",
+	"Search for...": "Search for..."
 }

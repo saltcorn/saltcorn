@@ -402,7 +402,7 @@ const config_fields_form = async ({
     if (typeof name0 === "object" && name0.section_header) {
       fields.push({
         input_type: "section_header",
-        label: name0.section_header,
+        label: req.__(name0.section_header),
       });
       continue;
     }

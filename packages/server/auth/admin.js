@@ -55,7 +55,7 @@ module.exports = router;
  */
 const getUserFields = async (req) => {
   const userTable = Table.findOne({ name: "users" });
-  const userFields = (await userTable.getFields()).filter(
+  const userFields = (userTable.getFields()).filter(
     (f) => !f.calculated && f.name !== "id"
   );
   //console.log("userFields:",userFields);
@@ -265,7 +265,7 @@ router.get(
                 class: "form-control",
                 type: "search",
                 "data-filter-table": "table.user-admin",
-                placeholder: "🔍 Search",
+                placeholder: `🔍 ${req.__("Search")}`,
               })
             )
           ),
@@ -280,7 +280,7 @@ router.get(
                 label: "",
                 key: (r) =>
                   r.disabled
-                    ? span({ class: "badge bg-danger" }, "Disabled")
+                    ? span({ class: "badge bg-danger" }, req.__("Disabled"))
                     : "",
               },
               {
