@@ -34,7 +34,7 @@ class DeleteTenantsCommand extends Command {
           nviews = await db.count("_sc_views");
           npages = await db.count("_sc_pages");
         });
-        if (nusers < 2 && ntables < 2 && nviews < 1 && npages < 1) {
+        if (nusers < 2 && ntables < 3 && nviews < 3 && npages < 2) {
           console.log("deleting ", ten.subdomain, {
             nusers,
             ntables,
