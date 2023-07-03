@@ -857,7 +857,7 @@ const runPost = async (
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);
-    if (tbl_field && !form_field) {
+    if (tbl_field && !form_field && !fixed[`_block_${k}`]) {
       form.fields.push(new Field({ name: k, input_type: "hidden" }));
     }
   });
