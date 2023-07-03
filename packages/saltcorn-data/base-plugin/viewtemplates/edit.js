@@ -216,7 +216,7 @@ const configuration_workflow = (req) =>
         },
       },
       {
-        name: req.__("Fixed fields"),
+        name: req.__("Fixed and blocked fields"),
         contextField: "fixed",
         onlyWhen: async (context) => {
           const table = Table.findOne({ id: context.table_id });
@@ -239,7 +239,8 @@ const configuration_workflow = (req) =>
               !f.calculated &&
               !f.primary_key
           );
-          var formFields = [];
+          const formFields = [];
+          const blockFields = [];
           omitted_fields.forEach((f) => {
             f.required = false;
             if (f.type?.name === "Bool") {
@@ -257,12 +258,29 @@ const configuration_workflow = (req) =>
                 })
               );
             }
+            blockFields.push({
+              name: `_block_${f.name}`,
+              type: "Bool",
+              label: f.label,
+            });
           });
           const form = new Form({
-            blurb: req.__(
-              "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list."
-            ),
-            fields: formFields,
+            fields: [
+              {
+                input_type: "section_header",
+                label: req.__(
+                  "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list."
+                ),
+              },
+              ...formFields,
+              {
+                input_type: "section_header",
+                label: req.__(
+                  "Do not allow the following fields to have a value set from the query string or state"
+                ),
+              },
+              ...blockFields,
+            ],
           });
           await form.fill_fkey_options();
           return form;

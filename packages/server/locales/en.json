@@ -1186,5 +1186,7 @@
 	"Backup File Prefix": "Backup File Prefix",
 	"Search for...": "Search for...",
 	"Every 5 minutes": "Every 5 minutes",
-	"Not scheduled but can be run as an action from a button click": "Not scheduled but can be run as an action from a button click"
+	"Not scheduled but can be run as an action from a button click": "Not scheduled but can be run as an action from a button click",
+	"Fixed and blocked fields": "Fixed and blocked fields",
+	"Do not allow the following fields to have a value set from the query string or state": "Do not allow the following fields to have a value set from the query string or state"
 }
