@@ -69,9 +69,12 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
-    const { dir } = req.query;
+    const { dir, search } = req.query;
     const safeDir = File.normalise(dir || "/");
-    const rows = await File.find({ folder: dir }, { orderBy: "filename" });
+    const rows = await File.find(
+      { folder: dir, search },
+      { orderBy: "filename" }
+    );
     const roles = await User.get_roles();
     if (safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir);

@@ -22,10 +22,14 @@
   export let directories = [];
   export let roles = {};
   export let currentFolder = "/";
+  let noSelectAll = false;
   let selectedList = [];
   let selectedFiles = {};
   let rolesList;
   let lastSelected;
+  let sortBy;
+  let sortDesc = false;
+  let search = "";
 
   const updateDirState = () => {
     const url = new URL(window.location);
@@ -50,7 +54,9 @@
   };
   const fetchAndReset = async function (keepSelection) {
     const response = await fetch(
-      `/files?dir=${encodeURIComponent(currentFolder)}`,
+      `/files?dir=${encodeURIComponent(currentFolder)}${
+        search ? `&search=${encodeURIComponent(search)}` : ""
+      }`,
       {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       }
@@ -104,7 +110,7 @@
   let ctrlDown = false;
   function onKeyDown(e) {
     if (e.keyCode === 17) ctrlDown = true;
-    else if (ctrlDown && e.keyCode === 65) {
+    else if (ctrlDown && e.keyCode === 65 && !noSelectAll) {
       e.preventDefault();
       const selectedLength = Object.values(selectedFiles).filter(
         (v) => v
@@ -258,8 +264,6 @@
     return faFile;
   }
 
-  let sortBy;
-  let sortDesc = false;
   function clickHeader(varNm, isInit) {
     if (sortBy === varNm && !isInit) sortDesc = !sortDesc;
     else if (sortBy !== varNm) {
@@ -280,6 +284,15 @@
   function getSorterIcon(varNm) {
     if (varNm !== sortBy) return null;
     return sortDesc ? faCaretDown : faCaretUp;
+  }
+
+  function formatLocation(file) {
+    let relative =
+      currentFolder === "/"
+        ? file.location
+        : file.location.substr(currentFolder.length);
+    if (relative.startsWith("/")) relative = relative.substr(1);
+    return relative.substr(0, relative.length - file.filename.length);
   }
 </script>
 
@@ -304,6 +317,37 @@
           </ol>
         </nav>
       </div>
+      <div class="input-group search-bar mb-3">
+        <button
+          on:click={async (e) => {
+            await fetchAndReset();
+          }}
+          class="btn btn-outline-secondary search-bar"
+          type="submit"
+          id="button-search-submit"
+        >
+          <i class="fas fa-search" />
+        </button>
+
+        <input
+          on:change={async (e) => {
+            search = e.target.value;
+            await fetchAndReset();
+          }}
+          on:focus={() => {
+            noSelectAll = true;
+          }}
+          on:blur={() => {
+            noSelectAll = false;
+          }}
+          type="search"
+          class="form-control search-bar"
+          placeholder="Search Files"
+          aria-label="Search"
+          aria-describedby="button-search-submit"
+        />
+      </div>
+
       <div class="filelist">
         <table class="table table-sm">
           <thead>
@@ -313,6 +357,9 @@
                 Filename
                 <Fa icon={getSorterIcon("filename", sortBy, sortDesc)} />
               </th>
+              {#if search}
+                <th>Location</th>
+              {/if}
               <th on:click={() => clickHeader("mimetype")}>
                 Media type
                 <Fa icon={getSorterIcon("mimetype", sortBy, sortDesc)} />
@@ -354,6 +401,11 @@
                     {file.filename}
                   {/if}
                 </td>
+                {#if search}
+                  <td>
+                    {formatLocation(file)}
+                  </td>
+                {/if}
                 <td>
                   {file.mimetype}
                 </td>
@@ -373,6 +425,7 @@
                 <Fa size="lg" icon={faFolderPlus} />
               </td>
               <td>Create new folder...</td>
+              {#if search}<td />{/if}
               <td />
               <td />
               <td />
@@ -435,7 +488,11 @@
           </strong>
         {/if}
         <div class="file-actions d-flex">
-          <select id="setRoleSelectId" class="form-select" on:change={changeAccessRole}>
+          <select
+            id="setRoleSelectId"
+            class="form-select"
+            on:change={changeAccessRole}
+          >
             <option value="" disabled selected>Set access</option>
             {#each rolesList as role}
               <option value={role.id}>{role.role}</option>
