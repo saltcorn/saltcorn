@@ -390,6 +390,7 @@ const run = async (
         action_icon,
         action_name,
         configuration,
+        confirm,
       } = segment;
       const label = action_label || action_name;
       if (segment.action_style === "on_page_load") {
@@ -400,12 +401,13 @@ const run = async (
         }).catch((e) => Crash.create(e, extra.req));
         return "";
       }
+      const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
 
       if (action_name === "Clear") {
         if (action_style === "btn-link")
           return a(
             {
-              href: `javascript:clear_state('${
+              href: `javascript:${confirmStr}clear_state('${
                 configuration?.omit_fields || ""
               }', this)`,
             },
@@ -415,7 +417,7 @@ const run = async (
         else
           return button(
             {
-              onClick: `clear_state('${
+              onClick: `${confirmStr}clear_state('${
                 configuration?.omit_fields || ""
               }', this)`,
               class: `btn ${action_style || "btn-primary"} ${
@@ -427,7 +429,7 @@ const run = async (
           );
       } else {
         const url = {
-          javascript: `view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'});`,
+          javascript: `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'});`,
         };
 
         return action_link(url, extra.req, segment);
