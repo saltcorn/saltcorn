@@ -560,7 +560,8 @@ const transformForm = async ({
           segment.action_name,
           row,
           segment.rndid,
-          "rndid"
+          "rndid",
+          segment.confirm
         );
         segment.action_link = action_link(url, req, segment);
       }
