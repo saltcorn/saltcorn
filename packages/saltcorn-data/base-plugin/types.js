@@ -165,7 +165,7 @@ const progress_bar = (type) => ({
     ),
 });
 
-const traffic_light = (type) => ({
+const heat_cell = (type) => ({
   configFields: (field) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: true }]
@@ -195,6 +195,7 @@ const traffic_light = (type) => ({
     }[attrs.color_scale];
     return div(
       {
+        class: "px-2",
         style: {
           width: "100%",
           height: `${attrs.em_height || 1}em`,
@@ -1011,7 +1012,7 @@ const int = {
     number_slider: number_slider("Integer"),
     range_interval: range_interval("Integer"),
     progress_bar: progress_bar("Integer"),
-    traffic_light: traffic_light("Integer"),
+    heat_cell: heat_cell("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
     show_star_rating: {
@@ -1256,7 +1257,7 @@ const float = {
     number_slider: number_slider("Float"),
     range_interval: range_interval("Float"),
     progress_bar: progress_bar("Float"),
-    traffic_light: traffic_light("Float"),
+    heat_cell: heat_cell("Float"),
     above_input: float_number_limit("gte"),
     below_input: float_number_limit("lte"),
   },
