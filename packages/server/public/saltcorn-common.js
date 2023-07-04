@@ -841,6 +841,10 @@ function notifyAlert(note, spin) {
 </div>`);
 }
 
+function emptyAlerts() {
+  $("#alerts-area").html("");
+}
+
 function press_store_button(clicked) {
   const width = $(clicked).width();
   $(clicked).html('<i class="fas fa-spinner fa-spin"></i>').width(width);

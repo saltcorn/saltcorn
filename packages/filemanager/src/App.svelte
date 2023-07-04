@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
   import {
-    faTrashAlt,
     faFileImage,
     faFile,
     faFolder,
@@ -52,7 +51,7 @@
     const dirParam = url.searchParams.get("dir");
     if (dirParam) currentFolder = dirParam;
   };
-  const fetchAndReset = async function (keepSelection) {
+  const fetchAndReset = async function (keepSelection, keepAlerts) {
     const response = await fetch(
       `/files?dir=${encodeURIComponent(currentFolder)}${
         search ? `&search=${encodeURIComponent(search)}` : ""
@@ -81,11 +80,12 @@
     } else if (lastSelected) {
       lastSelected = files.find((f) => f.filename === lastSelected.filename);
     }
+    if (!keepAlerts) emptyAlerts();
     clickHeader(sortBy || "filename", true);
   };
   onMount(async () => {
     readState();
-    await fetchAndReset();
+    await fetchAndReset(false, true);
   });
   function rowClick(file, e) {
     file.selected = true;
@@ -132,15 +132,15 @@
     .filter(([k, v]) => v)
     .map(([k, v]) => k);
 
-  async function POST(url, body, isDownload) {
+  async function POST(url, body, isDownload, isFormData) {
     const go = fetch(url, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "CSRF-Token": window._sc_globalCsrf,
-        "Content-Type": "application/json",
+        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       },
       method: "POST",
-      body: JSON.stringify(body || {}),
+      body: isFormData ? body : JSON.stringify(body || {}),
     });
     if (isDownload) {
       const res = await go;
@@ -166,15 +166,16 @@
     switch (action) {
       case "Delete":
         if (!confirm(`Delete files: ${selectedList.join()}`)) return;
+        const alerts = [];
         for (const fileNm of selectedList) {
           const file = files.find((f) => f.filename === fileNm);
           const delres = await POST(`/files/delete/${file.location}`);
           const deljson = await delres.json();
-          if (deljson.error) {
-            window.notifyAlert({ type: "danger", text: deljson.error });
-          }
+          if (deljson.error)
+            alerts.push({ type: "danger", text: deljson.error });
         }
         await fetchAndReset();
+        for (const alert of alerts) notifyAlert(alert);
         break;
       case "Rename":
         const newName = window.prompt(
@@ -294,10 +295,41 @@
     if (relative.startsWith("/")) relative = relative.substr(1);
     return relative.substr(0, relative.length - file.filename.length);
   }
+
+  async function uploadFiles(files) {
+    try {
+      const body = new FormData();
+      for (const file of files) {
+        body.append("file", file);
+      }
+      body.append("folder", currentFolder);
+      const resp = await POST("/files/upload", body, false, true);
+      if (resp?.status === 200) {
+        await fetchAndReset();
+        const data = await resp.json();
+        notifyAlert({ type: "success", text: data?.success?.msg || "Success" });
+      } else notifyAlert({ type: "warning", text: "Unable to upload" });
+    } catch (error) {
+      notifyAlert({
+        type: "danger",
+        text: error.message ? error.message : "An error occured.",
+      });
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    if (e.dataTransfer?.files?.length > 0) uploadFiles(e.dataTransfer.files);
+  }
 </script>
 
 <main>
-  <div class="row">
+  <div
+    id="drop-zone"
+    on:drop={handleDrop}
+    ondragover="return false"
+    class="row"
+  >
     <div class="col-8">
       <div>
         <nav aria-label="breadcrumb">

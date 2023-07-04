@@ -564,7 +564,7 @@ function create_new_folder(folder) {
 function handle_upload_file_change(form) {
   const url = new URL(window.location);
   const dir = url.searchParams.get("dir");
-  if (dir) $("#uploadFolderInpId").val(dir);
+  if (dir !== null) $("#uploadFolderInpId").val(dir);
   const jqForm = $(form);
   const sortBy = url.searchParams.get("sortBy");
   if (sortBy) {

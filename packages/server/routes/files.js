@@ -407,16 +407,11 @@ router.post(
       );
       const many = Array.isArray(f);
       file_for_redirect = many ? f[0] : f;
-      if (!req.xhr)
-        req.flash(
-          "success",
-          req.__(
-            `File %s uploaded`,
-            many
-              ? f.map((fl) => text(fl.filename)).join(", ")
-              : text(f.filename)
-          )
-        );
+      const successMsg = req.__(
+        `File %s uploaded`,
+        many ? f.map((fl) => text(fl.filename)).join(", ") : text(f.filename)
+      );
+      if (!req.xhr) req.flash("success", successMsg);
       else
         jsonResp = {
           success: {
@@ -425,6 +420,7 @@ router.post(
             url: many
               ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
               : `/files/serve/${f.path_to_serve}`,
+            msg: successMsg,
           },
         };
     }
