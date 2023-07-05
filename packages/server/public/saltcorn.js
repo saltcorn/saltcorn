@@ -51,13 +51,13 @@ function removeQueryStringParameter(uri1, key) {
     uri = uris[0];
   }
 
-  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-  var separator = uri.indexOf("?") !== -1 ? "&" : "?";
+  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "gi");
   if (uri.match(re)) {
     uri = uri.replace(re, "$1" + "$2");
   }
   if (uri[uri.length - 1] === "?" || uri[uri.length - 1] === "&")
     uri = uri.substring(0, uri.length - 1);
+  if (uri.match(re)) return removeQueryStringParameter(uri + hash, key);
   return uri + hash;
 }
 
