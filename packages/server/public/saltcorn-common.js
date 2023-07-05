@@ -143,6 +143,13 @@ function apply_showif() {
         } value="${value}">${label}</option>`;
         e.append($(html));
       });
+      //TODO: also sort inserted HTML options
+      dataOptions.sort((a, b) =>
+        (a.text?.toLowerCase?.() || a.text) >
+        (b.text?.toLowerCase?.() || b.text)
+          ? 1
+          : -1
+      );
       element.dispatchEvent(new Event("RefreshSelectOptions"));
       if (e.hasClass("selectized") && $().selectize) {
         e.selectize()[0].selectize.clearOptions(true);
