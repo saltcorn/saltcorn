@@ -110,23 +110,29 @@ class File {
         safeDir
       );
       const files: File[] = [];
-      if (where?.filename) {
-        files.push(
-          await File.from_file_on_disk(where?.filename, absoluteFolder)
-        );
-      } else {
+      const searcher = async (folder: string, recursive: boolean) => {
         let fileNms;
         try {
-          fileNms = await fsp.readdir(absoluteFolder);
+          fileNms = await fsp.readdir(folder);
         } catch (e) {
           fileNms = [];
         }
 
         for (const name of fileNms) {
           if (name[0] === "." || name.startsWith("_resized_")) continue;
-          files.push(await File.from_file_on_disk(name, absoluteFolder));
+          const f = await File.from_file_on_disk(name, folder);
+          if (recursive && f.isDirectory) await searcher(f.location, recursive);
+          if (where?.search && name.indexOf(where.search) < 0) continue;
+          files.push(f);
         }
-      }
+      };
+
+      if (where?.filename) {
+        files.push(
+          await File.from_file_on_disk(where?.filename, absoluteFolder)
+        );
+      } else await searcher(absoluteFolder, !!where?.search);
+
       let pred = (f: File) => true;
       const addPred = (p: Function) => {
         const oldPred = pred;

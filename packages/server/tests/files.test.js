@@ -7,9 +7,9 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   toSucceed,
-  toNotInclude,
   resetToFixtures,
   toSucceedWithImage,
+  respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const fs = require("fs").promises;
@@ -18,7 +18,17 @@ const File = require("@saltcorn/data/models/file");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
-const { table } = require("console");
+const { existsSync } = require("fs");
+
+const createTestFile = async (folder, name, mimetype, content) => {
+  if (
+    !existsSync(
+      path.join(db.connectObj.file_store, db.getTenantSchema(), folder, name)
+    )
+  ) {
+    await File.from_contents(name, mimetype, content, 1, 100, folder);
+  }
+};
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -46,6 +56,33 @@ beforeAll(async () => {
     },
     1,
     100
+  );
+
+  await File.new_folder(path.join("_sc_test_subfolder_one", "subsubfolder"));
+  await createTestFile(
+    "_sc_test_subfolder_one",
+    "foo_image.png",
+    "image/png",
+    "imagecontent"
+  );
+  await createTestFile(
+    "_sc_test_subfolder_one",
+    "bar_image.png",
+    "image/png",
+    "imagecontent"
+  );
+  await createTestFile(
+    path.join("_sc_test_subfolder_one", "subsubfolder"),
+    "bar_image.png",
+    "image/png",
+    "imagecontent"
+  );
+  await File.new_folder("_sc_test_subfolder_two");
+  await createTestFile(
+    "_sc_test_subfolder_two",
+    "foo_image.png",
+    "image/png",
+    "imagecontent"
   );
 });
 afterAll(db.close);
@@ -145,6 +182,90 @@ describe("files admin", () => {
       .attach("file", Buffer.from("helloiamasmallfile", "utf-8"))
 
       .expect(toRedirect("/files?dir=."));
+  });
+  it("search files by name", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const checkFiles = (files, expecteds) =>
+      files.length === expecteds.length &&
+      expecteds.every(({ filename, location }) =>
+        files.find(
+          (file) => file.filename === filename && file.location === location
+        )
+      );
+    const searchTestHelper = async (dir, search, expected) => {
+      await request(app)
+        .get("/files")
+        .query({ dir, search })
+        .set("X-Requested-With", "XMLHttpRequest")
+        .set("Cookie", loginCookie)
+        .expect(
+          respondJsonWith(200, (data) => checkFiles(data.files, expected))
+        );
+    };
+
+    await searchTestHelper("/", "foo", [
+      {
+        filename: "foo_image.png",
+        location: path.join("_sc_test_subfolder_one", "foo_image.png"),
+      },
+      {
+        filename: "foo_image.png",
+        location: path.join("_sc_test_subfolder_two", "foo_image.png"),
+      },
+    ]);
+    await searchTestHelper("_sc_test_subfolder_two", "foo", [
+      {
+        filename: "foo_image.png",
+        location: path.join("_sc_test_subfolder_two", "foo_image.png"),
+      },
+      {
+        filename: "..",
+        location: "",
+      },
+    ]);
+    await searchTestHelper("/", "bar", [
+      {
+        filename: "bar_image.png",
+        location: path.join("_sc_test_subfolder_one", "bar_image.png"),
+      },
+      {
+        filename: "bar_image.png",
+        location: path.join(
+          "_sc_test_subfolder_one",
+          "subsubfolder",
+          "bar_image.png"
+        ),
+      },
+    ]);
+    await searchTestHelper(
+      path.join("_sc_test_subfolder_one", "subsubfolder"),
+      "foo",
+      [
+        {
+          filename: "..",
+          location: "_sc_test_subfolder_one",
+        },
+      ]
+    );
+    await searchTestHelper(
+      path.join("_sc_test_subfolder_one", "subsubfolder"),
+      "bar",
+      [
+        {
+          filename: "..",
+          location: "_sc_test_subfolder_one",
+        },
+        {
+          filename: "bar_image.png",
+          location: path.join(
+            "_sc_test_subfolder_one",
+            "subsubfolder",
+            "bar_image.png"
+          ),
+        },
+      ]
+    );
   });
 });
 describe("files edit", () => {
