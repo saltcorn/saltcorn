@@ -32,6 +32,7 @@ const Table = ({
   bs_striped,
   bs_bordered,
   bs_borderless,
+  bs_wauto,
 }) => {
   const {
     selected,
@@ -45,7 +46,7 @@ const Table = ({
         bs_style && bs_striped ? "table-striped" : ""
       } ${bs_style && bs_bordered ? "table-bordered" : ""} ${
         bs_style && bs_borderless ? "table-borderless" : ""
-      }`}
+      } ${bs_style && bs_wauto ? "w-auto" : ""}`}
       ref={(dom) => connect(drag(dom))}
     >
       <tbody>
@@ -104,6 +105,12 @@ const fields = [
   {
     label: "Borderless",
     name: "bs_borderless",
+    type: "Bool",
+    showIf: { bs_style: true },
+  },
+  {
+    label: "Auto width",
+    name: "bs_wauto",
     type: "Bool",
     showIf: { bs_style: true },
   },

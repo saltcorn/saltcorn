@@ -260,6 +260,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           bs_small={segment.bs_small || false}
           bs_striped={segment.bs_striped || false}
           bs_bordered={segment.bs_bordered || false}
+          bs_wauto={segment.bs_wauto || false}
           bs_borderless={segment.bs_borderless || false}
           contents={(segment.contents || []).map((row) =>
             (row || []).map(toTag)
@@ -466,6 +467,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         bs_striped: node.props.bs_striped,
         bs_bordered: node.props.bs_bordered,
         bs_borderless: node.props.bs_borderless,
+        bs_wauto: node.props.bs_wauto,
       };
     }
 
