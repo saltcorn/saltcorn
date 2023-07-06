@@ -189,7 +189,7 @@ const heat_cell = (type) => ({
     const pcnt0 = (v - attrs.min) / (attrs.max - attrs.min);
     const pcnt = attrs.reverse ? 1 - pcnt0 : pcnt0;
     const backgroundColor = {
-      RainBow: `hsl(${360 * pcnt},100%, 50%)`,
+      Rainbow: `hsl(${360 * pcnt},100%, 50%)`,
       RedAmberGreen: `hsl(${100 * pcnt},100%, 50%)`,
       WhiteToRed: `hsl(0,100%, ${100 * (1 - pcnt / 2)}%)`,
     }[attrs.color_scale];
