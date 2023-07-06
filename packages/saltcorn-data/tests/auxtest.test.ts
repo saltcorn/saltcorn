@@ -10,6 +10,7 @@ const {
   get_inbound_self_relation_opts,
   stateFieldsToWhere,
   field_picker_fields,
+  readState,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const { satisfies } = require("../utils");
@@ -353,6 +354,16 @@ describe("stateFieldsToWhere", () => {
         state: { favbook: [1, 2] },
       })
     ).toStrictEqual({ favbook: { or: [1, 2] } });
+  });
+  it("readState array or fkey", async () => {
+    const state = { favbook: ["1", "2"] };
+    readState(state, fields, mockReqRes.req);
+    expect(state).toStrictEqual({ favbook: [1, 2] });
+  });
+  it("readState fkey", async () => {
+    const state = { favbook: "1" };
+    readState(state, fields, mockReqRes.req);
+    expect(state).toStrictEqual({ favbook: 1 });
   });
   it("join field", async () => {
     const table = Table.findOne({ name: "patients" });
