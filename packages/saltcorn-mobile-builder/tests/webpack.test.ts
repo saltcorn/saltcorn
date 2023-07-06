@@ -70,7 +70,7 @@ describe("webpack build", () => {
     expect(output.indexOf(" compiled with ")).toBeGreaterThan(-1);
     for (const expected of [
       bundleDir,
-      join(bundleDir, "any-bootstrap-theme.js"),
+      join(bundleDir, "any-bootstrap-theme.bundle.js"),
       join(bundleDir, "tabulator.bundle.js"),
     ]) {
       expect(existsSync(expected)).toBe(true);
