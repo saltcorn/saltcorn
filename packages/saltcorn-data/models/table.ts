@@ -954,19 +954,23 @@ class Table implements AbstractTable {
       let need_to_update = Object.keys(v_in).some((k) =>
         freeVarFKFields.has(k)
       );
-
-      if (need_to_update) {
-        await db.update(this.name, v, id, { pk_name });
-      }
-
       existing = await this.getJoinedRow({
         where: { [pk_name]: id },
         forUser: user,
         joinFields,
       });
+      let updated;
+      if (need_to_update) {
+        await db.update(this.name, v, id, { pk_name });
+        updated = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
+      }
 
       let calced = await apply_calculated_fields_stored(
-        need_to_update ? existing : { ...existing, ...v_in },
+        need_to_update ? updated : { ...existing, ...v_in },
         // @ts-ignore TODO ch throw ?
         this.fields
       );
