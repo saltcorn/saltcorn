@@ -168,7 +168,7 @@ const insert = async (tbl, obj, opts = {}) => {
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   var valPosList = [];
   var valList = [];
-  const schema = getTenantSchema();
+  const schema = opts.schema || getTenantSchema();
   kvs.forEach(([k, v]) => {
     if (v && v.next_version_by_id) {
       valPosList.push(
