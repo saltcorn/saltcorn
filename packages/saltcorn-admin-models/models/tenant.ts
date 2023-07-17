@@ -28,7 +28,11 @@ const { process_send } = require("@saltcorn/data/db/state");
  * @returns {Promise<string[]>}
  */
 const getAllTenants = async (): Promise<string[]> => {
-  const tens = await db.select("_sc_tenants");
+  const tens = await db.select(
+    "_sc_tenants",
+    {},
+    { schema: db.connectObj.default_schema }
+  );
   return tens.map(({ subdomain }: { subdomain: string }) => subdomain);
 };
 

@@ -75,11 +75,12 @@ const changeConnection = async (connObj = {}) => {
  */
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
+  const schema = selectopts.schema || getTenantSchema();
   const sql = `SELECT ${
     selectopts.fields ? selectopts.fields.join(", ") : `*`
-  } FROM "${getTenantSchema()}"."${sqlsanitize(
-    tbl
-  )}" ${where} ${mkSelectOptions(selectopts)}`;
+  } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
+    selectopts
+  )}`;
   sql_log(sql, values);
   const tq = await pool.query(sql, values);
 
