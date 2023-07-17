@@ -75,11 +75,12 @@ const changeConnection = async (connObj = {}) => {
  */
 const select = async (tbl, whereObj, selectopts = {}) => {
   const { where, values } = mkWhere(whereObj);
+  const schema = selectopts.schema || getTenantSchema();
   const sql = `SELECT ${
     selectopts.fields ? selectopts.fields.join(", ") : `*`
-  } FROM "${getTenantSchema()}"."${sqlsanitize(
-    tbl
-  )}" ${where} ${mkSelectOptions(selectopts)}`;
+  } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
+    selectopts
+  )}`;
   sql_log(sql, values);
   const tq = await pool.query(sql, values);
 
@@ -168,7 +169,7 @@ const insert = async (tbl, obj, opts = {}) => {
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   var valPosList = [];
   var valList = [];
-  const schema = getTenantSchema();
+  const schema = opts.schema || getTenantSchema();
   kvs.forEach(([k, v]) => {
     if (v && v.next_version_by_id) {
       valPosList.push(

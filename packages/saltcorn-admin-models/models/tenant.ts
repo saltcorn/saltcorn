@@ -28,7 +28,11 @@ const { process_send } = require("@saltcorn/data/db/state");
  * @returns {Promise<string[]>}
  */
 const getAllTenants = async (): Promise<string[]> => {
-  const tens = await db.select("_sc_tenants");
+  const tens = await db.select(
+    "_sc_tenants",
+    {},
+    { schema: db.connectObj.default_schema }
+  );
   return tens.map(({ subdomain }: { subdomain: string }) => subdomain);
 };
 
@@ -76,7 +80,7 @@ const insertTenant = async (
       template: saneTemplate,
       created: new Date(),
     },
-    { noid: true }
+    { noid: true, schema: db.connectObj.default_schema }
   );
   // create tenant schema
   if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
@@ -331,7 +335,7 @@ class Tenant {
    * @returns {Promise<void>}
    */
   static async update(subdomain: string, row: Row): Promise<void> {
-    await db.update("_sc_tenants", row, subdomain ,{ pk_name : "subdomain" } );
+    await db.update("_sc_tenants", row, subdomain, { pk_name: "subdomain" });
     // todo trigger if need
   }
 }
