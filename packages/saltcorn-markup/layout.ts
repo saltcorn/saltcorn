@@ -271,7 +271,14 @@ const render = ({
             : undefined,
         src,
       };
-      if (!isWeb && !src) imageCfg["mobile-img-path"] = segment.fileid;
+      if (!isWeb && !segment.encoded_image) {
+        imageCfg["mobile-img-path"] =
+          srctype === "File"
+            ? segment.fileid
+            : segment.url?.startsWith("/files/serve/")
+            ? segment.url.substr(13)
+            : undefined;
+      }
       return wrap(segment, isTop, ix, img(imageCfg));
     }
     if (segment.type === "dropdown_menu") {
