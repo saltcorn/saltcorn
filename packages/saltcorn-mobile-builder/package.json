@@ -6,7 +6,7 @@
   "version": "0.8.7-beta.3",
   "author": "Christian Hugo",
   "scripts": {
-    "test": "jest tests --runInBand",
+    "test": "jest ./tests/ --runInBand",
     "build": "webpack --mode development",
     "postinstall": "node ./docker/post-installer.js"
   },

@@ -2,8 +2,8 @@
 
 set -ex
 
-# machines to run with libvirt
-libvirts=("ubuntu2004-mobile/")
+# to run with libvirt
+libvirts=("ubuntu2004-mobile/" "debian11-mobile/")
 
 for d in */ ; do
     echo ""

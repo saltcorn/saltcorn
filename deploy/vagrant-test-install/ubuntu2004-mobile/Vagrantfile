@@ -19,6 +19,9 @@ Vagrant.configure("2") do |config|
     vb.memory = "8192"
   end
 
+  config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/package.json", destination: "$HOME/tests/package.json"
+  config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/ui.test.js", destination: "$HOME/tests/ui.test.js"
+
   config.vm.provision "shell", inline: <<-SHELL
     set -e
     sudo apt update -q
@@ -47,7 +50,7 @@ Vagrant.configure("2") do |config|
     echo "no" | sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/avdmanager create avd --force -n test -k "system-images;android-32;google_apis;x86_64" --device "pixel_xl"
     
     # start emulator
-    sudo -u saltcorn /home/saltcorn/android_sdk/emulator/emulator -avd test -memory 3072 -partition-size 8192 -no-audio -no-window -no-boot-anim -accel on -gpu swiftshader_indirect -no-snapshot-load &
+    sudo -u saltcorn /home/saltcorn/android_sdk/emulator/emulator -avd test -memory 3072 -no-audio -no-window -no-boot-anim -accel on -gpu auto -no-snapshot-load &
     sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb wait-for-device
 
     npm install -g npm@9.2.0
@@ -66,8 +69,8 @@ Vagrant.configure("2") do |config|
     sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn install-pack -n "Address book"
     
     echo "build apk"
-    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -c /home/saltcorn -u "user@foo.com" -p "android" -s "http://10.0.2.2" -b "/home/saltcorn/build_dir" -e "EditPerson"
-    sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn serve &
+    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -c /home/saltcorn -u "user@foo.com" -p "android" -s "http://10.0.2.2:3000" -b "/home/saltcorn/build_dir" -e "EditMeeting"
+    sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn serve -p 3000 &
     set +e
 
     echo "install apk"
@@ -87,11 +90,24 @@ Vagrant.configure("2") do |config|
 
     if [ $LINES -eq 1 ]; then
       echo "success"
-      exit 0
     else
       echo "error: Unable to start the app"
       exit 1
     fi
+
+    echo "prepare appium"
+    cd /home/saltcorn
+    sudo npm install -g appium@2.0.0-beta.40
+    sudo npm install -g appium-chromedriver
+    appium driver install uiautomator2
+    appium --allow-insecure chromedriver_autodownload &
+    sleep 10
+
+    set -e
+    echo "run tests"
+    cd /home/vagrant/tests
+    npm install
+    npm run test
 
     SHELL
   end
