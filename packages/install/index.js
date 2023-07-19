@@ -339,15 +339,14 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   if (isSUSE) {
     await asyncSudo(
       [
-        "echo",
-        "'net.ipv4.ip_unprivileged_port_start=80'",
-        ">>",
-        "/etc/sysctl.conf",
+        "bash",
+        "-c",
+        "echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf",
       ],
       false,
       dryRun
     );
-    await asyncSudo(["sysctl", " --system"], false, dryRun);
+    await asyncSudo(["sysctl", "--system"], false, dryRun);
   }
   if (db === "pg-local" && installer === "dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
