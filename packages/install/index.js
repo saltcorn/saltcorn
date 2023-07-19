@@ -275,7 +275,7 @@ const isRedHat = (osInfo) =>
 
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   const distro_code = `${osInfo.distro} ${osInfo.codename}`;
-  console.log("Distro code: ", distro_code);
+  console.log("osInfo: ", osInfo);
   let python, installer;
   switch (distro_code) {
     case "Ubuntu Bionic Beaver":
