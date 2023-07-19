@@ -294,8 +294,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
 
   if (isRedHat(osInfo)) {
     installer = "dnf";
-  }
-  if (isSUSE) {
+  } else if (isSUSE) {
     installer = "zypper";
   } else {
     installer = "apt";
