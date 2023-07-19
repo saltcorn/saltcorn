@@ -113,8 +113,7 @@ def build(cxn):
     clean_up(cxn)
     cxn.run('exit')
     print('----------------------------------------------------------------')
-    print('Check that docker build saltcorn/cordova-builder has completed.')
-    print('Then shut down your build droplet from the control')
+    print('Build Complete.  Shut down your build droplet from the control')
     print('panel before creating your snapshot.')
     print('----------------------------------------------------------------')
 
