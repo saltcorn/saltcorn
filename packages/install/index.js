@@ -612,6 +612,11 @@ WantedBy=multi-user.target`
       dryRun
     );
     await asyncSudo(
+      ["restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
+      false,
+      dryRun
+    );
+    await asyncSudo(
       [
         "semanage",
         "fcontext",
