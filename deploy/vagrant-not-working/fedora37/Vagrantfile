@@ -23,10 +23,7 @@ Vagrant.configure("2") do |config|
     cd /home/vagrant/saltcorn/packages/install/
     sudo -u vagrant git checkout devops-july-2023
     sudo -u vagrant npm install
-    sudo -u vagrant node index.js -y
-    semanage fcontext -a -t bin_t '/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin.*'
-    chcon -Rv -u system_u -t bin_t '/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin'
-    restorecon -R -v /home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin
+    sudo -u vagrant node index.js -y   
     systemctl is-active saltcorn 
     wget -qO- http://localhost/ | grep Please
   SHELL

@@ -612,7 +612,37 @@ WantedBy=multi-user.target`
       dryRun
     );
     await asyncSudo(
-      ["/sbin/restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
+      [
+        "semanage",
+        "-fcontext",
+        "-a",
+        "-t",
+        "bin_t",
+        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin.*",
+      ],
+      false,
+      dryRun
+    );
+    await asyncSudo(
+      [
+        "chcon",
+        "-Rv",
+        "-u",
+        "system_u",
+        "-t",
+        "bin_t",
+        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
+      ],
+      false,
+      dryRun
+    );
+    await asyncSudo(
+      [
+        "restorecon",
+        "-R",
+        "-v",
+        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
+      ],
       false,
       dryRun
     );
