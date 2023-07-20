@@ -314,24 +314,19 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       "git",
       "make",
       osInfo.distro === "Fedora Linux" ? "g++" : "gcc-c++",
-      "policycoreutils-python-utils"
+      "policycoreutils-python-utils",
+      "python3"
     );
-  if (installer === "dnf" && osInfo.distro !== "Fedora Linux")
-    packages.push("python3");
+
   if (port === 80 && installer === "apt") packages.push("libcap2-bin"); // libcap-progs
   if (port === 80 && installer === "zypper") packages.push("libcap-progs"); //
   if (db === "pg-local" && installer === "apt")
     packages.push("postgresql", "postgresql-client");
   if (db === "pg-local" && installer === "dnf")
     packages.push("postgresql-server", "postgresql");
+  if (installer === "zypper") packages.push("make", "gcc-c++");
   if (db === "pg-local" && installer === "zypper")
-    packages.push(
-      "postgresql",
-      "postgresql-server",
-      "postgresql-contrib",
-      "make",
-      "gcc-c++"
-    );
+    packages.push("postgresql", "postgresql-server", "postgresql-contrib");
 
   const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
   const quietFlags = installer === "apt" ? "-qqy" : "-y";
