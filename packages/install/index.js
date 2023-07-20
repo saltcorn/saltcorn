@@ -316,6 +316,8 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       osInfo.distro === "Fedora Linux" ? "g++" : "gcc-c++",
       "policycoreutils-python-utils"
     );
+  if (installer === "dnf" && osInfo.distro !== "Fedora Linux")
+    packages.push("python3");
   if (port === 80 && installer === "apt") packages.push("libcap2-bin"); // libcap-progs
   if (port === 80 && installer === "zypper") packages.push("libcap-progs"); //
   if (db === "pg-local" && installer === "apt")
