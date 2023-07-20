@@ -313,7 +313,8 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     packages.push(
       "git",
       "make",
-      osInfo.distro === "Fedora Linux" ? "g++" : "gcc-c++"
+      osInfo.distro === "Fedora Linux" ? "g++" : "gcc-c++",
+      "policycoreutils-python-utils"
     );
   if (port === 80 && installer === "apt") packages.push("libcap2-bin"); // libcap-progs
   if (port === 80 && installer === "zypper") packages.push("libcap-progs"); //
