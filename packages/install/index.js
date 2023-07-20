@@ -614,7 +614,7 @@ WantedBy=multi-user.target`
     await asyncSudo(
       [
         "semanage",
-        "-fcontext",
+        "fcontext",
         "-a",
         "-t",
         "bin_t",
