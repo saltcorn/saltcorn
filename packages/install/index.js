@@ -309,7 +309,12 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       packages.push("chromium");
     if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
   }
-  if (installer === "dnf") packages.push("git", "make", "g++");
+  if (installer === "dnf")
+    packages.push(
+      "git",
+      "make",
+      osInfo.distro === "Fedora Linux" ? "g++" : "gcc-c++"
+    );
   if (port === 80 && installer === "apt") packages.push("libcap2-bin"); // libcap-progs
   if (port === 80 && installer === "zypper") packages.push("libcap-progs"); //
   if (db === "pg-local" && installer === "apt")
