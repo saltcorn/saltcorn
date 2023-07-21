@@ -100,15 +100,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { tableName, id, _version } = req.params;
     const table = Table.findOne({ name: tableName });
-
-    const fields = table.getFields();
-    const row = await db.selectOne(`${db.sqlsanitize(table.name)}__history`, {
-      id,
-      _version,
-    });
-    var r = {};
-    fields.forEach((f) => (r[f.name] = row[f.name]));
-    await table.updateRow(r, +id);
+    await table.restore_row_version(id, _version);
     req.flash("success", req.__("Version %s restored", _version));
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
