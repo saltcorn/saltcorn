@@ -1322,20 +1322,31 @@ class Table implements AbstractTable {
   ): Promise<void> {
     const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
       id,
-      version,
+      _version: version,
     });
     var r: any = {};
     this.fields.forEach((f: Field) => {
       if (!f.calculated) r[f.name] = row[f.name];
     });
+    //console.log("restore_row_version", r);
+
     await this.updateRow(r, id, user, false, undefined, version);
   }
 
   async undo_row_changes(id: any, user: Row): Promise<void> {
-    //get max that is not a restore
-    const last_non_restore = await await db.select(
+    const current_verion_row = await await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
-      { id, _restore_of_version: null },
+      { id },
+      { orderBy: "_version", orderDesc: true, limit: 1 }
+    );
+    //get max that is not a restore
+    const last_non_restore = await await db.selectMaybeOne(
+      `${sqlsanitize(this.name)}__history`,
+      {
+        id,
+        _restore_of_version: null,
+        _version: { lt: current_verion_row._version },
+      },
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
     if (last_non_restore) {
@@ -1344,7 +1355,7 @@ class Table implements AbstractTable {
   }
   async redo_row_changes(id: any, user: Row): Promise<void> {
     //get max that is not a restore
-    const last_version = await await db.select(
+    const last_version = await await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
       { orderBy: "_version", orderDesc: true, limit: 1 }

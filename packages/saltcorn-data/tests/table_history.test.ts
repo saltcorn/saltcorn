@@ -17,6 +17,7 @@ import {
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
+import { text } from "stream/consumers";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -128,6 +129,36 @@ describe("Table history", () => {
       await table2.update(table2);
       await table2.rename("thisisthebestname");
     }
+  });
+});
+
+describe("undo/redo", () => {
+  it("should create table", async () => {
+    const tc = await Table.create("counttable23");
+
+    await Field.create({
+      table: tc,
+      label: "Number",
+      type: "Integer",
+      required: true,
+    });
+    await tc.update({ versioned: true });
+    await tc.insertRow({ id: 1, number: 101 });
+
+    await tc.updateRow({ number: 102 }, 1);
+    await tc.updateRow({ number: 103 }, 1);
+    await tc.updateRow({ number: 104 }, 1);
+    await tc.updateRow({ number: 105 }, 1);
+    const history = await tc.get_history(1);
+    //console.log(history);
+  });
+  it("should undo", async () => {
+    const tc = Table.findOne({ name: "counttable23" });
+    assertIsSet(tc);
+    //db.set_sql_logging(true);
+    await tc.undo_row_changes(1, {});
+    const r1 = await tc.getRow({ id: 1 });
+    expect(r1?.number).toBe(104);
   });
 });
 
