@@ -1357,19 +1357,17 @@ class Table implements AbstractTable {
       await this.restore_row_version(id, last_non_restore._version, user);
     }
   }
-  async redo_row_changes(id: any, user: Row): Promise<void> {
-    //get max that is not a restore
-    const last_version = await db.selectMaybeOne(
+  async redo_row_changes(id: any, user?: Row): Promise<void> {
+    //previous
+    const second_most_recent = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
-      { orderBy: "_version", orderDesc: true, limit: 1 }
+      { orderBy: "_version", orderDesc: true, limit: 1, offset: 1 }
     );
-    if (last_version?._restore_of_version) {
-      await this.restore_row_version(
-        id,
-        last_version?._restore_of_version,
-        user
-      );
+    //console.log(second_most_recent);
+
+    if (second_most_recent) {
+      await this.restore_row_version(id, second_most_recent._version, user);
     }
   }
 

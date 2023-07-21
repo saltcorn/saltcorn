@@ -168,6 +168,17 @@ describe("undo/redo", () => {
     const r2 = await tc.getRow({ id: 1 });
     expect(r2?.number).toBe(103);
   });
+  it("should redo", async () => {
+    const tc = Table.findOne({ name: "counttable23" });
+    assertIsSet(tc);
+    //db.set_sql_logging(true);
+    //console.log(await tc.get_history(1));
+
+    await tc.redo_row_changes(1);
+
+    const r2 = await tc.getRow({ id: 1 });
+    expect(r2?.number).toBe(104);
+  });
 });
 
 describe("unique history clash", () => {
