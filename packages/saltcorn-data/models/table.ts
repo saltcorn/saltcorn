@@ -859,7 +859,8 @@ class Table implements AbstractTable {
     id: number,
     user?: Row,
     noTrigger?: boolean,
-    resultCollector?: object
+    resultCollector?: object,
+    restore_of_version?: any
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
@@ -991,6 +992,7 @@ class Table implements AbstractTable {
         },
         _time: new Date(),
         _userid: user?.id,
+        _restore_of_version: restore_of_version || null,
       });
     }
     if (typeof existing === "undefined") {
@@ -1305,11 +1307,51 @@ class Table implements AbstractTable {
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           _version integer,
           _time timestamp,
+          _restore_of_version integer,
           _userid integer
           ${flds.join("")}
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
+  }
+
+  async restore_row_version(
+    id: any,
+    version: number,
+    user: Row
+  ): Promise<void> {
+    const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
+      id,
+      version,
+    });
+    var r: any = {};
+    this.fields.forEach((f: Field) => {
+      if (!f.calculated) r[f.name] = row[f.name];
+    });
+    await this.updateRow(r, id, user, false, undefined, version);
+  }
+
+  async undo_row_changes(id: any, user: Row): Promise<void> {
+    //get max that is not a restore
+    const last_non_restore = await await db.select(
+      `${sqlsanitize(this.name)}__history`,
+      { id, _restore_of_version: null },
+      { orderBy: "_version", orderDesc: true, limit: 1 }
+    );
+    if (last_non_restore) {
+      this.restore_row_version(id, last_non_restore._version, user);
+    }
+  }
+  async redo_row_changes(id: any, user: Row): Promise<void> {
+    //get max that is not a restore
+    const last_version = await await db.select(
+      `${sqlsanitize(this.name)}__history`,
+      { id },
+      { orderBy: "_version", orderDesc: true, limit: 1 }
+    );
+    if (last_version?._restore_of_version) {
+      this.restore_row_version(id, last_version?._restore_of_version, user);
+    }
   }
 
   /**
