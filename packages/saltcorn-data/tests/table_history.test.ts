@@ -171,10 +171,26 @@ describe("undo/redo", () => {
   it("should redo", async () => {
     const tc = Table.findOne({ name: "counttable23" });
     assertIsSet(tc);
-    //db.set_sql_logging(true);
-    //console.log(await tc.get_history(1));
 
     await tc.redo_row_changes(1);
+
+    const r2 = await tc.getRow({ id: 1 });
+    expect(r2?.number).toBe(104);
+  });
+  it("should redo again", async () => {
+    const tc = Table.findOne({ name: "counttable23" });
+    assertIsSet(tc);
+
+    await tc.redo_row_changes(1);
+
+    const r2 = await tc.getRow({ id: 1 });
+    expect(r2?.number).toBe(105);
+  });
+  it("should undo after redo", async () => {
+    const tc = Table.findOne({ name: "counttable23" });
+    assertIsSet(tc);
+
+    await tc.undo_row_changes(1);
 
     const r2 = await tc.getRow({ id: 1 });
     expect(r2?.number).toBe(104);

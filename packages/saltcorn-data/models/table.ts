@@ -1344,7 +1344,6 @@ class Table implements AbstractTable {
       `${sqlsanitize(this.name)}__history`,
       {
         id,
-        _restore_of_version: null,
         _version: {
           lt: current_verion_row._restore_of_version
             ? current_verion_row._restore_of_version
@@ -1358,16 +1357,27 @@ class Table implements AbstractTable {
     }
   }
   async redo_row_changes(id: any, user?: Row): Promise<void> {
-    //previous
-    const second_most_recent = await db.selectMaybeOne(
+    const current_verion_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
-      { orderBy: "_version", orderDesc: true, limit: 1, offset: 1 }
+      { orderBy: "_version", orderDesc: true, limit: 1 }
     );
-    //console.log(second_most_recent);
 
-    if (second_most_recent) {
-      await this.restore_row_version(id, second_most_recent._version, user);
+    if (current_verion_row._restore_of_version) {
+      const next_version = await db.selectMaybeOne(
+        `${sqlsanitize(this.name)}__history`,
+        {
+          id,
+          _version: {
+            gt: current_verion_row._restore_of_version,
+          },
+        },
+        { orderBy: "_version", limit: 1 }
+      );
+
+      if (next_version) {
+        await this.restore_row_version(id, next_version._version, user);
+      }
     }
   }
 
