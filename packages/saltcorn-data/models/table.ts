@@ -1345,7 +1345,11 @@ class Table implements AbstractTable {
       {
         id,
         _restore_of_version: null,
-        _version: { lt: current_verion_row._version },
+        _version: {
+          lt: current_verion_row._restore_of_version
+            ? current_verion_row._restore_of_version
+            : current_verion_row._version,
+        },
       },
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
