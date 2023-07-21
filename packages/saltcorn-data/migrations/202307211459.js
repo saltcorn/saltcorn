@@ -4,7 +4,7 @@ const js = async () => {
   const db = require("../db");
   const schema = db.getTenantSchemaPrefix();
 
-  const tables = Table.find({});
+  const tables = await Table.find({});
   for (const table of tables) {
     if (table.versioned) {
       try {
