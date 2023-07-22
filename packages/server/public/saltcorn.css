@@ -464,3 +464,6 @@ div.unread-notify {
   grid-column: 3;
   grid-row: 3;
 }
+.sc-modal-linkout {
+  color: inherit;
+}

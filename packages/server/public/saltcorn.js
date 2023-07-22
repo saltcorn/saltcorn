@@ -262,7 +262,7 @@ function ensure_modal_exists_and_closed() {
             <span class="sc-ajax-indicator-wrapper">
               <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
             </span>
-            <a class="sc-modal-linkout ms-2" href=""><i class="fas fa-expand-alt"></i></a>
+            <a class="sc-modal-linkout ms-2" href="" target="_blank"><i class="fas fa-expand-alt"></i></a>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
             </button>
           </div>
