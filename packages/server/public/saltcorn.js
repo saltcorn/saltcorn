@@ -258,12 +258,14 @@ function ensure_modal_exists_and_closed() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
-          <span class="sc-ajax-indicator-wrapper">
-            <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
-          </span>
-          <a class="sc-modal-linkout" href=""><i class="fas fa-expand-alt"></i></a>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
-          </button>
+          <div class="">
+            <span class="sc-ajax-indicator-wrapper">
+              <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
+            </span>
+            <a class="sc-modal-linkout ms-2" href=""><i class="fas fa-expand-alt"></i></a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
+            </button>
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>
