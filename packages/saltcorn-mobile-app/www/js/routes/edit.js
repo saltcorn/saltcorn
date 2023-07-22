@@ -9,7 +9,7 @@ const postToggleField = async (context) => {
     state.mobileConfig;
   if (isOfflineMode || localTableIds.indexOf(table.id) >= 0) {
     if (role_id > table.min_role_write)
-      throw new Error(i18next.t("Not authorized"));
+      throw new saltcorn.data.utils.NotAuthorized(i18next.t("Not authorized"));
     await table.toggleBool(+id, field_name);
     if (isOfflineMode && !(await offlineHelper.getLastOfflineSession()))
       await offlineHelper.setOfflineSession({ offlineUser: user_name });

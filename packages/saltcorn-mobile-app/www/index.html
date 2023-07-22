@@ -243,6 +243,35 @@
         }
       };
 
+      const isPublicEntryPoint = async (entryPoint) => {
+        try {
+          const tokens = entryPoint.split("/");
+          if (tokens.length < 3) throw new Error("The format is incorrect");
+          const name = tokens[tokens.length - 1];
+          const entryObj =
+            tokens[tokens.length - 2] === "view"
+              ? saltcorn.data.models.View.findOne({ name: name })
+              : saltcorn.data.models.Page.findOne({ name: name });
+          if (!entryObj) throw new Error(`The object '${name}' does not exist`);
+          else return entryObj.min_role === 100;
+        } catch (error) {
+          console.log(
+            `Unable to inspect '${entryPoint}': ${
+              error.message ? error.message : "Unknown error"
+            }`
+          );
+          return false;
+        }
+      };
+
+      const showLogin = async (alerts) => {
+        const page = await router.resolve({
+          pathname: "get/auth/login",
+          alerts,
+        });
+        await replaceIframe(page.content);
+      };
+
       // device is ready
       const init = async () => {
         document.addEventListener("resume", onResume, false);
@@ -366,26 +395,25 @@
               alerts,
             });
             await replaceIframe(page.content);
-          } else {
+          } else if (await isPublicEntryPoint(entryPoint)) {
+            await publicLogin(entryPoint);
+          } else await showLogin(alerts);
+        } catch (error) {
+          if (error.httpCode === 401) await showLogin([]);
+          else {
+            state.mobileConfig.inErrorState = true;
             const page = await router.resolve({
-              pathname: "get/auth/login",
-              alerts,
+              pathname: "get/error_page",
+              fullWrap: true,
+              alerts: [
+                {
+                  type: "error",
+                  msg: error.message ? error.message : "An error occured.",
+                },
+              ],
             });
             await replaceIframe(page.content);
           }
-        } catch (error) {
-          state.mobileConfig.inErrorState = true;
-          const page = await router.resolve({
-            pathname: "get/error_page",
-            fullWrap: true,
-            alerts: [
-              {
-                type: "error",
-                msg: error.message ? error.message : "An error occured.",
-              },
-            ],
-          });
-          await replaceIframe(page.content);
         }
       };
 
