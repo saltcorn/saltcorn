@@ -261,6 +261,7 @@ function ensure_modal_exists_and_closed() {
           <span class="sc-ajax-indicator-wrapper">
             <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
           </span>
+          <a class="sc-modal-linkout" href=""><i class="fas fa-expand-alt"></i></a>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
         </div>
@@ -300,6 +301,9 @@ function ajax_modal(url, opts = {}) {
       );
       if (saveIndicate) $(".sc-ajax-indicator-wrapper").show();
       else $(".sc-ajax-indicator-wrapper").hide();
+      var linkOut = !!request.getResponseHeader("SaltcornModalLinkOut");
+      if (linkOut) $(".sc-modal-linkout").show().attr("href", url);
+      else $(".sc-modal-linkout").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));

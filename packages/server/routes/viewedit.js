@@ -250,6 +250,13 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         parent_field: "attributes",
         tab: "Popup settings",
       },
+      {
+        name: "popup_link_out",
+        label: req.__("Link out?"),
+        type: "Bool",
+        parent_field: "attributes",
+        tab: "Popup settings",
+      },
       ...(isEdit
         ? [
             new Field({

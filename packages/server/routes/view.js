@@ -83,6 +83,8 @@ router.get(
       );
     if (isModal && view.attributes?.popup_save_indicator)
       res.set("SaltcornModalSaveIndicator", `true`);
+    if (isModal && view.attributes?.popup_link_out)
+      res.set("SaltcornModalLinkOut", `true`);
     if (tic) {
       const tock = new Date();
       const ms = tock.getTime() - tic.getTime();
