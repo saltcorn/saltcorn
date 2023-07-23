@@ -253,6 +253,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       {
         name: "popup_link_out",
         label: req.__("Link out?"),
+        sublabel: req.__("Show a link to open popup contents in new tab"),
         type: "Bool",
         parent_field: "attributes",
         tab: "Popup settings",
