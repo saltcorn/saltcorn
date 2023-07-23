@@ -149,6 +149,8 @@ function pjax_to(href, e) {
       success: function (res, textStatus, request) {
         if (!inModal && !localizer.length)
           window.history.pushState({ url: href }, "", href);
+        if (inModal && !localizer.length)
+          $(".sc-modal-linkout").attr("href", href);
         setTimeout(() => {
           loadPage = true;
         }, 0);
