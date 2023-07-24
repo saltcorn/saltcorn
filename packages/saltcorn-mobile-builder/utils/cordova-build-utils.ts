@@ -164,7 +164,7 @@ function addPlugins(buildDir: string) {
   console.log(result.output.toString());
   result = spawnSync(
     "npm",
-    ["run", "add-plugin", "--", "cordova-plugin-file"],
+    ["run", "add-plugin", "--", "cordova-plugin-file@7.0.0"],
     {
       cwd: buildDir,
       env: {
