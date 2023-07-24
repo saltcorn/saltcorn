@@ -463,7 +463,7 @@ const navigationPanel = () =>
     button(
       {
         class: "btn btn-primary er-up",
-        onclick: "erHelper.translateY(-100)",
+        onclick: "erHelper.translateY(100)",
       },
       i({ class: "fas fa-chevron-up" })
     ),
@@ -477,7 +477,7 @@ const navigationPanel = () =>
     button(
       {
         class: "btn btn-primary er-left",
-        onclick: "erHelper.translateX(-100)",
+        onclick: "erHelper.translateX(100)",
       },
       i({ class: "fas fa-chevron-left" })
     ),
@@ -488,14 +488,14 @@ const navigationPanel = () =>
     button(
       {
         class: "btn btn-primary er-right",
-        onclick: "erHelper.translateX(100)",
+        onclick: "erHelper.translateX(-100)",
       },
       i({ class: "fas fa-chevron-right" })
     ),
     button(
       {
         class: "btn btn-primary er-down",
-        onclick: "erHelper.translateY(100)",
+        onclick: "erHelper.translateY(-100)",
       },
       i({ class: "fas fa-chevron-down" })
     ),
@@ -573,6 +573,7 @@ router.get(
             contents: [
               div(
                 {
+                  id: "erd-wrapper",
                   style: "height: calc(100vh - 250px);",
                   class: "overflow-scroll position-relative",
                 },
@@ -584,6 +585,15 @@ router.get(
                 navigationPanel()
               ),
               script({ src: "/relationship_diagram_utils.js" }),
+              script(
+                domReady(`
+                  const erdWrapper = $("#erd-wrapper")[0];
+                  erdWrapper.onwheel = erHelper.onWheel;
+                  erdWrapper.onmousedown = erHelper.onMouseDown;
+                  erdWrapper.onmouseup = erHelper.onMouseUp;
+                  window.addEventListener("mousemove", erHelper.onMouseMove);
+                `)
+              ),
             ],
           },
         ],

@@ -39,7 +39,7 @@ var erHelper = (() => {
       }px) scale(${scale || 1.0})`
     );
   };
-
+  let mouseDown = false;
   return {
     translateY: (val) => {
       const parsed = parseTransform();
@@ -54,6 +54,8 @@ var erHelper = (() => {
     zoom: (val) => {
       const parsed = parseTransform();
       parsed.scale += val;
+      if (parsed.scale < 0.1) parsed.scale = 0.1;
+      else if (parsed.scale > 20) parsed.scale = 20;
       buildTransform(parsed);
     },
     reset: () => {
@@ -61,6 +63,23 @@ var erHelper = (() => {
     },
     takePicture: () => {
       window.open("/table/relationship-diagram/screenshot");
+    },
+    onWheel: (event) => {
+      event.preventDefault();
+      erHelper.zoom(0.001 * event.deltaY);
+    },
+    onMouseDown: () => {
+      mouseDown = true;
+    },
+    onMouseUp: () => {
+      mouseDown = false;
+    },
+    onMouseMove: (event) => {
+      if (mouseDown) {
+        document.getSelection().removeAllRanges();
+        erHelper.translateX(event.movementX);
+        erHelper.translateY(event.movementY);
+      }
     },
   };
 })();
