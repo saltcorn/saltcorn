@@ -13,6 +13,7 @@
     "@saltcorn/filemanager": "0.8.7-beta.5",
     "@saltcorn/markup": "0.8.7-beta.5",
     "@saltcorn/sbadmin2": "0.8.7-beta.5",
+    "@mermaid-js/mermaid-cli": "~10.2.4",
     "@socket.io/cluster-adapter": "^0.2.1",
     "@socket.io/sticky": "^1.0.1",
     "adm-zip": "0.5.10",

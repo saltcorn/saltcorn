@@ -60,16 +60,7 @@ var erHelper = (() => {
       buildTransform();
     },
     takePicture: () => {
-      // TODO as png, so that you can download it via right click
-      // right now, you can only print it to pdf
-      const svg = $("svg[aria-roledescription='er']")[0];
-      const DOMURL = self.URL || self.webkitURL || self;
-      const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
-        type: "image/svg+xml;charset=utf-8",
-      });
-      const url = DOMURL.createObjectURL(blob);
-      window.open(url);
-      DOMURL.revokeObjectURL(url);
+      window.open("/table/relationship-diagram/screenshot");
     },
   };
 })();

@@ -593,6 +593,58 @@ router.get(
 );
 
 /**
+ * builds a png of the 'Relationship diagram' with mermaid-cli
+ * and sends it via res.download
+ */
+router.get(
+  "/relationship-diagram/screenshot",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { run } = await import("@mermaid-js/mermaid-cli");
+    const tables = await Table.find_with_external({}, { orderBy: "name" });
+    const fileStore = db.connectObj.file_store;
+    const randVal = Math.floor(Math.random() * 16777215).toString(16);
+    const mmdFile = path.join(fileStore, `er_${randVal}.mmd`);
+    const pngFile = path.join(fileStore, `er_${randVal}.png`);
+    const deleteFiles = async () => {
+      try {
+        await fs.unlink(mmdFile);
+      } catch (error) {
+        getState().log(
+          2,
+          `GET /relationship-diagram/screenshot error: '${error.message}'`
+        );
+      }
+      try {
+        await fs.unlink(pngFile);
+      } catch (error) {
+        getState().log(
+          2,
+          `GET /relationship-diagram/screenshot error: '${error.message}'`
+        );
+      }
+    };
+    try {
+      await fs.writeFile(mmdFile, buildMermaidMarkup(tables));
+      await run(mmdFile, pngFile, {
+        puppeteerConfig: { headless: "new" },
+        parseMMDOptions: {
+          viewport: { width: 10000, height: 10000, deviceScaleFactor: 4 },
+        },
+        outputFormat: "png",
+        quiet: true,
+      });
+      res.download(pngFile, "relationship-diagram.png", async (error) => {
+        if (error) throw error;
+        await deleteFiles();
+      });
+    } catch (error) {
+      await deleteFiles();
+      throw error;
+    }
+  })
+);
+/**
  * @param {string} col
  * @param {string} lbl
  * @returns {string}
