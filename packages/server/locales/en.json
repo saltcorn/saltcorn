@@ -1191,5 +1191,7 @@
 	"Do not allow the following fields to have a value set from the query string or state": "Do not allow the following fields to have a value set from the query string or state",
 	"Action configuration saved": "Action configuration saved",
 	"Prevent any deletion of parent rows": "Prevent any deletion of parent rows",
-	"If the parent row is deleted, set key fields on child rows to null": "If the parent row is deleted, set key fields on child rows to null"
+	"If the parent row is deleted, set key fields on child rows to null": "If the parent row is deleted, set key fields on child rows to null",
+	"Link out?": "Link out?",
+	"Show a link to open popup contents in new tab": "Show a link to open popup contents in new tab"
 }
