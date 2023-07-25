@@ -15,6 +15,11 @@ export namespace plugin_helper {
   export const { run_action_column } = pluginHelper;
 }
 
+const _utils = require("./utils");
+export namespace utils {
+  export const { NotAuthorized } = _utils;
+}
+
 import web_mobile_commons from "./web-mobile-commons";
 export { web_mobile_commons };
 
