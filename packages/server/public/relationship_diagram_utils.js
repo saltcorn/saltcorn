@@ -40,6 +40,7 @@ var erHelper = (() => {
     );
   };
   let mouseDown = false;
+  let isMoving = false;
   return {
     translateY: (val) => {
       const parsed = parseTransform();
@@ -70,16 +71,21 @@ var erHelper = (() => {
     },
     onMouseDown: () => {
       mouseDown = true;
+      isMoving = false;
     },
     onMouseUp: () => {
       mouseDown = false;
     },
     onMouseMove: (event) => {
       if (mouseDown) {
+        isMoving = true;
         document.getSelection().removeAllRanges();
         erHelper.translateX(event.movementX);
         erHelper.translateY(event.movementY);
       }
+    },
+    isTranslating: () => {
+      return isMoving;
     },
   };
 })();

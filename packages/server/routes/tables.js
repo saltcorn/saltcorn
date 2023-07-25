@@ -542,11 +542,30 @@ router.get(
           {
             headerTag: `
             <script type="module">
-              mermaid.initialize({ startOnLoad: false });
+              mermaid.initialize({ 
+                startOnLoad: false,
+                securityLevel: 'loose',
+              });
               await mermaid.run({
                 querySelector: ".mermaid",
                 postRenderCallback: (id) => {
                   $("#" + id).css("height", "calc(100vh - 250px)");
+                  $("#" + id + " > g").each(function(index) {
+                    const jThis = $(this);
+                    const id = jThis.attr("id");
+                    if (id) {
+                      const arr = /^entity-(.+)-(\\w+-\\w+-\\w+-\\w+-\\w+$)/.exec(id);
+                      if (arr?.length === 3) {
+                        const textEnt = $("#text-entity-" + arr[1] + "-" + arr[2]);
+                        textEnt.css("cursor", "pointer");
+                        textEnt.on("click", function () {
+                          if (!erHelper.isTranslating()) {
+                            window.open("/table/" + encodeURIComponent(this.innerHTML));
+                          }
+                        });
+                      }
+                    }
+                  });
                 }
               });
             </script>`,
