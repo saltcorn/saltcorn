@@ -67,7 +67,7 @@ var erHelper = (() => {
     },
     onWheel: (event) => {
       event.preventDefault();
-      erHelper.zoom(0.001 * event.deltaY);
+      erHelper.zoom(-0.001 * event.deltaY);
     },
     onMouseDown: () => {
       mouseDown = true;

@@ -598,7 +598,10 @@ router.get(
                 },
                 screenshotPanel(),
                 pre(
-                  { class: "mermaid", style: "height: calc(100vh - 250px);" },
+                  {
+                    class: "mermaid",
+                    style: "height: calc(100vh - 250px); color: transparent;",
+                  },
                   buildMermaidMarkup(tables)
                 ),
                 navigationPanel()
