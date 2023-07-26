@@ -463,7 +463,7 @@ const navigationPanel = () =>
     button(
       {
         class: "btn btn-primary er-up",
-        onclick: "erHelper.translateY(-100)",
+        onclick: "erHelper.translateY(100)",
       },
       i({ class: "fas fa-chevron-up" })
     ),
@@ -477,7 +477,7 @@ const navigationPanel = () =>
     button(
       {
         class: "btn btn-primary er-left",
-        onclick: "erHelper.translateX(-100)",
+        onclick: "erHelper.translateX(100)",
       },
       i({ class: "fas fa-chevron-left" })
     ),
@@ -488,14 +488,14 @@ const navigationPanel = () =>
     button(
       {
         class: "btn btn-primary er-right",
-        onclick: "erHelper.translateX(100)",
+        onclick: "erHelper.translateX(-100)",
       },
       i({ class: "fas fa-chevron-right" })
     ),
     button(
       {
         class: "btn btn-primary er-down",
-        onclick: "erHelper.translateY(100)",
+        onclick: "erHelper.translateY(-100)",
       },
       i({ class: "fas fa-chevron-down" })
     ),
@@ -542,11 +542,30 @@ router.get(
           {
             headerTag: `
             <script type="module">
-              mermaid.initialize({ startOnLoad: false });
+              mermaid.initialize({ 
+                startOnLoad: false,
+                securityLevel: 'loose',
+              });
               await mermaid.run({
                 querySelector: ".mermaid",
                 postRenderCallback: (id) => {
                   $("#" + id).css("height", "calc(100vh - 250px)");
+                  $("#" + id + " > g").each(function(index) {
+                    const jThis = $(this);
+                    const id = jThis.attr("id");
+                    if (id) {
+                      const arr = /^entity-(.+)-(\\w+-\\w+-\\w+-\\w+-\\w+$)/.exec(id);
+                      if (arr?.length === 3) {
+                        const textEnt = $("#text-entity-" + arr[1] + "-" + arr[2]);
+                        textEnt.css("cursor", "pointer");
+                        textEnt.on("click", function () {
+                          if (!erHelper.isTranslating()) {
+                            window.open("/table/" + encodeURIComponent(this.innerHTML));
+                          }
+                        });
+                      }
+                    }
+                  });
                 }
               });
             </script>`,
@@ -573,17 +592,30 @@ router.get(
             contents: [
               div(
                 {
+                  id: "erd-wrapper",
                   style: "height: calc(100vh - 250px);",
                   class: "overflow-scroll position-relative",
                 },
                 screenshotPanel(),
                 pre(
-                  { class: "mermaid", style: "height: calc(100vh - 250px);" },
+                  {
+                    class: "mermaid",
+                    style: "height: calc(100vh - 250px); color: transparent;",
+                  },
                   buildMermaidMarkup(tables)
                 ),
                 navigationPanel()
               ),
               script({ src: "/relationship_diagram_utils.js" }),
+              script(
+                domReady(`
+                  const erdWrapper = $("#erd-wrapper")[0];
+                  erdWrapper.onwheel = erHelper.onWheel;
+                  erdWrapper.onmousedown = erHelper.onMouseDown;
+                  erdWrapper.onmouseup = erHelper.onMouseUp;
+                  window.addEventListener("mousemove", erHelper.onMouseMove);
+                `)
+              ),
             ],
           },
         ],
@@ -592,6 +624,58 @@ router.get(
   })
 );
 
+/**
+ * builds a png of the 'Relationship diagram' with mermaid-cli
+ * and sends it via res.download
+ */
+router.get(
+  "/relationship-diagram/screenshot",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { run } = await import("@mermaid-js/mermaid-cli");
+    const tables = await Table.find_with_external({}, { orderBy: "name" });
+    const fileStore = db.connectObj.file_store;
+    const randVal = Math.floor(Math.random() * 16777215).toString(16);
+    const mmdFile = path.join(fileStore, `er_${randVal}.mmd`);
+    const pngFile = path.join(fileStore, `er_${randVal}.png`);
+    const deleteFiles = async () => {
+      try {
+        await fs.unlink(mmdFile);
+      } catch (error) {
+        getState().log(
+          2,
+          `GET /relationship-diagram/screenshot error: '${error.message}'`
+        );
+      }
+      try {
+        await fs.unlink(pngFile);
+      } catch (error) {
+        getState().log(
+          2,
+          `GET /relationship-diagram/screenshot error: '${error.message}'`
+        );
+      }
+    };
+    try {
+      await fs.writeFile(mmdFile, buildMermaidMarkup(tables));
+      await run(mmdFile, pngFile, {
+        puppeteerConfig: { headless: "new" },
+        parseMMDOptions: {
+          viewport: { width: 10000, height: 10000, deviceScaleFactor: 4 },
+        },
+        outputFormat: "png",
+        quiet: true,
+      });
+      res.download(pngFile, "relationship-diagram.png", async (error) => {
+        if (error) throw error;
+        await deleteFiles();
+      });
+    } catch (error) {
+      await deleteFiles();
+      throw error;
+    }
+  })
+);
 /**
  * @param {string} col
  * @param {string} lbl

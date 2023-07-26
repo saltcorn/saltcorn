@@ -39,7 +39,8 @@ var erHelper = (() => {
       }px) scale(${scale || 1.0})`
     );
   };
-
+  let mouseDown = false;
+  let isMoving = false;
   return {
     translateY: (val) => {
       const parsed = parseTransform();
@@ -54,22 +55,37 @@ var erHelper = (() => {
     zoom: (val) => {
       const parsed = parseTransform();
       parsed.scale += val;
+      if (parsed.scale < 0.1) parsed.scale = 0.1;
+      else if (parsed.scale > 20) parsed.scale = 20;
       buildTransform(parsed);
     },
     reset: () => {
       buildTransform();
     },
     takePicture: () => {
-      // TODO as png, so that you can download it via right click
-      // right now, you can only print it to pdf
-      const svg = $("svg[aria-roledescription='er']")[0];
-      const DOMURL = self.URL || self.webkitURL || self;
-      const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
-        type: "image/svg+xml;charset=utf-8",
-      });
-      const url = DOMURL.createObjectURL(blob);
-      window.open(url);
-      DOMURL.revokeObjectURL(url);
+      window.open("/table/relationship-diagram/screenshot");
+    },
+    onWheel: (event) => {
+      event.preventDefault();
+      erHelper.zoom(-0.001 * event.deltaY);
+    },
+    onMouseDown: () => {
+      mouseDown = true;
+      isMoving = false;
+    },
+    onMouseUp: () => {
+      mouseDown = false;
+    },
+    onMouseMove: (event) => {
+      if (mouseDown) {
+        isMoving = true;
+        document.getSelection().removeAllRanges();
+        erHelper.translateX(event.movementX);
+        erHelper.translateY(event.movementY);
+      }
+    },
+    isTranslating: () => {
+      return isMoving;
     },
   };
 })();
