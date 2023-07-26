@@ -102,228 +102,243 @@ router.get(
             title: req.__(`Application diagram`),
             contents: [
               div(
-                { class: "btn-group" },
-                // New dropdown
-                button(
-                  {
-                    type: "button",
-                    class: "btn btn-primary m-2 rounded",
-                    "data-bs-toggle": "dropdown",
-                    "aria-expanded": false,
-                  },
-                  "New",
-                  i({ class: "fas fa-plus-square ms-2" })
-                ),
+                { class: "d-flex justify-content-between" },
+                div(
+                  { class: "btn-group" },
+                  // New dropdown
+                  button(
+                    {
+                      type: "button",
+                      class: "btn btn-primary m-2 rounded",
+                      "data-bs-toggle": "dropdown",
+                      "aria-expanded": false,
+                    },
+                    "New",
+                    i({ class: "fas fa-plus-square ms-2" })
+                  ),
 
-                div(
-                  {
-                    class: "dropdown-menu",
-                  },
-                  // New View
                   div(
-                    { class: "m-3" },
+                    {
+                      class: "dropdown-menu",
+                    },
+                    // New View
+                    div(
+                      { class: "m-3" },
 
-                    a(
-                      {
-                        href: "/viewedit/new?on_done_redirect=diagram",
-                      },
-                      req.__("View")
+                      a(
+                        {
+                          href: "/viewedit/new?on_done_redirect=diagram",
+                        },
+                        req.__("View")
+                      )
+                    ),
+                    // New Page
+                    div(
+                      { class: "m-3" },
+                      a(
+                        {
+                          href: "/pageedit/new?on_done_redirect=diagram",
+                        },
+                        req.__("Page")
+                      )
+                    ),
+                    // New Table
+                    div(
+                      { class: "m-3" },
+                      a(
+                        {
+                          href: "/table/new",
+                        },
+                        req.__("Table")
+                      )
+                    ),
+                    // New Trigger
+                    div(
+                      { class: "m-3" },
+                      a(
+                        {
+                          href: "/actions/new?on_done_redirect=diagram",
+                        },
+                        req.__("Trigger")
+                      )
                     )
                   ),
-                  // New Page
-                  div(
-                    { class: "m-3" },
-                    a(
-                      {
-                        href: "/pageedit/new?on_done_redirect=diagram",
-                      },
-                      req.__("Page")
-                    )
+                  // Entity type filter dropdown
+                  button(
+                    {
+                      type: "button",
+                      class: "btn btn-primary m-2 rounded",
+                      "data-bs-toggle": "dropdown",
+                      "aria-expanded": false,
+                    },
+                    req.__("All entities")
                   ),
-                  // New Table
                   div(
-                    { class: "m-3" },
-                    a(
-                      {
-                        href: "/table/new",
-                      },
-                      req.__("Table")
-                    )
-                  ),
-                  // New Trigger
-                  div(
-                    { class: "m-3" },
-                    a(
-                      {
-                        href: "/actions/new?on_done_redirect=diagram",
-                      },
-                      req.__("Trigger")
-                    )
-                  )
-                ),
-                // Entity type filter dropdown
-                button(
-                  {
-                    type: "button",
-                    class: "btn btn-primary m-2 rounded",
-                    "data-bs-toggle": "dropdown",
-                    "aria-expanded": false,
-                  },
-                  req.__("All entities")
-                ),
-                div(
-                  {
-                    class: "dropdown-menu",
-                  },
-                  // Views checkbox
-                  div(
-                    { class: "m-3 form-check" },
-                    label(
-                      { class: "form-check-label", for: "showViewsId" },
-                      req.__("Views")
-                    ),
-                    input({
-                      type: "checkbox",
-                      class: "form-check-input",
-                      id: "showViewsId",
-                      checked: true,
-                      name: "show_views",
-                      value: "true",
-                      onclick: "toggleEntityFilter('views'); reloadCy();",
-                      autocomplete: "off",
-                    })
-                  ),
-                  // Pages checkbox
-                  div(
-                    { class: "m-3 form-check" },
-                    label(
-                      { class: "form-check-label", for: "showPagesId" },
-                      req.__("Pages")
-                    ),
-                    input({
-                      type: "checkbox",
-                      class: "form-check-input",
-                      id: "showPagesId",
-                      name: "show_pages",
-                      value: "true",
-                      checked: true,
-                      onclick: "toggleEntityFilter('pages'); reloadCy();",
-                      autocomplete: "off",
-                    })
-                  ),
-                  // Tables checkbox
-                  div(
-                    { class: "m-3 form-check" },
-                    label(
-                      { class: "form-check-label", for: "showTablesId" },
-                      req.__("Tables")
-                    ),
-                    input({
-                      type: "checkbox",
-                      class: "form-check-input",
-                      id: "showTablesId",
-                      name: "show_tables",
-                      value: "true",
-                      checked: true,
-                      onclick: "toggleEntityFilter('tables'); reloadCy();",
-                      autocomplete: "off",
-                    })
-                  ),
-                  // Trigger checkbox
-                  div(
-                    { class: "m-3 form-check" },
-                    label(
-                      { class: "form-check-label", for: "showTriggerId" },
-                      req.__("Triggers")
-                    ),
-                    input({
-                      type: "checkbox",
-                      class: "form-check-input",
-                      id: "showTriggerId",
-                      name: "show_trigger",
-                      value: "true",
-                      checked: true,
-                      onclick: "toggleEntityFilter('trigger'); reloadCy();",
-                      autocomplete: "off",
-                    })
-                  )
-                ),
-                // Tags filter dropdown
-                button(
-                  {
-                    type: "button",
-                    class: "btn btn-primary m-2 rounded",
-                    "data-bs-toggle": "dropdown",
-                    "aria-expanded": false,
-                  },
-                  req.__("Tags")
-                ),
-                div(
-                  {
-                    class: "dropdown-menu",
-                  },
-                  // no tags checkbox
-                  div(
-                    { class: "m-3 form-check" },
-                    label(
-                      { class: "form-check-label", for: "noTagsId" },
-                      req.__("no tags")
-                    ),
-                    input({
-                      type: "checkbox",
-                      class: "form-check-input",
-                      id: "noTagsId",
-                      name: "no_tags",
-                      value: "true",
-                      checked: true,
-                      onclick: "toggleTagFilterMode(); reloadCy();",
-                      autocomplete: "off",
-                    })
-                  ),
-                  tags.map((tag) => {
-                    const inputId = `tagFilter_box_${tag.name}_id`;
-                    return div(
+                    {
+                      class: "dropdown-menu",
+                    },
+                    // Views checkbox
+                    div(
                       { class: "m-3 form-check" },
                       label(
-                        {
-                          class: "form-check-label",
-                          id: `tagFilter_label_${tag.name}`,
-                          style: "opacity: 0.5;",
-                          for: inputId,
-                        },
-                        tag.name
+                        { class: "form-check-label", for: "showViewsId" },
+                        req.__("Views")
                       ),
                       input({
                         type: "checkbox",
                         class: "form-check-input",
-                        id: inputId,
-                        name: "choice",
-                        value: tag.id,
-                        checked: false,
-                        onclick: `toggleTagFilter(${tag.id});  reloadCy();`,
+                        id: "showViewsId",
+                        checked: true,
+                        name: "show_views",
+                        value: "true",
+                        onclick: "toggleEntityFilter('views'); reloadCy();",
                         autocomplete: "off",
                       })
-                    );
-                  }),
-                  div(
-                    { class: "m-3" },
-                    a(
-                      {
-                        href: "/tag/new",
-                      },
-                      req.__("Add tag"),
-                      i({ class: "fas fa-plus ms-2" })
+                    ),
+                    // Pages checkbox
+                    div(
+                      { class: "m-3 form-check" },
+                      label(
+                        { class: "form-check-label", for: "showPagesId" },
+                        req.__("Pages")
+                      ),
+                      input({
+                        type: "checkbox",
+                        class: "form-check-input",
+                        id: "showPagesId",
+                        name: "show_pages",
+                        value: "true",
+                        checked: true,
+                        onclick: "toggleEntityFilter('pages'); reloadCy();",
+                        autocomplete: "off",
+                      })
+                    ),
+                    // Tables checkbox
+                    div(
+                      { class: "m-3 form-check" },
+                      label(
+                        { class: "form-check-label", for: "showTablesId" },
+                        req.__("Tables")
+                      ),
+                      input({
+                        type: "checkbox",
+                        class: "form-check-input",
+                        id: "showTablesId",
+                        name: "show_tables",
+                        value: "true",
+                        checked: true,
+                        onclick: "toggleEntityFilter('tables'); reloadCy();",
+                        autocomplete: "off",
+                      })
+                    ),
+                    // Trigger checkbox
+                    div(
+                      { class: "m-3 form-check" },
+                      label(
+                        { class: "form-check-label", for: "showTriggerId" },
+                        req.__("Triggers")
+                      ),
+                      input({
+                        type: "checkbox",
+                        class: "form-check-input",
+                        id: "showTriggerId",
+                        name: "show_trigger",
+                        value: "true",
+                        checked: true,
+                        onclick: "toggleEntityFilter('trigger'); reloadCy();",
+                        autocomplete: "off",
+                      })
                     )
+                  ),
+                  // Tags filter dropdown
+                  button(
+                    {
+                      type: "button",
+                      class: "btn btn-primary m-2 rounded",
+                      "data-bs-toggle": "dropdown",
+                      "aria-expanded": false,
+                    },
+                    req.__("Tags")
+                  ),
+                  div(
+                    {
+                      class: "dropdown-menu",
+                    },
+                    // no tags checkbox
+                    div(
+                      { class: "m-3 form-check" },
+                      label(
+                        { class: "form-check-label", for: "noTagsId" },
+                        req.__("no tags")
+                      ),
+                      input({
+                        type: "checkbox",
+                        class: "form-check-input",
+                        id: "noTagsId",
+                        name: "no_tags",
+                        value: "true",
+                        checked: true,
+                        onclick: "toggleTagFilterMode(); reloadCy();",
+                        autocomplete: "off",
+                      })
+                    ),
+                    tags.map((tag) => {
+                      const inputId = `tagFilter_box_${tag.name}_id`;
+                      return div(
+                        { class: "m-3 form-check" },
+                        label(
+                          {
+                            class: "form-check-label",
+                            id: `tagFilter_label_${tag.name}`,
+                            style: "opacity: 0.5;",
+                            for: inputId,
+                          },
+                          tag.name
+                        ),
+                        input({
+                          type: "checkbox",
+                          class: "form-check-input",
+                          id: inputId,
+                          name: "choice",
+                          value: tag.id,
+                          checked: false,
+                          onclick: `toggleTagFilter(${tag.id});  reloadCy();`,
+                          autocomplete: "off",
+                        })
+                      );
+                    }),
+                    div(
+                      { class: "m-3" },
+                      a(
+                        {
+                          href: "/tag/new",
+                        },
+                        req.__("Add tag"),
+                        i({ class: "fas fa-plus ms-2" })
+                      )
+                    )
+                  ),
+                  // refresh button
+                  button(
+                    {
+                      type: "button",
+                      class: "btn btn-primary m-2 rounded",
+                      onclick: "reloadCy(true);",
+                    },
+                    i({ class: "fas fa-sync-alt" })
                   )
                 ),
-                // refresh button
-                button(
-                  {
-                    type: "button",
-                    class: "btn btn-primary m-2 rounded",
-                    onclick: "reloadCy(true);",
-                  },
-                  i({ class: "fas fa-sync-alt" })
+                // screenshot button
+                div(
+                  { class: "ad-screenshot-panel" },
+                  button(
+                    {
+                      type: "button",
+                      class: "btn btn-primary m-2 rounded",
+                      onclick: "takePicture()",
+                    },
+                    i({ class: "fas fa-camera" })
+                  )
                 )
               ),
               div({ id: "cy" }),
