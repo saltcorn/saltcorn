@@ -84,6 +84,12 @@ class PostReleaseCommand extends Command {
 
       const stat = await fsp.stat(cwd);
       if (!stat.isDirectory()) continue;
+      try {
+        spawnSync("vagrant", ["destroy", "-f"], {
+          stdio: "inherit",
+          cwd,
+        });
+      } catch (e) {}
       const runres = await runWithOutput("vagrant", ["up"], {
         cwd,
       });

@@ -51,19 +51,23 @@ function removeQueryStringParameter(uri1, key) {
     uri = uris[0];
   }
 
-  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-  var separator = uri.indexOf("?") !== -1 ? "&" : "?";
+  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "gi");
   if (uri.match(re)) {
     uri = uri.replace(re, "$1" + "$2");
   }
   if (uri[uri.length - 1] === "?" || uri[uri.length - 1] === "&")
     uri = uri.substring(0, uri.length - 1);
+  if (uri.match(re)) return removeQueryStringParameter(uri + hash, key);
   return uri + hash;
 }
 
-function get_current_state_url() {
+function get_current_state_url(e) {
+  const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
   let $modal = $("#scmodal");
-  if ($modal.length === 0 || !$modal.hasClass("show"))
+  if (localizer.length) {
+    const localState = localizer.attr("data-sc-local-state") || "";
+    return localState;
+  } else if ($modal.length === 0 || !$modal.hasClass("show"))
     return window.location.href;
   else return $modal.prop("data-modal-state");
 }
@@ -72,8 +76,8 @@ function select_id(id) {
   pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id));
 }
 
-function set_state_field(key, value) {
-  pjax_to(updateQueryStringParameter(get_current_state_url(), key, value));
+function set_state_field(key, value, e) {
+  pjax_to(updateQueryStringParameter(get_current_state_url(e), key, value), e);
 }
 
 function check_state_field(that) {
@@ -97,8 +101,8 @@ function invalidate_pagings(href) {
   return newhref;
 }
 
-function set_state_fields(kvs, disable_pjax) {
-  let newhref = get_current_state_url();
+function set_state_fields(kvs, disable_pjax, e) {
+  let newhref = get_current_state_url(e);
   if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
     newhref = invalidate_pagings(newhref);
   }
@@ -108,10 +112,10 @@ function set_state_fields(kvs, disable_pjax) {
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
   if (disable_pjax) href_to(newhref.replace("&&", "&").replace("?&", "?"));
-  else pjax_to(newhref.replace("&&", "&").replace("?&", "?"));
+  else pjax_to(newhref.replace("&&", "&").replace("?&", "?"), e);
 }
-function unset_state_field(key) {
-  pjax_to(removeQueryStringParameter(get_current_state_url(), key));
+function unset_state_field(key, e) {
+  pjax_to(removeQueryStringParameter(get_current_state_url(e), key), e);
 }
 
 let loadPage = true;
@@ -124,29 +128,39 @@ $(function () {
   });
 });
 
-function pjax_to(href) {
+function pjax_to(href, e) {
   let $modal = $("#scmodal");
   const inModal = $modal.length && $modal.hasClass("show");
-  let $dest = inModal ? $("#scmodal .modal-body") : $("#page-inner-content");
-
+  const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
+  let $dest = localizer.length
+    ? localizer
+    : inModal
+    ? $("#scmodal .modal-body")
+    : $("#page-inner-content");
   if (!$dest.length) window.location.href = href;
   else {
     loadPage = false;
+    const headers = {
+      pjaxpageload: "true",
+    };
+    if (localizer.length) headers.localizedstate = "true";
     $.ajax(href, {
-      headers: {
-        pjaxpageload: "true",
-      },
+      headers,
       success: function (res, textStatus, request) {
-        if (!inModal) window.history.pushState({ url: href }, "", href);
+        if (!inModal && !localizer.length)
+          window.history.pushState({ url: href }, "", href);
+        if (inModal && !localizer.length)
+          $(".sc-modal-linkout").attr("href", href);
         setTimeout(() => {
           loadPage = true;
         }, 0);
-        if (!inModal && res.includes("<!--SCPT:")) {
+        if (!inModal && !localizer.length && res.includes("<!--SCPT:")) {
           const start = res.indexOf("<!--SCPT:");
           const end = res.indexOf("-->", start);
           document.title = res.substring(start + 9, end);
         }
         $dest.html(res);
+        if (localizer.length) localizer.attr("data-sc-local-state", href);
         initialize_page();
       },
       error: function (res) {
@@ -246,11 +260,14 @@ function ensure_modal_exists_and_closed() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
-          <span class="sc-ajax-indicator-wrapper">
-            <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
-          </span>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
-          </button>
+          <div class="">
+            <span class="sc-ajax-indicator-wrapper">
+              <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
+            </span>
+            <a class="sc-modal-linkout ms-2" href="" target="_blank"><i class="fas fa-expand-alt"></i></a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
+            </button>
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>
@@ -288,6 +305,9 @@ function ajax_modal(url, opts = {}) {
       );
       if (saveIndicate) $(".sc-ajax-indicator-wrapper").show();
       else $(".sc-ajax-indicator-wrapper").hide();
+      var linkOut = !!request.getResponseHeader("SaltcornModalLinkOut");
+      if (linkOut) $(".sc-modal-linkout").show().attr("href", url);
+      else $(".sc-modal-linkout").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
@@ -547,6 +567,22 @@ function create_new_folder(folder) {
         location.reload();
       },
     });
+}
+
+function handle_upload_file_change(form) {
+  const url = new URL(window.location);
+  const dir = url.searchParams.get("dir");
+  if (dir !== null) $("#uploadFolderInpId").val(dir);
+  const jqForm = $(form);
+  const sortBy = url.searchParams.get("sortBy");
+  if (sortBy) {
+    jqForm.append(`<input type="hidden" name="sortBy" value="${sortBy}" />`);
+  }
+  const sortDesc = url.searchParams.get("sortDesc");
+  if (sortDesc === "on") {
+    jqForm.append('<input type="hidden" name="sortDesc" value="on" />');
+  }
+  form.submit();
 }
 
 async function fill_formula_btn_click(btn, k) {

@@ -711,7 +711,7 @@ const ConfigField = ({
         prop.style[field.name] = v;
       } else prop[field.name] = v;
     });
-    onChange && onChange(field.name, v);
+    onChange && onChange(field.name, v, setProp);
   };
   const value = or_if_undef(
     configuration
@@ -937,30 +937,49 @@ export /**
  * @namespace
  * @returns {table}
  */
-const SettingsFromFields = (fields) => () => {
-  const node = useNode((node) => {
-    const ps = {};
-    fields.forEach((f) => {
-      ps[f.name] = node.data.props[f.name];
+const SettingsFromFields =
+  (fields, opts = {}) =>
+  () => {
+    const node = useNode((node) => {
+      const ps = {};
+      fields.forEach((f) => {
+        ps[f.name] = node.data.props[f.name];
+      });
+      if (fields.some((f) => f.canBeFormula))
+        ps.isFormula = node.data.props.isFormula;
+      return ps;
     });
-    if (fields.some((f) => f.canBeFormula))
-      ps.isFormula = node.data.props.isFormula;
-    return ps;
-  });
-  const {
-    actions: { setProp },
-  } = node;
-
-  return (
-    <table className="w-100">
-      <tbody>
-        {fields.map((f, ix) => (
-          <SettingsRow field={f} key={ix} node={node} setProp={setProp} />
-        ))}
-      </tbody>
-    </table>
-  );
-};
+    const {
+      actions: { setProp },
+    } = node;
+    const noop = () => {};
+    return (
+      <table className="w-100">
+        <tbody>
+          {fields.map((f, ix) => {
+            if (f.showIf) {
+              let noshow = false;
+              Object.entries(f.showIf).forEach(([nm, value]) => {
+                if (Array.isArray(value))
+                  noshow = noshow || value.includes(node[nm]);
+                else noshow = noshow || value !== node[nm];
+              });
+              if (noshow) return null;
+            }
+            return (
+              <SettingsRow
+                field={f}
+                key={ix}
+                node={node}
+                onChange={opts.onChange || noop}
+                setProp={setProp}
+              />
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  };
 
 export /**
  * @param {object} props

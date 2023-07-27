@@ -98,7 +98,7 @@ const action_link = (
   },
   __ = (s) => s
 ) => {
-  const label = __(action_label) || action_name;
+  const label = action_label === " " ? "" : __(action_label) || action_name;
   let style =
     action_style === "btn-custom-color"
       ? `background-color: ${action_bgcol || "#000000"};border-color: ${
@@ -115,7 +115,7 @@ const action_link = (
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
       },
-      action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+      action_icon ? i({ class: action_icon }) + (label ? "&nbsp;" : "") : false,
       label
     );
   else

@@ -103,7 +103,7 @@ const range_interval = (type) => ({
         type: "range",
         disabled: attrs.disabled,
         readonly: attrs.readonly,
-        onChange: `set_state_field('_gte_${nm}', this.value)`,
+        onChange: `set_state_field('_gte_${nm}', this.value, this)`,
       }),
       input({
         ...(isdef(state[`_lte_${nm}`])
@@ -118,7 +118,7 @@ const range_interval = (type) => ({
         type: "range",
         disabled: attrs.disabled,
         readonly: attrs.readonly,
-        onChange: `set_state_field('_lte_${nm}', this.value)`,
+        onChange: `set_state_field('_lte_${nm}', this.value, this)`,
       })
     );
   },
@@ -165,6 +165,48 @@ const progress_bar = (type) => ({
     ),
 });
 
+const heat_cell = (type) => ({
+  configFields: (field) => [
+    ...(!isdef(field.attributes.min)
+      ? [{ name: "min", type, required: true }]
+      : []),
+    ...(!isdef(field.attributes.max)
+      ? [{ name: "max", type, required: true }]
+      : []),
+    {
+      name: "color_scale",
+      type: "String",
+      label: "Color scale",
+      required: true,
+      attributes: { options: ["RedAmberGreen", "Rainbow", "WhiteToRed"] },
+    },
+    { name: "reverse", type: "Bool", label: "Reverse color scale" },
+    { name: "em_height", type: "Integer", label: "Height in em", default: 1.5 },
+  ],
+  isEdit: false,
+  run: (v, req, attrs = {}) => {
+    if (typeof v !== "number") return "";
+    const pcnt0 = (v - attrs.min) / (attrs.max - attrs.min);
+    const pcnt = attrs.reverse ? 1 - pcnt0 : pcnt0;
+    const backgroundColor = {
+      Rainbow: `hsl(${360 * pcnt},100%, 50%)`,
+      RedAmberGreen: `hsl(${100 * pcnt},100%, 50%)`,
+      WhiteToRed: `hsl(0,100%, ${100 * (1 - pcnt / 2)}%)`,
+    }[attrs.color_scale];
+    return div(
+      {
+        class: "px-2",
+        style: {
+          width: "100%",
+          height: `${attrs.em_height || 1}em`,
+          backgroundColor,
+        },
+      },
+      text(v)
+    );
+  },
+});
+
 const number_limit = (direction) => ({
   isEdit: false,
   isFilter: true,
@@ -173,7 +215,7 @@ const number_limit = (direction) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
-    const onChange = `set_state_field('_${direction}_${nm}', this.value)`;
+    const onChange = `set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
           undefined,
@@ -182,7 +224,7 @@ const number_limit = (direction) => ({
             : undefined,
           {
             ...attrs,
-            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val())`,
+            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
           },
           cls,
           undefined,
@@ -214,7 +256,7 @@ const float_number_limit = (direction) => ({
       class: ["form-control", cls],
       disabled: attrs.disabled,
       readonly: attrs.readonly,
-      onChange: `set_state_field('_${direction}_${nm}', this.value)`,
+      onChange: `set_state_field('_${direction}_${nm}', this.value, this)`,
       step: attrs.decimal_places ? Math.pow(10, -attrs.decimal_places) : "0.01",
       ...(attrs.max && { max: attrs.max }),
       ...(attrs.min && { min: attrs.min }),
@@ -970,6 +1012,7 @@ const int = {
     number_slider: number_slider("Integer"),
     range_interval: range_interval("Integer"),
     progress_bar: progress_bar("Integer"),
+    heat_cell: heat_cell("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
     show_star_rating: {
@@ -1214,6 +1257,7 @@ const float = {
     number_slider: number_slider("Float"),
     range_interval: range_interval("Float"),
     progress_bar: progress_bar("Float"),
+    heat_cell: heat_cell("Float"),
     above_input: float_number_limit("gte"),
     below_input: float_number_limit("lte"),
   },
@@ -1549,7 +1593,9 @@ const bool = {
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
-          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+          attrs.isFilter && v
+            ? `unset_state_field('${nm}', this)`
+            : attrs.onChange;
         return input({
           class: ["me-2 mt-1", attrs?.size || null, cls],
           "data-fieldname": text_attr(field.name),
@@ -1567,7 +1613,9 @@ const bool = {
       isEdit: true,
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
-          attrs.isFilter && v ? `unset_state_field('${nm}')` : attrs.onChange;
+          attrs.isFilter && v
+            ? `unset_state_field('${nm}', this)`
+            : attrs.onChange;
         return span(
           { class: "form-switch" },
           input({
@@ -1624,6 +1672,7 @@ const bool = {
    * @returns {boolean|null}
    */
   readFromFormRecord: (rec, name) => {
+    if (rec[name] === "") return null;
     if (!rec[name]) return false;
     if (["undefined", "false", "off"].includes(rec[name])) return false;
     if (rec[name] === "?") return null;
@@ -1637,7 +1686,7 @@ const bool = {
     switch (typeof v) {
       case "string":
         if (["TRUE", "T", "ON"].includes(v.toUpperCase())) return true;
-        if (v === "?") return null;
+        if (v === "?" || v === "") return null;
         else return false;
       default:
         if (v === null) return null;

@@ -4,10 +4,11 @@ function showHideCol(nm, e) {
 }
 
 function lookupIntToString(cell, formatterParams, onRendered) {
-  const cellVal = cell.getValue()
-  const val = typeof cellVal === "object" && cellVal !== null
-    ? `${cellVal.id}`
-    : `${cellVal}`;
+  const cellVal = cell.getValue();
+  const val =
+    typeof cellVal === "object" && cellVal !== null
+      ? `${cellVal.id}`
+      : `${cellVal}`;
   const res = formatterParams.values[val];
   return res;
 }
@@ -19,10 +20,11 @@ function deleteIcon() {
 function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
   var input = $("<input type='text'/>");
   const dayOnly = editorParams && editorParams.dayOnly;
-  let defaultDate = cell.getValue()
+  let defaultDate = cell.getValue();
 
-  if (!defaultDate) defaultDate = new Date()
+  if (!defaultDate) defaultDate = new Date();
   input.flatpickr({
+    disableMobile: true, // the native picker has problems combined with tabulator
     enableTime: !dayOnly,
     dateFormat: dayOnly ? "Y-m-d" : "Z",
     time_24hr: true,
@@ -30,7 +32,7 @@ function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
     defaultDate,
     onClose: function (selectedDates, dateStr, instance) {
       evt = window.event;
-      var isEscape = false;
+      var isEscape = false; 
       if ("key" in evt) {
         isEscape = evt.key === "Escape" || evt.key === "Esc";
       } else {
@@ -156,7 +158,8 @@ function delete_tabulator_row(e, cell) {
   if (def && def.formatterParams && def.formatterParams.confirm) {
     if (!confirm("Are you sure you want to delete this row?")) return;
   }
-  const tableName = def?.formatterParams?.tableName || window.tabulator_table_name
+  const tableName =
+    def?.formatterParams?.tableName || window.tabulator_table_name;
 
   const row = cell.getRow().getData();
   if (!row.id) {

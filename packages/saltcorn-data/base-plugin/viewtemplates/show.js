@@ -369,7 +369,7 @@ const set_load_actions_join_fieldviews = async ({
     join_field: async (segment) => {
       const { join_field, fieldview } = segment;
       if (!fieldview) return;
-      const field = await table.getField(join_field);
+      const field = table.getField(join_field);
 
       if (field && field.type === "File") segment.field_type = "File";
       else if (field?.type.name && field?.type?.fieldviews[fieldview])
@@ -754,7 +754,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         segment.action_name,
         row,
         segment.rndid,
-        "rndid"
+        "rndid",
+        segment.confirm
       );
       return action_link(url, req, segment);
     },

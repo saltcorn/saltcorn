@@ -34,6 +34,7 @@ const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
 const { structuredClone, removeAllWhiteSpace, stringToJSON } = utils;
 import I18n from "i18n";
+import { tz } from "moment-timezone";
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
@@ -438,6 +439,12 @@ class State {
     else return configTypes[key] && configTypes[key].default;
   }
 
+  get utcOffset() {
+    const tzName = this.getConfig("timezone");
+    if (!tzName) return 0;
+    return tz(tzName).utcOffset() / 60;
+  }
+
   /**
    * Get copy of config parameter (which can be safely mutated)
    * @param {string} key - key of parameter
@@ -814,7 +821,7 @@ const init_multi_tenant = async (
   tenantList: string[]
 ) => {
   // for each domain
-  if (singleton?.configs?.base_url.value) {
+  if (singleton?.configs?.base_url?.value) {
     const cfg_domain = get_domain(singleton?.configs?.base_url.value);
     otherdomaintenants[cfg_domain] = "public";
   }
@@ -879,6 +886,8 @@ const features = {
   json_state_query: true,
   async_validate: true,
   public_user_role: 100,
+  get_view_goto: true,
+  table_undo: true,
 };
 
 export = {

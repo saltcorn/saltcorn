@@ -34,6 +34,8 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
   );
 }
 
+const dirCache: Record<string, File[] | null> = {};
+
 /**
  * File Descriptor class
  *
@@ -108,23 +110,29 @@ class File {
         safeDir
       );
       const files: File[] = [];
-      if (where?.filename) {
-        files.push(
-          await File.from_file_on_disk(where?.filename, absoluteFolder)
-        );
-      } else {
+      const searcher = async (folder: string, recursive: boolean) => {
         let fileNms;
         try {
-          fileNms = await fsp.readdir(absoluteFolder);
+          fileNms = await fsp.readdir(folder);
         } catch (e) {
           fileNms = [];
         }
 
         for (const name of fileNms) {
           if (name[0] === "." || name.startsWith("_resized_")) continue;
-          files.push(await File.from_file_on_disk(name, absoluteFolder));
+          const f = await File.from_file_on_disk(name, folder);
+          if (recursive && f.isDirectory) await searcher(f.location, recursive);
+          if (where?.search && name.indexOf(where.search) < 0) continue;
+          files.push(f);
         }
-      }
+      };
+
+      if (where?.filename) {
+        files.push(
+          await File.from_file_on_disk(where?.filename, absoluteFolder)
+        );
+      } else await searcher(absoluteFolder, !!where?.search);
+
       let pred = (f: File) => true;
       const addPred = (p: Function) => {
         const oldPred = pred;
@@ -156,7 +164,17 @@ class File {
     const s = absPath.replace(path.join(db.connectObj.file_store, tenant), "");
     return s[0] === "/" ? s.substring(1) : s;
   }
-  static async allDirectories(): Promise<Array<File>> {
+
+  /**
+   * get all directories in the root folder (tenant root dir for multi-tenant)
+   * @param ignoreCache if a cache exists, ignore it
+   * @returns
+   */
+  static async allDirectories(ignoreCache?: boolean): Promise<Array<File>> {
+    if (!ignoreCache) {
+      const cache = File.getDirCache();
+      if (cache) return cache;
+    }
     const allDirs: File[] = [await File.rootFolder()];
     const iterFolder = async (folder?: string) => {
       const files = await File.find(folder ? { folder } : {});
@@ -171,6 +189,19 @@ class File {
 
     return allDirs;
   }
+
+  static async buildDirCache() {
+    dirCache[db.getTenantSchema()] = await File.allDirectories();
+  }
+
+  static getDirCache() {
+    return dirCache[db.getTenantSchema()];
+  }
+
+  static destroyDirCache() {
+    dirCache[db.getTenantSchema()] = null;
+  }
+
   async is_symlink(): Promise<boolean> {
     try {
       let stat = await fsp.lstat(this.location);

@@ -77,8 +77,10 @@ const link_view = (
           style,
           class: [textStyle, link_style, link_size, extraClass],
         },
-        link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-        label
+        link_icon
+          ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
+          : "",
+        label === " " && link_icon ? "" : label
       );
     else
       return button(
@@ -94,8 +96,10 @@ const link_view = (
           onClick: isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`,
           style,
         },
-        link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-        label
+        link_icon
+          ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
+          : "",
+        label === " " && link_icon ? "" : label
       );
   } else
     return a(
@@ -105,8 +109,10 @@ const link_view = (
         style,
         target: link_target_blank ? "_blank" : undefined,
       },
-      link_icon ? i({ class: link_icon }) + "&nbsp;" : "",
-      text(label)
+      link_icon
+        ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
+        : "",
+      text(label === " " && link_icon ? "" : label)
     );
 };
 
@@ -1619,6 +1625,12 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     } else if (Array.isArray(v) && field && field.type && field.type.read) {
       qstate[k] = { or: v.map(field.type.read) };
     } else if (
+      Array.isArray(v) &&
+      field?.is_fkey &&
+      field?.reftype === "Integer"
+    ) {
+      qstate[k] = { or: v.map((v) => (v && !isNaN(+v) ? +v : v)) };
+    } else if (
       field &&
       field.type.name === "String" &&
       !(field.attributes && field.attributes.options) &&
@@ -1805,6 +1817,7 @@ const initial_config_all_fields =
         });
         aboves.push({
           widths: [2, 10],
+          aligns: ["end", "start"],
           style,
           besides: [
             flabel,
@@ -1840,6 +1853,7 @@ const initial_config_all_fields =
         });
         aboves.push({
           widths: [2, 10],
+          aligns: ["end", "start"],
           style,
           besides: [
             flabel,
@@ -1889,6 +1903,10 @@ const strictParseInt = (x) => {
  * @returns {object}
  */
 const readState = (state, fields, req) => {
+  const read_key = (f, current) =>
+    current === "null" || current === "" || current === null
+      ? null
+      : getState().types[f.reftype].read(current);
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
@@ -1900,6 +1918,12 @@ const readState = (state, fields, req) => {
         //ignore (this is or statement)
       } else if (Array.isArray(current) && f.type.read) {
         state[f.name] = current.map(f.type.read);
+      } else if (
+        Array.isArray(current) &&
+        f.is_fkey &&
+        f.reftype === "Integer"
+      ) {
+        state[f.name] = current.map((v) => read_key(f, v));
       } else if (current && current.slugify)
         state[f.name] = f.type.read
           ? { slugify: f.type.read(current.slugify) }
@@ -1914,11 +1938,7 @@ const readState = (state, fields, req) => {
           state[f.name] = preset(req);
         }
       } else if (f.type === "File") state[f.name] = current;
-      else if (f.type === "Key")
-        state[f.name] =
-          current === "null" || current === "" || current === null
-            ? null
-            : getState().types[f.reftype].read(current);
+      else if (f.type === "Key") state[f.name] = read_key(f, current);
     }
   });
   return state;
@@ -1926,6 +1946,7 @@ const readState = (state, fields, req) => {
 
 /**
  * Read State Strict
+ * @deprecated use Table.read_state_strict
  * @param {object} state
  * @param {object[]} fields
  * @returns {boolean|*}

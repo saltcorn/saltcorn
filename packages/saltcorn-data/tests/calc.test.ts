@@ -389,6 +389,12 @@ describe("jsexprToWhere", () => {
       foo: 5,
     });
   });
+  it("still parses same var", () => {
+    //nexdot issue Where function not working well
+    expect(jsexprToWhere("foo == $foo", { foo: "$foo" })).toEqual({
+      foo: "$foo",
+    });
+  });
   it("translates sums", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });

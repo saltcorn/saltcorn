@@ -35,6 +35,9 @@ test("updateQueryStringParameter", () => {
     "/foo?name=Bar"
   );
   expect(
+    removeQueryStringParameter("/foo?name=Baz&name=Foo&age=45", "name")
+  ).not.toContain("name");
+  expect(
     updateQueryStringParameter("/foo", "publisher.publisher->name", "AK")
   ).toBe("/foo?publisher.publisher->name=AK");
   expect(

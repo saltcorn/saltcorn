@@ -225,7 +225,7 @@ const run = async (
       }
       badges.push({
         text: `${text_attr(k)}:${text_attr(showv)}`,
-        onclick: `unset_state_field('${text_attr(k)}')`,
+        onclick: `unset_state_field('${text_attr(k)}', this)`,
       });
     }
   });
@@ -247,7 +247,7 @@ const run = async (
     view: async (segment) => {
       const view = await View.findOne({ name: segment.view });
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, {}, extra.req.user)
+        ? eval_expression(segment.extra_state_fml, state, extra.req.user)
         : {};
       const state1 = { ...state, ...extra_state };
       if (!view)
@@ -257,12 +257,13 @@ const run = async (
       else segment.contents = await view.run(state1, extra);
     },
     link: (segment) => {
+      //console.log("link:", segment, state);
       if (segment.transfer_state) {
         segment.url += `?` + objectToQueryString(state || {});
       }
       if (segment.view_state_fml) {
         const extra_state = segment.view_state_fml
-          ? eval_expression(segment.view_state_fml, {}, extra.req.user)
+          ? eval_expression(segment.view_state_fml, state, extra.req.user)
           : {};
         segment.url +=
           (segment.transfer_state ? "" : `?`) +
@@ -285,7 +286,7 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value)`,
+              onChange: `set_state_field('${field_name}', this.value, this)`,
               ...field.attributes,
               isFilter: true,
               ...configuration,
@@ -309,7 +310,7 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value)`,
+              onChange: `set_state_field('${field_name}', this.value, this)`,
               isFilter: true,
               ...field.attributes,
               ...configuration,
@@ -373,9 +374,9 @@ const run = async (
           required: true,
           onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
             field_name
-          )}'): set_state_field('${encodeURIComponent(
+          )}', this): set_state_field('${encodeURIComponent(
             field_name
-          )}', this.value)`,
+          )}', this.value, this)`,
         },
         options
       );
@@ -389,6 +390,7 @@ const run = async (
         action_icon,
         action_name,
         configuration,
+        confirm,
       } = segment;
       const label = action_label || action_name;
       if (segment.action_style === "on_page_load") {
@@ -399,14 +401,15 @@ const run = async (
         }).catch((e) => Crash.create(e, extra.req));
         return "";
       }
+      const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
 
       if (action_name === "Clear") {
         if (action_style === "btn-link")
           return a(
             {
-              href: `javascript:clear_state('${
+              href: `javascript:${confirmStr}clear_state('${
                 configuration?.omit_fields || ""
-              }')`,
+              }', this)`,
             },
             action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
             label
@@ -414,7 +417,9 @@ const run = async (
         else
           return button(
             {
-              onClick: `clear_state('${configuration?.omit_fields || ""}')`,
+              onClick: `${confirmStr}clear_state('${
+                configuration?.omit_fields || ""
+              }', this)`,
               class: `btn ${action_style || "btn-primary"} ${
                 action_size || ""
               }`,
@@ -424,7 +429,7 @@ const run = async (
           );
       } else {
         const url = {
-          javascript: `view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'});`,
+          javascript: `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'});`,
         };
 
         return action_link(url, extra.req, segment);
@@ -460,8 +465,8 @@ const run = async (
           ],
           onClick:
             active || use_value === undefined
-              ? `unset_state_field('${field_name}')`
-              : `set_state_field('${field_name}', '${use_value || ""}')`,
+              ? `unset_state_field('${field_name}', this)`
+              : `set_state_field('${field_name}', '${use_value || ""}', this)`,
         },
         label || value || preset_value
       );
@@ -580,7 +585,7 @@ module.exports = {
               col.field_name.split(".");
             const [thoughTblNm, throughField] = throughPart.split("->");
             const [jtNm, lblField] = finalPart.split("->");
-            const target = await table.getField(
+            const target = table.getField(
               `${jFieldNm}.${throughField}.${lblField}`
             );
             if (target)
@@ -612,7 +617,7 @@ module.exports = {
                 throw new InvalidConfiguration(
                   `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
                 );
-              const jfields = await jtable.getFields();
+              const jfields = jtable.fields;
               const jfield = jfields.find((f) => f.name === lblField);
               if (jfield)
                 distinct_values[col.field_name] = await jfield.distinct_values(
@@ -620,7 +625,7 @@ module.exports = {
                   jsexprToWhere(col.where)
                 );
             } else if (kpath.length === 2) {
-              const target = await table.getField(col.field_name);
+              const target = table.getField(col.field_name);
               if (target)
                 distinct_values[col.field_name] = await target.distinct_values(
                   req,

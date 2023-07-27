@@ -402,66 +402,7 @@ describe("Table get data", () => {
 
     expect(rows.length).toBe(2);
   });
-  it("should enable versioning", async () => {
-    const table = Table.findOne({ name: "patients" });
-    assertIsSet(table);
-    table.versioned = true;
-    await table.update(table);
-  });
-  it("should save version on insert", async () => {
-    const table = Table.findOne({ name: "patients" });
-    assertIsSet(table);
-    await table.insertRow({ name: "Bunny foo-foo", favbook: 1 });
-    const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
-    assertIsSet(bunnyFooFoo);
-    const history1 = await table.get_history(bunnyFooFoo.id);
-    expect(history1.length).toBe(1);
-    expect(history1[0].id).toBe(bunnyFooFoo.id);
-    expect(history1[0]._version).toBe(1);
-    expect(history1[0].name).toBe("Bunny foo-foo");
-  });
-  it("should save version on update", async () => {
-    const table = Table.findOne({ name: "patients" });
-    assertIsSet(table);
 
-    const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
-    assertIsSet(bunnyFooFoo);
-
-    await table.updateRow({ name: "Goon" }, bunnyFooFoo.id);
-    const history2 = await table.get_history(bunnyFooFoo.id);
-    expect(history2.length).toBe(2);
-    expect(history2[0].id).toBe(bunnyFooFoo.id);
-    expect(history2[0]._version).toBe(1);
-    expect(history2[0].name).toBe("Bunny foo-foo");
-    expect(history2[0].favbook).toBe(1);
-    expect(history2[1].id).toBe(bunnyFooFoo.id);
-    expect(history2[1]._version).toBe(2);
-    expect(history2[1].name).toBe("Goon");
-    expect(history2[1].favbook).toBe(1);
-    const goon = await table.getRow({ id: bunnyFooFoo.id });
-    assertIsSet(goon);
-    expect(goon.name).toBe("Goon");
-    expect(goon.favbook).toBe(1);
-  });
-  it("create field on version table", async () => {
-    const table = Table.findOne({ name: "patients" });
-
-    const fc = await Field.create({
-      table: table,
-      name: "Height19",
-      label: "height19",
-      type: "Integer",
-      required: true,
-      attributes: { default: 6 },
-    });
-    await fc.delete();
-  });
-  it("should disable versioning", async () => {
-    const table = Table.findOne({ name: "patients" });
-    assertIsSet(table);
-    table.getFields();
-    await table.update({ versioned: false });
-  });
   it("should rename", async () => {
     const table = await Table.create("notsurename");
     await Field.create({
@@ -659,7 +600,10 @@ Gordon Kane, 217`;
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rows = await table.getRows({ author: "Gordon Kane" });
     expect(rows.length).toBe(1);
     expect(rows[0].pages).toBe(217);
@@ -674,7 +618,10 @@ Peter Rossi, 212,9,200`;
     assertIsSet(table);
     expect(!!table).toBe(true);
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rows = await table.getRows({ author: "Peter Rossi" });
 
     expect(rows.length).toBe(1);
@@ -691,7 +638,10 @@ Peter Rossi, 212,9,200`;
     expect(!!table).toBe(true);
     const rowsBefore = await table.countRows();
     const impres = await table.import_csv_file(fnm);
-    expect(impres).toEqual({ success: "Imported 2 rows into table books" });
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
     const rowsAfter = await table.countRows();
     expect(rowsAfter).toBe(rowsBefore + 1);
     const row = await table.getRow({ id: 1 });
@@ -738,6 +688,8 @@ David MacKay, ITILA`;
     expect(impres).toEqual({
       success:
         "Imported 1 rows into table books_not_req_pages. Rejected 1 rows.",
+      details:
+        "Reject row 3 because: No valid value for required field pages. \n",
     });
     const rows = await table.getRows({ author: "David MacKay" });
     expect(rows.length).toBe(0);
@@ -771,6 +723,7 @@ David MacKay, ITILA`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
+      details: "",
     });
     const row = await table.getRow({ review: "Awesome" });
     expect(row?.author).toBe(1);
@@ -779,8 +732,9 @@ David MacKay, ITILA`;
     const table = Table.findOne({ name: "book_reviews" });
     assertIsSet(table);
     const csv = `author,review
-    Leo Tolstoy, Funny
-    Herman Melville, Whaley`;
+Leo Tolstoy, "Funny
+as hell",  
+Herman Melville, Whaley`;
     const fnm = "/tmp/test1.csv";
     await writeFile(fnm, csv);
 
@@ -788,9 +742,27 @@ David MacKay, ITILA`;
     const impres = await table.import_csv_file(fnm);
     expect(impres).toEqual({
       success: "Imported 2 rows into table book_reviews",
+      details: "",
     });
-    const row = await table.getRow({ review: "Funny" });
+
+    const row = await table.getRow({ review: "Funny\nas hell" });
     expect(row?.author).toBe(2);
+  });
+  it("CSV import fkeys as summary fields gives error message ", async () => {
+    const table = Table.findOne({ name: "book_reviews" });
+    assertIsSet(table);
+    const csv = `author,review
+    China Mieville, Scar`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 0 rows into table book_reviews. Rejected 1 rows.",
+      details:
+        'Reject row 2 because in field author value "China Mieville" not matched by a value in table books field author.\n',
+    });
   });
 
   it("should create by importing", async () => {
@@ -1491,91 +1463,6 @@ describe("table providers", () => {
   });
 });
 
-describe("unique history clash", () => {
-  it("should create table", async () => {
-    const table = await Table.create("unihistory");
-
-    await Field.create({
-      table,
-      label: "Name",
-      type: "String",
-      is_unique: true,
-    });
-    await Field.create({
-      table,
-      label: "age",
-      type: "Integer",
-    });
-    await Field.create({
-      table,
-      label: "agep1",
-      type: "Integer",
-      calculated: true,
-      stored: true,
-      expression: "age ? age+1:null",
-    });
-  });
-  it("should enable versioning", async () => {
-    const table = Table.findOne({ name: "unihistory" });
-    assertIsSet(table);
-    table.versioned = true;
-    await table.update(table);
-  });
-  it("should not error on history with unique", async () => {
-    const table = Table.findOne({ name: "unihistory" });
-    assertIsSet(table);
-
-    await table.insertRow({ name: "Bartimaeus", age: 2500 });
-    const row = await table.getRow({ name: "Bartimaeus" });
-    expect(row!.name).toBe("Bartimaeus");
-    await table.deleteRows({ id: row!.id });
-    await table.insertRow({ name: "Bartimaeus" });
-    const row1 = await table.getRow({ name: "Bartimaeus" });
-    expect(row1!.name).toBe("Bartimaeus");
-  });
-  it("should duplicate row manually", async () => {
-    const table = Table.findOne({ name: "unihistory" });
-    assertIsSet(table);
-
-    const row = await table.getRow({ name: "Bartimaeus" });
-    assertIsSet(row);
-    const history0 = await table.get_history(row.id);
-
-    await table.updateRow({ age: 2501 }, row.id);
-    const row1 = await table.getRow({ name: "Bartimaeus" });
-    expect(row1!.name).toBe("Bartimaeus");
-    expect(row1!.age).toBe(2501);
-    const history1 = await table.get_history(row1!.id);
-    expect(history0.length + 1).toBe(history1.length);
-  });
-  it("should not clash unique with history", async () => {
-    const table = Table.findOne({ name: "unihistory" });
-    assertIsSet(table);
-
-    const row = await table.getRow({ name: "Bartimaeus" });
-    assertIsSet(row);
-    await table.deleteRows({});
-    await table.insertRow({ name: "Bartimaeus", age: 2499 });
-  });
-  it("should disable and enable history", async () => {
-    const table = Table.findOne({ name: "unihistory" });
-    assertIsSet(table);
-    table.versioned = false;
-    await table.update(table);
-    table.versioned = true;
-    await table.update(table);
-    const row = await table.getRow({ name: "Bartimaeus" });
-    assertIsSet(row);
-
-    await table.updateRow({ age: 2502 }, row.id);
-    const row1 = await table.getRow({ name: "Bartimaeus" });
-    expect(row1!.name).toBe("Bartimaeus");
-    expect(row1!.age).toBe(2502);
-    await table.deleteRows({});
-    await table.insertRow({ name: "Bartimaeus", age: 2498 });
-  });
-});
-
 describe("distance ordering", () => {
   it("should create table", async () => {
     const tc = await Table.create("geotable1");
@@ -1629,14 +1516,14 @@ describe("getField", () => {
   it("should find own field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("name");
+    const field = table.getField("name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(7);
   });
   it("should find single join field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook.pages");
+    const field = table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
 
     expect(field?.id).toBe(5);
@@ -1644,21 +1531,21 @@ describe("getField", () => {
   it("should find double join field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook.publisher.name");
+    const field = table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(19);
   });
   it("should find triple join field", async () => {
     const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
-    const field = await table.getField("patient_id.favbook.publisher.name");
+    const field = table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(19);
   });
   it("should find own key field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook");
+    const field = table.getField("favbook");
     expect(field?.name).toBe("favbook");
     expect(field?.is_fkey).toBe(true);
     expect(field?.id).toBe(8);
@@ -1666,7 +1553,7 @@ describe("getField", () => {
   it("should find single join key field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
-    const field = await table.getField("favbook.publisher");
+    const field = table.getField("favbook.publisher");
     expect(field?.name).toBe("publisher");
     expect(field?.is_fkey).toBe(true);
 

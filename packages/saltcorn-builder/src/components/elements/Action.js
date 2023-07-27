@@ -172,18 +172,16 @@ const ActionSettings = () => {
           <MinRoleSettingRow minRole={minRole} setProp={setProp} />
         </tbody>
       </table>
-      {options.mode === "show" || name === "Delete" || name === "Reset" ? (
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            name="block"
-            type="checkbox"
-            checked={confirm}
-            onChange={setAProp("confirm", { checked: true })}
-          />
-          <label className="form-check-label">User confirmation?</label>
-        </div>
-      ) : null}
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={confirm}
+          onChange={setAProp("confirm", { checked: true })}
+        />
+        <label className="form-check-label">User confirmation?</label>
+      </div>
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}

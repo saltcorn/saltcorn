@@ -10,6 +10,7 @@ const {
   get_inbound_self_relation_opts,
   stateFieldsToWhere,
   field_picker_fields,
+  readState,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const { satisfies } = require("../utils");
@@ -254,6 +255,7 @@ describe("stateFieldsToWhere", () => {
   const fields = [
     new Field({ name: "astr", type: "String" }),
     new Field({ name: "age", type: "Integer" }),
+    new Field({ name: "favbook", type: "Key to books" }),
     { name: "props", type: { name: "JSON" } },
     {
       name: "attrs",
@@ -336,6 +338,32 @@ describe("stateFieldsToWhere", () => {
       state: { astr: ["foo", "bar"] },
     });
     expect(w).toStrictEqual({ astr: { or: ["foo", "bar"] } });
+  });
+  it("fkey", async () => {
+    expect(
+      stateFieldsToWhere({
+        fields,
+        state: { favbook: 1 },
+      })
+    ).toStrictEqual({ favbook: 1 });
+  });
+  it("array or fkey", async () => {
+    expect(
+      stateFieldsToWhere({
+        fields,
+        state: { favbook: [1, 2] },
+      })
+    ).toStrictEqual({ favbook: { or: [1, 2] } });
+  });
+  it("readState array or fkey", async () => {
+    const state = { favbook: ["1", "2"] };
+    readState(state, fields, mockReqRes.req);
+    expect(state).toStrictEqual({ favbook: [1, 2] });
+  });
+  it("readState fkey", async () => {
+    const state = { favbook: "1" };
+    readState(state, fields, mockReqRes.req);
+    expect(state).toStrictEqual({ favbook: 1 });
   });
   it("join field", async () => {
     const table = Table.findOne({ name: "patients" });

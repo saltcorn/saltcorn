@@ -173,9 +173,9 @@ const triggerForm = async (req, trigger) => {
         sublabel: req.__("Event type which runs the trigger"),
         attributes: {
           explainers: {
-            Often: "Every 5 minutes",
+            Often: req.__("Every 5 minutes"),
             Never:
-              "Not scheduled but can be run as an action from a button click",
+              req.__("Not scheduled but can be run as an action from a button click"),
           },
         },
       },
@@ -358,7 +358,7 @@ router.post(
       });
     } else {
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
-      req.flash("success", "Action information saved");
+      req.flash("success", req.__("Action information saved"));
       res.redirect(`/actions/`);
     }
   })
@@ -443,13 +443,13 @@ router.get(
                       )
                     )
                   ),
-                  h6({ class: "mt-1" }, "JavaScript code:"),
+                  h6({ class: "mt-1" }, req.__("JavaScript code:")),
                   div(
                     { class: "mt-1" },
 
                     pre(
                       { class: "js-code-display" },
-                      code({ id: "blockly_js_output" }, "code here")
+                      code({ id: "blockly_js_output" }, req.__("code here"))
                     )
                   ),
                 ],
@@ -538,7 +538,7 @@ router.post(
         res.json({ success: "ok" });
         return;
       }
-      req.flash("success", "Action configuration saved");
+      req.flash("success", req.__("Action configuration saved"));
       res.redirect(
         req.query.on_done_redirect &&
           is_relative_url(req.query.on_done_redirect)
@@ -577,17 +577,23 @@ router.get(
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const output = [];
+    const ppVal = (x) =>
+      typeof x === "string"
+        ? x
+        : typeof x === "function"
+        ? x.toString()
+        : JSON.stringify(x, null, 2);
     const fakeConsole = {
       log(...s) {
         console.log(...s);
-        output.push(div(code(pre(text(s.join(" "))))));
+        output.push(div(code(pre(text(s.map(ppVal).join(" "))))));
       },
       error(...s) {
         output.push(
           div(
             code(
               { style: "color:red;font-weight:bold;" },
-              pre(text(s.join(" ")))
+              pre(text(s.map(ppVal).join(" ")))
             )
           )
         );

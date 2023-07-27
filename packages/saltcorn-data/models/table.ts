@@ -70,6 +70,8 @@ const {
   mergeIntoWhere,
   stringToJSON,
 } = utils;
+import tags from "@saltcorn/markup/tags";
+const { text } = tags;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import type {
@@ -864,7 +866,8 @@ class Table implements AbstractTable {
     id: number,
     user?: Row,
     noTrigger?: boolean,
-    resultCollector?: object
+    resultCollector?: object,
+    restore_of_version?: any
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
@@ -959,19 +962,23 @@ class Table implements AbstractTable {
       let need_to_update = Object.keys(v_in).some((k) =>
         freeVarFKFields.has(k)
       );
-
-      if (need_to_update) {
-        await db.update(this.name, v, id, { pk_name });
-      }
-
       existing = await this.getJoinedRow({
         where: { [pk_name]: id },
         forUser: user,
         joinFields,
       });
+      let updated;
+      if (need_to_update) {
+        await db.update(this.name, v, id, { pk_name });
+        updated = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
+      }
 
       let calced = await apply_calculated_fields_stored(
-        need_to_update ? existing : { ...existing, ...v_in },
+        need_to_update ? updated : { ...existing, ...v_in },
         // @ts-ignore TODO ch throw ?
         this.fields
       );
@@ -992,14 +999,21 @@ class Table implements AbstractTable {
         },
         _time: new Date(),
         _userid: user?.id,
+        _restore_of_version: restore_of_version || null,
       });
     }
-    await db.update(this.name, v, id, { pk_name });
     if (typeof existing === "undefined") {
       const triggers = await Trigger.getTableTriggers("Update", this);
       if (triggers.length > 0)
-        existing = await db.selectOne(this.name, { [pk_name]: id });
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
     }
+
+    await db.update(this.name, v, id, { pk_name });
+
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
@@ -1007,7 +1021,8 @@ class Table implements AbstractTable {
         this,
         newRow,
         resultCollector,
-        role === 100 ? undefined : user
+        role === 100 ? undefined : user,
+        { old_row: existing, updated_fields: v_in }
       );
       if (resultCollector) await trigPromise;
     }
@@ -1299,11 +1314,78 @@ class Table implements AbstractTable {
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           _version integer,
           _time timestamp,
+          _restore_of_version integer,
           _userid integer
           ${flds.join("")}
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
+  }
+
+  async restore_row_version(
+    id: any,
+    version: number,
+    user?: Row
+  ): Promise<void> {
+    const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
+      id,
+      _version: version,
+    });
+    var r: any = {};
+    this.fields.forEach((f: Field) => {
+      if (!f.calculated) r[f.name] = row[f.name];
+    });
+    //console.log("restore_row_version", r);
+
+    await this.updateRow(r, id, user, false, undefined, version);
+  }
+
+  async undo_row_changes(id: any, user?: Row): Promise<void> {
+    const current_verion_row = await db.selectMaybeOne(
+      `${sqlsanitize(this.name)}__history`,
+      { id },
+      { orderBy: "_version", orderDesc: true, limit: 1 }
+    );
+    //get max that is not a restore
+    const last_non_restore = await db.selectMaybeOne(
+      `${sqlsanitize(this.name)}__history`,
+      {
+        id,
+        _version: {
+          lt: current_verion_row._restore_of_version
+            ? current_verion_row._restore_of_version
+            : current_verion_row._version,
+        },
+      },
+      { orderBy: "_version", orderDesc: true, limit: 1 }
+    );
+    if (last_non_restore) {
+      await this.restore_row_version(id, last_non_restore._version, user);
+    }
+  }
+  async redo_row_changes(id: any, user?: Row): Promise<void> {
+    const current_verion_row = await db.selectMaybeOne(
+      `${sqlsanitize(this.name)}__history`,
+      { id },
+      { orderBy: "_version", orderDesc: true, limit: 1 }
+    );
+
+    if (current_verion_row._restore_of_version) {
+      const next_version = await db.selectMaybeOne(
+        `${sqlsanitize(this.name)}__history`,
+        {
+          id,
+          _version: {
+            gt: current_verion_row._restore_of_version,
+          },
+        },
+        { orderBy: "_version", limit: 1 }
+      );
+
+      if (next_version) {
+        await this.restore_row_version(id, next_version._version, user);
+      }
+    }
   }
 
   /**
@@ -1508,6 +1590,41 @@ class Table implements AbstractTable {
     return parse_res;
   }
 
+  read_state_strict(state: Row): Row | string {
+    let errorString = "";
+    this.fields.forEach((f) => {
+      const current = state[f.name];
+      //console.log(f.name, current, typeof current);
+
+      if (typeof current !== "undefined") {
+        if (instanceOfType(f.type) && f.type?.read) {
+          const readval = f.type?.read(current);
+          if (typeof readval === "undefined") {
+            if (current === "" && !f.required) delete state[f.name];
+            else errorString += `No valid value for required field ${f.name}. `;
+          }
+          if (f.type && f.type.validate) {
+            const vres = f.type.validate(f.attributes || {})(readval);
+            if (vres.error)
+              errorString += `Validation error in field ${f.name}. `;
+          }
+          state[f.name] = readval;
+        } else if (f.type === "Key")
+          state[f.name] =
+            current === "null" || current === "" || current === null
+              ? null
+              : +current;
+        else if (f.type === "File")
+          state[f.name] =
+            current === "null" || current === "" || current === null
+              ? null
+              : current;
+      } else if (f.required && !f.primary_key)
+        errorString += `No valid value for required field ${f.name}. `;
+    });
+    return errorString || state;
+  }
+
   /**
    * Import CSV file to existing table
    * @param filePath
@@ -1526,8 +1643,7 @@ class Table implements AbstractTable {
     if (typeof options === "boolean") {
       options = { recalc_stored: options };
     }
-    let headers;
-    const { readStateStrict } = require("../plugin-helper");
+    let headers: string[];
     let headerStr;
     try {
       headerStr = await getLines(filePath, 1);
@@ -1538,11 +1654,12 @@ class Table implements AbstractTable {
     } catch (e) {
       return { error: `Error processing CSV file header: ${headerStr}` };
     }
-    const fields = (await this.getFields()).filter((f) => !f.calculated);
+    const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};
     const pk_name = this.pk_name;
     const renames: any[] = [];
     const fkey_fields: Field[] = [];
+    const json_schema_fields: Field[] = [];
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -1557,6 +1674,21 @@ class Table implements AbstractTable {
           from: headers.find((h: string) => Field.labelToName(h) === f.name),
           to: f.name,
         });
+      } else if (
+        instanceOfType(f.type) &&
+        f.type?.name === "JSON" &&
+        headers.some((h) => h.startsWith(`${f.name}.`))
+      ) {
+        const hs = headers.filter((h) => h.startsWith(`${f.name}.`));
+        hs.forEach((h) => {
+          const f1 = new Field({
+            ...f,
+            attributes: structuredClone(f.attributes),
+          });
+          f1.attributes.subfield = h.replace(`${f.name}.`, "");
+          okHeaders[h] = f1;
+          json_schema_fields.push(f1);
+        });
       } else if (f.required && !f.primary_key) {
         return { error: `Required field missing: ${f.label}` };
       }
@@ -1567,7 +1699,6 @@ class Table implements AbstractTable {
       )
         fkey_fields.push(f);
     }
-
     const fieldNames = headers.map((hnm: any) => {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
@@ -1587,6 +1718,7 @@ class Table implements AbstractTable {
 
     let i = 1;
     let rejects = 0;
+    let rejectDetails = "";
     const client = db.isSQLite ? db : await db.getClient();
 
     const stats = await stat(filePath);
@@ -1634,6 +1766,25 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
+
+                  for (const jfield of json_schema_fields) {
+                    const sf = jfield.attributes.subfield;
+                    const jtype = jfield.attributes.schema.find(
+                      ({ key }: { key: string }) => key === sf
+                    );
+
+                    if (rec[jfield.name][sf] === "")
+                      delete rec[jfield.name][sf];
+                    else if (
+                      jtype?.type === "Integer" ||
+                      jtype?.type === "Float"
+                    ) {
+                      rec[jfield.name][sf] = +rec[jfield.name][sf];
+                      if (isNaN(rec[jfield.name][sf]))
+                        delete rec[jfield.name][sf];
+                    }
+                  }
+
                   for (const fkfield of fkey_fields) {
                     const current = rec[fkfield.name];
                     if (
@@ -1659,11 +1810,22 @@ class Table implements AbstractTable {
                           summary_field_cache[current] = row[tbl.pk_name];
                         }
                       }
+                      if (isNaN(+rec[fkfield.name])) {
+                        rejectDetails += `Reject row ${i} because in field ${
+                          fkfield.name
+                        } value "${text(
+                          current
+                        )}" not matched by a value in table ${
+                          fkfield.reftable_name
+                        } field ${fkfield.attributes.summary_field}.\n`;
+                        rejects += 1;
+                        return;
+                      }
                     }
                   }
-                  const rowOk = readStateStrict(rec, fields);
+                  const rowOk = this.read_state_strict(rec);
 
-                  if (rowOk) {
+                  if (typeof rowOk !== "string") {
                     if (typeof rec[this.pk_name] !== "undefined") {
                       //TODO replace with upsert - optimisation
                       if (imported_pk_set.has(rec[this.pk_name]))
@@ -1674,6 +1836,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
+
                       if (options?.no_table_write) {
                         if (existing) Object.assign(rec, existing);
                         returnedRows.push(rec);
@@ -1696,7 +1859,10 @@ class Table implements AbstractTable {
                         client,
                         pk_name,
                       });
-                  } else rejects += 1;
+                  } else {
+                    rejectDetails += `Reject row ${i} because: ${rowOk}\n`;
+                    rejects += 1;
+                  }
                 } catch (e: any) {
                   await client.query("ROLLBACK");
 
@@ -1732,6 +1898,7 @@ class Table implements AbstractTable {
         success:
           `Found ${i > 1 ? i - 1 - rejects : ""} rows for table ${this.name}` +
           (rejects ? `. Rejected ${rejects} rows.` : ""),
+        details: rejectDetails,
         rows: returnedRows,
       };
     }
@@ -1746,6 +1913,7 @@ class Table implements AbstractTable {
       await recalculate_for_stored(this);
     }
     return {
+      details: rejectDetails,
       success:
         `Imported ${i > 1 ? i - 1 - rejects : ""} rows into table ${
           this.name

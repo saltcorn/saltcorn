@@ -7,7 +7,7 @@
  */
 const db = require("@saltcorn/data/db");
 const { PluginManager } = require("live-plugin-manager");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
 const fs = require("fs");
 const proc = require("child_process");
@@ -179,10 +179,23 @@ const loadAllPlugins = async () => {
  * @returns {Promise<void>}
  */
 const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
+  const tenants_unsafe_plugins = getRootState().getConfig(
+    "tenants_unsafe_plugins",
+    false
+  );
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  if (!isRoot && !tenants_unsafe_plugins) {
+    if (plugin.source !== "npm") return;
+    //get allowed plugins
+    const instore = await Plugin.store_plugins_available();
+    const safes = instore.filter((p) => !p.unsafe).map((p) => p.location);
+    if (!safes.includes(plugin.location)) return;
+  }
   const { version, plugin_module, location } = await requirePlugin(
     plugin,
     force
   );
+
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
     const existing = await Plugin.findOne({ location: loc });

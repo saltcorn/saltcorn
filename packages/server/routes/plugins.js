@@ -526,7 +526,8 @@ const plugin_store_html = (items, req) => {
         contents: div(
           { class: "d-flex justify-content-between" },
           storeNavPills(req),
-          div(search_bar("q", req.query.q || "", { stateField: "q" })),
+          div(search_bar("q", req.query.q || "",
+              { placeHolder: req.__("Search for..."), stateField: "q" })),
           div(store_actions_dropdown(req))
         ),
       },
@@ -825,7 +826,7 @@ router.get(
       pkgjson = require(path.join(mod.location, "package.json"));
 
     if (!plugin_db) {
-      req.flash("warning", "Module not found");
+      req.flash("warning", req.__("Module not found"));
       res.redirect("/plugins");
       return;
     }
@@ -1035,7 +1036,7 @@ router.post(
 
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
-      req.flash("warning", "Module not found");
+      req.flash("warning", req.__("Module not found"));
       res.redirect("/plugins");
       return;
     }

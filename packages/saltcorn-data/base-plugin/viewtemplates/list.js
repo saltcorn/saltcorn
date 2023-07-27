@@ -478,7 +478,7 @@ const set_join_fieldviews = async ({ table, columns, fields }) => {
     const { join_field, join_fieldview } = segment;
     if (!join_fieldview) continue;
 
-    const field = await table.getField(join_field);
+    const field = table.getField(join_field);
     if (field && field.type === "File") segment.field_type = "File";
     else if (field?.type.name && field?.type?.fieldviews[join_fieldview])
       segment.field_type = field.type.name;

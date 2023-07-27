@@ -492,7 +492,8 @@ class Field implements AbstractField {
    * @type {string}
    */
   get pretty_type(): string {
-    if (this.reftable_name === "_sc_files") return "File";
+    if (this.reftable_name === "_sc_files" || this.type === "File")
+      return "File";
     if (this.is_fkey) return `Key to ${this.reftable_name}`;
     else return this.type && instanceOfType(this.type) ? this.type.name : "?";
   }

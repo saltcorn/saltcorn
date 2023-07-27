@@ -81,6 +81,7 @@ const add_edit_bar = ({
 }) => {
   if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
   if (role > 1) return contents;
+  if (req && req.headers.localizedstate) return { above: [contents] };
   let viewSpec = "";
   if (viewtemplate) viewSpec = viewtemplate;
   if (table) {
@@ -401,7 +402,7 @@ const config_fields_form = async ({
     if (typeof name0 === "object" && name0.section_header) {
       fields.push({
         input_type: "section_header",
-        label: name0.section_header,
+        label: req.__(name0.section_header),
       });
       continue;
     }

@@ -15,7 +15,16 @@ const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
 
 const { getState } = require("../../db/state");
-const { text, text_attr, script, domReady } = require("@saltcorn/markup/tags");
+const {
+  text,
+  text_attr,
+  script,
+  domReady,
+  div,
+  button,
+  i,
+  pre,
+} = require("@saltcorn/markup/tags");
 const { renderForm } = require("@saltcorn/markup");
 const FieldRepeat = require("../../models/fieldrepeat");
 const {
@@ -207,7 +216,7 @@ const configuration_workflow = (req) =>
         },
       },
       {
-        name: req.__("Fixed fields"),
+        name: req.__("Fixed and blocked fields"),
         contextField: "fixed",
         onlyWhen: async (context) => {
           const table = Table.findOne({ id: context.table_id });
@@ -230,7 +239,8 @@ const configuration_workflow = (req) =>
               !f.calculated &&
               !f.primary_key
           );
-          var formFields = [];
+          const formFields = [];
+          const blockFields = [];
           omitted_fields.forEach((f) => {
             f.required = false;
             if (f.type?.name === "Bool") {
@@ -248,12 +258,29 @@ const configuration_workflow = (req) =>
                 })
               );
             }
+            blockFields.push({
+              name: `_block_${f.name}`,
+              type: "Bool",
+              label: f.label,
+            });
           });
           const form = new Form({
-            blurb: req.__(
-              "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list."
-            ),
-            fields: formFields,
+            fields: [
+              {
+                input_type: "section_header",
+                label: req.__(
+                  "These fields were missing, you can give values here. The values you enter here can be overwritten by information coming from other views, for instance if the form is triggered from a list."
+                ),
+              },
+              ...formFields,
+              {
+                input_type: "section_header",
+                label: req.__(
+                  "Do not allow the following fields to have a value set from the query string or state"
+                ),
+              },
+              ...blockFields,
+            ],
           });
           await form.fill_fkey_options();
           return form;
@@ -533,7 +560,8 @@ const transformForm = async ({
           segment.action_name,
           row,
           segment.rndid,
-          "rndid"
+          "rndid",
+          segment.confirm
         );
         segment.action_link = action_link(url, req, segment);
       }
@@ -830,7 +858,7 @@ const runPost = async (
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
     const tbl_field = fields.find((f) => f.name === k);
-    if (tbl_field && !form_field) {
+    if (tbl_field && !form_field && !fixed?.[`_block_${k}`]) {
       form.fields.push(new Field({ name: k, input_type: "hidden" }));
     }
   });
@@ -1005,8 +1033,35 @@ const runPost = async (
       }
     }
     trigger_return = trigger_return || {};
-    if (trigger_return.notify) req.flash("success", trigger_return.notify);
+    if (trigger_return.notify && trigger_return.details)
+      req.flash(
+        "success",
+        div(
+          { class: "d-inline" },
+          trigger_return.notify,
+          button(
+            {
+              class: "btn btn-sm btn-outline-secondary btn-xs",
+              type: "button",
+              "data-bs-toggle": "collapse",
+              "data-bs-target": "#notifyDetails",
+              "aria-expanded": "false",
+              "aria-controls": "notifyDetails",
+            },
+            i({ class: "fas fa-plus" })
+          ),
+          div(
+            { class: "collapse", id: "notifyDetails" },
+            pre(trigger_return.details)
+          )
+        )
+      );
+    else if (trigger_return.notify) req.flash("success", trigger_return.notify);
     if (trigger_return.error) req.flash("danger", trigger_return.error);
+    if (trigger_return.goto) {
+      res.redirect(trigger_return.goto);
+      return;
+    }
 
     if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });

@@ -25,7 +25,7 @@ WORKDIR /init_project/project
 # download plugins while building
 # so that we can add them later via file reference
 RUN cordova plugin add cordova-sqlite-ext
-RUN cordova plugin add cordova-plugin-file
+RUN cordova plugin add cordova-plugin-file@7.0.0
 RUN cordova plugin add cordova-plugin-inappbrowser
 RUN cordova plugin add cordova-plugin-network-information
 RUN cordova plugin add cordova-plugin-geolocation

@@ -2,7 +2,7 @@ import { dirname, basename, join, sep } from "path";
 import { existsSync, mkdirSync, copySync, readdirSync, rmSync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
 import { spawnSync } from "child_process";
-const { getState, features } = require("@saltcorn/data/db/state");
+const { getState } = require("@saltcorn/data/db/state");
 
 /**
  *
@@ -58,7 +58,7 @@ async function copyHeaderToApp(
   }
 }
 
-function copyAllThemeFiles(location: string, dstPublicDir: string) {
+function copyAllPublicFiles(location: string, dstPublicDir: string) {
   const srcPublicDir = join(location, "public");
   if (existsSync(srcPublicDir)) {
     if (!existsSync(dstPublicDir)) {
@@ -68,10 +68,6 @@ function copyAllThemeFiles(location: string, dstPublicDir: string) {
       copySync(join(srcPublicDir, dirEntry), join(dstPublicDir, dirEntry));
     }
   }
-}
-
-function hasTheme(plugin: any) {
-  return plugin.layout;
 }
 
 /**
@@ -89,8 +85,8 @@ export async function copyPublicDirs(buildDir: string) {
         if (script) copyHeaderToApp(location, script, wwwDir);
         if (css) copyHeaderToApp(location, css, wwwDir);
       }
-      if (hasTheme(v) && k !== "sbadmin2")
-        copyAllThemeFiles(location, join(wwwDir, "plugins", "public", k));
+      if (k !== "sbadmin2")
+        copyAllPublicFiles(location, join(wwwDir, "plugins", "public", k));
     }
   }
 }

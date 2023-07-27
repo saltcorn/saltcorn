@@ -143,6 +143,13 @@ function apply_showif() {
         } value="${value}">${label}</option>`;
         e.append($(html));
       });
+      //TODO: also sort inserted HTML options
+      dataOptions.sort((a, b) =>
+        (a.text?.toLowerCase?.() || a.text) >
+        (b.text?.toLowerCase?.() || b.text)
+          ? 1
+          : -1
+      );
       element.dispatchEvent(new Event("RefreshSelectOptions"));
       if (e.hasClass("selectized") && $().selectize) {
         e.selectize()[0].selectize.clearOptions(true);
@@ -568,6 +575,22 @@ function initialize_page() {
       </form>`
       );
   });
+  $("[mobile-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-img-path");
+      const base64Encoded = await parent.loadEncodedFile(fileId);
+      this.src = base64Encoded;
+    }
+  });
+  $("[mobile-bg-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-bg-img-path");
+      if (fileId) {
+        const base64Encoded = await parent.loadEncodedFile(fileId);
+        this.style.backgroundImage = `url("${base64Encoded}")`;
+      }
+    }
+  });
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 
@@ -823,6 +846,10 @@ function notifyAlert(note, spin) {
   </button>`
   }
 </div>`);
+}
+
+function emptyAlerts() {
+  $("#alerts-area").html("");
 }
 
 function press_store_button(clicked) {

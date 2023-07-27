@@ -83,6 +83,18 @@ class InvalidConfiguration extends Error {
   }
 }
 
+class NotAuthorized extends Error {
+  headline: string;
+  httpCode: number;
+  severity: number;
+  constructor(message: string) {
+    super(message);
+    this.httpCode = 401;
+    this.headline = "Not Authorized";
+    this.severity = 5; //syslog equivalent severity level
+  }
+}
+
 const sat1 = (obj: any, [k, v]: [k: string, v: any]) =>
   v && v.or
     ? v.or.some((v1: any) => sat1(obj, [k, v1]))
@@ -301,6 +313,7 @@ export = {
   structuredClone,
   InvalidAdminAction,
   InvalidConfiguration,
+  NotAuthorized,
   satisfies,
   getLines,
   removeAllWhiteSpace,

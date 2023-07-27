@@ -213,6 +213,7 @@ async function publicLogin(entryPoint) {
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
       parent.i18next.changeLanguage(config.language);
+      parent.addRoute({ route: entryPoint, query: undefined });
       const page = await parent.router.resolve({
         pathname: entryPoint,
         fullWrap: true,
@@ -530,19 +531,6 @@ async function make_unique_field(
   }
 }
 
-async function buildEncodedImage(fileId, elementId) {
-  const base64Encoded = await parent.loadEncodedFile(fileId);
-  document.getElementById(elementId).src = base64Encoded;
-}
-
-async function buildEncodedBgImage(fileId, elementId) {
-  const base64Encoded = await parent.loadEncodedFile(fileId);
-  // ensure that not unique IDs work, but should not happen
-  $(`#${elementId}`).each(function () {
-    $(this).prev()[0].style.backgroundImage = `url("${base64Encoded}")`;
-  });
-}
-
 function openFile(fileId) {
   // TODO fileIds with whitespaces do not work
   const config = parent.saltcorn.data.state.getState().mobileConfig;
@@ -574,14 +562,31 @@ async function clear_state() {
 }
 
 async function view_post(viewname, route, data, onDone) {
+  const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
+  const view = parent.saltcorn.data.models.View.findOne({ name: viewname });
   try {
-    const response = await parent.apiCall({
-      method: "POST",
-      path: "/view/" + viewname + "/" + route,
-      body: data,
-    });
-    if (onDone) onDone(response.data);
-    common_done(response.data);
+    let respData = undefined;
+    if (
+      mobileConfig.isOfflineMode ||
+      (view?.table_id && mobileConfig.localTableIds.indexOf(view.table_id) >= 0)
+    ) {
+      respData = await parent.router.resolve({
+        pathname: `post/view/${viewname}/${route}`,
+        data,
+      });
+    } else {
+      const response = await parent.apiCall({
+        method: "POST",
+        path: "/view/" + viewname + "/" + route,
+        body: data,
+      });
+      if (response) respData = response.data;
+    }
+
+    if (!respData)
+      throw new Error(`The response of '${viewname}/${route}' is ${respData}`);
+    if (onDone) onDone(respData);
+    common_done(respData);
   } catch (error) {
     parent.errorAlert(error);
   }

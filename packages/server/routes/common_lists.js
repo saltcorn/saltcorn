@@ -44,7 +44,7 @@ const listClass = (tagId, showList) =>
 
 const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
   const roles = await User.get_roles();
-  const getRole = (rid) => roles.find((r) => r.id === rid).role;
+  const getRole = (rid) => roles.find((r) => r.id === rid)?.role || "?";
   return tables.length > 0
     ? mkTable(
         [

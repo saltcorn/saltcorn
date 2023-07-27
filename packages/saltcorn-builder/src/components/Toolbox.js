@@ -21,6 +21,7 @@ import { ToggleFilter } from "./elements/ToggleFilter";
 import { Empty } from "./elements/Empty";
 import { Card } from "./elements/Card";
 import { Tabs } from "./elements/Tabs";
+import { Table } from "./elements/Table";
 import { Container } from "./elements/Container";
 import { Image } from "./elements/Image";
 import { View } from "./elements/View";
@@ -130,7 +131,7 @@ const ColumnsElem = ({ connectors }) => (
     title="Split into columns"
     label="Columns"
   >
-    <Columns contents={[]} />
+    <Columns contents={[]} setting_col_n={1} />
   </WrapElem>
 );
 /**
@@ -360,7 +361,7 @@ const DropMenuElem = ({ connectors }) => (
   </WrapElem>
 );
 
-const PageElem = ({connectors, pages}) => (
+const PageElem = ({ connectors, pages }) => (
   <WrapElem
     connectors={connectors}
     icon="fa-fw far fa-file"
@@ -368,9 +369,7 @@ const PageElem = ({connectors, pages}) => (
     label="Page"
     disable={pages.length <= 1}
   >
-    <Page 
-      page={pages.length > 0 ? pages[0].name : "page"}
-    />
+    <Page page={pages.length > 0 ? pages[0].name : "page"} />
   </WrapElem>
 );
 
@@ -500,6 +499,18 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
   </WrapElem>
 );
 
+const TableElem = ({ connectors }) => (
+  <WrapElem
+    connectors={connectors}
+    innerClass="mt-m1px"
+    icon="fas fa-table"
+    title="Table"
+    label="Table"
+  >
+    <Table contents={[[], []]} rows={2} columns={2} />
+  </WrapElem>
+);
+
 export /**
  * @returns {Fragment}
  * @category saltcorn-builder
@@ -559,6 +570,9 @@ const ToolboxShow = () => {
         <HTMLElem connectors={connectors} />
         <DropMenuElem connectors={connectors} />
       </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -608,6 +622,9 @@ const ToolboxFilter = () => {
         <HTMLElem connectors={connectors} />
         <LinkElem connectors={connectors} />
       </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -656,6 +673,9 @@ const ToolboxEdit = () => {
         <JoinFieldElem connectors={connectors} options={options} />
         <DropMenuElem connectors={connectors} />
       </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
+      </div>
     </Fragment>
   );
 };
@@ -699,6 +719,9 @@ const ToolboxPage = () => {
       <div className="toolbar-row">
         <DropMenuElem connectors={connectors} />
         <PageElem connectors={connectors} pages={pages} />
+      </div>
+      <div className="toolbar-row">
+        <TableElem connectors={connectors} />
       </div>
     </Fragment>
   );

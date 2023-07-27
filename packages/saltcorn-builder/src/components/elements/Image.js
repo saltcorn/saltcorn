@@ -145,12 +145,11 @@ export /**
                   <option>File</option>
                   <option>URL</option>
                   <option>Upload</option>
-                  {options.mode === "page" && <option>Base64</option>}
                   {options.mode === "show" && <option>Field</option>}
                 </select>
               </td>
             </tr>
-            {(srctype === "File" || srctype === "Base64") && (
+            {srctype === "File" && (
               <tr>
                 <td>
                   <label>File</label>
@@ -252,7 +251,7 @@ export /**
                 </td>
               </tr>
             )}
-            {srctype !== "Upload" && srctype !== "Base64" && (
+            {srctype !== "Upload" && (
               <tr>
                 <td style={{ verticalAlign: "top" }}>
                   <label>Responsive widths</label>

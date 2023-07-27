@@ -23,7 +23,7 @@ const postView = async (context) => {
     mobileCfg.role_id > view.min_role &&
     !(await view.authorise_post({ body, req, ...view }))
   ) {
-    throw new Error(req.__("Not authorized"));
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
   await view.runPost(
     {},
@@ -52,7 +52,8 @@ const postViewRoute = async (context) => {
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const { role_id, isOfflineMode, user_name } = state.mobileConfig;
-  if (role_id > view.min_role) throw new Error(req.__("Not authorized"));
+  if (role_id > view.min_role)
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   await view.runRoute(
     context.params.route,
     context.data,
@@ -80,7 +81,7 @@ const getView = async (context) => {
     state.mobileConfig.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
   )
-    throw new Error(req.__("Not authorized"));
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   const contents = await view.run_possibly_on_page(
     query,
     req,

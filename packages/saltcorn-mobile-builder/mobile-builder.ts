@@ -9,7 +9,8 @@ import Plugin from "@saltcorn/data/models/plugin";
 import {
   buildTablesFile,
   copySbadmin2Deps,
-  copyStaticAssets,
+  copySiteLogo,
+  copyServerFiles,
   copyTranslationFiles,
   createSqliteDb,
   writeCfgFile,
@@ -116,8 +117,9 @@ export class MobileBuilder {
     if (this.appName) await setAppName(this.buildDir, this.appName);
     if (this.appVersion) await setAppVersion(this.buildDir, this.appVersion);
     if (this.appIcon) await prepareAppIcon(this.buildDir, this.appIcon);
-    copyStaticAssets(this.buildDir);
+    copyServerFiles(this.buildDir);
     copySbadmin2Deps(this.buildDir);
+    await copySiteLogo(this.buildDir);
     copyTranslationFiles(this.buildDir);
     writeCfgFile({
       buildDir: this.buildDir,

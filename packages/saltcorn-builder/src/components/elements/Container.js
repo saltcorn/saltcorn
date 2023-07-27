@@ -389,9 +389,9 @@ const ContainerSettings = () => {
               label: "Horizontal",
               type: "btn_select",
               options: [
-                { value: "left", title: "Left", label: <AlignStart /> },
+                { value: "start", title: "Left", label: <AlignStart /> },
                 { value: "center", title: "Center", label: <AlignCenter /> },
-                { value: "right", title: "Right", label: <AlignEnd /> },
+                { value: "end", title: "Right", label: <AlignEnd /> },
               ],
             }}
             node={node}
@@ -488,12 +488,12 @@ const ContainerSettings = () => {
                     onChange={setAProp("bgFileId")}
                   >
                     {options.images.map((f, ix) => (
-                      <option key={ix} value={f.location}>
+                      <option key={ix} value={f.id}>
                         {f.filename}
                       </option>
                     ))}
                     {(uploadedFiles || []).map((uf, ix) => (
-                      <option key={ix} value={uf.location}>
+                      <option key={ix} value={uf.id}>
                         {uf.filename}
                       </option>
                     ))}{" "}

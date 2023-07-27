@@ -326,7 +326,7 @@ const alert = (type: string, s: string): string => {
       : "";
   return s && s.length > 0
     ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
-        <i class="fas ${icon} me-1"></i>${text(s)}
+        <i class="fas ${icon} me-1"></i>${s}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
         </button>
       </div>`
