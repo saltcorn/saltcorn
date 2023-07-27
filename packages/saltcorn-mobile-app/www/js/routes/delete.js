@@ -10,7 +10,8 @@ const deleteRows = async (context) => {
     if (role_id <= table.min_role_write) {
       await table.deleteRows({ id });
       // TODO 'table.is_owner' check?
-    } else throw new Error(i18next.t("Not authorized"));
+    } else
+      throw new saltcorn.data.utils.NotAuthorized(i18next.t("Not authorized"));
     if (isOfflineMode && !(await offlineHelper.hasOfflineRows())) {
       await offlineHelper.setOfflineSession(null);
     }

@@ -51,13 +51,13 @@ function removeQueryStringParameter(uri1, key) {
     uri = uris[0];
   }
 
-  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-  var separator = uri.indexOf("?") !== -1 ? "&" : "?";
+  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "gi");
   if (uri.match(re)) {
     uri = uri.replace(re, "$1" + "$2");
   }
   if (uri[uri.length - 1] === "?" || uri[uri.length - 1] === "&")
     uri = uri.substring(0, uri.length - 1);
+  if (uri.match(re)) return removeQueryStringParameter(uri + hash, key);
   return uri + hash;
 }
 
@@ -149,6 +149,8 @@ function pjax_to(href, e) {
       success: function (res, textStatus, request) {
         if (!inModal && !localizer.length)
           window.history.pushState({ url: href }, "", href);
+        if (inModal && !localizer.length)
+          $(".sc-modal-linkout").attr("href", href);
         setTimeout(() => {
           loadPage = true;
         }, 0);
@@ -258,11 +260,14 @@ function ensure_modal_exists_and_closed() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Modal title</h5>
-          <span class="sc-ajax-indicator-wrapper">
-            <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
-          </span>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
-          </button>
+          <div class="">
+            <span class="sc-ajax-indicator-wrapper">
+              <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
+            </span>
+            <a class="sc-modal-linkout ms-2" href="" target="_blank"><i class="fas fa-expand-alt"></i></a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
+            </button>
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>
@@ -300,6 +305,9 @@ function ajax_modal(url, opts = {}) {
       );
       if (saveIndicate) $(".sc-ajax-indicator-wrapper").show();
       else $(".sc-ajax-indicator-wrapper").hide();
+      var linkOut = !!request.getResponseHeader("SaltcornModalLinkOut");
+      if (linkOut) $(".sc-modal-linkout").show().attr("href", url);
+      else $(".sc-modal-linkout").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
@@ -559,6 +567,22 @@ function create_new_folder(folder) {
         location.reload();
       },
     });
+}
+
+function handle_upload_file_change(form) {
+  const url = new URL(window.location);
+  const dir = url.searchParams.get("dir");
+  if (dir !== null) $("#uploadFolderInpId").val(dir);
+  const jqForm = $(form);
+  const sortBy = url.searchParams.get("sortBy");
+  if (sortBy) {
+    jqForm.append(`<input type="hidden" name="sortBy" value="${sortBy}" />`);
+  }
+  const sortDesc = url.searchParams.get("sortDesc");
+  if (sortDesc === "on") {
+    jqForm.append('<input type="hidden" name="sortDesc" value="on" />');
+  }
+  form.submit();
 }
 
 async function fill_formula_btn_click(btn, k) {

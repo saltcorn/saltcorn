@@ -275,7 +275,6 @@ const isRedHat = (osInfo) =>
 
 const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   const distro_code = `${osInfo.distro} ${osInfo.codename}`;
-  console.log("Distro code: ", distro_code);
   let python, installer;
   switch (distro_code) {
     case "Ubuntu Bionic Beaver":
@@ -294,8 +293,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
 
   if (isRedHat(osInfo)) {
     installer = "dnf";
-  }
-  if (isSUSE) {
+  } else if (isSUSE) {
     installer = "zypper";
   } else {
     installer = "apt";
@@ -310,20 +308,24 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       packages.push("chromium");
     if (osInfo.distro === "Fedora Linux") packages.push("chromium-headless");
   }
+  if (installer === "dnf")
+    packages.push(
+      "git",
+      "make",
+      osInfo.distro === "Fedora Linux" ? "g++" : "gcc-c++",
+      "policycoreutils-python-utils",
+      "python3"
+    );
+
   if (port === 80 && installer === "apt") packages.push("libcap2-bin"); // libcap-progs
   if (port === 80 && installer === "zypper") packages.push("libcap-progs"); //
   if (db === "pg-local" && installer === "apt")
     packages.push("postgresql", "postgresql-client");
   if (db === "pg-local" && installer === "dnf")
     packages.push("postgresql-server", "postgresql");
+  if (installer === "zypper") packages.push("make", "gcc-c++");
   if (db === "pg-local" && installer === "zypper")
-    packages.push(
-      "postgresql",
-      "postgresql-server",
-      "postgresql-contrib",
-      "make",
-      "gcc-c++"
-    );
+    packages.push("postgresql", "postgresql-server", "postgresql-contrib");
 
   const nonInteractiveFlag = installer === "zypper" ? ["-n"] : [];
   const quietFlags = installer === "apt" ? "-qqy" : "-y";
@@ -336,7 +338,18 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     await asyncSudo(["systemctl", "enable", "postgresql"], false, dryRun);
     await asyncSudo(["systemctl", "start", "postgresql"], false, dryRun);
   }
-
+  if (isSUSE) {
+    await asyncSudo(
+      [
+        "bash",
+        "-c",
+        "echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf",
+      ],
+      false,
+      dryRun
+    );
+    await asyncSudo(["sysctl", "--system"], false, dryRun);
+  }
   if (db === "pg-local" && installer === "dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
     await asyncSudo(
@@ -601,7 +614,42 @@ WantedBy=multi-user.target`
       dryRun
     );
     await asyncSudo(
-      ["/sbin/restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
+      ["restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
+      false,
+      dryRun
+    );
+    await asyncSudo(
+      [
+        "semanage",
+        "fcontext",
+        "-a",
+        "-t",
+        "bin_t",
+        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin.*",
+      ],
+      false,
+      dryRun
+    );
+    await asyncSudo(
+      [
+        "chcon",
+        "-Rv",
+        "-u",
+        "system_u",
+        "-t",
+        "bin_t",
+        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
+      ],
+      false,
+      dryRun
+    );
+    await asyncSudo(
+      [
+        "restorecon",
+        "-R",
+        "-v",
+        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
+      ],
       false,
       dryRun
     );

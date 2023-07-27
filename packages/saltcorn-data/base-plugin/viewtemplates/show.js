@@ -754,7 +754,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         segment.action_name,
         row,
         segment.rndid,
-        "rndid"
+        "rndid",
+        segment.confirm
       );
       return action_link(url, req, segment);
     },

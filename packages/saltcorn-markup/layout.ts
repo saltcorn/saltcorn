@@ -210,8 +210,14 @@ const render = ({
         }
         return res;
       };
-      const { bs_style, bs_small, bs_striped, bs_bordered, bs_borderless } =
-        segment;
+      const {
+        bs_style,
+        bs_small,
+        bs_striped,
+        bs_bordered,
+        bs_borderless,
+        bs_wauto,
+      } = segment;
       const tabHtml = table(
         {
           class: !bs_style
@@ -222,6 +228,7 @@ const render = ({
                 bs_striped && "table-striped",
                 bs_bordered && "table-bordered",
                 bs_borderless && "table-borderless",
+                bs_wauto && "w-auto",
               ],
         },
         tbody(
@@ -264,7 +271,14 @@ const render = ({
             : undefined,
         src,
       };
-      if (!isWeb && !src) imageCfg["mobile-img-path"] = segment.fileid;
+      if (!isWeb && !segment.encoded_image) {
+        imageCfg["mobile-img-path"] =
+          srctype === "File"
+            ? segment.fileid
+            : segment.url?.startsWith("/files/serve/")
+            ? segment.url.substr(13)
+            : undefined;
+      }
       return wrap(segment, isTop, ix, img(imageCfg));
     }
     if (segment.type === "dropdown_menu") {

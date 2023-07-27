@@ -34,6 +34,7 @@ const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
 const { structuredClone, removeAllWhiteSpace, stringToJSON } = utils;
 import I18n from "i18n";
+import { tz } from "moment-timezone";
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
@@ -421,6 +422,12 @@ class State {
       return this.configs[key].value;
     if (def) return def;
     else return configTypes[key] && configTypes[key].default;
+  }
+
+  get utcOffset() {
+    const tzName = this.getConfig("timezone");
+    if (!tzName) return 0;
+    return tz(tzName).utcOffset() / 60;
   }
 
   /**
@@ -859,6 +866,7 @@ const features = {
   async_validate: true,
   public_user_role: 100,
   get_view_goto: true,
+  table_undo: true,
 };
 
 export = {

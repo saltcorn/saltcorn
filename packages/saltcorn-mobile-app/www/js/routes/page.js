@@ -7,7 +7,7 @@ const postPageAction = async (context) => {
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
   const req = new MobileRequest({ xhr: context.xhr });
   if (state.mobileConfig.role_id > page.min_role) {
-    throw new Error(req.__("Not authorized"));
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
   let col;
   saltcorn.data.models.layout.traverseSync(page.layout, {
@@ -30,7 +30,7 @@ const getPage = async (context) => {
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
   const req = new MobileRequest({ xhr: context.xhr });
   if (state.mobileConfig.role_id > page.min_role) {
-    throw new Error(req.__("Not authorized"));
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
   const query = parseQuery(context.query);
   const res = new MobileResponse();

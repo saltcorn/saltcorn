@@ -22,6 +22,7 @@ const { isAdmin, error_catcher } = require("./utils.js");
 const Tag = require("@saltcorn/data/models/tag");
 const Router = require("express-promise-router");
 const User = require("@saltcorn/data/models/user");
+const db = require("@saltcorn/data/db");
 
 const router = new Router();
 module.exports = router;
@@ -343,16 +344,13 @@ router.get(
             }`,
         },
         {
-          script:
-            "https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js",
+          script: `/static_assets/${db.connectObj.version_tag}/popper.min.js`,
         },
         {
-          script:
-            "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.22.1/cytoscape.min.js",
+          script: `/static_assets/${db.connectObj.version_tag}/cytoscape.min.js`,
         },
         {
-          script:
-            "https://cdnjs.cloudflare.com/ajax/libs/cytoscape-popper/2.0.0/cytoscape-popper.min.js",
+          script: `/static_assets/${db.connectObj.version_tag}/cytoscape-popper.min.js`,
         },
       ],
     });

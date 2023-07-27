@@ -419,3 +419,51 @@ div.unread-notify {
 .mt-6 {
   margin-top: 5rem;
 }
+
+.er-navigation-panel {
+  position: absolute;
+  bottom: 1em;
+  right: 1em;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.2em;
+}
+
+.er-screenshot-panel {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  z-index: 1;
+}
+
+.er-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+.er-zoom-in {
+  grid-column: 3;
+  grid-row: 1;
+}
+.er-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+.er-reset {
+  grid-column: 2;
+  grid-row: 2;
+}
+.er-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+.er-down {
+  grid-column: 2;
+  grid-row: 3;
+}
+.er-zoom-out {
+  grid-column: 3;
+  grid-row: 3;
+}
+.sc-modal-linkout {
+  color: inherit;
+}
