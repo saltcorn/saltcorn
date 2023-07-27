@@ -63,7 +63,13 @@ var erHelper = (() => {
       buildTransform();
     },
     takePicture: () => {
-      window.open("/table/relationship-diagram/screenshot");
+      const svg = $("svg[aria-roledescription='er']")[0];
+      const link = document.createElement("a");
+      link.href = `data:image/svg+xml;base64,${btoa(
+        new XMLSerializer().serializeToString(svg)
+      )}`;
+      link.download = "er-diagram.svg";
+      link.click();
     },
     onWheel: (event) => {
       event.preventDefault();
