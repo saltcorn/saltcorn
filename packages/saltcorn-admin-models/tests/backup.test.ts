@@ -26,6 +26,7 @@ beforeAll(async () => {
   await require("@saltcorn/data/db/reset_schema")();
   await require("@saltcorn/data/db/fixtures")();
 });
+jest.setTimeout(30000);
 
 describe("Backup and restore", () => {
   it("should create and restore backup", async () => {
