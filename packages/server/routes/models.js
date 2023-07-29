@@ -217,7 +217,7 @@ router.get(
     const model = await Model.findOne({ id });
     const table = await Table.findOne({ id: model.table_id });
     const instances = await ModelInstance.find({ model_id: model.id });
-    const metrics = model.templateObj.metrics;
+    const metrics = model.templateObj.metrics || {};
     const metricCols = Object.entries(metrics).map(([k, v]) => ({
       label: k,
       key: (inst) => inst.metric_values?.[k]?.toPrecision(6),
