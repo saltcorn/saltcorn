@@ -123,12 +123,14 @@ class Model {
   ): Promise<ModelInstance | string> {
     const trainf = this.templateObj.train;
     const table = Table.findOne({ id: this.table_id });
-    const result = await trainf({
-      table,
-      configuration: this.configuration,
-      hyperparameters,
-      state,
-    });
+    const result = trainf
+      ? await trainf({
+          table,
+          configuration: this.configuration,
+          hyperparameters,
+          state,
+        })
+      : {};
     if (result.error) return result.error;
     else
       return await ModelInstance.create({
