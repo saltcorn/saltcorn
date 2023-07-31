@@ -195,7 +195,12 @@ function ajax_done(res) {
   common_done(res);
 }
 
-function view_post(viewname, route, data, onDone) {
+function view_post(viewname, route, data, onDone, sendState) {
+  if (sendState)
+    data.state = Object.fromEntries(
+      new URL(get_current_state_url()).searchParams
+    );
+
   $.ajax("/view/" + viewname + "/" + route, {
     dataType: "json",
     type: "POST",
