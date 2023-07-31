@@ -122,6 +122,7 @@ function apply_showif() {
     if (currentOptionsSet === qs) return;
 
     const activate = (success, qs) => {
+      if (e.prop("data-fetch-options-current-set") === qs) return;
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
       if (!dynwhere.required) e.append($(`<option></option>`));
