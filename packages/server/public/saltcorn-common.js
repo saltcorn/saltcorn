@@ -122,9 +122,11 @@ function apply_showif() {
     if (currentOptionsSet === qs) return;
 
     const activate = (success, qs) => {
+      if (e.prop("data-fetch-options-current-set") === qs) return;
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
-      if (!dynwhere.required) e.append($(`<option></option>`));
+      const toAppend = [];
+      if (!dynwhere.required) toAppend.push(`<option></option>`);
       let currentDataOption = undefined;
       const dataOptions = [];
       success.forEach((r) => {
@@ -141,8 +143,10 @@ function apply_showif() {
         const html = `<option ${
           selected ? "selected" : ""
         } value="${value}">${label}</option>`;
-        e.append($(html));
+        toAppend.push(html);
       });
+      e.html(toAppend.join(""));
+
       //TODO: also sort inserted HTML options
       dataOptions.sort((a, b) =>
         (a.text?.toLowerCase?.() || a.text) >
