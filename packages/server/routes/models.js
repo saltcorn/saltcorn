@@ -325,6 +325,18 @@ const model_train_form = (model, table, req) => {
     ],
   });
 };
+router.post(
+  "/delete/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const model = await Model.findOne({ id });
+    await model.delete();
+    req.flash("success", req.__("Model %s deleted", model.name));
+    res.redirect(`/table/${model.table_id}`);
+  })
+);
+
 router.get(
   "/train/:id",
   isAdmin,
@@ -390,7 +402,7 @@ router.post(
           ],
         });
       } else {
-        req.flash("success", "Model trained?");
+        req.flash("success", "Model trained");
         res.redirect(`/models/show/${model.id}`);
       }
     }

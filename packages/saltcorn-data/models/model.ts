@@ -89,6 +89,10 @@ class Model {
    */
   async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete FROM ${schema}_sc_model_instances WHERE model_id = $1`,
+      [this.id]
+    );
     await db.query(`delete FROM ${schema}_sc_models WHERE id = $1`, [this.id]);
     await require("../db/state").getState().refresh_tables();
   }

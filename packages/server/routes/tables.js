@@ -848,6 +848,14 @@ router.get(
             key: (r) => link(`/models/show/${r.id}`, r.name),
           },
           { label: req.__("Pattern"), key: "modelpattern" },
+          {
+            label: req.__("Delete"),
+            key: (r) =>
+              post_delete_btn(
+                `/models/delete/${encodeURIComponent(r.id)}`,
+                req
+              ),
+          },
         ],
         models
       ),
