@@ -15,7 +15,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const moment = require("moment");
 
-const { mkTable, renderForm } = require("@saltcorn/markup");
+const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
 const {
   span,
   h4,
@@ -291,6 +291,14 @@ router.get(
                       })
                     ),
                 },
+                {
+                  label: req.__("Delete"),
+                  key: (r) =>
+                    post_delete_btn(
+                      `/models/delete-instance/${encodeURIComponent(r.id)}`,
+                      req
+                    ),
+                },
               ],
               instances
             ),
@@ -334,6 +342,18 @@ router.post(
     await model.delete();
     req.flash("success", req.__("Model %s deleted", model.name));
     res.redirect(`/table/${model.table_id}`);
+  })
+);
+
+router.post(
+  "/delete-instance/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const model_inst = await ModelInstance.findOne({ id });
+    await model_inst.delete();
+    req.flash("success", req.__("Model instance %s deleted", model_inst.name));
+    res.redirect(`/models/show/${model_inst.model_id}`);
   })
 );
 

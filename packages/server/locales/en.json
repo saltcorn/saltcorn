@@ -1210,5 +1210,6 @@
 	"If the parent row is deleted, set key fields on child rows to null": "If the parent row is deleted, set key fields on child rows to null",
 	"Link out?": "Link out?",
 	"Show a link to open popup contents in new tab": "Show a link to open popup contents in new tab",
-	"Model %s deleted": "Model %s deleted"
+	"Model %s deleted": "Model %s deleted",
+	"Model instance %s deleted": "Model instance %s deleted"
 }
