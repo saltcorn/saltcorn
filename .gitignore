@@ -103,6 +103,9 @@ dist
 # TernJS port file
 .tern-port
 
+# vscode
+.vscode/
+
 plugin_packages/
 git_plugins/
 *.sqlc
