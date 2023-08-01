@@ -109,11 +109,11 @@ class Model {
   }
 
   get templateObj() {
-    return getState()?.modeltemplates[this.modeltemplate];
+    return getState()?.modelpatterns[this.modeltemplate];
   }
 
   static get has_templates() {
-    return Object.keys(getState()?.modeltemplates || {}).length > 0;
+    return Object.keys(getState()?.modelpatterns || {}).length > 0;
   }
 
   async train_instance(

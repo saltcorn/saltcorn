@@ -48,7 +48,7 @@ const newModelForm = (table, req) => {
         label: "Model template",
         type: "String",
         required: true,
-        attributes: { options: Object.keys(getState().modeltemplates) },
+        attributes: { options: Object.keys(getState().modelpatterns) },
       },
     ],
   });

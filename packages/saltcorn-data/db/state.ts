@@ -102,7 +102,7 @@ class State {
   triggers: Array<Trigger>;
   virtual_triggers: Array<Trigger>;
   viewtemplates: Record<string, ViewTemplate>;
-  modeltemplates: Record<string, any>;
+  modelpatterns: Record<string, any>;
   tables: Array<Table>;
   types: Record<string, Type>;
   stashed_fieldviews: Record<string, any>;
@@ -143,7 +143,7 @@ class State {
     this.triggers = [];
     this.virtual_triggers = [];
     this.viewtemplates = {};
-    this.modeltemplates = {};
+    this.modelpatterns = {};
     this.tables = [];
     this.types = {};
     this.stashed_fieldviews = {};
@@ -537,9 +537,9 @@ class State {
         this.function_context[k] = typeof v === "function" ? v : v.run;
       }
     );
-    Object.entries(withCfg("modeltemplates", {})).forEach(
+    Object.entries(withCfg("modelpatterns", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
-        this.modeltemplates[k] = v;
+        this.modelpatterns[k] = v;
       }
     );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
@@ -639,7 +639,7 @@ class State {
    */
   async refresh_plugins(noSignal?: boolean) {
     this.viewtemplates = {};
-    this.modeltemplates = {};
+    this.modelpatterns = {};
     this.types = {};
     this.stashed_fieldviews = {};
     this.fields = [];
