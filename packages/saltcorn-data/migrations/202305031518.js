@@ -3,7 +3,7 @@ create table _sc_models (
   id serial primary key,
   name text not null,
   table_id integer references _sc_tables(id),
-  modeltemplate text not null,
+  modelpattern text not null,
   configuration jsonb,
   UNIQUE (table_id, name)
 );
@@ -28,7 +28,7 @@ create table _sc_models (
   id integer primary key,
   name text not null,
   table_id integer references _sc_tables(id),
-  modeltemplate text not null,
+  modelpattern text not null,
   configuration json,
   UNIQUE(table_id, name) ON CONFLICT FAIL
 );`,

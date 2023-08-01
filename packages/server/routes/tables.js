@@ -847,7 +847,7 @@ router.get(
             label: req.__("Name"),
             key: (r) => link(`/models/show/${r.id}`, r.name),
           },
-          { label: req.__("Pattern"), key: "modeltemplate" },
+          { label: req.__("Pattern"), key: "modelpattern" },
         ],
         models
       ),

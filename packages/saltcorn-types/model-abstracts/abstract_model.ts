@@ -2,7 +2,7 @@ export type ModelCfg = {
   id?: number;
   name: string;
   table_id: number;
-  modeltemplate: string;
+  modelpattern: string;
   configuration: any;
 };
 

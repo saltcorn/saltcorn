@@ -300,7 +300,7 @@ describe("Model", () => {
     const mdl = await Model.create({
       name: "mymodel",
       table_id: table.id as number,
-      modeltemplate: "modtype",
+      modelpattern: "modtype",
       configuration: { numcluster: 2 },
     });
     const mdl1 = await Model.findOne({ name: "mymodel" });

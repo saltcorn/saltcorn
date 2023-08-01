@@ -20,7 +20,7 @@ class Model {
   id?: number;
   name: string;
   table_id: number;
-  modeltemplate: string;
+  modelpattern: string;
   configuration: any;
 
   /**
@@ -30,7 +30,7 @@ class Model {
   constructor(o: ModelCfg | Model) {
     this.id = o.id;
     this.name = o.name;
-    this.modeltemplate = o.modeltemplate;
+    this.modelpattern = o.modelpattern;
     this.table_id = o.table_id;
     this.configuration =
       typeof o.configuration === "string"
@@ -45,7 +45,7 @@ class Model {
     const lib = new Model(lib_in);
     const id = await db.insert("_sc_models", {
       name: lib.name,
-      modeltemplate: lib.modeltemplate,
+      modelpattern: lib.modelpattern,
       table_id: lib.table_id,
       configuration: lib.configuration,
     });
@@ -109,7 +109,7 @@ class Model {
   }
 
   get templateObj() {
-    return getState()?.modelpatterns[this.modeltemplate];
+    return getState()?.modelpatterns[this.modelpattern];
   }
 
   static get has_templates() {
