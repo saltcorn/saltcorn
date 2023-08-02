@@ -7,10 +7,10 @@ RUN apt update && apt install -y wget unzip \
 RUN wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
 RUN unzip commandlinetools-linux-8512546_latest.zip
 RUN mkdir android_sdk
-RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;latest"
-RUN android_sdk/cmdline-tools/latest/bin/sdkmanager --list
-RUN android_sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-11"
-RUN android_sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;10.0"
+RUN android_sdk/cmdline-tools/10.0/bin/sdkmanager --list
+RUN android_sdk/cmdline-tools/10.0/bin/sdkmanager "platforms;android-11"
+RUN android_sdk/cmdline-tools/10.0/bin/sdkmanager "build-tools;30.0.3"
 
 # download gradle
 RUN wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip \
