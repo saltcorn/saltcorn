@@ -2378,7 +2378,7 @@ class Table implements AbstractTable {
         const ownField = through ? sqlsanitize(through) : this.pk_name;
         const agg_and_field =
           aggregate.toLowerCase() === "countunique"
-            ? `count(unique(${field ? `"${sqlsanitize(field)}"` : "*"}))`
+            ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
             : `${sqlsanitize(aggregate)}(${
                 field ? `"${sqlsanitize(field)}"` : "*"
               })`;
