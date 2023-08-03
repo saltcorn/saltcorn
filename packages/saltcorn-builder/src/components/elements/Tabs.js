@@ -29,7 +29,7 @@ const Tabs = ({
   tabsStyle,
   ntabs,
   independent,
-  initial_closed,
+  startClosed,
   field,
 }) => {
   const {
@@ -37,10 +37,10 @@ const Tabs = ({
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showTab, setShowTab] = useState(
-    tabsStyle === "Accordion" && initial_closed ? false : 0
+    tabsStyle === "Accordion" && startClosed ? false : 0
   );
   const [showTabs, setShowTabs] = useState(
-    tabsStyle === "Accordion" && initial_closed ? [] : [true]
+    tabsStyle === "Accordion" && startClosed ? [] : [true]
   );
   console.log({ showTab, showTabs });
   if (tabsStyle === "Accordion")
@@ -172,7 +172,7 @@ const TabsSettings = () => {
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
     independent: node.data.props.independent,
-    initial_closed: node.data.props.initial_closed,
+    startClosed: node.data.props.startClosed,
     deeplink: node.data.props.deeplink,
     titles: node.data.props.titles,
     field: node.data.props.field,
@@ -183,7 +183,7 @@ const TabsSettings = () => {
     tabsStyle,
     deeplink,
     independent,
-    initial_closed,
+    startClosed,
     ntabs,
     field,
   } = node;
@@ -332,8 +332,8 @@ const TabsSettings = () => {
                       className="form-check-input"
                       name="block"
                       type="checkbox"
-                      checked={initial_closed}
-                      onChange={setAProp("initial_closed", { checked: true })}
+                      checked={startClosed}
+                      onChange={setAProp("startClosed", { checked: true })}
                     />
                     <label className="form-check-label">
                       Inititally closed
@@ -358,7 +358,7 @@ Tabs.craft = {
     ntabs: 2,
     tabsStyle: "Tabs",
     independent: false,
-    initial_closed: false,
+    startClosed: false,
     deeplink: true,
   },
   displayName: "Tabs",
