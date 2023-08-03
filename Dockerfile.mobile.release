@@ -24,12 +24,12 @@ RUN cordova create project
 WORKDIR /init_project/project
 # download plugins while building
 # so that we can add them later via file reference
-RUN cordova plugin add cordova-sqlite-ext
+RUN cordova plugin add cordova-sqlite-ext@6.0.0
 RUN cordova plugin add cordova-plugin-file@7.0.0
-RUN cordova plugin add cordova-plugin-inappbrowser
-RUN cordova plugin add cordova-plugin-network-information
-RUN cordova plugin add cordova-plugin-geolocation
-RUN cordova plugin add cordova-plugin-camera
+RUN cordova plugin add cordova-plugin-inappbrowser@5.0.0
+RUN cordova plugin add cordova-plugin-network-information@3.0.0
+RUN cordova plugin add cordova-plugin-geolocation@4.1.0
+RUN cordova plugin add cordova-plugin-camera@6.0.0
 RUN cordova platform add android
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
