@@ -42,7 +42,6 @@ const Tabs = ({
   const [showTabs, setShowTabs] = useState(
     tabsStyle === "Accordion" && startClosed ? [] : [true]
   );
-  console.log({ showTab, showTabs });
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
