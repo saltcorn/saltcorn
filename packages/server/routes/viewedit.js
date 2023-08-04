@@ -13,7 +13,12 @@ const { p, a, div, script, text, domReady, code, pre, tbody, tr, th, td } =
   tags;
 
 const { getState } = require("@saltcorn/data/db/state");
-const { isAdmin, error_catcher, addOnDoneRedirect } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("./utils.js");
 const { setTableRefs, viewsList } = require("./common_lists");
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
@@ -675,7 +680,11 @@ router.post(
         view.name
       )
     );
-    res.redirect(`/viewedit`);
+    let redirectTarget =
+      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/viewedit";
+    res.redirect(redirectTarget);
   })
 );
 
@@ -696,7 +705,11 @@ router.post(
       "success",
       req.__("View %s duplicated as %s", view.name, newview.name)
     );
-    res.redirect(`/viewedit`);
+    let redirectTarget =
+      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/viewedit";
+    res.redirect(redirectTarget);
   })
 );
 
@@ -713,7 +726,11 @@ router.post(
     const { id } = req.params;
     await View.delete({ id });
     req.flash("success", req.__("View deleted"));
-    res.redirect(`/viewedit`);
+    let redirectTarget =
+      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/viewedit";
+    res.redirect(redirectTarget);
   })
 );
 
@@ -805,7 +822,12 @@ router.post(
         : req.__(`Minimum role updated`);
     if (!req.xhr) {
       req.flash("success", message);
-      res.redirect("/viewedit");
+      let redirectTarget =
+        req.query.on_done_redirect &&
+        is_relative_url(req.query.on_done_redirect)
+          ? `/${req.query.on_done_redirect}`
+          : "/viewedit";
+      res.redirect(redirectTarget);
     } else res.json({ okay: true, responseText: message });
   })
 );
