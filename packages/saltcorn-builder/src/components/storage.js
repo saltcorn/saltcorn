@@ -246,6 +246,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           titles={segment.titles}
           ntabs={segment.ntabs}
           independent={segment.independent}
+          startClosed={segment.startClosed}
           deeplink={segment.deeplink}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
@@ -504,6 +505,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         tabsStyle: node.props.tabsStyle,
         field: node.props.field,
         independent: node.props.independent,
+        startClosed: node.props.startClosed,
         deeplink: node.props.deeplink,
         ntabs: node.props.ntabs,
       };

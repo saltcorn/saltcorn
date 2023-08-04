@@ -49,7 +49,7 @@ function buildCard(node) {
         <h5 class="card-title">${type}</h5>
         <h6 class="card-subtitle text-muted">${label}</h6>
       </div>
-      <div class="card-body">
+      <div class="card-body pt-1">
         ${!isVirtual ? buildTagBadges(node) : "<h5>virtual</h5>"}
         ${buildCardBody(node)}
         <div>
@@ -198,6 +198,7 @@ function buildTagBadges(node) {
     id="_${type}_${objectId}_badges_id"
     class="mb-3"
   >
+    <h6 class="text-muted mb-0">Tags:</h6>
     ${existingTagBadges(node)}    
     <button 
       class="badge bg-primary" 
@@ -484,6 +485,25 @@ function reloadCy(keepViewPos) {
     }
     initMouseOver();
   });
+}
+
+function takePicture() {
+  const base64 = window.cy.png({ bg: "white" }).substr(22);
+  const decoded = window.atob(base64);
+  const bytes = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) {
+    bytes[i] = decoded.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: "image/png" });
+  const DOMURL = self.URL || self.webkitURL || self;
+  const url = DOMURL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "app-diagram.png";
+  link.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 2000);
 }
 
 function toggleEntityFilter(type) {

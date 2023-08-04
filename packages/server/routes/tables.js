@@ -54,7 +54,7 @@ const {
 } = require("@saltcorn/data/models/discovery");
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
-const { tablesList } = require("./common_lists");
+const { tablesList, viewsList } = require("./common_lists");
 const {
   InvalidConfiguration,
   removeAllWhiteSpace,
@@ -785,37 +785,10 @@ router.get(
       );
       var viewCardContents;
       if (views.length > 0) {
-        viewCardContents = mkTable(
-          [
-            {
-              label: req.__("Name"),
-              key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
-            },
-            { label: req.__("Pattern"), key: "viewtemplate" },
-            {
-              label: req.__("Configure"),
-              key: (r) =>
-                link(
-                  `/viewedit/config/${encodeURIComponent(
-                    r.name
-                  )}?on_done_redirect=${encodeURIComponent(
-                    `table/${table.name}`
-                  )}`,
-                  req.__("Configure")
-                ),
-            },
-            {
-              label: req.__("Delete"),
-              key: (r) =>
-                post_delete_btn(
-                  `/viewedit/delete/${encodeURIComponent(r.id)}`,
-                  req
-                ),
-            },
-          ],
-          views,
-          { hover: true }
-        );
+        viewCardContents = await viewsList(views, req, {
+          on_done_redirect: encodeURIComponent(`table/${table.name}`),
+          notable: true,
+        });
       } else {
         viewCardContents = div(
           h4(req.__("No views defined")),
