@@ -789,6 +789,7 @@ const field_picker_fields = async ({
         `${table.name}.${key_field.name}`;
       aggStatOptions[aggKey] = [
         "Count",
+        "CountUnique",
         "Avg",
         "Sum",
         "Max",

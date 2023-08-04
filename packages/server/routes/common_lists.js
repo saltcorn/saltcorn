@@ -101,9 +101,9 @@ const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
  * @param {object} req
  * @returns {Form}
  */
-const editViewRoleForm = (view, roles, req) =>
+const editViewRoleForm = (view, roles, req, on_done_redirect_str) =>
   editRoleForm({
-    url: `/viewedit/setrole/${view.id}`,
+    url: `/viewedit/setrole/${view.id}${on_done_redirect_str || ""}`,
     current_role: view.min_role,
     roles,
     req,
@@ -114,7 +114,7 @@ const editViewRoleForm = (view, roles, req) =>
  * @param {object} req
  * @returns {div}
  */
-const view_dropdown = (view, req) =>
+const view_dropdown = (view, req, on_done_redirect_str = "") =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
     a(
       {
@@ -126,17 +126,19 @@ const view_dropdown = (view, req) =>
     a(
       {
         class: "dropdown-item",
-        href: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+        href: `/viewedit/edit/${encodeURIComponent(
+          view.name
+        )}${on_done_redirect_str}`,
       },
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
     post_dropdown_item(
-      `/viewedit/add-to-menu/${view.id}`,
+      `/viewedit/add-to-menu/${view.id}${on_done_redirect_str}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
       req
     ),
     post_dropdown_item(
-      `/viewedit/clone/${view.id}`,
+      `/viewedit/clone/${view.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
       req
     ),
@@ -149,7 +151,7 @@ const view_dropdown = (view, req) =>
     ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
-      `/viewedit/delete/${view.id}`,
+      `/viewedit/delete/${view.id}${on_done_redirect_str}`,
       '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
       req,
       true,
@@ -169,9 +171,15 @@ const setTableRefs = async (views) => {
   return views;
 };
 
-const viewsList = async (views, req, { tagId, domId, showList } = {}) => {
+const viewsList = async (
+  views,
+  req,
+  { tagId, domId, showList, on_done_redirect, notable } = {}
+) => {
   const roles = await User.get_roles();
-
+  const on_done_redirect_str = on_done_redirect
+    ? `?on_done_redirect=${on_done_redirect}`
+    : "";
   return views.length > 0
     ? mkTable(
         [
@@ -200,29 +208,36 @@ const viewsList = async (views, req, { tagId, domId, showList } = {}) => {
               ? `javascript:set_state_field('_sortby', 'viewtemplate')`
               : undefined,
           },
-          {
-            label: req.__("Table"),
-            key: (r) => link(`/table/${r.table}`, r.table),
-            sortlink: !tagId
-              ? `javascript:set_state_field('_sortby', 'table')`
-              : undefined,
-          },
+          ...(notable
+            ? []
+            : [
+                {
+                  label: req.__("Table"),
+                  key: (r) => link(`/table/${r.table}`, r.table),
+                  sortlink: !tagId
+                    ? `javascript:set_state_field('_sortby', 'table')`
+                    : undefined,
+                },
+              ]),
           {
             label: req.__("Role to access"),
-            key: (row) => editViewRoleForm(row, roles, req),
+            key: (row) =>
+              editViewRoleForm(row, roles, req, on_done_redirect_str),
           },
           {
             label: "",
             key: (r) =>
               link(
-                `/viewedit/config/${encodeURIComponent(r.name)}`,
+                `/viewedit/config/${encodeURIComponent(
+                  r.name
+                )}${on_done_redirect_str}`,
                 req.__("Configure")
               ),
           },
           !tagId
             ? {
                 label: "",
-                key: (r) => view_dropdown(r, req),
+                key: (r) => view_dropdown(r, req, on_done_redirect_str),
               }
             : {
                 label: req.__("Remove From Tag"),

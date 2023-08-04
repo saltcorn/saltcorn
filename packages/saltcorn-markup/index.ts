@@ -146,7 +146,17 @@ const post_dropdown_item = (
   confirm?: boolean,
   what?: string
 ): string => {
-  const id = href.split("/").join("").split(" ").join("");
+  const id = href
+    .split("/")
+    .join("")
+    .split(" ")
+    .join("")
+    .split("?")
+    .join("")
+    .split("=")
+    .join("")
+    .split("%")
+    .join("");
   return `<a class="dropdown-item" onclick="${
     confirm
       ? `if(confirm('${

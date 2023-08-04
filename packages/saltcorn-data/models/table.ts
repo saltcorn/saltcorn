@@ -2376,6 +2376,12 @@ class Table implements AbstractTable {
         const aggTable = Table.findOne({ name: table });
         const aggField = aggTable?.fields?.find((f) => f.name === field);
         const ownField = through ? sqlsanitize(through) : this.pk_name;
+        const agg_and_field =
+          aggregate.toLowerCase() === "countunique"
+            ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
+            : `${sqlsanitize(aggregate)}(${
+                field ? `"${sqlsanitize(field)}"` : "*"
+              })`;
         if (
           aggField?.is_fkey &&
           aggField.attributes.summary_field &&
@@ -2415,23 +2421,19 @@ class Table implements AbstractTable {
           );
         } else if (subselect)
           fldNms.push(
-            `(select ${sqlsanitize(aggregate)}(${
-              field ? `"${sqlsanitize(field)}"` : "*"
-            }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
-              ref
-            )}" in (select "${subselect.field}" from ${schema}"${
-              subselect.table.name
-            }" where "${subselect.whereField}"=a."${ownField}")) ${sqlsanitize(
-              fldnm
-            )}`
+            `(select ${agg_and_field} from ${schema}"${sqlsanitize(
+              table
+            )}" where "${sqlsanitize(ref)}" in (select "${
+              subselect.field
+            }" from ${schema}"${subselect.table.name}" where "${
+              subselect.whereField
+            }"=a."${ownField}")) ${sqlsanitize(fldnm)}`
           );
         else
           fldNms.push(
-            `(select ${sqlsanitize(aggregate)}(${
-              field ? `"${sqlsanitize(field)}"` : "*"
-            }) from ${schema}"${sqlsanitize(table)}" where "${sqlsanitize(
-              ref
-            )}"=a."${ownField}"${
+            `(select ${agg_and_field} from ${schema}"${sqlsanitize(
+              table
+            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
               whereStr ? ` and ${whereStr}` : ""
             }) ${sqlsanitize(fldnm)}`
           );
