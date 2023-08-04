@@ -150,6 +150,7 @@ class User {
     uo: any = {}
   ): Promise<User | false | ErrorMessage> {
     const u = await User.findOne({ _attributes: { json: [k, v] } });
+    if (u && u.disabled) return false;
     if (u) return u;
     else {
       const { getState } = require("../db/state");
