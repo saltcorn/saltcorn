@@ -550,9 +550,12 @@ const run_action = async (
 };
 
 /**
- * @param {*} results
+ * combine multiple action results into one object
+ * for 'reload_page, goto, popup' take the first
+ * all other types are combined into arrays
+ * @param results array of action results
  */
-const safeActionResults = (results) => {
+const combineResults = (results) => {
   const messageLimit = 5;
   const downloadLimit = 5;
   let numMsgs = 0,
@@ -560,15 +563,14 @@ const safeActionResults = (results) => {
     suppressedErrors = 0;
   let numDownloads = 0,
     suppressedDownloads = 0;
-  const safeResult = { json: { success: "ok" } };
+  const result = { json: { success: "ok" } };
   const initOrPush = (newElement, memberName) => {
-    if (safeResult.json[memberName])
-      safeResult.json[memberName].push(newElement);
-    else safeResult.json[memberName] = [newElement];
+    if (result.json[memberName]) result.json[memberName].push(newElement);
+    else result.json[memberName] = [newElement];
   };
   const initOnce = (newElement, memberName) => {
-    if (typeof safeResult[memberName] === "undefined")
-      safeResult.json[memberName] = newElement;
+    if (typeof result[memberName] === "undefined")
+      result.json[memberName] = newElement;
   };
   for (const result of results) {
     if (result.reload_page) initOnce(result.reload_page, "reload_page");
@@ -599,8 +601,8 @@ const safeActionResults = (results) => {
   if (suppressedErrors > 0)
     suppressedMsg += `${suppressedMsg ? ", " : ""}${suppressedErrors} errors`;
   if (suppressedMsg)
-    safeResult.json.suppressed = `And '${suppressedMsg}' were not shown`;
-  return safeResult;
+    result.json.suppressed = `And '${suppressedMsg}' were not shown`;
+  return result;
 };
 
 module.exports = {
@@ -660,7 +662,7 @@ module.exports = {
             forUser: req.user,
           });
           const referrer = req.get("Referrer");
-          return safeActionResults(
+          return combineResults(
             await Promise.all(
               rows.map(async (row) => {
                 return await run_action_column({
