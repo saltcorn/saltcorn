@@ -1193,5 +1193,9 @@
 	"Prevent any deletion of parent rows": "Prevent any deletion of parent rows",
 	"If the parent row is deleted, set key fields on child rows to null": "If the parent row is deleted, set key fields on child rows to null",
 	"Link out?": "Link out?",
-	"Show a link to open popup contents in new tab": "Show a link to open popup contents in new tab"
+	"Show a link to open popup contents in new tab": "Show a link to open popup contents in new tab",
+	"JavaScript code:": "JavaScript code:",
+	"code here": "code here",
+	"Page '%s' was loaded": "Page '%s' was loaded",
+	"View '%s' was loaded": "View '%s' was loaded"
 }

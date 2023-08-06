@@ -121,6 +121,13 @@ class EventLog {
   }
 
   /**
+   * delete all rows from db
+   */
+  static async clear(): Promise<void> {
+    await db.deleteWhere("_sc_event_log");
+  }
+
+  /**
    * @param {string} evType
    * @returns {boolean}
    */

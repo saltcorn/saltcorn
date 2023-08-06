@@ -11,8 +11,11 @@ const {
   toNotInclude,
   resetToFixtures,
 } = require("../auth/testhelp");
+const { sleep } = require("@saltcorn/data/tests/mocks");
 const db = require("@saltcorn/data/db");
 const Page = require("@saltcorn/data/models/page");
+const EventLog = require("@saltcorn/data/models/eventlog");
+const { getState } = require("@saltcorn/data/db/state");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -113,6 +116,31 @@ describe("page action", () => {
       .expect(succeedJsonWith((r) => r === "ok"));
     expect(console.log).toHaveBeenCalled();
     console.log = oldConsoleLog;
+  });
+});
+
+describe("page load trigger", () => {
+  beforeAll(async () => {
+    await getState().setConfig("event_log_settings", {
+      PageLoad: true,
+    });
+  });
+  afterAll(async () => {
+    await getState().setConfig("event_log_settings", {
+      PageLoad: false,
+    });
+  });
+
+  it("load page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await EventLog.clear();
+    await request(app).get("/page/a_page");
+    // for setTimeout in emitEvent
+    await sleep(1000);
+    const events = await EventLog.find({ event_type: "PageLoad" });
+    expect(events.length).toBe(1);
+    expect(events[0].payload.type).toBe("page");
+    expect(events[0].payload.name).toBe("a_page");
   });
 });
 
