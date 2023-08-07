@@ -246,15 +246,17 @@ router.get(
     const userBadges = (user) =>
       span(
         !!user.disabled &&
-          span({ class: "badge bg-danger" }, req.__("Disabled")),
+          span({ class: "badge bg-danger me-1" }, req.__("Disabled")),
         !!user.verified_on &&
-          span({ class: "badge bg-success" }, req.__("Verified")),
+          span({ class: "badge bg-success me-1" }, req.__("Verified")),
         Object.entries(auth_methods)
           .filter(
             ([k, v]) =>
               v.setsUserAttribute && user._attributes[v.setsUserAttribute]
           )
-          .map(([k, v]) => span({ class: "badge bg-secondary" }, v.label || k))
+          .map(([k, v]) =>
+            span({ class: "badge bg-secondary me-1" }, v.label || k)
+          )
       );
     const users = await User.find({}, { orderBy: "id" });
     const roles = await User.get_roles();
