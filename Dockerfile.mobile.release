@@ -7,10 +7,10 @@ RUN apt update && apt install -y wget unzip \
 RUN wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
 RUN unzip commandlinetools-linux-8512546_latest.zip
 RUN mkdir android_sdk
-RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;latest"
-RUN android_sdk/cmdline-tools/latest/bin/sdkmanager --list
-RUN android_sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-11"
-RUN android_sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;10.0"
+RUN android_sdk/cmdline-tools/10.0/bin/sdkmanager --list
+RUN android_sdk/cmdline-tools/10.0/bin/sdkmanager "platforms;android-11"
+RUN android_sdk/cmdline-tools/10.0/bin/sdkmanager "build-tools;30.0.3"
 
 # download gradle
 RUN wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip \
@@ -24,12 +24,12 @@ RUN cordova create project
 WORKDIR /init_project/project
 # download plugins while building
 # so that we can add them later via file reference
-RUN cordova plugin add cordova-sqlite-ext
+RUN cordova plugin add cordova-sqlite-ext@6.0.0
 RUN cordova plugin add cordova-plugin-file@7.0.0
-RUN cordova plugin add cordova-plugin-inappbrowser
-RUN cordova plugin add cordova-plugin-network-information
-RUN cordova plugin add cordova-plugin-geolocation
-RUN cordova plugin add cordova-plugin-camera
+RUN cordova plugin add cordova-plugin-inappbrowser@5.0.0
+RUN cordova plugin add cordova-plugin-network-information@3.0.0
+RUN cordova plugin add cordova-plugin-geolocation@4.1.0
+RUN cordova plugin add cordova-plugin-camera@6.0.0
 RUN cordova platform add android
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
