@@ -539,8 +539,8 @@ const run_action = async (
       `View '${viewname}:run_action' incorrectly configured: ` +
         `Unable to find table with id '${table_id}'`
     );
-  const state = body?.state
-    ? readState(removeEmptyStrings(body.state), table.getFields(), req)
+  const state = req?.query
+    ? readState(removeEmptyStrings(req.query), table.getFields(), req)
     : {};
   const result = await actionQuery(state, body?.rndid);
   if (result.json.error) {

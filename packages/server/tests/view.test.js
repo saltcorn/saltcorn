@@ -272,11 +272,12 @@ describe("action row_variable", () => {
       viewName: "insert_row_from_state",
     });
     await request(app)
-      .post("/view/insert_row_from_state/run_action")
+      .post(
+        "/view/insert_row_from_state/run_action?author=author_from_state&pages=234"
+      )
       .set("Cookie", loginCookie)
       .send({
         rndid: "u6b06u",
-        state: { author: "author_from_state", pages: 234 },
       })
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
@@ -298,11 +299,11 @@ describe("action row_variable", () => {
       actionName: "run_js_code",
       viewName: "run_code_eatch_matching",
     });
-    const testHelper = async (state, resultCount) => {
+    const testHelper = async (query, resultCount) => {
       await request(app)
-        .post("/view/run_code_eatch_matching/run_action")
+        .post(`/view/run_code_eatch_matching/run_action?${query}`)
         .set("Cookie", loginCookie)
-        .send({ rndid: "b6b06b", state })
+        .send({ rndid: "b6b06b" })
         .set("Content-Type", "application/json")
         .set("Accept", "application/json")
         .expect(
@@ -316,9 +317,9 @@ describe("action row_variable", () => {
           })
         );
     };
-    await testHelper({ author: "le" }, 2);
-    await testHelper({ author: "Herman" }, 1);
-    await testHelper({ author: "Christian" }, 0);
+    await testHelper("author=le", 2);
+    await testHelper("author=Herman", 1);
+    await testHelper("author=Christian", 0);
   });
 
   it("insert_row_each_matching", async () => {
@@ -337,11 +338,11 @@ describe("action row_variable", () => {
       actionName: "insert_any_row",
       viewName: "insert_row_each_matching",
     });
-    const testHelper = async (state) => {
+    const testHelper = async (query) => {
       await request(app)
-        .post("/view/insert_row_each_matching/run_action")
+        .post(`/view/insert_row_each_matching/run_action?${query}`)
         .set("Cookie", loginCookie)
-        .send({ rndid: "a6b06a", state })
+        .send({ rndid: "a6b06a" })
         .set("Content-Type", "application/json")
         .set("Accept", "application/json")
         .expect(
@@ -352,15 +353,15 @@ describe("action row_variable", () => {
     };
     const books = Table.findOne({ name: "books" });
     let oldLength = (await books.getRows()).length;
-    await testHelper({ author: "le" });
+    await testHelper("author=le");
     let newLength = (await books.getRows()).length;
     expect(newLength).toBe(oldLength + 2);
     oldLength = newLength;
-    await testHelper({ author: "_copy" });
+    await testHelper("author=_copy");
     newLength = (await books.getRows()).length;
     expect(newLength).toBe(oldLength + 2);
     oldLength = newLength;
-    await testHelper({ author: "Christian" });
+    await testHelper("author=Christian");
     newLength = (await books.getRows()).length;
     expect(newLength).toBe(oldLength);
   });
@@ -380,9 +381,9 @@ describe("action row_variable", () => {
       rowLimit: 2,
     });
     await request(app)
-      .post("/view/author_filter_row_limit/run_action")
+      .post("/view/author_filter_row_limit/run_action?author=le")
       .set("Cookie", loginCookie)
-      .send({ rndid: "c6b06c", state: { author: "le" } })
+      .send({ rndid: "c6b06c" })
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
       .expect(

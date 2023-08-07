@@ -196,12 +196,10 @@ function ajax_done(res) {
 }
 
 function view_post(viewname, route, data, onDone, sendState) {
-  if (sendState)
-    data.state = Object.fromEntries(
-      new URL(get_current_state_url()).searchParams
-    );
-
-  $.ajax("/view/" + viewname + "/" + route, {
+  const query = sendState
+    ? `?${new URL(get_current_state_url()).searchParams.toString()}`
+    : "";
+  $.ajax("/view/" + viewname + "/" + route + query, {
     dataType: "json",
     type: "POST",
     headers: {
