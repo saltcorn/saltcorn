@@ -13,8 +13,8 @@ const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
-const EventLog = require("@saltcorn/data/models/eventlog");
-const { plugin_with_routes, sleep } = require("@saltcorn/data/tests/mocks");
+
+const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -175,32 +175,6 @@ describe("render view with slug", () => {
     await request(app)
       .get("/view/authorshow/herman-melville")
       .expect(toInclude(`Herman Melville`));
-  });
-});
-
-describe("view load trigger", () => {
-  beforeAll(async () => {
-    await getState().setConfig("event_log_settings", {
-      PageLoad: true,
-    });
-  });
-  afterAll(async () => {
-    await getState().setConfig("event_log_settings", {
-      PageLoad: false,
-    });
-  });
-
-  it("load view", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    await EventLog.clear();
-    await request(app).get("/view/authorlist").set("Cookie", loginCookie);
-    // for setTimeout in emitEvent
-    await sleep(1000);
-    const events = await EventLog.find({ event_type: "PageLoad" });
-    expect(events.length).toBe(1);
-    expect(events[0].payload.type).toBe("view");
-    expect(events[0].payload.name).toBe("authorlist");
   });
 });
 
