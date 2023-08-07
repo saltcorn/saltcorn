@@ -243,7 +243,6 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const auth_methods = getState().auth_methods;
-    console.log(auth_methods);
     const userBadges = (user) =>
       span(
         !!user.disabled &&
