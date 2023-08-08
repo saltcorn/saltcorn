@@ -294,7 +294,7 @@ describe("action row_variable", () => {
         run_where: "Client page",
         code: 'console.log("hello");',
       },
-      rowVariable: "eatch_matching_row",
+      rowVariable: "each_matching_row",
       rndid: "b6b06b",
       actionName: "run_js_code",
       viewName: "run_code_eatch_matching",
@@ -333,7 +333,7 @@ describe("action row_variable", () => {
           pages: row.pages,
         }`,
       },
-      rowVariable: "eatch_matching_row",
+      rowVariable: "each_matching_row",
       rndid: "a6b06a",
       actionName: "insert_any_row",
       viewName: "insert_row_each_matching",
@@ -366,7 +366,7 @@ describe("action row_variable", () => {
     expect(newLength).toBe(oldLength);
   });
 
-  it("eatch_matching_row: action_row_limit", async () => {
+  it("each_matching_row: action_row_limit", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await createFilterView({
@@ -374,7 +374,7 @@ describe("action row_variable", () => {
         run_where: "Client page",
         code: 'console.log("hello");',
       },
-      rowVariable: "eatch_matching_row",
+      rowVariable: "each_matching_row",
       rndid: "c6b06c",
       actionName: "run_js_code",
       viewName: "author_filter_row_limit",

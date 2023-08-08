@@ -456,7 +456,7 @@ const run = async (
           );
       } else {
         const withState =
-          action_row_variable === "eatch_matching_row" ||
+          action_row_variable === "each_matching_row" ||
           action_row_variable === "state";
         // keep state option
         const url = {
@@ -641,7 +641,7 @@ module.exports = {
       );
       const table = Table.findOne(table_id);
       try {
-        if (col.action_row_variable === "eatch_matching_row") {
+        if (col.action_row_variable === "each_matching_row") {
           const fields = table.getFields();
           const { joinFields, aggregations } = picked_fields_to_query(
             columns,

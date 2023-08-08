@@ -191,7 +191,7 @@ const ActionSettings = () => {
                     setInitialConfig(setProp, value, getCfgFields(value));
                   }}
                 >
-                  {buildOptions(["none", "state", "eatch_matching_row"], {
+                  {buildOptions(["none", "state", "each_matching_row"], {
                     valAttr: true,
                     keyAttr: true,
                   })}
@@ -199,7 +199,7 @@ const ActionSettings = () => {
               </td>
             </tr>
           ) : null}
-          {action_row_variable === "eatch_matching_row" ? (
+          {action_row_variable === "each_matching_row" ? (
             <tr>
               <td>
                 <label>Rows limit</label>
