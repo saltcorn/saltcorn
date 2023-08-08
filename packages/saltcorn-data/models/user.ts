@@ -181,6 +181,7 @@ class User {
     const { email, password, passwordRepeat, role_id, ...rest } = uo;
     const hasPw = typeof password !== "undefined";
     const u = new User({ email, password, role_id });
+    if (rest._attributes) u._attributes = rest._attributes;
     if (hasPw && User.unacceptable_password_reason(u.password))
       return {
         error:

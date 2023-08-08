@@ -293,3 +293,21 @@ describe("User join fields and aggregations in ownership", () => {
     expect(books.is_owner(u, bookRows[1])).toBe(false);
   });
 });
+
+describe("User findOrCreateByAttribute", () => {
+  it("should create", async () => {
+    const u = await User.findOrCreateByAttribute("foo", "bar", {
+      email: "foobar@bar.foo",
+    });
+    expect(u instanceof User).toBe(true);
+    expect((u as User)._attributes?.foo).toBe("bar");
+  });
+  it("should fetch again", async () => {
+    const u = await User.findOrCreateByAttribute("foo", "bar", {
+      email: "something@else.org",
+    });
+    expect(u instanceof User).toBe(true);
+    expect((u as User)._attributes?.foo).toBe("bar");
+    expect((u as User).email).toBe("foobar@bar.foo");
+  });
+});
