@@ -639,7 +639,7 @@ module.exports = {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === rndid && rndid
       );
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne(table_id);
       try {
         if (col.action_row_variable === "eatch_matching_row") {
           const fields = table.getFields();
