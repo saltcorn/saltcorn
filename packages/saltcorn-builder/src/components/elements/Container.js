@@ -10,16 +10,15 @@ import { Element, useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
   Accordion,
-  BlockSetting,
   OrFormula,
   parseStyles,
-  SelectUnits,
   SettingsSectionHeaderRow,
   SettingsRow,
   reactifyStyles,
-  bstyleopt,
   setAPropGen,
   FormulaTooltip,
+  buildOptions,
+  buildBootstrapOptions,
 } from "./utils";
 import {
   BorderOuter,
@@ -46,15 +45,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 import { BoxModelEditor } from "./BoxModelEditor";
 import previewCtx from "../preview_context";
-
-/**
- *
- * @param {string} string
- * @returns {string}
- */
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
 
 export /**
  * @param {object} props
@@ -511,9 +501,7 @@ const ContainerSettings = () => {
                     className="form-control-sm  form-select"
                     onChange={setAProp("imageSize")}
                   >
-                    <option>contain</option>
-                    <option>cover</option>
-                    <option>repeat</option>
+                    {buildOptions(["contain", "cover", "repeat"])}
                   </select>
                 </td>
               </tr>
@@ -823,10 +811,7 @@ const ContainerSettings = () => {
                 onChange={setAProp("minScreenWidth")}
               >
                 <option value="">all</option>
-                <option value="sm">small</option>
-                <option value="md">medium</option>
-                <option value="lg">large</option>
-                <option value="xl">x-large</option>
+                {buildBootstrapOptions(["sm", "md", "lg", "xl"])}
               </select>
             </td>
           </tr>
@@ -866,11 +851,10 @@ const ContainerSettings = () => {
           className="form-control form-select"
           onChange={setAProp("hoverColor")}
         >
-          <option value="">None</option>
-          <option value="gray">gray</option>
-          <option value="gray-dark">gray-dark</option>
-          <option value="light">light</option>
-          <option value="dark">dark</option>
+          <option value="">none</option>
+          {buildOptions(["gray", "gray-dark", "light", "dark"], {
+            valAttr: true,
+          })}
         </select>
       </div>
 

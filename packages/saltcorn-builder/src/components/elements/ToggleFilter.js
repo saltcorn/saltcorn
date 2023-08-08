@@ -7,7 +7,12 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  setAPropGen,
+  buildOptions,
+} from "./utils";
 
 export /**
  * @param {object} props
@@ -196,14 +201,19 @@ const ToggleFilterSettings = () => {
               value={style}
               onChange={setAProp("style")}
             >
-              <option value="primary">Primary</option>
-              <option value="secondary">Secondary</option>
-              <option value="success">Success</option>
-              <option value="danger">Danger</option>
-              <option value="warning">Warning</option>
-              <option value="info">Info</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+              {buildOptions(
+                [
+                  "primary",
+                  "secondary",
+                  "success",
+                  "danger",
+                  "warning",
+                  "info",
+                  "light",
+                  "dark",
+                ],
+                { valAttr: true, capitalize: true }
+              )}
             </select>
           </td>
         </tr>

@@ -533,7 +533,7 @@ const run_action = async (
   { req, res },
   { actionQuery }
 ) => {
-  const table = Table.findOne({ id: table_id });
+  const table = Table.findOne(table_id);
   if (!table)
     throw new InvalidConfiguration(
       `View '${viewname}:run_action' incorrectly configured: ` +
@@ -573,6 +573,7 @@ const combineResults = (results) => {
       result.json[memberName] = newElement;
   };
   for (const result of results) {
+    if (!result) continue;
     if (result.reload_page) initOnce(result.reload_page, "reload_page");
     if (result.goto) initOnce(result.goto, "goto");
     if (result.popup) initOnce(result.popup, "popup");

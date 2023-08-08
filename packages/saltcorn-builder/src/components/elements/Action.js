@@ -9,7 +9,6 @@ import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
-  blockProps,
   BlockSetting,
   MinRoleSettingRow,
   OrFormula,
@@ -18,6 +17,7 @@ import {
   ButtonOrLinkSettingsRows,
   DynamicFontAwesomeIcon,
   setAPropGen,
+  buildOptions,
 } from "./utils";
 
 export /**
@@ -191,15 +191,10 @@ const ActionSettings = () => {
                     setInitialConfig(setProp, value, getCfgFields(value));
                   }}
                 >
-                  <option key="none" value="none">
-                    None
-                  </option>
-                  <option key="state" value="state">
-                    State
-                  </option>
-                  <option key="eatch_matching_row" value="eatch_matching_row">
-                    Each matching row
-                  </option>
+                  {buildOptions(["none", "state", "eatch_matching_row"], {
+                    valAttr: true,
+                    keyAttr: true,
+                  })}
                 </select>
               </td>
             </tr>
