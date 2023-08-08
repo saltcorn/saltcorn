@@ -195,8 +195,11 @@ function ajax_done(res) {
   common_done(res);
 }
 
-function view_post(viewname, route, data, onDone) {
-  $.ajax("/view/" + viewname + "/" + route, {
+function view_post(viewname, route, data, onDone, sendState) {
+  const query = sendState
+    ? `?${new URL(get_current_state_url()).searchParams.toString()}`
+    : "";
+  $.ajax("/view/" + viewname + "/" + route + query, {
     dataType: "json",
     type: "POST",
     headers: {

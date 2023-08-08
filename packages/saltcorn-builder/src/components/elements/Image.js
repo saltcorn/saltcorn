@@ -17,6 +17,7 @@ import {
   Accordion,
   OrFormula,
   setAPropGen,
+  buildOptions,
 } from "./utils";
 
 export /**
@@ -121,6 +122,8 @@ export /**
       }
     };
     const setAProp = setAPropGen(setProp);
+    const sourceOpts = ["File", "URL", "Upload"];
+    if (options.mode === "show") sourceOpts.push("Field");
     return (
       <Accordion>
         <table accordiontitle="Select image">
@@ -142,10 +145,7 @@ export /**
                   className="form-control form-select"
                   onChange={setAProp("srctype")}
                 >
-                  <option>File</option>
-                  <option>URL</option>
-                  <option>Upload</option>
-                  {options.mode === "show" && <option>Field</option>}
+                  {buildOptions(sourceOpts)}
                 </select>
               </td>
             </tr>

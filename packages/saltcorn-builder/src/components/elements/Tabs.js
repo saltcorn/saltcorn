@@ -8,7 +8,7 @@ import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
-import { setAPropGen } from "./utils";
+import { setAPropGen, buildOptions } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -210,6 +210,9 @@ const TabsSettings = () => {
         });
   }, [field]);
   const setAProp = setAPropGen(setProp);
+  const styleOptions = ["Tabs", "Pills", "Accordion"];
+  if (["show", "edit"].includes(options.mode))
+    styleOptions.push("Value switch");
 
   return (
     <table className="w-100" accordiontitle="Placement">
@@ -224,12 +227,7 @@ const TabsSettings = () => {
               className="form-control form-select"
               onChange={setAProp("tabsStyle")}
             >
-              <option>Tabs</option>
-              <option>Pills</option>
-              <option>Accordion</option>
-              {["show", "edit"].includes(options.mode) && (
-                <option>Value switch</option>
-              )}
+              {buildOptions(styleOptions)}
             </select>
           </td>
         </tr>

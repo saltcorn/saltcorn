@@ -436,7 +436,7 @@ const ViewLinkElem = ({ connectors, options }) => (
         options.link_view_opts.length > 0 ? options.link_view_opts[0].name : ""
       }
       block={false}
-      minRole={10}
+      minRole={100}
       label={""}
     />
   </WrapElem>
@@ -459,8 +459,9 @@ const ActionElem = ({ connectors, options }) => (
   >
     <Action
       name={options.actions[0]}
+      action_row_variable={""}
       block={false}
-      minRole={10}
+      minRole={100}
       confirm={false}
       action_label={""}
       isFormula={{}}

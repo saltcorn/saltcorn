@@ -31,6 +31,10 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   run_action_column,
+  stateFieldsToWhere,
+  getActionConfigFields,
+  picked_fields_to_query,
+  stateFieldsToQuery,
 } = require("../../plugin-helper");
 const { action_link } = require("./viewable_fields");
 const { search_bar } = require("@saltcorn/markup/helpers");
@@ -40,7 +44,11 @@ const {
   getStringsForI18n,
   traverse,
 } = require("../../models/layout");
-const { InvalidConfiguration, objectToQueryString } = require("../../utils");
+const {
+  InvalidConfiguration,
+  objectToQueryString,
+  removeEmptyStrings,
+} = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
 const { getState } = require("../../db/state");
@@ -101,7 +109,10 @@ const configuration_workflow = () =>
                 );
             });
           }
-          const actions = ["Clear"];
+          const stateActions = Object.entries(getState().actions).filter(
+            ([k, v]) => !v.disableInBuilder
+          );
+          const actions = ["Clear", ...stateActions.map(([k, v]) => k)];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
@@ -109,6 +120,12 @@ const configuration_workflow = () =>
           ).forEach((tr) => {
             actions.push(tr.name);
           });
+          const actionConstraints = {};
+          const stateActionsObj = getState().actions;
+          for (const action of actions) {
+            if (stateActionsObj[action]?.requireRow)
+              actionConstraints[action] = { requireRow: true };
+          }
           const actionConfigForms = {
             Clear: [
               {
@@ -119,6 +136,14 @@ const configuration_workflow = () =>
               },
             ],
           };
+          for (const [name, action] of stateActions) {
+            if (action.configFields) {
+              actionConfigForms[name] = await getActionConfigFields(
+                action,
+                table
+              );
+            }
+          }
           const own_link_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
             ({ viewrow }) => viewrow.name !== context.viewname
@@ -163,6 +188,7 @@ const configuration_workflow = () =>
             parent_field_list: my_parent_field_list,
             roles,
             actions,
+            actionConstraints,
             views,
             pages,
             images: [], //temp fix till we rebuild builder
@@ -389,6 +415,7 @@ const run = async (
         action_size,
         action_icon,
         action_name,
+        action_row_variable,
         configuration,
         confirm,
       } = segment;
@@ -428,8 +455,14 @@ const run = async (
             label
           );
       } else {
+        const withState =
+          action_row_variable === "each_matching_row" ||
+          action_row_variable === "state";
+        // keep state option
         const url = {
-          javascript: `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'});`,
+          javascript:
+            `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'}, ` +
+            `null, ${withState});`,
         };
 
         return action_link(url, extra.req, segment);
@@ -495,17 +528,84 @@ const eq_string = (x, y) => `${x}` === `${y}`;
 const run_action = async (
   table_id,
   viewname,
-  { columns, layout },
+  config,
   body,
   { req, res },
   { actionQuery }
 ) => {
-  const result = await actionQuery();
+  const table = Table.findOne(table_id);
+  if (!table)
+    throw new InvalidConfiguration(
+      `View '${viewname}:run_action' incorrectly configured: ` +
+        `Unable to find table with id '${table_id}'`
+    );
+  const state = req?.query
+    ? readState(removeEmptyStrings(req.query), table.getFields(), req)
+    : {};
+  const result = await actionQuery(state, body?.rndid);
   if (result.json.error) {
     Crash.create({ message: result.json.error, stack: "" }, req);
   }
   return result;
 };
+
+/**
+ * combine multiple action results into one object
+ * for 'reload_page, goto, popup' take the first
+ * all other types are combined into arrays
+ * @param results array of action results
+ */
+const combineResults = (results) => {
+  const messageLimit = 5;
+  const downloadLimit = 5;
+  let numMsgs = 0,
+    suppressedMsgs = 0,
+    suppressedErrors = 0;
+  let numDownloads = 0,
+    suppressedDownloads = 0;
+  const result = { json: { success: "ok" } };
+  const initOrPush = (newElement, memberName) => {
+    if (result.json[memberName]) result.json[memberName].push(newElement);
+    else result.json[memberName] = [newElement];
+  };
+  const initOnce = (newElement, memberName) => {
+    if (typeof result[memberName] === "undefined")
+      result.json[memberName] = newElement;
+  };
+  for (const result of results) {
+    if (!result) continue;
+    if (result.reload_page) initOnce(result.reload_page, "reload_page");
+    if (result.goto) initOnce(result.goto, "goto");
+    if (result.popup) initOnce(result.popup, "popup");
+    if (result.notify) {
+      if (numMsgs < messageLimit) {
+        initOrPush(result.notify, "notify");
+        ++numMsgs;
+      } else ++suppressedMsgs;
+    }
+    if (result.error) {
+      if (numMsgs < messageLimit) {
+        initOrPush(result.error, "error");
+        ++numMsgs;
+      } else ++suppressedErrors;
+    }
+    if (result.download) {
+      if (numDownloads < downloadLimit) {
+        initOrPush(result.download, "download");
+        ++numDownloads;
+      } else suppressedDownloads++;
+    }
+    if (result.eval_js) initOrPush(result.eval_js, "eval_js");
+  }
+  let suppressedMsg = "";
+  if (suppressedMsgs > 0) suppressedMsg = `${suppressedMsgs} messages`;
+  if (suppressedErrors > 0)
+    suppressedMsg += `${suppressedMsg ? ", " : ""}${suppressedErrors} errors`;
+  if (suppressedMsg)
+    result.json.suppressed = `And '${suppressedMsg}' were not shown`;
+  return result;
+};
+
 module.exports = {
   /** @type {string} */
   name: "Filter",
@@ -530,26 +630,65 @@ module.exports = {
   queries: ({
     table_id,
     viewname,
-    configuration: { columns, default_state },
+    configuration: { columns },
     req,
     res,
     exttable_name,
   }) => ({
-    async actionQuery() {
-      const body = req.body;
+    async actionQuery(state, rndid) {
       const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+        (c) => c.type === "Action" && c.rndid === rndid && rndid
       );
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne(table_id);
       try {
-        const result = await run_action_column({
-          col,
-          req,
-          table,
-          res,
-          referrer: req.get("Referrer"),
-        });
-        return { json: { success: "ok", ...(result || {}) } };
+        if (col.action_row_variable === "each_matching_row") {
+          const fields = table.getFields();
+          const { joinFields, aggregations } = picked_fields_to_query(
+            columns,
+            fields
+          );
+          const where = stateFieldsToWhere({ fields, state, table });
+          const q = stateFieldsToQuery({
+            state,
+            prefix: "a.",
+            noSortAndPaging: true,
+          });
+          if (col.action_row_limit) q.limit = col.action_row_limit;
+          let rows = await table.getJoinedRows({
+            where,
+            joinFields,
+            aggregations,
+            ...q,
+            forPublic: !req.user || req.user.role_id === 100,
+            forUser: req.user,
+          });
+          const referrer = req.get("Referrer");
+          return combineResults(
+            await Promise.all(
+              rows.map(async (row) => {
+                return await run_action_column({
+                  col,
+                  req,
+                  table,
+                  res,
+                  referrer,
+                  row,
+                });
+              })
+            )
+          );
+        } else {
+          const row = col.action_row_variable === "state" ? { ...state } : null;
+          const result = await run_action_column({
+            col,
+            req,
+            table,
+            res,
+            referrer: req.get("Referrer"),
+            ...(row ? { row } : {}),
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        }
       } catch (e) {
         return { json: { error: e.message || e } };
       }

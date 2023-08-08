@@ -7,7 +7,13 @@
 import React, { useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
+import {
+  blockProps,
+  BlockSetting,
+  TextStyleRow,
+  setAPropGen,
+  buildOptions,
+} from "./utils";
 
 export /**
  * @param {object} props
@@ -121,13 +127,18 @@ const AggregationSettings = () => {
               onChange={setAProp("stat")}
               onBlur={setAProp("stat")}
             >
-              <option value={"Count"}>Count</option>
-              <option value={"CountUnique"}>CountUnique</option>
-              <option value={"Avg"}>Avg</option>
-              <option value={"Sum"}>Sum</option>
-              <option value={"Max"}>Max</option>
-              <option value={"Min"}>Min</option>
-              <option value={"Array_Agg"}>Array_Agg</option>
+              {buildOptions(
+                [
+                  "Count",
+                  "CountUnique",
+                  "Avg",
+                  "Sum",
+                  "Max",
+                  "Min",
+                  "Array_Agg",
+                ],
+                { valAttr: true }
+              )}
               {options.fields
                 .filter((f) => f.type.name === "Date")
                 .map((f) => (

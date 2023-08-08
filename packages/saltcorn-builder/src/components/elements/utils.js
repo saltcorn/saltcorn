@@ -519,16 +519,11 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const SelectUnits = ({ vert, autoable, ...props }) => (
-  <select {...props}>
-    <option>px</option>
-    <option>%</option>
-    <option>{vert ? "vh" : "vw"}</option>
-    <option>em</option>
-    <option>rem</option>
-    {autoable && <option>auto</option>}
-  </select>
-);
+const SelectUnits = ({ vert, autoable, ...props }) => {
+  const options = ["px", "%", vert ? "vh" : "vw", "em", "rem"];
+  if (autoable) options.push("auto");
+  return <select {...props}>{buildOptions(options)}</select>;
+};
 
 /**
  * @function
@@ -1426,4 +1421,39 @@ export const parseLegacyRelation = (type, rest, parentTbl) => {
 
 export const removeWhitespaces = (str) => {
   return str.replace(/\s/g, "X");
+};
+
+/**
+ *
+ * @param {string} string
+ * @returns {string}
+ */
+export const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+export const buildOptions = (
+  options,
+  { valAttr, keyAttr, capitalize } = {}
+) => {
+  return options.map((option) => (
+    <option
+      {...(valAttr ? { value: option } : {})}
+      {...(keyAttr ? { key: option } : {})}
+    >
+      {capitalize ? capitalizeFirstLetter(option) : option}
+    </option>
+  ));
+};
+
+export const buildBootstrapOptions = (values) => {
+  const mappings = {
+    sm: "small",
+    md: "medium",
+    lg: "large",
+    xl: "x-large",
+  };
+  return values.map((option) => (
+    <option value={option}>{mappings[option]}</option>
+  ));
 };

@@ -14,6 +14,7 @@ import {
   ConfigForm,
   setAPropGen,
   FormulaTooltip,
+  buildOptions,
 } from "./utils";
 
 import { RelationPicker } from "./RelationPicker";
@@ -206,9 +207,10 @@ const ViewSettings = () => {
               onChange={setAProp("state")}
               onBlur={setAProp("state")}
             >
-              <option value="shared">Shared</option>
-              <option value="fixed">Fixed</option>
-              <option value="local">Local</option>
+              {buildOptions(["shared", "fixed", "local"], {
+                valAttr: true,
+                capitalize: true,
+              })}
             </select>
           </div>
           {state === "fixed" &&

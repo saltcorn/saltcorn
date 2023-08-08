@@ -14,6 +14,7 @@ import {
   SettingsRow,
   reactifyStyles,
   SettingsSectionHeaderRow,
+  buildBootstrapOptions,
 } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
 import {
@@ -213,10 +214,8 @@ const ColumnsSettings = () => {
                     }}
                   >
                     <option disabled>Breakpoint</option>
-                    <option value="">None</option>
-                    <option value="sm">Small</option>
-                    <option value="md">Medium</option>
-                    <option value="lg">Large</option>
+                    <option value="">none</option>
+                    {buildBootstrapOptions(["sm", "md", "lg"])}
                   </select>
                 </td>
               </tr>

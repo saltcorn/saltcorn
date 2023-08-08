@@ -862,25 +862,33 @@ function press_store_button(clicked) {
 }
 
 function common_done(res, isWeb = true) {
-  if (res.notify) notifyAlert(res.notify);
-  if (res.error) notifyAlert({ type: "danger", text: res.error });
-  if (res.eval_js) eval(res.eval_js);
+  const handle = (element, fn) => {
+    if (Array.isArray(element)) for (const current of element) fn(current);
+    else fn(element);
+  };
+  if (res.notify) handle(res.notify, notifyAlert);
+  if (res.error)
+    handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
+  if (res.eval_js) handle(res.eval_js, eval);
+
   if (res.reload_page) {
     (isWeb ? location : parent.location).reload(); //TODO notify to cookie if reload or goto
   }
   if (res.download) {
-    const dataurl = `data:${
-      res.download.mimetype || "application/octet-stream"
-    };base64,${res.download.blob}`;
-    fetch(dataurl)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const link = document.createElement("a");
-        link.href = window.URL.createObjectURL(blob);
-        if (res.download.filename) link.download = res.download.filename;
-        else link.target = "_blank";
-        link.click();
-      });
+    handle(res.download, (download) => {
+      const dataurl = `data:${
+        download.mimetype || "application/octet-stream"
+      };base64,${download.blob}`;
+      fetch(dataurl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          if (download.filename) link.download = download.filename;
+          else link.target = "_blank";
+          link.click();
+        });
+    });
   }
   if (res.goto && !isWeb)
     // TODO ch
@@ -904,6 +912,12 @@ function common_done(res, isWeb = true) {
   }
   if (res.popup) {
     ajax_modal(res.popup);
+  }
+  if (res.suppressed) {
+    notifyAlert({
+      type: "warning",
+      text: res.suppressed,
+    });
   }
 }
 
