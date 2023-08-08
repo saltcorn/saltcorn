@@ -768,6 +768,7 @@ const available_languages = {
   zh: "中文",
   pl: "Polski",
   uk: "Українська",
+  si: "Sinhala",
 };
 /**
  * Get Config variable value by key (contract)

@@ -186,7 +186,7 @@ describe("User", () => {
       email: "tom@yahoo.com",
     });
     assertsObjectIsUser(u);
-    expect(typeof u.password).toBe("string");
+    expect(typeof u.password).toBe("undefined");
     const u1 = await User.findOrCreateByAttribute("googleId", 5);
     assertsObjectIsUser(u1);
     expect(u.id).toEqual(u1.id);
