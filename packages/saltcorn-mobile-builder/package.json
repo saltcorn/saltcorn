@@ -6,6 +6,7 @@
   "version": "0.8.7",
   "author": "Christian Hugo",
   "scripts": {
+    "test": "jest ./tests/ --runInBand",
     "build": "webpack --mode development",
     "postinstall": "node ./docker/post-installer.js"
   },
@@ -26,7 +27,22 @@
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
-    "@types/xml2js": "0.4.11"
+    "@types/xml2js": "0.4.11",
+    "jest": "^27.1.0",
+    "ts-jest": "^27.1.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "modulePathIgnorePatterns": [
+      ".*\\.js$"
+    ],
+    "moduleNameMapper": {
+      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1"
+    }
   },
   "main": "./dist/index.js",
   "exports": {

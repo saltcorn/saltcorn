@@ -15,6 +15,7 @@ import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
+import type { PluginLayout } from "@saltcorn/types/base_types";
 
 /**
  * copy files from 'server/public' into the www folder (with a version_tag prefix)
@@ -251,8 +252,7 @@ export async function prepareSplashPage(
       }
     );
     const sbadmin2 = state.plugins["sbadmin2"];
-    // @ts-ignore TODO CH fix base_types
-    const html = sbadmin2.layout.wrap({
+    const html = (<PluginLayout>sbadmin2.layout).wrap({
       title: page.title,
       body: contents.above ? contents : { above: [contents] },
       alerts: [],

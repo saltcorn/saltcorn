@@ -3,12 +3,12 @@
  * @module components/elements/Action
  * @subcategory components / elements
  */
+/*global notifyAlert*/
 
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
-  blockProps,
   BlockSetting,
   MinRoleSettingRow,
   OrFormula,
@@ -17,6 +17,7 @@ import {
   ButtonOrLinkSettingsRows,
   DynamicFontAwesomeIcon,
   setAPropGen,
+  buildOptions,
 } from "./utils";
 
 export /**
@@ -89,6 +90,8 @@ export /**
 const ActionSettings = () => {
   const node = useNode((node) => ({
     name: node.data.props.name,
+    action_row_variable: node.data.props.action_row_variable,
+    action_row_limit: node.data.props.action_row_limit,
     block: node.data.props.block,
     minRole: node.data.props.minRole,
     confirm: node.data.props.confirm,
@@ -105,6 +108,8 @@ const ActionSettings = () => {
   const {
     actions: { setProp },
     name,
+    action_row_variable,
+    action_row_limit,
     block,
     minRole,
     isFormula,
@@ -117,7 +122,6 @@ const ActionSettings = () => {
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
   const setAProp = setAPropGen(setProp);
-
   return (
     <div>
       <table className="w-100">
@@ -133,7 +137,24 @@ const ActionSettings = () => {
                 onChange={(e) => {
                   if (!e.target) return;
                   const value = e.target.value;
-                  setProp((prop) => (prop.name = value));
+                  setProp((prop) => {
+                    prop.name = value;
+                    if (options.mode === "filter" && value !== "Clear") {
+                      const rowRequired =
+                        options.actionConstraints &&
+                        options.actionConstraints[value]?.requireRow;
+                      if (!action_row_variable) {
+                        prop.action_row_variable = rowRequired
+                          ? "state"
+                          : "none";
+                      } else if (
+                        rowRequired &&
+                        action_row_variable === "none"
+                      ) {
+                        prop.action_row_variable = "state";
+                      }
+                    }
+                  });
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
               >
@@ -145,6 +166,55 @@ const ActionSettings = () => {
               </select>
             </td>
           </tr>
+          {name !== "Clear" && options.mode === "filter" ? (
+            <tr>
+              <td>
+                <label>Row variable</label>
+              </td>
+              <td>
+                <select
+                  value={action_row_variable}
+                  className="form-control form-select"
+                  onChange={(e) => {
+                    if (!e.target) return;
+                    const value = e.target.value;
+                    const rowRequired =
+                      options.actionConstraints &&
+                      options.actionConstraints[name]?.requireRow;
+                    if (value === "none" && rowRequired) {
+                      notifyAlert({
+                        type: "warning",
+                        text: `${name} requires a row, none is not possible`,
+                      });
+                    } else
+                      setProp((prop) => (prop.action_row_variable = value));
+                    setInitialConfig(setProp, value, getCfgFields(value));
+                  }}
+                >
+                  {buildOptions(["none", "state", "each_matching_row"], {
+                    valAttr: true,
+                    keyAttr: true,
+                  })}
+                </select>
+              </td>
+            </tr>
+          ) : null}
+          {action_row_variable === "each_matching_row" ? (
+            <tr>
+              <td>
+                <label>Rows limit</label>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  className="form-control"
+                  min="0"
+                  value={action_row_limit}
+                  onChange={setAProp("action_row_limit")}
+                />
+              </td>
+            </tr>
+          ) : null}
           {action_style !== "on_page_load" ? (
             <tr>
               <td colSpan="2">

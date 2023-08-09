@@ -7,6 +7,7 @@
 const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
+const Trigger = require("@saltcorn/data/models/trigger");
 const { getState } = require("@saltcorn/data/db/state");
 const {
   error_catcher,
@@ -40,18 +41,21 @@ router.get(
     const { pagename } = req.params;
     const state = getState();
     state.log(3, `Route /page/${pagename} user=${req.user?.id}`);
-    const tic = state.logLevel >= 5 ? new Date() : null;
+    const tic = new Date();
 
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const db_page = await Page.findOne({ name: pagename });
     if (db_page && role <= db_page.min_role) {
       const contents = await db_page.run(req.query, { res, req });
       const title = scan_for_page_title(contents, db_page.title);
-      if (tic) {
-        const tock = new Date();
-        const ms = tock.getTime() - tic.getTime();
-        state.log(5, `Page ${pagename} rendered in ${ms} ms`);
-      }
+      const tock = new Date();
+      const ms = tock.getTime() - tic.getTime();
+      Trigger.emitEvent("PageLoad", null, req.user, {
+        text: req.__("Page '%s' was loaded", pagename),
+        type: "page",
+        name: pagename,
+        render_time: ms,
+      });
       res.sendWrap(
         {
           title,

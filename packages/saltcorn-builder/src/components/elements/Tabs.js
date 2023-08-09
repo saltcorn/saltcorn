@@ -8,7 +8,7 @@ import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
-import { setAPropGen } from "./utils";
+import { setAPropGen, buildOptions } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -23,13 +23,25 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Tabs = ({ contents, titles, tabsStyle, ntabs, independent, field }) => {
+const Tabs = ({
+  contents,
+  titles,
+  tabsStyle,
+  ntabs,
+  independent,
+  startClosed,
+  field,
+}) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  const [showTab, setShowTab] = useState(0);
-  const [showTabs, setShowTabs] = useState([true]);
+  const [showTab, setShowTab] = useState(
+    tabsStyle === "Accordion" && startClosed ? false : 0
+  );
+  const [showTabs, setShowTabs] = useState(
+    tabsStyle === "Accordion" && startClosed ? [] : [true]
+  );
   if (tabsStyle === "Accordion")
     return (
       <div className="accordion">
@@ -159,6 +171,7 @@ const TabsSettings = () => {
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
     independent: node.data.props.independent,
+    startClosed: node.data.props.startClosed,
     deeplink: node.data.props.deeplink,
     titles: node.data.props.titles,
     field: node.data.props.field,
@@ -169,6 +182,7 @@ const TabsSettings = () => {
     tabsStyle,
     deeplink,
     independent,
+    startClosed,
     ntabs,
     field,
   } = node;
@@ -196,6 +210,9 @@ const TabsSettings = () => {
         });
   }, [field]);
   const setAProp = setAPropGen(setProp);
+  const styleOptions = ["Tabs", "Pills", "Accordion"];
+  if (["show", "edit"].includes(options.mode))
+    styleOptions.push("Value switch");
 
   return (
     <table className="w-100" accordiontitle="Placement">
@@ -210,12 +227,7 @@ const TabsSettings = () => {
               className="form-control form-select"
               onChange={setAProp("tabsStyle")}
             >
-              <option>Tabs</option>
-              <option>Pills</option>
-              <option>Accordion</option>
-              {["show", "edit"].includes(options.mode) && (
-                <option>Value switch</option>
-              )}
+              {buildOptions(styleOptions)}
             </select>
           </td>
         </tr>
@@ -309,6 +321,24 @@ const TabsSettings = () => {
                 </td>
               </tr>
             )}
+            {tabsStyle === "Accordion" ? (
+              <tr>
+                <td colSpan="2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      name="block"
+                      type="checkbox"
+                      checked={startClosed}
+                      onChange={setAProp("startClosed", { checked: true })}
+                    />
+                    <label className="form-check-label">
+                      Inititally closed
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            ) : null}
           </Fragment>
         )}
       </tbody>
@@ -325,6 +355,7 @@ Tabs.craft = {
     ntabs: 2,
     tabsStyle: "Tabs",
     independent: false,
+    startClosed: false,
     deeplink: true,
   },
   displayName: "Tabs",

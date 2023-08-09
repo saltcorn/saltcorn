@@ -231,6 +231,23 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
+  it("should get joined rows with unique count aggregations", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        ntemps: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "CountUnique",
+        },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].ntemps)).toBe(2);
+  });
   it("should get fkey aggregations", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);

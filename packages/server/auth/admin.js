@@ -55,9 +55,9 @@ module.exports = router;
  */
 const getUserFields = async (req) => {
   const userTable = Table.findOne({ name: "users" });
-  const userFields = (userTable.getFields()).filter(
-    (f) => !f.calculated && f.name !== "id"
-  );
+  const userFields = userTable
+    .getFields()
+    .filter((f) => !f.calculated && f.name !== "id");
   //console.log("userFields:",userFields);
   const iterForm = async (cfgField) => {
     const signup_form_name = getState().getConfig(cfgField, "");
@@ -242,6 +242,22 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
+    const auth_methods = getState().auth_methods;
+    const userBadges = (user) =>
+      span(
+        !!user.disabled &&
+          span({ class: "badge bg-danger me-1" }, req.__("Disabled")),
+        !!user.verified_on &&
+          span({ class: "badge bg-success me-1" }, req.__("Verified")),
+        Object.entries(auth_methods)
+          .filter(
+            ([k, v]) =>
+              v.setsUserAttribute && user._attributes[v.setsUserAttribute]
+          )
+          .map(([k, v]) =>
+            span({ class: "badge bg-secondary me-1" }, v.label || k)
+          )
+      );
     const users = await User.find({}, { orderBy: "id" });
     const roles = await User.get_roles();
     let roleMap = {};
@@ -278,19 +294,7 @@ router.get(
               },
               {
                 label: "",
-                key: (r) =>
-                  r.disabled
-                    ? span({ class: "badge bg-danger" }, req.__("Disabled"))
-                    : "",
-              },
-              {
-                label: req.__("Verified"),
-                key: (r) =>
-                  r.verified_on
-                    ? i({
-                        class: "fas fa-check-circle text-success",
-                      })
-                    : "",
+                key: userBadges,
               },
               { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
               {

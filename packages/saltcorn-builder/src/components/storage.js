@@ -158,6 +158,8 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           key={ix}
           name={segment.action_name}
           rndid={segment.rndid || "not_assigned"}
+          action_row_variable={segment.action_row_variable || ""}
+          action_row_limit={segment.action_row_limit || ""}
           action_label={segment.action_label || ""}
           action_style={segment.action_style || "btn-primary"}
           action_size={segment.action_size || ""}
@@ -244,6 +246,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           titles={segment.titles}
           ntabs={segment.ntabs}
           independent={segment.independent}
+          startClosed={segment.startClosed}
           deeplink={segment.deeplink}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
@@ -502,6 +505,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         tabsStyle: node.props.tabsStyle,
         field: node.props.field,
         independent: node.props.independent,
+        startClosed: node.props.startClosed,
         deeplink: node.props.deeplink,
         ntabs: node.props.ntabs,
       };
@@ -524,6 +528,12 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       columns.push({
         type: "Action",
         action_name: node.props.name,
+        ...(node.props.name !== "Clear" && node.props.action_row_variable
+          ? {
+              action_row_variable: node.props.action_row_variable,
+              action_row_limit: node.props.action_row_limit,
+            }
+          : {}),
         action_label: node.props.action_label,
         action_style: node.props.action_style,
         action_size: node.props.action_size,
@@ -543,6 +553,12 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         configuration: node.props.configuration,
         confirm: node.props.confirm,
         action_name: node.props.name,
+        ...(node.props.name !== "Clear" && node.props.action_row_variable
+          ? {
+              action_row_variable: node.props.action_row_variable,
+              action_row_limit: node.props.action_row_limit,
+            }
+          : {}),
         action_label: node.props.action_label,
         action_style: node.props.action_style,
         action_size: node.props.action_size,

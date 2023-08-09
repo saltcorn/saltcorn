@@ -40,6 +40,8 @@ export type FieldLike = FieldLikeWithInputType | FieldLikeWithType;
 
 export type Header = {
   script?: string;
+  css?: string;
+  headerTag?: string;
 };
 
 type MenuItem = {
@@ -90,6 +92,8 @@ export type PluginWrapArg = {
     msg: string | string[];
   }>;
   headers: Array<Header>;
+  bodyClass: string;
+  role?: number;
 };
 
 type PluginAuthwrapArg = {
@@ -113,7 +117,7 @@ type PluginAuthwrapArg = {
   };
 };
 
-export type PluginWrap = (arg0: PluginAuthwrapArg) => string;
+export type PluginWrap = (arg0: PluginWrapArg) => string;
 
 export type PluginLayout = {
   wrap: PluginWrap;
@@ -290,7 +294,7 @@ export type Plugin = {
   plugin_name?: string;
   headers: MaybeCfgFun<Array<Header>>;
   functions: MaybeCfgFun<PluginFunction | ((arg1: any) => any)>;
-  layout: MaybeCfgFun<PluginLayout>;
+  layout: MaybeCfgFun<PluginLayout> | PluginLayout;
   types: MaybeCfgFun<Array<PluginType>>;
   viewtemplates: MaybeCfgFun<Array<ViewTemplate>>;
   configuration_workflow?: ([]) => AbstractWorkflow;

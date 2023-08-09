@@ -150,6 +150,7 @@ class User {
     uo: any = {}
   ): Promise<User | false | ErrorMessage> {
     const u = await User.findOne({ _attributes: { json: [k, v] } });
+    if (u && u.disabled) return false;
     if (u) return u;
     else {
       const { getState } = require("../db/state");
@@ -166,9 +167,7 @@ class User {
         const pseudoUser = { ...uo, _attributes: { [k]: v } };
         return { ...pseudoUser, session_object: pseudoUser };
       } else {
-        const extra: GenObj = {};
-        if (!uo.password) extra.password = User.generate_password();
-        return await User.create({ ...uo, ...extra, _attributes: { [k]: v } });
+        return await User.create({ ...uo, _attributes: { [k]: v } });
       }
     }
   }
@@ -180,14 +179,15 @@ class User {
    */
   static async create(uo: GenObj): Promise<User | ErrorMessage> {
     const { email, password, passwordRepeat, role_id, ...rest } = uo;
+    const hasPw = typeof password !== "undefined";
     const u = new User({ email, password, role_id });
-    if (User.unacceptable_password_reason(u.password))
+    if (hasPw && User.unacceptable_password_reason(u.password))
       return {
         error:
           "Password not accepted: " +
           User.unacceptable_password_reason(u.password),
       };
-    const hashpw = await User.hashPassword(u.password);
+    const hashpw = hasPw ? await User.hashPassword(u.password) : "";
     const ex = await User.findOne({ email: u.email });
     if (ex) return { error: `User with this email already exists` };
     u.id = await db.insert("users", {

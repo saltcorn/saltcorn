@@ -360,6 +360,7 @@ class Trigger implements AbstractTrigger {
       "Often",
       "API call",
       "Never",
+      "PageLoad",
       "Login",
       "LoginFailed",
       "Error",

@@ -195,8 +195,11 @@ function ajax_done(res) {
   common_done(res);
 }
 
-function view_post(viewname, route, data, onDone) {
-  $.ajax("/view/" + viewname + "/" + route, {
+function view_post(viewname, route, data, onDone, sendState) {
+  const query = sendState
+    ? `?${new URL(get_current_state_url()).searchParams.toString()}`
+    : "";
+  $.ajax("/view/" + viewname + "/" + route + query, {
     dataType: "json",
     type: "POST",
     headers: {
@@ -250,12 +253,15 @@ function close_saltcorn_modal() {
   var myModalEl = document.getElementById("scmodal");
   if (!myModalEl) return;
   var modal = bootstrap.Modal.getInstance(myModalEl);
-  if (modal) modal.dispose();
+  if (modal) {
+    if (modal.hide) modal.hide();
+    if (modal.dispose) modal.dispose();
+  }
 }
 
 function ensure_modal_exists_and_closed() {
   if ($("#scmodal").length === 0) {
-    $("body").append(`<div id="scmodal", class="modal">
+    $("body").append(`<div id="scmodal" class="modal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -264,7 +270,7 @@ function ensure_modal_exists_and_closed() {
             <span class="sc-ajax-indicator-wrapper">
               <span class="sc-ajax-indicator ms-2" style="display: none;"><i class="fas fa-save"></i></span>
             </span>
-            <a class="sc-modal-linkout ms-2" href="" target="_blank"><i class="fas fa-expand-alt"></i></a>
+            <a class="sc-modal-linkout ms-2" onclick="close_saltcorn_modal()" href="" target="_blank"><i class="fas fa-expand-alt"></i></a>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
             </button>
           </div>

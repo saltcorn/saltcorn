@@ -1211,5 +1211,10 @@
 	"Link out?": "Link out?",
 	"Show a link to open popup contents in new tab": "Show a link to open popup contents in new tab",
 	"Model %s deleted": "Model %s deleted",
-	"Model instance %s deleted": "Model instance %s deleted"
+	"Model instance %s deleted": "Model instance %s deleted",
+	"Action information saved": "Action information saved",
+	"JavaScript code:": "JavaScript code:",
+	"code here": "code here",
+	"Page '%s' was loaded": "Page '%s' was loaded",
+	"View '%s' was loaded": "View '%s' was loaded"
 }

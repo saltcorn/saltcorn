@@ -7,23 +7,31 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "debian/bullseye64"
+  config.vm.box = "generic/debian11"
 
   config.ssh.forward_agent = true
 
   config.ssh.insert_key = false
 
+  config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/package.json", destination: "$HOME/tests/package.json"
+  config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/ui.test.js", destination: "$HOME/tests/ui.test.js"
 
-
-  config.vm.provider "virtualbox" do |vb|  
+  config.vm.provider "libvirt" do |vb|  
     # Customize the amount of memory on the VM:
-    vb.memory = "4096"
+    vb.memory = "8192"
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+    set -e
+    sudo DEBIAN_FRONTEND=noninteractive apt update -yq
+    sudo DEBIAN_FRONTEND=noninteractive apt upgrade -qqy
+
+    sudo apt-get -y install libpulse0 pulseaudio libxcursor-dev libxdamage-dev
+    sudo apt-get -y install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+
     wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
-    sudo -iu vagrant npx -y saltcorn-install -y
+    sudo -iu vagrant npx -y saltcorn-install -s -y
 
     apt update && apt install -y wget unzip openjdk-11-jdk openjdk-11-demo openjdk-11-doc openjdk-11-jre-headless openjdk-11-source
     
@@ -31,11 +39,15 @@ Vagrant.configure("2") do |config|
     sudo -u saltcorn wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
     sudo -u saltcorn unzip commandlinetools-linux-8512546_latest.zip
     sudo -u saltcorn mkdir /home/saltcorn/android_sdk
-    yes | sudo -u saltcorn cmdline-tools/bin/sdkmanager --sdk_root=/home/saltcorn/android_sdk --install "cmdline-tools;latest"
-    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/sdkmanager --list
-    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-11"
-    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+    yes | sudo -u saltcorn cmdline-tools/bin/sdkmanager --sdk_root=/home/saltcorn/android_sdk --install "cmdline-tools;10.0"
+    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/10.0/bin/sdkmanager --list
+    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/10.0/bin/sdkmanager "platforms;android-11"
+    sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/10.0/bin/sdkmanager "build-tools;30.0.3"
 
+    sudo adduser saltcorn kvm
+    yes | sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/10.0/bin/sdkmanager "system-images;android-32;google_apis;x86_64"
+    echo "no" | sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/10.0/bin/avdmanager create avd --force -n test -k "system-images;android-32;google_apis;x86_64" --device "pixel_xl"
+    
     npm install -g npm@9.2.0
 
     sudo -u saltcorn wget -q https://services.gradle.org/distributions/gradle-7.1.1-all.zip
@@ -47,8 +59,58 @@ Vagrant.configure("2") do |config|
     export GRADLE_HOME=/opt/gradle-7.1.1
     export PATH=$PATH:/opt/gradle-7.1.1/bin
     export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/home/saltcorn/gradle-7.1.1-all.zip
+    export SALTCORN_NWORKERS=1
 
+    sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn create-user -e user@foo.com -r admin -p foobarbarfoo
     sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn install-pack -n "Address book"
-    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -p "android" -s "http://10.0.2.2" -b "/home/saltcorn/build_dir" -e "EditPerson"
+
+    echo "build apk"
+    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -c /home/saltcorn -u "user@foo.com" -p "android" -s "http://10.0.2.2:3000" -b "/home/saltcorn/build_dir" -e "EditMeeting"
+    sudo --preserve-env=SALTCORN_NWORKERS -u saltcorn /home/saltcorn/.local/bin/saltcorn serve -p 3000 &
+    set +e
+
+    echo "start emulator"
+    sudo -u saltcorn /home/saltcorn/android_sdk/emulator/emulator -avd test -memory 3072 -no-audio -no-window -no-boot-anim -accel on -gpu auto -no-snapshot-load &
+    sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb wait-for-device
+    sleep 500
+
+    echo "install apk"
+    sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb -s emulator-5554 install /home/saltcorn/app-debug.apk
+    sleep 20
+    
+    echo "start app"
+    START_TRY=0
+    sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell am start -n saltcorn.mobile.app/.MainActivity
+    LINES=$(sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell ps | grep saltcorn.mobile.app | wc -l)
+    while [ $LINES -eq 0 ] && [ $START_TRY -lt 50 ]; do
+      let START_TRY++
+      sleep 5
+      echo "re-try start app"
+      sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell am start -n saltcorn.mobile.app/.MainActivity
+      LINES=$(sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell ps | grep saltcorn.mobile.app | wc -l)
+    done
+
+    if [ $LINES -eq 1 ]; then
+      echo "success"
+    else
+      echo "error: Unable to start the app"
+      exit 1
+    fi
+
+    echo "prepare appium"
+    cd /home/saltcorn
+    sudo npm install -g appium@2.0.0-beta.40
+    sudo npm install -g appium-chromedriver
+    appium driver install uiautomator2
+    appium --allow-insecure chromedriver_autodownload &
+    sleep 10
+
+    echo "run tests"
+    cd /home/vagrant/tests
+    npm install
+    npm run test
+    
+    set -e
+    npm run test
   SHELL
 end

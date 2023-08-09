@@ -445,7 +445,7 @@ router.post(
         req.flash("success", req.__("Email with password reset link sent"));
         res.redirect("/auth/login");
       };
-      if (!u) {
+      if (!u || !u.password) {
         respond();
         return;
       }
@@ -1339,12 +1339,16 @@ const userSettings = async ({ req, res, pwform, user }) => {
           )
         ),
       },
-      {
-        type: "card",
-        title: req.__("Change password"),
-        contents: renderForm(pwform, req.csrfToken()),
-      },
-      ...(show2FAPolicy
+      ...(user.password
+        ? [
+            {
+              type: "card",
+              title: req.__("Change password"),
+              contents: renderForm(pwform, req.csrfToken()),
+            },
+          ]
+        : []),
+      ...(user.password && show2FAPolicy
         ? [
             {
               type: "card",
@@ -1560,7 +1564,7 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
-    if (req.body.new_password) {
+    if (req.body.new_password && user.password) {
       const pwform = changPwForm(req);
 
       pwform.fields[0].validator = (oldpw) => {
