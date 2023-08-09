@@ -107,7 +107,7 @@ class Crash {
     };
     const { getState } = require("../db/state");
 
-    getState().log(1, `ERROR: ${err.stack}`);
+    getState().log(1, `ERROR: ${err.stack || err.message}`);
     await db.runWithTenant(db.connectObj.default_schema, async () => {
       await db.insert("_sc_errors", payload);
     });
