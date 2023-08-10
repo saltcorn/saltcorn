@@ -1249,11 +1249,10 @@ class Table implements AbstractTable {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
       if (db.isSQLite) {
-        const m = msg.match(
-          /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/
+        fieldnm = msg.replace(
+          `SQLITE_CONSTRAINT: UNIQUE constraint failed: ${this.name}.`,
+          ""
         );
-        console.log(m);
-        if (m) fieldnm = m[2];
       } else {
         const m = msg.match(
           /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/
@@ -1265,12 +1264,23 @@ class Table implements AbstractTable {
         if (field?.attributes?.unique_error_msg)
           return field?.attributes?.unique_error_msg;
         else {
-          const tc_unique = this.constraints.find(
-            (c) =>
-              c.type === "Unique" &&
-              c.configuration.errormsg &&
-              c.configuration.fields.join("_") === fieldnm
-          );
+          const tc_unique = this.constraints.find((c) => {
+            if (c.type !== "Unique") return false;
+            let conNm = "";
+            if (db.isSQLite) {
+              // SQLITE_CONSTRAINT: UNIQUE constraint failed: books.author, books.pages
+              // first table name stripped by replace
+              let [field1, ...rest_fields] = c.configuration.fields;
+              conNm = [
+                field1,
+                ...rest_fields.map((fnm: string) => `${this.name}.${fnm}`),
+              ].join(", ");
+            } else {
+              conNm = c.configuration.fields.join("_");
+            }
+            return c.configuration.errormsg && conNm === fieldnm;
+          });
+
           if (tc_unique) return tc_unique.configuration.errormsg;
           return `Duplicate value for unique field: ${field?.label || fieldnm}`;
         }

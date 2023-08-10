@@ -981,7 +981,7 @@ Pencil, 0.5,2, t`;
 });
 
 describe("Table unique constraint", () => {
-  it("should create table", async () => {
+  it("should create table with unique constraint", async () => {
     //db.set_sql_logging()
     const table = await Table.create("TableWithUniques");
     const field = await Field.create({
