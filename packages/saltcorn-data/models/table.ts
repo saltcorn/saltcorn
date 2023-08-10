@@ -1272,9 +1272,7 @@ class Table implements AbstractTable {
               c.configuration.fields.join("_") === fieldnm
           );
           if (tc_unique) return tc_unique.configuration.errormsg;
-          return `Duplicate value for unique field: ${
-            field?.label || fieldnm
-          }"`;
+          return `Duplicate value for unique field: ${field?.label || fieldnm}`;
         }
       }
     }
