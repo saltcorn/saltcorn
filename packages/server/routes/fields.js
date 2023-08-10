@@ -140,6 +140,13 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         showIf: { calculated: false },
         type: "Bool",
       }),
+      new Field({
+        label: req.__("Error message"),
+        name: "unique_error_msg",
+        sublabel: req.__("Error shown to user if violated"),
+        showIf: { calculated: false, is_unique: true },
+        type: "String",
+      }),
 
       new Field({
         label: req.__("Stored"),
@@ -199,6 +206,7 @@ const fieldFlow = (req) =>
       attributes.include_fts = context.include_fts;
       attributes.on_delete_cascade = context.on_delete_cascade;
       attributes.on_delete = context.on_delete;
+      attributes.unique_error_msg = context.unique_error_msg;
       const {
         table_id,
         name,
@@ -528,10 +536,12 @@ const fieldFlow = (req) =>
                 attributes: {
                   explainers: {
                     Fail: req.__("Prevent any deletion of parent rows"),
-                    Cascade:
-                        req.__("If the parent row is deleted, automatically delete the child rows."),
-                    "Set null":
-                        req.__("If the parent row is deleted, set key fields on child rows to null"),
+                    Cascade: req.__(
+                      "If the parent row is deleted, automatically delete the child rows."
+                    ),
+                    "Set null": req.__(
+                      "If the parent row is deleted, set key fields on child rows to null"
+                    ),
                   },
                 },
                 sublabel: req.__(
