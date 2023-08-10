@@ -2019,6 +2019,8 @@ router.post(
     }
     if (form.values.tables) {
       await db.deleteWhere("_sc_table_constraints");
+      await db.deleteWhere("_sc_model_instances");
+      await db.deleteWhere("_sc_models");
 
       const tables = await Table.find();
 

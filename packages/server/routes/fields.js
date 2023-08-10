@@ -206,10 +206,18 @@ const fieldFlow = (req) =>
         required,
         is_unique,
         calculated,
-        expression,
         stored,
         description,
       } = context;
+      let expression = context.expression;
+      if (context.expression_type === "Model prediction") {
+        const { model, model_instance, model_output } = context;
+        expression = `${model}(${
+          model_instance && model_instance !== "Default"
+            ? `"${model_instance}",`
+            : ""
+        }row).${model_output}`;
+      }
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
         table_id,
@@ -360,9 +368,72 @@ const fieldFlow = (req) =>
         form: async (context) => {
           const table = Table.findOne({ id: context.table_id });
           const fields = table.getFields();
+          const models = await table.get_models();
+          const instance_options = {};
+          const output_options = {};
+          for (const model of models) {
+            instance_options[model.name] = ["Default"];
+            const instances = await model.get_instances();
+            instance_options[model.name].push(...instances.map((i) => i.name));
+
+            const outputs = await applyAsync(
+              model.templateObj.prediction_outputs || [],
+              { table, configuration: model.configuration }
+            );
+            output_options[model.name] = outputs.map((o) => o.name);
+          }
           return new Form({
-            blurb: expressionBlurb(context.type, context.stored, fields, req),
             fields: [
+              {
+                name: "expression_type",
+                label: "Formula type",
+                input_type: "select",
+                options: [
+                  "JavaScript expression",
+                  ...(models.length ? ["Model prediction"] : []),
+                ],
+              },
+              {
+                name: "model",
+                label: req.__("Model"),
+                input_type: "select",
+                options: models.map((m) => m.name),
+                showIf: { expression_type: "Model prediction" },
+              },
+              {
+                name: "model_instance",
+                label: req.__("Model instance"),
+                type: "String",
+                required: true,
+                attributes: {
+                  calcOptions: ["model", instance_options],
+                },
+                showIf: { expression_type: "Model prediction" },
+              },
+              {
+                name: "model_output",
+                label: req.__("Prediction output"),
+                type: "String",
+                required: true,
+                attributes: {
+                  calcOptions: ["model", output_options],
+                },
+                showIf: { expression_type: "Model prediction" },
+              },
+              {
+                input_type: "custom_html",
+                name: "expr_blurb",
+                label: " ",
+                showIf: { expression_type: "JavaScript expression" },
+                attributes: {
+                  html: expressionBlurb(
+                    context.type,
+                    context.stored,
+                    fields,
+                    req
+                  ),
+                },
+              },
               new Field({
                 name: "expression",
                 label: req.__("Formula"),
@@ -370,10 +441,12 @@ const fieldFlow = (req) =>
                 type: "String",
                 class: "validate-expression",
                 validator: expressionValidator,
+                showIf: { expression_type: "JavaScript expression" },
               }),
               new Field({
                 name: "test_btn",
                 label: req.__("Test"),
+                showIf: { expression_type: "JavaScript expression" },
                 // todo sublabel
                 input_type: "custom_html",
                 attributes: {
@@ -720,6 +793,7 @@ router.post(
         } is: <pre>${JSON.stringify(result)}</pre>`
       );
     } catch (e) {
+      console.error(e);
       return res.send(
         `Error on running on row with id=${rows[0].id}: ${e.message}`
       );

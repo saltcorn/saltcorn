@@ -663,11 +663,10 @@ module.exports = {
      */
     run: async ({ row, configuration: { row_expr, table }, user, ...rest }) => {
       const f = get_async_expression_function(row_expr, [], {
-        row: row || {},
         user,
         console,
       });
-      const calcrow = await f({});
+      const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: table });
       const res = await table_for_insert.tryInsertRow(calcrow, user);
       if (res.error) return res;
@@ -702,7 +701,7 @@ module.exports = {
         row: row || {},
         user,
       });
-      const calcrow = await f(row);
+      const calcrow = await f(row, user);
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;

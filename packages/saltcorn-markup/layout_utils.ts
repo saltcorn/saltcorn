@@ -424,7 +424,7 @@ const workflowBreadcrumbItem = ({
  * @param {object[]} crumbs
  * @returns {string}
  */
-const breadcrumbs = (crumbs: any[], right: any): string =>
+const breadcrumbs = (crumbs: any[], right: any, after: any): string =>
   nav(
     { "aria-label": "breadcrumb" },
     ol(
@@ -434,6 +434,7 @@ const breadcrumbs = (crumbs: any[], right: any): string =>
           ? workflowBreadcrumbItem(c)
           : standardBreadcrumbItem(crumbs.length)(c, ix)
       ),
+      after ? li({ class: "ms-3" }, after) : "",
       right ? li({ class: "ms-auto" }, right) : ""
     )
   );

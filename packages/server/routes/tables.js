@@ -11,6 +11,7 @@ const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
 const {
   mkTable,
@@ -811,6 +812,33 @@ router.get(
           ),
       };
     }
+    const models = await Model.find({ table_id: table.id });
+    const modelCard = div(
+      mkTable(
+        [
+          {
+            label: req.__("Name"),
+            key: (r) => link(`/models/show/${r.id}`, r.name),
+          },
+          { label: req.__("Pattern"), key: "modelpattern" },
+          {
+            label: req.__("Delete"),
+            key: (r) =>
+              post_delete_btn(
+                `/models/delete/${encodeURIComponent(r.id)}`,
+                req
+              ),
+          },
+        ],
+        models
+      ),
+      a(
+        { href: `/models/new/${table.id}`, class: "btn btn-primary" },
+        i({ class: "fas fa-plus-square me-1" }),
+        req.__("Create model")
+      )
+    );
+
     // Table Data card
     const dataCard = div(
       { class: "d-flex text-center" },
@@ -970,6 +998,15 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
+        ...(Model.has_templates
+          ? [
+              {
+                type: "card",
+                title: req.__("Models"),
+                contents: modelCard,
+              },
+            ]
+          : []),
       ],
     });
   })
@@ -1846,7 +1883,7 @@ const get_provider_workflow = (table, req) => {
 
     return {
       redirect: `/table/${table.id}`,
-      flash: ["success", `Table ${this.name || ""} saved`],
+      flash: ["success", `Table ${table.name || ""} saved`],
     };
   };
   return workflow;
