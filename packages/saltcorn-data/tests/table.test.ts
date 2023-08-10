@@ -1016,7 +1016,25 @@ describe("Table unique constraint", () => {
     expect(field2.is_unique).toBe(true);
     expect(field1.is_unique).toBe(true);
   });
+  it("should show unique_error_msg", async () => {
+    //db.set_sql_logging()
+    const table = await Table.create("TableWithUniques1");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      is_unique: true,
+      attributes: { unique_error_msg: "No same name twice" },
+    });
+    await table.insertRow({ name: "Bill" });
+    const ted_id = await table.insertRow({ name: "Ted" });
+    const ins_res = await table.tryInsertRow({ name: "Bill" });
+    expect(ins_res).toEqual({
+      error: "No same name twice",
+    });
+  });
 });
+
 describe("Table not null constraint", () => {
   it("should create table", async () => {
     //db.set_sql_logging()

@@ -1053,7 +1053,7 @@ class Table implements AbstractTable {
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
     } catch (e: any) {
-      return { error: normalise_error_message(e.message) };
+      return { error: this.normalise_error_message(e.message) };
     }
   }
 
@@ -1241,8 +1241,36 @@ class Table implements AbstractTable {
       const id = await this.insertRow(v, user, resultCollector);
       return { success: id };
     } catch (e: any) {
-      return { error: normalise_error_message(e.message) };
+      return { error: this.normalise_error_message(e.message) };
     }
+  }
+
+  normalise_error_message(msg: string): string {
+    let fieldnm: string = "";
+    if (msg.toLowerCase().includes("unique constraint")) {
+      if (db.isSQLite) {
+        const m = msg.match(
+          /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/
+        );
+        console.log(m);
+        if (m) fieldnm = m[2];
+      } else {
+        const m = msg.match(
+          /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/
+        );
+        if (m) fieldnm = m[2];
+      }
+      if (fieldnm) {
+        const field = this.fields.find((f) => f.name === fieldnm);
+        if (field?.attributes?.unique_error_msg)
+          return field?.attributes?.unique_error_msg;
+        else
+          return `Duplicate value for unique field: ${
+            field?.label || fieldnm
+          }"`;
+      }
+    }
+    return msg;
   }
 
   /**
