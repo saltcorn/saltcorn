@@ -143,7 +143,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       new Field({
         label: req.__("Error message"),
         name: "unique_error_msg",
-        sublabel: req.__("Error shown to user if violated"),
+        sublabel: req.__("Error shown to user if uniqueness is violated"),
         showIf: { calculated: false, is_unique: true },
         type: "String",
       }),

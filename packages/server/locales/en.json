@@ -1218,5 +1218,5 @@
 	"Page '%s' was loaded": "Page '%s' was loaded",
 	"View '%s' was loaded": "View '%s' was loaded",
 	"Error message": "Error message",
-	"Error shown to user if violated": "Error shown to user if violated"
+	"Error shown to user if uniqueness is violated": "Error shown to user if uniqueness is violated"
 }
