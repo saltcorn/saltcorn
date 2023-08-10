@@ -1264,10 +1264,18 @@ class Table implements AbstractTable {
         const field = this.fields.find((f) => f.name === fieldnm);
         if (field?.attributes?.unique_error_msg)
           return field?.attributes?.unique_error_msg;
-        else
+        else {
+          const tc_unique = this.constraints.find(
+            (c) =>
+              c.type === "Unique" &&
+              c.configuration.errormsg &&
+              c.configuration.fields.join("_") === fieldnm
+          );
+          if (tc_unique) return tc_unique.configuration.errormsg;
           return `Duplicate value for unique field: ${
             field?.label || fieldnm
           }"`;
+        }
       }
     }
     return msg;
