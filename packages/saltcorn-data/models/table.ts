@@ -369,7 +369,7 @@ class Table implements AbstractTable {
   }
 
   async ownership_options(): Promise<{ label: string; value: string }[]> {
-    const fields = await this.getFields();
+    const fields = this.fields;
 
     //start with userfields
     const opts: { label: string; value: string }[] = fields
@@ -619,7 +619,7 @@ class Table implements AbstractTable {
   }
 
   async resetSequence() {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const pk = fields.find((f) => f.primary_key);
     if (!pk) {
       throw new Error("Unable to find a field with a primary key.");
@@ -666,7 +666,7 @@ class Table implements AbstractTable {
   async deleteRows(where: Where, user?: Row) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
-    const fields = await this.getFields();
+    const fields = this.fields;
 
     if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
       const state = require("../db/state").getState();
@@ -743,7 +743,7 @@ class Table implements AbstractTable {
     where: Where = {},
     selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row | null> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     const row = await db.selectMaybeOne(this.name, where, selopts1);
@@ -775,7 +775,7 @@ class Table implements AbstractTable {
     where: Where = {},
     selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row[]> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     if (!this.fields) return [];
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
@@ -871,7 +871,7 @@ class Table implements AbstractTable {
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
-    const fields = await this.getFields();
+    const fields = this.fields;
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
@@ -1071,7 +1071,7 @@ class Table implements AbstractTable {
       )}"=NOT coalesce("${sqlsanitize(field_name)}", false) where id=$1`,
       [id]
     );
-    const fields = await this.getFields();
+    const fields = this.fields;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       await this.updateRow({}, id, undefined, false);
     }
@@ -1120,7 +1120,7 @@ class Table implements AbstractTable {
     user?: Row,
     resultCollector?: object
   ): Promise<any> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();
     if (this.ownership_formula)
@@ -1344,7 +1344,7 @@ class Table implements AbstractTable {
   async create_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const fields = await this.getFields();
+    const fields = this.fields;
     const flds = fields.map(
       (f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
     );
@@ -1535,7 +1535,7 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async enable_fkey_constraints(): Promise<void> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     for (const f of fields) await f.enable_fkey_constraint(this);
   }
 
@@ -1977,7 +1977,7 @@ class Table implements AbstractTable {
   ): Promise<any> {
     // todo argument type buffer is not assignable for type String...
     const file_rows = JSON.parse((await readFile(filePath)).toString());
-    const fields = await this.getFields();
+    const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
 
@@ -2026,7 +2026,7 @@ class Table implements AbstractTable {
     allow_double?: boolean,
     allow_triple?: boolean
   ): Promise<JoinFieldOption[]> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const result = [];
     for (const f of fields) {
       if (f.is_fkey && f.type !== "File") {
@@ -2143,7 +2143,7 @@ class Table implements AbstractTable {
     allow_double?: boolean,
     allow_triple?: boolean
   ): Promise<ParentRelations> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     let parent_relations = [];
     let parent_field_list = [];
     for (const f of fields) {
@@ -2224,7 +2224,7 @@ class Table implements AbstractTable {
     fieldWhere: (f: Field) => boolean = () => true,
     prefix: string = ""
   ): Promise<string[]> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const these = fields.filter(fieldWhere).map((f) => prefix + f.name);
     const those: string[] = [];
     if (nrecurse > 0)
@@ -2270,7 +2270,7 @@ class Table implements AbstractTable {
       }
     }
     if (allow_join_aggregations) {
-      const fields = await this.getFields();
+      const fields = this.fields;
       for (const f of fields) {
         if (f.is_fkey && f.type !== "File") {
           const refTable = Table.findOne({ name: f.reftable_name });
@@ -2296,7 +2296,7 @@ class Table implements AbstractTable {
   async getJoinedQuery(
     opts: (JoinOptions & ForUserRequest) | any = {}
   ): Promise<any> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     let fldNms = [];
     let joinq = "";
     let joinTables: string[] = [];
@@ -2531,7 +2531,7 @@ class Table implements AbstractTable {
   async getJoinedRows(
     opts: (JoinOptions & ForUserRequest) | any = {}
   ): Promise<Array<Row>> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     const { sql, values, notAuthorized, joinFields } =
@@ -2614,7 +2614,7 @@ class Table implements AbstractTable {
   }
 
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {
-    const fields = await this.getFields();
+    const fields = this.fields;
     const unique_fields = fields.filter((f) => f.is_unique);
     const opts: Array<{ label: string; steps: any }> = [];
     unique_fields.forEach((f: Field) => {
