@@ -1218,5 +1218,8 @@
 	"Page '%s' was loaded": "Page '%s' was loaded",
 	"View '%s' was loaded": "View '%s' was loaded",
 	"Error message": "Error message",
-	"Error shown to user if uniqueness is violated": "Error shown to user if uniqueness is violated"
+	"Error shown to user if uniqueness is violated": "Error shown to user if uniqueness is violated",
+	"Protected": "Protected",
+	"Set role to access": "Set role to access",
+	"User must have this role or higher to update or create field values": "User must have this role or higher to update or create field values"
 }
