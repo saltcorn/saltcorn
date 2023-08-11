@@ -887,7 +887,7 @@ class Table implements AbstractTable {
       );
 
     if (user && role && role > this.min_role_write) {
-      if (role === 10) return "Not authorized";
+      if (role === 100) return "Not authorized";
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
@@ -953,6 +953,10 @@ class Table implements AbstractTable {
       const newRow = { ...existing, ...v };
       let constraint_check = this.check_table_constraints(newRow);
       if (constraint_check) return constraint_check;
+    }
+    if (user) {
+      let field_write_check = this.check_field_write_role(v, user);
+      if (field_write_check) return field_write_check;
     }
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       //if any freevars are join fields, update row in db first
@@ -1108,6 +1112,18 @@ class Table implements AbstractTable {
     return undefined;
   }
 
+  check_field_write_role(row: Row, user: Row): string | undefined {
+    for (const field of this.fields) {
+      if (
+        typeof row[field.name] !== "undefined" &&
+        field.attributes?.min_role_write &&
+        user.role_id > field.attributes?.min_role_write
+      )
+        return "Not authorized";
+    }
+    return undefined;
+  }
+
   /**
    * Insert row
    * @param v_in
@@ -1157,7 +1173,10 @@ class Table implements AbstractTable {
     }
     let constraint_check = this.check_table_constraints(v_in);
     if (constraint_check) throw new Error(constraint_check);
-
+    if (user) {
+      let field_write_check = this.check_field_write_role(v_in, user);
+      if (field_write_check) return field_write_check;
+    }
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
