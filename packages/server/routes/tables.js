@@ -655,7 +655,14 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
-      if (["summary_field", "on_delete_cascade", "on_delete"].includes(k))
+      if (
+        [
+          "summary_field",
+          "on_delete_cascade",
+          "on_delete",
+          "unique_error_msg",
+        ].includes(k)
+      )
         return;
       if (v || v === 0) s += badge("secondary", k);
     });
@@ -1399,11 +1406,19 @@ const constraintForm = (req, table_id, fields, type) => {
         blurb: req.__(
           "Tick the boxes for the fields that should be jointly unique"
         ),
-        fields: fields.map((f) => ({
-          name: f.name,
-          label: f.label,
-          type: "Bool",
-        })),
+        fields: [
+          ...fields.map((f) => ({
+            name: f.name,
+            label: f.label,
+            type: "Bool",
+          })),
+          {
+            name: "errormsg",
+            label: "Error message",
+            sublabel: "Shown the user if joint uniqueness is violated",
+            type: "String",
+          },
+        ],
       });
     case "Index":
       return new Form({
@@ -1495,11 +1510,12 @@ router.post(
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
       let configuration = {};
-      if (type === "Unique")
+      if (type === "Unique") {
         configuration.fields = fields
           .map((f) => f.name)
           .filter((f) => form.values[f]);
-      else configuration = form.values;
+        configuration.errormsg = form.values.errormsg;
+      } else configuration = form.values;
       await TableConstraint.create({
         table_id: table.id,
         type,

@@ -981,7 +981,7 @@ Pencil, 0.5,2, t`;
 });
 
 describe("Table unique constraint", () => {
-  it("should create table", async () => {
+  it("should create table with unique constraint", async () => {
     //db.set_sql_logging()
     const table = await Table.create("TableWithUniques");
     const field = await Field.create({
@@ -1016,7 +1016,25 @@ describe("Table unique constraint", () => {
     expect(field2.is_unique).toBe(true);
     expect(field1.is_unique).toBe(true);
   });
+  it("should show unique_error_msg", async () => {
+    //db.set_sql_logging()
+    const table = await Table.create("TableWithUniques1");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      is_unique: true,
+      attributes: { unique_error_msg: "No same name twice" },
+    });
+    await table.insertRow({ name: "Bill" });
+    const ted_id = await table.insertRow({ name: "Ted" });
+    const ins_res = await table.tryInsertRow({ name: "Bill" });
+    expect(ins_res).toEqual({
+      error: "No same name twice",
+    });
+  });
 });
+
 describe("Table not null constraint", () => {
   it("should create table", async () => {
     //db.set_sql_logging()
@@ -1236,13 +1254,20 @@ describe("Table joint unique constraint", () => {
     const tc = await TableConstraint.create({
       table_id: table.id,
       type: "Unique",
-      configuration: { fields: ["author", "pages"] },
+      configuration: {
+        fields: ["author", "pages"],
+        errormsg: "Bad author/pages vibes",
+      },
     });
-    const res = await table.tryInsertRow(row0);
+    const table1 = Table.findOne({ name: "books" });
+    assertIsSet(table1);
+    const res = await table1.tryInsertRow(row0);
     assertIsErrorMsg(res);
-    expect(!!res.error).toBe(true);
+    expect(res.error).toBe("Bad author/pages vibes");
     await tc.delete();
-    const res1 = await table.tryInsertRow(row0);
+    const table2 = Table.findOne({ name: "books" });
+    assertIsSet(table2);
+    const res1 = await table2.tryInsertRow(row0);
     assertIsErrorMsg(res1);
     expect(!!res1.error).toBe(false);
   });
