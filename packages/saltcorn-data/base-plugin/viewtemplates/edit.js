@@ -522,6 +522,7 @@ const transformForm = async ({
   res,
   getRowQuery,
   viewname,
+  optionsQuery,
 }) => {
   await traverse(form.layout, {
     async action(segment) {
@@ -604,6 +605,8 @@ const transformForm = async ({
               : "omit-repeater-clone";
           }
         }
+        await childForm.fill_fkey_options(false, optionsQuery, req.user);
+
         const fr = new FieldRepeat({
           name: view_select.field_name,
           label: view_select.field_name,
@@ -803,7 +806,16 @@ const render = async ({
         )
       : "";
   await form.fill_fkey_options(false, optionsQuery, req.user);
-  await transformForm({ form, table, req, row, res, getRowQuery, viewname });
+  await transformForm({
+    form,
+    table,
+    req,
+    row,
+    res,
+    getRowQuery,
+    viewname,
+    optionsQuery,
+  });
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
     reloadAfterCloseInModalScript
@@ -844,7 +856,7 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery },
+  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery, optionsQuery },
   remote
 ) => {
   const table = Table.findOne({ id: table_id });
@@ -872,6 +884,7 @@ const runPost = async (
       : undefined,
     getRowQuery,
     viewname,
+    optionsQuery,
   });
   const cancel = body._cancel;
   await form.asyncValidate(body);
