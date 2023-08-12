@@ -886,8 +886,12 @@ class Table implements AbstractTable {
         fields
       );
 
-    if (user && role && role > this.min_role_write) {
-      if (role === 100) return "Not authorized";
+    if (
+      user &&
+      role &&
+      (role > this.min_role_write || role > this.min_role_read)
+    ) {
+      if (role === 100) return "Not authorized"; //no possibility of ownership
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
