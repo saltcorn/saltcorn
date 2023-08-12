@@ -65,6 +65,10 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       isPrimary = !!field.primary_key;
     }
   }
+  const roleOptions = (await User.get_roles()).map((r) => ({
+    value: r.id,
+    label: r.role,
+  }));
   return new Form({
     action: "/field",
     validator: (vs) => {
@@ -156,6 +160,22 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         disabled: !!id,
         showIf: { calculated: true },
       }),
+      new Field({
+        label: req.__("Protected"),
+        name: "protected",
+        sublabel: req.__("Set role to access"),
+        type: "Bool",
+      }),
+      {
+        label: req.__("Minimum role to write"),
+        name: "min_role_write",
+        input_type: "select",
+        sublabel: req.__(
+          "User must have this role or higher to update or create field values"
+        ),
+        options: roleOptions,
+        showIf: { protected: true },
+      },
     ],
   });
 };
@@ -207,6 +227,8 @@ const fieldFlow = (req) =>
       attributes.on_delete_cascade = context.on_delete_cascade;
       attributes.on_delete = context.on_delete;
       attributes.unique_error_msg = context.unique_error_msg;
+      if (context.protected) attributes.min_role_write = context.min_role_write;
+      else attributes.min_role_write = undefined;
       const {
         table_id,
         name,
@@ -296,6 +318,7 @@ const fieldFlow = (req) =>
           if (context.type === "Key" && context.reftable_name) {
             form.values.type = `Key to ${context.reftable_name}`;
           }
+          if (context.min_role_write) context.protected = true;
           return form;
         },
       },

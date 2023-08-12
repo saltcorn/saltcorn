@@ -71,6 +71,29 @@ describe("Table create basic tests", () => {
     assertIsSet(row);
     expect(row.group).toBe(false);
   });
+  it("observe field min_role_write", async () => {
+    const tc = await Table.create("mytable177", {
+      min_role_read: 100,
+      min_role_write: 100,
+    });
+
+    await Field.create({
+      table: tc,
+      label: "Group",
+      type: "Bool",
+      attributes: { min_role_write: 40 },
+    });
+
+    const err = await tc.insertRow({ group: true }, { role_id: 80 });
+    expect(err).toBe("Not authorized");
+    expect(await tc.countRows()).toBe(0);
+    const tall_id = await tc.insertRow({ group: true }, { role_id: 20 });
+    expect(tall_id).toBe(1);
+    const ures = await tc.updateRow({ group: false }, tall_id, { role_id: 80 });
+    expect(ures).toBe("Not authorized");
+    const tall = await tc.getRow({ id: tall_id });
+    expect(tall?.group).toBe(true);
+  });
   it("should create required field in empty table without default", async () => {
     const mytable1 = Table.findOne({ name: "mytable1" });
     expect(!!mytable1).toBe(true);
