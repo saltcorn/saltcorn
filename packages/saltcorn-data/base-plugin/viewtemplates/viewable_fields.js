@@ -1048,6 +1048,7 @@ const fill_presets = async (table, req, fixed) => {
     } else {
       const fld = fields.find((f) => f.name === k);
       if (!fld) delete fixed[k];
+      if (fixed[k] === null || fixed[k] === "") delete fixed[k];
     }
   });
   return fixed;
