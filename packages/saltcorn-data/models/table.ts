@@ -1244,6 +1244,8 @@ class Table implements AbstractTable {
   ): Promise<{ error: string } | { success: any }> {
     try {
       const id = await this.insertRow(v, user, resultCollector);
+      if (id?.includes?.("Not authorized")) return { error: id };
+      if (id.error) return id;
       return { success: id };
     } catch (e: any) {
       return { error: this.normalise_error_message(e.message) };
