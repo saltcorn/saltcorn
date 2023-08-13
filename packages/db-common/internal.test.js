@@ -110,6 +110,13 @@ describe("mkWhere", () => {
       values: [5],
       where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.\"Robert''); DROP TABLE Students; --\"'))->>0=$1`,
     });
+    expect(
+      mkWhere({ foo: { json: ['Robert"); DROP TABLE Students; --', 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where:
+        'where jsonb_build_array(jsonb_path_query_first("foo", \'$."Robert\\"); DROP TABLE Students; --"\'))->>0=$1',
+    });
   });
 
   it("should set id", () => {
