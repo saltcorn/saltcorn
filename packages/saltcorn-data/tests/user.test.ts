@@ -293,3 +293,91 @@ describe("User join fields and aggregations in ownership", () => {
     expect(books.is_owner(u, bookRows[1])).toBe(false);
   });
 });
+describe("SQL injection tests on user table", () => {
+  const test_sql_injection = async (where: any, { can_fail }: any = {}) => {
+    //db.set_sql_logging(true);
+    let found_users;
+    if (can_fail) {
+      try {
+        found_users = await User.find(where);
+      } catch (error) {
+        //ignore
+      }
+    } else found_users = await User.find(where);
+    // assert that no users were found
+    expect((found_users || []).length).toBe(0);
+    // assert that users table was not dropped
+    const nusers = await Table.findOne({ name: "users" })?.countRows();
+    expect(typeof nusers).toBe("number");
+    expect(nusers).toBeGreaterThan(1);
+  };
+  it("json single quote in variable", async () => {
+    await test_sql_injection(
+      {
+        "Robert'); DROP TABLE users; --": { json: ["bar", 5] },
+      },
+      { can_fail: true }
+    );
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ["Robert'); DROP TABLE users; --", 5] },
+    });
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ["Robert'; DROP TABLE users; --", 5] },
+    });
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ['Robert"; DROP TABLE users; --', 5] },
+    });
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ["Robert')) OR 1 = 1 --", 5] },
+    });
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ["Robert') OR 1 = 1 --", 5] },
+    });
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ['Robert")) OR 1 = 1 --', 5] },
+    });
+  });
+  it("json single quote in key", async () => {
+    await test_sql_injection({
+      _attributes: { json: ['Robert") OR 1 = 1 --', 5] },
+    });
+  });
+  it("single quote in variable", async () => {
+    await test_sql_injection(
+      {
+        "Robert'); DROP TABLE users; --": 5,
+      },
+      { can_fail: true }
+    );
+  });
+  it("double quote in variable eq", async () => {
+    await test_sql_injection(
+      {
+        eq: [Symbol('Robert"); DROP TABLE users; --'), 5],
+      },
+      { can_fail: true }
+    );
+  });
+  it("single quote in value", async () => {
+    await test_sql_injection({
+      email: "Robert'); DROP TABLE users; --",
+    });
+  });
+  it("double quote in value", async () => {
+    await test_sql_injection({
+      email: 'Robert"); DROP TABLE users; --',
+    });
+  });
+});
