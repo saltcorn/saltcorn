@@ -295,7 +295,7 @@ describe("User join fields and aggregations in ownership", () => {
 });
 describe("SQL injection tests on user table", () => {
   const test_sql_injection = async (where: any, { can_fail }: any = {}) => {
-    //db.set_sql_logging(true);
+    db.set_sql_logging(true);
     let found_users;
     if (can_fail) {
       try {
@@ -307,6 +307,8 @@ describe("SQL injection tests on user table", () => {
     // assert that no users were found
     expect((found_users || []).length).toBe(0);
     // assert that users table was not dropped
+    db.set_sql_logging(false);
+
     const nusers = await Table.findOne({ name: "users" })?.countRows();
     expect(typeof nusers).toBe("number");
     expect(nusers).toBeGreaterThan(1);
@@ -379,5 +381,13 @@ describe("SQL injection tests on user table", () => {
     await test_sql_injection({
       email: 'Robert"); DROP TABLE users; --',
     });
+  });
+  it("double quote in variable", async () => {
+    await test_sql_injection(
+      {
+        'Robert"); DROP TABLE users; --': 5,
+      },
+      { can_fail: true }
+    );
   });
 });
