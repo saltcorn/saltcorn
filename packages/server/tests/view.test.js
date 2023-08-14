@@ -9,13 +9,12 @@ const {
   toNotInclude,
   resetToFixtures,
   respondJsonWith,
+  toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Page = require("@saltcorn/data/models/page");
 
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 
@@ -393,6 +392,56 @@ describe("action row_variable", () => {
         })
       );
   });
+});
+
+describe("update matching rows", () => {
+  const updateMatchingRows = async ({ query, body }) => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post(
+        `/view/author_multi_edit/update_matching_rows${
+          query ? `?${query}` : ""
+        }`
+      )
+      .set("Cookie", loginCookie)
+      .send(body)
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(toSucceed(302));
+  };
+
+  beforeAll(async () => {
+    const table = Table.findOne({ name: "books" });
+    const field = table.getFields().find((f) => f.name === "author");
+    await field.update({ is_unique: false });
+  });
+
+  it("update ", async () => {
+    const table = Table.findOne({ name: "books" });
+    await updateMatchingRows({
+      query: "author=leo&publisher=1",
+      body: { author: "new_author" },
+    });
+    let actualRows = await table.getRows({ author: "new_author" });
+    expect(actualRows.length).toBe(1);
+    await updateMatchingRows({
+      query: "_gte_pages=600",
+      body: { author: "more_than" },
+    });
+    actualRows = await table.getRows({ author: "more_than" });
+    expect(actualRows.length >= 2).toBe(true);
+    const expected = (await table.getRows()).map((row) => {
+      return { id: row.id, author: "agi", pages: 100, publisher: null };
+    });
+    await updateMatchingRows({
+      body: { author: "agi", pages: 100, publisher: null },
+    });
+    actualRows = await table.getRows({});
+    expect(actualRows).toEqual(expected);
+  });
+
+  it("update with edit-in-edit", async () => {});
 });
 
 describe("inbound relations", () => {

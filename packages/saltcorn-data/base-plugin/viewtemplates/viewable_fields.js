@@ -1016,6 +1016,7 @@ const getForm = async (
     onSubmit: isRemote
       ? `javascript:formSubmit(this, '/view/', '${viewname}')`
       : undefined,
+    viewname: viewname,
     fields: tfields,
     layout,
     req,

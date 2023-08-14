@@ -42,7 +42,8 @@ describe("plugin helper", () => {
   it("get parent views", async () => {
     const patients = Table.findOne({ name: "patients" });
     const x = await get_parent_views(patients, "foobar");
-    expect(x[0].views.map((v: View) => v.name)).toStrictEqual([
+    expect((x[0].views.map((v: View) => v.name)).sort()).toStrictEqual([
+      "author_multi_edit",
       "authoredit",
       "authorshow",
     ]);

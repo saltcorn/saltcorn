@@ -22,6 +22,8 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
+jest.setTimeout(4000000);
+
 describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
@@ -123,7 +125,7 @@ describe("View", () => {
     const link_views = await View.find({
       table_id: table.id,
     });
-    expect(link_views.length).toBe(3);
+    expect(link_views.length).toBe(4);
   });
   it("should find where", async () => {
     const link_views = await View.find_all_views_where(

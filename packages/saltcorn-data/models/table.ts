@@ -864,7 +864,7 @@ class Table implements AbstractTable {
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
-    const fields = await this.getFields();
+    const fields = this.getFields();
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();

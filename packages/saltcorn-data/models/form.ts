@@ -35,6 +35,7 @@ class Form implements AbstractForm {
   errors: any;
   values: any;
   action?: string;
+  viewname?: string;
   layout?: Layout;
   id?: string;
   labelCols?: number;
@@ -69,6 +70,7 @@ class Form implements AbstractForm {
     this.errors = o.errors || {};
     this.values = o.values || {};
     this.action = o.action;
+    this.viewname = o.viewname;
     this.layout = o.layout;
     this.id = o.id;
     this.labelCols = o.labelCols;
@@ -255,6 +257,7 @@ namespace Form {
     errors?: any;
     values?: any;
     action?: string;
+    viewname?: string;
     layout?: Layout;
     id?: string;
     labelCols?: number;

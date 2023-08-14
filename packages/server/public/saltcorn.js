@@ -383,6 +383,20 @@ function saveAndContinue(e, k) {
   return false;
 }
 
+function updateMatchingRows(e, viewname) {
+  const form = $(e).closest("form");
+  try {
+    const sp = `${new URL(get_current_state_url()).searchParams.toString()}`;
+    form.attr(
+      "action",
+      `/view/${viewname}/update_matching_rows${sp ? `?${sp}` : ""}`
+    );
+    form[0].submit();
+  } finally {
+    form.attr("action", `/view/${viewname}`);
+  }
+}
+
 function applyViewConfig(e, url, k) {
   var form = $(e).closest("form");
   var form_data = form.serializeArray();

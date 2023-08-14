@@ -127,6 +127,46 @@ module.exports =
       min_role: 100,
     });
     await View.create({
+      table_id: table.id,
+      name: "author_multi_edit",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "author" },
+          { type: "Field", field_name: "publisher", fieldview: "select" },
+          {
+            type: "action",
+            block: false,
+            configuration: {},
+            action_name: "UpdateMatchingRows",
+            action_style: "btn-primary",
+            minRole: 100,
+            rndid: "f7c2cd",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "edit", field_name: "author" },
+            {
+              type: "field",
+              field_name: "publisher",
+              fieldview: "select",
+            },
+            {
+              type: "action",
+              block: false,
+              configuration: {},
+              action_name: "UpdateMatchingRows",
+              action_style: "btn-primary",
+              minRole: 100,
+              rndid: "f7c2cd",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+    await View.create({
       table_id: patients.id,
       name: "patientlist",
       viewtemplate: "List",
