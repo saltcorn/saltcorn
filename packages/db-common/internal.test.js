@@ -97,6 +97,27 @@ describe("mkWhere", () => {
       where: `where jsonb_path_query_first(\"foo\", '$.bar') >= $1 and jsonb_path_query_first(\"foo\", '$.bar') <= $2`,
     });
   });
+  it("should not sql inject in json", () => {
+    expect(
+      mkWhere({ "Robert'); DROP TABLE Students; --": { json: ["bar", 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"RobertDROPTABLEStudents\", '$.bar'))->>0=$1`,
+    });
+    expect(
+      mkWhere({ foo: { json: ["Robert'); DROP TABLE Students; --", 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.\"Robert''); DROP TABLE Students; --\"'))->>0=$1`,
+    });
+    expect(
+      mkWhere({ foo: { json: ['Robert"); DROP TABLE Students; --', 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where:
+        'where jsonb_build_array(jsonb_path_query_first("foo", \'$."Robert\\"); DROP TABLE Students; --"\'))->>0=$1',
+    });
+  });
 
   it("should set id", () => {
     expect(mkWhere({ id: 5 })).toStrictEqual({
