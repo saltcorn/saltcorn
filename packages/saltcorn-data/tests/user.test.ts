@@ -295,7 +295,7 @@ describe("User join fields and aggregations in ownership", () => {
 });
 describe("SQL injection tests on user table", () => {
   const test_sql_injection = async (where: any, { can_fail }: any = {}) => {
-    db.set_sql_logging(true);
+    //db.set_sql_logging(true);
     let found_users;
     if (can_fail) {
       try {
