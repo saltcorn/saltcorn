@@ -452,7 +452,8 @@ const run = async (
   { res, req },
   { editQuery }
 ) => {
-  return await editQuery(state);
+  const mobileReferrer = isNode() ? undefined : req?.headers?.referer;
+  return await editQuery(state, mobileReferrer);
 };
 
 /**
@@ -710,6 +711,7 @@ const render = async ({
   getRowQuery,
   optionsQuery,
   split_paste,
+  mobileReferrer,
 }) => {
   const form = await getForm(
     table,
@@ -745,7 +747,9 @@ const render = async ({
 
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
-    form.values._referer = req.headers?.referer;
+    form.values._referer = mobileReferrer
+      ? mobileReferrer
+      : req.headers?.referer;
   }
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
@@ -1303,7 +1307,7 @@ module.exports = {
     req,
     res,
   }) => ({
-    async editQuery(state) {
+    async editQuery(state, mobileReferrer) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
@@ -1330,6 +1334,7 @@ module.exports = {
         destination_type,
         isRemote,
         split_paste,
+        mobileReferrer,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {

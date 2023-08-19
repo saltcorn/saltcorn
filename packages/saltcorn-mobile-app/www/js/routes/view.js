@@ -76,7 +76,11 @@ const getView = async (context) => {
   const query = parseQuery(context.query);
   const { viewname } = context.params;
   const view = saltcorn.data.models.View.findOne({ name: viewname });
-  const req = new MobileRequest({ xhr: context.xhr, query });
+  const refererRoute =
+    routingHistory?.length > 1
+      ? routingHistory[routingHistory.length - 2]
+      : undefined;
+  const req = new MobileRequest({ xhr: context.xhr, query, refererRoute });
   if (
     state.mobileConfig.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
