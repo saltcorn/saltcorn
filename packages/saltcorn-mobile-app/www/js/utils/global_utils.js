@@ -210,7 +210,8 @@ async function handleRoute(route, query, files) {
       clearHistory();
       await gotoEntryView();
     } else {
-      if (route === "/" || route === "get") return await gotoEntryView();
+      if (route === "/" || route === "get" || route === "get/")
+        return await gotoEntryView();
       const safeRoute = route ? route : currentLocation();
       addRoute({ route: safeRoute, query });
       const page = await router.resolve({

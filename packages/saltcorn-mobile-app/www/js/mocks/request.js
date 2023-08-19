@@ -11,7 +11,12 @@ function MobileRequest({
   const userId = cfg.user_id ? cfg.user_id : undefined;
   const flashMessages = [];
   const refererPath = refererRoute ? refererRoute.route : undefined;
-  const referQuery = refererPath ? refererRoute.query : "";
+  const referQuery =
+    refererPath && refererRoute.query
+      ? refererRoute.query.startsWith("?")
+        ? refererRoute.query
+        : `?${refererRoute.query}`
+      : "";
   const referer = refererPath ? `${refererPath}${referQuery}` : undefined;
   return {
     __: (s, ...params) =>

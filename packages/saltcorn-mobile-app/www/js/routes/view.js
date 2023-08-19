@@ -1,4 +1,4 @@
-/*global MobileRequest, MobileResponse, parseQuery, wrapContents, saltcorn, offlineHelper*/
+/*global MobileRequest, MobileResponse, parseQuery, wrapContents, saltcorn, offlineHelper, routingHistory*/
 
 /**
  *
