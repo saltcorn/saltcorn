@@ -69,8 +69,8 @@ const menuForm = async (req) => {
       .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
       .map(([k, v]) => k),
   ];
-  const triggers = await Trigger.find({
-    when_trigger: { or: ["API call", "Never"] },
+  const triggers = Trigger.find({
+    when_trigger: {or: ["API call", "Never"]},
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -264,18 +264,18 @@ const menuForm = async (req) => {
         },
         attributes: {
           options: [
-            { name: "", label: "Link" },
-            { name: "btn btn-primary", label: "Primary button" },
-            { name: "btn btn-secondary", label: "Secondary button" },
-            { name: "btn btn-success", label: "Success button" },
-            { name: "btn btn-danger", label: "Danger button" },
+            { name: "", label: req.__("Link") },
+            { name: "btn btn-primary", label: req.__("Primary button") },
+            { name: "btn btn-secondary", label: req.__("Secondary button") },
+            { name: "btn btn-success", label: req.__("Success button") },
+            { name: "btn btn-danger", label: req.__("Danger button") },
             {
               name: "btn btn-outline-primary",
-              label: "Primary outline button",
+              label: req.__("Primary outline button"),
             },
             {
               name: "btn btn-outline-secondary",
-              label: "Secondary outline button",
+              label: req.__("Secondary outline button"),
             },
           ],
         },

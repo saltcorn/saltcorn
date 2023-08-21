@@ -16,16 +16,16 @@ class RunTriggerCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags, args } = this.parse(RunTriggerCommand);
+    const {flags, args} = this.parse(RunTriggerCommand);
     await init_some_tenants(flags.tenant);
 
-    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+    const {mockReqRes} = require("@saltcorn/data/tests/mocks");
     const Trigger = require(`@saltcorn/data/models/trigger`);
     const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
-      const trigger = await Trigger.findOne({ name: args.trigger });
+      const trigger = await Trigger.findOne({name: flags.trigger});
       if (!trigger) {
-        console.error(`Trigger ${args.trigger} not found`);
+        console.error(`Trigger ${flags.trigger} not found`);
         this.exit(1);
       }
       await trigger.runWithoutRow();
@@ -33,22 +33,34 @@ class RunTriggerCommand extends Command {
     this.exit(0);
   }
 }
-
 /**
  * @type {string}
  */
 RunTriggerCommand.description = `Run a trigger`;
 
+/*
 RunTriggerCommand.args = [
-  { name: "trigger", required: true, description: "trigger name" },
+
+  { name: "tenant", char: "t", required: false, description: "tenant name" },
+  { name: "trigger", char: "a", required: true, description: "trigger name" },
 ];
+*/
+
 /**
  * @type {object}
  */
 RunTriggerCommand.flags = {
   tenant: flags.string({
+    name: "tenant",
     char: "t",
     description: "tenant",
+    required: false,
+  }),
+  action: flags.string({
+      name: "action",
+      char: "a",
+      description: "action (trigger)",
+      required: true,
   }),
 };
 

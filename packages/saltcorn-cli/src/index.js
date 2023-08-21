@@ -28,7 +28,9 @@
  * @property {module:commands/restore} restore
  * @property {module:commands/rm-tenant} rm-tenant
  * @property {module:commands/run-benchmark} run-benchmark
+ * @property {module:commands/run-benchmark} run-js
  * @property {module:commands/run-benchmark} run-test
+ * @property {module:commands/run-benchmark} run-sql
  * @property {module:commands/setup} scheduler
  * @property {module:commands/setup} setup
  * @property {module:commands/setup} setup-benchmark
