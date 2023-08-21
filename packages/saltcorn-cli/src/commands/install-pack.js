@@ -66,7 +66,7 @@ class InstallPackCommand extends Command {
 /**
  * @type {string}
  */
-InstallPackCommand.description = `Install a pack or restore a snapshot`;
+InstallPackCommand.description = `Install a pack`;
 
 /**
  * @type {object}
