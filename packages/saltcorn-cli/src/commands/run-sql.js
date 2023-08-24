@@ -71,7 +71,7 @@ class RunSQLCommand extends Command {
       const query = await db.query(sql_str);
 
       if (!query) {
-        console.error(`Cannot execute Query ${args.sql}`);
+        console.error(`Cannot execute Query ${flags.sql}`);
         this.exit(1);
       }
       // print sql statement
