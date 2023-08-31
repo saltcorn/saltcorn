@@ -149,6 +149,13 @@ const menuForm = async (req) => {
         options: roles.map((r) => ({ label: r.role, value: r.id })),
       },
       {
+        name: "disable_on_mobile",
+        label: req.__("Disable on mobile"),
+        type: "Bool",
+        class: "item-menu",
+        required: false,
+      },
+      {
         name: "url",
         label: req.__("URL"),
         class: "item-menu validate-expression validate-expression-conditional",

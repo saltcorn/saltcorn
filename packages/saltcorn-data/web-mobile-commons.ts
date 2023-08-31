@@ -11,7 +11,7 @@ import type User from "./models/user";
 const { isNode } = utils;
 const { getState } = require("./db/state");
 
-const disabledMobileMenus = ["Link", "Action", "Search"];
+const disabledMobileMenus = ["Action", "Search"];
 
 /**
  * Get extra menu
@@ -34,7 +34,10 @@ const get_extra_menu = (
     items
       .filter((item: any) => role <= +item.min_role)
       .filter((item: any) =>
-        is_node ? true : disabledMobileMenus.indexOf(item.type)
+        is_node
+          ? true
+          : disabledMobileMenus.indexOf(item.type) < 0 &&
+            !item.disable_on_mobile
       )
       .map((item: any) => ({
         label: __(item.label),
@@ -46,7 +49,9 @@ const get_extra_menu = (
           item.type === "Link" && item.url_formula
             ? expression.eval_expression(item.url, { locale, role }, user)
             : item.type === "Link"
-            ? item.url
+            ? is_node
+              ? item.url
+              : `javascript:execNavbarLink('${item.url}')`
             : item.type === "Action"
             ? `javascript:${
                 is_node ? "ajax" : "local"
