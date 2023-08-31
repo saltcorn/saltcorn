@@ -1222,5 +1222,20 @@
 	"Protected": "Protected",
 	"Set role to access": "Set role to access",
 	"User must have this role or higher to update or create field values": "User must have this role or higher to update or create field values",
-	"Disable on mobile": "Disable on mobile"
+	"Disable on mobile": "Disable on mobile",
+	"moment.js format specifier": "moment.js format specifier",
+	"Primary button": "Primary button",
+	"Secondary button": "Secondary button",
+	"Success button": "Success button",
+	"Danger button": "Danger button",
+	"Primary outline button": "Primary outline button",
+	"Secondary outline button": "Secondary outline button",
+	"Standard": "Standard",
+	"X-Small": "X-Small",
+	"Block": "Block",
+	"Large block": "Large block",
+	"Formula for JavaScript object that will be added to state parameters": "Formula for JavaScript object that will be added to state parameters",
+	"Alignment": "Alignment",
+	"Click to edit?": "Click to edit?",
+	"Format": "Format"
 }
