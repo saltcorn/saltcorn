@@ -533,7 +533,7 @@ const get_viewable_fields = (
           );
           const label = column.action_label_formula
             ? eval_expression(column.action_label, r)
-            : __(column.action_label) || column.action_name;
+            : __(column.action_label) || __(column.action_name);
           if (url.javascript)
             return a(
               {
@@ -830,7 +830,7 @@ const get_viewable_fields = (
   }).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
     tfields.push({
-      label: "Action",
+      label: req.__("Action"),
       key: (r) =>
         div(
           { class: "dropdown" },
@@ -844,7 +844,7 @@ const get_viewable_fields = (
               "aria-haspopup": "true",
               "aria-expanded": "false",
             },
-            "Action"
+            req.__("Action")
           ),
           div(
             {

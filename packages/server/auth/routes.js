@@ -224,7 +224,7 @@ const getAuthLinks = (current, noMethods) => {
  * @param {*} saltcornApp
  * @param {*} res
  */
-const loginWithJwt = async (email, password, saltcornApp, res) => {
+const loginWithJwt = async (email, password, saltcornApp, res, req) => {
   const loginFn = async () => {
     const publicUserLink = getState().getConfig("public_user_link");
     const jwt_secret = db.connectObj.jwt_secret;
@@ -254,7 +254,7 @@ const loginWithJwt = async (email, password, saltcornApp, res) => {
         res.json(token);
       } else {
         res.json({
-          alerts: [{ type: "danger", msg: "Incorrect user or password" }],
+          alerts: [{ type: "danger", msg: req.__("Incorrect user or password") }],
         });
       }
     } else if (publicUserLink) {
@@ -276,7 +276,7 @@ const loginWithJwt = async (email, password, saltcornApp, res) => {
       res.json(token);
     } else {
       res.json({
-        alerts: [{ type: "danger", msg: "The public login is deactivated" }],
+        alerts: [{ type: "danger", msg: req.__("The public login is deactivated") }],
       });
     }
   };
@@ -986,7 +986,8 @@ router.post(
             email,
             password,
             req.headers["x-saltcorn-app"],
-            res
+            res,
+            req
           );
         else signup_login_with_user(u, req, res);
       }
@@ -1099,7 +1100,7 @@ router.get(
     const { method } = req.params;
     if (method === "jwt") {
       const { email, password } = req.query;
-      await loginWithJwt(email, password, req.headers["x-saltcorn-app"], res);
+      await loginWithJwt(email, password, req.headers["x-saltcorn-app"], res, req);
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {
