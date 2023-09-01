@@ -29,7 +29,7 @@ class ListTenantsCommand extends Command {
       await db.runWithTenant(domain, async () => {
         if (!flags.verbose)
           tenantDetails[index] = { domain : domain };
-        else {
+        else
           tenantDetails[index] = {
             domain: domain,
             users: await db.count("users"),
@@ -40,10 +40,9 @@ class ListTenantsCommand extends Command {
             files: await db.count("_sc_files"),
             triggers: await db.count("_sc_triggers"),
             tags: await  db.count ("_sc_tags"),
-          };
-        };
+          }
       });
-    };
+    }
 
     // print
     if(!flags.verbose)
