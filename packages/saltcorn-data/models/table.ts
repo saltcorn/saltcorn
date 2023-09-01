@@ -317,6 +317,11 @@ class Table implements AbstractTable {
     return [...dbs, ...externals];
   }
 
+  /**
+   * Get Models
+   * tbd why this function in this file - needs to models
+   * @param opts
+   */
   async get_models(opts?: any) {
     const Model = require("./model");
     if (typeof opts === "string")
@@ -368,6 +373,10 @@ class Table implements AbstractTable {
     return typeof field_name === "string" && row[field_name] === user.id;
   }
 
+  /**
+   * get Ownership options
+   * user interface...
+   */
   async ownership_options(): Promise<{ label: string; value: string }[]> {
     const fields = this.fields;
 
@@ -492,6 +501,9 @@ class Table implements AbstractTable {
     return opts;
   }
 
+  /**
+   * get sanitized name of table
+   */
   get santized_name() {
     return sqlsanitize(this.name);
   }
@@ -574,8 +586,10 @@ class Table implements AbstractTable {
 
   /**
    * Drop current table
+   * @param only_forget boolean - if true that only
    * @returns {Promise<void>}
    */
+  // tbd check all other tables related to table description
   async delete(only_forget: boolean = false): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
@@ -583,18 +597,21 @@ class Table implements AbstractTable {
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
+      // drop table
       if (!only_forget)
         await client.query(
           `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
         );
+      // delete fields
       await client.query(
         `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
         [this.id]
       );
-
+      // delete table description
       await client.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
         this.id,
       ]);
+      // delete versioned table
       if (this.versioned)
         await client.query(
           `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
@@ -611,13 +628,16 @@ class Table implements AbstractTable {
   }
 
   /***
-   * get Table SQL Name
+   * Get Table SQL Name
    * @type {string}
    */
   get sql_name(): string {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
 
+  /**
+   * Reset Sequence
+   */
   async resetSequence() {
     const fields = this.fields;
     const pk = fields.find((f) => f.primary_key);
@@ -633,6 +653,13 @@ class Table implements AbstractTable {
       await db.reset_sequence(this.name);
   }
 
+  /**
+   * update Where with Ownership
+   * @param where
+   * @param fields
+   * @param user
+   * @param forRead
+   */
   updateWhereWithOwnership(
     where: Where,
     fields: Field[],
@@ -841,6 +868,9 @@ class Table implements AbstractTable {
     }
   }
 
+  /**
+   *
+   */
   storedExpressionJoinFields() {
     let freeVars: Set<string> = new Set([]);
     for (const f of this.fields!)
@@ -854,7 +884,7 @@ class Table implements AbstractTable {
 
   /**
    * Update row
-   * @param v_in - colums with values to update
+   * @param v_in - columns with values to update
    * @param id - id value
    * @param _userid - user id
    * @param noTrigger
@@ -1088,6 +1118,10 @@ class Table implements AbstractTable {
     return pkField;
   }
 
+  /**
+   * Check table constraints
+   * @param row
+   */
   check_table_constraints(row: Row): string | undefined {
     const fmls = this.constraints
       .filter((c) => c.type === "Formula")
@@ -1098,6 +1132,11 @@ class Table implements AbstractTable {
     return undefined;
   }
 
+  /**
+   *
+   * @param row
+   * @param user
+   */
   check_field_write_role(row: Row, user: Row): string | undefined {
     for (const field of this.fields) {
       if (
@@ -1252,6 +1291,10 @@ class Table implements AbstractTable {
     }
   }
 
+  /**
+   *
+   * @param msg
+   */
   normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
@@ -1373,6 +1416,12 @@ class Table implements AbstractTable {
     );
   }
 
+  /**
+   * Restore Row Version
+   * @param id
+   * @param version
+   * @param user
+   */
   async restore_row_version(
     id: any,
     version: number,
@@ -1391,8 +1440,13 @@ class Table implements AbstractTable {
     await this.updateRow(r, id, user, false, undefined, version);
   }
 
+  /**
+   * Undo row chnages
+   * @param id
+   * @param user
+   */
   async undo_row_changes(id: any, user?: Row): Promise<void> {
-    const current_verion_row = await db.selectMaybeOne(
+    const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
       { orderBy: "_version", orderDesc: true, limit: 1 }
@@ -1403,9 +1457,9 @@ class Table implements AbstractTable {
       {
         id,
         _version: {
-          lt: current_verion_row._restore_of_version
-            ? current_verion_row._restore_of_version
-            : current_verion_row._version,
+          lt: current_version_row._restore_of_version
+            ? current_version_row._restore_of_version
+            : current_version_row._version,
         },
       },
       { orderBy: "_version", orderDesc: true, limit: 1 }
@@ -1414,20 +1468,26 @@ class Table implements AbstractTable {
       await this.restore_row_version(id, last_non_restore._version, user);
     }
   }
+
+  /**
+   * Redo row changes
+   * @param id
+   * @param user
+   */
   async redo_row_changes(id: any, user?: Row): Promise<void> {
-    const current_verion_row = await db.selectMaybeOne(
+    const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
 
-    if (current_verion_row._restore_of_version) {
+    if (current_version_row._restore_of_version) {
       const next_version = await db.selectMaybeOne(
         `${sqlsanitize(this.name)}__history`,
         {
           id,
           _version: {
-            gt: current_verion_row._restore_of_version,
+            gt: current_version_row._restore_of_version,
           },
         },
         { orderBy: "_version", limit: 1 }
@@ -1641,6 +1701,10 @@ class Table implements AbstractTable {
     return parse_res;
   }
 
+  /**
+   *
+   * @param state
+   */
   read_state_strict(state: Row): Row | string {
     let errorString = "";
     this.fields.forEach((f) => {
@@ -2620,6 +2684,9 @@ class Table implements AbstractTable {
     return calcRow;
   }
 
+  /**
+   *
+   */
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {
     const fields = this.fields;
     const unique_fields = fields.filter((f) => f.is_unique);
@@ -2647,6 +2714,9 @@ class Table implements AbstractTable {
     return opts;
   }
 
+  /**
+   *
+   */
   static async allSlugOptions(): Promise<{
     [nm: string]: Array<{ label: string; steps: any }>;
   }> {
@@ -2660,11 +2730,17 @@ class Table implements AbstractTable {
     return options;
   }
 
+  /**
+   *
+   */
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ table_id: this.id });
   }
 
+  /**
+   *
+   */
   async getForeignTables(): Promise<Array<AbstractTable>> {
     const result = new Array<AbstractTable>();
     if (this.fields) {
