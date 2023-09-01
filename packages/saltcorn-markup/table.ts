@@ -62,7 +62,7 @@ const transposedBody = (
 ): string[] =>
   hdrs.map((hdr: HeadersParams, ix) =>
     tr(
-      th(hdr.label),
+      !opts.noHeader && th(hdr.label),
       (vs || []).map((v: any) =>
         td(
           ix === 0 && opts.transpose_width
