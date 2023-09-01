@@ -1063,7 +1063,11 @@ router.post(
       res.send("");
       return;
     }
-    const firefox = /firefox/i.test(req.headers["user-agent"]);
+    //const firefox = /firefox/i.test(req.headers["user-agent"]);
+
+    //Chrome 116 changes its behaviour to align with firefox
+    // - disabled inputs do not dispactch click events
+    const firefox = true;
     const fv = fieldviews[fieldview];
     if (!fv && field.type === "Key" && fieldview === "select")
       res.send(
