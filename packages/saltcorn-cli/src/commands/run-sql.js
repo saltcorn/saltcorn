@@ -76,24 +76,7 @@ class RunSQLCommand extends Command {
       }
       // print sql statement
       console.log(sql_str);
-      // print columns
-      if( query.fields){
-        let columns_str = "";
-        for (let field of query.fields){
-          columns_str += field.name + ",";
-        }
-        console.log(columns_str);
-      }
-      // print results
-
-      for ( let row of query.rows ) {
-
-        let value_str = "";
-        for ( let prop in row ) {
-          value_str += row[prop]+",";
-        }
-        console.log(value_str);
-      }
+      console.table (query.rows);
     });
     this.exit(0);
   }
