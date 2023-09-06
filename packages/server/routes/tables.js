@@ -922,7 +922,10 @@ router.get(
             { href: `/table/constraints/${table.id}` },
             i({ class: "fas fa-2x fa-tasks" }),
             "<br/>",
-            req.__("Constraints")
+            req.__("Constraints") +
+              (table.constraints?.length
+                ? ` (${table.constraints.length})`
+                : "")
           )
         ),
 
