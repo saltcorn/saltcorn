@@ -35,9 +35,6 @@ const plugin_pack = (plugin) => ({
 
 describe("Tenant cannot install unsafe plugins", () => {
   if (!db.isSQLite) {
-    it("refreshes root tenant store", async () => {
-      await Plugin.store_plugins_available();
-    });
     it("creates a new tenant", async () => {
       db.enable_multi_tenant();
       const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;

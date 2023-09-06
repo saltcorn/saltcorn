@@ -187,7 +187,14 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   if (!isRoot && !tenants_unsafe_plugins) {
     if (plugin.source !== "npm") return;
     //get allowed plugins
-    const instore = await Plugin.store_plugins_available();
+
+    //refresh root store
+    await db.runWithTenant(
+      db.connectObj.default_schema,
+      async () => await Plugin.store_plugins_available()
+    );
+
+    const instore = getRootState().getConfig("available_plugins", []);
     const safes = instore.filter((p) => !p.unsafe).map((p) => p.location);
     if (!safes.includes(plugin.location)) return;
   }
