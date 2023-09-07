@@ -1436,8 +1436,9 @@ export const buildOptions = (
   options,
   { valAttr, keyAttr, capitalize } = {}
 ) => {
-  return options.map((option) => (
+  return options.map((option, ix) => (
     <option
+      key={ix}
       {...(valAttr ? { value: option } : {})}
       {...(keyAttr ? { key: option } : {})}
     >
@@ -1453,7 +1454,9 @@ export const buildBootstrapOptions = (values) => {
     lg: "large",
     xl: "x-large",
   };
-  return values.map((option) => (
-    <option value={option}>{mappings[option]}</option>
+  return values.map((option, ix) => (
+    <option key={ix} value={option}>
+      {mappings[option]}
+    </option>
   ));
 };
