@@ -421,7 +421,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
         .attr("onclick", "return false");
 
       //.attr("disabled", true);
-      $(".preview-scratchpad").find("textarea").attr("disabled", true);
+      $(".preview-scratchpad").find("textarea").attr("readonly", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       if (isView) {
         $(".preview-scratchpad").find("input").attr("readonly", true);
