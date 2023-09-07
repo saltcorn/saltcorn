@@ -542,14 +542,6 @@ const fieldFlow = (req) =>
                 type: "Bool",
                 showIf: { summary_field: textfields },
               }),
-              /*new Field({
-                name: "on_delete_cascade",
-                label: req.__("On delete cascade"),
-                type: "Bool",
-                sublabel: req.__(
-                  "If the parent row is deleted, automatically delete the child rows."
-                ),
-              }),*/
               new Field({
                 name: "on_delete",
                 label: req.__("On delete"),

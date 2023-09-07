@@ -1088,7 +1088,11 @@ class Table implements AbstractTable {
     return pkField;
   }
 
-  check_table_constraints(row: Row): string | undefined {
+  check_table_constraints(row0: Row): string | undefined {
+    const row = { ...row0 };
+    this.fields.forEach((f) => {
+      if (typeof row[f.name] === "undefined") row[f.name] = null;
+    });
     const fmls = this.constraints
       .filter((c) => c.type === "Formula")
       .map((c) => c.configuration);

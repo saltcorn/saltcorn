@@ -63,6 +63,18 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           const cleft = compile(node.left!);
 
           const cright = compile(node.right!);
+          if (node.operator === "===") node.operator = "==";
+          if (node.operator === "!==") node.operator = "!=";
+          if (cleft === "null" && node.operator == "==")
+            return `${cright} is null`;
+          if (cright === "null" && node.operator == "==")
+            return `${cleft} is null`;
+
+          if (cleft === "null" && node.operator == "!=")
+            return `${cright} is not null`;
+          if (cright === "null" && node.operator == "!=")
+            return `${cleft} is not null`;
+
           return `(${cleft})${node.operator}(${cright})`;
         },
         UnaryExpression() {
