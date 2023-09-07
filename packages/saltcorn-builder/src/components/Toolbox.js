@@ -677,6 +677,7 @@ const ToolboxEdit = () => {
       </div>
       <div className="toolbar-row">
         <TableElem connectors={connectors} />
+        <ViewLinkElem connectors={connectors} options={options} />
       </div>
     </Fragment>
   );
