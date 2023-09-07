@@ -625,6 +625,7 @@ const ToolboxFilter = () => {
       </div>
       <div className="toolbar-row">
         <TableElem connectors={connectors} />
+        <DropMenuElem connectors={connectors} />
       </div>
     </Fragment>
   );
