@@ -48,7 +48,7 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
         type="text"
         className="form-control bg-light"
         placeholder="Search..."
-        disabled
+        readOnly={true}
       />
 
       {show_badges && (
