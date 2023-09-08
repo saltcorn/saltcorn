@@ -375,20 +375,30 @@ function jsonWhere(
   phs: PlaceHolderStack
 ): string {
   const jsonpathElemEscape = (sf: JsonPathElem): string =>
-    typeof sf == 'number' ? `[${sf}]` :
-    `.${ /[\x00-\x08\x0A-\x1F\x22\x27\x7F.[\]]/.test(String(sf)) ? JSON.stringify(String(sf)) : sf }`;
+    typeof sf == "number"
+      ? `[${sf}]`
+      : `.${
+          /[\x00-\x08\x0A-\x1F\x22\x27\x7F.[\]]/.test(String(sf))
+            ? JSON.stringify(String(sf))
+            : sf
+        }`;
   const jsonpathPrepare = (sf: JsonPath): string =>
-    ((/^\$[[.]/.test(String(sf)) && !/[\n\r\v\0]/.test(String(sf))) ? String(sf) :
-    `\$${Array.isArray(sf) ? sf.map(jsonpathElemEscape).join('') : jsonpathElemEscape(sf)}`
+    (/^\$[[.]/.test(String(sf)) && !/[\n\r\v\0]/.test(String(sf))
+      ? String(sf)
+      : `\$${
+          Array.isArray(sf)
+            ? sf.map(jsonpathElemEscape).join("")
+            : jsonpathElemEscape(sf)
+        }`
     ).replace(/'/g, "''");
   const lhs = (f: string, sf: JsonPath, convText: boolean): string =>
     phs.is_sqlite
-      ? `json_extract(${quote(sqlsanitizeAllowDots(f))}, '${jsonpathPrepare(sf)}')`
-      : `${
-          convText ? "jsonb_build_array(" : ""
-        }jsonb_path_query_first(${quote(sqlsanitizeAllowDots(f))}, '${jsonpathPrepare(sf)}')${
-          convText ? ")->>0" : ""
-        }`;
+      ? `json_extract(${quote(sqlsanitizeAllowDots(f))}, '${jsonpathPrepare(
+          sf
+        )}')`
+      : `${convText ? "jsonb_build_array(" : ""}jsonb_path_query_first(${quote(
+          sqlsanitizeAllowDots(f)
+        )}, '${jsonpathPrepare(sf)}')${convText ? ")->>0" : ""}`;
 
   if (Array.isArray(v)) return `${lhs(k, v[0], true)}=${phs.push(v[1])}`;
   else {
@@ -493,6 +503,7 @@ export type SelectOptions = {
   nocase?: boolean;
   orderDesc?: boolean;
   cached?: boolean;
+  ignore_errors?: boolean;
   versioned?: boolean; //TODO rm this and below
   min_role_read?: number;
   min_role_write?: number;
