@@ -682,11 +682,9 @@ const field_picker_fields = async ({
     actions.push(tr.name);
   });
   if (!table.external)
-    (
-      Trigger.find({
-        table_id: table.id,
-      })
-    ).forEach((tr) => {
+    Trigger.find({
+      table_id: table.id,
+    }).forEach((tr) => {
       actions.push(tr.name);
     });
   const actionConfigFields = [];
@@ -1094,8 +1092,9 @@ const field_picker_fields = async ({
     {
       name: "extra_state_fml",
       label: __("Extra state Formula"),
-      sublabel:
-        __("Formula for JavaScript object that will be added to state parameters"),
+      sublabel: __(
+        "Formula for JavaScript object that will be added to state parameters"
+      ),
       type: "String",
       class: "validate-expression",
       showIf: { type: "ViewLink" },
@@ -1611,6 +1610,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       addOrCreateList(qstate, "id", {
         inSelectWithLevels: {
           joinLevels: levels,
+          schema: db.getTenantSchema(),
           where,
         },
       });
