@@ -804,7 +804,8 @@ class Table implements AbstractTable {
 
     return apply_calculated_fields(
       rows.map((r: Row) => this.readFromDB(r)),
-      this.fields
+      this.fields,
+      !!selopts.ignore_errors
     );
   }
 
@@ -2552,7 +2553,11 @@ class Table implements AbstractTable {
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
 
-    let calcRow = apply_calculated_fields(res.rows, fields);
+    let calcRow = apply_calculated_fields(
+      res.rows,
+      fields,
+      !!opts?.ignore_errors
+    );
 
     //rename joinfields
     if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {

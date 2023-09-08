@@ -564,7 +564,8 @@ function get_async_expression_function(
  */
 function apply_calculated_fields(
   rows: Array<Row>,
-  fields: Array<Field>
+  fields: Array<Field>,
+  ignore_errors?: boolean
 ): Array<Row> {
   let hasExprs = false;
   let transform = (x: Row): Row => x;
@@ -576,7 +577,8 @@ function apply_calculated_fields(
         if (!field.expression) throw new Error(`The field has no expression`);
         f = get_expression_function(field.expression, fields);
       } catch (e: any) {
-        throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        if (!ignore_errors)
+          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
       }
       const oldf = transform;
       transform = (row) => {
@@ -584,7 +586,10 @@ function apply_calculated_fields(
           const x = f(row);
           row[field.name] = x;
         } catch (e: any) {
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+          if (!ignore_errors)
+            throw new Error(
+              `Error in calculating "${field.name}": ${e.message}`
+            );
         }
         return oldf(row);
       };
