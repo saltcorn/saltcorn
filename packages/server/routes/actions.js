@@ -211,6 +211,7 @@ const triggerForm = async (req, trigger) => {
         name: "description",
         label: req.__("Description"),
         type: "String",
+        fieldview: "textarea",
         sublabel: req.__(
           "Description allows you to give more information about the action"
         ),
@@ -400,8 +401,8 @@ router.get(
       });
       form.values = trigger.configuration;
       const events = Trigger.when_options;
-      const actions = await Trigger.find({
-        when_trigger: { or: ["API call", "Never"] },
+      const actions = Trigger.find({
+        when_trigger: {or: ["API call", "Never"]},
       });
       const tables = (await Table.find({})).map((t) => ({
         name: t.name,
@@ -430,7 +431,7 @@ router.get(
                   div(
                     button(
                       { class: "btn btn-primary mt-2", id: "blocklySave" },
-                      "Save"
+                      req.__("Save")
                     ),
                     renderForm(form, req.csrfToken()),
                     script(

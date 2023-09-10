@@ -783,6 +783,7 @@ const string = {
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
             onChange: attrs.onChange,
+            readonly: attrs.readonly,
             required: !!required,
             maxlength: isdef(attrs.max_length) && attrs.max_length,
             minlength: isdef(attrs.min_length) && attrs.min_length,

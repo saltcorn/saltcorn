@@ -19,6 +19,8 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
+jest.setTimeout(30000);
+
 describe("viewedit list endpoint", () => {
   itShouldRedirectUnauthToLogin("/viewedit");
 

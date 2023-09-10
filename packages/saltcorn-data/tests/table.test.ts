@@ -1332,6 +1332,33 @@ describe("Table formula constraint", () => {
     assertIsErrorMsg(res1);
     expect(!!res1.error).toBe(false);
   });
+  it("should prevent self-join loop", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    assertIsSet(table.id);
+
+    const tc = await TableConstraint.create({
+      table_id: table.id,
+      type: "Formula",
+      configuration: {
+        formula: "parent != id || parent == null",
+        errormsg: "No loop",
+      },
+    });
+    const table1 = Table.findOne({ name: "patients" });
+    assertIsSet(table1);
+
+    const res = await table1.tryInsertRow({ name: "Fred" });
+    assertsIsSuccessMessage(res);
+
+    const id = res.success;
+
+    const resup = await table1.updateRow({ parent: id }, id);
+    expect(resup).toBe("No loop");
+    const uprow = await table1.getRow({ id });
+
+    expect(uprow!.parent).toBe(null);
+  });
 });
 describe("Table with UUID pks", () => {
   if (!db.isSQLite) {

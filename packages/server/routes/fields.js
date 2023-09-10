@@ -542,14 +542,6 @@ const fieldFlow = (req) =>
                 type: "Bool",
                 showIf: { summary_field: textfields },
               }),
-              /*new Field({
-                name: "on_delete_cascade",
-                label: req.__("On delete cascade"),
-                type: "Bool",
-                sublabel: req.__(
-                  "If the parent row is deleted, automatically delete the child rows."
-                ),
-              }),*/
               new Field({
                 name: "on_delete",
                 label: req.__("On delete"),
@@ -1063,7 +1055,11 @@ router.post(
       res.send("");
       return;
     }
-    const firefox = /firefox/i.test(req.headers["user-agent"]);
+    //const firefox = /firefox/i.test(req.headers["user-agent"]);
+
+    //Chrome 116 changes its behaviour to align with firefox
+    // - disabled inputs do not dispactch click events
+    const firefox = true;
     const fv = fieldviews[fieldview];
     if (!fv && field.type === "Key" && fieldview === "select")
       res.send(

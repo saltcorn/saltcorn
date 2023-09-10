@@ -20,8 +20,13 @@ function combineFormAndQuery(form, query) {
  * @param {*} url
  */
 async function execLink(url) {
-  const { path, query } = parent.splitPathQuery(url);
-  await parent.handleRoute(`get${path}`, query);
+  try {
+    showLoadSpinner();
+    const { path, query } = parent.splitPathQuery(url);
+    await parent.handleRoute(`get${path}`, query);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 async function execNavbarLink(url) {
@@ -36,33 +41,39 @@ async function execNavbarLink(url) {
  * @returns
  */
 async function formSubmit(e, urlSuffix, viewname, noSubmitCb) {
-  if (!noSubmitCb) e.submit();
-  const files = {};
-  const urlParams = new URLSearchParams();
-  for (const entry of new FormData(e).entries()) {
-    if (entry[1] instanceof File) files[entry[0]] = entry[1];
-    else {
-      // is there a hidden input with a filename?
-      const domEl = $(e).find(
-        `[name='${entry[0]}'][mobile-camera-input='true']`
-      );
-      if (domEl.length > 0) {
-        const tokens = entry[1].split("/");
-        const fileName = tokens[tokens.length - 1];
-        const directory = tokens.splice(0, tokens.length - 1).join("/");
-        // read and add file to submit
-        const binary = await parent.readBinary(fileName, directory);
-        files[entry[0]] = new File([binary], fileName);
-      } else urlParams.append(entry[0], entry[1]);
+  try {
+    showLoadSpinner();
+    if (!noSubmitCb) e.submit();
+    const files = {};
+    const urlParams = new URLSearchParams();
+    for (const entry of new FormData(e).entries()) {
+      if (entry[1] instanceof File) files[entry[0]] = entry[1];
+      else {
+        // is there a hidden input with a filename?
+        const domEl = $(e).find(
+          `[name='${entry[0]}'][mobile-camera-input='true']`
+        );
+        if (domEl.length > 0) {
+          const tokens = entry[1].split("/");
+          const fileName = tokens[tokens.length - 1];
+          const directory = tokens.splice(0, tokens.length - 1).join("/");
+          // read and add file to submit
+          const binary = await parent.readBinary(fileName, directory);
+          files[entry[0]] = new File([binary], fileName);
+        } else urlParams.append(entry[0], entry[1]);
+      }
     }
+    const queryStr = urlParams.toString();
+    await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
+  } finally {
+    removeLoadSpinner();
   }
-  const queryStr = urlParams.toString();
-  await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
 }
 
 async function inline_local_submit(e, opts1) {
   try {
     e.preventDefault();
+    showLoadSpinner();
     const opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
     const form = $(e.target).closest("form");
     const urlParams = new URLSearchParams();
@@ -82,25 +93,32 @@ async function inline_local_submit(e, opts1) {
         msg: error.message ? error.message : "An error occured.",
       },
     ]);
+  } finally {
+    removeLoadSpinner();
   }
 }
 
 async function saveAndContinue(e, action, k) {
-  const form = $(e).closest("form");
-  submitWithEmptyAction(form[0]);
-  const queryStr = new URLSearchParams(new FormData(form[0])).toString();
-  const res = await parent.router.resolve({
-    pathname: `post${action}`,
-    query: queryStr,
-    xhr: true,
-  });
-  if (res.id && form.find("input[name=id")) {
-    form.append(
-      `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
-    );
+  try {
+    showLoadSpinner();
+    const form = $(e).closest("form");
+    submitWithEmptyAction(form[0]);
+    const queryStr = new URLSearchParams(new FormData(form[0])).toString();
+    const res = await parent.router.resolve({
+      pathname: `post${action}`,
+      query: queryStr,
+      xhr: true,
+    });
+    if (res.id && form.find("input[name=id")) {
+      form.append(
+        `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
+      );
+    }
+    if (k) await k();
+    // TODO ch error (request.responseText?)
+  } finally {
+    removeLoadSpinner();
   }
-  if (k) await k();
-  // TODO ch error (request.responseText?)
 }
 
 async function loginRequest({ email, password, isSignup, isPublic }) {
@@ -131,75 +149,79 @@ async function loginRequest({ email, password, isSignup, isPublic }) {
 }
 
 async function login(e, entryPoint, isSignup) {
-  const formData = new FormData(e);
-  const loginResult = await loginRequest({
-    email: formData.get("email"),
-    password: formData.get("password"),
-    isSignup,
-  });
-  if (typeof loginResult === "string") {
-    // use it as a token
-    const decodedJwt = parent.jwt_decode(loginResult);
-    const state = parent.saltcorn.data.state.getState();
-    const config = state.mobileConfig;
-    config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 100;
-    config.user_name = decodedJwt.user.email;
-    config.user_id = decodedJwt.user.id;
-    config.language = decodedJwt.user.language;
-    config.isPublicUser = false;
-    config.isOfflineMode = false;
-    await parent.insertUser({
-      id: config.user_id,
-      email: config.user_name,
-      role_id: config.role_id,
-      language: config.language,
+  try {
+    showLoadSpinner();
+    const formData = new FormData(e);
+    const loginResult = await loginRequest({
+      email: formData.get("email"),
+      password: formData.get("password"),
+      isSignup,
     });
-    await parent.setJwt(loginResult);
-    config.jwt = loginResult;
-    await parent.i18next.changeLanguage(config.language);
-    const alerts = [];
-    if (config.allowOfflineMode) {
-      const {
-        offlineUser,
-        hasOfflineData,
-      } = (await parent.offlineHelper.getLastOfflineSession()) || {};
-      if (!offlineUser || offlineUser === config.user_name) {
-        await parent.offlineHelper.sync();
-      } else {
-        if (hasOfflineData)
-          alerts.push({
-            type: "warning",
-            msg: `'${offlineUser}' has not yet uploaded offline data.`,
-          });
-        else {
-          await deleteOfflineData(true);
+    if (typeof loginResult === "string") {
+      // use it as a token
+      const decodedJwt = parent.jwt_decode(loginResult);
+      const state = parent.saltcorn.data.state.getState();
+      const config = state.mobileConfig;
+      config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 100;
+      config.user_name = decodedJwt.user.email;
+      config.user_id = decodedJwt.user.id;
+      config.language = decodedJwt.user.language;
+      config.isPublicUser = false;
+      config.isOfflineMode = false;
+      await parent.insertUser({
+        id: config.user_id,
+        email: config.user_name,
+        role_id: config.role_id,
+        language: config.language,
+      });
+      await parent.setJwt(loginResult);
+      config.jwt = loginResult;
+      await parent.i18next.changeLanguage(config.language);
+      const alerts = [];
+      if (config.allowOfflineMode) {
+        const { offlineUser, hasOfflineData } =
+          (await parent.offlineHelper.getLastOfflineSession()) || {};
+        if (!offlineUser || offlineUser === config.user_name) {
           await parent.offlineHelper.sync();
+        } else {
+          if (hasOfflineData)
+            alerts.push({
+              type: "warning",
+              msg: `'${offlineUser}' has not yet uploaded offline data.`,
+            });
+          else {
+            await deleteOfflineData(true);
+            await parent.offlineHelper.sync();
+          }
         }
       }
+      alerts.push({
+        type: "success",
+        msg: parent.i18next.t("Welcome, %s!", {
+          postProcess: "sprintf",
+          sprintf: [config.user_name],
+        }),
+      });
+      parent.addRoute({ route: entryPoint, query: undefined });
+      const page = await parent.router.resolve({
+        pathname: entryPoint,
+        fullWrap: true,
+        alerts,
+      });
+      await parent.replaceIframe(page.content);
+    } else if (loginResult?.alerts) {
+      parent.showAlerts(loginResult?.alerts);
+    } else {
+      throw new Error("The login failed.");
     }
-    alerts.push({
-      type: "success",
-      msg: parent.i18next.t("Welcome, %s!", {
-        postProcess: "sprintf",
-        sprintf: [config.user_name],
-      }),
-    });
-    parent.addRoute({ route: entryPoint, query: undefined });
-    const page = await parent.router.resolve({
-      pathname: entryPoint,
-      fullWrap: true,
-      alerts,
-    });
-    await parent.replaceIframe(page.content);
-  } else if (loginResult?.alerts) {
-    parent.showAlerts(loginResult?.alerts);
-  } else {
-    throw new Error("The login failed.");
+  } finally {
+    removeLoadSpinner();
   }
 }
 
 async function publicLogin(entryPoint) {
   try {
+    showLoadSpinner();
     const loginResult = await loginRequest({ isPublic: true });
     if (typeof loginResult === "string") {
       const config = parent.saltcorn.data.state.getState().mobileConfig;
@@ -234,12 +256,15 @@ async function publicLogin(entryPoint) {
         msg: error.message ? error.message : "An error occured.",
       },
     ]);
+  } finally {
+    removeLoadSpinner();
   }
 }
 
 async function logout() {
   const config = parent.saltcorn.data.state.getState().mobileConfig;
   try {
+    showLoadSpinner();
     const page = await parent.router.resolve({
       pathname: "get/auth/logout",
       entryView: config.entry_point,
@@ -253,6 +278,8 @@ async function logout() {
         msg: error.message ? error.message : "An error occured.",
       },
     ]);
+  } finally {
+    removeLoadSpinner();
   }
 }
 
@@ -273,14 +300,19 @@ async function loginFormSubmit(e, entryView) {
 }
 
 async function local_post_btn(e) {
-  const form = $(e).closest("form");
-  const url = form.attr("action");
-  const method = form.attr("method");
-  const { path, query } = parent.splitPathQuery(url);
-  await parent.handleRoute(
-    `${method}${path}`,
-    combineFormAndQuery(form, query)
-  );
+  try {
+    showLoadSpinner();
+    const form = $(e).closest("form");
+    const url = form.attr("action");
+    const method = form.attr("method");
+    const { path, query } = parent.splitPathQuery(url);
+    await parent.handleRoute(
+      `${method}${path}`,
+      combineFormAndQuery(form, query)
+    );
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 /**
@@ -289,8 +321,13 @@ async function local_post_btn(e) {
  * @param {*} path
  */
 async function stateFormSubmit(e, path) {
-  const formQuery = new URLSearchParams(new FormData(e)).toString();
-  await parent.handleRoute(path, formQuery);
+  try {
+    showLoadSpinner();
+    const formQuery = new URLSearchParams(new FormData(e)).toString();
+    await parent.handleRoute(path, formQuery);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 function removeQueryStringParameter(queryStr, key) {
@@ -334,33 +371,48 @@ function invalidate_pagings(currentQuery) {
 }
 
 async function set_state_fields(kvs, href) {
-  let queryParams = [];
-  let currentQuery = parent.currentQuery();
-  if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
-    currentQuery = invalidate_pagings(currentQuery);
-  }
-  Object.entries(kvs).forEach((kv) => {
-    if (kv[1].unset && kv[1].unset === true) {
-      currentQuery = removeQueryStringParameter(currentQuery, kv[0]);
-    } else {
-      currentQuery = updateQueryStringParameter(currentQuery, kv[0], kv[1]);
+  try {
+    showLoadSpinner();
+    let queryParams = [];
+    let currentQuery = parent.currentQuery();
+    if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
+      currentQuery = invalidate_pagings(currentQuery);
     }
-  });
-  for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
-    queryParams.push(`${k}=${v}`);
+    Object.entries(kvs).forEach((kv) => {
+      if (kv[1].unset && kv[1].unset === true) {
+        currentQuery = removeQueryStringParameter(currentQuery, kv[0]);
+      } else {
+        currentQuery = updateQueryStringParameter(currentQuery, kv[0], kv[1]);
+      }
+    });
+    for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
+      queryParams.push(`${k}=${v}`);
+    }
+    await parent.handleRoute(href, queryParams.join("&"));
+  } finally {
+    removeLoadSpinner();
   }
-  await parent.handleRoute(href, queryParams.join("&"));
 }
 
 async function set_state_field(key, value) {
-  const query = updateQueryStringParameter(parent.currentQuery(), key, value);
-  await parent.handleRoute(parent.currentLocation(), query);
+  try {
+    showLoadSpinner();
+    const query = updateQueryStringParameter(parent.currentQuery(), key, value);
+    await parent.handleRoute(parent.currentLocation(), query);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 async function unset_state_field(key) {
-  const href = parent.currentLocation();
-  const query = removeQueryStringParameter(parent.currentLocation(), key);
-  await parent.handleRoute(href, query);
+  try {
+    showLoadSpinner();
+    const href = parent.currentLocation();
+    const query = removeQueryStringParameter(parent.currentLocation(), key);
+    await parent.handleRoute(href, query);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 async function sortby(k, desc, viewIdentifier) {
@@ -453,6 +505,7 @@ function closeModal() {
 
 async function local_post(url, args) {
   try {
+    showLoadSpinner();
     const result = await parent.router.resolve({
       pathname: `post${url}`,
       data: args,
@@ -461,11 +514,14 @@ async function local_post(url, args) {
     else common_done(result);
   } catch (error) {
     parent.errorAlert(error);
+  } finally {
+    removeLoadSpinner();
   }
 }
 
 async function local_post_json(url) {
   try {
+    showLoadSpinner();
     const result = await parent.router.resolve({
       pathname: `post${url}`,
     });
@@ -474,6 +530,8 @@ async function local_post_json(url) {
     else common_done(result);
   } catch (error) {
     parent.errorAlert(error);
+  } finally {
+    removeLoadSpinner();
   }
 }
 
@@ -542,26 +600,46 @@ function openFile(fileId) {
 }
 
 async function select_id(id) {
-  const newQuery = updateQueryStringParameter(parent.currentQuery(), "id", id);
-  await parent.handleRoute(parent.currentLocation(), newQuery);
+  try {
+    showLoadSpinner();
+    const newQuery = updateQueryStringParameter(
+      parent.currentQuery(),
+      "id",
+      id
+    );
+    await parent.handleRoute(parent.currentLocation(), newQuery);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 async function check_state_field(that) {
-  const name = that.name;
-  const newQuery = that.checked
-    ? updateQueryStringParameter(parent.currentQuery(), name, that.value)
-    : removeQueryStringParameter(name);
-  await parent.handleRoute(parent.currentLocation(), newQuery);
+  try {
+    showLoadSpinner();
+    const name = that.name;
+    const newQuery = that.checked
+      ? updateQueryStringParameter(parent.currentQuery(), name, that.value)
+      : removeQueryStringParameter(name);
+    await parent.handleRoute(parent.currentLocation(), newQuery);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 async function clear_state() {
-  await parent.handleRoute(parent.currentLocation(), undefined);
+  try {
+    showLoadSpinner();
+    await parent.handleRoute(parent.currentLocation(), undefined);
+  } finally {
+    removeLoadSpinner();
+  }
 }
 
 async function view_post(viewname, route, data, onDone) {
   const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
   const view = parent.saltcorn.data.models.View.findOne({ name: viewname });
   try {
+    showLoadSpinner();
     let respData = undefined;
     if (
       mobileConfig.isOfflineMode ||
@@ -586,6 +664,8 @@ async function view_post(viewname, route, data, onDone) {
     common_done(respData);
   } catch (error) {
     parent.errorAlert(error);
+  } finally {
+    removeLoadSpinner();
   }
 }
 

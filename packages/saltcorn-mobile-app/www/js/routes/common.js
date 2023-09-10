@@ -6,6 +6,7 @@ const getHeaders = () => {
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
+    { script: `static_assets/${versionTag}/dayjs.min.js` },
     { script: "js/utils/iframe_view_utils.js" },
   ];
   return [...stdHeaders, ...config.pluginHeaders];

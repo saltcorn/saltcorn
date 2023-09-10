@@ -857,7 +857,8 @@ class Table implements AbstractTable {
 
     return apply_calculated_fields(
       rows.map((r: Row) => this.readFromDB(r)),
-      this.fields
+      this.fields,
+      !!selopts.ignore_errors
     );
   }
 
@@ -1207,7 +1208,11 @@ class Table implements AbstractTable {
     return pkField;
   }
 
-  check_table_constraints(row: Row): string | undefined {
+  check_table_constraints(row0: Row): string | undefined {
+    const row = { ...row0 };
+    this.fields.forEach((f) => {
+      if (typeof row[f.name] === "undefined") row[f.name] = null;
+    });
     const fmls = this.constraints
       .filter((c) => c.type === "Formula")
       .map((c) => c.configuration);
@@ -2727,7 +2732,11 @@ class Table implements AbstractTable {
     const res = await db.query(sql, values);
     if (res.length === 0) return res; // check
 
-    let calcRow = apply_calculated_fields(res.rows, fields);
+    let calcRow = apply_calculated_fields(
+      res.rows,
+      fields,
+      !!opts?.ignore_errors
+    );
 
     //rename joinfields
     if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {

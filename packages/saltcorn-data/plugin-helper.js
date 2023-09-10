@@ -639,9 +639,12 @@ const getActionConfigFields = async (action, table) =>
 
 /**
  * @function
- * @param {Table|object} table
- * @param {string} viewname
- * @param {object} req
+ * @param {Table|object} table - Table object
+ * @param {string} viewname - view name
+ * @param {object} req - Request Object
+ * @param has_click_to_edit - boolean
+ * @param has_align - boolean
+ * @param no_fieldviews - boolean
  * @returns {Promise<object[]>}
  */
 const field_picker_fields = async ({
@@ -680,7 +683,7 @@ const field_picker_fields = async ({
   });
   if (!table.external)
     (
-      await Trigger.find({
+      Trigger.find({
         table_id: table.id,
       })
     ).forEach((tr) => {
@@ -772,9 +775,9 @@ const field_picker_fields = async ({
   const agg_fieldview_cfg_opts = [
     {
       name: "format",
-      label: "Format",
+      label: __("Format"),
       type: "String",
-      sublabel: "moment.js format specifier",
+      sublabel: __("moment.js format specifier"),
       showIf: {
         type: "Aggregation",
         "agg_field|_@_1": "Date",
@@ -929,7 +932,7 @@ const field_picker_fields = async ({
       ? [
           {
             name: "click_to_edit",
-            label: "Click to edit?",
+            label: __("Click to edit?"),
             type: "Bool",
             showIf: { type: ["Field", "JoinField"] },
           },
@@ -967,16 +970,16 @@ const field_picker_fields = async ({
       attributes: {
         asideNext: true,
         options: [
-          { name: "btn-primary", label: "Primary button" },
-          { name: "btn-secondary", label: "Secondary button" },
-          { name: "btn-success", label: "Success button" },
-          { name: "btn-danger", label: "Danger button" },
-          { name: "btn-outline-primary", label: "Primary outline button" },
+          { name: "btn-primary", label: __("Primary button") },
+          { name: "btn-secondary", label: __("Secondary button") },
+          { name: "btn-success", label: __("Success button") },
+          { name: "btn-danger", label: __("Danger button") },
+          { name: "btn-outline-primary", label: __("Primary outline button") },
           {
             name: "btn-outline-secondary",
-            label: "Secondary outline button",
+            label: __("Secondary outline button"),
           },
-          { name: "btn-link", label: "Link" },
+          { name: "btn-link", label: __("Link") },
         ],
       },
 
@@ -989,12 +992,12 @@ const field_picker_fields = async ({
       required: true,
       attributes: {
         options: [
-          { name: "", label: "Standard" },
-          { name: "btn-lg", label: "Large" },
-          { name: "btn-sm", label: "Small" },
-          { name: "btn-sm btn-xs", label: "X-Small" },
-          { name: "btn-block", label: "Block" },
-          { name: "btn-block btn-lg", label: "Large block" },
+          { name: "", label: __("Standard") },
+          { name: "btn-lg", label: __("Large") },
+          { name: "btn-sm", label: __("Small") },
+          { name: "btn-sm btn-xs", label: __("X-Small") },
+          { name: "btn-block", label: __("Block") },
+          { name: "btn-block btn-lg", label: __("Large block") },
         ],
       },
       showIf: { type: "Action" },
@@ -1053,18 +1056,18 @@ const field_picker_fields = async ({
       attributes: {
         asideNext: true,
         options: [
-          { name: "", label: "Link" },
-          { name: "btn btn-primary", label: "Primary button" },
-          { name: "btn btn-secondary", label: "Secondary button" },
-          { name: "btn btn-success", label: "Success button" },
-          { name: "btn btn-danger", label: "Danger button" },
+          { name: "", label: __("Link") },
+          { name: "btn btn-primary", label: __("Primary button") },
+          { name: "btn btn-secondary", label: __("Secondary button") },
+          { name: "btn btn-success", label: __("Success button") },
+          { name: "btn btn-danger", label: __("Danger button") },
           {
             name: "btn btn-outline-primary",
-            label: "Primary outline button",
+            label: __("Primary outline button"),
           },
           {
             name: "btn btn-outline-secondary",
-            label: "Secondary outline button",
+            label: __("Secondary outline button"),
           },
         ],
       },
@@ -1078,12 +1081,12 @@ const field_picker_fields = async ({
       required: true,
       attributes: {
         options: [
-          { name: "", label: "Standard" },
-          { name: "btn-lg", label: "Large" },
-          { name: "btn-sm", label: "Small" },
-          { name: "btn-sm btn-xs", label: "X-Small" },
-          { name: "btn-block", label: "Block" },
-          { name: "btn-block btn-lg", label: "Large block" },
+          { name: "", label: __("Standard") },
+          { name: "btn-lg", label: __("Large") },
+          { name: "btn-sm", label: __("Small") },
+          { name: "btn-sm btn-xs", label: __("X-Small") },
+          { name: "btn-block", label: __("Block") },
+          { name: "btn-block btn-lg", label: __("Large block") },
         ],
       },
       showIf: { type: "ViewLink" },
@@ -1092,7 +1095,7 @@ const field_picker_fields = async ({
       name: "extra_state_fml",
       label: __("Extra state Formula"),
       sublabel:
-        "Formula for JavaScript object that will be added to state parameters",
+        __("Formula for JavaScript object that will be added to state parameters"),
       type: "String",
       class: "validate-expression",
       showIf: { type: "ViewLink" },
@@ -1205,7 +1208,7 @@ const field_picker_fields = async ({
       ? [
           {
             name: "alignment",
-            label: "Alignment",
+            label: __("Alignment"),
             input_type: "select",
             options: ["Default", "Left", "Center", "Right"],
           },
