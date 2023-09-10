@@ -341,7 +341,7 @@
             mobileConfig.isPublicUser = false;
             await i18next.changeLanguage(mobileConfig.language);
             if (mobileConfig.allowOfflineMode) {
-              const { offlineUser, upload_started_at, upload_ended_at } =
+              const { offlineUser } =
                 (await offlineHelper.getLastOfflineSession()) || {};
               if (networkDisabled) {
                 if (offlineUser && offlineUser !== mobileConfig.user_name)
@@ -357,19 +357,11 @@
                 }
               } else if (offlineUser) {
                 if (offlineUser === mobileConfig.user_name) {
-                  if (upload_started_at && !upload_ended_at) {
-                    // TODO check server upload status
-                    alerts.push({
-                      type: "warning",
-                      msg: "Please check if your offline data is already online. An upload was started but did not finish.",
-                    });
-                  } else {
-                    await offlineHelper.sync();
-                    alerts.push({
-                      type: "info",
-                      msg: "Synchronized your offline data.",
-                    });
-                  }
+                  await offlineHelper.sync();
+                  alerts.push({
+                    type: "info",
+                    msg: "Synchronized your offline data.",
+                  });
                 } else
                   alerts.push({
                     type: "warning",
