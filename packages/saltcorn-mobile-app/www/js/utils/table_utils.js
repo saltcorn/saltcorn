@@ -81,6 +81,25 @@ async function updateUserDefinedTables() {
   }
 }
 
+async function createSyncInfoTables(synchTbls) {
+  const infoTbls = (await saltcorn.data.db.listTables()).filter(({ name }) => {
+    name.endsWith("_sync_info");
+  });
+  for (const synchTbl of synchTbls) {
+    if (!infoTbls.find(({ name }) => name.startsWith(synchTbl))) {
+      await saltcorn.data.db
+        .query(`CREATE TABLE IF NOT EXISTS ${saltcorn.data.db.sqlsanitize(
+        synchTbl
+      )}_sync_info (
+          ref integer,
+          last_modified timestamp,
+          deleted integer,
+          modified_local integer
+      )`);
+    }
+  }
+}
+
 async function tablesUptodate(tables, historyFile) {
   const history = await readJSON(historyFile, cordova.file.dataDirectory);
   return tables.created_at.valueOf() < history.updated_at.valueOf();

@@ -1491,7 +1491,7 @@ router.get(
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
-
+    const withSyncInfo = await Table.find({ has_sync_info: true });
     send_admin_page({
       res,
       req,
@@ -1752,7 +1752,6 @@ router.get(
                   ),
 
                   div(
-                    // TODO only for some tables?
                     { class: "row pb-2" },
                     div(
                       { class: "col-sm-4" },
@@ -1761,6 +1760,8 @@ router.get(
                         id: "offlineModeBoxId",
                         class: "form-check-input me-2",
                         name: "allowOfflineMode",
+                        value: "allowOfflineMode",
+                        onClick: "toggle_tbl_sync()",
                         checked: true,
                       }),
                       label(
@@ -1769,6 +1770,98 @@ router.get(
                           class: "form-label",
                         },
                         req.__("Allow offline mode")
+                      )
+                    )
+                  ),
+                  div(
+                    {
+                      id: "tblSyncSelectorId",
+                      class: "row pb-2",
+                    },
+                    div(
+                      label(
+                        { class: "form-label fw-bold" },
+                        req.__("Table Synchronization")
+                      )
+                    ),
+                    div(
+                      { class: "container" },
+                      div(
+                        { class: "row" },
+                        div(
+                          { class: "col-sm-4 text-center" },
+                          req.__("unsynched")
+                        ),
+                        div({ class: "col-sm-1" }),
+                        div(
+                          { class: "col-sm-4 text-center" },
+                          req.__("synched")
+                        )
+                      ),
+                      div(
+                        { class: "row" },
+                        div(
+                          { class: "col-sm-4" },
+                          select(
+                            {
+                              id: "unsynched-tbls-select-id",
+                              class: "form-control form-select",
+                              multiple: true,
+                            },
+                            withSyncInfo.map((table) =>
+                              option({
+                                id: `${table.name}_unsynched_opt`,
+                                value: table.name,
+                                label: table.name,
+                              })
+                            )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-1 d-flex justify-content-center" },
+                          div(
+                            div(
+                              button(
+                                {
+                                  id: "move-right-btn-id",
+                                  type: "button",
+                                  onClick: `move_to_synched()`,
+                                  class: "btn btn-light pt-1 mb-1",
+                                },
+                                i({ class: "fas fa-arrow-right" })
+                              )
+                            ),
+                            div(
+                              button(
+                                {
+                                  id: "move-left-btn-id",
+                                  type: "button",
+                                  onClick: `move_to_unsynched()`,
+                                  class: "btn btn-light pt-1",
+                                },
+                                i({ class: "fas fa-arrow-left" })
+                              )
+                            )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+                          select(
+                            {
+                              id: "synched-tbls-select-id",
+                              class: "form-control form-select",
+                              multiple: true,
+                            },
+                            withSyncInfo.map((table) =>
+                              option({
+                                id: `${table.name}_synched_opt`,
+                                value: table.name,
+                                label: table.name,
+                                hidden: "true",
+                              })
+                            )
+                          )
+                        )
                       )
                     )
                   )
@@ -1877,6 +1970,7 @@ router.post(
       serverURL,
       splashPage,
       allowOfflineMode,
+      synchedTables,
     } = req.body;
     if (!androidPlatform && !iOSPlatform) {
       return res.json({
@@ -1928,6 +2022,8 @@ router.post(
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
+    if (synchedTables?.length > 0)
+      spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
     if (
       db.is_it_multi_tenant() &&
       db.getTenantSchema() !== db.connectObj.default_schema

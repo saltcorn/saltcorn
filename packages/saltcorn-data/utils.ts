@@ -241,7 +241,16 @@ const extractPagings = (state: any): any => {
 const getSafeSaltcornCmd = () => {
   return process.env.PATH!.indexOf("saltcorn-cli/bin") > 0
     ? "saltcorn"
-    : join(dirname(require!.main!.filename), "saltcorn");
+    : process.env.JEST_WORKER_ID === undefined
+    ? join(dirname(require!.main!.filename), "saltcorn")
+    : join(
+        dirname(require!.main!.filename),
+        "..",
+        "..",
+        "saltcorn-cli",
+        "bin",
+        "saltcorn"
+      );
 };
 
 /**

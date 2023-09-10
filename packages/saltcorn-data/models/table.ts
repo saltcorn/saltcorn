@@ -57,9 +57,9 @@ import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
-import utils from "../utils";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
+import utils from "../utils";
 const {
   prefixFieldsInWhere,
   InvalidConfiguration,
@@ -69,6 +69,7 @@ const {
   getLines,
   mergeIntoWhere,
   stringToJSON,
+  isNode,
 } = utils;
 import tags from "@saltcorn/markup/tags";
 const { text } = tags;
@@ -145,6 +146,7 @@ class Table implements AbstractTable {
   ownership_field_id?: string;
   ownership_formula?: string;
   versioned: boolean;
+  has_sync_info: boolean;
   external: boolean;
   description?: string;
   fields: Field[];
@@ -164,6 +166,7 @@ class Table implements AbstractTable {
     this.ownership_field_id = o.ownership_field_id;
     this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
+    this.has_sync_info = !!o.has_sync_info;
     this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
@@ -657,13 +660,46 @@ class Table implements AbstractTable {
     }
   }
 
+  async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
+    if (ids.length > 0) {
+      const schema = db.getTenantSchemaPrefix();
+      const pkName = this.pk_name;
+      if (isNode()) {
+        await db.query(
+          `delete from ${schema}${db.sqlsanitize(
+            this.name
+          )}_sync_info where ref in (
+            ${ids.map((row) => row[pkName]).join(",")})`
+        );
+        await db.query(
+          `insert into ${schema}${db.sqlsanitize(
+            this.name
+          )}_sync_info values ${ids
+            .map(
+              (row) =>
+                `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
+                  timestamp.valueOf() / 1000.0
+                } ) ), true)`
+            )
+            .join(",")}`
+        );
+      } else {
+        await db.query(
+          `update ${db.sqlsanitize(this.name)}_sync_info 
+           set deleted = true, modified_local = true
+           where ref in (${ids.map((row) => row[pkName]).join(",")})`
+        );
+      }
+    }
+  }
+
   /**
    * Delete rows from table
    * @param where - condition
    * @param user - optional user, if null then no authorization will be checked
    * @returns
    */
-  async deleteRows(where: Where, user?: Row) {
+  async deleteRows(where: Where, user?: Row, noTrigger?: boolean) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = this.fields;
@@ -685,7 +721,7 @@ class Table implements AbstractTable {
       (f) => f.type === "File" && f.attributes?.also_delete_file
     );
     const deleteFiles = [];
-    if (triggers.length > 0 || deleteFileFields.length > 0) {
+    if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
       const File = require("./file");
 
       if (!rows)
@@ -707,11 +743,28 @@ class Table implements AbstractTable {
         }
       }
     }
-    if (rows)
+    if (rows) {
       await db.deleteWhere(this.name, {
         [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
       });
-    else await db.deleteWhere(this.name, where);
+      if (this.has_sync_info) {
+        const dbTime = await db.time();
+        const ids = rows.map((r) => r[this.pk_name || "id"]);
+        await this.addDeleteSyncInfo(ids, dbTime);
+      }
+    } else {
+      const delIds = this.has_sync_info
+        ? await db.select(this.name, where, {
+            fields: [this.pk_name],
+          })
+        : null;
+
+      await db.deleteWhere(this.name, where);
+      if (this.has_sync_info) {
+        const dbTime = await db.time();
+        await this.addDeleteSyncInfo(delIds, dbTime);
+      }
+    }
     if (fields.find((f) => f.primary_key)) await this.resetSequence();
     for (const file of deleteFiles) {
       await file.delete();
@@ -867,7 +920,8 @@ class Table implements AbstractTable {
     user?: Row,
     noTrigger?: boolean,
     resultCollector?: object,
-    restore_of_version?: any
+    restore_of_version?: any,
+    syncTimestamp?: Date
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
@@ -1022,6 +1076,12 @@ class Table implements AbstractTable {
 
     await db.update(this.name, v, id, { pk_name });
 
+    if (this.has_sync_info) {
+      const oldInfo = await this.latestSyncInfo(id);
+      if (oldInfo && !oldInfo.deleted)
+        await this.updateSyncInfo(id, oldInfo.last_modified, syncTimestamp);
+      else await this.insertSyncInfo(id, syncTimestamp);
+    }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
@@ -1033,6 +1093,65 @@ class Table implements AbstractTable {
         { old_row: existing, updated_fields: v_in }
       );
       if (resultCollector) await trigPromise;
+    }
+  }
+
+  async latestSyncInfo(id: number) {
+    const rows = await this.latestSyncInfos([id]);
+    return rows?.length === 1 ? rows[0] : null;
+  }
+
+  async latestSyncInfos(ids: number[]) {
+    const schema = db.getTenantSchemaPrefix();
+    const dbResult = await db.query(
+      `select max(last_modified) "last_modified", ref
+       from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+       group by ref having ref in (${ids.join(",")})`
+    );
+    return dbResult.rows;
+  }
+
+  async insertSyncInfo(id: number, syncTimestamp?: Date) {
+    const schema = db.getTenantSchemaPrefix();
+    if (isNode()) {
+      await db.query(`insert into ${schema}"${db.sqlsanitize(
+        this.name
+      )}_sync_info" values(${id},
+        date_trunc('milliseconds', to_timestamp(${
+          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
+        })))`);
+    } else {
+      await db.query(
+        `insert into "${db.sqlsanitize(this.name)}_sync_info"
+         (ref, modified_local, deleted) 
+         values(${id}, true, false)`
+      );
+    }
+  }
+
+  async updateSyncInfo(
+    id: number,
+    oldLastModified: Date,
+    syncTimestamp?: Date
+  ) {
+    const schema = db.getTenantSchemaPrefix();
+    if (!db.isSQLite) {
+      await db.query(
+        `update ${schema}"${db.sqlsanitize(
+          this.name
+        )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp(${
+          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
+        })) where ref=${id} and last_modified = to_timestamp(${
+          oldLastModified.valueOf() / 1000.0
+        })`
+      );
+    } else {
+      await db.query(
+        `update "${db.sqlsanitize(
+          this.name
+        )}_sync_info" set modified_local = true 
+         where ref = ${id} and last_modified = ${oldLastModified.valueOf()}`
+      );
     }
   }
 
@@ -1120,7 +1239,9 @@ class Table implements AbstractTable {
   async insertRow(
     v_in: Row,
     user?: Row,
-    resultCollector?: object
+    resultCollector?: object,
+    noTrigger?: boolean,
+    syncTimestamp?: Date
   ): Promise<any> {
     const fields = this.fields;
     const pk_name = this.pk_name;
@@ -1219,14 +1340,33 @@ class Table implements AbstractTable {
         _time: new Date(),
       });
 
-    const trigPromise = Trigger.runTableTriggers(
-      "Insert",
-      this,
-      { [pk_name]: id, ...v },
-      resultCollector,
-      user
-    );
-    if (resultCollector) await trigPromise;
+    if (this.has_sync_info) {
+      if (isNode()) {
+        const schemaPrefix = db.getTenantSchemaPrefix();
+        await db.query(
+          `insert into ${schemaPrefix}${db.sqlsanitize(this.name)}_sync_info 
+           values(${id}, date_trunc('milliseconds', to_timestamp(${
+            (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
+          })))`
+        );
+      } else {
+        await db.query(
+          `insert into ${db.sqlsanitize(this.name)}_sync_info 
+           (last_modified, ref, modified_local, deleted)
+           values(NULL, ${id}, true, false)`
+        );
+      }
+    }
+    if (!noTrigger) {
+      const trigPromise = Trigger.runTableTriggers(
+        "Insert",
+        this,
+        { [pk_name]: id, ...v },
+        resultCollector,
+        user
+      );
+      if (resultCollector) await trigPromise;
+    }
     return id;
   }
 
@@ -1371,6 +1511,40 @@ class Table implements AbstractTable {
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
+  }
+
+  async create_sync_info_table(): Promise<void> {
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    const fields = this.fields;
+    const pk = fields.find((f) => f.primary_key)?.name;
+    if (!pk) {
+      throw new Error("Unable to find a field with a primary key.");
+    }
+    await db.query(
+      `create table ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info (ref integer, last_modified timestamp, deleted boolean default false)`
+    );
+    await db.query(
+      `create index ${sqlsanitize(
+        this.name
+      )}_sync_info_ref_index on ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info(ref)`
+    );
+    await db.query(
+      `create index ${sqlsanitize(
+        this.name
+      )}_sync_info_lm_index on ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info(last_modified)`
+    );
+  }
+
+  async drop_sync_table(): Promise<void> {
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    await db.query(`
+      drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
   }
 
   async restore_row_version(
@@ -1519,6 +1693,11 @@ class Table implements AbstractTable {
         await new_table.create_history_table();
       } else if (!new_table.versioned && existing.versioned) {
         await new_table.drop_history_table();
+      }
+      if (new_table.has_sync_info && !existing.has_sync_info) {
+        await this.create_sync_info_table();
+      } else if (!new_table.has_sync_info && existing.has_sync_info) {
+        await new_table.drop_sync_table();
       }
       Object.assign(this, new_table_rec);
     }

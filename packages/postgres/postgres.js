@@ -17,6 +17,7 @@ const {
 let getTenantSchema;
 let getConnectObject = null;
 let pool = null;
+let client = null;
 
 let log_sql_enabled = false;
 
@@ -66,6 +67,22 @@ const changeConnection = async (connObj = {}) => {
   pool = new Pool(getConnectObject(connObj));
 };
 
+const begin = async () => {
+  client = await getClient();
+};
+
+const commit = async () => {
+  await client.query(`COMMIT`);
+  client.release(true);
+  client = null;
+};
+
+const rollback = async () => {
+  await client.query(`ROLLBACK`);
+  client.release(true);
+  client = null;
+};
+
 /**
  * Execute Select statement
  * @param {string} tbl - table name
@@ -82,7 +99,7 @@ const select = async (tbl, whereObj, selectopts = {}) => {
     selectopts
   )}`;
   sql_log(sql, values);
-  const tq = await pool.query(sql, values);
+  const tq = await (client || selectopts.client || pool).query(sql, values);
 
   return tq.rows;
 };
@@ -116,7 +133,7 @@ const count = async (tbl, whereObj) => {
     tbl
   )}" ${where}`;
   sql_log(sql, values);
-  const tq = await pool.query(sql, values);
+  const tq = await (client || pool).query(sql, values);
 
   return parseInt(tq.rows[0].count);
 };
@@ -152,7 +169,7 @@ const deleteWhere = async (tbl, whereObj, opts = {}) => {
   )}" ${where}`;
   sql_log(sql, values);
 
-  const tq = await (opts.client || pool).query(sql, values);
+  const tq = await (client || opts.client || pool).query(sql, values);
 
   return tq.rows;
 };
@@ -193,7 +210,7 @@ const insert = async (tbl, obj, opts = {}) => {
           tbl
         )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
   sql_log(sql, valList);
-  const { rows } = await (opts.client || pool).query(sql, valList);
+  const { rows } = await (client || opts.client || pool).query(sql, valList);
   if (opts.noid) return;
   else return rows[0][opts.pk_name || "id"];
 };
@@ -220,7 +237,7 @@ const update = async (tbl, obj, id, opts = {}) => {
     tbl
   )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
   sql_log(q, valList);
-  await (opts.client || pool).query(q, valList);
+  await (client || opts.client || pool).query(q, valList);
 };
 
 /**
@@ -244,7 +261,7 @@ const updateWhere = async (tbl, obj, whereObj, opts = {}) => {
     tbl
   )}" set ${assigns} ${where}`;
   sql_log(q, valList);
-  await (opts.client || pool).query(q, valList);
+  await (client || opts.client || pool).query(q, valList);
 };
 
 /**
@@ -296,7 +313,7 @@ const reset_sequence = async (tblname) => {
   )}"', 'id'), coalesce(max(id),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
     tblname
   )}";`;
-  await pool.query(sql);
+  await (client || pool).query(sql);
 };
 
 /**
@@ -424,6 +441,12 @@ const slugify = (s) =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
+const time = async () => {
+  const result = await (client || pool).query("select now()");
+  const row = result.rows[0];
+  return new Date(row.now);
+};
+
 /**
  *
  * @returns
@@ -474,6 +497,9 @@ const postgresExports = {
     sql_log(text, params);
     return pool.query(text, params);
   },
+  begin,
+  commit,
+  rollback,
   select,
   selectOne,
   selectMaybeOne,
@@ -498,6 +524,7 @@ const postgresExports = {
   getVersion,
   copyFrom,
   slugify,
+  time,
   listTables,
   listScTables,
   listUserDefinedTables,

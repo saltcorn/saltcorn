@@ -46,11 +46,7 @@ export function copyServerFiles(buildDir: string) {
     copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
   }
   // publics
-  const srcs = [
-    "flatpickr.min.css",
-    "flatpickr.min.js",
-    "gridedit.js"
-  ];
+  const srcs = ["flatpickr.min.css", "flatpickr.min.js", "gridedit.js"];
   for (const srcFile of srcs) {
     copySync(join(srcPrefix, srcFile), join(wwwDir, srcFile));
   }
@@ -137,6 +133,7 @@ export function writeCfgFile({
   entryPointType,
   serverPath,
   localUserTables,
+  synchedTables,
   tenantAppName,
   allowOfflineMode,
 }: any) {
@@ -148,6 +145,7 @@ export function writeCfgFile({
       ? serverPath
       : serverPath.substring(0, serverPath.length - 1),
     localUserTables,
+    synchedTables,
     allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;

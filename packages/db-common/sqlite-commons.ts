@@ -41,7 +41,7 @@ export type SqlAndValues = {
 export const buildInsertSql = (
   tbl: string,
   obj: Row,
-  opts: { noid?: boolean; ignoreExisting?: boolean } = {}
+  opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
 ): SqlAndValues => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
@@ -60,7 +60,8 @@ export const buildInsertSql = (
     .filter(([k, v]: [any, any]) => !(v && v.next_version_by_id))
     .map(mkVal);
   const ignoreExisting = opts.ignoreExisting ? "or ignore" : "";
-  const sql = `insert ${ignoreExisting} into "${sqlsanitize(
+  const replace = opts.replace ? "or replace" : "";
+  const sql = `insert ${ignoreExisting} ${replace} into "${sqlsanitize(
     tbl
   )}"(${fnameList}) values(${valPosList})`;
 
