@@ -712,6 +712,7 @@ const field_picker_fields = async ({
   }));
   const { field_view_options } = calcfldViewOptions(fields, "list");
   const rel_field_view_options = await calcrelViewOptions(table, "list");
+  //TODO the following line is slow
   const fieldViewConfigForms = await calcfldViewConfig(fields, false);
   const fvConfigFields = [];
   for (const [field_name, fvOptFields] of Object.entries(
@@ -740,6 +741,7 @@ const field_picker_fields = async ({
       }
     }
   }
+  //TODO the following line is slow
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
