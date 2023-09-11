@@ -501,8 +501,8 @@ const get_inbound_self_relation_opts = async (source, viewname) => {
  */
 const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const own_link_views = await View.find_possible_links_to_table(table);
-  const all_views = await View.find({});
-  const all_tables = await Table.find({});
+  const all_views = await View.find({}, { cached: true });
+  const all_tables = await Table.find({}, { cached: true });
   const table_id_to_name = {};
   all_tables.forEach((t) => {
     table_id_to_name[t.id] = t.name;
