@@ -421,7 +421,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
         .attr("onclick", "return false");
 
       //.attr("disabled", true);
-      $(".preview-scratchpad").find("textarea").attr("disabled", true);
+      $(".preview-scratchpad").find("textarea").attr("readonly", true);
       $(".preview-scratchpad .full-page-width").removeClass("full-page-width");
       if (isView) {
         $(".preview-scratchpad").find("input").attr("readonly", true);
@@ -1436,8 +1436,9 @@ export const buildOptions = (
   options,
   { valAttr, keyAttr, capitalize } = {}
 ) => {
-  return options.map((option) => (
+  return options.map((option, ix) => (
     <option
+      key={ix}
       {...(valAttr ? { value: option } : {})}
       {...(keyAttr ? { key: option } : {})}
     >
@@ -1453,7 +1454,9 @@ export const buildBootstrapOptions = (values) => {
     lg: "large",
     xl: "x-large",
   };
-  return values.map((option) => (
-    <option value={option}>{mappings[option]}</option>
+  return values.map((option, ix) => (
+    <option key={ix} value={option}>
+      {mappings[option]}
+    </option>
   ));
 };

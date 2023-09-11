@@ -63,6 +63,18 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           const cleft = compile(node.left!);
 
           const cright = compile(node.right!);
+          if (node.operator === "===") node.operator = "==";
+          if (node.operator === "!==") node.operator = "!=";
+          if (cleft === "null" && node.operator == "==")
+            return `${cright} is null`;
+          if (cright === "null" && node.operator == "==")
+            return `${cleft} is null`;
+
+          if (cleft === "null" && node.operator == "!=")
+            return `${cright} is not null`;
+          if (cright === "null" && node.operator == "!=")
+            return `${cleft} is not null`;
+
           return `(${cleft})${node.operator}(${cright})`;
         },
         UnaryExpression() {
@@ -490,13 +502,14 @@ function get_expression_function(
 ): Function {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
-    ? `{${field_names.join()}}`
-    : `{${field_names.join()}}, user`;
+    ? `row, {${field_names.join()}}`
+    : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
-  return runInNewContext(
+  const f = runInNewContext(
     `(${args})=>(${expression})`,
     getState().function_context
   );
+  return (row: any, user: any) => f(row, row, user);
 }
 
 /**
@@ -532,15 +545,16 @@ function get_async_expression_function(
 ): any {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
-    ? `{${field_names.join()}}`
-    : `{${field_names.join()}}, user`;
+    ? `row, {${field_names.join()}}`
+    : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
-  return runInNewContext(evalStr, {
+  const f = runInNewContext(evalStr, {
     ...getState().function_context,
     ...extraContext,
   });
+  return (row: any, user: any) => f(row, row, user);
 }
 
 /**
@@ -550,7 +564,8 @@ function get_async_expression_function(
  */
 function apply_calculated_fields(
   rows: Array<Row>,
-  fields: Array<Field>
+  fields: Array<Field>,
+  ignore_errors?: boolean
 ): Array<Row> {
   let hasExprs = false;
   let transform = (x: Row): Row => x;
@@ -562,7 +577,8 @@ function apply_calculated_fields(
         if (!field.expression) throw new Error(`The field has no expression`);
         f = get_expression_function(field.expression, fields);
       } catch (e: any) {
-        throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        if (!ignore_errors)
+          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
       }
       const oldf = transform;
       transform = (row) => {
@@ -570,7 +586,10 @@ function apply_calculated_fields(
           const x = f(row);
           row[field.name] = x;
         } catch (e: any) {
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+          if (!ignore_errors)
+            throw new Error(
+              `Error in calculating "${field.name}": ${e.message}`
+            );
         }
         return oldf(row);
       };

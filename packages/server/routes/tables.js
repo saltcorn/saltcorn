@@ -11,6 +11,7 @@ const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
 const {
   mkTable,
@@ -654,7 +655,14 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
-      if (["summary_field", "on_delete_cascade", "on_delete"].includes(k))
+      if (
+        [
+          "summary_field",
+          "on_delete_cascade",
+          "on_delete",
+          "unique_error_msg",
+        ].includes(k)
+      )
         return;
       if (v || v === 0) s += badge("secondary", k);
     });
@@ -811,6 +819,33 @@ router.get(
           ),
       };
     }
+    const models = await Model.find({ table_id: table.id });
+    const modelCard = div(
+      mkTable(
+        [
+          {
+            label: req.__("Name"),
+            key: (r) => link(`/models/show/${r.id}`, r.name),
+          },
+          { label: req.__("Pattern"), key: "modelpattern" },
+          {
+            label: req.__("Delete"),
+            key: (r) =>
+              post_delete_btn(
+                `/models/delete/${encodeURIComponent(r.id)}`,
+                req
+              ),
+          },
+        ],
+        models
+      ),
+      a(
+        { href: `/models/new/${table.id}`, class: "btn btn-primary" },
+        i({ class: "fas fa-plus-square me-1" }),
+        req.__("Create model")
+      )
+    );
+
     // Table Data card
     const dataCard = div(
       { class: "d-flex text-center" },
@@ -887,7 +922,10 @@ router.get(
             { href: `/table/constraints/${table.id}` },
             i({ class: "fas fa-2x fa-tasks" }),
             "<br/>",
-            req.__("Constraints")
+            req.__("Constraints") +
+              (table.constraints?.length
+                ? ` (${table.constraints.length})`
+                : "")
           )
         ),
 
@@ -970,6 +1008,15 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
+        ...(Model.has_templates
+          ? [
+              {
+                type: "card",
+                title: req.__("Models"),
+                contents: modelCard,
+              },
+            ]
+          : []),
       ],
     });
   })
@@ -1362,11 +1409,19 @@ const constraintForm = (req, table_id, fields, type) => {
         blurb: req.__(
           "Tick the boxes for the fields that should be jointly unique"
         ),
-        fields: fields.map((f) => ({
-          name: f.name,
-          label: f.label,
-          type: "Bool",
-        })),
+        fields: [
+          ...fields.map((f) => ({
+            name: f.name,
+            label: f.label,
+            type: "Bool",
+          })),
+          {
+            name: "errormsg",
+            label: "Error message",
+            sublabel: "Shown the user if joint uniqueness is violated",
+            type: "String",
+          },
+        ],
       });
     case "Index":
       return new Form({
@@ -1458,11 +1513,12 @@ router.post(
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
       let configuration = {};
-      if (type === "Unique")
+      if (type === "Unique") {
         configuration.fields = fields
           .map((f) => f.name)
           .filter((f) => form.values[f]);
-      else configuration = form.values;
+        configuration.errormsg = form.values.errormsg;
+      } else configuration = form.values;
       await TableConstraint.create({
         table_id: table.id,
         type,
@@ -1846,7 +1902,7 @@ const get_provider_workflow = (table, req) => {
 
     return {
       redirect: `/table/${table.id}`,
-      flash: ["success", `Table ${this.name || ""} saved`],
+      flash: ["success", `Table ${table.name || ""} saved`],
     };
   };
   return workflow;

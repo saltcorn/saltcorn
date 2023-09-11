@@ -467,7 +467,7 @@ const action_requires_write = (nm) => {
 };
 
 // flapMap if f returns array
-const flapMaipish = (xs, f) => {
+const flapMapish = (xs, f) => {
   const res = [];
   let index = 0;
   for (const x of xs) {
@@ -500,7 +500,7 @@ const get_viewable_fields = (
   __
 ) => {
   const dropdown_actions = [];
-  const tfields = flapMaipish(columns, (column, index) => {
+  const tfields = flapMapish(columns, (column, index) => {
     const role = req.user ? req.user.role_id : 100;
     const user_id = req.user ? req.user.id : null;
     const setWidth = column.col_width
@@ -533,7 +533,7 @@ const get_viewable_fields = (
           );
           const label = column.action_label_formula
             ? eval_expression(column.action_label, r)
-            : __(column.action_label) || column.action_name;
+            : __(column.action_label) || __(column.action_name);
           if (url.javascript)
             return a(
               {
@@ -830,7 +830,7 @@ const get_viewable_fields = (
   }).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
     tfields.push({
-      label: "Action",
+      label: req.__("Action"),
       key: (r) =>
         div(
           { class: "dropdown" },
@@ -844,7 +844,7 @@ const get_viewable_fields = (
               "aria-haspopup": "true",
               "aria-expanded": "false",
             },
-            "Action"
+            req.__("Action")
           ),
           div(
             {
@@ -1049,6 +1049,7 @@ const fill_presets = async (table, req, fixed) => {
     } else {
       const fld = fields.find((f) => f.name === k);
       if (!fld) delete fixed[k];
+      if (fixed[k] === null || fixed[k] === "") delete fixed[k];
     }
   });
   return fixed;

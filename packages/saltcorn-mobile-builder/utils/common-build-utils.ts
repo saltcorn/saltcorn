@@ -41,16 +41,13 @@ export function copyServerFiles(buildDir: string) {
     "flatpickr.min.css",
     "gridedit.js",
     "flatpickr.min.js",
+    "dayjs.min.js",
   ];
   for (const srcFile of srcAssests) {
     copySync(join(srcPrefix, srcFile), join(assetsDst, srcFile));
   }
   // publics
-  const srcs = [
-    "flatpickr.min.css",
-    "flatpickr.min.js",
-    "gridedit.js"
-  ];
+  const srcs = ["flatpickr.min.css", "flatpickr.min.js", "gridedit.js"];
   for (const srcFile of srcs) {
     copySync(join(srcPrefix, srcFile), join(wwwDir, srcFile));
   }
@@ -263,6 +260,7 @@ export async function prepareSplashPage(
         {
           script: `static_assets/${db.connectObj.version_tag}/saltcorn-common.js`,
         },
+        { script: `/static_assets/${db.connectObj.version_tag}/dayjs.min.js` },
         { script: "js/utils/iframe_view_utils.js" },
         {
           headerTag: `<script>parent.splashConfig = { server_path: '${serverUrl}', tenantAppName: ${tenantAppName}, };</script>`,

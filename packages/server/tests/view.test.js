@@ -23,6 +23,8 @@ beforeAll(async () => {
   await resetToFixtures();
 });
 
+jest.setTimeout(30000);
+
 describe("view list endpoint", () => {
   it("should show view to unauth", async () => {
     const app = await getApp({ disableCsrf: true });

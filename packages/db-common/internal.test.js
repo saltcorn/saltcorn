@@ -48,27 +48,45 @@ describe("mkWhere", () => {
   it("should query json", () => {
     expect(mkWhere({ foo: { json: ["bar", 5] } })).toStrictEqual({
       values: [5],
-      where: `where "foo"->>'bar'=$1`,
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.bar'))->>0=$1`,
+    });
+  });
+  it("should query json deeply", () => {
+    expect(mkWhere({ foo: { json: [["bar", 2], 5] } })).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.bar[2]'))->>0=$1`,
     });
   });
   it("should query json with object syntax", () => {
     expect(mkWhere({ foo: { json: { bar: 5 } } })).toStrictEqual({
       values: [5],
-      where: `where "foo"->>'bar'=$1`,
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.bar'))->>0=$1`,
+    });
+  });
+  it("should query json path", () => {
+    expect(mkWhere({ foo: { json: { "$.bar[2]": 5 } } })).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.bar[2]'))->>0=$1`,
+    });
+  });
+  it("should query json escapes", () => {
+    expect(mkWhere({ foo: { json: { "bar.baz": 5 } } })).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$."bar.baz"'))->>0=$1`,
     });
   });
   it("should query json approx", () => {
     expect(mkWhere({ foo: { json: { bar: { ilike: "baz" } } } })).toStrictEqual(
       {
         values: ["baz"],
-        where: `where "foo"->>'bar' ILIKE '%' || $1 || '%'`,
+        where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.bar'))->>0 ILIKE '%' || $1 || '%'`,
       }
     );
   });
   it("should query json gte", () => {
     expect(mkWhere({ foo: { json: { bar: { gte: 6 } } } })).toStrictEqual({
       values: [6],
-      where: `where "foo"->'bar' >= $1`,
+      where: `where jsonb_path_query_first(\"foo\", '$.bar') >= $1`,
     });
   });
   it("should query json gte and lte", () => {
@@ -76,7 +94,28 @@ describe("mkWhere", () => {
       mkWhere({ foo: { json: { bar: { gte: 6, lte: 1 } } } })
     ).toStrictEqual({
       values: [6, 1],
-      where: `where "foo"->'bar' >= $1 and "foo"->'bar' <= $2`,
+      where: `where jsonb_path_query_first(\"foo\", '$.bar') >= $1 and jsonb_path_query_first(\"foo\", '$.bar') <= $2`,
+    });
+  });
+  it("should not sql inject in json", () => {
+    expect(
+      mkWhere({ "Robert'); DROP TABLE Students; --": { json: ["bar", 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"RobertDROPTABLEStudents\", '$.bar'))->>0=$1`,
+    });
+    expect(
+      mkWhere({ foo: { json: ["Robert'); DROP TABLE Students; --", 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where: `where jsonb_build_array(jsonb_path_query_first(\"foo\", '$.\"Robert''); DROP TABLE Students; --\"'))->>0=$1`,
+    });
+    expect(
+      mkWhere({ foo: { json: ['Robert"); DROP TABLE Students; --', 5] } })
+    ).toStrictEqual({
+      values: [5],
+      where:
+        'where jsonb_build_array(jsonb_path_query_first("foo", \'$."Robert\\"); DROP TABLE Students; --"\'))->>0=$1',
     });
   });
 

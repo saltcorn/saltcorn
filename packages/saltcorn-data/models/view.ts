@@ -6,7 +6,7 @@
  */
 
 import db from "../db";
-import Form from "./form";
+//import Form from "./form";
 import utils from "../utils";
 const {
   removeEmptyStrings,
@@ -17,7 +17,7 @@ const {
   isNode,
   isWeb,
 } = utils;
-const { remove_from_menu } = require("./config");
+
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
 import markup from "@saltcorn/markup/index";
@@ -41,6 +41,8 @@ import type {
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+
+import {remove_from_menu} from "./config";
 
 /**
  * View Class
@@ -86,8 +88,8 @@ class View implements AbstractView {
     this.min_role =
       !o.min_role && typeWithDefinedMember<ViewCfg>(o, "is_public")
         ? o.is_public
-          ? 10
-          : 8
+          ? 100
+          : 80
         : +o.min_role!;
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
@@ -284,10 +286,10 @@ class View implements AbstractView {
   async clone(): Promise<View> {
     const basename = this.name + " copy";
     let newname;
-    // todo there is hard code linmitation about 100 copies of veiew
+    // todo there is hard code limitation about 100 copies of view
     for (let i = 0; i < 100; i++) {
       newname = i ? `${basename} (${i})` : basename;
-      const existing = await View.findOne({ name: newname });
+      const existing = View.findOne({name: newname});
       if (!existing) break;
     }
     const createObj: View = {
@@ -564,8 +566,8 @@ class View implements AbstractView {
         const tbl = Table.findOne({ id: this.table_id });
         if (!tbl)
           throw new Error(`Unable to find table with id ${this.table_id}`);
-        const fields = await tbl.getFields();
-        const qstate = await stateFieldsToWhere({
+        const fields = tbl.getFields();
+        const qstate = stateFieldsToWhere({
           fields,
           state: query,
           table: tbl,

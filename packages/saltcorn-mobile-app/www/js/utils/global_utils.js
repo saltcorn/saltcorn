@@ -189,6 +189,15 @@ async function gotoEntryView() {
   }
 }
 
+function handleOpenModal() {
+  const iframe = document.getElementById("content-iframe");
+  if (!iframe) return false;
+  const openModal = iframe.contentWindow.$("#scmodal.modal.show");
+  if (openModal.length === 0) return;
+  iframe.contentWindow.bootstrap.Modal.getInstance(openModal[0]).hide();
+  return true;
+}
+
 async function handleRoute(route, query, files) {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   try {
@@ -201,7 +210,8 @@ async function handleRoute(route, query, files) {
       clearHistory();
       await gotoEntryView();
     } else {
-      if (route === "/" || route === "get") return await gotoEntryView();
+      if (route === "/" || route === "get" || route === "get/")
+        return await gotoEntryView();
       const safeRoute = route ? route : currentLocation();
       addRoute({ route: safeRoute, query });
       const page = await router.resolve({
@@ -218,6 +228,7 @@ async function handleRoute(route, query, files) {
           : [],
       });
       if (page.redirect) {
+        if (handleOpenModal()) return;
         if (
           page.redirect.startsWith("http://localhost") ||
           page.redirect === "undefined"

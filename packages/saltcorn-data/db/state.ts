@@ -102,6 +102,7 @@ class State {
   triggers: Array<Trigger>;
   virtual_triggers: Array<Trigger>;
   viewtemplates: Record<string, ViewTemplate>;
+  modelpatterns: Record<string, any>;
   tables: Array<Table>;
   types: Record<string, Type>;
   stashed_fieldviews: Record<string, any>;
@@ -142,6 +143,7 @@ class State {
     this.triggers = [];
     this.virtual_triggers = [];
     this.viewtemplates = {};
+    this.modelpatterns = {};
     this.tables = [];
     this.types = {};
     this.stashed_fieldviews = {};
@@ -361,6 +363,12 @@ class State {
       { orderBy: "name", nocase: true }
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
+    const Model = require("../models/model");
+    let allModels = [];
+    try {
+      //needed for refresh in pre-model migration
+      allModels = await Model.find({});
+    } catch (e) {}
     for (const table of allTables) {
       if (table.provider_name) {
         table.provider_cfg = stringToJSON(table.provider_cfg);
@@ -396,8 +404,15 @@ class State {
           }
         }
       });
+      const models = allModels.filter((m: any) => m.table_id == table.id);
+      for (const model of models) {
+        const predictor_function = model.predictor_function;
+        this.functions[model.name] = { isAsync: true, run: predictor_function };
+        this.function_context[model.name] = predictor_function;
+      }
     }
     this.tables = allTables;
+
     if (!noSignal) this.log(5, "Refresh table");
 
     if (!noSignal && db.is_node)
@@ -522,6 +537,11 @@ class State {
         this.function_context[k] = typeof v === "function" ? v : v.run;
       }
     );
+    Object.entries(withCfg("modelpatterns", {})).forEach(
+      ([k, v]: [k: string, v: any]) => {
+        this.modelpatterns[k] = v;
+      }
+    );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
     });
@@ -619,6 +639,7 @@ class State {
    */
   async refresh_plugins(noSignal?: boolean) {
     this.viewtemplates = {};
+    this.modelpatterns = {};
     this.types = {};
     this.stashed_fieldviews = {};
     this.fields = [];

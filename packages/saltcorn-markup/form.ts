@@ -614,7 +614,7 @@ const mkFormRowForRepeatFancy = (
     { class: "row w-100" },
     div(
       { class: "col-6 mb-3" },
-      h5("Columns"),
+      h5("Columns"), // todo i18n
       div(ul({ id: "myEditor", class: "sortableLists list-group" }))
     ),
     div(

@@ -30,9 +30,13 @@ const DropDownFilter = ({ name, block, full_width }) => {
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
     >
-      <select disabled={true} className={full_width ? "w-100" : ""}>
-        <option>{name}</option>
-      </select>
+      <input
+        readOnly
+        value={name}
+        className={`${
+          full_width ? "w-100" : "w-unset"
+        } form-control form-select ${!block ? "d-inline" : ""}`}
+      />
     </span>
   );
 };

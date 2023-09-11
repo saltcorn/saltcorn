@@ -9,7 +9,8 @@ import db from "../db";
 import type Field from "./field";
 const { stringToJSON } = require("../utils");
 import type Table from "./table";
-
+import _expr from "./expression";
+const { add_free_variables_to_joinfields, freeVariables, jsexprToSQL } = _expr;
 /**
  * TableConstraint class
  * @category saltcorn-data
@@ -82,8 +83,29 @@ class TableConstraint {
       await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index") {
       await db.add_index(table.name, con.configuration.field);
-    } else if (con.type === "Formula") {
-      //TODO: implement in db
+    } else if (con.type === "Formula" && !db.isSQLite) {
+      // implement in db if no join fields
+      const jfs = {};
+      add_free_variables_to_joinfields(
+        freeVariables(con.configuration.formula),
+        jfs,
+        table.fields
+      );
+      if (Object.keys(jfs).length === 0)
+        try {
+          const sql = jsexprToSQL(con.configuration.formula);
+          const schema = db.getTenantSchemaPrefix();
+          await db.query(
+            `alter table ${schema}"${db.sqlsanitize(
+              table.name
+            )}" add constraint "${db.sqlsanitize(
+              table.name
+            )}_fml_${fid}" CHECK (${sql});`
+          );
+        } catch (e) {
+          //cannot implement as SQL
+          console.error(e);
+        }
     }
     await require("../db/state").getState().refresh_tables();
 
@@ -101,8 +123,15 @@ class TableConstraint {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
     } else if (this.type === "Index") {
       await db.drop_index(table.name, this.configuration.field);
-    } else if (this.type === "Formula") {
-      //TODO: implement in db
+    } else if (this.type === "Formula" && !db.isSQLite) {
+      const schema = db.getTenantSchemaPrefix();
+      await db.query(
+        `alter table ${schema}"${db.sqlsanitize(
+          table.name
+        )}" drop constraint IF EXISTS "${db.sqlsanitize(table.name)}_fml_${
+          this.id
+        }";`
+      );
     }
     await require("../db/state").getState().refresh_tables();
   }

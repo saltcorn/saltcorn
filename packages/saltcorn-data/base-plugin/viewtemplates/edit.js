@@ -58,6 +58,7 @@ const {
   objToQueryString,
   action_url,
   action_link,
+  view_linker,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -207,6 +208,7 @@ const configuration_workflow = (req) =>
             min_role: (myviewrow || {}).min_role,
             library,
             views: link_view_opts,
+            link_view_opts,
             mode: "edit",
             view_name_opts,
             view_relation_opts,
@@ -454,7 +456,8 @@ const run = async (
   { res, req },
   { editQuery }
 ) => {
-  return await editQuery(state);
+  const mobileReferrer = isNode() ? undefined : req?.headers?.referer;
+  return await editQuery(state, mobileReferrer);
 };
 
 /**
@@ -524,6 +527,7 @@ const transformForm = async ({
   res,
   getRowQuery,
   viewname,
+  optionsQuery,
 }) => {
   await traverse(form.layout, {
     async action(segment) {
@@ -572,6 +576,25 @@ const transformForm = async ({
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
+    view_link(segment) {
+      segment.type = "blank";
+      if (!row) {
+        //TODO could show if independent
+        segment.contents = "";
+      } else {
+        const prefix =
+          req.generate_email && req.get_base_url ? req.get_base_url() : "";
+        const { key } = view_linker(
+          segment,
+          table.fields,
+          (s) => s,
+          isWeb(req),
+          req.user,
+          prefix
+        );
+        segment.contents = key(row);
+      }
+    },
     async view(segment) {
       //console.log(segment);
       const view_select = parse_view_select(segment.view);
@@ -606,6 +629,8 @@ const transformForm = async ({
               : "omit-repeater-clone";
           }
         }
+        await childForm.fill_fkey_options(false, optionsQuery, req.user);
+
         const fr = new FieldRepeat({
           name: view_select.field_name,
           label: view_select.field_name,
@@ -709,6 +734,7 @@ const render = async ({
   getRowQuery,
   optionsQuery,
   split_paste,
+  mobileReferrer,
 }) => {
   const form = await getForm(
     table,
@@ -744,7 +770,9 @@ const render = async ({
 
   if (destination_type === "Back to referer") {
     form.hidden("_referer");
-    form.values._referer = req.headers?.referer;
+    form.values._referer = mobileReferrer
+      ? mobileReferrer
+      : req.headers?.referer;
   }
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
@@ -805,7 +833,16 @@ const render = async ({
         )
       : "";
   await form.fill_fkey_options(false, optionsQuery, req.user);
-  await transformForm({ form, table, req, row, res, getRowQuery, viewname });
+  await transformForm({
+    form,
+    table,
+    req,
+    row,
+    res,
+    getRowQuery,
+    viewname,
+    optionsQuery,
+  });
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
     reloadAfterCloseInModalScript
@@ -846,7 +883,7 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery },
+  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery, optionsQuery },
   remote
 ) => {
   const table = Table.findOne({ id: table_id });
@@ -863,7 +900,7 @@ const runPost = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery },
+    { getRowQuery, saveFileQuery, optionsQuery },
     remote
   );
   if (prepResult) {
@@ -1144,7 +1181,7 @@ const update_matching_rows = async (
   },
   body,
   { req, res, redirect }, // TODO test redirect
-  { updateMatchingQuery, getRowQuery, saveFileQuery }
+  { updateMatchingQuery, getRowQuery, saveFileQuery, optionsQuery }
 ) => {
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
@@ -1160,7 +1197,7 @@ const update_matching_rows = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery }
+    { getRowQuery, saveFileQuery, optionsQuery }
     // TODO remote
   );
   if (prepResult) {
@@ -1229,7 +1266,7 @@ const prepare = async (
   { columns, layout, fixed, auto_save },
   { req, res },
   body,
-  { getRowQuery, saveFileQuery },
+  { getRowQuery, saveFileQuery, optionsQuery },
   remote
 ) => {
   const form = await getForm(table, viewname, columns, layout, body.id, req);
@@ -1255,6 +1292,7 @@ const prepare = async (
       : undefined,
     getRowQuery,
     viewname,
+    optionsQuery,
   });
   const cancel = body._cancel;
   await form.asyncValidate(body);
@@ -1498,7 +1536,7 @@ module.exports = {
     req,
     res,
   }) => ({
-    async editQuery(state) {
+    async editQuery(state, mobileReferrer) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
@@ -1525,6 +1563,7 @@ module.exports = {
         destination_type,
         isRemote,
         split_paste,
+        mobileReferrer,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
