@@ -282,6 +282,10 @@ function ensure_modal_exists_and_closed() {
     </div>
   </div>`);
   } else if ($("#scmodal").hasClass("show")) {
+    // remove reload handler added by edit, for when we have popup link
+    // in autosave edit in popup
+    $("#scmodal").off("hidden.bs.modal");
+
     close_saltcorn_modal();
   }
 }

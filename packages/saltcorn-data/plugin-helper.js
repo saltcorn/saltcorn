@@ -396,7 +396,8 @@ const get_inbound_path_suffixes = async (
  */
 const get_inbound_relation_opts = async (source, viewname) => {
   const tableCache = {};
-  for (const table of await Table.find()) {
+  const allTables = await Table.find({}, { cached: true });
+  for (const table of allTables) {
     tableCache[table.id] = table;
   }
   const fieldCache = {};
@@ -444,7 +445,7 @@ const get_inbound_relation_opts = async (source, viewname) => {
   };
   // search in reverse,
   // start with the target (table of the subview) to the relation source
-  for (const table of await Table.find()) {
+  for (const table of allTables) {
     const visited = new Set();
     await search(table, [], table, visited);
   }
@@ -500,8 +501,8 @@ const get_inbound_self_relation_opts = async (source, viewname) => {
  */
 const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const own_link_views = await View.find_possible_links_to_table(table);
-  const all_views = await View.find({});
-  const all_tables = await Table.find({});
+  const all_views = await View.find({}, { cached: true });
+  const all_tables = await Table.find({}, { cached: true });
   const table_id_to_name = {};
   all_tables.forEach((t) => {
     table_id_to_name[t.id] = t.name;
@@ -682,11 +683,9 @@ const field_picker_fields = async ({
     actions.push(tr.name);
   });
   if (!table.external)
-    (
-      Trigger.find({
-        table_id: table.id,
-      })
-    ).forEach((tr) => {
+    Trigger.find({
+      table_id: table.id,
+    }).forEach((tr) => {
       actions.push(tr.name);
     });
   const actionConfigFields = [];
@@ -713,34 +712,39 @@ const field_picker_fields = async ({
   }));
   const { field_view_options } = calcfldViewOptions(fields, "list");
   const rel_field_view_options = await calcrelViewOptions(table, "list");
-  const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+
   const fvConfigFields = [];
-  for (const [field_name, fvOptFields] of Object.entries(
-    fieldViewConfigForms
-  )) {
-    for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
-      for (const formField of formFields) {
-        if (field_name.includes("."))
-          fvConfigFields.push({
-            ...formField,
-            showIf: {
-              type: "JoinField",
-              join_field: field_name,
-              join_fieldview: fieldview,
-            },
-          });
-        else
-          fvConfigFields.push({
-            ...formField,
-            showIf: {
-              type: "Field",
-              field_name,
-              fieldview,
-            },
-          });
+  if (req.staticFieldViewConfig) {
+    //TODO the following line is slow
+    const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+    for (const [field_name, fvOptFields] of Object.entries(
+      fieldViewConfigForms
+    )) {
+      for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
+        for (const formField of formFields) {
+          if (field_name.includes("."))
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "JoinField",
+                join_field: field_name,
+                join_fieldview: fieldview,
+              },
+            });
+          else
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "Field",
+                field_name,
+                fieldview,
+              },
+            });
+        }
       }
     }
   }
+  //TODO the following line is slow
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
@@ -1094,8 +1098,9 @@ const field_picker_fields = async ({
     {
       name: "extra_state_fml",
       label: __("Extra state Formula"),
-      sublabel:
-        __("Formula for JavaScript object that will be added to state parameters"),
+      sublabel: __(
+        "Formula for JavaScript object that will be added to state parameters"
+      ),
       type: "String",
       class: "validate-expression",
       showIf: { type: "ViewLink" },
@@ -1611,6 +1616,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       addOrCreateList(qstate, "id", {
         inSelectWithLevels: {
           joinLevels: levels,
+          schema: db.getTenantSchema(),
           where,
         },
       });
@@ -2130,7 +2136,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
  */
 const build_schema_fk_options = async () => {
   const result = {};
-  for (const table of await Table.find()) {
+  for (const table of await Table.find({}, { cached: true })) {
     result[table.name] = table.getForeignKeys().map((field) => {
       return { name: field.name, reftable_name: field.reftable_name };
     });

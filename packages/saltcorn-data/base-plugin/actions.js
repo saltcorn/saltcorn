@@ -582,7 +582,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     configFields: async ({ table }) => {
-      const tables = await Table.find();
+      const tables = await Table.find({}, { cached: true });
       return [
         {
           name: "table",
@@ -635,7 +635,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     configFields: async ({ table }) => {
-      const tables = await Table.find();
+      const tables = await Table.find({}, { cached: true });
       return [
         {
           name: "table",

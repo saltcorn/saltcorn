@@ -201,6 +201,7 @@ const inSelectWithLevels =
     v: {
       inSelectWithLevels: {
         where: Where;
+        schema?: string;
         joinLevels: { table: string; fkey?: string; inboundKey?: string }[];
       };
     }
@@ -210,12 +211,17 @@ const inSelectWithLevels =
     let whereObj = null;
     const selectParts = [];
     const joinLevels = v.inSelectWithLevels.joinLevels;
+    const schemaS =
+      v.inSelectWithLevels.schema && !phs.is_sqlite
+        ? `${quote(sqlsanitize(v.inSelectWithLevels.schema))}.`
+        : "";
+
     for (let i = 0; i < joinLevels.length; i++) {
       const { table, fkey, inboundKey } = joinLevels[i];
       const alias = quote(sqlsanitize(`${table}SubJ${i}`));
       if (i === 0) {
         selectParts.push(
-          `from ${quote(sqlsanitize(`${table}`))} ${quote(
+          `from ${schemaS}${quote(sqlsanitize(`${table}`))} ${quote(
             sqlsanitize(`${alias}`)
           )}`
         );
@@ -223,15 +229,19 @@ const inSelectWithLevels =
       } else if (i < joinLevels.length - 1) {
         if (fkey) {
           selectParts.push(
-            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
+            `join ${schemaS}${quote(
+              sqlsanitize(`${table}`)
+            )} ${alias} on ${quote(
               `${lastAlias}.${sqlsanitize(fkey)}`
             )} = ${alias}.id`
           );
         } else {
           selectParts.push(
-            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
-              `${lastAlias}.id`
-            )} = ${quote(`${alias}.${sqlsanitize(inboundKey!)}`)}`
+            `join ${schemaS}${quote(
+              sqlsanitize(`${table}`)
+            )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
+              `${alias}.${sqlsanitize(inboundKey!)}`
+            )}`
           );
         }
       } else {
@@ -239,9 +249,11 @@ const inSelectWithLevels =
           inColumn = quote(`${lastAlias}.${sqlsanitize(fkey)}`);
         } else {
           selectParts.push(
-            `join ${quote(sqlsanitize(`${table}`))} ${alias} on ${quote(
-              `${lastAlias}.id`
-            )} = ${quote(`${alias}.${sqlsanitize(`${inboundKey}`)}`)}`
+            `join ${schemaS}${quote(
+              sqlsanitize(`${table}`)
+            )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
+              `${alias}.${sqlsanitize(`${inboundKey}`)}`
+            )}`
           );
           inColumn = quote(`${alias}.id`);
         }
