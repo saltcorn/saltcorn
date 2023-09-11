@@ -44,7 +44,10 @@ const Tabs = ({
   );
   if (tabsStyle === "Accordion")
     return (
-      <div className="accordion">
+      <div
+        className={`accordion ${selected ? "selected-node" : ""}`}
+        ref={(dom) => connect(drag(dom))}
+      >
         {ntimes(ntabs, (ix) => (
           <div key={ix} className="card">
             <div className="card-header">

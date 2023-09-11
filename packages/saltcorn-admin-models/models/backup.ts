@@ -117,7 +117,7 @@ const create_table_json = async (
   table: Table,
   dirpath: string
 ): Promise<void> => {
-  const rows = await table.getRows();
+  const rows = await table.getRows({}, { ignore_errors: true });
   await writeFile(join(dirpath, table.name + ".json"), JSON.stringify(rows));
 };
 
@@ -141,7 +141,6 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
  * @returns {Promise<void>}
  */
 const backup_files = async (root_dirpath: string): Promise<void> => {
-
   const backup_file_prefix = getState().getConfig("backup_file_prefix");
 
   const dirpath = join(root_dirpath, "files");
@@ -160,7 +159,10 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
         //exclude auto backups
         if (
           base.startsWith(
-            `${backup_file_prefix}${getState().getConfig("site_name", "Saltcorn")}`
+            `${backup_file_prefix}${getState().getConfig(
+              "site_name",
+              "Saltcorn"
+            )}`
           ) &&
           f.mime_sub === "zip" &&
           !f.user_id
@@ -438,18 +440,20 @@ const delete_old_backups = async () => {
 const auto_backup_now = async () => {
   const fileName = await create_backup();
 
-  const destination = getState().getConfig("auto_backup_destination", "Saltcorn files");
+  const destination = getState().getConfig(
+    "auto_backup_destination",
+    "Saltcorn files"
+  );
   const directory = getState().getConfig("auto_backup_directory", "");
   if (directory === null) throw new Error("Directory is unspecified");
 
   switch (destination) {
     case "Saltcorn files":
-
-      if(directory.length>0) {
+      if (directory.length > 0) {
         await File.new_folder(directory);
       }
 
-      const newPath = File.get_new_path(join(directory,fileName));
+      const newPath = File.get_new_path(join(directory, fileName));
       const stats = statSync(fileName);
       await copyFile(fileName, newPath);
       await File.create({
@@ -466,7 +470,7 @@ const auto_backup_now = async () => {
     case "Local directory":
       //const directory = getState().getConfig("auto_backup_directory");
 
-      if(directory.length>0) {
+      if (directory.length > 0) {
         await mkdir(directory, { recursive: true });
       }
 

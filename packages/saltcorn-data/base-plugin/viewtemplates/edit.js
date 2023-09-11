@@ -58,6 +58,7 @@ const {
   objToQueryString,
   action_url,
   action_link,
+  view_linker,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -205,6 +206,7 @@ const configuration_workflow = (req) =>
             min_role: (myviewrow || {}).min_role,
             library,
             views: link_view_opts,
+            link_view_opts,
             mode: "edit",
             view_name_opts,
             view_relation_opts,
@@ -571,6 +573,25 @@ const transformForm = async ({
     join_field(segment) {
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
+    },
+    view_link(segment) {
+      segment.type = "blank";
+      if (!row) {
+        //TODO could show if independent
+        segment.contents = "";
+      } else {
+        const prefix =
+          req.generate_email && req.get_base_url ? req.get_base_url() : "";
+        const { key } = view_linker(
+          segment,
+          table.fields,
+          (s) => s,
+          isWeb(req),
+          req.user,
+          prefix
+        );
+        segment.contents = key(row);
+      }
     },
     async view(segment) {
       //console.log(segment);
