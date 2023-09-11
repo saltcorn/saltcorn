@@ -1240,5 +1240,7 @@
 	"Format": "Format",
 	"Table Synchronization": "Table Synchronization",
 	"unsynched": "unsynched",
-	"synched": "synched"
+	"synched": "synched",
+	"Sync information": "Sync information",
+	"Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app": "Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app"
 }

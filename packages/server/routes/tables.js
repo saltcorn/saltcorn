@@ -168,15 +168,19 @@ const tableForm = async (table, req) => {
               name: "versioned",
               type: "Bool",
             },
-            {
-              label: req.__("Sync information"),
-              sublabel: req.__(
-                "Sync information tracks the last modification or deletion timestamp " +
-                  "so that the table data can be synchronized with the mobile app"
-              ),
-              name: "has_sync_info",
-              type: "Bool",
-            },
+            ...(table.name === "users"
+              ? []
+              : [
+                  {
+                    label: req.__("Sync information"),
+                    sublabel: req.__(
+                      "Sync information tracks the last modification or deletion timestamp " +
+                        "so that the table data can be synchronized with the mobile app"
+                    ),
+                    name: "has_sync_info",
+                    type: "Bool",
+                  },
+                ]),
           ]),
     ],
   });
