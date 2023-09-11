@@ -4,7 +4,7 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant, init_some_tenants } = require("../common");
+const { maybe_as_tenant, init_some_tenants, readFileSync } = require("../common");
 const db = require("@saltcorn/data/db");
 
 /**
@@ -13,24 +13,7 @@ const db = require("@saltcorn/data/db");
  * @category saltcorn-cli
  */
 class RunSQLCommand extends Command {
-  /**
-   * Read sql select file
-   * @param filename
-   * @returns {null|string}
-   */
-  readFile(filename){
-    const path = require('path'), fs = require('fs');
-    try {
-      //let p = path.join(__dirname, filename);
-      let str = fs.readFileSync(filename, 'utf8');
-      // let str = fs.readFileSync(p, {encoding: 'utf8'});
-      console.log(str);
-      return str;
-    } catch (e) {
-      console.error(e.message);
-      return null;
-    }
-  }
+
   /**
    * @returns {Promise<void>}
    */
@@ -63,7 +46,7 @@ class RunSQLCommand extends Command {
 
       console.log("current tenant:", schema);
       //if(flags.sql){
-      const sql_str = flags.sql? flags.sql  : this.readFile(flags.file);
+      const sql_str = flags.sql? flags.sql  : readFileSync(flags.file);
       // check that file not find (not directly)
       if (sql_str === null ){
         this.exit(1);
@@ -76,24 +59,7 @@ class RunSQLCommand extends Command {
       }
       // print sql statement
       console.log(sql_str);
-      // print columns
-      if( query.fields){
-        let columns_str = "";
-        for (let field of query.fields){
-          columns_str += field.name + ",";
-        }
-        console.log(columns_str);
-      }
-      // print results
-
-      for ( let row of query.rows ) {
-
-        let value_str = "";
-        for ( let prop in row ) {
-          value_str += row[prop]+",";
-        }
-        console.log(value_str);
-      }
+      console.table (query.rows);
     });
     this.exit(0);
   }
@@ -113,12 +79,12 @@ RunSQLCommand.flags = {
     description: "tenant name",
   }),
   sql: flags.string({
-    name: "sql statement",
+    name: "sql",
     char: "s",
     description: "sql statement",
   }),
   file: flags.string({
-    name: "sql file name",
+    name: "file",
     char: "f",
     description: "path to sql file name",
   }),

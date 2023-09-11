@@ -1095,5 +1095,8 @@
 	"Backup settings": "Настройки резервного копироваия",
 	"Click to edit?": "Редактировать по клику?",
 	"Format": "Формат",
-	"Page '%s' was loaded": "Страница '%s' была загружена"
+	"Page '%s' was loaded": "Страница '%s' была загружена",
+	"Table provider": "Провайдер данных",
+	"Database table": "Таблица БД",
+	"Disable on mobile": "Disable on mobile"
 }

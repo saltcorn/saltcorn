@@ -50,9 +50,29 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Read txt file (SyncMode)
+ * @param filename - absolute path to file
+ * @returns {null|string}
+ */
+function readFileSync(filename){
+  const path = require('path'), fs = require('fs');
+  try {
+    //let p = path.join(__dirname, filename);
+    let str = fs.readFileSync(filename, 'utf8');
+    // let str = fs.readFileSync(p, {encoding: 'utf8'});
+    console.log(str);
+    return str;
+  } catch (e) {
+    console.error(e.message);
+    return null;
+  }
+}
+
 module.exports = {
   maybe_as_tenant,
   parseJSONorString,
   sleep,
   init_some_tenants,
+  readFileSync,
 };
