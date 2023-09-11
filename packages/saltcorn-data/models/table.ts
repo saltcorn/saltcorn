@@ -2659,7 +2659,7 @@ class Table implements AbstractTable {
   static async allSlugOptions(): Promise<{
     [nm: string]: Array<{ label: string; steps: any }>;
   }> {
-    const tables = await Table.find({});
+    const tables = await Table.find({}, { cached: true });
     const options: {
       [nm: string]: Array<{ label: string; steps: any }>;
     } = {};

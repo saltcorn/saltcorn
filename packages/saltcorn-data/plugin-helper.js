@@ -396,7 +396,8 @@ const get_inbound_path_suffixes = async (
  */
 const get_inbound_relation_opts = async (source, viewname) => {
   const tableCache = {};
-  for (const table of await Table.find()) {
+  const allTables = await Table.find({}, { cached: true });
+  for (const table of allTables) {
     tableCache[table.id] = table;
   }
   const fieldCache = {};
@@ -444,7 +445,7 @@ const get_inbound_relation_opts = async (source, viewname) => {
   };
   // search in reverse,
   // start with the target (table of the subview) to the relation source
-  for (const table of await Table.find()) {
+  for (const table of allTables) {
     const visited = new Set();
     await search(table, [], table, visited);
   }
@@ -2130,7 +2131,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
  */
 const build_schema_fk_options = async () => {
   const result = {};
-  for (const table of await Table.find()) {
+  for (const table of await Table.find({}, { cached: true })) {
     result[table.name] = table.getForeignKeys().map((field) => {
       return { name: field.name, reftable_name: field.reftable_name };
     });
