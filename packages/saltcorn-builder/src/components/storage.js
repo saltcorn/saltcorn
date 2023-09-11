@@ -248,6 +248,8 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           independent={segment.independent}
           startClosed={segment.startClosed}
           deeplink={segment.deeplink}
+          serverRendered={segment.serverRendered}
+          tabId={segment.tabId}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
           contents={contents}
@@ -507,6 +509,8 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         independent: node.props.independent,
         startClosed: node.props.startClosed,
         deeplink: node.props.deeplink,
+        serverRendered: node.props.serverRendered,
+        tabId: node.props.tabId,
         ntabs: node.props.ntabs,
       };
     }
