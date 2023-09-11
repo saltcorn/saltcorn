@@ -29,32 +29,17 @@ class ListTriggersCommand extends Command {
         this.exit(1);
       }
       if(!flags.verbose){
-        console.log('name');
-      }
-      else {
-        console.log('' +
-            'id,name,action,when_trigger,min_role,'+
-            'channel,table_id,table_name,description'
+        console.table(triggers,
+          ["name"]
         );
       }
-      console.log('-------------------');
-      for (let trigger of triggers){
-        if(!flags.verbose)
-          console.log(trigger.name);
-        else{
-          console.log(
-              trigger.id
-              +","+trigger.name
-              +","+trigger.action
-              +","+trigger.when_trigger
-              +","+trigger.min_role
-              +","+trigger.channel
-              +","+trigger.table_id
-              +","+trigger.table_name
-              +","+trigger.description
-          );
-        }
+      else {
+        console.table(triggers,
+          ["id","name","action","when_trigger","min_role",
+            "channel","table_id","table_name","description"]
+        );
       }
+
     });
     this.exit(0);
   }

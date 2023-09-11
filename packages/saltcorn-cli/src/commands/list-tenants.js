@@ -3,6 +3,7 @@
  * @module commands/list-tenants
  */
 const { Command, flags } = require("@oclif/command");
+const db = require("@saltcorn/data/db");
 
 
 /**
@@ -18,50 +19,42 @@ class ListTenantsCommand extends Command {
     const {flags, args} = this.parse(ListTenantsCommand);
 
     const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-    const db = require("@saltcorn/data/db");
-    const tenantList = await getAllTenants();
+    let tenantList = flags.tenant? [flags.tenant] : await getAllTenants();
 
-     if(!flags.verbose)
-      console.log('name');
-    else
-      console.log(
-          "domain                  ,    files,    users,   tables,    views,    pages"
-      );
-    console.log('-------------------');
+    let tenantDetails = new Object();
 
-    if(flags.tenant) {
-      const domain = flags.tenant;
+    let index=0;
+    for (const domain of tenantList) {
+      index++;
       await db.runWithTenant(domain, async () => {
         if (!flags.verbose)
-          console.log(domain);
+          tenantDetails[index] = { domain : domain };
         else
-          console.log(
-              "%s, %s, %s, %s, %s, %s",
-              domain.padEnd(24),
-              (await db.count("_sc_files")).toString().padStart(8),
-              (await db.count("users")).toString().padStart(8),
-              (await db.count("_sc_tables")).toString().padStart(8),
-              (await db.count("_sc_views")).toString().padStart(8),
-              (await db.count("_sc_pages")).toString().padStart(8),
-          );
+          tenantDetails[index] = {
+            domain: domain,
+            users: await db.count("users"),
+            roles: await db.count("_sc_roles"),
+            tables: await db.count("_sc_tables"),
+            views: await db.count("_sc_views"),
+            pages: await db.count("_sc_pages"),
+            files: await db.count("_sc_files"),
+            triggers: await db.count("_sc_triggers"),
+            tags: await  db.count ("_sc_tags"),
+          }
       });
     }
+
+    // print
+    if(!flags.verbose)
+      console.table(
+        tenantDetails,
+        ["domain"]
+      );
     else
-      for (const domain of tenantList)
-        await db.runWithTenant(domain, async () => {
-          if (!flags.verbose)
-            console.log(domain);
-          else
-            console.log(
-                "%s, %s, %s, %s, %s, %s",
-                domain.padEnd(24),
-                (await db.count("_sc_files")).toString().padStart(8),
-                (await db.count("users")).toString().padStart(8),
-                (await db.count("_sc_tables")).toString().padStart(8),
-                (await db.count("_sc_views")).toString().padStart(8),
-                (await db.count("_sc_pages")).toString().padStart(8),
-            );
-        });
+      console.table(
+        tenantDetails,
+        ["domain","users","roles","tables","views","pages", "files","triggers", "tags"]
+      );
 
 
     this.exit(0);
