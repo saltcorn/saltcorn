@@ -211,9 +211,10 @@ const inSelectWithLevels =
     let whereObj = null;
     const selectParts = [];
     const joinLevels = v.inSelectWithLevels.joinLevels;
-    const schemaS = v.inSelectWithLevels.schema
-      ? `${quote(sqlsanitize(v.inSelectWithLevels.schema))}.`
-      : "";
+    const schemaS =
+      v.inSelectWithLevels.schema && !phs.is_sqlite
+        ? `${quote(sqlsanitize(v.inSelectWithLevels.schema))}.`
+        : "";
 
     for (let i = 0; i < joinLevels.length; i++) {
       const { table, fkey, inboundKey } = joinLevels[i];
