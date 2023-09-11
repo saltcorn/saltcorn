@@ -69,16 +69,17 @@ const changeConnection = async (connObj = {}) => {
 
 const begin = async () => {
   client = await getClient();
+  await client.query("BEGIN");
 };
 
 const commit = async () => {
-  await client.query(`COMMIT`);
+  await client.query("COMMIT");
   client.release(true);
   client = null;
 };
 
 const rollback = async () => {
-  await client.query(`ROLLBACK`);
+  await client.query("ROLLBACK");
   client.release(true);
   client = null;
 };
@@ -495,7 +496,7 @@ const postgresExports = {
    */
   query: (text, params) => {
     sql_log(text, params);
-    return pool.query(text, params);
+    return (client || pool).query(text, params);
   },
   begin,
   commit,

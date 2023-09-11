@@ -133,32 +133,35 @@ var offlineHelper = (() => {
       reftable_name: tblName,
     })) {
       const srcTbl = saltcorn.data.models.Table.findOne(field.table_id);
-      const fkConflicts = await saltcorn.data.db.query(
-        `select data_tbl."${saltcorn.data.db.sqlsanitize(
-          field.name
-        )}" from "${saltcorn.data.db.sqlsanitize(
-          srcTbl.name
-        )}" as data_tbl join "${saltcorn.data.db.sqlsanitize(
-          srcTbl.name
-        )}_sync_info" as info_tbl
+      const { synchedTables } = saltcorn.data.state.getState().mobileConfig;
+      if (synchedTables.indexOf(srcTbl.name) >= 0) {
+        const fkConflicts = await saltcorn.data.db.query(
+          `select data_tbl."${saltcorn.data.db.sqlsanitize(
+            field.name
+          )}" from "${saltcorn.data.db.sqlsanitize(
+            srcTbl.name
+          )}" as data_tbl join "${saltcorn.data.db.sqlsanitize(
+            srcTbl.name
+          )}_sync_info" as info_tbl
          on data_tbl."${saltcorn.data.db.sqlsanitize(pkName)}" = info_tbl.ref
          where data_tbl."${saltcorn.data.db.sqlsanitize(
            field.name
          )}" in (${result.map(({ ref }) => ref).join(",")}) 
            and (info_tbl.last_modified is null or info_tbl.modified_local = true)`
-      );
-      if (fkConflicts.rows.length > 0) {
-        // make it an insert
-        const conflicts = fkConflicts.rows.map(
-          (conflict) => conflict[field.name]
         );
-        const conflictsSet = new Set(conflicts);
-        result = result.filter((del) => !conflictsSet.has(del.ref));
-        await saltcorn.data.db.query(
-          `update "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
+        if (fkConflicts.rows.length > 0) {
+          // make it an insert
+          const conflicts = fkConflicts.rows.map(
+            (conflict) => conflict[field.name]
+          );
+          const conflictsSet = new Set(conflicts);
+          result = result.filter((del) => !conflictsSet.has(del.ref));
+          await saltcorn.data.db.query(
+            `update "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
            set last_modified = null, modified_local = true
            where ref in (${conflicts.join(",")})`
-        );
+          );
+        }
       }
     }
     return result;
@@ -429,11 +432,12 @@ var offlineHelper = (() => {
           syncDir = await syncOfflineData(synchedTables, syncTimestamp);
           await syncRemoteData(syncInfos, syncTimestamp);
           await offlineHelper.endOfflineMode(true);
-          await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
           await setUploadStarted(false);
           await saltcorn.data.db.query("COMMIT");
+          await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
         } catch (error) {
           await saltcorn.data.db.query("ROLLBACK");
+          await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
           console.log(error);
           throw error;
         }
