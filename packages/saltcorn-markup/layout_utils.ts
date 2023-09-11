@@ -510,6 +510,8 @@ namespace LayoutExports {
     tabsStyle: string;
     ntabs?: any;
     deeplink?: boolean;
+    serverRendered?: boolean;
+    tabId?: string;
     bodyClass?: string;
     outerClass?: string;
     independent: boolean;
@@ -548,8 +550,11 @@ const renderTabs = (
     outerClass,
     deeplink,
     startClosed,
+    serverRendered,
+    tabId,
   }: RenderTabsOpts,
-  go: (segment: any, isTop: boolean, ix: number) => any
+  go: (segment: any, isTop: boolean, ix: number) => any,
+  activeTabTitle?: string
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
@@ -611,12 +616,17 @@ const renderTabs = (
               {
                 class: [
                   "nav-link",
-                  ix === 0 && "active",
+                  (serverRendered ? activeTabTitle === titles[ix] : ix === 0) &&
+                    "active",
                   deeplink && "deeplink",
                 ],
                 id: `${rndid}link${ix}`,
-                "data-bs-toggle": "tab",
-                href: `#${validID(titles[ix])}`,
+                "data-bs-toggle": serverRendered ? undefined : "tab",
+                href: serverRendered
+                  ? `javascript:set_state_field(tabId || "_tab", '${encodeURIComponent(
+                      titles[ix]
+                    )}')`
+                  : `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
                 "aria-selected": ix === 0 ? "true" : "false",

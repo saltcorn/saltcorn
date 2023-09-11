@@ -450,8 +450,22 @@ const render = ({
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
-    if (segment.type === "tabs")
-      return wrap(segment, isTop, ix, renderTabs(segment, go));
+    if (segment.type === "tabs") {
+      console.log({ req });
+
+      return wrap(
+        segment,
+        isTop,
+        ix,
+        renderTabs(
+          segment,
+          go,
+          segment.serverRendered
+            ? req.query[segment.tabId || "_tab"]
+            : undefined
+        )
+      );
+    }
     if (segment.type === "container") {
       const {
         bgFileId,
