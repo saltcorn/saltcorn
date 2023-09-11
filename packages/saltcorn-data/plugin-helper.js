@@ -712,32 +712,35 @@ const field_picker_fields = async ({
   }));
   const { field_view_options } = calcfldViewOptions(fields, "list");
   const rel_field_view_options = await calcrelViewOptions(table, "list");
-  //TODO the following line is slow
-  const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+
   const fvConfigFields = [];
-  for (const [field_name, fvOptFields] of Object.entries(
-    fieldViewConfigForms
-  )) {
-    for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
-      for (const formField of formFields) {
-        if (field_name.includes("."))
-          fvConfigFields.push({
-            ...formField,
-            showIf: {
-              type: "JoinField",
-              join_field: field_name,
-              join_fieldview: fieldview,
-            },
-          });
-        else
-          fvConfigFields.push({
-            ...formField,
-            showIf: {
-              type: "Field",
-              field_name,
-              fieldview,
-            },
-          });
+  if (req.staticFieldViewConfig) {
+    //TODO the following line is slow
+    const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+    for (const [field_name, fvOptFields] of Object.entries(
+      fieldViewConfigForms
+    )) {
+      for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
+        for (const formField of formFields) {
+          if (field_name.includes("."))
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "JoinField",
+                join_field: field_name,
+                join_fieldview: fieldview,
+              },
+            });
+          else
+            fvConfigFields.push({
+              ...formField,
+              showIf: {
+                type: "Field",
+                field_name,
+                fieldview,
+              },
+            });
+        }
       }
     }
   }
