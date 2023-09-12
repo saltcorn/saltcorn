@@ -283,10 +283,11 @@ const blockDispatch = {
  * @param {*} role
  * @returns {string}
  */
-const renderBody = (title, body, role) =>
+const renderBody = (title, body, role, req) =>
   renderLayout({
     blockDispatch,
     role,
+    req,
     layout:
       typeof body === "string" ? { type: "card", title, contents: body } : body,
   });
@@ -447,6 +448,7 @@ const wrap = ({
   headers,
   role,
   bodyClass,
+  req,
 }) =>
   wrapIt(
     headers,
@@ -462,7 +464,7 @@ const wrap = ({
               ${alerts.map((a) => alert(a.type, a.msg)).join("")}
             </div>
             <div >
-              ${renderBody(title, body, role)}
+              ${renderBody(title, body, role, req)}
             <div>
           </div>
         </div>
@@ -478,12 +480,12 @@ const wrap = ({
  * @param {*} opts.role
  * @returns {string}
  */
-const exportRenderBody = ({ title, body, alerts, role }) =>
+const exportRenderBody = ({ title, body, alerts, role, req }) =>
   `<div id="alerts-area">
     ${alerts.map((a) => alert(a.type, a.msg)).join("")}
   </div>
   <div >
-    ${renderBody(title, body, role)}
+    ${renderBody(title, body, role, req)}
   <div>`;
 
 module.exports = {
