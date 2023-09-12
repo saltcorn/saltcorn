@@ -1237,5 +1237,10 @@
 	"Formula for JavaScript object that will be added to state parameters": "Formula for JavaScript object that will be added to state parameters",
 	"Alignment": "Alignment",
 	"Click to edit?": "Click to edit?",
-	"Format": "Format"
+	"Format": "Format",
+	"Table Synchronization": "Table Synchronization",
+	"unsynched": "unsynched",
+	"synched": "synched",
+	"Sync information": "Sync information",
+	"Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app": "Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app"
 }

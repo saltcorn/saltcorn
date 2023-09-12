@@ -17,7 +17,7 @@ export namespace plugin_helper {
 
 const _utils = require("./utils");
 export namespace utils {
-  export const { NotAuthorized } = _utils;
+  export const { NotAuthorized, sleep } = _utils;
 }
 
 import web_mobile_commons from "./web-mobile-commons";

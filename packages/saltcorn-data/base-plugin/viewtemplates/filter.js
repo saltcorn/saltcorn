@@ -157,7 +157,7 @@ const configuration_workflow = () =>
               viewtemplate: v.viewtemplate,
             };
           });
-          const all_views = await View.find();
+          const all_views = await View.find({}, { cached: true });
           for (const v of all_views) {
             if (!own_view_names.has(v.name)) {
               views.push({

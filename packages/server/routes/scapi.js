@@ -101,7 +101,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user)) {
-          const views = await View.find({});
+          const views = await View.find({}, { cached: true });
 
           res.json({ success: views });
         } else {

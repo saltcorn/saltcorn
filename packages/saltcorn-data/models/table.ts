@@ -57,9 +57,9 @@ import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
 import { stat, readFile } from "fs/promises";
-import utils from "../utils";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
+import utils from "../utils";
 const {
   prefixFieldsInWhere,
   InvalidConfiguration,
@@ -69,6 +69,7 @@ const {
   getLines,
   mergeIntoWhere,
   stringToJSON,
+  isNode,
 } = utils;
 import tags from "@saltcorn/markup/tags";
 const { text } = tags;
@@ -145,6 +146,7 @@ class Table implements AbstractTable {
   ownership_field_id?: string;
   ownership_formula?: string;
   versioned: boolean;
+  has_sync_info: boolean;
   external: boolean;
   description?: string;
   fields: Field[];
@@ -164,6 +166,7 @@ class Table implements AbstractTable {
     this.ownership_field_id = o.ownership_field_id;
     this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
+    this.has_sync_info = !!o.has_sync_info;
     this.is_user_group = !!o.is_user_group;
     this.external = false;
     this.description = o.description;
@@ -317,6 +320,11 @@ class Table implements AbstractTable {
     return [...dbs, ...externals];
   }
 
+  /**
+   * Get Models
+   * tbd why this function in this file - needs to models
+   * @param opts
+   */
   async get_models(opts?: any) {
     const Model = require("./model");
     if (typeof opts === "string")
@@ -368,6 +376,10 @@ class Table implements AbstractTable {
     return typeof field_name === "string" && row[field_name] === user.id;
   }
 
+  /**
+   * get Ownership options
+   * user interface...
+   */
   async ownership_options(): Promise<{ label: string; value: string }[]> {
     const fields = this.fields;
 
@@ -492,6 +504,9 @@ class Table implements AbstractTable {
     return opts;
   }
 
+  /**
+   * get sanitized name of table
+   */
   get santized_name() {
     return sqlsanitize(this.name);
   }
@@ -574,8 +589,10 @@ class Table implements AbstractTable {
 
   /**
    * Drop current table
+   * @param only_forget boolean - if true that only
    * @returns {Promise<void>}
    */
+  // tbd check all other tables related to table description
   async delete(only_forget: boolean = false): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
@@ -583,18 +600,21 @@ class Table implements AbstractTable {
     const client = is_sqlite ? db : await db.getClient();
     await client.query(`BEGIN`);
     try {
+      // drop table
       if (!only_forget)
         await client.query(
           `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
         );
+      // delete fields
       await client.query(
         `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
         [this.id]
       );
-
+      // delete table description
       await client.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
         this.id,
       ]);
+      // delete versioned table
       if (this.versioned)
         await client.query(
           `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
@@ -611,13 +631,16 @@ class Table implements AbstractTable {
   }
 
   /***
-   * get Table SQL Name
+   * Get Table SQL Name
    * @type {string}
    */
   get sql_name(): string {
     return `${db.getTenantSchemaPrefix()}"${sqlsanitize(this.name)}"`;
   }
 
+  /**
+   * Reset Sequence
+   */
   async resetSequence() {
     const fields = this.fields;
     const pk = fields.find((f) => f.primary_key);
@@ -633,6 +656,13 @@ class Table implements AbstractTable {
       await db.reset_sequence(this.name);
   }
 
+  /**
+   * update Where with Ownership
+   * @param where
+   * @param fields
+   * @param user
+   * @param forRead
+   */
   updateWhereWithOwnership(
     where: Where,
     fields: Field[],
@@ -657,13 +687,46 @@ class Table implements AbstractTable {
     }
   }
 
+  async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
+    if (ids.length > 0) {
+      const schema = db.getTenantSchemaPrefix();
+      const pkName = this.pk_name;
+      if (isNode()) {
+        await db.query(
+          `delete from ${schema}${db.sqlsanitize(
+            this.name
+          )}_sync_info where ref in (
+            ${ids.map((row) => row[pkName]).join(",")})`
+        );
+        await db.query(
+          `insert into ${schema}${db.sqlsanitize(
+            this.name
+          )}_sync_info values ${ids
+            .map(
+              (row) =>
+                `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
+                  timestamp.valueOf() / 1000.0
+                } ) ), true)`
+            )
+            .join(",")}`
+        );
+      } else {
+        await db.query(
+          `update ${db.sqlsanitize(this.name)}_sync_info 
+           set deleted = true, modified_local = true
+           where ref in (${ids.map((row) => row[pkName]).join(",")})`
+        );
+      }
+    }
+  }
+
   /**
    * Delete rows from table
    * @param where - condition
    * @param user - optional user, if null then no authorization will be checked
    * @returns
    */
-  async deleteRows(where: Where, user?: Row) {
+  async deleteRows(where: Where, user?: Row, noTrigger?: boolean) {
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = this.fields;
@@ -685,7 +748,7 @@ class Table implements AbstractTable {
       (f) => f.type === "File" && f.attributes?.also_delete_file
     );
     const deleteFiles = [];
-    if (triggers.length > 0 || deleteFileFields.length > 0) {
+    if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
       const File = require("./file");
 
       if (!rows)
@@ -707,11 +770,28 @@ class Table implements AbstractTable {
         }
       }
     }
-    if (rows)
+    if (rows) {
       await db.deleteWhere(this.name, {
         [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
       });
-    else await db.deleteWhere(this.name, where);
+      if (this.has_sync_info) {
+        const dbTime = await db.time();
+        const ids = rows.map((r) => r[this.pk_name || "id"]);
+        await this.addDeleteSyncInfo(ids, dbTime);
+      }
+    } else {
+      const delIds = this.has_sync_info
+        ? await db.select(this.name, where, {
+            fields: [this.pk_name],
+          })
+        : null;
+
+      await db.deleteWhere(this.name, where);
+      if (this.has_sync_info) {
+        const dbTime = await db.time();
+        await this.addDeleteSyncInfo(delIds, dbTime);
+      }
+    }
     if (fields.find((f) => f.primary_key)) await this.resetSequence();
     for (const file of deleteFiles) {
       await file.delete();
@@ -842,6 +922,9 @@ class Table implements AbstractTable {
     }
   }
 
+  /**
+   *
+   */
   storedExpressionJoinFields() {
     let freeVars: Set<string> = new Set([]);
     for (const f of this.fields!)
@@ -855,7 +938,7 @@ class Table implements AbstractTable {
 
   /**
    * Update row
-   * @param v_in - colums with values to update
+   * @param v_in - columns with values to update
    * @param id - id value
    * @param _userid - user id
    * @param noTrigger
@@ -868,7 +951,8 @@ class Table implements AbstractTable {
     user?: Row,
     noTrigger?: boolean,
     resultCollector?: object,
-    restore_of_version?: any
+    restore_of_version?: any,
+    syncTimestamp?: Date
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
@@ -1023,6 +1107,12 @@ class Table implements AbstractTable {
 
     await db.update(this.name, v, id, { pk_name });
 
+    if (this.has_sync_info) {
+      const oldInfo = await this.latestSyncInfo(id);
+      if (oldInfo && !oldInfo.deleted)
+        await this.updateSyncInfo(id, oldInfo.last_modified, syncTimestamp);
+      else await this.insertSyncInfo(id, syncTimestamp);
+    }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
@@ -1034,6 +1124,65 @@ class Table implements AbstractTable {
         { old_row: existing, updated_fields: v_in }
       );
       if (resultCollector) await trigPromise;
+    }
+  }
+
+  async latestSyncInfo(id: number) {
+    const rows = await this.latestSyncInfos([id]);
+    return rows?.length === 1 ? rows[0] : null;
+  }
+
+  async latestSyncInfos(ids: number[]) {
+    const schema = db.getTenantSchemaPrefix();
+    const dbResult = await db.query(
+      `select max(last_modified) "last_modified", ref
+       from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+       group by ref having ref in (${ids.join(",")})`
+    );
+    return dbResult.rows;
+  }
+
+  async insertSyncInfo(id: number, syncTimestamp?: Date) {
+    const schema = db.getTenantSchemaPrefix();
+    if (isNode()) {
+      await db.query(`insert into ${schema}"${db.sqlsanitize(
+        this.name
+      )}_sync_info" values(${id},
+        date_trunc('milliseconds', to_timestamp(${
+          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
+        })))`);
+    } else {
+      await db.query(
+        `insert into "${db.sqlsanitize(this.name)}_sync_info"
+         (ref, modified_local, deleted) 
+         values(${id}, true, false)`
+      );
+    }
+  }
+
+  async updateSyncInfo(
+    id: number,
+    oldLastModified: Date,
+    syncTimestamp?: Date
+  ) {
+    const schema = db.getTenantSchemaPrefix();
+    if (!db.isSQLite) {
+      await db.query(
+        `update ${schema}"${db.sqlsanitize(
+          this.name
+        )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp(${
+          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
+        })) where ref=${id} and last_modified = to_timestamp(${
+          oldLastModified.valueOf() / 1000.0
+        })`
+      );
+    } else {
+      await db.query(
+        `update "${db.sqlsanitize(
+          this.name
+        )}_sync_info" set modified_local = true 
+         where ref = ${id} and last_modified = ${oldLastModified.valueOf()}`
+      );
     }
   }
 
@@ -1089,11 +1238,18 @@ class Table implements AbstractTable {
     return pkField;
   }
 
+
+  /**
+   * Check table constraints
+   * @param row
+   */
+
   check_table_constraints(row0: Row): string | undefined {
     const row = { ...row0 };
     this.fields.forEach((f) => {
       if (typeof row[f.name] === "undefined") row[f.name] = null;
     });
+
     const fmls = this.constraints
       .filter((c) => c.type === "Formula")
       .map((c) => c.configuration);
@@ -1103,6 +1259,11 @@ class Table implements AbstractTable {
     return undefined;
   }
 
+  /**
+   *
+   * @param row
+   * @param user
+   */
   check_field_write_role(row: Row, user: Row): string | undefined {
     for (const field of this.fields) {
       if (
@@ -1125,7 +1286,9 @@ class Table implements AbstractTable {
   async insertRow(
     v_in: Row,
     user?: Row,
-    resultCollector?: object
+    resultCollector?: object,
+    noTrigger?: boolean,
+    syncTimestamp?: Date
   ): Promise<any> {
     const fields = this.fields;
     const pk_name = this.pk_name;
@@ -1224,14 +1387,33 @@ class Table implements AbstractTable {
         _time: new Date(),
       });
 
-    const trigPromise = Trigger.runTableTriggers(
-      "Insert",
-      this,
-      { [pk_name]: id, ...v },
-      resultCollector,
-      user
-    );
-    if (resultCollector) await trigPromise;
+    if (this.has_sync_info) {
+      if (isNode()) {
+        const schemaPrefix = db.getTenantSchemaPrefix();
+        await db.query(
+          `insert into ${schemaPrefix}${db.sqlsanitize(this.name)}_sync_info 
+           values(${id}, date_trunc('milliseconds', to_timestamp(${
+            (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
+          })))`
+        );
+      } else {
+        await db.query(
+          `insert into ${db.sqlsanitize(this.name)}_sync_info 
+           (last_modified, ref, modified_local, deleted)
+           values(NULL, ${id}, true, false)`
+        );
+      }
+    }
+    if (!noTrigger) {
+      const trigPromise = Trigger.runTableTriggers(
+        "Insert",
+        this,
+        { [pk_name]: id, ...v },
+        resultCollector,
+        user
+      );
+      if (resultCollector) await trigPromise;
+    }
     return id;
   }
 
@@ -1257,6 +1439,10 @@ class Table implements AbstractTable {
     }
   }
 
+  /**
+   *
+   * @param msg
+   */
   normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
@@ -1378,6 +1564,46 @@ class Table implements AbstractTable {
     );
   }
 
+  async create_sync_info_table(): Promise<void> {
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    const fields = this.fields;
+    const pk = fields.find((f) => f.primary_key)?.name;
+    if (!pk) {
+      throw new Error("Unable to find a field with a primary key.");
+    }
+    await db.query(
+      `create table ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info (ref integer, last_modified timestamp, deleted boolean default false)`
+    );
+    await db.query(
+      `create index ${sqlsanitize(
+        this.name
+      )}_sync_info_ref_index on ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info(ref)`
+    );
+    await db.query(
+      `create index ${sqlsanitize(
+        this.name
+      )}_sync_info_lm_index on ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info(last_modified)`
+    );
+  }
+
+  async drop_sync_table(): Promise<void> {
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    await db.query(`
+      drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
+  }
+
+  /**
+   * Restore Row Version
+   * @param id
+   * @param version
+   * @param user
+   */
   async restore_row_version(
     id: any,
     version: number,
@@ -1396,8 +1622,13 @@ class Table implements AbstractTable {
     await this.updateRow(r, id, user, false, undefined, version);
   }
 
+  /**
+   * Undo row chnages
+   * @param id
+   * @param user
+   */
   async undo_row_changes(id: any, user?: Row): Promise<void> {
-    const current_verion_row = await db.selectMaybeOne(
+    const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
       { orderBy: "_version", orderDesc: true, limit: 1 }
@@ -1408,9 +1639,9 @@ class Table implements AbstractTable {
       {
         id,
         _version: {
-          lt: current_verion_row._restore_of_version
-            ? current_verion_row._restore_of_version
-            : current_verion_row._version,
+          lt: current_version_row._restore_of_version
+            ? current_version_row._restore_of_version
+            : current_version_row._version,
         },
       },
       { orderBy: "_version", orderDesc: true, limit: 1 }
@@ -1419,20 +1650,26 @@ class Table implements AbstractTable {
       await this.restore_row_version(id, last_non_restore._version, user);
     }
   }
+
+  /**
+   * Redo row changes
+   * @param id
+   * @param user
+   */
   async redo_row_changes(id: any, user?: Row): Promise<void> {
-    const current_verion_row = await db.selectMaybeOne(
+    const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
 
-    if (current_verion_row._restore_of_version) {
+    if (current_version_row._restore_of_version) {
       const next_version = await db.selectMaybeOne(
         `${sqlsanitize(this.name)}__history`,
         {
           id,
           _version: {
-            gt: current_verion_row._restore_of_version,
+            gt: current_version_row._restore_of_version,
           },
         },
         { orderBy: "_version", limit: 1 }
@@ -1524,6 +1761,11 @@ class Table implements AbstractTable {
         await new_table.create_history_table();
       } else if (!new_table.versioned && existing.versioned) {
         await new_table.drop_history_table();
+      }
+      if (new_table.has_sync_info && !existing.has_sync_info) {
+        await this.create_sync_info_table();
+      } else if (!new_table.has_sync_info && existing.has_sync_info) {
+        await new_table.drop_sync_table();
       }
       Object.assign(this, new_table_rec);
     }
@@ -1646,6 +1888,10 @@ class Table implements AbstractTable {
     return parse_res;
   }
 
+  /**
+   *
+   * @param state
+   */
   read_state_strict(state: Row): Row | string {
     let errorString = "";
     this.fields.forEach((f) => {
@@ -2629,6 +2875,9 @@ class Table implements AbstractTable {
     return calcRow;
   }
 
+  /**
+   *
+   */
   async slug_options(): Promise<Array<{ label: string; steps: any }>> {
     const fields = this.fields;
     const unique_fields = fields.filter((f) => f.is_unique);
@@ -2656,10 +2905,13 @@ class Table implements AbstractTable {
     return opts;
   }
 
+  /**
+   *
+   */
   static async allSlugOptions(): Promise<{
     [nm: string]: Array<{ label: string; steps: any }>;
   }> {
-    const tables = await Table.find({});
+    const tables = await Table.find({}, { cached: true });
     const options: {
       [nm: string]: Array<{ label: string; steps: any }>;
     } = {};
@@ -2669,11 +2921,17 @@ class Table implements AbstractTable {
     return options;
   }
 
+  /**
+   *
+   */
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ table_id: this.id });
   }
 
+  /**
+   *
+   */
   async getForeignTables(): Promise<Array<AbstractTable>> {
     const result = new Array<AbstractTable>();
     if (this.fields) {

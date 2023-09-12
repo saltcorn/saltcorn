@@ -312,7 +312,8 @@ module.exports = (version_tag) =>
 
       if (req.xhr) {
         const renderToHtml = layout.renderBody
-          ? (h, role) => layout.renderBody({ title, body: h, role, alerts })
+          ? (h, role, req) =>
+              layout.renderBody({ title, body: h, role, alerts, req })
           : defaultRenderToHtml;
         res.header(
           "Cache-Control",
@@ -322,8 +323,8 @@ module.exports = (version_tag) =>
         res.set("Page-Title", encodeURIComponent(title));
         res.send(
           html.length === 1
-            ? renderToHtml(html[0], role)
-            : html.map((h) => renderToHtml(h, role)).join("")
+            ? renderToHtml(html[0], role, req)
+            : html.map((h) => renderToHtml(h, role, req)).join("")
         );
         return;
       }
@@ -356,11 +357,12 @@ module.exports = (version_tag) =>
  * @param role
  * @returns {string|string|*}
  */
-const defaultRenderToHtml = (s, role) =>
+const defaultRenderToHtml = (s, role, req) =>
   typeof s === "string"
     ? s
     : renderLayout({
         blockDispatch: {},
         role,
+        req,
         layout: s,
       });

@@ -92,7 +92,7 @@ export const query = (statement: string, params?: any): Promise<any> => {
 export const insert = async (
   tbl: string,
   obj: Row,
-  opts: { noid?: boolean; ignoreExisting?: boolean } = {}
+  opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
 ): Promise<string | void> => {
   const { sql, valList } = buildInsertSql(tbl, obj, opts);
   await query(sql, valList);
@@ -263,6 +263,8 @@ export const drop_index = async (
 ): Promise<void> => {
   await do_drop_index(table_name, [field_name], query, false);
 };
+
+export const time = () => new Date();
 
 /**
  *

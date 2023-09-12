@@ -179,25 +179,20 @@ async function login(e, entryPoint, isSignup) {
       await parent.i18next.changeLanguage(config.language);
       const alerts = [];
       if (config.allowOfflineMode) {
-        const { offlineUser, upload_started_at, upload_ended_at } =
+        const { offlineUser, hasOfflineData } =
           (await parent.offlineHelper.getLastOfflineSession()) || {};
-        if (offlineUser === config.user_name) {
-          if (upload_started_at && !upload_ended_at) {
+        if (!offlineUser || offlineUser === config.user_name) {
+          await parent.offlineHelper.sync();
+        } else {
+          if (hasOfflineData)
             alerts.push({
               type: "warning",
-              msg: "Please check if your offline data is already online. An upload was started but did not finish.",
+              msg: `'${offlineUser}' has not yet uploaded offline data.`,
             });
-          } else {
-            alerts.push({
-              type: "info",
-              msg: "You have offline data, to handle it open the Network menu.",
-            });
+          else {
+            await deleteOfflineData(true);
+            await parent.offlineHelper.sync();
           }
-        } else if (offlineUser) {
-          alerts.push({
-            type: "warning",
-            msg: `'${offlineUser}' has not yet uploaded offline data.`,
-          });
         }
       }
       alerts.push({
@@ -732,68 +727,46 @@ async function switchNetworkMode() {
   }
 }
 
-async function callUpload(force = false) {
-  const lastOfflineSession = await parent.offlineHelper.getLastOfflineSession();
-  const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
-  if (!lastOfflineSession?.offlineUser) {
-    parent.showAlerts([
-      {
-        type: "error",
-        msg: "You don't have any offline data.",
-      },
-    ]);
-  } else if (mobileConfig.networkState === "none") {
-    parent.showAlerts([
-      {
-        type: "error",
-        msg: "You don't have an internet connection.",
-      },
-    ]);
-  } else {
-    if (
-      !force &&
-      lastOfflineSession.upload_started_at &&
-      !lastOfflineSession.upload_ended_at
-    ) {
-      await mobile_modal("/sync/ask_upload_not_ended");
+async function callSync() {
+  try {
+    const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
+    if (mobileConfig.networkState === "none") {
+      parent.showAlerts([
+        {
+          type: "error",
+          msg: "You don't have an internet connection.",
+        },
+      ]);
     } else {
       const wasOffline = mobileConfig.isOfflineMode;
-      try {
-        showLoadSpinner();
-        mobileConfig.inLoadState = true;
-        await parent.offlineHelper.setUploadStartedTime(new Date());
-        await parent.offlineHelper.uploadLocalData();
-        await parent.offlineHelper.clearLocalData();
-        await parent.offlineHelper.setUploadFinishedTime(new Date());
-        await parent.offlineHelper.endOfflineMode();
+      showLoadSpinner();
+      await parent.offlineHelper.sync();
+      parent.clearAlerts();
+      if (!wasOffline) {
+        parent.showAlerts([
+          {
+            type: "info",
+            msg: "Synchronized your offline data.",
+          },
+        ]);
+      } else {
+        setNetworSwitcherOn();
         parent.clearHistory();
         parent.addRoute({ route: "/" });
         parent.addRoute({ route: "get/sync/sync_settings" });
-        parent.clearAlerts();
-        if (!wasOffline) {
-          parent.showAlerts([
-            {
-              type: "info",
-              msg: "Uploaded your offline data.",
-            },
-          ]);
-        } else if (wasOffline) {
-          setNetworSwitcherOn();
-          parent.showAlerts([
-            {
-              type: "info",
-              msg: "Uploaded your offline data, you are online again.",
-            },
-          ]);
-        }
-      } catch (error) {
-        await parent.offlineHelper.setUploadFinishedTime(null);
-        parent.errorAlert(error);
-      } finally {
-        mobileConfig.inLoadState = false;
-        removeLoadSpinner();
+        parent.showAlerts([
+          {
+            type: "info",
+            msg: "Synchronized your offline data, you are online again.",
+          },
+        ]);
       }
     }
+  } catch (error) {
+    console.log(error);
+    parent.errorAlert(error);
+  } finally {
+    removeLoadSpinner();
   }
 }
 
@@ -819,24 +792,25 @@ async function deleteOfflineDataClicked() {
   }
 }
 
-async function deleteOfflineData() {
+async function deleteOfflineData(noFeedback) {
   const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
   try {
     mobileConfig.inLoadState = true;
-    showLoadSpinner();
-    await parent.offlineHelper.clearLocalData();
-    await parent.offlineHelper.setOfflineSession(null);
-    parent.showAlerts([
-      {
-        type: "info",
-        msg: "Deleted your offline data.",
-      },
-    ]);
+    if (!noFeedback) showLoadSpinner();
+    await parent.offlineHelper.clearLocalData(false);
+    await parent.offlineHelper.setHasOfflineData(false);
+    if (!noFeedback)
+      parent.showAlerts([
+        {
+          type: "info",
+          msg: "Deleted your offline data.",
+        },
+      ]);
   } catch (error) {
     parent.errorAlert(error);
   } finally {
     mobileConfig.inLoadState = false;
-    removeLoadSpinner();
+    if (!noFeedback) removeLoadSpinner();
   }
 }
 

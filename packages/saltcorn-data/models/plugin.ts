@@ -132,7 +132,7 @@ class Plugin {
    * @returns {Promise<string[]>}
    */
   async dependant_views(): Promise<string[]> {
-    const views = await View.find({});
+    const views = await View.find({}, { cached: true });
     const { getState } = require("../db/state");
     if (!getState().plugins[this.name]) return [];
     const myViewTemplates = getState().plugins[this.name].viewtemplates || [];

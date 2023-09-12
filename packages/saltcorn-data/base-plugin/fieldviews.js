@@ -286,7 +286,7 @@ const search_or_create = {
   configFields: async (field) => {
     const reftable = Table.findOne({ name: field.reftable_name });
     if (!reftable) return [];
-    const views = await View.find({ table_id: reftable.id });
+    const views = await View.find({ table_id: reftable.id }, { cached: true });
     return [
       {
         name: "viewname",

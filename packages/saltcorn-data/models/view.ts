@@ -42,7 +42,7 @@ import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_tab
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
-import {remove_from_menu} from "./config";
+import { remove_from_menu } from "./config";
 
 /**
  * View Class
@@ -289,7 +289,7 @@ class View implements AbstractView {
     // todo there is hard code limitation about 100 copies of view
     for (let i = 0; i < 100; i++) {
       newname = i ? `${basename} (${i})` : basename;
-      const existing = View.findOne({name: newname});
+      const existing = View.findOne({ name: newname });
       if (!existing) break;
     }
     const createObj: View = {
@@ -752,7 +752,7 @@ class View implements AbstractView {
   async inbound_connected_objects(): Promise<ConnectedObjects> {
     const embeddedViews: Array<AbstractView> = [];
     const linkedViews: Array<AbstractView> = [];
-    const allViews = await View.find({});
+    const allViews = await View.find({}, { cached: true });
     for (const view of allViews) {
       if (!view?.viewtemplateObj?.connectedObjects) continue;
       const result = await view.viewtemplateObj.connectedObjects(

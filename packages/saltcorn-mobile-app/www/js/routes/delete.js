@@ -12,9 +12,11 @@ const deleteRows = async (context) => {
       // TODO 'table.is_owner' check?
     } else
       throw new saltcorn.data.utils.NotAuthorized(i18next.t("Not authorized"));
-    if (isOfflineMode && !(await offlineHelper.hasOfflineRows())) {
-      await offlineHelper.setOfflineSession(null);
-    }
+    if (isOfflineMode && (await offlineHelper.hasOfflineRows()))
+      await offlineHelper.setHasOfflineData(true);
+    // if (isOfflineMode && !(await offlineHelper.hasOfflineRows())) {
+    //   await offlineHelper.setOfflineSession(null);
+    // }
   } else {
     await apiCall({ method: "POST", path: `/delete/${name}/${id}` });
   }

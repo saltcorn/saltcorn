@@ -46,6 +46,7 @@ export class MobileBuilder {
   useDocker?: boolean;
   platforms: string[];
   localUserTables: string[];
+  synchedTables: string[];
   entryPoint: string;
   entryPointType: EntryPointType;
   serverURL: string;
@@ -73,6 +74,7 @@ export class MobileBuilder {
     useDocker?: boolean;
     platforms: string[];
     localUserTables?: string[];
+    synchedTables?: string[];
     entryPoint: string;
     entryPointType: EntryPointType;
     serverURL: string;
@@ -93,6 +95,7 @@ export class MobileBuilder {
     this.useDocker = cfg.useDocker;
     this.platforms = cfg.platforms;
     this.localUserTables = cfg.localUserTables ? cfg.localUserTables : [];
+    this.synchedTables = cfg.synchedTables ? cfg.synchedTables : [];
     this.entryPoint = cfg.entryPoint;
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
@@ -127,6 +130,7 @@ export class MobileBuilder {
       entryPointType: this.entryPointType,
       serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
       localUserTables: this.localUserTables,
+      synchedTables: this.synchedTables,
       tenantAppName: this.tenantAppName,
       allowOfflineMode: this.allowOfflineMode,
     });

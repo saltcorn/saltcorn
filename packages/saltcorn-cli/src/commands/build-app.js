@@ -5,7 +5,6 @@ const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
-const Table = require("@saltcorn/data/models/table");
 
 /**
  *
@@ -82,6 +81,7 @@ class BuildAppCommand extends Command {
         useDocker: flags.useDocker,
         platforms: flags.platforms,
         localUserTables: flags.localUserTables,
+        synchedTables: flags.synchedTables,
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
@@ -136,6 +136,13 @@ BuildAppCommand.flags = {
     name: "local user tables",
     char: "l",
     description: "user defined tables that should be replicated into the app",
+    multiple: true,
+  }),
+  synchedTables: flags.string({
+    name: "synched tables",
+    string: "synchedTables",
+    description:
+      "Table names for which the offline should be synchronized with the saltcorn server",
     multiple: true,
   }),
   useDocker: flags.boolean({

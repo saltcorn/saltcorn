@@ -17,9 +17,15 @@ const { navbar, alert } = layoutUtils;
  * @param {object[]} alerts
  * @returns {string}
  */
-const renderBody = (title: string, body: string | any, alerts: any[]): string =>
+const renderBody = (
+  title: string,
+  body: string | any,
+  alerts: any[],
+  req: any
+): string =>
   renderLayout({
     blockDispatch: {},
+    req,
     layout:
       typeof body === "string" ? { type: "card", title, contents: body } : body,
     alerts,
@@ -31,6 +37,7 @@ namespace EmergencyLayoutExports {
     title: string;
     menu: any;
     brand: any;
+    req: any;
     alerts: any[];
     currentUrl: string;
     body: string | any;
@@ -48,6 +55,7 @@ type WrapParams = EmergencyLayoutExports.WrapParams;
  * @param {string} opts.currentUrl
  * @param {string|object} opts.body
  * @param {object[]} opts.headers
+ * @param {object} opts.req
  * @returns {string}
  */
 const wrap = ({
@@ -58,8 +66,9 @@ const wrap = ({
   currentUrl,
   body,
   headers,
+  req,
 }: WrapParams): string =>
-  navbar(brand, menu, currentUrl) + renderBody(title, body, alerts);
+  navbar(brand, menu, currentUrl) + renderBody(title, body, alerts, req);
 
 const EmergencyLayoutExports = wrap;
 export = EmergencyLayoutExports;

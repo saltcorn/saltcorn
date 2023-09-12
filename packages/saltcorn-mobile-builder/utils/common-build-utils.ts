@@ -134,6 +134,7 @@ export function writeCfgFile({
   entryPointType,
   serverPath,
   localUserTables,
+  synchedTables,
   tenantAppName,
   allowOfflineMode,
 }: any) {
@@ -145,6 +146,7 @@ export function writeCfgFile({
       ? serverPath
       : serverPath.substring(0, serverPath.length - 1),
     localUserTables,
+    synchedTables,
     allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
