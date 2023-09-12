@@ -602,10 +602,7 @@ const renderTabs = (
       )
     );
   else {
-    let activeIx =
-      serverRendered && activeTabTitle
-        ? titles.findIndex((t) => t === activeTabTitle)
-        : 0;
+    let activeIx = serverRendered && activeTabTitle ? +activeTabTitle : 0;
     if (activeIx === -1) activeIx = 0;
     return (
       ul(
@@ -627,9 +624,7 @@ const renderTabs = (
                 id: `${rndid}link${ix}`,
                 "data-bs-toggle": serverRendered ? undefined : "tab",
                 href: serverRendered
-                  ? `javascript:set_state_field('${
-                      tabId || "_tab"
-                    }', '${encodeURIComponent(titles[ix])}')`
+                  ? `javascript:set_state_field('${tabId || "_tab"}', ${ix})`
                   : `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
