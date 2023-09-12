@@ -601,7 +601,12 @@ const renderTabs = (
         )
       )
     );
-  else
+  else {
+    let activeIx =
+      serverRendered && activeTabTitle
+        ? titles.findIndex((t) => t === activeTabTitle)
+        : 0;
+    if (activeIx === -1) activeIx = 0;
     return (
       ul(
         {
@@ -616,16 +621,15 @@ const renderTabs = (
               {
                 class: [
                   "nav-link",
-                  (serverRendered ? activeTabTitle === titles[ix] : ix === 0) &&
-                    "active",
+                  ix === activeIx && "active",
                   deeplink && "deeplink",
                 ],
                 id: `${rndid}link${ix}`,
                 "data-bs-toggle": serverRendered ? undefined : "tab",
                 href: serverRendered
-                  ? `javascript:set_state_field(tabId || "_tab", '${encodeURIComponent(
-                      titles[ix]
-                    )}')`
+                  ? `javascript:set_state_field('${
+                      tabId || "_tab"
+                    }', '${encodeURIComponent(titles[ix])}')`
                   : `#${validID(titles[ix])}`,
                 role: "tab",
                 "aria-controls": `${rndid}tab${ix}`,
@@ -638,23 +642,34 @@ const renderTabs = (
       ) +
       div(
         { class: "tab-content", id: `${rndid}content` },
-        contents.map((t, ix) =>
-          div(
-            {
-              class: [
-                "tab-pane fade",
-                bodyClass || "",
-                ix === 0 && "show active",
-              ],
-              role: "tabpanel",
-              id: `${validID(titles[ix])}`,
-              "aria-labelledby": `${rndid}link${ix}`,
-            },
-            go(t, false, ix)
-          )
-        )
+        serverRendered
+          ? div(
+              {
+                class: ["tab-pane", bodyClass || "", "show active"],
+                role: "tabpanel",
+                id: `${validID(titles[activeIx])}`,
+                "aria-labelledby": `${rndid}link${activeIx}`,
+              },
+              go(contents[activeIx], false, activeIx)
+            )
+          : contents.map((t, ix) =>
+              div(
+                {
+                  class: [
+                    "tab-pane fade",
+                    bodyClass || "",
+                    ix === activeIx && "show active",
+                  ],
+                  role: "tabpanel",
+                  id: `${validID(titles[ix])}`,
+                  "aria-labelledby": `${rndid}link${ix}`,
+                },
+                go(t, false, ix)
+              )
+            )
       )
     );
+  }
 };
 
 export = {
