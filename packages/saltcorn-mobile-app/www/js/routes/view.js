@@ -35,8 +35,7 @@ const postView = async (context) => {
     },
     view.isRemoteTable()
   );
-  if (mobileCfg.isOfflineMode && !(await offlineHelper.getLastOfflineSession()))
-    await offlineHelper.setOfflineSession({ offlineUser: mobileCfg.user_name });
+  if (mobileCfg.isOfflineMode) await offlineHelper.setHasOfflineData(true);
   return res.getJson();
 };
 
@@ -51,7 +50,7 @@ const postViewRoute = async (context) => {
   const req = new MobileRequest({ xhr: context.xhr });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
-  const { role_id, isOfflineMode, user_name } = state.mobileConfig;
+  const { role_id, isOfflineMode } = state.mobileConfig;
   if (role_id > view.min_role)
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   await view.runRoute(
@@ -61,8 +60,7 @@ const postViewRoute = async (context) => {
     { req, res },
     view.isRemoteTable()
   );
-  if (isOfflineMode && !(await offlineHelper.getLastOfflineSession()))
-    await offlineHelper.setOfflineSession({ offlineUser: user_name });
+  if (isOfflineMode) await offlineHelper.setHasOfflineData(true);
   return res.getJson();
 };
 

@@ -27,13 +27,7 @@ const updateTableRow = async (context) => {
     const ins_res = await table.tryUpdateRow(row, id, user);
     if (ins_res.error)
       throw new Error(`Update '${table.name}' error: ${ins_res.error}`);
-    if (
-      mobileConfig.isOfflineMode &&
-      !(await offlineHelper.getLastOfflineSession())
-    )
-      await offlineHelper.setOfflineSession({
-        offlineUser: mobileConfig.user_name,
-      });
+    if (mobileConfig.isOfflineMode) await offlineHelper.setHasOfflineData(true);
     return ins_res;
   } else {
     const response = await apiCall({
@@ -72,13 +66,7 @@ const insertTableRow = async (context) => {
     if (ins_res.error) {
       throw new Error(`Insert '${table.name}' error: ${ins_res.error}`);
     }
-    if (
-      mobileConfig.isOfflineMode &&
-      !(await offlineHelper.getLastOfflineSession())
-    )
-      await offlineHelper.setOfflineSession({
-        offlineUser: mobileConfig.user_name,
-      });
+    if (mobileConfig.isOfflineMode) await offlineHelper.setHasOfflineData(true);
     return ins_res;
   } else {
     const response = await apiCall({

@@ -168,6 +168,19 @@ const tableForm = async (table, req) => {
               name: "versioned",
               type: "Bool",
             },
+            ...(table.name === "users"
+              ? []
+              : [
+                  {
+                    label: req.__("Sync information"),
+                    sublabel: req.__(
+                      "Sync information tracks the last modification or deletion timestamp " +
+                        "so that the table data can be synchronized with the mobile app"
+                    ),
+                    name: "has_sync_info",
+                    type: "Bool",
+                  },
+                ]),
           ]),
     ],
   });
@@ -1083,9 +1096,11 @@ router.post(
       const { id, _csrf, ...rest } = v;
       const table = Table.findOne({ id: parseInt(id) });
       const old_versioned = table.versioned;
+      const old_has_sync_info = table.has_sync_info;
       let hasError = false;
       let notify = "";
       if (!rest.versioned) rest.versioned = false;
+      if (!rest.has_sync_info) rest.has_sync_info = false;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);

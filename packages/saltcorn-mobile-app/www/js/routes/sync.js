@@ -54,7 +54,7 @@ const getSyncSettingsView = (context) => {
         { class: "col-9" },
         saltcorn.markup.div(
           { class: "fs-6 fw-bold text-decoration-underline" },
-          "Upload offline data"
+          "Sync offline data"
         ),
         saltcorn.markup.div("Upload the data from your last offline session.")
       ),
@@ -64,7 +64,7 @@ const getSyncSettingsView = (context) => {
           {
             class: "btn btn-primary",
             type: "button",
-            onClick: "callUpload()",
+            onClick: "callSync()",
           },
           saltcorn.markup.i({ class: "fas fa-sync" })
         )

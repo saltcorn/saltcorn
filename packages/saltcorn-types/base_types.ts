@@ -338,6 +338,7 @@ export type MobileConfig = {
   entry_point: string;
   // server_path <=> base_url
   localTableIds: number[];
+  synchedTables: string[];
   allowOfflineMode?: boolean;
   isOfflineMode?: boolean;
   networkState?:
