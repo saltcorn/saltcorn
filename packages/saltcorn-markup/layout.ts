@@ -451,8 +451,6 @@ const render = ({
         )
       );
     if (segment.type === "tabs") {
-      console.log({ req });
-
       return wrap(
         segment,
         isTop,
