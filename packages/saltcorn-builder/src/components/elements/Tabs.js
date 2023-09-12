@@ -176,6 +176,8 @@ const TabsSettings = () => {
     independent: node.data.props.independent,
     startClosed: node.data.props.startClosed,
     deeplink: node.data.props.deeplink,
+    serverRendered: node.data.props.serverRendered,
+    tabId: node.data.props.tabId,
     titles: node.data.props.titles,
     field: node.data.props.field,
   }));
@@ -188,6 +190,8 @@ const TabsSettings = () => {
     startClosed,
     ntabs,
     field,
+    serverRendered,
+    tabId,
   } = node;
   const options = useContext(optionsCtx);
   useEffect(() => {
@@ -309,20 +313,53 @@ const TabsSettings = () => {
                 </td>
               </tr>
             ) : (
-              <tr>
-                <td colSpan="2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      name="block"
-                      type="checkbox"
-                      checked={deeplink}
-                      onChange={setAProp("deeplink", { checked: true })}
-                    />
-                    <label className="form-check-label">Deep link</label>
-                  </div>
-                </td>
-              </tr>
+              <Fragment>
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={deeplink}
+                        onChange={setAProp("deeplink", { checked: true })}
+                      />
+                      <label className="form-check-label">Deep link</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={serverRendered}
+                        onChange={setAProp("serverRendered", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        Server rendering
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                {serverRendered ? (
+                  <tr>
+                    <th>
+                      <label>Identifier</label>
+                    </th>
+                    <td>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={tabId}
+                        onChange={setAProp("tabId")}
+                      />
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
             )}
             {tabsStyle === "Accordion" ? (
               <tr>
@@ -360,6 +397,8 @@ Tabs.craft = {
     independent: false,
     startClosed: false,
     deeplink: true,
+    serverRendered: false,
+    tabId: "",
   },
   displayName: "Tabs",
   related: {

@@ -291,7 +291,13 @@ class Page implements AbstractPage {
         const { getState } = require("../db/state");
         segment.contents = getState()
           .getLayout(extraArgs.req.user)
-          .renderBody({ title: "", body: pageContent, role, alerts: [] });
+          .renderBody({
+            title: "",
+            body: pageContent,
+            req: extraArgs.req,
+            role,
+            alerts: [],
+          });
       }
     });
     const pagename = this.name;

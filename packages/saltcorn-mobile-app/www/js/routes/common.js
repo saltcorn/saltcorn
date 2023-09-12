@@ -131,6 +131,7 @@ const wrapContents = (contents, title, context, req) => {
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.role_id,
         menu: getMenu(req),
+        req,
         headers: getHeaders(),
         brand: {
           name: state.getConfig("site_name") || "Saltcorn",
@@ -142,6 +143,7 @@ const wrapContents = (contents, title, context, req) => {
     : layout().renderBody({
         title: title,
         body: { above: [contents] },
+        req,
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.role_id,
       });
