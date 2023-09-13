@@ -506,6 +506,10 @@ const get_viewable_fields = (
     const setWidth = column.col_width
       ? { width: `${column.col_width}${column.col_width_units}` }
       : {};
+    setWidth.align =
+      !column.alignment || column.alignment === "Default"
+        ? undefined
+        : column.alignment.toLowerCase();
     if (column.type === "FormulaValue") {
       return {
         ...setWidth,
@@ -726,6 +730,7 @@ const get_viewable_fields = (
         f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
       }
       const isNum = f && f.type && f.type.name === "Integer";
+      if (isNum && !setWidth.align) setWidth.align = "right";
       let fvrun;
       if (
         column.fieldview &&
@@ -742,12 +747,6 @@ const get_viewable_fields = (
       } else
         fvrun = f && {
           ...setWidth,
-          align:
-            !column.alignment || column.alignment === "Default"
-              ? isNum
-                ? "right"
-                : undefined
-              : column.alignment.toLowerCase(),
           label: headerLabelForName(column, f, req, __),
           row_key: f_with_val.name,
           key:
