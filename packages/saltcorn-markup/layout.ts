@@ -357,7 +357,8 @@ const render = ({
         )
       );
     }
-    if (segment.type === "card")
+    if (segment.type === "card") {
+      const isWeb = typeof window === "undefined" && !req?.smr;
       return wrap(
         segment,
         isTop,
@@ -371,7 +372,11 @@ const render = ({
               segment.class,
               segment.url && "with-link",
             ],
-            onclick: segment.url ? `location.href='${segment.url}'` : false,
+            onclick: segment.url
+              ? isWeb
+                ? `location.href='${segment.url}'`
+                : `execLink('${segment.url}')`
+              : false,
             style: segment.style,
           },
           segment.title &&
@@ -450,6 +455,7 @@ const render = ({
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
+    }
     if (segment.type === "tabs") {
       return wrap(
         segment,
@@ -587,7 +593,11 @@ const render = ({
               hoverColor && `hover-${hoverColor}`,
               fullPageWidth && "full-page-width",
             ],
-            onclick: segment.url ? `location.href='${segment.url}'` : false,
+            onclick: segment.url
+              ? isWeb
+                ? `location.href='${segment.url}'`
+                : `execLink('${segment.url}')`
+              : false,
 
             style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
