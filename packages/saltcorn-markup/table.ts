@@ -89,8 +89,10 @@ const mkTable = (
   hdrs: HeadersParams[],
   vs: any[],
   opts: OptsParams | any = {}
-): string =>
-  div(
+): string => {
+  console.log(hdrs);
+
+  return div(
     {
       class: ["table-responsive", opts.tableClass],
       id: opts.tableId,
@@ -117,7 +119,14 @@ const mkTable = (
                 mkClickHandler(opts, v),
                 hdrs.map((hdr: HeadersParams) =>
                   td(
-                    !!hdr.align && { style: "text-align:" + hdr.align },
+                    {
+                      style: {
+                        ...(hdr.align ? { "text-align": hdr.align } : {}),
+                        ...(hdr.width && opts.noHeader
+                          ? { width: hdr.width }
+                          : {}),
+                      },
+                    },
                     typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
                   )
                 )
@@ -127,6 +136,7 @@ const mkTable = (
     ),
     opts.pagination && pagination(opts.pagination)
   );
+};
 
 /**
  * @param {object} opts
