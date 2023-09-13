@@ -1203,7 +1203,7 @@ const field_picker_fields = async ({
       name: "col_width_units",
       label: __("Units"),
       type: "String",
-      fieldview: "radio_group",
+      required: true,
       attributes: {
         inline: true,
         options: ["px", "%", "vw", "em", "rem"],
