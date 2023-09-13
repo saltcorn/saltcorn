@@ -90,8 +90,6 @@ const mkTable = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string => {
-  console.log(hdrs);
-
   return div(
     {
       class: ["table-responsive", opts.tableClass],
