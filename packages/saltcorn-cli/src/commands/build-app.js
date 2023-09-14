@@ -40,9 +40,11 @@ class BuildAppCommand extends Command {
     }
   }
 
-  async uniquePlugins() {
+  async uniquePlugins(toInclude) {
     const dynamicPlugins = (await Plugin.find()).filter(
-      (plugin) => !this.staticPlugins.includes(plugin.name)
+      (plugin) =>
+        !this.staticPlugins.includes(plugin.name) &&
+        (!toInclude || toInclude.includes(plugin.name))
     );
     const pluginsMap = new Map();
     for (const plugin of dynamicPlugins) {
@@ -82,12 +84,13 @@ class BuildAppCommand extends Command {
         platforms: flags.platforms,
         localUserTables: flags.localUserTables,
         synchedTables: flags.synchedTables,
+        includedPlugins: flags.includedPlugins,
         entryPoint: flags.entryPoint,
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
         splashPage: flags.splashPage,
         allowOfflineMode: flags.allowOfflineMode,
-        plugins: await this.uniquePlugins(),
+        plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
         user,
         buildForEmulator: flags.buildForEmulator,
@@ -143,6 +146,14 @@ BuildAppCommand.flags = {
     string: "synchedTables",
     description:
       "Table names for which the offline should be synchronized with the saltcorn server",
+    multiple: true,
+  }),
+  includedPlugins: flags.string({
+    name: "included plugins",
+    string: "includedPlugins",
+    description:
+      "Names of plugins that should be bundled into the app." +
+      "If empty, all installed modules are used.",
     multiple: true,
   }),
   useDocker: flags.boolean({
