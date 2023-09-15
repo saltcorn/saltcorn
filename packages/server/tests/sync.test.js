@@ -10,6 +10,8 @@ const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/tests/mocks");
 
 const Table = require("@saltcorn/data/models/table");
+const Field = require("@saltcorn/data/models/field");
+const User = require("@saltcorn/data/models/user");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -32,7 +34,7 @@ const initSyncInfo = async (tbls) => {
 describe("load remote insert/updates", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {
-      await initSyncInfo(["books", "publisher"]);
+      await initSyncInfo(["books", "publisher", "patients"]);
     });
     it("check params", async () => {
       const app = await getApp({ disableCsrf: true });
@@ -177,6 +179,99 @@ describe("load remote insert/updates", () => {
         expect(data.books.rows[0].author).toBe("Herman Melville");
         expect(data.books.rows[1].author).toBe("Leo Tolstoy");
       }
+    });
+
+    it("load sync not authorized", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getUserLoginCookie();
+      const loadUntil = new Date();
+      const resp = await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: loadUntil.valueOf(),
+          syncInfos: {
+            patients: {
+              maxLoadedId: 0,
+              syncFrom: 1000,
+            },
+          },
+        });
+      expect(resp.status).toBe(200);
+      const data = resp._body;
+      expect(Object.keys(data).length).toBe(0);
+    });
+
+    const addOwnerField = async () => {
+      const patients = Table.findOne({ name: "patients" });
+      const users = Table.findOne({ name: "users" });
+      const ownerField = await Field.create({
+        table: patients,
+        name: "owner",
+        label: "Pages",
+        type: "Key",
+        reftable: users,
+        attributes: { summary_field: "id" },
+      });
+      patients.ownership_field_id = ownerField.id;
+      await patients.update(patients);
+      const user = await User.findOne({ email: "user@foo.com" });
+      await patients.updateRow({ owner: user.id }, 1);
+    };
+
+    it("load sync authorized with ownership", async () => {
+      await addOwnerField();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getUserLoginCookie();
+      const loadUntil = new Date();
+      const resp = await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: loadUntil.valueOf(),
+          syncInfos: {
+            patients: {
+              maxLoadedId: 0,
+            },
+          },
+        });
+      expect(resp.status).toBe(200);
+      const data = resp._body;
+      expect(Object.keys(data).length).toBe(1);
+      expect(data.patients).toBeDefined();
+      expect(data.patients.rows.length).toBe(1);
+      expect(data.patients.rows[0].id).toBe(1);
+    });
+
+    it("load sync authorized with ownership and syncFrom", async () => {
+      const patients = Table.findOne({ name: "patients" });
+      if (!patients.ownership_field_id) await addOwnerField();
+      const rows = await patients.getRows();
+      for (const row of rows) {
+        await patients.updateRow(row, row.id);
+      }
+
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getUserLoginCookie();
+      const loadUntil = new Date();
+      const resp = await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: loadUntil.valueOf(),
+          syncInfos: {
+            patients: {
+              maxLoadedId: 0,
+              syncFrom: 1000,
+            },
+          },
+        });
+      expect(resp.status).toBe(200);
+      const data = resp._body;
+      expect(Object.keys(data).length).toBe(1);
+      expect(data.patients).toBeDefined();
+      expect(data.patients.rows.length).toBe(1);
+      expect(data.patients.rows[0].id).toBe(1);
     });
   } else
     it("only pq support", () => {
