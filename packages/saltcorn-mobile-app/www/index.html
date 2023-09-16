@@ -193,6 +193,22 @@
         }
       };
 
+      const showErrorPage = async (error) => {
+        const state = saltcorn.data.state.getState();
+        state.mobileConfig.inErrorState = true;
+        const page = await router.resolve({
+          pathname: "get/error_page",
+          fullWrap: true,
+          alerts: [
+            {
+              type: "error",
+              msg: error.message ? error.message : "An error occured.",
+            },
+          ],
+        });
+        await replaceIframe(page.content);
+      };
+
       // the app comes back from background
       const onResume = async () => {
         if (typeof saltcorn === "undefined") return;
@@ -205,25 +221,29 @@
             !mobileConfig.isOfflineMode &&
             mobileConfig.jwt
           ) {
-            await offlineHelper.startOfflineMode();
-            clearHistory();
-            if (mobileConfig.user_id) await gotoEntryView();
-            else {
-              const decodedJwt = jwt_decode(mobileConfig.jwt);
-              mobileConfig.role_id = decodedJwt.user.role_id
-                ? decodedJwt.user.role_id
-                : 100;
-              mobileConfig.user_id = decodedJwt.user.id;
-              mobileConfig.user_name = decodedJwt.user.email;
-              mobileConfig.language = decodedJwt.user.language;
-              mobileConfig.isPublicUser = false;
+            try {
+              await offlineHelper.startOfflineMode();
+              clearHistory();
+              if (mobileConfig.user_id) await gotoEntryView();
+              else {
+                const decodedJwt = jwt_decode(mobileConfig.jwt);
+                mobileConfig.role_id = decodedJwt.user.role_id
+                  ? decodedJwt.user.role_id
+                  : 100;
+                mobileConfig.user_id = decodedJwt.user.id;
+                mobileConfig.user_name = decodedJwt.user.email;
+                mobileConfig.language = decodedJwt.user.language;
+                mobileConfig.isPublicUser = false;
+              }
+              addRoute({ route: entryPoint, query: undefined });
+              const page = await router.resolve({
+                pathname: mobileConfig.entry_point,
+                fullWrap: true,
+                alerts: [],
+              });
+            } catch (error) {
+              await showErrorPage(error);
             }
-            addRoute({ route: entryPoint, query: undefined });
-            const page = await router.resolve({
-              pathname: mobileConfig.entry_point,
-              fullWrap: true,
-              alerts: [],
-            });
           }
         }
       };
@@ -348,13 +368,20 @@
                   throw new Error(
                     `The offline mode is not available, '${offlineUser}' has not yet uploaded offline data.`
                   );
-                else {
-                  await offlineHelper.startOfflineMode();
-                  alerts.push({
-                    type: "info",
-                    msg: offlineHelper.getOfflineMsg(),
-                  });
-                }
+                else
+                  try {
+                    await offlineHelper.startOfflineMode();
+                    alerts.push({
+                      type: "info",
+                      msg: offlineHelper.getOfflineMsg(),
+                    });
+                  } catch (error) {
+                    throw new Error(
+                      `Neither an internet connection nor the offline mode are available: ${
+                        error.message ? error.message : "Unknown error"
+                      }`
+                    );
+                  }
               } else if (offlineUser) {
                 if (offlineUser === mobileConfig.user_name) {
                   await offlineHelper.sync();
@@ -397,24 +424,16 @@
             });
             await replaceIframe(page.content);
           } else if (await isPublicEntryPoint(entryPoint)) {
+            if (networkDisabled)
+              throw new Error(
+                "No internet connection or previous login is available. " +
+                  "Please go online and reload, the public login is not yet supported."
+              );
             await publicLogin(entryPoint);
           } else await showLogin(alerts);
         } catch (error) {
           if (error.httpCode === 401) await showLogin([]);
-          else {
-            state.mobileConfig.inErrorState = true;
-            const page = await router.resolve({
-              pathname: "get/error_page",
-              fullWrap: true,
-              alerts: [
-                {
-                  type: "error",
-                  msg: error.message ? error.message : "An error occured.",
-                },
-              ],
-            });
-            await replaceIframe(page.content);
-          }
+          else await showErrorPage(error);
         }
       };
 

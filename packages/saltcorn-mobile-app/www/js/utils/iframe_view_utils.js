@@ -250,12 +250,8 @@ async function publicLogin(entryPoint) {
       throw new Error("The login failed.");
     }
   } catch (error) {
-    parent.showAlerts([
-      {
-        type: "error",
-        msg: error.message ? error.message : "An error occured.",
-      },
-    ]);
+    console.log(error);
+    throw error;
   } finally {
     removeLoadSpinner();
   }

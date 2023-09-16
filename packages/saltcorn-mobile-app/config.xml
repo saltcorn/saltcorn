@@ -7,6 +7,9 @@
     <edit-config file="app/src/main/AndroidManifest.xml" target="/manifest/application" mode="merge">
       <application android:usesCleartextTraffic="true"/>
     </edit-config>
+    <config-file parent="/manifest" target="AndroidManifest.xml">
+      <uses-permission android:name="android.permission.WAKE_LOCK" />
+    </config-file>
     <preference name="Scheme" value="http"/>
     <preference name="MixedContentMode" value="2"/>
   </platform>
