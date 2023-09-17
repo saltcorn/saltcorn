@@ -1180,7 +1180,7 @@ const update_matching_rows = async (
     page_when_done,
   },
   body,
-  { req, res, redirect }, // TODO test redirect
+  { req, res, redirect },
   { updateMatchingQuery, getRowQuery, saveFileQuery, optionsQuery }
 ) => {
   const table = Table.findOne({ id: table_id });
@@ -1217,14 +1217,14 @@ const update_matching_rows = async (
       repeatFields,
       childRows
     );
-    if (uptResults.rowError) {
+    if (uptResults.error || uptResults.rowError || uptResults.inEditError) {
       res.status(422);
-      req.flash("error", text_attr(uptResults.rowError));
-      res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-      return;
-    } else if (uptResults.inEditError) {
-      res.status(422);
-      req.flash("error", text_attr(uptResults.inEditError));
+      req.flash(
+        "error",
+        text_attr(
+          uptResults.error || uptResults.rowError || uptResults.inEditError
+        )
+      );
       res.sendWrap(viewname, renderForm(form, req.csrfToken()));
       return;
     }
@@ -1718,30 +1718,46 @@ module.exports = {
       const table = Table.findOne(table_id);
       const rows = await table.getRows(where);
       const results = [];
-      for (const row of rows) {
-        const uptRes = await tryUpdateImpl(updateVals, row.id, table, req.user);
-        if (uptRes.error) {
-          // TODO transaction
-          return { rowError: uptRes.error };
-        }
-        results.push(uptRes);
-        for (const field of repeatFields) {
-          const childTable = Table.findOne({ id: field.metadata?.table_id });
-          await childTable.deleteRows({ [field.metadata?.relation]: row.id });
-          for (const childRow of childRows[field.name]) {
-            childRow[field.metadata?.relation] = row.id;
-            const insRow = { ...childRow };
-            delete insRow[childTable.pk_name];
-            const insRes = await childTable.tryInsertRow(
-              insRow,
-              req.user || { role_id: 100 }
-            );
-            if (insRes.error) {
-              // TODO transaction
-              return { inEditError: insRes.error };
+      let inTransaction = false;
+      try {
+        if (rows.length > 0) inTransaction = true;
+        await db.begin();
+        for (const row of rows) {
+          const uptRes = await tryUpdateImpl(
+            updateVals,
+            row.id,
+            table,
+            req.user
+          );
+          if (uptRes.error) {
+            inTransaction = false;
+            await db.rollback();
+            return { rowError: uptRes.error };
+          }
+          results.push(uptRes);
+          for (const field of repeatFields) {
+            const childTable = Table.findOne({ id: field.metadata?.table_id });
+            await childTable.deleteRows({ [field.metadata?.relation]: row.id });
+            for (const childRow of childRows[field.name]) {
+              childRow[field.metadata?.relation] = row.id;
+              const insRow = { ...childRow };
+              delete insRow[childTable.pk_name];
+              const insRes = await childTable.tryInsertRow(
+                insRow,
+                req.user || { role_id: 100 }
+              );
+              if (insRes.error) {
+                inTransaction = false;
+                await db.rollback();
+                return { inEditError: insRes.error };
+              }
             }
           }
         }
+        if (inTransaction) await db.commit();
+      } catch (error) {
+        if (inTransaction) await db.rollback();
+        return { error: error.message };
       }
       return results;
     },

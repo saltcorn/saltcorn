@@ -198,7 +198,7 @@ function handleOpenModal() {
   return true;
 }
 
-async function handleRoute(route, query, files) {
+async function handleRoute(route, query, files, data) {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   try {
     if (
@@ -218,6 +218,7 @@ async function handleRoute(route, query, files) {
         pathname: safeRoute,
         query: query,
         files: files,
+        data: data,
         alerts: mobileConfig.isOfflineMode
           ? [
               {

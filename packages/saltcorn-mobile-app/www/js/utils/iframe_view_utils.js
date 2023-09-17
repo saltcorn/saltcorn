@@ -40,12 +40,13 @@ async function execNavbarLink(url) {
  * @param {*} urlSuffix
  * @returns
  */
-async function formSubmit(e, urlSuffix, viewname, noSubmitCb) {
+async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
   try {
     showLoadSpinner();
     if (!noSubmitCb) e.submit();
     const files = {};
     const urlParams = new URLSearchParams();
+    const data = matchingState ? {} : null;
     for (const entry of new FormData(e).entries()) {
       if (entry[1] instanceof File) files[entry[0]] = entry[1];
       else {
@@ -60,11 +61,19 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb) {
           // read and add file to submit
           const binary = await parent.readBinary(fileName, directory);
           files[entry[0]] = new File([binary], fileName);
-        } else urlParams.append(entry[0], entry[1]);
+        } else if (!matchingState) urlParams.append(entry[0], entry[1]);
+        else data[entry[0]] = entry[1];
       }
     }
-    const queryStr = urlParams.toString();
-    await parent.handleRoute(`post${urlSuffix}${viewname}`, queryStr, files);
+    const queryStr = !matchingState
+      ? urlParams.toString()
+      : parent.currentQuery() || "";
+    await parent.handleRoute(
+      `post${urlSuffix}${viewname}`,
+      queryStr,
+      files,
+      data
+    );
   } finally {
     removeLoadSpinner();
   }
@@ -882,6 +891,21 @@ async function getPicture(fieldName) {
     );
     const tokens = fileURI.split("/");
     $(`#cpt-file-name-${fieldName}`).text(tokens[tokens.length - 1]);
+  } catch (error) {
+    parent.errorAlert(error);
+  }
+}
+
+async function updateMatchingRows(e, viewname) {
+  try {
+    const form = $(e).closest("form");
+    await formSubmit(
+      form[0],
+      "/view/",
+      `${viewname}/update_matching_rows`,
+      false,
+      true
+    );
   } catch (error) {
     parent.errorAlert(error);
   }

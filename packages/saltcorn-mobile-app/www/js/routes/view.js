@@ -47,7 +47,8 @@ const postViewRoute = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const req = new MobileRequest({ xhr: context.xhr });
+  const query = context.query ? parseQuery(context.query) : {};
+  const req = new MobileRequest({ xhr: context.xhr, query });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const { role_id, isOfflineMode } = state.mobileConfig;
