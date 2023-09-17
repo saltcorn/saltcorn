@@ -182,7 +182,7 @@ const isNode = (): boolean => {
  * @param req express request
  */
 const isWeb = (req: any): boolean => {
-  return isNode() && !req.smr;
+  return isNode() && !req?.smr;
 };
 
 /**

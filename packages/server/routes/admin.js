@@ -1492,6 +1492,9 @@ router.get(
       image.filename?.endsWith(".png")
     );
     const withSyncInfo = await Table.find({ has_sync_info: true });
+    const plugins = (await Plugin.find()).filter(
+      (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
+    );
     send_admin_page({
       res,
       req,
@@ -1750,7 +1753,29 @@ router.get(
                       )
                     )
                   ),
-
+                  // auto public login box
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-4" },
+                      input({
+                        type: "checkbox",
+                        id: "autoPublLoginId",
+                        class: "form-check-input me-2",
+                        name: "autoPublicLogin",
+                        value: "autoPublicLogin",
+                        checked: false,
+                      }),
+                      label(
+                        {
+                          for: "autoPublLoginId",
+                          class: "form-label",
+                        },
+                        req.__("Auto public login")
+                      )
+                    )
+                  ),
+                  // allow offline mode box
                   div(
                     { class: "row pb-2" },
                     div(
@@ -1773,10 +1798,11 @@ router.get(
                       )
                     )
                   ),
+                  // synched/unsynched tables
                   div(
                     {
                       id: "tblSyncSelectorId",
-                      class: "row pb-2",
+                      class: "row pb-3",
                     },
                     div(
                       label(
@@ -1858,6 +1884,97 @@ router.get(
                                 value: table.name,
                                 label: table.name,
                                 hidden: "true",
+                              })
+                            )
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  // included/excluded plugins
+                  div(
+                    {
+                      id: "pluginsSelectorId",
+                      class: "row pb-2",
+                    },
+                    div(
+                      label({ class: "form-label fw-bold" }, req.__("Plugins"))
+                    ),
+                    div(
+                      { class: "container" },
+                      div(
+                        { class: "row" },
+                        div(
+                          { class: "col-sm-4 text-center" },
+                          req.__("exclude")
+                        ),
+                        div({ class: "col-sm-1" }),
+                        div(
+                          { class: "col-sm-4 text-center" },
+                          req.__("include")
+                        )
+                      ),
+                      div(
+                        { class: "row" },
+                        div(
+                          { class: "col-sm-4" },
+                          select(
+                            {
+                              id: "excluded-plugins-select-id",
+                              class: "form-control form-select",
+                              multiple: true,
+                            },
+                            plugins.map((plugin) =>
+                              option({
+                                id: `${plugin.name}_excluded_opt`,
+                                value: plugin.name,
+                                label: plugin.name,
+                                hidden: "true",
+                              })
+                            )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-1 d-flex justify-content-center" },
+                          div(
+                            div(
+                              button(
+                                {
+                                  id: "move-plugin-right-btn-id",
+                                  type: "button",
+                                  onClick: `move_plugin_to_included()`,
+                                  class: "btn btn-light pt-1 mb-1",
+                                },
+                                i({ class: "fas fa-arrow-right" })
+                              )
+                            ),
+                            div(
+                              button(
+                                {
+                                  id: "move-plugin-left-btn-id",
+                                  type: "button",
+                                  onClick: `move_plugin_to_excluded()`,
+                                  class: "btn btn-light pt-1",
+                                },
+                                i({ class: "fas fa-arrow-left" })
+                              )
+                            )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+                          select(
+                            {
+                              id: "included-plugins-select-id",
+                              class: "form-control form-select",
+                              multiple: true,
+                            },
+                            plugins.map((plugin) =>
+                              option({
+                                id: `${plugin.name}_included_opt`,
+                                value: plugin.name,
+                                label: plugin.name,
+                                // hidden: "true",
                               })
                             )
                           )
@@ -1969,8 +2086,10 @@ router.post(
       appIcon,
       serverURL,
       splashPage,
+      autoPublicLogin,
       allowOfflineMode,
       synchedTables,
+      includedPlugins,
     } = req.body;
     if (!androidPlatform && !iOSPlatform) {
       return res.json({
@@ -2022,8 +2141,14 @@ router.post(
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
+    if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (synchedTables?.length > 0)
       spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
+    if (includedPlugins?.length > 0)
+      spawnParams.push(
+        "--includedPlugins",
+        ...includedPlugins.map((pluginName) => pluginName)
+      );
     if (
       db.is_it_multi_tenant() &&
       db.getTenantSchema() !== db.connectObj.default_schema

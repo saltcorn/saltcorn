@@ -1,4 +1,4 @@
-/*global $, apiCall, saltcorn, navigator, clearAlerts*/
+/*global window, $, apiCall, saltcorn, navigator, clearAlerts*/
 
 var offlineHelper = (() => {
   const setUploadStarted = async (started, time) => {
@@ -423,7 +423,10 @@ var offlineHelper = (() => {
         );
         const syncTimestamp = await getSyncTimestamp();
         await setUploadStarted(true, syncTimestamp);
+        let lock = null;
         try {
+          if (window.navigator.wakeLock?.request)
+            lock = await window.navigator.wakeLock.request();
           await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
           await saltcorn.data.db.query("BEGIN");
           if (cleanSync) await offlineHelper.clearLocalData(true);
@@ -440,8 +443,10 @@ var offlineHelper = (() => {
           await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
           console.log(error);
           throw error;
+        } finally {
+          if (syncDir) await cleanSyncDir(syncDir);
+          if (lock) await lock.release();
         }
-        if (syncDir) await cleanSyncDir(syncDir);
       }
     },
 
@@ -453,27 +458,37 @@ var offlineHelper = (() => {
         await offlineHelper.setOfflineSession({
           offlineUser: mobileConfig.user_name,
         });
-        mobileConfig.isOfflineMode = true;
-      } else if (oldSession.offlineUser !== mobileConfig.user_name) {
-        if (oldSession.hasOfflineData) {
+      } else if (
+        oldSession.offlineUser &&
+        oldSession.offlineUser !== mobileConfig.user_name
+      ) {
+        if (oldSession.hasOfflineData)
           throw new Error(
             `The offline mode is not available, '${oldSession.offlineUser}' has not yet uploaded offline data.`
           );
-        } else {
-          await offlineHelper.setOfflineSession({
-            offlineUser: mobileConfig.user_name,
-          });
-          mobileConfig.isOfflineMode = true;
-        }
+      } else if (oldSession.uploadStarted) {
+        throw new Error(
+          `A previous Synchronization did not finish. Please ${
+            mobileConfig.networkState === "none" ? "go online and " : ""
+          } try it again.`
+        );
       } else {
-        mobileConfig.isOfflineMode = true;
+        await offlineHelper.setOfflineSession({
+          offlineUser: mobileConfig.user_name,
+        });
       }
+      mobileConfig.isOfflineMode = true;
     },
     endOfflineMode: async (endSession = false) => {
       const state = saltcorn.data.state.getState();
       const mobileConfig = state.mobileConfig;
       mobileConfig.isOfflineMode = false;
-      if (!(await offlineHelper.hasOfflineRows()) || endSession)
+      const oldSession = await offlineHelper.getLastOfflineSession();
+      if (
+        (!oldSession?.uploadStarted &&
+          !(await offlineHelper.hasOfflineRows())) ||
+        endSession
+      )
         await state.setConfig("last_offline_session", null);
     },
     getLastOfflineSession: async () => {
@@ -493,6 +508,7 @@ var offlineHelper = (() => {
     },
     clearLocalData: async (inTransaction) => {
       try {
+        await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
         if (!inTransaction) await saltcorn.data.db.query("BEGIN");
         const { synchedTables } = saltcorn.data.state.getState().mobileConfig;
         for (const tblName of synchedTables) {
@@ -501,8 +517,12 @@ var offlineHelper = (() => {
           await saltcorn.data.db.deleteWhere(`${table.name}_sync_info`, {});
         }
         if (!inTransaction) await saltcorn.data.db.query("COMMIT");
+        await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
       } catch (error) {
-        if (!inTransaction) await saltcorn.data.db.query("ROLLBACK");
+        if (!inTransaction) {
+          await saltcorn.data.db.query("ROLLBACK");
+          await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+        }
         throw error;
       }
     },

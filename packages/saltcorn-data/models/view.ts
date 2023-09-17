@@ -411,7 +411,8 @@ class View implements AbstractView {
     extraArgs: RunExtra,
     remote: boolean = !isNode()
   ): Promise<any> {
-    this.check_viewtemplate();
+    if (isWeb(extraArgs.req)) this.check_viewtemplate();
+    else if (!this.viewtemplateObj) return "";
     const table_id = this.exttable_name || this.table_id;
     const state = require("../db/state").getState();
     try {
@@ -504,7 +505,8 @@ class View implements AbstractView {
     remote: boolean = false
   ): Promise<string | { goto?: string }> {
     const view = this;
-    this.check_viewtemplate();
+    if (isWeb(req)) this.check_viewtemplate();
+    else if (!this.viewtemplateObj) return "";
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
@@ -539,7 +541,8 @@ class View implements AbstractView {
     extraArgs: RunExtra,
     remote?: boolean
   ): Promise<string[] | Array<{ html: string; row: any }>> {
-    this.check_viewtemplate();
+    if (isWeb(extraArgs.req)) this.check_viewtemplate();
+    else if (!this.viewtemplateObj) return [];
     require("../db/state")
       .getState()
       .log(5, `runMany view ${this.name} with state ${JSON.stringify(query)}`);
@@ -616,7 +619,8 @@ class View implements AbstractView {
     ) {
       remote = false;
     }
-    this.check_viewtemplate();
+    if (isWeb(extraArgs.req)) this.check_viewtemplate();
+    else if (!this.viewtemplateObj) return;
     getState().log(
       5,
       `runPost view ${this.name} with state ${JSON.stringify(query)}`
@@ -652,12 +656,12 @@ class View implements AbstractView {
     extraArgs: RunExtra,
     remote: boolean = false
   ): Promise<any> {
-    this.check_viewtemplate();
+    if (isWeb(extraArgs.req)) this.check_viewtemplate();
+    else if (!this.viewtemplateObj) return res.json({ excluded: true });
     if (!this.viewtemplateObj!.routes)
       throw new InvalidConfiguration(
         `Unable to call runRoute of view '${this.name}', ${this.viewtemplate} is missing 'routes'.`
       );
-    this.check_viewtemplate();
     require("../db/state")
       .getState()
       .log(
@@ -683,7 +687,8 @@ class View implements AbstractView {
    */
   combine_state_and_default_state(req_query: any): any {
     var state = { ...req_query };
-    this.check_viewtemplate();
+    if (isNode()) this.check_viewtemplate();
+    else if (!this.viewtemplateObj) return state;
     const defstate = this.viewtemplateObj!.default_state_form
       ? this.viewtemplateObj!.default_state_form(this.configuration)
       : {};

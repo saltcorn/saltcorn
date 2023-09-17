@@ -24,9 +24,30 @@ router.get(
   })
 );
 
-const getSyncRows = async (syncInfo, table, syncUntil, client) => {
+const getSyncRows = async (syncInfo, table, syncUntil, client, user) => {
   const tblName = table.name;
   const pkName = table.pk_name;
+  const minRole = table.min_role_read;
+  const role = user?.role_id || 100;
+  let ownerFieldName = null;
+  if (
+    role > minRole &&
+    ((!table.ownership_field_id && !table.ownership_formula) || role === 100)
+  )
+    return null;
+  if (user?.id && role < 100 && role > minRole && table.ownership_field_id) {
+    const ownerField = table
+      .getFields()
+      .find((f) => f.id === table.ownership_field_id);
+    if (!ownerField) {
+      getState().log(
+        5,
+        `GET /load_changes: The ownership field of '${table.name}' does not exist.`
+      );
+      return null;
+    }
+    ownerFieldName = ownerField.name;
+  }
   const schema = db.getTenantSchemaPrefix();
   if (!syncInfo.syncFrom) {
     const { rows } = await client.query(
@@ -43,9 +64,9 @@ const getSyncRows = async (syncInfo, table, syncUntil, client) => {
       on info_tbl.ref = data_tbl."${db.sqlsanitize(
         pkName
       )}" and info_tbl.deleted = false
-      where data_tbl."${db.sqlsanitize(pkName)}" > ${
-        syncInfo.maxLoadedId
-      } order by data_tbl."${db.sqlsanitize(pkName)}"`
+      where data_tbl."${db.sqlsanitize(pkName)}" > ${syncInfo.maxLoadedId}
+      ${ownerFieldName ? `and data_tbl."${ownerFieldName}" = ${user.id}` : ""}
+      order by data_tbl."${db.sqlsanitize(pkName)}"`
     );
     for (const row of rows) {
       if (row._sync_info_tbl_last_modified_)
@@ -76,6 +97,7 @@ const getSyncRows = async (syncInfo, table, syncUntil, client) => {
       }) 
       and info_tbl.deleted = false
       and info_tbl.ref > ${syncInfo.maxLoadedId}
+      ${ownerFieldName ? `and data_tbl."${ownerFieldName}" = ${user.id}` : ""}
       order by info_tbl.ref`
     );
     for (const row of rows) {
@@ -114,7 +136,14 @@ router.post(
         const table = Table.findOne({ name: tblName });
         if (!table) throw new Error(`The table '${tblName}' does not exists`);
         const pkName = table.pk_name;
-        let rows = await getSyncRows(syncInfo, table, loadUntil, client);
+        let rows = await getSyncRows(
+          syncInfo,
+          table,
+          loadUntil,
+          client,
+          req.user
+        );
+        if (!rows) continue;
         if (role > table.min_role_read) {
           if (
             role === 100 ||

@@ -47,10 +47,12 @@ export class MobileBuilder {
   platforms: string[];
   localUserTables: string[];
   synchedTables: string[];
+  includedPlugins: string[];
   entryPoint: string;
   entryPointType: EntryPointType;
   serverURL: string;
   splashPage?: string;
+  autoPublicLogin: string;
   allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
@@ -75,10 +77,12 @@ export class MobileBuilder {
     platforms: string[];
     localUserTables?: string[];
     synchedTables?: string[];
+    includedPlugins?: string[];
     entryPoint: string;
     entryPointType: EntryPointType;
     serverURL: string;
     splashPage?: string;
+    autoPublicLogin: string;
     allowOfflineMode: string;
     plugins: Plugin[];
     copyTargetDir?: string;
@@ -96,10 +100,12 @@ export class MobileBuilder {
     this.platforms = cfg.platforms;
     this.localUserTables = cfg.localUserTables ? cfg.localUserTables : [];
     this.synchedTables = cfg.synchedTables ? cfg.synchedTables : [];
+    this.includedPlugins = cfg.includedPlugins ? cfg.includedPlugins : [];
     this.entryPoint = cfg.entryPoint;
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
     this.splashPage = cfg.splashPage;
+    this.autoPublicLogin = cfg.allowOfflineMode;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -132,6 +138,7 @@ export class MobileBuilder {
       localUserTables: this.localUserTables,
       synchedTables: this.synchedTables,
       tenantAppName: this.tenantAppName,
+      autoPublicLogin: this.autoPublicLogin,
       allowOfflineMode: this.allowOfflineMode,
     });
     let resultCode = await bundlePackagesAndPlugins(
@@ -143,7 +150,7 @@ export class MobileBuilder {
     await loadAllPlugins();
     await copyPublicDirs(this.buildDir);
     await installNpmPackages(this.buildDir, this.pluginManager);
-    await buildTablesFile(this.buildDir);
+    await buildTablesFile(this.buildDir, this.includedPlugins);
     if (this.splashPage)
       await prepareSplashPage(
         this.buildDir,

@@ -136,6 +136,7 @@ export function writeCfgFile({
   localUserTables,
   synchedTables,
   tenantAppName,
+  autoPublicLogin,
   allowOfflineMode,
 }: any) {
   const wwwDir = join(buildDir, "www");
@@ -147,6 +148,7 @@ export function writeCfgFile({
       : serverPath.substring(0, serverPath.length - 1),
     localUserTables,
     synchedTables,
+    autoPublicLogin,
     allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
@@ -157,8 +159,12 @@ export function writeCfgFile({
  * create a file with all data from the db
  * the app updates its local db from this
  * @param buildDir directory where the app will be build
+ * @param includedPlugins names of plugins that are bundled into the app
  */
-export async function buildTablesFile(buildDir: string) {
+export async function buildTablesFile(
+  buildDir: string,
+  includedPlugins?: string[]
+) {
   const wwwDir = join(buildDir, "www");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
@@ -167,7 +173,16 @@ export async function buildTablesFile(buildDir: string) {
   const tablesWithData = await Promise.all(
     scTables.map(async (row: Row) => {
       const dbData = await db.select(row.name);
-      return { table: row.name, rows: dbData };
+      return {
+        table: row.name,
+        rows:
+          row.name !== "_sc_plugins"
+            ? dbData
+            : dbData.filter(
+                (plugin: any) =>
+                  !includedPlugins || includedPlugins.includes(plugin.name)
+              ),
+      };
     })
   );
   writeFileSync(
