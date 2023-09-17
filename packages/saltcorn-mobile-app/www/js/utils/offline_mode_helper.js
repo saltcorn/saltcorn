@@ -1,4 +1,4 @@
-/*global $, apiCall, saltcorn, navigator, clearAlerts*/
+/*global window, $, apiCall, saltcorn, navigator, clearAlerts*/
 
 var offlineHelper = (() => {
   const setUploadStarted = async (started, time) => {

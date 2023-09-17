@@ -1753,7 +1753,29 @@ router.get(
                       )
                     )
                   ),
-
+                  // auto public login box
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-4" },
+                      input({
+                        type: "checkbox",
+                        id: "autoPublLoginId",
+                        class: "form-check-input me-2",
+                        name: "autoPublicLogin",
+                        value: "autoPublicLogin",
+                        checked: false,
+                      }),
+                      label(
+                        {
+                          for: "autoPublLoginId",
+                          class: "form-label",
+                        },
+                        req.__("Auto public login")
+                      )
+                    )
+                  ),
+                  // allow offline mode box
                   div(
                     { class: "row pb-2" },
                     div(
@@ -2064,6 +2086,7 @@ router.post(
       appIcon,
       serverURL,
       splashPage,
+      autoPublicLogin,
       allowOfflineMode,
       synchedTables,
       includedPlugins,
@@ -2118,6 +2141,7 @@ router.post(
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
+    if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (synchedTables?.length > 0)
       spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
     if (includedPlugins?.length > 0)

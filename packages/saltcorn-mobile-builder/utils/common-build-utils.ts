@@ -136,6 +136,7 @@ export function writeCfgFile({
   localUserTables,
   synchedTables,
   tenantAppName,
+  autoPublicLogin,
   allowOfflineMode,
 }: any) {
   const wwwDir = join(buildDir, "www");
@@ -147,6 +148,7 @@ export function writeCfgFile({
       : serverPath.substring(0, serverPath.length - 1),
     localUserTables,
     synchedTables,
+    autoPublicLogin,
     allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;

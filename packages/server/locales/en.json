@@ -1245,5 +1245,6 @@
 	"Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app": "Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app",
 	"Included Plugins": "Included Plugins",
 	"exclude": "exclude",
-	"include": "include"
+	"include": "include",
+	"Auto public login": "Auto public login"
 }

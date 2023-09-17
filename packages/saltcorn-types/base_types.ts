@@ -339,6 +339,7 @@ export type MobileConfig = {
   // server_path <=> base_url
   localTableIds: number[];
   synchedTables: string[];
+  autoPublicLogin: boolean;
   allowOfflineMode?: boolean;
   isOfflineMode?: boolean;
   networkState?:

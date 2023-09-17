@@ -89,6 +89,7 @@ class BuildAppCommand extends Command {
         entryPointType: flags.entryPointType ? flags.entryPointType : "view",
         serverURL: flags.serverURL,
         splashPage: flags.splashPage,
+        autoPublicLogin: flags.autoPublicLogin,
         allowOfflineMode: flags.allowOfflineMode,
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
@@ -203,6 +204,11 @@ BuildAppCommand.flags = {
     string: "splashPage",
     description:
       "Name of a page that should be shown while the app is loading.",
+  }),
+  autoPublicLogin: flags.boolean({
+    name: "auto public login",
+    string: "autoPublicLogin",
+    description: "Show public entry points before the login as a public user.",
   }),
   allowOfflineMode: flags.boolean({
     name: "Allow offline mode",

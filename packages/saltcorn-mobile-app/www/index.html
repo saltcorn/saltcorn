@@ -423,7 +423,10 @@
               alerts,
             });
             await replaceIframe(page.content);
-          } else if (await isPublicEntryPoint(entryPoint)) {
+          } else if (
+            (await isPublicEntryPoint(entryPoint)) &&
+            state.mobileConfig.autoPublicLogin
+          ) {
             if (networkDisabled)
               throw new Error(
                 "No internet connection or previous login is available. " +

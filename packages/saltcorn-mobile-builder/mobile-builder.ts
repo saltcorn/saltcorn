@@ -52,6 +52,7 @@ export class MobileBuilder {
   entryPointType: EntryPointType;
   serverURL: string;
   splashPage?: string;
+  autoPublicLogin: string;
   allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
@@ -81,6 +82,7 @@ export class MobileBuilder {
     entryPointType: EntryPointType;
     serverURL: string;
     splashPage?: string;
+    autoPublicLogin: string;
     allowOfflineMode: string;
     plugins: Plugin[];
     copyTargetDir?: string;
@@ -103,6 +105,7 @@ export class MobileBuilder {
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
     this.splashPage = cfg.splashPage;
+    this.autoPublicLogin = cfg.allowOfflineMode;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -135,6 +138,7 @@ export class MobileBuilder {
       localUserTables: this.localUserTables,
       synchedTables: this.synchedTables,
       tenantAppName: this.tenantAppName,
+      autoPublicLogin: this.autoPublicLogin,
       allowOfflineMode: this.allowOfflineMode,
     });
     let resultCode = await bundlePackagesAndPlugins(
