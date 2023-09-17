@@ -3,6 +3,7 @@
  * @module common
  */
 // todo need to be reorganized
+const {dump} = require("js-yaml");
 /**
  * Execute function for specified tenant
  * @param {object} ten - specified tenant
@@ -69,10 +70,35 @@ function readFileSync(filename){
   }
 }
 
+/**
+ *
+ * @param {object[]} results
+ * @param {boolean} json
+ * @returns {void}
+ */
+const print_it = (results, json) => {
+  if (json) console.log(JSON.stringify(results, null, 2));
+  else console.log(dump(results, { lineWidth: process.stdout.columns }));
+};
+
+/**
+ *
+ * @param {object[]} results
+ * @param {boolean} json
+ * @returns {void}
+ */
+const print_table = (results, properties, json) => {
+  if (json) console.log(JSON.stringify(results, null, 2));
+  else
+    console.table(results, properties);
+};
+
 module.exports = {
   maybe_as_tenant,
   parseJSONorString,
   sleep,
   init_some_tenants,
   readFileSync,
+  print_it,
+  print_table,
 };

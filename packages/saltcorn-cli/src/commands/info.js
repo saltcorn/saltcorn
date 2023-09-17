@@ -7,19 +7,9 @@ const {
   configFilePath,
   getConnectObject,
 } = require("@saltcorn/data/db/connect");
-const { dump } = require("js-yaml");
 const packagejson = require("../../package.json");
+const {print_it} = require("../common");
 
-/**
- * 
- * @param {object[]} results 
- * @param {boolean} json 
- * @returns {void}
- */
-const print_it = (results, json) => {
-  if (json) console.log(JSON.stringify(results, null, 2));
-  else console.log(dump(results, { lineWidth: process.stdout.columns }));
-};
 
 /**
  * InfoCommand Class

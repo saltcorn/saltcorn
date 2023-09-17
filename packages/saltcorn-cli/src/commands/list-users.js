@@ -4,38 +4,40 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant, init_some_tenants, print_table} = require("../common");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
  * ListTriggerCommand Class
  * @extends oclif.Command
  * @category saltcorn-cli
  */
-class ListTriggersCommand extends Command {
+class ListUsersCommand extends Command {
   /**
    * @returns {Promise<void>}
    */
   async run() {
-    const {flags, args} = this.parse(ListTriggersCommand);
+    const {flags, args} = this.parse(ListUsersCommand);
     await init_some_tenants(flags.tenant);
 
     const {mockReqRes} = require("@saltcorn/data/tests/mocks");
-    const Trigger = require(`@saltcorn/data/models/trigger`);
+    const User = require(`@saltcorn/data/models/user`);
     //const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
-      const triggers = Trigger.find();
-      if (!triggers) {
-        console.log(`There are no triggers`);
+      const users = await User.find({});
+      if (!users) {
+        console.log(`There are no users`);
         this.exit(1);
       }
+
       if(!flags.verbose){
-        print_table(triggers,["name"], flags.json);
+        console.table(users,
+          ["email"]
+        );
       }
       else {
-        print_table(triggers,
-          ["id","name","action","when_trigger","min_role",
-            "channel","table_id","table_name","description"],
-          flags.json);
+        console.table(users,
+          ["id","email","language","role_id"]
+        );
       }
 
     });
@@ -45,13 +47,16 @@ class ListTriggersCommand extends Command {
 /**
  * @type {string}
  */
-ListTriggersCommand.description = `List triggers`;
-
+ListUsersCommand.description = `List users`;
+/**
+ * @type {string}
+ */
+ListUsersCommand.help = `List users`;
 
 /**
  * @type {object}
  */
-ListTriggersCommand.flags = {
+ListUsersCommand.flags = {
   tenant: flags.string({
     name: "tenant",
     char: "t",
@@ -64,7 +69,9 @@ ListTriggersCommand.flags = {
     description: "verbose output",
     required: false,
   }),
-  json: flags.boolean({ char: "j", description: "json format" }),
+  // todo option to specify list of fields for user (because dynamic list of fields for user)
+  // todo filter password and other secret fields
+  // todo print role.name instead of role_id
 };
 
-module.exports = ListTriggersCommand;
+module.exports = ListUsersCommand;
