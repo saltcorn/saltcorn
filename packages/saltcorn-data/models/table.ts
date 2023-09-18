@@ -70,6 +70,7 @@ const {
   mergeIntoWhere,
   stringToJSON,
   isNode,
+  apply,
 } = utils;
 import tags from "@saltcorn/markup/tags";
 const { text } = tags;
@@ -186,7 +187,8 @@ class Table implements AbstractTable {
     const { getRows } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
-    const t = json_list_to_external_table(getRows, provider.fields);
+    const fields = apply(provider.fields, tbl.provider_cfg);
+    const t = json_list_to_external_table(getRows, fields);
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
     t.update = async (upd_rec: any) => {
