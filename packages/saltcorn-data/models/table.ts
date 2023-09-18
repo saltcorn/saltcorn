@@ -236,7 +236,7 @@ class Table implements AbstractTable {
         : satisfies(where)
     );
     if (tbl?.provider_name) {
-      return tbl.to_provided_table();
+      return new Table(structuredClone(tbl)).to_provided_table();
     } else return tbl ? new Table(structuredClone(tbl)) : null;
   }
 
