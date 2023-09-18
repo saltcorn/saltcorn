@@ -510,6 +510,14 @@ function initialize_page() {
     if (schema) {
       schema = JSON.parse(decodeURIComponent(schema));
     }
+    if (type === "Date") {
+      console.log("timeelsems", $(this).find("span.current time"));
+      current =
+        $(this).attr("data-inline-edit-current") ||
+        $(this).find("span.current time").attr("datetime"); // ||
+      //$(this).children("span.current").html();
+    }
+    console.log({ type, current });
     var is_key = type?.startsWith("Key:");
     const opts = encodeURIComponent(
       JSON.stringify({
