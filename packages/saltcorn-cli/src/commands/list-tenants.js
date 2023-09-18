@@ -4,6 +4,7 @@
  */
 const { Command, flags } = require("@oclif/command");
 const db = require("@saltcorn/data/db");
+const {print_table} = require("../common");
 
 
 /**
@@ -46,17 +47,11 @@ class ListTenantsCommand extends Command {
 
     // print
     if(!flags.verbose)
-      console.table(
-        tenantDetails,
-        ["domain"]
-      );
+      print_table(tenantDetails,["domain"],flags.json);
     else
-      console.table(
-        tenantDetails,
-        ["domain","users","roles","tables","views","pages", "files","triggers", "tags"]
-      );
-
-
+      print_table(tenantDetails,
+        ["domain","users","roles","tables","views","pages", "files","triggers", "tags"],
+        flags.json);
     this.exit(0);
   }
 }
@@ -89,6 +84,7 @@ ListTenantsCommand.flags = {
     description: "verbose output",
     required: false,
   }),
+  json: flags.boolean({ char: "j", description: "json format" }),
 };
 
 module.exports = ListTenantsCommand;
