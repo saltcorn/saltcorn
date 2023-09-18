@@ -71,6 +71,8 @@ const {
   stringToJSON,
   isNode,
   apply,
+  applyAsync,
+  asyncMap,
 } = utils;
 import tags from "@saltcorn/markup/tags";
 const { text } = tags;
@@ -187,8 +189,7 @@ class Table implements AbstractTable {
     const { getRows } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
-    const fields = apply(provider.fields, tbl.provider_cfg);
-    const t = json_list_to_external_table(getRows, fields);
+    const t = json_list_to_external_table(getRows, tbl.fields);
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
     t.update = async (upd_rec: any) => {
@@ -278,10 +279,16 @@ class Table implements AbstractTable {
       db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
     );
 
-    return tbls.map((t: TableCfg) => {
-      t.fields = flds
-        .filter((f: any) => f.table_id === t.id)
-        .map((f: any) => new Field(f));
+    return await asyncMap(tbls, async (t: TableCfg) => {
+      if (t.provider_name) {
+        const { getState } = require("../db/state");
+        const provider = getState().table_providers[t.provider_name];
+        t.fields = await applyAsync(provider.fields, t.provider_cfg);
+      } else
+        t.fields = flds
+          .filter((f: any) => f.table_id === t.id)
+          .map((f: any) => new Field(f));
+
       t.constraints = constraints
         .filter((f: any) => f.table_id === t.id)
         .map((f: any) => new _TableConstraint(f));

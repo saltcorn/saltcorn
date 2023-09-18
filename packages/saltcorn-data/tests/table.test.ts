@@ -1534,12 +1534,22 @@ describe("table providers", () => {
       provider_name: "provtab",
       provider_cfg: { middle_name: "Robinette" },
     });
+    await getState().refresh_tables();
+  });
+  it("should find", async () => {
+    const [table] = await Table.find({ name: "JoeTable" });
+    assertIsSet(table);
+    const rows = await table.getRows({});
+    expect(rows.length).toBe(1);
+    expect(rows[0].name).toBe("Robinette");
+    expect(table.fields.length).toBe(2);
   });
   it("should query", async () => {
     const table = Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
+    expect(table.fields.length).toBe(2);
     const rows = await table.getRows({});
-    expect(rows.length === 1);
+    expect(rows.length).toBe(1);
     expect(rows[0].name).toBe("Robinette");
     expect(rows[0].age).toBe(36);
   });
