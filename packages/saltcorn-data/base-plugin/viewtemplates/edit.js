@@ -883,7 +883,14 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery, optionsQuery },
+  {
+    tryInsertQuery,
+    tryUpdateQuery,
+    getRowQuery,
+    saveFileQuery,
+    optionsQuery,
+    getRowByIdQuery,
+  },
   remote
 ) => {
   const table = Table.findOne({ id: table_id });
@@ -900,7 +907,7 @@ const runPost = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery, optionsQuery },
+    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
     remote
   );
   if (prepResult) {
@@ -1181,7 +1188,13 @@ const update_matching_rows = async (
   },
   body,
   { req, res, redirect },
-  { updateMatchingQuery, getRowQuery, saveFileQuery, optionsQuery }
+  {
+    updateMatchingQuery,
+    getRowQuery,
+    saveFileQuery,
+    optionsQuery,
+    getRowByIdQuery,
+  }
 ) => {
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
@@ -1197,8 +1210,7 @@ const update_matching_rows = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery, optionsQuery }
-    // TODO remote
+    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery }
   );
   if (prepResult) {
     let { form, row, pk } = prepResult;
@@ -1266,7 +1278,7 @@ const prepare = async (
   { columns, layout, fixed, auto_save },
   { req, res },
   body,
-  { getRowQuery, saveFileQuery, optionsQuery },
+  { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
   remote
 ) => {
   const form = await getForm(table, viewname, columns, layout, body.id, req);
@@ -1298,7 +1310,7 @@ const prepare = async (
   await form.asyncValidate(body);
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
-    await form.fill_fkey_options(false, undefined, req.user);
+    await form.fill_fkey_options(false, optionsQuery, req.user);
     res.sendWrap(
       viewname,
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
@@ -1312,8 +1324,9 @@ const prepare = async (
     const use_fixed = await fill_presets(table, req, fixed);
     row = { ...use_fixed, ...form.values };
   } else if (cancel) {
-    //get row
-    row = await table.getRow({ id });
+    row = getRowByIdQuery
+      ? await getRowByIdQuery(id)
+      : await table.getRow({ id });
   } else {
     row = { ...form.values };
   }
@@ -1677,6 +1690,10 @@ module.exports = {
           forUser: req.user,
         }
       );
+    },
+    async getRowByIdQuery(id) {
+      const table = Table.findOne({ id: table_id });
+      return await table.getRow({ id });
     },
     async actionQuery() {
       const body = req.body;

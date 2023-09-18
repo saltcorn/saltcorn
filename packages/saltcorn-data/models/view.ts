@@ -674,7 +674,8 @@ class View implements AbstractView {
     );
     if (result && result.json) res.json(result.json);
     else if (result && result.html) res.send(result.html);
-    else if (!res.headersSent) res.json({ success: "ok" });
+    else if (!res.headersSent && (isNode() || (!isNode() && !res.getJson())))
+      res.json({ success: "ok" });
   }
 
   /**
