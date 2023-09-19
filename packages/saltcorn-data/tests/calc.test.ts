@@ -10,6 +10,7 @@ const {
   transform_for_async,
   expressionValidator,
   jsexprToWhere,
+  jsexprToSQL,
   freeVariables,
   recalculate_for_stored,
 } = expression;
@@ -317,6 +318,22 @@ describe("free variables", () => {
     expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
   });
 });
+describe("jsexprToSQL", () => {
+  it("translates equality", () => {
+    expect(jsexprToSQL("foo==4")).toEqual("(foo)==(4)");
+  });
+  it("translates bools", () => {
+    expect(jsexprToSQL("foo==true")).toEqual("foo is true");
+    expect(jsexprToSQL("foo==false")).toEqual("foo is false");
+  });
+  it("translates null cmps", () => {
+    expect(jsexprToSQL("foo===null")).toEqual("foo is null");
+    expect(jsexprToSQL("foo==null")).toEqual("foo is null");
+    expect(jsexprToSQL("foo!=null")).toEqual("foo is not null");
+    expect(jsexprToSQL("foo!==null")).toEqual("foo is not null");
+  });
+});
+
 describe("jsexprToWhere", () => {
   it("translates equality", () => {
     expect(jsexprToWhere("foo==4")).toEqual({ foo: 4 });
