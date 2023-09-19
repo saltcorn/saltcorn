@@ -206,7 +206,7 @@ describe("User", () => {
   it("has table", async () => {
     const t = User.table;
     assertIsSet(t);
-    expect(t.name).toBe("name");
+    expect(t.name).toBe("users");
   });
 });
 
