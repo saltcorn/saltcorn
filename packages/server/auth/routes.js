@@ -632,9 +632,11 @@ router.post(
  * @throws {InvalidConfiguration}
  */
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
+  if (!new_user_view_name) return;
   const view = await View.findOne({ name: new_user_view_name });
   if (!view)
     throw new InvalidConfiguration("New user form view does not exist");
+  if (view.viewtemplate !== "Edit") return;
   const table = Table.findOne({ name: "users" });
   const fields = table.getFields();
   const { columns, layout } = view.configuration;
@@ -708,14 +710,14 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
  * @param {object} res
  * @returns {void}
  */
-const signup_login_with_user = (u, req, res) =>
+const signup_login_with_user = (u, req, res, redirUrl) =>
   req.login(u.session_object, function (err) {
     if (!err) {
       Trigger.emitEvent("Login", null, u);
       if (getState().verifier) res.redirect("/auth/verification-flow");
       else if (getState().get2FApolicy(u) === "Mandatory")
         res.redirect("/auth/twofa/setup/totp");
-      else res.redirect("/");
+      else res.redirect(redirUrl || "/");
     } else {
       req.flash("danger", err);
       res.redirect("/auth/signup");
@@ -956,18 +958,30 @@ router.post(
         const userObject = signup_form.values;
         //const { email, password, passwordRepeat } = userObject;
         if (await unsuitableEmailPassword(userObject)) return;
-        if (new_user_form) {
-          const form = await getNewUserForm(new_user_form, req);
+        const new_user_form_form = await getNewUserForm(new_user_form, req);
+        if (new_user_form_form) {
           Object.entries(userObject).forEach(([k, v]) => {
-            form.values[k] = v;
-            if (!form.fields.find((f) => f.name === k)) form.hidden(k);
+            new_user_form_form.values[k] = v;
+            if (!new_user_form_form.fields.find((f) => f.name === k))
+              new_user_form_form.hidden(k);
           });
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+          res.sendAuthWrap(
+            new_user_form,
+            new_user_form_form,
+            getAuthLinks("signup", true)
+          );
         } else {
           const u = await User.create(userObject);
           await send_verification_email(u, req);
 
-          signup_login_with_user(u, req, res);
+          signup_login_with_user(
+            u,
+            req,
+            res,
+            new_user_form && !new_user_form_form
+              ? `/view/${new_user_form}?id=${u.id}`
+              : undefined
+          );
         }
         return;
       }
