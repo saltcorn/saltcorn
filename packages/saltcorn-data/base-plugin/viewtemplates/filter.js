@@ -48,6 +48,7 @@ const {
   InvalidConfiguration,
   objectToQueryString,
   removeEmptyStrings,
+  asyncMap,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -664,18 +665,16 @@ module.exports = {
           });
           const referrer = req.get("Referrer");
           return combineResults(
-            await Promise.all(
-              rows.map(async (row) => {
-                return await run_action_column({
-                  col,
-                  req,
-                  table,
-                  res,
-                  referrer,
-                  row,
-                });
-              })
-            )
+            await asyncMap(rows, async (row) => {
+              return await run_action_column({
+                col,
+                req,
+                table,
+                res,
+                referrer,
+                row,
+              });
+            })
           );
         } else {
           const row = col.action_row_variable === "state" ? { ...state } : null;

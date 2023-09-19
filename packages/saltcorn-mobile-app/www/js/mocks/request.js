@@ -18,6 +18,8 @@ function MobileRequest({
         : `?${refererRoute.query}`
       : "";
   const referer = refererPath ? `${refererPath}${referQuery}` : undefined;
+  const values = {};
+  if (refererRoute) values.Referrer = referer;
   return {
     __: (s, ...params) =>
       i18next.t(s, {
@@ -43,7 +45,10 @@ function MobileRequest({
       return flashMessages;
     },
     get: (key) => {
-      return "";
+      return values[key] ? values[key] : "";
+    },
+    set: (key, val) => {
+      values[key] = val;
     },
     csrfToken: () => "",
     xhr,

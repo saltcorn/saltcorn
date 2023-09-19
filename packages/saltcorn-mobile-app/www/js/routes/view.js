@@ -15,7 +15,15 @@ const postView = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const req = new MobileRequest({ xhr: context.xhr, files: context.files });
+  const refererRoute =
+    routingHistory?.length > 1
+      ? routingHistory[routingHistory.length - 2]
+      : undefined;
+  const req = new MobileRequest({
+    xhr: context.xhr,
+    files: context.files,
+    refererRoute,
+  });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const mobileCfg = state.mobileConfig;
@@ -47,7 +55,16 @@ const postViewRoute = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const req = new MobileRequest({ xhr: context.xhr });
+  const query = parseQuery(context.query);
+  const refererRoute =
+    routingHistory?.length > 1
+      ? routingHistory[routingHistory.length - 2]
+      : undefined;
+  const req = new MobileRequest({
+    xhr: context.xhr,
+    query,
+    refererRoute,
+  });
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const { role_id, isOfflineMode } = state.mobileConfig;

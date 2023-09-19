@@ -256,6 +256,12 @@ async function handleRoute(route, query, files) {
   }
 }
 
+async function reload() {
+  const currentRoute = currentLocation();
+  if (!currentRoute) await gotoEntryView();
+  await handleRoute(currentRoute, currentQuery());
+}
+
 async function goBack(steps = 1, exitOnFirstPage = false) {
   const { inLoadState } = saltcorn.data.state.getState().mobileConfig;
   if (inLoadState) return;
