@@ -254,7 +254,9 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
         res.json(token);
       } else {
         res.json({
-          alerts: [{ type: "danger", msg: req.__("Incorrect user or password") }],
+          alerts: [
+            { type: "danger", msg: req.__("Incorrect user or password") },
+          ],
         });
       }
     } else if (publicUserLink) {
@@ -276,7 +278,9 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
       res.json(token);
     } else {
       res.json({
-        alerts: [{ type: "danger", msg: req.__("The public login is deactivated") }],
+        alerts: [
+          { type: "danger", msg: req.__("The public login is deactivated") },
+        ],
       });
     }
   };
@@ -869,7 +873,8 @@ router.post(
       return;
     }
 
-    const unsuitableEmailPassword = async (email, password, passwordRepeat) => {
+    const unsuitableEmailPassword = async (urecord) => {
+      const { email, password, passwordRepeat } = urecord;
       if (!email || !password) {
         req.flash("danger", req.__("E-mail and password required"));
         res.redirect("/auth/signup");
@@ -911,6 +916,12 @@ router.post(
         res.redirect("/auth/signup");
         return true;
       }
+      let constraint_check_error = User.table.check_table_constraints(urecord);
+      if (constraint_check_error) {
+        req.flash("danger", constraint_check_error);
+        res.redirect("/auth/signup");
+        return true;
+      }
     };
     const new_user_form = getState().getConfig("new_user_form");
 
@@ -943,9 +954,8 @@ router.post(
             signup_form.values[f.name] = signup_form.values[f.name] || "";
         });
         const userObject = signup_form.values;
-        const { email, password, passwordRepeat } = userObject;
-        if (await unsuitableEmailPassword(email, password, passwordRepeat))
-          return;
+        //const { email, password, passwordRepeat } = userObject;
+        if (await unsuitableEmailPassword(userObject)) return;
         if (new_user_form) {
           const form = await getNewUserForm(new_user_form, req);
           Object.entries(userObject).forEach(([k, v]) => {
@@ -1100,7 +1110,13 @@ router.get(
     const { method } = req.params;
     if (method === "jwt") {
       const { email, password } = req.query;
-      await loginWithJwt(email, password, req.headers["x-saltcorn-app"], res, req);
+      await loginWithJwt(
+        email,
+        password,
+        req.headers["x-saltcorn-app"],
+        res,
+        req
+      );
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {

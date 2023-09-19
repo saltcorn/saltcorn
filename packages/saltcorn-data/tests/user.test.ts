@@ -203,6 +203,11 @@ describe("User", () => {
     expect(!!u2.id).toBe(false);
     await getState().setConfig("new_user_form", "");
   });
+  it("has table", async () => {
+    const t = User.table;
+    assertIsSet(t);
+    expect(t.name).toBe("name");
+  });
 });
 
 describe("User fields", () => {
