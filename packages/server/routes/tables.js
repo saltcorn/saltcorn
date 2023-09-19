@@ -90,7 +90,7 @@ const tableForm = async (table, req) => {
     noSubmitButton: true,
     onChange: "saveAndContinue(this)",
     fields: [
-      ...(!table.external
+      ...(!table.external && !table.provider_name
         ? [
             {
               label: req.__("Ownership field"),
@@ -146,9 +146,9 @@ const tableForm = async (table, req) => {
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
-        attributes: { asideNext: !table.external },
+        attributes: { asideNext: !table.external && !table.provider_name },
       },
-      ...(table.external
+      ...(table.external || table.provider_name
         ? []
         : [
             {
@@ -790,6 +790,7 @@ router.get(
             "<br>"
           : "",
         !table.external &&
+          !table.provider_name &&
           a(
             {
               href: `/field/new/${table.id}`,
@@ -903,6 +904,7 @@ router.get(
         )
       ),
       !table.external &&
+        !table.provider_name &&
         div(
           { class: "mx-auto" },
           form(
@@ -929,6 +931,7 @@ router.get(
           )
         ),
       !table.external &&
+        !table.provider_name &&
         div(
           { class: "mx-auto" },
           a(
@@ -944,6 +947,7 @@ router.get(
 
       // only if table is not external
       !table.external &&
+        !table.provider_name &&
         div(
           { class: "mx-auto" },
           settingsDropdown(`dataMenuButton`, [
