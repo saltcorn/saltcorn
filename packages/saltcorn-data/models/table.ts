@@ -385,9 +385,10 @@ class Table implements AbstractTable {
       return !!f(row, user);
     }
     const field_name = this.owner_fieldname();
-    // todo seems like hacking logic. needs redesign
-    if (!field_name && this.name === "users")
-      return user && user.id && row && `${row.id}` === `${user.id}`;
+
+    // users are owners of their own row in users table
+    if (this.name === "users" && !field_name)
+      return user.id && `${row?.id}` === `${user.id}`;
 
     return typeof field_name === "string" && row[field_name] === user.id;
   }
