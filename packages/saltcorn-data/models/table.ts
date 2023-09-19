@@ -385,9 +385,10 @@ class Table implements AbstractTable {
       return !!f(row, user);
     }
     const field_name = this.owner_fieldname();
-    // todo seems like hacking logic. needs redesign
-    if (!field_name && this.name === "users")
-      return user && user.id && row && `${row.id}` === `${user.id}`;
+
+    // users are owners of their own row in users table
+    if (this.name === "users" && !field_name)
+      return user.id && `${row?.id}` === `${user.id}`;
 
     return typeof field_name === "string" && row[field_name] === user.id;
   }
@@ -854,7 +855,7 @@ class Table implements AbstractTable {
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
         if (row[owner_field.name] !== (forUser as AbstractUser).id) return null;
-      } else if (this.ownership_formula) {
+      } else if (this.ownership_formula || this.name === "users") {
         if (!this.is_owner(forUser, row)) return null;
       } else return null; //no ownership
     }
@@ -893,7 +894,7 @@ class Table implements AbstractTable {
       if (forPublic) return [];
       else if (this.ownership_field_id) {
         //already dealt with by changing where
-      } else if (this.ownership_formula) {
+      } else if (this.ownership_formula || this.name === "users") {
         rows = rows.filter((row: Row) => this.is_owner(forUser, row));
       } else return []; //no ownership
     }
@@ -2883,7 +2884,7 @@ class Table implements AbstractTable {
       if (forPublic) return [];
       else if (this.ownership_field_id) {
         //already dealt with by changing where
-      } else if (this.ownership_formula) {
+      } else if (this.ownership_formula || this.name === "users") {
         calcRow = calcRow.filter((row: Row) => this.is_owner(forUser, row));
       } else return []; //no ownership
     }

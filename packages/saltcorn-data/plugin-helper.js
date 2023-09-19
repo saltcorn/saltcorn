@@ -2118,9 +2118,13 @@ const run_action_column = async ({ col, req, ...rest }) => {
   if (state_action) configuration = col.configuration;
   else {
     const trigger = await Trigger.findOne({ name: col.action_name });
-    state_action = getState().actions[trigger.action];
-    configuration = trigger.configuration;
+    if (trigger) {
+      state_action = getState().actions[trigger.action];
+      configuration = trigger.configuration;
+    }
   }
+  if (!state_action)
+    throw new Error("Runnable action not found: " + text(col.action_name));
   return await state_action.run({
     configuration,
     user: req.user,

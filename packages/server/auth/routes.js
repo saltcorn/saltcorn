@@ -254,7 +254,9 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
         res.json(token);
       } else {
         res.json({
-          alerts: [{ type: "danger", msg: req.__("Incorrect user or password") }],
+          alerts: [
+            { type: "danger", msg: req.__("Incorrect user or password") },
+          ],
         });
       }
     } else if (publicUserLink) {
@@ -276,7 +278,9 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
       res.json(token);
     } else {
       res.json({
-        alerts: [{ type: "danger", msg: req.__("The public login is deactivated") }],
+        alerts: [
+          { type: "danger", msg: req.__("The public login is deactivated") },
+        ],
       });
     }
   };
@@ -628,9 +632,11 @@ router.post(
  * @throws {InvalidConfiguration}
  */
 const getNewUserForm = async (new_user_view_name, req, askEmail) => {
+  if (!new_user_view_name) return;
   const view = await View.findOne({ name: new_user_view_name });
   if (!view)
     throw new InvalidConfiguration("New user form view does not exist");
+  if (view.viewtemplate !== "Edit") return;
   const table = Table.findOne({ name: "users" });
   const fields = table.getFields();
   const { columns, layout } = view.configuration;
@@ -704,14 +710,14 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
  * @param {object} res
  * @returns {void}
  */
-const signup_login_with_user = (u, req, res) =>
+const signup_login_with_user = (u, req, res, redirUrl) =>
   req.login(u.session_object, function (err) {
     if (!err) {
       Trigger.emitEvent("Login", null, u);
       if (getState().verifier) res.redirect("/auth/verification-flow");
       else if (getState().get2FApolicy(u) === "Mandatory")
         res.redirect("/auth/twofa/setup/totp");
-      else res.redirect("/");
+      else res.redirect(redirUrl || "/");
     } else {
       req.flash("danger", err);
       res.redirect("/auth/signup");
@@ -869,7 +875,8 @@ router.post(
       return;
     }
 
-    const unsuitableEmailPassword = async (email, password, passwordRepeat) => {
+    const unsuitableEmailPassword = async (urecord) => {
+      const { email, password, passwordRepeat } = urecord;
       if (!email || !password) {
         req.flash("danger", req.__("E-mail and password required"));
         res.redirect("/auth/signup");
@@ -911,6 +918,12 @@ router.post(
         res.redirect("/auth/signup");
         return true;
       }
+      let constraint_check_error = User.table.check_table_constraints(urecord);
+      if (constraint_check_error) {
+        req.flash("danger", constraint_check_error);
+        res.redirect("/auth/signup");
+        return true;
+      }
     };
     const new_user_form = getState().getConfig("new_user_form");
 
@@ -943,21 +956,32 @@ router.post(
             signup_form.values[f.name] = signup_form.values[f.name] || "";
         });
         const userObject = signup_form.values;
-        const { email, password, passwordRepeat } = userObject;
-        if (await unsuitableEmailPassword(email, password, passwordRepeat))
-          return;
-        if (new_user_form) {
-          const form = await getNewUserForm(new_user_form, req);
+        //const { email, password, passwordRepeat } = userObject;
+        if (await unsuitableEmailPassword(userObject)) return;
+        const new_user_form_form = await getNewUserForm(new_user_form, req);
+        if (new_user_form_form) {
           Object.entries(userObject).forEach(([k, v]) => {
-            form.values[k] = v;
-            if (!form.fields.find((f) => f.name === k)) form.hidden(k);
+            new_user_form_form.values[k] = v;
+            if (!new_user_form_form.fields.find((f) => f.name === k))
+              new_user_form_form.hidden(k);
           });
-          res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
+          res.sendAuthWrap(
+            new_user_form,
+            new_user_form_form,
+            getAuthLinks("signup", true)
+          );
         } else {
           const u = await User.create(userObject);
           await send_verification_email(u, req);
 
-          signup_login_with_user(u, req, res);
+          signup_login_with_user(
+            u,
+            req,
+            res,
+            new_user_form && !new_user_form_form
+              ? `/view/${new_user_form}?id=${u.id}`
+              : undefined
+          );
         }
         return;
       }
@@ -972,7 +996,7 @@ router.post(
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
     } else {
       const { email, password } = form.values;
-      if (await unsuitableEmailPassword(email, password)) return;
+      if (await unsuitableEmailPassword({ email, password })) return;
       if (new_user_form) {
         const form = await getNewUserForm(new_user_form, req);
         form.values.email = email;
@@ -1100,7 +1124,13 @@ router.get(
     const { method } = req.params;
     if (method === "jwt") {
       const { email, password } = req.query;
-      await loginWithJwt(email, password, req.headers["x-saltcorn-app"], res, req);
+      await loginWithJwt(
+        email,
+        password,
+        req.headers["x-saltcorn-app"],
+        res,
+        req
+      );
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {

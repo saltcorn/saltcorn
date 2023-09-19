@@ -190,12 +190,17 @@ class User {
     const hashpw = hasPw ? await User.hashPassword(u.password) : "";
     const ex = await User.findOne({ email: u.email });
     if (ex) return { error: `User with this email already exists` };
-    u.id = await db.insert("users", {
+    const urecord = {
       email: u.email,
       password: hashpw,
       role_id: u.role_id,
       ...rest,
-    });
+    };
+    const user_table = Table.findOne({ name: "users" }) as Table;
+    let constraint_check_error = user_table.check_table_constraints(urecord);
+    if (constraint_check_error) return { error: constraint_check_error };
+
+    u.id = await db.insert("users", urecord);
     await Trigger.runTableTriggers(
       "Insert",
       Table.findOne({ name: "users" }) as Table,
@@ -218,6 +223,10 @@ class User {
     };
     Object.assign(so, safeUserFields(this));
     return so;
+  }
+
+  static get table(): Table {
+    return Table.findOne({ name: "users" }) as Table;
   }
 
   /**

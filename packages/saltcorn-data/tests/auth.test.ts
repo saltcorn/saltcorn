@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import User from "../models/user";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -478,6 +479,27 @@ describe("Table with row ownership joined formula and stored calc", () => {
     await department.delete();
   });
 });
+describe("ownerhip of users table", () => {
+  it("should find own row", async () => {
+    const users = Table.findOne({ name: "users" });
+    assertIsSet(users);
+    const u3 = await users.getRow({ id: 3 });
+    assertIsSet(u3);
+
+    expect(u3?.email).toBe("user@foo.com");
+    const u3forUser = await users.getRow(
+      { id: 3 },
+      { forUser: u3 as AbstractUser }
+    );
+    expect(u3forUser?.email).toBe("user@foo.com");
+    const u2forUser = await users.getRow(
+      { id: 2 },
+      { forUser: u3 as AbstractUser }
+    );
+    expect(u2forUser).toBe(null);
+  });
+});
+
 describe("User group", () => {
   it("should support user groups", async () => {
     const projects = await Table.create("Project");

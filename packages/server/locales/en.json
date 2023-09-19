@@ -1246,5 +1246,7 @@
 	"Included Plugins": "Included Plugins",
 	"exclude": "exclude",
 	"include": "include",
-	"Auto public login": "Auto public login"
+	"Auto public login": "Auto public login",
+	"New user view": "New user view",
+	"A view to show to new users, to finalise registration (if Edit) or as a welcome view": "A view to show to new users, to finalise registration (if Edit) or as a welcome view"
 }
