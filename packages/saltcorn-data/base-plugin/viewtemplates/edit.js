@@ -1271,6 +1271,18 @@ const update_matching_rows = async (
   }
 };
 
+/**
+ * preparations for the form and the data row
+ * @param {*} viewname
+ * @param {*} table table of the view
+ * @param {*} fields all fields in table
+ * @param {*} param3 columns, layout, fixed, auto_save
+ * @param {*} param4  req, res
+ * @param {*} body request body
+ * @param {*} param6 getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery
+ * @param {*} remote
+ * @returns null on error, { form, row, pk, id } on success
+ */
 const prepare = async (
   viewname,
   table,
@@ -1381,6 +1393,19 @@ const prepare = async (
   return { form, row, pk, id };
 };
 
+/**
+ * take care of final redirect
+ * @param {*} viewname
+ * @param {*} table_id id of the table of the view
+ * @param {*} fields all fields in table
+ * @param {*} pk private key field
+ * @param {*} param4 view_when_done, formula_destinations, destination_type, dest_url_formula, page_when_done, redirect
+ * @param {*} req
+ * @param {*} res
+ * @param {*} body reuqest body
+ * @param {*} row row of the form
+ * @returns
+ */
 const whenDone = async (
   viewname,
   table_id,
@@ -1458,6 +1483,10 @@ const whenDone = async (
   }
 };
 
+/**
+ * @param {*} results results from updateMatchingQuery
+ * @returns success, danger, goto
+ */
 const combineResults = (results) => {
   const combined = { success: [], danger: [] };
   for (const uptResult of results) {
