@@ -996,7 +996,7 @@ router.post(
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
     } else {
       const { email, password } = form.values;
-      if (await unsuitableEmailPassword(email, password)) return;
+      if (await unsuitableEmailPassword({ email, password })) return;
       if (new_user_form) {
         const form = await getNewUserForm(new_user_form, req);
         form.values.email = email;
