@@ -1400,7 +1400,7 @@ const whenDone = async (
   row
 ) => {
   if (redirect) {
-    res.redirect(redirect); // test redirect
+    res.redirect(redirect);
     return;
   }
 
@@ -1737,8 +1737,9 @@ module.exports = {
       const results = [];
       let inTransaction = false;
       try {
-        if (rows.length > 0) inTransaction = true;
+        if (rows.length === 0) return results;
         await db.begin();
+        inTransaction = true;
         for (const row of rows) {
           const uptRes = await tryUpdateImpl(
             updateVals,

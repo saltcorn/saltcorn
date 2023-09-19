@@ -419,7 +419,7 @@ describe("update matching rows", () => {
     await field.update({ is_unique: false });
   });
 
-  it("update ", async () => {
+  it("update matching books normal", async () => {
     const table = Table.findOne({ name: "books" });
     await updateMatchingRows({
       query: "author=leo&publisher=1",
@@ -443,7 +443,21 @@ describe("update matching rows", () => {
     expect(actualRows).toEqual(expected);
   });
 
-  it("update with edit-in-edit", async () => {});
+  it("update matching books with edit-in-edit", async () => {
+    const disBooks = Table.findOne({ name: "discusses_books" });
+    await updateMatchingRows({
+      query: "id=2",
+      body: { author: "Leo Tolstoy" },
+    });
+    await updateMatchingRows({
+      query: "author=leo",
+      body: { author: "agi", discussant_0: "1", discussant_1: "2" },
+    });
+    const discBooksRows = (await disBooks.getRows({ book: 2 })).filter(
+      ({ discussant }) => discussant === 1 || discussant === 2
+    );
+    expect(discBooksRows.length).toBe(2);
+  });
 });
 
 describe("inbound relations", () => {

@@ -22,8 +22,6 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-jest.setTimeout(4000000);
-
 describe("View", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });

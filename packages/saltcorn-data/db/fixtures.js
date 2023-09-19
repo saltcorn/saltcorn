@@ -126,46 +126,7 @@ module.exports =
       },
       min_role: 100,
     });
-    await View.create({
-      table_id: table.id,
-      name: "author_multi_edit",
-      viewtemplate: "Edit",
-      configuration: {
-        columns: [
-          { type: "Field", field_name: "author" },
-          { type: "Field", field_name: "publisher", fieldview: "select" },
-          {
-            type: "action",
-            block: false,
-            configuration: {},
-            action_name: "UpdateMatchingRows",
-            action_style: "btn-primary",
-            minRole: 100,
-            rndid: "f7c2cd",
-          },
-        ],
-        layout: {
-          above: [
-            { type: "field", fieldview: "edit", field_name: "author" },
-            {
-              type: "field",
-              field_name: "publisher",
-              fieldview: "select",
-            },
-            {
-              type: "action",
-              block: false,
-              configuration: {},
-              action_name: "UpdateMatchingRows",
-              action_style: "btn-primary",
-              minRole: 100,
-              rndid: "f7c2cd",
-            },
-          ],
-        },
-      },
-      min_role: 100,
-    });
+
     await View.create({
       table_id: patients.id,
       name: "patientlist",
@@ -374,6 +335,84 @@ module.exports =
         ],
       },
       fixed_states: {},
+    });
+
+    await View.create({
+      table_id: disc_books.id,
+      name: "disc_books_edit-in-edit",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "select",
+              textStyle: "",
+              field_name: "discussant",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "select",
+            textStyle: "",
+            field_name: "discussant",
+            configuration: {},
+          },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: table.id,
+      name: "author_multi_edit",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "author" },
+          { type: "Field", field_name: "publisher", fieldview: "select" },
+          {
+            type: "action",
+            block: false,
+            configuration: {},
+            action_name: "UpdateMatchingRows",
+            action_style: "btn-primary",
+            minRole: 100,
+            rndid: "f7c2cd",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "edit", field_name: "author" },
+            {
+              type: "field",
+              field_name: "publisher",
+              fieldview: "select",
+            },
+            {
+              type: "action",
+              block: false,
+              configuration: {},
+              action_name: "UpdateMatchingRows",
+              action_style: "btn-primary",
+              minRole: 100,
+              rndid: "f7c2cd",
+            },
+            {
+              name: "7b17af",
+              type: "view",
+              view: "ChildList:disc_books_edit-in-edit.discusses_books.book",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 100,
     });
 
     const rooms = await Table.create("rooms", {
