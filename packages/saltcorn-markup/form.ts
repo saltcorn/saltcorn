@@ -1189,6 +1189,10 @@ const renderFormLayout = (form: Form): string => {
           )
         );
       }
+      if (action_name === "UpdateMatchingRows")
+        return mkBtn(
+          `onClick="updateMatchingRows(this, '${form.viewname}')" type="button"`
+        );
       if (action_link) return action_link;
 
       if (isNode && !form.req?.smr) {

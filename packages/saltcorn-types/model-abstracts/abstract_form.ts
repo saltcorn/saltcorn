@@ -13,6 +13,7 @@ export interface AbstractForm {
   errors: any;
   values: any;
   action?: string;
+  viewname?: string;
   layout?: Layout;
   id?: string;
   labelCols?: number;

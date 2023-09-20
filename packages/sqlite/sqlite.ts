@@ -128,6 +128,30 @@ export const changeConnection = async (connObj: any): Promise<void> => {
 };
 
 /**
+ * start a transaction
+ * just an equivalent for the pg function
+ */
+export const begin = async () => {
+  await query(`BEGIN`);
+};
+
+/**
+ * commit a transaction
+ * just an equivalent for the pg function
+ */
+export const commit = async () => {
+  await query(`COMMIT`);
+};
+
+/**
+ * rollback a
+ * just an equivalent for the pg function
+ */
+export const rollback = async () => {
+  await query(`ROLLBACK`);
+};
+
+/**
  * Close database connection
  * @returns {Promise<void>}
  * @function
