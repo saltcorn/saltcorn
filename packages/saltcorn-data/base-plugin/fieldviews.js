@@ -203,6 +203,7 @@ const two_level_select = {
             field.class || ""
           } d-inline`,
           "data-fieldname": `_${field.name}_toplevel`,
+          id: `twolevelfirst_${text_attr(nm)}`,
           onChange: attrs.isFilter ? "apply_showif()" : undefined,
         },
         select_options_first_level(v, field, attrs || {}, attrs || {})
