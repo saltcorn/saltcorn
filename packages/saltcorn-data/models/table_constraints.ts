@@ -104,7 +104,8 @@ class TableConstraint {
           );
         } catch (e) {
           //cannot implement as SQL
-          console.error(e);
+          //console.error(e);
+          //ignore
         }
     }
     await require("../db/state").getState().refresh_tables();

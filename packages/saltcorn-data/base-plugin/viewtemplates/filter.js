@@ -459,7 +459,6 @@ const run = async (
         const withState =
           action_row_variable === "each_matching_row" ||
           action_row_variable === "state";
-        // keep state option
         const url = {
           javascript:
             `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'}, ` +

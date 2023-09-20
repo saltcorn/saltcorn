@@ -503,5 +503,20 @@
 	"Table columns": "Table columns",
 	"Configuration items": "Configuration items",
 	"Crashlogs": "Crashlogs",
-	"Logged out user %s": "Logged out user %s"
+	"Logged out user %s": "Logged out user %s",
+	"CSV upload": "CSV upload",
+	"Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content.": "Pages are the web pages of your application built with a drag-and-drop builder. They have static content, and by embedding views, dynamic content.",
+	"Create page": "Create page",
+	"Triggers run actions in response to events.": "Triggers run actions in response to events.",
+	"No triggers": "No triggers",
+	"Upload file(s)": "Upload file(s)",
+	"Pattern": "Pattern",
+	"You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.": "You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.",
+	"Views potentially affected": "Views potentially affected",
+	"Fixed and blocked fields": "Fixed and blocked fields",
+	"URL after delete": "URL after delete",
+	"Save before going back": "Save before going back",
+	"Reload after going back": "Reload after going back",
+	"Steps to go back": "Steps to go back",
+	"%s configuration": "%s configuration"
 }

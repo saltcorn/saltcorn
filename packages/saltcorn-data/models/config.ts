@@ -167,9 +167,10 @@ const configTypes: ConfigTypes = {
   /** @type {object} */
   new_user_form: {
     type: "View users",
-    label: "New user form",
+    label: "New user view",
     default: "",
-    blurb: "A view to show to new users",
+    blurb:
+      "A view to show to new users, to finalise registration (if Edit) or as a welcome view",
   },
   /** @type {object} */
   user_settings_form: {

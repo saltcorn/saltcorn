@@ -62,7 +62,9 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
     fields: fields.map((f) => strip_ids(f.toJson)),
     //triggers: triggers.map((tr) => tr.toJson),
     constraints: constraints.map((c) => c.toJson),
-    ownership_field_name: table.owner_fieldname_from_fields(fields),
+    ownership_field_name: table.owner_fieldname_from_fields
+      ? table.owner_fieldname_from_fields(fields)
+      : null,
   };
 };
 

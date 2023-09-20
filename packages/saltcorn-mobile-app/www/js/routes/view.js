@@ -55,7 +55,7 @@ const postViewRoute = async (context) => {
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
   });
-  const query = parseQuery(context.query);
+  const query = context.query ? parseQuery(context.query) : {};
   const refererRoute =
     routingHistory?.length > 1
       ? routingHistory[routingHistory.length - 2]
@@ -78,7 +78,15 @@ const postViewRoute = async (context) => {
     view.isRemoteTable()
   );
   if (isOfflineMode) await offlineHelper.setHasOfflineData(true);
-  return res.getJson();
+  const wrapped = res.getWrapHtml();
+  if (wrapped)
+    return wrapContents(
+      wrapped,
+      res.getWrapViewName() || "viewname",
+      context,
+      req
+    );
+  else return res.getJson();
 };
 
 /**
@@ -88,7 +96,7 @@ const postViewRoute = async (context) => {
  */
 const getView = async (context) => {
   const state = saltcorn.data.state.getState();
-  const query = parseQuery(context.query);
+  const query = context.query ? parseQuery(context.query) : {};
   const { viewname } = context.params;
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   const refererRoute =
@@ -96,6 +104,7 @@ const getView = async (context) => {
       ? routingHistory[routingHistory.length - 2]
       : undefined;
   const req = new MobileRequest({ xhr: context.xhr, query, refererRoute });
+  const res = new MobileResponse();
   if (
     state.mobileConfig.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
@@ -104,8 +113,16 @@ const getView = async (context) => {
   const contents = await view.run_possibly_on_page(
     query,
     req,
-    new MobileResponse(),
+    res,
     view.isRemoteTable()
   );
-  return wrapContents(contents, viewname, context, req);
+  const wrapped = res.getWrapHtml();
+  if (wrapped)
+    return wrapContents(
+      wrapped,
+      res.getWrapViewName() || "viewname",
+      context,
+      req
+    );
+  else return wrapContents(contents, viewname, context, req);
 };

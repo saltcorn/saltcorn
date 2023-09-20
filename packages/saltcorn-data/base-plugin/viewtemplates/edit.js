@@ -45,9 +45,9 @@ const {
   picked_fields_to_query,
   stateFieldsToWhere,
   stateFieldsToQuery,
-  strictParseInt,
   run_action_column,
   add_free_variables_to_joinfields,
+  readState,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -66,13 +66,15 @@ const {
   translateLayout,
   traverseSync,
 } = require("../../models/layout");
-const { asyncMap, isWeb } = require("../../utils");
+const { asyncMap, isWeb, removeEmptyStrings } = require("../../utils");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
+const { prepare_update_row } = require("../../web-mobile-commons");
 
 const builtInActions = [
   "Save",
   "SaveAndContinue",
+  "UpdateMatchingRows",
   "Reset",
   "GoBack",
   "Delete",
@@ -881,107 +883,36 @@ const runPost = async (
   state,
   body,
   { res, req, redirect },
-  { tryInsertQuery, tryUpdateQuery, getRowQuery, saveFileQuery, optionsQuery },
+  {
+    tryInsertQuery,
+    tryUpdateQuery,
+    getRowQuery,
+    saveFileQuery,
+    optionsQuery,
+    getRowByIdQuery,
+  },
   remote
 ) => {
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
-  const form = await getForm(table, viewname, columns, layout, body.id, req);
-  if (auto_save)
-    form.onChange = `saveAndContinue(this, ${
-      !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
-
-  Object.entries(body).forEach(([k, v]) => {
-    const form_field = form.fields.find((f) => f.name === k);
-    const tbl_field = fields.find((f) => f.name === k);
-    if (tbl_field && !form_field && !fixed?.[`_block_${k}`]) {
-      form.fields.push(new Field({ name: k, input_type: "hidden" }));
-    }
-  });
-  setDateLocales(form, req.getLocale());
-  await transformForm({
-    form,
-    table,
-    req,
-    row: body[table.pk_name]
-      ? { [table.pk_name]: body[table.pk_name] }
-      : undefined,
-    getRowQuery,
+  const prepResult = await prepare(
     viewname,
-    optionsQuery,
-  });
-  const cancel = body._cancel;
-  await form.asyncValidate(body);
-  if (form.hasErrors && !cancel) {
-    if (req.xhr) res.status(422);
-    await form.fill_fkey_options(false, undefined, req.user);
-    res.sendWrap(
-      viewname,
-      renderForm(form, req.csrfToken ? req.csrfToken() : false)
-    );
-  } else {
-    let row;
-    const pk = fields.find((f) => f.primary_key);
-    let id = pk.type.read(body[pk.name]);
-    if (typeof id === "undefined") {
-      const use_fixed = await fill_presets(table, req, fixed);
-      row = { ...use_fixed, ...form.values };
-    } else if (cancel) {
-      //get row
-      row = await table.getRow({ id });
-    } else {
-      row = { ...form.values };
-    }
-
-    for (const field of form.fields.filter((f) => f.isRepeat)) {
-      delete row[field.name];
-    }
-
-    const file_fields = form.fields.filter((f) => f.type === "File");
-    for (const field of file_fields) {
-      if (field.fieldviewObj?.setsFileId) {
-        //do nothing
-      } else if (field.fieldviewObj?.setsDataURL) {
-        if (body[field.name]) {
-          if (body[field.name].startsWith("data:")) {
-            const path_to_serve = await saveFileQuery(
-              body[field.name],
-              field.id,
-              field.fieldview,
-              row
-            );
-            row[field.name] = path_to_serve;
-          }
-        }
-      } else if (req.files && req.files[field.name]) {
-        if (!isNode() && !remote) {
-          req.flash(
-            "error",
-            "The mobile-app supports no local files, please use a remote table."
-          );
-          res.sendWrap(
-            viewname,
-            renderForm(form, req.csrfToken ? req.csrfToken() : false)
-          );
-          return;
-        }
-        if (isNode()) {
-          const file = await File.from_req_files(
-            req.files[field.name],
-            req.user ? req.user.id : null,
-            (field.attributes && +field.attributes.min_role_read) || 1,
-            field?.attributes?.folder
-          );
-          row[field.name] = file.path_to_serve;
-        } else {
-          const serverResp = await File.upload(req.files[field.name]);
-          row[field.name] = serverResp.location;
-        }
-      } else {
-        delete row[field.name];
-      }
-    }
+    table,
+    fields,
+    {
+      columns,
+      layout,
+      fixed,
+      auto_save,
+    },
+    { req, res },
+    body,
+    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
+    remote
+  );
+  if (prepResult) {
+    let { form, row, pk, id } = prepResult;
+    const cancel = body._cancel;
     const originalID = id;
     let trigger_return;
     let ins_upd_error;
@@ -1108,66 +1039,24 @@ const runPost = async (
       res.json({ view_when_done, ...trigger_return });
       return;
     }
-
-    if (redirect) {
-      res.redirect(redirect);
-      return;
-    }
-
-    let use_view_when_done = view_when_done;
-    if (destination_type === "Back to referer" && body._referer) {
-      res.redirect(body._referer);
-      return;
-    } else if (destination_type === "Page" && page_when_done) {
-      res.redirect(`/page/${page_when_done}`);
-      return;
-    } else if (destination_type === "URL formula" && dest_url_formula) {
-      const url = eval_expression(dest_url_formula, row);
-      res.redirect(url);
-      return;
-    } else if (destination_type !== "View")
-      for (const { view, expression } of formula_destinations || []) {
-        if (expression) {
-          const f = get_expression_function(expression, fields);
-          if (f(row)) {
-            use_view_when_done = view;
-            continue;
-          }
-        }
-      }
-    if (!use_view_when_done) {
-      res.redirect(`/`);
-      return;
-    }
-    const [viewname_when_done, relation] = use_view_when_done.split(".");
-    const nxview = await View.findOne({ name: viewname_when_done });
-    if (!nxview) {
-      req.flash(
-        "warning",
-        `View "${use_view_when_done}" not found - change "View when done" in "${viewname}" view`
-      );
-      res.redirect(`/`);
-    } else {
-      const state_fields = await nxview.get_state_fields();
-      let target = `/view/${text(viewname_when_done)}`;
-      let query = "";
-      if (
-        (nxview.table_id === table_id || relation) &&
-        state_fields.some((sf) => sf.name === pk.name) &&
-        viewname_when_done !== viewname
-      ) {
-        const get_query = get_view_link_query(fields, nxview);
-        query = relation
-          ? `?${pk.name}=${text(row[relation])}`
-          : get_query(row);
-      }
-      const redirectPath = `${target}${query}`;
-      if (!isWeb(req)) {
-        res.json({ redirect: `get${redirectPath}` });
-      } else {
-        res.redirect(redirectPath);
-      }
-    }
+    await whenDone(
+      viewname,
+      table_id,
+      fields,
+      pk,
+      {
+        view_when_done,
+        formula_destinations,
+        destination_type,
+        dest_url_formula,
+        page_when_done,
+        redirect,
+      },
+      req,
+      res,
+      body,
+      row
+    );
   }
 };
 
@@ -1281,6 +1170,367 @@ const run_action = async (
     Crash.create({ message: result.json.error, stack: "" }, req);
   }
   return result;
+};
+
+const update_matching_rows = async (
+  table_id,
+  viewname,
+  {
+    columns,
+    layout,
+    fixed,
+    view_when_done,
+    formula_destinations,
+    auto_save,
+    destination_type,
+    dest_url_formula,
+    page_when_done,
+  },
+  body,
+  { req, res, redirect },
+  {
+    updateMatchingQuery,
+    getRowQuery,
+    saveFileQuery,
+    optionsQuery,
+    getRowByIdQuery,
+  }
+) => {
+  const table = Table.findOne({ id: table_id });
+  const fields = table.getFields();
+  const prepResult = await prepare(
+    viewname,
+    table,
+    fields,
+    {
+      columns,
+      layout,
+      fixed,
+      auto_save,
+    },
+    { req, res },
+    body,
+    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery }
+  );
+  if (prepResult) {
+    let { form, row, pk } = prepResult;
+    const state = req?.query
+      ? readState(removeEmptyStrings(req.query), fields, req)
+      : {};
+    const where = stateFieldsToWhere({ fields, state, table });
+    const repeatFields = form.fields.filter((f) => f.isRepeat);
+    const childRows = {};
+    for (const field of repeatFields)
+      childRows[field.name] = form.values[field.name];
+    const { id, ...rest } = row;
+    const uptResults = await updateMatchingQuery(
+      where,
+      rest,
+      repeatFields,
+      childRows
+    );
+    if (uptResults.error || uptResults.rowError || uptResults.inEditError) {
+      res.status(422);
+      req.flash(
+        "error",
+        text_attr(
+          uptResults.error || uptResults.rowError || uptResults.inEditError
+        )
+      );
+      res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+      return;
+    }
+    const { success, danger, goto } = combineResults(uptResults);
+    if (success.length > 0) {
+      req.flash("success", success);
+    }
+    if (danger.length > 0) {
+      req.flash("danger", danger);
+    } else if (goto) {
+      res.redirect(goto);
+      return;
+    }
+    await whenDone(
+      viewname,
+      table_id,
+      fields,
+      pk,
+      {
+        view_when_done,
+        formula_destinations,
+        destination_type,
+        dest_url_formula,
+        page_when_done,
+        redirect,
+      },
+      req,
+      res,
+      body,
+      row
+    );
+  }
+};
+
+/**
+ * preparations for the form and the data row
+ * @param {*} viewname
+ * @param {*} table table of the view
+ * @param {*} fields all fields in table
+ * @param {*} param3 columns, layout, fixed, auto_save
+ * @param {*} param4  req, res
+ * @param {*} body request body
+ * @param {*} param6 getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery
+ * @param {*} remote
+ * @returns null on error, { form, row, pk, id } on success
+ */
+const prepare = async (
+  viewname,
+  table,
+  fields,
+  { columns, layout, fixed, auto_save },
+  { req, res },
+  body,
+  { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
+  remote
+) => {
+  const form = await getForm(table, viewname, columns, layout, body.id, req);
+  if (auto_save)
+    form.onChange = `saveAndContinue(this, ${
+      !isWeb(req) ? `'${form.action}'` : undefined
+    })`;
+
+  Object.entries(body).forEach(([k, v]) => {
+    const form_field = form.fields.find((f) => f.name === k);
+    const tbl_field = fields.find((f) => f.name === k);
+    if (tbl_field && !form_field && !fixed?.[`_block_${k}`]) {
+      form.fields.push(new Field({ name: k, input_type: "hidden" }));
+    }
+  });
+  setDateLocales(form, req.getLocale());
+  await transformForm({
+    form,
+    table,
+    req,
+    row: body[table.pk_name]
+      ? { [table.pk_name]: body[table.pk_name] }
+      : undefined,
+    getRowQuery,
+    viewname,
+    optionsQuery,
+  });
+  const cancel = body._cancel;
+  await form.asyncValidate(body);
+  if (form.hasErrors && !cancel) {
+    if (req.xhr) res.status(422);
+    await form.fill_fkey_options(false, optionsQuery, req.user);
+    res.sendWrap(
+      viewname,
+      renderForm(form, req.csrfToken ? req.csrfToken() : false)
+    );
+    return null;
+  }
+  let row;
+  const pk = fields.find((f) => f.primary_key);
+  let id = pk.type.read(body[pk.name]);
+  if (typeof id === "undefined") {
+    const use_fixed = await fill_presets(table, req, fixed);
+    row = { ...use_fixed, ...form.values };
+  } else if (cancel) {
+    row = getRowByIdQuery
+      ? await getRowByIdQuery(id)
+      : await table.getRow({ id });
+  } else {
+    row = { ...form.values };
+  }
+  for (const field of form.fields.filter((f) => f.isRepeat)) {
+    delete row[field.name];
+  }
+
+  const file_fields = form.fields.filter((f) => f.type === "File");
+  for (const field of file_fields) {
+    if (field.fieldviewObj?.setsFileId) {
+      //do nothing
+    } else if (field.fieldviewObj?.setsDataURL) {
+      if (body[field.name]) {
+        if (body[field.name].startsWith("data:")) {
+          const path_to_serve = await saveFileQuery(
+            body[field.name],
+            field.id,
+            field.fieldview,
+            row
+          );
+          row[field.name] = path_to_serve;
+        }
+      }
+    } else if (req.files && req.files[field.name]) {
+      if (!isNode() && !remote) {
+        req.flash(
+          "error",
+          "The mobile-app supports no local files, please use a remote table."
+        );
+        res.sendWrap(
+          viewname,
+          renderForm(form, req.csrfToken ? req.csrfToken() : false)
+        );
+        return null;
+      }
+      if (isNode()) {
+        const file = await File.from_req_files(
+          req.files[field.name],
+          req.user ? req.user.id : null,
+          (field.attributes && +field.attributes.min_role_read) || 1,
+          field?.attributes?.folder
+        );
+        row[field.name] = file.path_to_serve;
+      } else {
+        const serverResp = await File.upload(req.files[field.name]);
+        row[field.name] = serverResp.location;
+      }
+    } else {
+      delete row[field.name];
+    }
+  }
+  return { form, row, pk, id };
+};
+
+/**
+ * take care of final redirect
+ * @param {*} viewname
+ * @param {*} table_id id of the table of the view
+ * @param {*} fields all fields in table
+ * @param {*} pk private key field
+ * @param {*} param4 view_when_done, formula_destinations, destination_type, dest_url_formula, page_when_done, redirect
+ * @param {*} req
+ * @param {*} res
+ * @param {*} body reuqest body
+ * @param {*} row row of the form
+ * @returns
+ */
+const whenDone = async (
+  viewname,
+  table_id,
+  fields,
+  pk,
+  {
+    view_when_done,
+    formula_destinations,
+    destination_type,
+    dest_url_formula,
+    page_when_done,
+    redirect,
+  },
+  req,
+  res,
+  body,
+  row
+) => {
+  if (redirect) {
+    res.redirect(redirect);
+    return;
+  }
+
+  let use_view_when_done = view_when_done;
+  if (destination_type === "Back to referer" && body._referer) {
+    res.redirect(body._referer);
+    return;
+  } else if (destination_type === "Page" && page_when_done) {
+    res.redirect(`/page/${page_when_done}`);
+    return;
+  } else if (destination_type === "URL formula" && dest_url_formula) {
+    const url = eval_expression(dest_url_formula, row);
+    res.redirect(url);
+    return;
+  } else if (destination_type !== "View")
+    for (const { view, expression } of formula_destinations || []) {
+      if (expression) {
+        const f = get_expression_function(expression, fields);
+        if (f(row)) {
+          use_view_when_done = view;
+          continue;
+        }
+      }
+    }
+  if (!use_view_when_done) {
+    res.redirect(`/`);
+    return;
+  }
+  const [viewname_when_done, relation] = use_view_when_done.split(".");
+  const nxview = View.findOne({ name: viewname_when_done });
+  if (!nxview) {
+    req.flash(
+      "warning",
+      `View "${use_view_when_done}" not found - change "View when done" in "${viewname}" view`
+    );
+    res.redirect(`/`);
+  } else {
+    const state_fields = await nxview.get_state_fields();
+    let target = `/view/${text(viewname_when_done)}`;
+    let query = "";
+    if (
+      (nxview.table_id === table_id || relation) &&
+      state_fields.some((sf) => sf.name === pk.name) &&
+      viewname_when_done !== viewname
+    ) {
+      const get_query = get_view_link_query(fields, nxview);
+      query = relation ? `?${pk.name}=${text(row[relation])}` : get_query(row);
+    }
+    const redirectPath = `${target}${query}`;
+    if (!isWeb(req)) {
+      res.json({ redirect: `get${redirectPath}` });
+    } else {
+      res.redirect(redirectPath);
+    }
+  }
+};
+
+/**
+ * @param {*} results results from updateMatchingQuery
+ * @returns success, danger, goto
+ */
+const combineResults = (results) => {
+  const combined = { success: [], danger: [] };
+  for (const uptResult of results) {
+    const trigger_return = uptResult.trigger_return || {};
+    if (trigger_return.notify && trigger_return.details)
+      combined.success.push(
+        div(
+          { class: "d-inline" },
+          trigger_return.notify,
+          button(
+            {
+              class: "btn btn-sm btn-outline-secondary btn-xs",
+              type: "button",
+              "data-bs-toggle": "collapse",
+              "data-bs-target": "#notifyDetails",
+              "aria-expanded": "false",
+              "aria-controls": "notifyDetails",
+            },
+            i({ class: "fas fa-plus" })
+          ),
+          div(
+            { class: "collapse", id: "notifyDetails" },
+            pre(trigger_return.details)
+          )
+        )
+      );
+    else if (trigger_return.notify)
+      combined.success.push(trigger_return.notify);
+    if (trigger_return.error) combined.danger.push(trigger_return.error);
+    if (trigger_return.goto && !combined.goto) combined.trigger_return.goto;
+  }
+  return combined;
+};
+
+const tryUpdateImpl = async (row, id, table, user) => {
+  const result = {};
+  const upd_res = await table.tryUpdateRow(
+    row,
+    id,
+    user || { role_id: 100 },
+    result
+  );
+  upd_res.trigger_return = result;
+  return upd_res;
 };
 
 module.exports = {
@@ -1399,16 +1649,8 @@ module.exports = {
     },
 
     async tryUpdateQuery(row, id) {
-      const table = Table.findOne({ id: table_id });
-      const result = {};
-      const upd_res = await table.tryUpdateRow(
-        row,
-        id,
-        req.user || { role_id: 100 },
-        result
-      );
-      upd_res.trigger_return = result;
-      return upd_res;
+      const table = Table.findOne(table_id);
+      return await tryUpdateImpl(row, id, table, req.user);
     },
     async saveFileQuery(fieldVal, fieldId, fieldView, row) {
       const field = await Field.findOne({ id: fieldId });
@@ -1478,6 +1720,10 @@ module.exports = {
         }
       );
     },
+    async getRowByIdQuery(id) {
+      const table = Table.findOne({ id: table_id });
+      return await table.getRow({ id });
+    },
     async actionQuery() {
       const body = req.body;
       const col = columns.find(
@@ -1514,8 +1760,56 @@ module.exports = {
       );
       return rows;
     },
+    async updateMatchingQuery(where, updateVals, repeatFields, childRows) {
+      const table = Table.findOne(table_id);
+      const rows = await table.getRows(where);
+      const results = [];
+      let inTransaction = false;
+      try {
+        if (rows.length === 0) return results;
+        await db.begin();
+        inTransaction = true;
+        for (const row of rows) {
+          const uptRes = await tryUpdateImpl(
+            updateVals,
+            row.id,
+            table,
+            req.user
+          );
+          if (uptRes.error) {
+            inTransaction = false;
+            await db.rollback();
+            return { rowError: uptRes.error };
+          }
+          results.push(uptRes);
+          for (const field of repeatFields) {
+            const childTable = Table.findOne({ id: field.metadata?.table_id });
+            await childTable.deleteRows({ [field.metadata?.relation]: row.id });
+            for (const childRow of childRows[field.name]) {
+              childRow[field.metadata?.relation] = row.id;
+              const insRow = { ...childRow };
+              delete insRow[childTable.pk_name];
+              const insRes = await childTable.tryInsertRow(
+                insRow,
+                req.user || { role_id: 100 }
+              );
+              if (insRes.error) {
+                inTransaction = false;
+                await db.rollback();
+                return { inEditError: insRes.error };
+              }
+            }
+          }
+        }
+        if (inTransaction) await db.commit();
+      } catch (error) {
+        if (inTransaction) await db.rollback();
+        return { error: error.message };
+      }
+      return results;
+    },
   }),
-  routes: { run_action },
+  routes: { run_action, update_matching_rows },
 
   configCheck: async (view) => {
     const {

@@ -180,6 +180,7 @@ const customEventForm = async (req) => {
         name: "name",
         label: req.__("Event Name"),
         type: "String",
+        required: true,
       },
       {
         name: "hasChannel",
@@ -256,11 +257,11 @@ router.post(
  * @function
  */
 router.post(
-  "/custom/delete/:name",
+  "/custom/delete/:name?",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { name } = req.params;
-
+    let { name } = req.params;
+    if (!name) name = "";
     const cevs = getState().getConfig("custom_events", []);
 
     await getState().setConfig(

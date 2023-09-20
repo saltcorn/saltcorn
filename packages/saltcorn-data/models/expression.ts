@@ -65,16 +65,17 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           const cright = compile(node.right!);
           if (node.operator === "===") node.operator = "==";
           if (node.operator === "!==") node.operator = "!=";
-          if (cleft === "null" && node.operator == "==")
-            return `${cright} is null`;
-          if (cright === "null" && node.operator == "==")
-            return `${cleft} is null`;
+          for (const val of ["null", "true", "false"]) {
+            if (cleft === val && node.operator == "==")
+              return `${cright} is ${val}`;
+            if (cright === val && node.operator == "==")
+              return `${cleft} is ${val}`;
 
-          if (cleft === "null" && node.operator == "!=")
-            return `${cright} is not null`;
-          if (cright === "null" && node.operator == "!=")
-            return `${cleft} is not null`;
-
+            if (cleft === val && node.operator == "!=")
+              return `${cright} is not ${val}`;
+            if (cright === val && node.operator == "!=")
+              return `${cleft} is not ${val}`;
+          }
           return `(${cleft})${node.operator}(${cright})`;
         },
         UnaryExpression() {
