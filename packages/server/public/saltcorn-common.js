@@ -883,7 +883,7 @@ function common_done(res, isWeb = true) {
   if (res.eval_js) handle(res.eval_js, eval);
 
   if (res.reload_page) {
-    (isWeb ? location : parent.location).reload(); //TODO notify to cookie if reload or goto
+    (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
   }
   if (res.download) {
     handle(res.download, (download) => {
