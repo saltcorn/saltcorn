@@ -96,6 +96,34 @@ async function createSyncInfoTables(synchTbls) {
           deleted integer,
           modified_local integer
       )`);
+      await saltcorn.data.db.query(
+        `CREATE INDEX IF NOT EXISTS ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info_ref_index on ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info(ref);`
+      );
+      await saltcorn.data.db.query(
+        `CREATE INDEX IF NOT EXISTS ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info_lm_index on ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info(last_modified);`
+      );
+      await saltcorn.data.db.query(
+        `CREATE INDEX IF NOT EXISTS ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info_deleted_index on ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info(deleted);`
+      );
+      await saltcorn.data.db.query(
+        `CREATE INDEX IF NOT EXISTS ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info_ml_index on ${saltcorn.data.db.sqlsanitize(
+          synchTbl
+        )}_sync_info(modified_local);`
+      );
     }
   }
 }

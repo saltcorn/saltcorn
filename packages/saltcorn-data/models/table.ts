@@ -1606,6 +1606,13 @@ class Table implements AbstractTable {
         this.name
       )}_sync_info(last_modified)`
     );
+    await db.query(
+      `create index ${sqlsanitize(
+        this.name
+      )}_sync_info_deleted_index on ${schemaPrefix}${sqlsanitize(
+        this.name
+      )}_sync_info(deleted)`
+    );
   }
 
   async drop_sync_table(): Promise<void> {
