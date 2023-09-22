@@ -769,6 +769,18 @@ function toggle_tbl_sync() {
   }
 }
 
+function toggle_android_platform() {
+  if ($("#androidCheckboxId")[0].checked === true) {
+    $("#dockerCheckboxId").attr("hidden", false);
+    $("#dockerCheckboxId").attr("checked", true);
+    $("#dockerLabelId").removeClass("d-none");
+  } else {
+    $("#dockerCheckboxId").attr("hidden", true);
+    $("#dockerCheckboxId").attr("checked", false);
+    $("#dockerLabelId").addClass("d-none");
+  }
+}
+
 function join_field_clicked(e, fieldPath) {
   $("#inputjoin_field").val(fieldPath);
   apply_showif();
