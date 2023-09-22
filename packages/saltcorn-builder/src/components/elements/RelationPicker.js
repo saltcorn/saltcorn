@@ -178,32 +178,54 @@ export const RelationPicker = ({ options, viewname, update }) => {
                 `${inboundKey.name}_${inboundKey.table}_${level.table}_${reclevel}`
               );
               return hasSubLevels ? (
-                <li
-                  key={`${identifier}_inboundkey_key`}
-                  className={`dropdown-item ${identifier}_inbound_item item_level_${reclevel} ${
-                    reclevel < 5 ? "dropstart" : "dropdown"
-                  }`}
-                  role="button"
-                >
-                  <div
-                    className={`dropdown-toggle ${identifier}_inbound_toggle dropdown_level_${reclevel}`}
+                <div key={`${identifier}_inboundkey_key_div`}>
+                  <li
+                    key={`${identifier}_inboundkey_key`}
+                    className={`dropdown-item ${identifier}_inbound_item item_level_${reclevel} ${
+                      reclevel < 5 ? "dropstart" : "dropdown"
+                    }`}
                     role="button"
-                    aria-expanded="false"
-                    onClick={() => {
-                      $(
-                        `.${identifier}_inbound_toggle,${levelClasses(
-                          reclevel
-                        )}`
-                      ).dropdown("toggle");
-                      if (reclevel > maxRecLevel) setMaxRecLevel(reclevel);
-                      $(activeClasses(reclevel)).removeClass("active");
-                      $(`.${identifier}_inbound_item`).addClass(() => "active");
-                    }}
                   >
-                    {inboundKey.name} (from {inboundKey.table})
-                  </div>
-                  {buildPicker(inboundKey, reclevel + 1)}
-                </li>
+                    <div
+                      className={`dropdown-toggle ${identifier}_inbound_toggle dropdown_level_${reclevel}`}
+                      role="button"
+                      aria-expanded="false"
+                      onClick={() => {
+                        $(
+                          `.${identifier}_inbound_toggle,${levelClasses(
+                            reclevel
+                          )}`
+                        ).dropdown("toggle");
+                        if (reclevel > maxRecLevel) setMaxRecLevel(reclevel);
+                        $(activeClasses(reclevel)).removeClass("active");
+                        $(`.${identifier}_inbound_item`).addClass(
+                          () => "active"
+                        );
+                      }}
+                    >
+                      {inboundKey.name} (from {inboundKey.table})
+                    </div>
+                    {buildPicker(inboundKey, reclevel + 1)}
+                  </li>
+                  {/* it's a level and a direct link */}
+                  {inboundKey.relPath ? (
+                    <li
+                      key={`${identifier}_inboundkey_key_direct`}
+                      className="dropdown-item"
+                      role="button"
+                      onClick={() => {
+                        update(inboundKey.relPath);
+                        $(".dropdown-item.active").removeClass("active");
+                        $(`${levelClasses(0)}`).dropdown("toggle");
+                        setMaxRecLevel(maxRecLevelDefault);
+                      }}
+                    >
+                      {inboundKey.name} (from {inboundKey.table})
+                    </li>
+                  ) : (
+                    ""
+                  )}
+                </div>
               ) : (
                 <li
                   key={`${identifier}_inboundkey_key`}
