@@ -31,7 +31,7 @@ NOTE: The dependencies to build mobile apps are quite large, they are not instal
 
 ## Quick install server on Debian/Ubuntu
 
-This has been tested on Debian 9, 10 and 11 and Ubuntu 18.04, 20.04 and 22.04. All you need is to run these
+This has been [tested on Debian 10, 11 and 12, Ubuntu 18.04, 20.04 and 22.04, OpenSuSE, AlmaLinux, and Fedora](https://releases.saltcorn.com/). All you need is to run these
 three lines on the command line shell, as root or as a user with sudo access:
 
 ```
@@ -40,7 +40,7 @@ sudo apt-get install -qqy nodejs
 npx saltcorn-install -y
 ```
 
-The first two lines will install Node.js 16. The last line will call the Saltcorn install script
+The first two lines will install Node.js 16 (you can also use 18 or 20). The last line will call the Saltcorn install script
 accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
@@ -67,6 +67,8 @@ For a recent version (v16) of Node.js:
 wget -qO - https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
+
+You can also use Node 18 or 20.
 
 ### Install saltcorn
 
@@ -268,7 +270,10 @@ but this is not a production build, so run
 
 `npm run build`
 
-when done
+when done.
+
+If you get this error: `Error: error:0308010C:digital envelope routines::unsupported`,
+run this and try again: `export NODE_OPTIONS=--openssl-legacy-provider`.
 
 ### Build tsdocs
 
