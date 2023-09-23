@@ -244,6 +244,7 @@ namespace HelpersExports {
   export type SearchBarOpts = {
     placeHolder?: string;
     has_dropdown: boolean;
+    autofocus?: boolean;
     contents: string;
     badges?: string[];
     stateField: string;
@@ -268,6 +269,7 @@ const search_bar = (
     badges,
     stateField,
     onClick,
+    autofocus,
   }: SearchBarOpts | any = {}
 ): string => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
@@ -285,7 +287,9 @@ const search_bar = (
   
 <input type="search" class="form-control search-bar ${
     (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
-  }" placeholder="${placeHolder || "Search for..."}" 
+  }" ${autofocus ? `autofocus ` : ""}placeholder="${
+    placeHolder || "Search for..."
+  }" 
 }" 
   }" 
        id="${input_id}" name="${name}" 

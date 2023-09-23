@@ -364,12 +364,13 @@ const run = async (
       }
       return "";
     },
-    search_bar({ has_dropdown, contents, show_badges }, go) {
+    search_bar({ has_dropdown, contents, show_badges, autofocus }, go) {
       const rendered_contents = go(contents);
       const stVar = `_fts_${table.santized_name}`;
       return search_bar(stVar, state[stVar], {
         stateField: stVar,
         has_dropdown,
+        autofocus,
         contents: rendered_contents,
         badges: show_badges ? badges : null,
       });

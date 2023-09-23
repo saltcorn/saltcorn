@@ -661,6 +661,7 @@ const render = ({
     if (segment.type === "search_bar") {
       return `<form action="/search" method="get">${search_bar("q", "", {
         has_dropdown: segment.has_dropdown,
+        autofocus: segment.autofocus,
         contents: go(segment.contents),
       })}</form>`;
     }

@@ -89,9 +89,11 @@ const SearchBarSettings = () => {
     actions: { setProp },
     has_dropdown,
     show_badges,
+    autofocus,
   } = useNode((node) => ({
     has_dropdown: node.data.props.has_dropdown,
     show_badges: node.data.props.show_badges,
+    autofocus: node.data.props.autofocus,
   }));
   const setAProp = setAPropGen(setProp);
 
@@ -117,6 +119,16 @@ const SearchBarSettings = () => {
         />
         <label className="form-check-label">Show current state badges</label>
       </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={autofocus}
+          onChange={setAProp("autofocus", { checked: true })}
+        />
+        <label className="form-check-label">Autofocus</label>
+      </div>
     </div>
   );
 };
@@ -129,11 +141,12 @@ SearchBar.craft = {
   props: {
     has_dropdown: false,
     show_badges: false,
+    autofocus: false,
   },
   related: {
     settings: SearchBarSettings,
     segment_type: "search_bar",
     hasContents: true,
-    fields: ["has_dropdown", "show_badges"],
+    fields: ["has_dropdown", "show_badges", "autofocus"],
   },
 };
