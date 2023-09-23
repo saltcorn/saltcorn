@@ -35,6 +35,7 @@ const {
   getActionConfigFields,
   picked_fields_to_query,
   stateFieldsToQuery,
+  stateToQueryString,
 } = require("../../plugin-helper");
 const { action_link } = require("./viewable_fields");
 const { search_bar } = require("@saltcorn/markup/helpers");
@@ -273,15 +274,28 @@ const run = async (
     },
     view: async (segment) => {
       const view = await View.findOne({ name: segment.view });
-      const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, state, extra.req.user)
-        : {};
-      const state1 = { ...state, ...extra_state };
       if (!view)
         throw new InvalidConfiguration(
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
-      else segment.contents = await view.run(state1, extra);
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(segment.extra_state_fml, state, extra.req.user)
+        : {};
+      if (segment.state === "local") {
+        const state1 = { ...extra_state };
+        const qs = stateToQueryString(state1);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+          },
+          await view.run(state1, extra)
+        );
+      } else {
+        const state1 = { ...state, ...extra_state };
+        segment.contents = await view.run(state1, extra);
+      }
     },
     link: (segment) => {
       //console.log("link:", segment, state);
@@ -350,12 +364,13 @@ const run = async (
       }
       return "";
     },
-    search_bar({ has_dropdown, contents, show_badges }, go) {
+    search_bar({ has_dropdown, contents, show_badges, autofocus }, go) {
       const rendered_contents = go(contents);
       const stVar = `_fts_${table.santized_name}`;
       return search_bar(stVar, state[stVar], {
         stateField: stVar,
         has_dropdown,
+        autofocus,
         contents: rendered_contents,
         badges: show_badges ? badges : null,
       });

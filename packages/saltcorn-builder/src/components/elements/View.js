@@ -197,7 +197,7 @@ const ViewSettings = () => {
           </select>
         </div>
       )}
-      {options.mode === "page" && (
+      {options.mode !== "edit" && (
         <Fragment>
           <div>
             <label>State</label>
@@ -207,10 +207,17 @@ const ViewSettings = () => {
               onChange={setAProp("state")}
               onBlur={setAProp("state")}
             >
-              {buildOptions(["shared", "fixed", "local"], {
-                valAttr: true,
-                capitalize: true,
-              })}
+              {buildOptions(
+                [
+                  "shared",
+                  ...(options.mode === "page" ? ["fixed"] : []),
+                  "local",
+                ],
+                {
+                  valAttr: true,
+                  capitalize: true,
+                }
+              )}
             </select>
           </div>
           {state === "fixed" &&

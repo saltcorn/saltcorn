@@ -49,6 +49,7 @@ const {
   run_action_column,
   readState,
   add_free_variables_to_joinfields,
+  stateToQueryString,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -504,8 +505,21 @@ const renderRows = async (
           ? eval_expression(segment.extra_state_fml, row, extra.req.user)
           : {};
         const { id, ...outerState } = state;
-        const state2 = { ...outerState, ...state1, ...extra_state };
-        segment.contents = await view.run(state2, subviewExtra);
+        //console.log(segment);
+        if (segment.state === "local") {
+          const state2 = { ...state1, ...extra_state };
+          const qs = stateToQueryString(state2);
+          segment.contents = div(
+            {
+              class: "d-inline",
+              "data-sc-local-state": `/view/${view.name}${qs}`,
+            },
+            await view.run(state2, subviewExtra)
+          );
+        } else {
+          const state2 = { ...outerState, ...state1, ...extra_state };
+          segment.contents = await view.run(state2, subviewExtra);
+        }
       }
     });
     const user_id = extra.req.user ? extra.req.user.id : null;

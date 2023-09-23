@@ -613,7 +613,8 @@ const run = async (
       table.ownership_field_id &&
       table.fields.find((f) => f.id === table.ownership_field_id);
     if (
-      about_user ||
+      role <= table.min_role_write ||
+      (ownership_field?.reftable_name === "users" && about_user) ||
       create_view?.configuration?.fixed?.[`preset_${ownership_field?.name}`] ===
         "LoggedIn"
     ) {

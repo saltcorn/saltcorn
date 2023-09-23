@@ -541,6 +541,11 @@ const string = {
           input_type: "select",
           options: ["text", "email", "url", "tel", "password"],
         },
+        {
+          name: "autofocus",
+          label: "Autofocus",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options && (attrs.options.length > 0 || !required)
@@ -606,6 +611,7 @@ const string = {
               maxlength: isdef(attrs.max_length) && attrs.max_length,
               minlength: isdef(attrs.min_length) && attrs.min_length,
               pattern: !!attrs.regexp && attrs.regexp,
+              autofocus: !!attrs.autofocus,
               title:
                 !!attrs.re_invalid_error &&
                 !!attrs.regexp &&
