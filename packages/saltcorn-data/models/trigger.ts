@@ -199,18 +199,28 @@ class Trigger implements AbstractTrigger {
 
       for (const trigger of triggers) {
         state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
-
-        const action = state.actions[trigger.action];
-        action &&
-          action.run &&
-          (await action.run({
-            table,
-            channel,
-            user,
-            configuration: trigger.configuration,
-            row: payload,
-            ...(payload || {}),
-          }));
+        try {
+          const action = state.actions[trigger.action];
+          action &&
+            action.run &&
+            (await action.run({
+              table,
+              channel,
+              user,
+              configuration: trigger.configuration,
+              row: payload,
+              ...(payload || {}),
+            }));
+        } catch (e) {
+          Crash.create(e, {
+            url: "/",
+            headers: {
+              eventType,
+              trigger_name: trigger.name,
+              action: trigger.action,
+            },
+          });
+        }
       }
       //intentionally omit await
       EventLog.create({
