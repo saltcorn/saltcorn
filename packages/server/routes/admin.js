@@ -1535,7 +1535,9 @@ router.get(
                     div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
                     div(
                       {
-                        class: "col-sm-1 fw-bold d-flex justify-content-center",
+                        class:
+                          "col-sm-1 fw-bold d-flex justify-content-center d-none",
+                        id: "dockerLabelId",
                       },
                       req.__("docker")
                     )
@@ -1596,7 +1598,7 @@ router.get(
                     ),
                     div(
                       { class: "col-sm-4" },
-
+                      // android
                       div(
                         { class: "container ps-0" },
                         div(
@@ -1609,9 +1611,11 @@ router.get(
                               class: "form-check-input",
                               name: "androidPlatform",
                               id: "androidCheckboxId",
+                              onClick: "toggle_android_platform()",
                             })
                           )
                         ),
+                        // iOS
                         div(
                           { class: "row" },
                           div({ class: "col-sm-8" }, req.__("iOS")),
@@ -1627,6 +1631,7 @@ router.get(
                         )
                       )
                     ),
+                    // android with docker
                     div(
                       { class: "col-sm-1 d-flex justify-content-center" },
                       input({
@@ -1634,6 +1639,7 @@ router.get(
                         class: "form-check-input",
                         name: "useDocker",
                         id: "dockerCheckboxId",
+                        hidden: true,
                       })
                     )
                   ),
