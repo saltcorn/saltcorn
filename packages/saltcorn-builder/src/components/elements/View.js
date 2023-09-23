@@ -197,37 +197,42 @@ const ViewSettings = () => {
           </select>
         </div>
       )}
-      {options.mode === "page" && (
-        <Fragment>
-          <div>
-            <label>State</label>
-            <select
-              value={state}
-              className="form-control form-select"
-              onChange={setAProp("state")}
-              onBlur={setAProp("state")}
-            >
-              {buildOptions(["shared", "fixed", "local"], {
+      <Fragment>
+        <div>
+          <label>State</label>
+          <select
+            value={state}
+            className="form-control form-select"
+            onChange={setAProp("state")}
+            onBlur={setAProp("state")}
+          >
+            {buildOptions(
+              [
+                "shared",
+                ...(options.mode === "page" ? ["fixed"] : []),
+                "local",
+              ],
+              {
                 valAttr: true,
                 capitalize: true,
-              })}
-            </select>
-          </div>
-          {state === "fixed" &&
-            fixed_state_fields &&
-            fixed_state_fields.length > 0 && (
-              <Fragment>
-                <h6>View state fields</h6>
-                <ConfigForm
-                  fields={fixed_state_fields}
-                  configuration={configuration || {}}
-                  setProp={setProp}
-                  node={node}
-                />
-              </Fragment>
+              }
             )}
-        </Fragment>
-      )}
+          </select>
+        </div>
+        {state === "fixed" &&
+          fixed_state_fields &&
+          fixed_state_fields.length > 0 && (
+            <Fragment>
+              <h6>View state fields</h6>
+              <ConfigForm
+                fields={fixed_state_fields}
+                configuration={configuration || {}}
+                setProp={setProp}
+                node={node}
+              />
+            </Fragment>
+          )}
+      </Fragment>
       {(state === "shared" || options.mode === "page") && (
         <Fragment>
           {" "}
