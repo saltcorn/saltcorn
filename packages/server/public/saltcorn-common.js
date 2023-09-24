@@ -832,6 +832,59 @@ function tristateClick(nm) {
   }
 }
 
+function buildToast(txt, type, spin) {
+  const realtype = type === "error" ? "danger" : type;
+  const icon =
+    realtype === "success"
+      ? "fa-check-circle"
+      : realtype === "danger"
+      ? "fa-times-circle"
+      : realtype === "warning"
+      ? "fa-exclamation-triangle"
+      : "";
+  return `
+    <div 
+      class="toast text-white show" 
+      role="alert" 
+      aria-live="assertive" 
+      aria-atomic="true"
+      style="min-width: 350px; max-width: 50vw; width: auto; z-index: 999; transform: translateX(-50%);"
+    >
+      <div class="toast-header bg-${realtype} bg-opacity-75 text-white py-1 ">
+        <i class="fas ${icon} me-2"></i>
+        <strong class="me-auto" >
+          ${type}
+        </strong>
+        ${
+          spin
+            ? ""
+            : `<button 
+                type="button" 
+                class="btn-close btn-close-white" 
+                data-bs-dismiss="toast" 
+                aria-label="Close"
+                style="font-size: 12px;"
+                ></button>`
+        }
+      </div>
+      <div 
+        class="toast-body py-2 bg-${realtype} bg-opacity-75 fs-6 fw-bold d-flex align-items-center"
+      >
+        <strong>${txt}</strong>
+        ${
+          spin
+            ? `<span 
+                class="spinner-border ms-auto" 
+                role="status" 
+                aria-hidden="true" 
+                style="width: 1.5rem; height: 1.5rem"></span>`
+            : ""
+        }
+      </div>
+    </div>
+  `;
+}
+
 function notifyAlert(note, spin) {
   if (Array.isArray(note)) {
     note.forEach(notifyAlert);
@@ -845,23 +898,11 @@ function notifyAlert(note, spin) {
     txt = note.text;
     type = note.type;
   }
-
-  $("#alerts-area")
-    .append(`<div class="alert alert-${type} alert-dismissible fade show ${
-    spin ? "d-flex align-items-center" : ""
-  }" role="alert">
-  ${txt}
-  ${
-    spin
-      ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
-      : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-  </button>`
-  }
-</div>`);
+  $("#toasts-area").append(buildToast(txt, type, spin));
 }
 
 function emptyAlerts() {
-  $("#alerts-area").html("");
+  $("#toasts-area").html("");
 }
 
 function press_store_button(clicked) {

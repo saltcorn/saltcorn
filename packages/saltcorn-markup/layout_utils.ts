@@ -13,6 +13,7 @@ const {
   hr,
   div,
   text,
+  strong,
   img,
   button,
   nav,
@@ -309,9 +310,10 @@ const navbar = (
   );
 
 /**
- * @param {string} type
- * @param {string} s
- * @returns {string}
+ * creates an alert div (deprecated, use toast)
+ * @param type
+ * @param s
+ * @returns
  */
 const alert = (type: string, s: string): string => {
   //console.log("alert", type, s,s.length)
@@ -331,6 +333,65 @@ const alert = (type: string, s: string): string => {
         </button>
       </div>`
     : "";
+};
+
+/**
+ * creates a toast div
+ * @param type bootstrap type
+ * @param s
+ * @param fullWrap false to just return the toast div, true to wrap it in a toast-container
+ * @returns
+ */
+const toast = (type: string, s: string, fullWrap?: boolean): string => {
+  if (!s || s.length === 0) return "";
+  else {
+    const realtype = type === "error" ? "danger" : type;
+    const icon =
+      realtype === "success"
+        ? "fa-check-circle"
+        : realtype === "danger"
+        ? "fa-times-circle"
+        : realtype === "warning"
+        ? "fa-exclamation-triangle"
+        : "";
+    const toastDiv = div(
+      {
+        class: "toast text-white show",
+        role: "alert",
+        ariaLive: "assertive",
+        ariaAtomic: "true",
+        style:
+          "min-width: 350px; max-width: 50vw; width: auto; transform: translateX(-50%);",
+      },
+      div(
+        { class: `toast-header bg-${realtype} bg-opacity-75 text-white py-1` },
+        icon ? i({ class: `fas ${icon} me-2` }) : "",
+        strong({ class: "me-auto" }, type === "danger" ? "error" : type),
+        button({
+          type: "button",
+          class: "btn-close btn-close-white",
+          "data-bs-dismiss": "toast",
+          "aria-label": "Close",
+          style: "font-size: 12px;",
+        })
+      ),
+      div(
+        { class: `toast-body bg-${realtype} bg-opacity-75 py-2 fs-6 fw-bold` },
+        strong(s)
+      )
+    );
+    return fullWrap
+      ? div(
+          {
+            class: "toast-container position-fixed top-0 start-50 p-0",
+            style: "z-index: 999",
+            "aria-live": "polite",
+            "aria-atomic": "true",
+          },
+          toastDiv
+        )
+      : toastDiv;
+  }
 };
 
 /**
@@ -670,6 +731,7 @@ const renderTabs = (
 export = {
   navbar,
   alert,
+  toast,
   logit,
   navbarSolidOnScroll,
   breadcrumbs,

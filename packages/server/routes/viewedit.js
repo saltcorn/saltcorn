@@ -7,7 +7,7 @@
 
 const Router = require("express-promise-router");
 
-const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
+const { renderForm, renderBuilder, toast } = require("@saltcorn/markup");
 const tags = require("@saltcorn/markup/tags");
 const { p, a, div, script, text, domReady, code, pre, tbody, tr, th, td } =
   tags;
@@ -76,14 +76,15 @@ router.get(
     const hasAccessWarning = views.filter(viewAccessWarning);
     const accessWarning =
       hasAccessWarning.length > 0
-        ? alert(
+        ? toast(
             "danger",
             `<p>${req.__(
               `You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.`
             )}</p> 
       ${req.__("Views potentially affected")}: ${hasAccessWarning
               .map((v) => v.name)
-              .join(", ")}`
+              .join(", ")}`,
+            true
           )
         : "";
     res.sendWrap(req.__(`Views`), {

@@ -58,23 +58,34 @@ async function apiCall({ method, path, params, body, responseType, timeout }) {
 function clearAlerts() {
   const iframe = document.getElementById("content-iframe");
   const alertsArea =
-    iframe.contentWindow.document.getElementById("alerts-area");
+    iframe.contentWindow.document.getElementById("toasts-area");
   alertsArea.innerHTML = "";
 }
 
-function showAlerts(alerts) {
+function showAlerts(alerts, toast = true) {
   if (typeof saltcorn === "undefined") {
     console.log("Not yet initalized.");
     console.log(alerts);
   } else {
     const iframe = document.getElementById("content-iframe");
-    const alertsArea =
-      iframe.contentWindow.document.getElementById("alerts-area");
-    alertsArea.innerHTML = "";
+    const area = iframe.contentWindow.document.getElementById(
+      toast ? "toasts-area" : "top-alert"
+    );
+    area.innerHTML = "";
     for (const { type, msg } of alerts) {
-      alertsArea.innerHTML += saltcorn.markup.alert(type, msg);
+      area.innerHTML += toast
+        ? saltcorn.markup.toast(type, msg)
+        : saltcorn.markup.alert(type, msg);
     }
   }
+}
+
+function clearTopAlerts() {
+  const iframe = document.getElementById("content-iframe");
+  const area = iframe.contentWindow.document.getElementById("alerts-area");
+  if (area) area.innerHTML = "";
+  const topAlert = iframe.contentWindow.document.getElementById("top-alert");
+  if (topAlert) topAlert.innerHTML = "";
 }
 
 async function loadEncodedFile(fileId) {
@@ -173,9 +184,7 @@ async function gotoEntryView() {
     }
     const page = await router.resolve({
       pathname: mobileConfig.entry_point,
-      alerts: mobileConfig.isOfflineMode
-        ? [{ type: "info", msg: offlineHelper.getOfflineMsg() }]
-        : [],
+      alerts: [],
     });
     addRoute({ route: mobileConfig.entry_point, query: undefined });
     await replaceIframeInnerContent(page.content);
@@ -219,14 +228,7 @@ async function handleRoute(route, query, files, data) {
         query: query,
         files: files,
         data: data,
-        alerts: mobileConfig.isOfflineMode
-          ? [
-              {
-                type: "info",
-                msg: offlineHelper.getOfflineMsg(),
-              },
-            ]
-          : [],
+        alerts: [],
       });
       if (page.redirect) {
         if (handleOpenModal()) return;
