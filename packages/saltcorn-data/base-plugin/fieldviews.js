@@ -19,7 +19,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
-const { isNode } = require("../utils");
+const { isNode, nubBy } = require("../utils");
 
 /**
  * select namespace
@@ -239,14 +239,11 @@ const select_from_table = {
       : srcField.attributes.summary_field
       ? (r) => r.summary_field
       : (r) => r[fieldNm];
-    const nubBy = (prop, xs) => {
-      const vs = new Set();
-      return xs.filter((x) => {
-        if (vs.has(x[prop])) return false;
-        vs.add(x[prop]);
-        return true;
-      });
-    };
+
+    const isDynamic = (formFieldNames || []).some((nm) =>
+      (this.attributes.where || "").includes("$" + nm)
+    );
+
     /*console.log({
       where,
       tableNm,
@@ -255,6 +252,7 @@ const select_from_table = {
       refname: field.refname,
       field,
     });*/
+
     field.options = nubBy(fieldNm, rows).map((r) => ({
       label: get_label(r),
       value: r[fieldNm],
