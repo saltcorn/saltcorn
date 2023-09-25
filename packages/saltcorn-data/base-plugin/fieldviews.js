@@ -181,13 +181,13 @@ const select_from_table = {
         label: "Where",
         type: "String",
       },
-      {
+      /*{
         name: "label_formula",
         label: "Label formula",
         type: "String",
         class: "validate-expression",
         sublabel: "Uses summary field if blank",
-      },
+      },*/
       {
         name: "force_required",
         label: "Force required",
@@ -259,10 +259,10 @@ const select_from_table = {
       });
       field.attributes.dynamic_where = {
         table: tableNm,
-        refname: "id",
+        refname: srcField.name,
         where: field.attributes.where,
         whereParsed: jsexprToWhere(field.attributes.where, fakeEnv),
-        summary_field: srcField.attributes.summary_field,
+        summary_field: `${srcField.name}_${srcField.attributes.summary_field}`,
         label_formula: field.attributes.label_formula,
         dereference: srcField.name,
         required: field.required,
