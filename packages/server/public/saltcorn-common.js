@@ -135,6 +135,7 @@ function apply_showif() {
       if (!dynwhere.required) toAppend.push(`<option></option>`);
       let currentDataOption = undefined;
       const dataOptions = [];
+      //console.log(success);
       success.forEach((r) => {
         const label = dynwhere.label_formula
           ? new Function(
@@ -143,6 +144,7 @@ function apply_showif() {
             )(r)
           : r[dynwhere.summary_field];
         const value = r[dynwhere.refname];
+        //console.log("lv", label, value, r, dynwhere.summary_field);
         const selected = `${current}` === `${r[dynwhere.refname]}`;
         dataOptions.push({ text: label, value });
         if (selected) currentDataOption = value;
