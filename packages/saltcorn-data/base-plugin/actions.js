@@ -25,7 +25,7 @@ const {
   recalculate_for_stored,
   eval_expression,
 } = require("../models/expression");
-const { div, code } = require("@saltcorn/markup/tags");
+const { div, code, a } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
@@ -727,8 +727,20 @@ module.exports = {
         "user",
         "console",
         "Actions",
-        "Table",
-        "File",
+        a(
+          {
+            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html",
+            target: "_blank",
+          },
+          "Table"
+        ),
+        a(
+          {
+            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.File-1.html",
+            target: "_blank",
+          },
+          "File"
+        ),
         ...(table ? ["table"] : []),
         ...fields,
       ]
