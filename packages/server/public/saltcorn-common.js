@@ -41,6 +41,15 @@ const _apply_showif_plugins = [];
 const add_apply_showif_plugin = (p) => {
   _apply_showif_plugins.push(p);
 };
+
+const nubBy = (prop, xs) => {
+  const vs = new Set();
+  return xs.filter((x) => {
+    if (vs.has(x[prop])) return false;
+    vs.add(x[prop]);
+    return true;
+  });
+};
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
@@ -109,10 +118,16 @@ function apply_showif() {
     const dynwhere = JSON.parse(
       decodeURIComponent(e.attr("data-fetch-options"))
     );
-    //console.log(dynwhere);
-    const qs = Object.entries(dynwhere.whereParsed)
-      .map(([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`)
-      .join("&");
+    //console.log("dynwhere", dynwhere);
+    const qss = Object.entries(dynwhere.whereParsed).map(
+      ([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`
+    );
+    if (dynwhere.dereference) {
+      if (Array.isArray(dynwhere.dereference))
+        qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
+      else qss.push(`dereference=${dynwhere.dereference}`);
+    }
+    const qs = qss.join("&");
     var current = e.attr("data-selected");
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
@@ -129,7 +144,11 @@ function apply_showif() {
       if (!dynwhere.required) toAppend.push(`<option></option>`);
       let currentDataOption = undefined;
       const dataOptions = [];
-      success.forEach((r) => {
+      //console.log(success);
+      const success1 = dynwhere.nubBy
+        ? nubBy(dynwhere.nubBy, success)
+        : success;
+      success1.forEach((r) => {
         const label = dynwhere.label_formula
           ? new Function(
               `{${Object.keys(r).join(",")}}`,
@@ -137,6 +156,7 @@ function apply_showif() {
             )(r)
           : r[dynwhere.summary_field];
         const value = r[dynwhere.refname];
+        //console.log("lv", label, value, r, dynwhere.summary_field);
         const selected = `${current}` === `${r[dynwhere.refname]}`;
         dataOptions.push({ text: label, value });
         if (selected) currentDataOption = value;

@@ -221,11 +221,12 @@ class Field implements AbstractField {
   static async select_options_query(
     table_name: string,
     where: string,
-    attributes: any
+    attributes: any,
+    extra_joinfields: any = {}
   ) {
     const Table = require("./table");
     const label_formula = attributes?.label_formula;
-    const joinFields = {};
+    const joinFields = { ...extra_joinfields };
 
     const table = Table.findOne(table_name);
     if (!table) {
@@ -277,6 +278,18 @@ class Field implements AbstractField {
       where = this.attributes.where
         ? jsexprToWhere(this.attributes.where, extraCtx)
         : undefined;
+    if (this.fieldviewObj?.fill_options) {
+      await this.fieldviewObj.fill_options(
+        this,
+        force_allow_none,
+        where,
+        extraCtx,
+        optionsQuery,
+        formFieldNames
+      );
+      return;
+    }
+
     const isDynamic = (formFieldNames || []).some((nm) =>
       (this.attributes.where || "").includes("$" + nm)
     );

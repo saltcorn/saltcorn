@@ -127,6 +127,22 @@ describe("API read", () => {
       .set("Cookie", loginCookie)
       .expect(succeedJsonWith((rows) => rows.length == 2));
   });
+  it("should dereference", async () => {
+    const loginCookie = await getStaffLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/?dereference=favbook")
+      .set("Cookie", loginCookie)
+      .expect(
+        succeedJsonWith(
+          (rows) =>
+            rows.length == 2 &&
+            rows.find((r) => r.favbook === 1).favbook_author ==
+              "Herman Melville"
+        )
+      );
+  });
   it("should add version counts", async () => {
     const patients = Table.findOne({ name: "patients" });
     await patients.update({ versioned: true });

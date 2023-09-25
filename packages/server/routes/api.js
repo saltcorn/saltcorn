@@ -251,7 +251,8 @@ router.get(
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     let { tableName } = req.params;
-    const { fields, versioncount, approximate, ...req_query } = req.query;
+    const { fields, versioncount, approximate, dereference, ...req_query } =
+      req.query;
     const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
@@ -284,7 +285,7 @@ router.get(
               },
             };
             rows = await table.getJoinedRows(joinOpts);
-          } else if (req_query && req_query !== {}) {
+          } else {
             const tbl_fields = table.getFields();
             readState(req_query, tbl_fields, req);
             const qstate = await stateFieldsToWhere({
@@ -293,18 +294,26 @@ router.get(
               state: req_query,
               table,
             });
-            rows = await table.getRows(qstate, {
+            const joinFields = {};
+            const derefs = Array.isArray(dereference)
+              ? dereference
+              : !dereference
+              ? []
+              : [dereference];
+            derefs.forEach((f) => {
+              const field = table.getField(f);
+              if (field?.attributes?.summary_field)
+                joinFields[`${f}_${field?.attributes?.summary_field}`] = {
+                  ref: f,
+                  target: field?.attributes?.summary_field,
+                };
+            });
+            rows = await table.getJoinedRows({
+              where: qstate,
+              joinFields,
               forPublic: !(req.user || user),
               forUser: req.user || user,
             });
-          } else {
-            rows = await table.getRows(
-              {},
-              {
-                forPublic: !(req.user || user),
-                forUser: req.user || user,
-              }
-            );
           }
           res.json({ success: rows.map(limitFields(fields)) });
         } else {

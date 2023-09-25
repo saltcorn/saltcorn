@@ -307,7 +307,14 @@ const buildRelationPath = (
 const removeNonWordChars = (str: string) => {
   return str.replace(/[\W_]+/g, "");
 };
-
+const nubBy = (prop: string, xs: any[]) => {
+  const vs = new Set();
+  return xs.filter((x) => {
+    if (vs.has(x[prop])) return false;
+    vs.add(x[prop]);
+    return true;
+  });
+};
 export = {
   objectToQueryString,
   removeEmptyStrings,
@@ -339,4 +346,5 @@ export = {
   parseRelationPath,
   buildRelationPath,
   removeNonWordChars,
+  nubBy,
 };
