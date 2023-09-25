@@ -277,6 +277,18 @@ class Field implements AbstractField {
       where = this.attributes.where
         ? jsexprToWhere(this.attributes.where, extraCtx)
         : undefined;
+    if (this.fieldviewObj?.fill_options) {
+      await this.fieldviewObj.fill_options(
+        this,
+        force_allow_none,
+        where,
+        extraCtx,
+        optionsQuery,
+        formFieldNames
+      );
+      return;
+    }
+
     const isDynamic = (formFieldNames || []).some((nm) =>
       (this.attributes.where || "").includes("$" + nm)
     );
