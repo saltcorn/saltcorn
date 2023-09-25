@@ -221,11 +221,12 @@ class Field implements AbstractField {
   static async select_options_query(
     table_name: string,
     where: string,
-    attributes: any
+    attributes: any,
+    extra_joinfields: any = {}
   ) {
     const Table = require("./table");
     const label_formula = attributes?.label_formula;
-    const joinFields = {};
+    const joinFields = { ...extra_joinfields };
 
     const table = Table.findOne(table_name);
     if (!table) {
