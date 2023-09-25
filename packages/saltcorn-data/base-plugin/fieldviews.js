@@ -265,6 +265,7 @@ const select_from_table = {
         summary_field: `${srcField.name}_${srcField.attributes.summary_field}`,
         label_formula: field.attributes.label_formula,
         dereference: srcField.name,
+        nubBy: fieldNm,
         required: field.required,
       };
     }
@@ -272,6 +273,8 @@ const select_from_table = {
       label: get_label(r),
       value: r[fieldNm],
     }));
+    if (!field.required || force_allow_none)
+      field.options.unshift({ label: "", value: "" });
   },
 
   /**

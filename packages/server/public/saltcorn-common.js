@@ -41,6 +41,15 @@ const _apply_showif_plugins = [];
 const add_apply_showif_plugin = (p) => {
   _apply_showif_plugins.push(p);
 };
+
+const nubBy = (prop, xs) => {
+  const vs = new Set();
+  return xs.filter((x) => {
+    if (vs.has(x[prop])) return false;
+    vs.add(x[prop]);
+    return true;
+  });
+};
 function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
@@ -136,7 +145,10 @@ function apply_showif() {
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
-      success.forEach((r) => {
+      const success1 = dynwhere.nubBy
+        ? nubBy(dynwhere.nubBy, success)
+        : success;
+      success1.forEach((r) => {
         const label = dynwhere.label_formula
           ? new Function(
               `{${Object.keys(r).join(",")}}`,
