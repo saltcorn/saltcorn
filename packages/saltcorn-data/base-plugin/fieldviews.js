@@ -7,7 +7,7 @@
 const View = require("../models/view");
 const Table = require("../models/table");
 const Field = require("../models/field");
-const { eval_expression } = require("../models/expression");
+const { eval_expression, jsexprToWhere } = require("../models/expression");
 const {
   option,
   a,
@@ -241,7 +241,7 @@ const select_from_table = {
       : (r) => r[fieldNm];
 
     const isDynamic = (formFieldNames || []).some((nm) =>
-      (this.attributes.where || "").includes("$" + nm)
+      (field.attributes.where || "").includes("$" + nm)
     );
 
     /*console.log({
@@ -250,9 +250,24 @@ const select_from_table = {
       fieldNm,
       rows,
       refname: field.refname,
-      field,
+      fieldattrs: field.attributes,
     });*/
-
+    if (isDynamic) {
+      const fakeEnv = {};
+      formFieldNames.forEach((nm) => {
+        fakeEnv[nm] = "$" + nm;
+      });
+      field.attributes.dynamic_where = {
+        table: tableNm,
+        refname: "id",
+        where: field.attributes.where,
+        whereParsed: jsexprToWhere(field.attributes.where, fakeEnv),
+        summary_field: srcField.attributes.summary_field,
+        label_formula: field.attributes.label_formula,
+        dereference: srcField.name,
+        required: field.required,
+      };
+    }
     field.options = nubBy(fieldNm, rows).map((r) => ({
       label: get_label(r),
       value: r[fieldNm],

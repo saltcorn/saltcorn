@@ -109,10 +109,16 @@ function apply_showif() {
     const dynwhere = JSON.parse(
       decodeURIComponent(e.attr("data-fetch-options"))
     );
-    //console.log(dynwhere);
-    const qs = Object.entries(dynwhere.whereParsed)
-      .map(([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`)
-      .join("&");
+    //console.log("dynwhere", dynwhere);
+    const qss = Object.entries(dynwhere.whereParsed).map(
+      ([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`
+    );
+    if (dynwhere.dereference) {
+      if (Array.isArray(dynwhere.dereference))
+        qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
+      else qss.push(`dereference=${dynwhere.dereference}`);
+    }
+    const qs = qss.join("&");
     var current = e.attr("data-selected");
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
