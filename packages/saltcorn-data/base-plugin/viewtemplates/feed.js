@@ -28,7 +28,7 @@ const {
   hashState,
 } = require("../../utils");
 const { getState } = require("../../db/state");
-const { jsexprToWhere } = require("../../models/expression");
+const { jsexprToWhere, eval_expression } = require("../../models/expression");
 const {
   extractFromLayout,
   extractViewToCreate,
@@ -283,7 +283,7 @@ const configuration_workflow = (req) =>
                 required: true,
               },
               {
-                name: "title_fml",
+                name: "title_formula",
                 label: req.__("Title formula"),
                 class: "validate-expression",
                 type: "String",
@@ -403,6 +403,7 @@ const run = async (
     create_view_display,
     in_card, //legacy
     view_decoration,
+    title_formula,
     masonry_columns,
     rows_per_page = 20,
     hide_pagination,
@@ -532,6 +533,12 @@ const run = async (
     in_card || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
+          title_formula
+            ? div(
+                { class: "card-header" },
+                eval_expression(title_formula, r.row, extraArgs.req.user)
+              )
+            : undefined,
           div({ class: "card-body" }, r.html)
         )
       : r.html;
