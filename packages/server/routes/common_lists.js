@@ -187,7 +187,7 @@ const viewsList = async (
             label: req.__("Name"),
             key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
             sortlink: !tagId
-              ? `javascript:set_state_field('_sortby', 'name')`
+              ? `set_state_field('_sortby', 'name', this)`
               : undefined,
           },
           // description - currently I dont want to show description in view list
@@ -205,7 +205,7 @@ const viewsList = async (
             label: req.__("Pattern"),
             key: "viewtemplate",
             sortlink: !tagId
-              ? `javascript:set_state_field('_sortby', 'viewtemplate')`
+              ? `set_state_field('_sortby', 'viewtemplate', this)`
               : undefined,
           },
           ...(notable
@@ -215,7 +215,7 @@ const viewsList = async (
                   label: req.__("Table"),
                   key: (r) => link(`/table/${r.table}`, r.table),
                   sortlink: !tagId
-                    ? `javascript:set_state_field('_sortby', 'table')`
+                    ? `set_state_field('_sortby', 'table', this)`
                     : undefined,
                 },
               ]),

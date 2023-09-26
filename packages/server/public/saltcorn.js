@@ -1,18 +1,22 @@
-function sortby(k, desc, viewIdentifier) {
-  set_state_fields({
-    [viewIdentifier ? `_${viewIdentifier}_sortby` : "_sortby"]: k,
-    [viewIdentifier ? `_${viewIdentifier}_sortdesc` : "_sortdesc"]: desc
-      ? "on"
-      : { unset: true },
-  });
+function sortby(k, desc, viewIdentifier, e) {
+  set_state_fields(
+    {
+      [viewIdentifier ? `_${viewIdentifier}_sortby` : "_sortby"]: k,
+      [viewIdentifier ? `_${viewIdentifier}_sortdesc` : "_sortdesc"]: desc
+        ? "on"
+        : { unset: true },
+    },
+    false,
+    e
+  );
 }
-function gopage(n, pagesize, viewIdentifier, extra = {}) {
+function gopage(n, pagesize, viewIdentifier, extra = {}, e) {
   const cfg = {
     ...extra,
     [viewIdentifier ? `_${viewIdentifier}_page` : "_page"]: n,
     [viewIdentifier ? `_${viewIdentifier}_pagesize` : "_pagesize"]: pagesize,
   };
-  set_state_fields(cfg);
+  set_state_fields(cfg, false, e);
 }
 
 if (localStorage.getItem("reload_on_init")) {
@@ -72,28 +76,31 @@ function get_current_state_url(e) {
   else return $modal.prop("data-modal-state");
 }
 
-function select_id(id) {
-  pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id));
+function select_id(id, e) {
+  pjax_to(updateQueryStringParameter(get_current_state_url(e), "id", id), e);
 }
 
 function set_state_field(key, value, e) {
   pjax_to(updateQueryStringParameter(get_current_state_url(e), key, value), e);
 }
 
-function check_state_field(that) {
+function check_state_field(that, e) {
   const checked = that.checked;
   const name = that.name;
   const value = encodeURIComponent(that.value);
-  var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
+  var separator = get_current_state_url(e).indexOf("?") !== -1 ? "&" : "?";
   let dest;
-  if (checked) dest = get_current_state_url() + `${separator}${name}=${value}`;
-  else dest = get_current_state_url().replace(`${name}=${value}`, "");
-  pjax_to(dest.replace("&&", "&").replace("?&", "?"));
+  if (checked) dest = get_current_state_url(e) + `${separator}${name}=${value}`;
+  else dest = get_current_state_url(e).replace(`${name}=${value}`, "");
+  pjax_to(dest.replace("&&", "&").replace("?&", "?"), e);
 }
 
 function invalidate_pagings(href) {
   let newhref = href;
-  const queryObj = Object.fromEntries(new URL(newhref).searchParams.entries());
+  const prev = new URL(window.location.href);
+  const queryObj = Object.fromEntries(
+    new URL(newhref, prev.origin).searchParams.entries()
+  );
   const toRemove = Object.keys(queryObj).filter((val) => is_paging_param(val));
   for (const k of toRemove) {
     newhref = removeQueryStringParameter(newhref, k);
@@ -173,12 +180,12 @@ function pjax_to(href, e) {
 function href_to(href) {
   window.location.href = href;
 }
-function clear_state(omit_fields_str) {
-  let newUrl = get_current_state_url().split("?")[0];
-  const hash = get_current_state_url().split("#")[1];
+function clear_state(omit_fields_str, e) {
+  let newUrl = get_current_state_url(e).split("?")[0];
+  const hash = get_current_state_url(e).split("#")[1];
   if (omit_fields_str) {
     const omit_fields = omit_fields_str.split(",").map((s) => s.trim());
-    let qs = (get_current_state_url().split("?")[1] || "").split("#")[0];
+    let qs = (get_current_state_url(e).split("?")[1] || "").split("#")[0];
     let params = new URLSearchParams(qs);
     newUrl = newUrl + "?";
     omit_fields.forEach((f) => {
@@ -188,7 +195,7 @@ function clear_state(omit_fields_str) {
   }
   if (hash) newUrl += "#" + hash;
 
-  pjax_to(newUrl);
+  pjax_to(newUrl, e);
 }
 
 function ajax_done(res) {

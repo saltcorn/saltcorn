@@ -450,9 +450,10 @@ const run = async (
         if (action_style === "btn-link")
           return a(
             {
-              href: `javascript:${confirmStr}clear_state('${
+              onclick: `${confirmStr}clear_state('${
                 configuration?.omit_fields || ""
               }', this)`,
+              href: "javascript:void(0)",
             },
             action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
             label

@@ -20,7 +20,9 @@ const headerCell = (hdr: any): string =>
         (hdr.align ? `text-align: ${hdr.align};` : "") +
         (hdr.width ? `width: ` + hdr.width : ""),
     },
-    hdr.sortlink ? a({ href: hdr.sortlink }, hdr.label) : hdr.label
+    hdr.sortlink
+      ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
+      : hdr.label
   );
 
 // declaration merging

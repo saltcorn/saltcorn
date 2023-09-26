@@ -467,3 +467,8 @@ div.unread-notify {
 .sc-modal-linkout {
   color: inherit;
 }
+
+.link-style {
+  cursor: pointer;
+  text-decoration: underline;
+}
