@@ -842,15 +842,18 @@ function buildToast(txt, type, spin) {
       : realtype === "warning"
       ? "fa-exclamation-triangle"
       : "";
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   return `
     <div 
-      class="toast text-white show" 
+      class="toast show" 
       role="alert" 
       aria-live="assertive" 
       aria-atomic="true"
-      style="min-width: 350px; max-width: 50vw; width: auto; z-index: 999; transform: translateX(-50%);"
+      style="min-width: 350px; max-width: 50vw; width: auto; z-index: 999; ${
+        !isNode ? "transform: translateX(-50%);" : ""
+      }" 
     >
-      <div class="toast-header bg-${realtype} bg-opacity-75 text-white py-1 ">
+      <div class="toast-header bg-${realtype} text-white py-1 ">
         <i class="fas ${icon} me-2"></i>
         <strong class="me-auto" >
           ${type}
@@ -868,7 +871,7 @@ function buildToast(txt, type, spin) {
         }
       </div>
       <div 
-        class="toast-body py-2 bg-${realtype} bg-opacity-75 fs-6 fw-bold d-flex align-items-center"
+        class="toast-body py-2 fs-6 fw-bold d-flex align-items-center"
       >
         <strong>${txt}</strong>
         ${

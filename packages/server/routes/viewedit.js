@@ -74,19 +74,17 @@ router.get(
       return table.min_role_read < view.min_role;
     };
     const hasAccessWarning = views.filter(viewAccessWarning);
-    const accessWarning =
-      hasAccessWarning.length > 0
-        ? toast(
-            "danger",
-            `<p>${req.__(
-              `You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.`
-            )}</p> 
-      ${req.__("Views potentially affected")}: ${hasAccessWarning
-              .map((v) => v.name)
-              .join(", ")}`,
-            true
-          )
-        : "";
+    if (hasAccessWarning.length > 0) {
+      req.flash(
+        "danger",
+        `<p>${req.__(
+          `You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.`
+        )}</p> 
+${req.__("Views potentially affected")}: ${hasAccessWarning
+          .map((v) => v.name)
+          .join(", ")}`
+      );
+    }
     res.sendWrap(req.__(`Views`), {
       above: [
         {
@@ -98,7 +96,6 @@ router.get(
           class: "mt-0",
           title: req.__("Your views"),
           contents: [
-            accessWarning,
             viewMarkup,
             tables.length > 0
               ? a(

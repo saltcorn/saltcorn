@@ -339,10 +339,9 @@ const alert = (type: string, s: string): string => {
  * creates a toast div
  * @param type bootstrap type
  * @param s
- * @param fullWrap false to just return the toast div, true to wrap it in a toast-container
  * @returns
  */
-const toast = (type: string, s: string, fullWrap?: boolean): string => {
+const toast = (type: string, s: string): string => {
   if (!s || s.length === 0) return "";
   else {
     const realtype = type === "error" ? "danger" : type;
@@ -354,17 +353,18 @@ const toast = (type: string, s: string, fullWrap?: boolean): string => {
         : realtype === "warning"
         ? "fa-exclamation-triangle"
         : "";
-    const toastDiv = div(
+    return div(
       {
-        class: "toast text-white show",
+        class: "toast show",
         role: "alert",
         ariaLive: "assertive",
         ariaAtomic: "true",
-        style:
-          "min-width: 350px; max-width: 50vw; width: auto; transform: translateX(-50%);",
+        style: `min-width: 350px; max-width: 50vw; width: auto; ${
+          !isNode ? "transform: translateX(-50%);" : ""
+        }`,
       },
       div(
-        { class: `toast-header bg-${realtype} bg-opacity-75 text-white py-1` },
+        { class: `toast-header bg-${realtype} text-white py-1` },
         icon ? i({ class: `fas ${icon} me-2` }) : "",
         strong({ class: "me-auto" }, type === "danger" ? "error" : type),
         button({
@@ -375,22 +375,8 @@ const toast = (type: string, s: string, fullWrap?: boolean): string => {
           style: "font-size: 12px;",
         })
       ),
-      div(
-        { class: `toast-body bg-${realtype} bg-opacity-75 py-2 fs-6 fw-bold` },
-        strong(s)
-      )
+      div({ class: `toast-body py-2 fs-6 fw-bold` }, strong(s))
     );
-    return fullWrap
-      ? div(
-          {
-            class: "toast-container position-fixed top-0 start-50 p-0",
-            style: "z-index: 999",
-            "aria-live": "polite",
-            "aria-atomic": "true",
-          },
-          toastDiv
-        )
-      : toastDiv;
   }
 };
 
