@@ -77,7 +77,7 @@ function get_current_state_url(e) {
 }
 
 function select_id(id, e) {
-  pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id), e);
+  pjax_to(updateQueryStringParameter(get_current_state_url(e), "id", id), e);
 }
 
 function set_state_field(key, value, e) {
