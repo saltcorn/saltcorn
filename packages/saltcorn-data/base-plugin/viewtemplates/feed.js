@@ -461,7 +461,7 @@ const run = async (
         current_page,
         pages: Math.ceil(nrows / qextra.limit),
         get_page_link: (n) =>
-          `javascript:gopage(${n}, ${qextra.limit}, '${stateHash}')`,
+          `gopage(${n}, ${qextra.limit}, '${stateHash}', {}, this)`,
       });
     }
   }

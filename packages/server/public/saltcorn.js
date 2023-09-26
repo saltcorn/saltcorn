@@ -10,13 +10,13 @@ function sortby(k, desc, viewIdentifier, e) {
     e
   );
 }
-function gopage(n, pagesize, viewIdentifier, extra = {}) {
+function gopage(n, pagesize, viewIdentifier, extra = {}, e) {
   const cfg = {
     ...extra,
     [viewIdentifier ? `_${viewIdentifier}_page` : "_page"]: n,
     [viewIdentifier ? `_${viewIdentifier}_pagesize` : "_pagesize"]: pagesize,
   };
-  set_state_fields(cfg);
+  set_state_fields(cfg, false, e);
 }
 
 if (localStorage.getItem("reload_on_init")) {

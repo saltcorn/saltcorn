@@ -211,7 +211,14 @@ const pagination = ({
     lis.push(
       li(
         { class: `page-item` },
-        a({ class: "page-link", href: get_page_link(1) }, 1)
+        span(
+          {
+            class: "page-link link-style",
+            onclick: get_page_link(1),
+            role: "link",
+          },
+          1
+        )
       )
     );
     lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
@@ -221,7 +228,14 @@ const pagination = ({
     lis.push(
       li(
         { class: ["page-item", index === current_page && "active"] },
-        a({ class: "page-link", href: get_page_link(index) }, index)
+        span(
+          {
+            class: "page-link link-style",
+            onclick: get_page_link(index),
+            role: "link",
+          },
+          index
+        )
       )
     );
   }
@@ -230,7 +244,14 @@ const pagination = ({
     lis.push(
       li(
         { class: `page-item` },
-        a({ class: "page-link", href: get_page_link(pages) }, pages)
+        span(
+          {
+            class: "page-link link-style",
+            onclick: get_page_link(pages),
+            role: "link",
+          },
+          pages
+        )
       )
     );
   }
