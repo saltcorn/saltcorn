@@ -871,7 +871,7 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
       : _sortdesc
       ? "false"
       : "true";
-  return `javascript:sortby('${text(fname)}', ${desc}, '${statehash}')`;
+  return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
 };
 
 /**
