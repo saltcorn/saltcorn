@@ -72,8 +72,8 @@ function get_current_state_url(e) {
   else return $modal.prop("data-modal-state");
 }
 
-function select_id(id) {
-  pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id));
+function select_id(id, e) {
+  pjax_to(updateQueryStringParameter(get_current_state_url(), "id", id), e);
 }
 
 function set_state_field(key, value, e) {
