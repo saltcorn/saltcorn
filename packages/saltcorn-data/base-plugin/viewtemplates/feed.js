@@ -401,7 +401,8 @@ const run = async (
     descending,
     view_to_create,
     create_view_display,
-    in_card,
+    in_card, //legacy
+    view_decoration,
     masonry_columns,
     rows_per_page = 20,
     hide_pagination,
@@ -528,7 +529,7 @@ const run = async (
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
   const showRowInner = (r) =>
-    in_card
+    in_card || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
           div({ class: "card-body" }, r.html)
@@ -547,7 +548,7 @@ const run = async (
     istop ? [create, main, pagin] : [main, pagin, create];
 
   const inner =
-    in_card && masonry_columns
+    (in_card || view_decoration === "Card") && masonry_columns
       ? div(
           correct_order([
             div({ class: "card-columns" }, sresp.map(showRowInner)),
