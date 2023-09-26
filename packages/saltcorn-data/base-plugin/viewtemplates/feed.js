@@ -263,17 +263,31 @@ const configuration_workflow = (req) =>
                 default: 20,
               },
               {
+                name: "view_decoration",
+                label: req.__("View decoration"),
+                type: "String",
+                attributes: { options: ["None", "Card", "Accordion"] },
+                required: true,
+              },
+              /*{
                 name: "in_card",
                 label: req.__("Each in card?"),
                 type: "Bool",
                 required: true,
-              },
+              },*/
               {
                 name: "masonry_columns",
                 label: req.__("Masonry columns"),
                 type: "Bool",
-                showIf: { in_card: true },
+                showIf: { view_decoration: "Card" },
                 required: true,
+              },
+              {
+                name: "title_fml",
+                label: req.__("Title formula"),
+                class: "validate-expression",
+                type: "String",
+                showIf: { view_decoration: ["Card", "Accordion"] },
               },
               {
                 name: "hide_pagination",
