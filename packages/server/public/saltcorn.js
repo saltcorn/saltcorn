@@ -80,15 +80,15 @@ function set_state_field(key, value, e) {
   pjax_to(updateQueryStringParameter(get_current_state_url(e), key, value), e);
 }
 
-function check_state_field(that) {
+function check_state_field(that, e) {
   const checked = that.checked;
   const name = that.name;
   const value = encodeURIComponent(that.value);
-  var separator = window.location.href.indexOf("?") !== -1 ? "&" : "?";
+  var separator = get_current_state_url(e).indexOf("?") !== -1 ? "&" : "?";
   let dest;
-  if (checked) dest = get_current_state_url() + `${separator}${name}=${value}`;
-  else dest = get_current_state_url().replace(`${name}=${value}`, "");
-  pjax_to(dest.replace("&&", "&").replace("?&", "?"));
+  if (checked) dest = get_current_state_url(e) + `${separator}${name}=${value}`;
+  else dest = get_current_state_url(e).replace(`${name}=${value}`, "");
+  pjax_to(dest.replace("&&", "&").replace("?&", "?"), e);
 }
 
 function invalidate_pagings(href) {
