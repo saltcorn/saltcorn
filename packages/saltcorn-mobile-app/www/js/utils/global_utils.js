@@ -1,4 +1,4 @@
-/*global window, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig*/
+/*global window, $, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig*/
 
 let routingHistory = [];
 
@@ -71,11 +71,22 @@ function showAlerts(alerts, toast = true) {
     const area = iframe.contentWindow.document.getElementById(
       toast ? "toasts-area" : "top-alert"
     );
+    const successIds = [];
     area.innerHTML = "";
     for (const { type, msg } of alerts) {
-      area.innerHTML += toast
-        ? saltcorn.markup.toast(type, msg)
-        : saltcorn.markup.alert(type, msg);
+      if (toast) {
+        const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+        area.innerHTML += saltcorn.markup.toast(type, msg, rndid);
+        if (type === "success") successIds.push(rndid);
+      } else area.innerHTML += saltcorn.markup.alert(type, msg);
+    }
+    if (successIds.length > 0) {
+      setTimeout(() => {
+        for (const id of successIds) {
+          const toastEl = iframe.contentWindow.document.getElementById(id);
+          if (toastEl) $(toastEl).removeClass("show");
+        }
+      }, 5000);
     }
   }
 }

@@ -341,7 +341,7 @@ const alert = (type: string, s: string): string => {
  * @param s
  * @returns
  */
-const toast = (type: string, s: string): string => {
+const toast = (type: string, s: string, id?: string): string => {
   if (!s || s.length === 0) return "";
   else {
     const realtype = type === "error" ? "danger" : type;
@@ -356,6 +356,9 @@ const toast = (type: string, s: string): string => {
     return div(
       {
         class: "toast show",
+        ...(id ? { id: id } : {}),
+        rendered: "server-side",
+        type: type,
         role: "alert",
         ariaLive: "assertive",
         ariaAtomic: "true",

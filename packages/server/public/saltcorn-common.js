@@ -682,6 +682,11 @@ function initialize_page() {
       }
     }
   }
+  setTimeout(() => {
+    $("#toasts-area")
+      .find(".show[rendered='server-side'][type='success']")
+      .removeClass("show");
+  }, 5000);
 }
 
 $(initialize_page);
@@ -843,11 +848,16 @@ function buildToast(txt, type, spin) {
       ? "fa-exclamation-triangle"
       : "";
   const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
-  return `
+  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  return {
+    id: rndid,
+    html: `
     <div 
-      class="toast show" 
-      role="alert" 
-      aria-live="assertive" 
+      class="toast show"
+      id="${rndid}"
+      rendered="client-side",
+      role="alert"
+      aria-live="assertive"
       aria-atomic="true"
       style="min-width: 350px; max-width: 50vw; width: auto; z-index: 999; ${
         !isNode ? "transform: translateX(-50%);" : ""
@@ -885,7 +895,8 @@ function buildToast(txt, type, spin) {
         }
       </div>
     </div>
-  `;
+  `,
+  };
 }
 
 function notifyAlert(note, spin) {
@@ -901,7 +912,13 @@ function notifyAlert(note, spin) {
     txt = note.text;
     type = note.type;
   }
-  $("#toasts-area").append(buildToast(txt, type, spin));
+  const { id, html } = buildToast(txt, type, spin);
+  $("#toasts-area").append(html);
+  if (type === "success") {
+    setTimeout(() => {
+      $(`#${id}`).removeClass("show");
+    }, 5000);
+  }
 }
 
 function emptyAlerts() {
