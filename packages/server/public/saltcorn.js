@@ -180,12 +180,12 @@ function pjax_to(href, e) {
 function href_to(href) {
   window.location.href = href;
 }
-function clear_state(omit_fields_str) {
-  let newUrl = get_current_state_url().split("?")[0];
-  const hash = get_current_state_url().split("#")[1];
+function clear_state(omit_fields_str, e) {
+  let newUrl = get_current_state_url(e).split("?")[0];
+  const hash = get_current_state_url(e).split("#")[1];
   if (omit_fields_str) {
     const omit_fields = omit_fields_str.split(",").map((s) => s.trim());
-    let qs = (get_current_state_url().split("?")[1] || "").split("#")[0];
+    let qs = (get_current_state_url(e).split("?")[1] || "").split("#")[0];
     let params = new URLSearchParams(qs);
     newUrl = newUrl + "?";
     omit_fields.forEach((f) => {
@@ -195,7 +195,7 @@ function clear_state(omit_fields_str) {
   }
   if (hash) newUrl += "#" + hash;
 
-  pjax_to(newUrl);
+  pjax_to(newUrl, e);
 }
 
 function ajax_done(res) {
