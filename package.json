@@ -13,7 +13,8 @@
     "test": "jest",
     "tsc": "tsc --build",
     "clean": "tsc --build --clean",
-    "docs": "typedoc --options typedoc_cfg.json"
+    "docs": "typedoc --options typedoc_cfg.json",
+    "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json"
   },
   "jest": {
     "testEnvironment": "node",
