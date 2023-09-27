@@ -572,7 +572,7 @@ const run = async (
               class: ["accordion-collapse", "collapse", ix === 0 && "show"],
               id: `a${stateHash}tab${ix}`,
               "aria-labelledby": `a${stateHash}head${ix}`,
-              "data-parent": `top${stateHash}`,
+              "data-bs-parent": `#top${stateHash}`,
             },
             div({ class: ["accordion-body"] }, r.html)
           )
