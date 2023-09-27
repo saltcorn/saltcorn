@@ -556,11 +556,11 @@ const run = async (
             { class: "accordion-header", id: `a${stateHash}head${ix}` },
             button(
               {
-                class: ["accordion-button", ix > 0 && "collapsed"],
+                class: ["accordion-button", "collapsed"],
                 type: "button",
                 "data-bs-toggle": "collapse",
                 "data-bs-target": `#a${stateHash}tab${ix}`,
-                "aria-expanded": ix === 0 ? "true" : "false",
+                "aria-expanded": "false",
                 "aria-controls": `a${stateHash}tab${ix}`,
               },
               eval_expression(title_formula, r.row, extraArgs.req.user) ||
@@ -569,7 +569,7 @@ const run = async (
           ),
           div(
             {
-              class: ["accordion-collapse", "collapse", ix === 0 && "show"],
+              class: ["accordion-collapse", "collapse"],
               id: `a${stateHash}tab${ix}`,
               "aria-labelledby": `a${stateHash}head${ix}`,
               "data-bs-parent": `#top${stateHash}`,
