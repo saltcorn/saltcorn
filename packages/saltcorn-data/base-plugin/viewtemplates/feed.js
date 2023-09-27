@@ -8,7 +8,15 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr, button, code } = require("@saltcorn/markup/tags");
+const {
+  text,
+  div,
+  h4,
+  hr,
+  button,
+  code,
+  h2,
+} = require("@saltcorn/markup/tags");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
@@ -529,7 +537,7 @@ const run = async (
 
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
-  const showRowInner = (r) =>
+  const showRowInner = (r, ix) =>
     in_card || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
@@ -540,6 +548,34 @@ const run = async (
               )
             : undefined,
           div({ class: "card-body" }, r.html)
+        )
+      : view_decoration === "Accordion"
+      ? div(
+          { class: "accordion-item" },
+          h2(
+            { class: "accordion-header", id: `a${stateHash}head${ix}` },
+            button(
+              {
+                class: ["accordion-button", ix > 0 && "collapsed"],
+                type: "button",
+                "data-bs-toggle": "collapse",
+                "data-bs-target": `#a${stateHash}tab${ix}`,
+                "aria-expanded": ix === 0 ? "true" : "false",
+                "aria-controls": `a${stateHash}tab${ix}`,
+              },
+              eval_expression(title_formula, r.row, extraArgs.req.user) ||
+                "Missing title"
+            )
+          ),
+          div(
+            {
+              class: ["accordion-collapse", "collapse", ix === 0 && "show"],
+              id: `a${stateHash}tab${ix}`,
+              "aria-labelledby": `a${stateHash}head${ix}`,
+              "data-parent": `top${stateHash}`,
+            },
+            div({ class: ["accordion-body"] }, r.html)
+          )
         )
       : r.html;
 
@@ -554,22 +590,20 @@ const run = async (
   const correct_order = ([main, pagin, create]) =>
     istop ? [create, main, pagin] : [main, pagin, create];
 
-  const inner =
-    (in_card || view_decoration === "Card") && masonry_columns
-      ? div(
-          correct_order([
-            div({ class: "card-columns" }, sresp.map(showRowInner)),
-            paginate,
-            create_link_div,
-          ])
-        )
-      : div(
-          correct_order([
-            div({ class: "row" }, sresp.map(showRow)),
-            paginate,
-            create_link_div,
-          ])
-        );
+  const inner = div(
+    correct_order([
+      (in_card || view_decoration === "Card") && masonry_columns
+        ? div({ class: "card-columns" }, sresp.map(showRowInner))
+        : view_decoration === "Accordion"
+        ? div(
+            { class: "accordion", id: `top${stateHash}` },
+            sresp.map(showRowInner)
+          )
+        : div({ class: "row" }, sresp.map(showRow)),
+      paginate,
+      create_link_div,
+    ])
+  );
 
   return inner;
 };
