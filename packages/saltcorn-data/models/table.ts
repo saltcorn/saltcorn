@@ -138,7 +138,32 @@ const normalise_error_message = (msg: string): string =>
       );
 
 /**
- * Table class
+ * A class representing database tables and their properties.
+ *
+ * Use this to create or delete tables and their properties, or to query
+ * or change table rows.
+ *
+ * To query, update, insert or delete rows in an existing table, first you
+ * should find the table object with `findOne`
+ *
+ * @example
+ * ```
+ * Table.findOne({name: "Customers"}) // find the table with name "Customers"
+ * Table.findOne("Customers") // find the table with name "Customers" (shortcut)
+ * Table.findOne({ id: 5 }) // find the table with id=5
+ * Table.findOne(5) // find the table with id=5 (shortcut)
+ * ```
+ *
+ * Table.findOne is synchronous (no need to await), But the functions that
+ * manipulate rows are mostly asyncronous, so you can put the await in front of the
+ * whole expression
+ *
+ * @example
+ * To count the number of rows in the customer table
+ * ```
+ * const nrows = await Table.findOne("Customers").countRows()
+ * ```
+ *
  * @category saltcorn-data
  */
 class Table implements AbstractTable {
