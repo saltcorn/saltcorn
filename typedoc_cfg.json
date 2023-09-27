@@ -1,5 +1,6 @@
 {
   "entryPointStrategy": "packages",
+  "excludePrivate": true,
   "entryPoints": [
     "packages/saltcorn-admin-models",
     "packages/saltcorn-types",
