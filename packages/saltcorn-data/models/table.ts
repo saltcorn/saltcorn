@@ -1271,7 +1271,7 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Get primary key field
+   * Get primary key field name
    * @type {string}
    */
   get pk_name(): string {
@@ -1283,7 +1283,9 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Check table constraints
+   * Check table constraints against a row object. Will return a string With an error message if the 
+   * table constraints are violated, `undefined` if the row does not violate any constraints
+   * 
    * @param row
    */
 
@@ -1307,7 +1309,7 @@ class Table implements AbstractTable {
    * @param row
    * @param user
    */
-  check_field_write_role(row: Row, user: Row): string | undefined {
+  private check_field_write_role(row: Row, user: Row): string | undefined {
     for (const field of this.fields) {
       if (
         typeof row[field.name] !== "undefined" &&
@@ -1320,9 +1322,21 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Insert row
+   * Insert row into the table. By passing in the user as
+   * the second argument, tt will check write rights. If a user object is not 
+   * supplied, The insert goes ahead without checking write permissions.
+   * 
+   * This will throw an exception if the row 
+   * does not conform to the table constraints. If you would like to insert
+   * and receive an error message, use {@link Table.tryInsertRow} instead.
+   * 
+   * @example
+   * ```
+   * await Table.findOne("People").insertRow({ name: "Jim", age: 35 })
+   * ```
+   * 
    * @param v_in
-   * @param _userid
+   * @param user
    * @param resultCollector
    * @returns {Promise<*>}
    */
