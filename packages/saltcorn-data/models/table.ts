@@ -119,23 +119,6 @@ const dateFormats = [moment.ISO_8601];
 const isDate = function (date: Date): boolean {
   return moment(date, dateFormats, true).isValid();
 };
-// todo resolve database specific
-/**
- * Normalise specific error message according db specific
- * @param msg
- * @returns {string}
- */
-// todo refactor
-const normalise_error_message = (msg: string): string =>
-  db.isSQLite
-    ? msg.replace(
-        /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
-        "Duplicate value for unique field: $2"
-      )
-    : msg.replace(
-        /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/,
-        "Duplicate value for unique field: $2"
-      );
 
 /**
  * A class representing database tables and their properties.
@@ -707,7 +690,7 @@ class Table implements AbstractTable {
    * @param user
    * @param forRead
    */
-  updateWhereWithOwnership(
+  private updateWhereWithOwnership(
     where: Where,
     fields: Field[],
     user?: Row,
@@ -731,7 +714,7 @@ class Table implements AbstractTable {
     }
   }
 
-  async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
+  private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
     if (ids.length > 0) {
       const schema = db.getTenantSchemaPrefix();
       const pkName = this.pk_name;
@@ -847,7 +830,7 @@ class Table implements AbstractTable {
    * @param row
    * @returns {*}
    */
-  readFromDB(row: Row): any {
+  private readFromDB(row: Row): any {
     if (this.fields) {
       for (const f of this.fields) {
         if (f.type && instanceOfType(f.type) && f.type.readFromDB)
@@ -969,7 +952,7 @@ class Table implements AbstractTable {
   /**
    *
    */
-  storedExpressionJoinFields() {
+  private storedExpressionJoinFields() {
     let freeVars: Set<string> = new Set([]);
     for (const f of this.fields!)
       if (f.calculated && f.stored && f.expression)
@@ -1186,7 +1169,7 @@ class Table implements AbstractTable {
     return dbResult.rows;
   }
 
-  async insertSyncInfo(id: number, syncTimestamp?: Date) {
+  private async insertSyncInfo(id: number, syncTimestamp?: Date) {
     const schema = db.getTenantSchemaPrefix();
     if (isNode()) {
       await db.query(`insert into ${schema}"${db.sqlsanitize(
@@ -1204,7 +1187,7 @@ class Table implements AbstractTable {
     }
   }
 
-  async updateSyncInfo(
+  private async updateSyncInfo(
     id: number,
     oldLastModified: Date,
     syncTimestamp?: Date
@@ -1500,7 +1483,7 @@ class Table implements AbstractTable {
    *
    * @param msg
    */
-  normalise_error_message(msg: string): string {
+  private normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
       if (db.isSQLite) {
@@ -1596,7 +1579,7 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   // todo create function that returns history table name for table
-  async create_history_table(): Promise<void> {
+  private async create_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     const fields = this.fields;
@@ -1621,7 +1604,7 @@ class Table implements AbstractTable {
     );
   }
 
-  async create_sync_info_table(): Promise<void> {
+  private async create_sync_info_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
     const fields = this.fields;
     const pk = fields.find((f) => f.primary_key)?.name;
@@ -1656,7 +1639,7 @@ class Table implements AbstractTable {
     );
   }
 
-  async drop_sync_table(): Promise<void> {
+  private async drop_sync_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
     await db.query(`
       drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
@@ -1749,7 +1732,7 @@ class Table implements AbstractTable {
    * Drop history table
    * @returns {Promise<void>}
    */
-  async drop_history_table(): Promise<void> {
+  private async drop_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     await db.query(`
