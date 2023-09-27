@@ -1,5 +1,5 @@
 {
-  "entryPointStrategy": "packages",
+  "entryPointStrategy": "legacy-packages",
   "excludePrivate": true,
   "customCss": "./deploy/typedoc/custom.css",
   "entryPoints": [
@@ -13,5 +13,5 @@
     "packages/saltcorn-mobile-builder"
   ],
   "out": "docs",
-  "theme": "my-theme"
+  "readme": "deploy/typedoc/documentation_main.md"
 }
