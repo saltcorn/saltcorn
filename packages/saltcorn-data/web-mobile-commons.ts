@@ -44,6 +44,7 @@ const get_extra_menu = (
         icon: item.icon,
         location: item.location,
         style: item.style || "",
+        target_blank: item.target_blank,
         type: item.type,
         link:
           item.type === "Link" && item.url_formula

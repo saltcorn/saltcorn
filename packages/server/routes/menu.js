@@ -70,7 +70,7 @@ const menuForm = async (req) => {
       .map(([k, v]) => k),
   ];
   const triggers = Trigger.find({
-    when_trigger: {or: ["API call", "Never"]},
+    when_trigger: { or: ["API call", "Never"] },
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -154,6 +154,22 @@ const menuForm = async (req) => {
         type: "Bool",
         class: "item-menu",
         required: false,
+      },
+      {
+        name: "target_blank",
+        label: req.__("Open in new tab"),
+        type: "Bool",
+        required: false,
+        class: "item-menu",
+        showIf: { type: ["View", "Page", "Link"] },
+      },
+      {
+        name: "in_modal",
+        label: req.__("Open in popup modal?"),
+        type: "Bool",
+        required: false,
+        class: "item-menu",
+        showIf: { type: ["View", "Page", "Link"] },
       },
       {
         name: "url",

@@ -109,6 +109,7 @@ const navSubitems = ({
               {
                 class: ["dropdown-item", si.style || "", si.class],
                 href: si.link,
+                target: si.target_blank ? "_blank" : undefined,
               },
               si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
               si.label
@@ -142,6 +143,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                 {
                   class: ["nav-link js-scroll-trigger", s.style || ""],
                   href: text(s.link),
+                  target: s.target_blank ? "_blank" : undefined,
                 },
                 s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
                 text(s.label)
@@ -228,6 +230,7 @@ const mobileBottomNavBar = (
                   {
                     class: [s.style || "", clsLink],
                     href: text(s.link),
+                    target: s.target_blank ? "_blank" : undefined,
                   },
                   s.icon ? i({ class: `fa-lg ${s.icon}` }) : "",
                   br(),
