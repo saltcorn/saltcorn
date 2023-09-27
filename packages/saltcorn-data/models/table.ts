@@ -1309,9 +1309,11 @@ class Table implements AbstractTable {
    * the second argument, tt will check write rights. If a user object is not 
    * supplied, the insert goes ahead without checking write permissions.
    * 
+   * Returns the primary key value of the inserted row.
+   * 
    * This will throw an exception if the row 
-   * does not conform to the table constraints. If you would like to insert
-   * and receive an error message, use {@link Table.tryInsertRow} instead.
+   * does not conform to the table constraints. If you would like to insert a row
+   * with a function that can return an error message, use {@link Table.tryInsertRow} instead.
    * 
    * @example
    * ```
