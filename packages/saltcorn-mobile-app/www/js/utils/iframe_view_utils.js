@@ -478,14 +478,7 @@ async function mobile_modal(url, opts = {}) {
       const page = await parent.router.resolve({
         pathname: `get${path}`,
         query: query,
-        alerts: mobileConfig.isOfflineMode
-          ? [
-              {
-                type: "info",
-                msg: parent.offlineHelper.getOfflineMsg(),
-              },
-            ]
-          : [],
+        alerts: [],
       });
       const modalContent = page.content;
       const title = page.title;
@@ -701,12 +694,16 @@ async function switchNetworkMode() {
       parent.clearHistory();
       parent.addRoute({ route: "/" });
       parent.addRoute({ route: "get/sync/sync_settings" });
-      parent.showAlerts([
-        {
-          type: "info",
-          msg: parent.offlineHelper.getOfflineMsg(),
-        },
-      ]);
+      parent.showAlerts(
+        [
+          {
+            type: "info",
+            msg: parent.offlineHelper.getOfflineMsg(),
+          },
+        ],
+        false
+      );
+      parent.clearAlerts();
     } else {
       if (networkState === "none")
         throw new Error("No internet connection is available.");
@@ -720,6 +717,7 @@ async function switchNetworkMode() {
           msg: "You are online again.",
         },
       ]);
+      parent.clearTopAlerts();
     }
   } catch (error) {
     parent.showAlerts([
@@ -771,6 +769,7 @@ async function callSync() {
             msg: "Synchronized your offline data, you are online again.",
           },
         ]);
+        parent.clearTopAlerts();
       }
     }
   } catch (error) {
