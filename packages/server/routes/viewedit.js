@@ -7,7 +7,7 @@
 
 const Router = require("express-promise-router");
 
-const { renderForm, renderBuilder, alert } = require("@saltcorn/markup");
+const { renderForm, renderBuilder, toast } = require("@saltcorn/markup");
 const tags = require("@saltcorn/markup/tags");
 const { p, a, div, script, text, domReady, code, pre, tbody, tr, th, td } =
   tags;

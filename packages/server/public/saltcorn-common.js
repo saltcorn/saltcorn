@@ -702,6 +702,11 @@ function initialize_page() {
       }
     }
   }
+  setTimeout(() => {
+    $("#toasts-area")
+      .find(".show[rendered='server-side'][type='success']")
+      .removeClass("show");
+  }, 5000);
 }
 
 $(initialize_page);
@@ -852,6 +857,68 @@ function tristateClick(nm) {
   }
 }
 
+function buildToast(txt, type, spin) {
+  const realtype = type === "error" ? "danger" : type;
+  const icon =
+    realtype === "success"
+      ? "fa-check-circle"
+      : realtype === "danger"
+      ? "fa-times-circle"
+      : realtype === "warning"
+      ? "fa-exclamation-triangle"
+      : "";
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  return {
+    id: rndid,
+    html: `
+    <div 
+      class="toast show"
+      id="${rndid}"
+      rendered="client-side",
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+      style="min-width: 350px; max-width: 50vw; width: auto; z-index: 999; ${
+        !isNode ? "transform: translateX(-50%);" : ""
+      }" 
+    >
+      <div class="toast-header bg-${realtype} text-white py-1 ">
+        <i class="fas ${icon} me-2"></i>
+        <strong class="me-auto" >
+          ${type}
+        </strong>
+        ${
+          spin
+            ? ""
+            : `<button 
+                type="button" 
+                class="btn-close btn-close-white" 
+                data-bs-dismiss="toast" 
+                aria-label="Close"
+                style="font-size: 12px;"
+                ></button>`
+        }
+      </div>
+      <div 
+        class="toast-body py-2 fs-6 fw-bold d-flex align-items-center"
+      >
+        <strong>${txt}</strong>
+        ${
+          spin
+            ? `<span 
+                class="spinner-border ms-auto" 
+                role="status" 
+                aria-hidden="true" 
+                style="width: 1.5rem; height: 1.5rem"></span>`
+            : ""
+        }
+      </div>
+    </div>
+  `,
+  };
+}
+
 function notifyAlert(note, spin) {
   if (Array.isArray(note)) {
     note.forEach(notifyAlert);
@@ -865,23 +932,17 @@ function notifyAlert(note, spin) {
     txt = note.text;
     type = note.type;
   }
-
-  $("#alerts-area")
-    .append(`<div class="alert alert-${type} alert-dismissible fade show ${
-    spin ? "d-flex align-items-center" : ""
-  }" role="alert">
-  ${txt}
-  ${
-    spin
-      ? `<div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>`
-      : `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-  </button>`
+  const { id, html } = buildToast(txt, type, spin);
+  $("#toasts-area").append(html);
+  if (type === "success") {
+    setTimeout(() => {
+      $(`#${id}`).removeClass("show");
+    }, 5000);
   }
-</div>`);
 }
 
 function emptyAlerts() {
-  $("#alerts-area").html("");
+  $("#toasts-area").html("");
 }
 
 function press_store_button(clicked) {

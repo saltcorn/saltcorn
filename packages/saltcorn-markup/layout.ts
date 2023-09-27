@@ -23,14 +23,12 @@ const {
   li,
   i,
   genericElement,
-  script,
-  domReady,
   table,
   tr,
   td,
   tbody,
 } = tags;
-const { alert, breadcrumbs, renderTabs } = require("./layout_utils");
+const { toast, breadcrumbs, renderTabs } = require("./layout_utils");
 
 import helpers = require("./helpers");
 import renderMJML from "./mjml-layout";
@@ -50,14 +48,26 @@ const couldHaveAlerts = (alerts?: any | any[]): boolean =>
  * @param {object[]} [alerts]
  * @returns {object}
  */
-const makeSegments = (body: string | any, alerts: any[]): any => {
-  const alertsSegments = couldHaveAlerts(alerts)
+const makeSegments = (
+  body: string | any,
+  alerts: any[],
+  isWeb: boolean
+): any => {
+  const toastSegments = couldHaveAlerts(alerts)
     ? [
         {
           type: "blank",
           contents: div(
-            { id: "alerts-area" },
-            (alerts || []).map((a: any) => alert(a.type, a.msg))
+            {
+              id: "toasts-area",
+              class: `toast-container position-fixed ${
+                isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+              } `,
+              style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+              "aria-live": "polite",
+              "aria-atomic": "true",
+            },
+            (alerts || []).map((a: any) => toast(a.type, a.msg))
           ),
         },
       ]
@@ -65,12 +75,15 @@ const makeSegments = (body: string | any, alerts: any[]): any => {
 
   if (typeof body === "string")
     return {
-      above: [...alertsSegments, { type: "blank", contents: body }],
+      above: [{ type: "blank", contents: body }, ...toastSegments],
     };
   else if (body.above) {
-    if (couldHaveAlerts(alerts)) body.above.unshift(alertsSegments[0]);
+    if (couldHaveAlerts(alerts)) body.above.push(toastSegments[0]);
     return body;
-  } else return { above: [...alertsSegments, body] };
+  } else
+    return {
+      above: [body, ...toastSegments],
+    };
 };
 
 /**
@@ -143,6 +156,7 @@ const render = ({
   req,
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
+  const isWeb = typeof window === "undefined" && !req?.smr;
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
@@ -244,7 +258,6 @@ const render = ({
       return wrap(segment, isTop, ix, tabHtml);
     }
     if (segment.type === "image") {
-      const isWeb = typeof window === "undefined" && !req?.smr;
       const srctype = segment.srctype || "File";
       const src = isWeb
         ? srctype === "File"
@@ -358,7 +371,6 @@ const render = ({
       );
     }
     if (segment.type === "card") {
-      const isWeb = typeof window === "undefined" && !req?.smr;
       return wrap(
         segment,
         isTop,
@@ -548,7 +560,6 @@ const render = ({
       const hasImgBg = renderBg && bgType === "Image" && bgFileId;
       const useImgTagAsBg = hasImgBg && imageSize !== "repeat" && isTop;
       let image = undefined;
-      const isWeb = typeof window === "undefined" && !req?.smr;
       if (hasImgBg && useImgTagAsBg) {
         const imgCfg: any = {
           class: `containerbgimage `,
@@ -746,7 +757,7 @@ const render = ({
       is_owner,
       req,
     });
-  else return go(makeSegments(layout, alerts), true, 0);
+  else return go(makeSegments(layout, alerts, isWeb), true, 0);
 };
 
 // declaration merging

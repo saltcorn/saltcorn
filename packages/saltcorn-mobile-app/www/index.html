@@ -371,10 +371,6 @@
                 else
                   try {
                     await offlineHelper.startOfflineMode();
-                    alerts.push({
-                      type: "info",
-                      msg: offlineHelper.getOfflineMsg(),
-                    });
                   } catch (error) {
                     throw new Error(
                       `Neither an internet connection nor the offline mode are available: ${

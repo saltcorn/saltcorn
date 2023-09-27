@@ -25,7 +25,7 @@ const {
 const renderLayout = require("@saltcorn/markup/layout");
 const { renderForm, link } = require("@saltcorn/markup");
 const {
-  alert,
+  toast,
   headersInHead,
   headersInBody,
 } = require("@saltcorn/markup/layout_utils");
@@ -403,13 +403,11 @@ const authWrap = ({
       <div class="row justify-content-center">
         <div class="col-xl-10 col-lg-12 col-md-9">
           <div class="card o-hidden border-0 shadow-lg my-5">
-            <div class="card-body p-0">
+            <div class="card-body p-2">
               <div class="row">
                 <div class="col">
                   <div class="p-5">
-                  <div id="alerts-area">
-                    ${alerts.map((a) => alert(a.type, a.msg)).join("")}
-                  </div>                  
+                  <div id="alerts-area">${/* deprecated */ ""}</div>
                     <div class="text-center">
                       <h1 class="h4 text-gray-900 mb-4">${title}</h1>
                     </div>
@@ -422,6 +420,17 @@ const authWrap = ({
             </div>
           </div>
         </div>
+      </div>
+      <div 
+        id="toasts-area"
+        class="toast-container position-fixed p-2 top-0 ${
+          isNode() ? "end-0" : "start-50"
+        }
+        style: "z-index: 999;"
+        aria-live="polite" 
+        aria-atomic="true"
+      >
+        ${alerts.map((a) => toast(a.type, a.msg)).join("")}
       </div>
     </div>`
   );
@@ -460,14 +469,23 @@ const wrap = ({
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
           <div id="page-inner-content" class="container-fluid px-2">
-            <div id="alerts-area">
-              ${alerts.map((a) => alert(a.type, a.msg)).join("")}
-            </div>
-            <div >
+            <div id="alerts-area">${/* deprecated */ ""}</div>
+            <div>
               ${renderBody(title, body, role, req)}
             <div>
           </div>
         </div>
+      </div>
+      <div 
+        id="toasts-area"
+        class="toast-container position-fixed ${
+          isNode() ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+        } end-0 p-2"
+        style: "z-index: 999; ${!isNode() ? "margin-bottom: 1.0rem" : ""}"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        ${alerts.map((a) => toast(a.type, a.msg)).join("")}
       </div>
     </div>`
   );
@@ -481,12 +499,21 @@ const wrap = ({
  * @returns {string}
  */
 const exportRenderBody = ({ title, body, alerts, role, req }) =>
-  `<div id="alerts-area">
-    ${alerts.map((a) => alert(a.type, a.msg)).join("")}
-  </div>
+  `<div id="alerts-area">${/* deprecated */ ""}</div>
   <div >
     ${renderBody(title, body, role, req)}
-  <div>`;
+  <div>
+  <div 
+    id="toasts-area"
+    class="toast-container position-fixed ${
+      isNode() ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+    }"
+    style: "z-index: 999; ${!isNode() ? "margin-bottom: 1.0rem" : ""}"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    ${alerts.map((a) => toast(a.type, a.msg)).join("")}
+  </div>`;
 
 module.exports = {
   /** @type {number} */

@@ -1,4 +1,4 @@
-/*global saltcorn*/
+/*global saltcorn, offlineHelper*/
 
 const getHeaders = () => {
   const config = saltcorn.data.state.getState().mobileConfig;
@@ -124,10 +124,21 @@ const prepareAlerts = (context, req) => {
 
 const wrapContents = (contents, title, context, req) => {
   const state = saltcorn.data.state.getState();
+  const body = {
+    above: [
+      saltcorn.markup.div(
+        { id: "top-alert" },
+        state.mobileConfig.isOfflineMode
+          ? saltcorn.markup.alert("info", offlineHelper.getOfflineMsg())
+          : ""
+      ),
+      contents,
+    ],
+  };
   const wrappedContent = context.fullWrap
     ? layout().wrap({
         title: title,
-        body: { above: [contents] },
+        body,
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.role_id,
         menu: getMenu(req),
@@ -142,7 +153,7 @@ const wrapContents = (contents, title, context, req) => {
       })
     : layout().renderBody({
         title: title,
-        body: { above: [contents] },
+        body,
         req,
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.role_id,

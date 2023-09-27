@@ -13,6 +13,7 @@ const {
   hr,
   div,
   text,
+  strong,
   img,
   button,
   nav,
@@ -309,9 +310,10 @@ const navbar = (
   );
 
 /**
- * @param {string} type
- * @param {string} s
- * @returns {string}
+ * creates an alert div (deprecated, use toast)
+ * @param type
+ * @param s
+ * @returns
  */
 const alert = (type: string, s: string): string => {
   //console.log("alert", type, s,s.length)
@@ -331,6 +333,54 @@ const alert = (type: string, s: string): string => {
         </button>
       </div>`
     : "";
+};
+
+/**
+ * creates a toast div
+ * @param type bootstrap type
+ * @param s
+ * @returns
+ */
+const toast = (type: string, s: string, id?: string): string => {
+  if (!s || s.length === 0) return "";
+  else {
+    const realtype = type === "error" ? "danger" : type;
+    const icon =
+      realtype === "success"
+        ? "fa-check-circle"
+        : realtype === "danger"
+        ? "fa-times-circle"
+        : realtype === "warning"
+        ? "fa-exclamation-triangle"
+        : "";
+    return div(
+      {
+        class: "toast show",
+        ...(id ? { id: id } : {}),
+        rendered: "server-side",
+        type: type,
+        role: "alert",
+        ariaLive: "assertive",
+        ariaAtomic: "true",
+        style: `min-width: 350px; max-width: 50vw; width: auto; ${
+          !isNode ? "transform: translateX(-50%);" : ""
+        }`,
+      },
+      div(
+        { class: `toast-header bg-${realtype} text-white py-1` },
+        icon ? i({ class: `fas ${icon} me-2` }) : "",
+        strong({ class: "me-auto" }, type === "danger" ? "error" : type),
+        button({
+          type: "button",
+          class: "btn-close btn-close-white",
+          "data-bs-dismiss": "toast",
+          "aria-label": "Close",
+          style: "font-size: 12px;",
+        })
+      ),
+      div({ class: `toast-body py-2 fs-6 fw-bold` }, strong(s))
+    );
+  }
 };
 
 /**
@@ -670,6 +720,7 @@ const renderTabs = (
 export = {
   navbar,
   alert,
+  toast,
   logit,
   navbarSolidOnScroll,
   breadcrumbs,

@@ -10,7 +10,7 @@ import tabs = require("./tabs");
 import tags = require("./tags");
 const { a, text, div, button, hr, time, i, input } = tags;
 import layoutUtils = require("./layout_utils");
-const { alert } = layoutUtils;
+const { alert, toast } = layoutUtils;
 
 /**
  * @param {string} href
@@ -265,4 +265,5 @@ export = {
   input,
   hr,
   alert,
+  toast,
 };

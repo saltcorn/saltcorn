@@ -250,8 +250,11 @@ Gordon Kane, 218`;
       await request(app)
         .get("/table/")
         .set("Cookie", loginCookie)
-        .expect(toInclude("alert-danger"))
-        .expect(toInclude("books"));
+        .expect(
+          toInclude(
+            "cannot drop table books because other objects depend on it"
+          )
+        );
   });
 });
 describe("deletion to table with row ownership", () => {
