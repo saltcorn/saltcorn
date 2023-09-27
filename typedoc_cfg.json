@@ -1,7 +1,7 @@
 {
   "entryPointStrategy": "packages",
   "excludePrivate": true,
-  "customCss": "./deploy/typedoc/custom.css", 
+  "customCss": "./deploy/typedoc/custom.css",
   "entryPoints": [
     "packages/saltcorn-admin-models",
     "packages/saltcorn-types",
@@ -13,7 +13,5 @@
     "packages/saltcorn-mobile-builder"
   ],
   "out": "docs",
-  "readme": "deploy/typedoc/documentation_main.md",
-  "plugin": ["@mxssfd/typedoc-theme"],
   "theme": "my-theme"
 }
