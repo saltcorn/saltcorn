@@ -144,7 +144,7 @@ const normalise_error_message = (msg: string): string =>
  * or change table rows.
  *
  * To query, update, insert or delete rows in an existing table, first you
- * should find the table object with `findOne`
+ * should find the table object with {@link Table.findOne}.
  *
  * @example
  * ```
@@ -155,7 +155,9 @@ const normalise_error_message = (msg: string): string =>
  * ```
  *
  * Table.findOne is synchronous (no need to await), But the functions that
- * manipulate rows are mostly asyncronous, so you can put the await in front of the
+ * query and manipulate (such as {@link Table.insertRow}, {@link Table.getRows}, 
+ * {@link Table.updateRow}, {@link Table.deleteRows}) rows are mostly asyncronous, 
+ * so you can put the await in front of the
  * whole expression
  *
  * @example
