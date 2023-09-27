@@ -641,7 +641,7 @@ const renderTabs = (
               ],
               id: `${rndid}tab${ix}`,
               "aria-labelledby": `${rndid}head${ix}`,
-              "data-parent": independent ? undefined : `#${rndid}top`,
+              "data-bs-parent": independent ? undefined : `#${rndid}top`,
             },
             div(
               { class: ["accordion-body", bodyClass || ""] },

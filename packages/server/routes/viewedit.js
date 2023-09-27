@@ -65,26 +65,7 @@ router.get(
 
     const viewMarkup = await viewsList(views, req);
     const tables = await Table.find();
-    const viewAccessWarning = (view) => {
-      const table = tables.find((t) => t.name === view.table);
-      if (!table) return false;
-      if (table.name === "users") return false;
-      if (table.ownership_field_id || table.ownership_formula) return false;
 
-      return table.min_role_read < view.min_role;
-    };
-    const hasAccessWarning = views.filter(viewAccessWarning);
-    if (hasAccessWarning.length > 0) {
-      req.flash(
-        "danger",
-        `<p>${req.__(
-          `You have views with a role to access lower than the table role to read, with no table ownership. This may cause a denial of access. Users need to have table read access to any data displayed.`
-        )}</p> 
-${req.__("Views potentially affected")}: ${hasAccessWarning
-          .map((v) => v.name)
-          .join(", ")}`
-      );
-    }
     res.sendWrap(req.__(`Views`), {
       above: [
         {

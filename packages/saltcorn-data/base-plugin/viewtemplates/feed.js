@@ -8,7 +8,15 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, hr, button, code } = require("@saltcorn/markup/tags");
+const {
+  text,
+  div,
+  h4,
+  hr,
+  button,
+  code,
+  h2,
+} = require("@saltcorn/markup/tags");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
@@ -28,7 +36,7 @@ const {
   hashState,
 } = require("../../utils");
 const { getState } = require("../../db/state");
-const { jsexprToWhere } = require("../../models/expression");
+const { jsexprToWhere, eval_expression } = require("../../models/expression");
 const {
   extractFromLayout,
   extractViewToCreate,
@@ -263,17 +271,31 @@ const configuration_workflow = (req) =>
                 default: 20,
               },
               {
+                name: "view_decoration",
+                label: req.__("View decoration"),
+                type: "String",
+                attributes: { options: ["None", "Card", "Accordion"] },
+                required: true,
+              },
+              /*{
                 name: "in_card",
                 label: req.__("Each in card?"),
                 type: "Bool",
                 required: true,
-              },
+              },*/
               {
                 name: "masonry_columns",
                 label: req.__("Masonry columns"),
                 type: "Bool",
-                showIf: { in_card: true },
+                showIf: { view_decoration: "Card" },
                 required: true,
+              },
+              {
+                name: "title_formula",
+                label: req.__("Title formula"),
+                class: "validate-expression",
+                type: "String",
+                showIf: { view_decoration: ["Card", "Accordion"] },
               },
               {
                 name: "hide_pagination",
@@ -387,7 +409,9 @@ const run = async (
     descending,
     view_to_create,
     create_view_display,
-    in_card,
+    in_card, //legacy
+    view_decoration,
+    title_formula,
     masonry_columns,
     rows_per_page = 20,
     hide_pagination,
@@ -513,11 +537,45 @@ const run = async (
 
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
-  const showRowInner = (r) =>
-    in_card
+  const showRowInner = (r, ix) =>
+    in_card || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
+          title_formula
+            ? div(
+                { class: "card-header" },
+                eval_expression(title_formula, r.row, extraArgs.req.user)
+              )
+            : undefined,
           div({ class: "card-body" }, r.html)
+        )
+      : view_decoration === "Accordion"
+      ? div(
+          { class: "accordion-item" },
+          h2(
+            { class: "accordion-header", id: `a${stateHash}head${ix}` },
+            button(
+              {
+                class: ["accordion-button", ix > 0 && "collapsed"],
+                type: "button",
+                "data-bs-toggle": "collapse",
+                "data-bs-target": `#a${stateHash}tab${ix}`,
+                "aria-expanded": ix === 0 ? "true" : "false",
+                "aria-controls": `a${stateHash}tab${ix}`,
+              },
+              eval_expression(title_formula, r.row, extraArgs.req.user) ||
+                "Missing title"
+            )
+          ),
+          div(
+            {
+              class: ["accordion-collapse", "collapse", ix === 0 && "show"],
+              id: `a${stateHash}tab${ix}`,
+              "aria-labelledby": `a${stateHash}head${ix}`,
+              "data-bs-parent": `#top${stateHash}`,
+            },
+            div({ class: ["accordion-body"] }, r.html)
+          )
         )
       : r.html;
 
@@ -532,22 +590,20 @@ const run = async (
   const correct_order = ([main, pagin, create]) =>
     istop ? [create, main, pagin] : [main, pagin, create];
 
-  const inner =
-    in_card && masonry_columns
-      ? div(
-          correct_order([
-            div({ class: "card-columns" }, sresp.map(showRowInner)),
-            paginate,
-            create_link_div,
-          ])
-        )
-      : div(
-          correct_order([
-            div({ class: "row" }, sresp.map(showRow)),
-            paginate,
-            create_link_div,
-          ])
-        );
+  const inner = div(
+    correct_order([
+      (in_card || view_decoration === "Card") && masonry_columns
+        ? div({ class: "card-columns" }, sresp.map(showRowInner))
+        : view_decoration === "Accordion"
+        ? div(
+            { class: "accordion", id: `top${stateHash}` },
+            sresp.map(showRowInner)
+          )
+        : div({ class: "row" }, sresp.map(showRow)),
+      paginate,
+      create_link_div,
+    ])
+  );
 
   return inner;
 };
