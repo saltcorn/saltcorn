@@ -1,0 +1,6 @@
+section.tsd-hierarchy {
+  display: none;
+}
+section.tsd-hierarchy + section {
+  display: none;
+}
