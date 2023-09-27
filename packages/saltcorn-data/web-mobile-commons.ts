@@ -39,34 +39,44 @@ const get_extra_menu = (
           : disabledMobileMenus.indexOf(item.type) < 0 &&
             !item.disable_on_mobile
       )
-      .map((item: any) => ({
-        label: __(item.label),
-        icon: item.icon,
-        location: item.location,
-        style: item.style || "",
-        type: item.type,
-        link:
-          item.type === "Link" && item.url_formula
-            ? expression.eval_expression(item.url, { locale, role }, user)
-            : item.type === "Link"
-            ? is_node
-              ? item.url
-              : `javascript:execNavbarLink('${item.url}')`
-            : item.type === "Action"
-            ? `javascript:${
-                is_node ? "ajax" : "local"
-              }_post_json('/menu/runaction/${item.action_name}')`
-            : item.type === "View"
-            ? is_node
-              ? `/view/${encodeURIComponent(item.viewname)}`
-              : `javascript:execNavbarLink('/view/${item.viewname}')`
-            : item.type === "Page"
-            ? is_node
-              ? `/page/${encodeURIComponent(item.pagename)}`
-              : `javascript:execNavbarLink('/page/${item.pagename}')`
-            : undefined,
-        ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
-      }));
+      .map((item: any) => {
+        const wrapUrl = (url: string) => {
+          if (item.in_modal && is_node)
+            return `javascript:ajax_modal('${url}')`;
+          if (item.in_modal) return `javascript:mobile_modal('${url}')`;
+          return url;
+        };
+        return {
+          label: __(item.label),
+          icon: item.icon,
+          location: item.location,
+          style: item.style || "",
+          target_blank: item.target_blank,
+          in_modal: item.in_modal,
+          type: item.type,
+          link:
+            item.type === "Link" && item.url_formula
+              ? expression.eval_expression(item.url, { locale, role }, user)
+              : item.type === "Link"
+              ? is_node
+                ? wrapUrl(item.url)
+                : `javascript:execNavbarLink('${item.url}')`
+              : item.type === "Action"
+              ? `javascript:${
+                  is_node ? "ajax" : "local"
+                }_post_json('/menu/runaction/${item.action_name}')`
+              : item.type === "View"
+              ? is_node
+                ? wrapUrl(`/view/${encodeURIComponent(item.viewname)}`)
+                : `javascript:execNavbarLink('/view/${item.viewname}')`
+              : item.type === "Page"
+              ? is_node
+                ? wrapUrl(`/page/${encodeURIComponent(item.pagename)}`)
+                : `javascript:execNavbarLink('/page/${item.pagename}')`
+              : undefined,
+          ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
+        };
+      });
   return transform(cfg);
 };
 

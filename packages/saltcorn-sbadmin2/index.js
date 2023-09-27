@@ -46,6 +46,7 @@ const subItem = (currentUrl) => (item) =>
             item.class,
           ],
           href: text(item.link),
+          target: item.target_blank ? "_blank" : undefined,
         },
         item.icon ? i({ class: `fa-fw mr-05 ${item.icon}` }) : "",
         item.label
@@ -127,7 +128,11 @@ const sideBarItem = (currentUrl) => (item) => {
         ]
       : item.link
       ? a(
-          { class: "nav-link", href: text(item.link) },
+          {
+            class: "nav-link",
+            href: text(item.link),
+            target: item.target_blank ? "_blank" : undefined,
+          },
           item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
           span(text(item.label))
         )
