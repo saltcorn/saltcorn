@@ -376,13 +376,8 @@ class User {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
-    await db.update("users", row, this.id);
+    await User.table.updateRow(row, this.id!);
     Object.assign(this, row);
-    await Trigger.runTableTriggers(
-      "Update",
-      Table.findOne({ name: "users" }) as Table,
-      { ...this, ...row }
-    );
   }
 
   /**
