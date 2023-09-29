@@ -149,6 +149,8 @@ const isDate = function (date: Date): boolean {
  * const nrows = await Table.findOne("Customers").countRows()
  * ```
  *
+ * For further examples, see the [Table test suite](https://github.com/saltcorn/saltcorn/blob/master/packages/saltcorn-data/tests/table.test.ts)
+ *
  * ## Querying table rows
  *
  * There are several methods you can use to retrieve rows in the database:
@@ -158,19 +160,40 @@ const isDate = function (date: Date): boolean {
  * * {@link Table.getRow} To retrieve a single row matching a criterion
  * * {@link Table.getJoinedRows} To retrieve rows together with joinfields and aggregations
  *
- * These functions all take `Where` expressions Which are JavaScript objects describing
+ * These functions all take `Where` expressions which are JavaScript objects describing
  * the criterion to match to. Some examples:
  *
  * * `{ name: "Jim" }`: Match all rows with name="Jim"
+ * * `{ name: { ilike: "im"} }`: Match all rows where name contains "im" (case insensitive)
+ * * `{ age: { lt: 18 } }`: Match all rows with age<18
+ * * `{ age: { lt: 18, equal: true } }`: Match all rows with age<=18
+ * * `{ age: { gt: 18, lt: 65} }`: Match all rows with 18<age<65
+ * * `{ name: { or: ["Harry", "Sally"] } }`: Match all rows with name="Harry" or "Sally"
+ * * `{ or: [{ name: "Joe"}, { age: 37 }] }`: Match all rows with name="Joe" or age=37
+ * * `{ not: { id: 5 } }`: All rows except id=5
  *
+ * For further examples, see the [mkWhere test suite](https://github.com/saltcorn/saltcorn/blob/master/packages/db-common/internal.test.js)
  *
- * ## Updating Rows
+ * ## Updating a Row
  *
- * There are two nearly identical functions for updating rose depending on how you want
+ * There are two nearly identical functions for updating rows depending on how you want
  * failures treated
  *
  * * {@link Table.updateRow} Update a row, throws an exception if update is invalid
- * * {@link Table.updateRow} Update a row, return an error message if update is invalid
+ * * {@link Table.tryUpdateRow} Update a row, return an error message if update is invalid
+ *
+ * ## Inserting a new Row
+ *
+ * There are two nearly identical functions for inserting a new row depending on how you want
+ * failures treated
+ *
+ * * {@link Table.insertRow} insert a row, throws an exception if it is invalid
+ * * {@link Table.tryInsertRow} insert a row, return an error message if it is invalid
+ *
+ * ## Deleting rows
+ *
+ * Use {@link Table.deleteRows} to delete any number (zero, one or many) of rows matching a criterion. It uses
+ * the same `where` expression as the functions for querying rows
  *
  *
  * @category saltcorn-data
