@@ -138,8 +138,8 @@ const isDate = function (date: Date): boolean {
  * ```
  *
  * Table.findOne is synchronous (no need to await), But the functions that
- * query and manipulate (such as {@link Table.insertRow}, {@link Table.getRows}, 
- * {@link Table.updateRow}, {@link Table.deleteRows}) rows are mostly asyncronous, 
+ * query and manipulate (such as {@link Table.insertRow}, {@link Table.getRows},
+ * {@link Table.updateRow}, {@link Table.deleteRows}) rows are mostly asyncronous,
  * so you can put the await in front of the
  * whole expression
  *
@@ -149,23 +149,77 @@ const isDate = function (date: Date): boolean {
  * const nrows = await Table.findOne("Customers").countRows()
  * ```
  *
+ * ## Querying table rows
+ *
+ * There are several methods you can use to retrieve rows in the database:
+ *
+ * * {@link Table.countRows} To count the number of rows, optionally matching a criterion
+ * * {@link Table.getRows} To retrieve multiple rows matching a criterion
+ * * {@link Table.getRow} To retrieve a single row matching a criterion
+ * * {@link Table.getJoinedRows} To retrieve rows together with joinfields and aggregations
+ *
+ * These functions all take `Where` expressions Which are JavaScript objects describing
+ * the criterion to match to. Some examples:
+ *
+ * * `{ name: "Jim" }`: Match all rows with name="Jim"
+ *
+ *
+ * ## Updating Rows
+ *
+ * There are two nearly identical functions for updating rose depending on how you want
+ * failures treated
+ *
+ * * {@link Table.updateRow} Update a row, throws an exception if update is invalid
+ * * {@link Table.updateRow} Update a row, return an error message if update is invalid
+ *
+ *
  * @category saltcorn-data
  */
 class Table implements AbstractTable {
+  /** The table name */
   name: string;
+
+  /** The table ID */
   id?: number;
+
+  /** Minimum role to read */
   min_role_read: number;
+
+  /** Minimum role to write */
   min_role_write: number;
+
+  /** The ID of the ownership field*/
   ownership_field_id?: string;
+
+  /** A formula to denote ownership. This is a JavaScript expression which
+   * must evaluate to true if the user is the owner*/
   ownership_formula?: string;
+
+  /** Version history enabled for this table */
   versioned: boolean;
+
+  /** Whether sync info for mobile apps is enabled for this table */
   has_sync_info: boolean;
+
+  /** If true this is an external table (not a database table) */
   external: boolean;
+
+  /** A description of the purpose of the table */
   description?: string;
+
+  /** An array of {@link Field}s in this table */
   fields: Field[];
+
+  /** An array of {@link TableConstraint}s for this table */
   constraints: TableConstraint[];
+
+  /** Is this a user group? If yes it will appear as options in the ownership dropdown */
   is_user_group: boolean;
+
+  /** Name of the table provider for this table (not a database table) */
   provider_name?: string;
+
+  /** Configuration for the table provider for this table */
   provider_cfg?: any;
   /**
    * Table constructor
@@ -1266,9 +1320,9 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Check table constraints against a row object. Will return a string With an error message if the 
+   * Check table constraints against a row object. Will return a string With an error message if the
    * table constraints are violated, `undefined` if the row does not violate any constraints
-   * 
+   *
    * @param row
    */
 
@@ -1306,20 +1360,20 @@ class Table implements AbstractTable {
 
   /**
    * Insert row into the table. By passing in the user as
-   * the second argument, tt will check write rights. If a user object is not 
+   * the second argument, tt will check write rights. If a user object is not
    * supplied, the insert goes ahead without checking write permissions.
-   * 
+   *
    * Returns the primary key value of the inserted row.
-   * 
-   * This will throw an exception if the row 
+   *
+   * This will throw an exception if the row
    * does not conform to the table constraints. If you would like to insert a row
    * with a function that can return an error message, use {@link Table.tryInsertRow} instead.
-   * 
+   *
    * @example
    * ```
    * await Table.findOne("People").insertRow({ name: "Jim", age: 35 })
    * ```
-   * 
+   *
    * @param v_in
    * @param user
    * @param resultCollector
