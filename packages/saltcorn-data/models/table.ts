@@ -2909,6 +2909,38 @@ class Table implements AbstractTable {
   }
 
   /**
+   * Get rows along with joined and aggregated fields. The argument to `getJoinedRows` is an object
+   * with several different possible fields, all of which are optional
+   *
+   * * `where`: A Where expression indicating the criterion to match
+   * * `joinFields`: An object with the joinfields to retrieve
+   * * `aggregations`: An object with the aggregations to retrieve
+   * * `orderBy`: A string with the name of the field to order by
+   * * `orderDesc`: If true, descending order
+   * * `limit`: A number with the maximum number of rows to retrieve
+   * * `offset`: The number of rows to skip in the result before returning rows
+   *
+   * @example
+   * ```
+   * const patients = Table.findOne({ name: "patients" });
+   * const patients_rows = await patients.getJoinedRows({
+   *      where: { age: { gt: 65 } },
+   *      orderBy: "id",
+   *      aggregations: {
+   *        avg_temp: {
+   *          table: "readings",
+   *          ref: "patient_id",
+   *          field: "temperature",
+   *          aggregate: "avg",
+   *       },
+   *      },
+   *      joinFields: {
+   *        pages: { ref: "favbook", target: "pages" },
+   *        author: { ref: "favbook", target: "author" },
+   *      },
+   * });
+   * ```
+   *
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */
