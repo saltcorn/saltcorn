@@ -89,13 +89,13 @@ class Snapshot {
   }
 
   async restore_entity(type: string, name: string): Promise<undefined> {
-    if (type === "View") {
+    if ((type || "").toLowerCase() === "view") {
       const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
         this.pack?.views.find((v: any) => v.name === name) as any;
       const view = await View.findOne({ name });
       if (view) await View.update(viewNoTable, view.id!);
     }
-    if (type === "page") {
+    if ((type || "").toLowerCase() === "page") {
       const { root_page_for_roles, menu_label, ...pageSpec } =
         this.pack?.pages.find((p: any) => p.name === name) as any;
       const page = await Page.findOne({ name });

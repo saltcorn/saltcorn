@@ -56,6 +56,7 @@ const {
   li,
   ol,
   script,
+  text,
   domReady,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
@@ -538,6 +539,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { type, name } = req.params;
     const snaps = await Snapshot.entity_history(type, name);
+    res.set("Page-Title", `Restore ${text(name)}`);
     res.send(
       mkTable(
         [
