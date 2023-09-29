@@ -12,6 +12,10 @@ export interface AbstractTable {
   getForeignTables(): Promise<Array<AbstractTable>>;
 }
 
+/**
+ * Fields required to construct a table
+ * 
+ */
 export type TableCfg = {
   name: string;
   id?: number;

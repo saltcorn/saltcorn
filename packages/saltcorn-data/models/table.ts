@@ -119,43 +119,130 @@ const dateFormats = [moment.ISO_8601];
 const isDate = function (date: Date): boolean {
   return moment(date, dateFormats, true).isValid();
 };
-// todo resolve database specific
-/**
- * Normalise specific error message according db specific
- * @param msg
- * @returns {string}
- */
-// todo refactor
-const normalise_error_message = (msg: string): string =>
-  db.isSQLite
-    ? msg.replace(
-        /SQLITE_CONSTRAINT: UNIQUE constraint failed: (.*?)\.(.*?)/,
-        "Duplicate value for unique field: $2"
-      )
-    : msg.replace(
-        /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/,
-        "Duplicate value for unique field: $2"
-      );
 
 /**
- * Table class
+ * A class representing database tables and their properties.
+ *
+ * Use this to create or delete tables and their properties, or to query
+ * or change table rows.
+ *
+ * To query, update, insert or delete rows in an existing table, first you
+ * should find the table object with {@link Table.findOne}.
+ *
+ * @example
+ * ```
+ * Table.findOne({name: "Customers"}) // find the table with name "Customers"
+ * Table.findOne("Customers") // find the table with name "Customers" (shortcut)
+ * Table.findOne({ id: 5 }) // find the table with id=5
+ * Table.findOne(5) // find the table with id=5 (shortcut)
+ * ```
+ *
+ * Table.findOne is synchronous (no need to await), But the functions that
+ * query and manipulate (such as {@link Table.insertRow}, {@link Table.getRows},
+ * {@link Table.updateRow}, {@link Table.deleteRows}) rows are mostly asyncronous,
+ * so you can put the await in front of the
+ * whole expression
+ *
+ * @example
+ * To count the number of rows in the customer table
+ * ```
+ * const nrows = await Table.findOne("Customers").countRows()
+ * ```
+ *
+ * For further examples, see the [Table test suite](https://github.com/saltcorn/saltcorn/blob/master/packages/saltcorn-data/tests/table.test.ts)
+ *
+ * ## Querying table rows
+ *
+ * There are several methods you can use to retrieve rows in the database:
+ *
+ * * {@link Table.countRows} To count the number of rows, optionally matching a criterion
+ * * {@link Table.getRows} To retrieve multiple rows matching a criterion
+ * * {@link Table.getRow} To retrieve a single row matching a criterion
+ * * {@link Table.getJoinedRows} To retrieve rows together with joinfields and aggregations
+ *
+ * These functions all take `Where` expressions which are JavaScript objects describing
+ * the criterion to match to. Some examples:
+ *
+ * * `{ name: "Jim" }`: Match all rows with name="Jim"
+ * * `{ name: { ilike: "im"} }`: Match all rows where name contains "im" (case insensitive)
+ * * `{ age: { lt: 18 } }`: Match all rows with age<18
+ * * `{ age: { lt: 18, equal: true } }`: Match all rows with age<=18
+ * * `{ age: { gt: 18, lt: 65} }`: Match all rows with 18<age<65
+ * * `{ name: { or: ["Harry", "Sally"] } }`: Match all rows with name="Harry" or "Sally"
+ * * `{ or: [{ name: "Joe"}, { age: 37 }] }`: Match all rows with name="Joe" or age=37
+ * * `{ not: { id: 5 } }`: All rows except id=5
+ *
+ * For further examples, see the [mkWhere test suite](https://github.com/saltcorn/saltcorn/blob/master/packages/db-common/internal.test.js)
+ *
+ * ## Updating a Row
+ *
+ * There are two nearly identical functions for updating rows depending on how you want
+ * failures treated
+ *
+ * * {@link Table.updateRow} Update a row, throws an exception if update is invalid
+ * * {@link Table.tryUpdateRow} Update a row, return an error message if update is invalid
+ *
+ * ## Inserting a new Row
+ *
+ * There are two nearly identical functions for inserting a new row depending on how you want
+ * failures treated
+ *
+ * * {@link Table.insertRow} insert a row, throws an exception if it is invalid
+ * * {@link Table.tryInsertRow} insert a row, return an error message if it is invalid
+ *
+ * ## Deleting rows
+ *
+ * Use {@link Table.deleteRows} to delete any number (zero, one or many) of rows matching a criterion. It uses
+ * the same `where` expression as the functions for querying rows
+ *
+ *
  * @category saltcorn-data
  */
 class Table implements AbstractTable {
+  /** The table name */
   name: string;
+
+  /** The table ID */
   id?: number;
+
+  /** Minimum role to read */
   min_role_read: number;
+
+  /** Minimum role to write */
   min_role_write: number;
+
+  /** The ID of the ownership field*/
   ownership_field_id?: string;
+
+  /** A formula to denote ownership. This is a JavaScript expression which
+   * must evaluate to true if the user is the owner*/
   ownership_formula?: string;
+
+  /** Version history enabled for this table */
   versioned: boolean;
+
+  /** Whether sync info for mobile apps is enabled for this table */
   has_sync_info: boolean;
+
+  /** If true this is an external table (not a database table) */
   external: boolean;
+
+  /** A description of the purpose of the table */
   description?: string;
+
+  /** An array of {@link Field}s in this table */
   fields: Field[];
+
+  /** An array of {@link TableConstraint}s for this table */
   constraints: TableConstraint[];
+
+  /** Is this a user group? If yes it will appear as options in the ownership dropdown */
   is_user_group: boolean;
+
+  /** Name of the table provider for this table (not a database table) */
   provider_name?: string;
+
+  /** Configuration for the table provider for this table */
   provider_cfg?: any;
   /**
    * Table constructor
@@ -680,7 +767,7 @@ class Table implements AbstractTable {
    * @param user
    * @param forRead
    */
-  updateWhereWithOwnership(
+  private updateWhereWithOwnership(
     where: Where,
     fields: Field[],
     user?: Row,
@@ -704,7 +791,7 @@ class Table implements AbstractTable {
     }
   }
 
-  async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
+  private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
     if (ids.length > 0) {
       const schema = db.getTenantSchemaPrefix();
       const pkName = this.pk_name;
@@ -820,7 +907,7 @@ class Table implements AbstractTable {
    * @param row
    * @returns {*}
    */
-  readFromDB(row: Row): any {
+  private readFromDB(row: Row): any {
     if (this.fields) {
       for (const f of this.fields) {
         if (f.type && instanceOfType(f.type) && f.type.readFromDB)
@@ -942,7 +1029,7 @@ class Table implements AbstractTable {
   /**
    *
    */
-  storedExpressionJoinFields() {
+  private storedExpressionJoinFields() {
     let freeVars: Set<string> = new Set([]);
     for (const f of this.fields!)
       if (f.calculated && f.stored && f.expression)
@@ -1159,7 +1246,7 @@ class Table implements AbstractTable {
     return dbResult.rows;
   }
 
-  async insertSyncInfo(id: number, syncTimestamp?: Date) {
+  private async insertSyncInfo(id: number, syncTimestamp?: Date) {
     const schema = db.getTenantSchemaPrefix();
     if (isNode()) {
       await db.query(`insert into ${schema}"${db.sqlsanitize(
@@ -1177,7 +1264,7 @@ class Table implements AbstractTable {
     }
   }
 
-  async updateSyncInfo(
+  private async updateSyncInfo(
     id: number,
     oldLastModified: Date,
     syncTimestamp?: Date
@@ -1244,7 +1331,7 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Get primary key field
+   * Get primary key field name
    * @type {string}
    */
   get pk_name(): string {
@@ -1256,7 +1343,9 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Check table constraints
+   * Check table constraints against a row object. Will return a string With an error message if the
+   * table constraints are violated, `undefined` if the row does not violate any constraints
+   *
    * @param row
    */
 
@@ -1280,7 +1369,7 @@ class Table implements AbstractTable {
    * @param row
    * @param user
    */
-  check_field_write_role(row: Row, user: Row): string | undefined {
+  private check_field_write_role(row: Row, user: Row): string | undefined {
     for (const field of this.fields) {
       if (
         typeof row[field.name] !== "undefined" &&
@@ -1293,9 +1382,23 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Insert row
+   * Insert row into the table. By passing in the user as
+   * the second argument, tt will check write rights. If a user object is not
+   * supplied, the insert goes ahead without checking write permissions.
+   *
+   * Returns the primary key value of the inserted row.
+   *
+   * This will throw an exception if the row
+   * does not conform to the table constraints. If you would like to insert a row
+   * with a function that can return an error message, use {@link Table.tryInsertRow} instead.
+   *
+   * @example
+   * ```
+   * await Table.findOne("People").insertRow({ name: "Jim", age: 35 })
+   * ```
+   *
    * @param v_in
-   * @param _userid
+   * @param user
    * @param resultCollector
    * @returns {Promise<*>}
    */
@@ -1459,7 +1562,7 @@ class Table implements AbstractTable {
    *
    * @param msg
    */
-  normalise_error_message(msg: string): string {
+  private normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
       if (db.isSQLite) {
@@ -1555,7 +1658,7 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   // todo create function that returns history table name for table
-  async create_history_table(): Promise<void> {
+  private async create_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     const fields = this.fields;
@@ -1580,7 +1683,7 @@ class Table implements AbstractTable {
     );
   }
 
-  async create_sync_info_table(): Promise<void> {
+  private async create_sync_info_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
     const fields = this.fields;
     const pk = fields.find((f) => f.primary_key)?.name;
@@ -1615,7 +1718,7 @@ class Table implements AbstractTable {
     );
   }
 
-  async drop_sync_table(): Promise<void> {
+  private async drop_sync_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
     await db.query(`
       drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
@@ -1708,7 +1811,7 @@ class Table implements AbstractTable {
    * Drop history table
    * @returns {Promise<void>}
    */
-  async drop_history_table(): Promise<void> {
+  private async drop_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     await db.query(`
@@ -2806,6 +2909,38 @@ class Table implements AbstractTable {
   }
 
   /**
+   * Get rows along with joined and aggregated fields. The argument to `getJoinedRows` is an object
+   * with several different possible fields, all of which are optional
+   *
+   * * `where`: A Where expression indicating the criterion to match
+   * * `joinFields`: An object with the joinfields to retrieve
+   * * `aggregations`: An object with the aggregations to retrieve
+   * * `orderBy`: A string with the name of the field to order by
+   * * `orderDesc`: If true, descending order
+   * * `limit`: A number with the maximum number of rows to retrieve
+   * * `offset`: The number of rows to skip in the result before returning rows
+   *
+   * @example
+   * ```
+   * const patients = Table.findOne({ name: "patients" });
+   * const patients_rows = await patients.getJoinedRows({
+   *      where: { age: { gt: 65 } },
+   *      orderBy: "id",
+   *      aggregations: {
+   *        avg_temp: {
+   *          table: "readings",
+   *          ref: "patient_id",
+   *          field: "temperature",
+   *          aggregate: "avg",
+   *       },
+   *      },
+   *      joinFields: {
+   *        pages: { ref: "favbook", target: "pages" },
+   *        author: { ref: "favbook", target: "author" },
+   *      },
+   * });
+   * ```
+   *
    * @param {object} [opts = {}]
    * @returns {Promise<object[]>}
    */

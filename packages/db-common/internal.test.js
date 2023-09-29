@@ -5,39 +5,6 @@ const {
   sqlsanitizeAllowDots,
 } = require("./internal");
 
-describe("sqlsanitize", () => {
-  it("should not alter valid name", () => {
-    expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");
-  });
-  it("should not alter valid symbol", () => {
-    expect(sqlsanitize(Symbol("ffoo_oo"))).toBe("ffoo_oo");
-  });
-  it("should remove spaces", () => {
-    expect(sqlsanitize(" ")).toBe("");
-  });
-  it("should remove chars from invalid name", () => {
-    expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
-  });
-  it("should remove chars from invalid symbol", () => {
-    expect(sqlsanitize(Symbol("ffoo--oo--uu"))).toBe("ffoooouu");
-  });
-  it("should not allow dots", () => {
-    expect(sqlsanitize("ffoo.oo")).toBe("ffoooo");
-  });
-  it("should allow dots when specified", () => {
-    expect(sqlsanitizeAllowDots("ffoo.oo")).toBe("ffoo.oo");
-  });
-  it("should allow quotes when dots specified", () => {
-    expect(sqlsanitizeAllowDots('ffoo."oo"')).toBe('ffoo."oo"');
-  });
-  it("should allow numbers", () => {
-    expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");
-  });
-  it("should not allow numbers in initial position", () => {
-    expect(sqlsanitize("1ffoo_o1o")).toBe("_1ffoo_o1o");
-  });
-});
-
 describe("mkWhere", () => {
   it("should empty on no arg", () => {
     expect(mkWhere()).toStrictEqual({ values: [], where: "" });
@@ -366,6 +333,39 @@ describe("mkWhere", () => {
       values: [5, 7, 9],
       where: 'where ("id"=$1 or "x"=$2) and "z"=$3',
     });*/
+  });
+});
+
+describe("sqlsanitize", () => {
+  it("should not alter valid name", () => {
+    expect(sqlsanitize("ffoo_oo")).toBe("ffoo_oo");
+  });
+  it("should not alter valid symbol", () => {
+    expect(sqlsanitize(Symbol("ffoo_oo"))).toBe("ffoo_oo");
+  });
+  it("should remove spaces", () => {
+    expect(sqlsanitize(" ")).toBe("");
+  });
+  it("should remove chars from invalid name", () => {
+    expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
+  });
+  it("should remove chars from invalid symbol", () => {
+    expect(sqlsanitize(Symbol("ffoo--oo--uu"))).toBe("ffoooouu");
+  });
+  it("should not allow dots", () => {
+    expect(sqlsanitize("ffoo.oo")).toBe("ffoooo");
+  });
+  it("should allow dots when specified", () => {
+    expect(sqlsanitizeAllowDots("ffoo.oo")).toBe("ffoo.oo");
+  });
+  it("should allow quotes when dots specified", () => {
+    expect(sqlsanitizeAllowDots('ffoo."oo"')).toBe('ffoo."oo"');
+  });
+  it("should allow numbers", () => {
+    expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");
+  });
+  it("should not allow numbers in initial position", () => {
+    expect(sqlsanitize("1ffoo_o1o")).toBe("_1ffoo_o1o");
   });
 });
 
