@@ -140,7 +140,7 @@ router.post(
     const view = await View.findOne({ name: viewName });
     const db = require("@saltcorn/data/db");
     if (!view) {
-      getState().log(3, `API viewQuery ${view.name} not found`);
+      getState().log(3, `API viewQuery ${viewName} not found`);
       res.status(404).json({
         error: req.__("View %s not found", viewName),
         view: viewName,

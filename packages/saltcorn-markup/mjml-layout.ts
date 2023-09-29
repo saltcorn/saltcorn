@@ -209,8 +209,7 @@ const render = ({
     if (segment.minRole && role > segment.minRole) return "";
     if (segment.type && blockDispatch && blockDispatch[segment.type]) {
       const rendered = blockDispatch[segment.type](segment, go);
-      if (!rendered) return "";
-      else {
+      if (rendered !== false) {
         return wrap(segment, isTop, ix, rendered);
       }
     }
@@ -268,6 +267,15 @@ const render = ({
           segment.text
         )
       );
+    }
+    if (segment.type === "tabs") {
+      let ss = [];
+      for (let jx = 0; jx < segment.ntabs; jx++) {
+        ss.push(div({ style: transformTextStyle("h4") }, segment.titles[jx]));
+        ss.push(go(segment.contents[jx], isTop, jx + ix));
+      }
+
+      return wrap(segment, isTop, ix, ss.join(""));
     }
     if (segment.type === "card") {
       return wrap(
