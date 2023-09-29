@@ -165,6 +165,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         name: "protected",
         sublabel: req.__("Set role to access"),
         type: "Bool",
+        showIf: { calculated: false },
       }),
       {
         label: req.__("Minimum role to write"),
