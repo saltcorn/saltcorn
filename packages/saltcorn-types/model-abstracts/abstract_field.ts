@@ -30,6 +30,7 @@ export type FieldCfg = {
   id?: number;
   default?: string;
   sublabel?: string;
+  help?: { topic: string; context?: any };
   description?: string;
   type?: string | Type;
   options?: any;

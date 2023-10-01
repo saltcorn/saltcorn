@@ -131,7 +131,7 @@ const formRowWrap = (
             },
             text(hdr.label)
           )
-        ) + (hdr.sublabel ? i(text(hdr.sublabel)) : "")
+        ) + mkSubLabelAndHelp(hdr)
       : [
           div(
             { class: [isHoriz(fStyle) && `col-sm-${labelCols} text-end`] },
@@ -146,7 +146,7 @@ const formRowWrap = (
             { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
             inner,
             text(error),
-            hdr.sublabel && i(text(hdr.sublabel))
+            mkSubLabelAndHelp(hdr)
           ),
         ]
   );
@@ -872,6 +872,21 @@ const mkFormRowForField =
       );
   };
 
+const mkSubLabelAndHelp = (hdr: any) => {
+  const helpLink = ({ topic }: any) =>
+    a(
+      {
+        href: `javascript:ajax_modal('/admin/help/${topic}')`,
+      },
+      i({ class: "fas fa-question-circle ms-1" })
+    );
+  return [
+    hdr.sublabel && i(text(hdr.sublabel)),
+    hdr.help && hdr.sublabel && helpLink(hdr.help),
+    hdr.help && !hdr.sublabel && "Help" + helpLink(hdr.help),
+  ];
+};
+
 /**
  * @param v
  * @param errors
@@ -909,35 +924,28 @@ const mkFormRowAside = (
       "data-show-if": mkShowIf(hdr1.showIf),
     }),
   };
+
   if (formStyle === "vert")
     return div(
       outerAttributes,
       div(
         { class: `col-sm-6` },
         div(mkLabel(hdr1)),
-        div(inner1, hdr1.sublabel && i(text(hdr1.sublabel)))
+        div(inner1, mkSubLabelAndHelp(hdr1))
       ),
       div(
         { class: `col-sm-6` },
         div(mkLabel(hdr2)),
-        div(inner2, hdr2.sublabel && i(text(hdr2.sublabel)))
+        div(inner2, mkSubLabelAndHelp(hdr2))
       )
     );
   else
     return div(
       outerAttributes,
       div({ class: `col-sm-${labelCols} text-end` }, mkLabel(hdr1)),
-      div(
-        { class: `col-sm-${inputCols}` },
-        inner1,
-        hdr1.sublabel && i(text(hdr1.sublabel))
-      ),
+      div({ class: `col-sm-${inputCols}` }, inner1, mkSubLabelAndHelp(hdr1)),
       div({ class: `col-sm-${labelCols} text-end` }, mkLabel(hdr2)),
-      div(
-        { class: `col-sm-${inputCols}` },
-        inner2,
-        hdr2.sublabel && i(text(hdr2.sublabel))
-      )
+      div({ class: `col-sm-${inputCols}` }, inner2, mkSubLabelAndHelp(hdr2))
     );
 
   /*formRowWrap(
