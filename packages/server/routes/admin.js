@@ -105,6 +105,7 @@ const Page = require("@saltcorn/data/models/page");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
+const { get_help_markup } = require("../help/index.js");
 
 const router = new Router();
 module.exports = router;
@@ -251,9 +252,9 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { topic } = req.params;
-    //res.set("Page-Title", `Help`);
+    const { markup, title } = await get_help_markup(topic, req.query);
 
-    res.sendWrap(req.__(`Help`), { above: ["Help is on the way!"] });
+    res.sendWrap(`Help: ${title}`, { above: [markup] });
   })
 );
 
