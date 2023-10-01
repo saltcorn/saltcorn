@@ -1,0 +1,9 @@
+In the constraint formula... Table name
+{{table.name}}
+
+In scope:
+
+{{#each table.fields}}
+  - `{{this.name}}`
+  {{$ "this.pretty_type"}}
+{{/each}}
