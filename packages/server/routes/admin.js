@@ -1688,7 +1688,7 @@ router.get(
                         class: "form-check-input",
                         name: "useDocker",
                         id: "dockerCheckboxId",
-                        hidden: builderSettings.useDocker !== "on",
+                        hidden: builderSettings.androidPlatform !== "on",
                         checked: builderSettings.useDocker === "on",
                       })
                     )
@@ -1836,7 +1836,6 @@ router.get(
                         id: "autoPublLoginId",
                         class: "form-check-input me-2",
                         name: "autoPublicLogin",
-                        value: "autoPublicLogin",
                         checked: builderSettings.autoPublicLogin === "on",
                       }),
                       label(
