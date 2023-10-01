@@ -1,7 +1,7 @@
-In the constraint formula... Table name
-{{table.name}}
+In the constraint formula... Table name 
 
-In scope:
+In scope (fields from table
+{{table.name}}):
 
 {{#each table.fields}}
   - `{{this.name}}`

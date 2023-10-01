@@ -16,7 +16,6 @@ const get_md_file = async (topic) => {
 
 //https://gist.github.com/asselin/2762936
 Handlebars.registerHelper("$", function (expr) {
-  console.log(expr);
   if (arguments.length < 2)
     throw new Error("Handlerbars Helper 'arrayaccess' needs 1 parameter");
   // eslint-disable-next-line
