@@ -1380,7 +1380,7 @@ router.get(
             link(`/table/add-constraint/${id}/Index`, req.__("Index")),
             a(
               {
-                href: `javascript:ajax_modal('/admin/help/table-constraints?table=${table.id}')`,
+                href: `javascript:ajax_modal('/admin/help/Table%20constraints?table=${table.name}')`,
               },
               i({ class: "fas fa-question-circle ms-1" })
             ),
