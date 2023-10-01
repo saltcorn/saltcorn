@@ -1378,6 +1378,12 @@ router.get(
             link(`/table/add-constraint/${id}/Formula`, req.__("Formula")),
             " | ",
             link(`/table/add-constraint/${id}/Index`, req.__("Index")),
+            a(
+              {
+                href: `javascript:ajax_modal('/admin/help/table-constraints?table=${table.id}')`,
+              },
+              i({ class: "fas fa-question-circle ms-1" })
+            ),
           ],
         },
       ],

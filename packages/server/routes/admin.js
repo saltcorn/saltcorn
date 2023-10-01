@@ -242,6 +242,22 @@ router.get(
 );
 
 /**
+ * @name get/send-test-email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/help/:topic",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { topic } = req.params;
+    //res.set("Page-Title", `Help`);
+
+    res.sendWrap(req.__(`Help`), { above: ["Help is on the way!"] });
+  })
+);
+
+/**
  * @name get/backup
  * @function
  * @memberof module:routes/admin~routes/adminRouter
