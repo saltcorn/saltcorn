@@ -873,13 +873,18 @@ const mkFormRowForField =
   };
 
 const mkSubLabelAndHelp = (hdr: any) => {
-  const helpLink = ({ topic }: any) =>
-    a(
+  const helpLink = ({ topic, context }: any) => {
+    let qs = "";
+    Object.keys(context).forEach((k) => {
+      qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
+    });
+    return a(
       {
-        href: `javascript:ajax_modal('/admin/help/${topic}')`,
+        href: `javascript:ajax_modal('/admin/help/${topic}?${qs}')`,
       },
       i({ class: "fas fa-question-circle ms-1" })
     );
+  };
   return [
     hdr.sublabel && i(text(hdr.sublabel)),
     hdr.help && hdr.sublabel && helpLink(hdr.help),
