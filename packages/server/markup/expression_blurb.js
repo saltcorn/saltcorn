@@ -65,14 +65,22 @@ const colorExamples = (type, fields) => {
 const stringExamples = (type, fields) => {
   const boolFields = fields.filter((f) => f.type && f.type.name === "Bool");
   const strFields = fields.filter((f) => f.type && f.type.name === "String");
+  const intFields = fields.filter((f) => f.type && f.type.name === "Integer");
   const exs = [`"Hello world!"`];
   if (boolFields.length > 0) {
     const b = is.one_of(boolFields).generate();
     exs.push(`${b.name} ? "Squish" : "Squash"`);
   }
   if (strFields.length > 0) {
+    const b1 = is.one_of(strFields).generate();
+    exs.push(`${b1.name}`);
     const b = is.one_of(strFields).generate();
     exs.push(`${b.name}.toUpperCase()`);
+  }
+  if (strFields.length > 0 && intFields.length > 0) {
+    const sf = is.one_of(strFields).generate();
+    const intf = is.one_of(intFields).generate();
+    exs.push("`${" + sf.name + "} ${" + intf.name + "}`");
   }
   return exs;
 };
