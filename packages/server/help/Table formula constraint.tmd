@@ -4,6 +4,11 @@ valid and will not be accepted in the table. If you are editing an existing row
 then the edit will not be accepted. The supplied error message text will be shown 
 to the user. 
 
+Some examples: 
+
+{{# for (const fml of table.getFormulaExamples("Bool")) { }} * `{{= fml}}`
+{{# } }}
+
 This formula can use any of the fields in table {{= table.name }} as variables:
 
 | Field | Variable name | Type |
@@ -12,7 +17,24 @@ This formula can use any of the fields in table {{= table.name }} as variables:
 {{# } }}
 
 
-Some examples: 
 
-{{# for (const fml of table.getFormulaExamples("Bool")) { }} * `{{= fml}}`
+
+{{# if(table.fields.some(f=>f.is_fkey)) { }}
+
+You can also use join fields on related tables. These are accessed with the dot object access 
+notation, in the form:
+
+```
+{key field}.{field on referenced table}
+```
+
+The first-order join fields you can access are:
+
+{{# for (const field of table.fields.filter(f=>f.is_fkey && f.reftable_name)) { }}
+{{#  const reftable = Table.findOne( field.reftable_name); }}
+* Through {{=field.label}} key field: {{= table.fields.map(jf=>`\`${field.name}.${jf.name}\``).join(", ") }}
+
+
+{{# } }}
+
 {{# } }}

@@ -252,7 +252,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { topic } = req.params;
-    const { markup } = await get_help_markup(topic, req.query);
+    const { markup } = await get_help_markup(topic, req.query, req);
 
     res.sendWrap(`Help: ${topic}`, { above: [markup] });
   })
