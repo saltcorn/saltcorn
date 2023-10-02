@@ -340,7 +340,20 @@ function ajax_modal(url, opts = {}) {
         $("body").css("overflow", "");
       });
     },
+    ...(opts.onError
+      ? {
+          error: opts.onError,
+        }
+      : {}),
   });
+}
+
+function selectVersionError(res, btnId) {
+  notifyAlert({
+    type: "danger",
+    text: res.responseJSON?.error || "unknown error",
+  });
+  restore_old_button(btnId);
 }
 
 function saveAndContinue(e, k) {
