@@ -6,7 +6,7 @@ const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 const get_md_file = async (topic) => {
   try {
-    const fp = require.resolve(`./${File.normalise(topic)}.hmd`);
+    const fp = require.resolve(`./${File.normalise(topic)}.tmd`);
     const fileBuf = await fs.readFile(fp);
     return fileBuf.toString();
   } catch (e) {
