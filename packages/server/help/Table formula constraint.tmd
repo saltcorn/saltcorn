@@ -10,3 +10,9 @@ This formula can use any of the fields in table {{= table.name }} as variables:
 | ----- | ------------- | ---- |
 {{# for (const field of table.fields) { }} | {{= field.label }} | `{{= field.name }}` | {{= field.pretty_type }} | 
 {{# } }}
+
+
+Some examples: 
+
+{{# for (const fml of table.getFormulaExamples("Bool")) { }} * `{{= fml}}`
+{{# } }}

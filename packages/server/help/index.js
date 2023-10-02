@@ -28,7 +28,6 @@ const get_help_markup = async (topic, query) => {
   if (!mdTemplate) return { markup: "Topic not found" };
   const template = _.template(mdTemplate);
   const mdTopic = template(context);
-  console.log(mdTopic);
   const markup = md.render(mdTopic);
   return { markup };
 };
