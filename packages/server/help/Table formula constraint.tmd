@@ -28,7 +28,7 @@ notation, in the form:
 {key field}.{field on referenced table}
 ```
 
-The first-order join fields you can access are:
+The first-order join fields you can use in the constraint formula are:
 
 {{# for (const field of table.fields.filter(f=>f.is_fkey && f.reftable_name)) { }}
 {{#  const reftable = Table.findOne( field.reftable_name); }}
@@ -36,5 +36,8 @@ The first-order join fields you can access are:
 
 
 {{# } }}
+
+If you use join fields, Saltcorn is not able to create a constraint in the SQL database. In that case, it will not check existing 
+rows, and it will also not be able to enforce constraints involving the primary key value on newly created rows.
 
 {{# } }}
