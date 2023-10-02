@@ -105,6 +105,7 @@ const Page = require("@saltcorn/data/models/page");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
+const { get_help_markup } = require("../help/index.js");
 
 const router = new Router();
 module.exports = router;
@@ -238,6 +239,22 @@ router.get(
     }
 
     res.redirect("/admin/email");
+  })
+);
+
+/**
+ * @name get/send-test-email
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/help/:topic",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { topic } = req.params;
+    const { markup } = await get_help_markup(topic, req.query, req);
+
+    res.sendWrap(`Help: ${topic}`, { above: [markup] });
   })
 );
 

@@ -461,7 +461,7 @@ const fieldFlow = (req) =>
                   html: expressionBlurb(
                     context.type,
                     context.stored,
-                    fields,
+                    table,
                     req
                   ),
                 },

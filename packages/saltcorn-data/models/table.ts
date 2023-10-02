@@ -82,6 +82,7 @@ import type {
   JoinFieldOption,
   RelationOption,
 } from "@saltcorn/types/base_types";
+import { get_formula_examples } from "./internal/table_helper";
 
 /**
  * Transponce Objects
@@ -3101,6 +3102,13 @@ class Table implements AbstractTable {
       }
     }
     return result;
+  }
+
+  getFormulaExamples(typename: string) {
+    return get_formula_examples(
+      typename,
+      this.fields.filter((f) => !f.calculated)
+    );
   }
 }
 
