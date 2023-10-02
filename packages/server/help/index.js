@@ -1,6 +1,6 @@
 const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
-const Handlebars = require("handlebars");
+const _ = require("underscore");
 const fs = require("fs").promises;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
@@ -14,15 +14,10 @@ const get_md_file = async (topic) => {
   }
 };
 
-//https://gist.github.com/asselin/2762936
-Handlebars.registerHelper("$", function (expr) {
-  if (arguments.length < 2)
-    throw new Error("Handlerbars Helper 'arrayaccess' needs 1 parameter");
-  // eslint-disable-next-line
-  with (this) {
-    return eval(expr);
-  }
-});
+_.templateSettings = {
+  evaluate: /\{\{#(.+?)\}\}/g,
+  interpolate: /\{\{=(.+?)\}\}/g,
+};
 
 const get_help_markup = async (topic, query) => {
   const context = {};
@@ -31,10 +26,9 @@ const get_help_markup = async (topic, query) => {
   }
   const mdTemplate = await get_md_file(topic);
   if (!mdTemplate) return { markup: "Topic not found" };
-  const template = Handlebars.compile(mdTemplate, {
-    allowProtoMethodsByDefault: true,
-  });
+  const template = _.template(mdTemplate);
   const mdTopic = template(context);
+  console.log(mdTopic);
   const markup = md.render(mdTopic);
   return { markup };
 };

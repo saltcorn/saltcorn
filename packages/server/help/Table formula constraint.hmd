@@ -4,16 +4,9 @@ valid and will not be accepted in the table. If you are editing an existing row
 then the edit will not be accepted. The supplied error message text will be shown 
 to the user. 
 
-This formula can use any of the fields in table {{table.name}} as variables:
+This formula can use any of the fields in table {{= table.name }} as variables:
 
 | Field | Variable name | Type |
 | ----- | ------------- | ---- |
-{{#each table.fields}}
-| {{this.label}} | `{{this.name}}` | {{$ "this.pretty_type"}} |
-{{/each}}
-
-Use the field variable name directly as a variable in the formula. Some examples:
-
-{{#each table.getFormulaExamples("Boolean")}}
-* {{this}}
-{{/each}}
+{{# for (const field of table.fields) { }} | {{= field.label }} | `{{= field.name }}` | {{= field.pretty_type }} | 
+{{# } }}
