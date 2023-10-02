@@ -32,7 +32,7 @@ The first-order join fields you can use in the constraint formula are:
 
 {{# for (const field of table.fields.filter(f=>f.is_fkey && f.reftable_name)) { }}
 {{#  const reftable = Table.findOne( field.reftable_name); }}
-* Through {{=field.label}} key field: {{= table.fields.map(jf=>`\`${field.name}.${jf.name}\``).join(", ") }}
+* Through {{=field.label}} key field: {{= reftable.fields.map(jf=>`\`${field.name}.${jf.name}\``).join(", ") }}
 
 
 {{# } }}
