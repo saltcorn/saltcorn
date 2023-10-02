@@ -33,6 +33,7 @@ export const instanceOfSuccessMsg = (object: any): object is SuccessMessage => {
 export type Type = {
   name: string;
   sql_name?: string;
+  js_type?: string;
   readFromDB?: (arg0: any) => any;
   read?: (arg0: any, arg1?: any) => any;
   readFromFormRecord?: Function;
