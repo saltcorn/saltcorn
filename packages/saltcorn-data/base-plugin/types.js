@@ -353,6 +353,8 @@ const string = {
   name: "String",
   /** @type {string} */
   sql_name: "text",
+  js_type: "string",
+
   /**
    * @param {object} param
    * @returns {object}
@@ -960,6 +962,8 @@ const int = {
   name: "Integer",
   /** @type {string} */
   sql_name: "int",
+  js_type: "number",
+
   /**
    * @param {object} opts
    * @param {number} opts.min
@@ -1133,6 +1137,8 @@ const color = {
   name: "Color",
   /** @type {string} */
   sql_name: "text",
+  js_type: "string",
+
   /**
    * @returns {function}
    */
@@ -1214,6 +1220,8 @@ const float = {
   name: "Float",
   /** @type {string} */
   sql_name: "double precision",
+  js_type: "number",
+
   /**
    * @param {object} opts
    * @param {number} opts.min
@@ -1334,6 +1342,8 @@ const date = {
   name: "Date",
   /** @type {string} */
   sql_name: "timestamptz",
+  js_type: "Date",
+
   /**
    * @returns {function}
    */
@@ -1530,6 +1540,7 @@ const bool = {
   name: "Bool",
   /** @type {string} */
   sql_name: "boolean",
+  js_type: "boolean",
   /**
    * @returns {function}
    */
