@@ -1,9 +1,15 @@
-In the constraint formula... Table name 
+The constraint formula should be a JavaScript expression which evaluates to a 
+boolean (true or false). If the formula evaluates to false then the row is not
+valid and will not be accepted in the table. If you are editing an existing row 
+then the edit will not be accepted. The supplied error message text will be shown 
+to the user. 
 
-In scope (fields from table
-{{table.name}}):
+This formula can use any of the fields in table {{table.name}} as variables:
 
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
 {{#each table.fields}}
-  - `{{this.name}}`
-  {{$ "this.pretty_type"}}
+| {{this.label}} | `{{this.name}}` | {{$ "this.pretty_type"}} |
 {{/each}}
+
+Use the field variable name directly as a variable in the formula. Some examples:
