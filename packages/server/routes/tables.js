@@ -1447,7 +1447,7 @@ const constraintForm = (req, table, fields, type) => {
           {
             name: "errormsg",
             label: "Error message",
-            sublabel: "Shown the user if joint uniqueness is violated",
+            sublabel: "Shown to the user if joint uniqueness is violated",
             type: "String",
           },
         ],
