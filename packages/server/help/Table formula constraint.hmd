@@ -13,3 +13,7 @@ This formula can use any of the fields in table {{table.name}} as variables:
 {{/each}}
 
 Use the field variable name directly as a variable in the formula. Some examples:
+
+{{#each table.getFormulaExamples("Boolean")}}
+* {{this}}
+{{/each}}
