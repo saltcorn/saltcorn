@@ -1,3 +1,23 @@
-Hello from the help markdown file!
+Table constraints in Saltcorn are used to impose constraints on the data that
+can be held in individual rows or to alter the performance characteristics of
+the table. 
 
-This is _markdown_, it is the best!
+There are three types of table constraints: 
+
+A __unique constraint__ can be used to impose a restriction that a combination 
+of fields is unique
+across the whole table. For instance, if you have a table for people and you
+mark `name` and `age` as jointly unique using a unique constraint then you cannot
+have two rows with the same name and age; but you could have two rows with the
+same name. 
+
+A __formula constraint__ is used to impose restrictions on the content of
+each row which can use several Fields. For instance if you have from and to
+date fields, you can use the formula constraint to ensure that the to date is
+always after the from date.
+
+An __index__ does not put any limitations or constraints
+on the table data. It adds an index to the table to accelerate queries from
+individual fields, at the expense of using more disk space. You should put an
+index on fields in large tables that are frequently queried either through
+filters or aggregations.
