@@ -19,7 +19,7 @@ const get_md_file = async (topic) => {
 
 _.templateSettings = {
   evaluate: /\{\{#(.+?)\}\}/g,
-  interpolate: /\{\{=(.+?)\}\}/g,
+  interpolate: /\{\{([^#].+?)\}\}/g,
 };
 
 const get_help_markup = async (topic, query, req) => {

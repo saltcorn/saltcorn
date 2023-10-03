@@ -6,14 +6,14 @@ to the user. 
 
 Some examples: 
 
-{{# for (const fml of table.getFormulaExamples("Bool")) { }} * `{{= fml}}`
+{{# for (const fml of table.getFormulaExamples("Bool")) { }} * `{{ fml}}`
 {{# } }}
 
-This formula can use any of the fields in table {{= table.name }} as variables:
+This formula can use any of the fields in table {{ table.name }} as variables:
 
 | Field | Variable name | Type |
 | ----- | ------------- | ---- |
-{{# for (const field of table.fields) { }} | {{= field.label }} | `{{= field.name }}` | {{= field.pretty_type }} | 
+{{# for (const field of table.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
 {{# } }}
 
 
@@ -32,7 +32,7 @@ The first-order join fields you can use in the constraint formula are:
 
 {{# for (const field of table.fields.filter(f=>f.is_fkey && f.reftable_name)) { }}
 {{#  const reftable = Table.findOne( field.reftable_name); }}
-* Through {{=field.label}} key field: {{= reftable.fields.map(jf=>`\`${field.name}.${jf.name}\``).join(", ") }}
+* Through {{field.label}} key field: {{ reftable.fields.map(jf=>`\`${field.name}.${jf.name}\``).join(", ") }}
 
 
 {{# } }}
