@@ -3,7 +3,8 @@
  * @module common
  */
 // todo need to be reorganized
-const {dump} = require("js-yaml");
+const { dump } = require("js-yaml");
+
 /**
  * Execute function for specified tenant
  * @param {object} ten - specified tenant
@@ -56,11 +57,12 @@ function sleep(ms) {
  * @param filename - absolute path to file
  * @returns {null|string}
  */
-function readFileSync(filename){
-  const path = require('path'), fs = require('fs');
+function readFileSync(filename) {
+  const path = require("path"),
+    fs = require("fs");
   try {
     //let p = path.join(__dirname, filename);
-    let str = fs.readFileSync(filename, 'utf8');
+    let str = fs.readFileSync(filename, "utf8");
     // let str = fs.readFileSync(p, {encoding: 'utf8'});
     console.log(str);
     return str;
@@ -89,8 +91,24 @@ const print_it = (results, json) => {
  */
 const print_table = (results, properties, json) => {
   if (json) console.log(JSON.stringify(results, null, 2));
-  else
-    console.table(results, properties);
+  else console.table(results, properties);
+};
+
+/**
+ * make schema reset and restore the backup file
+ * @param {string} backupFile path to a backupfile with test data
+ */
+const prep_test_db = async (backupFile) => {
+  const fs = require("fs");
+  if (!fs.existsSync(backupFile))
+    throw new Error(`backup file '${backupFile}' does not exist`);
+  const load_plugins = require("@saltcorn/server/load_plugins");
+  await require("@saltcorn/data/db/reset_schema")();
+  await load_plugins.loadAllPlugins();
+  const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
+  const { restore } = require("@saltcorn/admin-models/models/backup");
+  const err = await restore(backupFile, savePlugin);
+  if (err) console.log(`warning: ${err}`);
 };
 
 module.exports = {
@@ -101,4 +119,5 @@ module.exports = {
   readFileSync,
   print_it,
   print_table,
+  prep_test_db,
 };
