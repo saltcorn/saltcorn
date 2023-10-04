@@ -472,3 +472,17 @@ div.unread-notify {
   cursor: pointer;
   text-decoration: underline;
 }
+
+table.help-md thead {
+  border-bottom: 1px solid black;
+}
+
+table.help-md {
+  margin-bottom: 1em;
+}
+
+table.help-md td:nth-child(2),
+table.help-md th:nth-child(2) {
+  padding-left: 10px;
+  padding-right: 10px;
+}
