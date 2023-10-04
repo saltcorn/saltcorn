@@ -885,11 +885,11 @@ const mkSubLabelAndHelp = (hdr: any) => {
       i({ class: "fas fa-question-circle ms-1" })
     );
   };
-  return [
-    hdr.sublabel && i(text(hdr.sublabel)),
-    hdr.help && hdr.sublabel && helpLink(hdr.help),
-    hdr.help && !hdr.sublabel && "Help" + helpLink(hdr.help),
-  ];
+  return (
+    (hdr.sublabel ? i(text(hdr.sublabel)) : "") +
+    (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "") +
+    (hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
+  );
 };
 
 /**
