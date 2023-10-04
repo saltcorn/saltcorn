@@ -136,6 +136,7 @@ const configuration_workflow = (req) =>
             req,
             has_click_to_edit: true,
             has_align: true,
+            has_showif: true,
           });
           return new Form({
             blurb: req.__("Specify the fields in the table to show"),

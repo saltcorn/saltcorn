@@ -289,7 +289,7 @@ const view_linker = (
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return view_label;
-    return eval_expression(view_label, row);
+    return eval_expression(view_label, row, user);
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
@@ -500,333 +500,349 @@ const get_viewable_fields = (
   __
 ) => {
   const dropdown_actions = [];
-  const tfields = flapMapish(columns, (column, index) => {
-    const role = req.user ? req.user.role_id : 100;
-    const user_id = req.user ? req.user.id : null;
-    const setWidth = column.col_width
-      ? { width: `${column.col_width}${column.col_width_units}` }
-      : {};
-    setWidth.align =
-      !column.alignment || column.alignment === "Default"
-        ? undefined
-        : column.alignment.toLowerCase();
-    if (column.type === "FormulaValue") {
-      return {
-        ...setWidth,
-        label: column.header_label ? text(__(column.header_label)) : "",
-        key: (r) => text(eval_expression(column.formula, r)),
+  const checkShowIf = (tFieldGenF) => (column, index) => {
+    const tfield = tFieldGenF(column, index);
+    if (column.showif) {
+      const oldKeyF = tfield.key;
+      if (typeof oldKeyF !== "function") return tfield;
+      const newKeyF = (r) => {
+        if (eval_expression(column.showif, r, req.user)) return oldKeyF(r);
+        else return "";
       };
-    } else if (column.type === "Action") {
-      const action_col = {
-        ...setWidth,
-        label: column.header_label ? text(__(column.header_label)) : "",
-        key: (r) => {
-          if (action_requires_write(column.action_name)) {
-            if (table.min_role_write < role && !table.is_owner(req.user, r))
-              return "";
-          }
-          const url = action_url(
-            viewname,
-            table,
-            column.action_name,
-            r,
-            column.action_name,
-            "action_name",
-            column.confirm,
-            index
-          );
-          const label = column.action_label_formula
-            ? eval_expression(column.action_label, r)
-            : __(column.action_label) || __(column.action_name);
-          if (url.javascript)
-            return a(
-              {
-                href: "javascript:" + url.javascript,
-                class: column.in_dropdown
-                  ? "dropdown-item"
-                  : column.action_style === "btn-link"
-                  ? ""
-                  : `btn ${column.action_style || "btn-primary"} ${
-                      column.action_size || ""
-                    }`,
-              },
-              label
-            );
-          else
-            return post_btn(url, label, req.csrfToken(), {
-              small: true,
-              ajax: true,
-              reload_on_done: true,
-              confirm: column.confirm,
-              btnClass: column.in_dropdown
-                ? "dropdown-item"
-                : column.action_style || "btn-primary",
-              req,
-            });
-        },
-      };
-      if (column.in_dropdown) {
-        dropdown_actions.push(action_col);
-        return false;
-      } else return action_col;
-    } else if (column.type === "ViewLink") {
-      if (!column.view) return;
-      const r = view_linker(column, fields, __, isWeb(req), req.user);
-      if (column.header_label) r.label = text(__(column.header_label));
-      Object.assign(r, setWidth);
-      if (column.in_dropdown) {
-        dropdown_actions.push(r);
-        return false;
-      } else return r;
-    } else if (column.type === "Link") {
-      const r = make_link(column, fields, __);
-      if (column.header_label) r.label = text(__(column.header_label));
-      Object.assign(r, setWidth);
-      if (column.in_dropdown) {
-        dropdown_actions.push(r);
-        return false;
-      } else return r;
-    } else if (column.type === "JoinField") {
-      //console.log(column);
-      let fvrun;
-      let refNm, targetNm, through, key, type;
-      if (column.join_field.includes("->")) {
-        const [relation, target] = column.join_field.split("->");
-        const [ontable, ref] = relation.split(".");
-        targetNm = target;
-        refNm = ref;
-        key = `${ref}_${ontable}_${target}`;
-      } else {
-        const keypath = column.join_field.split(".");
-        refNm = keypath[0];
-        targetNm = keypath[keypath.length - 1];
-        key = keypath.join("_");
-      }
-      if (column.field_type) type = getState().types[column.field_type];
-      if (
-        column.join_fieldview &&
-        type?.fieldviews?.[column.join_fieldview]?.expandColumns
-      ) {
-        const reffield = fields.find((f) => f.name === refNm);
-        const reftable = Table.findOne({
-          name: reffield.reftable_name,
-        });
-        const field = reftable.fields.find((f) => f.name === targetNm);
-        return type.fieldviews[column.join_fieldview].expandColumns(
-          field,
-          {
-            ...field.attributes,
-            ...column,
-          },
-          column
-        );
-      }
-      fvrun = {
-        ...setWidth,
-        label: column.header_label
-          ? text(__(column.header_label))
-          : text(targetNm),
-        row_key: key,
-        key:
-          column.join_fieldview &&
-          type &&
-          type.fieldviews &&
-          type.fieldviews[column.join_fieldview]
-            ? (row) =>
-                type.fieldviews[column.join_fieldview].run(
-                  row[key],
-                  req,
-                  column
-                )
-            : (row) => text(row[key]),
-        // sortlink: `javascript:sortby('${text(targetNm)}')`
-      };
-      if (column.click_to_edit) {
-        const reffield = fields.find((f) => f.name === refNm);
-
-        const oldkey =
-          typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
-        const newkey = (row) =>
-          div(
-            {
-              "data-inline-edit-field": refNm,
-              "data-inline-edit-ajax": "true",
-              "data-inline-edit-current": row[refNm],
-              "data-inline-edit-current-label": row[key],
-              "data-inline-edit-dest-url": `/api/${table.name}/${
-                row[table.pk_name]
-              }`,
-              "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
-            },
-            span({ class: "current" }, oldkey(row)),
-            i({ class: "editicon fas fa-edit ms-1" })
-          );
-        fvrun.key = newkey;
-      }
-      return fvrun;
-    } else if (column.type === "Aggregation") {
-      let table, fld, through;
-      if (column.agg_relation.includes("->")) {
-        let restpath;
-        [through, restpath] = column.agg_relation.split("->");
-        [table, fld] = restpath.split(".");
-      } else {
-        [table, fld] = column.agg_relation.split(".");
-      }
-      const targetNm =
-        column.targetNm ||
-        db.sqlsanitize(
-          (
-            column.stat.replace(" ", "") +
-              "_" +
-              table +
-              "_" +
-              fld +
-              "_" +
-              column.agg_field.split("@")[0] +
-              "_" +
-              column.aggwhere || ""
-          ).toLowerCase()
-        );
-
-      let showValue = (value) => {
-        if (value === true || value === false)
-          return bool.fieldviews.show.run(value);
-        if (value instanceof Date) return date.fieldviews.show.run(value);
-        return value?.toString ? value.toString() : value;
-      };
-      if (column.agg_fieldview && column.agg_field?.includes("@")) {
-        const tname = column.agg_field.split("@")[1];
-        const type = getState().types[tname];
-        if (type?.fieldviews[column.agg_fieldview])
-          showValue = (x) =>
-            type.fieldviews[column.agg_fieldview].run(x, req, column);
-      }
-
-      let key = (r) => {
-        const value = r[targetNm];
-        return showValue(value);
-      };
-      if (column.stat.toLowerCase() === "array_agg")
-        key = (r) =>
-          Array.isArray(r[targetNm])
-            ? r[targetNm].map((v) => showValue(v)).join(", ")
-            : "";
-      return {
-        ...setWidth,
-        label: column.header_label
-          ? text(column.header_label)
-          : text(column.stat + " " + table),
-        key,
-        // sortlink: `javascript:sortby('${text(targetNm)}')`
-      };
-    } else if (column.type === "Field") {
-      //console.log(column);
-      let f = fields.find((fld) => fld.name === column.field_name);
-      let f_with_val = f;
-      if (f && f.attributes && f.attributes.localized_by) {
-        const locale = req.getLocale();
-        const localized_fld_nm = f.attributes.localized_by[locale];
-        f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
-      }
-      const isNum = f && f.type && f.type.name === "Integer";
-      if (isNum && !setWidth.align) setWidth.align = "right";
-      let fvrun;
-      if (
-        column.fieldview &&
-        f?.type?.fieldviews?.[column.fieldview]?.expandColumns
-      ) {
-        fvrun = f.type.fieldviews[column.fieldview].expandColumns(
-          f,
-          {
-            ...f.attributes,
-            ...column.configuration,
-          },
-          column
-        );
-      } else
-        fvrun = f && {
+      tfield.key = newKeyF;
+    }
+    return tfield;
+  };
+  const tfields = flapMapish(
+    columns,
+    checkShowIf((column, index) => {
+      const role = req.user ? req.user.role_id : 100;
+      const user_id = req.user ? req.user.id : null;
+      const setWidth = column.col_width
+        ? { width: `${column.col_width}${column.col_width_units}` }
+        : {};
+      setWidth.align =
+        !column.alignment || column.alignment === "Default"
+          ? undefined
+          : column.alignment.toLowerCase();
+      if (column.type === "FormulaValue") {
+        return {
           ...setWidth,
-          label: headerLabelForName(column, f, req, __),
-          row_key: f_with_val.name,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) => text(eval_expression(column.formula, r, req.user)),
+        };
+      } else if (column.type === "Action") {
+        const action_col = {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) => {
+            if (action_requires_write(column.action_name)) {
+              if (table.min_role_write < role && !table.is_owner(req.user, r))
+                return "";
+            }
+            const url = action_url(
+              viewname,
+              table,
+              column.action_name,
+              r,
+              column.action_name,
+              "action_name",
+              column.confirm,
+              index
+            );
+            const label = column.action_label_formula
+              ? eval_expression(column.action_label, r, req.user)
+              : __(column.action_label) || __(column.action_name);
+            if (url.javascript)
+              return a(
+                {
+                  href: "javascript:" + url.javascript,
+                  class: column.in_dropdown
+                    ? "dropdown-item"
+                    : column.action_style === "btn-link"
+                    ? ""
+                    : `btn ${column.action_style || "btn-primary"} ${
+                        column.action_size || ""
+                      }`,
+                },
+                label
+              );
+            else
+              return post_btn(url, label, req.csrfToken(), {
+                small: true,
+                ajax: true,
+                reload_on_done: true,
+                confirm: column.confirm,
+                btnClass: column.in_dropdown
+                  ? "dropdown-item"
+                  : column.action_style || "btn-primary",
+                req,
+              });
+          },
+        };
+        if (column.in_dropdown) {
+          dropdown_actions.push(action_col);
+          return false;
+        } else return action_col;
+      } else if (column.type === "ViewLink") {
+        if (!column.view) return;
+        const r = view_linker(column, fields, __, isWeb(req), req.user);
+        if (column.header_label) r.label = text(__(column.header_label));
+        Object.assign(r, setWidth);
+        if (column.in_dropdown) {
+          dropdown_actions.push(r);
+          return false;
+        } else return r;
+      } else if (column.type === "Link") {
+        const r = make_link(column, fields, __);
+        if (column.header_label) r.label = text(__(column.header_label));
+        Object.assign(r, setWidth);
+        if (column.in_dropdown) {
+          dropdown_actions.push(r);
+          return false;
+        } else return r;
+      } else if (column.type === "JoinField") {
+        //console.log(column);
+        let fvrun;
+        let refNm, targetNm, through, key, type;
+        if (column.join_field.includes("->")) {
+          const [relation, target] = column.join_field.split("->");
+          const [ontable, ref] = relation.split(".");
+          targetNm = target;
+          refNm = ref;
+          key = `${ref}_${ontable}_${target}`;
+        } else {
+          const keypath = column.join_field.split(".");
+          refNm = keypath[0];
+          targetNm = keypath[keypath.length - 1];
+          key = keypath.join("_");
+        }
+        if (column.field_type) type = getState().types[column.field_type];
+        if (
+          column.join_fieldview &&
+          type?.fieldviews?.[column.join_fieldview]?.expandColumns
+        ) {
+          const reffield = fields.find((f) => f.name === refNm);
+          const reftable = Table.findOne({
+            name: reffield.reftable_name,
+          });
+          const field = reftable.fields.find((f) => f.name === targetNm);
+          return type.fieldviews[column.join_fieldview].expandColumns(
+            field,
+            {
+              ...field.attributes,
+              ...column,
+            },
+            column
+          );
+        }
+        fvrun = {
+          ...setWidth,
+          label: column.header_label
+            ? text(__(column.header_label))
+            : text(targetNm),
+          row_key: key,
           key:
-            column.fieldview && f.type === "File"
+            column.join_fieldview &&
+            type &&
+            type.fieldviews &&
+            type.fieldviews[column.join_fieldview]
               ? (row) =>
-                  row[f.name] &&
-                  getState().fileviews[column.fieldview].run(
-                    row[f.name],
-                    row[`${f.name}__filename`],
+                  type.fieldviews[column.join_fieldview].run(
+                    row[key],
+                    req,
                     column
                   )
-              : column.fieldview &&
-                f.type.fieldviews &&
-                f.type.fieldviews[column.fieldview]
-              ? (row) =>
-                  f.type.fieldviews[column.fieldview].run(
-                    row[f_with_val.name],
-                    req,
-                    { ...f.attributes, ...column.configuration }
-                  )
-              : isShow
-              ? f.type.showAs
-                ? (row) => f.type.showAs(row[f_with_val.name])
-                : (row) => text(row[f_with_val.name])
-              : f.listKey,
-          sortlink:
-            !f.calculated || f.stored
-              ? sortlinkForName(f.name, req, viewname, statehash)
-              : undefined,
+              : (row) => text(row[key]),
+          // sortlink: `javascript:sortby('${text(targetNm)}')`
         };
-      if (column.click_to_edit) {
-        const updateKey = (fvr, column_key) => {
+        if (column.click_to_edit) {
+          const reffield = fields.find((f) => f.name === refNm);
+
           const oldkey =
-            typeof fvr.key === "function" ? fvr.key : (r) => r[fvr.key];
-          const doSetKey =
-            (column.fieldview === "subfield" ||
-              column.fieldview === "keys_expand_columns") &&
-            column_key;
-          const schema =
-            doSetKey && f.attributes?.hasSchema
-              ? (f.attributes.schema || []).find((s) => s.key === column_key)
-              : undefined;
-          const newkey = (row) => {
-            if (role <= table.min_role_write || table.is_owner(req.user, row))
-              return div(
-                {
-                  "data-inline-edit-field": doSetKey
-                    ? `${column.field_name}.${column_key}`
-                    : column.field_name,
-                  "data-inline-edit-ajax": "true",
-                  "data-inline-edit-key": doSetKey
-                    ? `${column.field_name}.${column_key}`
-                    : undefined,
-                  "data-inline-edit-schema": schema
-                    ? encodeURIComponent(JSON.stringify(schema))
-                    : undefined,
-                  "data-inline-edit-current": doSetKey
-                    ? row[f.name]?.[column_key]
-                    : undefined,
-                  "data-inline-edit-dest-url": `/api/${table.name}/${
-                    row[table.pk_name]
-                  }`,
-                  "data-inline-edit-type": f?.type?.name,
-                },
-                span({ class: "current" }, oldkey(row)),
-                i({ class: "editicon fas fa-edit ms-1" })
-              );
-            else return oldkey(row);
-          };
-          fvr.key = newkey;
+            typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
+          const newkey = (row) =>
+            div(
+              {
+                "data-inline-edit-field": refNm,
+                "data-inline-edit-ajax": "true",
+                "data-inline-edit-current": row[refNm],
+                "data-inline-edit-current-label": row[key],
+                "data-inline-edit-dest-url": `/api/${table.name}/${
+                  row[table.pk_name]
+                }`,
+                "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
+              },
+              span({ class: "current" }, oldkey(row)),
+              i({ class: "editicon fas fa-edit ms-1" })
+            );
+          fvrun.key = newkey;
+        }
+        return fvrun;
+      } else if (column.type === "Aggregation") {
+        let table, fld, through;
+        if (column.agg_relation.includes("->")) {
+          let restpath;
+          [through, restpath] = column.agg_relation.split("->");
+          [table, fld] = restpath.split(".");
+        } else {
+          [table, fld] = column.agg_relation.split(".");
+        }
+        const targetNm =
+          column.targetNm ||
+          db.sqlsanitize(
+            (
+              column.stat.replace(" ", "") +
+                "_" +
+                table +
+                "_" +
+                fld +
+                "_" +
+                column.agg_field.split("@")[0] +
+                "_" +
+                column.aggwhere || ""
+            ).toLowerCase()
+          );
+
+        let showValue = (value) => {
+          if (value === true || value === false)
+            return bool.fieldviews.show.run(value);
+          if (value instanceof Date) return date.fieldviews.show.run(value);
+          return value?.toString ? value.toString() : value;
         };
-        if (Array.isArray(fvrun)) {
-          fvrun.forEach((fvr) => {
-            updateKey(fvr, fvr.row_key[1]);
-          });
-        } else updateKey(fvrun, column.key);
+        if (column.agg_fieldview && column.agg_field?.includes("@")) {
+          const tname = column.agg_field.split("@")[1];
+          const type = getState().types[tname];
+          if (type?.fieldviews[column.agg_fieldview])
+            showValue = (x) =>
+              type.fieldviews[column.agg_fieldview].run(x, req, column);
+        }
+
+        let key = (r) => {
+          const value = r[targetNm];
+          return showValue(value);
+        };
+        if (column.stat.toLowerCase() === "array_agg")
+          key = (r) =>
+            Array.isArray(r[targetNm])
+              ? r[targetNm].map((v) => showValue(v)).join(", ")
+              : "";
+        return {
+          ...setWidth,
+          label: column.header_label
+            ? text(column.header_label)
+            : text(column.stat + " " + table),
+          key,
+          // sortlink: `javascript:sortby('${text(targetNm)}')`
+        };
+      } else if (column.type === "Field") {
+        //console.log(column);
+        let f = fields.find((fld) => fld.name === column.field_name);
+        let f_with_val = f;
+        if (f && f.attributes && f.attributes.localized_by) {
+          const locale = req.getLocale();
+          const localized_fld_nm = f.attributes.localized_by[locale];
+          f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
+        }
+        const isNum = f && f.type && f.type.name === "Integer";
+        if (isNum && !setWidth.align) setWidth.align = "right";
+        let fvrun;
+        if (
+          column.fieldview &&
+          f?.type?.fieldviews?.[column.fieldview]?.expandColumns
+        ) {
+          fvrun = f.type.fieldviews[column.fieldview].expandColumns(
+            f,
+            {
+              ...f.attributes,
+              ...column.configuration,
+            },
+            column
+          );
+        } else
+          fvrun = f && {
+            ...setWidth,
+            label: headerLabelForName(column, f, req, __),
+            row_key: f_with_val.name,
+            key:
+              column.fieldview && f.type === "File"
+                ? (row) =>
+                    row[f.name] &&
+                    getState().fileviews[column.fieldview].run(
+                      row[f.name],
+                      row[`${f.name}__filename`],
+                      column
+                    )
+                : column.fieldview &&
+                  f.type.fieldviews &&
+                  f.type.fieldviews[column.fieldview]
+                ? (row) =>
+                    f.type.fieldviews[column.fieldview].run(
+                      row[f_with_val.name],
+                      req,
+                      { ...f.attributes, ...column.configuration }
+                    )
+                : isShow
+                ? f.type.showAs
+                  ? (row) => f.type.showAs(row[f_with_val.name])
+                  : (row) => text(row[f_with_val.name])
+                : f.listKey,
+            sortlink:
+              !f.calculated || f.stored
+                ? sortlinkForName(f.name, req, viewname, statehash)
+                : undefined,
+          };
+        if (column.click_to_edit) {
+          const updateKey = (fvr, column_key) => {
+            const oldkey =
+              typeof fvr.key === "function" ? fvr.key : (r) => r[fvr.key];
+            const doSetKey =
+              (column.fieldview === "subfield" ||
+                column.fieldview === "keys_expand_columns") &&
+              column_key;
+            const schema =
+              doSetKey && f.attributes?.hasSchema
+                ? (f.attributes.schema || []).find((s) => s.key === column_key)
+                : undefined;
+            const newkey = (row) => {
+              if (role <= table.min_role_write || table.is_owner(req.user, row))
+                return div(
+                  {
+                    "data-inline-edit-field": doSetKey
+                      ? `${column.field_name}.${column_key}`
+                      : column.field_name,
+                    "data-inline-edit-ajax": "true",
+                    "data-inline-edit-key": doSetKey
+                      ? `${column.field_name}.${column_key}`
+                      : undefined,
+                    "data-inline-edit-schema": schema
+                      ? encodeURIComponent(JSON.stringify(schema))
+                      : undefined,
+                    "data-inline-edit-current": doSetKey
+                      ? row[f.name]?.[column_key]
+                      : undefined,
+                    "data-inline-edit-dest-url": `/api/${table.name}/${
+                      row[table.pk_name]
+                    }`,
+                    "data-inline-edit-type": f?.type?.name,
+                  },
+                  span({ class: "current" }, oldkey(row)),
+                  i({ class: "editicon fas fa-edit ms-1" })
+                );
+              else return oldkey(row);
+            };
+            fvr.key = newkey;
+          };
+          if (Array.isArray(fvrun)) {
+            fvrun.forEach((fvr) => {
+              updateKey(fvr, fvr.row_key[1]);
+            });
+          } else updateKey(fvrun, column.key);
+        }
+        return fvrun;
       }
-      return fvrun;
-    }
-  }).filter((v) => !!v);
+    })
+  ).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
     tfields.push({
       label: req.__("Action"),
