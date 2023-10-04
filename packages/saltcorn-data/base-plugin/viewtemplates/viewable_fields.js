@@ -504,6 +504,7 @@ const get_viewable_fields = (
     const tfield = tFieldGenF(column, index);
     if (column.showif) {
       const oldKeyF = tfield.key;
+      if (typeof oldKeyF !== "function") return tfield;
       const newKeyF = (r) => {
         if (eval_expression(column.showif, r)) return oldKeyF(r);
         else return "";
