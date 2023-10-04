@@ -1514,6 +1514,8 @@ router.get(
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
     );
+    const builderSettings =
+      getState().getConfig("mobile_builder_settings") || {};
     send_admin_page({
       res,
       req,
@@ -1574,7 +1576,14 @@ router.get(
                             onClick: "showEntrySelect('view')",
                           },
                           div(
-                            { class: "nav-link active", id: "viewNavLinkID" },
+                            {
+                              class: `nav-link ${
+                                !builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                                  ? "active"
+                                  : ""
+                              }`,
+                              id: "viewNavLinkID",
+                            },
                             req.__("View")
                           )
                         ),
@@ -1584,7 +1593,14 @@ router.get(
                             onClick: "showEntrySelect('page')",
                           },
                           div(
-                            { class: "nav-link", id: "pageNavLinkID" },
+                            {
+                              class: `nav-link ${
+                                builderSettings.entryPointType === "page"
+                                  ? "active"
+                                  : ""
+                              }`,
+                              id: "pageNavLinkID",
+                            },
                             req.__("Page")
                           )
                         )
@@ -1592,25 +1608,54 @@ router.get(
                       // select entry-view
                       select(
                         {
-                          class: "form-select",
-                          name: "entryPoint",
+                          class: `form-select ${
+                            builderSettings.entryPointType === "page"
+                              ? "d-none"
+                              : ""
+                          }`,
+                          ...(!builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                            ? { name: "entryPoint" }
+                            : {}),
                           id: "viewInputID",
                         },
                         views
                           .map((view) =>
-                            option({ value: view.name }, view.name)
+                            option(
+                              {
+                                value: view.name,
+                                selected:
+                                  builderSettings.entryPointType === "view" &&
+                                  builderSettings.entryPoint === view.name,
+                              },
+                              view.name
+                            )
                           )
                           .join(",")
                       ),
                       // select entry-page
                       select(
                         {
-                          class: "form-select d-none",
+                          class: `form-select ${
+                            !builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                              ? "d-none"
+                              : ""
+                          }`,
+                          ...(builderSettings.entryPointType === "page"
+                            ? { name: "entryPoint" }
+                            : {}),
                           id: "pageInputID",
                         },
                         pages
                           .map((page) =>
-                            option({ value: page.name }, page.name)
+                            option(
+                              {
+                                value: page.name,
+                                selected:
+                                  builderSettings.entryPointType === "page" &&
+                                  builderSettings.entryPoint === page.name,
+                              },
+                              page.name
+                            )
                           )
                           .join("")
                       )
@@ -1631,6 +1676,7 @@ router.get(
                               name: "androidPlatform",
                               id: "androidCheckboxId",
                               onClick: "toggle_android_platform()",
+                              checked: builderSettings.androidPlatform === "on",
                             })
                           )
                         ),
@@ -1645,6 +1691,7 @@ router.get(
                               class: "form-check-input",
                               name: "iOSPlatform",
                               id: "iOSCheckboxId",
+                              checked: builderSettings.iOSPlatform === "on",
                             })
                           )
                         )
@@ -1658,7 +1705,8 @@ router.get(
                         class: "form-check-input",
                         name: "useDocker",
                         id: "dockerCheckboxId",
-                        hidden: true,
+                        hidden: builderSettings.androidPlatform !== "on",
+                        checked: builderSettings.useDocker === "on",
                       })
                     )
                   ),
@@ -1680,6 +1728,7 @@ router.get(
                         name: "appName",
                         id: "appNameInputId",
                         placeholder: "SaltcornMobileApp",
+                        value: builderSettings.appName || "",
                       })
                     )
                   ),
@@ -1701,6 +1750,7 @@ router.get(
                         name: "appVersion",
                         id: "appVersionInputId",
                         placeholder: "1.0.0",
+                        value: builderSettings.appVersion || "",
                       })
                     )
                   ),
@@ -1721,6 +1771,7 @@ router.get(
                         class: "form-control",
                         name: "serverURL",
                         id: "serverURLInputId",
+                        value: builderSettings.serverURL || "",
                         placeholder: getState().getConfig("base_url") || "",
                       })
                     )
@@ -1746,7 +1797,14 @@ router.get(
                         [
                           option({ value: "" }, ""),
                           ...images.map((image) =>
-                            option({ value: image.location }, image.filename)
+                            option(
+                              {
+                                value: image.location,
+                                selected:
+                                  builderSettings.appIcon === image.location,
+                              },
+                              image.filename
+                            )
                           ),
                         ].join("")
                       )
@@ -1772,7 +1830,14 @@ router.get(
                         [
                           option({ value: "" }, ""),
                           ...pages.map((page) =>
-                            option({ value: page.name }, page.name)
+                            option(
+                              {
+                                value: page.name,
+                                selected:
+                                  builderSettings.splashPage === page.name,
+                              },
+                              page.name
+                            )
                           ),
                         ].join("")
                       )
@@ -1788,8 +1853,7 @@ router.get(
                         id: "autoPublLoginId",
                         class: "form-check-input me-2",
                         name: "autoPublicLogin",
-                        value: "autoPublicLogin",
-                        checked: false,
+                        checked: builderSettings.autoPublicLogin === "on",
                       }),
                       label(
                         {
@@ -1810,9 +1874,8 @@ router.get(
                         id: "offlineModeBoxId",
                         class: "form-check-input me-2",
                         name: "allowOfflineMode",
-                        value: "allowOfflineMode",
                         onClick: "toggle_tbl_sync()",
-                        checked: true,
+                        checked: builderSettings.allowOfflineMode === "on",
                       }),
                       label(
                         {
@@ -1828,6 +1891,7 @@ router.get(
                     {
                       id: "tblSyncSelectorId",
                       class: "row pb-3",
+                      hidden: builderSettings.allowOfflineMode !== "on",
                     },
                     div(
                       label(
@@ -1864,6 +1928,12 @@ router.get(
                                 id: `${table.name}_unsynched_opt`,
                                 value: table.name,
                                 label: table.name,
+                                hidden:
+                                  builderSettings.synchedTables?.indexOf(
+                                    table.name
+                                  ) >= 0
+                                    ? true
+                                    : false,
                               })
                             )
                           )
@@ -1908,7 +1978,12 @@ router.get(
                                 id: `${table.name}_synched_opt`,
                                 value: table.name,
                                 label: table.name,
-                                hidden: "true",
+                                hidden:
+                                  builderSettings.synchedTables?.indexOf(
+                                    table.name
+                                  ) >= 0
+                                    ? false
+                                    : true,
                               })
                             )
                           )
@@ -1954,7 +2029,12 @@ router.get(
                                 id: `${plugin.name}_excluded_opt`,
                                 value: plugin.name,
                                 label: plugin.name,
-                                hidden: "true",
+                                hidden:
+                                  builderSettings.excludedPlugins?.indexOf(
+                                    plugin.name
+                                  ) >= 0
+                                    ? false
+                                    : true,
                               })
                             )
                           )
@@ -1999,7 +2079,12 @@ router.get(
                                 id: `${plugin.name}_included_opt`,
                                 value: plugin.name,
                                 label: plugin.name,
-                                // hidden: "true",
+                                hidden:
+                                  builderSettings.excludedPlugins?.indexOf(
+                                    plugin.name
+                                  ) >= 0
+                                    ? true
+                                    : false,
                               })
                             )
                           )
@@ -2116,6 +2201,8 @@ router.post(
       synchedTables,
       includedPlugins,
     } = req.body;
+    if (!includedPlugins) includedPlugins = [];
+    if (!synchedTables) synchedTables = [];
     if (!androidPlatform && !iOSPlatform) {
       return res.json({
         error: req.__("Please select at least one platform (android or iOS)."),
@@ -2167,9 +2254,9 @@ router.post(
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
-    if (synchedTables?.length > 0)
+    if (synchedTables.length > 0)
       spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
-    if (includedPlugins?.length > 0)
+    if (includedPlugins.length > 0)
       spawnParams.push(
         "--includedPlugins",
         ...includedPlugins.map((pluginName) => pluginName)
@@ -2180,6 +2267,30 @@ router.post(
     ) {
       spawnParams.push("--tenantAppName", db.getTenantSchema());
     }
+    const excludedPlugins = (await Plugin.find())
+      .filter(
+        (plugin) =>
+          ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
+          includedPlugins.indexOf(plugin.name) < 0
+      )
+      .map((plugin) => plugin.name);
+    await getState().setConfig("mobile_builder_settings", {
+      entryPoint,
+      entryPointType,
+      androidPlatform,
+      iOSPlatform,
+      useDocker,
+      appName,
+      appVersion,
+      appIcon,
+      serverURL,
+      splashPage,
+      autoPublicLogin,
+      allowOfflineMode,
+      synchedTables: synchedTables,
+      includedPlugins: includedPlugins,
+      excludedPlugins,
+    });
     // end http call, return the out directory name
     // the gui polls for results
     res.json({ build_dir_name: outDirName });

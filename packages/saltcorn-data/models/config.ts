@@ -81,6 +81,13 @@ const configTypes: ConfigTypes = {
     blurb:
       "This is the email of the last user who created offline data in the mobile app.",
   },
+  mobile_builder_settings: {
+    type: "Object",
+    label: "Mobile builder settings",
+    default: {},
+    blurb:
+      "This is an object to remember the settings of the mobile builder menu.",
+  },
   /** @type {object} */
   menu_items: { type: "hidden", label: "Menu items" },
   /** @type {object} */
