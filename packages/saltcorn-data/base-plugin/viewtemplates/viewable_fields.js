@@ -289,7 +289,7 @@ const view_linker = (
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return view_label;
-    return eval_expression(view_label, row);
+    return eval_expression(view_label, row, user);
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
@@ -506,7 +506,7 @@ const get_viewable_fields = (
       const oldKeyF = tfield.key;
       if (typeof oldKeyF !== "function") return tfield;
       const newKeyF = (r) => {
-        if (eval_expression(column.showif, r)) return oldKeyF(r);
+        if (eval_expression(column.showif, r, req.user)) return oldKeyF(r);
         else return "";
       };
       tfield.key = newKeyF;
@@ -529,7 +529,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
-          key: (r) => text(eval_expression(column.formula, r)),
+          key: (r) => text(eval_expression(column.formula, r, req.user)),
         };
       } else if (column.type === "Action") {
         const action_col = {
@@ -551,7 +551,7 @@ const get_viewable_fields = (
               index
             );
             const label = column.action_label_formula
-              ? eval_expression(column.action_label, r)
+              ? eval_expression(column.action_label, r, req.user)
               : __(column.action_label) || __(column.action_name);
             if (url.javascript)
               return a(
