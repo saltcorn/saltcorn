@@ -1194,6 +1194,14 @@ const field_picker_fields = async ({
       type: "String",
     },
     {
+      name: "showif",
+      label: __("Show if true"),
+      sublabel: __("Formula. Leave blank to always show"),
+      class: "validate-expression",
+      type: "String",
+      required: false,
+    },
+    {
       name: "col_width",
       label: __("Column width"),
       type: "Integer",
