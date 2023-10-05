@@ -70,6 +70,7 @@ class Field implements AbstractField {
   description?: string;
   type?: string | Type;
   typename?: string;
+  help?: { topic: string; context?: any };
   options?: any;
   required: boolean;
   is_unique: boolean;
@@ -121,6 +122,7 @@ class Field implements AbstractField {
     if (!this.type)
       this.typename = typeof o.type === "string" ? o.type : o.type?.name;
     this.options = o.options;
+    this.help = o.help;
     this.required = !!o.required;
     this.is_unique = !!o.is_unique;
     this.hidden = o.hidden || false;

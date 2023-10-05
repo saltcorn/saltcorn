@@ -58,6 +58,8 @@ module.exports = {
   },
   resolve: {
     fallback: {
+      tls: false,
+      dns: false,
       net: false,
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),

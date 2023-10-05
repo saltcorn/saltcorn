@@ -21,3 +21,4 @@
   "exclude": ["node_modules", "dist/**", "webpack.config.js"],
   "include": ["**/*", "**/*.json"]
 }
+

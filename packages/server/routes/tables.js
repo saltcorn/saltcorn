@@ -1378,6 +1378,12 @@ router.get(
             link(`/table/add-constraint/${id}/Formula`, req.__("Formula")),
             " | ",
             link(`/table/add-constraint/${id}/Index`, req.__("Index")),
+            a(
+              {
+                href: `javascript:ajax_modal('/admin/help/Table%20constraints?table=${table.name}')`,
+              },
+              i({ class: "fas fa-question-circle ms-1" })
+            ),
           ],
         },
       ],
@@ -1392,11 +1398,11 @@ router.get(
  * @param {object[]} fields
  * @returns {Form}
  */
-const constraintForm = (req, table_id, fields, type) => {
+const constraintForm = (req, table, fields, type) => {
   switch (type) {
     case "Formula":
       return new Form({
-        action: `/table/add-constraint/${table_id}/${type}`,
+        action: `/table/add-constraint/${table.id}/${type}`,
 
         fields: [
           {
@@ -1405,6 +1411,10 @@ const constraintForm = (req, table_id, fields, type) => {
             validator: expressionValidator,
             type: "String",
             class: "validate-expression",
+            help: {
+              topic: "Table formula constraint",
+              context: { table: table.name },
+            },
             sublabel:
               req.__(
                 "Formula must evaluate to true for valid rows. In scope: "
@@ -1417,14 +1427,14 @@ const constraintForm = (req, table_id, fields, type) => {
           {
             name: "errormsg",
             label: "Error message",
-            sublabel: "Shown the user if formula is false",
+            sublabel: "Shown to the user if formula is false",
             type: "String",
           },
         ],
       });
     case "Unique":
       return new Form({
-        action: `/table/add-constraint/${table_id}/${type}`,
+        action: `/table/add-constraint/${table.id}/${type}`,
         blurb: req.__(
           "Tick the boxes for the fields that should be jointly unique"
         ),
@@ -1437,14 +1447,14 @@ const constraintForm = (req, table_id, fields, type) => {
           {
             name: "errormsg",
             label: "Error message",
-            sublabel: "Shown the user if joint uniqueness is violated",
+            sublabel: "Shown to the user if joint uniqueness is violated",
             type: "String",
           },
         ],
       });
     case "Index":
       return new Form({
-        action: `/table/add-constraint/${table_id}/${type}`,
+        action: `/table/add-constraint/${table.id}/${type}`,
         blurb: req.__(
           "Choose the field to be indexed. This make searching the table faster."
         ),
@@ -1483,7 +1493,7 @@ router.get(
       return;
     }
     const fields = table.getFields();
-    const form = constraintForm(req, table.id, fields, type);
+    const form = constraintForm(req, table, fields, type);
     res.sendWrap(req.__(`Add constraint to %s`, table.name), {
       above: [
         {
@@ -1527,7 +1537,7 @@ router.post(
       return;
     }
     const fields = table.getFields();
-    const form = constraintForm(req, table.id, fields, type);
+    const form = constraintForm(req, table, fields, type);
     form.validate(req.body);
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {

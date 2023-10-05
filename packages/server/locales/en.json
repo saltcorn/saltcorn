@@ -1251,10 +1251,6 @@
 	"A view to show to new users, to finalise registration (if Edit) or as a welcome view": "A view to show to new users, to finalise registration (if Edit) or as a welcome view",
 	"View decoration": "View decoration",
 	"Title formula": "Title formula",
-	"%s versions": "%s versions",
-	"Close": "Close",
-	"Module up-to-date": "Module up-to-date",
-	"Module '%s' not found": "Module '%s' not found",
-	"Module dependencies": "Module dependencies",
-	"install a different version": "install a different version"
+	"Show if true": "Show if true",
+	"Formula. Leave blank to always show": "Formula. Leave blank to always show"
 }

@@ -176,9 +176,10 @@ const loadAllPlugins = async () => {
  * @param plugin
  * @param force
  * @param noSignalOrDB
+ * @param manager - optional plugin manager
  * @returns {Promise<void>}
  */
-const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
+const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
     false
@@ -200,7 +201,8 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   }
   const { version, plugin_module, location } = await requirePlugin(
     plugin,
-    force
+    force,
+    manager,
   );
 
   // install dependecies

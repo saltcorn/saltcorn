@@ -5,3 +5,4 @@
 /tmp
 /yarn.lock
 node_modules
+test_plugin_packages

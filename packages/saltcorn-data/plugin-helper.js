@@ -655,6 +655,7 @@ const field_picker_fields = async ({
   has_click_to_edit,
   has_align,
   no_fieldviews,
+  has_showif,
 }) => {
   const __ = (...s) => (req ? req.__(...s) : s.join(""));
   const fields = table.getFields();
@@ -1193,6 +1194,18 @@ const field_picker_fields = async ({
       label: __("Header label"),
       type: "String",
     },
+    ...(has_showif
+      ? [
+          {
+            name: "showif",
+            label: __("Show if true"),
+            sublabel: __("Formula. Leave blank to always show"),
+            class: "validate-expression",
+            type: "String",
+            required: false,
+          },
+        ]
+      : []),
     {
       name: "col_width",
       label: __("Column width"),

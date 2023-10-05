@@ -509,8 +509,20 @@ const search_or_create = {
       },
       {
         name: "label",
-        label: "Label to create",
+        label: "Label on link to create",
         type: "String",
+      },
+      {
+        name: "where",
+        label: "Where",
+        type: "String",
+      },
+      {
+        name: "label_formula",
+        label: "Option label formula",
+        type: "String",
+        class: "validate-expression",
+        sublabel: "Uses summary field if blank",
       },
     ];
   },
@@ -529,8 +541,21 @@ const search_or_create = {
       tags.select(
         {
           class: `form-control form-select ${cls} ${field.class || ""}`,
+          "data-fieldname": field.form_name,
+
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
+          disabled: attrs.disabled,
+          readonly: attrs.readonly,
+          onChange: attrs.onChange,
+          ...(attrs?.dynamic_where
+            ? {
+                "data-selected": v,
+                "data-fetch-options": encodeURIComponent(
+                  JSON.stringify(attrs?.dynamic_where)
+                ),
+              }
+            : {}),
         },
         select_options(v, field)
       ) +
