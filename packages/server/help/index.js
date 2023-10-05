@@ -7,6 +7,7 @@ const MarkdownIt = require("markdown-it"),
 
 const { pre } = require("@saltcorn/markup/tags");
 const path = require("path");
+const { getState } = require("@saltcorn/data/db/state");
 
 const get_md_file = async (topic) => {
   try {
@@ -24,7 +25,7 @@ md.renderer.rules.table_open = function (tokens, idx) {
 
 const get_help_markup = async (topic, query, req) => {
   try {
-    const context = { user: req.user, Table };
+    const context = { user: req.user, Table, scState: getState() };
     if (query.table) {
       context.table = Table.findOne({ name: query.table });
     }

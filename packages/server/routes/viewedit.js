@@ -147,6 +147,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         sublabel: req.__(
           "The view pattern sets the foundation of how the view relates to the table and the behaviour of the view"
         ),
+        help: {
+          topic: "View patterns",
+          context: {},
+        },
         options: Object.keys(getState().viewtemplates),
         attributes: {
           explainers: mapObjectValues(

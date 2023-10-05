@@ -1,0 +1,35 @@
+The view pattern is a fundamental concept in Saltcorn that determines how 
+the view will relate to the database table and the overall behavior of the 
+view. A view will always follow one specific view pattern, and will require 
+further configuration according to which view pattern is chosen. This 
+configuration could be as simple as making a few choices, or it could be as 
+complicated as specifying a layout using drag and drop. In addition most view 
+patterns require choosing a single table, which it can use as a source or 
+destination of data, although in many cases data from other tables can be 
+brought in using table relationships.
+
+There are fundamental view patterns in Saltcorn that you will use in 
+every application:
+
+* A List view shows a tabular grid of multiple rows in a table. You can define 
+  its columns which can be data from this or related tables, action buttons or 
+  links to other views.
+
+* An Edit view is a form that can be used to create a new row or edit an existing 
+  row in a table.
+
+* A Show view shows a single existing row in the table. The row must be specified 
+  either by linking or embedding from another view or page.
+
+* A Filter view does not display any data from the table but can be used to set 
+  up user interface elements that determine which rows are shown in other views 
+  on the same page. 
+
+* A Feed view is configured by another view which shows a single row and will 
+  repeat this view for all available rows.
+
+The additional view patterns available in your system are:
+{{# const vts = Object.values(scState.viewtemplates).filter(vt=>!["List","Show","Edit","Filter","Feed",].includes(vt.name))}}
+{{# for (const vt of vts) { }} 
+* {{ vt.name }}{{vt.description ? `: ${vt.description}` : ""}}
+{{# } }}
