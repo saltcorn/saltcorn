@@ -562,7 +562,7 @@ const transformForm = async ({
         !["Sign up", ...builtInActions].includes(segment.action_name) &&
         !segment.action_name.startsWith("Login")
       ) {
-        const url = action_url(
+        let url = action_url(
           viewname,
           table,
           segment.action_name,
@@ -571,7 +571,17 @@ const transformForm = async ({
           "rndid",
           segment.confirm
         );
-        segment.action_link = action_link(url, req, segment);
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+
+          url.javascript = `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}', ...get_form_record({viewname: '${viewname}'})});`;
+        }
+        segment.action_link = action_link(url, req, segment, req.__);
+
+        console.log("AL", segment.action_link, url);
       }
     },
     join_field(segment) {
@@ -1727,12 +1737,12 @@ module.exports = {
       return await table.getRow({ id });
     },
     async actionQuery() {
-      const body = req.body;
+      const { rndid, _csrf, ...body } = req.body;
       const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+        (c) => c.type === "Action" && c.rndid === rndid && rndid
       );
       const table = Table.findOne({ id: table_id });
-      const row = body.id
+      const dbrow = body.id
         ? await table.getRow(
             { id: body.id },
             {
@@ -1741,6 +1751,8 @@ module.exports = {
             }
           )
         : undefined;
+      const row = { ...dbrow, ...body };
+      console.log({ row, body, dbrow });
       try {
         const result = await run_action_column({
           col,
@@ -1752,6 +1764,7 @@ module.exports = {
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
+        console.error(e);
         return { json: { error: e.message || e } };
       }
     },

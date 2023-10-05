@@ -335,18 +335,21 @@ function splitTargetMatch(elemValue, target, keySpec) {
   return elemValueShort === target;
 }
 
-function get_form_record(e, select_labels) {
+function get_form_record(e_in, select_labels) {
   const rec = {};
-  e.closest(".form-namespace")
-    .find("input[name],select[name]")
-    .each(function () {
-      const name = $(this).attr("data-fieldname") || $(this).attr("name");
-      if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
-        rec[name] = $(this).find("option:selected").text();
-      else if ($(this).prop("type") === "checkbox")
-        rec[name] = $(this).prop("checked");
-      else rec[name] = $(this).val();
-    });
+
+  const e = e_in.viewname
+    ? $(`form[data-viewname=${e_in.viewname}]`)
+    : e_in.closest(".form-namespace");
+
+  e.find("input[name],select[name]").each(function () {
+    const name = $(this).attr("data-fieldname") || $(this).attr("name");
+    if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
+      rec[name] = $(this).find("option:selected").text();
+    else if ($(this).prop("type") === "checkbox")
+      rec[name] = $(this).prop("checked");
+    else rec[name] = $(this).val();
+  });
   return rec;
 }
 function showIfFormulaInputs(e, fml) {
