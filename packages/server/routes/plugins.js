@@ -569,16 +569,16 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const safeName = name.replace(/^@saltcorn\//, "");
-    const plugin = await Plugin.store_by_name(decodeURIComponent(safeName));
+    const withoutOrg = name.replace(/^@saltcorn\//, "");
+    const plugin = await Plugin.store_by_name(decodeURIComponent(withoutOrg));
     if (!plugin) {
       getState().log(
         2,
-        `GET /versions_dialog${safeName}: '${safeName}' not found`
+        `GET /versions_dialog${withoutOrg}: '${withoutOrg}' not found`
       );
       return res
         .status(404)
-        .json({ error: req.__("Module '%s' not found", safeName) });
+        .json({ error: req.__("Module '%s' not found", withoutOrg) });
     } else {
       try {
         const pkgInfo = await npmFetch.json(
@@ -586,7 +586,7 @@ router.get(
         );
         if (!pkgInfo?.versions)
           throw new Error(req.__("Unable to fetch versions"));
-        res.set("Page-Title", req.__("%s versions", text(safeName)));
+        res.set("Page-Title", req.__("%s versions", text(withoutOrg)));
         const versions = Object.keys(pkgInfo.versions);
         if (versions.length === 0) throw new Error(req.__("No versions found"));
         let selected = null;
@@ -598,7 +598,7 @@ router.get(
         return res.send(
           form(
             {
-              action: `/plugins/install/${encodeURIComponent(safeName)}`,
+              action: `/plugins/install/${encodeURIComponent(name)}`,
               method: "post",
             },
             input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
@@ -651,7 +651,9 @@ router.get(
       } catch (error) {
         getState().log(
           2,
-          `GET /versions_dialog${safeName}: ${error.message || "unknown error"}`
+          `GET /versions_dialog${withoutOrg}: ${
+            error.message || "unknown error"
+          }`
         );
         return res
           .status(500)
@@ -913,7 +915,12 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const plugin_db = await Plugin.findOne({ name });
+    let plugin_db = await Plugin.findOne({ name });
+    if (!plugin_db) {
+      req.flash("warning", req.__("Module not found"));
+      res.redirect("/plugins");
+      return;
+    }
     const mod = await load_plugins.requirePlugin(plugin_db);
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
@@ -928,12 +935,6 @@ router.get(
     let pkgjson;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
-
-    if (!plugin_db) {
-      req.flash("warning", req.__("Module not found"));
-      res.redirect("/plugins");
-      return;
-    }
     const domId = `${removeNonWordChars(mod.name)}_store_version_btn`;
     const infoTable = table(
       tbody(
@@ -952,7 +953,7 @@ router.get(
                     class: "store-install btn btn-sm btn-primary ms-2",
                     onClick: "press_store_button(this, true)",
                     href: `javascript:ajax_modal('/plugins/versions_dialog/${encodeURIComponent(
-                      encodeURIComponent(mod.name)
+                      encodeURIComponent(plugin_db.name)
                     )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res) => { selectVersionError(res, '${domId}') } });`,
                   },
                   req.__("install a different version")
@@ -970,7 +971,9 @@ router.get(
             can_update
               ? a(
                   {
-                    href: `/plugins/upgrade-plugin/${plugin_db.name}`,
+                    href: `/plugins/upgrade-plugin/${encodeURIComponent(
+                      plugin_db.name
+                    )}`,
                     class: "btn btn-primary btn-sm ms-2",
                   },
                   req.__("Upgrade")
@@ -1108,7 +1111,7 @@ router.get(
     await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     req.flash("success", req.__(`Module up-to-date`));
 
-    res.redirect(`/plugins/info/${plugin.name}`);
+    res.redirect(`/plugins/info/${encodeURIComponent(plugin.name)}`);
   })
 );
 
