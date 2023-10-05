@@ -7,13 +7,7 @@
 
 const Router = require("express-promise-router");
 const { isAdmin, error_catcher } = require("./utils.js");
-const {
-  mkTable,
-  renderForm,
-  link,
-  post_btn,
-  post_delete_btn,
-} = require("@saltcorn/markup");
+const { renderForm, link, post_btn } = require("@saltcorn/markup");
 const {
   getState,
   restart_tenant,
@@ -26,7 +20,6 @@ const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
 const {
   upgrade_all_tenants_plugins,
 } = require("@saltcorn/admin-models/models/tenant");
-const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 const {
   plugin_types_info_card,
@@ -37,7 +30,6 @@ const {
 const load_plugins = require("../load_plugins");
 const {
   h5,
-  nbsp,
   a,
   div,
   span,
@@ -51,7 +43,6 @@ const {
   td,
   p,
   form,
-  strong,
   select,
   option,
   input,
@@ -63,7 +54,7 @@ const fs = require("fs");
 const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
-const { sleep } = require("@saltcorn/data/utils");
+const { sleep, removeNonWordChars } = require("@saltcorn/data/utils");
 const { loadAllPlugins } = require("../load_plugins");
 const npmFetch = require("npm-registry-fetch");
 
@@ -311,33 +302,6 @@ const store_item_html = (req) => (item) => ({
             }
           )
         ),
-      !item.installed &&
-        item.plugin &&
-        item.source === "npm" &&
-        div(
-          { class: "me-2 d-inline" },
-          a(
-            {
-              id: `${item.name}_store_version_btn`,
-              class: "store-install btn btn-sm btn-primary",
-              onClick: "press_store_button(this, true)",
-              href: `javascript:ajax_modal('/plugins/versions_dialog/${encodeURIComponent(
-                item.name
-              )}', { onOpen: () => { restore_old_button('${
-                item.name
-              }_store_version_btn'); }, onError: (res) => { selectVersionError(res, '${
-                item.name
-              }_store_version_btn') } });`,
-            },
-            req.__("select version")
-          )
-        ),
-      !item.installed &&
-        item.plugin &&
-        div({
-          id: `${item.name}_version_box`,
-          class: "d-inline",
-        }),
       !item.installed &&
         item.pack &&
         post_btn(
@@ -605,12 +569,16 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const plugin = await Plugin.store_by_name(decodeURIComponent(name));
+    const safeName = name.replace(/^@saltcorn\//, "");
+    const plugin = await Plugin.store_by_name(decodeURIComponent(safeName));
     if (!plugin) {
-      getState().log(2, `GET /versions_dialog${name}: '${name}' not found`);
+      getState().log(
+        2,
+        `GET /versions_dialog${safeName}: '${safeName}' not found`
+      );
       return res
         .status(404)
-        .json({ error: req.__("Module '%s' not found", name) });
+        .json({ error: req.__("Module '%s' not found", safeName) });
     } else {
       try {
         const pkgInfo = await npmFetch.json(
@@ -618,14 +586,19 @@ router.get(
         );
         if (!pkgInfo?.versions)
           throw new Error(req.__("Unable to fetch versions"));
-        res.set("Page-Title", req.__("%s versions", text(name)));
+        res.set("Page-Title", req.__("%s versions", text(safeName)));
         const versions = Object.keys(pkgInfo.versions);
         if (versions.length === 0) throw new Error(req.__("No versions found"));
-        const latest = versions[versions.length - 1];
+        let selected = null;
+        if (getState().plugins[plugin.name]) {
+          const mod = await load_plugins.requirePlugin(plugin);
+          if (mod) selected = mod.version;
+        }
+        if (!selected) selected = versions[versions.length - 1];
         return res.send(
           form(
             {
-              action: `/plugins/install/${encodeURIComponent(name)}`,
+              action: `/plugins/install/${encodeURIComponent(safeName)}`,
               method: "post",
             },
             input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
@@ -649,7 +622,7 @@ router.get(
                     id: `${version}_opt`,
                     value: version,
                     label: version,
-                    selected: version === latest,
+                    selected: version === selected,
                   })
                 )
               )
@@ -678,7 +651,7 @@ router.get(
       } catch (error) {
         getState().log(
           2,
-          `GET /versions_dialog${name}: ${error.message || "unknown error"}`
+          `GET /versions_dialog${safeName}: ${error.message || "unknown error"}`
         );
         return res
           .status(500)
@@ -951,6 +924,7 @@ router.get(
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
     const can_update = update_permitted && latest && mod.version !== latest;
+    const can_select_version = update_permitted && plugin_db.source === "npm";
     let pkgjson;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
@@ -960,14 +934,39 @@ router.get(
       res.redirect("/plugins");
       return;
     }
+    const domId = `${removeNonWordChars(mod.name)}_store_version_btn`;
     const infoTable = table(
       tbody(
         tr(th(req.__("Package name")), td(mod.name)),
-        tr(th(req.__("Package version")), td(mod.version)),
+        tr(
+          th(req.__("Package version")),
+          td(
+            span(
+              { style: "display: inline-block; min-width: 2.9rem;" },
+              mod.version
+            ),
+            can_select_version
+              ? a(
+                  {
+                    id: domId,
+                    class: "store-install btn btn-sm btn-primary ms-2",
+                    onClick: "press_store_button(this, true)",
+                    href: `javascript:ajax_modal('/plugins/versions_dialog/${encodeURIComponent(
+                      encodeURIComponent(mod.name)
+                    )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res) => { selectVersionError(res, '${domId}') } });`,
+                  },
+                  req.__("install a different version")
+                )
+              : ""
+          )
+        ),
         tr(
           th(req.__("Latest version")),
           td(
-            latest || "",
+            span(
+              { style: "display: inline-block; min-width: 2.9rem;" },
+              latest || ""
+            ),
             can_update
               ? a(
                   {
@@ -1203,7 +1202,20 @@ router.post(
       "tenants_unsafe_plugins",
       false
     );
-    const plugin = await Plugin.store_by_name(decodeURIComponent(name));
+    // when a version is specified, either update the db row or use the plugin from the store
+    // when no version is specified, allways use the plugin from the store
+    let plugin = null;
+    if (version) {
+      plugin = await Plugin.findOne({ name: name });
+      if (plugin) plugin.version = version;
+    }
+    if (!plugin) {
+      plugin = await Plugin.store_by_name(decodeURIComponent(name));
+      if (plugin) {
+        delete plugin.id;
+        if (version) plugin.version = version;
+      }
+    }
     if (!plugin) {
       req.flash(
         "error",
@@ -1226,7 +1238,6 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    delete plugin.id;
     await load_plugins.loadAndSaveNewPlugin(plugin, forceReInstall);
     const plugin_module = getState().plugins[name];
     if (plugin_module && plugin_module.configuration_workflow) {
