@@ -544,7 +544,9 @@ const transformForm = async ({
         segment.style = {};
         if (actionResult)
           segment.contents = script(
-            domReady(`common_done(${JSON.stringify(actionResult)})`)
+            domReady(
+              `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+            )
           );
         else segment.contents = "";
         return;

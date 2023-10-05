@@ -953,7 +953,7 @@ function press_store_button(clicked) {
   $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
 }
 
-function common_done(res, isWeb = true) {
+function common_done(res, viewname, isWeb = true) {
   const handle = (element, fn) => {
     if (Array.isArray(element)) for (const current of element) fn(current);
     else fn(element);
@@ -981,6 +981,8 @@ function common_done(res, isWeb = true) {
           link.click();
         });
     });
+  }
+  if (res.set_fields && viewname) {
   }
   if (res.goto && !isWeb)
     // TODO ch
