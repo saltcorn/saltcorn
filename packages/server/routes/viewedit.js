@@ -209,7 +209,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       }),
       {
         name: "popup_width",
-        label: req.__("Column width"),
+        label: req.__("Popup width"),
         type: "Integer",
         tab: "Popup settings",
         parent_field: "attributes",
@@ -232,6 +232,9 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         label: req.__("Save indicator"),
         type: "Bool",
         parent_field: "attributes",
+        sublabel: req.__(
+          "Show an icon in the title bar to indicate when form data is being saved"
+        ),
         tab: "Popup settings",
       },
       {

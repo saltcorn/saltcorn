@@ -1252,5 +1252,7 @@
 	"View decoration": "View decoration",
 	"Title formula": "Title formula",
 	"Show if true": "Show if true",
-	"Formula. Leave blank to always show": "Formula. Leave blank to always show"
+	"Formula. Leave blank to always show": "Formula. Leave blank to always show",
+	"Popup width": "Popup width",
+	"Show an icon in the title bar to indicate when form data is being saved": "Show an icon in the title bar to indicate when form data is being saved"
 }
