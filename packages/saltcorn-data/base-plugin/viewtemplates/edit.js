@@ -1750,7 +1750,6 @@ module.exports = {
           )
         : undefined;
       const row = { ...dbrow, ...body };
-      console.log({ row, body, dbrow });
       try {
         const result = await run_action_column({
           col,
