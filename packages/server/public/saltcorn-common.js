@@ -984,7 +984,10 @@ function common_done(res, viewname, isWeb = true) {
   }
   if (res.set_fields && viewname) {
     Object.keys(res.set_fields).forEach((k) => {
-      const input = $(`form[data-viewname=${viewname}] input[name=${k}]`);
+      const form = $(`form[data-viewname=${viewname}]`);
+      const input = form.find(
+        `input[name=${k}], textarea[name=${k}], select[name=${k}]`
+      );
       if (input.attr("type") === "checkbox")
         input.prop("checked", res.set_fields[k]);
       else input.val(res.set_fields[k]);
