@@ -532,6 +532,8 @@ const transformForm = async ({
   await traverse(form.layout, {
     async action(segment) {
       if (segment.action_style === "on_page_load") {
+        //TODO check segment.min_role
+
         //run action
         const actionResult = await run_action_column({
           col: { ...segment },
