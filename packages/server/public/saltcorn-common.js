@@ -342,7 +342,7 @@ function get_form_record(e_in, select_labels) {
     ? $(`form[data-viewname=${e_in.viewname}]`)
     : e_in.closest(".form-namespace");
 
-  e.find("input[name],select[name]").each(function () {
+  e.find("input[name],select[name],textarea[name]").each(function () {
     const name = $(this).attr("data-fieldname") || $(this).attr("name");
     if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
       rec[name] = $(this).find("option:selected").text();
