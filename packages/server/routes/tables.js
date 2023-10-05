@@ -163,7 +163,7 @@ const tableForm = async (table, req) => {
             {
               label: req.__("Version history"),
               sublabel: req.__(
-                "Version history allows to track table data changes"
+                "Track table data changes over time"
               ),
               name: "versioned",
               type: "Bool",
