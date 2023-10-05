@@ -983,6 +983,11 @@ function common_done(res, viewname, isWeb = true) {
     });
   }
   if (res.set_fields && viewname) {
+    Object.keys(res.set_fields).forEach((k) => {
+      $(`form[data-viewname=${viewname}] input[name=${k}]`).val(
+        res.set_fields[k]
+      );
+    });
   }
   if (res.goto && !isWeb)
     // TODO ch
