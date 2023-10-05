@@ -509,6 +509,13 @@ const renderRows = async (
         if (segment.state === "local") {
           const state2 = { ...state1, ...extra_state };
           const qs = stateToQueryString(state2);
+          if (
+            view.name === viewname &&
+            JSON.stringify(state) === JSON.stringify(state2)
+          )
+            throw new InvalidConfiguration(
+              `View ${view.name} embeds itself with same state; inifinite loop detected`
+            );
           segment.contents = div(
             {
               class: "d-inline",
@@ -518,6 +525,13 @@ const renderRows = async (
           );
         } else {
           const state2 = { ...outerState, ...state1, ...extra_state };
+          if (
+            view.name === viewname &&
+            JSON.stringify(state) === JSON.stringify(state2)
+          )
+            throw new InvalidConfiguration(
+              `View ${view.name} embeds itself with same state; inifinite loop detected`
+            );
           segment.contents = await view.run(state2, subviewExtra);
         }
       }
