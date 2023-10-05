@@ -580,8 +580,6 @@ const transformForm = async ({
           url.javascript = `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}', ...get_form_record({viewname: '${viewname}'})});`;
         }
         segment.action_link = action_link(url, req, segment, req.__);
-
-        console.log("AL", segment.action_link, url);
       }
     },
     join_field(segment) {
@@ -1764,7 +1762,6 @@ module.exports = {
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
-        console.error(e);
         return { json: { error: e.message || e } };
       }
     },
