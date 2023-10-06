@@ -232,6 +232,8 @@ const FieldSettings = () => {
       </table>
       {cfgFields ? (
         <ConfigForm
+          tableName={options.tableName}
+          fieldName={name}
           fields={cfgFields}
           configuration={configuration}
           setProp={setProp}

@@ -647,7 +647,15 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
+const ConfigForm = ({
+  fields,
+  configuration,
+  setProp,
+  node,
+  onChange,
+  tableName,
+  fieldName,
+}) => (
   <div>
     {fields.map((f, ix) => {
       if (f.showIf && configuration) {
@@ -671,7 +679,13 @@ const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
           {f.sublabel ? (
             <i dangerouslySetInnerHTML={{ __html: f.sublabel }}></i>
           ) : null}
-          {f.help ? <HelpTopicLink topic={f.help.topic} /> : null}
+          {f.help ? (
+            <HelpTopicLink
+              topic={f.help.topic}
+              fieldName={fieldName}
+              tableName={tableName}
+            />
+          ) : null}
         </div>
       );
     })}
