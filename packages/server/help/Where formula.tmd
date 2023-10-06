@@ -18,7 +18,7 @@ their variable nmame. The fields on the table {{ refTable.name }} are:
 {{# for (const field of refTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
 {{# } }}
 
-You can also use variables from the current form. In that case the selection will
+You can also use variables from the current form. In that case the options will
 respond dynamically to the state of the form fields. These form variables must be proceeded by 
 a `$`:
 
