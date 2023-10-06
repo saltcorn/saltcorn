@@ -1,4 +1,6 @@
 {{# const srcTable = Table.findOne({ name: query.srcTable }) }}
+{{# const view = View.findOne({ name: query.view_name }) }}
+{{# const destTable = Table.findOne({ id: view.table_id }) }}
 
 The extra state formula when embedding or linking to a view is used
 to influence the row that will be included in that views display, 
@@ -18,11 +20,17 @@ key, for example:
 ``` 
 (See below for using the `user` variable and greater-than filters)
 
-The keys you can use are the variable names from the following table:
+The keys you can use are the variable names on the {{destTable.name}} table:
+
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
+{{# for (const field of destTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
+{{# } }}
 
 In the value expressions (to the right of the colon) you can use 
 literals (e.g. 17 for numbers or true for booleans; string literals 
-must be enclosed in quotes (single double or backtick). ) 
+must be enclosed in quotes (single, double or 
+[backtick](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals))). 
 
 You can refer to the logged in user using the variable name user. 
 This is an object and you must use the dot to access user fields,

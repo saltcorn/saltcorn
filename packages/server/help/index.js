@@ -1,4 +1,5 @@
 const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
 const File = require("@saltcorn/data/models/file");
 const _ = require("underscore");
 const fs = require("fs").promises;
@@ -28,6 +29,7 @@ const get_help_markup = async (topic, query, req) => {
     const context = {
       user: req.user,
       Table,
+      View,
       scState: getState(),
       query,
       oneOf,
