@@ -8,7 +8,7 @@ in addition to any selection based on a chosen relationship.
 
 The formula takes the form of a JavaScript object where the object 
 keys are fields (variable names) on the table of the embedded view,
-and the values are the values for those fields which set the criteria 
+and the values are the JavaScript expressions for those fields which set the criteria 
 for the rows to be included. For example, if you would like to display 
 all rows where the Active field is true you would use this as the extra
 state formula: `{ active: true }`. This is an object where the only
@@ -31,6 +31,7 @@ In the value expressions (to the right of the colon) you can use
 literals (e.g. 17 for numbers or true for booleans; string literals 
 must be enclosed in quotes (single, double or 
 [backtick](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals))). 
+You can also as the value use a more complex JavaScript expression.
 
 You can refer to the logged in user using the variable name user. 
 This is an object and you must use the dot to access user fields,
