@@ -1102,6 +1102,11 @@ const field_picker_fields = async ({
       sublabel: __(
         "Formula for JavaScript object that will be added to state parameters"
       ),
+      help: {
+        topic: "Extra state formula",
+        context: { srcTable: table.name },
+        dynContext: ["view_name"],
+      },
       type: "String",
       class: "validate-expression",
       showIf: { type: "ViewLink" },
