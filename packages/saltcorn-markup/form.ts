@@ -873,7 +873,7 @@ const mkFormRowForField =
   };
 
 const mkSubLabelAndHelp = (hdr: any) => {
-  const helpLink = ({ topic, context }: any) => {
+  const helpLink = ({ topic, context, dynContext }: any) => {
     let qs = "";
     Object.keys(context).forEach((k) => {
       qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
@@ -881,6 +881,11 @@ const mkSubLabelAndHelp = (hdr: any) => {
     return a(
       {
         href: `javascript:ajax_modal('/admin/help/${topic}?${qs}')`,
+        "data-dyn-href":
+          !!dynContext &&
+          `\`javascript:ajax_modal('/admin/help/${topic}?${qs}&${dynContext
+            .map((k: string) => `${k}=\${${k}}`)
+            .join("&")}')\``,
       },
       i({ class: "fas fa-question-circle ms-1" })
     );
