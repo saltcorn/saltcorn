@@ -1,1 +1,30 @@
-The where formula...
+{{# const srcTable = Table.findOne({ name: query.tableName }) }}
+{{# const field = srcTable.getField(query.fieldName) }}
+{{# const refTable = Table.findOne(field.reftable_name) }}
+
+The where formula allows you to restrict the options provided. This can be 
+done according to a static criterion, all according to a dynamic criterion 
+that depends on the value of another form field. 
+
+The formula should take the form of a JavaScript boolean expression such as
+`a === b` or `x>y && w==1` etc.
+
+In this expression you can use variables from the target table from which 
+you are selecting values, here {{ refTable.name }}. These can accessed by 
+their variable nmame. The fields on the table {{ refTable.name }} are:
+
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
+{{# for (const field of refTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
+{{# } }}
+
+You can also use variables from the current form. In that case the selection will
+respond dynamically to the state of the form fields. These form variables must be proceeded by 
+a `$`:
+
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
+{{# for (const field of srcTable.fields) { }} | {{ field.label }} | `${{ field.name }}` | {{ field.pretty_type }} | 
+{{# } }}
+
+You can mix the two types of variables, as in `a == $b`
