@@ -122,7 +122,6 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
-  console.log("view opts", options);
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
