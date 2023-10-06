@@ -671,6 +671,7 @@ const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
           {f.sublabel ? (
             <i dangerouslySetInnerHTML={{ __html: f.sublabel }}></i>
           ) : null}
+          {f.help ? <HelpTopicLink topic={f.help.topic} /> : null}
         </div>
       );
     })}

@@ -41,11 +41,16 @@ const select = {
       name: "neutral_label",
       label: "Neutral label",
       type: "String",
+      sublabel: "Show when no value is selected",
     },
     {
       name: "where",
       label: "Where",
       type: "String",
+      help: {
+        topic: "Where formula",
+      },
+      sublabel: "Limit selectable options",
     },
     {
       name: "label_formula",
