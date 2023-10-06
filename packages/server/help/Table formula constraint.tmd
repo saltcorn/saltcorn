@@ -1,3 +1,5 @@
+{{# const table = Table.findOne({ name: query.table }) }}
+
 The constraint formula should be a JavaScript expression which evaluates to a 
 boolean (true or false). If the formula evaluates to false then the row is not
 valid and will not be accepted in the table. If you are editing an existing row 

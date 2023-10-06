@@ -25,10 +25,7 @@ md.renderer.rules.table_open = function (tokens, idx) {
 
 const get_help_markup = async (topic, query, req) => {
   try {
-    const context = { user: req.user, Table, scState: getState() };
-    if (query.table) {
-      context.table = Table.findOne({ name: query.table });
-    }
+    const context = { user: req.user, Table, scState: getState(), query };
     const mdTemplate = await get_md_file(topic);
     if (!mdTemplate) return { markup: "Topic not found" };
     const template = _.template(mdTemplate, {
