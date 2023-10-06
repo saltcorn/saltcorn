@@ -85,7 +85,6 @@ export const HelpTopicLink = ({ topic, ...context }) => {
   Object.keys(context).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
   });
-  console.log({ context, qs });
   return (
     <FontAwesomeIcon
       className="ms-1"

@@ -122,7 +122,9 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
-
+  console.log("view opts", options);
+  const helpContext = { view_name: viewname };
+  if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
@@ -238,10 +240,9 @@ const ViewSettings = () => {
       )}
       {(state === "shared" || options.mode === "page") && (
         <Fragment>
-          {" "}
           <label>
             Extra state Formula
-            <HelpTopicLink topic="Extra state formula" view_name={viewname} />
+            <HelpTopicLink topic="Extra state formula" {...helpContext} />
           </label>
           <input
             type="text"

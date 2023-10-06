@@ -37,8 +37,8 @@ You can refer to the logged in user using the variable name user.
 This is an object and you must use the dot to access user fields,
 e.g. user.id for the logged in users id. A very common scenario 
 is to restrict rows to show to those that belong to the current user. 
-If you have a key to users field called user, you would use this 
-as the extra state formula: `{user: user.id}`
+If you have a key to users field called `theUser`, you would use this 
+as the extra state formula: `{theUser: user.id}`
 
 The user object has other fields than the primary key identifier.
 For your login session the user object is:
@@ -48,7 +48,7 @@ For your login session the user object is:
 ```
 {{# const userkey = oneOf(Object.keys(user)) }}
 
-For example to use the `{{userkey}}` field On the user object, write `user.{{userkey}}`
+For example to use the `{{userkey}}` field on the user object, write `user.{{userkey}}`
 {{# if(srcTable) { }}
 You can also use variables from the currently displayed row in the value expressions, 
 in this case the table {{srcTable.name}}:
