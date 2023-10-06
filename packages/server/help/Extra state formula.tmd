@@ -48,7 +48,7 @@ For your login session the user object is:
 {{# const userkey = oneOf(Object.keys(user)) }}
 
 For example to use the `{{userkey}}` field On the user object, write `user.{{userkey}}`
-
+{{# if(srcTable) { }}
 You can also use variables from the currently displayed row in the value expressions, 
 in this case the table {{srcTable.name}}:
 
@@ -56,3 +56,6 @@ in this case the table {{srcTable.name}}:
 | ----- | ------------- | ---- |
 {{# for (const field of srcTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
 {{# } }}
+
+{{# } }}
+
