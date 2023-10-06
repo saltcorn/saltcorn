@@ -1252,5 +1252,11 @@
 	"View decoration": "View decoration",
 	"Title formula": "Title formula",
 	"Show if true": "Show if true",
-	"Formula. Leave blank to always show": "Formula. Leave blank to always show"
+	"Formula. Leave blank to always show": "Formula. Leave blank to always show",
+	"install a different version": "install a different version",
+	"%s versions": "%s versions",
+	"Close": "Close",
+	"Module up-to-date": "Module up-to-date",
+	"Module '%s' not found": "Module '%s' not found",
+	"Module %s not found": "Module %s not found"
 }
