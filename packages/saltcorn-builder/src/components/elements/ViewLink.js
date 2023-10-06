@@ -15,6 +15,7 @@ import {
   ButtonOrLinkSettingsRows,
   setAPropGen,
   FormulaTooltip,
+  HelpTopicLink,
 } from "./utils";
 
 import { RelationPicker } from "./RelationPicker";
@@ -149,6 +150,8 @@ const ViewLinkSettings = () => {
       }
     }
   };
+  const helpContext = { view_name: use_view_name };
+  if (options.tableName) helpContext.srcTable = options.tableName;
   return (
     <div>
       <table className="w-100">
@@ -213,7 +216,8 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>
-                Extra state Formula <FormulaTooltip />
+                Extra state Formula
+                <HelpTopicLink topic="Extra state formula" {...helpContext} />
               </label>
               <input
                 type="text"
