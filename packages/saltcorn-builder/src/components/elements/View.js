@@ -15,6 +15,7 @@ import {
   setAPropGen,
   FormulaTooltip,
   buildOptions,
+  HelpTopicLink,
 } from "./utils";
 
 import { RelationPicker } from "./RelationPicker";
@@ -239,7 +240,8 @@ const ViewSettings = () => {
         <Fragment>
           {" "}
           <label>
-            Extra state Formula <FormulaTooltip />
+            Extra state Formula
+            <HelpTopicLink topic="Extra state formula" view_name={viewname} />
           </label>
           <input
             type="text"

@@ -11,6 +11,7 @@ import {
   faChevronDown,
   faChevronRight,
   faInfoCircle,
+  faQuestionCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
@@ -77,6 +78,22 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
       <label className="form-check-label">Inline display</label>
     </div>
   );
+
+export const HelpTopicLink = ({ topic, ...context }) => {
+  const { mode } = useContext(optionsCtx);
+  let qs = "";
+  Object.keys(context).forEach((k) => {
+    qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
+  });
+  console.log({ context, qs });
+  return (
+    <FontAwesomeIcon
+      className="ms-1"
+      icon={faQuestionCircle}
+      onClick={() => window.ajax_modal(`/admin/help/${topic}?${qs}`)}
+    />
+  );
+};
 
 export const FormulaTooltip = () => {
   const { fields } = useContext(optionsCtx);
