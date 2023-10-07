@@ -235,7 +235,8 @@ router.get(
                         name: "provider_name",
                         input_type: "select",
                         options: [
-                          req.__("Database table"),
+                          // Due to packages/saltcorn-markup/helpers.ts#L45 (select_options replaces label if o.value === "")
+                          {label:req.__("Database table"), value:'-'},
                           ...table_provider_names,
                         ],
                         required: true,
@@ -1066,7 +1067,7 @@ router.post(
         res.redirect(`/table/new`);
       } else if (
         rest.provider_name &&
-        rest.provider_name !== "Database table"
+        rest.provider_name !== "-"
       ) {
         const table = await Table.create(name, rest);
         res.redirect(`/table/provider-cfg/${table.id}`);
