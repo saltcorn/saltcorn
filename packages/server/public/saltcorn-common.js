@@ -1005,6 +1005,7 @@ function common_done(res, viewname, isWeb = true) {
       if (input.attr("type") === "checkbox")
         input.prop("checked", res.set_fields[k]);
       else input.val(res.set_fields[k]);
+      input.trigger("set_form_field");
     });
   }
   if (res.goto && !isWeb)
