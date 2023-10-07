@@ -957,12 +957,23 @@ function emptyAlerts() {
   $("#toasts-area").html("");
 }
 
-function press_store_button(clicked) {
+function press_store_button(clicked, keepOld) {
   let btn = clicked;
   if ($(clicked).is("form")) btn = $(clicked).find("button[type=submit]");
-
+  if (keepOld) {
+    const oldText = $(btn).html();
+    $(btn).data("old-text", oldText);
+  }
   const width = $(btn).width();
   $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+}
+
+function restore_old_button(btnId) {
+  const btn = $(`#${btnId}`);
+  const oldText = $(btn).data("old-text");
+  btn.html(oldText);
+  btn.css({ width: "" });
+  btn.removeData("old-text");
 }
 
 function common_done(res, viewname, isWeb = true) {

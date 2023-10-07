@@ -44,7 +44,7 @@ const menuForm = async (req) => {
   const views = await View.find({}, { orderBy: "name", nocase: true });
   const pages = await Page.find({}, { orderBy: "name", nocase: true });
   const roles = await User.get_roles();
-  const tables = await Table.find({});
+  const tables = await Table.find_with_external({});
   const dynTableOptions = tables.map((t) => t.name);
   const dynOrderFieldOptions = {},
     dynSectionFieldOptions = {};
