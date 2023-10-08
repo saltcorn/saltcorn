@@ -69,6 +69,37 @@ const disabledCsurf = (req, res, next) => {
   next();
 };
 
+const noCsrfLookup = (state) => {
+  if (!state.plugin_routes) return null;
+  else {
+    const result = new Set();
+    for (const [plugin, routes] of Object.entries(state.plugin_routes)) {
+      for (const url of routes
+        .filter((r) => r.csrf === false)
+        .map((r) => r.url)) {
+        result.add(url);
+      }
+    }
+    return result;
+  }
+};
+
+const mountPluginRoutes = (app, pluginRoutes) => {
+  for (const [plugin, routes] of Object.entries(pluginRoutes)) {
+    for (const route of routes) {
+      switch (route.method) {
+        case "post":
+          app.post(route.url, error_catcher(route.callback));
+          break;
+        case "get":
+        default:
+          app.get(route.url, error_catcher(route.callback));
+          break;
+      }
+    }
+  }
+};
+
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
 
 /**
@@ -300,21 +331,25 @@ const getApp = async (opts = {}) => {
   app.use("/scapi", scapi);
 
   const csurf = csrf();
-  if (!opts.disableCsrf)
+  if (!opts.disableCsrf) {
+    const noCsrf = noCsrfLookup(getState());
     app.use(function (req, res, next) {
       if (
+        noCsrf?.has(req.url) ||
         (req.smr &&
           (req.url.startsWith("/api/") ||
             req.url === "/auth/login-with/jwt" ||
             req.url === "/auth/signup")) ||
-        jwt_extractor(req)
+        jwt_extractor(req) ||
+        req.url === "/auth/callback/saml"
       )
         return disabledCsurf(req, res, next);
       csurf(req, res, next);
     });
-  else app.use(disabledCsurf);
+  } else app.use(disabledCsurf);
 
   mountRoutes(app);
+  mountPluginRoutes(app, getState().plugin_routes || {});
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
   // /robots.txt

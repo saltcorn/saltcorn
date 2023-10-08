@@ -374,3 +374,10 @@ export type RelationOption = {
   relationPath: string;
   relationFields: string[];
 };
+
+export type PluginRoute = {
+  url: string;
+  method?: string;
+  csrf?: boolean; // undefined => check csrf
+  callback: ({ req, res }: { req: any; res: any }) => void;
+};

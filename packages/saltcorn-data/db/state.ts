@@ -18,6 +18,7 @@ import {
   PluginLayout,
   ViewTemplate,
   MobileConfig,
+  PluginRoute,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -117,6 +118,7 @@ class State {
   plugin_cfgs: any;
   plugin_locations: any;
   plugin_module_names: any;
+  plugin_routes: Record<string, Array<PluginRoute>>;
   eventTypes: any;
   fonts: Record<string, string>;
   layouts: Record<string, PluginLayout>;
@@ -157,6 +159,7 @@ class State {
     this.plugin_cfgs = {};
     this.plugin_locations = {};
     this.plugin_module_names = {};
+    this.plugin_routes = {};
     this.table_providers = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
@@ -593,6 +596,8 @@ class State {
     withCfg("headers", []).forEach((h: any) => {
       if (!this.headers[name].includes(h)) this.headers[name].push(h);
     });
+    const routes = withCfg("routes", []);
+    this.plugin_routes[name] = routes;
   }
 
   /**

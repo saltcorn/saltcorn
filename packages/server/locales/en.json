@@ -1250,5 +1250,6 @@
 	"New user view": "New user view",
 	"A view to show to new users, to finalise registration (if Edit) or as a welcome view": "A view to show to new users, to finalise registration (if Edit) or as a welcome view",
 	"View decoration": "View decoration",
-	"Title formula": "Title formula"
+	"Title formula": "Title formula",
+	"Unknown authentication method %s": "Unknown authentication method %s"
 }
