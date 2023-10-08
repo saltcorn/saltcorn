@@ -16,6 +16,7 @@ import {
   setInitialConfig,
   isBlock,
   fetchFieldPreview,
+  HelpTopicLink,
 } from "./utils";
 
 export /**
@@ -108,6 +109,7 @@ const FieldSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const { setPreviews } = useContext(previewCtx);
+  console.log(options);
 
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
@@ -166,7 +168,15 @@ const FieldSettings = () => {
           {fvs && (
             <tr>
               <td>
-                <label>Field view</label>
+                <label>
+                  Field view
+                  <HelpTopicLink
+                    topic="Field views"
+                    fieldName={name}
+                    tableName={options.tableName}
+                    mode={options.mode}
+                  />
+                </label>
               </td>
 
               <td>
