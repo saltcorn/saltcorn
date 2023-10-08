@@ -668,8 +668,19 @@ const ConfigForm = ({
         if (noshow) return null;
       }
       return (
-        <div key={ix}>
-          {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
+        <div key={ix} className="builder-config-field">
+          {!isCheckbox(f) ? (
+            <label>
+              {f.label || f.name}
+              {f.help ? (
+                <HelpTopicLink
+                  topic={f.help.topic}
+                  fieldName={fieldName}
+                  tableName={tableName}
+                />
+              ) : null}
+            </label>
+          ) : null}
           <ConfigField
             field={f}
             configuration={configuration}
@@ -677,9 +688,12 @@ const ConfigForm = ({
             onChange={onChange}
           />
           {f.sublabel ? (
-            <i dangerouslySetInnerHTML={{ __html: f.sublabel }}></i>
+            <i
+              className="small"
+              dangerouslySetInnerHTML={{ __html: f.sublabel }}
+            ></i>
           ) : null}
-          {f.help ? (
+          {isCheckbox(f) && f.help ? (
             <HelpTopicLink
               topic={f.help.topic}
               fieldName={fieldName}
