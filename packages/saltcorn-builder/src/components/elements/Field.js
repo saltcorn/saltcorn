@@ -16,6 +16,7 @@ import {
   setInitialConfig,
   isBlock,
   fetchFieldPreview,
+  HelpTopicLink,
 } from "./utils";
 
 export /**
@@ -166,7 +167,15 @@ const FieldSettings = () => {
           {fvs && (
             <tr>
               <td>
-                <label>Field view</label>
+                <label>
+                  Field view
+                  <HelpTopicLink
+                    topic="Field views"
+                    field_name={name}
+                    table_name={options.tableName}
+                    mode={options.mode}
+                  />
+                </label>
               </td>
 
               <td>
@@ -232,6 +241,8 @@ const FieldSettings = () => {
       </table>
       {cfgFields ? (
         <ConfigForm
+          tableName={options.tableName}
+          fieldName={name}
           fields={cfgFields}
           configuration={configuration}
           setProp={setProp}
