@@ -117,7 +117,9 @@ const formRowWrap = (
       ? div(
           { class: `col-sm-12` },
           h5(text(hdr.label)),
-          hdr.sublabel && p(i(hdr.sublabel))
+          hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+          hdr.sublabel && p(i(hdr.sublabel)),
+          mkSubLabelAndHelp(hdr)
         )
       : hdr.input_type === "dynamic_fields"
       ? inner
@@ -130,7 +132,8 @@ const formRowWrap = (
               for: `input${text_attr(hdr.form_name)}`,
             },
             text(hdr.label)
-          )
+          ),
+          hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
         ) + mkSubLabelAndHelp(hdr)
       : [
           div(
@@ -140,7 +143,8 @@ const formRowWrap = (
                 for: `input${text_attr(hdr.form_name)}`,
               },
               text(hdr.label)
-            )
+            ),
+            hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
           ),
           div(
             { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
@@ -871,29 +875,28 @@ const mkFormRowForField =
         labelCols
       );
   };
-
+const helpLink = ({ topic, context, dynContext }: any) => {
+  let qs = "";
+  Object.keys(context).forEach((k) => {
+    qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
+  });
+  return a(
+    {
+      href: `javascript:ajax_modal('/admin/help/${topic}?${qs}')`,
+      "data-dyn-href":
+        !!dynContext &&
+        `\`javascript:ajax_modal('/admin/help/${topic}?${qs}&${dynContext
+          .map((k: string) => `${k}=\${${k}}`)
+          .join("&")}')\``,
+    },
+    i({ class: "fas fa-question-circle ms-1" })
+  );
+};
 const mkSubLabelAndHelp = (hdr: any) => {
-  const helpLink = ({ topic, context, dynContext }: any) => {
-    let qs = "";
-    Object.keys(context).forEach((k) => {
-      qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
-    });
-    return a(
-      {
-        href: `javascript:ajax_modal('/admin/help/${topic}?${qs}')`,
-        "data-dyn-href":
-          !!dynContext &&
-          `\`javascript:ajax_modal('/admin/help/${topic}?${qs}&${dynContext
-            .map((k: string) => `${k}=\${${k}}`)
-            .join("&")}')\``,
-      },
-      i({ class: "fas fa-question-circle ms-1" })
-    );
-  };
   return (
     (hdr.sublabel ? i(text(hdr.sublabel)) : "") +
-    (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "") +
-    (hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
+    (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "")
+    //(hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
   );
 };
 
@@ -924,7 +927,8 @@ const mkFormRowAside = (
       {
         for: `input${text_attr(hdr.form_name)}`,
       },
-      text(hdr.label)
+      text(hdr.label),
+      hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
     );
   const outerAttributes = {
     class: ["form-group row"],
