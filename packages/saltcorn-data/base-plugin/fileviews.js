@@ -26,6 +26,7 @@ const path = require("path");
 module.exports = {
   // download link
   "Download link": {
+    description: "Link to download file",
     run: (filePath, file_name, cfg = {}) => {
       if (!filePath) return "";
       return link(
@@ -38,6 +39,8 @@ module.exports = {
   },
   // Link
   Link: {
+    description: "Link to open file",
+
     run: (filePath, file_name, cfg = {}) =>
       !filePath
         ? ""
@@ -51,6 +54,8 @@ module.exports = {
 
   // Link (new tab)
   "Link (new tab)": {
+    description: "Link to open file in new tab",
+
     run: (filePath, file_name, cfg = {}) =>
       !filePath
         ? ""
@@ -66,6 +71,8 @@ module.exports = {
   },
   // Show Image
   "Show Image": {
+    description: "Show the file as an image",
+
     run: (filePath, file_name, cfg = {}) => {
       if (!filePath) return "";
       if (isNode())
@@ -83,6 +90,8 @@ module.exports = {
   },
   // upload
   upload: {
+    description: "Upload the file",
+
     isEdit: true,
     multipartFormData: true,
     valueIsFilename: true,
@@ -126,6 +135,8 @@ module.exports = {
   select: {
     isEdit: true,
     setsFileId: true,
+    description: "Select existing file",
+
     configFields: async () => {
       const dirs = await File.allDirectories();
       return [
@@ -172,6 +183,8 @@ module.exports = {
     isEdit: true,
     multipartFormData: true,
     valueIsFilename: true,
+    description:
+      "Capture image, audio, or video with the user's camera or microphone",
 
     configFields: async () => {
       const dirs = await File.allDirectories();
@@ -225,6 +238,8 @@ module.exports = {
       { name: "height", type: "Integer", label: "Height (px)" },
       { name: "expand", type: "Bool", label: "Click to expand" },
     ],
+    description: "Show the image file as small thumbnail image",
+
     run: (filePath, file_name, cfg = {}) => {
       const { width, height, expand, targetPrefix } = cfg || {};
       if (!filePath) return "";

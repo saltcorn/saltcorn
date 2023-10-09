@@ -78,6 +78,15 @@ function apply_showif() {
       console.error(e);
     }
   });
+  $("[data-dyn-href]").each(function (ix, element) {
+    const e = $(element);
+    const rec = get_form_record(e);
+    const href = new Function(
+      `{${Object.keys(rec).join(",")}}`,
+      "return " + e.attr("data-dyn-href")
+    )(rec);
+    e.attr("href", href);
+  });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
     var data = JSON.parse(decodeURIComponent(e.attr("data-calc-options")));

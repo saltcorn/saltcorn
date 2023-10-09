@@ -1,0 +1,62 @@
+{{# const srcTable = Table.findOne({ name: query.srcTable }) }}
+{{# const view = View.findOne({ name: query.view_name }) }}
+{{# const destTable = Table.findOne({ id: view.table_id }) }}
+
+The extra state formula when embedding or linking to a view is used
+to influence the row that will be included in that views display, 
+in addition to any selection based on a chosen relationship.
+
+The formula takes the form of a JavaScript object where the object 
+keys are fields (variable names) on the table of the embedded view,
+and the values are the JavaScript expressions for those fields which set the criteria 
+for the rows to be included. For example, if you would like to display 
+all rows where the Active field is true you would use this as the extra
+state formula: `{ active: true }`. This is an object where the only
+key is `active` and its value is `true`. You can have more than one 
+key, for example: 
+
+```
+{ active: true, age: {gt: 21}, manager: user.id }
+``` 
+(See below for using the `user` variable and greater-than filters)
+
+The keys you can use are the variable names on the {{destTable.name}} table:
+
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
+{{# for (const field of destTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
+{{# } }}
+
+In the value expressions (to the right of the colon) you can use 
+literals (e.g. 17 for numbers or true for booleans; string literals 
+must be enclosed in quotes (single, double or 
+[backtick](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals))). 
+You can also as the value use a more complex JavaScript expression.
+
+You can refer to the logged in user using the variable name user. 
+This is an object and you must use the dot to access user fields,
+e.g. user.id for the logged in users id. A very common scenario 
+is to restrict rows to show to those that belong to the current user. 
+If you have a key to users field called `theUser`, you would use this 
+as the extra state formula: `{theUser: user.id}`
+
+The user object has other fields than the primary key identifier.
+For your login session the user object is:
+
+```
+{{JSON.stringify(user, null, 2)}}
+```
+{{# const userkey = oneOf(Object.keys(user)) }}
+
+For example to use the `{{userkey}}` field on the user object, write `user.{{userkey}}`
+{{# if(srcTable) { }}
+You can also use variables from the currently displayed row in the value expressions, 
+in this case the table {{srcTable.name}}:
+
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
+{{# for (const field of srcTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
+{{# } }}
+
+{{# } }}
+

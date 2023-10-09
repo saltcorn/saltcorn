@@ -15,6 +15,7 @@ import {
   setAPropGen,
   FormulaTooltip,
   buildOptions,
+  HelpTopicLink,
 } from "./utils";
 
 import { RelationPicker } from "./RelationPicker";
@@ -121,7 +122,8 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
-
+  const helpContext = { view_name: viewname };
+  if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
@@ -237,9 +239,9 @@ const ViewSettings = () => {
       )}
       {(state === "shared" || options.mode === "page") && (
         <Fragment>
-          {" "}
           <label>
-            Extra state Formula <FormulaTooltip />
+            Extra state Formula
+            <HelpTopicLink topic="Extra state formula" {...helpContext} />
           </label>
           <input
             type="text"

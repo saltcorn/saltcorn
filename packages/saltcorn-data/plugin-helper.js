@@ -886,6 +886,11 @@ const field_picker_fields = async ({
               calcOptions: ["field_name", field_view_options],
             },
             showIf: { type: "Field" },
+            help: {
+              topic: "Field views",
+              context: { table_name: table.name, mode: "list" },
+              dynContext: ["field_name"],
+            },
           },
         ]),
 
@@ -1102,6 +1107,11 @@ const field_picker_fields = async ({
       sublabel: __(
         "Formula for JavaScript object that will be added to state parameters"
       ),
+      help: {
+        topic: "Extra state formula",
+        context: { srcTable: table.name },
+        dynContext: ["view_name"],
+      },
       type: "String",
       class: "validate-expression",
       showIf: { type: "ViewLink" },
