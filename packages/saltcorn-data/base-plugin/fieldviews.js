@@ -31,6 +31,8 @@ const select = {
   type: "Key",
   /** @type {boolean} */
   isEdit: true,
+  description:
+    "Select relation by a dropdown. Labels can be customised and the options restricted",
   blockDisplay: true,
 
   /**
@@ -155,7 +157,8 @@ const select_from_table = {
   /** @type {boolean} */
   isEdit: true,
   blockDisplay: true,
-
+  description:
+    "Select by drop-down. Available options are sourced from another table.",
   /**
    * @type {object[]}
    */
@@ -359,6 +362,8 @@ const two_level_select = {
   /** @type {boolean} */
   isEdit: true,
   blockDisplay: true,
+  description:
+    "Two related dropdowns, the first determines values in the second.",
 
   /**
    * @type {object[]}
@@ -466,6 +471,7 @@ const radio_select = {
   type: "Key",
   /** @type {boolean} */
   isEdit: true,
+  description: "Select from a radio group",
   /**
    * @param {*} nm
    * @param {*} v
@@ -495,6 +501,8 @@ const search_or_create = {
   /** @type {boolean} */
   isEdit: true,
   blockDisplay: true,
+  description:
+    "Select from dropdown, or give user the option of creating a new relation in a popup",
 
   /**
    * @param {object} field
