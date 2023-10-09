@@ -85,7 +85,7 @@ const noCsrfLookup = (state) => {
 };
 
 const prepPluginRouter = (pluginRoutes) => {
-  router = express.Router();
+  const router = express.Router();
   for (const [plugin, routes] of Object.entries(pluginRoutes)) {
     for (const route of routes) {
       switch (route.method) {
