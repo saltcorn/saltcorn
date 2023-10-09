@@ -51,6 +51,7 @@ const number_slider = (type) => ({
       : []),
   ],
   isEdit: true,
+  description: "Input on a slider between defined maximum and minimum values",
   blockDisplay: true,
   run: (nm, v, attrs = {}, cls, required, field) =>
     input({
@@ -85,6 +86,8 @@ const range_interval = (type) => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
+  description:
+    "User can pick filtered interval by moving low and high controls on a slider.",
   /* https://stackoverflow.com/a/31083391 */
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
     return section(
@@ -146,6 +149,7 @@ const progress_bar = (type) => ({
     { name: "px_height", type: "Integer", label: "Height in px" },
   ],
   isEdit: false,
+  description: "Show value as a percentage filled on a horizontal progress bar",
   run: (v, req, attrs = {}) =>
     div(
       {
@@ -184,6 +188,7 @@ const heat_cell = (type) => ({
     { name: "em_height", type: "Integer", label: "Height in em", default: 1.5 },
   ],
   isEdit: false,
+  description: "Set background color on according to value on a color scale",
   run: (v, req, attrs = {}) => {
     if (typeof v !== "number") return "";
     const pcnt0 = (v - attrs.min) / (attrs.max - attrs.min);
@@ -459,14 +464,20 @@ const string = {
      * @category saltcorn-data
      * @subcategory types / string
      */
-    as_text: { isEdit: false, run: (s) => text_attr(s || "") },
+    as_text: {
+      isEdit: false,
+      description: "Show the value with no other formatting",
+      run: (s) => text_attr(s || ""),
+    },
     preFormatted: {
       isEdit: false,
+      description: "Pre-formatted (in a &lt;pre&gt; tag)",
       run: (s) =>
         s ? span({ style: "white-space:pre-wrap" }, text_attr(s || "")) : "",
     },
     code: {
       isEdit: false,
+      description: "Show as a code block",
       run: (s) => (s ? pre(code(text_attr(s || ""))) : ""),
     },
     /**
@@ -483,6 +494,7 @@ const string = {
           sublabel: "Optional. If blank, label is URL",
         },
       ],
+      description: "Show a link with the field value as the URL.",
       isEdit: false,
       run: (s, req, attrs = {}) =>
         s
@@ -496,6 +508,7 @@ const string = {
      */
     img_from_url: {
       isEdit: false,
+      description: "Show an image from the URL in the field value",
       run: (s, req, attrs) => img({ src: text(s || ""), style: "width:100%" }),
     },
     /**
@@ -503,7 +516,12 @@ const string = {
      * @category saltcorn-data
      * @subcategory types / string
      */
-    as_header: { isEdit: false, run: (s) => h3(text_attr(s || "")) },
+    as_header: {
+      isEdit: false,
+      description: "Show this as a header",
+
+      run: (s) => h3(text_attr(s || "")),
+    },
     /**
      * @namespace
      * @category saltcorn-data
@@ -512,7 +530,8 @@ const string = {
     edit: {
       isEdit: true,
       blockDisplay: true,
-
+      description:
+        "edit with a standard text input, or dropdown if field has options",
       configFields: (field) => [
         ...(field.attributes.options &&
         field.attributes.options.length > 0 &&
@@ -625,7 +644,7 @@ const string = {
     fill_formula_btn: {
       isEdit: true,
       blockDisplay: true,
-
+      description: "Input with a button prefills value from specified formula",
       configFields: [
         {
           name: "formula",
@@ -715,7 +734,7 @@ const string = {
     make_unique: {
       isEdit: true,
       blockDisplay: true,
-
+      description: "Make this input unique in the database table",
       configFields: [
         {
           name: "placeholder",
@@ -782,7 +801,7 @@ const string = {
     textarea: {
       isEdit: true,
       blockDisplay: true,
-
+      description: "Edit as a text area (multi line input)",
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
@@ -815,6 +834,7 @@ const string = {
           label: "Inline",
         },
       ],
+      description: "Pick from a radio group. Field must have options",
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options
           ? radio_group({
@@ -834,6 +854,8 @@ const string = {
     checkbox_group: {
       isEdit: false,
       isFilter: true,
+      description:
+        "Filter from a checkbox group. Field must have options. Possible selections are treated as OR.",
       configFields: [
         {
           type: "Bool",
@@ -863,7 +885,7 @@ const string = {
     password: {
       isEdit: true,
       blockDisplay: true,
-
+      description: "Password input type, characters are hidden when typed",
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "password",
@@ -983,7 +1005,11 @@ const int = {
      * @category saltcorn-data
      * @subcategory types / int
      */
-    show: { isEdit: false, run: (s) => text(s) },
+    show: {
+      isEdit: false,
+      description: "Show value with no additional formatting.",
+      run: (s) => text(s),
+    },
     /**
      * @namespace
      * @category saltcorn-data
@@ -992,6 +1018,7 @@ const int = {
     edit: {
       isEdit: true,
       blockDisplay: true,
+      description: "Number input, optionally with stepper.",
       configFields: [
         { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
       ],
@@ -1027,6 +1054,7 @@ const int = {
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
     show_star_rating: {
+      description: "Show value as filled stars out of maximum.",
       configFields: (field) => [
         ...(!isdef(field.attributes.min)
           ? [{ name: "min", type: "Integer", required: true, default: 1 }]
@@ -1051,6 +1079,7 @@ const int = {
         ),
     },
     edit_star_rating: {
+      description: "Input by clicking filled stars out of maximum.",
       configFields: (field) => [
         ...(!isdef(field.attributes.min)
           ? [{ name: "min", type: "Integer", required: true, default: 1 }]
@@ -1156,6 +1185,7 @@ const color = {
      */
     show: {
       isEdit: false,
+      description: "A box filled with the color",
       run: (s) =>
         s
           ? div({
@@ -1172,7 +1202,7 @@ const color = {
     edit: {
       isEdit: true,
       blockDisplay: true,
-
+      description: "Simple color picker",
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "color",
@@ -1240,7 +1270,11 @@ const float = {
      * @category saltcorn-data
      * @subcategory types / float
      */
-    show: { isEdit: false, run: (s) => text(s) },
+    show: {
+      isEdit: false,
+      description: "Show number with no additional formatting",
+      run: (s) => text(s),
+    },
     /**
      * @namespace
      * @category saltcorn-data
@@ -1249,7 +1283,7 @@ const float = {
     edit: {
       isEdit: true,
       blockDisplay: true,
-
+      description: "Number input",
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
