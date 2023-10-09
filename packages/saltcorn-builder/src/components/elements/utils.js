@@ -11,6 +11,7 @@ import {
   faChevronDown,
   faChevronRight,
   faInfoCircle,
+  faQuestionCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
@@ -77,6 +78,21 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
       <label className="form-check-label">Inline display</label>
     </div>
   );
+
+export const HelpTopicLink = ({ topic, ...context }) => {
+  const { mode } = useContext(optionsCtx);
+  let qs = "";
+  Object.keys(context).forEach((k) => {
+    qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
+  });
+  return (
+    <FontAwesomeIcon
+      className="ms-1"
+      icon={faQuestionCircle}
+      onClick={() => window.ajax_modal(`/admin/help/${topic}?${qs}`)}
+    />
+  );
+};
 
 export const FormulaTooltip = () => {
   const { fields } = useContext(optionsCtx);
@@ -631,7 +647,15 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
+const ConfigForm = ({
+  fields,
+  configuration,
+  setProp,
+  node,
+  onChange,
+  tableName,
+  fieldName,
+}) => (
   <div>
     {fields.map((f, ix) => {
       if (f.showIf && configuration) {
@@ -644,8 +668,19 @@ const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
         if (noshow) return null;
       }
       return (
-        <div key={ix}>
-          {!isCheckbox(f) ? <label>{f.label || f.name}</label> : null}
+        <div key={ix} className="builder-config-field">
+          {!isCheckbox(f) ? (
+            <label>
+              {f.label || f.name}
+              {f.help ? (
+                <HelpTopicLink
+                  topic={f.help.topic}
+                  field_name={fieldName}
+                  table_name={tableName}
+                />
+              ) : null}
+            </label>
+          ) : null}
           <ConfigField
             field={f}
             configuration={configuration}
@@ -653,7 +688,17 @@ const ConfigForm = ({ fields, configuration, setProp, node, onChange }) => (
             onChange={onChange}
           />
           {f.sublabel ? (
-            <i dangerouslySetInnerHTML={{ __html: f.sublabel }}></i>
+            <i
+              className="small"
+              dangerouslySetInnerHTML={{ __html: f.sublabel }}
+            ></i>
+          ) : null}
+          {isCheckbox(f) && f.help ? (
+            <HelpTopicLink
+              topic={f.help.topic}
+              fieldName={fieldName}
+              tableName={tableName}
+            />
           ) : null}
         </div>
       );

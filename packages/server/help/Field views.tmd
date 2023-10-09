@@ -1,0 +1,22 @@
+{{# const table = Table.findOne({ name: query.table_name }) }}
+{{# const mode = query.mode }}
+{{# const field = table.getField(query.field_name) }}
+{{# const fvsObj = field.type === "Key" ? scState.keyFieldviews : field.type === "File" ? scState.fileviews : field.type?.fieldviews || {} }}
+{{# const allFVs = Object.entries(fvsObj) }}
+{{# const myFVs = mode==='filter' ? allFVs.filter(([nm,fv])=>fv.isFilter || fv.isEdit) : mode==='edit' ? allFVs.filter(([nm,fv])=>!fv.isFilter || fv.isEdit) : mode==='show'||mode==='list' ? allFVs.filter(([nm,fv])=>!fv.isFilter && !fv.isEdit) : allFVs }}
+
+The field view determines how a field value is shown to the user and how the 
+user can interact with (or edit, in Edit views) that value. The available 
+field views are determined by the field type and the view pattern. 
+
+Some field views have configuration options which can be used to further 
+customize how the value is displayed or how the user interacts with it. 
+This configuration options will appear in the field settings below the 
+field view choice.
+
+In the table {{ table.name }} the field {{ field.label }} of type 
+{{ field.pretty_type }} has the following available field views:
+
+{{# for (const [name, fv] of myFVs) { }}
+* {{name}}{{mode==='edit' && !fv.isEdit? ` [Not editable]`:''}}: {{fv.description||undefined}}
+{{# } }}

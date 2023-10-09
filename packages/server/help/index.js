@@ -1,4 +1,5 @@
 const Table = require("@saltcorn/data/models/table");
+const View = require("@saltcorn/data/models/view");
 const File = require("@saltcorn/data/models/file");
 const _ = require("underscore");
 const fs = require("fs").promises;
@@ -7,7 +8,8 @@ const MarkdownIt = require("markdown-it"),
 
 const { pre } = require("@saltcorn/markup/tags");
 const path = require("path");
-
+const { getState } = require("@saltcorn/data/db/state");
+const { oneOf } = require("@saltcorn/types/generators");
 const get_md_file = async (topic) => {
   try {
     const fp = path.join(__dirname, `${File.normalise(topic)}.tmd`);
@@ -24,10 +26,14 @@ md.renderer.rules.table_open = function (tokens, idx) {
 
 const get_help_markup = async (topic, query, req) => {
   try {
-    const context = { user: req.user, Table };
-    if (query.table) {
-      context.table = Table.findOne({ name: query.table });
-    }
+    const context = {
+      user: req.user,
+      Table,
+      View,
+      scState: getState(),
+      query,
+      oneOf,
+    };
     const mdTemplate = await get_md_file(topic);
     if (!mdTemplate) return { markup: "Topic not found" };
     const template = _.template(mdTemplate, {
