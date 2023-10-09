@@ -23,11 +23,11 @@ export type ReqRes = {
 export type ResultMessage = ErrorMessage | SuccessMessage;
 
 export const instanceOfErrorMsg = (object: any): object is ErrorMessage => {
-  return "error" in object;
+  return object && "error" in object;
 };
 
 export const instanceOfSuccessMsg = (object: any): object is SuccessMessage => {
-  return "success" in object;
+  return object && "success" in object;
 };
 
 export type Type = {

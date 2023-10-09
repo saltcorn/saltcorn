@@ -66,7 +66,9 @@ export async function buildObjectTrees(
   const result = new Array<Node>();
   const helper = new ExtractHelper(opts);
   if (opts.showPages) {
-    const entryPages = opts.entryPages ? opts.entryPages : new Array<any>();
+    const entryPages = opts.entryPages
+      ? opts.entryPages.filter((p) => !!p)
+      : new Array<any>();
     const entryPageTrees = await buildTree(entryPages, helper);
     const allPages = await require("../models/page").find();
     const pageTrees = await buildTree(allPages, helper);
