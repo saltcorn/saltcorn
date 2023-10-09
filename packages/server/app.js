@@ -75,7 +75,7 @@ const noCsrfLookup = (state) => {
     const result = new Set();
     for (const [plugin, routes] of Object.entries(state.plugin_routes)) {
       for (const url of routes
-        .filter((r) => r.csrf === false)
+        .filter((r) => r.noCsrf === true)
         .map((r) => r.url)) {
         result.add(url);
       }
