@@ -1903,17 +1903,3 @@ router.post(
     res.redirect("/");
   })
 );
-
-router.post(
-  "/my_callback",
-  error_catcher(async (req, res) => {
-    console.log("my_callback POST");
-  })
-);
-
-router.get(
-  "/my_callback",
-  error_catcher(async (req, res) => {
-    console.log("my_callback GET");
-  })
-);

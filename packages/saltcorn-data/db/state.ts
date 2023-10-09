@@ -119,6 +119,7 @@ class State {
   plugin_locations: any;
   plugin_module_names: any;
   plugin_routes: Record<string, Array<PluginRoute>>;
+  routesChangedCb?: Function;
   eventTypes: any;
   fonts: Record<string, string>;
   layouts: Record<string, PluginLayout>;
@@ -598,6 +599,7 @@ class State {
     });
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
+    if (routes.length > 0 && this.routesChangedCb) this.routesChangedCb();
   }
 
   /**

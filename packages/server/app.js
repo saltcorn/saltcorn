@@ -84,20 +84,22 @@ const noCsrfLookup = (state) => {
   }
 };
 
-const mountPluginRoutes = (app, pluginRoutes) => {
+const prepPluginRouter = (pluginRoutes) => {
+  router = express.Router();
   for (const [plugin, routes] of Object.entries(pluginRoutes)) {
     for (const route of routes) {
       switch (route.method) {
         case "post":
-          app.post(route.url, error_catcher(route.callback));
+          router.post(route.url, error_catcher(route.callback));
           break;
         case "get":
         default:
-          app.get(route.url, error_catcher(route.callback));
+          router.get(route.url, error_catcher(route.callback));
           break;
       }
     }
   }
+  return router;
 };
 
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
@@ -349,7 +351,14 @@ const getApp = async (opts = {}) => {
   } else app.use(disabledCsurf);
 
   mountRoutes(app);
-  mountPluginRoutes(app, getState().plugin_routes || {});
+  // mount plugin router with a callback for changes
+  let pluginRouter = prepPluginRouter(getState().plugin_routes || {});
+  getState().routesChangedCb = () => {
+    pluginRouter = prepPluginRouter(getState().plugin_routes || {});
+  };
+  app.use((req, res, next) => {
+    pluginRouter(req, res, next);
+  });
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
   // /robots.txt
