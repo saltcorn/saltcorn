@@ -333,8 +333,9 @@ const getApp = async (opts = {}) => {
   app.use("/scapi", scapi);
 
   const csurf = csrf();
+  let noCsrf = null;
   if (!opts.disableCsrf) {
-    const noCsrf = noCsrfLookup(getState());
+    noCsrf = noCsrfLookup(getState());
     app.use(function (req, res, next) {
       if (
         noCsrf?.has(req.url) ||
@@ -355,6 +356,7 @@ const getApp = async (opts = {}) => {
   let pluginRouter = prepPluginRouter(getState().plugin_routes || {});
   getState().routesChangedCb = () => {
     pluginRouter = prepPluginRouter(getState().plugin_routes || {});
+    noCsrf = noCsrfLookup(getState());
   };
   app.use((req, res, next) => {
     pluginRouter(req, res, next);
