@@ -172,8 +172,8 @@ const FieldSettings = () => {
                   Field view
                   <HelpTopicLink
                     topic="Field views"
-                    fieldName={name}
-                    tableName={options.tableName}
+                    field_name={name}
+                    table_name={options.tableName}
                     mode={options.mode}
                   />
                 </label>

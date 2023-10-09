@@ -886,6 +886,11 @@ const field_picker_fields = async ({
               calcOptions: ["field_name", field_view_options],
             },
             showIf: { type: "Field" },
+            help: {
+              topic: "Field views",
+              context: { table_name: table.name, mode: "list" },
+              dynContext: ["field_name"],
+            },
           },
         ]),
 

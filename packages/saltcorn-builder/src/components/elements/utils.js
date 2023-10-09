@@ -675,8 +675,8 @@ const ConfigForm = ({
               {f.help ? (
                 <HelpTopicLink
                   topic={f.help.topic}
-                  fieldName={fieldName}
-                  tableName={tableName}
+                  field_name={fieldName}
+                  table_name={tableName}
                 />
               ) : null}
             </label>

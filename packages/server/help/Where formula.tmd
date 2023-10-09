@@ -1,5 +1,5 @@
-{{# const srcTable = Table.findOne({ name: query.tableName }) }}
-{{# const field = srcTable.getField(query.fieldName) }}
+{{# const srcTable = Table.findOne({ name: query.table_name }) }}
+{{# const field = srcTable.getField(query.field_name) }}
 {{# const refTable = Table.findOne(field.reftable_name) }}
 
 The where formula allows you to restrict the options provided. This can be 

@@ -1,9 +1,9 @@
-{{# const srcTable = Table.findOne({ name: query.tableName }) }}
+{{# const srcTable = Table.findOne({ name: query.table_name }) }}
 {{# const mode = query.mode }}
-{{# const field = srcTable.getField(query.fieldName) }}
+{{# const field = srcTable.getField(query.field_name) }}
 {{# const fvsObj = field.type === "Key" ? scState.keyFieldviews : field.type === "File" ? scState.fileviews : field.type?.fieldviews || {} }}
 {{# const allFVs = Object.entries(fvsObj) }}
-{{# const myFVs = mode==='filter' ? allFVs.filter(([nm,fv])=>fv.isFilter || fv.isEdit) : mode==='edit' ? allFVs.filter(([nm,fv])=>!fv.isFilter || fv.isEdit) : mode==='show'||mode==='list' ? allFVs.filter(([nm,fv])=>!fv.isFilter || !fv.isEdit) : allFVs }}
+{{# const myFVs = mode==='filter' ? allFVs.filter(([nm,fv])=>fv.isFilter || fv.isEdit) : mode==='edit' ? allFVs.filter(([nm,fv])=>!fv.isFilter || fv.isEdit) : mode==='show'||mode==='list' ? allFVs.filter(([nm,fv])=>!fv.isFilter && !fv.isEdit) : allFVs }}
 
 
 Field views are...
