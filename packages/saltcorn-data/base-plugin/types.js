@@ -1397,6 +1397,7 @@ const date = {
      */
     show: {
       isEdit: false,
+      description: "Show date and time in the users locale",
       run: (d, req) =>
         typeof d === "string"
           ? localeDateTime(new Date(d))
@@ -1411,6 +1412,8 @@ const date = {
      */
     showDay: {
       isEdit: false,
+      description: "Show date in the users locale",
+
       run: (d, req) =>
         typeof d === "string"
           ? localeDate(new Date(d))
@@ -1425,6 +1428,7 @@ const date = {
      */
     format: {
       isEdit: false,
+      description: "Display date with a specified format",
       configFields: [
         {
           name: "format",
@@ -1453,6 +1457,7 @@ const date = {
      */
     relative: {
       isEdit: false,
+      description: "Display relative to current time (e.g. 2 hours ago)",
       run: (d, req) => {
         if (!d) return "";
         const loc = locale(req);
@@ -1467,6 +1472,8 @@ const date = {
      */
     yearsAgo: {
       isEdit: false,
+      description: "Show how many years ago this occurred.",
+
       run: (d, req) => {
         if (!d) return "";
         return text(moment.duration(new Date() - d).years());
@@ -1480,7 +1487,8 @@ const date = {
     edit: {
       isEdit: true,
       blockDisplay: true,
-
+      description:
+        "Ask user to enter a date string. For a better user experience install the flatpickr module.",
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "text",
@@ -1509,6 +1517,8 @@ const date = {
     editDay: {
       isEdit: true,
       blockDisplay: true,
+      description:
+        "Ask user to enter a day string. For a better user experience install the flatpickr module.",
 
       run: (nm, v, attrs, cls, required, field) =>
         input({
@@ -1592,6 +1602,7 @@ const bool = {
      */
     show: {
       isEdit: false,
+      description: "Show as a green tick or red cross circle",
       run: (v) =>
         typeof v === "undefined" || v === null
           ? ""
@@ -1610,6 +1621,7 @@ const bool = {
      */
     checkboxes: {
       isEdit: false,
+      description: "Show with a non-editable checkbox",
       run: (v) =>
         v === true
           ? input({ disabled: true, type: "checkbox", checked: true })
@@ -1624,6 +1636,8 @@ const bool = {
      */
     TrueFalse: {
       isEdit: false,
+      description: "Show as True or False",
+
       run: (v) => (v === true ? "True" : v === false ? "False" : ""),
     },
     /**
@@ -1633,6 +1647,7 @@ const bool = {
      */
     edit: {
       isEdit: true,
+      description: "Edit with a checkbox",
       configFields: [
         {
           name: "size",
@@ -1663,6 +1678,7 @@ const bool = {
     },
     switch: {
       isEdit: true,
+      description: "Edit with a switch",
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
           attrs.isFilter && v
@@ -1692,6 +1708,8 @@ const bool = {
      */
     tristate: {
       isEdit: true,
+      description:
+        "Edit with a control that can be True, False and Null (missing)",
       run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
