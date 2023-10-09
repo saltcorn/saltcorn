@@ -69,6 +69,39 @@ const disabledCsurf = (req, res, next) => {
   next();
 };
 
+const noCsrfLookup = (state) => {
+  if (!state.plugin_routes) return null;
+  else {
+    const result = new Set();
+    for (const [plugin, routes] of Object.entries(state.plugin_routes)) {
+      for (const url of routes
+        .filter((r) => r.noCsrf === true)
+        .map((r) => r.url)) {
+        result.add(url);
+      }
+    }
+    return result;
+  }
+};
+
+const prepPluginRouter = (pluginRoutes) => {
+  const router = express.Router();
+  for (const [plugin, routes] of Object.entries(pluginRoutes)) {
+    for (const route of routes) {
+      switch (route.method) {
+        case "post":
+          router.post(route.url, error_catcher(route.callback));
+          break;
+        case "get":
+        default:
+          router.get(route.url, error_catcher(route.callback));
+          break;
+      }
+    }
+  }
+  return router;
+};
+
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
 
 /**
@@ -300,21 +333,34 @@ const getApp = async (opts = {}) => {
   app.use("/scapi", scapi);
 
   const csurf = csrf();
-  if (!opts.disableCsrf)
+  let noCsrf = null;
+  if (!opts.disableCsrf) {
+    noCsrf = noCsrfLookup(getState());
     app.use(function (req, res, next) {
       if (
+        noCsrf?.has(req.url) ||
         (req.smr &&
           (req.url.startsWith("/api/") ||
             req.url === "/auth/login-with/jwt" ||
             req.url === "/auth/signup")) ||
-        jwt_extractor(req)
+        jwt_extractor(req) ||
+        req.url === "/auth/callback/saml"
       )
         return disabledCsurf(req, res, next);
       csurf(req, res, next);
     });
-  else app.use(disabledCsurf);
+  } else app.use(disabledCsurf);
 
   mountRoutes(app);
+  // mount plugin router with a callback for changes
+  let pluginRouter = prepPluginRouter(getState().plugin_routes || {});
+  getState().routesChangedCb = () => {
+    pluginRouter = prepPluginRouter(getState().plugin_routes || {});
+    noCsrf = noCsrfLookup(getState());
+  };
+  app.use((req, res, next) => {
+    pluginRouter(req, res, next);
+  });
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
   // /robots.txt

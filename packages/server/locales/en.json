@@ -1257,5 +1257,8 @@
 	"Show an icon in the title bar to indicate when form data is being saved": "Show an icon in the title bar to indicate when form data is being saved",
 	"install a different version": "install a different version",
 	"%s versions": "%s versions",
-	"Close": "Close"
+	"Close": "Close",
+	"Module up-to-date": "Module up-to-date",
+	"Module '%s' not found": "Module '%s' not found",
+	"Module %s not found": "Module %s not found"
 }

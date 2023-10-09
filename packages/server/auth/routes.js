@@ -1202,25 +1202,21 @@ const loginCallback = (req, res) => () => {
   }
 };
 
-/**
- * @name get/callback/:method
- * @function
- * @memberof module:auth/routes~routesRouter
- */
-router.get(
-  "/callback/:method",
-  error_catcher(async (req, res, next) => {
-    const { method } = req.params;
-    const auth = getState().auth_methods[method];
-    if (auth) {
-      passport.authenticate(method, { failureRedirect: "/auth/login" })(
-        req,
-        res,
-        loginCallback(req, res)
-      );
-    }
-  })
-);
+const callbackFn = async (req, res, next) => {
+  const { method } = req.params;
+  const auth = getState().auth_methods[method];
+  if (auth) {
+    passport.authenticate(method, { failureRedirect: "/auth/login" })(
+      req,
+      res,
+      loginCallback(req, res)
+    );
+  }
+};
+
+router.get("/callback/:method", error_catcher(callbackFn));
+
+router.post("/callback/:method", error_catcher(callbackFn));
 
 /**
  * @param {object} req
