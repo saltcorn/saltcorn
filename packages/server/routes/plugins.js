@@ -7,13 +7,7 @@
 
 const Router = require("express-promise-router");
 const { isAdmin, error_catcher } = require("./utils.js");
-const {
-  mkTable,
-  renderForm,
-  link,
-  post_btn,
-  post_delete_btn,
-} = require("@saltcorn/markup");
+const { renderForm, link, post_btn } = require("@saltcorn/markup");
 const {
   getState,
   restart_tenant,
@@ -26,7 +20,6 @@ const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
 const {
   upgrade_all_tenants_plugins,
 } = require("@saltcorn/admin-models/models/tenant");
-const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 const {
   plugin_types_info_card,
@@ -37,7 +30,6 @@ const {
 const load_plugins = require("../load_plugins");
 const {
   h5,
-  nbsp,
   a,
   div,
   span,
@@ -50,7 +42,11 @@ const {
   th,
   td,
   p,
-  strong,
+  form,
+  select,
+  option,
+  input,
+  label,
   text,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
@@ -58,8 +54,9 @@ const fs = require("fs");
 const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
-const { sleep } = require("@saltcorn/data/utils");
+const { sleep, removeNonWordChars } = require("@saltcorn/data/utils");
 const { loadAllPlugins } = require("../load_plugins");
+const npmFetch = require("npm-registry-fetch");
 
 /**
  * @type {object}
@@ -177,6 +174,7 @@ const get_store_items = async () => {
       has_theme: plugin.has_theme,
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
+      source: plugin.source,
     }))
     .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
@@ -290,15 +288,19 @@ const store_item_html = (req) => (item) => ({
     div(
       !item.installed &&
         item.plugin &&
-        post_btn(
-          `/plugins/install/${encodeURIComponent(item.name)}`,
-          req.__("Install"),
-          req.csrfToken(),
-          {
-            klass: "store-install",
-            small: true,
-            onClick: "press_store_button(this)",
-          }
+        div(
+          { class: "me-2 d-inline" },
+          post_btn(
+            `/plugins/install/${encodeURIComponent(item.name)}`,
+            req.__("Install"),
+            req.csrfToken(),
+            {
+              klass: "store-install",
+              small: true,
+              onClick: "press_store_button(this)",
+              formClass: "d-inline",
+            }
+          )
         ),
       !item.installed &&
         item.pack &&
@@ -526,8 +528,12 @@ const plugin_store_html = (items, req) => {
         contents: div(
           { class: "d-flex justify-content-between" },
           storeNavPills(req),
-          div(search_bar("q", req.query.q || "",
-              { placeHolder: req.__("Search for..."), stateField: "q" })),
+          div(
+            search_bar("q", req.query.q || "", {
+              placeHolder: req.__("Search for..."),
+              stateField: "q",
+            })
+          ),
           div(store_actions_dropdown(req))
         ),
       },
@@ -555,6 +561,105 @@ router.get(
       req.__("Module store"),
       plugin_store_html(relevant_items, req)
     );
+  })
+);
+
+router.get(
+  "/versions_dialog/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const withoutOrg = name.replace(/^@saltcorn\//, "");
+    const plugin = await Plugin.store_by_name(decodeURIComponent(withoutOrg));
+    if (!plugin) {
+      getState().log(
+        2,
+        `GET /versions_dialog${withoutOrg}: '${withoutOrg}' not found`
+      );
+      return res
+        .status(404)
+        .json({ error: req.__("Module '%s' not found", withoutOrg) });
+    } else {
+      try {
+        const pkgInfo = await npmFetch.json(
+          `https://registry.npmjs.org/${plugin.location}`
+        );
+        if (!pkgInfo?.versions)
+          throw new Error(req.__("Unable to fetch versions"));
+        res.set("Page-Title", req.__("%s versions", text(withoutOrg)));
+        const versions = Object.keys(pkgInfo.versions);
+        if (versions.length === 0) throw new Error(req.__("No versions found"));
+        let selected = null;
+        if (getState().plugins[plugin.name]) {
+          const mod = await load_plugins.requirePlugin(plugin);
+          if (mod) selected = mod.version;
+        }
+        if (!selected) selected = versions[versions.length - 1];
+        return res.send(
+          form(
+            {
+              action: `/plugins/install/${encodeURIComponent(name)}`,
+              method: "post",
+            },
+            input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+            div(
+              { class: "form-group" },
+              label(
+                {
+                  for: "version_select",
+                  class: "form-label fw-bold",
+                },
+                req.__("Version")
+              ),
+              select(
+                {
+                  id: "version_select",
+                  class: "form-control form-select",
+                  name: "version",
+                },
+                versions.map((version) =>
+                  option({
+                    id: `${version}_opt`,
+                    value: version,
+                    label: version,
+                    selected: version === selected,
+                  })
+                )
+              )
+            ),
+            div(
+              { class: "d-flex justify-content-end" },
+              button(
+                {
+                  type: "button",
+                  class: "btn btn-secondary me-2",
+                  "data-bs-dismiss": "modal",
+                },
+                req.__("Close")
+              ),
+              button(
+                {
+                  type: "submit",
+                  class: "btn btn-primary",
+                  onClick: "press_store_button(this)",
+                },
+                req.__("Install")
+              )
+            )
+          )
+        );
+      } catch (error) {
+        getState().log(
+          2,
+          `GET /versions_dialog${withoutOrg}: ${
+            error.message || "unknown error"
+          }`
+        );
+        return res
+          .status(500)
+          .json({ error: error.message || "unknown error" });
+      }
+    }
   })
 );
 
@@ -810,7 +915,12 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const plugin_db = await Plugin.findOne({ name });
+    let plugin_db = await Plugin.findOne({ name });
+    if (!plugin_db) {
+      req.flash("warning", req.__("Module not found"));
+      res.redirect("/plugins");
+      return;
+    }
     const mod = await load_plugins.requirePlugin(plugin_db);
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
@@ -821,27 +931,49 @@ router.get(
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
     const can_update = update_permitted && latest && mod.version !== latest;
+    const can_select_version = update_permitted && plugin_db.source === "npm";
     let pkgjson;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
-
-    if (!plugin_db) {
-      req.flash("warning", req.__("Module not found"));
-      res.redirect("/plugins");
-      return;
-    }
+    const domId = `${removeNonWordChars(mod.name)}_store_version_btn`;
     const infoTable = table(
       tbody(
         tr(th(req.__("Package name")), td(mod.name)),
-        tr(th(req.__("Package version")), td(mod.version)),
+        tr(
+          th(req.__("Package version")),
+          td(
+            span(
+              { style: "display: inline-block; min-width: 2.9rem;" },
+              mod.version
+            ),
+            can_select_version
+              ? a(
+                  {
+                    id: domId,
+                    class: "store-install btn btn-sm btn-primary ms-2",
+                    onClick: "press_store_button(this, true)",
+                    href: `javascript:ajax_modal('/plugins/versions_dialog/${encodeURIComponent(
+                      encodeURIComponent(plugin_db.name)
+                    )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res) => { selectVersionError(res, '${domId}') } });`,
+                  },
+                  req.__("install a different version")
+                )
+              : ""
+          )
+        ),
         tr(
           th(req.__("Latest version")),
           td(
-            latest || "",
+            span(
+              { style: "display: inline-block; min-width: 2.9rem;" },
+              latest || ""
+            ),
             can_update
               ? a(
                   {
-                    href: `/plugins/upgrade-plugin/${plugin_db.name}`,
+                    href: `/plugins/upgrade-plugin/${encodeURIComponent(
+                      plugin_db.name
+                    )}`,
                     class: "btn btn-primary btn-sm ms-2",
                   },
                   req.__("Upgrade")
@@ -979,7 +1111,7 @@ router.get(
     await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
     req.flash("success", req.__(`Module up-to-date`));
 
-    res.redirect(`/plugins/info/${plugin.name}`);
+    res.redirect(`/plugins/info/${encodeURIComponent(plugin.name)}`);
   })
 );
 
@@ -1068,11 +1200,25 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
+    const { version } = req.body;
     const tenants_unsafe_plugins = getRootState().getConfig(
       "tenants_unsafe_plugins",
       false
     );
-    const plugin = await Plugin.store_by_name(decodeURIComponent(name));
+    // when a version is specified, either update the db row or use the plugin from the store
+    // when no version is specified, allways use the plugin from the store
+    let plugin = null;
+    if (version) {
+      plugin = await Plugin.findOne({ name: name });
+      if (plugin) plugin.version = version;
+    }
+    if (!plugin) {
+      plugin = await Plugin.store_by_name(decodeURIComponent(name));
+      if (plugin) {
+        delete plugin.id;
+        if (version) plugin.version = version;
+      }
+    }
     if (!plugin) {
       req.flash(
         "error",
@@ -1081,6 +1227,11 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
+    let forceReInstall =
+      version !== undefined ||
+      (plugin.source === "npm" && plugin.version === "latest");
+    if (version) plugin.version = version;
+
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     if (!isRoot && plugin.unsafe && !tenants_unsafe_plugins) {
       req.flash(
@@ -1090,8 +1241,7 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    delete plugin.id;
-    await load_plugins.loadAndSaveNewPlugin(plugin);
+    await load_plugins.loadAndSaveNewPlugin(plugin, forceReInstall);
     const plugin_module = getState().plugins[name];
     if (plugin_module && plugin_module.configuration_workflow) {
       const plugin_db = await Plugin.findOne({ name });

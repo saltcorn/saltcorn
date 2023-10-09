@@ -625,7 +625,7 @@ class File {
             await unlink(path.join(this.location, name));
         }
 
-        await fsp.rmdir(this.location);
+        await fsp.rm(this.location, { recursive: true });
       } else await unlink(this.location);
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache

@@ -335,18 +335,21 @@ function splitTargetMatch(elemValue, target, keySpec) {
   return elemValueShort === target;
 }
 
-function get_form_record(e, select_labels) {
+function get_form_record(e_in, select_labels) {
   const rec = {};
-  e.closest(".form-namespace")
-    .find("input[name],select[name]")
-    .each(function () {
-      const name = $(this).attr("data-fieldname") || $(this).attr("name");
-      if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
-        rec[name] = $(this).find("option:selected").text();
-      else if ($(this).prop("type") === "checkbox")
-        rec[name] = $(this).prop("checked");
-      else rec[name] = $(this).val();
-    });
+
+  const e = e_in.viewname
+    ? $(`form[data-viewname=${e_in.viewname}]`)
+    : e_in.closest(".form-namespace");
+
+  e.find("input[name],select[name],textarea[name]").each(function () {
+    const name = $(this).attr("data-fieldname") || $(this).attr("name");
+    if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
+      rec[name] = $(this).find("option:selected").text();
+    else if ($(this).prop("type") === "checkbox")
+      rec[name] = $(this).prop("checked");
+    else rec[name] = $(this).val();
+  });
   return rec;
 }
 function showIfFormulaInputs(e, fml) {
@@ -945,15 +948,26 @@ function emptyAlerts() {
   $("#toasts-area").html("");
 }
 
-function press_store_button(clicked) {
+function press_store_button(clicked, keepOld) {
   let btn = clicked;
   if ($(clicked).is("form")) btn = $(clicked).find("button[type=submit]");
-
+  if (keepOld) {
+    const oldText = $(btn).html();
+    $(btn).data("old-text", oldText);
+  }
   const width = $(btn).width();
   $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
 }
 
-function common_done(res, isWeb = true) {
+function restore_old_button(btnId) {
+  const btn = $(`#${btnId}`);
+  const oldText = $(btn).data("old-text");
+  btn.html(oldText);
+  btn.css({ width: "" });
+  btn.removeData("old-text");
+}
+
+function common_done(res, viewname, isWeb = true) {
   const handle = (element, fn) => {
     if (Array.isArray(element)) for (const current of element) fn(current);
     else fn(element);
@@ -980,6 +994,17 @@ function common_done(res, isWeb = true) {
           else link.target = "_blank";
           link.click();
         });
+    });
+  }
+  if (res.set_fields && viewname) {
+    Object.keys(res.set_fields).forEach((k) => {
+      const form = $(`form[data-viewname=${viewname}]`);
+      const input = form.find(
+        `input[name=${k}], textarea[name=${k}], select[name=${k}]`
+      );
+      if (input.attr("type") === "checkbox")
+        input.prop("checked", res.set_fields[k]);
+      else input.val(res.set_fields[k]);
     });
   }
   if (res.goto && !isWeb)

@@ -198,8 +198,8 @@ function clear_state(omit_fields_str, e) {
   pjax_to(newUrl, e);
 }
 
-function ajax_done(res) {
-  common_done(res);
+function ajax_done(res, viewname) {
+  common_done(res, viewname);
 }
 
 function view_post(viewname, route, data, onDone, sendState) {
@@ -220,7 +220,7 @@ function view_post(viewname, route, data, onDone, sendState) {
   })
     .done(function (res) {
       if (onDone) onDone(res);
-      ajax_done(res);
+      ajax_done(res, viewname);
     })
     .fail(function (res) {
       notifyAlert({ type: "danger", text: res.responseText });
@@ -340,7 +340,20 @@ function ajax_modal(url, opts = {}) {
         $("body").css("overflow", "");
       });
     },
+    ...(opts.onError
+      ? {
+          error: opts.onError,
+        }
+      : {}),
   });
+}
+
+function selectVersionError(res, btnId) {
+  notifyAlert({
+    type: "danger",
+    text: res.responseJSON?.error || "unknown error",
+  });
+  restore_old_button(btnId);
 }
 
 function saveAndContinue(e, k) {
@@ -491,7 +504,7 @@ function ajaxSubmitForm(e) {
       var no_reload = $("#scmodal").hasClass("no-submit-reload");
       $("#scmodal").modal("hide");
       if (!no_reload) location.reload();
-      else common_done(res);
+      else common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {
       var title = request.getResponseHeader("Page-Title");

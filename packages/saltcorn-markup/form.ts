@@ -885,11 +885,11 @@ const mkSubLabelAndHelp = (hdr: any) => {
       i({ class: "fas fa-question-circle ms-1" })
     );
   };
-  return [
-    hdr.sublabel && i(text(hdr.sublabel)),
-    hdr.help && hdr.sublabel && helpLink(hdr.help),
-    hdr.help && !hdr.sublabel && "Help" + helpLink(hdr.help),
-  ];
+  return (
+    (hdr.sublabel ? i(text(hdr.sublabel)) : "") +
+    (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "") +
+    (hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
+  );
 };
 
 /**
@@ -1265,7 +1265,9 @@ const renderForm = (
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form action="${buildActionAttribute(form)}"${
+  const top = `<form data-viewname="${
+    form.viewname
+  }" action="${buildActionAttribute(form)}"${
     form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
   }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
@@ -1384,7 +1386,7 @@ const mkForm = (
     csrfToken === false
       ? ""
       : `<input type="hidden" name="_csrf" value="${csrfToken}">`;
-  const top = `<form ${
+  const top = `<form data-viewname="${form.viewname}" ${
     form.id ? `id="${form.id}" ` : ""
   }action="${buildActionAttribute(form)}"${
     form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""

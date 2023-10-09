@@ -532,6 +532,8 @@ const transformForm = async ({
   await traverse(form.layout, {
     async action(segment) {
       if (segment.action_style === "on_page_load") {
+        //TODO check segment.min_role
+
         //run action
         const actionResult = await run_action_column({
           col: { ...segment },
@@ -544,7 +546,9 @@ const transformForm = async ({
         segment.style = {};
         if (actionResult)
           segment.contents = script(
-            domReady(`common_done(${JSON.stringify(actionResult)})`)
+            domReady(
+              `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+            )
           );
         else segment.contents = "";
         return;
@@ -560,7 +564,7 @@ const transformForm = async ({
         !["Sign up", ...builtInActions].includes(segment.action_name) &&
         !segment.action_name.startsWith("Login")
       ) {
-        const url = action_url(
+        let url = action_url(
           viewname,
           table,
           segment.action_name,
@@ -569,6 +573,14 @@ const transformForm = async ({
           "rndid",
           segment.confirm
         );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+
+          url.javascript = `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}', ...get_form_record({viewname: '${viewname}'})});`;
+        }
         segment.action_link = action_link(url, req, segment);
       }
     },
@@ -1725,12 +1737,12 @@ module.exports = {
       return await table.getRow({ id });
     },
     async actionQuery() {
-      const body = req.body;
+      const { rndid, _csrf, ...body } = req.body;
       const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+        (c) => c.type === "Action" && c.rndid === rndid && rndid
       );
       const table = Table.findOne({ id: table_id });
-      const row = body.id
+      const dbrow = body.id
         ? await table.getRow(
             { id: body.id },
             {
@@ -1739,6 +1751,7 @@ module.exports = {
             }
           )
         : undefined;
+      const row = { ...dbrow, ...body };
       try {
         const result = await run_action_column({
           col,
