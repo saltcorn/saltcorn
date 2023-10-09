@@ -109,7 +109,6 @@ const FieldSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const { setPreviews } = useContext(previewCtx);
-  console.log(options);
 
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
