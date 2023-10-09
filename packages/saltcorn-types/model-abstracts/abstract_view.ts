@@ -39,5 +39,5 @@ export type ViewPack = {
 } & Omit<ViewCfg, "table">;
 
 export const instanceOfView = (object: any): object is AbstractView => {
-  return "name" in object && "viewtemplate" in object;
+  return object && "name" in object && "viewtemplate" in object;
 };

@@ -28,5 +28,5 @@ export type PagePack = {
 } & PageCfg;
 
 export const instanceOfPage = (object: any): object is AbstractPage => {
-  return "name" in object && "layout" in object;
+  return object && "name" in object && "layout" in object;
 };
