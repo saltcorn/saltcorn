@@ -44,7 +44,7 @@ class BuildAppCommand extends Command {
     const dynamicPlugins = (await Plugin.find()).filter(
       (plugin) =>
         !this.staticPlugins.includes(plugin.name) &&
-        (!toInclude || toInclude.includes(plugin.name))
+        toInclude?.includes(plugin.name)
     );
     const pluginsMap = new Map();
     for (const plugin of dynamicPlugins) {
