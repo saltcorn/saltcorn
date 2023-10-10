@@ -346,7 +346,6 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
-      const mobile = typeof window !== "undefined";
       return wrap(
         segment,
         isTop,
@@ -354,14 +353,16 @@ const render = ({
         a(
           {
             href: segment.in_modal
-              ? !mobile
+              ? isWeb
                 ? `javascript:ajax_modal('${segment.url}');`
                 : `javascript:mobile_modal('${segment.url}');`
-              : !mobile
+              : isWeb
               ? segment.url
-              : `javascript:execLink('${segment.url}', '${segment.link_src}' )`,
+              : `javascript:execLink('${segment.url}', '${
+                  segment.link_src || "URL"
+                }')`,
             class: [segment.link_style || "", segment.link_size || ""],
-            target: segment.target_blank ? "_blank" : false,
+            target: isWeb && segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
             style,
           },
