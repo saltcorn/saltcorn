@@ -16,17 +16,22 @@ function combineFormAndQuery(form, query) {
 }
 
 /**
- *
- * @param {*} url
+ * Pass View or Page source into the app internal router,
+ * links with an URL source are opened in the system browser.
+ * @param {string} url
+ * @param {string} linkSrc - URL, View or Page
  */
-async function execLink(url) {
-  try {
-    showLoadSpinner();
-    const { path, query } = parent.splitPathQuery(url);
-    await parent.handleRoute(`get${path}`, query);
-  } finally {
-    removeLoadSpinner();
-  }
+async function execLink(url, linkSrc) {
+  if (linkSrc === "URL") {
+    parent.cordova.InAppBrowser.open(url, "_system");
+  } else
+    try {
+      showLoadSpinner();
+      const { path, query } = parent.splitPathQuery(url);
+      await parent.handleRoute(`get${path}`, query);
+    } finally {
+      removeLoadSpinner();
+    }
 }
 
 async function execNavbarLink(url) {

@@ -359,7 +359,7 @@ const render = ({
                 : `javascript:mobile_modal('${segment.url}');`
               : !mobile
               ? segment.url
-              : `javascript:execLink('${segment.url}')`,
+              : `javascript:execLink('${segment.url}', '${segment.link_src}' )`,
             class: [segment.link_style || "", segment.link_size || ""],
             target: segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
