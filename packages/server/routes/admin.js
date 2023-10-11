@@ -1545,7 +1545,7 @@ router.get(
                 input({
                   type: "hidden",
                   name: "entryPointType",
-                  value: "view",
+                  value: builderSettings.entryPointType || "view",
                   id: "entryPointTypeID",
                 }),
                 div(
@@ -1578,7 +1578,8 @@ router.get(
                           div(
                             {
                               class: `nav-link ${
-                                !builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                                !builderSettings.entryPointType ||
+                                builderSettings.entryPointType === "view"
                                   ? "active"
                                   : ""
                               }`,
@@ -1613,7 +1614,8 @@ router.get(
                               ? "d-none"
                               : ""
                           }`,
-                          ...(!builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                          ...(!builderSettings.entryPointType ||
+                          builderSettings.entryPointType === "view"
                             ? { name: "entryPoint" }
                             : {}),
                           id: "viewInputID",
@@ -1636,7 +1638,8 @@ router.get(
                       select(
                         {
                           class: `form-select ${
-                            !builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                            !builderSettings.entryPointType ||
+                            builderSettings.entryPointType === "view"
                               ? "d-none"
                               : ""
                           }`,
