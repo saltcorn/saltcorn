@@ -228,7 +228,7 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
   const loginFn = async () => {
     const publicUserLink = getState().getConfig("public_user_link");
     const jwt_secret = db.connectObj.jwt_secret;
-    if (email && password) {
+    if (email !== undefined && password !== undefined) {
       // with credentials
       const user = await User.findOne({ email });
       if (user && user.checkPassword(password)) {

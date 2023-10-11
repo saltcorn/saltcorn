@@ -154,7 +154,7 @@ BuildAppCommand.flags = {
     string: "includedPlugins",
     description:
       "Names of plugins that should be bundled into the app." +
-      "If empty, all installed modules are used.",
+      "If empty, no modules are used.",
     multiple: true,
   }),
   useDocker: flags.boolean({
