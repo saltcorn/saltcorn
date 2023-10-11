@@ -168,6 +168,8 @@ const make_link = (
     link_target_blank,
     in_dropdown,
     in_modal,
+    link_icon,
+    icon,
   },
   fields,
   __ = (s) => s
@@ -176,6 +178,7 @@ const make_link = (
     label: "",
     key: (r) => {
       let txt, href;
+      const theIcon = link_icon || icon;
       try {
         txt = link_text_formula ? eval_expression(link_text, r) : link_text;
       } catch (error) {
@@ -199,9 +202,10 @@ const make_link = (
               ? `javascript:ajax_modal('${href}');`
               : `javascript:mobile_modal('${href}');`,
           },
+          !!theIcon && i({ class: theIcon }),
           txt
         );
-      return a(attrs, txt);
+      return a(attrs, !!theIcon && i({ class: theIcon }), txt);
     },
   };
 };
@@ -272,6 +276,7 @@ const view_linker = (
     link_style = "",
     link_size = "",
     link_icon = "",
+    icon = "",
     textStyle = "",
     link_bgcol,
     link_bordercol,
@@ -320,7 +325,7 @@ const view_linker = (
           in_modal,
           link_style,
           link_size,
-          link_icon,
+          link_icon || icon,
           textStyle,
           link_bgcol,
           link_bordercol,
@@ -354,7 +359,7 @@ const view_linker = (
               in_modal,
               link_style,
               link_size,
-              link_icon,
+              link_icon || icon,
               textStyle,
               link_bgcol,
               link_bordercol,
@@ -377,7 +382,7 @@ const view_linker = (
               in_modal,
               link_style,
               link_size,
-              link_icon,
+              link_icon || icon,
               textStyle,
               link_bgcol,
               link_bordercol,
@@ -404,7 +409,7 @@ const view_linker = (
               in_modal,
               link_style,
               link_size,
-              link_icon,
+              link_icon || icon,
               textStyle,
               link_bgcol,
               link_bordercol,
@@ -438,7 +443,7 @@ const view_linker = (
                 in_modal,
                 link_style,
                 link_size,
-                link_icon,
+                link_icon || icon,
                 textStyle,
                 link_bgcol,
                 link_bordercol,

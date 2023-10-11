@@ -1153,7 +1153,7 @@ const field_picker_fields = async ({
       attributes: {
         html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
       },
-      showIf: { type: ["Link", "Action"] },
+      showIf: { type: ["Link", "ViewLink", "Action"] },
     },
     {
       name: "icon",
