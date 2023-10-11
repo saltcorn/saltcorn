@@ -1502,6 +1502,12 @@ const picked_fields_to_query = (columns, fields, layout) => {
             ...freeVariables(v.extra_state_fml),
           ]);
       },
+      card(v) {
+        if (v?.isFormula?.title && typeof v.title === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.title)]);
+        if (v?.isFormula?.url && typeof v.url === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
+      },
       blank(v) {
         if (v?.isFormula?.text && typeof v.contents === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
