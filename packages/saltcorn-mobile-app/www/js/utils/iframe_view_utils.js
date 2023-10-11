@@ -16,17 +16,22 @@ function combineFormAndQuery(form, query) {
 }
 
 /**
- *
- * @param {*} url
+ * Pass View or Page source into the app internal router,
+ * links with an URL source are opened in the system browser.
+ * @param {string} url
+ * @param {string} linkSrc - URL, View or Page
  */
-async function execLink(url) {
-  try {
-    showLoadSpinner();
-    const { path, query } = parent.splitPathQuery(url);
-    await parent.handleRoute(`get${path}`, query);
-  } finally {
-    removeLoadSpinner();
-  }
+async function execLink(url, linkSrc) {
+  if (linkSrc === "URL") {
+    parent.cordova.InAppBrowser.open(url, "_system");
+  } else
+    try {
+      showLoadSpinner();
+      const { path, query } = parent.splitPathQuery(url);
+      await parent.handleRoute(`get${path}`, query);
+    } finally {
+      removeLoadSpinner();
+    }
 }
 
 async function execNavbarLink(url) {
@@ -248,7 +253,13 @@ async function publicLogin(entryPoint) {
         alerts: [
           {
             type: "success",
-            msg: parent.i18next.t("Welcome to Saltcorn!"),
+            msg: parent.i18next.t("Welcome to %s!", {
+              postProcess: "sprintf",
+              sprintf: [
+                parent.saltcorn.data.state.getState().getConfig("site_name") ||
+                  "Saltcorn",
+              ],
+            }),
           },
         ],
       });
@@ -260,6 +271,12 @@ async function publicLogin(entryPoint) {
     }
   } catch (error) {
     console.log(error);
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
     throw error;
   } finally {
     removeLoadSpinner();
