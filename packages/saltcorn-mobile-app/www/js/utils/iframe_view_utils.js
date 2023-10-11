@@ -253,7 +253,13 @@ async function publicLogin(entryPoint) {
         alerts: [
           {
             type: "success",
-            msg: parent.i18next.t("Welcome to Saltcorn!"),
+            msg: parent.i18next.t("Welcome to %s!", {
+              postProcess: "sprintf",
+              sprintf: [
+                parent.saltcorn.data.state.getState().getConfig("site_name") ||
+                  "Saltcorn",
+              ],
+            }),
           },
         ],
       });
@@ -265,6 +271,12 @@ async function publicLogin(entryPoint) {
     }
   } catch (error) {
     console.log(error);
+    parent.showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
     throw error;
   } finally {
     removeLoadSpinner();
