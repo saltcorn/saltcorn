@@ -480,6 +480,24 @@ const string = {
       description: "Show as a code block",
       run: (s) => (s ? pre(code(text_attr(s || ""))) : ""),
     },
+    ellipsize: {
+      isEdit: false,
+      configFields: [
+        {
+          name: "nchars",
+          label: "Number of characters",
+          type: "Integer",
+          default: 20,
+        },
+      ],
+      description:
+        "Show First N characters of text followed by ... if truncated",
+      run: (s, req, attrs = {}) => {
+        if (!s || !s.length) return "";
+        if (s.length <= (attrs.nchars || 20)) return text_attr(s);
+        return s.substr(0, (attrs.nchars || 20) - 3) + "...";
+      },
+    },
     /**
      * @namespace
      * @category saltcorn-data
