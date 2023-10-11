@@ -423,7 +423,8 @@ function updateMatchingRows(e, viewname) {
   }
 }
 
-function applyViewConfig(e, url, k) {
+function applyViewConfig(e, url, k, event) {
+  if (event && event.target && event.target.id === "myEditor_icon") return;
   var form = $(e).closest("form");
   var form_data = form.serializeArray();
   const cfg = {};
