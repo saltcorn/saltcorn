@@ -577,6 +577,7 @@ const runMany = async (
   const tbl = Table.findOne({ id: table_id });
   const rows = await runManyQuery(state, {
     where: extra.where,
+    joinFieldsExtra: extra.joinFields,
     limit: extra.limit,
     offset: extra.offset,
     orderBy: extra.orderBy,
@@ -918,7 +919,10 @@ module.exports = {
         message: null,
       };
     },
-    async runManyQuery(state, { where, limit, offset, orderBy, orderDesc }) {
+    async runManyQuery(
+      state,
+      { where, limit, offset, joinFieldsExtra, orderBy, orderDesc }
+    ) {
       const tbl = Table.findOne({ id: table_id });
       const fields = await tbl.getFields();
       readState(state, fields);
@@ -927,6 +931,7 @@ module.exports = {
         fields,
         layout
       );
+      Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
       const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
       const q = await stateFieldsToQuery({ state, fields, stateHash });

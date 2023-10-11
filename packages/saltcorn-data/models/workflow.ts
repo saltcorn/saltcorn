@@ -308,7 +308,7 @@ async function addApplyButtonToForm(
         }
       }
     if (that.autoSave)
-      form.onChange = `applyViewConfig(this, '${that.saveURL}')`;
+      form.onChange = `applyViewConfig(this, '${that.saveURL}', null, event)`;
     form.additionalButtons = [
       ...(form.additionalButtons || []),
       ...(that.startAtStepURL && prevStep
