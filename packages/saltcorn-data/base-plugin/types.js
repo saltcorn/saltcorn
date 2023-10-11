@@ -495,7 +495,7 @@ const string = {
       run: (s, req, attrs = {}) => {
         if (!s || !s.length) return "";
         if (s.length <= (attrs.nchars || 20)) return text_attr(s);
-        return s.substr(0, (attrs.nchars || 20) - 3) + "...";
+        return text_attr(s.substr(0, (attrs.nchars || 20) - 3)) + "...";
       },
     },
     /**
