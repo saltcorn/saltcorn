@@ -565,12 +565,14 @@ const get_viewable_fields = (
                         column.action_size || ""
                       }`,
                 },
+                !!column.icon && i({ class: column.icon }),
                 label
               );
             else
               return post_btn(url, label, req.csrfToken(), {
                 small: true,
                 ajax: true,
+                icon: column.icon || undefined,
                 reload_on_done: true,
                 confirm: column.confirm,
                 btnClass: column.in_dropdown

@@ -1147,6 +1147,20 @@ const field_picker_fields = async ({
       showIf: { type: "Link" },
     },
     {
+      name: "icon_btn",
+      label: __("Icon"),
+      input_type: "custom_html",
+      attributes: {
+        html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
+      },
+      showIf: { type: ["Link", "Action"] },
+    },
+    {
+      name: "icon",
+      class: "item-menu",
+      input_type: "hidden",
+    },
+    {
       name: "link_target_blank",
       label: __("Open in new tab"),
       type: "Bool",
