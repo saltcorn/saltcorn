@@ -1260,6 +1260,5 @@
 	"Close": "Close",
 	"Module up-to-date": "Module up-to-date",
 	"Module '%s' not found": "Module '%s' not found",
-	"Module %s not found": "Module %s not found",
-	"Header icon": "Header icon"
+	"Module %s not found": "Module %s not found"
 }

@@ -1203,21 +1203,6 @@ const field_picker_fields = async ({
       name: "header_label",
       label: __("Header label"),
       type: "String",
-      attributes: { asideNext: true },
-    },
-
-    {
-      name: "header_icon_btn",
-      label: __("Header icon"),
-      input_type: "custom_html",
-      attributes: {
-        html: `<button type="button" class="myEditor_icon btn btn-outline-secondary"></button>`,
-      },
-    },
-    {
-      name: "icon",
-      class: "item-menu",
-      input_type: "hidden",
     },
     ...(has_showif
       ? [

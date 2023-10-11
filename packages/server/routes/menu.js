@@ -132,7 +132,7 @@ const menuForm = async (req) => {
         label: req.__("Icon"),
         input_type: "custom_html",
         attributes: {
-          html: `<button type="button" class="myEditor_icon btn btn-outline-secondary"></button>`,
+          html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
         showIf: { type: ["View", "Page", "Link", "Header", "Action"] },
       },
