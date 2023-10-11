@@ -36,7 +36,12 @@ const {
   hashState,
 } = require("../../utils");
 const { getState } = require("../../db/state");
-const { jsexprToWhere, eval_expression } = require("../../models/expression");
+const {
+  jsexprToWhere,
+  eval_expression,
+  add_free_variables_to_joinfields,
+  freeVariables,
+} = require("../../models/expression");
 const {
   extractFromLayout,
   extractViewToCreate,
@@ -462,7 +467,12 @@ const run = async (
       user_id,
       user: extraArgs?.req?.user,
     });
-
+  qextra.joinFields = {};
+  add_free_variables_to_joinfields(
+    freeVariables(title_formula),
+    qextra.joinFields,
+    fields
+  );
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     ...qextra,
