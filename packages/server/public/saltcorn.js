@@ -381,6 +381,9 @@ function saveAndContinue(e, k) {
       if (res.notify) {
         notifyAlert(res.notify);
       }
+      if (res.reload_page) {
+        location.reload(); //TODO notify to cookie if reload or goto
+      }
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
