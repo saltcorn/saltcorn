@@ -58,8 +58,18 @@ class Model {
    * @type {...*}
    */
   get toJson(): any {
-    const { id, ...rest } = this;
-    return rest;
+    const table = Table.findOne(this.table_id);
+    const cfgCopy = { ...this.configuration };
+    if (cfgCopy.table_id) {
+      delete cfgCopy.table_id;
+      cfgCopy.table_name = table?.name;
+    }
+    return {
+      name: this.name,
+      table_name: table?.name,
+      modelpattern: this.modelpattern,
+      configuration: cfgCopy,
+    };
   }
 
   /**

@@ -20,6 +20,10 @@ import type { LibraryPack } from "./model-abstracts/abstract_library";
 import type { AbstractView, ViewPack } from "./model-abstracts/abstract_view";
 import type { AbstractPage, PagePack } from "./model-abstracts/abstract_page";
 import type { PluginPack } from "./model-abstracts/abstract_plugin";
+import type { TagPack } from "./model-abstracts/abstract_tag";
+import type { ModelPack } from "./model-abstracts/abstract_model";
+import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
+import type { EventLogPack } from "./model-abstracts/abstract_event_log";
 
 type FieldLikeBasics = {
   name: string;
@@ -323,6 +327,10 @@ export type Pack = {
   roles: Array<RolePack>;
   library: Array<LibraryPack>;
   triggers: Array<TriggerPack>;
+  tags: Array<TagPack>;
+  models: Array<ModelPack>;
+  model_instances: Array<ModelInstancePack>;
+  event_logs?: Array<EventLogPack>;
 };
 
 export type PluginSourceType = "npm" | "github" | "local" | "git";

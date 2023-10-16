@@ -285,6 +285,9 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
+    backupForm.values.backup_with_event_log = getState().getConfig(
+      "backup_with_event_log"
+    );
     //
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
@@ -720,6 +723,12 @@ const autoBackupForm = (req) =>
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "Local directory",
         },
+      },
+      {
+        type: "Bool",
+        label: req.__("Include Event Logs"),
+        sublabel: req.__("Backup with event logs"),
+        name: "backup_with_event_log",
       },
     ],
   });
@@ -1578,7 +1587,8 @@ router.get(
                           div(
                             {
                               class: `nav-link ${
-                                !builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                                !builderSettings.entryPointType ||
+                                builderSettings.entryPointType === "view"
                                   ? "active"
                                   : ""
                               }`,
@@ -1613,7 +1623,8 @@ router.get(
                               ? "d-none"
                               : ""
                           }`,
-                          ...(!builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                          ...(!builderSettings.entryPointType ||
+                          builderSettings.entryPointType === "view"
                             ? { name: "entryPoint" }
                             : {}),
                           id: "viewInputID",
@@ -1636,7 +1647,8 @@ router.get(
                       select(
                         {
                           class: `form-select ${
-                            !builderSettings.entryPointType || builderSettings.entryPointType === "view"
+                            !builderSettings.entryPointType ||
+                            builderSettings.entryPointType === "view"
                               ? "d-none"
                               : ""
                           }`,

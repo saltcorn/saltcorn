@@ -1,5 +1,5 @@
 import db from "@saltcorn/data/db/index";
-import pack from "../models/pack";
+const pack = require("../models/pack");
 const {
   table_pack,
   view_pack,
@@ -8,6 +8,9 @@ const {
   library_pack,
   trigger_pack,
   role_pack,
+  tag_pack,
+  model_pack,
+  model_instance_pack,
   fetch_available_packs,
   fetch_pack_by_name,
   install_pack,
@@ -88,6 +91,7 @@ describe("pack create", () => {
       exttable_name: null,
       min_role: 100,
       name: "authorlist",
+      description: "",
       menu_label: undefined,
       slug: null,
       table: "books",
@@ -113,6 +117,7 @@ describe("pack create", () => {
       name: "base",
       deploy_private_key: null,
       source: "npm",
+      version: "latest",
     });
   });
 
@@ -231,6 +236,84 @@ describe("pack create", () => {
     const rpack = await role_pack("admin");
     expect(rpack.id === 1).toBe(true);
     expect(rpack.role).toBe("admin");
+  });
+
+  // tag packs
+  it("creates tags pack", async () => {
+    const tpack = await tag_pack("tag1");
+    expect(tpack).toEqual({
+      name: "tag1",
+      entries: [
+        { table_name: "books" },
+        { view_name: "authorlist" },
+        { view_name: "authorshow" },
+        { view_name: "authoredit" },
+      ],
+    });
+    await expect((async () => await tag_pack("tag0"))()).rejects.toThrow();
+  });
+
+  // model packs
+  it("creates model pack", async () => {
+    const mpack = await model_pack("regression_model", "books");
+    expect(mpack).toEqual({
+      name: "regression_model",
+      table_name: "books",
+      modelpattern: "regression",
+      configuration: { numcluster: 2 },
+    });
+    await expect(
+      (async () => await model_pack("invalid_model", "books"))()
+    ).rejects.toThrow();
+    await expect(
+      (async () => await model_pack("regression_model", "invalid_table"))()
+    ).rejects.toThrow();
+  });
+
+  // model instance pack
+  it("creates model instance pack", async () => {
+    const mipack = await model_instance_pack(
+      "regression_model_instance",
+      "regression_model",
+      "books"
+    );
+    expect(mipack).toEqual({
+      name: "regression_model_instance",
+      table_name: "books",
+      state: {},
+      hyperparameters: { numcluster: 2 },
+      parameters: {},
+      metric_values: {},
+      trained_on: new Date("2019-11-11T10:34:00.000Z"),
+      fit_object: Buffer.from("foo"),
+      is_default: false,
+      report: "report",
+      model_name: "regression_model",
+    });
+    await expect(
+      (async () =>
+        await model_instance_pack(
+          "invalid_model_instance",
+          "regression_model",
+          "books"
+        ))()
+    ).rejects.toThrow();
+    await expect(
+      (async () =>
+        await model_instance_pack(
+          "regression_model_instance",
+          "invalid_model",
+          "books"
+        ))()
+    ).rejects.toThrow();
+    await expect(
+      (async () =>
+        await model_instance_pack(
+          "regression_model_instance",
+          "regression_model",
+          "invalid_table"
+        ))()
+    ).rejects.toThrow();
   });
 });
 
@@ -410,6 +493,9 @@ const todoPack: Pack = {
   roles: [],
   library: [],
   triggers: [],
+  tags: [],
+  models: [],
+  model_instances: [],
 };
 
 describe("pack install", () => {

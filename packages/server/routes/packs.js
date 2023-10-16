@@ -6,18 +6,19 @@
 
 const Router = require("express-promise-router");
 const { isAdmin, error_catcher } = require("./utils.js");
-const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
-const { getState } = require("@saltcorn/data/db/state");
+const { renderForm } = require("@saltcorn/markup");
 const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
 const View = require("@saltcorn/data/models/view");
-const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
 const Page = require("@saltcorn/data/models/page");
+const Tag = require("@saltcorn/data/models/tag");
+const EventLog = require("@saltcorn/data/models/eventlog");
+const Model = require("@saltcorn/data/models/model");
+const ModelInstance = require("@saltcorn/data/models/model_instance");
 const load_plugins = require("../load_plugins");
 
 const { is_pack } = require("@saltcorn/data/contracts");
-const { contract, is } = require("contractis");
 const {
   table_pack,
   view_pack,
@@ -26,12 +27,16 @@ const {
   role_pack,
   library_pack,
   trigger_pack,
+  tag_pack,
+  model_pack,
+  model_instance_pack,
   install_pack,
   fetch_pack_by_name,
   can_install_pack,
   uninstall_pack,
+  event_log_pack,
 } = require("@saltcorn/admin-models/models/pack");
-const { h5, pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
+const { pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
 const Library = require("@saltcorn/data/models/library");
 const Trigger = require("@saltcorn/data/models/trigger");
 const Role = require("@saltcorn/data/models/role");
@@ -98,6 +103,52 @@ router.get(
       name: `role.${l.role}`,
       type: "Bool",
     }));
+    const tags = await Tag.find({});
+    const tagFields = tags.map((t) => ({
+      label: `${t.name} tag`,
+      name: `tag.${t.name}`,
+      type: "Bool",
+    }));
+    const models = await Model.find({});
+    const modelFields = models.map((m) => {
+      const modelTbl = Table.findOne({ id: m.table_id });
+      return {
+        label: `${m.name} model, table: ${
+          modelTbl.name || req.__("Table not found")
+        }`,
+        name: `model.${m.name}.${modelTbl.name}`,
+        type: "Bool",
+      };
+    });
+    const modelInstances = await ModelInstance.find({});
+    const modelInstanceFields = (
+      await Promise.all(
+        modelInstances.map(async (instance) => {
+          const model = await Model.findOne({ id: instance.model_id });
+          if (!model) {
+            req.flash(
+              "warning",
+              req.__(`Model with '${instance.model_id}' not found`)
+            );
+            return null;
+          }
+          const mTable = await Table.findOne({ id: model.table_id });
+          if (!mTable) {
+            req.flash(
+              "warning",
+              req.__(`Table of model '${model.name}' not found`)
+            );
+            return null;
+          }
+          return {
+            label: `${instance.name} model instance, model: ${model.name}, table: ${mTable.name}`,
+            name: `model_instance.${instance.name}.${model.name}.${mTable.name}`,
+            type: "Bool",
+          };
+        })
+      )
+    ).filter((f) => f);
+
     const form = new Form({
       action: "/packs/create",
       fields: [
@@ -108,6 +159,14 @@ router.get(
         ...trigFields,
         ...roleFields,
         ...libFields,
+        ...tagFields,
+        ...modelFields,
+        ...modelInstanceFields,
+        {
+          name: "with_event_logs",
+          label: req.__("Include Event Logs"),
+          type: "Bool",
+        },
       ],
     });
     res.sendWrap(req.__(`Create Pack`), {
@@ -140,7 +199,7 @@ router.post(
   "/create",
   isAdmin,
   error_catcher(async (req, res) => {
-    var pack = {
+    const pack = {
       tables: [],
       views: [],
       plugins: [],
@@ -148,9 +207,13 @@ router.post(
       roles: [],
       library: [],
       triggers: [],
+      tags: [],
+      models: [],
+      model_instances: [],
+      event_logs: [],
     };
     for (const k of Object.keys(req.body)) {
-      const [type, name] = k.split(".");
+      const [type, name, ...rest] = k.split(".");
       switch (type) {
         case "table":
           pack.tables.push(await table_pack(name));
@@ -173,7 +236,32 @@ router.post(
         case "trigger":
           pack.triggers.push(await trigger_pack(name));
           break;
-
+        case "tag":
+          pack.tags.push(await tag_pack(name));
+          break;
+        case "model": {
+          const table = rest[0];
+          if (!table) throw new Error(`Table for model '${name}' not found`);
+          pack.models.push(await model_pack(name, table));
+          break;
+        }
+        case "model_instance": {
+          const model = rest[0];
+          if (!model)
+            throw new Error(`Model of Model Instance '${name}' not found`);
+          const table = rest[1];
+          if (!table) throw new Error(`Table of Model '${model}' not found`);
+          pack.model_instances.push(
+            await model_instance_pack(name, model, table)
+          );
+          break;
+        }
+        case "with_event_logs":
+          const logs = await EventLog.find({});
+          pack.event_logs = await Promise.all(
+            logs.map(async (l) => await event_log_pack(l))
+          );
+          break;
         default:
           break;
       }

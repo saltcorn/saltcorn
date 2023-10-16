@@ -521,10 +521,11 @@ export type SelectOptions = {
   min_role_write?: number;
   ownership_field_id?: string;
   ownership_formula?: string;
-  description?: string;
   provider_name?: string;
   provider_cfg?: any;
   fields?: [string];
+  has_sync_info?: boolean;
+  description?: string;
 };
 export const orderByIsObject = (
   object: any

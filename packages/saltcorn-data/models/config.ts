@@ -624,6 +624,11 @@ const configTypes: ConfigTypes = {
     label: "Auto backup expiration days",
     default: null,
   },
+  backup_with_event_log: {
+    type: "Bool",
+    label: "Backup with event log",
+    default: false,
+  },
   snapshots_enabled: {
     type: "Bool",
     label: "Snapshots enabled",

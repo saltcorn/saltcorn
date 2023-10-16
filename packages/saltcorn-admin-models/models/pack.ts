@@ -15,6 +15,11 @@ import Page from "@saltcorn/data/models/page";
 import TableConstraint from "@saltcorn/data/models/table_constraints";
 import Role from "@saltcorn/data/models/role";
 import Library from "@saltcorn/data/models/library";
+import Tag from "@saltcorn/data/models/tag";
+import Model from "@saltcorn/data/models/model";
+import ModelInstance from "@saltcorn/data/models/model_instance";
+import EventLog, { EventLogCfg } from "@saltcorn/data/models/eventlog";
+import User from "@saltcorn/data/models/user";
 import config from "@saltcorn/data/models/config";
 import type { Pack } from "@saltcorn/types/base_types";
 import type { PagePack } from "@saltcorn/types/model-abstracts/abstract_page";
@@ -26,6 +31,10 @@ import type { PluginPack } from "@saltcorn/types/model-abstracts/abstract_plugin
 import type { LibraryPack } from "@saltcorn/types/model-abstracts/abstract_library";
 import type { TriggerPack } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import type { RolePack } from "@saltcorn/types/model-abstracts/abstract_role";
+import type { EventLogPack } from "@saltcorn/types/model-abstracts/abstract_event_log";
+import type { ModelPack } from "@saltcorn/types/model-abstracts/abstract_model";
+import type { ModelInstancePack } from "@saltcorn/types/model-abstracts/abstract_model_instance";
+import type { TagPack } from "@saltcorn/types/model-abstracts/abstract_tag";
 const { isStale } = require("@saltcorn/data/utils");
 
 /**
@@ -53,9 +62,12 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
 
   return {
     name: table.name,
+    description: table.description,
+    is_user_group: table.is_user_group,
     min_role_read: table.min_role_read,
     min_role_write: table.min_role_write,
     versioned: table.versioned,
+    has_sync_info: table.has_sync_info,
     provider_name: table.provider_name,
     provider_cfg: table.provider_cfg,
     ownership_formula: table.ownership_formula,
@@ -81,6 +93,7 @@ const view_pack = async (name: string): Promise<ViewPack> => {
   //  throw new Error(`Unable to find table with id '${view.table_id}'`);
   return {
     name: view.name,
+    description: view.description,
     viewtemplate: view.viewtemplate,
     configuration: view.configuration,
     min_role: view.min_role,
@@ -109,6 +122,7 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
     location: plugin.location,
     configuration: plugin.configuration,
     deploy_private_key: plugin.deploy_private_key,
+    version: plugin.version || "latest",
   };
 };
 
@@ -163,6 +177,108 @@ const trigger_pack = async (name: string): Promise<TriggerPack> => {
  */
 const role_pack = async (role: string): Promise<RolePack> => {
   return await Role.findOne({ role });
+};
+
+/**
+ * 'page/view/table/trigger' ids are replaced by names
+ * @param name name of the tag
+ * @returns
+ */
+const tag_pack = async (name: string): Promise<TagPack> => {
+  const tag = await Tag.findOne({ name });
+  if (!tag) throw new Error(`Unable to find tag '${name}'`);
+  const entries = await tag.getEntries();
+  const withNames = entries.map((e) => {
+    const result: any = {};
+    if (e.page_id) {
+      const page = Page.findOne({ id: e.page_id });
+      if (!page) throw new Error(`Unable to find page '${e.page_id}'`);
+      result.page_name = page.name;
+    }
+    if (e.view_id) {
+      const view = View.findOne({ id: e.view_id });
+      if (!view) throw new Error(`Unable to find view '${e.view_id}'`);
+      result.view_name = view.name;
+    }
+    if (e.table_id) {
+      const table = Table.findOne({ id: e.table_id });
+      if (!table) throw new Error(`Unable to find table '${e.table_id}'`);
+      result.table_name = table.name;
+    }
+    if (e.trigger_id) {
+      const trigger = Trigger.findOne({ id: e.trigger_id });
+      if (!trigger) throw new Error(`Unable to find trigger '${e.trigger_id}'`);
+      result.trigger_name = trigger.name;
+    }
+    return result;
+  });
+  return {
+    name: name,
+    entries: withNames,
+  };
+};
+
+/**
+ * tableIds are replace by names
+ * @param name name of model
+ * @param tableName name of table the model is based on
+ * @returns
+ */
+const model_pack = async (
+  name: string,
+  tableName: string
+): Promise<ModelPack> => {
+  const table = Table.findOne({ name: tableName });
+  if (!table) throw new Error(`Model-table '${tableName}' not found`);
+  const model = await Model.findOne({ name, table_id: table.id });
+  if (!model) throw new Error(`Model '${name}' not found`);
+  return model.toJson;
+};
+
+/**
+ * the modelId gets replaced with modelName + tableName
+ * @param instanceName
+ * @param modelName
+ * @param tableName
+ * @returns
+ */
+const model_instance_pack = async (
+  instanceName: string,
+  modelName: string,
+  tableName: string
+): Promise<ModelInstancePack> => {
+  const table = Table.findOne({ name: tableName });
+  if (!table) throw new Error(`Model-table '${tableName}' not found`);
+  const model = await Model.findOne({ name: modelName, table_id: table.id });
+  if (!model) throw new Error(`Unable to find model '${modelName}'`);
+  const instance = await ModelInstance.findOne({
+    name: instanceName,
+    model_id: model.id,
+  });
+  if (!instance)
+    throw new Error(`Unable to find model instance '${instanceName}'`);
+  const result = instance.toJson;
+  if (result.model_id) delete result.model_id;
+  result.model_name = model.name;
+  result.table_name = table.name;
+  return result;
+};
+
+/**
+ * the userId gets replaced with userName
+ * no lookup by name because either all eventlogs or none are packed
+ * @param eventLog
+ */
+const event_log_pack = async (eventLog: EventLog): Promise<EventLogPack> => {
+  const result = eventLog.toJson;
+  if (result.user_id) {
+    const userId = result.user_id;
+    if (result.user_id) delete result.user_id;
+    const user = await User.findOne({ id: userId });
+    if (!user) throw new Error(`Unable to find user '${userId}'`);
+    result.user_name = user.name;
+  }
+  return result;
 };
 
 /**
@@ -293,12 +409,10 @@ const add_to_menu = async (item: {
 };
 
 /**
- * @function
- * @param {string} pack
- * @param {string} [name]
- * @param {function} loadAndSaveNewPlugin
- * @param {boolean} [bare_tables = false]
- * @returns {Promise<void>}
+ * @param pack
+ * @param [name]
+ * @param loadAndSaveNewPlugin
+ * @param  [bare_tables = false]
  */
 const install_pack = async (
   pack: Pack,
@@ -438,6 +552,86 @@ const install_pack = async (
         min_role: pageSpec.min_role,
       });
   }
+
+  for (const tag of pack.tags || []) {
+    const entries = tag.entries
+      ? tag.entries.map((e) => {
+          const result: any = {};
+          if (e.page_name) {
+            const page = Page.findOne({ name: e.page_name });
+            if (!page) throw new Error(`Unable to find page '${e.page_name}'`);
+            result.page_id = page.id;
+          }
+          if (e.view_name) {
+            const view = View.findOne({ name: e.view_name });
+            if (!view) throw new Error(`Unable to find view '${e.view_name}'`);
+            result.view_id = view.id;
+          }
+          if (e.table_name) {
+            const table = Table.findOne({ name: e.table_name });
+            if (!table)
+              throw new Error(`Unable to find table '${e.table_name}'`);
+            result.table_id = table.id;
+          }
+          if (e.trigger_name) {
+            const trigger = Trigger.findOne({ name: e.trigger_name });
+            if (!trigger)
+              throw new Error(`Unable to find trigger '${e.trigger_name}'`);
+            result.trigger_id = trigger.id;
+          }
+          return result;
+        })
+      : undefined;
+
+    await Tag.create({ name: tag.name, entries });
+  }
+  for (const model of pack.models || []) {
+    const mTbl = Table.findOne({ name: model.table_name });
+    if (!mTbl) throw new Error(`Unable to find table '${model.table_name}'`);
+    if (!mTbl.id) throw new Error(`Table '${model.table_name}' has no id`);
+    const { table_name, ...cfg } = model.configuration;
+    if (table_name) {
+      if (table_name === mTbl.name) cfg.table_id = mTbl.id;
+      else {
+        const cfgTbl = Table.findOne({ name: table_name });
+        if (!cfgTbl) throw new Error(`Unable to find table '${table_name}'`);
+        cfg.table_id = cfgTbl.id;
+      }
+    }
+    await Model.create({
+      name: model.name,
+      table_id: mTbl.id,
+      modelpattern: model.modelpattern,
+      configuration: cfg,
+    });
+  }
+
+  for (const modelInst of pack.model_instances || []) {
+    const table = Table.findOne({ name: modelInst.table_name });
+    if (!table)
+      throw new Error(`Unable to find table '${modelInst.table_name}'`);
+    const model = await Model.findOne({
+      name: modelInst.model_name,
+      table_id: table.id,
+    });
+    if (!model)
+      throw new Error(`Unable to find table '${modelInst.model_name}'`);
+    const { model_name, ...mICfg }: any = modelInst;
+    mICfg.model_id = model.id;
+    await ModelInstance.create(mICfg);
+  }
+
+  for (const eventLog of pack.event_logs || []) {
+    const { user_name, ...rest } = eventLog;
+    if (user_name) {
+      const user = await User.findOne({ email: user_name });
+      if (!user) throw new Error(`Unable to find user '${user_name}'`);
+      const eventLogCfg = rest as EventLogCfg;
+      eventLogCfg.user_id = user.id;
+      await EventLog.create(eventLogCfg);
+    } else await EventLog.create(rest);
+  }
+
   if (name) {
     const existPacks = getState().getConfigCopy("installed_packs", []);
     await getState().setConfig("installed_packs", [...existPacks, name]);
@@ -535,6 +729,10 @@ export = {
   role_pack,
   library_pack,
   trigger_pack,
+  tag_pack,
+  model_pack,
+  model_instance_pack,
+  event_log_pack,
   install_pack,
   fetch_available_packs,
   get_cached_packs,
