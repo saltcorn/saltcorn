@@ -729,6 +729,9 @@ const autoBackupForm = (req) =>
         label: req.__("Include Event Logs"),
         sublabel: req.__("Backup with event logs"),
         name: "backup_with_event_log",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+        },
       },
     ],
   });

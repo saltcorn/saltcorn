@@ -378,7 +378,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
-    const { source } = req.body;
+    const source = req.body.source || "from_text";
     try {
       switch (source) {
         case "from_text":
