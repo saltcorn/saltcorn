@@ -400,8 +400,21 @@ var offlineHelper = (() => {
     return resp.data.syncTimestamp;
   };
 
+  const setSpinnerText = () => {
+    const iframeWindow = $("#content-iframe")[0].contentWindow;
+    if (iframeWindow) {
+      const spinnerText =
+        iframeWindow.document.getElementById("scspinner-text-id");
+      if (spinnerText) {
+        spinnerText.innerHTML = "Syncing, please don't turn off";
+        spinnerText.classList.remove("d-none");
+      }
+    }
+  };
+
   return {
     sync: async () => {
+      setSpinnerText();
       const state = saltcorn.data.state.getState();
       const mobileConfig = state.mobileConfig;
       const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
@@ -425,10 +438,17 @@ var offlineHelper = (() => {
         await setUploadStarted(true, syncTimestamp);
         let lock = null;
         try {
-          if (window.navigator.wakeLock?.request)
+          if (window.navigator?.wakeLock?.request)
             lock = await window.navigator.wakeLock.request();
+        } catch (error) {
+          console.log("wakeLock not available");
+          console.log(error);
+        }
+        let transactionOpen = false;
+        try {
           await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
           await saltcorn.data.db.query("BEGIN");
+          transactionOpen = true;
           if (cleanSync) await offlineHelper.clearLocalData(true);
           const { synchedTables, syncInfos } = await prepare();
           await syncRemoteDeletes(syncInfos, syncTimestamp);
@@ -437,9 +457,10 @@ var offlineHelper = (() => {
           await offlineHelper.endOfflineMode(true);
           await setUploadStarted(false);
           await saltcorn.data.db.query("COMMIT");
+          transactionOpen = false;
           await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
         } catch (error) {
-          await saltcorn.data.db.query("ROLLBACK");
+          if (transactionOpen) await saltcorn.data.db.query("ROLLBACK");
           await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
           console.log(error);
           throw error;

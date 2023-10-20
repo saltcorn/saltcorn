@@ -853,16 +853,25 @@ function showLoadSpinner() {
         z-index: 9999;"
     >
       <div 
-        class="spinner-border"
-        role="status"
         style="position: absolute;
           left: 50%;
           top: 50%;
-          height:60px;
-          width:60px;
-          margin:0px auto;"
+          height: 60px;
+          width: 250px;
+          margin: 0px auto;"
       >
-        <span class="visually-hidden">Loading...</span>
+        <span 
+          class="spinner-border d-block"
+          role="status"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </span>
+        <span 
+          style="margin-left: -125px"
+          id="scspinner-text-id"
+          class="d-none fs-5 fw-bold bg-secondary text-white p-1 rounded"
+        >
+        </span>
       </div>
     </div>`);
   }
