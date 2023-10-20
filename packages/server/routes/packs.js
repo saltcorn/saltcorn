@@ -40,6 +40,7 @@ const { pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
 const Library = require("@saltcorn/data/models/library");
 const Trigger = require("@saltcorn/data/models/trigger");
 const Role = require("@saltcorn/data/models/role");
+const fs = require("fs");
 
 /**
  * @type {object}
@@ -306,10 +307,32 @@ const install_pack_form = (req) =>
     submitLabel: req.__("Install"),
     fields: [
       {
+        name: "source",
+        label: req.__("Source"),
+        type: "String",
+        attributes: {
+          options: [
+            { label: "from text", name: "from_text" },
+            { label: "from file", name: "from_file" },
+          ],
+        },
+        default: "from_text",
+        required: true,
+      },
+      {
         name: "pack",
         label: req.__("Pack"),
         type: "String",
         fieldview: "textarea",
+        showIf: { source: "from_text" },
+      },
+      {
+        name: "pack_file",
+        label: req.__("Pack file"),
+        class: "form-control",
+        type: "File",
+        sublabel: req.__("Upload a pack file"),
+        showIf: { source: "from_file" },
       },
     ],
   });
@@ -355,8 +378,22 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
+    const { source } = req.body;
     try {
-      pack = JSON.parse(req.body.pack);
+      switch (source) {
+        case "from_text":
+          pack = JSON.parse(req.body.pack);
+          break;
+        case "from_file":
+          if (req.files?.pack_file?.tempFilePath)
+            pack = JSON.parse(
+              fs.readFileSync(req.files?.pack_file?.tempFilePath)
+            );
+          else throw new Error(req.__("No file uploaded"));
+          break;
+        default:
+          throw new Error(req.__("Invalid source"));
+      }
     } catch (e) {
       error = e.message;
     }
