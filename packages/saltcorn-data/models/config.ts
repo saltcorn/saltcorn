@@ -743,6 +743,16 @@ const configTypes: ConfigTypes = {
     label: "Upload size limit (Kb)",
     blurb: "Maximum upload file size in kilobytes",
   },
+  body_limit: {
+    type: "Integer",
+    label: "Body size limit (Kb)",
+    blurb: "Maximum request body size in kilobytes",
+  },
+  url_encoded_limit: {
+    type: "Integer",
+    label: "URL encoded size limit (Kb)",
+    blurb: "Maximum URL encoded request size in kilobytes",
+  },
   /** @type {object} */
   min_role_search: {
     type: "Role",

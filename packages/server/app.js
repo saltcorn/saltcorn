@@ -128,17 +128,23 @@ const getApp = async (opts = {}) => {
   app.use(helmet());
   // TODO ch find a better solution
   app.use(cors());
+  const bodyLimit = getState().getConfig("body_limit");
   app.use(
     express.json({
-      limit: "5mb",
+      limit: bodyLimit ? `${bodyLimit}kb` : "5mb",
       verify: (req, res, buf) => {
         req.rawBody = buf;
       },
     })
   );
-  // extenetede url encoding in use
+  const urlencodedLimit = getState().getConfig("url_encoded_limit");
+  // extended url encoding in use
   app.use(
-    express.urlencoded({ limit: "5mb", extended: true, parameterLimit: 50000 })
+    express.urlencoded({
+      limit: urlencodedLimit ? `${urlencodedLimit}kb` : "5mb",
+      extended: true,
+      parameterLimit: 50000,
+    })
   );
 
   // cookies
