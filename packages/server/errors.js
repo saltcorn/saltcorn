@@ -46,10 +46,10 @@ module.exports =
             ? text(err.message)
             : req.__("An error occurred")
         );
-    } else
-      res
-        .status(code)
-        .sendWrap(
+    } else {
+      const _res = res.status(code);
+      if (_res.sendWrap)
+        _res.sendWrap(
           req.__(headline),
           devmode ? pre(text(err.stack)) : h3(req.__(headline)),
           role === 1 && !devmode ? pre(text(err.message)) : "",
@@ -61,4 +61,15 @@ module.exports =
               )
             : ""
         );
+      else
+        _res.send(
+          `<h2>${
+            err.message
+              ? err.message
+              : req.__
+              ? req.__("An error occurred")
+              : "An error occurred"
+          }</h2>`
+        );
+    }
   };
