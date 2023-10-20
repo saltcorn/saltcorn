@@ -36,7 +36,12 @@ const {
   hashState,
 } = require("../../utils");
 const { getState } = require("../../db/state");
-const { jsexprToWhere, eval_expression } = require("../../models/expression");
+const {
+  jsexprToWhere,
+  eval_expression,
+  add_free_variables_to_joinfields,
+  freeVariables,
+} = require("../../models/expression");
 const {
   extractFromLayout,
   extractViewToCreate,
@@ -298,6 +303,14 @@ const configuration_workflow = (req) =>
                 showIf: { view_decoration: ["Card", "Accordion"] },
               },
               {
+                name: "initial_open_accordions",
+                label: req.__("Initially open"),
+                type: "String",
+                fieldview: "radio_group",
+                attributes: { options: ["None", "All", "First"], inline: true },
+                required: true,
+              },
+              {
                 name: "hide_pagination",
                 label: req.__("Hide pagination"),
                 type: "Bool",
@@ -411,6 +424,7 @@ const run = async (
     create_view_display,
     in_card, //legacy
     view_decoration,
+    initial_open_accordions = "None",
     title_formula,
     masonry_columns,
     rows_per_page = 20,
@@ -462,7 +476,12 @@ const run = async (
       user_id,
       user: extraArgs?.req?.user,
     });
-
+  qextra.joinFields = {};
+  add_free_variables_to_joinfields(
+    freeVariables(title_formula),
+    qextra.joinFields,
+    fields
+  );
   const sresp = await sview.runMany(state, {
     ...extraArgs,
     ...qextra,
@@ -556,7 +575,12 @@ const run = async (
             { class: "accordion-header", id: `a${stateHash}head${ix}` },
             button(
               {
-                class: ["accordion-button", "collapsed"],
+                class: [
+                  "accordion-button",
+                  (initial_open_accordions === "None" ||
+                    (initial_open_accordions === "First" && ix > 0)) &&
+                    "collapsed",
+                ],
                 type: "button",
                 "data-bs-toggle": "collapse",
                 "data-bs-target": `#a${stateHash}tab${ix}`,
@@ -569,7 +593,14 @@ const run = async (
           ),
           div(
             {
-              class: ["accordion-collapse", "collapse"],
+              class: [
+                "accordion-collapse",
+                "collapse",
+                !(
+                  initial_open_accordions === "None" ||
+                  (initial_open_accordions === "First" && ix > 0)
+                ) && "show",
+              ],
               id: `a${stateHash}tab${ix}`,
               "aria-labelledby": `a${stateHash}head${ix}`,
               "data-bs-parent": `#top${stateHash}`,

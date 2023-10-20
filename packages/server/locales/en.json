@@ -1262,5 +1262,6 @@
 	"Module '%s' not found": "Module '%s' not found",
 	"Module %s not found": "Module %s not found",
 	"Include Event Logs": "Include Event Logs",
-	"Backup with event logs": "Backup with event logs"
+	"Backup with event logs": "Backup with event logs",
+	"Initially open": "Initially open"
 }

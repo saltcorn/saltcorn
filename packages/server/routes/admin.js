@@ -1554,7 +1554,7 @@ router.get(
                 input({
                   type: "hidden",
                   name: "entryPointType",
-                  value: "view",
+                  value: builderSettings.entryPointType || "view",
                   id: "entryPointTypeID",
                 }),
                 div(

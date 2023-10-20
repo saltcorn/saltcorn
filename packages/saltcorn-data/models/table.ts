@@ -2864,7 +2864,7 @@ class Table implements AbstractTable {
               table
             )}" where "${sqlsanitize(ref)}" in (select "${
               subselect.field
-            }" from ${schema}"${subselect.table.name}" where "${
+            }" from ${schema}"${sqlsanitize(subselect.table.name)}" where "${
               subselect.whereField
             }"=a."${ownField}")) ${sqlsanitize(fldnm)}`
           );

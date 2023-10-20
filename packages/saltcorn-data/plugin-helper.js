@@ -1147,6 +1147,20 @@ const field_picker_fields = async ({
       showIf: { type: "Link" },
     },
     {
+      name: "icon_btn",
+      label: __("Icon"),
+      input_type: "custom_html",
+      attributes: {
+        html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
+      },
+      showIf: { type: ["Link", "ViewLink", "Action"] },
+    },
+    {
+      name: "icon",
+      class: "item-menu",
+      input_type: "hidden",
+    },
+    {
       name: "link_target_blank",
       label: __("Open in new tab"),
       type: "Bool",
@@ -1487,6 +1501,22 @@ const picked_fields_to_query = (columns, fields, layout) => {
             ...freeVars,
             ...freeVariables(v.extra_state_fml),
           ]);
+      },
+      link(v) {
+        if (v?.isFormula?.text && typeof v.text === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.text)]);
+        if (v?.isFormula?.url && typeof v.url === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
+      },
+      image(v) {
+        if (v?.isFormula?.alt && typeof v.alt === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.alt)]);
+      },
+      card(v) {
+        if (v?.isFormula?.title && typeof v.title === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.title)]);
+        if (v?.isFormula?.url && typeof v.url === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
       },
       blank(v) {
         if (v?.isFormula?.text && typeof v.contents === "string")

@@ -895,6 +895,7 @@ const features = {
   public_user_role: 100,
   get_view_goto: true,
   table_undo: true,
+  ellipsize: true,
 };
 
 export = {
