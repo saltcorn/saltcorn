@@ -276,7 +276,7 @@ const event_log_pack = async (eventLog: EventLog): Promise<EventLogPack> => {
     if (result.user_id) delete result.user_id;
     const user = await User.findOne({ id: userId });
     if (!user) throw new Error(`Unable to find user '${userId}'`);
-    result.user_name = user.name;
+    result.user_email = user.email;
   }
   return result;
 };
@@ -622,14 +622,19 @@ const install_pack = async (
   }
 
   for (const eventLog of pack.event_logs || []) {
-    const { user_name, ...rest } = eventLog;
-    if (user_name) {
-      const user = await User.findOne({ email: user_name });
-      if (!user) throw new Error(`Unable to find user '${user_name}'`);
-      const eventLogCfg = rest as EventLogCfg;
-      eventLogCfg.user_id = user.id;
-      await EventLog.create(eventLogCfg);
-    } else await EventLog.create(rest);
+    const { user_email, ...rest } = eventLog;
+    const eventLogCfg = rest as EventLogCfg;
+    if (user_email) {
+      const user = await User.findOne({ email: user_email });
+      if (user) eventLogCfg.user_id = user.id;
+      else {
+        getState().log(
+          2,
+          `User '${user_email}' not found for event log ${eventLog.event_type}`
+        );
+      }
+    }
+    await EventLog.create(eventLogCfg);
   }
 
   if (name) {
