@@ -499,7 +499,13 @@ class Field implements AbstractField {
       return this.type.sql_name;
     }
     throw new Error(
-      "Unable to get the sql_type" + JSON.stringify(this.type, null, 2)
+      `Unable to get the sql_type: ${
+        this.type
+          ? JSON.stringify(this.type, null, 2)
+          : this.typename
+          ? this.typename
+          : "unknown type"
+      }`
     );
   }
 
