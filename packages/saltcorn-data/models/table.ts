@@ -798,15 +798,15 @@ class Table implements AbstractTable {
       const pkName = this.pk_name;
       if (isNode()) {
         await db.query(
-          `delete from ${schema}${db.sqlsanitize(
+          `delete from ${schema}"${db.sqlsanitize(
             this.name
-          )}_sync_info where ref in (
+          )}_sync_info" where ref in (
             ${ids.map((row) => row[pkName]).join(",")})`
         );
         await db.query(
-          `insert into ${schema}${db.sqlsanitize(
+          `insert into ${schema}"${db.sqlsanitize(
             this.name
-          )}_sync_info values ${ids
+          )}_sync_info" values ${ids
             .map(
               (row) =>
                 `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
@@ -817,7 +817,7 @@ class Table implements AbstractTable {
         );
       } else {
         await db.query(
-          `update ${db.sqlsanitize(this.name)}_sync_info 
+          `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
            where ref in (${ids.map((row) => row[pkName]).join(",")})`
         );
@@ -1511,14 +1511,14 @@ class Table implements AbstractTable {
       if (isNode()) {
         const schemaPrefix = db.getTenantSchemaPrefix();
         await db.query(
-          `insert into ${schemaPrefix}${db.sqlsanitize(this.name)}_sync_info 
+          `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
            values(${id}, date_trunc('milliseconds', to_timestamp(${
             (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
           })))`
         );
       } else {
         await db.query(
-          `insert into ${db.sqlsanitize(this.name)}_sync_info 
+          `insert into "${db.sqlsanitize(this.name)}_sync_info"
            (last_modified, ref, modified_local, deleted)
            values(NULL, ${id}, true, false)`
         );
@@ -1692,30 +1692,30 @@ class Table implements AbstractTable {
       throw new Error("Unable to find a field with a primary key.");
     }
     await db.query(
-      `create table ${schemaPrefix}${sqlsanitize(
+      `create table ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info (ref integer, last_modified timestamp, deleted boolean default false)`
+      )}_sync_info" (ref integer, last_modified timestamp, deleted boolean default false)`
     );
     await db.query(
-      `create index ${sqlsanitize(
+      `create index "${sqlsanitize(
         this.name
-      )}_sync_info_ref_index on ${schemaPrefix}${sqlsanitize(
+      )}_sync_info_ref_index" on ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info(ref)`
+      )}_sync_info"(ref)`
     );
     await db.query(
-      `create index ${sqlsanitize(
+      `create index "${sqlsanitize(
         this.name
-      )}_sync_info_lm_index on ${schemaPrefix}${sqlsanitize(
+      )}_sync_info_lm_index" on ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info(last_modified)`
+      )}_sync_info"(last_modified)`
     );
     await db.query(
-      `create index ${sqlsanitize(
+      `create index "${sqlsanitize(
         this.name
-      )}_sync_info_deleted_index on ${schemaPrefix}${sqlsanitize(
+      )}_sync_info_deleted_index" on ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info(deleted)`
+      )}_sync_info"(deleted)`
     );
   }
 

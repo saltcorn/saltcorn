@@ -5,6 +5,9 @@ const {
   getAdminLoginCookie,
   resetToFixtures,
   respondJsonWith,
+  toRedirect,
+  toInclude,
+  toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/tests/mocks");
@@ -179,6 +182,52 @@ describe("load remote insert/updates", () => {
         expect(data.books.rows[0].author).toBe("Herman Melville");
         expect(data.books.rows[1].author).toBe("Leo Tolstoy");
       }
+    });
+
+    it("sync table with capitals", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      // create table
+      await request(app)
+        .post("/table")
+        .set("Cookie", loginCookie)
+        .send(`name=${encodeURIComponent("Table with capitals")}`)
+        .expect(toRedirect("/table/16"));
+      // add a field
+      await request(app)
+        .post("/field/")
+        .send("stepName=Basic properties")
+        .send("name=string_field")
+        .send("label=StringField")
+        .send("type=String")
+        .send(
+          `contextEnc=${encodeURIComponent(JSON.stringify({ table_id: 16 }))}`
+        )
+        .set("Cookie", loginCookie)
+        .expect(toInclude("options"));
+      // init sync_info table
+      await request(app)
+        .post("/table")
+        .send("id=16")
+        .send("has_sync_info=on")
+        .set("Cookie", loginCookie)
+        .expect(toRedirect("/table/16"));
+      const dbTime = await db.time();
+
+      // call load changes
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: (await db.time()).valueOf(),
+          syncInfos: {
+            "Table with capitals": {
+              maxLoadedId: 0,
+              syncFrom: dbTime.valueOf(),
+            },
+          },
+        })
+        .expect(toSucceed());
     });
 
     it("load sync not authorized", async () => {
