@@ -710,6 +710,13 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
               row[table.pk_name]
             }`,
             "data-inline-edit-type": field?.type?.name,
+            ...(field?.type?.name === "Float" &&
+            field.attributes?.decimal_places
+              ? {
+                  "data-inline-edit-decimal-places":
+                    field.attributes.decimal_places,
+                }
+              : {}),
             class: !isWeb(req) ? "mobile-data-inline-edit" : "",
           },
           fvrun

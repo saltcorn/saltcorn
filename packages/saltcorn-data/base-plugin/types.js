@@ -1313,8 +1313,11 @@ const float = {
           onChange: attrs.onChange,
           required: !!required,
           step: attrs.decimal_places
-            ? Math.pow(10, -attrs.decimal_places)
-            : "0.01",
+            ? Math.round(
+                Math.pow(10, -attrs.decimal_places) *
+                  Math.pow(10, attrs.decimal_places)
+              ) / Math.pow(10, attrs.decimal_places)
+            : "any",
           id: `input${text_attr(nm)}`,
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
