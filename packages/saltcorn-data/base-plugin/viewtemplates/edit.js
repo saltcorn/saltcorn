@@ -708,7 +708,11 @@ const transformForm = async ({
           state = { id: row[view_select.field_name] };
           break;
       }
-      segment.contents = await view.run(state, { req, res });
+      segment.contents = await view.run(
+        state,
+        { req, res },
+        view.isRemoteTable()
+      );
     },
   });
   translateLayout(form.layout, req.getLocale());
