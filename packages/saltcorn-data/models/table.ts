@@ -1286,7 +1286,9 @@ class Table implements AbstractTable {
         `update "${db.sqlsanitize(
           this.name
         )}_sync_info" set modified_local = true 
-         where ref = ${id} and last_modified = ${oldLastModified.valueOf()}`
+         where ref = ${id} and last_modified = ${
+          oldLastModified ? oldLastModified.valueOf() : "null"
+        }`
       );
     }
   }

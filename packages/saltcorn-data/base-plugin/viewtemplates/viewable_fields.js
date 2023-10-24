@@ -678,6 +678,13 @@ const get_viewable_fields = (
                 "data-inline-edit-dest-url": `/api/${table.name}/${
                   row[table.pk_name]
                 }`,
+                ...(reffield?.type?.name === "Float" &&
+                reffield.attributes?.decimal_places
+                  ? {
+                      "data-inline-edit-decimal-places":
+                        reffield.attributes.decimal_places,
+                    }
+                  : {}),
                 "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
               },
               span({ class: "current" }, oldkey(row)),
@@ -831,6 +838,13 @@ const get_viewable_fields = (
                     "data-inline-edit-dest-url": `/api/${table.name}/${
                       row[table.pk_name]
                     }`,
+                    ...(f?.type?.name === "Float" &&
+                    f.attributes?.decimal_places
+                      ? {
+                          "data-inline-edit-decimal-places":
+                            f.attributes.decimal_places,
+                        }
+                      : {}),
                     "data-inline-edit-type": f?.type?.name,
                   },
                   span({ class: "current" }, oldkey(row)),

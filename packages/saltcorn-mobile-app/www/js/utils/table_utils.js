@@ -14,7 +14,9 @@ async function dropDeletedTables(incomingTables) {
       table.name !== "users" &&
       !incomingTables.find((row) => row.id === table.id)
     ) {
-      await saltcorn.data.db.query(`DROP TABLE ${table.name}`);
+      await saltcorn.data.db.query(
+        `DROP TABLE "${saltcorn.data.db.sqlsanitize(table.name)}"`
+      );
     }
   }
 }

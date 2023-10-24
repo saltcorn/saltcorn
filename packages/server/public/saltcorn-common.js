@@ -539,6 +539,7 @@ function initialize_page() {
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");
     var schema = $(this).attr("data-inline-edit-schema");
+    var decimalPlaces = $(this).attr("data-inline-edit-decimal-places");
     if (schema) {
       schema = JSON.parse(decodeURIComponent(schema));
     }
@@ -561,6 +562,7 @@ function initialize_page() {
         type,
         is_key,
         schema,
+        ...(decimalPlaces ? { decimalPlaces } : {}),
       })
     );
     const doAjaxOptionsFetch = (tblName, target) => {
@@ -613,7 +615,17 @@ function initialize_page() {
         }
         <input type="${
           type === "Integer" || type === "Float" ? "number" : "text"
-        }" name="${key}" value="${escapeHtml(current)}">
+        }" ${
+          type === "Float"
+            ? `step="${
+                decimalPlaces
+                  ? Math.round(
+                      Math.pow(10, -decimalPlaces) * Math.pow(10, decimalPlaces)
+                    ) / Math.pow(10, decimalPlaces)
+                  : "any"
+              }"`
+            : ""
+        } name="${key}" value="${escapeHtml(current)}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
@@ -780,6 +792,11 @@ function inline_submit_success(e, form, opts) {
       : ""
   }
   ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
+  ${
+    opts.decimalPlaces
+      ? `data-inline-edit-decimal-places="${opts.decimalPlaces}"`
+      : ""
+  }
   data-inline-edit-dest-url="${opts.url}">
     <span class="current">${val}</span>
     <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
