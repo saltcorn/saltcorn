@@ -951,9 +951,12 @@ const runPost = async (
       }
       if (ins_upd_error) {
         res.status(422);
-        req.flash("error", text_attr(ins_upd_error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-
+        if (req.xhr) {
+          res.json({ error: ins_upd_error });
+        } else {
+          req.flash("error", text_attr(ins_upd_error));
+          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        }
         return;
       }
       //Edit-in-edit
