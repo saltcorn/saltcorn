@@ -1215,6 +1215,8 @@ const renderFormLayout = (form: Form): string => {
         return mkBtn(
           `onClick="updateMatchingRows(this, '${form.viewname}')" type="button"`
         );
+      if (action_name === "SubmitWithAjax")
+        return mkBtn(`onClick="submitWithAjax(this)" type="button"`);
       if (action_link) return action_link;
 
       if (isNode && !form.req?.smr) {
