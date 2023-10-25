@@ -534,17 +534,20 @@ async function local_post(url, args) {
   }
 }
 
-async function local_post_json(url) {
+async function local_post_json(url, data, cb) {
   try {
     showLoadSpinner();
     const result = await parent.router.resolve({
       pathname: `post${url}`,
+      ...(data ? { data } : {}),
     });
     if (result.server_eval) await evalServerCode(url);
     if (result.redirect) await parent.handleRoute(result.redirect);
     else common_done(result, "", false);
+    if (cb?.success) cb.success(result);
   } catch (error) {
     parent.errorAlert(error);
+    if (cb?.error) cb.error(error);
   } finally {
     removeLoadSpinner();
   }

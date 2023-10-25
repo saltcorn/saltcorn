@@ -51,6 +51,7 @@ const nubBy = (prop, xs) => {
   });
 };
 function apply_showif() {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
@@ -275,7 +276,8 @@ function apply_showif() {
       activate_onchange_coldef();
       return;
     }
-    ajax_post_json(e.attr("data-source-url"), rec, {
+
+    const cb = {
       success: (data) => {
         e.html(data);
         const cacheNow = e.prop("data-source-url-cache") || {};
@@ -295,7 +297,11 @@ function apply_showif() {
         });
         e.html("");
       },
-    });
+    };
+    if (isNode) ajax_post_json(e.attr("data-source-url"), rec, cb);
+    else {
+      local_post_json(e.attr("data-source-url"), rec, cb);
+    }
   });
   const locale =
     navigator.userLanguage ||
