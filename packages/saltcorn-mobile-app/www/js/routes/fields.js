@@ -1,4 +1,4 @@
-/*global saltcorn, apiCall, MobileRequest, offlineHelper*/
+/*global saltcorn, apiCall, MobileRequest, MobileResponse, offlineHelper*/
 
 const postShowCalculated = async (context) => {
   const { tableName, fieldName, fieldview } = context.params;
@@ -9,8 +9,17 @@ const postShowCalculated = async (context) => {
     mobileConfig.isOfflineMode ||
     mobileConfig.localTableIds.indexOf(table.id) >= 0
   ) {
-    // offline mode TODO
-    return "";
+    const req = new MobileRequest({
+      query: context.query ? parseQuery(context.query) : {},
+      body: context.data || {},
+    });
+    const res = new MobileResponse();
+    await saltcorn.data.web_mobile_commons.show_calculated_fieldview(req, res, {
+      tableName,
+      fieldName,
+      fieldview,
+    });
+    return res.getSendData();
   } else {
     const response = await apiCall({
       method: "POST",

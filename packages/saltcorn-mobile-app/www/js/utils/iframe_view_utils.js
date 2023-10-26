@@ -539,7 +539,8 @@ async function local_post_json(url, data, cb) {
     showLoadSpinner();
     const result = await parent.router.resolve({
       pathname: `post${url}`,
-      ...(data ? { data } : {}),
+      data: data,
+      query: parent.currentQuery(),
     });
     if (result.server_eval) await evalServerCode(url);
     if (result.redirect) await parent.handleRoute(result.redirect);
