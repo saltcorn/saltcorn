@@ -4,6 +4,7 @@ function MobileRequest({
   xhr = false,
   files = undefined,
   query = undefined,
+  body = undefined,
   refererRoute = undefined,
 } = {}) {
   const cfg = saltcorn.data.state.getState().mobileConfig;
@@ -54,6 +55,7 @@ function MobileRequest({
     xhr,
     files,
     query,
+    body,
     headers: {
       referer: referer,
     },

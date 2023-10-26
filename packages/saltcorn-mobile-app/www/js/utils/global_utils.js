@@ -4,7 +4,11 @@ let routingHistory = [];
 
 function currentLocation() {
   if (routingHistory.length == 0) return undefined;
-  return routingHistory[routingHistory.length - 1].route;
+  let index = routingHistory.length - 1;
+  while (index > 0 && routingHistory[index].route.startsWith("post/")) {
+    index--;
+  }
+  return routingHistory[index].route;
 }
 
 function currentQuery() {
@@ -210,12 +214,15 @@ async function gotoEntryView() {
 }
 
 function handleOpenModal() {
+  const result = { moddalWasOpen: false, noSubmitReload: false };
   const iframe = document.getElementById("content-iframe");
-  if (!iframe) return false;
+  if (!iframe) return result;
   const openModal = iframe.contentWindow.$("#scmodal.modal.show");
-  if (openModal.length === 0) return;
+  if (openModal.length === 0) return result;
+  result.moddalWasOpen = true;
   iframe.contentWindow.bootstrap.Modal.getInstance(openModal[0]).hide();
-  return true;
+  result.noSubmitReload = openModal[0].classList.contains("no-submit-reload");
+  return result;
 }
 
 async function handleRoute(route, query, files, data) {
@@ -242,7 +249,11 @@ async function handleRoute(route, query, files, data) {
         alerts: [],
       });
       if (page.redirect) {
-        if (handleOpenModal()) return;
+        const { moddalWasOpen, noSubmitReload } = handleOpenModal();
+        if (moddalWasOpen) {
+          if (noSubmitReload) return;
+          else return await reload();
+        }
         if (
           page.redirect.startsWith("http://localhost") ||
           page.redirect === "undefined"

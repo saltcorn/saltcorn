@@ -479,9 +479,10 @@ async function mobile_modal(url, opts = {}) {
     var modal = bootstrap.Modal.getInstance(myModalEl);
     modal.dispose();
   }
+  if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
+  else $("#scmodal").removeClass("no-submit-reload");
   try {
     const { path, query } = parent.splitPathQuery(url);
-    // submitReload ?
     const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
     if (
       mobileConfig.networkState === "none" &&
@@ -534,17 +535,21 @@ async function local_post(url, args) {
   }
 }
 
-async function local_post_json(url) {
+async function local_post_json(url, data, cb) {
   try {
     showLoadSpinner();
     const result = await parent.router.resolve({
       pathname: `post${url}`,
+      data: data,
+      query: parent.currentQuery(),
     });
     if (result.server_eval) await evalServerCode(url);
     if (result.redirect) await parent.handleRoute(result.redirect);
     else common_done(result, "", false);
+    if (cb?.success) cb.success(result);
   } catch (error) {
     parent.errorAlert(error);
+    if (cb?.error) cb.error(error);
   } finally {
     removeLoadSpinner();
   }
