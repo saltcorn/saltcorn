@@ -273,6 +273,7 @@ function apply_showif() {
 
     if (typeof cache[recS] !== "undefined") {
       e.html(cache[recS]);
+      e.prop("data-source-url-current", recS);
       activate_onchange_coldef();
       return;
     }
