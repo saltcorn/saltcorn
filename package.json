@@ -48,7 +48,10 @@
     ],
     "extends": "eslint:recommended",
     "parserOptions": {
-      "ecmaVersion": 2021
+      "ecmaVersion": 2021,
+      "ecmaFeatures": {
+        "jsx": true
+      }
     },
     "env": {
       "node": true,
