@@ -360,6 +360,8 @@ function submitWithAjax(e) {
   saveAndContinue(e, (res) => {
     if (res && res.responseJSON && res.responseJSON.url_when_done)
       window.location.href = res.responseJSON.url_when_done;
+    if (res && res.responseJSON && res.responseJSON.error)
+      notifyAlert({ type: "danger", text: res.responseJSON.error });
   });
 }
 

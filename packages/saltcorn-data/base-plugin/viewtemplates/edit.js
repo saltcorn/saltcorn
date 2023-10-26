@@ -1462,6 +1462,13 @@ const whenDone = async (
     res_redirect(redirect);
     return;
   }
+  if (check_ajax && req.xhr && !req.smr && trigger_return?.error) {
+    res.json({
+      view_when_done,
+      ...(trigger_return || {}),
+    });
+    return;
+  }
 
   let use_view_when_done = view_when_done;
   if (destination_type === "Back to referer" && body._referer) {
