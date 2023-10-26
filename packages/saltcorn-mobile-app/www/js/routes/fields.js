@@ -1,4 +1,4 @@
-/*global saltcorn, apiCall, MobileRequest, MobileResponse, offlineHelper*/
+/*global saltcorn, apiCall, MobileRequest, MobileResponse, offlineHelper, parseQuery */
 
 const postShowCalculated = async (context) => {
   const { tableName, fieldName, fieldview } = context.params;
