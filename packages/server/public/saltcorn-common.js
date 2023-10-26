@@ -518,6 +518,11 @@ function initialize_page() {
   });
 
   $("form").change(apply_showif);
+  // also change if we select same
+  $("form select").on("blur", (e) => {
+    if (!e || !e.target) return;
+    $(e.target).closest("form").trigger("change");
+  });
   apply_showif();
   apply_showif();
   $("[data-inline-edit-dest-url]").each(function () {

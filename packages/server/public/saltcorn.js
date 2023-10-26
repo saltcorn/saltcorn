@@ -356,6 +356,13 @@ function selectVersionError(res, btnId) {
   restore_old_button(btnId);
 }
 
+function submitWithAjax(e) {
+  saveAndContinue(e, (res) => {
+    if (res && res.responseJSON && res.responseJSON.url_when_done)
+      window.location.href = res.responseJSON.url_when_done;
+  });
+}
+
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
   const valres = form[0].reportValidity();
@@ -404,8 +411,8 @@ function saveAndContinue(e, k) {
       }
       ajax_indicate_error(e, request);
     },
-    complete: function () {
-      if (k) k();
+    complete: function (res) {
+      if (k) k(res);
     },
   });
 

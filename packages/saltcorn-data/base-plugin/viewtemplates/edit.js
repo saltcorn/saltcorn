@@ -75,6 +75,7 @@ const builtInActions = [
   "Save",
   "SaveAndContinue",
   "UpdateMatchingRows",
+  "SubmitWithAjax",
   "Reset",
   "GoBack",
   "Delete",
@@ -829,7 +830,7 @@ const render = async ({
   let hasSave = false;
   traverseSync(layout, {
     action({ action_name }) {
-      if (action_name === "Save") {
+      if (action_name === "Save" || action_name === "SubmitWithAjax") {
         hasSave = true;
       }
     },
@@ -951,9 +952,12 @@ const runPost = async (
       }
       if (ins_upd_error) {
         res.status(422);
-        req.flash("error", text_attr(ins_upd_error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-
+        if (req.xhr) {
+          res.json({ error: ins_upd_error });
+        } else {
+          req.flash("error", text_attr(ins_upd_error));
+          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        }
         return;
       }
       //Edit-in-edit
@@ -1048,13 +1052,13 @@ const runPost = async (
       return;
     }
 
-    if (req.xhr && !originalID && !req.smr) {
+    /*if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
       return;
     } else if (req.xhr && !req.smr) {
       res.json({ view_when_done, ...trigger_return });
       return;
-    }
+    }*/
     await whenDone(
       viewname,
       table_id,
@@ -1071,7 +1075,9 @@ const runPost = async (
       req,
       res,
       body,
-      row
+      row,
+      !originalID ? { id, ...trigger_return } : trigger_return,
+      true
     );
   }
 };
@@ -1438,23 +1444,35 @@ const whenDone = async (
   req,
   res,
   body,
-  row
+  row,
+  trigger_return,
+  check_ajax
 ) => {
+  const res_redirect = (url) => {
+    if (check_ajax && req.xhr && !req.smr)
+      res.json({
+        view_when_done,
+        url_when_done: url,
+        ...(trigger_return || {}),
+      });
+    else res.redirect(url);
+  };
+
   if (redirect) {
-    res.redirect(redirect);
+    res_redirect(redirect);
     return;
   }
 
   let use_view_when_done = view_when_done;
   if (destination_type === "Back to referer" && body._referer) {
-    res.redirect(body._referer);
+    res_redirect(body._referer);
     return;
   } else if (destination_type === "Page" && page_when_done) {
-    res.redirect(`/page/${page_when_done}`);
+    res_redirect(`/page/${page_when_done}`);
     return;
   } else if (destination_type === "URL formula" && dest_url_formula) {
     const url = eval_expression(dest_url_formula, row);
-    res.redirect(url);
+    res_redirect(url);
     return;
   } else if (destination_type !== "View")
     for (const { view, expression } of formula_destinations || []) {
@@ -1467,7 +1485,7 @@ const whenDone = async (
       }
     }
   if (!use_view_when_done) {
-    res.redirect(`/`);
+    res_redirect(`/`);
     return;
   }
   const [viewname_when_done, relation] = use_view_when_done.split(".");
@@ -1477,7 +1495,7 @@ const whenDone = async (
       "warning",
       `View "${use_view_when_done}" not found - change "View when done" in "${viewname}" view`
     );
-    res.redirect(`/`);
+    res_redirect(`/`);
   } else {
     const state_fields = await nxview.get_state_fields();
     let target = `/view/${text(viewname_when_done)}`;
@@ -1494,7 +1512,7 @@ const whenDone = async (
     if (!isWeb(req)) {
       res.json({ redirect: `get${redirectPath}` });
     } else {
-      res.redirect(redirectPath);
+      res_redirect(redirectPath);
     }
   }
 };

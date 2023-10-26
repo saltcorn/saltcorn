@@ -632,6 +632,19 @@ router.post(
 
     const view = await View.findOne({ name });
     const configFlow = await view.get_config_flow(req);
+    configFlow.onStepSuccess = async (step, context) => {
+      let newcfg;
+      if (step.contextField)
+        newcfg = {
+          ...view.configuration,
+          [step.contextField]: {
+            ...view.configuration?.[step.contextField],
+            ...context,
+          },
+        };
+      else newcfg = { ...view.configuration, ...context };
+      await View.update({ configuration: newcfg }, view.id);
+    };
     const wfres = await configFlow.run(req.body, req);
 
     let table;
