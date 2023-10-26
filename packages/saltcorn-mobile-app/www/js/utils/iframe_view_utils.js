@@ -479,9 +479,10 @@ async function mobile_modal(url, opts = {}) {
     var modal = bootstrap.Modal.getInstance(myModalEl);
     modal.dispose();
   }
+  if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
+  else $("#scmodal").removeClass("no-submit-reload");
   try {
     const { path, query } = parent.splitPathQuery(url);
-    // submitReload ?
     const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
     if (
       mobileConfig.networkState === "none" &&
