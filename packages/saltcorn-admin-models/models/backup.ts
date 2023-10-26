@@ -30,6 +30,9 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  tag_pack,
+  model_instance_pack,
+  event_log_pack,
   install_pack,
   can_install_pack,
 } = pack;
@@ -37,32 +40,37 @@ const {
 const { asyncMap } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
+import Tag from "@saltcorn/data/models/tag";
+import Model from "@saltcorn/data/models/model";
+import ModelInstance from "@saltcorn/data/models/model_instance";
+import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
 
 /**
- * @function
- * @returns {Promise<void>}
+ * @param [withEventLog] - include event log
  */
-const create_pack_json = async (): Promise<object> => {
+const create_pack_json = async (
+  withEventLog: boolean = false
+): Promise<object> => {
   // tables
   const tables = await asyncMap(
     await Table.find({}),
-    async (t: any) => await table_pack(t) // find already done before
+    async (t: Table) => await table_pack(t) // find already done before
   );
   // views
   const views = await asyncMap(
     await View.find({}),
-    async (v: any) => await view_pack(v.name)
+    async (v: View) => await view_pack(v.name)
   );
   // plugins
   const plugins = await asyncMap(
     await Plugin.find({}),
-    async (v: any) => await plugin_pack(v.name)
+    async (v: Plugin) => await plugin_pack(v.name)
   );
   // pages
   const pages = await asyncMap(
     await Page.find({}),
-    async (v: any) => await page_pack(v.name)
+    async (v: Page) => await page_pack(v.name)
   );
 
   // triggers
@@ -71,17 +79,55 @@ const create_pack_json = async (): Promise<object> => {
   const roles = await Role.find({});
   // library
   const library = (await Library.find({})).map((l: Library) => l.toJson);
+  // tags
+  const tags = await asyncMap(
+    await Tag.find({}),
+    async (v: Tag) => await tag_pack(v.name)
+  );
+  // models
+  const models = (await Model.find({})).map((m: Model) => m.toJson);
+  // model instances
+  const model_instances = await asyncMap(
+    await ModelInstance.find({}),
+    async (modelinst: ModelInstance) => {
+      const model = await Model.findOne({ id: modelinst.model_id });
+      if (!model)
+        throw new Error(`Model of instance '${modelinst.name}' not found`);
+      const table = await Table.findOne({ id: model.table_id });
+      if (!table) throw new Error(`Table of model '${model.name}' not found`);
+      return await model_instance_pack(modelinst.name, model.name, table.name);
+    }
+  );
+  // optional event log
+  const event_logs = withEventLog
+    ? await asyncMap(
+        await EventLog.find({}),
+        async (e: EventLog) => await event_log_pack(e)
+      )
+    : [];
 
-  return { tables, views, plugins, pages, triggers, roles, library };
+  return {
+    tables,
+    views,
+    plugins,
+    pages,
+    triggers,
+    roles,
+    library,
+    tags,
+    models,
+    model_instances,
+    event_logs,
+  };
 };
 
 /**
- * @function
- * @param {string} dirpath
- * @returns {Promise<void>}
+ * @param dirpath
  */
 const create_pack = async (dirpath: string): Promise<void> => {
-  const pack = await create_pack_json();
+  const pack = await create_pack_json(
+    getState().getConfig("backup_with_event_log", false)
+  );
 
   await writeFile(join(dirpath, "pack.json"), JSON.stringify(pack));
 };
@@ -397,7 +443,8 @@ const restore = async (
     Delete these entities or restore to a pristine instance.
     `;
   }
-
+  //config
+  await restore_config(tmpDir.path);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
@@ -409,8 +456,6 @@ const restore = async (
 
   if (Object.keys(newLocations).length > 0)
     await correct_fileid_references_to_location(newLocations);
-  //config
-  await restore_config(tmpDir.path);
   await restore_file_users(file_users);
 
   await tmpDir.cleanup();

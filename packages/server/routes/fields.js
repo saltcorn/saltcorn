@@ -409,7 +409,7 @@ const fieldFlow = (req) =>
             instance_options[model.name].push(...instances.map((i) => i.name));
 
             const outputs = await applyAsync(
-              model.templateObj.prediction_outputs || [],
+              model.templateObj?.prediction_outputs || [], // unit tests can have templateObj undefined
               { table, configuration: model.configuration }
             );
             output_options[model.name] = outputs.map((o) => o.name);

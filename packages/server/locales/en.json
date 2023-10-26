@@ -1261,5 +1261,10 @@
 	"Module up-to-date": "Module up-to-date",
 	"Module '%s' not found": "Module '%s' not found",
 	"Module %s not found": "Module %s not found",
-	"Initially open": "Initially open"
+	"Include Event Logs": "Include Event Logs",
+	"Backup with event logs": "Backup with event logs",
+	"Initially open": "Initially open",
+	"Not a valid pack": "Not a valid pack",
+	"Pack file": "Pack file",
+	"Upload a pack file": "Upload a pack file"
 }

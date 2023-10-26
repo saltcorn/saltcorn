@@ -568,11 +568,11 @@ describe("tags", () => {
       .post("/tag")
       .set("Cookie", loginCookie)
       .send("name=MyNewTestTag")
-      .expect(toRedirect("/tag/1?show_list=tables"));
+      .expect(toRedirect("/tag/2?show_list=tables"));
   });
 
   itShouldIncludeTextForAdmin("/tag", "MyNewTestTag");
-  itShouldIncludeTextForAdmin("/tag/1", "MyNewTestTag");
+  itShouldIncludeTextForAdmin("/tag/2", "MyNewTestTag");
   itShouldIncludeTextForAdmin("/tag-entries/add/tables/1", "Add entries");
   itShouldIncludeTextForAdmin("/tag-entries/add/pages/1", "Add entries");
   itShouldIncludeTextForAdmin("/tag-entries/add/views/1", "Add entries");

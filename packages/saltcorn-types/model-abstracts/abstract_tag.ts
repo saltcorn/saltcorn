@@ -1,4 +1,12 @@
+import type { AbstractTagEntry, TagEntryPack } from "./abstract_tag_entry";
+
 export interface AbstractTag {
-  name: string;
   id?: number;
+  name: string;
+  entries?: AbstractTagEntry[];
 }
+
+export type TagPack = {
+  name: string;
+  entries?: TagEntryPack[];
+};

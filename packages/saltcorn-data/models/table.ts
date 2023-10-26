@@ -300,11 +300,11 @@ class Table implements AbstractTable {
    * @param where - where condition
    * @returns {*|Table|null} table or null
    */
-  static findOne(where: Where | Table): Table | null {
+  static findOne(where: Where | Table | number | string): Table | null {
     if (
       where &&
       ((where.constructor && where.constructor.name === "Table") ||
-        where.getRows)
+        (where as any).getRows)
     )
       return <Table>where;
     // todo add string & number as possible types for where
@@ -639,6 +639,7 @@ class Table implements AbstractTable {
     const tblrow: any = {
       name,
       versioned: options.versioned || false,
+      has_sync_info: options.has_sync_info || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
       ownership_field_id: options.ownership_field_id,
@@ -686,6 +687,8 @@ class Table implements AbstractTable {
 
     // create table history
     if (table?.versioned) await table.create_history_table();
+    // create sync info
+    if (table.has_sync_info) await table.create_sync_info_table();
     // refresh tables cache
     await require("../db/state").getState().refresh_tables();
 
