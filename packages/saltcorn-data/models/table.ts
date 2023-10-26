@@ -795,7 +795,7 @@ class Table implements AbstractTable {
   private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
     if (ids.length > 0) {
       const schema = db.getTenantSchemaPrefix();
-      const pkName = this.pk_name;
+      const pkName = this.pk_name || "id";
       if (isNode()) {
         await db.query(
           `delete from ${schema}"${db.sqlsanitize(
@@ -881,8 +881,7 @@ class Table implements AbstractTable {
       });
       if (this.has_sync_info) {
         const dbTime = await db.time();
-        const ids = rows.map((r) => r[this.pk_name || "id"]);
-        await this.addDeleteSyncInfo(ids, dbTime);
+        await this.addDeleteSyncInfo(rows, dbTime);
       }
     } else {
       const delIds = this.has_sync_info
