@@ -1,4 +1,4 @@
-/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window, getSyncSettingsView, getAskDeleteOfflineData, getAskUploadNotEnded, updateTableRow, insertTableRow */
+/*global postView, postViewRoute, getView, postToggleField, deleteRows, postPageAction, getPage, getLoginView, logoutAction, getSignupView, getErrorView, window, getSyncSettingsView, getAskDeleteOfflineData, getAskUploadNotEnded, updateTableRow, insertTableRow, postShowCalculated */
 // TODO module namespacese
 
 const initRoutes = async () => {
@@ -66,6 +66,10 @@ const initRoutes = async () => {
     {
       path: "get/sync/ask_delete_offline_data",
       action: getAskDeleteOfflineData,
+    },
+    {
+      path: "post/field/show-calculated/:tableName/:fieldName/:fieldview",
+      action: postShowCalculated,
     },
   ];
   window.router = new window.UniversalRouter(routes);

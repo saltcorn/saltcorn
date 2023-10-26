@@ -40,6 +40,7 @@ function MobileResponse() {
 
   function status(value) {
     resStatus = value;
+    return this;
   }
 
   function getStatus() {
