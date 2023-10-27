@@ -769,7 +769,7 @@ module.exports = {
           label: " ",
           sublabel: span("Variables in scope: ", vars),
           help: {
-            topic: "Code return",
+            topic: "JavaScript action code",
           },
           showIf: { run_where: "Server" },
         },
