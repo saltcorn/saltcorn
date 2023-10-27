@@ -1,3 +1,117 @@
+await at top level
+
+table is the associated table, Table class of tables
+
+console
+
 ## Return directives
 
-Code can return with the ....
+Your code can with its return value give directives to the current page. 
+Valid return values are:
+
+#### `notify`
+
+Send a pop-up notification indicating success to the user
+
+Example:
+
+```
+return { notify: "Order completed!" }
+```
+
+#### `error`
+
+Send a pop-up notification indicating error to the user.
+
+Example:
+
+```
+return { error: "Invalid command!" }
+```
+
+If this is triggered by an Edit view with the SubmitWithAjax, 
+halt navigation and stay on page. This can be used for complex validation logic, 
+When added as an Insert or Update trigger. If you delete the inserted row, You 
+may also need to clear the returned id in order to allow the user to continue editing.
+
+Example:
+
+```
+if(amount>cash_on_hand) {
+  await table.deleteRows({ id })
+  return { 
+    error: "Invalid order!",
+    id: null 
+  }
+}
+```
+
+#### `goto`
+
+Navigate to a different URL: 
+
+Example:
+
+```
+return { goto: "https://saltcorn.com" }
+```
+
+#### `reload_page`
+
+Request a page reload with the existing URL.
+
+Example:
+
+```
+return { reload_page: true }
+```
+
+#### `popup`
+
+Open a URL in a popup: 
+
+Example:
+
+```
+return { popup: `/view/Orders?id=${parent}` }
+```
+
+#### `download`
+
+Download a file to the client browser.
+
+Example:
+
+```
+return { download: {
+    mimetype: "text/csv",
+    blob: filecontents
+  }
+}
+```
+
+#### `set_fields`
+
+If triggered from an edit view, set fields dynamically in the form. The 
+value should be an object with keys that are field variable names.
+
+Example:
+
+```
+return { set_fields: {
+    zidentifier: `${name.toUpperCase()}-${id}`
+  }
+}
+```
+
+#### `eval_js`
+
+Execute JavaScript in the browser:
+
+Example:
+
+```
+return { eval_js: `alert("Hello world")` }
+
+
+```
