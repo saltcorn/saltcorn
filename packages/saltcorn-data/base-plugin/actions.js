@@ -25,7 +25,7 @@ const {
   recalculate_for_stored,
   eval_expression,
 } = require("../models/expression");
-const { div, code, a } = require("@saltcorn/markup/tags");
+const { div, code, a, span } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
@@ -767,7 +767,10 @@ module.exports = {
         {
           input_type: "section_header",
           label: " ",
-          sublabel: div("Variables in scope: ", vars),
+          sublabel: span("Variables in scope: ", vars),
+          help: {
+            topic: "Code return",
+          },
           showIf: { run_where: "Server" },
         },
         {

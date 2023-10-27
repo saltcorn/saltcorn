@@ -877,7 +877,7 @@ const mkFormRowForField =
   };
 const helpLink = ({ topic, context, dynContext }: any) => {
   let qs = "";
-  Object.keys(context).forEach((k) => {
+  Object.keys(context || {}).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
   });
   return a(
