@@ -869,19 +869,30 @@ class Table implements AbstractTable {
           await trigger.run!(row);
         }
       }
-      for (const deleteFile of deleteFileFields) {
-        for (const row of rows) {
-          if (row[deleteFile.name]) {
-            const file = await File.findOne({ id: row[deleteFile.name] });
-            deleteFiles.push(file);
+      if (isNode()) {
+        for (const deleteFile of deleteFileFields) {
+          for (const row of rows) {
+            if (row[deleteFile.name]) {
+              const file = await File.findOne({ id: row[deleteFile.name] });
+              deleteFiles.push(file);
+            }
           }
         }
       }
     }
     if (rows) {
-      await db.deleteWhere(this.name, {
-        [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
-      });
+      const delIds = rows.map((r) => r[this.pk_name]);
+      if (!db.isSQLite) {
+        await db.deleteWhere(this.name, {
+          [this.pk_name]: { in: delIds },
+        });
+      } else {
+        await db.query(
+          `delete from "${db.sqlsanitize(this.name)}" where "${db.sqlsanitize(
+            this.pk_name
+          )}" in (${delIds.join(",")})`
+        );
+      }
       if (this.has_sync_info) {
         const dbTime = await db.time();
         await this.addDeleteSyncInfo(rows, dbTime);
@@ -1567,7 +1578,7 @@ class Table implements AbstractTable {
    *
    * @param msg
    */
-  private normalise_error_message(msg: string): string {
+  normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
       if (db.isSQLite) {

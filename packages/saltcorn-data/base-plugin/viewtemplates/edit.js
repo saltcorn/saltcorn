@@ -767,10 +767,12 @@ const render = async ({
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
-    for (const field of file_fields) {
-      if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
-        const file = await File.findOne({ id: row[field.name] });
-        if (file.id) form.values[field.name] = file.filename;
+    if (isNode()) {
+      for (const field of file_fields) {
+        if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
+          const file = await File.findOne({ id: row[field.name] });
+          if (file.id) form.values[field.name] = file.filename;
+        }
       }
     }
     form.hidden(table.pk_name);

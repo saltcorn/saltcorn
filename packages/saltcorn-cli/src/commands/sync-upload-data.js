@@ -66,28 +66,35 @@ const applyInserts = async (changes, syncTimestamp, user) => {
   for (const [tblName, vals] of Object.entries(changes)) {
     const table = Table.findOne({ name: tblName });
     if (!table) throw new Error(`The table '${tblName}' does not exists`);
-    if (vals.inserts?.length > 0) {
-      const pkName = table.pk_name;
-      await db.query(
-        `alter table ${schema}"${db.sqlsanitize(tblName)}" disable trigger all`
-      );
-      const translations = {};
-      for (const insert of vals.inserts || []) {
-        const row = pickFields(table, pkName, insert);
-        const newId = await table.insertRow(
-          row,
-          user,
-          undefined,
-          true,
-          syncTimestamp
+    try {
+      if (vals.inserts?.length > 0) {
+        const pkName = table.pk_name;
+        await db.query(
+          `alter table ${schema}"${db.sqlsanitize(
+            tblName
+          )}" disable trigger all`
         );
-        if (!newId) throw new Error(`Unable to insert into ${tblName}`);
-        else if (newId !== insert[pkName]) translations[insert[pkName]] = newId;
+        const translations = {};
+        for (const insert of vals.inserts || []) {
+          const row = pickFields(table, pkName, insert);
+          const newId = await table.insertRow(
+            row,
+            user,
+            undefined,
+            true,
+            syncTimestamp
+          );
+          if (!newId) throw new Error(`Unable to insert into ${tblName}`);
+          else if (newId !== insert[pkName])
+            translations[insert[pkName]] = newId;
+        }
+        allTranslations[tblName] = translations;
+        await db.query(
+          `alter table ${schema}"${db.sqlsanitize(tblName)}" enable trigger all`
+        );
       }
-      allTranslations[tblName] = translations;
-      await db.query(
-        `alter table ${schema}"${db.sqlsanitize(tblName)}" enable trigger all`
-      );
+    } catch (error) {
+      throw new Error(table.normalise_error_message(error.message));
     }
   }
   return allTranslations;
@@ -98,29 +105,33 @@ const applyUpdates = async (changes, allTranslations, syncTimestamp, user) => {
     if (vals.updates?.length > 0) {
       const table = Table.findOne({ name: tblName });
       if (!table) throw new Error(`The table '${tblName}' does not exists`);
-      const pkName = table.pk_name;
-      const insertTranslations = allTranslations[tblName];
-      for (const update of vals.updates) {
-        const row = pickFields(table, pkName, update, true);
-        if (insertTranslations?.[row[pkName]])
-          row[pkName] = insertTranslations[row[pkName]];
-        for (const fk of table.getForeignKeys()) {
-          const oldVal = row[fk.name];
-          if (oldVal) {
-            const newVal = allTranslations[fk.reftable_name]?.[oldVal];
-            if (newVal) row[fk.name] = newVal;
+      try {
+        const pkName = table.pk_name;
+        const insertTranslations = allTranslations[tblName];
+        for (const update of vals.updates) {
+          const row = pickFields(table, pkName, update, true);
+          if (insertTranslations?.[row[pkName]])
+            row[pkName] = insertTranslations[row[pkName]];
+          for (const fk of table.getForeignKeys()) {
+            const oldVal = row[fk.name];
+            if (oldVal) {
+              const newVal = allTranslations[fk.reftable_name]?.[oldVal];
+              if (newVal) row[fk.name] = newVal;
+            }
           }
+          const result = await table.updateRow(
+            row,
+            row[pkName],
+            user,
+            true,
+            undefined,
+            undefined,
+            syncTimestamp
+          );
+          if (result) throw new Error(`Unable to update ${tblName}: ${result}`);
         }
-        const result = await table.updateRow(
-          row,
-          row[pkName],
-          user,
-          true,
-          undefined,
-          undefined,
-          syncTimestamp
-        );
-        if (result) throw new Error(`Unable to update ${tblName}: ${result}`);
+      } catch (error) {
+        throw new Error(table.normalise_error_message(error.message));
       }
     }
   }
