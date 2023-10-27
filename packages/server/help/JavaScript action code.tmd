@@ -1,8 +1,72 @@
-await at top level
+Here you can enter the code that needs to run when this trigger occurs. 
+The action can manipulate rows in the database, manipulate files, interact 
+with remote APIs, or issue directives for the user's display.
 
-table is the associated table, Table class of tables
+Your code can use await at the top level, and should do so whenever calling 
+database queries or other aynchronous code (see example below)
 
-console
+The variable `table` is the associated table (if any; note lowercase). If you want to access a different table,
+use the `Table` variable (note uppercase) to access the Table class of tables (see 
+[documentation for Table class](https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html))
+
+Example:
+
+```
+await table.insertRow({name: "Alex", age: 43})
+const otherTable = Table.findOne({name: "Orders"})
+await otherTable.deleteRows({id: order})
+```
+
+In addition to `table` and `Table`, you can use other functions/variables:
+
+#### `console`
+
+Use this to print to the terminal.
+
+Example: `console.log("Hello world")`
+
+#### `Actions`
+
+Use `Actions.{ACTION NAME}` to run an action.
+
+Your available action names are: {{ Object.keys(scState.actions).join(", ") }}
+
+Example: 
+
+```
+await Actions.set_user_language({language: "fr"})
+```
+
+#### `sleep`
+
+A small utility function to sleep for certain number of milliseconds. Use this with await
+
+Example: `await sleep(1000)`
+
+#### `require`
+
+Use require to access NPM packages listed under your [Development settings](/admin/dev)
+
+Example: `const _ = require("underscore")`
+
+#### `fetch` and `fetchJSON`
+
+Use these to make HTTP API calls. `fetch` is the standard JavaScript `fetch` (provided by 
+[node-fetch](https://www.npmjs.com/package/node-fetch#common-usage)). `fetchJSON` performs a fetch 
+and then reads its reponse to JSON
+
+Example: 
+
+```
+const response = await fetch('https://api.github.com/users/github');
+const data = await response.json();
+```
+
+which is the same as
+
+```
+const data = await fetchJSON('https://api.github.com/users/github');
+```
 
 ## Return directives
 
@@ -13,21 +77,13 @@ Valid return values are:
 
 Send a pop-up notification indicating success to the user
 
-Example:
-
-```
-return { notify: "Order completed!" }
-```
+Example: `return { notify: "Order completed!" }`
 
 #### `error`
 
 Send a pop-up notification indicating error to the user.
 
-Example:
-
-```
-return { error: "Invalid command!" }
-```
+Example: `return { error: "Invalid command!" }`
 
 If this is triggered by an Edit view with the SubmitWithAjax, 
 halt navigation and stay on page. This can be used for complex validation logic, 
@@ -50,27 +106,19 @@ if(amount>cash_on_hand) {
 
 Navigate to a different URL: 
 
-Example:
-
-```
-return { goto: "https://saltcorn.com" }
-```
+Example: `return { goto: "https://saltcorn.com" }`
 
 #### `reload_page`
 
 Request a page reload with the existing URL.
 
-Example:
-
-```
-return { reload_page: true }
-```
+Example: `return { reload_page: true }`
 
 #### `popup`
 
 Open a URL in a popup: 
 
-Example:
+Example: 
 
 ```
 return { popup: `/view/Orders?id=${parent}` }
@@ -106,12 +154,6 @@ return { set_fields: {
 
 #### `eval_js`
 
-Execute JavaScript in the browser:
+Execute JavaScript in the browser.
 
-Example:
-
-```
-return { eval_js: `alert("Hello world")` }
-
-
-```
+Example: `return { eval_js: 'alert("Hello world")' }`
