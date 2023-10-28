@@ -118,7 +118,7 @@ const formRowWrap = (
           { class: `col-sm-12` },
           h5(text(hdr.label)),
           hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
-          hdr.sublabel && p(i(hdr.sublabel)),
+          //hdr.sublabel && p(i(hdr.sublabel)),
           mkSubLabelAndHelp(hdr)
         )
       : hdr.input_type === "dynamic_fields"
@@ -877,7 +877,7 @@ const mkFormRowForField =
   };
 const helpLink = ({ topic, context, dynContext }: any) => {
   let qs = "";
-  Object.keys(context).forEach((k) => {
+  Object.keys(context || {}).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
   });
   return a(

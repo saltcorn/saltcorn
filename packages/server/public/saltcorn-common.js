@@ -690,10 +690,13 @@ function initialize_page() {
       setTimeout(() => {
         codes.forEach((el) => {
           //console.log($(el).attr("mode"), el);
+          if ($(el).hasClass("codemirror-enabled")) return;
+
           const cm = CodeMirror.fromTextArea(el, {
             lineNumbers: true,
             mode: $(el).attr("mode"),
           });
+          $(el).addClass("codemirror-enabled");
           cm.on(
             "change",
             $.debounce(() => {
