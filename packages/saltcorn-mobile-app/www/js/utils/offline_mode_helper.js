@@ -287,6 +287,16 @@ var offlineHelper = (() => {
     }
   };
 
+  const handleUniqueConflicts = async (uniqueConflicts) => {
+    for (const [tblName, conflicts] of Object.entries(uniqueConflicts)) {
+      const table = saltcorn.data.models.Table.findOne({ name: tblName });
+      const pkName = table.pk_name || "id";
+      for (const conflict of conflicts) {
+        await saltcorn.data.db.insert(tblName, conflict, { replace: true });
+      }
+    }
+  };
+
   const updateSyncInfos = async (
     offlineChanges,
     allTranslations,
@@ -342,11 +352,12 @@ var offlineHelper = (() => {
         path: `/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`,
       });
       pollCount++;
-      const { finished, translatedIds, error } = pollResp.data;
+      const { finished, translatedIds, uniqueConflicts, error } = pollResp.data;
       if (finished) {
         if (error) throw new Error(error.message);
         else {
           await handleTranslatedIds(translatedIds);
+          await handleUniqueConflicts(uniqueConflicts);
           await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
           return syncDir;
         }

@@ -60,9 +60,23 @@ const translateInsertFks = async (allChanges, allTranslations) => {
   }
 };
 
+const checkConstraints = async (table, row) => {
+  const uniques = table.constraints.filter((c) => c.type === "Unique");
+  for (const { configuration } of uniques) {
+    const where = {};
+    for (const field of configuration.fields) {
+      where[field] = row[field];
+    }
+    const conflictRow = await table.getRow(where);
+    if (conflictRow) return conflictRow;
+  }
+  return null;
+};
+
 const applyInserts = async (changes, syncTimestamp, user) => {
   const schema = db.getTenantSchemaPrefix();
   const allTranslations = {};
+  const allUniqueConflicts = {};
   for (const [tblName, vals] of Object.entries(changes)) {
     const table = Table.findOne({ name: tblName });
     if (!table) throw new Error(`The table '${tblName}' does not exists`);
@@ -75,20 +89,28 @@ const applyInserts = async (changes, syncTimestamp, user) => {
           )}" disable trigger all`
         );
         const translations = {};
+        const uniqueConflicts = [];
         for (const insert of vals.inserts || []) {
           const row = pickFields(table, pkName, insert);
-          const newId = await table.insertRow(
-            row,
-            user,
-            undefined,
-            true,
-            syncTimestamp
-          );
-          if (!newId) throw new Error(`Unable to insert into ${tblName}`);
-          else if (newId !== insert[pkName])
-            translations[insert[pkName]] = newId;
+          const conflictRow = await checkConstraints(table, row);
+          if (!conflictRow) {
+            const newId = await table.insertRow(
+              row,
+              user,
+              undefined,
+              true,
+              syncTimestamp
+            );
+            if (!newId) throw new Error(`Unable to insert into ${tblName}`);
+            else if (newId !== insert[pkName])
+              translations[insert[pkName]] = newId;
+          } else {
+            translations[insert[pkName]] = conflictRow[pkName];
+            uniqueConflicts.push(conflictRow);
+          }
         }
         allTranslations[tblName] = translations;
+        allUniqueConflicts[tblName] = uniqueConflicts;
         await db.query(
           `alter table ${schema}"${db.sqlsanitize(tblName)}" enable trigger all`
         );
@@ -97,7 +119,7 @@ const applyInserts = async (changes, syncTimestamp, user) => {
       throw new Error(table.normalise_error_message(error.message));
     }
   }
-  return allTranslations;
+  return { allTranslations, allUniqueConflicts };
 };
 
 const applyUpdates = async (changes, allTranslations, syncTimestamp, user) => {
@@ -174,6 +196,12 @@ const writeTranslatedIds = async (translatedIds, directory) => {
   await fs.rename(writeName, path.join(directory, "translated-ids.json"));
 };
 
+const writeUniqueConflicts = async (uniqueConflicts, directory) => {
+  const writeName = path.join(directory, "unique-conflicts.out");
+  await fs.writeFile(writeName, JSON.stringify(uniqueConflicts));
+  await fs.rename(writeName, path.join(directory, "unique-conflicts.json"));
+};
+
 const writeErrorFile = async (message, directory) => {
   const writeName = path.join(directory, "error.out");
   await fs.writeFile(writeName, JSON.stringify({ message }));
@@ -203,12 +231,17 @@ class SyncUploadData extends Command {
         await loadAllPlugins();
         await db.begin();
         inTransaction = true;
-        const translatedIds = await applyInserts(changes, syncTimestamp, user);
-        await translateInsertFks(changes, translatedIds);
-        await applyUpdates(changes, translatedIds, syncTimestamp, user);
+        const { allTranslations, allUniqueConflicts } = await applyInserts(
+          changes,
+          syncTimestamp,
+          user
+        );
+        await translateInsertFks(changes, allTranslations);
+        await applyUpdates(changes, allTranslations, syncTimestamp, user);
         await applyDeletes(changes, user);
         await db.commit();
-        await writeTranslatedIds(translatedIds, flags.directory);
+        await writeTranslatedIds(allTranslations, flags.directory);
+        await writeUniqueConflicts(allUniqueConflicts, flags.directory);
       } catch (error) {
         returnCode = 1;
         getState().log(2, `Unable to sync: ${error.message}`);
