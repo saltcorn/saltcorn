@@ -174,8 +174,9 @@ const triggerForm = async (req, trigger) => {
         attributes: {
           explainers: {
             Often: req.__("Every 5 minutes"),
-            Never:
-              req.__("Not scheduled but can be run as an action from a button click"),
+            Never: req.__(
+              "Not scheduled but can be run as an action from a button click"
+            ),
           },
         },
       },
@@ -201,6 +202,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Action"),
         type: "String",
         required: true,
+        help: { topic: "Actions" },
         attributes: {
           calcOptions: ["when_trigger", action_options],
         },
@@ -402,7 +404,7 @@ router.get(
       form.values = trigger.configuration;
       const events = Trigger.when_options;
       const actions = Trigger.find({
-        when_trigger: {or: ["API call", "Never"]},
+        when_trigger: { or: ["API call", "Never"] },
       });
       const tables = (await Table.find({})).map((t) => ({
         name: t.name,

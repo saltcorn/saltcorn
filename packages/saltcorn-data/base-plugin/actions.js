@@ -118,6 +118,7 @@ module.exports = {
   blocks: {
     disableInBuilder: true,
     disableInList: true,
+    description: "Build action with drag and drop steps similar to Scratch",
     configFields: [
       {
         name: "workspace",
@@ -144,6 +145,7 @@ module.exports = {
     /**
      * @returns {object[]}
      */
+    description: "Emit an event",
     configFields: () => [
       {
         name: "eventType",
@@ -193,6 +195,7 @@ module.exports = {
    * @subcategory actions
    */
   webhook: {
+    description: "Make an outbound HTTP POST request",
     configFields: [
       {
         name: "url",
@@ -232,6 +235,8 @@ module.exports = {
     /**
      * @returns {Promise<object[]>}
      */
+    description:
+      "Find or create a direct message room for the user, redirect the page to this room",
     configFields: async () => {
       const views = await View.find_all_views_where(
         ({ viewrow }) => viewrow.viewtemplate === "Room"
@@ -313,6 +318,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Send an email, based on a chosen view for this table",
     configFields: async ({ table }) => {
       if (!table) return [];
       const views = await View.find_table_views_where(
@@ -493,6 +499,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Insert a row in a related table",
     configFields: async ({ table }) => {
       if (!table) return [];
       const { child_field_list } = await table.get_child_relations();
@@ -552,6 +559,7 @@ module.exports = {
     /**
      * @returns {Promise<object[]>}
      */
+    description: "Duplicate the current row",
     configFields: () => [],
     requireRow: true,
     /**
@@ -581,6 +589,8 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description:
+      "Re-calculate the stored calculated fields for a table, optionally only for the triggering row",
     configFields: async ({ table }) => {
       const tables = await Table.find({}, { cached: true });
       return [
@@ -634,6 +644,7 @@ module.exports = {
      * @param {*} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "insert a row into any table, using a formula expression",
     configFields: async ({ table }) => {
       const tables = await Table.find({}, { cached: true });
       return [
@@ -647,7 +658,8 @@ module.exports = {
         {
           name: "row_expr",
           label: "Row expression",
-          sublabel: "Expression for JavaScript object",
+          sublabel:
+            "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
         },
@@ -684,6 +696,7 @@ module.exports = {
      * @param {*} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Modify the triggering row",
     configFields: async ({ table }) => {
       return [
         {
@@ -720,6 +733,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Run arbitrary JavaScript code",
     configFields: async ({ table }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
@@ -830,6 +844,7 @@ module.exports = {
    * @subcategory actions
    */
   set_user_language: {
+    description: "Set the logged-in user's chosen language",
     configFields: async ({ table }) => [
       {
         name: "language",
@@ -874,6 +889,8 @@ module.exports = {
      * @param {*} opts.table
      * @returns {Promise<object[]>}
      */
+    description:
+      "Synchronize a database table with an external table by copying rows from the external table",
     configFields: async ({ table }) => {
       const tables = await Table.find_with_external();
       const pk_options = {};
@@ -1023,6 +1040,7 @@ module.exports = {
     },
   },
   notify_user: {
+    description: "Send a notification to a specific user",
     configFields: () => [
       {
         name: "user_spec",

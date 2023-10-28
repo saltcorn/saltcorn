@@ -1,0 +1,9 @@
+The action chosen will determine what happens when the trigger occurs. 
+After you have chosen an action, there will be further configuration of that action.
+
+The available actions, some of which are only accessible when the trigger is 
+table-related, are: 
+
+{{# for (const [name, action] of Object.entries(scState.actions)) { }}
+* `{{name}}`: {{action.description||""}}
+{{# } }}
