@@ -287,11 +287,18 @@ var offlineHelper = (() => {
     }
   };
 
-  const handleUniqueConflicts = async (uniqueConflicts) => {
+  const handleUniqueConflicts = async (uniqueConflicts, translatedIds) => {
     for (const [tblName, conflicts] of Object.entries(uniqueConflicts)) {
       const table = saltcorn.data.models.Table.findOne({ name: tblName });
       const pkName = table.pk_name || "id";
+      const translated = translatedIds[tblName] || {};
       for (const conflict of conflicts) {
+        for (const [from, to] of Object.entries(translated)) {
+          if (to === conflict[pkName]) {
+            await table.deleteRows({ [pkName]: from });
+            break;
+          }
+        }
         await saltcorn.data.db.insert(tblName, conflict, { replace: true });
       }
     }
@@ -356,8 +363,8 @@ var offlineHelper = (() => {
       if (finished) {
         if (error) throw new Error(error.message);
         else {
+          await handleUniqueConflicts(uniqueConflicts, translatedIds);
           await handleTranslatedIds(translatedIds);
-          await handleUniqueConflicts(uniqueConflicts);
           await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
           return syncDir;
         }
