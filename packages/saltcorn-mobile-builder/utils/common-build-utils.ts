@@ -185,11 +185,18 @@ export async function buildTablesFile(
       };
     })
   );
+  const createdAt = new Date();
   writeFileSync(
     join(wwwDir, "tables.json"),
     JSON.stringify({
-      created_at: new Date(),
+      created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
+    })
+  );
+  writeFileSync(
+    join(wwwDir, "tables_created_at.json"),
+    JSON.stringify({
+      created_at: createdAt.valueOf(),
     })
   );
 }

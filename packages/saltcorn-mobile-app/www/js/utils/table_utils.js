@@ -130,15 +130,26 @@ async function createSyncInfoTables(synchTbls) {
   }
 }
 
-async function tablesUptodate(tables, historyFile) {
-  const history = await readJSON(historyFile, cordova.file.dataDirectory);
-  return tables.created_at.valueOf() < history.updated_at.valueOf();
+async function tablesUptodate(createdAt, historyFile) {
+  const { updated_at } = await readJSON(
+    historyFile,
+    cordova.file.dataDirectory
+  );
+  if (!updated_at) {
+    console.log("No updated_at in history file");
+    return false;
+  }
+  return createdAt < updated_at;
 }
 
-async function dbUpdateNeeded(tablesJSON) {
+/**
+ * Do a table update when the history file doesn't exist or is older than createdAt
+ * @param {number} createdAt UTC Date number when the tables.json file was created on the server
+ */
+async function dbUpdateNeeded(createdAt) {
   return (
     !(await fileExists(`${cordova.file.dataDirectory}${historyFile}`)) ||
-    !(await tablesUptodate(tablesJSON, historyFile))
+    !(await tablesUptodate(createdAt, historyFile))
   );
 }
 
@@ -147,7 +158,7 @@ async function updateDb(tablesJSON) {
   await saltcorn.data.state.getState().refresh_tables();
   await updateUserDefinedTables();
   await writeJSON(historyFile, cordova.file.dataDirectory, {
-    updated_at: new Date(),
+    updated_at: new Date().valueOf(),
   });
 }
 
