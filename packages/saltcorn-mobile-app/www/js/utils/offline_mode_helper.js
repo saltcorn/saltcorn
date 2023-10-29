@@ -303,7 +303,6 @@ var offlineHelper = (() => {
             await saltcorn.data.db.deleteWhere(`${table.name}_sync_info`, {
               ref: from,
             });
-            break;
           }
         }
         await saltcorn.data.db.insert(tblName, conflict, { replace: true });
@@ -320,10 +319,14 @@ var offlineHelper = (() => {
       const table = saltcorn.data.models.Table.findOne({ name: tblName });
       const pkName = table.pk_name;
       const translated = allTranslations[tblName];
-      const refIds = changes.map((change) =>
-        deleted
-          ? change[pkName]
-          : translated?.[change[pkName]] || change[pkName]
+      const refIds = Array.from(
+        new Set(
+          changes.map((change) =>
+            deleted
+              ? change[pkName]
+              : translated?.[change[pkName]] || change[pkName]
+          )
+        )
       );
       const values = refIds.map(
         (ref) => `(${ref}, ${syncTimestamp}, ${deleted}, false)`
