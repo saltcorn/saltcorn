@@ -385,7 +385,7 @@ class Field implements AbstractField {
           ? [{ label: "", value: "" }, ...dbOpts]
           : dbOpts;
       this.options = [...new Set(allOpts)];
-    } else if (this.type === "File") {
+    } else if (this.type === "File" && isNode()) {
       const files = await File.find(
         this.attributes.folder
           ? { folder: this.attributes.folder }

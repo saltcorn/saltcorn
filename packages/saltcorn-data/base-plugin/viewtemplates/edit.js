@@ -767,10 +767,12 @@ const render = async ({
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
-    for (const field of file_fields) {
-      if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
-        const file = await File.findOne({ id: row[field.name] });
-        if (file.id) form.values[field.name] = file.filename;
+    if (isNode()) {
+      for (const field of file_fields) {
+        if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
+          const file = await File.findOne({ id: row[field.name] });
+          if (file.id) form.values[field.name] = file.filename;
+        }
       }
     }
     form.hidden(table.pk_name);
@@ -1385,16 +1387,10 @@ const prepare = async (
         }
       }
     } else if (req.files && req.files[field.name]) {
-      if (!isNode() && !remote) {
-        req.flash(
-          "error",
+      if (!isNode() && !remote && req.files[field.name].name) {
+        throw new Error(
           "The mobile-app supports no local files, please use a remote table."
         );
-        res.sendWrap(
-          viewname,
-          renderForm(form, req.csrfToken ? req.csrfToken() : false)
-        );
-        return null;
       }
       if (isNode()) {
         const file = await File.from_req_files(
@@ -1405,8 +1401,11 @@ const prepare = async (
         );
         row[field.name] = file.path_to_serve;
       } else {
-        const serverResp = await File.upload(req.files[field.name]);
-        row[field.name] = serverResp.location;
+        const file = req.files[field.name];
+        if (file?.name) {
+          const serverResp = await File.upload(req.files[field.name]);
+          if (serverResp?.location) row[field.name] = serverResp.location;
+        }
       }
     } else {
       delete row[field.name];

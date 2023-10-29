@@ -300,15 +300,20 @@
           "config",
           `${cordova.file.applicationDirectory}www`
         );
-        const tablesJSON = await readJSON(
-          "tables.json",
+        const { created_at } = await readJSON(
+          "tables_created_at.json",
           `${cordova.file.applicationDirectory}${"www"}`
         );
+        let tablesJSON = null;
         await addScripts(config.version_tag);
         saltcorn.data.db.connectObj.version_tag = config.version_tag;
         await saltcorn.data.db.init();
-        const updateNeeded = await dbUpdateNeeded(tablesJSON);
+        const updateNeeded = await dbUpdateNeeded(created_at);
         if (updateNeeded) {
+          tablesJSON = await readJSON(
+            "tables.json",
+            `${cordova.file.applicationDirectory}${"www"}`
+          );
           // update '_sc_plugins' first because of loadPlugins()
           await updateScPlugins(tablesJSON);
         }
@@ -319,6 +324,11 @@
         state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
         collectPluginHeaders(await loadPlugins(state));
         if (updateNeeded) {
+          if (!tablesJSON)
+            tablesJSON = await readJSON(
+              "tables.json",
+              `${cordova.file.applicationDirectory}${"www"}`
+            );
           await updateDb(tablesJSON);
         }
         await createSyncInfoTables(config.synchedTables);
