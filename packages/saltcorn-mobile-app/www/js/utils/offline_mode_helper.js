@@ -254,22 +254,26 @@ var offlineHelper = (() => {
     return result;
   };
 
-  const handleTranslatedIds = async (allTranslations) => {
+  const handleTranslatedIds = async (allUniqueConflicts, allTranslations) => {
     const idToTable = {};
     for (const [tblName, translations] of Object.entries(allTranslations)) {
       const fks = await saltcorn.data.models.Field.find({
         reftable_name: tblName,
       });
+      const uniqueConflicts = (allUniqueConflicts[tblName] =
+        allUniqueConflicts[tblName] || []);
       const table = saltcorn.data.models.Table.findOne({ name: tblName });
       const transArr = Array.from(Object.entries(translations));
       transArr.sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
       for (const [from, to] of transArr) {
-        await saltcorn.data.db.update(tblName, { [table.pk_name]: to }, from);
-        await saltcorn.data.db.query(
-          `update "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
-           set ref = ${to}
-           where ref = ${from} and deleted = false`
-        );
+        if (!uniqueConflicts.find((conf) => conf[table.pk_name] === to)) {
+          await saltcorn.data.db.update(tblName, { [table.pk_name]: to }, from);
+          await saltcorn.data.db.query(
+            `update "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
+            set ref = ${to}
+            where ref = ${from} and deleted = false`
+          );
+        }
         for (const fk of fks) {
           if (!idToTable[fk.table_id])
             idToTable[fk.table_id] = saltcorn.data.models.Table.findOne(
@@ -296,6 +300,9 @@ var offlineHelper = (() => {
         for (const [from, to] of Object.entries(translated)) {
           if (to === conflict[pkName]) {
             await table.deleteRows({ [pkName]: from });
+            await saltcorn.data.db.deleteWhere(`${table.name}_sync_info`, {
+              ref: from,
+            });
             break;
           }
         }
@@ -364,7 +371,7 @@ var offlineHelper = (() => {
         if (error) throw new Error(error.message);
         else {
           await handleUniqueConflicts(uniqueConflicts, translatedIds);
-          await handleTranslatedIds(translatedIds);
+          await handleTranslatedIds(uniqueConflicts, translatedIds);
           await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
           return syncDir;
         }
