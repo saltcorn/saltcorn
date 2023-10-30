@@ -168,6 +168,8 @@ function addScriptToIframeHead(iframeDoc, script) {
 async function replaceIframeInnerContent(content) {
   const iframe = document.getElementById("content-iframe");
   const iframeDocument = iframe.contentWindow.document;
+  const modal = iframeDocument.getElementById("scmodal");
+  if (modal) modal.remove();
   const innerContentDiv = iframeDocument.getElementById("page-inner-content");
   innerContentDiv.innerHTML = content;
   const scripts = innerContentDiv.getElementsByTagName("script");
