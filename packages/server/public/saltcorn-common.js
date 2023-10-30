@@ -1064,6 +1064,7 @@ function common_done(res, viewname, isWeb = true) {
       if (
         prev.origin === next.origin &&
         prev.pathname === next.pathname &&
+        prev.searchParams.toString() === next.searchParams.toString() &&
         next.hash !== prev.hash
       )
         location.reload();

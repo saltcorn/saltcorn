@@ -108,6 +108,8 @@ Navigate to a different URL:
 
 Example: `return { goto: "https://saltcorn.com" }`
 
+Add `target: "_blank"` to open in a new tab.
+
 #### `reload_page`
 
 Request a page reload with the existing URL.
