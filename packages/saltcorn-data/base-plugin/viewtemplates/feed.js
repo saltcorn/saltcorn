@@ -557,7 +557,7 @@ const run = async (
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
   const showRowInner = (r, ix) =>
-    in_card || view_decoration === "Card"
+    (!view_decoration && in_card) || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
           title_formula
@@ -623,7 +623,8 @@ const run = async (
 
   const inner = div(
     correct_order([
-      (in_card || view_decoration === "Card") && masonry_columns
+      ((!view_decoration && in_card) || view_decoration === "Card") &&
+      masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
         : view_decoration === "Accordion"
         ? div(
