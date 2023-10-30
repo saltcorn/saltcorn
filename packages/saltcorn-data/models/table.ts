@@ -2810,6 +2810,7 @@ class Table implements AbstractTable {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
     let placeCounter = values.length;
+    let aggValues: any = []; // for sqlite
     Object.entries<AggregationOptions>(aggregations).forEach(
       ([
         fldnm,
@@ -2820,8 +2821,8 @@ class Table implements AbstractTable {
           const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
           // todo warning deprecated symbol substr is used
           whereStr = whereAndValues.where.substr(6); // remove "where "
-
-          values.push(...whereAndValues.values);
+          if (isNode()) values.push(...whereAndValues.values);
+          else aggValues.push(...whereAndValues.values);
           placeCounter += whereAndValues.values.length;
         }
         const aggTable = Table.findOne({ name: table });
@@ -2890,6 +2891,7 @@ class Table implements AbstractTable {
           );
       }
     );
+    if (!isNode()) values.unshift(...aggValues);
 
     const selectopts: SelectOptions = {
       limit: opts.limit,
