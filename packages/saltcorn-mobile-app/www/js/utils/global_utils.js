@@ -292,22 +292,37 @@ async function reload() {
 async function goBack(steps = 1, exitOnFirstPage = false) {
   const { inLoadState } = saltcorn.data.state.getState().mobileConfig;
   if (inLoadState) return;
+  const iframe = document.getElementById("content-iframe");
   if (
     routingHistory.length === 0 ||
     (exitOnFirstPage && routingHistory.length === 1)
   ) {
     navigator.app.exitApp();
   } else if (routingHistory.length <= steps) {
-    routingHistory = [];
-    await handleRoute("/");
-  } else {
-    routingHistory = routingHistory.slice(0, routingHistory.length - steps);
-    // don't repeat a post
-    if (routingHistory[routingHistory.length - 1].route.startsWith("post/")) {
-      routingHistory.pop();
+    try {
+      if (iframe?.contentWindow?.showLoadSpinner)
+        iframe.contentWindow.showLoadSpinner();
+      routingHistory = [];
+      await handleRoute("/");
+    } finally {
+      if (iframe?.contentWindow?.removeLoadSpinner)
+        iframe.contentWindow.removeLoadSpinner();
     }
-    const newCurrent = routingHistory.pop();
-    await handleRoute(newCurrent.route, newCurrent.query);
+  } else {
+    try {
+      if (iframe?.contentWindow?.showLoadSpinner)
+        iframe.contentWindow.showLoadSpinner();
+      routingHistory = routingHistory.slice(0, routingHistory.length - steps);
+      // don't repeat a post
+      if (routingHistory[routingHistory.length - 1].route.startsWith("post/")) {
+        routingHistory.pop();
+      }
+      const newCurrent = routingHistory.pop();
+      await handleRoute(newCurrent.route, newCurrent.query);
+    } finally {
+      if (iframe?.contentWindow?.removeLoadSpinner)
+        iframe.contentWindow.removeLoadSpinner();
+    }
   }
 }
 
