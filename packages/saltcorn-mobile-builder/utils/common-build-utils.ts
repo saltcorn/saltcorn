@@ -168,7 +168,13 @@ export async function buildTablesFile(
   const wwwDir = join(buildDir, "www");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
-      ["_sc_migrations", "_sc_errors", "_sc_session"].indexOf(table.name) === -1
+      [
+        "_sc_migrations",
+        "_sc_errors",
+        "_sc_session",
+        "_sc_event_log",
+        "_sc_snapshots",
+      ].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
     scTables.map(async (row: Row) => {
