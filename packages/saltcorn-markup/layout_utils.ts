@@ -253,36 +253,40 @@ type LeftNavBarOpts = {
  * @param {string} opts.logo
  * @returns {string[]}
  */
-const leftNavBar = ({ name, logo }: LeftNavBarOpts): string[] => [
-  a(
-    {
-      class: "navbar-brand js-scroll-trigger",
-      href: isNode ? "/" : "javascript:parent.gotoEntryView()",
-    },
-    logo &&
-      img({
-        src: logo,
-        width: "30",
-        height: "30",
-        class: "mx-1 d-inline-block align-top",
-        alt: "Logo",
-        loading: "lazy",
-      }),
-    name
-  ),
-  button(
-    {
-      class: "navbar-toggler navbar-toggler-right",
-      type: "button",
-      "data-bs-toggle": "collapse",
-      "data-bs-target": "#navbarResponsive",
-      "aria-controls": "navbarResponsive",
-      "aria-expanded": "false",
-      "aria-label": "Toggle navigation",
-    },
-    span({ class: "navbar-toggler-icon" })
-  ),
-];
+const leftNavBar = (namelogo?: LeftNavBarOpts): string[] => {
+  if (!namelogo) return [];
+  const { name, logo } = namelogo;
+  return [
+    a(
+      {
+        class: "navbar-brand js-scroll-trigger",
+        href: isNode ? "/" : "javascript:parent.gotoEntryView()",
+      },
+      logo &&
+        img({
+          src: logo,
+          width: "30",
+          height: "30",
+          class: "mx-1 d-inline-block align-top",
+          alt: "Logo",
+          loading: "lazy",
+        }),
+      name
+    ),
+    button(
+      {
+        class: "navbar-toggler navbar-toggler-right",
+        type: "button",
+        "data-bs-toggle": "collapse",
+        "data-bs-target": "#navbarResponsive",
+        "aria-controls": "navbarResponsive",
+        "aria-expanded": "false",
+        "aria-label": "Toggle navigation",
+      },
+      span({ class: "navbar-toggler-icon" })
+    ),
+  ];
+};
 
 /**
  * @param {object} brand
