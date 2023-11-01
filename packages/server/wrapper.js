@@ -309,6 +309,7 @@ module.exports = (version_tag) =>
       const alerts = getFlashes(req);
       const state = getState();
       const layout = state.getLayout(req.user);
+      const no_menu = opts.no_menu;
 
       if (req.xhr) {
         const renderToHtml = layout.renderBody
@@ -335,8 +336,8 @@ module.exports = (version_tag) =>
       res.send(
         layout.wrap({
           title,
-          brand: get_brand(state),
-          menu: get_menu(req),
+          brand: no_menu ? undefined : get_brand(state),
+          menu: no_menu ? undefined : get_menu(req),
           currentUrl,
           originalUrl: req.originalUrl,
 
