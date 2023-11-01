@@ -147,13 +147,18 @@ class Workflow implements AbstractWorkflow {
       }
       const toCtx = step.contextField
         ? {
-            [step.contextField]: {
-              ...(context[step.contextField] || {}),
-              ...valres.success,
-            },
+            ...(context[step.contextField] || {}),
+            ...valres.success,
           }
         : valres.success;
-      const newCtx = { ...context, ...toCtx };
+      let newCtx = null;
+      if (step.contextField) {
+        newCtx = { ...context };
+        newCtx[step.contextField] = toCtx;
+      } else {
+        newCtx = { ...context, ...toCtx };
+      }
+
       if (this.onStepSuccess) await this.onStepSuccess(step, newCtx);
       return this.runStep(newCtx, stepIx + 1);
     } else if (step.builder) {
