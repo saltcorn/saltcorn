@@ -386,6 +386,12 @@ module.exports = {
           required: true,
         },
         {
+          name: "subject_formula",
+          label: "Subject is a formula?",
+          type: "Bool",
+          required: false,
+        },
+        {
           name: "attachment_path",
           label: "Attachment",
           sublabel:
@@ -421,6 +427,7 @@ module.exports = {
       configuration: {
         viewname,
         subject,
+        subject_formula,
         to_email,
         to_email_field,
         to_email_fixed,
@@ -469,16 +476,19 @@ module.exports = {
         row,
         user ? user : { role_id: 100 }
       );
+      const the_subject = subject_formula
+        ? eval_expression(subject, row)
+        : subject;
 
       getState().log(
         3,
-        `Sending email from ${from} to ${to_addr} with subject ${subject}`
+        `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
 
       const email = {
         from,
         to: to_addr,
-        subject,
+        subject: the_subject,
         html,
         attachments,
       };
