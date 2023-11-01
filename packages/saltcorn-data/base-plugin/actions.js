@@ -354,17 +354,18 @@ module.exports = {
           type: "String",
           required: true,
           attributes: {
-            options: ["View", "Text Field", "HTML Field", "MJML Field"],
+            options: ["View", "Text field", "HTML field", "MJML field"],
           },
         },
         {
           name: "body_field",
           label: "Body field",
           type: "String",
+          required: true,
           attributes: {
             options: body_field_opts,
           },
-          showIf: { body_type: ["Text Field", "HTML Field", "MJML Field"] },
+          showIf: { body_type: ["Text field", "HTML field", "MJML field"] },
         },
 
         {
@@ -409,6 +410,8 @@ module.exports = {
           label: "Subject",
           sublabel: "Subject of email",
           type: "String",
+          class: "validate-expression validate-expression-conditional",
+
           required: true,
         },
         {
