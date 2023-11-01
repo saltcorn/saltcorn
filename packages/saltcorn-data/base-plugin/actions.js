@@ -19,6 +19,7 @@ const {
   viewToEmailHtml,
   loadAttachments,
   getFileAggregations,
+  mjml2html,
 } = require("../models/email");
 const {
   get_async_expression_function,
@@ -334,6 +335,11 @@ module.exports = {
             (f.type && f.type.name === "String") || f.reftable_name === "users"
         )
         .map((f) => f.name);
+      const body_field_opts = fields
+        .filter(
+          (f) => f.type && (f.type.name === "HTML" || f.type.name === "String")
+        )
+        .map((f) => f.name);
       const attachment_opts = [""];
       for (const field of fields) {
         if (field.type === "File") attachment_opts.push(field.name);
@@ -343,12 +349,32 @@ module.exports = {
       }
       return [
         {
+          name: "body_type",
+          label: "Body type",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["View", "Text Field", "HTML Field", "MJML Field"],
+          },
+        },
+        {
+          name: "body_field",
+          label: "Body field",
+          type: "String",
+          attributes: {
+            options: body_field_opts,
+          },
+          showIf: { body_type: ["Text Field", "HTML Field", "MJML Field"] },
+        },
+
+        {
           name: "viewname",
           label: "View to send",
           sublabel:
             "Select a view that can render a single record - for instance, of the Show template.",
           input_type: "select",
           options: view_opts,
+          showIf: { body_type: "View" },
         },
         {
           name: "to_email",
@@ -425,6 +451,8 @@ module.exports = {
       row,
       table,
       configuration: {
+        body_type,
+        body_field,
         viewname,
         subject,
         subject_formula,
@@ -468,8 +496,20 @@ module.exports = {
         );
         return;
       }
-      const view = await View.findOne({ name: viewname });
-      const html = await viewToEmailHtml(view, { id: row.id });
+      const setBody = {};
+      if (body_type === "Text field") {
+        setBody.text = row[body_field];
+      } else if (body_type === "HTML field") {
+        setBody.html = row[body_field];
+      } else if (body_type === "MJML field") {
+        const mjml = row[body_field];
+        const html = mjml2html(mjml, { minify: true });
+        setBody.html = html.html;
+      } else {
+        const view = await View.findOne({ name: viewname });
+        setBody.html = await viewToEmailHtml(view, { id: row.id });
+      }
+
       const from = getState().getConfig("email_from");
       const attachments = await loadAttachments(
         attachment_path,
@@ -489,7 +529,7 @@ module.exports = {
         from,
         to: to_addr,
         subject: the_subject,
-        html,
+        ...setBody,
         attachments,
       };
       await getMailTransport().sendMail(email);
