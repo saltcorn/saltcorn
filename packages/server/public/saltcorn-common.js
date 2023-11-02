@@ -129,10 +129,12 @@ function apply_showif() {
       decodeURIComponent(e.attr("data-fetch-options"))
     );
     if (window._sc_loglevel > 4) console.log("dynwhere", dynwhere);
-    //console.log("dynwhere", dynwhere);
-    const qss = Object.entries(dynwhere.whereParsed).map(
-      ([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`
-    );
+    const kvToQs = ([k, v]) => {
+      return k === "or" && Array.isArray(v)
+        ? v.map((v1) => Object.entries(v1).map(kvToQs).join("&")).join("&")
+        : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`;
+    };
+    const qss = Object.entries(dynwhere.whereParsed).map(kvToQs);
     if (dynwhere.dereference) {
       if (Array.isArray(dynwhere.dereference))
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
