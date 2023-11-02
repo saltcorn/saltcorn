@@ -20,6 +20,7 @@ export type PageCfg = {
   id?: number;
   layout: string | Layout | GenObj;
   fixed_states?: string | any;
+  attributes?: any;
 };
 
 export type PagePack = {

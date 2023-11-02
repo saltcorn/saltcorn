@@ -401,6 +401,7 @@ const render = ({
                     segment.title
                   )
                 : segment.title,
+              segment.subtitle ? span(segment.subtitle) : "",
               segment.titleAjaxIndicator &&
                 span(
                   {

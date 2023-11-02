@@ -143,6 +143,7 @@ const page_pack = async (name: string): Promise<PagePack> => {
     layout: page.layout,
     fixed_states: page.fixed_states,
     menu_label: page.menu_label,
+    attributes: page.attributes,
     root_page_for_roles,
   };
 };

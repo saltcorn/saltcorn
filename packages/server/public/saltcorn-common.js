@@ -128,10 +128,13 @@ function apply_showif() {
     const dynwhere = JSON.parse(
       decodeURIComponent(e.attr("data-fetch-options"))
     );
-    //console.log("dynwhere", dynwhere);
-    const qss = Object.entries(dynwhere.whereParsed).map(
-      ([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`
-    );
+    if (window._sc_loglevel > 4) console.log("dynwhere", dynwhere);
+    const kvToQs = ([k, v]) => {
+      return k === "or" && Array.isArray(v)
+        ? v.map((v1) => Object.entries(v1).map(kvToQs).join("&")).join("&")
+        : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`;
+    };
+    const qss = Object.entries(dynwhere.whereParsed).map(kvToQs);
     if (dynwhere.dereference) {
       if (Array.isArray(dynwhere.dereference))
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
@@ -205,6 +208,9 @@ function apply_showif() {
       });
       $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
         if (resp.success) {
+          if (window._sc_loglevel > 4)
+            console.log("dynwhere fetch", qs, resp.success);
+
           activate(resp.success, qs);
           const cacheNow = e.prop("data-fetch-options-cache") || {};
           e.prop("data-fetch-options-cache", {

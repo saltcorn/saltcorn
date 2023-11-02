@@ -61,6 +61,7 @@ router.get(
           title,
           description: db_page.description,
           bodyClass: "page_" + db.sqlsanitize(pagename),
+          no_menu: db_page.attributes?.no_menu,
         } || `${pagename} page`,
         add_edit_bar({
           role,

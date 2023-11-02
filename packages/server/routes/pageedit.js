@@ -92,6 +92,12 @@ const pagePropertiesForm = async (req, isNew) => {
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
+      {
+        name: "no_menu",
+        label: req.__("No menu"),
+        sublabel: req.__("Omit the menu from this page"),
+        type: "Bool",
+      },
     ],
   });
   return form;
@@ -315,6 +321,7 @@ router.get(
       const form = await pagePropertiesForm(req);
       form.hidden("id");
       form.values = page;
+      form.values.no_menu = page.attributes?.no_menu;
       res.sendWrap(
         req.__(`Page attributes`),
         wrap(renderForm(form, req.csrfToken()), false, req, page)
@@ -360,9 +367,9 @@ router.post(
         wrap(renderForm(form, req.csrfToken()), false, req)
       );
     } else {
-      const { id, columns, ...pageRow } = form.values;
+      const { id, columns, no_menu, ...pageRow } = form.values;
       pageRow.min_role = +pageRow.min_role;
-
+      pageRow.attributes = { no_menu };
       if (+id) {
         await Page.update(+id, pageRow);
         res.redirect(`/pageedit/`);

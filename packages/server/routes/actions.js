@@ -390,6 +390,16 @@ router.get(
       return;
     }
     const action = getState().actions[trigger.action];
+    // get table related to trigger
+    const table = trigger.table_id
+      ? Table.findOne({ id: trigger.table_id })
+      : null;
+
+    const subtitle = span(
+      { class: "ms-3" },
+      trigger.action,
+      table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
+    );
     if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
@@ -420,6 +430,7 @@ router.get(
           type: "card",
           titleAjaxIndicator: true,
           title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
           contents: {
             widths: [8, 4],
             besides: [
@@ -465,10 +476,6 @@ router.get(
       req.flash("warning", req.__("Action not configurable"));
       res.redirect(`/actions/`);
     } else {
-      // get table related to trigger
-      const table = trigger.table_id
-        ? Table.findOne({ id: trigger.table_id })
-        : null;
       // get configuration fields
       const cfgFields = await getActionConfigFields(action, table);
       // create form
@@ -491,6 +498,7 @@ router.get(
           type: "card",
           titleAjaxIndicator: true,
           title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
           contents: renderForm(form, req.csrfToken()),
         },
       });
