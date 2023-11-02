@@ -135,6 +135,7 @@ describe("pack create", () => {
     expect(ppack).toEqual({
       name: "a_page",
       title: "grgw",
+      attributes: null,
       description: "rgerg",
       menu_label: undefined,
       min_role: 100,
