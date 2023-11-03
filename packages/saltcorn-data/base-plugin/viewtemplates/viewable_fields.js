@@ -982,8 +982,10 @@ const getForm = async (
   const tfields = (columns || [])
     .map((column) => {
       if (column.type === "Field") {
-        const f = fields.find((fld) => fld.name === column.field_name);
-        if (f) {
+        const f0 = fields.find((fld) => fld.name === column.field_name);
+
+        if (f0) {
+          const f = new Field(f0);
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
             if (getState().keyFieldviews[column.fieldview])

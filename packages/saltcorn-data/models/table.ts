@@ -873,7 +873,9 @@ class Table implements AbstractTable {
         for (const deleteFile of deleteFileFields) {
           for (const row of rows) {
             if (row[deleteFile.name]) {
-              const file = await File.findOne({ id: row[deleteFile.name] });
+              const file = await File.findOne({
+                filename: row[deleteFile.name],
+              });
               deleteFiles.push(file);
             }
           }
