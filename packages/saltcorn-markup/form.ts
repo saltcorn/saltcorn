@@ -1048,10 +1048,11 @@ const renderFormLayout = (form: Form): string => {
       const field0 = segment.field_name.includes(".")
         ? (
             form.fields.find(
-              (f) => f.name === repeat_name
+              (f) => f.name === repeat_name && (f as any).isRepeat
             ) as AbstractFieldRepeat
           )?.fields.find((f: any) => f.name === field_name)
         : form.fields.find((f) => f.name === segment.field_name);
+
       const repeater = in_repeat
         ? form.fields.find((f) => f.name === repeat_name)
         : null;
