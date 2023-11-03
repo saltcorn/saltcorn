@@ -638,8 +638,8 @@ router.post(
         newcfg = {
           ...view.configuration,
           [step.contextField]: {
-            ...view.configuration?.[step.contextField],
-            ...context,
+            ...(view.configuration?.[step.contextField] || {}),
+            ...(context?.[step.contextField] || {}),
           },
         };
       else newcfg = { ...view.configuration, ...context };

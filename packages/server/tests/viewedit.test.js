@@ -396,7 +396,7 @@ describe("viewedit new Show", () => {
   it("delete new view", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
-    const id = (await View.findOne({ name: "mybook" })).id;
+    const id = View.findOne({ name: "mybook" }).id;
 
     await request(app)
       .post("/viewedit/delete/" + id)
@@ -404,6 +404,249 @@ describe("viewedit new Show", () => {
       .expect(toRedirect("/viewedit"));
   });
 });
+
+describe("viewedit new Edit", () => {
+  // create two edit views for 'books'
+  // the first has inputs for all books-fields
+  //   => 'Fixed and blocked fields (step 2 / max 3)' won't show up
+  // the second has no input for 'pages'
+  //   => 'Fixed and blocked fields (step 2 / max 3)' shows up
+  //       and the configration gets a fixed property
+  const colsWithoutPages = [
+    {
+      type: "Field",
+      fieldview: "edit",
+      field_name: "author",
+    },
+    {
+      type: "Field",
+      fieldview: "select",
+      field_name: "publisher",
+    },
+    {
+      type: "Action",
+      rndid: "f61f38",
+      minRole: 100,
+      action_name: "Save",
+      action_style: "btn-primary",
+    },
+  ];
+  const colsWithPages = [
+    {
+      type: "Field",
+      fieldview: "edit",
+      field_name: "pages",
+    },
+    ...colsWithoutPages,
+  ];
+
+  const layoutWithoutPages = {
+    above: [
+      {
+        type: "field",
+        fieldview: "edit",
+        field_name: "author",
+      },
+
+      {
+        type: "field",
+        fieldview: "select",
+        field_name: "publisher",
+      },
+      {
+        type: "action",
+        rndid: "f61f38",
+        minRole: 100,
+        action_name: "Save",
+        action_style: "btn-primary",
+      },
+    ],
+  };
+  const layoutWithPages = {
+    above: [
+      {
+        type: "field",
+        fieldview: "edit",
+        field_name: "pages",
+      },
+      ...layoutWithoutPages.above,
+    ],
+  };
+
+  it("submits new view", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    // edit_mybook
+    await request(app)
+      .post("/viewedit/save")
+      .send("viewtemplate=Edit")
+      .send("table_name=books")
+      .send("name=edit_mybook")
+      .send("min_role=100")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit/config/edit_mybook"));
+    // edit_mybook_without_pages
+    await request(app)
+      .post("/viewedit/save")
+      .send("viewtemplate=Edit")
+      .send("table_name=books")
+      .send("name=edit_mybook_without_pages")
+      .send("min_role=100")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit/config/edit_mybook_without_pages"));
+  });
+
+  it("saves new view layout", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+    const app = await getApp({ disableCsrf: true });
+    // edit_mybook
+    await request(app)
+      .post("/viewedit/config/edit_mybook")
+      .send(
+        "contextEnc=" +
+          encodeURIComponent(
+            JSON.stringify({
+              table_id: table.id,
+              viewname: "edit_mybook",
+            })
+          )
+      )
+      .send("stepName=Layout")
+      .send("columns=" + encodeURIComponent(JSON.stringify(colsWithPages)))
+      .send("layout=" + encodeURIComponent(JSON.stringify(layoutWithPages)))
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Edit options (step 3 / 3)"));
+    // edit_mybook_without_pages
+    await request(app)
+      .post("/viewedit/config/edit_mybook_without_pages")
+      .send(
+        "contextEnc=" +
+          encodeURIComponent(
+            JSON.stringify({
+              table_id: table.id,
+              viewname: "edit_mybook_without_pages",
+            })
+          )
+      )
+      .send("stepName=Layout")
+      .send("columns=" + encodeURIComponent(JSON.stringify(colsWithoutPages)))
+      .send("layout=" + encodeURIComponent(JSON.stringify(layoutWithoutPages)))
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Fixed and blocked fields (step 2 / max 3)"));
+  });
+
+  it("saves new view fixed fields", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+    const app = await getApp({ disableCsrf: true });
+    // only edit_mybook_without_pages
+    await request(app)
+      .post("/viewedit/config/edit_mybook_without_pages")
+      .send(
+        "contextEnc=" +
+          encodeURIComponent(
+            JSON.stringify({
+              table_id: table.id,
+              viewname: "edit_mybook_without_pages",
+              layout: layoutWithoutPages,
+              columns: colsWithoutPages,
+            })
+          )
+      )
+      .send("stepName=Fixed+and+blocked+fields")
+      .send("pages=2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Edit options (step 3 / 3)"));
+  });
+
+  it("saves view when done", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+    const app = await getApp({ disableCsrf: true });
+    // edit_mybook
+    await request(app)
+      .post("/viewedit/config/edit_mybook")
+      .send(
+        "contextEnc=" +
+          encodeURIComponent(
+            JSON.stringify({
+              table_id: table.id,
+              viewname: "edit_mybook",
+              layout: layoutWithPages,
+              columns: colsWithPages,
+            })
+          )
+      )
+      .send("stepName=Edit+options")
+      .send("destination_type=View")
+      .send("view_when_done=authorlist")
+      .send("auto_save=on")
+      .send("split_paste=on")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit"));
+    const viewWithPages = View.findOne({ name: "edit_mybook" });
+    expect(viewWithPages.configuration.layout).toEqual(layoutWithPages);
+    expect(viewWithPages.configuration.columns).toEqual(colsWithPages);
+    // edit_mybook_without_pages
+    await request(app)
+      .post("/viewedit/config/edit_mybook_without_pages")
+      .send(
+        "contextEnc=" +
+          encodeURIComponent(
+            JSON.stringify({
+              table_id: table.id,
+              viewname: "edit_mybook_without_pages",
+              layout: layoutWithoutPages,
+              columns: colsWithoutPages,
+              fixed: {
+                pages: 22,
+                _block_pages: false,
+              },
+            })
+          )
+      )
+      .send("stepName=Edit+options")
+      .send("destination_type=View")
+      .send("view_when_done=authorlist")
+      .send("auto_save=on")
+      .send("split_paste=on")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit"));
+
+    const viewWithoutPages = View.findOne({
+      name: "edit_mybook_without_pages",
+    });
+    expect(viewWithoutPages.configuration.fixed).toEqual({
+      pages: 22,
+      _block_pages: false,
+    });
+    expect(viewWithoutPages.configuration.layout).toEqual(layoutWithoutPages);
+    expect(viewWithoutPages.configuration.columns).toEqual(colsWithoutPages);
+  });
+
+  it("deletes new view", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const idA = View.findOne({ name: "edit_mybook" }).id;
+    // edit_mybook
+    await request(app)
+      .post("/viewedit/delete/" + idA)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit"));
+    // edit_mybook_without_pages
+    const idB = View.findOne({ name: "edit_mybook_without_pages" }).id;
+    await request(app)
+      .post("/viewedit/delete/" + idB)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/viewedit"));
+  });
+});
+
+describe("viewedit new Edit with fixed fields", () => {
+  it("submit new view", async () => {});
+});
+
 describe("Library", () => {
   it("should save new from builder", async () => {
     const loginCookie = await getAdminLoginCookie();
