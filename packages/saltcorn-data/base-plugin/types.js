@@ -1422,7 +1422,7 @@ const date = {
       isEdit: false,
       description: "Show date and time in the users locale",
       run: (d, req) =>
-        typeof d === "string"
+        typeof d === "string" || typeof d === "number"
           ? localeDateTime(new Date(d))
           : d && d.toISOString
           ? localeDateTime(d)
@@ -1438,7 +1438,7 @@ const date = {
       description: "Show date in the users locale",
 
       run: (d, req) =>
-        typeof d === "string"
+        typeof d === "string" || typeof d === "number"
           ? localeDate(new Date(d))
           : d && d.toISOString
           ? localeDate(d)
