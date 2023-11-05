@@ -615,8 +615,10 @@ router.get(
       table = Table.findOne({ id: trigger.table_id });
       row = await table.getRow({});
     }
+    let runres;
+
     try {
-      await trigger.runWithoutRow({
+      runres = await trigger.runWithoutRow({
         console: fakeConsole,
         table,
         row,
@@ -635,7 +637,9 @@ router.get(
         req.__(
           "Action %s run successfully with no console output",
           trigger.action
-        )
+        ) + runres
+          ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+          : ""
       );
       res.redirect(`/actions/`);
     } else {
@@ -649,7 +653,9 @@ router.get(
           title: req.__("Test run output"),
           contents: div(
             div({ class: "testrunoutput" }, output),
-
+            runres
+              ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+              : "",
             a(
               { href: `/actions`, class: "mt-4 btn btn-primary me-1" },
               "&laquo;&nbsp;" + req.__("back to actions")
