@@ -11,6 +11,13 @@ const {
 } = require("@saltcorn/server/load_plugins");
 const { PluginManager } = require("live-plugin-manager");
 
+const pluginsPath = path.join(__dirname, "test_plugin_packages");
+
+const removePluginsDir = () => {
+  if (fs.existsSync(pluginsPath))
+    fs.rmSync(pluginsPath, { force: true, recursive: true });
+};
+
 const spawnTest = async (installDir, env) => {
   const ret = spawnSync("npm", ["run", "test"], {
     stdio: "inherit",
@@ -22,9 +29,7 @@ const spawnTest = async (installDir, env) => {
 
 const installPlugin = async (plugin) => {
   await removeOldPlugin(plugin);
-  const pluginsPath = path.join(__dirname, "test_plugin_packages");
-  if (fs.existsSync(pluginsPath))
-    fs.rmSync(pluginsPath, { force: true, recursive: true });
+  removePluginsDir();
   const manager = new PluginManager({
     staticDependencies: {
       contractis: require("contractis"),
@@ -33,7 +38,33 @@ const installPlugin = async (plugin) => {
     pluginsPath,
   });
   await loadAndSaveNewPlugin(plugin, false, false, manager);
-  return getPLuginLocation(plugin.name);
+  const location = getPLuginLocation(plugin.name);
+  const modPath = path.join(__dirname, "test_plugin_packages");
+  const pck = require(path.join(location, "package.json"));
+  if (!pck.jest) {
+    pck.jest = {
+      testEnvironment: "node",
+      moduleNameMapper: {
+        "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
+        "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
+        "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
+        "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
+        "@saltcorn/markup$": "@saltcorn/markup/dist",
+        "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
+        "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1",
+      },
+      modulePaths: [modPath],
+    };
+  } else if (!pck.jest.modulePaths) {
+    pck.jest.modulePaths = [modPath];
+  } else if (pck.jest.modulePaths.indexOf(modPath) === -1) {
+    pck.jest.modulePaths.push(modPath);
+  }
+  fs.writeFileSync(
+    path.join(location, "package.json"),
+    JSON.stringify(pck, null, 2)
+  );
+  return location;
 };
 
 const removeOldPlugin = async (plugin) => {
@@ -121,8 +152,10 @@ class PluginTestCommand extends Command {
       }
     } catch (error) {
       console.log(error);
+      removePluginsDir();
       process.exit(1);
     }
+    removePluginsDir();
     if (jestStatus === 0) {
       console.log("Tests passed");
       process.exit(0);
