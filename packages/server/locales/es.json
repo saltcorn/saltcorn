@@ -351,7 +351,7 @@
 	"Default search form values when first loaded": "Valores del formulario de búsqueda predeterminado cuando se carga por primera vez",
 	"Next":"Siguiente",
 	"Save": "Guardar",
-	"Calculated fields cannot have File type": "Los campos calculados no pueden tener tipo de archivo,"
+	"Calculated fields cannot have File type": "Los campos calculados no pueden tener tipo de archivo",
 	"Calculated fields cannot have Key type": "Los campos calculados no pueden tener tipo de clave",
 	"On Field": "En el campo",
 	"Field in %s table": "Campo en %s tabla",
