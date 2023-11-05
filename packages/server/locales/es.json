@@ -357,14 +357,14 @@
 	"Field in %s table": "Campo en %s tabla",
 	"Action on row": "Acción en fila",
 	"Link to other view": "Enlace a otra vista",
-	"Link to anywhere": "Enlace a cualquier lugar,"
-	"Join Field": "Unirse al campo,"
-	"Aggregation": "Agregación,"
-	"Field": "Campo,"
-	"Field view": "Vista de campo,"
-	"Action": "Acción,"
-	"Action Label": "Etiqueta de acción,"
-	"View label": "Ver etiqueta,"
+	"Link to anywhere": "Enlace a cualquier lugar",
+	"Join Field": "Unirse al campo",
+	"Aggregation": "Agregación",
+	"Field": "Campo",
+	"Field view": "Vista de campo",
+	"Action": "Acción",
+	"Action Label": "Etiqueta de acción",
+	"View label": "Ver etiqueta",
 	"Leave blank for default label.": "Dejar en blanco para la etiqueta predeterminada.",
 	"View label is a formula?": "¿Ver etiqueta es una fórmula?",
 	"Open in popup modal?": "¿Abrir en modo emergente?",
