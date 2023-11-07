@@ -1,4 +1,4 @@
-/*global window, $, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig*/
+/*global window, $, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig, i18next*/
 
 let routingHistory = [];
 
@@ -271,13 +271,26 @@ async function handleRoute(route, query, files, data) {
       } else if (page.content) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content);
+      } else {
+        showAlerts([
+          {
+            type: "warning",
+            msg: i18next.t("%s finished without a result", {
+              postProcess: "sprintf",
+              sprintf: [safeRoute],
+            }),
+          },
+        ]);
       }
     }
   } catch (error) {
     showAlerts([
       {
         type: "error",
-        msg: error.message ? error.message : "An error occured.",
+        msg: `${i18next.t("In %s", {
+          postProcess: "sprintf",
+          sprintf: [route],
+        })}: ${error.message ? error.message : i18next.t("An error occurred")}`,
       },
     ]);
   }

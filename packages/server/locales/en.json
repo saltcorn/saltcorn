@@ -1268,5 +1268,6 @@
 	"Pack file": "Pack file",
 	"Upload a pack file": "Upload a pack file",
 	"No menu": "No menu",
-	"Omit the menu from this page": "Omit the menu from this page"
+	"Omit the menu from this page": "Omit the menu from this page",
+	"%s finished without a result": "%s finished without a result"
 }
