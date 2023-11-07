@@ -309,6 +309,7 @@ const configuration_workflow = (req) =>
                 fieldview: "radio_group",
                 attributes: { options: ["None", "All", "First"], inline: true },
                 required: true,
+                showIf: { view_decoration: "Accordion" },
               },
               {
                 name: "hide_pagination",
