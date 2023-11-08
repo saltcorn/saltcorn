@@ -33,7 +33,12 @@ const {
   eval_expression,
   freeVariables,
 } = require("../../models/expression");
-const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
+const {
+  InvalidConfiguration,
+  isNode,
+  isOfflineMode,
+  mergeIntoWhere,
+} = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
 const {
@@ -490,6 +495,7 @@ const runMany = async (
     table = Table.findOne({ id: table.id });
     fields = table.getFields();
   }
+  const isRemote = !isWeb(extra.req);
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -505,6 +511,7 @@ const runMany = async (
       getRowQuery,
       optionsQuery,
       split_paste,
+      isRemote,
     });
     return { html, row };
   });
@@ -628,7 +635,8 @@ const transformForm = async ({
           view.configuration.columns,
           view.configuration.layout,
           row?.id,
-          req
+          req,
+          !isWeb(req)
         );
         traverseSync(childForm.layout, {
           field(segment) {
@@ -1317,7 +1325,16 @@ const prepare = async (
   { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
   remote
 ) => {
-  const form = await getForm(table, viewname, columns, layout, body.id, req);
+  const isRemote = !isWeb(req);
+  const form = await getForm(
+    table,
+    viewname,
+    columns,
+    layout,
+    body.id,
+    req,
+    isRemote
+  );
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined

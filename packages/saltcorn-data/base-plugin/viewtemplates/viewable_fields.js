@@ -11,7 +11,7 @@ const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
-const { structuredClone, isWeb } = require("../../utils");
+const { structuredClone, isWeb, isOfflineMode } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
@@ -1051,9 +1051,10 @@ const getForm = async (
   });
   const form = new Form({
     action: action,
-    onSubmit: isRemote
-      ? `javascript:formSubmit(this, '/view/', '${viewname}')`
-      : undefined,
+    onSubmit:
+      isRemote || isOfflineMode()
+        ? `javascript:formSubmit(this, '/view/', '${viewname}')`
+        : undefined,
     viewname: viewname,
     fields: tfields,
     layout,
