@@ -1022,7 +1022,14 @@ function common_done(res, viewname, isWeb = true) {
   if (res.notify) handle(res.notify, notifyAlert);
   if (res.error)
     handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
-  if (res.eval_js) handle(res.eval_js, eval);
+
+  if (res.eval_js && res.row && res.field_names) {
+    const f = new Function(`row, {${res.field_names}}`, res.eval_js);
+    const evalres = f(res.row, res.row);
+    if (evalres) common_done(evalres, viewname, isWeb);
+  } else if (res.eval_js) {
+    handle(res.eval_js, eval);
+  }
 
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto

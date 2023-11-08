@@ -53,7 +53,8 @@ const run_code = async ({
   user,
   ...rest
 }) => {
-  if (run_where === "Client page") return { eval_js: code };
+  if (run_where === "Client page")
+    return { eval_js: code, row, field_names: table.fields.map((f) => f.name) };
   if (!isNode() && run_where === "Server") {
     // stop on the app and run the action server side
     return { server_eval: true };
@@ -813,6 +814,8 @@ module.exports = {
       ]
         .map((f) => code(f))
         .join(", ");
+      const clientvars = [...fields].map((f) => code(f)).join(", ");
+
       return [
         {
           name: "code",
@@ -839,6 +842,15 @@ module.exports = {
             topic: "JavaScript action code",
           },
           showIf: { run_where: "Server" },
+        },
+        {
+          input_type: "section_header",
+          label: " ",
+          sublabel: span("Variables in scope: ", clientvars),
+          help: {
+            topic: "JavaScript action code",
+          },
+          showIf: { run_where: "Client page" },
         },
         {
           name: "run_where",
