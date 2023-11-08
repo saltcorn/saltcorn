@@ -13,6 +13,7 @@ const {
   div,
   h4,
   hr,
+  a,
   button,
   code,
   h2,
@@ -79,9 +80,16 @@ const configuration_workflow = (req) =>
                 name: "show_view",
                 label: req.__("Single item view"),
                 type: "String",
-                sublabel: req.__(
-                  "The underlying individual view of each table row"
-                ),
+                sublabel:
+                  req.__("The underlying individual view of each table row") +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${show_view}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
                 required: true,
                 attributes: {
                   options: show_view_opts,
