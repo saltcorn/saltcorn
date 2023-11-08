@@ -186,6 +186,14 @@ const isWeb = (req: any): boolean => {
 };
 
 /**
+ * @returns true if the mobile offline mode is active
+ */
+const isOfflineMode = (): boolean => {
+  const state = require("./db/state").getState();
+  return !isNode() && state.mobileConfig?.isOfflineMode;
+};
+
+/**
  * merges the arrays from 'lhs' and 'rhs'
  * @param lhs
  * @param rhs
@@ -338,6 +346,7 @@ export = {
   isStale,
   isNode,
   isWeb,
+  isOfflineMode,
   mergeConnectedObjects,
   hashState,
   extractPagings,
