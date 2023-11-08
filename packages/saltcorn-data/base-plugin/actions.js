@@ -54,7 +54,11 @@ const run_code = async ({
   ...rest
 }) => {
   if (run_where === "Client page")
-    return { eval_js: code, row, field_names: table.fields.map((f) => f.name) };
+    return {
+      eval_js: code,
+      row,
+      field_names: table ? table.fields.map((f) => f.name) : undefined,
+    };
   if (!isNode() && run_where === "Server") {
     // stop on the app and run the action server side
     return { server_eval: true };
