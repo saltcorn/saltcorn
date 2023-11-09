@@ -1269,5 +1269,9 @@
 	"Upload a pack file": "Upload a pack file",
 	"No menu": "No menu",
 	"Omit the menu from this page": "Omit the menu from this page",
-	"%s finished without a result": "%s finished without a result"
+	"%s finished without a result": "%s finished without a result",
+	"Body size limit (Kb)": "Body size limit (Kb)",
+	"Maximum request body size in kilobytes": "Maximum request body size in kilobytes",
+	"URL encoded size limit (Kb)": "URL encoded size limit (Kb)",
+	"Maximum URL encoded request size in kilobytes": "Maximum URL encoded request size in kilobytes"
 }

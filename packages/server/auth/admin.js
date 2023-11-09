@@ -376,6 +376,8 @@ const http_settings_form = async (req) =>
       //"cookie_sessions",
       "public_cache_maxage",
       "custom_http_headers",
+      "body_limit",
+      "url_encoded_limit",
     ],
     action: "/useradmin/http",
     submitLabel: req.__("Save"),
