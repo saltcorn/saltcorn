@@ -154,7 +154,8 @@ function apply_showif() {
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
-      if (!dynwhere.required) toAppend.push({ label: "" });
+      if (!dynwhere.required)
+        toAppend.push({ label: dynwhere.neutral_label || "" });
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -176,8 +177,12 @@ function apply_showif() {
         toAppend.push({ selected, value, label });
       });
       toAppend.sort((a, b) =>
-        (a.label?.toLowerCase?.() || a.label) >
-        (b.label?.toLowerCase?.() || b.label)
+        a.label === dynwhere.neutral_label
+          ? -1
+          : b.label === dynwhere.neutral_label
+          ? 1
+          : (a.label?.toLowerCase?.() || a.label) >
+            (b.label?.toLowerCase?.() || b.label)
           ? 1
           : -1
       );
