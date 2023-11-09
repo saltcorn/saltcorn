@@ -345,6 +345,11 @@ module.exports = {
           (f) => f.type && (f.type.name === "HTML" || f.type.name === "String")
         )
         .map((f) => f.name);
+      const confirm_field_opts = fields
+        .filter(
+          (f) => f.type && (f.type.name === "Bool" || f.type.name === "Date")
+        )
+        .map((f) => f.name);
       const attachment_opts = [""];
       for (const field of fields) {
         if (field.type === "File") attachment_opts.push(field.name);
@@ -444,6 +449,16 @@ module.exports = {
           type: "String",
         },
         { name: "disable_notify", label: "Disable notification", type: "Bool" },
+        {
+          name: "confirm_field",
+          label: "Send confirmation field",
+          type: "String",
+          sublabel:
+            "Bool or Date field to indicate successful sending of email message",
+          attributes: {
+            options: confirm_field_opts,
+          },
+        },
       ];
     },
     requireRow: true,
@@ -470,6 +485,7 @@ module.exports = {
         only_if,
         attachment_path,
         disable_notify,
+        confirm_field,
       },
       user,
     }) => {
@@ -541,6 +557,13 @@ module.exports = {
         attachments,
       };
       await getMailTransport().sendMail(email);
+      if (confirm_field) {
+        const confirm_fld = table.getField(confirm_field);
+        if (confirm_fld && confirm_field.type.name === "Date")
+          await table.updateRow({ [confirm_field]: new Date() }, row.id);
+        else if (confirm_fld && confirm_field.type.name === "Bool")
+          await table.updateRow({ [confirm_field]: true }, row.id);
+      }
       if (disable_notify) return;
       else return { notify: `E-mail sent to ${to_addr}` };
     },
