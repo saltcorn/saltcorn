@@ -27,6 +27,7 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
+const { asyncMap } = require("@saltcorn/data/utils");
 const {
   mkTable,
   renderForm,
@@ -39,6 +40,7 @@ const {
 } = require("@saltcorn/markup");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const Library = require("@saltcorn/data/models/library");
+const path = require("path");
 
 /**
  * @type {object}
@@ -58,6 +60,20 @@ module.exports = router;
 const pagePropertiesForm = async (req, isNew) => {
   const roles = await User.get_roles();
   const pages = (await Page.find()).map((p) => p.name);
+  const htmlFiles = await File.find(
+    {
+      mime_super: "text",
+      mime_sub: "html",
+    },
+    { recursive: true }
+  );
+  const htmlOptions = await asyncMap(htmlFiles, async (f) => {
+    return {
+      label: path.join(f.current_folder, f.filename),
+      value: File.absPathToServePath(f.location),
+    };
+  });
+
   const form = new Form({
     action: addOnDoneRedirect("/pageedit/edit-properties", req),
     fields: [
@@ -91,6 +107,14 @@ const pagePropertiesForm = async (req, isNew) => {
         sublabel: req.__("Role required to access page"),
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+      },
+      {
+        name: "html_file",
+        label: req.__("HTML file"),
+        sublabel: req.__("HTML file to use as page content"),
+        input_type: "select",
+        required: false,
+        options: [{ label: "", value: "" }, ...htmlOptions],
       },
     ],
   });
@@ -360,17 +384,29 @@ router.post(
         wrap(renderForm(form, req.csrfToken()), false, req)
       );
     } else {
-      const { id, columns, ...pageRow } = form.values;
+      const { id, columns, html_file, ...pageRow } = form.values;
       pageRow.min_role = +pageRow.min_role;
-
+      if (html_file) {
+        pageRow.layout = {
+          html_file: html_file,
+        };
+      }
       if (+id) {
+        const dbPage = Page.findOne({ id: id });
+        if (dbPage.layout?.html_file && !html_file) {
+          pageRow.layout = {};
+        }
         await Page.update(+id, pageRow);
         res.redirect(`/pageedit/`);
       } else {
-        if (!pageRow.fixed_states) pageRow.fixed_states = {};
         if (!pageRow.layout) pageRow.layout = {};
+        if (!pageRow.fixed_states) pageRow.fixed_states = {};
         await Page.create(pageRow);
-        res.redirect(addOnDoneRedirect(`/pageedit/edit/${pageRow.name}`, req));
+        if (!html_file)
+          res.redirect(
+            addOnDoneRedirect(`/pageedit/edit/${pageRow.name}`, req)
+          );
+        else res.redirect(`/pageedit/`);
       }
     }
   })

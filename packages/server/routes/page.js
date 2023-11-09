@@ -8,6 +8,7 @@ const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
 const Trigger = require("@saltcorn/data/models/trigger");
+const File = require("@saltcorn/data/models/file");
 const { getState } = require("@saltcorn/data/db/state");
 const {
   error_catcher,
@@ -18,6 +19,8 @@ const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
+const path = require("path");
+const fsp = require("fs").promises;
 
 /**
  * @type {object}
@@ -56,20 +59,32 @@ router.get(
         name: pagename,
         render_time: ms,
       });
-      res.sendWrap(
-        {
-          title,
-          description: db_page.description,
-          bodyClass: "page_" + db.sqlsanitize(pagename),
-        } || `${pagename} page`,
-        add_edit_bar({
-          role,
-          title: db_page.name,
-          what: req.__("Page"),
-          url: `/pageedit/edit/${encodeURIComponent(db_page.name)}`,
-          contents,
-        })
-      );
+      if (contents.html_file) {
+        const rootFolder = (await File.rootFolder()).location;
+        try {
+          await fsp.stat(path.join(rootFolder, contents.html_file));
+        } catch (e) {
+          return res
+            .status(404)
+            .sendWrap(`${pagename} page`, req.__("File not found"));
+        }
+        res.sendFile(path.join(rootFolder, contents.html_file));
+      } else {
+        res.sendWrap(
+          {
+            title,
+            description: db_page.description,
+            bodyClass: "page_" + db.sqlsanitize(pagename),
+          } || `${pagename} page`,
+          add_edit_bar({
+            role,
+            title: db_page.name,
+            what: req.__("Page"),
+            url: `/pageedit/edit/${encodeURIComponent(db_page.name)}`,
+            contents,
+          })
+        );
+      }
     } else {
       if (db_page && !req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);

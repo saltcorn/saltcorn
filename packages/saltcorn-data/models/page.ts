@@ -18,6 +18,7 @@ import type {
   RunExtra,
   ConnectedObjects,
 } from "@saltcorn/types/base_types";
+import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import Role from "./role";
 import type {
@@ -370,6 +371,12 @@ class Page implements AbstractPage {
 
     translateLayout(this.layout, extraArgs.req.getLocale());
     return this.layout;
+  }
+
+  get html_file(): string | undefined {
+    if(instanceOWithHtmlFile(this.layout))
+      return this.layout.html_file;
+    else null;
   }
 
   connected_objects(): ConnectedObjects {

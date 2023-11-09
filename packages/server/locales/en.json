@@ -1261,5 +1261,7 @@
 	"Module up-to-date": "Module up-to-date",
 	"Module '%s' not found": "Module '%s' not found",
 	"Module %s not found": "Module %s not found",
-	"Initially open": "Initially open"
+	"Initially open": "Initially open",
+	"HTML file": "HTML file",
+	"HTML file to use as page content": "HTML file to use as page content"
 }

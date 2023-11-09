@@ -336,6 +336,16 @@ module.exports =
       },
       fixed_states: {},
     });
+    await Page.create({
+      name: "page_with_html_file",
+      title: "page with html file",
+      description: "This page uses a fixed HTML file",
+      min_role: 100,
+      layout: {
+        html_file: "test.html",
+      },
+      fixed_states: {},
+    });
 
     await View.create({
       table_id: disc_books.id,

@@ -29,7 +29,8 @@ const {
   tbody,
 } = tags;
 const { toast, breadcrumbs, renderTabs } = require("./layout_utils");
-
+import type { Layout } from "@saltcorn/types/base_types";
+import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
 import helpers = require("./helpers");
 import renderMJML from "./mjml-layout";
 const { search_bar } = helpers;
@@ -155,6 +156,8 @@ const render = ({
   is_owner,
   req,
 }: RenderOpts): string => {
+  if (instanceOWithHtmlFile(layout))
+    throw new Error("Please don't try to use HTML files in render()");
   //console.log(JSON.stringify(layout, null, 2));
   const isWeb = typeof window === "undefined" && !req?.smr;
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {

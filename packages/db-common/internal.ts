@@ -525,6 +525,7 @@ export type SelectOptions = {
   provider_name?: string;
   provider_cfg?: any;
   fields?: [string];
+  recursive?: boolean; // for File.find()
 };
 export const orderByIsObject = (
   object: any

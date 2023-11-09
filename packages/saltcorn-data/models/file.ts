@@ -110,7 +110,7 @@ class File {
         safeDir
       );
       const files: File[] = [];
-      const searcher = async (folder: string, recursive: boolean) => {
+      const searcher = async (folder: string, recursive?: boolean) => {
         let fileNms;
         try {
           fileNms = await fsp.readdir(folder);
@@ -131,7 +131,8 @@ class File {
         files.push(
           await File.from_file_on_disk(where?.filename, absoluteFolder)
         );
-      } else await searcher(absoluteFolder, !!where?.search);
+      } else
+        await searcher(absoluteFolder, !!where?.search || selectopts.recursive);
 
       let pred = (f: File) => true;
       const addPred = (p: Function) => {
