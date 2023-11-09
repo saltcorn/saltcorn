@@ -387,7 +387,7 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
         label: req.__("When"),
         key: (a) =>
           a.when_trigger === "API call"
-            ? `API: ${base_url}api/action/${a.name}`
+            ? `API: <small>${base_url}api/action/${a.name}</small>`
             : a.when_trigger,
       },
       {

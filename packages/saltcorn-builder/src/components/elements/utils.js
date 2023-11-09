@@ -1078,13 +1078,27 @@ const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
         <td colSpan="2">
           {needLabel && <label>{field.label}</label>}
           {inner}
+          {field.sublabel ? (
+            <i
+              className="small"
+              dangerouslySetInnerHTML={{ __html: field.sublabel }}
+            ></i>
+          ) : null}
         </td>
       ) : (
         <Fragment>
           <td>
             <label>{field.label}</label>
           </td>
-          <td>{inner}</td>
+          <td>
+            {inner}
+            {field.sublabel ? (
+              <i
+                className="small"
+                dangerouslySetInnerHTML={{ __html: field.sublabel }}
+              ></i>
+            ) : null}
+          </td>
         </Fragment>
       )}
     </tr>

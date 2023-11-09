@@ -307,6 +307,7 @@ class Field implements AbstractField {
         whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
         summary_field: this.attributes.summary_field,
         label_formula: this.attributes.label_formula,
+        neutral_label: this.attributes.neutral_label,
         required: this.required,
       };
     }

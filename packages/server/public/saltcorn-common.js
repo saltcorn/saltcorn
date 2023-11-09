@@ -154,7 +154,8 @@ function apply_showif() {
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
-      if (!dynwhere.required) toAppend.push(`<option></option>`);
+      if (!dynwhere.required)
+        toAppend.push({ label: dynwhere.neutral_label || "" });
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -173,12 +174,28 @@ function apply_showif() {
         const selected = `${current}` === `${r[dynwhere.refname]}`;
         dataOptions.push({ text: label, value });
         if (selected) currentDataOption = value;
-        const html = `<option ${
-          selected ? "selected" : ""
-        } value="${value}">${label}</option>`;
-        toAppend.push(html);
+        toAppend.push({ selected, value, label });
       });
-      e.html(toAppend.join(""));
+      toAppend.sort((a, b) =>
+        a.label === dynwhere.neutral_label
+          ? -1
+          : b.label === dynwhere.neutral_label
+          ? 1
+          : (a.label?.toLowerCase?.() || a.label) >
+            (b.label?.toLowerCase?.() || b.label)
+          ? 1
+          : -1
+      );
+      e.html(
+        toAppend
+          .map(
+            ({ label, value, selected }) =>
+              `<option${selected ? ` selected` : ""}${
+                value ? ` value="${value}"` : ""
+              }>${label || ""}</option>`
+          )
+          .join("")
+      );
 
       //TODO: also sort inserted HTML options
       dataOptions.sort((a, b) =>
