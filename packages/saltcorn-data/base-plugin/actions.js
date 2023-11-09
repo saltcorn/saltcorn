@@ -556,8 +556,8 @@ module.exports = {
         ...setBody,
         attachments,
       };
-      await getMailTransport().sendMail(email);
-      if (confirm_field) {
+      const sendres = await getMailTransport().sendMail(email);
+      if (confirm_field && sendres.accepted.includes(to_addr)) {
         const confirm_fld = table.getField(confirm_field);
         if (confirm_fld && confirm_fld.type.name === "Date")
           await table.updateRow({ [confirm_field]: new Date() }, row.id);
