@@ -77,6 +77,7 @@ const {
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
+const _ = require("underscore");
 
 /**
  * @param {object} req
@@ -822,6 +823,15 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       );
       if (ix === -1) return "";
       return go(segment.contents[ix]);
+    },
+    htmlcode(segment) {
+      const template = _.template(segment.contents, {
+        evaluate: /\{\{#(.+?)\}\}/g,
+        interpolate: /\{\{([^#].+?)\}\}/g,
+      });
+      const temres = template({ row, ...row });
+      console.log({ temres });
+      return temres;
     },
   };
   return renderLayout({
