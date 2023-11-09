@@ -194,9 +194,6 @@ const render = ({
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
-    if (segment.type === "htmlcode") {
-      return wrap(segment, isTop, ix, segment.contents || "");
-    }
     if (segment.type === "breadcrumbs") {
       return wrap(
         segment,

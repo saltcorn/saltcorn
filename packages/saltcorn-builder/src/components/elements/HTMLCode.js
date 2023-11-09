@@ -64,7 +64,7 @@ HTMLCode.craft = {
 
       return SettingsFromFields(fields(options.mode))();
     },
-    segment_type: "htmlcode",
+    segment_type: "blank",
     segment_vars: { isHTML: true },
     segment_match: (segment) => segment.isHTML,
     fields: fields(),

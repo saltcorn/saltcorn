@@ -824,14 +824,16 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       if (ix === -1) return "";
       return go(segment.contents[ix]);
     },
-    htmlcode(segment) {
-      const template = _.template(segment.contents, {
-        evaluate: /\{\{#(.+?)\}\}/g,
-        interpolate: /\{\{([^#].+?)\}\}/g,
-      });
-      const temres = template({ row, ...row });
-      console.log({ temres });
-      return temres;
+    blank(segment) {
+      if (segment.isHTML) {
+        const template = _.template(segment.contents, {
+          evaluate: /\{\{#(.+?)\}\}/g,
+          interpolate: /\{\{([^#].+?)\}\}/g,
+        });
+        const temres = template({ row, ...row });
+        console.log({ temres });
+        return temres;
+      } else return segment.contents;
     },
   };
   return renderLayout({
