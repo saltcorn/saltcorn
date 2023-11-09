@@ -556,16 +556,25 @@ module.exports = {
         ...setBody,
         attachments,
       };
-      const sendres = await getMailTransport().sendMail(email);
-      if (confirm_field && sendres.accepted.includes(to_addr)) {
-        const confirm_fld = table.getField(confirm_field);
-        if (confirm_fld && confirm_fld.type.name === "Date")
-          await table.updateRow({ [confirm_field]: new Date() }, row.id);
-        else if (confirm_fld && confirm_fld.type.name === "Bool")
-          await table.updateRow({ [confirm_field]: true }, row.id);
+      try {
+        const sendres = await getMailTransport().sendMail(email);
+        if (confirm_field && sendres.accepted.includes(to_addr)) {
+          const confirm_fld = table.getField(confirm_field);
+          if (confirm_fld && confirm_fld.type.name === "Date")
+            await table.updateRow({ [confirm_field]: new Date() }, row.id);
+          else if (confirm_fld && confirm_fld.type.name === "Bool")
+            await table.updateRow({ [confirm_field]: true }, row.id);
+        }
+        if (disable_notify) return;
+        else return { notify: `E-mail sent to ${to_addr}` };
+      } catch (e) {
+        if (confirm_field) {
+          const confirm_fld = table.getField(confirm_field);
+          if (confirm_fld && confirm_fld.type.name === "Bool")
+            await table.updateRow({ [confirm_field]: false }, row.id);
+          throw e;
+        }
       }
-      if (disable_notify) return;
-      else return { notify: `E-mail sent to ${to_addr}` };
     },
   },
 
