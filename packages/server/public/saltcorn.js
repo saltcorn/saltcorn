@@ -572,6 +572,20 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
+
+function api_action_call(name, body) {
+  $.ajax(`/api/action/${name}`, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: body,
+    success: function (res) {
+      common_done(res.data);
+    },
+  });
+}
+
 function make_unique_field(
   id,
   table_id,
