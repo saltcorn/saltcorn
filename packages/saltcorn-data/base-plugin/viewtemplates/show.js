@@ -831,7 +831,6 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
           interpolate: /\{\{([^#].+?)\}\}/g,
         });
         const temres = template({ row, ...row });
-        console.log({ temres });
         return temres;
       } else return segment.contents;
     },

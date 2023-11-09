@@ -154,7 +154,6 @@ const ColumnsSettings = () => {
     colClass: colClasses?.[setting_col_n - 1] || "",
     colStyle: colStyles?.[setting_col_n - 1] || "",
   };
-  console.log(colSetsNode);
   return (
     <Accordion>
       <table accordiontitle="Column properties">
