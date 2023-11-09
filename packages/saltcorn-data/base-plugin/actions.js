@@ -559,9 +559,9 @@ module.exports = {
       await getMailTransport().sendMail(email);
       if (confirm_field) {
         const confirm_fld = table.getField(confirm_field);
-        if (confirm_fld && confirm_field.type.name === "Date")
+        if (confirm_fld && confirm_fld.type.name === "Date")
           await table.updateRow({ [confirm_field]: new Date() }, row.id);
-        else if (confirm_fld && confirm_field.type.name === "Bool")
+        else if (confirm_fld && confirm_fld.type.name === "Bool")
           await table.updateRow({ [confirm_field]: true }, row.id);
       }
       if (disable_notify) return;
