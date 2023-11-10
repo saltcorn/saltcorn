@@ -344,7 +344,7 @@ describe("API action", () => {
       configuration: {
         code: `
         const table = Table.findOne({ name: "triggercounter" });
-        await table.insertRow({ thing: req.body?.thing || "no body" });
+        await table.insertRow({ thing: row?.thing || "no body" });
         return {studio: 54}
       `,
       },
@@ -360,5 +360,32 @@ describe("API action", () => {
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
       .expect(succeedJsonWithWholeBody((resp) => resp?.data?.studio === 54));
+    const table = Table.findOne({ name: "triggercounter" });
+    const counts = await table.getRows({});
+    expect(counts.map((c) => c.thing)).toContain("inthebody");
+    expect(counts.map((c) => c.thing)).not.toContain("no body");
+  });
+  it("should GET with query to trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/action/mywebhook?thing=inthequery")
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWithWholeBody((resp) => resp?.data?.studio === 54));
+    const table = Table.findOne({ name: "triggercounter" });
+    const counts = await table.getRows({});
+    expect(counts.map((c) => c.thing)).toContain("inthequery");
+    expect(counts.map((c) => c.thing)).not.toContain("no body");
+  });
+  it("should GET to trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/action/mywebhook")
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWithWholeBody((resp) => resp?.data?.studio === 54));
+    const table = Table.findOne({ name: "triggercounter" });
+    const counts = await table.getRows({});
+    expect(counts.map((c) => c.thing)).toContain("no body");
   });
 });

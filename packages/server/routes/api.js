@@ -361,7 +361,7 @@ router.all(
             const resp = await action.run({
               configuration: trigger.configuration,
               body: req.body,
-              row: req.body,
+              row: req.method === "GET" ? req.query : req.body,
               req,
               user: user || req.user,
             });
