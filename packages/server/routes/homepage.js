@@ -262,10 +262,16 @@ const actionsTab = async (req, triggers) => {
             },
             {
               label: req.__("When"),
-              key: (a) =>
-                a.when_trigger === "API call"
-                  ? `API: </small>${base_url}api/action/${a.name}</small>`
-                  : a.when_trigger,
+              key: (act) =>
+                act.when_trigger +
+                (act.when_trigger === "API call"
+                  ? a(
+                      {
+                        href: `javascript:ajax_modal('/admin/help/API%20actions?name=${act.name}')`,
+                      },
+                      i({ class: "fas fa-question-circle ms-1" })
+                    )
+                  : ""),
             },
           ],
           triggers

@@ -332,7 +332,7 @@ router.get(
  * @function
  * @memberof module:routes/api~apiRouter
  */
-router.post(
+router.all(
   "/action/:actionname/",
   error_catcher(async (req, res, next) => {
     const { actionname } = req.params;
@@ -361,7 +361,7 @@ router.post(
             const resp = await action.run({
               configuration: trigger.configuration,
               body: req.body,
-              row: req.body,
+              row: req.method === "GET" ? req.query : req.body,
               req,
               user: user || req.user,
             });
