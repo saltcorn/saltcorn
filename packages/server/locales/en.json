@@ -1275,5 +1275,6 @@
 	"URL encoded size limit (Kb)": "URL encoded size limit (Kb)",
 	"Maximum URL encoded request size in kilobytes": "Maximum URL encoded request size in kilobytes",
 	"HTML file": "HTML file",
-	"HTML file to use as page content": "HTML file to use as page content"
+	"HTML file to use as page content": "HTML file to use as page content",
+	"Offline mode: cannot load file": "Offline mode: cannot load file"
 }

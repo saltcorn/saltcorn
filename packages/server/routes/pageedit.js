@@ -109,18 +109,18 @@ const pagePropertiesForm = async (req, isNew) => {
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
       {
-        name: "no_menu",
-        label: req.__("No menu"),
-        sublabel: req.__("Omit the menu from this page"),
-        type: "Bool",
-      },
-      {
         name: "html_file",
         label: req.__("HTML file"),
         sublabel: req.__("HTML file to use as page content"),
         input_type: "select",
         required: false,
         options: [{ label: "", value: "" }, ...htmlOptions],
+      },
+      {
+        name: "no_menu",
+        label: req.__("No menu"),
+        sublabel: req.__("Omit the menu from this page"),
+        type: "Bool",
       },
     ],
   });

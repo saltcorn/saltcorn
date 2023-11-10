@@ -103,6 +103,34 @@ function clearTopAlerts() {
   if (topAlert) topAlert.innerHTML = "";
 }
 
+// TODO combine with loadEncodedFile
+async function loadFileAsText(fileId) {
+  try {
+    const response = await apiCall({
+      method: "GET",
+      path: `/files/download/${fileId}`,
+      responseType: "blob",
+    });
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        return resolve(reader.result);
+      };
+      reader.onerror = (error) => {
+        return reject(error);
+      };
+      reader.readAsText(response.data);
+    });
+  } catch (error) {
+    showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+  }
+}
+
 async function loadEncodedFile(fileId) {
   try {
     const response = await apiCall({
@@ -141,11 +169,34 @@ function splitPathQuery(url) {
   return { path, query };
 }
 
-async function replaceIframe(content) {
+async function replaceIframe(content, isFile = false) {
+  const iframe = document.getElementById("content-iframe");
   await write("content.html", `${cordova.file.dataDirectory}`, content);
   const url = await getDirEntry(`${cordova.file.dataDirectory}content.html`);
-  const iframe = document.getElementById("content-iframe");
   iframe.src = url.toURL();
+  if (isFile) {
+    iframe.setAttribute("is-html-file", true);
+    await new Promise((resolve, reject) => {
+      iframe.onload = () => {
+        try {
+          const _iframe = document.getElementById("content-iframe");
+          const iframeDoc = _iframe.contentWindow.document;
+          const baseEl = iframeDoc.createElement("base");
+          iframeDoc.head.appendChild(baseEl);
+          baseEl.href = "http://localhost";
+          const scriptEl = iframeDoc.createElement("script");
+          iframeDoc.body.appendChild(scriptEl);
+          scriptEl.src = "js/utils/iframe_view_utils.js";
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      };
+      iframe.onerror = () => {
+        reject();
+      };
+    });
+  } else iframe.setAttribute("is-html-file", false);
 }
 
 function addScriptToIframeHead(iframeDoc, script) {
@@ -227,6 +278,11 @@ function handleOpenModal() {
   return result;
 }
 
+function isHtmlFile() {
+  const iframe = document.getElementById("content-iframe");
+  return iframe.getAttribute("is-html-file") === "true";
+}
+
 async function handleRoute(route, query, files, data) {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   try {
@@ -249,6 +305,7 @@ async function handleRoute(route, query, files, data) {
         files: files,
         data: data,
         alerts: [],
+        fullWrap: isHtmlFile(), // fullWrap when it's currently a fixed-html-file
       });
       if (page.redirect) {
         const { moddalWasOpen, noSubmitReload } = handleOpenModal();
@@ -270,7 +327,7 @@ async function handleRoute(route, query, files, data) {
         }
       } else if (page.content) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
-        else await replaceIframe(page.content);
+        else await replaceIframe(page.content, page.isFile);
       } else {
         showAlerts([
           {

@@ -158,5 +158,9 @@ const wrapContents = (contents, title, context, req) => {
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.role_id,
       });
-  return { content: wrappedContent, title: title };
+  return {
+    content: wrappedContent,
+    title: title,
+    replaceIframe: context.fullWrap,
+  };
 };

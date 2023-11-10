@@ -1,4 +1,4 @@
-/*global MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn*/
+/*global MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn, loadFileAsText*/
 
 // post/page/:pagename/action/:rndid
 const postPageAction = async (context) => {
@@ -37,6 +37,13 @@ const getPage = async (context) => {
   const query = parseQuery(context.query);
   const res = new MobileResponse();
   const contents = await page.run(query, { res, req });
-  const title = "title"; // TODO
-  return wrapContents(contents, title, context, req);
+  if (contents.html_file) {
+    if (state.mobileConfig?.isOfflineMode)
+      throw new Error(req.__("Offline mode: cannot load file"));
+    const content = await loadFileAsText(contents.html_file);
+    return { content, title: "title", replaceIframe: true, isFile: true };
+  } else {
+    const title = "title"; // TODO
+    return wrapContents(contents, title, context, req);
+  }
 };
