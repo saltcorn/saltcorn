@@ -201,4 +201,5 @@ export = {
   viewToMjml,
   loadAttachments,
   getFileAggregations,
+  mjml2html,
 };

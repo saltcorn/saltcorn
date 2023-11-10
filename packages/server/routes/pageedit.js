@@ -109,6 +109,12 @@ const pagePropertiesForm = async (req, isNew) => {
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
       {
+        name: "no_menu",
+        label: req.__("No menu"),
+        sublabel: req.__("Omit the menu from this page"),
+        type: "Bool",
+      },
+      {
         name: "html_file",
         label: req.__("HTML file"),
         sublabel: req.__("HTML file to use as page content"),
@@ -307,7 +313,7 @@ const wrap = (contents, noCard, req, page) => ({
       crumbs: [
         { text: req.__("Pages"), href: "/pageedit" },
         page
-          ? { href: `/pageedit/edit/${page.name}`, text: page.name }
+          ? { href: `/page/${page.name}`, text: page.name }
           : { text: req.__("New") },
       ],
     },
@@ -339,6 +345,7 @@ router.get(
       const form = await pagePropertiesForm(req);
       form.hidden("id");
       form.values = page;
+      form.values.no_menu = page.attributes?.no_menu;
       res.sendWrap(
         req.__(`Page attributes`),
         wrap(renderForm(form, req.csrfToken()), false, req, page)
@@ -384,8 +391,9 @@ router.post(
         wrap(renderForm(form, req.csrfToken()), false, req)
       );
     } else {
-      const { id, columns, html_file, ...pageRow } = form.values;
+      const { id, columns, no_menu, html_file, ...pageRow } = form.values;
       pageRow.min_role = +pageRow.min_role;
+      pageRow.attributes = { no_menu };
       if (html_file) {
         pageRow.layout = {
           html_file: html_file,

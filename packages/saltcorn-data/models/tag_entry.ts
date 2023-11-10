@@ -1,7 +1,8 @@
+import { AbstractTagEntry } from "@saltcorn/types/model-abstracts/abstract_tag_entry";
 import type { Row, Where, SelectOptions } from "@saltcorn/db-common/internal";
 import db from "../db";
 
-class TagEntry {
+class TagEntry implements AbstractTagEntry {
   id?: number;
   tag_id?: number;
   table_id?: number;

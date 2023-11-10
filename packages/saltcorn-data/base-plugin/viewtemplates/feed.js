@@ -13,6 +13,7 @@ const {
   div,
   h4,
   hr,
+  a,
   button,
   code,
   h2,
@@ -79,9 +80,16 @@ const configuration_workflow = (req) =>
                 name: "show_view",
                 label: req.__("Single item view"),
                 type: "String",
-                sublabel: req.__(
-                  "The underlying individual view of each table row"
-                ),
+                sublabel:
+                  req.__("The underlying individual view of each table row") +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${show_view}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
                 required: true,
                 attributes: {
                   options: show_view_opts,
@@ -309,6 +317,7 @@ const configuration_workflow = (req) =>
                 fieldview: "radio_group",
                 attributes: { options: ["None", "All", "First"], inline: true },
                 required: true,
+                showIf: { view_decoration: "Accordion" },
               },
               {
                 name: "hide_pagination",
@@ -557,7 +566,7 @@ const run = async (
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
   const showRowInner = (r, ix) =>
-    in_card || view_decoration === "Card"
+    (!view_decoration && in_card) || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
           title_formula
@@ -623,7 +632,8 @@ const run = async (
 
   const inner = div(
     correct_order([
-      (in_card || view_decoration === "Card") && masonry_columns
+      ((!view_decoration && in_card) || view_decoration === "Card") &&
+      masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
         : view_decoration === "Accordion"
         ? div(

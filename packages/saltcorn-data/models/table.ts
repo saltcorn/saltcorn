@@ -300,11 +300,11 @@ class Table implements AbstractTable {
    * @param where - where condition
    * @returns {*|Table|null} table or null
    */
-  static findOne(where: Where | Table): Table | null {
+  static findOne(where: Where | Table | number | string): Table | null {
     if (
       where &&
       ((where.constructor && where.constructor.name === "Table") ||
-        where.getRows)
+        (where as any).getRows)
     )
       return <Table>where;
     // todo add string & number as possible types for where
@@ -639,6 +639,7 @@ class Table implements AbstractTable {
     const tblrow: any = {
       name,
       versioned: options.versioned || false,
+      has_sync_info: options.has_sync_info || false,
       min_role_read: options.min_role_read || 1,
       min_role_write: options.min_role_write || 1,
       ownership_field_id: options.ownership_field_id,
@@ -686,6 +687,8 @@ class Table implements AbstractTable {
 
     // create table history
     if (table?.versioned) await table.create_history_table();
+    // create sync info
+    if (table.has_sync_info) await table.create_sync_info_table();
     // refresh tables cache
     await require("../db/state").getState().refresh_tables();
 
@@ -795,18 +798,18 @@ class Table implements AbstractTable {
   private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
     if (ids.length > 0) {
       const schema = db.getTenantSchemaPrefix();
-      const pkName = this.pk_name;
+      const pkName = this.pk_name || "id";
       if (isNode()) {
         await db.query(
-          `delete from ${schema}${db.sqlsanitize(
+          `delete from ${schema}"${db.sqlsanitize(
             this.name
-          )}_sync_info where ref in (
+          )}_sync_info" where ref in (
             ${ids.map((row) => row[pkName]).join(",")})`
         );
         await db.query(
-          `insert into ${schema}${db.sqlsanitize(
+          `insert into ${schema}"${db.sqlsanitize(
             this.name
-          )}_sync_info values ${ids
+          )}_sync_info" values ${ids
             .map(
               (row) =>
                 `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
@@ -817,7 +820,7 @@ class Table implements AbstractTable {
         );
       } else {
         await db.query(
-          `update ${db.sqlsanitize(this.name)}_sync_info 
+          `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
            where ref in (${ids.map((row) => row[pkName]).join(",")})`
         );
@@ -866,23 +869,35 @@ class Table implements AbstractTable {
           await trigger.run!(row);
         }
       }
-      for (const deleteFile of deleteFileFields) {
-        for (const row of rows) {
-          if (row[deleteFile.name]) {
-            const file = await File.findOne({ id: row[deleteFile.name] });
-            deleteFiles.push(file);
+      if (isNode()) {
+        for (const deleteFile of deleteFileFields) {
+          for (const row of rows) {
+            if (row[deleteFile.name]) {
+              const file = await File.findOne({
+                filename: row[deleteFile.name],
+              });
+              deleteFiles.push(file);
+            }
           }
         }
       }
     }
     if (rows) {
-      await db.deleteWhere(this.name, {
-        [this.pk_name]: { in: rows.map((r) => r[this.pk_name]) },
-      });
+      const delIds = rows.map((r) => r[this.pk_name]);
+      if (!db.isSQLite) {
+        await db.deleteWhere(this.name, {
+          [this.pk_name]: { in: delIds },
+        });
+      } else {
+        await db.query(
+          `delete from "${db.sqlsanitize(this.name)}" where "${db.sqlsanitize(
+            this.pk_name
+          )}" in (${delIds.join(",")})`
+        );
+      }
       if (this.has_sync_info) {
         const dbTime = await db.time();
-        const ids = rows.map((r) => r[this.pk_name || "id"]);
-        await this.addDeleteSyncInfo(ids, dbTime);
+        await this.addDeleteSyncInfo(rows, dbTime);
       }
     } else {
       const delIds = this.has_sync_info
@@ -1286,7 +1301,9 @@ class Table implements AbstractTable {
         `update "${db.sqlsanitize(
           this.name
         )}_sync_info" set modified_local = true 
-         where ref = ${id} and last_modified = ${oldLastModified.valueOf()}`
+         where ref = ${id} and last_modified = ${
+          oldLastModified ? oldLastModified.valueOf() : "null"
+        }`
       );
     }
   }
@@ -1511,14 +1528,14 @@ class Table implements AbstractTable {
       if (isNode()) {
         const schemaPrefix = db.getTenantSchemaPrefix();
         await db.query(
-          `insert into ${schemaPrefix}${db.sqlsanitize(this.name)}_sync_info 
+          `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
            values(${id}, date_trunc('milliseconds', to_timestamp(${
             (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
           })))`
         );
       } else {
         await db.query(
-          `insert into ${db.sqlsanitize(this.name)}_sync_info 
+          `insert into "${db.sqlsanitize(this.name)}_sync_info"
            (last_modified, ref, modified_local, deleted)
            values(NULL, ${id}, true, false)`
         );
@@ -1563,7 +1580,7 @@ class Table implements AbstractTable {
    *
    * @param msg
    */
-  private normalise_error_message(msg: string): string {
+  normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
       if (db.isSQLite) {
@@ -1692,30 +1709,30 @@ class Table implements AbstractTable {
       throw new Error("Unable to find a field with a primary key.");
     }
     await db.query(
-      `create table ${schemaPrefix}${sqlsanitize(
+      `create table ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info (ref integer, last_modified timestamp, deleted boolean default false)`
+      )}_sync_info" (ref integer, last_modified timestamp, deleted boolean default false)`
     );
     await db.query(
-      `create index ${sqlsanitize(
+      `create index "${sqlsanitize(
         this.name
-      )}_sync_info_ref_index on ${schemaPrefix}${sqlsanitize(
+      )}_sync_info_ref_index" on ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info(ref)`
+      )}_sync_info"(ref)`
     );
     await db.query(
-      `create index ${sqlsanitize(
+      `create index "${sqlsanitize(
         this.name
-      )}_sync_info_lm_index on ${schemaPrefix}${sqlsanitize(
+      )}_sync_info_lm_index" on ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info(last_modified)`
+      )}_sync_info"(last_modified)`
     );
     await db.query(
-      `create index ${sqlsanitize(
+      `create index "${sqlsanitize(
         this.name
-      )}_sync_info_deleted_index on ${schemaPrefix}${sqlsanitize(
+      )}_sync_info_deleted_index" on ${schemaPrefix}"${sqlsanitize(
         this.name
-      )}_sync_info(deleted)`
+      )}_sync_info"(deleted)`
     );
   }
 
@@ -2795,6 +2812,7 @@ class Table implements AbstractTable {
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
     let placeCounter = values.length;
+    let aggValues: any = []; // for sqlite
     Object.entries<AggregationOptions>(aggregations).forEach(
       ([
         fldnm,
@@ -2805,8 +2823,8 @@ class Table implements AbstractTable {
           const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
           // todo warning deprecated symbol substr is used
           whereStr = whereAndValues.where.substr(6); // remove "where "
-
-          values.push(...whereAndValues.values);
+          if (isNode()) values.push(...whereAndValues.values);
+          else aggValues.push(...whereAndValues.values);
           placeCounter += whereAndValues.values.length;
         }
         const aggTable = Table.findOne({ name: table });
@@ -2875,6 +2893,7 @@ class Table implements AbstractTable {
           );
       }
     );
+    if (!isNode()) values.unshift(...aggValues);
 
     const selectopts: SelectOptions = {
       limit: opts.limit,

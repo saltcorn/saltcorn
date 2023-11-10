@@ -33,7 +33,7 @@ import config from "../models/config";
 const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
-const { structuredClone, removeAllWhiteSpace, stringToJSON } = utils;
+const { structuredClone, removeAllWhiteSpace, stringToJSON, isNode } = utils;
 import I18n from "i18n";
 import { tz } from "moment-timezone";
 import { join } from "path";
@@ -91,6 +91,12 @@ const standard_fonts = {
   "Trebuchet MS":
     "Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, sans-serif",
   Verdana: "Verdana, Geneva, sans-serif",
+};
+
+const withRenderBody = (layouts: any) => {
+  for (let i = layouts.length - 1; i >= 0; i--)
+    if (layouts[i].renderBody) return layouts[i];
+  throw new Error("No layout with renderBody found");
 };
 
 /**
@@ -199,7 +205,7 @@ class State {
       if (chosen) return chosen;
     }
     const layoutvs = Object.values(this.layouts);
-    return layoutvs[layoutvs.length - 1];
+    return isNode() ? layoutvs[layoutvs.length - 1] : withRenderBody(layoutvs);
   }
   /**
    * Get Two factor authentication policy

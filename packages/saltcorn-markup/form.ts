@@ -118,7 +118,7 @@ const formRowWrap = (
           { class: `col-sm-12` },
           h5(text(hdr.label)),
           hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
-          hdr.sublabel && p(i(hdr.sublabel)),
+          //hdr.sublabel && p(i(hdr.sublabel)),
           mkSubLabelAndHelp(hdr)
         )
       : hdr.input_type === "dynamic_fields"
@@ -877,7 +877,7 @@ const mkFormRowForField =
   };
 const helpLink = ({ topic, context, dynContext }: any) => {
   let qs = "";
-  Object.keys(context).forEach((k) => {
+  Object.keys(context || {}).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
   });
   return a(
@@ -894,7 +894,7 @@ const helpLink = ({ topic, context, dynContext }: any) => {
 };
 const mkSubLabelAndHelp = (hdr: any) => {
   return (
-    (hdr.sublabel ? i(text(hdr.sublabel)) : "") +
+    (hdr.sublabel ? i(hdr.sublabel) : "") +
     (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "")
     //(hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
   );
@@ -1048,10 +1048,11 @@ const renderFormLayout = (form: Form): string => {
       const field0 = segment.field_name.includes(".")
         ? (
             form.fields.find(
-              (f) => f.name === repeat_name
+              (f) => f.name === repeat_name && (f as any).isRepeat
             ) as AbstractFieldRepeat
           )?.fields.find((f: any) => f.name === field_name)
         : form.fields.find((f) => f.name === segment.field_name);
+
       const repeater = in_repeat
         ? form.fields.find((f) => f.name === repeat_name)
         : null;
@@ -1215,6 +1216,8 @@ const renderFormLayout = (form: Form): string => {
         return mkBtn(
           `onClick="updateMatchingRows(this, '${form.viewname}')" type="button"`
         );
+      if (action_name === "SubmitWithAjax")
+        return mkBtn(`onClick="submitWithAjax(this)" type="button"`);
       if (action_link) return action_link;
 
       if (isNode && !form.req?.smr) {

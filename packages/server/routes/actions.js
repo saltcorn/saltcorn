@@ -174,8 +174,9 @@ const triggerForm = async (req, trigger) => {
         attributes: {
           explainers: {
             Often: req.__("Every 5 minutes"),
-            Never:
-              req.__("Not scheduled but can be run as an action from a button click"),
+            Never: req.__(
+              "Not scheduled but can be run as an action from a button click"
+            ),
           },
         },
       },
@@ -201,6 +202,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Action"),
         type: "String",
         required: true,
+        help: { topic: "Actions" },
         attributes: {
           calcOptions: ["when_trigger", action_options],
         },
@@ -388,6 +390,16 @@ router.get(
       return;
     }
     const action = getState().actions[trigger.action];
+    // get table related to trigger
+    const table = trigger.table_id
+      ? Table.findOne({ id: trigger.table_id })
+      : null;
+
+    const subtitle = span(
+      { class: "ms-3" },
+      trigger.action,
+      table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
+    );
     if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
@@ -402,7 +414,7 @@ router.get(
       form.values = trigger.configuration;
       const events = Trigger.when_options;
       const actions = Trigger.find({
-        when_trigger: {or: ["API call", "Never"]},
+        when_trigger: { or: ["API call", "Never"] },
       });
       const tables = (await Table.find({})).map((t) => ({
         name: t.name,
@@ -418,6 +430,7 @@ router.get(
           type: "card",
           titleAjaxIndicator: true,
           title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
           contents: {
             widths: [8, 4],
             besides: [
@@ -463,10 +476,6 @@ router.get(
       req.flash("warning", req.__("Action not configurable"));
       res.redirect(`/actions/`);
     } else {
-      // get table related to trigger
-      const table = trigger.table_id
-        ? Table.findOne({ id: trigger.table_id })
-        : null;
       // get configuration fields
       const cfgFields = await getActionConfigFields(action, table);
       // create form
@@ -489,6 +498,7 @@ router.get(
           type: "card",
           titleAjaxIndicator: true,
           title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
           contents: renderForm(form, req.csrfToken()),
         },
       });
@@ -605,8 +615,10 @@ router.get(
       table = Table.findOne({ id: trigger.table_id });
       row = await table.getRow({});
     }
+    let runres;
+
     try {
-      await trigger.runWithoutRow({
+      runres = await trigger.runWithoutRow({
         console: fakeConsole,
         table,
         row,
@@ -625,7 +637,9 @@ router.get(
         req.__(
           "Action %s run successfully with no console output",
           trigger.action
-        )
+        ) + runres
+          ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+          : ""
       );
       res.redirect(`/actions/`);
     } else {
@@ -639,7 +653,9 @@ router.get(
           title: req.__("Test run output"),
           contents: div(
             div({ class: "testrunoutput" }, output),
-
+            runres
+              ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+              : "",
             a(
               { href: `/actions`, class: "mt-4 btn btn-primary me-1" },
               "&laquo;&nbsp;" + req.__("back to actions")

@@ -6,7 +6,7 @@
  */
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
-import type { ModelInstanceCfg } from "@saltcorn/types/model-abstracts/abstract_model";
+import type { ModelInstanceCfg } from "@saltcorn/types/model-abstracts/abstract_model_instance";
 
 /**
  * Model Class
@@ -127,7 +127,7 @@ class ModelInstance {
   }
 
   async predict(rows: Row): Promise<any> {
-    const Model = require("./model");
+    const Model = (await import("./model")).default;
     const model = await Model.findOne({ id: this.model_id });
     const template = model.templateObj;
     return await template.predict({

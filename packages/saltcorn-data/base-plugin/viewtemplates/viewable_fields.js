@@ -11,7 +11,7 @@ const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
-const { structuredClone, isWeb } = require("../../utils");
+const { structuredClone, isWeb, isOfflineMode } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
@@ -678,6 +678,13 @@ const get_viewable_fields = (
                 "data-inline-edit-dest-url": `/api/${table.name}/${
                   row[table.pk_name]
                 }`,
+                ...(reffield?.type?.name === "Float" &&
+                reffield.attributes?.decimal_places
+                  ? {
+                      "data-inline-edit-decimal-places":
+                        reffield.attributes.decimal_places,
+                    }
+                  : {}),
                 "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
               },
               span({ class: "current" }, oldkey(row)),
@@ -831,6 +838,13 @@ const get_viewable_fields = (
                     "data-inline-edit-dest-url": `/api/${table.name}/${
                       row[table.pk_name]
                     }`,
+                    ...(f?.type?.name === "Float" &&
+                    f.attributes?.decimal_places
+                      ? {
+                          "data-inline-edit-decimal-places":
+                            f.attributes.decimal_places,
+                        }
+                      : {}),
                     "data-inline-edit-type": f?.type?.name,
                   },
                   span({ class: "current" }, oldkey(row)),
@@ -968,8 +982,10 @@ const getForm = async (
   const tfields = (columns || [])
     .map((column) => {
       if (column.type === "Field") {
-        const f = fields.find((fld) => fld.name === column.field_name);
-        if (f) {
+        const f0 = fields.find((fld) => fld.name === column.field_name);
+
+        if (f0) {
+          const f = new Field(f0);
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
             if (getState().keyFieldviews[column.fieldview])
@@ -1035,9 +1051,10 @@ const getForm = async (
   });
   const form = new Form({
     action: action,
-    onSubmit: isRemote
-      ? `javascript:formSubmit(this, '/view/', '${viewname}')`
-      : undefined,
+    onSubmit:
+      isRemote || isOfflineMode()
+        ? `javascript:formSubmit(this, '/view/', '${viewname}')`
+        : undefined,
     viewname: viewname,
     fields: tfields,
     layout,

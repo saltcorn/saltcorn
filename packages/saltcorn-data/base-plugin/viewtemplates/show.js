@@ -77,6 +77,7 @@ const {
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
+const _ = require("underscore");
 
 /**
  * @param {object} req
@@ -521,7 +522,7 @@ const renderRows = async (
               class: "d-inline",
               "data-sc-local-state": `/view/${view.name}${qs}`,
             },
-            await view.run(state2, subviewExtra)
+            await view.run(state2, subviewExtra, view.isRemoteTable())
           );
         } else {
           const state2 = { ...outerState, ...state1, ...extra_state };
@@ -532,7 +533,11 @@ const renderRows = async (
             throw new InvalidConfiguration(
               `View ${view.name} embeds itself with same state; inifinite loop detected`
             );
-          segment.contents = await view.run(state2, subviewExtra);
+          segment.contents = await view.run(
+            state2,
+            subviewExtra,
+            view.isRemoteTable()
+          );
         }
       }
     });
@@ -710,6 +715,13 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
               row[table.pk_name]
             }`,
             "data-inline-edit-type": field?.type?.name,
+            ...(field?.type?.name === "Float" &&
+            field.attributes?.decimal_places
+              ? {
+                  "data-inline-edit-decimal-places":
+                    field.attributes.decimal_places,
+                }
+              : {}),
             class: !isWeb(req) ? "mobile-data-inline-edit" : "",
           },
           fvrun
@@ -811,6 +823,16 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
       );
       if (ix === -1) return "";
       return go(segment.contents[ix]);
+    },
+    blank(segment) {
+      if (segment.isHTML) {
+        const template = _.template(segment.contents, {
+          evaluate: /\{\{#(.+?)\}\}/g,
+          interpolate: /\{\{([^#].+?)\}\}/g,
+        });
+        const temres = template({ row, ...row });
+        return temres;
+      } else return segment.contents;
     },
   };
   return renderLayout({

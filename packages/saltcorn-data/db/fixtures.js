@@ -12,6 +12,9 @@ const File = require("../models/file");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
+const Tag = require("../models/tag");
+const Model = require("../models/model");
+const ModelInstance = require("../models/model_instance");
 const fs = require("fs").promises;
 
 module.exports =
@@ -69,7 +72,7 @@ module.exports =
       required: false,
       attributes: { summary_field: "name" },
     });
-    await View.create({
+    const authorList = await View.create({
       table_id: table.id,
       name: "authorlist",
       viewtemplate: "List",
@@ -88,7 +91,7 @@ module.exports =
       },
       min_role: 100,
     });
-    await View.create({
+    const authorShow = await View.create({
       table_id: table.id,
       name: "authorshow",
       viewtemplate: "Show",
@@ -110,7 +113,7 @@ module.exports =
       },
       min_role: 100,
     });
-    await View.create({
+    const authorEdit = await View.create({
       table_id: table.id,
       name: "authoredit",
       viewtemplate: "Edit",
@@ -1017,5 +1020,35 @@ module.exports =
         },
       },
       min_role: 100,
+    });
+
+    await Tag.create({
+      name: "tag1",
+      entries: [
+        { table_id: table.id },
+        { view_id: authorList.id },
+        { view_id: authorShow.id },
+        { view_id: authorEdit.id },
+      ],
+    });
+
+    const mdl = await Model.create({
+      name: "regression_model",
+      table_id: table.id,
+      modelpattern: "regression",
+      configuration: { numcluster: 2 },
+    });
+
+    await ModelInstance.create({
+      name: "regression_model_instance",
+      model_id: mdl.id,
+      fit_object: Buffer.from("foo"),
+      hyperparameters: { numcluster: 2 },
+      trained_on: new Date("2019-11-11T10:34:00.000Z"),
+      is_default: false,
+      metric_values: {},
+      parameters: {},
+      state: {},
+      report: "report",
     });
   };

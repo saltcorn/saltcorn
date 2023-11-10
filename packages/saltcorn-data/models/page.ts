@@ -46,6 +46,7 @@ const {
   structuredClone,
   isNode,
   objectToQueryString,
+  stringToJSON,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
@@ -61,6 +62,7 @@ class Page implements AbstractPage {
   min_role: number;
   layout: Layout;
   fixed_states: any;
+  attributes?: any;
 
   /**
    * @param {object} o
@@ -71,6 +73,8 @@ class Page implements AbstractPage {
     this.description = o.description;
     this.min_role = +o.min_role;
     this.id = o.id;
+    this.attributes = stringToJSON(o.attributes);
+
     this.layout =
       typeof o.layout === "string" ? JSON.parse(o.layout) : o.layout;
     this.fixed_states =
@@ -290,15 +294,13 @@ class Page implements AbstractPage {
         const role = (extraArgs.req.user || {}).role_id || 100;
         const pageContent = await page.run(querystate, extraArgs);
         const { getState } = require("../db/state");
-        segment.contents = getState()
-          .getLayout(extraArgs.req.user)
-          .renderBody({
-            title: "",
-            body: pageContent,
-            req: extraArgs.req,
-            role,
-            alerts: [],
-          });
+        segment.contents = getState().getLayout(extraArgs.req.user).renderBody({
+          title: "",
+          body: pageContent,
+          req: extraArgs.req,
+          role,
+          alerts: [],
+        });
       }
     });
     const pagename = this.name;

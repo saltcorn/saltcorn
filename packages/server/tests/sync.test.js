@@ -5,11 +5,15 @@ const {
   getAdminLoginCookie,
   resetToFixtures,
   respondJsonWith,
+  toRedirect,
+  toInclude,
+  toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/tests/mocks");
 
 const Table = require("@saltcorn/data/models/table");
+const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const Field = require("@saltcorn/data/models/field");
 const User = require("@saltcorn/data/models/user");
 
@@ -181,6 +185,52 @@ describe("load remote insert/updates", () => {
       }
     });
 
+    it("sync table with capitals", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      // create table
+      await request(app)
+        .post("/table")
+        .set("Cookie", loginCookie)
+        .send(`name=${encodeURIComponent("Table with capitals")}`)
+        .expect(toRedirect("/table/16"));
+      // add a field
+      await request(app)
+        .post("/field/")
+        .send("stepName=Basic properties")
+        .send("name=string_field")
+        .send("label=StringField")
+        .send("type=String")
+        .send(
+          `contextEnc=${encodeURIComponent(JSON.stringify({ table_id: 16 }))}`
+        )
+        .set("Cookie", loginCookie)
+        .expect(toInclude("options"));
+      // init sync_info table
+      await request(app)
+        .post("/table")
+        .send("id=16")
+        .send("has_sync_info=on")
+        .set("Cookie", loginCookie)
+        .expect(toRedirect("/table/16"));
+      const dbTime = await db.time();
+
+      // call load changes
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: (await db.time()).valueOf(),
+          syncInfos: {
+            "Table with capitals": {
+              maxLoadedId: 0,
+              syncFrom: dbTime.valueOf(),
+            },
+          },
+        })
+        .expect(toSucceed());
+    });
+
     it("load sync not authorized", async () => {
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getUserLoginCookie();
@@ -300,8 +350,9 @@ describe("Upload changes", () => {
         .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
         .set("Cookie", loginCookie);
       expect(resp.status).toBe(200);
-      const { finished, translatedIds, error } = resp._body;
-      if (finished) return translatedIds ? translatedIds : error;
+      const { finished, translatedIds, uniqueConflicts, error } = resp._body;
+      if (finished)
+        return translatedIds ? { translatedIds, uniqueConflicts } : error;
       await sleep(1000);
     }
     return null;
@@ -352,7 +403,7 @@ describe("Upload changes", () => {
       });
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
-      const translatedIds = await getResult(app, loginCookie, syncDir);
+      const { translatedIds } = await getResult(app, loginCookie, syncDir);
       await cleanSyncDir(app, loginCookie, syncDir);
       expect(translatedIds).toBeDefined();
       expect(translatedIds).toEqual({
@@ -362,6 +413,89 @@ describe("Upload changes", () => {
         publisher: {
           1: 3,
         },
+      });
+    });
+
+    it("handles inserts with TableConstraint conflicts", async () => {
+      const books = Table.findOne({ name: "books" });
+      const oldCount = await books.countRows();
+      // unique constraint for author + pages
+      const constraint = await TableConstraint.create({
+        table: books,
+        type: "Unique",
+        configuration: {
+          fields: ["author", "pages"],
+        },
+      });
+
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
+        books: {
+          inserts: [
+            {
+              author: "Herman Melville",
+              pages: 967,
+              publisher: 1,
+            },
+            {
+              author: "Leo Tolstoy",
+              pages: "728",
+              publisher: 2,
+            },
+          ],
+        },
+      });
+
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const { uniqueConflicts } = await getResult(app, loginCookie, syncDir);
+      await constraint.delete();
+      await cleanSyncDir(app, loginCookie, syncDir);
+      expect(uniqueConflicts).toBeDefined();
+      expect(uniqueConflicts).toEqual({
+        books: [
+          { id: 1, author: "Herman Melville", pages: 967, publisher: null },
+          { id: 2, author: "Leo Tolstoy", pages: 728, publisher: 1 },
+        ],
+      });
+      const newCount = await books.countRows();
+      expect(newCount).toBe(oldCount);
+    });
+
+    it("denies updates with TableConstraint conflicts", async () => {
+      const books = Table.findOne({ name: "books" });
+      const oldCount = await books.countRows();
+      // unique constraint for author + pages
+      const constraint = await TableConstraint.create({
+        table: books,
+        type: "Unique",
+        configuration: {
+          fields: ["author", "pages"],
+        },
+      });
+
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
+        books: {
+          updates: [
+            {
+              id: 2,
+              author: "Herman Melville",
+              pages: 967,
+            },
+          ],
+        },
+      });
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const error = await getResult(app, loginCookie, syncDir);
+      await constraint.delete();
+      await cleanSyncDir(app, loginCookie, syncDir);
+      expect(error).toBeDefined();
+      expect(error).toEqual({
+        message: "Duplicate value for unique field: author_pages",
       });
     });
 
@@ -389,7 +523,7 @@ describe("Upload changes", () => {
       });
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
-      const translatedIds = await getResult(app, loginCookie, syncDir);
+      const { translatedIds } = await getResult(app, loginCookie, syncDir);
       await cleanSyncDir(app, loginCookie, syncDir);
       expect(translatedIds).toBeDefined();
       expect(translatedIds).toEqual({
@@ -427,7 +561,7 @@ describe("Upload changes", () => {
       });
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
-      const translatedIds = await getResult(app, loginCookie, syncDir);
+      const { translatedIds } = await getResult(app, loginCookie, syncDir);
       await cleanSyncDir(app, loginCookie, syncDir);
       expect(translatedIds).toBeDefined();
       const afterDelete = await books.getRows();
@@ -471,7 +605,7 @@ describe("Upload changes", () => {
       });
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
-      const translatedIds = await getResult(app, loginCookie, syncDir);
+      const { translatedIds } = await getResult(app, loginCookie, syncDir);
       await cleanSyncDir(app, loginCookie, syncDir);
       expect(translatedIds).toBeDefined();
       const afterDelete = await books.getRows();

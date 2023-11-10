@@ -624,6 +624,11 @@ const configTypes: ConfigTypes = {
     label: "Auto backup expiration days",
     default: null,
   },
+  backup_with_event_log: {
+    type: "Bool",
+    label: "Backup with event log",
+    default: false,
+  },
   snapshots_enabled: {
     type: "Bool",
     label: "Snapshots enabled",
@@ -737,6 +742,16 @@ const configTypes: ConfigTypes = {
     type: "Integer",
     label: "Upload size limit (Kb)",
     blurb: "Maximum upload file size in kilobytes",
+  },
+  body_limit: {
+    type: "Integer",
+    label: "Body size limit (Kb)",
+    blurb: "Maximum request body size in kilobytes",
+  },
+  url_encoded_limit: {
+    type: "Integer",
+    label: "URL encoded size limit (Kb)",
+    blurb: "Maximum URL encoded request size in kilobytes",
   },
   /** @type {object} */
   min_role_search: {

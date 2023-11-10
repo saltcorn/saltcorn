@@ -15,6 +15,7 @@ import {
   reactifyStyles,
   SettingsSectionHeaderRow,
   buildBootstrapOptions,
+  parseStyles,
 } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
 import {
@@ -83,6 +84,8 @@ const Columns = ({
   gy,
   aligns,
   vAligns,
+  colClasses,
+  colStyles,
 }) => {
   const {
     selected,
@@ -101,7 +104,8 @@ const Columns = ({
           key={ix}
           className={`split-col col-sm-${getWidth(widths, ix)} text-${
             aligns?.[ix]
-          } align-items-${vAligns?.[ix]}`}
+          } align-items-${vAligns?.[ix]} ${colClasses?.[ix] || ""}`}
+          style={parseStyles(colStyles?.[ix] || "")}
         >
           <Element canvas id={`Col${ix}`} is={Column}>
             {contents[ix]}
@@ -129,6 +133,8 @@ const ColumnsSettings = () => {
     gy: node.data.props.gy,
     vAligns: node.data.props.vAligns,
     aligns: node.data.props.aligns,
+    colClasses: node.data.props.colClasses,
+    colStyles: node.data.props.colStyles,
   }));
   const {
     actions: { setProp },
@@ -139,10 +145,14 @@ const ColumnsSettings = () => {
     setting_col_n,
     vAligns,
     aligns,
+    colClasses,
+    colStyles,
   } = node;
   const colSetsNode = {
     vAlign: vAligns?.[setting_col_n - 1],
     hAlign: aligns?.[setting_col_n - 1],
+    colClass: colClasses?.[setting_col_n - 1] || "",
+    colStyle: colStyles?.[setting_col_n - 1] || "",
   };
   return (
     <Accordion>
@@ -280,6 +290,36 @@ const ColumnsSettings = () => {
                 setProp((prop) => {
                   if (!prop.aligns) prop.aligns = [];
                   prop.aligns[setting_col_n - 1] = v;
+                })
+              }
+            />
+            <SettingsRow
+              field={{
+                name: "colClass",
+                label: "Class",
+                type: "String",
+              }}
+              node={colSetsNode}
+              setProp={setProp}
+              onChange={(k, v) =>
+                setProp((prop) => {
+                  if (!prop.colClasses) prop.colClasses = [];
+                  prop.colClasses[setting_col_n - 1] = v;
+                })
+              }
+            />
+            <SettingsRow
+              field={{
+                name: "colStyle",
+                label: "CSS",
+                type: "textarea",
+              }}
+              node={colSetsNode}
+              setProp={setProp}
+              onChange={(k, v) =>
+                setProp((prop) => {
+                  if (!prop.colStyles) prop.colStyles = [];
+                  prop.colStyles[setting_col_n - 1] = v;
                 })
               }
             />

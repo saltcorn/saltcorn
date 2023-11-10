@@ -33,7 +33,12 @@ const {
   eval_expression,
   freeVariables,
 } = require("../../models/expression");
-const { InvalidConfiguration, isNode, mergeIntoWhere } = require("../../utils");
+const {
+  InvalidConfiguration,
+  isNode,
+  isOfflineMode,
+  mergeIntoWhere,
+} = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
 const {
@@ -75,6 +80,7 @@ const builtInActions = [
   "Save",
   "SaveAndContinue",
   "UpdateMatchingRows",
+  "SubmitWithAjax",
   "Reset",
   "GoBack",
   "Delete",
@@ -489,6 +495,7 @@ const runMany = async (
     table = Table.findOne({ id: table.id });
     fields = table.getFields();
   }
+  const isRemote = !isWeb(extra.req);
   return await asyncMap(rows, async (row) => {
     const html = await render({
       table,
@@ -504,6 +511,7 @@ const runMany = async (
       getRowQuery,
       optionsQuery,
       split_paste,
+      isRemote,
     });
     return { html, row };
   });
@@ -627,7 +635,8 @@ const transformForm = async ({
           view.configuration.columns,
           view.configuration.layout,
           row?.id,
-          req
+          req,
+          !isWeb(req)
         );
         traverseSync(childForm.layout, {
           field(segment) {
@@ -708,7 +717,11 @@ const transformForm = async ({
           state = { id: row[view_select.field_name] };
           break;
       }
-      segment.contents = await view.run(state, { req, res });
+      segment.contents = await view.run(
+        state,
+        { req, res },
+        view.isRemoteTable()
+      );
     },
   });
   translateLayout(form.layout, req.getLocale());
@@ -762,10 +775,12 @@ const render = async ({
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
-    for (const field of file_fields) {
-      if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
-        const file = await File.findOne({ id: row[field.name] });
-        if (file.id) form.values[field.name] = file.filename;
+    if (isNode()) {
+      for (const field of file_fields) {
+        if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
+          const file = await File.findOne({ id: row[field.name] });
+          if (file.id) form.values[field.name] = file.filename;
+        }
       }
     }
     form.hidden(table.pk_name);
@@ -825,7 +840,7 @@ const render = async ({
   let hasSave = false;
   traverseSync(layout, {
     action({ action_name }) {
-      if (action_name === "Save") {
+      if (action_name === "Save" || action_name === "SubmitWithAjax") {
         hasSave = true;
       }
     },
@@ -947,9 +962,12 @@ const runPost = async (
       }
       if (ins_upd_error) {
         res.status(422);
-        req.flash("error", text_attr(ins_upd_error));
-        res.sendWrap(viewname, renderForm(form, req.csrfToken()));
-
+        if (req.xhr) {
+          res.json({ error: ins_upd_error });
+        } else {
+          req.flash("error", text_attr(ins_upd_error));
+          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+        }
         return;
       }
       //Edit-in-edit
@@ -1044,13 +1062,13 @@ const runPost = async (
       return;
     }
 
-    if (req.xhr && !originalID && !req.smr) {
+    /*if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
       return;
     } else if (req.xhr && !req.smr) {
       res.json({ view_when_done, ...trigger_return });
       return;
-    }
+    }*/
     await whenDone(
       viewname,
       table_id,
@@ -1067,7 +1085,9 @@ const runPost = async (
       req,
       res,
       body,
-      row
+      row,
+      !originalID ? { id, ...trigger_return } : trigger_return,
+      true
     );
   }
 };
@@ -1305,7 +1325,16 @@ const prepare = async (
   { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
   remote
 ) => {
-  const form = await getForm(table, viewname, columns, layout, body.id, req);
+  const isRemote = !isWeb(req);
+  const form = await getForm(
+    table,
+    viewname,
+    columns,
+    layout,
+    body.id,
+    req,
+    isRemote
+  );
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
@@ -1375,16 +1404,10 @@ const prepare = async (
         }
       }
     } else if (req.files && req.files[field.name]) {
-      if (!isNode() && !remote) {
-        req.flash(
-          "error",
+      if (!isNode() && !remote && req.files[field.name].name) {
+        throw new Error(
           "The mobile-app supports no local files, please use a remote table."
         );
-        res.sendWrap(
-          viewname,
-          renderForm(form, req.csrfToken ? req.csrfToken() : false)
-        );
-        return null;
       }
       if (isNode()) {
         const file = await File.from_req_files(
@@ -1395,8 +1418,11 @@ const prepare = async (
         );
         row[field.name] = file.path_to_serve;
       } else {
-        const serverResp = await File.upload(req.files[field.name]);
-        row[field.name] = serverResp.location;
+        const file = req.files[field.name];
+        if (file?.name) {
+          const serverResp = await File.upload(req.files[field.name]);
+          if (serverResp?.location) row[field.name] = serverResp.location;
+        }
       }
     } else {
       delete row[field.name];
@@ -1434,23 +1460,42 @@ const whenDone = async (
   req,
   res,
   body,
-  row
+  row,
+  trigger_return,
+  check_ajax
 ) => {
+  const res_redirect = (url) => {
+    if (check_ajax && req.xhr && !req.smr)
+      res.json({
+        view_when_done,
+        url_when_done: url,
+        ...(trigger_return || {}),
+      });
+    else res.redirect(url);
+  };
+
   if (redirect) {
-    res.redirect(redirect);
+    res_redirect(redirect);
+    return;
+  }
+  if (check_ajax && req.xhr && !req.smr && trigger_return?.error) {
+    res.json({
+      view_when_done,
+      ...(trigger_return || {}),
+    });
     return;
   }
 
   let use_view_when_done = view_when_done;
   if (destination_type === "Back to referer" && body._referer) {
-    res.redirect(body._referer);
+    res_redirect(body._referer);
     return;
   } else if (destination_type === "Page" && page_when_done) {
-    res.redirect(`/page/${page_when_done}`);
+    res_redirect(`/page/${page_when_done}`);
     return;
   } else if (destination_type === "URL formula" && dest_url_formula) {
     const url = eval_expression(dest_url_formula, row);
-    res.redirect(url);
+    res_redirect(url);
     return;
   } else if (destination_type !== "View")
     for (const { view, expression } of formula_destinations || []) {
@@ -1463,7 +1508,7 @@ const whenDone = async (
       }
     }
   if (!use_view_when_done) {
-    res.redirect(`/`);
+    res_redirect(`/`);
     return;
   }
   const [viewname_when_done, relation] = use_view_when_done.split(".");
@@ -1473,7 +1518,7 @@ const whenDone = async (
       "warning",
       `View "${use_view_when_done}" not found - change "View when done" in "${viewname}" view`
     );
-    res.redirect(`/`);
+    res_redirect(`/`);
   } else {
     const state_fields = await nxview.get_state_fields();
     let target = `/view/${text(viewname_when_done)}`;
@@ -1490,7 +1535,7 @@ const whenDone = async (
     if (!isWeb(req)) {
       res.json({ redirect: `get${redirectPath}` });
     } else {
-      res.redirect(redirectPath);
+      res_redirect(redirectPath);
     }
   }
 };

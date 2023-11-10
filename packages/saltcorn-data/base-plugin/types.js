@@ -611,6 +611,7 @@ const string = {
                   id: `input${text_attr(nm)}`,
                   disabled: attrs.disabled,
                   onChange: attrs.onChange,
+                  onBlur: attrs.onChange,
                 },
                 required || attrs.force_required
                   ? getStrOptions(v, attrs.options)
@@ -630,6 +631,7 @@ const string = {
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
+                onBlur: attrs.onChange,
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
                   JSON.stringify(attrs.calcOptions)
@@ -1313,8 +1315,11 @@ const float = {
           onChange: attrs.onChange,
           required: !!required,
           step: attrs.decimal_places
-            ? Math.pow(10, -attrs.decimal_places)
-            : "0.01",
+            ? Math.round(
+                Math.pow(10, -attrs.decimal_places) *
+                  Math.pow(10, attrs.decimal_places)
+              ) / Math.pow(10, attrs.decimal_places)
+            : "any",
           id: `input${text_attr(nm)}`,
           ...(attrs.max && { max: attrs.max }),
           ...(attrs.min && { min: attrs.min }),
@@ -1417,7 +1422,7 @@ const date = {
       isEdit: false,
       description: "Show date and time in the users locale",
       run: (d, req) =>
-        typeof d === "string"
+        typeof d === "string" || typeof d === "number"
           ? localeDateTime(new Date(d))
           : d && d.toISOString
           ? localeDateTime(d)
@@ -1433,7 +1438,7 @@ const date = {
       description: "Show date in the users locale",
 
       run: (d, req) =>
-        typeof d === "string"
+        typeof d === "string" || typeof d === "number"
           ? localeDate(new Date(d))
           : d && d.toISOString
           ? localeDate(d)

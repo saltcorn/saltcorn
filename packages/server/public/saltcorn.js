@@ -356,6 +356,15 @@ function selectVersionError(res, btnId) {
   restore_old_button(btnId);
 }
 
+function submitWithAjax(e) {
+  saveAndContinue(e, (res) => {
+    if (res && res.responseJSON && res.responseJSON.url_when_done)
+      window.location.href = res.responseJSON.url_when_done;
+    if (res && res.responseJSON && res.responseJSON.error)
+      notifyAlert({ type: "danger", text: res.responseJSON.error });
+  });
+}
+
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
   const valres = form[0].reportValidity();
@@ -381,6 +390,9 @@ function saveAndContinue(e, k) {
       if (res.notify) {
         notifyAlert(res.notify);
       }
+      if (res.reload_page) {
+        location.reload(); //TODO notify to cookie if reload or goto
+      }
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
@@ -401,8 +413,8 @@ function saveAndContinue(e, k) {
       }
       ajax_indicate_error(e, request);
     },
-    complete: function () {
-      if (k) k();
+    complete: function (res) {
+      if (k) k(res);
     },
   });
 
@@ -560,6 +572,20 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
 
   return false;
 }
+
+function api_action_call(name, body) {
+  $.ajax(`/api/action/${name}`, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: body,
+    success: function (res) {
+      common_done(res.data);
+    },
+  });
+}
+
 function make_unique_field(
   id,
   table_id,

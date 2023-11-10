@@ -19,13 +19,14 @@ const {
   viewToEmailHtml,
   loadAttachments,
   getFileAggregations,
+  mjml2html,
 } = require("../models/email");
 const {
   get_async_expression_function,
   recalculate_for_stored,
   eval_expression,
 } = require("../models/expression");
-const { div, code, a } = require("@saltcorn/markup/tags");
+const { div, code, a, span } = require("@saltcorn/markup/tags");
 const { sleep } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
@@ -52,7 +53,12 @@ const run_code = async ({
   user,
   ...rest
 }) => {
-  if (run_where === "Client page") return { eval_js: code };
+  if (run_where === "Client page")
+    return {
+      eval_js: code,
+      row,
+      field_names: table ? table.fields.map((f) => f.name) : undefined,
+    };
   if (!isNode() && run_where === "Server") {
     // stop on the app and run the action server side
     return { server_eval: true };
@@ -118,6 +124,7 @@ module.exports = {
   blocks: {
     disableInBuilder: true,
     disableInList: true,
+    description: "Build action with drag and drop steps similar to Scratch",
     configFields: [
       {
         name: "workspace",
@@ -144,6 +151,7 @@ module.exports = {
     /**
      * @returns {object[]}
      */
+    description: "Emit an event",
     configFields: () => [
       {
         name: "eventType",
@@ -193,6 +201,7 @@ module.exports = {
    * @subcategory actions
    */
   webhook: {
+    description: "Make an outbound HTTP POST request",
     configFields: [
       {
         name: "url",
@@ -232,6 +241,8 @@ module.exports = {
     /**
      * @returns {Promise<object[]>}
      */
+    description:
+      "Find or create a direct message room for the user, redirect the page to this room",
     configFields: async () => {
       const views = await View.find_all_views_where(
         ({ viewrow }) => viewrow.viewtemplate === "Room"
@@ -313,6 +324,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Send an email, based on a chosen view for this table",
     configFields: async ({ table }) => {
       if (!table) return [];
       const views = await View.find_table_views_where(
@@ -328,6 +340,16 @@ module.exports = {
             (f.type && f.type.name === "String") || f.reftable_name === "users"
         )
         .map((f) => f.name);
+      const body_field_opts = fields
+        .filter(
+          (f) => f.type && (f.type.name === "HTML" || f.type.name === "String")
+        )
+        .map((f) => f.name);
+      const confirm_field_opts = fields
+        .filter(
+          (f) => f.type && (f.type.name === "Bool" || f.type.name === "Date")
+        )
+        .map((f) => f.name);
       const attachment_opts = [""];
       for (const field of fields) {
         if (field.type === "File") attachment_opts.push(field.name);
@@ -337,12 +359,33 @@ module.exports = {
       }
       return [
         {
+          name: "body_type",
+          label: "Body type",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["View", "Text field", "HTML field", "MJML field"],
+          },
+        },
+        {
+          name: "body_field",
+          label: "Body field",
+          type: "String",
+          required: true,
+          attributes: {
+            options: body_field_opts,
+          },
+          showIf: { body_type: ["Text field", "HTML field", "MJML field"] },
+        },
+
+        {
           name: "viewname",
           label: "View to send",
           sublabel:
             "Select a view that can render a single record - for instance, of the Show template.",
           input_type: "select",
           options: view_opts,
+          showIf: { body_type: "View" },
         },
         {
           name: "to_email",
@@ -377,7 +420,15 @@ module.exports = {
           label: "Subject",
           sublabel: "Subject of email",
           type: "String",
+          class: "validate-expression validate-expression-conditional",
+
           required: true,
+        },
+        {
+          name: "subject_formula",
+          label: "Subject is a formula?",
+          type: "Bool",
+          required: false,
         },
         {
           name: "attachment_path",
@@ -398,6 +449,16 @@ module.exports = {
           type: "String",
         },
         { name: "disable_notify", label: "Disable notification", type: "Bool" },
+        {
+          name: "confirm_field",
+          label: "Send confirmation field",
+          type: "String",
+          sublabel:
+            "Bool or Date field to indicate successful sending of email message",
+          attributes: {
+            options: confirm_field_opts,
+          },
+        },
       ];
     },
     requireRow: true,
@@ -413,14 +474,18 @@ module.exports = {
       row,
       table,
       configuration: {
+        body_type,
+        body_field,
         viewname,
         subject,
+        subject_formula,
         to_email,
         to_email_field,
         to_email_fixed,
         only_if,
         attachment_path,
         disable_notify,
+        confirm_field,
       },
       user,
     }) => {
@@ -455,30 +520,61 @@ module.exports = {
         );
         return;
       }
-      const view = await View.findOne({ name: viewname });
-      const html = await viewToEmailHtml(view, { id: row.id });
+      const setBody = {};
+      if (body_type === "Text field") {
+        setBody.text = row[body_field];
+      } else if (body_type === "HTML field") {
+        setBody.html = row[body_field];
+      } else if (body_type === "MJML field") {
+        const mjml = row[body_field];
+        const html = mjml2html(mjml, { minify: true });
+        setBody.html = html.html;
+      } else {
+        const view = await View.findOne({ name: viewname });
+        setBody.html = await viewToEmailHtml(view, { id: row.id });
+      }
+
       const from = getState().getConfig("email_from");
       const attachments = await loadAttachments(
         attachment_path,
         row,
         user ? user : { role_id: 100 }
       );
+      const the_subject = subject_formula
+        ? eval_expression(subject, row)
+        : subject;
 
       getState().log(
         3,
-        `Sending email from ${from} to ${to_addr} with subject ${subject}`
+        `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
 
       const email = {
         from,
         to: to_addr,
-        subject,
-        html,
+        subject: the_subject,
+        ...setBody,
         attachments,
       };
-      await getMailTransport().sendMail(email);
-      if (disable_notify) return;
-      else return { notify: `E-mail sent to ${to_addr}` };
+      try {
+        const sendres = await getMailTransport().sendMail(email);
+        if (confirm_field && sendres.accepted.includes(to_addr)) {
+          const confirm_fld = table.getField(confirm_field);
+          if (confirm_fld && confirm_fld.type.name === "Date")
+            await table.updateRow({ [confirm_field]: new Date() }, row.id);
+          else if (confirm_fld && confirm_fld.type.name === "Bool")
+            await table.updateRow({ [confirm_field]: true }, row.id);
+        }
+        if (disable_notify) return;
+        else return { notify: `E-mail sent to ${to_addr}` };
+      } catch (e) {
+        if (confirm_field) {
+          const confirm_fld = table.getField(confirm_field);
+          if (confirm_fld && confirm_fld.type.name === "Bool")
+            await table.updateRow({ [confirm_field]: false }, row.id);
+          throw e;
+        }
+      }
     },
   },
 
@@ -493,6 +589,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Insert a row in a related table",
     configFields: async ({ table }) => {
       if (!table) return [];
       const { child_field_list } = await table.get_child_relations();
@@ -552,6 +649,7 @@ module.exports = {
     /**
      * @returns {Promise<object[]>}
      */
+    description: "Duplicate the current row",
     configFields: () => [],
     requireRow: true,
     /**
@@ -581,6 +679,8 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description:
+      "Re-calculate the stored calculated fields for a table, optionally only for the triggering row",
     configFields: async ({ table }) => {
       const tables = await Table.find({}, { cached: true });
       return [
@@ -634,6 +734,7 @@ module.exports = {
      * @param {*} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "insert a row into any table, using a formula expression",
     configFields: async ({ table }) => {
       const tables = await Table.find({}, { cached: true });
       return [
@@ -647,7 +748,8 @@ module.exports = {
         {
           name: "row_expr",
           label: "Row expression",
-          sublabel: "Expression for JavaScript object",
+          sublabel:
+            "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
         },
@@ -684,6 +786,7 @@ module.exports = {
      * @param {*} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Modify the triggering row",
     configFields: async ({ table }) => {
       return [
         {
@@ -720,6 +823,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    description: "Run arbitrary JavaScript code",
     configFields: async ({ table }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
@@ -746,6 +850,8 @@ module.exports = {
       ]
         .map((f) => code(f))
         .join(", ");
+      const clientvars = [...fields].map((f) => code(f)).join(", ");
+
       return [
         {
           name: "code",
@@ -767,8 +873,20 @@ module.exports = {
         {
           input_type: "section_header",
           label: " ",
-          sublabel: div("Variables in scope: ", vars),
+          sublabel: span("Variables in scope: ", vars),
+          help: {
+            topic: "JavaScript action code",
+          },
           showIf: { run_where: "Server" },
+        },
+        {
+          input_type: "section_header",
+          label: " ",
+          sublabel: span("Variables in scope: ", clientvars),
+          help: {
+            topic: "JavaScript action code",
+          },
+          showIf: { run_where: "Client page" },
         },
         {
           name: "run_where",
@@ -827,6 +945,7 @@ module.exports = {
    * @subcategory actions
    */
   set_user_language: {
+    description: "Set the logged-in user's chosen language",
     configFields: async ({ table }) => [
       {
         name: "language",
@@ -871,6 +990,8 @@ module.exports = {
      * @param {*} opts.table
      * @returns {Promise<object[]>}
      */
+    description:
+      "Synchronize a database table with an external table by copying rows from the external table",
     configFields: async ({ table }) => {
       const tables = await Table.find_with_external();
       const pk_options = {};
@@ -1020,6 +1141,7 @@ module.exports = {
     },
   },
   notify_user: {
+    description: "Send a notification to a specific user",
     configFields: () => [
       {
         name: "user_spec",

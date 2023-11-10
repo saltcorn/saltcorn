@@ -404,6 +404,7 @@ const render = ({
                     segment.title
                   )
                 : segment.title,
+              segment.subtitle ? span(segment.subtitle) : "",
               segment.titleAjaxIndicator &&
                 span(
                   {
@@ -743,7 +744,12 @@ const render = ({
                         segment.vAligns
                           ? " align-items-" + segment.vAligns[ixb]
                           : ""
+                      }${
+                        segment.colClasses?.[ixb]
+                          ? " " + segment.colClasses[ixb]
+                          : ""
                       }`,
+                style: segment.colStyles?.[ixb] || undefined,
               },
               go(t, false, ixb)
             )

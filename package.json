@@ -44,6 +44,7 @@
       "**/dist/**",
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",
+      "packages/saltcorn-builder/**",
       "docs/**"
     ],
     "extends": "eslint:recommended",

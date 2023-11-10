@@ -471,7 +471,6 @@ const Builder = ({ options, layout, mode }) => {
                     icon={faSave}
                     className={isSaving ? "d-inline" : "d-none"}
                   />
-                  <ViewPageLink />
                   <SettingsPanel />
                 </div>
               </div>

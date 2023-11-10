@@ -12,9 +12,6 @@ const postView = async (context) => {
     body[k] = v;
     if (k === "redirect") redirect = v;
   }
-  const view = await saltcorn.data.models.View.findOne({
-    name: context.params.viewname,
-  });
   const refererRoute =
     routingHistory?.length > 1
       ? routingHistory[routingHistory.length - 2]
@@ -24,6 +21,11 @@ const postView = async (context) => {
     files: context.files,
     refererRoute,
   });
+  const view = await saltcorn.data.models.View.findOne({
+    name: context.params.viewname,
+  });
+  if (!view)
+    throw new Error(req.__("No such view: %s", context.params.viewname));
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const mobileCfg = state.mobileConfig;
@@ -44,7 +46,18 @@ const postView = async (context) => {
     view.isRemoteTable()
   );
   if (mobileCfg.isOfflineMode) await offlineHelper.setHasOfflineData(true);
-  return res.getJson();
+  const wrapped = res.getWrapHtml();
+  if (wrapped) {
+    return wrapContents(
+      wrapped,
+      res.getWrapViewName() || "viewname",
+      context,
+      req
+    );
+  }
+  const json = res.getJson();
+  if (json) return json;
+  throw new Error(req.__("%s finished without a result", `POST ${view.name}`));
 };
 
 /**
@@ -52,9 +65,6 @@ const postView = async (context) => {
  * @param {*} context
  */
 const postViewRoute = async (context) => {
-  const view = await saltcorn.data.models.View.findOne({
-    name: context.params.viewname,
-  });
   const query = context.query ? parseQuery(context.query) : {};
   const refererRoute =
     routingHistory?.length > 1
@@ -65,6 +75,11 @@ const postViewRoute = async (context) => {
     query,
     refererRoute,
   });
+  const view = await saltcorn.data.models.View.findOne({
+    name: context.params.viewname,
+  });
+  if (!view)
+    throw new Error(req.__("No such view: %s", context.params.viewname));
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const { role_id, isOfflineMode } = state.mobileConfig;
@@ -86,7 +101,14 @@ const postViewRoute = async (context) => {
       context,
       req
     );
-  else return res.getJson();
+  const json = res.getJson();
+  if (json) return json;
+  throw new Error(
+    req.__(
+      "%s finished without a result",
+      `POST ${view.name}: ${context.params.route}`
+    )
+  );
 };
 
 /**
@@ -97,13 +119,14 @@ const postViewRoute = async (context) => {
 const getView = async (context) => {
   const state = saltcorn.data.state.getState();
   const query = context.query ? parseQuery(context.query) : {};
-  const { viewname } = context.params;
-  const view = saltcorn.data.models.View.findOne({ name: viewname });
   const refererRoute =
     routingHistory?.length > 1
       ? routingHistory[routingHistory.length - 2]
       : undefined;
   const req = new MobileRequest({ xhr: context.xhr, query, refererRoute });
+  const { viewname } = context.params;
+  const view = saltcorn.data.models.View.findOne({ name: viewname });
+  if (!view) throw new Error(req.__("No such view: %s", viewname));
   const res = new MobileResponse();
   if (
     state.mobileConfig.role_id > view.min_role &&

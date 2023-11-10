@@ -409,7 +409,7 @@ const fieldFlow = (req) =>
             instance_options[model.name].push(...instances.map((i) => i.name));
 
             const outputs = await applyAsync(
-              model.templateObj.prediction_outputs || [],
+              model.templateObj?.prediction_outputs || [], // unit tests can have templateObj undefined
               { table, configuration: model.configuration }
             );
             output_options[model.name] = outputs.map((o) => o.name);
@@ -840,6 +840,11 @@ router.post(
     const table = Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 100;
 
+    getState().log(
+      5,
+      `Route /fields/show-calculated/${tableName}/${fieldName}/${fieldview} user=${req.user?.id}`
+    );
+
     const fields = table.getFields();
     let row = { ...req.body };
     if (row && Object.keys(row).length > 0) readState(row, fields);
@@ -1018,6 +1023,13 @@ router.post(
     const { tableName, fieldName, fieldview } = req.params;
     const table = Table.findOne({ name: tableName });
     const fields = table.getFields();
+    const state = getState();
+
+    state.log(
+      5,
+      `Route /fields/preview/${tableName}/${fieldName}/${fieldview} user=${req.user?.id}`
+    );
+
     let field, row, value;
     if (fieldName.includes(".")) {
       const [refNm, targetNm] = fieldName.split(".");
@@ -1048,9 +1060,9 @@ router.post(
     }
     const fieldviews =
       field.type === "Key"
-        ? getState().keyFieldviews
+        ? state.keyFieldviews
         : field.type === "File"
-        ? getState().fileviews
+        ? state.fileviews
         : field.type.fieldviews;
     if (!field.type || !fieldviews) {
       res.send("");

@@ -307,6 +307,7 @@ class Field implements AbstractField {
         whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
         summary_field: this.attributes.summary_field,
         label_formula: this.attributes.label_formula,
+        neutral_label: this.attributes.neutral_label,
         required: this.required,
       };
     }
@@ -385,7 +386,7 @@ class Field implements AbstractField {
           ? [{ label: "", value: "" }, ...dbOpts]
           : dbOpts;
       this.options = [...new Set(allOpts)];
-    } else if (this.type === "File") {
+    } else if (this.type === "File" && isNode()) {
       const files = await File.find(
         this.attributes.folder
           ? { folder: this.attributes.folder }
@@ -499,7 +500,13 @@ class Field implements AbstractField {
       return this.type.sql_name;
     }
     throw new Error(
-      "Unable to get the sql_type" + JSON.stringify(this.type, null, 2)
+      `Unable to get the sql_type: ${
+        this.type
+          ? JSON.stringify(this.type, null, 2)
+          : this.typename
+          ? this.typename
+          : "unknown type"
+      }`
     );
   }
 

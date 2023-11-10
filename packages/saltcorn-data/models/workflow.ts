@@ -28,6 +28,7 @@ const { applyAsync, apply } = require("../utils");
 class Workflow implements AbstractWorkflow {
   steps: any[];
   onDone: (context: any) => any;
+  onStepSuccess?: (step: any, context: any) => any;
   action?: string | undefined;
   __: any;
   saveURL?: string;
@@ -42,6 +43,7 @@ class Workflow implements AbstractWorkflow {
   constructor(o: WorkflowCfg) {
     this.steps = o.steps || [];
     this.onDone = o.onDone || ((c) => c);
+    this.onStepSuccess = o.onStepSuccess;
     this.action = o.action;
     this.previewURL = o.previewURL;
     this.__ = (s: any) => s;
@@ -145,14 +147,20 @@ class Workflow implements AbstractWorkflow {
       }
       const toCtx = step.contextField
         ? {
-            [step.contextField]: {
-              ...(context[step.contextField] || {}),
-              ...valres.success,
-            },
+            ...(context[step.contextField] || {}),
+            ...valres.success,
           }
         : valres.success;
+      let newCtx = null;
+      if (step.contextField) {
+        newCtx = { ...context };
+        newCtx[step.contextField] = toCtx;
+      } else {
+        newCtx = { ...context, ...toCtx };
+      }
 
-      return this.runStep({ ...context, ...toCtx }, stepIx + 1);
+      if (this.onStepSuccess) await this.onStepSuccess(step, newCtx);
+      return this.runStep(newCtx, stepIx + 1);
     } else if (step.builder) {
       const toCtx0 = {
         columns: JSON.parse(decodeURIComponent(body.columns)),
@@ -340,6 +348,7 @@ namespace Workflow {
   export type WorkflowCfg = {
     steps?: any[];
     onDone?: (context: any) => any;
+    onStepSuccess?: (step: any, context: any) => any;
     action?: string;
     previewURL?: string;
   };

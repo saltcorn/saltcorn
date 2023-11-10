@@ -254,22 +254,26 @@ var offlineHelper = (() => {
     return result;
   };
 
-  const handleTranslatedIds = async (allTranslations) => {
+  const handleTranslatedIds = async (allUniqueConflicts, allTranslations) => {
     const idToTable = {};
     for (const [tblName, translations] of Object.entries(allTranslations)) {
       const fks = await saltcorn.data.models.Field.find({
         reftable_name: tblName,
       });
+      const uniqueConflicts = (allUniqueConflicts[tblName] =
+        allUniqueConflicts[tblName] || []);
       const table = saltcorn.data.models.Table.findOne({ name: tblName });
       const transArr = Array.from(Object.entries(translations));
       transArr.sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
       for (const [from, to] of transArr) {
-        await saltcorn.data.db.update(tblName, { [table.pk_name]: to }, from);
-        await saltcorn.data.db.query(
-          `update "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
-           set ref = ${to}
-           where ref = ${from} and deleted = false`
-        );
+        if (!uniqueConflicts.find((conf) => conf[table.pk_name] === to)) {
+          await saltcorn.data.db.update(tblName, { [table.pk_name]: to }, from);
+          await saltcorn.data.db.query(
+            `update "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
+            set ref = ${to}
+            where ref = ${from} and deleted = false`
+          );
+        }
         for (const fk of fks) {
           if (!idToTable[fk.table_id])
             idToTable[fk.table_id] = saltcorn.data.models.Table.findOne(
@@ -287,6 +291,25 @@ var offlineHelper = (() => {
     }
   };
 
+  const handleUniqueConflicts = async (uniqueConflicts, translatedIds) => {
+    for (const [tblName, conflicts] of Object.entries(uniqueConflicts)) {
+      const table = saltcorn.data.models.Table.findOne({ name: tblName });
+      const pkName = table.pk_name || "id";
+      const translated = translatedIds[tblName] || {};
+      for (const conflict of conflicts) {
+        for (const [from, to] of Object.entries(translated)) {
+          if (to === conflict[pkName]) {
+            await table.deleteRows({ [pkName]: from });
+            await saltcorn.data.db.deleteWhere(`${table.name}_sync_info`, {
+              ref: from,
+            });
+          }
+        }
+        await saltcorn.data.db.insert(tblName, conflict, { replace: true });
+      }
+    }
+  };
+
   const updateSyncInfos = async (
     offlineChanges,
     allTranslations,
@@ -296,10 +319,14 @@ var offlineHelper = (() => {
       const table = saltcorn.data.models.Table.findOne({ name: tblName });
       const pkName = table.pk_name;
       const translated = allTranslations[tblName];
-      const refIds = changes.map((change) =>
-        deleted
-          ? change[pkName]
-          : translated?.[change[pkName]] || change[pkName]
+      const refIds = Array.from(
+        new Set(
+          changes.map((change) =>
+            deleted
+              ? change[pkName]
+              : translated?.[change[pkName]] || change[pkName]
+          )
+        )
       );
       const values = refIds.map(
         (ref) => `(${ref}, ${syncTimestamp}, ${deleted}, false)`
@@ -342,11 +369,12 @@ var offlineHelper = (() => {
         path: `/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`,
       });
       pollCount++;
-      const { finished, translatedIds, error } = pollResp.data;
+      const { finished, translatedIds, uniqueConflicts, error } = pollResp.data;
       if (finished) {
         if (error) throw new Error(error.message);
         else {
-          await handleTranslatedIds(translatedIds);
+          await handleUniqueConflicts(uniqueConflicts, translatedIds);
+          await handleTranslatedIds(uniqueConflicts, translatedIds);
           await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
           return syncDir;
         }
@@ -400,8 +428,21 @@ var offlineHelper = (() => {
     return resp.data.syncTimestamp;
   };
 
+  const setSpinnerText = () => {
+    const iframeWindow = $("#content-iframe")[0].contentWindow;
+    if (iframeWindow) {
+      const spinnerText =
+        iframeWindow.document.getElementById("scspinner-text-id");
+      if (spinnerText) {
+        spinnerText.innerHTML = "Syncing, please don't turn off";
+        spinnerText.classList.remove("d-none");
+      }
+    }
+  };
+
   return {
     sync: async () => {
+      setSpinnerText();
       const state = saltcorn.data.state.getState();
       const mobileConfig = state.mobileConfig;
       const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
@@ -425,10 +466,17 @@ var offlineHelper = (() => {
         await setUploadStarted(true, syncTimestamp);
         let lock = null;
         try {
-          if (window.navigator.wakeLock?.request)
+          if (window.navigator?.wakeLock?.request)
             lock = await window.navigator.wakeLock.request();
+        } catch (error) {
+          console.log("wakeLock not available");
+          console.log(error);
+        }
+        let transactionOpen = false;
+        try {
           await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
           await saltcorn.data.db.query("BEGIN");
+          transactionOpen = true;
           if (cleanSync) await offlineHelper.clearLocalData(true);
           const { synchedTables, syncInfos } = await prepare();
           await syncRemoteDeletes(syncInfos, syncTimestamp);
@@ -437,9 +485,10 @@ var offlineHelper = (() => {
           await offlineHelper.endOfflineMode(true);
           await setUploadStarted(false);
           await saltcorn.data.db.query("COMMIT");
+          transactionOpen = false;
           await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
         } catch (error) {
-          await saltcorn.data.db.query("ROLLBACK");
+          if (transactionOpen) await saltcorn.data.db.query("ROLLBACK");
           await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
           console.log(error);
           throw error;

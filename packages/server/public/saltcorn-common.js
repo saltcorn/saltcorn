@@ -51,6 +51,7 @@ const nubBy = (prop, xs) => {
   });
 };
 function apply_showif() {
+  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
@@ -127,10 +128,13 @@ function apply_showif() {
     const dynwhere = JSON.parse(
       decodeURIComponent(e.attr("data-fetch-options"))
     );
-    //console.log("dynwhere", dynwhere);
-    const qss = Object.entries(dynwhere.whereParsed).map(
-      ([k, v]) => `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`
-    );
+    if (window._sc_loglevel > 4) console.log("dynwhere", dynwhere);
+    const kvToQs = ([k, v]) => {
+      return k === "or" && Array.isArray(v)
+        ? v.map((v1) => Object.entries(v1).map(kvToQs).join("&")).join("&")
+        : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`;
+    };
+    const qss = Object.entries(dynwhere.whereParsed).map(kvToQs);
     if (dynwhere.dereference) {
       if (Array.isArray(dynwhere.dereference))
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
@@ -150,7 +154,8 @@ function apply_showif() {
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
-      if (!dynwhere.required) toAppend.push(`<option></option>`);
+      if (!dynwhere.required)
+        toAppend.push({ label: dynwhere.neutral_label || "" });
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -169,12 +174,28 @@ function apply_showif() {
         const selected = `${current}` === `${r[dynwhere.refname]}`;
         dataOptions.push({ text: label, value });
         if (selected) currentDataOption = value;
-        const html = `<option ${
-          selected ? "selected" : ""
-        } value="${value}">${label}</option>`;
-        toAppend.push(html);
+        toAppend.push({ selected, value, label });
       });
-      e.html(toAppend.join(""));
+      toAppend.sort((a, b) =>
+        a.label === dynwhere.neutral_label
+          ? -1
+          : b.label === dynwhere.neutral_label
+          ? 1
+          : (a.label?.toLowerCase?.() || a.label) >
+            (b.label?.toLowerCase?.() || b.label)
+          ? 1
+          : -1
+      );
+      e.html(
+        toAppend
+          .map(
+            ({ label, value, selected }) =>
+              `<option${selected ? ` selected` : ""}${
+                value ? ` value="${value}"` : ""
+              }>${label || ""}</option>`
+          )
+          .join("")
+      );
 
       //TODO: also sort inserted HTML options
       dataOptions.sort((a, b) =>
@@ -204,6 +225,9 @@ function apply_showif() {
       });
       $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
         if (resp.success) {
+          if (window._sc_loglevel > 4)
+            console.log("dynwhere fetch", qs, resp.success);
+
           activate(resp.success, qs);
           const cacheNow = e.prop("data-fetch-options-cache") || {};
           e.prop("data-fetch-options-cache", {
@@ -272,10 +296,12 @@ function apply_showif() {
 
     if (typeof cache[recS] !== "undefined") {
       e.html(cache[recS]);
+      e.prop("data-source-url-current", recS);
       activate_onchange_coldef();
       return;
     }
-    ajax_post_json(e.attr("data-source-url"), rec, {
+
+    const cb = {
       success: (data) => {
         e.html(data);
         const cacheNow = e.prop("data-source-url-cache") || {};
@@ -295,7 +321,11 @@ function apply_showif() {
         });
         e.html("");
       },
-    });
+    };
+    if (isNode) ajax_post_json(e.attr("data-source-url"), rec, cb);
+    else {
+      local_post_json(e.attr("data-source-url"), rec, cb);
+    }
   });
   const locale =
     navigator.userLanguage ||
@@ -518,6 +548,11 @@ function initialize_page() {
   });
 
   $("form").change(apply_showif);
+  // also change if we select same
+  $("form select").on("blur", (e) => {
+    if (!e || !e.target) return;
+    $(e.target).closest("form").trigger("change");
+  });
   apply_showif();
   apply_showif();
   $("[data-inline-edit-dest-url]").each(function () {
@@ -539,6 +574,7 @@ function initialize_page() {
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");
     var schema = $(this).attr("data-inline-edit-schema");
+    var decimalPlaces = $(this).attr("data-inline-edit-decimal-places");
     if (schema) {
       schema = JSON.parse(decodeURIComponent(schema));
     }
@@ -561,6 +597,7 @@ function initialize_page() {
         type,
         is_key,
         schema,
+        ...(decimalPlaces ? { decimalPlaces } : {}),
       })
     );
     const doAjaxOptionsFetch = (tblName, target) => {
@@ -613,7 +650,17 @@ function initialize_page() {
         }
         <input type="${
           type === "Integer" || type === "Float" ? "number" : "text"
-        }" name="${key}" value="${escapeHtml(current)}">
+        }" ${
+          type === "Float"
+            ? `step="${
+                decimalPlaces
+                  ? Math.round(
+                      Math.pow(10, -decimalPlaces) * Math.pow(10, decimalPlaces)
+                    ) / Math.pow(10, decimalPlaces)
+                  : "any"
+              }"`
+            : ""
+        } name="${key}" value="${escapeHtml(current)}">
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
@@ -666,10 +713,13 @@ function initialize_page() {
       setTimeout(() => {
         codes.forEach((el) => {
           //console.log($(el).attr("mode"), el);
+          if ($(el).hasClass("codemirror-enabled")) return;
+
           const cm = CodeMirror.fromTextArea(el, {
             lineNumbers: true,
             mode: $(el).attr("mode"),
           });
+          $(el).addClass("codemirror-enabled");
           cm.on(
             "change",
             $.debounce(() => {
@@ -780,6 +830,11 @@ function inline_submit_success(e, form, opts) {
       : ""
   }
   ${opts.current_label ? `data-inline-edit-current-label="${val}"` : ""}
+  ${
+    opts.decimalPlaces
+      ? `data-inline-edit-decimal-places="${opts.decimalPlaces}"`
+      : ""
+  }
   data-inline-edit-dest-url="${opts.url}">
     <span class="current">${val}</span>
     <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
@@ -984,7 +1039,14 @@ function common_done(res, viewname, isWeb = true) {
   if (res.notify) handle(res.notify, notifyAlert);
   if (res.error)
     handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
-  if (res.eval_js) handle(res.eval_js, eval);
+
+  if (res.eval_js && res.row && res.field_names) {
+    const f = new Function(`row, {${res.field_names}}`, res.eval_js);
+    const evalres = f(res.row, res.row);
+    if (evalres) common_done(evalres, viewname, isWeb);
+  } else if (res.eval_js) {
+    handle(res.eval_js, eval);
+  }
 
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
@@ -1032,6 +1094,7 @@ function common_done(res, viewname, isWeb = true) {
       if (
         prev.origin === next.origin &&
         prev.pathname === next.pathname &&
+        prev.searchParams.toString() === next.searchParams.toString() &&
         next.hash !== prev.hash
       )
         location.reload();

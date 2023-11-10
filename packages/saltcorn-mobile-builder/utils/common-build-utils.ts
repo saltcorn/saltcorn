@@ -168,7 +168,13 @@ export async function buildTablesFile(
   const wwwDir = join(buildDir, "www");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
-      ["_sc_migrations", "_sc_errors", "_sc_session"].indexOf(table.name) === -1
+      [
+        "_sc_migrations",
+        "_sc_errors",
+        "_sc_session",
+        "_sc_event_log",
+        "_sc_snapshots",
+      ].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
     scTables.map(async (row: Row) => {
@@ -185,11 +191,18 @@ export async function buildTablesFile(
       };
     })
   );
+  const createdAt = new Date();
   writeFileSync(
     join(wwwDir, "tables.json"),
     JSON.stringify({
-      created_at: new Date(),
+      created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
+    })
+  );
+  writeFileSync(
+    join(wwwDir, "tables_created_at.json"),
+    JSON.stringify({
+      created_at: createdAt.valueOf(),
     })
   );
 }

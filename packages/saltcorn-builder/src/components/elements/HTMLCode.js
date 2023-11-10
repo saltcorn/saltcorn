@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React from "react";
+import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
 import {
   blockProps,
@@ -12,6 +12,7 @@ import {
   SettingsFromFields,
   TextStyleSetting,
 } from "./utils";
+import optionsCtx from "../context";
 
 export /**
  * @param {object} props
@@ -37,14 +38,20 @@ const HTMLCode = ({ text }) => {
   );
 };
 
-const fields = [
-  {
-    label: "HTML Code",
-    name: "text",
-    type: "textarea",
-    segment_name: "contents"
-  },
-];
+const fields = (mode) => {
+  return [
+    {
+      label: "HTML Code",
+      name: "text",
+      type: "textarea",
+      segment_name: "contents",
+      sublabel:
+        mode === "show"
+          ? "Access fields with <code>{{ var_name }}</code>"
+          : undefined,
+    },
+  ];
+};
 
 /**
  * @type {object}
@@ -52,10 +59,14 @@ const fields = [
 HTMLCode.craft = {
   displayName: "HTMLCode",
   related: {
-    settings: SettingsFromFields(fields),
+    settings: () => {
+      const options = useContext(optionsCtx);
+
+      return SettingsFromFields(fields(options.mode))();
+    },
     segment_type: "blank",
     segment_vars: { isHTML: true },
     segment_match: (segment) => segment.isHTML,
-    fields,
+    fields: fields(),
   },
 };

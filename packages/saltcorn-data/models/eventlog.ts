@@ -137,6 +137,11 @@ class EventLog {
     const t = getState().eventTypes[evType];
     return t && t.hasChannel;
   }
+
+  get toJson(): any {
+    const { id, ...rest } = this;
+    return rest;
+  }
 }
 
 namespace EventLog {

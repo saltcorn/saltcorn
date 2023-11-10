@@ -286,5 +286,11 @@
 	"Users and security": "Users and security",
 	"Site structure": "Site structure",
 	"Events": "Events",
-	"Are you sure?": "Are you sure?"
+	"Are you sure?": "Are you sure?",
+	"API token": "API token",
+	"No API token issued": "No API token issued",
+	"Generate": "Generate",
+	"Two-factor authentication": "Two-factor authentication",
+	"Two-factor authentication is disabled": "Two-factor authentication is disabled",
+	"Enable 2FA": "Enable 2FA"
 }

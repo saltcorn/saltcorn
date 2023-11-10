@@ -312,7 +312,10 @@ router.get(
         const translatedIds = JSON.parse(
           await fs.readFile(path.join(syncDir, "translated-ids.json"))
         );
-        res.json({ finished: true, translatedIds });
+        const uniqueConflicts = JSON.parse(
+          await fs.readFile(path.join(syncDir, "unique-conflicts.json"))
+        );
+        res.json({ finished: true, translatedIds, uniqueConflicts });
       } else if (entries.indexOf("error.json") >= 0) {
         const error = JSON.parse(
           await fs.readFile(path.join(syncDir, "error.json"))

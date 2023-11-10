@@ -1,10 +1,14 @@
-/*global window, $, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig*/
+/*global window, $, offlineHelper, axios, write, cordova, router, getDirEntry, saltcorn, document, FileReader, navigator, splashConfig, i18next*/
 
 let routingHistory = [];
 
 function currentLocation() {
   if (routingHistory.length == 0) return undefined;
-  return routingHistory[routingHistory.length - 1].route;
+  let index = routingHistory.length - 1;
+  while (index > 0 && routingHistory[index].route.startsWith("post/")) {
+    index--;
+  }
+  return routingHistory[index].route;
 }
 
 function currentQuery() {
@@ -164,6 +168,8 @@ function addScriptToIframeHead(iframeDoc, script) {
 async function replaceIframeInnerContent(content) {
   const iframe = document.getElementById("content-iframe");
   const iframeDocument = iframe.contentWindow.document;
+  const modal = iframeDocument.getElementById("scmodal");
+  if (modal) modal.remove();
   const innerContentDiv = iframeDocument.getElementById("page-inner-content");
   innerContentDiv.innerHTML = content;
   const scripts = innerContentDiv.getElementsByTagName("script");
@@ -210,12 +216,15 @@ async function gotoEntryView() {
 }
 
 function handleOpenModal() {
+  const result = { moddalWasOpen: false, noSubmitReload: false };
   const iframe = document.getElementById("content-iframe");
-  if (!iframe) return false;
+  if (!iframe) return result;
   const openModal = iframe.contentWindow.$("#scmodal.modal.show");
-  if (openModal.length === 0) return;
+  if (openModal.length === 0) return result;
+  result.moddalWasOpen = true;
   iframe.contentWindow.bootstrap.Modal.getInstance(openModal[0]).hide();
-  return true;
+  result.noSubmitReload = openModal[0].classList.contains("no-submit-reload");
+  return result;
 }
 
 async function handleRoute(route, query, files, data) {
@@ -242,7 +251,11 @@ async function handleRoute(route, query, files, data) {
         alerts: [],
       });
       if (page.redirect) {
-        if (handleOpenModal()) return;
+        const { moddalWasOpen, noSubmitReload } = handleOpenModal();
+        if (moddalWasOpen) {
+          if (noSubmitReload) return;
+          else return await reload();
+        }
         if (
           page.redirect.startsWith("http://localhost") ||
           page.redirect === "undefined"
@@ -258,13 +271,26 @@ async function handleRoute(route, query, files, data) {
       } else if (page.content) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content);
+      } else {
+        showAlerts([
+          {
+            type: "warning",
+            msg: i18next.t("%s finished without a result", {
+              postProcess: "sprintf",
+              sprintf: [safeRoute],
+            }),
+          },
+        ]);
       }
     }
   } catch (error) {
     showAlerts([
       {
         type: "error",
-        msg: error.message ? error.message : "An error occured.",
+        msg: `${i18next.t("In %s", {
+          postProcess: "sprintf",
+          sprintf: [route],
+        })}: ${error.message ? error.message : i18next.t("An error occurred")}`,
       },
     ]);
   }
@@ -279,22 +305,37 @@ async function reload() {
 async function goBack(steps = 1, exitOnFirstPage = false) {
   const { inLoadState } = saltcorn.data.state.getState().mobileConfig;
   if (inLoadState) return;
+  const iframe = document.getElementById("content-iframe");
   if (
     routingHistory.length === 0 ||
     (exitOnFirstPage && routingHistory.length === 1)
   ) {
     navigator.app.exitApp();
   } else if (routingHistory.length <= steps) {
-    routingHistory = [];
-    await handleRoute("/");
-  } else {
-    routingHistory = routingHistory.slice(0, routingHistory.length - steps);
-    // don't repeat a post
-    if (routingHistory[routingHistory.length - 1].route.startsWith("post/")) {
-      routingHistory.pop();
+    try {
+      if (iframe?.contentWindow?.showLoadSpinner)
+        iframe.contentWindow.showLoadSpinner();
+      routingHistory = [];
+      await handleRoute("/");
+    } finally {
+      if (iframe?.contentWindow?.removeLoadSpinner)
+        iframe.contentWindow.removeLoadSpinner();
     }
-    const newCurrent = routingHistory.pop();
-    await handleRoute(newCurrent.route, newCurrent.query);
+  } else {
+    try {
+      if (iframe?.contentWindow?.showLoadSpinner)
+        iframe.contentWindow.showLoadSpinner();
+      routingHistory = routingHistory.slice(0, routingHistory.length - steps);
+      // don't repeat a post
+      if (routingHistory[routingHistory.length - 1].route.startsWith("post/")) {
+        routingHistory.pop();
+      }
+      const newCurrent = routingHistory.pop();
+      await handleRoute(newCurrent.route, newCurrent.query);
+    } finally {
+      if (iframe?.contentWindow?.removeLoadSpinner)
+        iframe.contentWindow.removeLoadSpinner();
+    }
   }
 }
 

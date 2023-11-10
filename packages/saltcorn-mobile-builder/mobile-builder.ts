@@ -105,7 +105,7 @@ export class MobileBuilder {
     this.entryPointType = cfg.entryPointType;
     this.serverURL = cfg.serverURL;
     this.splashPage = cfg.splashPage;
-    this.autoPublicLogin = cfg.allowOfflineMode;
+    this.autoPublicLogin = cfg.autoPublicLogin;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),

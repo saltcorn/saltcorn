@@ -3,9 +3,10 @@
 // post/page/:pagename/action/:rndid
 const postPageAction = async (context) => {
   const state = saltcorn.data.state.getState();
+  const req = new MobileRequest({ xhr: context.xhr });
   const { page_name, rndid } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
-  const req = new MobileRequest({ xhr: context.xhr });
+  if (!page) throw new Error(req.__("Page %s not found", page_name));
   if (state.mobileConfig.role_id > page.min_role) {
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
@@ -26,9 +27,10 @@ const postPageAction = async (context) => {
 // get/page/pagename
 const getPage = async (context) => {
   const state = saltcorn.data.state.getState();
+  const req = new MobileRequest({ xhr: context.xhr });
   const { page_name } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
-  const req = new MobileRequest({ xhr: context.xhr });
+  if (!page) throw new Error(req.__("Page %s not found", page_name));
   if (state.mobileConfig.role_id > page.min_role) {
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
