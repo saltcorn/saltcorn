@@ -1,0 +1,12 @@
+This trigger can be run with by making an HTTP request to
+
+{{scState.getConfig("base_url","").replace(/\/$/, "")}}/api/action/{{ query.name }}
+
+If you make a POST request, the POST body is expected to be JSON and its value 
+is accessible using the `row` variable (e.g. in a `run_js_code`)
+
+If you make a GET request, the query string values 
+are accessible as a JSON object using the `row` variable (e.g. in a `run_js_code`).
+
+If you return a value from the action, it will be available in the `data`
+subfield of the JSON body in the HTTP response

@@ -9,7 +9,7 @@ const {
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
-const { h4, p, div, a, input, text } = require("@saltcorn/markup/tags");
+const { h4, p, div, a, i, input, text } = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -385,10 +385,16 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
       },
       {
         label: req.__("When"),
-        key: (a) =>
-          a.when_trigger === "API call"
-            ? `API: <small>${base_url}api/action/${a.name}</small>`
-            : a.when_trigger,
+        key: (act) =>
+          act.when_trigger +
+          (act.when_trigger === "API call"
+            ? a(
+                {
+                  href: `javascript:ajax_modal('/admin/help/API%20actions?name=${act.name}')`,
+                },
+                i({ class: "fas fa-question-circle ms-1" })
+              )
+            : ""),
       },
       {
         label: req.__("Test run"),
