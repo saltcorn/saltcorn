@@ -215,6 +215,18 @@ const succeedJsonWith = (pred) => (res) => {
   }
 };
 
+const succeedJsonWithWholeBody = (pred) => (res) => {
+  if (res.statusCode !== 200) {
+    console.log(res.text);
+    throw new Error(`Expected status 200, received ${res.statusCode}`);
+  }
+
+  if (!pred(res.body)) {
+    console.log(res.body);
+    throw new Error(`Not satisfied`);
+  }
+};
+
 /**
  *
  * @param {number} code
@@ -260,6 +272,7 @@ module.exports = {
   notAuthorized,
   respondJsonWith,
   toSucceedWithImage,
+  succeedJsonWithWholeBody,
   resToLoginCookie,
   itShouldIncludeTextForAdmin,
 };

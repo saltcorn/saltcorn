@@ -332,7 +332,7 @@ router.get(
  * @function
  * @memberof module:routes/api~apiRouter
  */
-router.post(
+router.all(
   "/action/:actionname/",
   error_catcher(async (req, res, next) => {
     const { actionname } = req.params;
