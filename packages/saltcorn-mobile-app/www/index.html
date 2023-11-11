@@ -429,7 +429,7 @@
               fullWrap: true,
               alerts,
             });
-            await replaceIframe(page.content);
+            await replaceIframe(page.content, page.isFile);
           } else if (
             (await isPublicEntryPoint(entryPoint)) &&
             state.mobileConfig.autoPublicLogin

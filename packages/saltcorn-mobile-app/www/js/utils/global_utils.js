@@ -186,8 +186,10 @@ async function replaceIframe(content, isFile = false) {
           baseEl.href = "http://localhost";
           const scriptEl = iframeDoc.createElement("script");
           iframeDoc.body.appendChild(scriptEl);
+          scriptEl.onload = () => {
+            resolve();
+          };
           scriptEl.src = "js/utils/iframe_view_utils.js";
-          resolve();
         } catch (e) {
           reject(e);
         }
