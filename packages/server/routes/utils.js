@@ -18,6 +18,7 @@ const cookieSession = require("cookie-session");
 const is = require("contractis/is");
 const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
+const File = require("@saltcorn/data/models/file");
 const si = require("systeminformation");
 const {
   config_fields_form,
@@ -25,6 +26,9 @@ const {
   check_if_restart_required,
   flash_restart,
 } = require("../markup/admin.js");
+const fsp = require("fs").promises;
+const path = require("path");
+
 const get_sys_info = async () => {
   const disks = await si.fsSize();
   let size = 0;
@@ -380,6 +384,18 @@ const admin_config_route = ({
   );
 };
 
+const sendHtmlFile = async (req, res, file) => {
+  const rootFolder = (await File.rootFolder()).location;
+  try {
+    await fsp.stat(path.join(rootFolder, file));
+  } catch (e) {
+    return res
+      .status(404)
+      .sendWrap(req.__("An error occurred"), req.__("File not found"));
+  }
+  res.sendFile(path.join(rootFolder, file));
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -396,4 +412,5 @@ module.exports = {
   is_relative_url,
   get_sys_info,
   admin_config_route,
+  sendHtmlFile,
 };

@@ -847,7 +847,7 @@ async function deleteOfflineData(noFeedback) {
 }
 
 function showLoadSpinner() {
-  if ($("#scspinner").length === 0) {
+  if (!parent.isHtmlFile() && $("#scspinner").length === 0) {
     $("body").append(`
     <div 
       id="scspinner" 
@@ -883,7 +883,7 @@ function showLoadSpinner() {
 }
 
 function removeLoadSpinner() {
-  $("#scspinner").remove();
+  if (!parent.isHtmlFile()) $("#scspinner").remove();
 }
 
 /**

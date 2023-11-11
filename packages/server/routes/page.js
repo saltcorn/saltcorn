@@ -14,13 +14,12 @@ const {
   error_catcher,
   scan_for_page_title,
   isAdmin,
+  sendHtmlFile,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
-const path = require("path");
-const fsp = require("fs").promises;
 
 /**
  * @type {object}
@@ -59,17 +58,8 @@ router.get(
         name: pagename,
         render_time: ms,
       });
-      if (contents.html_file) {
-        const rootFolder = (await File.rootFolder()).location;
-        try {
-          await fsp.stat(path.join(rootFolder, contents.html_file));
-        } catch (e) {
-          return res
-            .status(404)
-            .sendWrap(`${pagename} page`, req.__("File not found"));
-        }
-        res.sendFile(path.join(rootFolder, contents.html_file));
-      } else {
+      if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
+      else
         res.sendWrap(
           {
             title,
@@ -85,7 +75,6 @@ router.get(
             contents,
           })
         );
-      }
     } else {
       if (db_page && !req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);

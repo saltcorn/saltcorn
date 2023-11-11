@@ -21,7 +21,7 @@ const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
-const { get_base_url } = require("./utils.js");
+const { get_base_url, sendHtmlFile } = require("./utils.js");
 
 /**
  * Tables List
@@ -474,15 +474,16 @@ const get_config_response = async (role_id, res, req) => {
 
     if (db_page) {
       const contents = await db_page.run(req.query, { res, req });
-
-      res.sendWrap(
-        {
-          title: db_page.title,
-          description: db_page.description,
-          bodyClass: "page_" + db.sqlsanitize(homeCfg),
-        },
-        contents
-      );
+      if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
+      else
+        res.sendWrap(
+          {
+            title: db_page.title,
+            description: db_page.description,
+            bodyClass: "page_" + db.sqlsanitize(homeCfg),
+          },
+          contents
+        );
     } else res.redirect(homeCfg);
     return true;
   }
