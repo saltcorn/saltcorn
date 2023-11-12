@@ -33,7 +33,7 @@ const prepHtmlFiles = async () => {
         "text/html",
         `<html><head><title>Landing page</title></head><body><h1>${content}</h1></body></html>`,
         1,
-        100,
+        1,
         folder
       );
     } else {
@@ -131,6 +131,35 @@ describe("page create", () => {
       .get("/page/new_page_with_html_file")
       .set("Cookie", loginCookie)
       .expect(toInclude("Land here"));
+  });
+
+  it("does not find the html file for staff or public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("not found", 404));
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .expect(toInclude("not found", 404));
+  });
+
+  it("finds the html file for staff (after update)", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/files/setrole/fixed_page.html")
+      .set("Cookie", await getAdminLoginCookie())
+      .send("role=40")
+      .expect(toRedirect("/files?dir=."));
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Land here"));
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .expect(toInclude("not found", 404));
   });
 });
 
