@@ -26,7 +26,6 @@ const {
   check_if_restart_required,
   flash_restart,
 } = require("../markup/admin.js");
-const fsp = require("fs").promises;
 const path = require("path");
 
 const get_sys_info = async () => {
@@ -384,16 +383,36 @@ const admin_config_route = ({
   );
 };
 
+/**
+ * Send HTML file to client without any menu
+ * @param {any} req
+ * @param {any} res
+ * @param {string} file
+ * @returns
+ */
 const sendHtmlFile = async (req, res, file) => {
-  const rootFolder = (await File.rootFolder()).location;
+  const fullPath = path.join((await File.rootFolder()).location, file);
+  const role = req.user && req.user.id ? req.user.role_id : 100;
   try {
-    await fsp.stat(path.join(rootFolder, file));
+    const scFile = await File.from_file_on_disk(
+      path.basename(fullPath),
+      path.dirname(fullPath)
+    );
+    if (scFile && role <= scFile.min_role_read) {
+      res.sendFile(fullPath);
+    } else {
+      return res
+        .status(404)
+        .sendWrap(req.__("An error occurred"), req.__("File not found"));
+    }
   } catch (e) {
     return res
       .status(404)
-      .sendWrap(req.__("An error occurred"), req.__("File not found"));
+      .sendWrap(
+        req.__("An error occurred"),
+        e.message || req.__("An error occurred")
+      );
   }
-  res.sendFile(path.join(rootFolder, file));
 };
 
 module.exports = {

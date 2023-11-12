@@ -75,6 +75,7 @@ function showAlerts(alerts, toast = true) {
     const area = iframe.contentWindow.document.getElementById(
       toast ? "toasts-area" : "top-alert"
     );
+    if (!area) return false;
     const successIds = [];
     area.innerHTML = "";
     for (const { type, msg } of alerts) {
@@ -93,6 +94,7 @@ function showAlerts(alerts, toast = true) {
       }, 5000);
     }
   }
+  return true;
 }
 
 function clearTopAlerts() {
@@ -122,12 +124,15 @@ async function loadFileAsText(fileId) {
       reader.readAsText(response.data);
     });
   } catch (error) {
-    showAlerts([
-      {
-        type: "error",
-        msg: error.message ? error.message : "An error occured.",
-      },
-    ]);
+    if (
+      !showAlerts([
+        {
+          type: "error",
+          msg: error.message ? error.message : "An error occured.",
+        },
+      ])
+    );
+    throw error;
   }
 }
 

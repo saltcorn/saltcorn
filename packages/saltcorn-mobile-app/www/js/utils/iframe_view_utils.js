@@ -222,7 +222,7 @@ async function login(e, entryPoint, isSignup) {
         fullWrap: true,
         alerts,
       });
-      await parent.replaceIframe(page.content, page.isFile);
+      if (page.content) await parent.replaceIframe(page.content, page.isFile);
     } else if (loginResult?.alerts) {
       parent.showAlerts(loginResult?.alerts);
     } else {
@@ -263,7 +263,7 @@ async function publicLogin(entryPoint) {
           },
         ],
       });
-      await parent.replaceIframe(page.content, page.isFile);
+      if (page.content) await parent.replaceIframe(page.content, page.isFile);
     } else if (loginResult?.alerts) {
       parent.showAlerts(loginResult?.alerts);
     } else {

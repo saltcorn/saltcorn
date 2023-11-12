@@ -415,7 +415,7 @@
               fullWrap: true,
               alerts,
             });
-            await replaceIframe(page.content, page.isFile);
+            if (page.content) await replaceIframe(page.content, page.isFile);
           } else if (isPublicJwt(jwt)) {
             const config = state.mobileConfig;
             config.role_id = 100;
@@ -429,7 +429,7 @@
               fullWrap: true,
               alerts,
             });
-            await replaceIframe(page.content, page.isFile);
+            if (page.content) await replaceIframe(page.content, page.isFile);
           } else if (
             (await isPublicEntryPoint(entryPoint)) &&
             state.mobileConfig.autoPublicLogin
