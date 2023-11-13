@@ -1641,16 +1641,10 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
-        const joinFields = {};
-        if (table.ownership_formula) {
-          const freeVars = freeVariables(table.ownership_formula);
-          add_free_variables_to_joinfields(freeVars, joinFields, fields);
-        }
         row = await table.getJoinedRow({
           where: uniques,
           forPublic: !req.user,
           forUser: req.user,
-          joinFields,
         });
       }
       const isRemote = !isWeb(req);

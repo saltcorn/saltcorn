@@ -84,8 +84,7 @@ const select = {
    * @param {*} field
    * @returns {object}
    */
-  run: (nm, v0, attrs, cls, reqd, field) => {
-    const v = v0?.id || v0;
+  run: (nm, v, attrs, cls, reqd, field) => {
     if (attrs.disabled) {
       const value =
         (field.options || []).find((lv) => lv?.value === v)?.label || v;
@@ -295,9 +294,7 @@ const select_from_table = {
    * @param {*} field
    * @returns {object}
    */
-  run: (nm, v0, attrs, cls, reqd, field) => {
-    const v = v0?.id || v0;
-
+  run: (nm, v, attrs, cls, reqd, field) => {
     if (attrs.disabled) {
       const value =
         (field.options || []).find((lv) => lv?.value === v)?.label || v;
@@ -412,9 +409,7 @@ const two_level_select = {
     ];
   },
 
-  run: (nm, v0, attrs, cls, reqd, field) => {
-    const v = v0?.id || v0;
-
+  run: (nm, v, attrs, cls, reqd, field) => {
     const options2 = {};
 
     Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
@@ -554,9 +549,7 @@ const search_or_create = {
    * @param {*} field
    * @returns {object}
    */
-  run: (nm, v0, attrs, cls, reqd, field) => {
-    const v = v0?.id || v0;
-
+  run: (nm, v, attrs, cls, reqd, field) => {
     return (
       tags.select(
         {
