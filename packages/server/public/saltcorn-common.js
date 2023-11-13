@@ -650,7 +650,11 @@ function initialize_page() {
             : ""
         }
         <input type="${
-          type === "Integer" || type === "Float" ? "number" : "text"
+          type === "Integer" || type === "Float"
+            ? "number"
+            : type === "Bool"
+            ? "checkbox"
+            : "text"
         }" ${
           type === "Float"
             ? `step="${
@@ -661,7 +665,13 @@ function initialize_page() {
                   : "any"
               }"`
             : ""
-        } name="${key}" value="${escapeHtml(current)}">
+        } name="${key}" ${
+          type === "Bool"
+            ? current
+              ? "checked"
+              : ""
+            : `value="${escapeHtml(current)}"`
+        }>
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
@@ -786,7 +796,9 @@ function inline_submit_success(e, form, opts) {
   const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   const formDataArray = form.serializeArray();
   if (opts) {
-    let rawVal = formDataArray.find((f) => f.name == opts.key).value;
+    let fdEntry = formDataArray.find((f) => f.name == opts.key);
+    console.log({ fdEntry });
+    let rawVal = opts.type === "Bool" ? !!fdEntry : fdEntry.value;
     let val =
       opts.is_key || (opts.schema && opts.schema.type.startsWith("Key to "))
         ? form.find("select").find("option:selected").text()
