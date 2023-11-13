@@ -585,8 +585,8 @@ function initialize_page() {
         $(this).find("span.current time").attr("datetime"); // ||
       //$(this).children("span.current").html();
     }
-    console.log({ type, current });
     var is_key = type?.startsWith("Key:");
+    const resetHtml = this.outerHTML;
     const opts = encodeURIComponent(
       JSON.stringify({
         url,
@@ -597,6 +597,7 @@ function initialize_page() {
         type,
         is_key,
         schema,
+        resetHtml,
         ...(decimalPlaces ? { decimalPlaces } : {}),
       })
     );
@@ -777,33 +778,7 @@ function cancel_inline_edit(e, opts1) {
   const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
-  var json_fk_opt;
-  if (opts.schema) {
-    json_fk_opt = form.find(`option[value="${opts.current}"]`).text();
-  }
-  form.replaceWith(`<div 
-  data-inline-edit-field="${opts.key}" 
-  ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
-  ${opts.type ? `data-inline-edit-type="${opts.type}"` : ""}
-  ${opts.current ? `data-inline-edit-current="${opts.current}"` : ""}
-  ${
-    opts.current_label
-      ? `data-inline-edit-current-label="${opts.current_label}"`
-      : ""
-  }
-  ${
-    opts.schema
-      ? `data-inline-edit-schema="${encodeURIComponent(
-          JSON.stringify(opts.schema)
-        )}"`
-      : ""
-  }
-  data-inline-edit-dest-url="${opts.url}">
-    <span class="current">${
-      json_fk_opt || opts.current_label || opts.current
-    }</span>
-    <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
-  </div>`);
+  form.replaceWith(opts.resetHtml);
   initialize_page();
 }
 
