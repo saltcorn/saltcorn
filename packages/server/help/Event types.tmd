@@ -1,0 +1,71 @@
+The event type for triggers determines when the chosen action should be run. 
+The different event types options come from a variety of the types and sources.
+
+These events also form the basis of the event log. Use the log settings to enable or disable 
+recording of the occurrence of events.
+
+## Database events
+
+These conditions are triggered by changes to rows in tables. Together with the event type 
+a specific table is chosen. The individual conditions are:
+
+**Insert**: run the action when a new row is inserted in the table. This is a good choice
+when a table itself represents actions to be carried out; for instance a table of 
+outbound emails would have a trigger with When = Insert and Action = send_email
+
+**Update**: run this action when changes are made to an existing row. The old row can 
+be accessed with the `old_row` variable.
+
+**Delete**: run this action when a row is deleted
+
+## Periodic events
+
+These triggers are run periodically at different times.
+
+**Weekly**: run this once a week.
+
+**Daily**: run this once a day.
+
+**Hourly**: run this once an hour.
+
+**Often**: run this every 5 minutes.
+
+## User-based events
+
+**PageLoad**: run this whenever a page or view is loaded. If you set up the event log to 
+record these events you can use this as a basis for an analytics system.
+
+**Login**: run this whenever a user log in successfully
+
+**LoginFailed**: run this whenever a user login failed
+
+**UserVerified**: run this when a user is verified, if an appropriate module for 
+user verification is enabled.
+
+## System-based events
+
+**Error**: run this whenever an error occurs
+
+**Startup**: run this whenever this saltcorn process initializes. 
+
+## Other events
+
+**Never**: this trigger is never run on its own. However triggers that are marked as never
+can be chosen as the target action for a button in the UI. Use this if you have a complex 
+configuration for an action that needs to be run in response to a button click, or if you
+have a configuration that needs to be reused between two different buttons in two different 
+views. You can also use this to switch off a trigger that is running on a different event 
+type without deleting it.
+
+**API call**: this trigger can be run in response to an inbound API call. To see the URL 
+and further help, click the help icon next to the "API call" label in the trigger list.
+
+## Custom events
+
+You can create your own event type which can then be triggered with an emit_event action 
+or the `emitEvent` call in a run js code action
+
+## Events supplied by modules
+
+Modules can provide new event types. For instance the mqtt module provides an event 
+type based on receiving new messages.
