@@ -786,11 +786,22 @@ const render = async ({
     form.hidden(table.pk_name);
     const user_id = req.user ? req.user.id : null;
     const owner_field = await table.owner_fieldname();
-
-    form.isOwner =
-      table.ownership_formula && user_id
-        ? await table.is_owner(req.user, row)
-        : owner_field && user_id && row[owner_field] === user_id;
+    if (table.ownership_formula && user_id) {
+      const freeVars = freeVariables(table.ownership_formula);
+      //need to fetch with joinfields
+      if (freeVars.size > 0) {
+        const joinFields = {};
+        add_free_variables_to_joinfields(freeVars, joinFields, fields);
+        const row_joined = await table.getJoinedRow({
+          where: { [table.pk_name]: row[table.pk_name] },
+          forPublic: !req.user,
+          forUser: req.user,
+          joinFields,
+        });
+        form.isOwner = await table.is_owner(req.user, row_joined);
+      } else form.isOwner = await table.is_owner(req.user, row);
+    } else
+      form.isOwner = owner_field && user_id && row[owner_field] === user_id;
   } else {
     form.isOwner = true;
   }
