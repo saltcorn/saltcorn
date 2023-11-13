@@ -585,6 +585,9 @@ function initialize_page() {
         $(this).find("span.current time").attr("datetime"); // ||
       //$(this).children("span.current").html();
     }
+    if (type === "Bool") {
+      current = current === "true";
+    }
     var is_key = type?.startsWith("Key:");
     const resetHtml = this.outerHTML;
     const opts = encodeURIComponent(
@@ -797,7 +800,6 @@ function inline_submit_success(e, form, opts) {
   const formDataArray = form.serializeArray();
   if (opts) {
     let fdEntry = formDataArray.find((f) => f.name == opts.key);
-    console.log({ fdEntry });
     let rawVal = opts.type === "Bool" ? !!fdEntry : fdEntry.value;
     let val =
       opts.is_key || (opts.schema && opts.schema.type.startsWith("Key to "))
@@ -833,9 +835,13 @@ function inline_submit_success(e, form, opts) {
 function inline_ajax_submit(e, opts1) {
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   e.preventDefault();
+
   var form = $(e.target).closest("form");
   var form_data = form.serialize();
   var url = form.attr("action");
+  if (opts.type === "Bool" && !form_data.includes(`${opts.key}=on`)) {
+    form_data += `&${opts.key}=off`;
+  }
   $.ajax(url, {
     type: "POST",
     headers: {
