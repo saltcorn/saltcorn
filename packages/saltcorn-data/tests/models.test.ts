@@ -20,6 +20,8 @@ const { rick_file, mockReqRes } = mocks;
 import Library from "../models/library";
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { existsSync } from "fs";
+import { join } from "path";
 
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
@@ -186,6 +188,46 @@ describe("File", () => {
     expect(f2.user_id).toBe(2);
     expect(f2.min_role_read).toBe(80);
     await f.delete();
+  });
+
+  it("should find in subfolders", async () => {
+    const subfolder = "subfolder";
+    const fileName = "fileName2.html";
+    if (
+      !existsSync(
+        join(db.connectObj.file_store, db.getTenantSchema(), "subfolder")
+      )
+    )
+      await File.new_folder(subfolder);
+    if (
+      !existsSync(
+        join(
+          db.connectObj.file_store,
+          db.getTenantSchema(),
+          subfolder,
+          fileName
+        )
+      )
+    ) {
+      await File.from_contents(
+        fileName,
+        "text/html",
+        "<html><head><title>Landing page 2</title></head><body><h1>Or land here</h1></body></html>",
+        1,
+        100,
+        subfolder
+      );
+    }
+    const htmlFiles = await File.find(
+      {
+        mime_super: "text",
+        mime_sub: "html",
+      },
+      { recursive: true }
+    );
+    expect(
+      htmlFiles.find((file: any) => file.filename === fileName)
+    ).toBeDefined();
   });
 });
 

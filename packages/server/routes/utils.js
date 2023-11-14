@@ -18,6 +18,7 @@ const cookieSession = require("cookie-session");
 const is = require("contractis/is");
 const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
+const File = require("@saltcorn/data/models/file");
 const si = require("systeminformation");
 const {
   config_fields_form,
@@ -25,6 +26,8 @@ const {
   check_if_restart_required,
   flash_restart,
 } = require("../markup/admin.js");
+const path = require("path");
+
 const get_sys_info = async () => {
   const disks = await si.fsSize();
   let size = 0;
@@ -380,6 +383,38 @@ const admin_config_route = ({
   );
 };
 
+/**
+ * Send HTML file to client without any menu
+ * @param {any} req
+ * @param {any} res
+ * @param {string} file
+ * @returns
+ */
+const sendHtmlFile = async (req, res, file) => {
+  const fullPath = path.join((await File.rootFolder()).location, file);
+  const role = req.user && req.user.id ? req.user.role_id : 100;
+  try {
+    const scFile = await File.from_file_on_disk(
+      path.basename(fullPath),
+      path.dirname(fullPath)
+    );
+    if (scFile && role <= scFile.min_role_read) {
+      res.sendFile(fullPath);
+    } else {
+      return res
+        .status(404)
+        .sendWrap(req.__("An error occurred"), req.__("File not found"));
+    }
+  } catch (e) {
+    return res
+      .status(404)
+      .sendWrap(
+        req.__("An error occurred"),
+        e.message || req.__("An error occurred")
+      );
+  }
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -396,4 +431,5 @@ module.exports = {
   is_relative_url,
   get_sys_info,
   admin_config_route,
+  sendHtmlFile,
 };

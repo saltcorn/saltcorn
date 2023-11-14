@@ -13,9 +13,42 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const Page = require("@saltcorn/data/models/page");
+const File = require("@saltcorn/data/models/file");
+const { existsSync } = require("fs");
+const { join } = require("path");
+
+let htmlFile = null;
+
+const prepHtmlFiles = async () => {
+  const createFile = async (folder, name, content) => {
+    const scFolder = join(
+      db.connectObj.file_store,
+      db.getTenantSchema(),
+      folder
+    );
+    if (!existsSync(scFolder)) await File.new_folder(folder);
+    if (!existsSync(join(scFolder, name))) {
+      return await File.from_contents(
+        name,
+        "text/html",
+        `<html><head><title>Landing page</title></head><body><h1>${content}</h1></body></html>`,
+        1,
+        1,
+        folder
+      );
+    } else {
+      const file = await File.from_file_on_disk(name, scFolder);
+      file.location = File.absPathToServePath(file.location);
+      return file;
+    }
+  };
+  htmlFile = await createFile("/", "fixed_page.html", "Land here");
+  await createFile("/subfolder", "fixed_page2.html", "Or Land here");
+};
 
 beforeAll(async () => {
   await resetToFixtures();
+  await prepHtmlFiles();
 });
 afterAll(db.close);
 
@@ -36,8 +69,17 @@ describe("page create", () => {
     await request(app)
       .get("/pageedit/new")
       .set("Cookie", loginCookie)
-
       .expect(toInclude("A short name that will be in your URL"));
+  });
+  it("shows new with html file selector", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/pageedit/new")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("HTML file"))
+      .expect(toInclude("fixed_page.html"))
+      .expect(toInclude(join("subfolder", "fixed_page2.html")));
   });
   it("fills basic details", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -47,6 +89,19 @@ describe("page create", () => {
       .send("name=whales&title=Whales&description=about+whales&min_role=100")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/pageedit/edit/whales"));
+  });
+  it("fills details with html-file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/pageedit/edit-properties")
+      .send(
+        `name=new_page_with_html_file&title=foo&description=bar&min_role=100&html_file=${encodeURIComponent(
+          htmlFile.location
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/pageedit/"));
   });
   it("fills layout", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -67,6 +122,44 @@ describe("page create", () => {
       .get("/page/whales")
       .set("Cookie", loginCookie)
       .expect(toInclude("Herman"));
+  });
+
+  it("shows page with html file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Land here"));
+  });
+
+  it("does not find the html file for staff or public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("not found", 404));
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .expect(toInclude("not found", 404));
+  });
+
+  it("finds the html file for staff (after update)", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/files/setrole/fixed_page.html")
+      .set("Cookie", await getAdminLoginCookie())
+      .send("role=40")
+      .expect(toRedirect("/files?dir=."));
+    const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Land here"));
+    await request(app)
+      .get("/page/new_page_with_html_file")
+      .expect(toInclude("not found", 404));
   });
 });
 

@@ -60,14 +60,28 @@ type MenuItem = {
 type LayoutWithTypeProp = {
   type:
     | "blank"
+    | "breadcrumbs"
+    | "view"
+    | "page"
+    | "table"
+    | "dropdown_menu"
+    | "tabs"
+    | "line_break"
+    | "search_bar"
     | "card"
     | "hero"
     | "pageHeader"
     | "footer"
     | "image"
     | "link"
+    | "container"
     | "line_break view";
   besides?: never;
+  above?: never;
+};
+
+type LayoutWithHtmlFile = {
+  html_file: string;
   above?: never;
 };
 
@@ -80,7 +94,17 @@ type LayoutArray = Array<
 type LayoutWithAbove = { above: LayoutArray; besides?: never };
 type LayoutWithBesides = { besides: LayoutArray; above?: never };
 
-export type Layout = LayoutWithAbove | LayoutWithBesides | LayoutWithTypeProp;
+export type Layout =
+  | LayoutWithAbove
+  | LayoutWithBesides
+  | LayoutWithTypeProp
+  | LayoutWithHtmlFile;
+
+export function instanceOWithHtmlFile(
+  object: any
+): object is LayoutWithHtmlFile {
+  return object && typeof object !== "string" && "html_file" in object;
+}
 
 export type PluginWrapArg = {
   title: string;

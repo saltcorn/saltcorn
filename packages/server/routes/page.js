@@ -8,11 +8,13 @@ const Router = require("express-promise-router");
 
 const Page = require("@saltcorn/data/models/page");
 const Trigger = require("@saltcorn/data/models/trigger");
+const File = require("@saltcorn/data/models/file");
 const { getState } = require("@saltcorn/data/db/state");
 const {
   error_catcher,
   scan_for_page_title,
   isAdmin,
+  sendHtmlFile,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
@@ -56,21 +58,23 @@ router.get(
         name: pagename,
         render_time: ms,
       });
-      res.sendWrap(
-        {
-          title,
-          description: db_page.description,
-          bodyClass: "page_" + db.sqlsanitize(pagename),
-          no_menu: db_page.attributes?.no_menu,
-        } || `${pagename} page`,
-        add_edit_bar({
-          role,
-          title: db_page.name,
-          what: req.__("Page"),
-          url: `/pageedit/edit/${encodeURIComponent(db_page.name)}`,
-          contents,
-        })
-      );
+      if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
+      else
+        res.sendWrap(
+          {
+            title,
+            description: db_page.description,
+            bodyClass: "page_" + db.sqlsanitize(pagename),
+            no_menu: db_page.attributes?.no_menu,
+          } || `${pagename} page`,
+          add_edit_bar({
+            role,
+            title: db_page.name,
+            what: req.__("Page"),
+            url: `/pageedit/edit/${encodeURIComponent(db_page.name)}`,
+            contents,
+          })
+        );
     } else {
       if (db_page && !req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);

@@ -526,6 +526,7 @@ export type SelectOptions = {
   fields?: [string];
   has_sync_info?: boolean;
   description?: string;
+  recursive?: boolean; // for File.find()
 };
 export const orderByIsObject = (
   object: any

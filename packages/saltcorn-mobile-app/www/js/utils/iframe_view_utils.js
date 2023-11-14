@@ -222,7 +222,7 @@ async function login(e, entryPoint, isSignup) {
         fullWrap: true,
         alerts,
       });
-      await parent.replaceIframe(page.content);
+      if (page.content) await parent.replaceIframe(page.content, page.isFile);
     } else if (loginResult?.alerts) {
       parent.showAlerts(loginResult?.alerts);
     } else {
@@ -263,7 +263,7 @@ async function publicLogin(entryPoint) {
           },
         ],
       });
-      await parent.replaceIframe(page.content);
+      if (page.content) await parent.replaceIframe(page.content, page.isFile);
     } else if (loginResult?.alerts) {
       parent.showAlerts(loginResult?.alerts);
     } else {
@@ -847,7 +847,7 @@ async function deleteOfflineData(noFeedback) {
 }
 
 function showLoadSpinner() {
-  if ($("#scspinner").length === 0) {
+  if (!parent.isHtmlFile() && $("#scspinner").length === 0) {
     $("body").append(`
     <div 
       id="scspinner" 
@@ -883,7 +883,7 @@ function showLoadSpinner() {
 }
 
 function removeLoadSpinner() {
-  $("#scspinner").remove();
+  if (!parent.isHtmlFile()) $("#scspinner").remove();
 }
 
 /**
