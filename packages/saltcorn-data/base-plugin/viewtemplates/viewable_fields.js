@@ -834,6 +834,8 @@ const get_viewable_fields = (
                       : undefined,
                     "data-inline-edit-current": doSetKey
                       ? row[f.name]?.[column_key]
+                      : f.type?.name == "Bool"
+                      ? "" + row[f.name]
                       : undefined,
                     "data-inline-edit-dest-url": `/api/${table.name}/${
                       row[table.pk_name]

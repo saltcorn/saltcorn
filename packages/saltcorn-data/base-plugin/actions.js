@@ -615,10 +615,7 @@ module.exports = {
     run: async ({ row, table, configuration: { joined_table }, user }) => {
       if (!joined_table)
         throw new Error(`Relation not specified in insert_joined_row action`);
-      if (!joinTable)
-        throw new Error(
-          `Table ${join_table_name} not found in insert_joined_row action`
-        );
+
       const [join_table_name, join_field] = joined_table.split(".");
       const joinTable = Table.findOne({ name: join_table_name });
       if (!joinTable)
