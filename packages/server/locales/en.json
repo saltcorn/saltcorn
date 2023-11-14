@@ -1276,5 +1276,6 @@
 	"Maximum URL encoded request size in kilobytes": "Maximum URL encoded request size in kilobytes",
 	"HTML file": "HTML file",
 	"HTML file to use as page content": "HTML file to use as page content",
-	"Offline mode: cannot load file": "Offline mode: cannot load file"
+	"Offline mode: cannot load file": "Offline mode: cannot load file",
+	"None - use drag and drop builder": "None - use drag and drop builder"
 }

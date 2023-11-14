@@ -43,7 +43,7 @@ const select_options = (
         : -1
     );
   options = options.map((o: any) =>
-    o.value === "" ? { ...o, label: neutral_label } : o
+    o.value === "" ? { ...o, label: neutral_label || o.label } : o
   );
   const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
   const isSelected = (value: any) =>

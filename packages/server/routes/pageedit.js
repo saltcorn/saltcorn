@@ -108,14 +108,24 @@ const pagePropertiesForm = async (req, isNew) => {
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
-      {
-        name: "html_file",
-        label: req.__("HTML file"),
-        sublabel: req.__("HTML file to use as page content"),
-        input_type: "select",
-        required: false,
-        options: [{ label: "", value: "" }, ...htmlOptions],
-      },
+      ...(htmlOptions.length > 0
+        ? [
+            {
+              name: "html_file",
+              label: req.__("HTML file"),
+              sublabel: req.__("HTML file to use as page content"),
+              input_type: "select",
+
+              options: [
+                {
+                  label: req.__("None - use drag and drop builder"),
+                  value: "",
+                },
+                ...htmlOptions,
+              ],
+            },
+          ]
+        : []),
       {
         name: "no_menu",
         label: req.__("No menu"),
