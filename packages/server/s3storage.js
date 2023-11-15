@@ -1,4 +1,3 @@
-require("aws-sdk/lib/maintenance_mode_message").suppress = true;
 const { S3 } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
