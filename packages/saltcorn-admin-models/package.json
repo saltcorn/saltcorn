@@ -30,6 +30,7 @@
     "@saltcorn/markup": "0.9.1-beta.0",
     "@saltcorn/db-common": "0.9.1-beta.0",
     "@saltcorn/data": "0.9.1-beta.0",
+    "@saltcorn/sbadmin2": "0.9.1-beta.0",
     "adm-zip": "0.5.5",
     "chaos-guinea-pig": "^0.1.4",
     "csv-stringify": "^5.5.0",
