@@ -1,5 +1,5 @@
 require("aws-sdk/lib/maintenance_mode_message").suppress = true;
-const aws = require("aws-sdk");
+const { S3 } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const { getState } = require("@saltcorn/data/db/state");
@@ -8,10 +8,17 @@ const { v4: uuidv4 } = require("uuid");
 const contentDisposition = require("content-disposition");
 const fs = require("fs");
 function createS3Client() {
-  return new aws.S3({
-    secretAccessKey: getState().getConfig("storage_s3_access_secret"),
-    accessKeyId: getState().getConfig("storage_s3_access_key"),
+  return new S3({
+    credentials: {
+      secretAccessKey: getState().getConfig("storage_s3_access_secret"),
+      accessKeyId: getState().getConfig("storage_s3_access_key"),
+    },
+
     region: getState().getConfig("storage_s3_region"),
+
+    // The transformation for endpoint is not implemented.
+    // Refer to UPGRADING.md on aws-sdk-js-v3 for changes needed.
+    // Please create/upvote feature request on aws-sdk-js-codemod for endpoint.
     endpoint: getState().getConfig("storage_s3_endpoint"),
   });
 }
