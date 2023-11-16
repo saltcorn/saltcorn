@@ -381,6 +381,17 @@ function get_form_record(e_in, select_labels) {
     ? $(`form[data-viewname=${e_in.viewname}]`)
     : e_in.closest(".form-namespace");
 
+  const form = $(e).closest("form");
+
+  const rowVals = form.attr("data-row-values");
+  if (rowVals)
+    try {
+      const initRow = JSON.parse(decodeURIComponent(rowVals));
+      Object.assign(rec, initRow);
+    } catch (error) {
+      console.error(error);
+    }
+
   e.find("input[name],select[name],textarea[name]").each(function () {
     const name = $(this).attr("data-fieldname") || $(this).attr("name");
     if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
