@@ -737,7 +737,26 @@ function initialize_page() {
           cm.on(
             "change",
             $.debounce(() => {
-              $(el).closest("form").trigger("change");
+              if ($(el).hasClass("validate-statements")) {
+                try {
+                  let AsyncFunction = Object.getPrototypeOf(
+                    async function () {}
+                  ).constructor;
+                  AsyncFunction(cm.getValue());
+                  $(el).closest("form").trigger("change");
+                } catch (e) {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(e.message);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${e.message}</p>`
+                      );
+                  return;
+                }
+              } else $(el).closest("form").trigger("change");
             }),
             500,
             null,
