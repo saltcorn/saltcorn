@@ -855,6 +855,7 @@ module.exports = {
           label: "Code",
           input_type: "code",
           attributes: { mode: "application/javascript" },
+          class: "validate-statements",
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
