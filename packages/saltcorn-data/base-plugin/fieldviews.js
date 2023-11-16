@@ -132,6 +132,7 @@ const select = {
         disabled: attrs.disabled,
         readonly: attrs.readonly,
         onChange: attrs.onChange,
+        autocomplete: "off",
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
@@ -342,6 +343,7 @@ const select_from_table = {
         disabled: attrs.disabled,
         readonly: attrs.readonly,
         onChange: attrs.onChange,
+        autocomplete: "off",
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
@@ -426,6 +428,7 @@ const two_level_select = {
           "data-fieldname": `_${field.name}_toplevel`,
           id: `twolevelfirst_${text_attr(nm)}`,
           onChange: attrs.isFilter ? "apply_showif()" : undefined,
+          autocomplete: "off",
         },
         select_options_first_level(v, field, attrs || {}, attrs || {})
       ) +
@@ -439,6 +442,7 @@ const two_level_select = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           onChange: attrs.onChange,
+          autocomplete: "off",
           "data-calc-options": encodeURIComponent(JSON.stringify(calcOptions)),
         },
         option({ value: "" }, "")
@@ -561,6 +565,8 @@ const search_or_create = {
           disabled: attrs.disabled,
           readonly: attrs.readonly,
           onChange: attrs.onChange,
+          autocomplete: "off",
+
           ...(attrs?.dynamic_where
             ? {
                 "data-selected": v,
