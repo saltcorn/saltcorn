@@ -1283,6 +1283,8 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     const formVals = new Set(
       form.fields
         .filter((f: any) => {
+          if (f.input_type === "hidden") return true;
+          if (f.fieldviewObj) return f.fieldviewObj.isEdit;
           if (!f?.type?.fieldviews) return false;
           const fv = f.type.fieldviews[f.fieldview];
           if (!fv) return false;
@@ -1294,6 +1296,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
       if (!formVals.has(k)) extraValues[k] = v;
     });
   }
+  if (form.req?.user) extraValues.user = form.req.user;
   const hasValues = Object.keys(extraValues).length > 0;
   const top = `<form data-viewname="${
     form.viewname
