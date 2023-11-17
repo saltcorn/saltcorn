@@ -1279,6 +1279,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const extraValues: any = {};
+  if (form.req?.user) extraValues.user = form.req.user;
   if (Object.keys(form.values || {}).length > 1) {
     const formVals = new Set(
       form.fields
@@ -1296,7 +1297,6 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
       if (!formVals.has(k)) extraValues[k] = v;
     });
   }
-  if (form.req?.user) extraValues.user = form.req.user;
   const hasValues = Object.keys(extraValues).length > 0;
   const top = `<form data-viewname="${
     form.viewname
