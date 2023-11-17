@@ -1280,12 +1280,21 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const extraValues: any = {};
   if (Object.keys(form.values || {}).length > 1) {
-    const formVals = new Set(form.fields.map((f) => f.name));
+    const formVals = new Set(
+      form.fields
+        .filter((f: any) => {
+          if (!f?.type?.fieldviews) return false;
+          const fv = f.type.fieldviews[f.fieldview];
+          if (!fv) return false;
+          return fv.isEdit;
+        })
+        .map((f) => f.name)
+    );
     Object.entries(form.values).forEach(([k, v]) => {
-      if (v !== null && !formVals.has(k)) extraValues[k] = v;
+      if (!formVals.has(k)) extraValues[k] = v;
     });
   }
-  const hasValues = Object.keys(extraValues).length > 1;
+  const hasValues = Object.keys(extraValues).length > 0;
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
