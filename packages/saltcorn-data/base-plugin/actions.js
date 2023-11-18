@@ -755,18 +755,23 @@ module.exports = {
     /**
      * @param {object} opts
      * @param {object} opts.row
+     * @param {object} [opts.table]
      * @param {object} opts.configuration
      * @param {object} opts.user
-     * @param {...*} opts.rest
+     * @param {...*} [opts.rest]
      * @returns {Promise<object|boolean>}
      */
-    run: async ({ row, configuration: { row_expr, table }, user, ...rest }) => {
-      const f = get_async_expression_function(row_expr, [], {
-        user,
-        console,
-      });
+    run: async ({ row, table, configuration, user, ...rest }) => {
+      const f = get_async_expression_function(
+        configuration.row_expr,
+        table?.fields || [],
+        {
+          user,
+          console,
+        }
+      );
       const calcrow = await f(row || {}, user);
-      const table_for_insert = Table.findOne({ name: table });
+      const table_for_insert = Table.findOne({ name: configuration.table });
       const res = await table_for_insert.tryInsertRow(calcrow, user);
       if (res.error) return res;
       else return true;

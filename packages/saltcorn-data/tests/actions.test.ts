@@ -9,6 +9,7 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { insert_any_row } from "../base-plugin/actions";
 
 afterAll(db.close);
 
@@ -183,7 +184,48 @@ describe("Action", () => {
     await table.insertRow({ author: "NK Jemisin", pages: 901 });
   });
 });
+describe("base plugin actions", () => {
+  it("should insert_any_row", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: { table: "patients", row_expr: '{name:"Simon1"}' },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toBe(true);
 
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    await sleep(10);
+    const rows = await patients.getRows({ name: "Simon1" });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should insert_any_row with field", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { pages: 3, author: "Joe" },
+      table: books,
+      configuration: {
+        table: "patients",
+        row_expr: '{name:"Si"+row.pages+"mon"+author}',
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toBe(true);
+
+    await sleep(10);
+    const rows = await patients.getRows({ name: "Si3monJoe" });
+
+    expect(rows.length).toBe(1);
+  });
+});
 describe("Events", () => {
   it("should add custom event", async () => {
     await getState().setConfig("custom_events", [
