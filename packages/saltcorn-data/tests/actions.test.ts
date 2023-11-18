@@ -9,10 +9,11 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import baseactions from "../base-plugin/actions";
+import baseactions, { notify_user } from "../base-plugin/actions";
 const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
   baseactions;
 import utils from "../utils";
+import Notification from "../models/notification";
 const { applyAsync } = utils;
 
 afterAll(db.close);
@@ -280,6 +281,26 @@ describe("base plugin actions", () => {
     const npats_after = await discusses_books.countRows({});
     expect(npats_after).toBe(npats_before + 1);
   });
+  it("should notify_user", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: 1 });
+    assertIsSet(book);
+    await notify_user.run({
+      row: book,
+      configuration: {
+        user_spec: "{id:1}",
+        title: "Hello",
+        body: "World",
+        link: "https://saltcorn.com",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    const notif = await Notification.findOne({ title: "Hello" });
+    assertIsSet(notif);
+    expect(notif.user_id).toBe(1);
+    expect(notif.body).toBe("World");
+  });
   it("should have valid configFields", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
@@ -292,8 +313,7 @@ describe("base plugin actions", () => {
     }
   });
 
-  //TODO emit event, recalculate_stored_fields, set_user_language,
-  // notify_user check can get configFields
+  //TODO emit event, recalculate_stored_fields, set_user_language
 });
 describe("Events", () => {
   it("should add custom event", async () => {
