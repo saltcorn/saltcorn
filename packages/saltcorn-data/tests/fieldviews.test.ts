@@ -59,7 +59,7 @@ describe("select fieldview", () => {
       field
     );
     expect(res).toBe(
-      '<select class="form-control form-select  " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value="">None</option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select>'
+      '<select class="form-control form-select  " data-fieldname="favbook" name="favbook" id="inputfavbook" autocomplete="off"><option value="">None</option><option value="1">Herman Melville</option><option value="2">Leo Tolstoy</option></select>'
     );
   });
   it("should render with where", async () => {
@@ -92,7 +92,7 @@ describe("select fieldview", () => {
       field
     );
     expect(res).toBe(
-      '<select class="form-control form-select  " data-fieldname="favbook" name="favbook" id="inputfavbook"><option value="">None</option><option value="2">Leo Tolstoy</option></select>'
+      '<select class="form-control form-select  " data-fieldname="favbook" name="favbook" id="inputfavbook" autocomplete="off"><option value="">None</option><option value="2">Leo Tolstoy</option></select>'
     );
   });
 });

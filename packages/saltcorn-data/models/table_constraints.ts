@@ -74,16 +74,20 @@ class TableConstraint {
    */
   static async create(f: TableConstraintCfg): Promise<TableConstraint> {
     const con = new TableConstraint(f);
-    const { id, ...rest } = con;
-    const fid = await db.insert("_sc_table_constraints", rest);
-    con.id = fid;
+
     const Table = require("./table");
     const table = Table.findOne({ id: con.table_id });
     if (con.type === "Unique" && con.configuration.fields) {
       await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index") {
       await db.add_index(table.name, con.configuration.field);
-    } else if (con.type === "Formula" && !db.isSQLite) {
+    }
+
+    const { id, ...rest } = con;
+    const fid = await db.insert("_sc_table_constraints", rest);
+    con.id = fid;
+
+    if (con.type === "Formula" && !db.isSQLite) {
       // implement in db if no join fields
       const jfs = {};
       add_free_variables_to_joinfields(
@@ -108,6 +112,7 @@ class TableConstraint {
           //ignore
         }
     }
+
     await require("../db/state").getState().refresh_tables();
 
     return con;

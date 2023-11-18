@@ -50,6 +50,7 @@ const {
   picked_fields_to_query,
   stateFieldsToWhere,
   stateFieldsToQuery,
+  getActionConfigFields,
   run_action_column,
   add_free_variables_to_joinfields,
   readState,
@@ -115,8 +116,13 @@ const configuration_workflow = (req) =>
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
-
-          const actions = [...builtInActions];
+          const stateActions = Object.entries(getState().actions).filter(
+            ([k, v]) => !v.disableInBuilder
+          );
+          const actions = [
+            ...builtInActions,
+            ...stateActions.map(([k, v]) => k),
+          ];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
@@ -158,6 +164,14 @@ const configuration_workflow = (req) =>
               },
             ],
           };
+          for (const [name, action] of stateActions) {
+            if (action.configFields) {
+              actionConfigForms[name] = await getActionConfigFields(
+                action,
+                table
+              );
+            }
+          }
           const { link_view_opts, view_name_opts, view_relation_opts } =
             await get_link_view_opts(
               table,

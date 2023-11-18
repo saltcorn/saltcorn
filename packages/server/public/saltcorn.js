@@ -397,16 +397,7 @@ function saveAndContinue(e, k) {
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
       if (ct.startsWith && ct.startsWith("application/json")) {
-        var errorArea = form.parent().find(".full-form-error");
-        if (errorArea.length) {
-          errorArea.text(request.responseJSON.error);
-        } else {
-          form
-            .parent()
-            .append(
-              `<p class="text-danger full-form-error">${request.responseJSON.error}</p>`
-            );
-        }
+        notifyAlert({ type: "danger", text: request.responseJSON.error });
       } else {
         $("#page-inner-content").html(request.responseText);
         initialize_page();

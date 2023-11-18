@@ -132,6 +132,7 @@ const select = {
         disabled: attrs.disabled,
         readonly: attrs.readonly,
         onChange: attrs.onChange,
+        autocomplete: "off",
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
@@ -342,6 +343,7 @@ const select_from_table = {
         disabled: attrs.disabled,
         readonly: attrs.readonly,
         onChange: attrs.onChange,
+        autocomplete: "off",
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
@@ -426,6 +428,7 @@ const two_level_select = {
           "data-fieldname": `_${field.name}_toplevel`,
           id: `twolevelfirst_${text_attr(nm)}`,
           onChange: attrs.isFilter ? "apply_showif()" : undefined,
+          autocomplete: "off",
         },
         select_options_first_level(v, field, attrs || {}, attrs || {})
       ) +
@@ -439,6 +442,7 @@ const two_level_select = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           onChange: attrs.onChange,
+          autocomplete: "off",
           "data-calc-options": encodeURIComponent(JSON.stringify(calcOptions)),
         },
         option({ value: "" }, "")
@@ -561,6 +565,8 @@ const search_or_create = {
           disabled: attrs.disabled,
           readonly: attrs.readonly,
           onChange: attrs.onChange,
+          autocomplete: "off",
+
           ...(attrs?.dynamic_where
             ? {
                 "data-selected": v,
@@ -574,27 +580,24 @@ const search_or_create = {
       ) +
       a(
         {
-          href: `javascript:${
-            isNode() ? "ajax_modal" : "mobile_modal"
-          }('/view/${
+          onclick: `${isNode() ? "ajax_modal" : "mobile_modal"}('/view/${
             attrs.viewname
-          }',{submitReload: false,onClose: soc_process_${nm}})`,
+          }',{submitReload: false,onClose: soc_process_${nm}(this)})`,
+          href: `javascript:void(0)`,
         },
         attrs.label || "Or create new"
       ) +
       script(`
-      function soc_process_${nm}(){
+      const soc_process_${nm} = (elem) => ()=> {
         $.ajax('/api/${field.reftable_name}', {
           success: function (res, textStatus, request) {
             var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
               attrs.summary_field
             }+'</option>').join("")
             ${reqd ? "" : `opts = '<option></option>'+opts`}
-            $('#input${text_attr(
-              nm
-            )}').html(opts).prop('selectedIndex', res.success.length${
-        reqd ? "-1" : ""
-      }); 
+            $(elem).parent().find('select').html(opts).prop('selectedIndex', res.success.length${
+              reqd ? "-1" : ""
+            }); 
           }
         })
       }`)

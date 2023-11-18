@@ -652,7 +652,7 @@ const render = ({
                 : ""
             } ${setTextColor ? `color: ${textColor};` : ""}${
               rotate ? `transform: rotate(${rotate}deg);` : ""
-            }`,
+            }${showIfFormulaInputs ? ` display: none;` : ``}`,
             ...(showIfFormulaInputs
               ? {
                   "data-show-if": encodeURIComponent(
