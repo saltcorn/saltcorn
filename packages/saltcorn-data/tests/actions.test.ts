@@ -282,6 +282,8 @@ describe("base plugin actions", () => {
     const npats_after = await discusses_books.countRows({});
     expect(npats_after).toBe(npats_before + 1);
   });
+  //TODO emit event, recalculate_stored_fields, set_user_language,
+  // notify_user check can get configFields
 });
 describe("Events", () => {
   it("should add custom event", async () => {
