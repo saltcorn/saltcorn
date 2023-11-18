@@ -11,9 +11,9 @@ are accessible as a JSON object using the `row` variable (e.g. in a `run_js_code
 If you return a value from the action, it will be available in the `data`
 subfield of the JSON body in the HTTP response
 
-## Redirection as response
+### Redirection as response
 
-Normally JPI call will return a JSON object with a true/false success field 
+Normally API call will return a JSON object with a true/false success field 
 and the response from the action, if any, in the data field. You may instead
 require the API call to redirect to a different URL. You can do this in two 
 different ways.
