@@ -9,6 +9,12 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
+const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
+  baseactions;
+import utils from "../utils";
+import Notification from "../models/notification";
+const { applyAsync } = utils;
 
 afterAll(db.close);
 
@@ -183,7 +189,132 @@ describe("Action", () => {
     await table.insertRow({ author: "NK Jemisin", pages: 901 });
   });
 });
+describe("base plugin actions", () => {
+  it("should insert_any_row", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: { table: "patients", row_expr: '{name:"Simon1"}' },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toBe(true);
 
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon1" });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should insert_any_row with field", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { pages: 3, author: "Joe" },
+      table: books,
+      configuration: {
+        table: "patients",
+        row_expr: '{name:"Si"+row.pages+"mon"+author}',
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toBe(true);
+
+    await sleep(10);
+    const rows = await patients.getRows({ name: "Si3monJoe" });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should modify_row", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const row = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row);
+
+    expect(row.favbook).toBe(null);
+    const result = await modify_row.run({
+      row,
+      table: patients,
+      configuration: { row_expr: "{favbook:1}" },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({ reload_page: true });
+
+    const row1 = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row1);
+
+    expect(row1.favbook).toBe(1);
+  });
+  it("should duplicate_row", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const rows = await patients.getRows({ name: "Simon1" });
+
+    expect(rows.length).toBe(1);
+    const result = await duplicate_row.run({
+      row: rows[0],
+      table: patients,
+      user: { id: 1, role_id: 1 },
+    });
+    const rows1 = await patients.getRows({ name: "Simon1" });
+
+    expect(rows1.length).toBe(2);
+  });
+  it("should insert_joined_row", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: 1 });
+    assertIsSet(book);
+    const discusses_books = Table.findOne({ name: "discusses_books" });
+    assertIsSet(discusses_books);
+    const npats_before = await discusses_books.countRows({});
+    const result = await insert_joined_row.run({
+      table: discusses_books,
+      row: book,
+      configuration: { joined_table: `discusses_books.book` },
+      user: { id: 1, role_id: 1 },
+    });
+    const npats_after = await discusses_books.countRows({});
+    expect(npats_after).toBe(npats_before + 1);
+  });
+  it("should notify_user", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: 1 });
+    assertIsSet(book);
+    await notify_user.run({
+      row: book,
+      configuration: {
+        user_spec: "{id:1}",
+        title: "Hello",
+        body: "World",
+        link: "https://saltcorn.com",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    const notif = await Notification.findOne({ title: "Hello" });
+    assertIsSet(notif);
+    expect(notif.user_id).toBe(1);
+    expect(notif.body).toBe("World");
+  });
+  it("should have valid configFields", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    for (const [name, action] of Object.entries(baseactions)) {
+      if (!action.configFields) continue;
+      const configFields = await applyAsync(action.configFields, {
+        table: books,
+      });
+      expect(Array.isArray(configFields)).toBe(true);
+    }
+  });
+
+  //TODO recalculate_stored_fields, set_user_language
+});
 describe("Events", () => {
   it("should add custom event", async () => {
     await getState().setConfig("custom_events", [
@@ -199,7 +330,7 @@ describe("Events", () => {
     await getState().setConfig("event_log_settings", {
       FooHappened: true,
       BarWasHere: true,
-      BarWasHere_channel: "Baz",
+      BarWasHere_channel: "Baz,oldbooks",
       Insert: true,
       Insert_readings: true,
     });
@@ -238,6 +369,31 @@ describe("Events", () => {
     await sleep(100);
     const evs1 = await EventLog.find({ event_type: "Insert" });
     expect(evs1.length).toBe(1);
+  });
+  it("should run emit_event action", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: 1 });
+    assertIsSet(book);
+    const r = await emit_event.run({
+      row: book,
+      configuration: {
+        eventType: "BarWasHere",
+        channel: "oldbooks",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+
+    await sleep(100);
+
+    const ev = await EventLog.findOne({
+      event_type: "BarWasHere",
+      channel: "oldbooks",
+    });
+
+    assertIsSet(ev);
+
+    expect(ev.payload.pages).toBe(967);
   });
 });
 
