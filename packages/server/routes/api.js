@@ -358,14 +358,20 @@ router.all(
         if (accessAllowed(req, user, trigger)) {
           try {
             const action = getState().actions[trigger.action];
+            const row = req.method === "GET" ? req.query : req.body;
             const resp = await action.run({
               configuration: trigger.configuration,
               body: req.body,
-              row: req.method === "GET" ? req.query : req.body,
+              row,
               req,
               user: user || req.user,
             });
-            res.json({ success: true, data: resp });
+            if (
+              (row._process_result || req.headers?.scprocessresults) &&
+              resp?.goto
+            )
+              res.redirect(resp.goto);
+            else res.json({ success: true, data: resp });
           } catch (e) {
             Crash.create(e, req);
             res.status(400).json({ success: false, error: e.message });
