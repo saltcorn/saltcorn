@@ -9,7 +9,7 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import { insert_any_row } from "../base-plugin/actions";
+import { insert_any_row, modify_row } from "../base-plugin/actions";
 
 afterAll(db.close);
 
@@ -197,7 +197,6 @@ describe("base plugin actions", () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
 
-    await sleep(10);
     const rows = await patients.getRows({ name: "Simon1" });
 
     expect(rows.length).toBe(1);
@@ -224,6 +223,26 @@ describe("base plugin actions", () => {
     const rows = await patients.getRows({ name: "Si3monJoe" });
 
     expect(rows.length).toBe(1);
+  });
+  it("should modify_row", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const row = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row);
+
+    expect(row.favbook).toBe(null);
+    const result = await modify_row.run({
+      row,
+      table: patients,
+      configuration: { row_expr: "{favbook:1}" },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({ reload_page: true });
+
+    const row1 = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row1);
+
+    expect(row1.favbook).toBe(1);
   });
 });
 describe("Events", () => {
