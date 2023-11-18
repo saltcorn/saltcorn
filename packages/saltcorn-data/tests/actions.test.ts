@@ -9,7 +9,12 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import { insert_any_row, modify_row } from "../base-plugin/actions";
+import {
+  duplicate_row,
+  insert_any_row,
+  insert_joined_row,
+  modify_row,
+} from "../base-plugin/actions";
 
 afterAll(db.close);
 
@@ -243,6 +248,39 @@ describe("base plugin actions", () => {
     assertIsSet(row1);
 
     expect(row1.favbook).toBe(1);
+  });
+  it("should duplicate_row", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const rows = await patients.getRows({ name: "Simon1" });
+
+    expect(rows.length).toBe(1);
+    const result = await duplicate_row.run({
+      row: rows[0],
+      table: patients,
+      user: { id: 1, role_id: 1 },
+    });
+    const rows1 = await patients.getRows({ name: "Simon1" });
+
+    expect(rows1.length).toBe(2);
+  });
+  it("should insert_joined_row", async () => {
+    const books = Table.findOne({ name: "books" });
+
+    assertIsSet(books);
+    const book = await books.getRow({ id: 1 });
+    assertIsSet(book);
+    const discusses_books = Table.findOne({ name: "discusses_books" });
+    assertIsSet(discusses_books);
+    const npats_before = await discusses_books.countRows({});
+    const result = await insert_joined_row.run({
+      table: discusses_books,
+      row: book,
+      configuration: { joined_table: `discusses_books.book` },
+      user: { id: 1, role_id: 1 },
+    });
+    const npats_after = await discusses_books.countRows({});
+    expect(npats_after).toBe(npats_before + 1);
   });
 });
 describe("Events", () => {
