@@ -9,12 +9,11 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import {
-  duplicate_row,
-  insert_any_row,
-  insert_joined_row,
-  modify_row,
-} from "../base-plugin/actions";
+import baseactions from "../base-plugin/actions";
+const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
+  baseactions;
+import utils from "../utils";
+const { applyAsync } = utils;
 
 afterAll(db.close);
 
@@ -266,7 +265,6 @@ describe("base plugin actions", () => {
   });
   it("should insert_joined_row", async () => {
     const books = Table.findOne({ name: "books" });
-
     assertIsSet(books);
     const book = await books.getRow({ id: 1 });
     assertIsSet(book);
@@ -282,6 +280,18 @@ describe("base plugin actions", () => {
     const npats_after = await discusses_books.countRows({});
     expect(npats_after).toBe(npats_before + 1);
   });
+  it("should have valid configFields", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    for (const [name, action] of Object.entries(baseactions)) {
+      if (!action.configFields) continue;
+      const configFields = await applyAsync(action.configFields, {
+        table: books,
+      });
+      expect(Array.isArray(configFields)).toBe(true);
+    }
+  });
+
   //TODO emit event, recalculate_stored_fields, set_user_language,
   // notify_user check can get configFields
 });
