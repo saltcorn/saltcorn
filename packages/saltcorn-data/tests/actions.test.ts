@@ -9,7 +9,7 @@ const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
   mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import baseactions, { notify_user } from "../base-plugin/actions";
+import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
 const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
   baseactions;
 import utils from "../utils";
@@ -313,7 +313,7 @@ describe("base plugin actions", () => {
     }
   });
 
-  //TODO emit event, recalculate_stored_fields, set_user_language
+  //TODO recalculate_stored_fields, set_user_language
 });
 describe("Events", () => {
   it("should add custom event", async () => {
@@ -330,7 +330,7 @@ describe("Events", () => {
     await getState().setConfig("event_log_settings", {
       FooHappened: true,
       BarWasHere: true,
-      BarWasHere_channel: "Baz",
+      BarWasHere_channel: "Baz,oldbooks",
       Insert: true,
       Insert_readings: true,
     });
@@ -369,6 +369,31 @@ describe("Events", () => {
     await sleep(100);
     const evs1 = await EventLog.find({ event_type: "Insert" });
     expect(evs1.length).toBe(1);
+  });
+  it("should run emit_event action", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: 1 });
+    assertIsSet(book);
+    const r = await emit_event.run({
+      row: book,
+      configuration: {
+        eventType: "BarWasHere",
+        channel: "oldbooks",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+
+    await sleep(100);
+
+    const ev = await EventLog.findOne({
+      event_type: "BarWasHere",
+      channel: "oldbooks",
+    });
+
+    assertIsSet(ev);
+
+    expect(ev.payload.pages).toBe(967);
   });
 });
 
