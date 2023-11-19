@@ -58,6 +58,7 @@ module.exports = {
   },
   resolve: {
     fallback: {
+      url: false,
       tls: false,
       dns: false,
       net: false,
@@ -67,7 +68,6 @@ module.exports = {
       crypto: require.resolve("crypto-browserify"),
       buffer: require.resolve("buffer/"),
       stream: require.resolve("stream-browserify"),
-      url: require.resolve("url"),
       http: require.resolve("stream-http"),
       https: require.resolve("https-browserify"),
       util: require.resolve("util"),
