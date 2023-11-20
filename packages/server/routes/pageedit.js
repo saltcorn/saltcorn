@@ -9,7 +9,7 @@ const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const Page = require("@saltcorn/data/models/page");
-const { div, a } = require("@saltcorn/markup/tags");
+const { div, a, iframe, script } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
 const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
@@ -41,6 +41,7 @@ const {
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
 const Library = require("@saltcorn/data/models/library");
 const path = require("path");
+const fsp = require("fs").promises;
 
 /**
  * @type {object}
@@ -431,6 +432,105 @@ router.post(
 );
 
 /**
+ * open the builder
+ * @param {*} req
+ * @param {*} res
+ * @param {*} page
+ */
+const getEditNormalPage = async (req, res, page) => {
+  // set fixed states in page directly for legacy builds
+  traverseSync(page.layout, {
+    view(s) {
+      if (s.state === "fixed" && !s.configuration) {
+        const fs = page.fixed_states[s.name];
+        if (fs) s.configuration = fs;
+      }
+    },
+  });
+  const options = await pageBuilderData(req, page);
+  const builderData = {
+    options,
+    context: page,
+    layout: page.layout,
+    mode: "page",
+    version_tag: db.connectObj.version_tag,
+  };
+  res.sendWrap(
+    req.__(`%s configuration`, page.name),
+    wrap(renderBuilder(builderData, req.csrfToken()), true, req, page)
+  );
+};
+
+/**
+ * open a file editor with an iframe preview
+ * @param {*} req
+ * @param {*} res
+ * @param {*} page
+ */
+const getEditPageWithHtmlFile = async (req, res, page) => {
+  const htmlFile = page.html_file;
+  const iframeId = "page_preview_iframe";
+  const file = await File.findOne(htmlFile);
+  if (!file) {
+    req.flash("error", req.__("File not found"));
+    return res.redirect(`/pageedit`);
+  }
+  const editForm = new Form({
+    action: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+    fields: [
+      {
+        name: "code",
+        form_name: "code",
+        label: "Code",
+        input_type: "code",
+        attributes: { mode: "text/html" },
+        validator(s) {
+          return true;
+        },
+      },
+    ],
+    values: {
+      code: await fsp.readFile(file.location, "utf8"),
+    },
+    onChange: `saveAndContinue(this, () => { 
+      document.getElementById('${iframeId}').contentWindow.location.reload();
+    })`,
+    submitLabel: req.__("Finish") + " &raquo;",
+  });
+  res.sendWrap(req.__("Edit %s", page.title), {
+    above: [
+      {
+        type: "card",
+        title: "Edit",
+        titleAjaxIndicator: true,
+        contents: [renderForm(editForm, req.csrfToken())],
+      },
+      {
+        type: "card",
+        title: "Preview",
+        contents: [
+          iframe({
+            id: iframeId,
+            src: `/files/serve/${encodeURIComponent(htmlFile)}`,
+          }),
+          script(`
+            const iframe = document.getElementById("${iframeId}");
+            iframe.onload = () => {
+              const _iframe = document.getElementById("${iframeId}");
+              if (_iframe.contentWindow.document.body) {
+                _iframe.width = _iframe.contentWindow.document.body.scrollWidth;
+                _iframe.height = _iframe.contentWindow.document.body.scrollHeight;
+              }
+            }`),
+        ],
+      },
+    ],
+  });
+};
+
+/**
+ * for normal pages, open the builder
+ * for pages with a fixed html file, open a file editor with an iframe preview
  * @name get/edit/:pagename
  * @function
  * @memberof module:routes/pageedit~pageeditRouter
@@ -446,27 +546,8 @@ router.get(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
     } else {
-      // set fixed states in page directly for legacy builds
-      traverseSync(page.layout, {
-        view(s) {
-          if (s.state === "fixed" && !s.configuration) {
-            const fs = page.fixed_states[s.name];
-            if (fs) s.configuration = fs;
-          }
-        },
-      });
-      const options = await pageBuilderData(req, page);
-      const builderData = {
-        options,
-        context: page,
-        layout: page.layout,
-        mode: "page",
-        version_tag: db.connectObj.version_tag,
-      };
-      res.sendWrap(
-        req.__(`%s configuration`, page.name),
-        wrap(renderBuilder(builderData, req.csrfToken()), true, req, page)
-      );
+      if (!page.html_file) await getEditNormalPage(req, res, page);
+      else await getEditPageWithHtmlFile(req, res, page);
     }
   })
 );
@@ -495,13 +576,33 @@ router.post(
       await Page.update(page.id, {
         layout: decodeURIComponent(req.body.layout),
       });
-
       req.flash("success", req.__(`Page %s saved`, pagename));
       res.redirect(redirectTarget);
+    } else if (req.body.code) {
+      try {
+        if (!page.html_file) throw new Error(req.__("File not found"));
+        const file = await File.findOne(page.html_file);
+        if (!file) throw new Error(req.__("File not found"));
+        await fsp.writeFile(file.location, req.body.code);
+        if (!req.xhr) {
+          req.flash("success", req.__(`Page %s saved`, pagename));
+          res.redirect(redirectTarget);
+        } else res.json({ okay: true });
+      } catch (error) {
+        getState().log(2, `POST /edit/${pagename}: '${error.message}'`);
+        req.flash(
+          "error",
+          `${req.__("Error")}: ${error.message || req.__("An error occurred")}`
+        );
+        if (!req.xhr) res.redirect(redirectTarget);
+        else res.json({ error: error.message });
+      }
     } else {
+      getState().log(2, `POST /edit/${pagename}: '${req.body}'`);
       req.flash("error", req.__(`Error processing page`));
       res.redirect(redirectTarget);
     }
+    getState().log(5, `POST /edit/${pagename}: Success`);
   })
 );
 

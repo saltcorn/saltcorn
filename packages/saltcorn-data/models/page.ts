@@ -376,8 +376,7 @@ class Page implements AbstractPage {
   }
 
   get html_file(): string | undefined {
-    if(instanceOWithHtmlFile(this.layout))
-      return this.layout.html_file;
+    if (instanceOWithHtmlFile(this.layout)) return this.layout.html_file;
     else null;
   }
 

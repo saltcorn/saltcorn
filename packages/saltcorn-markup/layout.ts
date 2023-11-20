@@ -762,7 +762,7 @@ const render = ({
     const rndid = `iframe_${Math.floor(Math.random() * 16777215).toString(16)}`;
     return `${iframe({
       id: rndid,
-      src: "/files/serve/folder/test.html",
+      src: `/files/serve/${encodeURIComponent(layout.html_file)}`,
     })} ${script(`
     const iframe = document.getElementById("${rndid}");
     iframe.onload = () => {
