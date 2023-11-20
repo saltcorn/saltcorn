@@ -731,8 +731,11 @@ const transformForm = async ({
           state = { id: row[view_select.field_name] };
           break;
       }
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(segment.extra_state_fml, row, req.user)
+        : {};
       segment.contents = await view.run(
-        state,
+        { ...state, ...extra_state },
         { req, res },
         view.isRemoteTable()
       );
