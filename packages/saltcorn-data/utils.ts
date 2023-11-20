@@ -323,7 +323,11 @@ const nubBy = (prop: string, xs: any[]) => {
     return true;
   });
 };
+// add a $ in front of every key
+const dollarizeObject = (state: object) =>
+  Object.fromEntries(Object.entries(state).map(([k, v]) => [`$${k}`, v]));
 export = {
+  dollarizeObject,
   objectToQueryString,
   removeEmptyStrings,
   removeDefaultColor,

@@ -67,6 +67,7 @@ const {
   isWeb,
   hashState,
   getSafeBaseUrl,
+  dollarizeObject,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -673,7 +674,8 @@ const render = (
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
-        if (!f(row, req.user)) segment.hide = true;
+        if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
+          segment.hide = true;
       }
     },
   });

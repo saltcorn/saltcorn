@@ -15,7 +15,7 @@ const { structuredClone, isWeb, isOfflineMode } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode, parseRelationPath } = require("../../utils");
+const { isNode, parseRelationPath, dollarizeObject } = require("../../utils");
 const { bool, date } = require("../types");
 
 /**
@@ -299,10 +299,7 @@ const view_linker = (
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
-    const dollarState = Object.fromEntries(
-      Object.entries(state).map(([k, v]) => [`$${k}`, v])
-    );
-    const ctx = { ...dollarState, ...row };
+    const ctx = { ...dollarizeObject(state), ...row };
     const o = eval_expression(extra_state_fml, ctx, user);
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
