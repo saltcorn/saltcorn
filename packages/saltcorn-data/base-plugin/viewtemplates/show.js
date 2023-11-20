@@ -660,8 +660,10 @@ const render = (
         const field = fields.find((f) => f.name === segment.field);
         if (!field) return;
         if (field.type.name === "String") segment.url = row[segment.field];
-        if (field.type === "File")
+        if (field.type === "File") {
           segment.url = `/files/serve/${row[segment.field]}`;
+          segment.fileid = row[segment.field];
+        }
       }
     },
     container(segment) {
