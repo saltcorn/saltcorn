@@ -381,6 +381,17 @@ function get_form_record(e_in, select_labels) {
     ? $(`form[data-viewname=${e_in.viewname}]`)
     : e_in.closest(".form-namespace");
 
+  const form = $(e).closest("form");
+
+  const rowVals = form.attr("data-row-values");
+  if (rowVals)
+    try {
+      const initRow = JSON.parse(decodeURIComponent(rowVals));
+      Object.assign(rec, initRow);
+    } catch (error) {
+      console.error(error);
+    }
+
   e.find("input[name],select[name],textarea[name]").each(function () {
     const name = $(this).attr("data-fieldname") || $(this).attr("name");
     if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
@@ -737,7 +748,26 @@ function initialize_page() {
           cm.on(
             "change",
             $.debounce(() => {
-              $(el).closest("form").trigger("change");
+              if ($(el).hasClass("validate-statements")) {
+                try {
+                  let AsyncFunction = Object.getPrototypeOf(
+                    async function () {}
+                  ).constructor;
+                  AsyncFunction(cm.getValue());
+                  $(el).closest("form").trigger("change");
+                } catch (e) {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(e.message);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${e.message}</p>`
+                      );
+                  return;
+                }
+              } else $(el).closest("form").trigger("change");
             }),
             500,
             null,

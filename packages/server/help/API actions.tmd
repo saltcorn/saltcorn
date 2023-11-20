@@ -10,3 +10,22 @@ are accessible as a JSON object using the `row` variable (e.g. in a `run_js_code
 
 If you return a value from the action, it will be available in the `data`
 subfield of the JSON body in the HTTP response
+
+### Redirection as response
+
+Normally API call will return a JSON object with a true/false success field 
+and the response from the action, if any, in the data field. You may instead
+require the API call to redirect to a different URL. You can do this in two 
+different ways.
+
+**Static redirect**: if you set the `scgotourl` HTTP header, the response will 
+redirect to this URL.
+
+**Dynamic redirect**: The redirect URL can also come from the action. If this
+returns an object with the `goto` field (e.g. 
+`return {goto: "https://myapp.com/view/ShowTheThing?id"+newid}`)
+that is normally returned in the JSON post body so it can be processed by client code.
+You can instead request that this is processed server-side, by (a) setting a 
+`_process_result` field to true in the row data, i.e. JSON body in POST and query
+string in GET or (b) setting the `scprocessresults` HTTP header. This will cause the 
+API call to return an HTTP redirect with the `goto` value.

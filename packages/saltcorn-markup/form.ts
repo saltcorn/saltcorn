@@ -718,6 +718,7 @@ const mkFormRowForRepeat = (
       hdr.showIf
         ? {
             "data-show-if": mkShowIf(hdr.showIf),
+            style: "display: none;",
           }
         : {},
       div(
@@ -1277,6 +1278,26 @@ const renderForm = (
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
+  const extraValues: any = {};
+  if (form.req?.user) extraValues.user = form.req.user;
+  if (Object.keys(form.values || {}).length > 1) {
+    const formVals = new Set(
+      form.fields
+        .filter((f: any) => {
+          if (f.input_type === "hidden") return true;
+          if (f.fieldviewObj) return f.fieldviewObj.isEdit;
+          if (!f?.type?.fieldviews) return false;
+          const fv = f.type.fieldviews[f.fieldview];
+          if (!fv) return false;
+          return fv.isEdit;
+        })
+        .map((f) => f.name)
+    );
+    Object.entries(form.values).forEach(([k, v]) => {
+      if (!formVals.has(k)) extraValues[k] = v;
+    });
+  }
+  const hasValues = Object.keys(extraValues).length > 0;
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
@@ -1285,7 +1306,11 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     form.onChange ? ` onchange="${form.onChange}"` : ""
   } class="form-namespace ${form.class || ""}" method="${
     form.methodGET ? "get" : "post"
-  }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}>`;
+  }"${hasFile ? ' encType="multipart/form-data" accept-charset="utf-8"' : ""}${
+    hasValues
+      ? ` data-row-values="${encodeURIComponent(JSON.stringify(extraValues))}"`
+      : ""
+  }>`;
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")

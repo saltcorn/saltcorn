@@ -612,6 +612,7 @@ const string = {
                   disabled: attrs.disabled,
                   onChange: attrs.onChange,
                   onBlur: attrs.onChange,
+                  autocomplete: "off",
                 },
                 required || attrs.force_required
                   ? getStrOptions(v, attrs.options)
@@ -632,6 +633,7 @@ const string = {
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
                 onBlur: attrs.onChange,
+                autocomplete: "off",
                 "data-selected": v,
                 "data-calc-options": encodeURIComponent(
                   JSON.stringify(attrs.calcOptions)

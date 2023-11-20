@@ -17,7 +17,6 @@ class CreateUserCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-
     const User = require("@saltcorn/data/models/user");
 
     const { flags } = this.parse(CreateUserCommand);
@@ -30,7 +29,7 @@ class CreateUserCommand extends Command {
 
     // run function as specified tenant
     await maybe_as_tenant(flags.tenant, async () => {
-      let role_id = flags.admin ? 1 : 8;
+      let role_id = flags.admin ? 1 : 80;
       if (flags.role) {
         const roles = await User.get_roles();
         const role = roles.find((r) => r.role === flags.role);
@@ -44,12 +43,15 @@ class CreateUserCommand extends Command {
       const password =
         flags.password || (await cli.prompt("Password", { type: "hide" }));
       const u = await User.create({ email, password, role_id });
-      if(u instanceof User)
-        console.log(`Success: User ${email} created successfully ${
-          typeof flags.tenant !== "undefined" ? "in tenant " + flags.tenant : ""
-        }`);
-      else
-        console.error(`Error: ${u.error}`);
+      if (u instanceof User)
+        console.log(
+          `Success: User ${email} created successfully ${
+            typeof flags.tenant !== "undefined"
+              ? "in tenant " + flags.tenant
+              : ""
+          }`
+        );
+      else console.error(`Error: ${u.error}`);
     });
     this.exit(0);
   }
