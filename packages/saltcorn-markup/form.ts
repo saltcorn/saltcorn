@@ -1351,7 +1351,7 @@ const displayAdditionalButtons = (additionalButtons: any[]): string =>
       (btn) =>
         `<button type="button" id="${btn.id}" class="${btn.class}"${
           btn.onclick ? ` onclick="${btn.onclick}"` : ""
-        }>${btn.label}</button>&nbsp;`
+        } ${btn.disabled ? "disabled" : ""}>${btn.label}</button>&nbsp;`
     )
     .join("");
 

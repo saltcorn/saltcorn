@@ -470,6 +470,7 @@ const getEditNormalPage = async (req, res, page) => {
 const getEditPageWithHtmlFile = async (req, res, page) => {
   const htmlFile = page.html_file;
   const iframeId = "page_preview_iframe";
+  const updateBttnId = "addnUpdBtn";
   const file = await File.findOne(htmlFile);
   if (!file) {
     req.flash("error", req.__("File not found"));
@@ -492,9 +493,19 @@ const getEditPageWithHtmlFile = async (req, res, page) => {
     values: {
       code: await fsp.readFile(file.location, "utf8"),
     },
-    onChange: `saveAndContinue(this, () => { 
-      document.getElementById('${iframeId}').contentWindow.location.reload();
-    })`,
+    onChange: `document.getElementById('${updateBttnId}').disabled = false;`,
+    additionalButtons: [
+      {
+        label: req.__("Update"),
+        id: updateBttnId,
+        class: "btn btn-primary",
+        onclick: `saveAndContinue(this, () => {
+          document.getElementById('${iframeId}').contentWindow.location.reload();
+          document.getElementById('${updateBttnId}').disabled = true;
+        })`,
+        disabled: true,
+      },
+    ],
     submitLabel: req.__("Finish") + " &raquo;",
   });
   res.sendWrap(req.__("Edit %s", page.title), {

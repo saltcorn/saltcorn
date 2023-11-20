@@ -135,6 +135,11 @@ describe("page create", () => {
 
   it("does not find the html file for staff or public", async () => {
     const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post(`/files/setrole/fixed_page.html`)
+      .set("Cookie", await getAdminLoginCookie())
+      .send("role=1")
+      .expect(toRedirect("/files?dir=."));
     const loginCookie = await getStaffLoginCookie();
     await request(app)
       .get("/page/new_page_with_html_file")
