@@ -33,6 +33,8 @@ must be enclosed in quotes (single, double or
 [backtick](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals))). 
 You can also as the value use a more complex JavaScript expression.
 
+
+
 You can refer to the logged in user using the variable name user. 
 This is an object and you must use the dot to access user fields,
 e.g. user.id for the logged in users id. A very common scenario 
@@ -60,3 +62,9 @@ in this case the table {{srcTable.name}}:
 
 {{# } }}
 
+The state values from the query string can also be accessed, by preceeding the 
+variable name by a dollar sign (in pages and Show views). For instance if your URL ends in `?id=45&foo=1`, 
+you can access the value of `foo` (here 1) as `$foo`. In Filter views, there is no 
+underlying row and the purpose of the view is fundamentally to manipulate the state
+so the state in extra state formulae is accessed without dollar sign; in the 
+previous example `foo` instead of `$foo`.
