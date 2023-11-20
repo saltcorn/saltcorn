@@ -33,7 +33,8 @@ must be enclosed in quotes (single, double or
 [backtick](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals))). 
 You can also as the value use a more complex JavaScript expression.
 
-
+For examples of how you can use these values for greater than/less than, 
+or-conditions or case insensitivity, see [here](https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html#md:querying-table-rows).
 
 You can refer to the logged in user using the variable name user. 
 This is an object and you must use the dot to access user fields,
