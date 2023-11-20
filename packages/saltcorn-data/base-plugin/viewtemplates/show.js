@@ -504,7 +504,11 @@ const renderRows = async (
             break;
         }
         const extra_state = segment.extra_state_fml
-          ? eval_expression(segment.extra_state_fml, row, extra.req.user)
+          ? eval_expression(
+              segment.extra_state_fml,
+              { ...dollarizeObject(state), ...row },
+              extra.req.user
+            )
           : {};
         const { id, ...outerState } = state;
         //console.log(segment);
