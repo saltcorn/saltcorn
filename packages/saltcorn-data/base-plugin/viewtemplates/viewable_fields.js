@@ -504,7 +504,8 @@ const get_viewable_fields = (
   columns,
   isShow,
   req,
-  __
+  __,
+  state = {}
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -595,7 +596,15 @@ const get_viewable_fields = (
         } else return action_col;
       } else if (column.type === "ViewLink") {
         if (!column.view) return;
-        const r = view_linker(column, fields, __, isWeb(req), req.user);
+        const r = view_linker(
+          column,
+          fields,
+          __,
+          isWeb(req),
+          req.user,
+          "",
+          state
+        );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
