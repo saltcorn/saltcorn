@@ -16,6 +16,7 @@ const Page = require("@saltcorn/data/models/page");
 const File = require("@saltcorn/data/models/file");
 const { existsSync } = require("fs");
 const { join } = require("path");
+const fs = require("fs");
 
 let htmlFile = null;
 
@@ -26,24 +27,20 @@ const prepHtmlFiles = async () => {
       db.getTenantSchema(),
       folder
     );
+    const html = `<html><head><title>Landing page</title></head><body><h1>${content}</h1></body></html>`;
     if (!existsSync(scFolder)) await File.new_folder(folder);
     if (!existsSync(join(scFolder, name))) {
-      return await File.from_contents(
-        name,
-        "text/html",
-        `<html><head><title>Landing page</title></head><body><h1>${content}</h1></body></html>`,
-        1,
-        1,
-        folder
-      );
+      return await File.from_contents(name, "text/html", html, 1, 1, folder);
     } else {
       const file = await File.from_file_on_disk(name, scFolder);
+      fs.writeFileSync(file.location, html);
       file.location = File.absPathToServePath(file.location);
       return file;
     }
   };
   htmlFile = await createFile("/", "fixed_page.html", "Land here");
   await createFile("/subfolder", "fixed_page2.html", "Or Land here");
+  await createFile("/", "test.html", "page with fixed html");
 };
 
 beforeAll(async () => {
@@ -251,6 +248,33 @@ describe("pageedit", () => {
       .get("/pageedit/edit/a_page")
       .set("Cookie", loginCookie)
       .expect(toInclude("<script>builder.renderBuilder"));
+  });
+  it("show editor with html file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/pageedit/edit/page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(`<textarea mode="text/html"`));
+  });
+  it("edit editor with html file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const newHtml =
+      "<html><head><title>title</title></head><body><h1>new html</h1></body</html>";
+    await request(app)
+      .get("/page/page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("page with fixed html"));
+    await request(app)
+      .post("/pageedit/edit/page_with_html_file")
+      .set("Cookie", loginCookie)
+      .send("code=" + encodeURIComponent(newHtml))
+      .expect(toRedirect("/pageedit"));
+    await request(app)
+      .get("/page/page_with_html_file")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("new html"));
   });
 
   it("sets root page", async () => {
