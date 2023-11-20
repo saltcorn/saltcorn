@@ -289,7 +289,8 @@ const view_linker = (
   __ = (s) => s,
   isWeb = true,
   user,
-  targetPrefix = ""
+  targetPrefix = "",
+  state = {}
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -298,7 +299,11 @@ const view_linker = (
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
-    const o = eval_expression(extra_state_fml, row, user);
+    const dollarState = Object.fromEntries(
+      Object.entries(state).map(([k, v]) => [`$${k}`, v])
+    );
+    const ctx = { ...dollarState, ...row };
+    const o = eval_expression(extra_state_fml, ctx, user);
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");

@@ -556,7 +556,8 @@ const renderRows = async (
       table,
       role,
       extra.req,
-      is_owner
+      is_owner,
+      state
     );
   });
 };
@@ -612,7 +613,17 @@ const runMany = async (
  * @throws {Error}
  * @returns {Layout}
  */
-const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
+const render = (
+  row,
+  fields,
+  layout0,
+  viewname,
+  table,
+  role,
+  req,
+  is_owner,
+  state
+) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
@@ -809,7 +820,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         (s) => s,
         isWeb(req),
         req.user,
-        prefix
+        prefix,
+        state
       );
       return key(row);
     },
