@@ -573,6 +573,7 @@ namespace LayoutExports {
     outerClass?: string;
     independent: boolean;
     startClosed?: boolean;
+    disable_inactive?: boolean;
   };
 }
 type RenderTabsOpts = LayoutExports.RenderTabsOpts;
@@ -606,6 +607,7 @@ const renderTabs = (
     bodyClass,
     outerClass,
     deeplink,
+    disable_inactive,
     startClosed,
     serverRendered,
     tabId,
@@ -678,6 +680,9 @@ const renderTabs = (
                   ix === activeIx && "active",
                   deeplink && "deeplink",
                 ],
+                onclick: disable_inactive
+                  ? `disable_inactive('${rndid}')`
+                  : undefined,
                 id: `${rndid}link${ix}`,
                 "data-bs-toggle": serverRendered ? undefined : "tab",
                 href: serverRendered
@@ -719,7 +724,8 @@ const renderTabs = (
                 go(t, false, ix)
               )
             )
-      )
+      ) +
+      script(domReady(`disable_inactive('${rndid}')`))
     );
   }
 };

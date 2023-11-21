@@ -381,7 +381,7 @@ const TabsSettings = () => {
                 </td>
               </tr>
             ) : null}
-            {options.mode === "edit" ? (
+            {options.mode === "edit" && !serverRendered ? (
               <tr>
                 <td colSpan="2">
                   <div className="form-check">

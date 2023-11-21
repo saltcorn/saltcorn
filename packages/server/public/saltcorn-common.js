@@ -1380,3 +1380,28 @@ function check_saltcorn_notifications() {
     }
   });
 }
+
+function disable_inactive(id) {
+  setTimeout(() => {
+    $(`#${id} li a`).each(function () {
+      const isActive = $(this).hasClass("active");
+      const target = $(this).attr("href");
+      if (isActive) {
+        //activate previously disabled
+
+        $(target)
+          .find("[disabled-by-tab]")
+          .prop("disabled", false)
+          .removeAttr("disabled-by-tab");
+      } else {
+        //disable all input
+        $(target)
+          .find(
+            "input:not(:disabled), textarea:not(:disabled), button:not(:disabled), select:not(:disabled)"
+          )
+          .prop("disabled", true)
+          .attr("disabled-by-tab", "1");
+      }
+    });
+  }, 100);
+}
