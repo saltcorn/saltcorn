@@ -1381,7 +1381,7 @@ function check_saltcorn_notifications() {
   });
 }
 
-function disable_inactive(id) {
+function disable_inactive_tab_inputs(id) {
   setTimeout(() => {
     const isAccordion = $(`#${id}`).hasClass("accordion");
     const iterElem = isAccordion

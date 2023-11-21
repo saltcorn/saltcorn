@@ -634,7 +634,7 @@ const renderTabs = (
                   ],
                   type: "button",
                   onclick: disable_inactive
-                    ? `disable_inactive('${rndid}top')`
+                    ? `disable_inactive_tab_inputs('${rndid}top')`
                     : undefined,
                   "data-bs-toggle": "collapse",
                   "data-bs-target": `#${rndid}tab${ix}`,
@@ -663,7 +663,10 @@ const renderTabs = (
             )
           )
         )
-      ) + script(domReady(`disable_inactive('${rndid}top')`))
+      ) +
+      (disable_inactive
+        ? script(domReady(`disable_inactive_tab_inputs('${rndid}top')`))
+        : "")
     );
   else {
     let activeIx = serverRendered && activeTabTitle ? +activeTabTitle : 0;
@@ -686,7 +689,7 @@ const renderTabs = (
                   deeplink && "deeplink",
                 ],
                 onclick: disable_inactive
-                  ? `disable_inactive('${rndid}')`
+                  ? `disable_inactive_tab_inputs('${rndid}')`
                   : undefined,
                 id: `${rndid}link${ix}`,
                 "data-bs-toggle": serverRendered ? undefined : "tab",
@@ -730,7 +733,9 @@ const renderTabs = (
               )
             )
       ) +
-      script(domReady(`disable_inactive('${rndid}')`))
+      (disable_inactive
+        ? script(domReady(`disable_inactive_tab_inputs('${rndid}')`))
+        : "")
     );
   }
 };
