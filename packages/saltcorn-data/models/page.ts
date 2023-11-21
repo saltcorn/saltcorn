@@ -337,10 +337,14 @@ class Page implements AbstractPage {
         }
         if (segment.view_state_fml) {
           const extra_state = segment.view_state_fml
-            ? eval_expression(segment.view_state_fml, {}, extraArgs.req.user)
+            ? eval_expression(
+                segment.view_state_fml,
+                dollarizeObject(querystate || {}),
+                extraArgs.req.user
+              )
             : {};
           segment.url +=
-            (segment.transfer_state ? "" : `?`) +
+            (segment.transfer_state ? "&" : `?`) +
             objectToQueryString(extra_state || {});
         }
       },
