@@ -364,7 +364,43 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/books/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 1);
+      .expect((r) => +r.body > 2);
+  });
+  it("should show calculated with single joinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "patients" });
+    await Field.create({
+      table,
+      label: "pagesp1",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "favbook.pages+1",
+    });
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/patients/pagesp1/show")
+      .set("Cookie", loginCookie)
+      .expect((r) => +r.body > 2);
+  });
+  it("should show calculated with double joinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "readings" });
+    await Field.create({
+      table,
+      label: "pagesp1",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "patient_id.favbook.pages+1",
+    });
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/readings/pagesp1/show")
+      .set("Cookie", loginCookie)
+      .expect((r) => +r.body > 2);
   });
 });
 
