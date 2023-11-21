@@ -617,48 +617,53 @@ const renderTabs = (
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
-    return div(
-      { class: ["accordion", outerClass], id: `${rndid}top` },
-      contents.map((t, ix) =>
-        div(
-          { class: "accordion-item" },
+    return (
+      div(
+        { class: ["accordion", outerClass], id: `${rndid}top` },
+        contents.map((t, ix) =>
+          div(
+            { class: "accordion-item" },
 
-          h2(
-            { class: "accordion-header", id: `${rndid}head${ix}` },
-            button(
+            h2(
+              { class: "accordion-header", id: `${rndid}head${ix}` },
+              button(
+                {
+                  class: [
+                    "accordion-button",
+                    (ix > 0 || startClosed) && "collapsed",
+                  ],
+                  type: "button",
+                  onclick: disable_inactive
+                    ? `disable_inactive('${rndid}top')`
+                    : undefined,
+                  "data-bs-toggle": "collapse",
+                  "data-bs-target": `#${rndid}tab${ix}`,
+                  "aria-expanded": ix === 0 ? "true" : "false",
+                  "aria-controls": `${rndid}tab${ix}`,
+                },
+                titles[ix]
+              )
+            ),
+
+            div(
               {
                 class: [
-                  "accordion-button",
-                  (ix > 0 || startClosed) && "collapsed",
+                  "accordion-collapse",
+                  "collapse",
+                  !startClosed && ix === 0 && "show",
                 ],
-                type: "button",
-                "data-bs-toggle": "collapse",
-                "data-bs-target": `#${rndid}tab${ix}`,
-                "aria-expanded": ix === 0 ? "true" : "false",
-                "aria-controls": `${rndid}tab${ix}`,
+                id: `${rndid}tab${ix}`,
+                "aria-labelledby": `${rndid}head${ix}`,
+                "data-bs-parent": independent ? undefined : `#${rndid}top`,
               },
-              titles[ix]
-            )
-          ),
-
-          div(
-            {
-              class: [
-                "accordion-collapse",
-                "collapse",
-                !startClosed && ix === 0 && "show",
-              ],
-              id: `${rndid}tab${ix}`,
-              "aria-labelledby": `${rndid}head${ix}`,
-              "data-bs-parent": independent ? undefined : `#${rndid}top`,
-            },
-            div(
-              { class: ["accordion-body", bodyClass || ""] },
-              go(t, false, ix)
+              div(
+                { class: ["accordion-body", bodyClass || ""] },
+                go(t, false, ix)
+              )
             )
           )
         )
-      )
+      ) + script(domReady(`disable_inactive('${rndid}top')`))
     );
   else {
     let activeIx = serverRendered && activeTabTitle ? +activeTabTitle : 0;

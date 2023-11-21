@@ -1383,12 +1383,19 @@ function check_saltcorn_notifications() {
 
 function disable_inactive(id) {
   setTimeout(() => {
-    $(`#${id} li a`).each(function () {
-      const isActive = $(this).hasClass("active");
-      const target = $(this).attr("href");
+    const isAccordion = $(`#${id}`).hasClass("accordion");
+    const iterElem = isAccordion
+      ? `#${id} div.accordion-item .accordion-button`
+      : `#${id} li a`;
+    $(iterElem).each(function () {
+      const isActive = isAccordion
+        ? !$(this).hasClass("collapsed")
+        : $(this).hasClass("active");
+      const target = isAccordion
+        ? $(this).attr("data-bs-target")
+        : $(this).attr("href");
       if (isActive) {
         //activate previously disabled
-
         $(target)
           .find("[disabled-by-tab]")
           .prop("disabled", false)
