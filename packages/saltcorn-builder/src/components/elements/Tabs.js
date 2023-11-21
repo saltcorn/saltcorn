@@ -176,6 +176,7 @@ const TabsSettings = () => {
     independent: node.data.props.independent,
     startClosed: node.data.props.startClosed,
     deeplink: node.data.props.deeplink,
+    disable_inactive: node.data.props.disable_inactive,
     serverRendered: node.data.props.serverRendered,
     tabId: node.data.props.tabId,
     titles: node.data.props.titles,
@@ -186,6 +187,7 @@ const TabsSettings = () => {
     titles,
     tabsStyle,
     deeplink,
+    disable_inactive,
     independent,
     startClosed,
     ntabs,
@@ -379,6 +381,24 @@ const TabsSettings = () => {
                 </td>
               </tr>
             ) : null}
+            {options.mode === "edit" ? (
+              <tr>
+                <td colSpan="2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      name="block"
+                      type="checkbox"
+                      checked={disable_inactive}
+                      onChange={setAProp("disable_inactive", { checked: true })}
+                    />
+                    <label className="form-check-label">
+                      Disable inactive inputs
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            ) : null}
           </Fragment>
         )}
       </tbody>
@@ -397,6 +417,7 @@ Tabs.craft = {
     independent: false,
     startClosed: false,
     deeplink: true,
+    disable_inactive: false,
     serverRendered: false,
     tabId: "",
   },
