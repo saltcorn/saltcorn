@@ -103,6 +103,7 @@ const run_code = async ({
     fetch,
     URL,
     File,
+    User,
     setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
@@ -846,6 +847,13 @@ module.exports = {
             target: "_blank",
           },
           "File"
+        ),
+        a(
+          {
+            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.User-1.html",
+            target: "_blank",
+          },
+          "User"
         ),
         ...(table ? ["table"] : []),
         ...fields,
