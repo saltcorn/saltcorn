@@ -311,6 +311,13 @@ const run = async (
           objectToQueryString(extra_state || {});
       }
     },
+    container(segment) {
+      if (segment.showIfFormula) {
+        const f = get_expression_function(segment.showIfFormula, fields);
+
+        if (!f(state, extra.req.user)) segment.hide = true;
+      }
+    },
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
