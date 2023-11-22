@@ -412,9 +412,11 @@ function get_form_record(e_in, select_labels) {
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
   try {
-    return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
-      rec
-    );
+    return new Function(
+      "row",
+      `{${Object.keys(rec).join(",")}}`,
+      "return " + fml
+    )(rec, rec);
   } catch (e) {
     throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
   }
