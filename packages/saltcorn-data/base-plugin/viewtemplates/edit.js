@@ -697,7 +697,7 @@ const transformForm = async ({
         return;
       }
 
-      if (!row) {
+      if (!row && view_select.type !== "Independent") {
         segment.type = "blank";
         segment.contents = "";
         return;
@@ -735,7 +735,7 @@ const transformForm = async ({
       const extra_state = segment.extra_state_fml
         ? eval_expression(
             segment.extra_state_fml,
-            { ...dollarizeObject(req.query), ...row },
+            { ...dollarizeObject(req.query), ...(row || {}) },
             req.user
           )
         : {};
