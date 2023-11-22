@@ -17,8 +17,12 @@ const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
 const { getState } = require("@saltcorn/data/db/state");
+const { sleep } = require("@saltcorn/data/utils");
 
-afterAll(db.close);
+afterAll(async () => {
+  await sleep(200);
+  await db.close();
+});
 beforeAll(async () => {
   await resetToFixtures();
 });

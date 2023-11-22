@@ -733,10 +733,10 @@ const ContainerSettings = () => {
       </table>
       <table className="w-100" accordiontitle="Show if...">
         <tbody>
-          {["show", "edit"].includes(options.mode) && (
+          {["show", "edit", "filter"].includes(options.mode) && (
             <SettingsSectionHeaderRow title="Formula - show if true" />
           )}
-          {["show", "edit"].includes(options.mode) && (
+          {["show", "edit", "filter"].includes(options.mode) && (
             <tr>
               <td>
                 <input
