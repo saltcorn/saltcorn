@@ -654,7 +654,7 @@ const run = async (
       correct_order([
         Object.entries(groups).map(
           ([group, sr]) =>
-            h3(group) +
+            h3({ class: "feed-group-header" }, group) +
             (((!view_decoration && in_card) || view_decoration === "Card") &&
             masonry_columns
               ? div({ class: "card-columns" }, sr.map(showRowInner))
