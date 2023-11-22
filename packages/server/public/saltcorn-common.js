@@ -285,9 +285,13 @@ function apply_showif() {
             .closest(".form-namespace")
             .find("input[name=_columndef]");
           try {
-            const def = JSON.parse($def.val());
-            def[k] = v;
-            $def.val(JSON.stringify(def));
+            const defval = $def.val();
+            const def =
+              typeof defval === "undefined" ? undefined : JSON.parse(defval);
+            if (def) {
+              def[k] = v;
+              $def.val(JSON.stringify(def));
+            }
           } catch (e) {
             console.error("Invalid json", e);
           }
