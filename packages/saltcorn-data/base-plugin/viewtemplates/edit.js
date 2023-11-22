@@ -38,6 +38,7 @@ const {
   isNode,
   isOfflineMode,
   mergeIntoWhere,
+  dollarizeObject,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -732,7 +733,11 @@ const transformForm = async ({
           break;
       }
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, row, req.user)
+        ? eval_expression(
+            segment.extra_state_fml,
+            { ...dollarizeObject(req.query), ...row },
+            req.user
+          )
         : {};
       segment.contents = await view.run(
         { ...state, ...extra_state },
