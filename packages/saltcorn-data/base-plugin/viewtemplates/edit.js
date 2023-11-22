@@ -613,8 +613,8 @@ const transformForm = async ({
     },
     view_link(segment) {
       segment.type = "blank";
-      if (!row) {
-        //TODO could show if independent
+      const view_select = parse_view_select(segment.view);
+      if (!row && view_select.type !== "Independent") {
         segment.contents = "";
       } else {
         const prefix =
@@ -625,9 +625,10 @@ const transformForm = async ({
           (s) => s,
           isWeb(req),
           req.user,
-          prefix
+          prefix,
+          req.query
         );
-        segment.contents = key(row);
+        segment.contents = key(row || {});
       }
     },
     async view(segment) {
