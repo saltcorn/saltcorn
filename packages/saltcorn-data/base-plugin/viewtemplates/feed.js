@@ -253,6 +253,13 @@ const configuration_workflow = (req) =>
                 required: true,
               },
               {
+                name: "groupby",
+                label: "Group by",
+                type: "String",
+                sublabel: "Formula for the group headings",
+                class: "validate-expression",
+              },
+              {
                 name: "include_fml",
                 label: req.__("Row inclusion formula"),
                 class: "validate-expression",
@@ -445,6 +452,7 @@ const run = async (
     always_create_view,
     include_fml,
     empty_view,
+    groupby,
     ...cols
   },
   state,
