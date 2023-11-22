@@ -241,6 +241,7 @@ input.hideupdownbtns::-webkit-inner-spin-button {
 
 input.hideupdownbtns[type="number"] {
   -moz-appearance: textfield;
+  text-align: center;
 }
 
 section.range-slider {
