@@ -764,14 +764,16 @@ const render = ({
       id: rndid,
       src: `/files/serve/${encodeURIComponent(layout.html_file)}`,
     })} ${script(`
-    const iframe = document.getElementById("${rndid}");
-    iframe.onload = () => {
-      const _iframe = document.getElementById("${rndid}");
-      if (_iframe.contentWindow.document.body) {
-        _iframe.width = _iframe.contentWindow.document.body.scrollWidth;
-        _iframe.height = _iframe.contentWindow.document.body.scrollHeight;
+    (() => {
+      const iframe = document.getElementById("${rndid}");
+      iframe.onload = () => {
+        const _iframe = document.getElementById("${rndid}");
+        if (_iframe.contentWindow.document.body) {
+          _iframe.width = _iframe.contentWindow.document.body.scrollWidth;
+          _iframe.height = _iframe.contentWindow.document.body.scrollHeight;
+        }
       }
-    }
+    })();
     `)}`;
   }
   if (req && req.generate_email)
