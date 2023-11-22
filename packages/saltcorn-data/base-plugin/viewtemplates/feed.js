@@ -14,6 +14,7 @@ const {
   h4,
   hr,
   a,
+  h3,
   button,
   code,
   h2,
@@ -253,6 +254,13 @@ const configuration_workflow = (req) =>
                 required: true,
               },
               {
+                name: "groupby",
+                label: "Group by",
+                type: "String",
+                sublabel: "Formula for the group headings",
+                class: "validate-expression",
+              },
+              {
                 name: "include_fml",
                 label: req.__("Row inclusion formula"),
                 class: "validate-expression",
@@ -445,6 +453,7 @@ const run = async (
     always_create_view,
     include_fml,
     empty_view,
+    groupby,
     ...cols
   },
   state,
@@ -488,6 +497,11 @@ const run = async (
   qextra.joinFields = {};
   add_free_variables_to_joinfields(
     freeVariables(title_formula),
+    qextra.joinFields,
+    fields
+  );
+  add_free_variables_to_joinfields(
+    freeVariables(groupby || ""),
     qextra.joinFields,
     fields
   );
@@ -629,8 +643,34 @@ const run = async (
 
   const correct_order = ([main, pagin, create]) =>
     istop ? [create, main, pagin] : [main, pagin, create];
-
-  const inner = div(
+  if (groupby) {
+    const groups = {};
+    for (const r of sresp) {
+      const group = eval_expression(groupby, r.row, extraArgs.req.user);
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(r);
+    }
+    return div(
+      correct_order([
+        Object.entries(groups).map(
+          ([group, sr]) =>
+            h3({ class: "feed-group-header" }, group) +
+            (((!view_decoration && in_card) || view_decoration === "Card") &&
+            masonry_columns
+              ? div({ class: "card-columns" }, sr.map(showRowInner))
+              : view_decoration === "Accordion"
+              ? div(
+                  { class: "accordion", id: `top${stateHash}` },
+                  sr.map(showRowInner)
+                )
+              : div({ class: "row" }, sr.map(showRow)))
+        ),
+        paginate,
+        create_link_div,
+      ])
+    );
+  }
+  return div(
     correct_order([
       ((!view_decoration && in_card) || view_decoration === "Card") &&
       masonry_columns
@@ -645,8 +685,6 @@ const run = async (
       create_link_div,
     ])
   );
-
-  return inner;
 };
 
 module.exports = {
