@@ -15,7 +15,7 @@ const { structuredClone, isWeb, isOfflineMode } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode, parseRelationPath } = require("../../utils");
+const { isNode, parseRelationPath, dollarizeObject } = require("../../utils");
 const { bool, date } = require("../types");
 
 /**
@@ -289,7 +289,8 @@ const view_linker = (
   __ = (s) => s,
   isWeb = true,
   user,
-  targetPrefix = ""
+  targetPrefix = "",
+  state = {}
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -298,7 +299,8 @@ const view_linker = (
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
-    const o = eval_expression(extra_state_fml, row, user);
+    const ctx = { ...dollarizeObject(state), ...row };
+    const o = eval_expression(extra_state_fml, ctx, user);
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
@@ -502,7 +504,8 @@ const get_viewable_fields = (
   columns,
   isShow,
   req,
-  __
+  __,
+  state = {}
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -593,7 +596,15 @@ const get_viewable_fields = (
         } else return action_col;
       } else if (column.type === "ViewLink") {
         if (!column.view) return;
-        const r = view_linker(column, fields, __, isWeb(req), req.user);
+        const r = view_linker(
+          column,
+          fields,
+          __,
+          isWeb(req),
+          req.user,
+          "",
+          state
+        );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
         if (column.in_dropdown) {

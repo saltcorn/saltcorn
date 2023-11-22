@@ -274,7 +274,9 @@ const render = ({
         alt: segment.alt,
         style: segment.style,
         srcset:
-          segment.imgResponsiveWidths && srctype === "File"
+          segment.imgResponsiveWidths &&
+          segment.fileid &&
+          (srctype === "File" || srctype === "Field")
             ? segment.imgResponsiveWidths
                 .split(",")
                 .map(

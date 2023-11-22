@@ -996,6 +996,30 @@ router.post(
         result = row[field.name];
       } else if (field.stored) {
         const f = get_async_expression_function(formula, fields);
+        //are there join fields in formula?
+        const joinFields = {};
+        add_free_variables_to_joinfields(
+          freeVariables(formula),
+          joinFields,
+          table.fields
+        );
+        for (const { target, ref, through, rename_object } of Object.values(
+          joinFields
+        )) {
+          const jf = table.getField(ref);
+          const jtable = Table.findOne(jf.reftable_name);
+          const jrow = await jtable.getRow({ [jtable.pk_name]: row[ref] });
+          row[ref] = jrow;
+          if (through) {
+            const jf2 = jtable.getField(through);
+            const jtable2 = Table.findOne(jf2.reftable_name);
+            const jrow2 = await jtable2.getRow({
+              [jtable2.pk_name]: jrow[through],
+            });
+            row[ref][through] = jrow2;
+          }
+        }
+
         result = await f(row);
       } else {
         const f = get_expression_function(formula, fields);

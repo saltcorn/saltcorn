@@ -67,6 +67,7 @@ const {
   isWeb,
   hashState,
   getSafeBaseUrl,
+  dollarizeObject,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -503,7 +504,11 @@ const renderRows = async (
             break;
         }
         const extra_state = segment.extra_state_fml
-          ? eval_expression(segment.extra_state_fml, row, extra.req.user)
+          ? eval_expression(
+              segment.extra_state_fml,
+              { ...dollarizeObject(state), ...row },
+              extra.req.user
+            )
           : {};
         const { id, ...outerState } = state;
         //console.log(segment);
@@ -556,7 +561,8 @@ const renderRows = async (
       table,
       role,
       extra.req,
-      is_owner
+      is_owner,
+      state
     );
   });
 };
@@ -612,7 +618,17 @@ const runMany = async (
  * @throws {Error}
  * @returns {Layout}
  */
-const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
+const render = (
+  row,
+  fields,
+  layout0,
+  viewname,
+  table,
+  role,
+  req,
+  is_owner,
+  state
+) => {
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
@@ -649,8 +665,10 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         const field = fields.find((f) => f.name === segment.field);
         if (!field) return;
         if (field.type.name === "String") segment.url = row[segment.field];
-        if (field.type === "File")
+        if (field.type === "File") {
           segment.url = `/files/serve/${row[segment.field]}`;
+          segment.fileid = row[segment.field];
+        }
       }
     },
     container(segment) {
@@ -660,7 +678,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
-        if (!f(row, req.user)) segment.hide = true;
+        if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
+          segment.hide = true;
       }
     },
   });
@@ -809,7 +828,8 @@ const render = (row, fields, layout0, viewname, table, role, req, is_owner) => {
         (s) => s,
         isWeb(req),
         req.user,
-        prefix
+        prefix,
+        state
       );
       return key(row);
     },

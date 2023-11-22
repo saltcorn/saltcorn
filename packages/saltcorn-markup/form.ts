@@ -825,16 +825,24 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
       throw new Error(`Unknown type ${hdr.typename} in field ${name}`);
     else throw new Error(`Cannot find fieldview for field ${name}`);
   }
-  if (fieldview.isEdit)
+  if (fieldview.isEdit) {
+    //use default if required
+    const v_use =
+      hdr.required &&
+      typeof attributes.default !== "undefined" &&
+      typeof v === "undefined"
+        ? attributes.default
+        : v;
+
     return fieldview.run(
       name,
-      v,
+      v_use,
       attributes,
       extracls + " " + hdr.class,
       hdr.required,
       hdr
     );
-  else return fieldview.run(v, undefined, attributes);
+  } else return fieldview.run(v, undefined, attributes);
 };
 
 /**

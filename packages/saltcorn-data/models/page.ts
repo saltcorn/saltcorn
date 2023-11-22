@@ -47,6 +47,7 @@ const {
   isNode,
   objectToQueryString,
   stringToJSON,
+  dollarizeObject,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
@@ -226,6 +227,13 @@ class Page implements AbstractPage {
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
     await eachView(this.layout, async (segment: any) => {
       const view = await View.findOne({ name: segment.view });
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            dollarizeObject(querystate || {}),
+            extraArgs.req.user
+          )
+        : {};
       if (!view) {
         throw new InvalidConfiguration(
           `Page ${this.name} configuration error in embedded view: ` +
@@ -234,10 +242,6 @@ class Page implements AbstractPage {
               : "no view specified")
         );
       } else if (segment.state === "shared") {
-        const extra_state = segment.extra_state_fml
-          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
-          : {};
-
         const mystate = view.combine_state_and_default_state({
           ...querystate,
           ...extra_state,
@@ -248,10 +252,6 @@ class Page implements AbstractPage {
           view.isRemoteTable()
         );
       } else if (segment.state === "local") {
-        const extra_state = segment.extra_state_fml
-          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
-          : {};
-
         const mystate = view.combine_state_and_default_state({
           ...querystate,
           ...extra_state,
@@ -270,9 +270,7 @@ class Page implements AbstractPage {
         const filled = await fill_presets(table, extraArgs.req, state);
 
         const mystate = view.combine_state_and_default_state(filled || {});
-        const extra_state = segment.extra_state_fml
-          ? eval_expression(segment.extra_state_fml, {}, extraArgs.req.user)
-          : {};
+
         Object.assign(mystate, extra_state);
         segment.contents = await view.run(
           mystate,
@@ -339,10 +337,14 @@ class Page implements AbstractPage {
         }
         if (segment.view_state_fml) {
           const extra_state = segment.view_state_fml
-            ? eval_expression(segment.view_state_fml, {}, extraArgs.req.user)
+            ? eval_expression(
+                segment.view_state_fml,
+                dollarizeObject(querystate || {}),
+                extraArgs.req.user
+              )
             : {};
           segment.url +=
-            (segment.transfer_state ? "" : `?`) +
+            (segment.transfer_state ? "&" : `?`) +
             objectToQueryString(extra_state || {});
         }
       },
