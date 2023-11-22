@@ -27,6 +27,8 @@ const {
   tr,
   td,
   tbody,
+  iframe,
+  script,
 } = tags;
 const { toast, breadcrumbs, renderTabs } = require("./layout_utils");
 import type { Layout } from "@saltcorn/types/base_types";
@@ -156,8 +158,6 @@ const render = ({
   is_owner,
   req,
 }: RenderOpts): string => {
-  if (instanceOWithHtmlFile(layout))
-    throw new Error("Please don't try to use HTML files in render()");
   //console.log(JSON.stringify(layout, null, 2));
   const isWeb = typeof window === "undefined" && !req?.smr;
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
@@ -759,6 +759,24 @@ const render = ({
         );
       return isTop ? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
+  }
+  if (instanceOWithHtmlFile(layout)) {
+    const rndid = `iframe_${Math.floor(Math.random() * 16777215).toString(16)}`;
+    return `${iframe({
+      id: rndid,
+      src: `/files/serve/${encodeURIComponent(layout.html_file)}`,
+    })} ${script(`
+    (() => {
+      const iframe = document.getElementById("${rndid}");
+      iframe.onload = () => {
+        const _iframe = document.getElementById("${rndid}");
+        if (_iframe.contentWindow.document.body) {
+          _iframe.width = _iframe.contentWindow.document.body.scrollWidth;
+          _iframe.height = _iframe.contentWindow.document.body.scrollHeight;
+        }
+      }
+    })();
+    `)}`;
   }
   if (req && req.generate_email)
     return renderMJML({

@@ -344,11 +344,7 @@ const getPageList = (rows, roles, req, { tagId, domId, showList } = {}) => {
       },
       {
         label: req.__("Edit"),
-        key: (r) =>
-          link(
-            `/pageedit/${!r.html_file ? "edit" : "edit-properties"}/${r.name}`,
-            req.__(!r.html_file ? "Edit" : "Edit properties")
-          ),
+        key: (r) => link(`/pageedit/edit/${r.name}`, req.__("Edit")),
       },
       !tagId
         ? {

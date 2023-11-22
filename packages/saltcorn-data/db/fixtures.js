@@ -350,6 +350,22 @@ module.exports =
       fixed_states: {},
     });
 
+    await Page.create({
+      name: "page_with embedded_html_page",
+      title: "page with embedded html page",
+      description: "This page embeds another page with fixed HTML",
+      min_role: 100,
+      layout: {
+        above: [
+          {
+            type: "page",
+            page: "page_with_html_file",
+          },
+        ],
+      },
+      fixed_states: {},
+    });
+
     await View.create({
       table_id: disc_books.id,
       name: "disc_books_edit-in-edit",

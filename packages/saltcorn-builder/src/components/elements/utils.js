@@ -431,6 +431,7 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
     })
     .then(function (html) {
       $(".preview-scratchpad").html(html);
+      $(".preview-scratchpad").find("iframe").css("pointer-events", "none");
       $(".preview-scratchpad").find("a").attr("href", "#");
       $(".preview-scratchpad")
         .find("[onclick], button, a, input, select")
