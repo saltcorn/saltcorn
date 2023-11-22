@@ -285,9 +285,13 @@ function apply_showif() {
             .closest(".form-namespace")
             .find("input[name=_columndef]");
           try {
-            const def = JSON.parse($def.val());
-            def[k] = v;
-            $def.val(JSON.stringify(def));
+            const defval = $def.val();
+            const def =
+              typeof defval === "undefined" ? undefined : JSON.parse(defval);
+            if (def) {
+              def[k] = v;
+              $def.val(JSON.stringify(def));
+            }
           } catch (e) {
             console.error("Invalid json", e);
           }
@@ -393,21 +397,26 @@ function get_form_record(e_in, select_labels) {
     }
 
   e.find("input[name],select[name],textarea[name]").each(function () {
-    const name = $(this).attr("data-fieldname") || $(this).attr("name");
-    if (select_labels && $(this).prop("tagName").toLowerCase() === "select")
-      rec[name] = $(this).find("option:selected").text();
-    else if ($(this).prop("type") === "checkbox")
-      rec[name] = $(this).prop("checked");
-    else rec[name] = $(this).val();
+    const $this = $(this);
+    const name = $this.attr("data-fieldname") || $this.attr("name");
+    if (select_labels && $this.prop("tagName").toLowerCase() === "select")
+      rec[name] = $this.find("option:selected").text();
+    else if ($this.prop("type") === "checkbox")
+      rec[name] = $this.prop("checked");
+    else if ($this.prop("type") === "radio" && !$this.prop("checked")) {
+      //do nothing
+    } else rec[name] = $this.val();
   });
   return rec;
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
   try {
-    return new Function(`{${Object.keys(rec).join(",")}}`, "return " + fml)(
-      rec
-    );
+    return new Function(
+      "row",
+      `{${Object.keys(rec).join(",")}}`,
+      "return " + fml
+    )(rec, rec);
   } catch (e) {
     throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
   }
