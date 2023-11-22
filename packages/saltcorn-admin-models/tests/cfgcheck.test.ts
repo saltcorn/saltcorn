@@ -9,6 +9,7 @@ import mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes } = mocks;
 
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
+getState().registerPlugin("sbadmin2", require("@saltcorn/sbadmin2"));
 
 beforeAll(async () => {
   await require("@saltcorn/data/db/reset_schema")();
