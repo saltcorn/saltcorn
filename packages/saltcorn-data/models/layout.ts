@@ -56,7 +56,6 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
     if (visitors[segment.type]) {
       const vres = visitors[segment.type](segment);
       if (vres && vres instanceof Promise) await vres;
-      return;
     }
     if (Array.isArray(segment)) {
       for (const seg of segment) await go(seg);

@@ -38,6 +38,7 @@ const {
   isNode,
   isOfflineMode,
   mergeIntoWhere,
+  dollarizeObject,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -612,8 +613,8 @@ const transformForm = async ({
     },
     view_link(segment) {
       segment.type = "blank";
-      if (!row) {
-        //TODO could show if independent
+      const view_select = parse_view_select(segment.view);
+      if (!row && view_select.type !== "Independent") {
         segment.contents = "";
       } else {
         const prefix =
@@ -624,9 +625,10 @@ const transformForm = async ({
           (s) => s,
           isWeb(req),
           req.user,
-          prefix
+          prefix,
+          req.query
         );
-        segment.contents = key(row);
+        segment.contents = key(row || {});
       }
     },
     async view(segment) {
@@ -696,7 +698,7 @@ const transformForm = async ({
         return;
       }
 
-      if (!row) {
+      if (!row && view_select.type !== "Independent") {
         segment.type = "blank";
         segment.contents = "";
         return;
@@ -732,7 +734,11 @@ const transformForm = async ({
           break;
       }
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, row, req.user)
+        ? eval_expression(
+            segment.extra_state_fml,
+            { ...dollarizeObject(req.query), ...(row || {}) },
+            req.user
+          )
         : {};
       segment.contents = await view.run(
         { ...state, ...extra_state },
