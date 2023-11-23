@@ -18,7 +18,7 @@ const {
   setTenant,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
-const { InvalidConfiguration } = require("@saltcorn/data/utils");
+const { InvalidConfiguration, isTest } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 
 /**
@@ -88,12 +88,13 @@ router.get(
       res.set("SaltcornModalLinkOut", `true`);
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
-    Trigger.emitEvent("PageLoad", null, req.user, {
-      text: req.__("View '%s' was loaded", viewname),
-      type: "view",
-      name: viewname,
-      render_time: ms,
-    });
+    if (!isTest())
+      Trigger.emitEvent("PageLoad", null, req.user, {
+        text: req.__("View '%s' was loaded", viewname),
+        type: "view",
+        name: viewname,
+        render_time: ms,
+      });
     if (typeof contents === "object" && contents.goto)
       res.redirect(contents.goto);
     else

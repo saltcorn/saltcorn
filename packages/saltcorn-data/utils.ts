@@ -326,6 +326,12 @@ const nubBy = (prop: string, xs: any[]) => {
 // add a $ in front of every key
 const dollarizeObject = (state: object) =>
   Object.fromEntries(Object.entries(state).map(([k, v]) => [`$${k}`, v]));
+
+/**
+ * @returns true if the NODE_ENV is 'test'
+ */
+const isTest = () => process.env.NODE_ENV === "test";
+
 export = {
   dollarizeObject,
   objectToQueryString,
@@ -360,4 +366,5 @@ export = {
   buildRelationPath,
   removeNonWordChars,
   nubBy,
+  isTest,
 };
