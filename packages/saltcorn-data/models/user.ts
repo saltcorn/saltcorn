@@ -196,16 +196,23 @@ class User {
       role_id: u.role_id,
       ...rest,
     };
-    const user_table = Table.findOne({ name: "users" }) as Table;
+    const user_table = User.table;
     let constraint_check_error = user_table.check_table_constraints(urecord);
     if (constraint_check_error) return { error: constraint_check_error };
+    const valResCollector = {};
+    await Trigger.runTableTriggers(
+      "Validate",
+      user_table,
+      { urecord },
+      valResCollector
+    );
+    if ("error" in valResCollector)
+      return { error: valResCollector.error as string };
+    if ("set_fields" in valResCollector)
+      Object.assign(urecord, valResCollector.set_fields);
 
     u.id = await db.insert("users", urecord);
-    await Trigger.runTableTriggers(
-      "Insert",
-      Table.findOne({ name: "users" }) as Table,
-      u
-    );
+    await Trigger.runTableTriggers("Insert", user_table, u);
     return u;
   }
 
