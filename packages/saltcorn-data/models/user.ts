@@ -188,15 +188,20 @@ class User {
           User.unacceptable_password_reason(u.password),
       };
     const hashpw = hasPw ? await User.hashPassword(u.password) : "";
-    const ex = await User.findOne({ email: u.email });
-    if (ex) return { error: `User with this email already exists` };
+    const user_table = User.table;
+    const existingCondition: any = [];
+    for (const field of user_table.fields.filter((f) => f.is_unique))
+      if (uo[field.name])
+        existingCondition.push({ [field.name]: uo[field.name] });
+
+    const ex = await User.findOne({ or: existingCondition });
+    if (ex) return { error: `This user already exists` };
     const urecord = {
       email: u.email,
       password: hashpw,
       role_id: u.role_id,
       ...rest,
     };
-    const user_table = User.table;
     let constraint_check_error = user_table.check_table_constraints(urecord);
     if (constraint_check_error) return { error: constraint_check_error };
     const valResCollector: any = {};
