@@ -363,6 +363,7 @@ class Trigger implements AbstractTrigger {
     return [
       "Insert",
       "Update",
+      "Validate",
       "Delete",
       "Weekly",
       "Daily",
