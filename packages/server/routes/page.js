@@ -16,6 +16,7 @@ const {
   isAdmin,
   sendHtmlFile,
 } = require("../routes/utils.js");
+const { isTest } = require("@saltcorn/data/utils");
 const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
@@ -52,12 +53,13 @@ router.get(
       const title = scan_for_page_title(contents, db_page.title);
       const tock = new Date();
       const ms = tock.getTime() - tic.getTime();
-      Trigger.emitEvent("PageLoad", null, req.user, {
-        text: req.__("Page '%s' was loaded", pagename),
-        type: "page",
-        name: pagename,
-        render_time: ms,
-      });
+      if (!isTest())
+        Trigger.emitEvent("PageLoad", null, req.user, {
+          text: req.__("Page '%s' was loaded", pagename),
+          type: "page",
+          name: pagename,
+          render_time: ms,
+        });
       if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
       else
         res.sendWrap(
