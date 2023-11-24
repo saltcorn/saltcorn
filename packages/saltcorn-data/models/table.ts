@@ -1167,6 +1167,20 @@ class Table implements AbstractTable {
       let field_write_check = this.check_field_write_role(v, user);
       if (field_write_check) return field_write_check;
     }
+
+    //check validation here
+    const valResCollector = resultCollector || {};
+    await Trigger.runTableTriggers(
+      "Validate",
+      this,
+      { ...v },
+      valResCollector,
+      user
+    );
+    if ("error" in valResCollector) return valResCollector.error as string;
+    if ("set_fields" in valResCollector)
+      Object.assign(v, valResCollector.set_fields);
+
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
