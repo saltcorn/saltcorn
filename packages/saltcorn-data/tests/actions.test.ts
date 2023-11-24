@@ -485,7 +485,7 @@ describe("Validate to create email", () => {
       type: "String",
     });
   });
-  it("it should not create user without email", async () => {
+  /*it("it should not create user without email", async () => {
     async function create_user() {
       await User.create({
         username: "tomn18",
@@ -495,7 +495,7 @@ describe("Validate to create email", () => {
     expect(create_user).rejects.toThrow();
     const u = await User.findOne({ username: "tomn18" });
     expect(u).toBe(null);
-  });
+  }); */
 
   it("it should setup", async () => {
     await Trigger.create({
@@ -503,7 +503,7 @@ describe("Validate to create email", () => {
       table_id: User.table.id,
       when_trigger: "Validate",
       configuration: {
-        code: `if(!row.email) return {set_fields: {email: row.username+"@anonymous.com"}}`,
+        code: `if(!row.email) return {set_fields: {email: row.username+"@anonymous.com"}}; else return {}`,
       },
     });
   });

@@ -203,7 +203,7 @@ class User {
     await Trigger.runTableTriggers(
       "Validate",
       user_table,
-      { urecord },
+      { ...urecord },
       valResCollector
     );
     if ("error" in valResCollector)
