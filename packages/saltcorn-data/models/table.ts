@@ -1169,7 +1169,7 @@ class Table implements AbstractTable {
     }
 
     //check validation here
-    const valResCollector = resultCollector || {};
+    const valResCollector: any = resultCollector || {};
     await Trigger.runTableTriggers(
       "Validate",
       this,
@@ -1483,7 +1483,7 @@ class Table implements AbstractTable {
       if (field_write_check) return field_write_check;
     }
     //check validate here based on v_in
-    const valResCollector = resultCollector || {};
+    const valResCollector: any = resultCollector || {};
     await Trigger.runTableTriggers(
       "Validate",
       this,

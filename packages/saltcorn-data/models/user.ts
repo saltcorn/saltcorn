@@ -199,7 +199,7 @@ class User {
     const user_table = User.table;
     let constraint_check_error = user_table.check_table_constraints(urecord);
     if (constraint_check_error) return { error: constraint_check_error };
-    const valResCollector = {};
+    const valResCollector: any = {};
     await Trigger.runTableTriggers(
       "Validate",
       user_table,
