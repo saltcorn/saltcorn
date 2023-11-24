@@ -188,25 +188,47 @@ class User {
           User.unacceptable_password_reason(u.password),
       };
     const hashpw = hasPw ? await User.hashPassword(u.password) : "";
-    const ex = await User.findOne({ email: u.email });
-    if (ex) return { error: `User with this email already exists` };
+    const user_table = User.table;
+
+    if (await User.matches_existing_user(uo))
+      return { error: `This user already exists` };
+
     const urecord = {
       email: u.email,
       password: hashpw,
       role_id: u.role_id,
       ...rest,
     };
-    const user_table = Table.findOne({ name: "users" }) as Table;
     let constraint_check_error = user_table.check_table_constraints(urecord);
     if (constraint_check_error) return { error: constraint_check_error };
+    const valResCollector: any = {};
+    await Trigger.runTableTriggers(
+      "Validate",
+      user_table,
+      { ...urecord },
+      valResCollector
+    );
+    if ("error" in valResCollector)
+      return { error: valResCollector.error as string };
+    if ("set_fields" in valResCollector)
+      Object.assign(urecord, valResCollector.set_fields);
 
     u.id = await db.insert("users", urecord);
-    await Trigger.runTableTriggers(
-      "Insert",
-      Table.findOne({ name: "users" }) as Table,
-      u
-    );
+    await Trigger.runTableTriggers("Insert", user_table, u);
     return u;
+  }
+
+  static async matches_existing_user(uo: any): Promise<boolean> {
+    const existingCondition: any = [];
+    for (const field of User.table.fields.filter((f) => f.is_unique))
+      if (uo[field.name])
+        existingCondition.push({ [field.name]: uo[field.name] });
+
+    if (existingCondition.length) {
+      const ex = await User.findOne({ or: existingCondition });
+      if (ex) return true;
+    }
+    return false;
   }
 
   /**

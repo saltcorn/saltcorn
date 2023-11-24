@@ -1,5 +1,7 @@
 import Trigger from "../models/trigger";
 import Table from "../models/table";
+import Field from "../models/field";
+import User from "../models/user";
 import EventLog from "../models/eventlog";
 import runScheduler from "../models/scheduler";
 import db from "../db";
@@ -421,5 +423,98 @@ describe("Scheduler", () => {
     expect(getActionCounter() > 1).toBe(true);
     stopSched = true;
     await sleep(1200);
+  });
+});
+
+describe("Validate action", () => {
+  it("it should setup", async () => {
+    const persons = await Table.create("ValidatedTable");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: persons.id,
+      when_trigger: "Validate",
+      configuration: {
+        code: `
+        if(age && age<16) return {error: "Must be 16+ to qualify"}
+        if(!row.name) return {set_fields: {name: "PersonAged"+age}}
+      `,
+      },
+    });
+  });
+
+  it("it should insert valid rows", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    await table.insertRow({ name: "Mike", age: 19 });
+    const row = await table.getRow({ name: "Mike" });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+  });
+  it("it should not insert invalid rows", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    await table.insertRow({ name: "Fred", age: 14 });
+    const row = await table.getRow({ name: "Fred" });
+    expect(row).toBe(null);
+  });
+  it("it should set fields", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    await table.insertRow({ age: 25 });
+    const row = await table.getRow({ age: 25 });
+    assertIsSet(row);
+    expect(row.name).toBe("PersonAged25");
+  });
+});
+
+describe("Validate to create email", () => {
+  it("it should setup field", async () => {
+    await Field.create({
+      table: User.table,
+      name: "username",
+      type: "String",
+    });
+  });
+  /*it("it should not create user without email", async () => {
+    async function create_user() {
+      await User.create({
+        username: "tomn18",
+        password: "s3cr3t893",
+      });
+    }
+    expect(create_user).rejects.toThrow();
+    const u = await User.findOne({ username: "tomn18" });
+    expect(u).toBe(null);
+  }); */
+
+  it("it should setup", async () => {
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: User.table.id,
+      when_trigger: "Validate",
+      configuration: {
+        code: `if(!row.email) return {set_fields: {email: row.username+"@anonymous.com"}}; else return {}`,
+      },
+    });
+  });
+  it("it should set new user email in Validate", async () => {
+    await User.create({
+      username: "tomn19",
+      password: "s3cr3t893",
+    });
+    const u = await User.findOne({ username: "tomn19" });
+    assertIsSet(u);
+    expect(u.username).toBe("tomn19");
+    expect(u.email).toBe("tomn19@anonymous.com");
   });
 });

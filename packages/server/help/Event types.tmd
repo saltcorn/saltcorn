@@ -16,6 +16,13 @@ outbound emails would have a trigger with When = Insert and Action = send_email
 **Update**: run this action when changes are made to an existing row. The old row can 
 be accessed with the `old_row` variable.
 
+**Validate**: run before inserts or updates. If the action returns `error` (for example, 
+`run_js_code` code: `return {error: "Invalid row"}`), the insert/update is aborted. If the 
+trigger returns `set_fields` (for example, `run_js_code` code: `return {set_fields: {full_name: "Unknown"}}`) 
+these values are inserted in row.
+
+Guaranteed to run before any Insert or Update triggers
+
 **Delete**: run this action when a row is deleted
 
 ## Periodic events

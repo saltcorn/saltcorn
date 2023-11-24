@@ -125,7 +125,7 @@ class EventLog {
    * @returns {boolean}
    */
   static hasTable(evType: string): boolean {
-    return ["Insert", "Update", "Delete"].includes(evType);
+    return ["Insert", "Update", "Delete", "Validate"].includes(evType);
   }
 
   /**

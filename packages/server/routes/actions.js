@@ -145,7 +145,7 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
   const allActions = actions.map((t) => t.name);
-  const table_triggers = ["Insert", "Update", "Delete"];
+  const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
   const actionsNotRequiringRow = actions
     .filter((a) => !a.requireRow)
