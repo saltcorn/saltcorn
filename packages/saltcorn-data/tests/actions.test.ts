@@ -1,5 +1,6 @@
 import Trigger from "../models/trigger";
 import Table from "../models/table";
+import Field from "../models/field";
 import EventLog from "../models/eventlog";
 import runScheduler from "../models/scheduler";
 import db from "../db";
@@ -421,5 +422,56 @@ describe("Scheduler", () => {
     expect(getActionCounter() > 1).toBe(true);
     stopSched = true;
     await sleep(1200);
+  });
+});
+
+describe("Validate action", () => {
+  it("it should setup", async () => {
+    const persons = await Table.create("ValidatedTable");
+    await Field.create({
+      table: persons,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: persons.id,
+      when_trigger: "Validate",
+      configuration: {
+        code: `
+        if(age && age<16) return {error: "Must be 16+ to qualify"}
+        if(!row.name) return {set_fields: {name: "PersonAged"+age}}
+      `,
+      },
+    });
+  });
+
+  it("it should insert valid rows", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    await table.insertRow({ name: "Mike", age: 19 });
+    const row = await table.getRow({ name: "Mike" });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+  });
+  it("it should not insert invalid rows", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    await table.insertRow({ name: "Fred", age: 14 });
+    const row = await table.getRow({ name: "Fred" });
+    expect(row).toBe(null);
+  });
+  it("it should set fields", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    await table.insertRow({ age: 25 });
+    const row = await table.getRow({ age: 25 });
+    assertIsSet(row);
+    expect(row.name).toBe("PersonAged25");
   });
 });
