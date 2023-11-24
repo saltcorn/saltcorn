@@ -189,13 +189,10 @@ class User {
       };
     const hashpw = hasPw ? await User.hashPassword(u.password) : "";
     const user_table = User.table;
-    const existingCondition: any = [];
-    for (const field of user_table.fields.filter((f) => f.is_unique))
-      if (uo[field.name])
-        existingCondition.push({ [field.name]: uo[field.name] });
 
-    const ex = await User.findOne({ or: existingCondition });
-    if (ex) return { error: `This user already exists` };
+    if (await User.matches_existing_user(uo))
+      return { error: `This user already exists` };
+
     const urecord = {
       email: u.email,
       password: hashpw,
@@ -219,6 +216,19 @@ class User {
     u.id = await db.insert("users", urecord);
     await Trigger.runTableTriggers("Insert", user_table, u);
     return u;
+  }
+
+  static async matches_existing_user(uo: any): Promise<boolean> {
+    const existingCondition: any = [];
+    for (const field of User.table.fields.filter((f) => f.is_unique))
+      if (uo[field.name])
+        existingCondition.push({ [field.name]: uo[field.name] });
+
+    if (existingCondition.length) {
+      const ex = await User.findOne({ or: existingCondition });
+      if (ex) return true;
+    }
+    return false;
   }
 
   /**

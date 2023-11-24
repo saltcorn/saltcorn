@@ -905,13 +905,7 @@ router.post(
         res.redirect("/auth/signup");
         return true;
       }
-      const existingCondition = [];
-
-      for (const field of User.table.fields.filter((f) => f.is_unique))
-        if (urecord[field.name])
-          existingCondition.push({ [field.name]: urecord[field.name] });
-      const us = await User.find({ or: existingCondition });
-      if (us.length > 0) {
+      if (await User.matches_existing_user(urecord)) {
         req.flash("danger", req.__("Account already exists"));
         res.redirect("/auth/signup");
         return true;
