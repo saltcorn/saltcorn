@@ -189,7 +189,10 @@ class Trigger implements AbstractTrigger {
       const state = getState();
       state.log(5, `Event ${eventType} ${channel} ${JSON.stringify(payload)}`);
       let table;
-      if (channel && ["Insert", "Update", "Delete"].includes(channel)) {
+      if (
+        channel &&
+        ["Insert", "Update", "Delete", "Validate"].includes(channel)
+      ) {
         const Table = require("./table");
         table = Table.findOne({ name: channel });
         findArgs.table_id = table.id;
