@@ -248,7 +248,7 @@ class Trigger implements AbstractTrigger {
     user?: Row,
     extraArgs?: any
   ): Promise<void> {
-    const triggers = await Trigger.getTableTriggers(when_trigger, table, user);
+    const triggers = Trigger.getTableTriggers(when_trigger, table, user);
     const { getState } = require("../db/state");
     const state = getState();
     for (const trigger of triggers) {
@@ -321,13 +321,13 @@ class Trigger implements AbstractTrigger {
    * get triggers
    * @param when_trigger
    * @param table
-   * @returns {Promise<Trigger[]>}
+   * @returns {Trigger[]}
    */
-  static async getTableTriggers(
+  static getTableTriggers(
     when_trigger: string,
     table: Table,
     user?: Row
-  ): Promise<Trigger[]> {
+  ): Trigger[] {
     const { getState } = require("../db/state");
     const triggers = Trigger.find({ when_trigger, table_id: table.id });
     Trigger.setRunFunctions(triggers, table, user);
@@ -341,9 +341,9 @@ class Trigger implements AbstractTrigger {
   /**
    * get triggers for a table with all when options
    * @param table
-   * @returns {Promise<Trigger[]>}
+   * @returns {Trigger[]}
    */
-  static async getAllTableTriggers(table: Table): Promise<Trigger[]> {
+  static getAllTableTriggers(table: Table): Trigger[] {
     const { getState } = require("../db/state");
     const triggers = Trigger.find({ table_id: table.id });
     Trigger.setRunFunctions(triggers, table);
