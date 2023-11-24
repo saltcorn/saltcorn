@@ -1468,6 +1468,19 @@ class Table implements AbstractTable {
       let field_write_check = this.check_field_write_role(v_in, user);
       if (field_write_check) return field_write_check;
     }
+    //check validate here based on v_in
+    const valResCollector = resultCollector || {};
+    await Trigger.runTableTriggers(
+      "Validate",
+      this,
+      { ...v_in },
+      valResCollector,
+      user
+    );
+    if ("error" in valResCollector) return; //???
+    if ("set_fields" in valResCollector)
+      Object.assign(v_in, valResCollector.set_fields);
+
     if (Object.keys(joinFields).length > 0) {
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
