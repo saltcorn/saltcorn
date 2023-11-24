@@ -877,17 +877,17 @@ router.post(
 
     const unsuitableEmailPassword = async (urecord) => {
       const { email, password, passwordRepeat } = urecord;
-      if (!email || !password) {
+      if (email == "" || !password) {
         req.flash("danger", req.__("E-mail and password required"));
         res.redirect("/auth/signup");
         return true;
       }
-      if (email.length > 127) {
+      if (email && email.length > 127) {
         req.flash("danger", req.__("E-mail too long"));
         res.redirect("/auth/signup");
         return true;
       }
-      if (!User.valid_email(email)) {
+      if (email && !User.valid_email(email)) {
         req.flash("danger", req.__("Not a valid e-mail address"));
         res.redirect("/auth/signup");
         return true;
