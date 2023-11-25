@@ -188,6 +188,53 @@ describe("Edit view with constraints and validations", () => {
       await Table.findOne("ValidatedTable1")!.countRows({ name: "Fred" })
     ).toBe(1);
   });
+  it("should update normally", async () => {
+    const v = await View.findOne({ name: "ValidatedWithSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    await v.runPost({}, { id: 1, name: "Fred", age: 19 }, mockReqRes);
+    const res = mockReqRes.getStored();
+
+    expect(!!res.flash).toBe(false);
+    expect(res.url).toBe("/");
+    const row = await Table.findOne("ValidatedTable1")!.getRow({
+      name: "Fred",
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+  });
+  it("should not update to violate constraint", async () => {
+    const v = await View.findOne({ name: "ValidatedWithSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    await v.runPost({}, { id: 1, name: "Fred", age: 10 }, mockReqRes);
+    const res = mockReqRes.getStored();
+    expect(res.flash).toStrictEqual(["error", "Must be at least a teenager"]);
+    expect(res.sendWrap[1]).toContain("<form");
+    expect(res.sendWrap[1]).toContain('value="Fred"');
+
+    const row = await Table.findOne("ValidatedTable1")!.getRow({
+      name: "Fred",
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+  });
+  it("should not update to violate constraint", async () => {
+    const v = await View.findOne({ name: "ValidatedWithSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    await v.runPost({}, { id: 1, name: "Fred", age: 14 }, mockReqRes);
+    const res = mockReqRes.getStored();
+    expect(res.flash).toStrictEqual(["error", "Must be 16+ to qualify"]);
+    expect(res.sendWrap[1]).toContain("<form");
+    expect(res.sendWrap[1]).toContain('value="Fred"');
+
+    const row = await Table.findOne("ValidatedTable1")!.getRow({
+      name: "Fred",
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+  });
   it("should return error on autosave constrain violation", async () => {
     const v = await View.findOne({ name: "ValidatedAutoSave" });
     assertIsSet(v);
