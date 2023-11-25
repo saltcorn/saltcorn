@@ -360,8 +360,8 @@ function submitWithAjax(e) {
   saveAndContinue(e, (res) => {
     if (res && res.responseJSON && res.responseJSON.url_when_done)
       window.location.href = res.responseJSON.url_when_done;
-    if (res && res.responseJSON && res.responseJSON.error)
-      notifyAlert({ type: "danger", text: res.responseJSON.error });
+    //if (res && res.responseJSON && res.responseJSON.error)
+    //  notifyAlert({ type: "danger", text: res.responseJSON.error });
   });
 }
 
@@ -397,12 +397,20 @@ function saveAndContinue(e, k) {
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
       if (ct.startsWith && ct.startsWith("application/json")) {
+        console.log(
+          "alert, ",
+          {
+            type: "danger",
+            text: request.responseJSON.error,
+          },
+          k
+        );
         notifyAlert({ type: "danger", text: request.responseJSON.error });
       } else {
         $("#page-inner-content").html(request.responseText);
         initialize_page();
       }
-      ajax_indicate_error(e, request);
+      //ajax_indicate_error(e, request);
     },
     complete: function (res) {
       if (k) k(res);
