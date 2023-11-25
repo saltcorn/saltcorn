@@ -979,7 +979,9 @@ const runPost = async (
     let ins_upd_error;
     if (!cancel) {
       if (typeof id === "undefined") {
+        console.log("inserting", row);
         const ins_res = await tryInsertQuery(row);
+        console.log({ ins_res });
         if (ins_res.success) {
           id = ins_res.success;
           row[pk.name] = id;
@@ -994,6 +996,7 @@ const runPost = async (
         }
         trigger_return = upd_res.trigger_return;
       }
+      console.log({ ins_upd_error });
       if (ins_upd_error) {
         res.status(422);
         if (req.xhr) {
@@ -1735,6 +1738,7 @@ module.exports = {
         req.user || { role_id: 100 },
         result
       );
+      console.log("insres in q", ins_res);
       ins_res.trigger_return = result;
       return ins_res;
     },
