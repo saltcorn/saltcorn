@@ -402,7 +402,7 @@ function saveAndContinue(e, k) {
         $("#page-inner-content").html(request.responseText);
         initialize_page();
       }
-      //ajax_indicate_error(e, request);
+      ajax_indicate_error(e, request);
     },
     complete: function (res) {
       if (k) k(res);
