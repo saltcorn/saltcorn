@@ -475,6 +475,34 @@ describe("Validate action", () => {
     assertIsSet(row);
     expect(row.name).toBe("PersonAged25");
   });
+  it("it should not update to invalid row", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    const row = await table.getRow({ name: "Mike" });
+    assertIsSet(row);
+
+    const upres = await table.updateRow({ name: "Mike", age: 12 }, row.id);
+    expect(upres).toBe("Must be 16+ to qualify");
+
+    const row1 = await table.getRow({ id: row.id });
+    assertIsSet(row1);
+    expect(row1.age).toBe(19);
+    expect(row1.name).toBe("Mike");
+  });
+  it("it should update to valid row", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    const row = await table.getRow({ name: "Mike" });
+    assertIsSet(row);
+
+    const upres = await table.updateRow({ name: "Mike", age: 29 }, row.id);
+    expect(upres).toBe(undefined);
+
+    const row1 = await table.getRow({ id: row.id });
+    assertIsSet(row1);
+    expect(row1.age).toBe(29);
+    expect(row1.name).toBe("Mike");
+  });
 });
 
 describe("Validate to create email", () => {
