@@ -293,20 +293,19 @@ describe("Edit view with constraints and validations", () => {
     ).toBe(1);
     mockReqRes.reset();
   });
-  it("should autosave normally", async () => {
+  it("should update autosave normally", async () => {
     const v = await View.findOne({ name: "ValidatedAutoSave" });
     assertIsSet(v);
     v.configuration.view_when_done = "ValidatedShow";
 
     mockReqRes.reset();
     mockReqRes.req.xhr = true;
-    await v.runPost({}, { id: 1, age: 20 }, mockReqRes);
+    await v.runPost({}, { id: 1, name: "Fred", age: 20 }, mockReqRes);
     const res = mockReqRes.getStored();
 
     expect(res.json).toStrictEqual({
       view_when_done: "ValidatedShow",
       url_when_done: "/view/ValidatedShow?id=1",
-      id: 2,
     });
     //expect(res.json.error).toBe("Must be 16+ to qualify");
 
