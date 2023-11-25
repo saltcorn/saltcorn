@@ -145,6 +145,13 @@ describe("Edit view with constraints and validations", () => {
       min_role: 100,
       configuration: { ...mkConfig(false), auto_save: true },
     });
+    await View.create({
+      name: "ValidatedShow",
+      table_id: persons.id,
+      viewtemplate: "Show",
+      min_role: 100,
+      configuration: {},
+    });
   });
   it("should return error on save constrain violation", async () => {
     const v = await View.findOne({ name: "ValidatedWithSave" });
@@ -178,11 +185,12 @@ describe("Edit view with constraints and validations", () => {
     const v = await View.findOne({ name: "ValidatedWithSave" });
     assertIsSet(v);
     mockReqRes.reset();
+    v.configuration.view_when_done = "ValidatedShow";
     await v.runPost({}, { name: "Fred", age: 18 }, mockReqRes);
     const res = mockReqRes.getStored();
 
     expect(!!res.flash).toBe(false);
-    expect(res.url).toBe("/");
+    expect(res.url).toBe("/view/ValidatedShow?id=1");
 
     expect(
       await Table.findOne("ValidatedTable1")!.countRows({ name: "Fred" })
@@ -283,6 +291,30 @@ describe("Edit view with constraints and validations", () => {
     expect(
       await Table.findOne("ValidatedTable1")!.countRows({ name: "Alex" })
     ).toBe(1);
+    mockReqRes.reset();
+  });
+  it("should autosave normally", async () => {
+    const v = await View.findOne({ name: "ValidatedAutoSave" });
+    assertIsSet(v);
+    v.configuration.view_when_done = "ValidatedShow";
+
+    mockReqRes.reset();
+    mockReqRes.req.xhr = true;
+    await v.runPost({}, { id: 1, age: 20 }, mockReqRes);
+    const res = mockReqRes.getStored();
+
+    expect(res.json).toStrictEqual({
+      view_when_done: "ValidatedShow",
+      url_when_done: "/view/ValidatedShow?id=1",
+      id: 2,
+    });
+    //expect(res.json.error).toBe("Must be 16+ to qualify");
+
+    const row = await Table.findOne("ValidatedTable1")!.getRow({
+      name: "Fred",
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(20);
     mockReqRes.reset();
   });
 });
