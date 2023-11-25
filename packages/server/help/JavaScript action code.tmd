@@ -87,20 +87,7 @@ Example: `return { error: "Invalid command!" }`
 
 If this is triggered by an Edit view with the SubmitWithAjax, 
 halt navigation and stay on page. This can be used for complex validation logic, 
-When added as an Insert or Update trigger. If you delete the inserted row, You 
-may also need to clear the returned id in order to allow the user to continue editing.
-
-Example:
-
-```
-if(amount>cash_on_hand) {
-  await table.deleteRows({ id })
-  return { 
-    error: "Invalid order!",
-    id: null 
-  }
-}
-```
+when added as a Validate trigger. 
 
 #### `goto`
 

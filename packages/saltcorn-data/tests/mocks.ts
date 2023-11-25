@@ -217,21 +217,33 @@ const mockReqRes = {
     isAuthenticated: () => true,
     headers: {},
     query: {},
-    flash: () => {},
+    xhr: false,
+    flash: (...fs: any) => {
+      mockResReqStored.flash = fs;
+    },
   },
   res: {
     redirect(url: string) {
       mockResReqStored.url = url;
     },
-    json() {},
-    send() {},
-    status() {},
-    sendWrap: () => {},
+    json(o: any) {
+      mockResReqStored.json = o;
+    },
+    send(s: any) {
+      mockResReqStored.send = s;
+    },
+    status(st: any) {
+      mockResReqStored.status = st;
+    },
+    sendWrap: (...sw: any[]) => {
+      mockResReqStored.sendWrap = sw;
+    },
     __: (s: any) => s,
   },
   getStored: () => mockResReqStored,
   reset: () => {
     mockResReqStored = {};
+    mockReqRes.req.xhr = false;
   },
 };
 
