@@ -503,6 +503,20 @@ describe("Validate action", () => {
     expect(row1.age).toBe(29);
     expect(row1.name).toBe("Mike");
   });
+  it("it should not change missing fields on update", async () => {
+    const table = Table.findOne({ name: "ValidatedTable" });
+    assertIsSet(table);
+    const row = await table.getRow({ name: "Mike" });
+    assertIsSet(row);
+
+    const upres = await table.updateRow({ age: 31 }, row.id);
+    expect(upres).toBe(undefined);
+
+    const row1 = await table.getRow({ id: row.id });
+    assertIsSet(row1);
+    expect(row1.age).toBe(31);
+    expect(row1.name).toBe("Mike");
+  });
 });
 
 describe("Validate to create email", () => {

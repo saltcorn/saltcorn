@@ -340,6 +340,21 @@ class Trigger implements AbstractTrigger {
     );
     return [...triggers, ...virtual_triggers];
   }
+  /**
+   * get triggers
+   * @param when_trigger
+   * @param table
+   * @returns {boolean}
+   */
+  static hasTableTriggers(when_trigger: string, table: Table): boolean {
+    const { getState } = require("../db/state");
+    const triggers = Trigger.find({ when_trigger, table_id: table.id });
+    const virtual_triggers = getState().virtual_triggers.filter(
+      (tr: Trigger) =>
+        when_trigger === tr.when_trigger && tr.table_id == table.id
+    );
+    return triggers.length + virtual_triggers.length > 0;
+  }
 
   /**
    * get triggers for a table with all when options

@@ -1169,17 +1169,26 @@ class Table implements AbstractTable {
     }
 
     //check validation here
-    const valResCollector: any = resultCollector || {};
-    await Trigger.runTableTriggers(
-      "Validate",
-      this,
-      { ...v },
-      valResCollector,
-      user
-    );
-    if ("error" in valResCollector) return valResCollector.error as string;
-    if ("set_fields" in valResCollector)
-      Object.assign(v, valResCollector.set_fields);
+    if (Trigger.hasTableTriggers("Validate", this)) {
+      if (!existing)
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: user,
+          joinFields,
+        });
+      const valResCollector: any = resultCollector || {};
+      await Trigger.runTableTriggers(
+        "Validate",
+        this,
+        { ...existing, ...v },
+        valResCollector,
+        user,
+        { old_row: existing, updated_fields: v_in }
+      );
+      if ("error" in valResCollector) return valResCollector.error as string;
+      if ("set_fields" in valResCollector)
+        Object.assign(v, valResCollector.set_fields);
+    }
 
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       //if any freevars are join fields, update row in db first
