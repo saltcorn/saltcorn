@@ -217,6 +217,7 @@ const mockReqRes = {
     isAuthenticated: () => true,
     headers: {},
     query: {},
+    xhr: false,
     flash: (...fs: any) => {
       mockResReqStored.flash = fs;
     },
@@ -242,6 +243,7 @@ const mockReqRes = {
   getStored: () => mockResReqStored,
   reset: () => {
     mockResReqStored = {};
+    mockReqRes.req.xhr = false;
   },
 };
 

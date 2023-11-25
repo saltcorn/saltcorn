@@ -188,4 +188,54 @@ describe("Edit view with constraints and validations", () => {
       await Table.findOne("ValidatedTable1")!.countRows({ name: "Fred" })
     ).toBe(1);
   });
+  it("should return error on autosave constrain violation", async () => {
+    const v = await View.findOne({ name: "ValidatedAutoSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    mockReqRes.req.xhr = true;
+    await v.runPost({}, { name: "Alex", age: 10 }, mockReqRes);
+    const res = mockReqRes.getStored();
+    expect(res.status).toBe(422);
+    expect(res.json.error).toBe("Must be at least a teenager");
+
+    expect(
+      await Table.findOne("ValidatedTable1")!.countRows({ name: "Alex" })
+    ).toBe(0);
+    mockReqRes.reset();
+  });
+  it("should return error on autosave validate violation", async () => {
+    const v = await View.findOne({ name: "ValidatedAutoSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    mockReqRes.req.xhr = true;
+    await v.runPost({}, { name: "Alex", age: 14 }, mockReqRes);
+    const res = mockReqRes.getStored();
+    expect(res.status).toBe(422);
+    expect(res.json.error).toBe("Must be 16+ to qualify");
+
+    expect(
+      await Table.findOne("ValidatedTable1")!.countRows({ name: "Alex" })
+    ).toBe(0);
+    mockReqRes.reset();
+  });
+  it("should autosave normally", async () => {
+    const v = await View.findOne({ name: "ValidatedAutoSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    mockReqRes.req.xhr = true;
+    await v.runPost({}, { name: "Alex", age: 18 }, mockReqRes);
+    const res = mockReqRes.getStored();
+
+    expect(res.json).toStrictEqual({
+      view_when_done: undefined,
+      url_when_done: "/",
+      id: 2,
+    });
+    //expect(res.json.error).toBe("Must be 16+ to qualify");
+
+    expect(
+      await Table.findOne("ValidatedTable1")!.countRows({ name: "Alex" })
+    ).toBe(1);
+    mockReqRes.reset();
+  });
 });
