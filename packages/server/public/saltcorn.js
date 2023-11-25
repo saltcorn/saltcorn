@@ -397,14 +397,6 @@ function saveAndContinue(e, k) {
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
       if (ct.startsWith && ct.startsWith("application/json")) {
-        console.log(
-          "alert, ",
-          {
-            type: "danger",
-            text: request.responseJSON.error,
-          },
-          k
-        );
         notifyAlert({ type: "danger", text: request.responseJSON.error });
       } else {
         $("#page-inner-content").html(request.responseText);
