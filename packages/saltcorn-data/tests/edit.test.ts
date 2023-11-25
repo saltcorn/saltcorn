@@ -316,4 +316,31 @@ describe("Edit view with constraints and validations", () => {
     expect(row.age).toBe(20);
     mockReqRes.reset();
   });
+  it("should not change existing on validation ", async () => {
+    const v = await View.findOne({ name: "ValidatedAutoSave" });
+    assertIsSet(v);
+    v.configuration.view_when_done = "ValidatedShow";
+    //remove name column.
+    v.configuration.columns = v.configuration.columns.filter(
+      (c: any) => c.field_name !== "name"
+    );
+    mockReqRes.reset();
+    mockReqRes.req.xhr = true;
+    await v.runPost({}, { id: 1, age: 41 }, mockReqRes);
+    const res = mockReqRes.getStored();
+
+    expect(res.json).toStrictEqual({
+      view_when_done: "ValidatedShow",
+      url_when_done: "/view/ValidatedShow?id=1",
+    });
+    //expect(res.json.error).toBe("Must be 16+ to qualify");
+
+    const row = await Table.findOne("ValidatedTable1")!.getRow({
+      id: 1,
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(41);
+    expect(row.name).toBe("Fred");
+    mockReqRes.reset();
+  });
 });
