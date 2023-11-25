@@ -174,4 +174,18 @@ describe("Edit view with constraints and validations", () => {
     ).toBe(0);
     //console.log(res);
   });
+  it("should return save normally", async () => {
+    const v = await View.findOne({ name: "ValidatedWithSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    await v.runPost({}, { name: "Fred", age: 18 }, mockReqRes);
+    const res = mockReqRes.getStored();
+
+    expect(!!res.flash).toBe(false);
+    expect(res.url).toBe("/");
+
+    expect(
+      await Table.findOne("ValidatedTable1")!.countRows({ name: "Fred" })
+    ).toBe(1);
+  });
 });
