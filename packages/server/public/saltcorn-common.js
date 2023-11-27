@@ -50,6 +50,11 @@ const nubBy = (prop, xs) => {
     return true;
   });
 };
+
+function valid_js_var_name(s) {
+  if (!s) return false;
+  return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
+}
 function apply_showif() {
   const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   $("[data-show-if]").each(function (ix, element) {
@@ -83,7 +88,7 @@ function apply_showif() {
     const e = $(element);
     const rec = get_form_record(e);
     const href = new Function(
-      `{${Object.keys(rec).join(",")}}`,
+      `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
       "return " + e.attr("data-dyn-href")
     )(rec);
     e.attr("href", href);
