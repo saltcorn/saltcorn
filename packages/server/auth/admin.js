@@ -1129,7 +1129,7 @@ router.post(
     await u.changePasswordTo(newpw);
     await u.destroy_sessions();
     req.flash(
-      "success",
+      "warning",
       req.__(`Changed password for user %s to %s`, u.email, newpw)
     );
 
