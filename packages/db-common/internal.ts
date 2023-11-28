@@ -325,6 +325,10 @@ const slugifyQuery = (k: string, s: string, phs: PlaceHolderStack) =>
  * @param {string} i
  * @returns {function}
  */
+
+const castDate = (doCast: boolean, is_sqlite: boolean, s: string) =>
+  !doCast ? s : is_sqlite ? `date(${s})` : `${s}::date`;
+
 const whereClause =
   (phs: PlaceHolderStack): (([k, v]: [string, any | [any, any]]) => string) =>
   ([k, v]: [string, any | [any, any]]): string =>
@@ -356,12 +360,24 @@ const whereClause =
           phs.is_sqlite ? "LIKE" : "ILIKE"
         } '%' || ${phs.push(v.ilike)} || '%'`
       : typeof (v || {}).gt !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))}>${v.equal ? "=" : ""}${phs.push(
-          v.gt
+      ? `${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          quote(sqlsanitizeAllowDots(k))
+        )}>${v.equal ? "=" : ""}${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          phs.push(v.gt)
         )}`
       : typeof (v || {}).lt !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${phs.push(
-          v.lt
+      ? `${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          quote(sqlsanitizeAllowDots(k))
+        )}<${v.equal ? "=" : ""}${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          phs.push(v.lt)
         )}`
       : typeof (v || {}).inSelect !== "undefined"
       ? subSelectWhere(phs)(k, v)

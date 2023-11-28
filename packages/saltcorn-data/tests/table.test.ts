@@ -1175,11 +1175,34 @@ describe("Table with date", () => {
       name: "time",
       type: "Date",
     });
-    await table.insertRow({ time: new Date() });
+    await Field.create({
+      table,
+      name: "theday",
+      type: "Date",
+      attributes: { day_only: true },
+    });
+
+    await table.insertRow({ time: new Date(), theday: "2023-11-28" });
     const rows = await table.getRows();
     var dif = new Date(rows[0].time).getTime() - new Date().getTime();
 
     expect(Math.abs(dif)).toBeLessThanOrEqual(1000);
+  });
+  it("should query days", async () => {
+    const table = Table.findOne({ name: "TableWithDates" });
+    assertIsSet(table);
+    const rows = await table.getRows({ theday: "2023-11-28" });
+    expect(rows.length).toBe(1);
+    const rows0 = await table.getRows({ theday: "2023-11-29" });
+    expect(rows0.length).toBe(0);
+    const rows1 = await table.getRows({
+      theday: { gt: "2023-11-28", day_only: true },
+    });
+    expect(rows1.length).toBe(0);
+    const rows2 = await table.getRows({
+      theday: { gt: "2023-11-28", equal: true, day_only: true },
+    });
+    expect(rows2.length).toBe(1);
   });
 });
 describe("Tables with name clashes", () => {

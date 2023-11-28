@@ -5,6 +5,8 @@ const {
   sqlsanitizeAllowDots,
 } = require("./internal");
 
+const someday = new Date("2019-11-11T10:34:00.000Z");
+
 describe("mkWhere", () => {
   it("should empty on no arg", () => {
     expect(mkWhere()).toStrictEqual({ values: [], where: "" });
@@ -162,6 +164,13 @@ describe("mkWhere", () => {
       where: 'where ("id">$1 or "id"<$2)',
     });
   });
+  it("should query days", () => {
+    expect(mkWhere({ theday: { gt: someday, day_only: true } })).toStrictEqual({
+      values: [someday],
+      where: 'where "theday"::date>$1::date',
+    });
+  });
+
   it("should query ilike", () => {
     expect(mkWhere({ name: { ilike: "imon" } })).toStrictEqual({
       values: ["imon"],

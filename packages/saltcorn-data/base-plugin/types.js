@@ -1408,7 +1408,14 @@ const date = {
    */
   contract: () => is.date,
   /** @type {object[]} */
-  attributes: [],
+  attributes: [
+    {
+      name: "day_only",
+      label: "Only day",
+      type: "Bool",
+      sublabel: "Do not pick or compare time",
+    },
+  ],
   /**
    * @namespace
    * @category saltcorn-data
@@ -1423,12 +1430,14 @@ const date = {
     show: {
       isEdit: false,
       description: "Show date and time in the users locale",
-      run: (d, req) =>
-        typeof d === "string" || typeof d === "number"
-          ? localeDateTime(new Date(d))
+      run: (d, req, attrs = {}) => {
+        const shower = attrs?.day_only ? localeDate : localeDateTime;
+        return typeof d === "string" || typeof d === "number"
+          ? shower(new Date(d))
           : d && d.toISOString
-          ? localeDateTime(d)
-          : "",
+          ? shower(d)
+          : "";
+      },
     },
     /**
      * @namespace

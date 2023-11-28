@@ -55,7 +55,7 @@ const link_view = (
   link_textcol,
   extraClass,
   extraState,
-  link_target_blank,
+  link_target_blank
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -81,7 +81,7 @@ const link_view = (
         link_icon
           ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
           : "",
-        label === " " && link_icon ? "" : label,
+        label === " " && link_icon ? "" : label
       );
     else
       return button(
@@ -100,7 +100,7 @@ const link_view = (
         link_icon
           ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
           : "",
-        label === " " && link_icon ? "" : label,
+        label === " " && link_icon ? "" : label
       );
   } else
     return a(
@@ -113,7 +113,7 @@ const link_view = (
       link_icon
         ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
         : "",
-      text(label === " " && link_icon ? "" : label),
+      text(label === " " && link_icon ? "" : label)
     );
 };
 
@@ -134,8 +134,8 @@ const stateToQueryString = (state) => {
           : `${encodeURIComponent(k)}=${encodeURIComponent(
               k === "_inbound_relation_path_" && typeof v !== "string"
                 ? queryToString(v)
-                : v,
-            )}`,
+                : v
+            )}`
       )
       .filter((s) => !!s)
       .join("&")
@@ -175,7 +175,7 @@ const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
       if (f.reftable && f.reftable.fields) {
         const { field_view_options } = calcfldViewOptions(
           f.reftable.fields,
-          isEdit ? "show" : mode,
+          isEdit ? "show" : mode
         );
         for (const jf of f.reftable.fields) {
           fvs[`${f.name}.${jf.name}`] = field_view_options[jf.name];
@@ -184,7 +184,7 @@ const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
             if (jtable && jtable.fields) {
               const jfieldOpts = calcfldViewOptions(
                 jtable.fields,
-                isEdit ? "show" : mode,
+                isEdit ? "show" : mode
               );
               for (const jf2 of jtable.fields) {
                 fvs[`${f.name}.${jf.name}.${jf2.name}`] =
@@ -194,7 +194,7 @@ const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
                   if (jtable2 && jtable2.fields) {
                     const jfield2Opts = calcfldViewOptions(
                       jtable2.fields,
-                      isEdit ? "show" : mode,
+                      isEdit ? "show" : mode
                     );
                     for (const jf3 of jtable2.fields) {
                       fvs[`${f.name}.${jf.name}.${jf2.name}.${jf3.name}`] =
@@ -216,7 +216,7 @@ const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
       const tfvs = Object.entries(f.type.fieldviews).filter(
         ([k, fv]) =>
           (f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter) &&
-          !(mode !== "list" && fv.expandColumns),
+          !(mode !== "list" && fv.expandColumns)
       );
       let tfvs_ordered = [];
       if (isEdit) {
@@ -256,7 +256,7 @@ const calcrelViewOptions = async (table, viewtemplate) => {
     const { field_view_options } = calcfldViewOptions(
       await relationTable.getFields(),
       viewtemplate,
-      true,
+      true
     );
     for (const [k, v] of Object.entries(field_view_options)) {
       rel_field_view_options[
@@ -296,7 +296,7 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
           const joinedCfg = await calcfldViewConfig(
             reftable.fields,
             isEdit,
-            nrecurse - 1,
+            nrecurse - 1
           );
           Object.entries(joinedCfg).forEach(([nm, o]) => {
             fieldViewConfigForms[`${f.name}.${nm}`] = o;
@@ -322,7 +322,7 @@ const get_inbound_path_suffixes = async (
   srcTable,
   levelPath,
   tableCache,
-  fieldCache,
+  fieldCache
 ) => {
   const result = [];
   // fks from targetTbl
@@ -335,8 +335,8 @@ const get_inbound_path_suffixes = async (
           (field) =>
             field.table_id !== targetTbl.id &&
             !levelPath.find(
-              (val) => val.tbl === targetTbl.name && val.fk === fkToRelTbl.name,
-            ),
+              (val) => val.tbl === targetTbl.name && val.fk === fkToRelTbl.name
+            )
         )
       : [];
     for (const inboundFk of inboundFks) {
@@ -417,14 +417,14 @@ const get_inbound_relation_opts = async (source, viewname) => {
       source,
       path,
       tableCache,
-      fieldCache,
+      fieldCache
     );
     if (suffixes.length > 0) {
       const views = await View.find_table_views_where(
         rootTable.id,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname &&
-          !state_fields.some((sf) => sf.name === "id"),
+          !state_fields.some((sf) => sf.name === "id")
       );
       for (const suffix of suffixes) {
         result.push({ path: suffix, views });
@@ -439,7 +439,7 @@ const get_inbound_relation_opts = async (source, viewname) => {
           inboundTbl,
           [{ tbl: inboundTbl.name, fk: inboundFk.name }, ...path],
           rootTable,
-          visitedCopy,
+          visitedCopy
         );
       }
     }
@@ -467,21 +467,21 @@ const get_inbound_self_relation_opts = async (source, viewname) => {
       reftable_name: source.name,
       is_unique: true,
     },
-    { cached: true },
+    { cached: true }
   );
   const result = [];
   const targetFields = source.getForeignKeys();
   for (const field of fields) {
     const refTable = Table.findOne({ id: field.table_id });
     const fromTargetToRef = targetFields.filter(
-      (field) => field.reftable_name === refTable.name,
+      (field) => field.reftable_name === refTable.name
     );
     if (fromTargetToRef.length > 0) {
       const views = await View.find_table_views_where(
         source,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname &&
-          state_fields.some((sf) => sf.name === "id"),
+          state_fields.some((sf) => sf.name === "id")
       );
       for (const toRef of fromTargetToRef) {
         result.push({
@@ -591,7 +591,7 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
     }
   }
   const independent_views = await View.find_all_views_where(
-    ({ state_fields }) => !state_fields.some((sf) => sf.required),
+    ({ state_fields }) => !state_fields.some((sf) => sf.required)
   );
   independent_views.forEach((view) => {
     link_view_opts_push_legacy({
@@ -720,7 +720,7 @@ const field_picker_fields = async ({
     //TODO the following line is slow
     const fieldViewConfigForms = await calcfldViewConfig(fields, false);
     for (const [field_name, fvOptFields] of Object.entries(
-      fieldViewConfigForms,
+      fieldViewConfigForms
     )) {
       for (const [fieldview, formFields] of Object.entries(fvOptFields)) {
         for (const formField of formFields) {
@@ -750,8 +750,9 @@ const field_picker_fields = async ({
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
-  const { child_field_list, child_relations } =
-    await table.get_child_relations(true);
+  const { child_field_list, child_relations } = await table.get_child_relations(
+    true
+  );
   const join_field_options = await table.get_join_field_options(true, true);
   const join_field_view_options = {
     ...field_view_options,
@@ -826,7 +827,7 @@ const field_picker_fields = async ({
           type: "Aggregation",
         },
       };
-    },
+    }
   );
   return [
     {
@@ -1105,7 +1106,7 @@ const field_picker_fields = async ({
       name: "extra_state_fml",
       label: __("Extra state Formula"),
       sublabel: __(
-        "Formula for JavaScript object that will be added to state parameters",
+        "Formula for JavaScript object that will be added to state parameters"
       ),
       help: {
         topic: "Extra state formula",
@@ -1270,7 +1271,7 @@ const field_picker_fields = async ({
 const get_child_views = async (table, viewname, nrecurse = 2) => {
   const rels = await Field.find(
     { reftable_name: table.name },
-    { cached: true },
+    { cached: true }
   );
   const possibleThroughTables = new Set();
   let child_views = [];
@@ -1279,7 +1280,7 @@ const get_child_views = async (table, viewname, nrecurse = 2) => {
     const views = await View.find_table_views_where(
       related_table.id,
       ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname && state_fields.every((sf) => !sf.required),
+        viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
     );
     child_views.push({ relation, related_table, views });
     possibleThroughTables.add(`${related_table.name}.${relation.name}`);
@@ -1322,8 +1323,7 @@ const get_parent_views = async (table, viewname) => {
     const views = await View.find_table_views_where(
       related_table,
       ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname &&
-        state_fields.some((sf) => sf.name === "id"),
+        viewrow.name !== viewname && state_fields.some((sf) => sf.name === "id")
     );
 
     parent_views.push({ relation, related_table, views });
@@ -1344,7 +1344,7 @@ const get_onetoone_views = async (table, viewname) => {
       reftable_name: table.name,
       is_unique: true,
     },
-    { cached: true },
+    { cached: true }
   );
   let child_views = [];
   for (const relation of rels) {
@@ -1352,8 +1352,7 @@ const get_onetoone_views = async (table, viewname) => {
     const views = await View.find_table_views_where(
       related_table.id,
       ({ state_fields, viewrow }) =>
-        viewrow.name !== viewname &&
-        state_fields.some((sf) => sf.name === "id"),
+        viewrow.name !== viewname && state_fields.some((sf) => sf.name === "id")
     );
     child_views.push({ relation, related_table, views });
   }
@@ -1411,7 +1410,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
         }
       } else {
         throw new InvalidConfiguration(
-          `Join field is specified as column but no join field is chosen`,
+          `Join field is specified as column but no join field is chosen`
         );
       }
     } else if (column.type === "FormulaValue") {
@@ -1460,7 +1459,7 @@ const picked_fields_to_query = (columns, fields, layout) => {
               field +
               "_" +
               column.aggwhere || ""
-          ).toLowerCase(),
+          ).toLowerCase()
         );
         // postgres fields have a max len
         if (targetNm.length > 58) {
@@ -1661,7 +1660,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         } else {
           const lastTable = Table.findOne({ name: lastTableName });
           const refField = lastTable.fields.find(
-            (field) => field.name === level.fkey,
+            (field) => field.name === level.fkey
           );
           levels.push({ table: refField.reftable_name, fkey: level.fkey });
           lastTableName = refField.reftable_name;
@@ -1679,12 +1678,36 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
-        addOrCreateList(qstate, datefield, { gt: new Date(v), equal: true });
+        addOrCreateList(qstate, datefield, {
+          gt: new Date(v),
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
     } else if (k.startsWith("_todate_")) {
       const datefield = db.sqlsanitize(k.replace("_todate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
-        addOrCreateList(qstate, datefield, { lt: new Date(v), equal: true });
+        addOrCreateList(qstate, datefield, {
+          lt: new Date(v),
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+    } else if (k.startsWith("_fromneqdate_")) {
+      const datefield = db.sqlsanitize(k.replace("_fromneqdate_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield)
+        addOrCreateList(qstate, datefield, {
+          gt: new Date(v),
+          day_only: dfield.attributes?.day_only,
+        });
+    } else if (k.startsWith("_toneqdate_")) {
+      const datefield = db.sqlsanitize(k.replace("_toneqdate_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield)
+        addOrCreateList(qstate, datefield, {
+          lt: new Date(v),
+          day_only: dfield.attributes?.day_only,
+        });
     } else if (k.startsWith("_gte_")) {
       const datefield = db.sqlsanitize(k.replace("_gte_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
@@ -1732,7 +1755,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
 
           if (field.attributes?.hasSchema) {
             const s = field.attributes.schema.find(
-              (f) => f.key === Object.keys(v)[0],
+              (f) => f.key === Object.keys(v)[0]
             );
             if (s?.type === "String") {
               json[kj] = { ilike: vj };
@@ -1848,7 +1871,7 @@ const initial_config_all_fields =
   (isEdit) =>
   async ({ table_id, exttable_name }) => {
     const table = Table.findOne(
-      table_id ? { id: table_id } : { name: exttable_name },
+      table_id ? { id: table_id } : { name: exttable_name }
     );
 
     const fields = table
@@ -1910,7 +1933,7 @@ const initial_config_all_fields =
       } else if (f.reftable_name !== "users") {
         const fvNm = f.type.fieldviews
           ? Object.entries(f.type.fieldviews).find(
-              ([nm, fv]) => fv.isEdit === isEdit,
+              ([nm, fv]) => fv.isEdit === isEdit
             )[0]
           : f.type === "File" && !isEdit
           ? Object.keys(getState().fileviews)[0]
@@ -2065,7 +2088,7 @@ const readStateStrict = (state, fields) => {
  */
 const json_list_to_external_table = (get_json_list, fields0) => {
   const fields = fields0.map((f) =>
-    f.constructor.name === Object.name ? new Field(f) : f,
+    f.constructor.name === Object.name ? new Field(f) : f
   );
   const getRows = async (where = {}, selopts = {}) => {
     let data_in = await get_json_list({ where, ...selopts });
@@ -2087,18 +2110,18 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       const cmp = selopts.orderDesc
         ? new Function(
             "a,b",
-            `return b.${selopts.orderBy}-a.${selopts.orderBy}`,
+            `return b.${selopts.orderBy}-a.${selopts.orderBy}`
           )
         : new Function(
             "a,b",
-            `return a.${selopts.orderBy}-b.${selopts.orderBy}`,
+            `return a.${selopts.orderBy}-b.${selopts.orderBy}`
           );
       data_filtered.sort(cmp);
     }
     if (selopts.limit)
       return data_filtered.slice(
         selopts.offset || 0,
-        (selopts.offset || 0) + selopts.limit,
+        (selopts.offset || 0) + selopts.limit
       );
     else return data_filtered;
   };
@@ -2163,10 +2186,10 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       const tableNames = new Set(
         tbl.fields
           .filter((f) => f.is_fkey && f.reftable_name)
-          .map((f) => f.reftable_name),
+          .map((f) => f.reftable_name)
       );
       return Array.from(tableNames).map((tname) =>
-        Table.findOne({ name: tname }),
+        Table.findOne({ name: tname })
       );
     },
   };
