@@ -42,7 +42,7 @@ describe("plugin helper", () => {
   it("get parent views", async () => {
     const patients = Table.findOne({ name: "patients" });
     const x = await get_parent_views(patients, "foobar");
-    expect((x[0].views.map((v: View) => v.name)).sort()).toStrictEqual([
+    expect(x[0].views.map((v: View) => v.name).sort()).toStrictEqual([
       "author_multi_edit",
       "authoredit",
       "authorshow",
@@ -256,6 +256,7 @@ describe("stateFieldsToWhere", () => {
   const fields = [
     new Field({ name: "astr", type: "String" }),
     new Field({ name: "age", type: "Integer" }),
+    new Field({ name: "dob", type: "Date", attributes: { only_day: true } }),
     new Field({ name: "favbook", type: "Key to books" }),
     { name: "props", type: { name: "JSON" } },
     {
@@ -283,6 +284,18 @@ describe("stateFieldsToWhere", () => {
       age: [
         { equal: true, gt: 5 },
         { equal: true, lt: 15 },
+      ],
+    });
+  });
+  it("date bounds", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _fromneqdate_dob: 5, _toneqdate_dob: 15 },
+    });
+    expect(w).toStrictEqual({
+      dob: [
+        { gt: new Date(5), only_day: true },
+        { lt: new Date(15), only_day: true },
       ],
     });
   });
