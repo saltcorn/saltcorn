@@ -761,31 +761,37 @@ function initialize_page() {
           $(el).addClass("codemirror-enabled");
           cm.on(
             "change",
-            $.debounce(() => {
-              if ($(el).hasClass("validate-statements")) {
-                try {
-                  let AsyncFunction = Object.getPrototypeOf(
-                    async function () {}
-                  ).constructor;
-                  AsyncFunction(cm.getValue());
+            $.debounce(
+              (cm1) => {
+                cm1.save();
+                if ($(el).hasClass("validate-statements")) {
+                  try {
+                    let AsyncFunction = Object.getPrototypeOf(
+                      async function () {}
+                    ).constructor;
+                    AsyncFunction(cm.getValue());
+                    $(el).closest("form").trigger("change");
+                  } catch (e) {
+                    const form = $(el).closest("form");
+                    const errorArea = form.parent().find(".full-form-error");
+                    if (errorArea.length) errorArea.text(e.message);
+                    else
+                      form
+                        .parent()
+                        .append(
+                          `<p class="text-danger full-form-error">${e.message}</p>`
+                        );
+                    return;
+                  }
+                } else {
+                  cm1.save();
                   $(el).closest("form").trigger("change");
-                } catch (e) {
-                  const form = $(el).closest("form");
-                  const errorArea = form.parent().find(".full-form-error");
-                  if (errorArea.length) errorArea.text(e.message);
-                  else
-                    form
-                      .parent()
-                      .append(
-                        `<p class="text-danger full-form-error">${e.message}</p>`
-                      );
-                  return;
                 }
-              } else $(el).closest("form").trigger("change");
-            }),
-            500,
-            null,
-            true
+              },
+              500,
+              null,
+              true
+            )
           );
         });
       }, 100);
