@@ -47,7 +47,7 @@ contains Default search form values when first loaded
 click button[type=submit]
 contains Row inclusion formula
 click button[type=submit]
-contains View ListPersons saved
+contains View <a href="/view/ListPersons">ListPersons</a> saved
 
 goto /viewedit/new?table=Persons&on_done_redirect=table%2FPersons
 contains basic information about the view
@@ -59,7 +59,7 @@ click button.builder-save
 contains Destination type
 select #inputview_when_done ListPersons
 click button[type=submit]
-contains View EditPersons saved
+contains View <a href="/view/EditPersons">EditPersons</a> saved
 contains Views of this table
 
 goto /viewedit/config/ListPersons?on_done_redirect=table%2FPersons

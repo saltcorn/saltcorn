@@ -22,4 +22,4 @@ contains No element selected
 click button.builder-save
 contains Set page title
 click button[type=submit]
-contains View authorshow saved
+contains View <a href="/view/authorshow">authorshow</a> saved
