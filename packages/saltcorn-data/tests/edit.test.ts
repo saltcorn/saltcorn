@@ -468,4 +468,41 @@ describe("Edit-in-edit", () => {
     expect(vres1).toContain("Leo Tolstoy");
     expect(vres1).not.toContain("Melville");
   });
+  it("should run post", async () => {
+    const v = await View.findOne({ name: "EditPublisherWithBooks" });
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    assertIsSet(v);
+    await v.runPost(
+      {},
+      {
+        name: "newpub",
+        author_0: "newpubsnewbook",
+        author_1: "newpubsotherbook",
+      },
+      mockReqRes
+    );
+    const pubrow = await Table.findOne("publisher")?.getRow({ name: "newpub" });
+    assertIsSet(pubrow);
+    const bookrow = await books.getRow({
+      author: "newpubsnewbook",
+    });
+    assertIsSet(bookrow);
+    expect(bookrow.publisher).toBe(pubrow.id);
+    expect(bookrow.pages).toBe(678);
+    const nbooks1 = await books.countRows({ publisher: pubrow.id });
+    expect(nbooks1).toBe(2);
+    await v.runPost(
+      {},
+      {
+        id: pubrow.id,
+        name: "newpub",
+        author_0: "newpubsnewbook",
+        id_0: bookrow.id,
+      },
+      mockReqRes
+    );
+    const nbooks2 = await books.countRows({ publisher: pubrow.id });
+    expect(nbooks2).toBe(1);
+  });
 });
