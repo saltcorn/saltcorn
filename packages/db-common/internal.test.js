@@ -165,7 +165,7 @@ describe("mkWhere", () => {
     });
   });
   it("should query days", () => {
-    expect(mkWhere({ theday: { gt: someday, only_day: true } })).toStrictEqual({
+    expect(mkWhere({ theday: { gt: someday, day_only: true } })).toStrictEqual({
       values: [someday],
       where: 'where "theday"::date>$1::date',
     });

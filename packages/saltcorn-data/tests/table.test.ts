@@ -1179,7 +1179,7 @@ describe("Table with date", () => {
       table,
       name: "theday",
       type: "Date",
-      attributes: { only_day: true },
+      attributes: { day_only: true },
     });
 
     await table.insertRow({ time: new Date(), theday: "2023-11-28" });
@@ -1196,11 +1196,11 @@ describe("Table with date", () => {
     const rows0 = await table.getRows({ theday: "2023-11-29" });
     expect(rows0.length).toBe(0);
     const rows1 = await table.getRows({
-      theday: { gt: "2023-11-28", only_day: true },
+      theday: { gt: "2023-11-28", day_only: true },
     });
     expect(rows1.length).toBe(0);
     const rows2 = await table.getRows({
-      theday: { gt: "2023-11-28", equal: true, only_day: true },
+      theday: { gt: "2023-11-28", equal: true, day_only: true },
     });
     expect(rows2.length).toBe(1);
   });

@@ -356,9 +356,9 @@ const whereClause =
           phs.is_sqlite ? "LIKE" : "ILIKE"
         } '%' || ${phs.push(v.ilike)} || '%'`
       : typeof (v || {}).gt !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))}${v.only_day ? "::date" : ""}>${
+      ? `${quote(sqlsanitizeAllowDots(k))}${v.day_only ? "::date" : ""}>${
           v.equal ? "=" : ""
-        }${phs.push(v.gt)}${v.only_day ? "::date" : ""}`
+        }${phs.push(v.gt)}${v.day_only ? "::date" : ""}`
       : typeof (v || {}).lt !== "undefined"
       ? `${quote(sqlsanitizeAllowDots(k))}<${v.equal ? "=" : ""}${phs.push(
           v.lt

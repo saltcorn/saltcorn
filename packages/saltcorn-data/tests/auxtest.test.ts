@@ -256,7 +256,7 @@ describe("stateFieldsToWhere", () => {
   const fields = [
     new Field({ name: "astr", type: "String" }),
     new Field({ name: "age", type: "Integer" }),
-    new Field({ name: "dob", type: "Date", attributes: { only_day: true } }),
+    new Field({ name: "dob", type: "Date", attributes: { day_only: true } }),
     new Field({ name: "favbook", type: "Key to books" }),
     { name: "props", type: { name: "JSON" } },
     {
@@ -294,8 +294,8 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({
       dob: [
-        { gt: new Date(5), only_day: true },
-        { lt: new Date(15), only_day: true },
+        { gt: new Date(5), day_only: true },
+        { lt: new Date(15), day_only: true },
       ],
     });
   });

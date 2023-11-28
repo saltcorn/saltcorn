@@ -1681,7 +1681,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         addOrCreateList(qstate, datefield, {
           gt: new Date(v),
           equal: true,
-          only_day: dfield.attributes?.only_day,
+          day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_todate_")) {
       const datefield = db.sqlsanitize(k.replace("_todate_", ""));
@@ -1690,7 +1690,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         addOrCreateList(qstate, datefield, {
           lt: new Date(v),
           equal: true,
-          only_day: dfield.attributes?.only_day,
+          day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_fromneqdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromneqdate_", ""));
@@ -1698,7 +1698,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       if (dfield)
         addOrCreateList(qstate, datefield, {
           gt: new Date(v),
-          only_day: dfield.attributes?.only_day,
+          day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_toneqdate_")) {
       const datefield = db.sqlsanitize(k.replace("_toneqdate_", ""));
@@ -1706,7 +1706,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       if (dfield)
         addOrCreateList(qstate, datefield, {
           lt: new Date(v),
-          only_day: dfield.attributes?.only_day,
+          day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_gte_")) {
       const datefield = db.sqlsanitize(k.replace("_gte_", ""));
