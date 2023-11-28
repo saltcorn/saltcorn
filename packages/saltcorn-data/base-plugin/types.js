@@ -36,6 +36,7 @@ const { getState } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
 const { freeVariables } = require("../models/expression");
 const Table = require("../models/table");
+const _ = require("underscore");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -169,6 +170,27 @@ const progress_bar = (type) => ({
       })
     ),
 });
+
+const show_with_html = {
+  configFields: [
+    {
+      input_type: "code",
+      label: "HTML",
+      sublabel: "Access the value with <code>{{ it }}</code>.",
+      default: "",
+      attributes: { mode: "text/html" },
+    },
+  ],
+  isEdit: false,
+  description: "Show value with any HTML code",
+  run: (v, req, attrs = {}) => {
+    const template = _.template(attrs?.code || "", {
+      evaluate: /\{\{#(.+?)\}\}/g,
+      interpolate: /\{\{([^#].+?)\}\}/g,
+    });
+    return template({ it: v });
+  },
+};
 
 const heat_cell = (type) => ({
   configFields: (field) => [
