@@ -726,7 +726,12 @@ class View implements AbstractView {
       await View.update({ configuration }, this.id!);
       return {
         redirect: onDoneRedirect ? `/${onDoneRedirect}` : `/viewedit`,
-        flash: ["success", `View ${this.name || ""} saved`],
+        flash: [
+          "success",
+          `View <a href="/view/${this.name || ""}">${
+            this.name || ""
+          }</a> saved`,
+        ],
       };
     };
     configFlow.saveURL = `/viewedit/saveconfig/${this.name}`;

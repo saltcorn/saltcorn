@@ -36,6 +36,7 @@ const { getState } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
 const { freeVariables } = require("../models/expression");
 const Table = require("../models/table");
+const _ = require("underscore");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -153,6 +154,7 @@ const progress_bar = (type) => ({
   run: (v, req, attrs = {}) =>
     div(
       {
+        class: "progress-bar",
         style: {
           width: "100%",
           height: `${attrs.px_height || 8}px`,
@@ -168,6 +170,29 @@ const progress_bar = (type) => ({
       })
     ),
 });
+
+const show_with_html = {
+  configFields: [
+    {
+      input_type: "code",
+      name: "code",
+      label: "HTML",
+      sublabel: "Access the value with <code>{{ it }}</code>.",
+      default: "",
+      attributes: { mode: "text/html" },
+    },
+  ],
+  isEdit: false,
+  description: "Show value with any HTML code",
+  run: (v, req, attrs = {}) => {
+    const template = _.template(attrs?.code || "", {
+      evaluate: /\{\{#(.+?)\}\}/g,
+      interpolate: /\{\{([^#].+?)\}\}/g,
+    });
+    const rendered = template({ it: v });
+    return rendered;
+  },
+};
 
 const heat_cell = (type) => ({
   configFields: (field) => [
@@ -540,6 +565,7 @@ const string = {
 
       run: (s) => h3(text_attr(s || "")),
     },
+    show_with_html,
     /**
      * @namespace
      * @category saltcorn-data
@@ -1075,6 +1101,7 @@ const int = {
     heat_cell: heat_cell("Integer"),
     above_input: number_limit("gte"),
     below_input: number_limit("lte"),
+    show_with_html,
     show_star_rating: {
       description: "Show value as filled stars out of maximum.",
       configFields: (field) => [
@@ -1216,6 +1243,7 @@ const color = {
             })
           : "",
     },
+    show_with_html,
     /**
      * @namespace
      * @category saltcorn-data
@@ -1334,6 +1362,7 @@ const float = {
     heat_cell: heat_cell("Float"),
     above_input: float_number_limit("gte"),
     below_input: float_number_limit("lte"),
+    show_with_html,
   },
   /** @type {object[]} */
   attributes: [
@@ -1513,6 +1542,7 @@ const date = {
         return text(moment.duration(new Date() - d).years());
       },
     },
+    show_with_html,
     /**
      * @namespace
      * @category saltcorn-data
@@ -1735,6 +1765,7 @@ const bool = {
         );
       },
     },
+    show_with_html,
     /**
      * @namespace
      * @category saltcorn-data
