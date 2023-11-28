@@ -1413,7 +1413,7 @@ const date = {
       name: "day_only",
       label: "Only day",
       type: "Bool",
-      //sublabel: "Do not pick time",
+      sublabel: "Do not pick or compare time",
     },
   ],
   /**
