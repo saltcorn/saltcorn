@@ -1693,7 +1693,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           only_day: dfield.attributes?.only_day,
         });
     } else if (k.startsWith("_fromneqdate_")) {
-      const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
+      const datefield = db.sqlsanitize(k.replace("_fromneqdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
@@ -1701,7 +1701,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
           only_day: dfield.attributes?.only_day,
         });
     } else if (k.startsWith("_toneqdate_")) {
-      const datefield = db.sqlsanitize(k.replace("_todate_", ""));
+      const datefield = db.sqlsanitize(k.replace("_toneqdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
