@@ -1433,9 +1433,9 @@ const date = {
       run: (d, req, attrs = {}) => {
         const shower = attrs?.day_only ? localeDate : localeDateTime;
         return typeof d === "string" || typeof d === "number"
-          ? localeDateTime(new Date(d))
+          ? shower(new Date(d))
           : d && d.toISOString
-          ? localeDateTime(d)
+          ? shower(d)
           : "";
       },
     },
