@@ -175,6 +175,7 @@ const show_with_html = {
   configFields: [
     {
       input_type: "code",
+      name: "code",
       label: "HTML",
       sublabel: "Access the value with <code>{{ it }}</code>.",
       default: "",
@@ -188,7 +189,8 @@ const show_with_html = {
       evaluate: /\{\{#(.+?)\}\}/g,
       interpolate: /\{\{([^#].+?)\}\}/g,
     });
-    return template({ it: v });
+    const rendered = template({ it: v });
+    return rendered;
   },
 };
 
