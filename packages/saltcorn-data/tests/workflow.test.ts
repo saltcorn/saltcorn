@@ -174,7 +174,10 @@ describe("Edit view Workflow", () => {
     assertIsSet(wfres);
     expect(wfres).toEqual({
       redirect: "/viewedit",
-      flash: ["success", "View authoredit saved"],
+      flash: [
+        "success",
+        'View <a href="/view/authoredit">authoredit</a> saved',
+      ],
     });
 
     const viewNew = View.findOne({ name: "authoredit" });
@@ -276,7 +279,10 @@ describe("Edit view Workflow", () => {
     assertIsSet(wfres);
     expect(wfres).toEqual({
       redirect: "/viewedit",
-      flash: ["success", "View authoredit saved"],
+      flash: [
+        "success",
+        'View <a href="/view/authoredit">authoredit</a> saved',
+      ],
     });
 
     const viewNew = View.findOne({ name: "authoredit" });
