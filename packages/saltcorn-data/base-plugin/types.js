@@ -153,6 +153,7 @@ const progress_bar = (type) => ({
   run: (v, req, attrs = {}) =>
     div(
       {
+        class: "progress-bar",
         style: {
           width: "100%",
           height: `${attrs.px_height || 8}px`,
