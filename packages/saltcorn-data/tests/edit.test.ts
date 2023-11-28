@@ -344,3 +344,128 @@ describe("Edit view with constraints and validations", () => {
     mockReqRes.reset();
   });
 });
+describe("Edit-in-edit", () => {
+  it("should setup", async () => {
+    await View.create({
+      name: "EditPublisherWithBooks",
+      table_id: Table.findOne("publisher")?.id,
+      viewtemplate: "Edit",
+      min_role: 100,
+      configuration: {
+        layout: {
+          above: [
+            {
+              gx: null,
+              gy: null,
+              style: {
+                "margin-bottom": "1.5rem",
+              },
+              aligns: ["end", "start"],
+              widths: [2, 10],
+              besides: [
+                {
+                  above: [
+                    null,
+                    {
+                      font: "",
+                      type: "blank",
+                      block: false,
+                      style: {},
+                      inline: false,
+                      contents: "Name",
+                      labelFor: "name",
+                      isFormula: {},
+                      textStyle: "",
+                    },
+                  ],
+                },
+                {
+                  above: [
+                    null,
+                    {
+                      type: "field",
+                      block: false,
+                      fieldview: "edit",
+                      textStyle: "",
+                      field_name: "name",
+                      configuration: {},
+                    },
+                  ],
+                },
+              ],
+              breakpoints: ["", ""],
+            },
+            {
+              name: "6dfcdb",
+              type: "view",
+              view: "ChildList:authoredit.books.publisher",
+              state: "shared",
+            },
+            {
+              type: "action",
+              block: false,
+              rndid: "dbf003",
+              minRole: 100,
+              isFormula: {},
+              action_icon: "",
+              action_name: "Save",
+              action_size: "",
+              action_bgcol: "",
+              action_label: "",
+              action_style: "btn-primary",
+              configuration: {},
+              action_textcol: "",
+              action_bordercol: "",
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+          {
+            type: "Action",
+            rndid: "dbf003",
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Save",
+            action_size: "",
+            action_bgcol: "",
+            action_label: "",
+            action_style: "btn-primary",
+            configuration: {},
+            action_textcol: "",
+            action_bordercol: "",
+          },
+        ],
+        viewname: "EditPublisherWithBooks",
+        auto_save: false,
+        split_paste: false,
+        exttable_name: null,
+        page_when_done: null,
+        view_when_done: "author_multi_edit",
+        dest_url_formula: null,
+        destination_type: "View",
+        formula_destinations: [],
+      },
+    });
+  });
+  it("should run get", async () => {
+    const v = await View.findOne({ name: "EditPublisherWithBooks" });
+    assertIsSet(v);
+    const vres0 = await v.run({}, mockReqRes);
+    expect(vres0).toContain("<form");
+    expect(vres0).toContain("add_repeater('publisher')");
+    const vres1 = await v.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain("<form");
+    expect(vres1).toContain("add_repeater('publisher')");
+    expect(vres1).toContain("Leo Tolstoy");
+    expect(vres1).not.toContain("Melville");
+  });
+});
