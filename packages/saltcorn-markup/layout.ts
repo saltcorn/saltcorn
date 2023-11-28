@@ -402,7 +402,7 @@ const render = ({
               { class: "card-header" },
               typeof segment.title === "string"
                 ? h5(
-                    { class: "m-0 fw-bold text-primary d-inline" },
+                    { class: "m-0 fw-bold text-primary card-title" },
                     segment.title
                   )
                 : segment.title,
