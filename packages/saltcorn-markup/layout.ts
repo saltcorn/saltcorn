@@ -160,6 +160,7 @@ const render = ({
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   const isWeb = typeof window === "undefined" && !req?.smr;
+  const hints = blockDispatch.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
@@ -386,7 +387,7 @@ const render = ({
             class: [
               "card",
               !(segment.class || "").includes("mt-") && "mt-4",
-              segment.shadow && "shadow",
+              segment.shadow === false ? false : "shadow",
               segment.class,
               segment.url && "with-link",
             ],
@@ -401,8 +402,13 @@ const render = ({
             span(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h5(
-                    { class: "m-0 fw-bold text-primary card-title" },
+                ? genericElement(
+                    `h${hints.cardTitleHeader || 5}`,
+                    {
+                      class:
+                        hints.cardTitleClass ||
+                        "m-0 fw-bold text-primary card-title",
+                    },
                     segment.title
                   )
                 : segment.title,
