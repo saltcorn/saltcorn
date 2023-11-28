@@ -1087,7 +1087,7 @@ module.exports = {
       let set_intersect = (a, b) => new Set([...a].filter((x) => b.has(x)));
 
       const source_table = Table.findOne({ name: table_src });
-      if (!source_rows) return { error: "Source table not found" };
+      if (!source_table) return { error: "Source table not found" };
 
       const source_rows = await source_table.getRows({});
       if (!source_rows) return { error: "No data received" };
