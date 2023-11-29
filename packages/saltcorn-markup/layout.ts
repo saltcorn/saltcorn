@@ -390,6 +390,7 @@ const render = ({
               segment.shadow === false ? false : "shadow",
               segment.class,
               segment.url && "with-link",
+              hints.cardClass,
             ],
             onclick: segment.url
               ? isWeb
@@ -402,15 +403,23 @@ const render = ({
             span(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? genericElement(
-                    `h${hints.cardTitleHeader || 5}`,
-                    {
-                      class:
-                        hints.cardTitleClass ||
-                        "m-0 fw-bold text-primary card-title",
-                    },
-                    segment.title
-                  )
+                ? hints.cardTitleWrapDiv
+                  ? div(
+                      { class: "card-title" },
+                      genericElement(
+                        `h${hints.cardTitleHeader || 5}`,
+                        segment.title
+                      )
+                    )
+                  : genericElement(
+                      `h${hints.cardTitleHeader || 5}`,
+                      {
+                        class:
+                          hints.cardTitleClass ||
+                          "m-0 fw-bold text-primary card-title",
+                      },
+                      segment.title
+                    )
                 : segment.title,
               segment.subtitle ? span(segment.subtitle) : "",
               segment.titleAjaxIndicator &&
