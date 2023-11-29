@@ -435,7 +435,7 @@ const render = ({
             div(
               { class: "card-header" },
               ul(
-                { class: "nav nav-tabs card-header-tabs" },
+                { class: ["nav nav-tabs card-header-tabs", hints.tabClass] },
                 Object.keys(segment.tabContents).map((title, ix) =>
                   li(
                     { class: "nav-item" },
