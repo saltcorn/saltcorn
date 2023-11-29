@@ -160,7 +160,7 @@ const render = ({
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   const isWeb = typeof window === "undefined" && !req?.smr;
-  const hints = blockDispatch.hints || {};
+  const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
