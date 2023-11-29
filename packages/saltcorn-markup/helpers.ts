@@ -4,7 +4,7 @@
  */
 
 import tags = require("./tags");
-const { a, text, div, input, text_attr, ul, li, span, label } = tags;
+const { a, text, div, input, text_attr, ul, li, span, label, i } = tags;
 
 /**
  * checks if x is defined
@@ -270,6 +270,7 @@ namespace HelpersExports {
     badges?: string[];
     stateField: string;
     onClick: any;
+    hints?: any;
   };
 }
 type SearchBarOpts = HelpersExports.SearchBarOpts;
@@ -291,6 +292,7 @@ const search_bar = (
     stateField,
     onClick,
     autofocus,
+    hints,
   }: SearchBarOpts | any = {}
 ): string => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
@@ -298,19 +300,27 @@ const search_bar = (
   const clickHandler = stateField
     ? `(function(v, that){v ? set_state_field('${stateField}', v, that):unset_state_field('${stateField}', that);})($('#${input_id}').val(), this)`
     : onClick || "";
-  return `<div class="input-group search-bar" id="search-input-group-${rndid}">
-  
-  <button class="btn btn-outline-secondary search-bar" ${
-    clickHandler ? `onClick="${clickHandler}"` : ""
-  } type="submit" id="button-search-submit">
+  return `<div class="${
+    hints?.searchBar?.iconButton === false ? "" : "input-group"
+  }${
+    hints?.searchBar?.containerClass
+      ? ` ${hints?.searchBar?.containerClass}`
+      : ""
+  } search-bar" id="search-input-group-${rndid}">
+  ${
+    hints?.searchBar?.iconButton === false
+      ? i({ class: ["fas fa-search", hints?.searchBar?.iconClass] })
+      : `<button class="btn btn-outline-secondary search-bar" ${
+          clickHandler ? `onClick="${clickHandler}"` : ""
+        } type="submit" id="button-search-submit">
   <i class="fas fa-search"></i>
-  </button>
-  
+  </button>`
+  }
 <input type="search" class="form-control search-bar ${
     (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
-  }" ${autofocus ? `autofocus ` : ""}placeholder="${
-    placeHolder || "Search for..."
-  }" 
+  }${hints?.searchBar?.inputClass ? ` ${hints?.searchBar?.inputClass}` : ""}" ${
+    autofocus ? `autofocus ` : ""
+  }placeholder="${placeHolder || "Search for..."}" 
 }" 
   }" 
        id="${input_id}" name="${name}" 

@@ -696,6 +696,7 @@ const render = ({
         has_dropdown: segment.has_dropdown,
         autofocus: segment.autofocus,
         contents: go(segment.contents),
+        hints,
       })}</form>`;
     }
     if (segment.above) {
