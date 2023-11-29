@@ -160,6 +160,7 @@ const render = ({
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   const isWeb = typeof window === "undefined" && !req?.smr;
+  const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop)
@@ -389,6 +390,7 @@ const render = ({
               segment.shadow === false ? false : "shadow",
               segment.class,
               segment.url && "with-link",
+              hints.cardClass,
             ],
             onclick: segment.url
               ? isWeb
@@ -401,10 +403,23 @@ const render = ({
             span(
               { class: "card-header" },
               typeof segment.title === "string"
-                ? h5(
-                    { class: "m-0 fw-bold text-primary d-inline" },
-                    segment.title
-                  )
+                ? hints.cardTitleWrapDiv
+                  ? div(
+                      { class: "card-title" },
+                      genericElement(
+                        `h${hints.cardTitleHeader || 5}`,
+                        segment.title
+                      )
+                    )
+                  : genericElement(
+                      `h${hints.cardTitleHeader || 5}`,
+                      {
+                        class:
+                          hints.cardTitleClass ||
+                          "m-0 fw-bold text-primary card-title",
+                      },
+                      segment.title
+                    )
                 : segment.title,
               segment.subtitle ? span(segment.subtitle) : "",
               segment.titleAjaxIndicator &&
@@ -485,7 +500,8 @@ const render = ({
           go,
           segment.serverRendered
             ? req.query[segment.tabId || "_tab"]
-            : undefined
+            : undefined,
+          hints
         )
       );
     }
@@ -681,6 +697,7 @@ const render = ({
         has_dropdown: segment.has_dropdown,
         autofocus: segment.autofocus,
         contents: go(segment.contents),
+        hints,
       })}</form>`;
     }
     if (segment.above) {

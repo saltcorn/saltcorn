@@ -613,7 +613,8 @@ const renderTabs = (
     tabId,
   }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any,
-  activeTabTitle?: string
+  activeTabTitle?: string,
+  hints?: any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
@@ -676,7 +677,11 @@ const renderTabs = (
         {
           role: "tablist",
           id: `${rndid}`,
-          class: `nav ${tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills"}`,
+          class: [
+            "nav",
+            tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills",
+            hints.tabClass && tabsStyle === "Tabs" && hints.tabClass,
+          ],
         },
         contents.map((t, ix) =>
           li(
