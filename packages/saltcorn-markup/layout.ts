@@ -416,7 +416,7 @@ const render = ({
                       {
                         class:
                           hints.cardTitleClass ||
-                          "m-0 fw-bold text-primary card-title",
+                          "m-0 fw-bold text-primary d-inline",
                       },
                       segment.title
                     )
