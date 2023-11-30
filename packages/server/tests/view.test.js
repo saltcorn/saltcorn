@@ -17,6 +17,9 @@ const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
+const {
+  prepareArtistsAlbumRelation,
+} = require("@saltcorn/data/tests/common_helpers");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -584,5 +587,60 @@ describe("inbound relations", () => {
       .expect(toNotInclude("Content of post APost A"))
       .expect(toNotInclude("Content of post BPost B"))
       .expect(toNotInclude("Content of post CPost C"));
+  });
+});
+
+describe("many to many relations", () => {
+  beforeAll(async () => {
+    await prepareArtistsAlbumRelation();
+  });
+
+  it("artist_plays_on_album", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/show_artist?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"))
+      .expect(toInclude("album B"));
+
+    await request(app)
+      .get("/view/show_artist?id=2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"))
+      .expect(toNotInclude("album B"));
+  });
+
+  it("albums feed with query", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    const queryObj_1 = {
+      relation: ".artists.artist_plays_on_album$artist.album",
+      srcId: 1,
+    };
+    await request(app)
+      .get(
+        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj_1)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"))
+      .expect(toInclude("album B"));
+
+    const queryObj_2 = {
+      relation: ".artists.artist_plays_on_album$artist.album",
+      srcId: 2,
+    };
+    await request(app)
+      .get(
+        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj_2)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"))
+      .expect(toNotInclude("album B"));
   });
 });

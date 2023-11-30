@@ -8,6 +8,7 @@ const {
   get_child_views,
   get_inbound_relation_opts,
   get_inbound_self_relation_opts,
+  get_many_to_many_relation_opts,
   stateFieldsToWhere,
   field_picker_fields,
   readState,
@@ -25,6 +26,7 @@ import {
   createLevelThreeInbound,
   prepareEmployeeDepartment,
   prepareSimpleTopicPostRelation,
+  prepareArtistsAlbumRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
 
@@ -243,6 +245,24 @@ describe("plugin helper", () => {
         users,
         "show_user_with_simple_posts_list"
       );
+      for (const expectedPath of expected) {
+        const actual = opts.find(
+          (val: any) => val.path === expectedPath && val.views.length > 0
+        );
+        expect(actual).toBeDefined();
+      }
+    });
+  });
+
+  describe("many to many relations", () => {
+    beforeAll(async () => {
+      await prepareArtistsAlbumRelation();
+    });
+
+    it("artist_plays_on_album", async () => {
+      const artists = Table.findOne({ name: "artists" });
+      const opts = await get_many_to_many_relation_opts(artists, "show_artist");
+      const expected = [".artists.artist_plays_on_album$artist.album"];
       for (const expectedPath of expected) {
         const actual = opts.find(
           (val: any) => val.path === expectedPath && val.views.length > 0
