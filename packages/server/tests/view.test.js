@@ -610,4 +610,37 @@ describe("many to many relations", () => {
       .expect(toInclude("album A"))
       .expect(toNotInclude("album B"));
   });
+
+  it("albums feed with query", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    const queryObj_1 = {
+      relation: ".artists.artist_plays_on_album$artist.album",
+      srcId: 1,
+    };
+    await request(app)
+      .get(
+        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj_1)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"))
+      .expect(toInclude("album B"));
+
+    const queryObj_2 = {
+      relation: ".artists.artist_plays_on_album$artist.album",
+      srcId: 2,
+    };
+    await request(app)
+      .get(
+        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj_2)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"))
+      .expect(toNotInclude("album B"));
+  });
 });
