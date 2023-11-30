@@ -1006,6 +1006,9 @@ const runPost = async (
       }
       //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
+        const view_select = parse_view_select(field.metadata.view);
+        const childView = View.findOne({ name: view_select.viewname });
+
         const childTable = Table.findOne({ id: field.metadata?.table_id });
         const submitted_row_ids = new Set(
           (form.values[field.name] || []).map(
@@ -1013,7 +1016,13 @@ const runPost = async (
           )
         );
         for (const childRow of form.values[field.name]) {
+          // set fixed here
           childRow[field.metadata?.relation] = id;
+          for (const [k, v] of Object.entries(
+            childView?.configuration?.fixed || {}
+          )) {
+            if (typeof childRow[k] === "undefined") childRow[k] = v;
+          }
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
               childRow,
@@ -1042,7 +1051,6 @@ const runPost = async (
 
         //need to delete any rows that are missing
         if (originalID && field.metadata) {
-          const view_select = parse_view_select(field.metadata.view);
           const childRows = getRowQuery
             ? await getRowQuery(
                 field.metadata.table_id,
