@@ -861,6 +861,7 @@ const render = (
     role,
     is_owner,
     req,
+    hints: getState().getLayout(req.user).hints || {},
   });
 };
 

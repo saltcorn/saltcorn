@@ -530,7 +530,13 @@ const run = async (
   };
   return div(
     { class: "form-namespace" },
-    renderLayout({ blockDispatch, layout, role, req: extra.req })
+    renderLayout({
+      blockDispatch,
+      layout,
+      role,
+      req: extra.req,
+      hints: getState().getLayout(extra.req.user).hints || {},
+    })
   );
 };
 
