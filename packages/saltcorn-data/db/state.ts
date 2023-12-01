@@ -170,7 +170,7 @@ class State {
     this.table_providers = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
-    this.layouts = { emergency: { wrap: emergency_layout } };
+    this.layouts = { emergency: emergency_layout };
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
@@ -662,7 +662,7 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
-    this.layouts = { emergency: { wrap: emergency_layout } };
+    this.layouts = { emergency: emergency_layout };
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
