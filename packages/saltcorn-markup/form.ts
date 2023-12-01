@@ -1246,6 +1246,7 @@ const renderFormLayout = (form: Form): string => {
     role,
     req: form.req,
     is_owner: form.isOwner,
+    hints: form.req?.layout_hints,
   });
 };
 

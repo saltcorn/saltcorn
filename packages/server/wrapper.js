@@ -316,7 +316,14 @@ module.exports = (version_tag) =>
       if (req.xhr) {
         const renderToHtml = layout.renderBody
           ? (h, role, req) =>
-              layout.renderBody({ title, body: h, role, alerts, req })
+              layout.renderBody({
+                title,
+                body: h,
+                role,
+                alerts,
+                req,
+                hints: layout.hints,
+              })
           : defaultRenderToHtml;
         res.header(
           "Cache-Control",
