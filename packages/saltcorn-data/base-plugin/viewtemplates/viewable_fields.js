@@ -991,7 +991,7 @@ const getForm = async (
   isRemote
 ) => {
   const fields = table.getFields();
-
+  const state = getState();
   const tfields = (columns || [])
     .map((column) => {
       if (column.type === "Field") {
@@ -1001,8 +1001,8 @@ const getForm = async (
           const f = new Field(f0);
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
-            if (getState().keyFieldviews[column.fieldview])
-              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            if (state.keyFieldviews[column.fieldview])
+              f.fieldviewObj = state.keyFieldviews[column.fieldview];
             f.input_type =
               !f.fieldview ||
               !f.fieldviewObj ||
@@ -1012,8 +1012,7 @@ const getForm = async (
           }
           if (f.type === "File") {
             const fvNm = column.fieldview || "upload";
-            if (getState().fileviews[fvNm])
-              f.fieldviewObj = getState().fileviews[fvNm];
+            if (state.fileviews[fvNm]) f.fieldviewObj = state.fileviews[fvNm];
             f.input_type =
               !f.fieldview || !f.fieldviewObj ? "file" : "fromtype";
           }
@@ -1062,6 +1061,8 @@ const getForm = async (
       }
     },
   });
+  if (!req.layout_hints)
+    req.layout_hints = state.getLayout(req.user).hints || {};
   const form = new Form({
     action: action,
     onSubmit:
