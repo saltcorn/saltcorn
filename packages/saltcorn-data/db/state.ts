@@ -561,6 +561,9 @@ class State {
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
       this.eventTypes[k] = v;
     });
+    Object.entries(withCfg("fonts", {})).forEach(([k, v]) => {
+      this.fonts[k] = v as string;
+    });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
       this.table_providers[k] = v;
     });
