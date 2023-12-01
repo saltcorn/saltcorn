@@ -193,6 +193,7 @@ class View implements AbstractView {
       // may fail if incomplete view
       const sfs = await viewrow.get_state_fields();
       if (
+        viewrow.viewtemplateObj &&
         pred({
           viewrow,
           viewtemplate: viewrow.viewtemplateObj,
@@ -234,6 +235,7 @@ class View implements AbstractView {
       // may fail if incomplete view
       const sfs = await viewrow.get_state_fields();
       if (
+        viewrow.viewtemplateObj &&
         pred({
           viewrow,
           viewtemplate: viewrow.viewtemplateObj,
