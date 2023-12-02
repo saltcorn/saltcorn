@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useContext } from "react";
+import React, { useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -16,10 +16,11 @@ import {
   setAPropGen,
   FormulaTooltip,
   HelpTopicLink,
+  buildTableCaches,
 } from "./utils";
 
-import { RelationPicker } from "./RelationPicker";
 import { RelationBadges } from "./RelationBadges";
+import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
 
 export /**
  * @param {object} props
@@ -86,7 +87,7 @@ const ViewLink = ({
 };
 
 export /**
- * @returns {div}
+ * @returns
  * @category saltcorn-builder
  * @subcategory components
  * @namespace
@@ -125,7 +126,17 @@ const ViewLinkSettings = () => {
     view_name,
     link_target_blank,
   } = node;
-  const options = useContext(optionsCtx);
+  const options = React.useContext(optionsCtx);
+  const caches = useMemo(() => buildTableCaches(options.tables), [undefined]);
+  const finder = useMemo(
+    () =>
+      new relationHelpers.RelationsFinder(
+        caches,
+        options.views,
+        options.max_relations_layer_depth || 6
+      ),
+    [undefined]
+  );
   let errorString = false;
   try {
     Function("return " + extra_state_fml);
@@ -138,15 +149,30 @@ const ViewLinkSettings = () => {
     view_name ||
     (name &&
       ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":")));
+  const [relations, setRelations] = React.useState(
+    finder.findRelations(options.tableName, use_view_name)
+  );
+  if (!relation && relations.paths.length > 0) {
+    setProp((prop) => {
+      prop.relation = relations.paths[0];
+    });
+  }
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
-      setProp((prop) => (prop.view_name = target_value));
       if (target_value !== use_view_name) {
-        setProp((prop) => {
-          prop.name = options.view_relation_opts[target_value][0].value;
-          prop.relation = undefined;
-        });
+        const newRelations = finder.findRelations(
+          options.tableName,
+          target_value
+        );
+        if (newRelations.paths.length > 0) {
+          setProp((prop) => (prop.view_name = target_value));
+          setProp((prop) => {
+            prop.name = target_value;
+            prop.relation = newRelations.paths[0];
+          });
+          setRelations(newRelations);
+        }
       }
     }
   };
@@ -165,7 +191,7 @@ const ViewLinkSettings = () => {
                 onChange={set_view_name}
                 onBlur={set_view_name}
               >
-                {options.view_name_opts.map((f, ix) => (
+                {options.views.map((f, ix) => (
                   <option key={ix} value={f.name}>
                     {f.label}
                   </option>
@@ -175,18 +201,17 @@ const ViewLinkSettings = () => {
           </tr>
           <tr>
             <td colSpan="2">
-              <RelationPicker
-                options={options}
-                viewname={use_view_name}
+              <RelationOnDemandPicker
+                relations={relations.layers}
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
                     setProp((prop) => {
-                      prop.name = use_view_name;
+                      prop.view = use_view_name;
                       prop.relation = relPath;
                     });
                   } else {
                     setProp((prop) => {
-                      prop.name = relPath;
+                      prop.view = relPath;
                       prop.relation = undefined;
                     });
                   }
@@ -196,7 +221,7 @@ const ViewLinkSettings = () => {
                 view={name}
                 relation={relation}
                 parentTbl={options.tableName}
-                fk_options={options.fk_options}
+                tableNameCache={caches.tableNameCache}
               />
             </td>
           </tr>

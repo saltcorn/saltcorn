@@ -193,7 +193,7 @@ describe("load remote insert/updates", () => {
         .post("/table")
         .set("Cookie", loginCookie)
         .send(`name=${encodeURIComponent("Table with capitals")}`)
-        .expect(toRedirect("/table/16"));
+        .expect(toRedirect("/table/26"));
       // add a field
       await request(app)
         .post("/field/")
@@ -202,17 +202,17 @@ describe("load remote insert/updates", () => {
         .send("label=StringField")
         .send("type=String")
         .send(
-          `contextEnc=${encodeURIComponent(JSON.stringify({ table_id: 16 }))}`
+          `contextEnc=${encodeURIComponent(JSON.stringify({ table_id: 26 }))}`
         )
         .set("Cookie", loginCookie)
         .expect(toInclude("options"));
       // init sync_info table
       await request(app)
         .post("/table")
-        .send("id=16")
+        .send("id=26")
         .send("has_sync_info=on")
         .set("Cookie", loginCookie)
-        .expect(toRedirect("/table/16"));
+        .expect(toRedirect("/table/26"));
       const dbTime = await db.time();
 
       // call load changes

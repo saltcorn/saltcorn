@@ -24,9 +24,7 @@ import {
   createMultipleInbounds,
   createKeyFromLevelTwo,
   createLevelThreeInbound,
-  prepareEmployeeDepartment,
   prepareSimpleTopicPostRelation,
-  prepareArtistsAlbumRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
 
@@ -218,7 +216,6 @@ describe("plugin helper", () => {
     });
 
     it("employee department relation", async () => {
-      await prepareEmployeeDepartment();
       const employee = Table.findOne({ name: "employee" });
       assertIsSet(employee);
       const result: any = await get_inbound_self_relation_opts(
@@ -255,10 +252,6 @@ describe("plugin helper", () => {
   });
 
   describe("many to many relations", () => {
-    beforeAll(async () => {
-      await prepareArtistsAlbumRelation();
-    });
-
     it("artist_plays_on_album", async () => {
       const artists = Table.findOne({ name: "artists" });
       const opts = await get_many_to_many_relation_opts(artists, "show_artist");

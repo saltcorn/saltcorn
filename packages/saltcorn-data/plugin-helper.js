@@ -2283,19 +2283,50 @@ const run_action_column = async ({ col, req, ...rest }) => {
   });
 };
 
-/**
- * for all tables collect the foreign keys with the targets
- * should only be used as options for the saltcorn-builder
- * @returns table names as key and the fks as value
- */
-const build_schema_fk_options = async () => {
-  const result = {};
-  for (const table of await Table.find({}, { cached: true })) {
-    result[table.name] = table.getForeignKeys().map((field) => {
-      return { name: field.name, reftable_name: field.reftable_name };
-    });
-  }
-  return result;
+const ViewDisplayType = {
+  SINGLE: "SINGLE_ROW",
+  MULTI: "MULTIPLE_ROWS",
+  NO_ROWS: "NO_ROWS",
+  INVALID: "INVALID",
+};
+
+const displayType = (stateFields) =>
+  stateFields.every((sf) => !sf.required)
+    ? ViewDisplayType.MULTI
+    : stateFields.some((sf) => sf.name === "id")
+    ? ViewDisplayType.SINGLE
+    : ViewDisplayType.INVALID;
+
+const build_schema_data = async () => {
+  const allViews = await View.find({}, { cached: true });
+  const allTables = await Table.find({}, { cached: true });
+  const tableIdToName = {};
+  allTables.forEach((t) => {
+    tableIdToName[t.id] = t.name;
+  });
+  const views = await Promise.all(
+    allViews.map(async (v) => ({
+      name: v.name,
+      table_id: v.table_id,
+      label: `${v.name} [${v.viewtemplate}] ${tableIdToName[v.table_id] || ""}`,
+      viewtemplate: v.viewtemplate,
+      display_type: displayType(await v.get_state_fields()),
+    }))
+  );
+  const tables = await Promise.all(
+    allTables.map(async (t) => ({
+      name: t.name,
+      id: t.id,
+      foreign_keys: t.getForeignKeys().map((f) => ({
+        name: f.name,
+        id: f.id,
+        table_id: t.id,
+        reftable_name: f.reftable_name,
+        is_unique: f.is_unique,
+      })),
+    }))
+  );
+  return { views, tables };
 };
 
 module.exports = {
@@ -2322,5 +2353,5 @@ module.exports = {
   get_inbound_relation_opts,
   get_inbound_self_relation_opts,
   get_many_to_many_relation_opts,
-  build_schema_fk_options,
+  build_schema_data,
 };

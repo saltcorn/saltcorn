@@ -195,6 +195,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
     { script: `/static_assets/${version_tag}/saltcorn-common.js` },
     { script: `/static_assets/${version_tag}/saltcorn.js` },
     { script: `/static_assets/${version_tag}/dayjs.min.js` },
+    { script: `/static_assets/${version_tag}/relation_helpers.js` },
   ];
   let from_cfg = [];
   if (state.getConfig("page_custom_css", ""))

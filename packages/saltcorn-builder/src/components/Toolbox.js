@@ -257,13 +257,9 @@ const ViewElem = ({ connectors, views }) => (
     icon="fas fa-eye"
     title="Embed a view"
     label="View"
-    disable={views.length === 0}
+    disable={false}
   >
-    <View
-      name={"not_assigned"}
-      state={"shared"}
-      view={views.length > 0 ? views[0].name : "view"}
-    />
+    <View name={"not_assigned"} state={"shared"} view={views[0].name} />
   </WrapElem>
 );
 /**
@@ -429,12 +425,10 @@ const ViewLinkElem = ({ connectors, options }) => (
     icons={["fas fa-eye", "fas fa-link"]}
     title="Link to a view"
     label="ViewLink"
-    disable={options.link_view_opts.length === 0}
+    disable={false}
   >
     <ViewLink
-      name={
-        options.link_view_opts.length > 0 ? options.link_view_opts[0].name : ""
-      }
+      name={options.views.length > 0 ? options.views[0].name : ""}
       block={false}
       minRole={100}
       label={""}

@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useContext, useEffect } from "react";
+import React, { Fragment, useEffect, useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
@@ -13,13 +13,13 @@ import {
   fetchViewPreview,
   ConfigForm,
   setAPropGen,
-  FormulaTooltip,
   buildOptions,
   HelpTopicLink,
+  buildTableCaches,
 } from "./utils";
 
-import { RelationPicker } from "./RelationPicker";
 import { RelationBadges } from "./RelationBadges";
+import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
 
 export /**
  * @param {object} props
@@ -37,12 +37,18 @@ const View = ({ name, view, configuration, state }) => {
     node_id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
-  const options = useContext(optionsCtx);
+  const options = React.useContext(optionsCtx);
 
-  const views = options.views;
-  const theview = views.find((v) => v.name === view);
+  let viewname = view;
+  if (viewname && viewname.includes(":")) {
+    const [prefix, rest] = viewname.split(":");
+    if (rest.startsWith(".")) viewname = prefix;
+    else viewname = rest;
+  }
+
+  const theview = options.views.find((v) => v.name === viewname);
   const label = theview ? theview.label : view;
-  const { previews, setPreviews } = useContext(previewCtx);
+  const { previews, setPreviews } = React.useContext(previewCtx);
   const myPreview = previews[node_id];
   useEffect(() => {
     fetchViewPreview({
@@ -73,7 +79,7 @@ const View = ({ name, view, configuration, state }) => {
 };
 
 export /**
- * @returns {div}
+ * @returns
  * @category saltcorn-builder
  * @subcategory components
  * @namespace
@@ -101,11 +107,21 @@ const ViewSettings = () => {
     extra_state_fml,
     view_name,
   } = node;
-  const options = useContext(optionsCtx);
-  const views = options.views;
+  const options = React.useContext(optionsCtx);
+  const caches = useMemo(() => buildTableCaches(options.tables), [undefined]);
+  const finder = useMemo(
+    () =>
+      new relationHelpers.RelationsFinder(
+        caches,
+        options.views,
+        options.max_relations_layer_depth || 6
+      ),
+    [undefined]
+  );
+
   const fixed_state_fields =
     options.fixed_state_fields && options.fixed_state_fields[view];
-  const { setPreviews } = useContext(previewCtx);
+  const { setPreviews } = React.useContext(previewCtx);
 
   const setAProp = setAPropGen(setProp);
   let errorString = false;
@@ -122,83 +138,81 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
+  const [relations, setRelations] = React.useState(
+    finder.findRelations(options.tableName, viewname)
+  );
+  if (!relation && relations.paths.length > 0) {
+    setProp((prop) => {
+      prop.relation = relations.paths[0];
+    });
+  }
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
-      setProp((prop) => (prop.view_name = target_value));
       if (target_value !== viewname) {
-        setProp((prop) => {
-          if (options.view_relation_opts[target_value]) {
-            prop.view = options.view_relation_opts[target_value][0].value;
-            prop.relation = undefined;
-          }
-        });
+        const newRelations = finder.findRelations(
+          options.tableName,
+          target_value
+        );
+        if (newRelations.paths.length > 0) {
+          setProp((prop) => (prop.view_name = target_value));
+          setProp((prop) => {
+            prop.view = target_value;
+            prop.relation = newRelations.paths[0];
+          });
+          setRelations(newRelations);
+        }
       }
     }
   };
 
   return (
     <div>
-      {options.view_name_opts ? (
-        <Fragment>
-          <div>
-            <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-            <select
-              value={viewname}
-              className="form-control form-select"
-              onChange={set_view_name}
-              onBlur={set_view_name}
-            >
-              {options.view_name_opts.map((f, ix) => (
-                <option key={ix} value={f.name}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <RelationPicker
-            options={options}
-            viewname={viewname}
-            update={(relPath) => {
-              if (relPath.startsWith(".")) {
-                setProp((prop) => {
-                  prop.view = viewname;
-                  prop.relation = relPath;
-                });
-              } else {
-                setProp((prop) => {
-                  prop.view = relPath;
-                  prop.relation = undefined;
-                });
-              }
-            }}
-          />
-          <RelationBadges
-            view={view}
-            relation={relation}
-            parentTbl={options.tableName}
-            fk_options={options.fk_options}
-          />
-        </Fragment>
-      ) : (
+      <Fragment>
         <div>
           <label>View to {options.mode === "show" ? "embed" : "show"}</label>
           <select
-            value={view}
+            value={viewname}
             className="form-control form-select"
-            onChange={setAProp("view")}
-            onBlur={setAProp("view")}
+            onChange={set_view_name}
+            onBlur={set_view_name}
           >
-            {views.map((f, ix) => (
-              <option key={ix} value={f.name}>
-                {f.label || f.name}
+            {options.views.map((v, ix) => (
+              <option key={ix} value={v.name}>
+                {v.label}
               </option>
             ))}
           </select>
         </div>
-      )}
+        {
+          <div>
+            <RelationOnDemandPicker
+              relations={relations.layers}
+              update={(relPath) => {
+                if (relPath.startsWith(".")) {
+                  setProp((prop) => {
+                    prop.view = viewname;
+                    prop.relation = relPath;
+                  });
+                } else {
+                  setProp((prop) => {
+                    prop.view = relPath;
+                    prop.relation = undefined;
+                  });
+                }
+              }}
+            />
+            <RelationBadges
+              view={view}
+              relation={relation}
+              parentTbl={options.tableName}
+              tableNameCache={caches.tableNameCache}
+            />
+          </div>
+        }
+      </Fragment>
       {options.mode !== "edit" && (
         <Fragment>
           <div>

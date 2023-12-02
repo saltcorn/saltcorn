@@ -9,10 +9,7 @@ import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { GenObj } from "../../saltcorn-types/dist/common_types";
 import { renderEditInEditConfig } from "./remote_query_helper";
-import {
-  prepareEmployeeDepartment,
-  prepareSimpleTopicPostRelation,
-} from "./common_helpers";
+import { prepareSimpleTopicPostRelation } from "./common_helpers";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -514,7 +511,6 @@ describe("subviews with relations", () => {
   });
 
   it("employee department relation", async () => {
-    await prepareEmployeeDepartment();
     const v = View.findOne({ name: "show_employee" });
     assertIsSet(v);
     {

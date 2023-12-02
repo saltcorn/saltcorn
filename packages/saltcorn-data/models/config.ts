@@ -773,6 +773,11 @@ const configTypes: ConfigTypes = {
     label: "Backup file prefix",
     default: "sc-backup-",
   },
+  max_relations_layer_depth: {
+    type: "Integer",
+    label: "Max relations layer depth",
+    default: 6,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

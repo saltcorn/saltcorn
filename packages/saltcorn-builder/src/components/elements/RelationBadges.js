@@ -1,7 +1,5 @@
-import React, { Fragment, useContext, useState } from "react";
+import React from "react";
 import {
-  parseRelationPath,
-  parseLegacyRelation,
   removeWhitespaces,
 } from "./utils";
 
@@ -13,8 +11,8 @@ const buildBadgeCfgs = (parsed, parentTbl) => {
       if (currentCfg) result.push(currentCfg);
       currentCfg = { up: key, table };
     } else {
-      if (!currentCfg) result.push({ down: key, table: parentTbl });
-      else {
+      if (!currentCfg && key) result.push({ down: key, table: parentTbl });
+      else if (currentCfg) {
         currentCfg.down = key;
         result.push(currentCfg);
       }
@@ -63,9 +61,15 @@ const buildBadge = ({ up, table, down }, index) => {
   );
 };
 
-export const RelationBadges = ({ view, relation, parentTbl, fk_options }) => {
+export const RelationBadges = ({
+  view,
+  relation,
+  parentTbl,
+  tableNameCache,
+}) => {
   if (relation) {
-    const parsed = parseRelationPath(relation, fk_options);
+    const parsed = relationHelpers.parseRelationPath(relation, tableNameCache);
+    
     return (
       <div className="overflow-scroll">
         {parsed.length > 0
@@ -75,7 +79,7 @@ export const RelationBadges = ({ view, relation, parentTbl, fk_options }) => {
     );
   } else {
     const [prefix, rest] = view.split(":");
-    const parsed = parseLegacyRelation(prefix, rest, parentTbl);
+    const parsed = relationHelpers.parseLegacyRelation(prefix, rest, parentTbl);
     if (parsed.length === 0)
       return buildBadge({ table: "invalid relation" }, 0);
     else if (

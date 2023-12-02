@@ -16,7 +16,7 @@ import db from "../db";
 import type Field from "./field";
 import Form from "./form";
 
-const { build_schema_fk_options } = require("../plugin-helper");
+import { build_schema_data } from "../plugin-helper";
 
 const { getState } = require("../db/state");
 const { applyAsync, apply } = require("../utils");
@@ -264,7 +264,10 @@ class Workflow implements AbstractWorkflow {
           relation_options: await table.get_relation_options(),
         };
       }
-      options.fk_options = await build_schema_fk_options();
+      const { tables, views } = await build_schema_data();
+      options.tables = tables;
+      options.views = views;
+      options.max_relations_layer_depth = getState().getConfig("base_url", 6);
       return {
         renderBuilder: {
           options,

@@ -7,8 +7,11 @@
 const { Command, flags } = require("@oclif/command");
 
 const { spawnSync, spawn } = require("child_process");
-const { sleep } = require("../common");
+const path = require("path");
+const fs = require("fs");
 
+const { sleep } = require("../common");
+const { build_schema_data } = require("@saltcorn/data/plugin-helper");
 /**
  * RunTestsCommand Class
  * @extends oclif.Command
@@ -98,6 +101,18 @@ class RunTestsCommand extends Command {
     }
   }
 
+  async copySchemaIntoBuilder() {
+    const schemaData = await build_schema_data();
+    const schemaFile = path.join(
+      process.cwd(),
+      "packages",
+      "saltcorn-builder",
+      "tests",
+      "schema_data.json"
+    );
+    fs.writeFileSync(schemaFile, JSON.stringify(schemaData));
+  }
+
   /**
    * Run
    * @returns {Promise<void>}
@@ -107,7 +122,7 @@ class RunTestsCommand extends Command {
     this.validateCall(args, flags);
     let env;
 
-    const dbname = flags.database? flags.database: "saltcorn_test";
+    const dbname = flags.database ? flags.database : "saltcorn_test";
 
     const db = require("@saltcorn/data/db");
     if (db.isSQLite) {
@@ -125,6 +140,8 @@ class RunTestsCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     await reset();
     await fixtures();
+    if (args.package === "saltcorn-builder" || !args.package)
+      await this.copySchemaIntoBuilder();
     await db.close();
     let jestParams = ["--"];
     // toddo add --logHeapUsage
@@ -155,7 +172,7 @@ class RunTestsCommand extends Command {
     } else if (args.package === "view-queries") {
       await this.remoteQueryTest(env, jestParams);
     } else if (args.package) {
-      const cwd = "packages/" + args.package;
+      const cwd = path.join("packages", args.package);
       await this.do_test("npm", ["run", "test", ...jestParams], env, cwd);
     } else {
       const cwd = ".";
