@@ -13,7 +13,7 @@ const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
 const { link, mkTable } = require("@saltcorn/markup");
-const { div, a, p, i, h6 } = require("@saltcorn/markup/tags");
+const { div, a, p, i, h6, span } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { get_cached_packs } = require("@saltcorn/admin-models/models/pack");
 // const { restore_backup } = require("../markup/admin");
@@ -315,15 +315,25 @@ const packTab = (req, packlist) =>
     )
   );
 
-const themeCard = (req) => {
+const themeCard = (req, roleMap) => {
+  const state_layouts = getState().layouts;
+  const state_layout_names = Object.keys(state_layouts);
   const layout_by_role = getState().getConfig("layout_by_role");
+  const used_layout_by_role = {};
+  Object.keys(roleMap).forEach((role_id) => {
+    used_layout_by_role[role_id] =
+      layout_by_role[role_id] ||
+      state_layout_names[state_layout_names.length - 1];
+  });
   const layouts = Object.entries(getState().layouts)
     .filter(([nm, v]) => nm !== "emergency")
     .map(([name, layout]) => {
       let plugin = getState().plugins[name];
-      const for_role = Object.entries(layout_by_role)
+      const for_role = Object.entries(used_layout_by_role)
         .filter(([role, rname]) => rname === name)
-        .map(([role, rname]) => role);
+        .map(([role, rname]) =>
+          span({ class: "badge bg-secondary" }, roleMap[role])
+        );
 
       return {
         name,
@@ -353,7 +363,7 @@ const themeCard = (req) => {
         },
         {
           label: req.__("Theme for role"),
-          key: ({ for_role }) => for_role.join(","),
+          key: ({ for_role }) => for_role.join(" "),
         },
       ],
       layouts
@@ -461,12 +471,12 @@ const welcome_page = async (req) => {
               users.length > 4
                 ? {
                     Users: await usersTab(req, users, roleMap),
-                    Theme: themeCard(req),
+                    Theme: themeCard(req, roleMap),
                     Help: helpCard(req),
                   }
                 : {
                     Help: helpCard(req),
-                    Theme: themeCard(req),
+                    Theme: themeCard(req, roleMap),
                     Users: await usersTab(req, users, roleMap),
                   },
           },
