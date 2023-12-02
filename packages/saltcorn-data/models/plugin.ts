@@ -147,7 +147,12 @@ class Plugin {
       .filter((v) => vt_names.includes(v.viewtemplate))
       .map((v) => v.name);
   }
+  static get_cached_plugins(): Array<Plugin> {
+    const { getState } = require("../db/state");
 
+    const stored = getState().getConfigCopy("available_plugins", false);
+    return stored || [];
+  }
   /**
    * List plugins available in store
    * @returns {Promise<*>}

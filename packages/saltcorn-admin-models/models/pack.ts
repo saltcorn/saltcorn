@@ -672,7 +672,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
  * @function
  * @returns {object[]}
  */
-const get_cached_packs = async (): Promise<Array<{ name: string }>> => {
+const get_cached_packs = (): Array<{ name: string }> => {
   const stored = getState().getConfigCopy("available_packs", false);
   return stored || [];
 };
