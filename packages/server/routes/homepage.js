@@ -12,8 +12,9 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
+const Plugin = require("@saltcorn/data/models/plugin");
 const { link, mkTable } = require("@saltcorn/markup");
-const { div, a, p, i, h6, span } = require("@saltcorn/markup/tags");
+const { div, a, p, i, h5, span } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { get_cached_packs } = require("@saltcorn/admin-models/models/pack");
 // const { restore_backup } = require("../markup/admin");
@@ -310,7 +311,7 @@ const packTab = (req, packlist) =>
       { noHeader: true }
     ),
     a(
-      { href: `/plugins?set=packs`, class: "btn btn-primary" },
+      { href: `/plugins?set=packs`, class: "btn btn-sm btn-primary" },
       req.__("Go to pack store »")
     )
   );
@@ -325,6 +326,9 @@ const themeCard = (req, roleMap) => {
       layout_by_role[role_id] ||
       state_layout_names[state_layout_names.length - 1];
   });
+  const themes_available = Plugin.get_cached_plugins().filter(
+    (p) => p.has_theme && !state_layout_names.includes(p.name)
+  );
   const layouts = Object.entries(getState().layouts)
     .filter(([nm, v]) => nm !== "emergency")
     .map(([name, layout]) => {
@@ -332,7 +336,7 @@ const themeCard = (req, roleMap) => {
       const for_role = Object.entries(used_layout_by_role)
         .filter(([role, rname]) => rname === name)
         .map(([role, rname]) =>
-          span({ class: "badge bg-secondary" }, roleMap[role])
+          span({ class: "badge bg-info" }, roleMap[role])
         );
 
       return {
@@ -366,9 +370,20 @@ const themeCard = (req, roleMap) => {
       ],
       layouts
     ),
-    a({ href: "/roleadmin" }, req.__("Set theme for each user role")),
-    h6(req.__("Available themes")),
-    a({ href: `/plugins?set=themes` }, req.__("Install more themes"))
+    a({ href: "/roleadmin" }, req.__("Set theme for each user role »")),
+    themes_available.length > 0 &&
+      h5({ class: "mt-2" }, req.__("Available themes")),
+    themes_available.length > 0 &&
+      div(
+        themes_available
+          .map((p) => span({ class: "badge bg-secondary" }, p.name))
+          .join(" ")
+      ),
+    themes_available.length > 0 &&
+      a(
+        { href: `/plugins?set=themes`, class: "mt-2" },
+        req.__("Install more themes »")
+      )
   );
 };
 /**
