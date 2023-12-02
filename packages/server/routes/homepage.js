@@ -13,7 +13,7 @@ const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
 const { link, mkTable } = require("@saltcorn/markup");
-const { div, a, p, i } = require("@saltcorn/markup/tags");
+const { div, a, p, i, h6 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { get_cached_packs } = require("@saltcorn/admin-models/models/pack");
 // const { restore_backup } = require("../markup/admin");
@@ -314,6 +314,55 @@ const packTab = (req, packlist) =>
       req.__("Go to pack store »")
     )
   );
+
+const themeCard = (req) => {
+  const layout_by_role = getState().getConfig("layout_by_role");
+  const layouts = Object.entries(getState().layouts)
+    .filter(([nm, v]) => nm !== "emergency")
+    .map(([name, layout]) => {
+      let plugin = getState().plugins[name];
+      const for_role = Object.entries(layout_by_role)
+        .filter(([role, rname]) => rname === name)
+        .map(([role, rname]) => role);
+
+      return {
+        name,
+        layout,
+        plugin,
+        for_role,
+        edit_cfg_link: plugin?.configuration_workflow
+          ? a(
+              {
+                href: `/plugins/configure/${encodeURIComponent(name)}`,
+              },
+              i({ class: "fa fa-cog ms-2" })
+            )
+          : "",
+      };
+    });
+
+  console.log(layouts);
+  console.log(layout_by_role);
+  return div(
+    { class: "pb-3 pt-2 pe-4" },
+    mkTable(
+      [
+        {
+          label: req.__("Installed theme"),
+          key: ({ name, edit_cfg_link }) => `${name}${edit_cfg_link}`,
+        },
+        {
+          label: req.__("Theme for role"),
+          key: ({ for_role }) => for_role.join(","),
+        },
+      ],
+      layouts
+    ),
+    a({ href: "/roleadmin" }, req.__("Set theme for each user role")),
+    h6(req.__("Available themes")),
+    a({ href: `/plugins?set=themes` }, req.__("Install more themes"))
+  );
+};
 /**
  * Help Card
  * @param req
@@ -412,10 +461,12 @@ const welcome_page = async (req) => {
               users.length > 4
                 ? {
                     Users: await usersTab(req, users, roleMap),
+                    Theme: themeCard(req),
                     Help: helpCard(req),
                   }
                 : {
                     Help: helpCard(req),
+                    Theme: themeCard(req),
                     Users: await usersTab(req, users, roleMap),
                   },
           },
