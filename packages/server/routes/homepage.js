@@ -354,7 +354,7 @@ const themeCard = (req, roleMap) => {
           : "",
       };
     });
-
+  const show_installable = themes_available.length > 0 || layouts.length == 1;
   return div(
     { class: "pb-3 pt-2 pe-4" },
     mkTable(
@@ -371,15 +371,14 @@ const themeCard = (req, roleMap) => {
       layouts
     ),
     a({ href: "/roleadmin" }, req.__("Set theme for each user role »")),
-    themes_available.length > 0 &&
-      h5({ class: "mt-2" }, req.__("Available themes")),
-    themes_available.length > 0 &&
+    show_installable && h5({ class: "mt-2" }, req.__("Available themes")),
+    show_installable &&
       div(
         themes_available
           .map((p) => span({ class: "badge bg-secondary" }, p.name))
           .join(" ")
       ),
-    themes_available.length > 0 &&
+    show_installable &&
       a(
         { href: `/plugins?set=themes`, class: "mt-2" },
         req.__("Install more themes »")
