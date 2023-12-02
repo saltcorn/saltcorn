@@ -241,24 +241,44 @@ const TabsSettings = () => {
           </td>
         </tr>
         {tabsStyle === "Value switch" ? (
-          <tr>
-            <td>
-              <label>Field</label>
-            </td>
-            <td>
-              <select
-                value={field}
-                className="form-control form-select"
-                onChange={setAProp("field")}
-              >
-                {options.fields.map((f, ix) => (
-                  <option key={ix} value={f.name}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </td>
-          </tr>
+          <Fragment>
+            <tr>
+              <td>
+                <label>Field</label>
+              </td>
+              <td>
+                <select
+                  value={field}
+                  className="form-control form-select"
+                  onChange={setAProp("field")}
+                >
+                  {options.fields.map((f, ix) => (
+                    <option key={ix} value={f.name}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+            {options.mode === "edit" && !serverRendered ? (
+              <tr>
+                <td colSpan="2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      name="block"
+                      type="checkbox"
+                      checked={disable_inactive}
+                      onChange={setAProp("disable_inactive", { checked: true })}
+                    />
+                    <label className="form-check-label">
+                      Disable inactive inputs
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            ) : null}
+          </Fragment>
         ) : (
           <Fragment>
             <tr>

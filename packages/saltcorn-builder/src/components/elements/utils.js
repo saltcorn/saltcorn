@@ -813,11 +813,13 @@ const ConfigField = ({
         onBlur={(e) => e.target && myOnChange(e.target.value)}
       >
         <option value={""}></option>
-        {Object.entries(options.fonts || {}).map(([nm, ff], ix) => (
-          <option key={ix} value={ff}>
-            {nm}
-          </option>
-        ))}
+        {Object.entries(options.fonts || {})
+          .sort()
+          .map(([nm, ff], ix) => (
+            <option key={ix} value={ff}>
+              {nm}
+            </option>
+          ))}
       </select>
     ),
     Integer: () => (
