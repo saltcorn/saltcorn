@@ -351,8 +351,6 @@ const themeCard = (req, roleMap) => {
       };
     });
 
-  console.log(layouts);
-  console.log(layout_by_role);
   return div(
     { class: "pb-3 pt-2 pe-4" },
     mkTable(
