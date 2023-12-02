@@ -307,6 +307,30 @@ const LinkSettings = () => {
 
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
+      <table>
+        <tbody>
+          {(link_src === "Page" && url && url.startsWith("/page/")) ||
+          (link_src === "View" && url && url.startsWith("/view/")) ? (
+            <tr>
+              <td colSpan="2">
+                <a
+                  className="d-block mt-2"
+                  target="_blank"
+                  href={
+                    link_src === "Page"
+                      ? url.replace("/page/", `/pageedit/edit/`)
+                      : link_src === "View"
+                      ? url.replace("/view/", `/viewedit/config/`)
+                      : ""
+                  }
+                >
+                  Configure this {link_src}
+                </a>
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
     </div>
   );
 };
