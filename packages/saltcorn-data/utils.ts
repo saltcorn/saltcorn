@@ -191,7 +191,7 @@ const isWeb = (req: any): boolean => {
  */
 
 const getSessionId = (req: any): string => {
-  return req.sessionID || req.cookies["express:sess"];
+  return req?.sessionID || req?.cookies?.["express:sess"];
 };
 
 /**

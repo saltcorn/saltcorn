@@ -50,6 +50,7 @@ const {
   objectToQueryString,
   removeEmptyStrings,
   asyncMap,
+  getSessionId,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -279,7 +280,11 @@ const run = async (
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, state, extra.req.user)
+        ? eval_expression(
+            segment.extra_state_fml,
+            { session_id: getSessionId(extra.req), ...state },
+            extra.req.user
+          )
         : {};
       if (segment.state === "local") {
         const state1 = { ...extra_state };

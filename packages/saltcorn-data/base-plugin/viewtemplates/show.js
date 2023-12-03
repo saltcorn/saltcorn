@@ -68,6 +68,7 @@ const {
   hashState,
   getSafeBaseUrl,
   dollarizeObject,
+  getSessionId,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -506,7 +507,11 @@ const renderRows = async (
         const extra_state = segment.extra_state_fml
           ? eval_expression(
               segment.extra_state_fml,
-              { ...dollarizeObject(state), ...row },
+              {
+                ...dollarizeObject(state),
+                session_id: getSessionId(extra.req),
+                ...row,
+              },
               extra.req.user
             )
           : {};
@@ -829,7 +834,8 @@ const render = (
         isWeb(req),
         req.user,
         prefix,
-        state
+        state,
+        req
       );
       return key(row);
     },
