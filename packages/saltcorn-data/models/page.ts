@@ -48,6 +48,7 @@ const {
   objectToQueryString,
   stringToJSON,
   dollarizeObject,
+  getSessionId,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
@@ -230,7 +231,10 @@ class Page implements AbstractPage {
       const extra_state = segment.extra_state_fml
         ? eval_expression(
             segment.extra_state_fml,
-            dollarizeObject(querystate || {}),
+            {
+              ...dollarizeObject(querystate || {}),
+              session_id: getSessionId(extraArgs.req),
+            },
             extraArgs.req.user
           )
         : {};
@@ -339,7 +343,10 @@ class Page implements AbstractPage {
           const extra_state = segment.view_state_fml
             ? eval_expression(
                 segment.view_state_fml,
-                dollarizeObject(querystate || {}),
+                {
+                  ...dollarizeObject(querystate || {}),
+                  session_id: getSessionId(extraArgs.req),
+                },
                 extraArgs.req.user
               )
             : {};
