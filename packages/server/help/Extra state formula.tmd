@@ -69,3 +69,6 @@ you can access the value of `foo` (here 1) as `$foo`. In Filter views, there is 
 underlying row and the purpose of the view is fundamentally to manipulate the state
 so the state in extra state formulae is accessed without dollar sign; in the 
 previous example `foo` instead of `$foo`.
+
+Use `session_id` top refer to the current session ID string (unique for the user's session
+whether the are logged in or not).
