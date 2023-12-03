@@ -70,5 +70,5 @@ underlying row and the purpose of the view is fundamentally to manipulate the st
 so the state in extra state formulae is accessed without dollar sign; in the 
 previous example `foo` instead of `$foo`.
 
-Use `session_id` top refer to the current session ID string (unique for the user's session
+Use `session_id` to refer to the current session ID string (unique for the user's session
 whether the are logged in or not).
