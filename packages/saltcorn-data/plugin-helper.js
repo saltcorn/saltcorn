@@ -505,19 +505,29 @@ const get_inbound_self_relation_opts = async (source, viewname) => {
  * Get all relations where a many to many relation through a join table is possible
  * @param {Table} source Top view table
  * @param {string} viewname Top view
+ * @param {object} cache lookup cache for tables and views (can be null)
+ * @param {string[]} path path to the current table
  * @returns an array with the relation paths and the matching views
  */
-const get_many_to_many_relation_opts = async (source, viewname, cache) => {
+const get_many_to_many_relation_opts = async (
+  source,
+  viewname,
+  cache,
+  path
+) => {
   const result = [];
   const { tableIdCache, tableNameCache, fieldCache } = cache
     ? cache
     : await tableFieldCache();
   for (const jTblToSource of fieldCache[source.name] || []) {
+    const visitedFks = new Set();
     const joinTbl = tableIdCache[jTblToSource.table_id];
     const jTblFks = joinTbl
       .getForeignKeys()
       .filter((f) => f.id !== jTblToSource.id);
     for (const jTblToTarget of jTblFks) {
+      if (visitedFks.has(jTblToTarget.id)) continue;
+      visitedFks.add(jTblToTarget.id);
       const targetTbl = tableNameCache[jTblToTarget.reftable_name];
       const views = await View.find_table_views_where(
         targetTbl,
@@ -525,9 +535,45 @@ const get_many_to_many_relation_opts = async (source, viewname, cache) => {
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
       result.push({
-        path: `.${source.name}.${joinTbl.name}$${jTblToSource.name}.${jTblToTarget.name}`,
+        path: `${path.join(".")}.${joinTbl.name}$${jTblToSource.name}.${
+          jTblToTarget.name
+        }`,
         views,
       });
+
+      const layerFks = fieldCache[targetTbl.name];
+      for (const layerFk of layerFks) {
+        if (visitedFks.has(layerFk.id)) continue;
+        visitedFks.add(layerFk.id);
+        const layerTbl = tableIdCache[layerFk.table_id];
+        const layerViews = await View.find_table_views_where(
+          layerTbl,
+          ({ state_fields, viewrow }) =>
+            viewrow.name !== viewname &&
+            state_fields.every((sf) => !sf.required)
+        );
+        result.push({
+          path: `${path.join(".")}.${joinTbl.name}$${jTblToSource.name}.${
+            jTblToTarget.name
+          }.${layerTbl.name}$${layerFk.name}`,
+          views: layerViews,
+        });
+      }
+    }
+  }
+  if (path.length < 2) {
+    const sourceFks = source.getForeignKeys();
+    for (const sourceFk of sourceFks) {
+      const nextTbl = tableNameCache[sourceFk.reftable_name];
+      path.push(sourceFk.name);
+      result.push(
+        ...(await get_many_to_many_relation_opts(
+          nextTbl,
+          viewname,
+          cache,
+          path
+        ))
+      );
     }
   }
   return result;
@@ -672,7 +718,8 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const many_to_many = await get_many_to_many_relation_opts(
     table,
     viewname,
-    cache
+    cache,
+    [`.${table.name}`]
   );
   for (const { path, views } of many_to_many) {
     for (const view of views) {

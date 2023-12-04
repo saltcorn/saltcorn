@@ -261,8 +261,32 @@ describe("plugin helper", () => {
 
     it("artist_plays_on_album", async () => {
       const artists = Table.findOne({ name: "artists" });
-      const opts = await get_many_to_many_relation_opts(artists, "show_artist");
+      const opts = await get_many_to_many_relation_opts(
+        artists,
+        "show_artist",
+        null,
+        [".artists"]
+      );
       const expected = [".artists.artist_plays_on_album$artist.album"];
+      for (const expectedPath of expected) {
+        const actual = opts.find(
+          (val: any) => val.path === expectedPath && val.views.length > 0
+        );
+        expect(actual).toBeDefined();
+      }
+    });
+
+    it("show pressing_job with embedded fan club feed", async () => {
+      const pressingJob = Table.findOne({ name: "pressing_job" });
+      const opts = await get_many_to_many_relation_opts(
+        pressingJob,
+        "show_pressing_job",
+        null,
+        [".pressing_job"]
+      );
+      const expected = [
+        ".pressing_job.album.artist_plays_on_album$album.artist.fan_club$artist",
+      ];
       for (const expectedPath of expected) {
         const actual = opts.find(
           (val: any) => val.path === expectedPath && val.views.length > 0
