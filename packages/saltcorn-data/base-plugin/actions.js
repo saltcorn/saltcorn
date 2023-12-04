@@ -27,7 +27,7 @@ const {
   eval_expression,
 } = require("../models/expression");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
-const { sleep } = require("../utils");
+const { sleep, getSessionId } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
 const { available_languages } = require("../models/config");
@@ -769,6 +769,7 @@ module.exports = {
         {
           user,
           console,
+          session_id: rest.req && getSessionId(rest.req),
         }
       );
       const calcrow = await f(row || {}, user);
