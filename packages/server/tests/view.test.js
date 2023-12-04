@@ -643,4 +643,43 @@ describe("many to many relations", () => {
       .expect(toInclude("album A"))
       .expect(toNotInclude("album B"));
   });
+
+  it("fan_club feed with query", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    const queryObj_1 = {
+      relation:
+        ".pressing_job.album.artist_plays_on_album$album.artist.fan_club$artist",
+      srcId: 1,
+    };
+    await request(app)
+      .get(
+        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj_1)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("crazy fan club"))
+      .expect(toInclude("another club"))
+      .expect(toInclude("fan club"))
+      .expect(toInclude("fan club official"));
+
+    const queryObj_2 = {
+      relation:
+        ".pressing_job.album.artist_plays_on_album$album.artist.fan_club$artist",
+      srcId: 2,
+    };
+    await request(app)
+      .get(
+        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj_2)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("crazy fan club"))
+      .expect(toNotInclude("another club"))
+      .expect(toInclude("fan club"))
+      .expect(toInclude("fan club official"));
+  });
 });

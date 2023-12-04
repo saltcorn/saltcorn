@@ -279,6 +279,8 @@ export async function prepareArtistsAlbumRelation() {
   const artists = await Table.create("artists");
   const albums = await Table.create("albums");
   const artistPlaysOnAlbum = await Table.create("artist_plays_on_album");
+  const pressing_job = await Table.create("pressing_job");
+  const fan_club = await Table.create("fan_club");
   await Field.create({
     table: artists,
     name: "name",
@@ -326,6 +328,38 @@ export async function prepareArtistsAlbumRelation() {
     attributes: { summary_field: "name" },
   });
 
+  await Field.create({
+    table: pressing_job,
+    name: "album",
+    reftable: albums,
+    label: "Album",
+    type: "Key",
+    attributes: { summary_field: "name" },
+  });
+  await Field.create({
+    table: pressing_job,
+    name: "pressing_date",
+    label: "Pressing date",
+    type: "Date",
+    required: true,
+  });
+
+  await Field.create({
+    table: fan_club,
+    name: "name",
+    label: "Name",
+    type: "String",
+    required: true,
+  });
+  await Field.create({
+    table: fan_club,
+    name: "artist",
+    reftable: artists,
+    label: "Artis",
+    type: "Key",
+    attributes: { summary_field: "name" },
+  });
+
   await db.insert("artists", {
     name: "artist A",
     birth_data: new Date("2000-11-11T10:34:00.000Z"),
@@ -353,6 +387,30 @@ export async function prepareArtistsAlbumRelation() {
   await db.insert("artist_plays_on_album", {
     artist: 2,
     album: 1,
+  });
+  await db.insert("pressing_job", {
+    album: 1,
+    pressing_date: new Date("2010-11-11T10:34:00.000Z"),
+  });
+  await db.insert("pressing_job", {
+    album: 2,
+    pressing_date: new Date("2010-11-11T10:34:00.000Z"),
+  });
+  await db.insert("fan_club", {
+    name: "crazy fan club",
+    artist: 1,
+  });
+  await db.insert("fan_club", {
+    name: "fan club",
+    artist: 1,
+  });
+  await db.insert("fan_club", {
+    name: "fan club official",
+    artist: 1,
+  });
+  await db.insert("fan_club", {
+    name: "another club",
+    artist: 2,
   });
 
   await View.create({
@@ -402,6 +460,60 @@ export async function prepareArtistsAlbumRelation() {
             view: "albums_feed",
             state: "shared",
             relation: ".artists.artist_plays_on_album$artist.album",
+            configuration: {},
+          },
+        ],
+      },
+    },
+    min_role: 100,
+  });
+
+  await View.create({
+    table_id: fan_club.id,
+    name: "edit_fan_club",
+    viewtemplate: "Edit",
+    configuration: {
+      columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+      layout: {
+        above: [{ type: "field", fieldview: "show", field_name: "name" }],
+      },
+    },
+    min_role: 100,
+  });
+  await View.create({
+    table_id: fan_club.id,
+    name: "fan_club_feed",
+    viewtemplate: "Feed",
+    configuration: {
+      cols_lg: 1,
+      cols_md: 1,
+      cols_sm: 1,
+      cols_xl: 1,
+      in_card: false,
+      viewname: "fan_club_feed",
+      show_view: "edit_fan_club",
+      descending: false,
+      view_to_create: "edit_fan_club",
+      create_view_display: "Link",
+    },
+    min_role: 100,
+  });
+
+  await View.create({
+    table_id: pressing_job.id,
+    name: "show_pressing_job",
+    viewtemplate: "Show",
+    configuration: {
+      columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+      layout: {
+        above: [
+          { type: "field", fieldview: "show", field_name: "name" },
+          {
+            name: "d7603a",
+            type: "view",
+            view: "fan_club_feed",
+            state: "shared",
+            relation: "Independent:fan_club_feed",
             configuration: {},
           },
         ],
