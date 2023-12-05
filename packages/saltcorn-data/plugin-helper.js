@@ -1582,10 +1582,12 @@ const picked_fields_to_query = (columns, fields, layout) => {
         if (v?.isFormula?.text && typeof v.contents === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
         if (v.isHTML)
-          (v.contents || "").match(/\{\{([^#].+?)\}\}/g).forEach((s) => {
-            const s1 = s.replace("{{", "").replace("}}", "").trim();
-            freeVars = new Set([...freeVars, ...freeVariables(s1)]);
-          });
+          ((v.contents || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach(
+            (s) => {
+              const s1 = s.replace("{{", "").replace("}}", "").trim();
+              freeVars = new Set([...freeVars, ...freeVariables(s1)]);
+            }
+          );
       },
       container(v) {
         if (v.showIfFormula)
