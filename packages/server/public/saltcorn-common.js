@@ -160,7 +160,7 @@ function apply_showif() {
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
       if (!dynwhere.required)
-        toAppend.push({ label: dynwhere.neutral_label || "" });
+        toAppend.push({ label: dynwhere.neutral_label || "", value: "" });
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -196,7 +196,7 @@ function apply_showif() {
           .map(
             ({ label, value, selected }) =>
               `<option${selected ? ` selected` : ""}${
-                value ? ` value="${value}"` : ""
+                typeof value !== "undefined" ? ` value="${value}"` : ""
               }>${label || ""}</option>`
           )
           .join("")
