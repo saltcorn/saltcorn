@@ -416,6 +416,7 @@ function get_form_record(e_in, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
+  if (window._sc_loglevel > 4) console.log("show if fml form_record", rec);
   try {
     return new Function(
       "row",
@@ -604,7 +605,7 @@ function initialize_page() {
       schema = JSON.parse(decodeURIComponent(schema));
     }
     if (type === "Date") {
-      console.log("timeelsems", $(this).find("span.current time"));
+      //console.log("timeelsems", $(this).find("span.current time"));
       current =
         $(this).attr("data-inline-edit-current") ||
         $(this).find("span.current time").attr("datetime"); // ||
