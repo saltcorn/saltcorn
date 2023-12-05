@@ -186,6 +186,15 @@ const isWeb = (req: any): boolean => {
 };
 
 /**
+ * returns the session id
+ * @param req express request
+ */
+
+const getSessionId = (req: any): string => {
+  return req?.sessionID || req?.cookies?.["express:sess"];
+};
+
+/**
  * @returns true if the mobile offline mode is active
  */
 const isOfflineMode = (): boolean => {
@@ -367,4 +376,5 @@ export = {
   removeNonWordChars,
   nubBy,
   isTest,
+  getSessionId,
 };

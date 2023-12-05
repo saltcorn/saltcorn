@@ -39,6 +39,7 @@ const {
   isOfflineMode,
   mergeIntoWhere,
   dollarizeObject,
+  getSessionId,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -626,7 +627,8 @@ const transformForm = async ({
           isWeb(req),
           req.user,
           prefix,
-          req.query
+          req.query,
+          req
         );
         segment.contents = key(row || {});
       }
@@ -736,7 +738,11 @@ const transformForm = async ({
       const extra_state = segment.extra_state_fml
         ? eval_expression(
             segment.extra_state_fml,
-            { ...dollarizeObject(req.query), ...(row || {}) },
+            {
+              ...dollarizeObject(req.query),
+              session_id: getSessionId(req),
+              ...(row || {}),
+            },
             req.user
           )
         : {};

@@ -11,7 +11,12 @@ const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
-const { structuredClone, isWeb, isOfflineMode } = require("../../utils");
+const {
+  structuredClone,
+  isWeb,
+  isOfflineMode,
+  getSessionId,
+} = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
@@ -290,7 +295,8 @@ const view_linker = (
   isWeb = true,
   user,
   targetPrefix = "",
-  state = {}
+  state = {},
+  req
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -299,7 +305,11 @@ const view_linker = (
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
-    const ctx = { ...dollarizeObject(state), ...row };
+    const ctx = {
+      ...dollarizeObject(state),
+      session_id: getSessionId(req),
+      ...row,
+    };
     const o = eval_expression(extra_state_fml, ctx, user);
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
@@ -603,7 +613,8 @@ const get_viewable_fields = (
           isWeb(req),
           req.user,
           "",
-          state
+          state,
+          req
         );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);

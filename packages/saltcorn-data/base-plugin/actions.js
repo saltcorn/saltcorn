@@ -27,7 +27,7 @@ const {
   eval_expression,
 } = require("../models/expression");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
-const { sleep } = require("../utils");
+const { sleep, getSessionId } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
 const { available_languages } = require("../models/config");
@@ -109,6 +109,7 @@ const run_code = async ({
     setConfig: (k, v) => sysState.setConfig(k, v),
     getConfig: (k) => sysState.getConfig(k),
     channel: table ? table.name : channel,
+    session_id: rest.req && getSessionId(rest.req),
     ...(row || {}),
     ...getState().function_context,
     ...rest,
@@ -769,6 +770,7 @@ module.exports = {
         {
           user,
           console,
+          session_id: rest.req && getSessionId(rest.req),
         }
       );
       const calcrow = await f(row || {}, user);

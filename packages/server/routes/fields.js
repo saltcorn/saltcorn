@@ -1169,7 +1169,10 @@ router.post(
     }
 
     const field = table.getField(fieldName);
-
+    if (!field) {
+      res.send("");
+      return;
+    }
     const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
     const formFields = fieldViewConfigForms[field.name][fv_name];
     if (!formFields) {

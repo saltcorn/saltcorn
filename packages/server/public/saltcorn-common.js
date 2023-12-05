@@ -160,7 +160,7 @@ function apply_showif() {
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
       if (!dynwhere.required)
-        toAppend.push({ label: dynwhere.neutral_label || "" });
+        toAppend.push({ label: dynwhere.neutral_label || "", value: "" });
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -196,7 +196,7 @@ function apply_showif() {
           .map(
             ({ label, value, selected }) =>
               `<option${selected ? ` selected` : ""}${
-                value ? ` value="${value}"` : ""
+                typeof value !== "undefined" ? ` value="${value}"` : ""
               }>${label || ""}</option>`
           )
           .join("")
@@ -416,6 +416,8 @@ function get_form_record(e_in, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
+  if (window._sc_loglevel > 4)
+    console.log(`show if fml ${fml} form_record`, rec);
   try {
     return new Function(
       "row",
@@ -423,7 +425,11 @@ function showIfFormulaInputs(e, fml) {
       "return " + fml
     )(rec, rec);
   } catch (e) {
-    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+    throw new Error(
+      `Error in evaluating showIf formula ${fml} with values ${JSON.stringify(
+        rec
+      )}: ${e.message}`
+    );
   }
 }
 
@@ -604,7 +610,7 @@ function initialize_page() {
       schema = JSON.parse(decodeURIComponent(schema));
     }
     if (type === "Date") {
-      console.log("timeelsems", $(this).find("span.current time"));
+      //console.log("timeelsems", $(this).find("span.current time"));
       current =
         $(this).attr("data-inline-edit-current") ||
         $(this).find("span.current time").attr("datetime"); // ||
