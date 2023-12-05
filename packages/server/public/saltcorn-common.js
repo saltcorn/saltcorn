@@ -416,7 +416,8 @@ function get_form_record(e_in, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
-  if (window._sc_loglevel > 4) console.log("show if fml form_record", rec);
+  if (window._sc_loglevel > 4)
+    console.log(`show if fml ${fml} form_record`, rec);
   try {
     return new Function(
       "row",
@@ -424,7 +425,11 @@ function showIfFormulaInputs(e, fml) {
       "return " + fml
     )(rec, rec);
   } catch (e) {
-    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+    throw new Error(
+      `Error in evaluating showIf formula ${fml} with values ${JSON.stringify(
+        rec
+      )}: ${e.message}`
+    );
   }
 }
 
