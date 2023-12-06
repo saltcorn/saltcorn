@@ -652,6 +652,7 @@ const ConfigForm = ({
   fields,
   configuration,
   setProp,
+  setter,
   node,
   onChange,
   tableName,
@@ -684,6 +685,7 @@ const ConfigForm = ({
           ) : null}
           <ConfigField
             field={f}
+            setter={setter}
             configuration={configuration}
             setProp={setProp}
             onChange={onChange}
@@ -734,6 +736,7 @@ const ConfigField = ({
   setProp,
   onChange,
   props,
+  setter,
   isStyle,
 }) => {
   /**
@@ -744,13 +747,15 @@ const ConfigField = ({
 
   const myOnChange = (v) => {
     setProp((prop) => {
-      if (configuration) {
+      if (setter) setter(prop, field.name, v);
+      else if (configuration) {
         if (!prop.configuration) prop.configuration = {};
         prop.configuration[field.name] = v;
       } else if (isStyle) {
         if (!prop.style) prop.style = {};
         prop.style[field.name] = v;
       } else prop[field.name] = v;
+      console.log(prop);
     });
     onChange && onChange(field.name, v, setProp);
   };

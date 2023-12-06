@@ -174,7 +174,7 @@ const ActionSettings = () => {
                     if (value === "Multi-step action" && !nsteps)
                       prop.nsteps = 1;
                     if (value === "Multi-step action" && !setting_action_n)
-                      prop.setting_action_n = 1;
+                      prop.setting_action_n = 0;
                     if (value === "Multi-step action" && !configuration.steps)
                       prop.configuration = { steps: [] };
                   });
@@ -351,8 +351,16 @@ const ActionSettings = () => {
               Step configuration
               <ConfigForm
                 fields={stepCfgFields}
-                configuration={configuration?.steps?.[use_setting_action_n]}
+                configuration={
+                  configuration?.steps?.[use_setting_action_n] || {}
+                }
                 setProp={setProp}
+                setter={(prop, fldname, v) => {
+                  if (!prop.configuration.steps) prop.configuration.steps = [];
+                  if (!prop.configuration.steps[use_setting_action_n])
+                    prop.configuration.steps[use_setting_action_n] = {};
+                  prop.configuration.steps[use_setting_action_n][fldname] = v;
+                }}
                 node={node}
               />
             </Fragment>
