@@ -107,6 +107,8 @@ const ActionSettings = () => {
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
     nsteps: node.data.props.nsteps,
+    step_only_ifs: node.data.props.step_only_ifs,
+    step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
   }));
   const {
@@ -123,11 +125,15 @@ const ActionSettings = () => {
     action_style,
     nsteps,
     setting_action_n,
+    step_only_ifs,
+    step_action_names,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
   const setAProp = setAPropGen(setProp);
+  const use_setting_action_n =
+    setting_action_n || setting_action_n === 0 ? setting_action_n : 0;
   return (
     <div>
       <table className="w-100">
@@ -291,7 +297,7 @@ const ActionSettings = () => {
               label: "Column number",
               type: "btn_select",
               options: ntimes(nsteps, (i) => ({
-                value: i + 1,
+                value: i,
                 title: `${i + 1}`,
                 label: `${i + 1}`,
               })),
@@ -300,6 +306,27 @@ const ActionSettings = () => {
             setProp={setProp}
             props={node}
           ></ConfigField>
+          <label>Action</label>
+          <select
+            value={step_action_names?.[use_setting_action_n] || ""}
+            className="form-control form-select"
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                console.log("anms", prop.step_action_names);
+                console.log({ setting_action_n, value });
+                if (!prop.step_action_names) prop.step_action_names = [];
+                prop.step_action_names[use_setting_action_n] = value;
+              });
+            }}
+          >
+            {options.actions.map((f, ix) => (
+              <option key={ix} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
         </Fragment>
       ) : cfgFields ? (
         <ConfigForm
@@ -318,6 +345,7 @@ const ActionSettings = () => {
  */
 Action.craft = {
   displayName: "Action",
+  defaultProps: { setting_action_n: 0, nsteps: 1 },
   related: {
     settings: ActionSettings,
   },
