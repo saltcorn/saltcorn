@@ -166,12 +166,14 @@ const isDate = function (date: Date): boolean {
  *
  * * `{ name: "Jim" }`: Match all rows with name="Jim"
  * * `{ name: { ilike: "im"} }`: Match all rows where name contains "im" (case insensitive)
+ * * `{ name: /im/ }`: Match all rows with name matching regular expression "im"
  * * `{ age: { lt: 18 } }`: Match all rows with age<18
  * * `{ age: { lt: 18, equal: true } }`: Match all rows with age<=18
  * * `{ age: { gt: 18, lt: 65} }`: Match all rows with 18<age<65
  * * `{ name: { or: ["Harry", "Sally"] } }`: Match all rows with name="Harry" or "Sally"
  * * `{ or: [{ name: "Joe"}, { age: 37 }] }`: Match all rows with name="Joe" or age=37
  * * `{ not: { id: 5 } }`: All rows except id=5
+ * * `{ id: { in: [1, 2, 3] } }`: Rows with id 1, 2, or 3
  *
  * For further examples, see the [mkWhere test suite](https://github.com/saltcorn/saltcorn/blob/master/packages/db-common/internal.test.js)
  *

@@ -169,6 +169,18 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
+  it("should get by regex", async () => {
+    if (!db.isSQLite) {
+      const patients = Table.findOne({ name: "patients" });
+      assertIsSet(patients);
+      const michaels = await patients.getRows(
+        { name: /ouglas/ },
+        { limit: 1, orderBy: "id", offset: 1 }
+      );
+      expect(michaels.length).toStrictEqual(1);
+      expect(michaels[0].name).toStrictEqual("Michael Douglas");
+    }
+  });
   it("should get rows by slug", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
