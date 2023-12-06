@@ -167,6 +167,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           action_bgcol={segment.action_bgcol || ""}
           action_bordercol={segment.action_bordercol || ""}
           action_textcol={segment.action_textcol || ""}
+          nsteps={segment.nsteps || ""}
           confirm={segment.confirm}
           configuration={segment.configuration || {}}
           block={segment.block || false}
@@ -555,6 +556,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         action_textcol: node.props.action_textcol,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        nsteps: node.props.nsteps,
         configuration: node.props.configuration,
         isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
@@ -578,6 +580,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         action_bgcol: node.props.action_bgcol,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
+        nsteps: node.props.nsteps,
         minRole: node.props.minRole,
         isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,

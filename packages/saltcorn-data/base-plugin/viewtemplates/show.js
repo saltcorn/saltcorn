@@ -204,6 +204,7 @@ const configuration_workflow = (req) =>
             views,
             library,
             pages,
+            allowMultiStepAction: true,
             handlesTextStyle,
             view_name_opts,
             view_relation_opts,

@@ -104,6 +104,7 @@ const ActionSettings = () => {
     action_bgcol: node.data.props.action_bgcol,
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
+    nsteps: node.data.props.nsteps,
   }));
   const {
     actions: { setProp },
@@ -117,6 +118,7 @@ const ActionSettings = () => {
     configuration,
     action_label,
     action_style,
+    nsteps,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -154,6 +156,8 @@ const ActionSettings = () => {
                         prop.action_row_variable = "state";
                       }
                     }
+                    if (value === "Multi-step action" && !nsteps)
+                      prop.nsteps = 1;
                   });
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
@@ -163,6 +167,9 @@ const ActionSettings = () => {
                     {f}
                   </option>
                 ))}
+                {options.allowMultiStepAction ? (
+                  <option value={"Multi-step action"}>Multi-step action</option>
+                ) : null}
               </select>
             </td>
           </tr>
@@ -255,7 +262,25 @@ const ActionSettings = () => {
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}
-      {cfgFields ? (
+      {name === "Multi-step action" ? (
+        <Fragment>
+          <label>#Steps</label>{" "}
+          <input
+            type="number"
+            value={nsteps}
+            className="form-control w-50 d-inline"
+            step="1"
+            min="1"
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                prop.nsteps = value;
+              });
+            }}
+          />
+        </Fragment>
+      ) : cfgFields ? (
         <ConfigForm
           fields={cfgFields}
           configuration={configuration}
