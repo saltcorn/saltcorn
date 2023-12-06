@@ -1027,7 +1027,8 @@ const runPost = async (
           for (const [k, v] of Object.entries(
             childView?.configuration?.fixed || {}
           )) {
-            if (typeof childRow[k] === "undefined") childRow[k] = v;
+            if (typeof childRow[k] === "undefined" && !k.startsWith("_block_"))
+              childRow[k] = v;
           }
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
