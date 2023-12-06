@@ -134,6 +134,11 @@ const ActionSettings = () => {
   const setAProp = setAPropGen(setProp);
   const use_setting_action_n =
     setting_action_n || setting_action_n === 0 ? setting_action_n : 0;
+  const stepCfgFields =
+    name === "Multi-step action"
+      ? getCfgFields(step_action_names?.[use_setting_action_n])
+      : null;
+
   return (
     <div>
       <table className="w-100">
@@ -170,6 +175,8 @@ const ActionSettings = () => {
                       prop.nsteps = 1;
                     if (value === "Multi-step action" && !setting_action_n)
                       prop.setting_action_n = 1;
+                    if (value === "Multi-step action" && !configuration.steps)
+                      prop.configuration = { steps: [] };
                   });
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
@@ -339,6 +346,17 @@ const ActionSettings = () => {
               });
             }}
           />
+          {stepCfgFields ? (
+            <Fragment>
+              Step configuration
+              <ConfigForm
+                fields={stepCfgFields}
+                configuration={configuration?.steps?.[use_setting_action_n]}
+                setProp={setProp}
+                node={node}
+              />
+            </Fragment>
+          ) : null}
         </Fragment>
       ) : cfgFields ? (
         <ConfigForm
