@@ -18,7 +18,9 @@ import {
   DynamicFontAwesomeIcon,
   setAPropGen,
   buildOptions,
+  ConfigField,
 } from "./utils";
+import { ntimes } from "./Columns";
 
 export /**
  *
@@ -105,6 +107,7 @@ const ActionSettings = () => {
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
     nsteps: node.data.props.nsteps,
+    setting_action_n: node.data.props.setting_action_n,
   }));
   const {
     actions: { setProp },
@@ -119,6 +122,7 @@ const ActionSettings = () => {
     action_label,
     action_style,
     nsteps,
+    setting_action_n,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -158,6 +162,8 @@ const ActionSettings = () => {
                     }
                     if (value === "Multi-step action" && !nsteps)
                       prop.nsteps = 1;
+                    if (value === "Multi-step action" && !setting_action_n)
+                      prop.setting_action_n = 1;
                   });
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
@@ -279,6 +285,21 @@ const ActionSettings = () => {
               });
             }}
           />
+          <ConfigField
+            field={{
+              name: "setting_action_n",
+              label: "Column number",
+              type: "btn_select",
+              options: ntimes(nsteps, (i) => ({
+                value: i + 1,
+                title: `${i + 1}`,
+                label: `${i + 1}`,
+              })),
+            }}
+            node={node}
+            setProp={setProp}
+            props={node}
+          ></ConfigField>
         </Fragment>
       ) : cfgFields ? (
         <ConfigForm
