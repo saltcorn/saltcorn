@@ -314,8 +314,6 @@ const ActionSettings = () => {
               if (!e.target) return;
               const value = e.target.value;
               setProp((prop) => {
-                console.log("anms", prop.step_action_names);
-                console.log({ setting_action_n, value });
                 if (!prop.step_action_names) prop.step_action_names = [];
                 prop.step_action_names[use_setting_action_n] = value;
               });
@@ -327,6 +325,20 @@ const ActionSettings = () => {
               </option>
             ))}
           </select>
+          <label>Only if... (formula)</label>
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={step_only_ifs?.[use_setting_action_n] || ""}
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                if (!prop.step_only_ifs) prop.step_only_ifs = [];
+                prop.step_only_ifs[use_setting_action_n] = value;
+              });
+            }}
+          />
         </Fragment>
       ) : cfgFields ? (
         <ConfigForm
