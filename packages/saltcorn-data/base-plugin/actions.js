@@ -899,17 +899,17 @@ module.exports = {
         },
       ];
     },
-    run: async ({ configuration: { nav_action, url } }) => {
-      switch (nav_action) {
-        case "Go to URL":
-          return { goto: url };
-        case "Popup modal":
-          return { popup: url };
-        case "Back":
-          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
-        case "Reload page":
-          return { reload_page: true };
-
+    run: async ({ configuration: { form_action } }) => {
+      const jqGet = `$("form[data-viewname"+viewname+"]")`;
+      switch (form_action) {
+        case "Submit":
+          return { eval_js: jqGet + ".submit()" };
+        case "Save":
+          return { eval_js: `saveAndContinue(${jqGet})` };
+        case "Reset":
+          return { eval_js: jqGet + ".trigger('reset')" };
+        case "Submit with Ajax":
+          return { eval_js: `submitWithAjax(${jqGet})` };
         default:
           break;
       }
