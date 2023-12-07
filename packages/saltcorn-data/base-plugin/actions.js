@@ -879,6 +879,42 @@ module.exports = {
       }
     },
   },
+  form_change: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Action on form in Edit view",
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "form_action",
+          label: "Form Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Submit", "Save", "Reset", "Submit with Ajax"],
+          },
+        },
+      ];
+    },
+    run: async ({ configuration: { nav_action, url } }) => {
+      switch (nav_action) {
+        case "Go to URL":
+          return { goto: url };
+        case "Popup modal":
+          return { popup: url };
+        case "Back":
+          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Reload page":
+          return { reload_page: true };
+
+        default:
+          break;
+      }
+    },
+  },
 
   toast: {
     /**
