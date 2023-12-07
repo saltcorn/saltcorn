@@ -879,7 +879,7 @@ module.exports = {
       }
     },
   },
-  form_change: {
+  form_action: {
     /**
      * @param {object} opts
      * @param {*} opts.table
