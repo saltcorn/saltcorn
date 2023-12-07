@@ -2354,6 +2354,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
       } catch (error) {
         console.error(error);
       }
+      if (result.error) break;
     }
     return result;
   } else return await run_action_step(col.action_name, col.configuration);
