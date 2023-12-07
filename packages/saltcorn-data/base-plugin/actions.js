@@ -880,6 +880,46 @@ module.exports = {
     },
   },
 
+  toast: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Notify the user with a toast",
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "type",
+          label: "Type",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Notify", "Error"],
+          },
+        },
+        {
+          name: "text",
+          label: "Text",
+          type: "String",
+          required: true,
+        },
+      ];
+    },
+    run: async ({ configuration: { type, text } }) => {
+      switch (type) {
+        case "Notify":
+          return { notify: text };
+
+        case "Error":
+          return { error: text };
+
+        default:
+          break;
+      }
+    },
+  },
+
   /**
    * @namespace
    * @category saltcorn-data
