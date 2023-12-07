@@ -741,9 +741,9 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
  * @param {object} table
  * @returns {Promise<object[]>}
  */
-const getActionConfigFields = async (action, table) =>
+const getActionConfigFields = async (action, table, extra = {}) =>
   typeof action.configFields === "function"
-    ? await action.configFields({ table })
+    ? await action.configFields({ table, ...extra })
     : action.configFields || [];
 
 /**

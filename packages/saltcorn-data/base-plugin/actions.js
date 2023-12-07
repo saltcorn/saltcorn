@@ -792,7 +792,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Modify the triggering row",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
       return [
         {
           name: "row_expr",
@@ -801,13 +801,15 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
-        {
-          name: "where",
-          label: "Modify where",
-          type: "String",
-          required: true,
-          attributes: { options: ["Database", "Form"] },
-        },
+        ...(mode === "edit"
+          ? {
+              name: "where",
+              label: "Modify where",
+              type: "String",
+              required: true,
+              attributes: { options: ["Database", "Form"] },
+            }
+          : {}),
       ];
     },
     requireRow: true,
