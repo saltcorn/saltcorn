@@ -241,7 +241,7 @@ describe("base plugin actions", () => {
     const result = await modify_row.run({
       row,
       table: patients,
-      configuration: { row_expr: "{favbook:1}" },
+      configuration: { row_expr: "{favbook:1}", where: "Database" },
       user: { id: 1, role_id: 1 },
     });
     expect(result).toStrictEqual({ reload_page: true });
