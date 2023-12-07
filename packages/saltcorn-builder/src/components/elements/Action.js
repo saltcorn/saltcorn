@@ -18,7 +18,9 @@ import {
   DynamicFontAwesomeIcon,
   setAPropGen,
   buildOptions,
+  ConfigField,
 } from "./utils";
+import { ntimes } from "./Columns";
 
 export /**
  *
@@ -104,6 +106,10 @@ const ActionSettings = () => {
     action_bgcol: node.data.props.action_bgcol,
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
+    nsteps: node.data.props.nsteps,
+    step_only_ifs: node.data.props.step_only_ifs,
+    step_action_names: node.data.props.step_action_names,
+    setting_action_n: node.data.props.setting_action_n,
   }));
   const {
     actions: { setProp },
@@ -117,11 +123,22 @@ const ActionSettings = () => {
     configuration,
     action_label,
     action_style,
+    nsteps,
+    setting_action_n,
+    step_only_ifs,
+    step_action_names,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
   const setAProp = setAPropGen(setProp);
+  const use_setting_action_n =
+    setting_action_n || setting_action_n === 0 ? setting_action_n : 0;
+  const stepCfgFields =
+    name === "Multi-step action"
+      ? getCfgFields(step_action_names?.[use_setting_action_n])
+      : null;
+
   return (
     <div>
       <table className="w-100">
@@ -154,6 +171,12 @@ const ActionSettings = () => {
                         prop.action_row_variable = "state";
                       }
                     }
+                    if (value === "Multi-step action" && !nsteps)
+                      prop.nsteps = 1;
+                    if (value === "Multi-step action" && !setting_action_n)
+                      prop.setting_action_n = 0;
+                    if (value === "Multi-step action" && !configuration.steps)
+                      prop.configuration = { steps: [] };
                   });
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
@@ -163,6 +186,9 @@ const ActionSettings = () => {
                     {f}
                   </option>
                 ))}
+                {options.allowMultiStepAction ? (
+                  <option value={"Multi-step action"}>Multi-step action</option>
+                ) : null}
               </select>
             </td>
           </tr>
@@ -255,7 +281,92 @@ const ActionSettings = () => {
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}
-      {cfgFields ? (
+      {name === "Multi-step action" ? (
+        <Fragment>
+          <label>#Steps</label>{" "}
+          <input
+            type="number"
+            value={nsteps}
+            className="form-control w-50 d-inline"
+            step="1"
+            min="1"
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                prop.nsteps = value;
+              });
+            }}
+          />
+          <ConfigField
+            field={{
+              name: "setting_action_n",
+              label: "Column number",
+              type: "btn_select",
+              options: ntimes(nsteps, (i) => ({
+                value: i,
+                title: `${i + 1}`,
+                label: `${i + 1}`,
+              })),
+            }}
+            node={node}
+            setProp={setProp}
+            props={node}
+          ></ConfigField>
+          <label>Action</label>
+          <select
+            value={step_action_names?.[use_setting_action_n] || ""}
+            className="form-control form-select"
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                if (!prop.step_action_names) prop.step_action_names = [];
+                prop.step_action_names[use_setting_action_n] = value;
+              });
+            }}
+          >
+            {options.actions.map((f, ix) => (
+              <option key={ix} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+          <label>Only if... (formula)</label>
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={step_only_ifs?.[use_setting_action_n] || ""}
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                if (!prop.step_only_ifs) prop.step_only_ifs = [];
+                prop.step_only_ifs[use_setting_action_n] = value;
+              });
+            }}
+          />
+          {stepCfgFields ? (
+            <Fragment>
+              Step configuration:
+              <ConfigForm
+                fields={stepCfgFields}
+                configuration={
+                  configuration?.steps?.[use_setting_action_n] || {}
+                }
+                setProp={setProp}
+                setter={(prop, fldname, v) => {
+                  if (!prop.configuration.steps) prop.configuration.steps = [];
+                  if (!prop.configuration.steps[use_setting_action_n])
+                    prop.configuration.steps[use_setting_action_n] = {};
+                  prop.configuration.steps[use_setting_action_n][fldname] = v;
+                }}
+                node={node}
+              />
+            </Fragment>
+          ) : null}
+        </Fragment>
+      ) : cfgFields ? (
         <ConfigForm
           fields={cfgFields}
           configuration={configuration}
@@ -272,6 +383,7 @@ const ActionSettings = () => {
  */
 Action.craft = {
   displayName: "Action",
+  defaultProps: { setting_action_n: 0, nsteps: 1 },
   related: {
     settings: ActionSettings,
   },

@@ -260,24 +260,6 @@ const TabsSettings = () => {
                 </select>
               </td>
             </tr>
-            {options.mode === "edit" && !serverRendered ? (
-              <tr>
-                <td colSpan="2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      name="block"
-                      type="checkbox"
-                      checked={disable_inactive}
-                      onChange={setAProp("disable_inactive", { checked: true })}
-                    />
-                    <label className="form-check-label">
-                      Disable inactive inputs
-                    </label>
-                  </div>
-                </td>
-              </tr>
-            ) : null}
           </Fragment>
         ) : (
           <Fragment>

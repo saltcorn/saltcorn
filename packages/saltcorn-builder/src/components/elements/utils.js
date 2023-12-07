@@ -652,6 +652,7 @@ const ConfigForm = ({
   fields,
   configuration,
   setProp,
+  setter,
   node,
   onChange,
   tableName,
@@ -663,7 +664,7 @@ const ConfigForm = ({
         let noshow = false;
         Object.entries(f.showIf).forEach(([nm, value]) => {
           if (Array.isArray(value))
-            noshow = noshow || value.includes(configuration[nm]);
+            noshow = noshow || !value.includes(configuration[nm]);
           else noshow = noshow || value !== configuration[nm];
         });
         if (noshow) return null;
@@ -684,6 +685,7 @@ const ConfigForm = ({
           ) : null}
           <ConfigField
             field={f}
+            setter={setter}
             configuration={configuration}
             setProp={setProp}
             onChange={onChange}
@@ -734,6 +736,7 @@ const ConfigField = ({
   setProp,
   onChange,
   props,
+  setter,
   isStyle,
 }) => {
   /**
@@ -744,13 +747,15 @@ const ConfigField = ({
 
   const myOnChange = (v) => {
     setProp((prop) => {
-      if (configuration) {
+      if (setter) setter(prop, field.name, v);
+      else if (configuration) {
         if (!prop.configuration) prop.configuration = {};
         prop.configuration[field.name] = v;
       } else if (isStyle) {
         if (!prop.style) prop.style = {};
         prop.style[field.name] = v;
       } else prop[field.name] = v;
+      console.log(prop);
     });
     onChange && onChange(field.name, v, setProp);
   };
@@ -1004,7 +1009,7 @@ const SettingsFromFields =
               let noshow = false;
               Object.entries(f.showIf).forEach(([nm, value]) => {
                 if (Array.isArray(value))
-                  noshow = noshow || value.includes(node[nm]);
+                  noshow = noshow || !value.includes(node[nm]);
                 else noshow = noshow || value !== node[nm];
               });
               if (noshow) return null;
