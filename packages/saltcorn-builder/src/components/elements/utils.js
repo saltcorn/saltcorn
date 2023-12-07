@@ -755,7 +755,6 @@ const ConfigField = ({
         if (!prop.style) prop.style = {};
         prop.style[field.name] = v;
       } else prop[field.name] = v;
-      console.log(prop);
     });
     onChange && onChange(field.name, v, setProp);
   };
