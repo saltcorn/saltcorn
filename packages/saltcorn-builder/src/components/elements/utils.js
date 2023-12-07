@@ -664,7 +664,7 @@ const ConfigForm = ({
         let noshow = false;
         Object.entries(f.showIf).forEach(([nm, value]) => {
           if (Array.isArray(value))
-            noshow = noshow || value.includes(configuration[nm]);
+            noshow = noshow || !value.includes(configuration[nm]);
           else noshow = noshow || value !== configuration[nm];
         });
         if (noshow) return null;
@@ -1009,7 +1009,7 @@ const SettingsFromFields =
               let noshow = false;
               Object.entries(f.showIf).forEach(([nm, value]) => {
                 if (Array.isArray(value))
-                  noshow = noshow || value.includes(node[nm]);
+                  noshow = noshow || !value.includes(node[nm]);
                 else noshow = noshow || value !== node[nm];
               });
               if (noshow) return null;
