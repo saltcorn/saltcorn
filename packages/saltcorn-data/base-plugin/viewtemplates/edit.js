@@ -227,6 +227,7 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,
             library,
             views: link_view_opts,
