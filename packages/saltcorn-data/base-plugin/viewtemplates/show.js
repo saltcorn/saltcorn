@@ -135,7 +135,8 @@ const configuration_workflow = (req) =>
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
-                table
+                table,
+                { mode: "show" }
               );
             }
           }

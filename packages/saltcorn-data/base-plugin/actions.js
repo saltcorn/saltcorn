@@ -792,7 +792,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Modify the triggering row",
-    configFields: async ({ table }) => {
+    configFields: async ({ mode }) => {
       return [
         {
           name: "row_expr",
@@ -801,13 +801,17 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
-        {
-          name: "where",
-          label: "Modify where",
-          type: "String",
-          required: true,
-          attributes: { options: ["Database", "Form"] },
-        },
+        ...(mode === "edit"
+          ? [
+              {
+                name: "where",
+                label: "Modify where",
+                type: "String",
+                required: true,
+                attributes: { options: ["Database", "Form"] },
+              },
+            ]
+          : []),
       ];
     },
     requireRow: true,
@@ -843,26 +847,24 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Navigation action",
-    configFields: async ({ table }) => {
-      return [
-        {
-          name: "nav_action",
-          label: "Nav Action",
-          type: "String",
-          required: true,
-          attributes: {
-            options: ["Go to URL", "Popup modal", "Back", "Reload page"],
-          },
+    configFields: [
+      {
+        name: "nav_action",
+        label: "Nav Action",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Go to URL", "Popup modal", "Back", "Reload page"],
         },
-        {
-          name: "url",
-          label: "URL",
-          type: "String",
-          required: true,
-          showIf: { nav_action: ["Go to URL", "Popup modal"] },
-        },
-      ];
-    },
+      },
+      {
+        name: "url",
+        label: "URL",
+        type: "String",
+        required: true,
+        showIf: { nav_action: ["Go to URL", "Popup modal"] },
+      },
+    ],
     run: async ({ configuration: { nav_action, url } }) => {
       switch (nav_action) {
         case "Go to URL":
@@ -886,19 +888,18 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Action on form in Edit view",
-    configFields: async ({ table }) => {
-      return [
-        {
-          name: "form_action",
-          label: "Form Action",
-          type: "String",
-          required: true,
-          attributes: {
-            options: ["Submit", "Save", "Reset", "Submit with Ajax"],
-          },
+    configFields: [
+      {
+        name: "form_action",
+        label: "Form Action",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Submit", "Save", "Reset", "Submit with Ajax"],
         },
-      ];
-    },
+      },
+    ],
+
     run: async ({ configuration: { form_action } }) => {
       const jqGet = `$("form[data-viewname="+viewname+"]")`;
       switch (form_action) {
@@ -923,25 +924,23 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Notify the user with a toast",
-    configFields: async ({ table }) => {
-      return [
-        {
-          name: "type",
-          label: "Type",
-          type: "String",
-          required: true,
-          attributes: {
-            options: ["Notify", "Error"],
-          },
+    configFields: [
+      {
+        name: "type",
+        label: "Type",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Notify", "Error"],
         },
-        {
-          name: "text",
-          label: "Text",
-          type: "String",
-          required: true,
-        },
-      ];
-    },
+      },
+      {
+        name: "text",
+        label: "Text",
+        type: "String",
+        required: true,
+      },
+    ],
     run: async ({ configuration: { type, text } }) => {
       switch (type) {
         case "Notify":

@@ -741,9 +741,9 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
  * @param {object} table
  * @returns {Promise<object[]>}
  */
-const getActionConfigFields = async (action, table) =>
+const getActionConfigFields = async (action, table, extra = {}) =>
   typeof action.configFields === "function"
-    ? await action.configFields({ table })
+    ? await action.configFields({ table, ...extra })
     : action.configFields || [];
 
 /**
@@ -2341,10 +2341,10 @@ const run_action_column = async ({ col, req, ...rest }) => {
   if (col.action_name === "Multi-step action") {
     const result = {};
     for (let i = 0; i < col.step_action_names.length; i++) {
-      const action_name = col.step_action_names[i];
+      const action_name = col.step_action_names?.[i];
       if (!action_name) continue;
-      const only_if = col.step_only_ifs[i];
-      const config = col.configuration.steps[i] || {};
+      const only_if = col.step_only_ifs?.[i];
+      const config = col.configuration.steps?.[i] || {};
       if (only_if && rest.row) {
         if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
       }

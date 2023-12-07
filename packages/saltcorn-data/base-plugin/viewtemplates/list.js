@@ -706,7 +706,9 @@ const run_action = async (
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
   if (state_action) {
-    const cfgFields = await getActionConfigFields(state_action, table);
+    const cfgFields = await getActionConfigFields(state_action, table, {
+      mode: "list",
+    });
     cfgFields.forEach(({ name }) => {
       col.configuration[name] = col[name];
     });

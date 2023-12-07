@@ -167,7 +167,9 @@ const pageBuilderData = async (req, context) => {
   for (const name of actions) {
     const action = stateActions[name];
     if (action && action.configFields) {
-      actionConfigForms[name] = await getActionConfigFields(action);
+      actionConfigForms[name] = await getActionConfigFields(action, null, {
+        mode: "page",
+      });
     }
   }
   const library = (await Library.find({})).filter((l) => l.suitableFor("page"));

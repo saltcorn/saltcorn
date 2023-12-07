@@ -170,7 +170,8 @@ const configuration_workflow = (req) =>
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
-                table
+                table,
+                { mode: "edit" }
               );
             }
           }
@@ -227,6 +228,7 @@ const configuration_workflow = (req) =>
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,
             library,
             views: link_view_opts,
@@ -1857,6 +1859,7 @@ module.exports = {
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
+        console.error(e);
         return { json: { error: e.message || e } };
       }
     },

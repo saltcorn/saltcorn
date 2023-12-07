@@ -143,7 +143,8 @@ const configuration_workflow = () =>
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
-                table
+                table,
+                { mode: "filter" }
               );
             }
           }
