@@ -801,19 +801,158 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
+        {
+          name: "where",
+          label: "Modify where",
+          type: "String",
+          required: true,
+          attributes: { options: ["Database", "Form"] },
+        },
       ];
     },
     requireRow: true,
-    run: async ({ row, table, configuration: { row_expr }, user, ...rest }) => {
+    run: async ({
+      row,
+      table,
+      configuration: { row_expr, where },
+      user,
+      ...rest
+    }) => {
       const f = get_async_expression_function(row_expr, table.fields, {
         row: row || {},
         user,
       });
       const calcrow = await f(row, user);
+      if (where === "Form") return { set_fields: calcrow };
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
       else return { reload_page: true };
+    },
+  },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  navigate: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Navigation action",
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "nav_action",
+          label: "Nav Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Go to URL", "Popup modal", "Back", "Reload page"],
+          },
+        },
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          required: true,
+          showIf: { nav_action: ["Go to URL", "Popup modal"] },
+        },
+      ];
+    },
+    run: async ({ configuration: { nav_action, url } }) => {
+      switch (nav_action) {
+        case "Go to URL":
+          return { goto: url };
+        case "Popup modal":
+          return { popup: url };
+        case "Back":
+          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Reload page":
+          return { reload_page: true };
+
+        default:
+          break;
+      }
+    },
+  },
+  form_action: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Action on form in Edit view",
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "form_action",
+          label: "Form Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Submit", "Save", "Reset", "Submit with Ajax"],
+          },
+        },
+      ];
+    },
+    run: async ({ configuration: { form_action } }) => {
+      const jqGet = `$("form[data-viewname="+viewname+"]")`;
+      switch (form_action) {
+        case "Submit":
+          return { eval_js: jqGet + ".submit()" };
+        case "Save":
+          return { eval_js: `saveAndContinue(${jqGet})` };
+        case "Reset":
+          return { eval_js: jqGet + ".trigger('reset')" };
+        case "Submit with Ajax":
+          return { eval_js: `submitWithAjax(${jqGet})` };
+        default:
+          break;
+      }
+    },
+  },
+
+  toast: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Notify the user with a toast",
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "type",
+          label: "Type",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Notify", "Error"],
+          },
+        },
+        {
+          name: "text",
+          label: "Text",
+          type: "String",
+          required: true,
+        },
+      ];
+    },
+    run: async ({ configuration: { type, text } }) => {
+      switch (type) {
+        case "Notify":
+          return { notify: text };
+
+        case "Error":
+          return { error: text };
+
+        default:
+          break;
+      }
     },
   },
 
