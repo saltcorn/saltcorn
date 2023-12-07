@@ -348,7 +348,7 @@ const ActionSettings = () => {
           />
           {stepCfgFields ? (
             <Fragment>
-              Step configuration
+              Step configuration:
               <ConfigForm
                 fields={stepCfgFields}
                 configuration={
