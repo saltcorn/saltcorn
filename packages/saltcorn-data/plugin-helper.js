@@ -22,6 +22,7 @@ const {
   jsexprToWhere,
   freeVariables,
   add_free_variables_to_joinfields,
+  eval_expression,
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
@@ -2317,24 +2318,46 @@ const json_list_to_external_table = (get_json_list, fields0) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
-  let state_action = getState().actions[col.action_name];
-  let configuration;
-  if (state_action) configuration = col.configuration;
-  else {
-    const trigger = await Trigger.findOne({ name: col.action_name });
-    if (trigger) {
-      state_action = getState().actions[trigger.action];
-      configuration = trigger.configuration;
+  const run_action_step = async (action_name, colcfg) => {
+    let state_action = getState().actions[action_name];
+    let configuration;
+    if (state_action) configuration = colcfg;
+    else {
+      const trigger = await Trigger.findOne({ name: action_name });
+      if (trigger) {
+        state_action = getState().actions[trigger.action];
+        configuration = trigger.configuration;
+      }
     }
-  }
-  if (!state_action)
-    throw new Error("Runnable action not found: " + text(col.action_name));
-  return await state_action.run({
-    configuration,
-    user: req.user,
-    req,
-    ...rest,
-  });
+    if (!state_action)
+      throw new Error("Runnable action not found: " + text(action_name));
+    return await state_action.run({
+      configuration,
+      user: req.user,
+      req,
+      ...rest,
+    });
+  };
+  if (col.action_name === "Multi-step action") {
+    const result = {};
+    for (let i = 0; i < col.step_action_names.length; i++) {
+      const action_name = col.step_action_names[i];
+      if (!action_name) continue;
+      const only_if = col.step_only_ifs[i];
+      const config = col.configuration.steps[i] || {};
+      if (only_if && rest.row) {
+        if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
+      }
+      const stepres = await run_action_step(action_name, config);
+      try {
+        Object.assign(result, stepres || {});
+      } catch (error) {
+        console.error(error);
+      }
+      if (result.error) break;
+    }
+    return result;
+  } else return await run_action_step(col.action_name, col.configuration);
 };
 
 /**
