@@ -836,6 +836,55 @@ module.exports = {
    * @category saltcorn-data
    * @subcategory actions
    */
+  navigate: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Navigation action",
+    configFields: async ({ table }) => {
+      return [
+        {
+          name: "nav_action",
+          label: "Nav Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Go to URL", "Popup modal", "Back", "Reload page"],
+          },
+        },
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          required: true,
+          showIf: { nav_action: ["Go to URL", "Popup modal"] },
+        },
+      ];
+    },
+    run: async ({ configuration: { nav_action, url } }) => {
+      switch (nav_action) {
+        case "Go to URL":
+          return { goto: url };
+        case "Popup modal":
+          return { popup: url };
+        case "Back":
+          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Reload page":
+          return { reload_page: true };
+
+        default:
+          break;
+      }
+    },
+  },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
   run_js_code: {
     /**
      * @param {object} opts
