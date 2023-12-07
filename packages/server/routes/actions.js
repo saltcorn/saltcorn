@@ -478,7 +478,9 @@ router.get(
       res.redirect(`/actions/`);
     } else {
       // get configuration fields
-      const cfgFields = await getActionConfigFields(action, table);
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "trigger",
+      });
       // create form
       const form = new Form({
         action: addOnDoneRedirect(`/actions/configure/${id}`, req),
@@ -523,7 +525,9 @@ router.post(
     const table = trigger.table_id
       ? Table.findOne({ id: trigger.table_id })
       : null;
-    const cfgFields = await getActionConfigFields(action, table);
+    const cfgFields = await getActionConfigFields(action, table, {
+      mode: "trigger",
+    });
     const form = new Form({
       action: `/actions/configure/${id}`,
       fields: cfgFields,
