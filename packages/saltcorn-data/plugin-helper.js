@@ -22,6 +22,7 @@ const {
   jsexprToWhere,
   freeVariables,
   add_free_variables_to_joinfields,
+  eval_expression,
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
@@ -2338,15 +2339,14 @@ const run_action_column = async ({ col, req, ...rest }) => {
     });
   };
   if (col.action_name === "Multi-step action") {
-    console.log("multi action", col);
     const result = {};
     for (let i = 0; i < col.step_action_names.length; i++) {
       const action_name = col.step_action_names[i];
-      console.log({ i, action_name });
       if (!action_name) continue;
       const only_if = col.step_only_ifs[i];
       const config = col.configuration.steps[i] || {};
-      if (only_if) {
+      if (only_if && rest.row) {
+        if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
       }
       const stepres = await run_action_step(action_name, config);
       try {
