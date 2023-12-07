@@ -900,7 +900,7 @@ module.exports = {
       ];
     },
     run: async ({ configuration: { form_action } }) => {
-      const jqGet = `$("form[data-viewname"+viewname+"]")`;
+      const jqGet = `$("form[data-viewname="+viewname+"]")`;
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
