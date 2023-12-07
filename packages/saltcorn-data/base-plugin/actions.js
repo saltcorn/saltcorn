@@ -802,14 +802,16 @@ module.exports = {
           attributes: { mode: "application/javascript" },
         },
         ...(mode === "edit"
-          ? {
-              name: "where",
-              label: "Modify where",
-              type: "String",
-              required: true,
-              attributes: { options: ["Database", "Form"] },
-            }
-          : {}),
+          ? [
+              {
+                name: "where",
+                label: "Modify where",
+                type: "String",
+                required: true,
+                attributes: { options: ["Database", "Form"] },
+              },
+            ]
+          : []),
       ];
     },
     requireRow: true,
