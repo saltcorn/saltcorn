@@ -2344,7 +2344,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
       const action_name = col.step_action_names?.[i];
       if (!action_name) continue;
       const only_if = col.step_only_ifs?.[i];
-      const config = col.configuration.steps[i] || {};
+      const config = col.configuration.steps?.[i] || {};
       if (only_if && rest.row) {
         if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
       }
