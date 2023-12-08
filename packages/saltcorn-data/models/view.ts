@@ -128,15 +128,33 @@ class View implements AbstractView {
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Array<View>> {
+    const { getState } = require("../db/state");
     if (selectopts.cached) {
-      const { getState } = require("../db/state");
       return getState()
         .views.map((t: View) => new View(t))
         .filter(satisfies(where || {}));
     }
-    const views = await db.select("_sc_views", where, selectopts);
+    const views_db = await db.select("_sc_views", where, selectopts);
+    const views = views_db.map((v: View) => new View(v));
+    const viewtemplates: ViewTemplate[] = Object.values(
+      getState().viewtemplates
+    );
+    viewtemplates.forEach((vt) => {
+      if (vt.singleton) {
+        views.push(
+          new View({
+            name: vt.name,
+            viewtemplate: vt.name,
+            viewtemplateObj: vt,
+            min_role: 1,
+            configuration: {},
+            singleton: true,
+          })
+        );
+      }
+    });
 
-    return views.map((v: View) => new View(v));
+    return views;
   }
 
   /**
