@@ -135,7 +135,7 @@ class View implements AbstractView {
         .filter(satisfies(where || {}));
     }
     const views_db = await db.select("_sc_views", where, selectopts);
-    const views = views_db.map((v: View) => new View(v));
+    const views: View[] = views_db.map((v: View) => new View(v));
     const viewtemplates: ViewTemplate[] = Object.values(
       getState().viewtemplates
     );
@@ -153,7 +153,14 @@ class View implements AbstractView {
         );
       }
     });
+    const orderBy = (selectopts?.orderBy as string) || "name";
 
+    views.sort((a: any, b: any) =>
+      (a?.[orderBy]?.toLowerCase?.() || a?.[orderBy]) >
+      (b?.[orderBy]?.toLowerCase?.() || b?.[orderBy])
+        ? 1
+        : -1
+    );
     return views;
   }
 
