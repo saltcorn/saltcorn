@@ -134,7 +134,9 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
         '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
       ),
     post_dropdown_item(
-      `/viewedit/add-to-menu/${view.id}${on_done_redirect_str}`,
+      `/viewedit/add-to-menu/${encodeURIComponent(
+        view.name
+      )}${on_done_redirect_str}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
       req
     ),
@@ -233,7 +235,7 @@ const viewsList = async (
           {
             label: "",
             key: (r) =>
-              r.viewtemplateObj?.configuration_workflow
+              r.id && r.viewtemplateObj?.configuration_workflow
                 ? link(
                     `/viewedit/config/${encodeURIComponent(
                       r.name

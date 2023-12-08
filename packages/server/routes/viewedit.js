@@ -661,11 +661,11 @@ router.post(
  * @function
  */
 router.post(
-  "/add-to-menu/:id",
+  "/add-to-menu/:viewname",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const view = await View.findOne({ id });
+    const { viewname } = req.params;
+    const view = await View.findOne({ name: viewname });
     await add_to_menu({
       label: view.name,
       type: "View",
