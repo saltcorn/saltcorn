@@ -321,12 +321,14 @@ class View implements AbstractView {
       const existing = View.findOne({ name: newname });
       if (!existing) break;
     }
+
     const createObj: View = {
       ...this,
       name: newname,
     };
     delete createObj.viewtemplateObj;
     delete createObj.id;
+    delete createObj.singleton;
     // very confusing for user if a view with default_render_page is copied
     delete createObj.default_render_page;
     return await View.create(createObj);
