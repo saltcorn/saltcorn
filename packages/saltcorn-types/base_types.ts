@@ -219,7 +219,7 @@ export type ViewTemplate = {
     arg1: string,
     arg2: any
   ) => Promise<Array<FieldLike>>;
-  configuration_workflow: (arg0: {
+  configuration_workflow?: (arg0: {
     __: (arg0: string) => string;
   }) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";

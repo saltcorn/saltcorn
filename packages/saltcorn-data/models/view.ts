@@ -746,6 +746,11 @@ class View implements AbstractView {
     if (onDoneRedirect) {
       action = `${action}?on_done_redirect=${onDoneRedirect}`;
     }
+    if (!this.viewtemplateObj!.configuration_workflow) {
+      const Workflow = require("../models/workflow");
+
+      return new Workflow({ steps: [] });
+    }
     const configFlow = this.viewtemplateObj!.configuration_workflow(req);
     configFlow.action = action;
     const oldOnDone = configFlow.onDone || ((c: any) => c);

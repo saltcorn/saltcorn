@@ -222,17 +222,21 @@ const viewsList = async (
           {
             label: req.__("Role to access"),
             key: (row) =>
-              editViewRoleForm(row, roles, req, on_done_redirect_str),
+              row.id
+                ? editViewRoleForm(row, roles, req, on_done_redirect_str)
+                : "admin",
           },
           {
             label: "",
             key: (r) =>
-              link(
-                `/viewedit/config/${encodeURIComponent(
-                  r.name
-                )}${on_done_redirect_str}`,
-                req.__("Configure")
-              ),
+              r.viewtemplateObj?.configuration_workflow
+                ? link(
+                    `/viewedit/config/${encodeURIComponent(
+                      r.name
+                    )}${on_done_redirect_str}`,
+                    req.__("Configure")
+                  )
+                : "",
           },
           !tagId
             ? {
