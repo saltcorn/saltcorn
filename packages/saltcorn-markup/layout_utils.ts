@@ -680,7 +680,7 @@ const renderTabs = (
           class: [
             "nav",
             tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills",
-            hints.tabClass && tabsStyle === "Tabs" && hints.tabClass,
+            hints?.tabClass && tabsStyle === "Tabs" && hints?.tabClass,
           ],
         },
         contents.map((t, ix) =>
