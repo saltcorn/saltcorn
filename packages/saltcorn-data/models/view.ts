@@ -62,6 +62,7 @@ class View implements AbstractView {
   configuration?: any;
   attributes?: any;
   table?: AbstractTable;
+  singleton?: boolean;
   slug?: any;
 
   /**
@@ -93,6 +94,7 @@ class View implements AbstractView {
         : +o.min_role!;
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
+    this.singleton = this.viewtemplateObj?.singleton;
     this.default_render_page = o.default_render_page;
     this.table = o.table;
     this.slug = stringToJSON(o.slug);
