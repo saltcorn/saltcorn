@@ -118,6 +118,9 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
     .filter(([k, v]) => !v.tableless)
     .map(([k, v]) => k);
   const slugOptions = await Table.allSlugOptions();
+  const viewpatternOptions = Object.values(getState().viewtemplates)
+    .filter((vt) => !vt.singleton)
+    .map((vt) => vt.name);
   return new Form({
     action: addOnDoneRedirect("/viewedit/save", req),
     submitLabel: req.__("Configure") + " &raquo;",
@@ -151,7 +154,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
           topic: "View patterns",
           context: {},
         },
-        options: Object.keys(getState().viewtemplates),
+        options: viewpatternOptions,
         attributes: {
           explainers: mapObjectValues(
             getState().viewtemplates,
@@ -661,11 +664,11 @@ router.post(
  * @function
  */
 router.post(
-  "/add-to-menu/:id",
+  "/add-to-menu/:viewname",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const view = await View.findOne({ id });
+    const { viewname } = req.params;
+    const view = await View.findOne({ name: viewname });
     await add_to_menu({
       label: view.name,
       type: "View",

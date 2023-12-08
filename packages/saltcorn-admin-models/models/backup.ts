@@ -59,7 +59,7 @@ const create_pack_json = async (
   );
   // views
   const views = await asyncMap(
-    await View.find({}),
+    (await View.find({})).filter((v) => v.id),
     async (v: View) => await view_pack(v.name)
   );
   // plugins

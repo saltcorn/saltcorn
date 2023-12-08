@@ -213,12 +213,13 @@ export type ConnectedObjects = {
 export type ViewTemplate = {
   name: string;
   tableless?: boolean;
+  singleton?: boolean;
   get_state_fields?: (
     arg0: number | string,
     arg1: string,
     arg2: any
   ) => Promise<Array<FieldLike>>;
-  configuration_workflow: (arg0: {
+  configuration_workflow?: (arg0: {
     __: (arg0: string) => string;
   }) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
