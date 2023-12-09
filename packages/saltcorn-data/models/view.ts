@@ -140,7 +140,7 @@ class View implements AbstractView {
       getState().viewtemplates
     );
     viewtemplates.forEach((vt) => {
-      if (vt.singleton) {
+      if (vt.singleton && satisfies(where || {})(vt)) {
         views.push(
           new View({
             name: vt.name,

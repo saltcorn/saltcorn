@@ -104,6 +104,7 @@ const run_code = async ({
     URL,
     File,
     User,
+    Buffer,
     setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
