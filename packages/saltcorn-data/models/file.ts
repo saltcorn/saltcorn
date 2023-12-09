@@ -577,7 +577,7 @@ class File {
   static async from_contents(
     name: string,
     mimetype: string,
-    contents: string | Buffer,
+    contents: string | Buffer | ArrayBuffer,
     user_id: number,
     min_role_read: number = 1,
     folder: string = "/"
@@ -587,13 +587,14 @@ class File {
     // set mime type
     const [mime_super, mime_sub] = mimetype.split("/");
     // move file in file system to newPath
-    await fsp.writeFile(newPath, contents);
+    const contents1 = contents instanceof ArrayBuffer ? Buffer.from(contents) : contents
+    await fsp.writeFile(newPath, contents1);
     // create file
     const file = await File.create({
       filename: name,
       location: newPath,
       uploaded_at: new Date(),
-      size_kb: contents.length,
+      size_kb: contents1.length,
       user_id,
       mime_super,
       mime_sub,
