@@ -400,7 +400,7 @@ router.get(
       { class: "ms-3" },
       trigger.action,
       table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
-    );
+    ) + a({href: `/actions/testrun/${id}`, class: "ms-2" }, req.__("Test run")+"&nbsp;&raquo;");
     if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
