@@ -618,7 +618,7 @@ router.get(
     let table, row;
     if (trigger.table_id) {
       table = Table.findOne({ id: trigger.table_id });
-      row = await table.getRow({});
+      row = await table.getRow({}, {orderBy: "RANDOM()"});
     }
     let runres;
 
