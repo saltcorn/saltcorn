@@ -666,6 +666,10 @@ router.get(
               "&laquo;&nbsp;" + req.__("back to actions")
             ),
             a(
+              { href: `/actions/configure/${trigger.id}`, class: "mt-4 btn btn-primary me-1" },
+              req.__("Configure action")
+            ),
+            a(
               {
                 href: `/actions/testrun/${id}`,
                 class: "ms-1 mt-4 btn btn-primary",
