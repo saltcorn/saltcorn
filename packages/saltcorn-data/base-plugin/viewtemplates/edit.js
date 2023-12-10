@@ -1023,13 +1023,18 @@ const runPost = async (
             (srow) => `${srow[childTable.pk_name]}`
           )
         );
+        const childFields = new Set(childTable.fields.map((f) => f.name));
         for (const childRow of form.values[field.name]) {
           // set fixed here
           childRow[field.metadata?.relation] = id;
           for (const [k, v] of Object.entries(
             childView?.configuration?.fixed || {}
           )) {
-            if (typeof childRow[k] === "undefined" && !k.startsWith("_block_"))
+            if (
+              typeof childRow[k] === "undefined" &&
+              !k.startsWith("_block_") &&
+              childFields.has(k)
+            )
               childRow[k] = v;
           }
           if (childRow[childTable.pk_name]) {
