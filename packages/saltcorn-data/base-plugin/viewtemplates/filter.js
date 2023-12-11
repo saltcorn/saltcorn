@@ -294,13 +294,23 @@ const run = async (
         segment.contents = div(
           {
             class: "d-inline",
+            "data-sc-embed-viewname": view.name,
             "data-sc-local-state": `/view/${view.name}${qs}`,
           },
           await view.run(state1, extra)
         );
       } else {
         const state1 = { ...state, ...extra_state };
-        segment.contents = await view.run(state1, extra);
+        const qs = stateToQueryString(state1);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          await view.run(state1, extra)
+        );
       }
     },
     link: (segment) => {
