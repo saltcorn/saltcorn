@@ -2350,7 +2350,15 @@ const run_action_column = async ({ col, req, ...rest }) => {
       }
       const stepres = await run_action_step(action_name, config);
       try {
-        Object.assign(result, stepres || {});
+        Object.keys(stepres).forEach((k) => {
+          if (!["notify", "error", "eval_js", "download"].includes(k))
+            result[k] = stepres[k];
+          else if (Array.isArray(result[k])) result[k].push(stepres[k]);
+          else if (typeof result[k] !== "undefined")
+            result[k] = [result[k], stepres[k]];
+          else result[k] = stepres[k];
+        });
+        //Object.assign(result, stepres || {});
       } catch (error) {
         console.error(error);
       }
