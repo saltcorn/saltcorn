@@ -1023,13 +1023,18 @@ const runPost = async (
             (srow) => `${srow[childTable.pk_name]}`
           )
         );
+        const childFields = new Set(childTable.fields.map((f) => f.name));
         for (const childRow of form.values[field.name]) {
           // set fixed here
           childRow[field.metadata?.relation] = id;
           for (const [k, v] of Object.entries(
             childView?.configuration?.fixed || {}
           )) {
-            if (typeof childRow[k] === "undefined" && !k.startsWith("_block_"))
+            if (
+              typeof childRow[k] === "undefined" &&
+              !k.startsWith("_block_") &&
+              childFields.has(k)
+            )
               childRow[k] = v;
           }
           if (childRow[childTable.pk_name]) {
@@ -1692,8 +1697,21 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
+        // add joinfields from certain locations if they are not fields in columns
+        const joinFields = {};
+        const picked = picked_fields_to_query([], fields, layout);
+        const colFields = new Set(
+          columns.map((c) =>
+            c.join_field ? c.join_field.split(".")[0] : c.field_name
+          )
+        );
+
+        Object.entries(picked.joinFields).forEach(([nm, jfv]) => {
+          if (!colFields.has(jfv.ref)) joinFields[nm] = jfv;
+        });
         row = await table.getJoinedRow({
           where: uniques,
+          joinFields,
           forPublic: !req.user,
           forUser: req.user,
         });

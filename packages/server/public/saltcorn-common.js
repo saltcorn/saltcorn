@@ -1049,7 +1049,10 @@ function notifyAlert(note, spin) {
     type = note.type;
   }
   const { id, html } = buildToast(txt, type, spin);
-  $("#toasts-area").append(html);
+  let $modal = $("#scmodal");
+  if ($modal.length && $modal.hasClass("show"))
+    $("#modal-toasts-area").append(html);
+  else $("#toasts-area").append(html);
   if (type === "success") {
     setTimeout(() => {
       $(`#${id}`).removeClass("show");
