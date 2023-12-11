@@ -1088,19 +1088,21 @@ function common_done(res, viewname, isWeb = true) {
     if (Array.isArray(element)) for (const current of element) fn(current);
     else fn(element);
   };
+  const eval_it = (s) => {
+    if (res.row && res.field_names) {
+      const f = new Function(`viewname, row, {${res.field_names}}`, s);
+      const evalres = f(viewname, res.row, res.row);
+      if (evalres) common_done(evalres, viewname, isWeb);
+    } else {
+      const f = new Function(`viewname`, s);
+      const evalres = f(viewname);
+      if (evalres) common_done(evalres, viewname, isWeb);
+    }
+  };
   if (res.notify) handle(res.notify, notifyAlert);
   if (res.error)
     handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
-
-  if (res.eval_js && res.row && res.field_names) {
-    const f = new Function(`viewname, row, {${res.field_names}}`, res.eval_js);
-    const evalres = f(viewname, res.row, res.row);
-    if (evalres) common_done(evalres, viewname, isWeb);
-  } else if (res.eval_js) {
-    const f = new Function(`viewname`, res.eval_js);
-    const evalres = f(viewname);
-    if (evalres) common_done(evalres, viewname, isWeb);
-  }
+  if (res.eval_js) handle(res.eval_js, eval_it);
 
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto

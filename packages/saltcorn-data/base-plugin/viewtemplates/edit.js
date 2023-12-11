@@ -56,6 +56,7 @@ const {
   run_action_column,
   add_free_variables_to_joinfields,
   readState,
+  stateToQueryString,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -748,10 +749,18 @@ const transformForm = async ({
             req.user
           )
         : {};
-      segment.contents = await view.run(
-        { ...state, ...extra_state },
-        { req, res },
-        view.isRemoteTable()
+      const qs = stateToQueryString({ ...state, ...extra_state });
+      segment.contents = div(
+        {
+          class: "d-inline",
+          "data-sc-embed-viewname": view.name,
+          "data-sc-view-source": `/view/${view.name}${qs}`,
+        },
+        await view.run(
+          { ...state, ...extra_state },
+          { req, res },
+          view.isRemoteTable()
+        )
       );
     },
   });

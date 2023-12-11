@@ -520,12 +520,13 @@ describe("subviews with relations", () => {
     {
       const res = await v.run({ id: 1 }, mockReqRes);
       expect(res.length > 0).toBe(true);
-      expect(res.search("managermanager") >= 0).toBe(true);
+      expect(res.match(/manager/g).length).toBe(5);
     }
     {
       const res = await v.run({ id: 2 }, mockReqRes);
       expect(res.length > 0).toBe(true);
-      expect(res.search("my_employeemanager") >= 0).toBe(true);
+      expect(res).toContain("my_employee");
+      expect(res).toContain("manager");
     }
   });
 
