@@ -135,6 +135,29 @@ $(function () {
   });
 });
 
+function reload_embedded_view(viewname) {
+  $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
+    const $e = $(this);
+    const url =
+      $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
+    if (!url) return;
+    const headers = {
+      pjaxpageload: "true",
+      localizedstate: "true", //no admin bar
+    };
+    $.ajax(url, {
+      headers,
+      success: function (res, textStatus, request) {
+        $e.html(res);
+        initialize_page();
+      },
+      error: function (res) {
+        notifyAlert({ type: "danger", text: res.responseText });
+      },
+    });
+  });
+}
+
 function pjax_to(href, e) {
   let $modal = $("#scmodal");
   const inModal = $modal.length && $modal.hasClass("show");
