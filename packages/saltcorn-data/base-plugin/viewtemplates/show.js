@@ -532,12 +532,15 @@ const renderRows = async (
           segment.contents = div(
             {
               class: "d-inline",
+              "data-sc-embed-viewname": view.name,
               "data-sc-local-state": `/view/${view.name}${qs}`,
             },
             await view.run(state2, subviewExtra, view.isRemoteTable())
           );
         } else {
           const state2 = { ...outerState, ...state1, ...extra_state };
+          const qs = stateToQueryString(state2);
+
           if (
             view.name === viewname &&
             JSON.stringify(state) === JSON.stringify(state2)
@@ -545,10 +548,13 @@ const renderRows = async (
             throw new InvalidConfiguration(
               `View ${view.name} embeds itself with same state; inifinite loop detected`
             );
-          segment.contents = await view.run(
-            state2,
-            subviewExtra,
-            view.isRemoteTable()
+          segment.contents = div(
+            {
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-sc-view-source": `/view/${view.name}${qs}`,
+            },
+            await view.run(state2, subviewExtra, view.isRemoteTable())
           );
         }
       }
