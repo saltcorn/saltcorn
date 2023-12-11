@@ -476,19 +476,27 @@ const renderRows = async (
       } else {
         let state1;
         const pk_name = table.pk_name;
+        const get_row_val = (k) => {
+          //handle expanded joinfields
+          if (row[k] === null) return null;
+          if (row[k]?.id === null) return null;
+          return row[k]?.id || row[k];
+        };
         switch (view.view_select.type) {
           case "RelationPath": {
             const path = view.view_select.path;
             state1 = {
               _inbound_relation_path_: {
                 ...view.view_select,
-                srcId: path[0].fkey ? row[path[0].fkey] : row[pk_name],
+                srcId: path[0].fkey
+                  ? get_row_val(path[0].fkey)
+                  : get_row_val(pk_name),
               },
             };
             break;
           }
           case "Own":
-            state1 = { [pk_name]: row[pk_name]?.id || row[pk_name] };
+            state1 = { [pk_name]: get_row_val(pk_name) };
             break;
           case "Independent":
             state1 = {};
@@ -498,16 +506,13 @@ const renderRows = async (
             state1 = {
               [view.view_select.through
                 ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
-                : view.view_select.field_name]:
-                row[pk_name]?.id || row[pk_name],
+                : view.view_select.field_name]: get_row_val(pk_name),
             };
             break;
           case "ParentShow":
             //todo set by pk name of parent tablr
             state1 = {
-              id:
-                row[view.view_select.field_name]?.id ||
-                row[view.view_select.field_name],
+              id: get_row_val(view.view_select.field_name),
             };
             break;
         }
