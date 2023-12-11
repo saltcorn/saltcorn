@@ -250,10 +250,14 @@ class Page implements AbstractPage {
           ...querystate,
           ...extra_state,
         });
-        segment.contents = await view.run(
-          mystate,
-          extraArgs,
-          view.isRemoteTable()
+        const qs = stateToQueryString(mystate);
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          await view.run(mystate, extraArgs, view.isRemoteTable())
         );
       } else if (segment.state === "local") {
         const mystate = view.combine_state_and_default_state({
@@ -264,22 +268,28 @@ class Page implements AbstractPage {
         segment.contents = div(
           {
             class: "d-inline",
+            "data-sc-embed-viewname": view.name,
             "data-sc-local-state": `/view/${view.name}${qs}`,
           },
           await view.run(mystate, extraArgs, view.isRemoteTable())
         );
       } else {
+        // segment.state === "fixed"
         const table = Table.findOne({ id: view.table_id });
         const state = segment.configuration || this.fixed_states[segment.name];
         const filled = await fill_presets(table, extraArgs.req, state);
 
         const mystate = view.combine_state_and_default_state(filled || {});
+        const qs = stateToQueryString(mystate);
 
         Object.assign(mystate, extra_state);
-        segment.contents = await view.run(
-          mystate,
-          extraArgs,
-          view.isRemoteTable()
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          await view.run(mystate, extraArgs, view.isRemoteTable())
         );
       }
     });
