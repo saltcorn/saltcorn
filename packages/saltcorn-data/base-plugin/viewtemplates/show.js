@@ -488,7 +488,7 @@ const renderRows = async (
             break;
           }
           case "Own":
-            state1 = { [pk_name]: row[pk_name] };
+            state1 = { [pk_name]: row[pk_name]?.id || row[pk_name] };
             break;
           case "Independent":
             state1 = {};
@@ -498,12 +498,17 @@ const renderRows = async (
             state1 = {
               [view.view_select.through
                 ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
-                : view.view_select.field_name]: row[pk_name],
+                : view.view_select.field_name]:
+                row[pk_name]?.id || row[pk_name],
             };
             break;
           case "ParentShow":
             //todo set by pk name of parent tablr
-            state1 = { id: row[view.view_select.field_name] };
+            state1 = {
+              id:
+                row[view.view_select.field_name]?.id ||
+                row[view.view_select.field_name],
+            };
             break;
         }
         const extra_state = segment.extra_state_fml
