@@ -281,6 +281,13 @@ function ensure_modal_exists_and_closed() {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
             </button>
           </div>
+          <div 
+            id="modal-toasts-area"
+            class="toast-container position-fixed top-0 end-0 p-2 "
+            style: "z-index: 7000;"
+            aria-live="polite"
+            aria-atomic="true">           
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>
@@ -292,9 +299,9 @@ function ensure_modal_exists_and_closed() {
     // remove reload handler added by edit, for when we have popup link
     // in autosave edit in popup
     $("#scmodal").off("hidden.bs.modal");
-
     close_saltcorn_modal();
   }
+  $("#modal-toasts-area").empty();
 }
 
 function expand_thumbnail(img_id, filename) {

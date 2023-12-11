@@ -944,14 +944,10 @@ module.exports = {
     ],
     run: async ({ configuration: { type, text } }) => {
       switch (type) {
-        case "Notify":
-          return { notify: text };
-
         case "Error":
           return { error: text };
-
         default:
-          break;
+          return { notify: text };
       }
     },
   },
