@@ -1295,6 +1295,24 @@ module.exports = {
       }
     },
   },
+  reload_embedded_view: {
+    description: "Reload an embedded view without full page reload",
+    configFields: async () => {
+      const views = await View.find({});
+      return [
+        {
+          name: "view",
+          label: "View to refresh",
+          type: "String",
+          required: true,
+          attributes: { options: views.map((v) => v.select_option) },
+        },
+      ];
+    },
+    run: async ({ configuration: { view } }) => {
+      return { eval_js: `reload_embedded_view('${view}')` };
+    },
+  },
   notify_user: {
     description: "Send a notification to a specific user",
     configFields: () => [
