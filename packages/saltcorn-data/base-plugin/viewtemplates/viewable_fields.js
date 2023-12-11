@@ -323,7 +323,10 @@ const view_linker = (
       label: view,
       key: (r) => {
         const relObj = {
-          srcId: r[idName],
+          srcId:
+            r[idName] === null || r[idName]?.id === null
+              ? null
+              : r[idName]?.id || r[idName],
           relation: relation,
         };
         const target = `/view/${encodeURIComponent(
