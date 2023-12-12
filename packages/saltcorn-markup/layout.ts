@@ -165,7 +165,7 @@ const render = ({
   //const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    if (isTop && blockDispatch && blockDispatch.wrapTop)
+    if (isTop && blockDispatch && blockDispatch.wrapTop && !layout?.noWrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
