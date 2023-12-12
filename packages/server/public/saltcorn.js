@@ -338,8 +338,10 @@ function expand_thumbnail(img_id, filename) {
 
 function ajax_modal(url, opts = {}) {
   ensure_modal_exists_and_closed();
+  $("#scmodal").removeClass("no-submit-reload");
+  $("#scmodal").attr("data-on-close-reload-view", opts.reload_view || null);
+
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
-  else $("#scmodal").removeClass("no-submit-reload");
   $.ajax(url, {
     headers: {
       SaltcornModalRequest: "true",
@@ -536,8 +538,15 @@ function ajaxSubmitForm(e) {
     contentType: false,
     success: function (res) {
       var no_reload = $("#scmodal").hasClass("no-submit-reload");
+      const on_close_reload_view = $("#scmodal").attr(
+        "data-on-close-reload-view"
+      );
       $("#scmodal").modal("hide");
-      if (!no_reload) location.reload();
+      if (on_close_reload_view) {
+        const viewE = $(`[data-sc-embed-viewname=${on_close_reload_view}]`);
+        if (viewE.length) reload_embedded_view(on_close_reload_view);
+        else location.reload();
+      } else if (!no_reload) location.reload();
       else common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {

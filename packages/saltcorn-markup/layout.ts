@@ -56,25 +56,26 @@ const makeSegments = (
   alerts: any[],
   isWeb: boolean
 ): any => {
-  const toastSegments = couldHaveAlerts(alerts)
-    ? [
-        {
-          type: "blank",
-          contents: div(
-            {
-              id: "toasts-area",
-              class: `toast-container position-fixed ${
-                isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
-              } `,
-              style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
-              "aria-live": "polite",
-              "aria-atomic": "true",
-            },
-            (alerts || []).map((a: any) => toast(a.type, a.msg))
-          ),
-        },
-      ]
-    : [];
+  const toastSegments =
+    couldHaveAlerts(alerts) && !body.noWrapTop
+      ? [
+          {
+            type: "blank",
+            contents: div(
+              {
+                id: "toasts-area",
+                class: `toast-container position-fixed ${
+                  isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+                } `,
+                style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+                "aria-live": "polite",
+                "aria-atomic": "true",
+              },
+              (alerts || []).map((a: any) => toast(a.type, a.msg))
+            ),
+          },
+        ]
+      : [];
 
   if (typeof body === "string")
     return {
@@ -165,7 +166,7 @@ const render = ({
   //const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    if (isTop && blockDispatch && blockDispatch.wrapTop)
+    if (isTop && blockDispatch && blockDispatch.wrapTop && !layout?.noWrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor

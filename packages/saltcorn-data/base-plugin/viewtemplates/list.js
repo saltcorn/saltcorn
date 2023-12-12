@@ -637,7 +637,7 @@ const run = async (
         create_link = link_view(
           hrefVal,
           __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
-          create_view_display === "Popup",
+          create_view_display === "Popup" ? { reload_view: viewname } : false,
           create_link_style,
           create_link_size
         );

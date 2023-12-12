@@ -664,7 +664,6 @@ module.exports = {
       table.getFields();
       delete newRow[table.pk_name];
       await table.insertRow(newRow, user);
-      return { reload_page: true };
     },
   },
 
@@ -832,7 +831,7 @@ module.exports = {
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
-      else return { reload_page: true };
+      else return;
     },
   },
 

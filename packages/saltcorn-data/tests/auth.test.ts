@@ -85,7 +85,7 @@ const test_person_table = async (persons: Table) => {
     { ...mockReqRes.req, user: non_owner_user },
     mockReqRes.res
   );
-  expect(contents).toBe("<div>No row selected</div>");
+  expect(contents).toBe("No row selected");
 
   const contents1 = await view.run_possibly_on_page(
     { id: row1.id },

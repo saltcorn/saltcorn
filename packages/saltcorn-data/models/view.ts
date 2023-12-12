@@ -555,7 +555,7 @@ class View implements AbstractView {
     }
 
     // return contents
-    return typeof resp === "string" ? div(resp) : resp;
+    return resp; // typeof resp === "string" ? resp) : resp;
   }
 
   /**
