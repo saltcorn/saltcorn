@@ -148,9 +148,11 @@ const progress_bar = (type) => ({
     { name: "bar_color", type: "Color", label: "Bar color" },
     { name: "bg_color", type: "Color", label: "Background color" },
     { name: "px_height", type: "Integer", label: "Height in px" },
+    { name: "radial", type: "Bool", label: "Radial" },
   ],
   isEdit: false,
-  description: "Show value as a percentage filled on a horizontal progress bar",
+  description:
+    "Show value as a percentage filled on a horizontal or radial progress bar",
   run: (v, req, attrs = {}) =>
     div(
       {
