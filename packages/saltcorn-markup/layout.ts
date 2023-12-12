@@ -56,25 +56,26 @@ const makeSegments = (
   alerts: any[],
   isWeb: boolean
 ): any => {
-  const toastSegments = couldHaveAlerts(alerts)
-    ? [
-        {
-          type: "blank",
-          contents: div(
-            {
-              id: "toasts-area",
-              class: `toast-container position-fixed ${
-                isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
-              } `,
-              style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
-              "aria-live": "polite",
-              "aria-atomic": "true",
-            },
-            (alerts || []).map((a: any) => toast(a.type, a.msg))
-          ),
-        },
-      ]
-    : [];
+  const toastSegments =
+    couldHaveAlerts(alerts) && !body.noWrapTop
+      ? [
+          {
+            type: "blank",
+            contents: div(
+              {
+                id: "toasts-area",
+                class: `toast-container position-fixed ${
+                  isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+                } `,
+                style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+                "aria-live": "polite",
+                "aria-atomic": "true",
+              },
+              (alerts || []).map((a: any) => toast(a.type, a.msg))
+            ),
+          },
+        ]
+      : [];
 
   if (typeof body === "string")
     return {
