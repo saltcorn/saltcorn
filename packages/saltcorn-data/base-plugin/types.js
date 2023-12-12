@@ -164,8 +164,8 @@ const progress_bar = (type) => ({
             `progress-bar-radial-${pcnt}`,
           ],
           style: {
-            height: `${attrs.px_height || 8}px`,
-            width: `${attrs.px_height || 8}px`,
+            height: `${attrs.px_height || 100}px`,
+            width: `${attrs.px_height || 100}px`,
             borderRadius: "50%",
             background:
               `radial-gradient(closest-side, white 79%, transparent 80% 100%),` +
