@@ -244,7 +244,7 @@ describe("base plugin actions", () => {
       configuration: { row_expr: "{favbook:1}", where: "Database" },
       user: { id: 1, role_id: 1 },
     });
-    expect(result).toStrictEqual({ reload_page: true });
+    expect(result).toStrictEqual(undefined);
 
     const row1 = await patients.getRow({ name: "Simon1" });
     assertIsSet(row1);

@@ -70,9 +70,9 @@ const link_view = (
     else url = `${url0}?${extraState}`;
   }
   if (popup) {
-    let ajaxOpts = "{}";
+    let ajaxOpts = "";
     if (typeof popup === "object")
-      ajaxOpts = `{${Object.entries(popup)
+      ajaxOpts = `, {${Object.entries(popup)
         .map(([k, v]) => `'${k}': '${v}'`)
         .join(",")}}`;
     if (!link_style)
@@ -80,7 +80,7 @@ const link_view = (
         {
           href: `javascript:${
             isNode()
-              ? `ajax_modal('${url}', ${ajaxOpts})`
+              ? `ajax_modal('${url}'${ajaxOpts})`
               : `mobile_modal('${url}')`
           }`,
           style,
@@ -103,7 +103,7 @@ const link_view = (
           ],
           type: "button",
           onClick: isNode()
-            ? `ajax_modal('${url}', ${ajaxOpts})`
+            ? `ajax_modal('${url}'${ajaxOpts})`
             : `mobile_modal('${url}')`,
           style,
         },
