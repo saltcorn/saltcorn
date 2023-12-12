@@ -183,14 +183,15 @@ const progress_bar = (type) => ({
     else
       return div(
         {
-          class: "progress-bar",
+          class: "progress",
+          role: "progress-bar",
           style: {
-            width: "100%",
             height: `${attrs.px_height || 8}px`,
             backgroundColor: attrs.bg_color || "#777777",
           },
         },
         div({
+          class: "progress-bar",
           style: {
             width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
             height: `${attrs.px_height || 8}px`,
