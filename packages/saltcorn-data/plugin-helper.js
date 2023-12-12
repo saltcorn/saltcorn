@@ -71,7 +71,10 @@ const link_view = (
   }
   if (popup) {
     let ajaxOpts = "{}";
-    if (popup.on_close) ajaxOpts = `{'on_close':'${popup.on_close}'}`;
+    if (typeof popup === "object")
+      ajaxOpts = `{${Object.entries(popup)
+        .map(([k, v]) => `'${k}': '${v}'`)
+        .join(",")}}`;
     if (!link_style)
       return a(
         {
