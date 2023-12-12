@@ -635,7 +635,7 @@ const string = {
           name: "input_type",
           label: "Input type",
           input_type: "select",
-          options: ["text", "email", "url", "tel", "password"],
+          options: ["text", "email", "url", "tel", "password", "hidden"],
         },
         {
           name: "autofocus",
