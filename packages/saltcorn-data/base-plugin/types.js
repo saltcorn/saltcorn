@@ -28,6 +28,7 @@ const {
   section,
   pre,
   code,
+  style,
   time,
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
@@ -153,24 +154,51 @@ const progress_bar = (type) => ({
   isEdit: false,
   description:
     "Show value as a percentage filled on a horizontal or radial progress bar",
-  run: (v, req, attrs = {}) =>
-    div(
-      {
-        class: "progress-bar",
-        style: {
-          width: "100%",
-          height: `${attrs.px_height || 8}px`,
-          backgroundColor: attrs.bg_color || "#777777",
+  run: (v, req, attrs = {}) => {
+    const pcnt = Math.round((100 * (v - attrs.min)) / (attrs.max - attrs.min));
+    if (attrs?.radial)
+      return (
+        div({
+          class: [
+            "progress-bar progress-bar-radial",
+            `progress-bar-radial-${pcnt}`,
+          ],
+          style: {
+            height: `${attrs.px_height || 8}px`,
+            width: `${attrs.px_height || 8}px`,
+            borderRadius: "50%",
+            background:
+              `radial-gradient(closest-side, white 79%, transparent 80% 100%),` +
+              `conic-gradient(${attrs.bar_color || "#0000ff"} ${pcnt}%, ${
+                attrs.bg_color || "#777777"
+              } 0);`,
+          },
+        }) +
+        style(
+          `.progress-bar-radial-${pcnt}::before { content: "${v}${
+            attrs.max == "100" ? "%" : ""
+          }"; }`
+        )
+      );
+    else
+      return div(
+        {
+          class: "progress-bar",
+          style: {
+            width: "100%",
+            height: `${attrs.px_height || 8}px`,
+            backgroundColor: attrs.bg_color || "#777777",
+          },
         },
-      },
-      div({
-        style: {
-          width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
-          height: `${attrs.px_height || 8}px`,
-          backgroundColor: attrs.bar_color || "#0000ff",
-        },
-      })
-    ),
+        div({
+          style: {
+            width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
+            height: `${attrs.px_height || 8}px`,
+            backgroundColor: attrs.bar_color || "#0000ff",
+          },
+        })
+      );
+  },
 });
 
 const show_with_html = {
