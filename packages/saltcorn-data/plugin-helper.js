@@ -2359,7 +2359,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
       }
       const stepres = await run_action_step(action_name, config);
       try {
-        Object.keys(stepres).forEach((k) => {
+        Object.keys(stepres || {}).forEach((k) => {
           if (!["notify", "error", "eval_js", "download"].includes(k))
             result[k] = stepres[k];
           else if (Array.isArray(result[k])) result[k].push(stepres[k]);
