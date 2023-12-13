@@ -565,23 +565,28 @@ const transformForm = async ({
           return;
         }
         //run action
-        const actionResult = await run_action_column({
-          col: { ...segment },
-          referrer: req.get("Referrer"),
-          req,
-          res,
-          row,
-        });
-        segment.type = "blank";
-        segment.style = {};
-        if (actionResult)
-          segment.contents = script(
-            domReady(
-              `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
-            )
-          );
-        else segment.contents = "";
-        return;
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req.get("Referrer"),
+            req,
+            res,
+            row,
+          });
+          segment.type = "blank";
+          segment.style = {};
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+          else segment.contents = "";
+          return;
+        } catch (e) {
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
       }
       if (segment.action_name === "Delete") {
         if (form.values && form.values.id) {
