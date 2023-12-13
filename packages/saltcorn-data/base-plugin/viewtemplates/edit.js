@@ -560,7 +560,10 @@ const transformForm = async ({
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //TODO check segment.min_role
-
+        if (req.method === "POST") {
+          segment.contents = "";
+          return;
+        }
         //run action
         const actionResult = await run_action_column({
           col: { ...segment },
