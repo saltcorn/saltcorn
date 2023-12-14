@@ -226,6 +226,7 @@ const configuration_workflow = (req) =>
             blockDisplay,
             roles,
             actions,
+            builtInActions,
             fieldViewConfigForms,
             actionConfigForms,
             images,

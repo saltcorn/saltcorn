@@ -191,6 +191,7 @@ const configuration_workflow = () =>
             tableName: table.name,
             parent_field_list: my_parent_field_list,
             roles,
+            builtInActions: ["Clear"],
             actions,
             actionConstraints,
             views,

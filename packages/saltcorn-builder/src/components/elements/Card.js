@@ -100,6 +100,16 @@ const CardSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
+            field={{
+              label: "Class",
+              name: "class",
+              type: "String",
+              canBeFormula: true,
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
             field={{ label: "Shadow", name: "shadow", type: "Bool" }}
             node={node}
             setProp={setProp}
@@ -135,6 +145,7 @@ const fields = [
     canBeFormula: true,
   },
   { label: "URL", name: "url", type: "String", canBeFormula: true },
+  { label: "Class", name: "class", type: "String", canBeFormula: true },
   { label: "Shadow", name: "shadow", type: "Bool" },
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
@@ -148,6 +159,7 @@ Card.craft = {
   props: {
     title: "",
     url: "",
+    class: "",
     shadow: true,
     isFormula: {},
     style: {},

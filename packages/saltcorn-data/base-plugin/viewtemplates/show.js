@@ -102,10 +102,13 @@ const configuration_workflow = (req) =>
           const stateActions = Object.entries(getState().actions).filter(
             ([k, v]) => !v.disableInBuilder
           );
-          const actions = [
+          const builtInActions = [
             "Delete",
             "GoBack",
             ...boolfields.map((f) => `Toggle ${f.name}`),
+          ];
+          const actions = [
+            ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
           (
@@ -190,6 +193,7 @@ const configuration_workflow = (req) =>
             fields,
             images,
             actions,
+            builtInActions,
             actionConfigForms,
             fieldViewConfigForms,
             field_view_options: {

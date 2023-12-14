@@ -28,6 +28,7 @@ import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
+import { rand_ident } from "./elements/utils";
 
 /**
  * @param {object} segment
@@ -347,7 +348,6 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
 /**
  * @returns {number}
  */
-const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
 export /**
  * @param {object[]} nodes
