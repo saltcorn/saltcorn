@@ -283,21 +283,31 @@ const ActionSettings = () => {
       ) : null}
       {name === "Multi-step action" ? (
         <Fragment>
-          <label>#Steps</label>{" "}
-          <input
-            type="number"
-            value={nsteps}
-            className="form-control w-50 d-inline"
-            step="1"
-            min="1"
-            onChange={(e) => {
-              if (!e.target) return;
-              const value = e.target.value;
-              setProp((prop) => {
-                prop.nsteps = value;
-              });
-            }}
-          />
+          <table className="mb-2">
+            <tbody>
+              <tr>
+                <td className="w-50">
+                  <label>#Steps</label>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={nsteps}
+                    className="form-control d-inline"
+                    step="1"
+                    min="1"
+                    onChange={(e) => {
+                      if (!e.target) return;
+                      const value = e.target.value;
+                      setProp((prop) => {
+                        prop.nsteps = value;
+                      });
+                    }}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
           <ConfigField
             field={{
               name: "setting_action_n",
