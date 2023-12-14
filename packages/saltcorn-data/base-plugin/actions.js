@@ -920,7 +920,7 @@ module.exports = {
         case "Submit with Ajax":
           return { eval_js: `submitWithAjax(${jqGet})` };
         default:
-          break;
+          return { eval_js: jqGet + ".submit()" };
       }
     },
   },
