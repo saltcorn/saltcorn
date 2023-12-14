@@ -331,6 +331,10 @@ describe("mkWhere", () => {
       values: [[1, 2, 3]],
       where: 'where not ("y" = ANY ($1))',
     });
+    expect(mkWhere({ y: { not: { in: [1, 2, 3] } } })).toStrictEqual({
+      values: [[1, 2, 3]],
+      where: 'where not ("y" = ANY ($1))',
+    });
     expect(mkWhere({ y: { in: [1, 2, 3] } })).toStrictEqual({
       values: [[1, 2, 3]],
       where: 'where "y" = ANY ($1)',

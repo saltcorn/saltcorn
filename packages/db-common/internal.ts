@@ -334,6 +334,10 @@ const whereClause =
   ([k, v]: [string, any | [any, any]]): string =>
     k === "_fts"
       ? whereFTS(v, phs)
+      : typeof (v || {}).not !== "undefined" && v.not.in
+      ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
+          phs.is_sqlite ? "" : "ANY"
+        } (${phs.push(v.not.in)}))`
       : typeof (v || {}).in !== "undefined"
       ? `${quote(sqlsanitizeAllowDots(k))} = ${
           phs.is_sqlite ? "" : "ANY"
