@@ -854,7 +854,13 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Go to URL", "Popup modal", "Back", "Reload page"],
+          options: [
+            "Go to URL",
+            "Popup modal",
+            "Back",
+            "Reload page",
+            "Close modal",
+          ],
         },
       },
       {
@@ -873,6 +879,8 @@ module.exports = {
           return { popup: url };
         case "Back":
           return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Close modal":
+          return { eval_js: "close_saltcorn_modal()" };
         case "Reload page":
           return { reload_page: true };
 
@@ -912,7 +920,7 @@ module.exports = {
         case "Submit with Ajax":
           return { eval_js: `submitWithAjax(${jqGet})` };
         default:
-          break;
+          return { eval_js: jqGet + ".submit()" };
       }
     },
   },

@@ -560,25 +560,33 @@ const transformForm = async ({
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //TODO check segment.min_role
-
+        if (req.method === "POST") {
+          segment.contents = "";
+          return;
+        }
         //run action
-        const actionResult = await run_action_column({
-          col: { ...segment },
-          referrer: req.get("Referrer"),
-          req,
-          res,
-          row,
-        });
-        segment.type = "blank";
-        segment.style = {};
-        if (actionResult)
-          segment.contents = script(
-            domReady(
-              `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
-            )
-          );
-        else segment.contents = "";
-        return;
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req.get("Referrer"),
+            req,
+            res,
+            row,
+          });
+          segment.type = "blank";
+          segment.style = {};
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+          else segment.contents = "";
+          return;
+        } catch (e) {
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
       }
       if (segment.action_name === "Delete") {
         if (form.values && form.values.id) {
