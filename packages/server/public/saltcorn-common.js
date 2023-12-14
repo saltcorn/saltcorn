@@ -1102,6 +1102,10 @@ function common_done(res, viewname, isWeb = true) {
   if (res.notify) handle(res.notify, notifyAlert);
   if (res.error)
     handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
+  if (res.notify_success)
+    handle(res.notify_success, (text) =>
+      notifyAlert({ type: "success", text: text })
+    );
   if (res.eval_js) handle(res.eval_js, eval_it);
 
   if (res.reload_page) {
