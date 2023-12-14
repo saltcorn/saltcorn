@@ -87,7 +87,10 @@ const whereFTS = (
   const { fields, table, schema } = v;
 
   let fldsArray = fields
-    .filter((f: any) => f.type && f.type.sql_name === "text")
+    .filter(
+      (f: any) =>
+        f.type && f.type.sql_name === "text" && (!f.calculated || f.stored)
+    )
     .map(
       (f: any) =>
         "coalesce(" +
