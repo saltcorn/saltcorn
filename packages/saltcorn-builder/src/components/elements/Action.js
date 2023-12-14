@@ -336,11 +336,13 @@ const ActionSettings = () => {
               });
             }}
           >
-            {options.actions.map((f, ix) => (
-              <option key={ix} value={f}>
-                {f}
-              </option>
-            ))}
+            {options.actions
+              .filter((f) => !(options.builtInActions || []).includes(f))
+              .map((f, ix) => (
+                <option key={ix} value={f}>
+                  {f}
+                </option>
+              ))}
           </select>
           <label>Only if... (formula)</label>
           <input

@@ -216,6 +216,7 @@ const pageBuilderData = async (req, context) => {
     images,
     pages,
     actions,
+    builtInActions: ["GoBack"],
     library,
     min_role: context.min_role,
     actionConfigForms,
