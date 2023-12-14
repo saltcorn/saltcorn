@@ -154,6 +154,19 @@ const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
   return where;
 };
 
+const mergeActionResults = (result: any, stepres: any) => {
+  Object.keys(stepres || {}).forEach((k) => {
+    if (
+      !["notify", "notify_success", "error", "eval_js", "download"].includes(k)
+    )
+      result[k] = stepres[k];
+    else if (Array.isArray(result[k])) result[k].push(stepres[k]);
+    else if (typeof result[k] !== "undefined")
+      result[k] = [result[k], stepres[k]];
+    else result[k] = stepres[k];
+  });
+};
+
 /**
  * @function
  * @param {Date} date
@@ -377,4 +390,5 @@ export = {
   nubBy,
   isTest,
   getSessionId,
+  mergeActionResults,
 };
