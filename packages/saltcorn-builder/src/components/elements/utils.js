@@ -1338,16 +1338,24 @@ export const bstyleopt = (style) => ({
     ></div>
   ),
 });
+
+export const rand_ident = () =>
+  Math.floor(Math.random() * 16777215).toString(16);
+
 export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   const { data } = query.node(nodeId).get();
   const { type, props, nodes } = data;
+  const newProps = { ...props };
+  if (newProps.rndid) {
+    newProps.rndid = rand_ident();
+  }
   const children = (nodes || []).map(recursivelyCloneToElems(query));
   if (data.displayName === "Columns") {
     const cols = ntimes(data.props.ncols, (ix) =>
       recursivelyCloneToElems(query)(data.linkedNodes["Col" + ix])
     );
     return React.createElement(Columns, {
-      ...props,
+      ...newProps,
       ...(typeof ix !== "undefined" ? { key: ix } : {}),
       contents: cols,
     });
@@ -1356,7 +1364,7 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
     return React.createElement(
       Element,
       {
-        ...props,
+        ...newProps,
         canvas: true,
         is: type,
         ...(typeof ix !== "undefined" ? { key: ix } : {}),
@@ -1366,7 +1374,7 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   return React.createElement(
     type,
     {
-      ...props,
+      ...newProps,
       ...(typeof ix !== "undefined" ? { key: ix } : {}),
     },
     children
