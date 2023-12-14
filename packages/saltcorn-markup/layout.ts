@@ -709,16 +709,21 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const cardDeck =
-        segment.besides.every((s: any) => s && s.type === "card") &&
-        (!segment.widths || segment.widths.every((w: any) => w === defwidth));
+      const cardDeck = segment.besides.every(
+        (s: any) => s && s.type === "card"
+      );
       let markup;
 
-      if (cardDeck)
+      if (cardDeck) {
+        const sameWidths =
+          !segment.widths || segment.widths.every((w: any) => w === defwidth);
         markup = div(
           {
             class: [
-              `row row-cols-1 row-cols-md-${segment.besides.length} g-4`,
+              "row",
+              sameWidths &&
+                `row-cols-1 row-cols-md-${segment.besides.length} g-4`,
+              "g-4",
               !segment.style?.["margin-bottom"] && `mb-3`,
             ],
             style: segment.style,
@@ -730,10 +735,23 @@ const render = ({
                 ? ["h-100", ...t.class]
                 : t.class + " h-100"
               : "h-100";
-            return div({ class: "col" }, go(newt, false, ixb));
+            return div(
+              {
+                class: sameWidths
+                  ? "col"
+                  : `col-${
+                      segment.breakpoint
+                        ? segment.breakpoint + "-"
+                        : segment.breakpoints && segment.breakpoints[ixb]
+                        ? segment.breakpoints[ixb] + "-"
+                        : ""
+                    }${segment.widths ? segment.widths[ixb] : defwidth}`,
+              },
+              go(newt, false, ixb)
+            );
           })
         );
-      else
+      } else
         markup = div(
           {
             class: [
