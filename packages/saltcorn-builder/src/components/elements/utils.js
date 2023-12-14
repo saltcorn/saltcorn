@@ -949,7 +949,7 @@ const ConfigField = ({
             className={`w-${
               styleDim === "auto" ? 100 : 50
             } form-control-sm d-inline dimunit`}
-            vert={true}
+            vert={!field.horiz}
             onChange={(e) => {
               if (!e.target) return;
               const target_value = e.target.value;
