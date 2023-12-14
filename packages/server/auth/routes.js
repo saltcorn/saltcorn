@@ -1586,9 +1586,17 @@ router.post(
  */
 router.post(
   "/settings",
+  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+    const user = await User.findOne({ id: req.user?.id });
+    if (!user) {
+      res.sendWrap(
+        req.__("User settings") || "User settings",
+        "Must be logged in"
+      );
+      return;
+    }
     if (req.body.new_password && user.password) {
       const pwform = changPwForm(req);
 
