@@ -857,7 +857,8 @@ const render = (
         req.user,
         prefix,
         state,
-        req
+        req,
+        viewname
       );
       return key(row);
     },

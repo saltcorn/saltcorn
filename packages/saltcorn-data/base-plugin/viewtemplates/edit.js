@@ -640,7 +640,8 @@ const transformForm = async ({
           req.user,
           prefix,
           req.query,
-          req
+          req,
+          viewname
         );
         segment.contents = key(row || {});
       }
@@ -1893,6 +1894,7 @@ module.exports = {
           res,
           referrer: req.get("Referrer"),
         });
+        console.log("result", result);
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
         console.error(e);

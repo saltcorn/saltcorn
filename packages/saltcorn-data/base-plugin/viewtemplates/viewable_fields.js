@@ -296,7 +296,8 @@ const view_linker = (
   user,
   targetPrefix = "",
   state = {},
-  req
+  req,
+  srcViewName
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -518,7 +519,8 @@ const get_viewable_fields = (
   isShow,
   req,
   __,
-  state = {}
+  state = {},
+  srcViewName
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -617,7 +619,8 @@ const get_viewable_fields = (
           req.user,
           "",
           state,
-          req
+          req,
+          srcViewName
         );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
