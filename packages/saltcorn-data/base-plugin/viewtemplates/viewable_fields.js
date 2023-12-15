@@ -338,7 +338,7 @@ const view_linker = (
         return link_view(
           isWeb || in_modal ? target : `javascript:execLink('${target}')`,
           get_label(view, r),
-          in_modal,
+          in_modal && srcViewName && { reload_view: srcViewName },
           link_style,
           link_size,
           link_icon || icon,
@@ -372,7 +372,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(vnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -395,7 +395,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(ivnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -422,7 +422,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(viewnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -456,7 +456,7 @@ const view_linker = (
                     : summary_field,
                   r
                 ),
-                in_modal,
+                in_modal && srcViewName && { reload_view: srcViewName },
                 link_style,
                 link_size,
                 link_icon || icon,
