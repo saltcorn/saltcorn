@@ -10,7 +10,7 @@ const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
 
-const { text, style } = require("@saltcorn/markup/tags");
+const { text, style, div } = require("@saltcorn/markup/tags");
 const {
   isAdmin,
   error_catcher,
@@ -70,11 +70,11 @@ router.get(
     }
     const isModal = req.headers?.saltcornmodalrequest;
 
-    const contents = await view.run_possibly_on_page(query, req, res);
+    const contents0 = await view.run_possibly_on_page(query, req, res);
     const title =
       isModal && view.attributes?.popup_title
         ? view.attributes?.popup_title
-        : scan_for_page_title(contents, view.name);
+        : scan_for_page_title(contents0, view.name);
     if (isModal && view.attributes?.popup_width)
       res.set(
         "SaltcornModalWidth",
@@ -95,9 +95,21 @@ router.get(
         name: viewname,
         render_time: ms,
       });
-    if (typeof contents === "object" && contents.goto)
-      res.redirect(contents.goto);
-    else
+    if (typeof contents0 === "object" && contents0.goto)
+      res.redirect(contents0.goto);
+    else {
+      const qs = "";
+      const contents =
+        typeof contents0 === "string" && !req.xhr
+          ? div(
+              {
+                class: "d-inline",
+                "data-sc-embed-viewname": view.name,
+                "data-sc-view-source": req.originalUrl,
+              },
+              contents0
+            )
+          : contents0;
       res.sendWrap(
         title,
         add_edit_bar({
@@ -112,6 +124,7 @@ router.get(
           table: view.table_id || view.exttable_name,
         })
       );
+    }
   })
 );
 
