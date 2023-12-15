@@ -934,12 +934,12 @@ module.exports = {
     description: "Notify the user with a toast",
     configFields: [
       {
-        name: "type",
+        name: "notify_type",
         label: "Type",
         type: "String",
         required: true,
         attributes: {
-          options: ["Notify", "Error"],
+          options: ["Notify", "Error", "Success"],
         },
       },
       {
@@ -949,10 +949,13 @@ module.exports = {
         required: true,
       },
     ],
-    run: async ({ configuration: { type, text } }) => {
-      switch (type) {
+    run: async ({ configuration: { type, notify_type, text } }) => {
+      //type is legacy. this name gave react problems
+      switch (notify_type || type) {
         case "Error":
           return { error: text };
+        case "Success":
+          return { notify_success: text };
         default:
           return { notify: text };
       }

@@ -455,6 +455,30 @@ describe("Table get data", () => {
     expect(rows.length).toBe(2);
   });
 
+  it("should support full text search with calculated", async () => {
+    const table = await Table.create("ftstesttable");
+    await Field.create({
+      table,
+      label: "name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      label: "shortname",
+      type: "String",
+      calculated: true,
+      expression: "name.substr(0,4)",
+      required: true,
+    });
+    await table.insertRow({ name: "Alexander" });
+    const rows = await table.getRows({
+      _fts: { fields: table.fields, searchTerm: "Alexander" },
+    });
+
+    expect(rows.length).toBe(1);
+  });
+
   it("should rename", async () => {
     const table = await Table.create("notsurename");
     await Field.create({

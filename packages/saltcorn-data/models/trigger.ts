@@ -14,7 +14,7 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash = require("./crash");
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-const { satisfies } = require("../utils");
+const { satisfies, mergeActionResults } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
@@ -262,7 +262,7 @@ class Trigger implements AbstractTrigger {
 
       try {
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
-        if (res && resultCollector) Object.assign(resultCollector, res);
+        if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {
         if (resultCollector)
           resultCollector.error = (resultCollector.error || "") + e.message;

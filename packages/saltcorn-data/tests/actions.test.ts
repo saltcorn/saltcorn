@@ -16,7 +16,7 @@ const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
   baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
-const { applyAsync } = utils;
+const { applyAsync, mergeActionResults } = utils;
 
 afterAll(db.close);
 
@@ -558,5 +558,26 @@ describe("Validate to create email", () => {
     assertIsSet(u);
     expect(u.username).toBe("tomn19");
     expect(u.email).toBe("tomn19@anonymous.com");
+  });
+});
+
+describe("mergeActionResults", () => {
+  it("it should merge errors", async () => {
+    const result = { error: "Foo" };
+    mergeActionResults(result, { error: "Bar" });
+    expect(result.error).toStrictEqual(["Foo", "Bar"]);
+  });
+
+  it("it should overwrite other keys", async () => {
+    const result = { error0: "Foo" };
+    mergeActionResults(result, { error0: "Bar" });
+    expect(result.error0).toStrictEqual("Bar");
+  });
+
+  it("it should merge set_fields", async () => {
+    const result = {};
+    mergeActionResults(result, { set_fields: { y: 2 } });
+    mergeActionResults(result, { set_fields: { z: 3 } });
+    expect(result).toStrictEqual({ set_fields: { y: 2, z: 3 } });
   });
 });

@@ -1623,12 +1623,24 @@ router.post(
       if (user_settings_form) {
         const view = await View.findOne({ name: user_settings_form });
         if (view) {
+          const fakeRes = {
+            status() {},
+            sendWrap() {},
+            json() {},
+            redirect() {},
+          };
           await view.runPost({ id: user.id }, req.body, {
             req,
-            res,
+            res: fakeRes,
             redirect: "/auth/settings",
           });
-          req.flash("success", req.__("User settings changed"));
+          const u = await User.findForSession({ id: user.id });
+          req.login(u.session_object, function (err) {
+            if (err) req.flash("danger", err);
+            else req.flash("success", req.__("User settings changed"));
+
+            res.redirect("/auth/settings");
+          });
         }
       } else {
         res.redirect("/auth/settings");

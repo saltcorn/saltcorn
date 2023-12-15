@@ -220,6 +220,7 @@ const pageBuilderData = async (req, context) => {
     library,
     min_role: context.min_role,
     actionConfigForms,
+    allowMultiStepAction: true,
     page_name: context.name,
     page_id: context.id,
     mode: "page",
