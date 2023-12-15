@@ -1082,6 +1082,16 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
+
+    if (typeof id === "undefined")
+      throw new Error(
+        this.name + " updateRow called without primary key value"
+      );
+    if (id === null)
+      throw new Error(
+        this.name + " updateRow called with null as primary key value"
+      );
+
     let joinFields = {};
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       joinFields = this.storedExpressionJoinFields();
@@ -1228,7 +1238,7 @@ class Table implements AbstractTable {
     if (this.versioned) {
       const existing1 = await db.selectOne(this.name, { [pk_name]: id });
       if (!existing) existing = existing1;
-      await db.insert(this.name + "__history", {
+      await this.insert_history_row({
         ...existing1,
         ...v,
         [pk_name]: id,
@@ -1269,6 +1279,23 @@ class Table implements AbstractTable {
         { old_row: existing, updated_fields: v_in }
       );
       if (resultCollector) await trigPromise;
+    }
+  }
+
+  private async insert_history_row(v: any, retry = 0) {
+    // sometimes there is a race condition in history inserts
+    // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
+    // solution: retry 3 times, if fails run with on conflict do nothing
+    if (retry < 3) {
+      try {
+        await db.insert(this.name + "__history", v);
+      } catch (error) {
+        await this.insert_history_row(v, retry + 1);
+      }
+    } else {
+      await db.insert(this.name + "__history", v, {
+        onConflictDoNothing: true,
+      });
     }
   }
 
@@ -1552,7 +1579,7 @@ class Table implements AbstractTable {
       }
     }
     if (this.versioned)
-      await db.insert(this.name + "__history", {
+      await this.insert_history_row({
         ...v,
         [pk_name]: id,
         _version: {
