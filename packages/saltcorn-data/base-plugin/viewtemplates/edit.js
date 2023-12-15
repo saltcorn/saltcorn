@@ -1894,7 +1894,7 @@ module.exports = {
           res,
           referrer: req.get("Referrer"),
         });
-        console.log("result", result);
+        //console.log("result", result);
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
         console.error(e);
