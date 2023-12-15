@@ -638,6 +638,14 @@ const install_pack = async (
     await EventLog.create(eventLogCfg);
   }
 
+  if (pack.config) {
+    const state = getState();
+
+    for (const [k, v] of Object.entries(pack.config)) {
+      await state.setConfig(k, v);
+    }
+  }
+
   if (name) {
     const existPacks = getState().getConfigCopy("installed_packs", []);
     await getState().setConfig("installed_packs", [...existPacks, name]);

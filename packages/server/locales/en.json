@@ -1284,5 +1284,6 @@
 	"Set theme for each user role »": "Set theme for each user role »",
 	"Available themes": "Available themes",
 	"Install more themes »": "Install more themes »",
-	"Configure action": "Configure action"
+	"Configure action": "Configure action",
+	"No changes detected, snapshot skipped": "No changes detected, snapshot skipped"
 }
