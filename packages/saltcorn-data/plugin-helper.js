@@ -82,7 +82,7 @@ const link_view = (
           href: `javascript:${
             isNode()
               ? `ajax_modal('${url}'${ajaxOpts})`
-              : `mobile_modal('${url}')`
+              : `mobile_modal('${url}'${ajaxOpts})`
           }`,
           style,
           class: [textStyle, link_style, link_size, extraClass],

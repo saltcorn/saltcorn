@@ -914,7 +914,7 @@ module.exports = {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
         case "Save":
-          return { eval_js: `saveAndContinue(${jqGet})` };
+          return { eval_js: `return saveAndContinueAsync(${jqGet})` };
         case "Reset":
           return { eval_js: jqGet + ".trigger('reset')" };
         case "Submit with Ajax":

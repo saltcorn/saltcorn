@@ -280,6 +280,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function close_saltcorn_modal() {
+  $("#scmodal").off("hidden.bs.modal");
   var myModalEl = document.getElementById("scmodal");
   if (!myModalEl) return;
   var modal = bootstrap.Modal.getInstance(myModalEl);
@@ -394,6 +395,11 @@ function submitWithAjax(e) {
       window.location.href = res.responseJSON.url_when_done;
     if (res && res.responseJSON && res.responseJSON.error && res.status < 300)
       notifyAlert({ type: "danger", text: res.responseJSON.error });
+  });
+}
+function saveAndContinueAsync(e) {
+  return new Promise((resolve, reject) => {
+    saveAndContinue(e, (x) => resolve(x));
   });
 }
 

@@ -112,6 +112,12 @@ async function inline_local_submit(e, opts1) {
   }
 }
 
+function saveAndContinueAsync(e, action) {
+  return new Promise((resolve, reject) => {
+    saveAndContinue(e, action, (x) => resolve(x));
+  });
+}
+
 async function saveAndContinue(e, action, k) {
   try {
     showLoadSpinner();

@@ -296,7 +296,8 @@ const view_linker = (
   user,
   targetPrefix = "",
   state = {},
-  req
+  req,
+  srcViewName
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -337,7 +338,7 @@ const view_linker = (
         return link_view(
           isWeb || in_modal ? target : `javascript:execLink('${target}')`,
           get_label(view, r),
-          in_modal,
+          in_modal && srcViewName && { reload_view: srcViewName },
           link_style,
           link_size,
           link_icon || icon,
@@ -371,7 +372,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(vnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -394,7 +395,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(ivnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -421,7 +422,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(viewnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -455,7 +456,7 @@ const view_linker = (
                     : summary_field,
                   r
                 ),
-                in_modal,
+                in_modal && srcViewName && { reload_view: srcViewName },
                 link_style,
                 link_size,
                 link_icon || icon,
@@ -518,7 +519,8 @@ const get_viewable_fields = (
   isShow,
   req,
   __,
-  state = {}
+  state = {},
+  srcViewName
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -617,7 +619,8 @@ const get_viewable_fields = (
           req.user,
           "",
           state,
-          req
+          req,
+          srcViewName
         );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);

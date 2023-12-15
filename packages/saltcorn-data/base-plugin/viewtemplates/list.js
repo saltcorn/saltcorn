@@ -567,7 +567,8 @@ const run = async (
     false,
     extraOpts.req,
     __,
-    state
+    state,
+    viewname
   );
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
