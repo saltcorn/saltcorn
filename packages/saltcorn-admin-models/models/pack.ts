@@ -599,12 +599,22 @@ const install_pack = async (
         cfg.table_id = cfgTbl.id;
       }
     }
-    await Model.create({
+    const existing = await Model.findOne({
       name: model.name,
       table_id: mTbl.id,
-      modelpattern: model.modelpattern,
-      configuration: cfg,
     });
+    if (existing)
+      await existing.update({
+        modelpattern: model.modelpattern,
+        configuration: cfg,
+      });
+    else
+      await Model.create({
+        name: model.name,
+        table_id: mTbl.id,
+        modelpattern: model.modelpattern,
+        configuration: cfg,
+      });
   }
 
   for (const modelInst of pack.model_instances || []) {
@@ -619,7 +629,14 @@ const install_pack = async (
       throw new Error(`Unable to find table '${modelInst.model_name}'`);
     const { model_name, ...mICfg }: any = modelInst;
     mICfg.model_id = model.id;
-    await ModelInstance.create(mICfg);
+    const existing = await ModelInstance.findOne({
+      name: modelInst.name,
+      model_id: model.id,
+    });
+    if (existing) {
+      const { id, table_name, ...updrow } = mICfg;
+      await existing.update(updrow);
+    } else await ModelInstance.create(mICfg);
   }
 
   for (const eventLog of pack.event_logs || []) {
