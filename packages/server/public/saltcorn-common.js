@@ -1083,36 +1083,39 @@ function restore_old_button(btnId) {
   btn.removeData("old-text");
 }
 
-function common_done(res, viewname, isWeb = true) {
-  const handle = (element, fn) => {
-    if (Array.isArray(element)) for (const current of element) fn(current);
-    else fn(element);
+async function common_done(res, viewname, isWeb = true) {
+  const handle = async (element, fn) => {
+    if (Array.isArray(element))
+      for (const current of element) await fn(current);
+    else await fn(element);
   };
-  const eval_it = (s) => {
+  const eval_it = async (s) => {
     if (res.row && res.field_names) {
       const f = new Function(`viewname, row, {${res.field_names}}`, s);
-      const evalres = f(viewname, res.row, res.row);
-      if (evalres) common_done(evalres, viewname, isWeb);
+      const evalres = await f(viewname, res.row, res.row);
+      if (evalres) await common_done(evalres, viewname, isWeb);
     } else {
       const f = new Function(`viewname`, s);
-      const evalres = f(viewname);
-      if (evalres) common_done(evalres, viewname, isWeb);
+      const evalres = await f(viewname);
+      if (evalres) await common_done(evalres, viewname, isWeb);
     }
   };
-  if (res.notify) handle(res.notify, notifyAlert);
+  if (res.notify) await handle(res.notify, notifyAlert);
   if (res.error)
-    handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
+    await handle(res.error, (text) =>
+      notifyAlert({ type: "danger", text: text })
+    );
   if (res.notify_success)
-    handle(res.notify_success, (text) =>
+    await handle(res.notify_success, (text) =>
       notifyAlert({ type: "success", text: text })
     );
-  if (res.eval_js) handle(res.eval_js, eval_it);
+  if (res.eval_js) await handle(res.eval_js, eval_it);
 
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
   }
   if (res.download) {
-    handle(res.download, (download) => {
+    await handle(res.download, (download) => {
       const dataurl = `data:${
         download.mimetype || "application/octet-stream"
       };base64,${download.blob}`;

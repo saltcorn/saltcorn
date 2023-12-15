@@ -397,6 +397,11 @@ function submitWithAjax(e) {
       notifyAlert({ type: "danger", text: res.responseJSON.error });
   });
 }
+function saveAndContinueAsync(e) {
+  return new Promise((resolve, reject) => {
+    saveAndContinue(e, (x) => resolve(x));
+  });
+}
 
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
