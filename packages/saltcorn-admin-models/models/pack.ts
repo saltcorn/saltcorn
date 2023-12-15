@@ -458,6 +458,9 @@ const install_pack = async (
       );
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
+        const { id, ownership_field_id, ownership_field_name, ...updrow } =
+          tableSpec;
+        await existing.update(updrow);
       } else {
         tableSpec.min_role_read = old_to_new_role(tableSpec.min_role_read);
         tableSpec.min_role_write = old_to_new_role(tableSpec.min_role_write);
@@ -484,6 +487,12 @@ const install_pack = async (
             bare_tables
           );
         else await Field.create({ table: _table, ...field }, bare_tables);
+      } else if (
+        exfield &&
+        !(_table.name === "users" && field.name === "email")
+      ) {
+        const { id, table_id, ...updrow } = field;
+        await exfield.update(updrow);
       }
     }
     for (const { table, ...trigger } of tableSpec.triggers || []) {
