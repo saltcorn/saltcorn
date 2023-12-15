@@ -489,7 +489,8 @@ const install_pack = async (
         else await Field.create({ table: _table, ...field }, bare_tables);
       } else if (
         exfield &&
-        !(_table.name === "users" && field.name === "email")
+        !(_table.name === "users" && field.name === "email") &&
+        exfield.type
       ) {
         const { id, table_id, ...updrow } = field;
         await exfield.update(updrow);
