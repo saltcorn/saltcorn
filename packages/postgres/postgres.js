@@ -188,6 +188,7 @@ const insert = async (tbl, obj, opts = {}) => {
   var valPosList = [];
   var valList = [];
   const schema = opts.schema || getTenantSchema();
+  let conflict = "";
   kvs.forEach(([k, v]) => {
     if (v && v.next_version_by_id) {
       valPosList.push(
@@ -195,6 +196,7 @@ const insert = async (tbl, obj, opts = {}) => {
           tbl
         )}" where id=${+v.next_version_by_id}), 0)+1`
       );
+      if (opts.onConflictDoNothing) conflict = "on conflict do nothing ";
     } else {
       valList.push(v);
       valPosList.push(`$${valList.length}`);
@@ -204,7 +206,7 @@ const insert = async (tbl, obj, opts = {}) => {
     valPosList.length > 0
       ? `insert into "${schema}"."${sqlsanitize(
           tbl
-        )}"(${fnameList}) values(${valPosList.join()}) returning ${
+        )}"(${fnameList}) values(${valPosList.join()}) ${conflict}returning ${
           opts.noid ? "*" : opts.pk_name || "id"
         }`
       : `insert into "${schema}"."${sqlsanitize(
@@ -213,6 +215,7 @@ const insert = async (tbl, obj, opts = {}) => {
   sql_log(sql, valList);
   const { rows } = await (client || opts.client || pool).query(sql, valList);
   if (opts.noid) return;
+  else if (conflict && rows.length === 0) return;
   else return rows[0][opts.pk_name || "id"];
 };
 
