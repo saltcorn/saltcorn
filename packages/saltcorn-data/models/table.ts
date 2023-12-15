@@ -1082,6 +1082,16 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
+
+    if (typeof id === "undefined")
+      throw new Error(
+        this.name + " updateRow called without primary key value"
+      );
+    if (id === null)
+      throw new Error(
+        this.name + " updateRow called with null as primary key value"
+      );
+
     let joinFields = {};
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       joinFields = this.storedExpressionJoinFields();
