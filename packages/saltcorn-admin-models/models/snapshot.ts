@@ -67,7 +67,7 @@ class Snapshot {
   static async take_if_changed(): Promise<boolean> {
     const latest = await Snapshot.latest();
 
-    const current_pack = await backup.create_pack_json();
+    const current_pack = await backup.create_pack_json(false, true);
 
     //comparing objects is not accurate (too many false positives) so we hash instead
     const hash = crypto

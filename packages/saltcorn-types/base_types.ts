@@ -356,6 +356,7 @@ export type Pack = {
   models: Array<ModelPack>;
   model_instances: Array<ModelInstancePack>;
   event_logs?: Array<EventLogPack>;
+  config?: object;
 };
 
 export type PluginSourceType = "npm" | "github" | "local" | "git";

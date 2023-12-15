@@ -36,7 +36,8 @@ const {
   install_pack,
   can_install_pack,
 } = pack;
-
+import config from "@saltcorn/data/models/config";
+const { configTypes } = config;
 const { asyncMap } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
@@ -50,7 +51,8 @@ import path from "path";
  * @param [withEventLog] - include event log
  */
 const create_pack_json = async (
-  withEventLog: boolean = false
+  withEventLog: boolean = false,
+  forSnapshot: boolean = false
 ): Promise<object> => {
   // tables
   const tables = await asyncMap(
@@ -106,7 +108,7 @@ const create_pack_json = async (
       )
     : [];
 
-  return {
+  const pack: any = {
     tables,
     views,
     plugins,
@@ -119,6 +121,18 @@ const create_pack_json = async (
     model_instances,
     event_logs,
   };
+
+  if (forSnapshot) {
+    const cfgs = await db.select("_sc_config");
+    const config: any = {};
+    for (const cfg of cfgs) {
+      //exclude base url, multitenancy, ssl/lets encrypt,
+      if (configTypes[cfg.key]?.excludeFromSnapshot) continue;
+      config[cfg.key] = (db.isSQLite ? JSON.parse(cfg.value) : cfg.value)?.v;
+    }
+    pack.config = config;
+  }
+  return pack;
 };
 
 /**
