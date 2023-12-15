@@ -280,6 +280,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function close_saltcorn_modal() {
+  $("#scmodal").off("hidden.bs.modal");
   var myModalEl = document.getElementById("scmodal");
   if (!myModalEl) return;
   var modal = bootstrap.Modal.getInstance(myModalEl);
