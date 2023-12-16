@@ -1354,8 +1354,12 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
  * @param additionalButtons
  * @returns
  */
-const displayAdditionalButtons = (additionalButtons: any[]): string =>
+const displayAdditionalButtons = (
+  additionalButtons: any[],
+  afterSave?: boolean
+): string =>
   additionalButtons
+    .filter((btn) => !!btn.afterSave === !!afterSave)
     .map(
       (btn) =>
         `<button type="button" id="${btn.id}" class="${btn.class}"${
@@ -1460,7 +1464,7 @@ const mkForm = (
   <div class="col-sm-12">
     ${
       form.additionalButtons
-        ? displayAdditionalButtons(form.additionalButtons)
+        ? displayAdditionalButtons(form.additionalButtons, false)
         : ""
     }
     ${
@@ -1469,6 +1473,11 @@ const mkForm = (
         : `<button type="submit" class="btn ${
             form.submitButtonClass || "btn-primary"
           }">${text(form.submitLabel || "Save")}</button>`
+    }
+    ${
+      form.additionalButtons
+        ? displayAdditionalButtons(form.additionalButtons, true)
+        : ""
     }
   </div>
 </div>`;
