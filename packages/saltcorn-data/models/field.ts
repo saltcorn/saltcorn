@@ -102,7 +102,7 @@ class Field implements AbstractField {
   constructor(o: FieldCfg | Field) {
     if (!o.name && !o.label)
       throw new Error(`Field initialised with no name and no label`);
-    this.label = <string>(o.label || o.name);
+    this.label = <string>(o.label || Field.nameToLabel(o.name as string));
     this.name = <string>(o.name || Field.labelToName(this.label));
     if (!o.type && !o.input_type)
       throw new Error(`Field ${o.name} initialised with no type`);
@@ -203,6 +203,10 @@ class Field implements AbstractField {
   // because label can contain characters that cannot be used in PG for sql names
   static labelToName(label: string): string {
     return sqlsanitize(label.toLowerCase().split(" ").join("_"));
+  }
+
+  static nameToLabel(label: string): string {
+    return sqlsanitize(label.split("_").join(" "));
   }
 
   get type_name(): string | undefined {
