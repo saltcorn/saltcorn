@@ -206,7 +206,7 @@ class Field implements AbstractField {
   }
 
   static nameToLabel(label: string): string {
-    return sqlsanitize(label.split("_").join(" "));
+    return label.split("_").join(" ");
   }
 
   get type_name(): string | undefined {
