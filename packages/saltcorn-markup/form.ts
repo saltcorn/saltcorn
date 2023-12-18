@@ -1473,12 +1473,11 @@ const mkForm = (
         : `<button type="submit" class="btn ${
             form.submitButtonClass || "btn-primary"
           }">${text(form.submitLabel || "Save")}</button>`
-    }
-    ${
-      form.additionalButtons
-        ? displayAdditionalButtons(form.additionalButtons, true)
-        : ""
-    }
+    }${
+    form.additionalButtons
+      ? displayAdditionalButtons(form.additionalButtons, true)
+      : ""
+  }
   </div>
 </div>`;
   return (
