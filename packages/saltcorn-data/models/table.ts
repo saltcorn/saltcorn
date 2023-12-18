@@ -164,6 +164,7 @@ const isDate = function (date: Date): boolean {
  * These functions all take `Where` expressions which are JavaScript objects describing
  * the criterion to match to. Some examples:
  *
+ * * `{}`: Match all rows
  * * `{ name: "Jim" }`: Match all rows with name="Jim"
  * * `{ name: { ilike: "im"} }`: Match all rows where name contains "im" (case insensitive)
  * * `{ name: /im/ }`: Match all rows with name matching regular expression "im"
@@ -174,6 +175,7 @@ const isDate = function (date: Date): boolean {
  * * `{ or: [{ name: "Joe"}, { age: 37 }] }`: Match all rows with name="Joe" or age=37
  * * `{ not: { id: 5 } }`: All rows except id=5
  * * `{ id: { in: [1, 2, 3] } }`: Rows with id 1, 2, or 3
+ * * `{ id: { not: { in: [1, 2, 3] } } }`: Rows with id any value except 1, 2, or 3
  *
  * For further examples, see the [mkWhere test suite](https://github.com/saltcorn/saltcorn/blob/master/packages/db-common/internal.test.js)
  *
@@ -936,7 +938,33 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Get one row from table in db
+   * Get one row from the table in the database. The matching row will be returned in a promise - use await to read the value.
+   * If no matching rule can be found, null will be returned. If more than one row matches, the first found row
+   * will be returned.
+   *
+   * The first argument to get row is a where-expression With the conditions the returned row should match.
+   *
+   * The second document is optional and is an object that can modify the search. This is mainly useful
+   * in case there is more than one matching row for the where-expression in the first argument and you
+   * want to give an explicit order. For example, use `{orderBy: "name"}` as the second argument to pick
+   * the first row by the name field, ordered ascending. `{orderBy: "name", orderDesc: true}` to order by name,
+   * descending
+   *
+   * This is however rare and usually getRow is run with a single argument of a
+   * Where expression that uniquely determines the row to return, if it exisits.
+   *
+   * @example
+   * ```
+   * const bookTable = Table.findOne({name: "books"})
+   *
+   *
+   * // get the row in the book table with id = 5
+   * const myBook = await bookTable.getRow({id: 5})
+   *
+   * // get the row for the last book published by Leo Tolstoy
+   * const myBook = await bookTable.getRow({author: "Leo Tolstoy"}, {orderBy: "published", orderDesc: true})
+   * ```
+   *
    * @param where
    * @param selopts
    * @returns {Promise<null|*>}
@@ -968,7 +996,26 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Get rows from Table in db
+   * Get all matching rows from the table in the database.
+   *
+   * The arguments are the same as for getRow. The first argument is where-expression with the conditions to match,
+   * and the second argument is an optional object and allows you to set ordering and limit options. Keywords that
+   * can be used in the second argument are orderBy, orderDesc, limit and offset.
+   *
+   * getRows will return an array of rows matching the where-expression in the first argument, wrapped in a Promise
+   * (use await to read the array).
+   *
+   * @example
+   * ```
+   * const bookTable = Table.findOne({name: "books"})
+   *
+   * // get the rows in the book table with author = "Henrik Pontoppidan"
+   * const myBooks = await bookTable.getRows({author: "Henrik Pontoppidan"})
+   *
+   * // get the 3 most recent books written by "Henrik Pontoppidan" with more that 500 pages
+   * const myBooks = await bookTable.getRows({author: "Henrik Pontoppidan", pages: {gt: 500}}, {orderBy: "published", orderDesc: true})
+   * ```
+   *
    * @param where
    * @param selopts
    * @returns {Promise<void>}
@@ -1012,7 +1059,22 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Count amount of rows in db table
+   * Count the number of rows in db table. The argument is a where-expression with conditions the
+   * counted rows should match. countRows returns the number of matching rows wrapped in a promise.
+   *
+   * @example
+   * ```
+   * const bookTable = Table.findOne({name: "books"})
+   *
+   * // Count the total number of rows in the books table
+   * const totalNumberOfBooks = await bookTable.countRows({})
+   *
+   * // Count the number of books where the cover_color field has the value is "Red"
+   * const numberOfRedBooks = await bookTable.countRows({cover_color: "Red"})
+   *
+   * // Count number of books with more than 500 pages
+   * const numberOfLongBooks = await bookTable.countRows({pages: {gt: 500}})
+   * ```
    * @param where
    * @returns {Promise<number>}
    */
@@ -1059,7 +1121,22 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Update row
+   * Update a single row in the table database.
+   *
+   * The first two arguments are mandatory. The first is an object with the new values to set in the row.
+   * The second argument is the value of the primary key of the row to update. Typically this is the id
+   * field of an existing row object
+   *
+   * @example
+   * ```
+   * const bookTable = Table.findOne({name: "books"})
+   *
+   * // get the row in the book table for Moby Dick
+   * const moby_dick = await bookTable.getRow({title: "Moby Dick"})
+   *
+   * // Update the read field to true and the rating field to 5
+   * await bookTable.updateRow({read: true, rating: 5}, moby_dick.id)
+   * ```
    * @param v_in - columns with values to update
    * @param id - id value
    * @param _userid - user id
