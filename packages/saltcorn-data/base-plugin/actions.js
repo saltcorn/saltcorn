@@ -8,6 +8,7 @@
 const fetch = require("node-fetch");
 const vm = require("vm");
 const Table = require("../models/table");
+const EventLog = require("../models/eventlog");
 const View = require("../models/view");
 const File = require("../models/file");
 const { getState } = require("../db/state");
@@ -104,6 +105,8 @@ const run_code = async ({
     URL,
     File,
     User,
+    View,
+    EventLog,
     Buffer,
     setTimeout,
     require,

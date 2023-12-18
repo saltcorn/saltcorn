@@ -75,14 +75,15 @@ const findType = (sql_name: string): any => {
     date: "Date",
     // todo discovery "time without time zone": "Date"?
     // todo discovery "time interval" : "Date"?
-  }[sql_name];
+  }[sql_name.toLowerCase()];
   if (fixed) return fixed;
   const state = getState();
   if (!state) {
     throw new Error("unable to get state");
   }
   const t = Object.entries(state.types).find(
-    ([k, v]: [k: string, v: any]) => v.sql_name === sql_name
+    ([k, v]: [k: string, v: any]) =>
+      v.sql_name.toLowerCase() === sql_name.toLowerCase()
   );
   if (t) {
     return t[0];
@@ -245,4 +246,5 @@ export = {
   discover_tables,
   implement_discovery,
   get_existing_views,
+  findType,
 };

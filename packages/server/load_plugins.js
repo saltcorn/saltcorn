@@ -29,6 +29,14 @@ const staticDependencies = {
   "@saltcorn/data/models/fieldrepeat": require("@saltcorn/data/models/fieldrepeat"),
   "@saltcorn/data/models/table": require("@saltcorn/data/models/table"),
   "@saltcorn/data/models/form": require("@saltcorn/data/models/form"),
+  "@saltcorn/data/models/config": require("@saltcorn/data/models/config"),
+  "@saltcorn/data/models/library": require("@saltcorn/data/models/library"),
+  "@saltcorn/data/models/model": require("@saltcorn/data/models/model"),
+  "@saltcorn/data/models/model_instance": require("@saltcorn/data/models/model_instance"),
+  "@saltcorn/data/models/notification": require("@saltcorn/data/models/notification"),
+  "@saltcorn/data/models/role": require("@saltcorn/data/models/role"),
+  "@saltcorn/data/models/tag": require("@saltcorn/data/models/tag"),
+  "@saltcorn/data/models/tag_entry": require("@saltcorn/data/models/tag_entry"),
   "@saltcorn/data/models/view": require("@saltcorn/data/models/view"),
   "@saltcorn/data/models/page": require("@saltcorn/data/models/page"),
   "@saltcorn/data/models/file": require("@saltcorn/data/models/file"),
@@ -202,7 +210,7 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
   const { version, plugin_module, location } = await requirePlugin(
     plugin,
     force,
-    manager,
+    manager
   );
 
   // install dependecies

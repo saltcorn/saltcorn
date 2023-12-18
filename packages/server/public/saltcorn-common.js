@@ -34,6 +34,11 @@ function add_repeater(nm) {
     $(element).attr("name", newnm).attr("id", newid);
   });
   newe.appendTo($("div.repeats-" + nm));
+  newe.find("[data-on-cloned]").each(function (ix, element) {
+    (function (str) {
+      return eval(str);
+    }).call(element, $(element).attr("data-on-cloned"));
+  });
 }
 
 const _apply_showif_plugins = [];
