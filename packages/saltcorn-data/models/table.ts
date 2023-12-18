@@ -833,7 +833,14 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Delete rows from table
+   * Delete rows from table. The first argument is a where expression indicating the conditions for the rows to be deleted
+   *
+   * @example
+   * ```
+   * // delete all books where author = "Friedrich Nietzsche"
+   * await Table.findOne({name: "books"}).deleteRows({author: "Friedrich Nietzsche"})
+   * ```
+   *
    * @param where - condition
    * @param user - optional user, if null then no authorization will be checked
    * @returns
