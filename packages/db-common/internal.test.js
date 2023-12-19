@@ -147,6 +147,14 @@ describe("mkWhere", () => {
       values: [8],
       where: 'where "id">$1',
     });
+    expect(mkWhere({ id: { gt: 8, lt: 15 } })).toStrictEqual({
+      values: [8, 15],
+      where: 'where "id">$1 and "id"<$2',
+    });
+    expect(mkWhere({ id: { gt: 8, lt: 15, equal: true } })).toStrictEqual({
+      values: [8, 15],
+      where: 'where "id">=$1 and "id"<=$2',
+    });
     expect(mkWhere({ id: { lt: 5, equal: true } })).toStrictEqual({
       values: [5],
       where: 'where "id"<=$1',
