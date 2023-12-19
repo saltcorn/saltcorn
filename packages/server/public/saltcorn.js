@@ -136,6 +136,13 @@ $(function () {
 });
 
 function reload_embedded_view(viewname) {
+  if (window._sc_loglevel > 4)
+    console.log(
+      "reload_embedded_view",
+      viewname,
+      "found",
+      $(`[data-sc-embed-viewname="${viewname}"]`).length
+    );
   $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
     const $e = $(this);
     const url =

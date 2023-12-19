@@ -1089,6 +1089,8 @@ function restore_old_button(btnId) {
 }
 
 async function common_done(res, viewname, isWeb = true) {
+  if (window._sc_loglevel > 4)
+    console.log("ajax result directives", viewname, res);
   const handle = async (element, fn) => {
     if (Array.isArray(element))
       for (const current of element) await fn(current);
