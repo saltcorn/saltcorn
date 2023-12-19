@@ -559,7 +559,7 @@ function ajaxSubmitForm(e) {
       );
       $("#scmodal").modal("hide");
       if (on_close_reload_view) {
-        const viewE = $(`[data-sc-embed-viewname=${on_close_reload_view}]`);
+        const viewE = $(`[data-sc-embed-viewname="${on_close_reload_view}"]`);
         if (viewE.length) reload_embedded_view(on_close_reload_view);
         else location.reload();
       } else if (!no_reload) location.reload();
